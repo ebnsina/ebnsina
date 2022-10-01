@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@700;800;900&display=swap');
+
+:root {
+	--primary: #59f9be;
+	--secondary: #a68bff;
+	--tertiary: #d4fe56;
+}
+
+body {
+	font-family: 'Google Sans', sans-serif;
+	background: linear-gradient(176deg, rgb(18, 24, 27) 50%, rgb(32, 39, 55) 100%);
+	color: #fff;
+	min-height: 100vh;
+	background-attachment: fixed;
+}
+
+.love-icon {
+	width: 80px;
+	height: 80px;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+	.btn-1 {
+		@apply relative bg-primary border-none text-black flex justify-center items-center text-xl px-4 md:px-8 py-2 md:py-4 font-bold text-center w-full max-w-md cursor-pointer transition-all duration-500 -rotate-2 touch-manipulation select-none focus:outline-none 
+        after:content-[''] after:absolute after:border after:border-slate-700 after:bottom-1 after:left-1 after:w-full after:h-full 
+        hover:after:bottom-0 hover:after:left-0;
+	}
+
+	.btn-2 {
+		@apply relative overflow-hidden border border-black text-black inline-block px-6 md:px-8 py-3 md:py-4 text-lg md:text-xl cursor-pointer bg-white select-none touch-manipulation
+         after:content-[''] after:absolute after:-bottom-1/2 after:left-0 after:w-full after:h-full after:bg-black z-50;
+	}
+
+	.btn-2 span:first-child {
+		transition: color 600ms cubic-bezier(0.48, 0, 0.12, 1);
+	}
+
+	.btn-2 span:last-child {
+		transition: all 500ms cubic-bezier(0.48, 0, 0.12, 1);
+		transform: translateY(225%) translateX(-50%);
+	}
+
+	.btn-2:after {
+		transform-origin: bottom center;
+		transition: transform 600ms cubic-bezier(0.48, 0, 0.12, 1);
+		transform: skewY(9.3deg) scaleY(0);
+	}
+
+	.btn-2:hover:after {
+		transform-origin: bottom center;
+		transform: skewY(9.3deg) scaleY(2);
+	}
+
+	.btn-2:hover span:last-child {
+		transform: translateX(-50%) translateY(-100%);
+		opacity: 1;
+		transition: all 900ms cubic-bezier(0.48, 0, 0.12, 1);
+	}
+
+	.btn-3 {
+		@apply text-black capitalize hover:bg-right-center active:scale-95;
+	}
+
+	.btn-3 {
+		background-size: 200% auto;
+		box-shadow: 0px 0px 14px -7px var(--primary);
+		background-image: linear-gradient(
+			45deg,
+			var(--tertiary) 0%,
+			var(--primary) 51%,
+			var(--tertiary) 100%
+		);
+	}
+
+	.btn-4 {
+		@apply relative bg-black/0 text-xl px-6 py-3 font-semibold outline-none border border-slate-700 cursor-pointer select-none touch-manipulation
+        after:content-[''] after:bg-teal-400 after:w-full after:h-full after:absolute after:transition-all after:top-[5px] after:left-[5px] after:-z-1
+        hover:after:top-0 hover:after:left-0;
+	}
+}
