@@ -19,9 +19,6 @@
 				class="flex space-x-6 uppercase md:capitalize text-sm lg:space-x-8 items-center lg:text-lg"
 			>
 				<li>
-					<a href="/about">About</a>
-				</li>
-				<li>
 					<a href="/blog">Blog</a>
 				</li>
 				<li>

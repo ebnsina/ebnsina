@@ -7,6 +7,17 @@
 	import Testimonial from '$lib/components/Testimonial.svelte';
 </script>
 
+<svelte:head>
+	<html lang="en" />
+	<title>Ebn Sina - Software Developer</title>
+	<meta name="robots" content="noindex nofollow" />
+	<meta name="description" content="ebnsina - software engineer, developer" />
+	<meta
+		name="keywords"
+		content="ebnsina - software engineer, developer, javascript, fullstack, web application development, mobile application development."
+	/>
+</svelte:head>
+
 <Hero />
 <About />
 <Service />

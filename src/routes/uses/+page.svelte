@@ -2,6 +2,10 @@
 	import { USES } from '$lib/data/data';
 </script>
 
+<svelte:head>
+	<title>Uses - Ebn Sina</title>
+</svelte:head>
+
 <section class="py-10 lg:py-20">
 	<div class="container mx-auto px-8 lg:px-0">
 		<div class="grid lg:grid-cols-3 lg:gap-20">
