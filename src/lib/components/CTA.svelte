@@ -1,7 +1,7 @@
 <script>
 	import emailjs from '@emailjs/browser';
 
-	import LoveImage from '$lib/assets/social/love.svg';
+	import LoveImage from '$lib/assets/love.svg';
 
 	let emailjs_public_key = import.meta.env.VITE_EMAIL_JS_PUBLIC_KEY;
 	let emailjs_service_id = import.meta.env.VITE_EMAIL_JS_SERVICE_ID;
