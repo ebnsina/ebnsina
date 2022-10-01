@@ -7,11 +7,15 @@
 	--tertiary: #d4fe56;
 }
 
+html,
+body {
+	background: #0e1219;
+}
+
 body {
 	font-family: 'Google Sans', sans-serif;
 	background: linear-gradient(176deg, rgb(18, 24, 27) 50%, rgb(32, 39, 55) 100%);
 	color: #fff;
-	min-height: 100vh;
 	background-attachment: fixed;
 }
 
