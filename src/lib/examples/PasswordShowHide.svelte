@@ -1,6 +1,6 @@
 <script lang="ts">
 	let value = '';
-	let showPassword = true;
+	let showPassword = false;
 
 	$: type = showPassword ? 'text' : 'password';
 
