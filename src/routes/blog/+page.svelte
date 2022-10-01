@@ -11,7 +11,7 @@
 		<div class="max-w-lg mx-auto prose text-white prose-headings:text-white prose-emerald">
 			{#each data.posts as post}
 				<article class="mb-5">
-					<h2 class="text-2xl m-0">
+					<h2 class="textxl lg:text-2xl m-0">
 						<a href={post.path} class="no-underline">
 							{post.meta.title}
 						</a>
