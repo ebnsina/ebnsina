@@ -11,7 +11,7 @@
 
 		<div class="relative bg-primary/30">
 			<form
-				class="bg-black/90 border border-primary -rotate-2 md:rotate-1 grid lg:grid-cols-3 gap-10 items-center p-4"
+				class="relative z-30 bg-black/90 border border-primary -rotate-2 md:rotate-1 grid lg:grid-cols-3 gap-10 items-center p-4"
 				autoComplete="off"
 			>
 				<input
@@ -36,7 +36,7 @@
 				</button>
 			</form>
 
-			<div class="animate-move-slow absolute left-[0] -top-[58px] -z-10 transform -rotate-12 ">
+			<div class="animate-move-slow absolute left-[0] -top-[58px] transform -rotate-12 ">
 				<img class="love-icon" src={LoveImage} alt="love" />
 			</div>
 		</div>
