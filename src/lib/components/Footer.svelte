@@ -8,6 +8,70 @@
 
 		<div class="flex justify-between items-center">
 			<a href="/" class="inline-block text-sm lg:text-2xl font-bold">Ebn Sina</a>
+
+			<ul class="hidden lg:text-sm lg:flex items-center lg:space-x-6">
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://m.me/ebnsina.dev"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Facebook
+					</a>
+				</li>
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://twitter.com/ebns1na"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Twitter
+					</a>
+				</li>
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://instagram.com/ebnsina7"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Instagram
+					</a>
+				</li>
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://www.linkedin.com/in/ebn-sina/"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Linkedin
+					</a>
+				</li>
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://www.youtube.com/channel/UC9Fr3dOzOdboqPl_YJrpmOw"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Youtube
+					</a>
+				</li>
+				<li>
+					<a
+						class="block hover:underline"
+						href="https://www.buymeacoffee.com/ebnsina"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Buy me a coffee
+					</a>
+				</li>
+			</ul>
+
 			<p class="text-xs lg:text-sm flex items-center">
 				<span>made with</span>
 				<svg

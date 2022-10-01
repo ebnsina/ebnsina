@@ -21,12 +21,12 @@
 			</p>
 
 			<div class="flex space-x-5 mt-5">
-				<button class="btn-2">
-					<span class="relative z-10 transition-all font-sans-heading">Get in touch</span>
+				<a href="mailto:ebnsina.dev@gmail.com" class="btn-2">
+					<span class="relative z-10 transition-all font-sans-heading">Say Hello!</span>
 					<span class="absolute block text-white bottom-0 z-50 opacity-0 top-1/2 left-1/2 h-4"
 						><ArrowRight /></span
 					>
-				</button>
+				</a>
 
 				<button class="btn-2">
 					<span class="relative z-10 transition-all font-sans-heading">Download CV</span>

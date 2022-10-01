@@ -34,6 +34,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@emailjs/browser": "^3.7.0",
 		"mdsvex": "^0.10.6"
 	}
 }

@@ -4,7 +4,7 @@
 
 <header
 	class={`block py-6 lg:sticky top-0 left-0 w-full z-50 text-white ${
-		y > 100 ? 'bg-[#12161B] z-50' : ''
+		y > 100 ? 'bg-slate-900 z-50' : ''
 	}`}
 >
 	<div

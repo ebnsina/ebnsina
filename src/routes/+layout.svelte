@@ -17,8 +17,8 @@
 	);
 </script>
 
-<Header />
-
-<slot />
-
-<Footer />
+<div id="__sveltekit" class="bg-slate-900 text-white">
+	<Header />
+	<slot />
+	<Footer />
+</div>
