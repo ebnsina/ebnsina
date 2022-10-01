@@ -1,5 +1,6 @@
 <script>
 	import '$lib/styles/tailwind.css';
+	import '$lib/styles/prism-dracula.css';
 
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';

@@ -1,15 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@700;800;900&display=swap');
 
+@font-face {
+	font-family: 'codelia';
+	src: url('https://cpwebassets.codepen.io/assets/codelia/codelia-regular-webfont-30e4f138f125b5154c605cb591426f776403a7fcbb7c045a990437fa5c3b4b2b.woff2')
+		format('woff2');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'codelia';
+	src: url('https://cpwebassets.codepen.io/assets/codelia/codelia-italic-webfont-92b4d4e0a7a6716f0adda95356a222e96675e4f36115925d07c8b6b3b79963f5.woff2')
+		format('woff2');
+	font-weight: normal;
+	font-style: italic;
+}
+
 :root {
 	--primary: #59f9be;
 	--secondary: #a68bff;
 	--tertiary: #d4fe56;
 }
 
-html,
-body {
-	background: #0e1219;
+html {
+	background: linear-gradient(176deg, rgb(18, 24, 27) 50%, rgb(32, 39, 55) 100%);
 }
 
 body {
@@ -17,6 +32,11 @@ body {
 	background: linear-gradient(176deg, rgb(18, 24, 27) 50%, rgb(32, 39, 55) 100%);
 	color: #fff;
 	background-attachment: fixed;
+}
+
+code,
+pre {
+	font-family: 'codelia', monospace !important;
 }
 
 .love-icon {
