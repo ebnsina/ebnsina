@@ -3,6 +3,10 @@ title: Password show hide
 date: '2022-09-30'
 ---
 
+<script>
+	import PasswordShowHide from '$lib/examples/PasswordShowHide.svelte';
+</script>
+
 ## You often see an eye icon inside password input box, do you know how do they do it?
 
 ![The San Juan Mountains are beautiful!](https://images.pexels.com/photos/788200/pexels-photo-788200.jpeg?auto=compress&cs=tinysrgb&w=800 'San Juan Mountains')
@@ -28,6 +32,8 @@ function onInput (event) {
 
 <button type="button" on:click="{ () => showPassword = !showPassword }">{showPassword ? 'Hide' : 'Show'}</button>
 ```
+
+<PasswordShowHide />
 
 It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
 
