@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { onNavigate } from '$app/navigation';
 	import Footer from '$lib/components/shared/Footer.svelte';
+	import { inject } from '@vercel/analytics';
+
 	import '$lib/styles/tailwind.css';
 
 	onNavigate((navigation) => {
@@ -13,6 +16,8 @@
 			});
 		});
 	});
+
+	inject({ mode: dev ? 'development' : 'production' });
 </script>
 
 <svelte:head>

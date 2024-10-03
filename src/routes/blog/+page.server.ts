@@ -1,18 +1,15 @@
+import type { PageLoad } from './$types';
 import { readingTime } from '$lib/utils/readingTime';
-import fs from 'fs';
-import path from 'path';
 import frontMatter from 'front-matter';
 
-export async function load() {
-	const postsDirectory = path.join(process.cwd(), 'static', 'posts');
-	const files = fs.readdirSync(postsDirectory);
+export const load: PageLoad = async () => {
+	const postFiles = import.meta.glob('/static/posts/*.md', { query: '?raw', import: 'default' });
 
 	const posts = await Promise.all(
-		files.map(async (filename) => {
-			const filePath = path.join(postsDirectory, filename);
-			const fileContents = fs.readFileSync(filePath, 'utf8');
+		Object.entries(postFiles).map(async ([filePath, resolver]) => {
+			const fileContents = await resolver();
 			const { attributes, body } = frontMatter(fileContents);
-			const slug = filename.replace('.md', '');
+			const slug = filePath.split('/').pop()?.replace('.md', '') || '';
 
 			return {
 				slug,
@@ -27,4 +24,4 @@ export async function load() {
 	const allTags = [...new Set(posts.flatMap((post) => post.tags as string[]))];
 
 	return { posts, allTags };
-}
+};
