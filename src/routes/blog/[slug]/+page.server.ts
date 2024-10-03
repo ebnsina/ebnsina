@@ -1,21 +1,23 @@
+import { readingTime } from '$lib/utils/readingTime';
 import { error } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
 import frontMatter from 'front-matter';
-import { unified } from 'unified';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeStringify from 'rehype-stringify';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import rehypeStringify from 'rehype-stringify';
-import rehypeHighlight from 'rehype-highlight';
-import { readingTime } from '$lib/utils/readingTime';
+import { unified } from 'unified';
 
 export async function load({ params }) {
 	const { slug } = params;
-	const postsDirectory = path.resolve('static', 'posts');
-	const filePath = path.join(postsDirectory, `${slug}.md`);
+	const postFiles = import.meta.glob('/static/posts/*.md', { query: '?raw', import: 'default' });
+
+	const fileResolver = postFiles[`/static/posts/${slug}.md`];
+	if (!fileResolver) {
+		throw error(404, `Could not find or process ${slug}`);
+	}
 
 	try {
-		const fileContents = await fs.readFile(filePath, 'utf8');
+		const fileContents = await fileResolver();
 		const { attributes, body } = frontMatter(fileContents);
 
 		const processedContent = await unified()
@@ -37,6 +39,6 @@ export async function load({ params }) {
 		};
 	} catch (e) {
 		console.error('Error processing markdown:', e);
-		throw error(404, `Could not find or process ${slug}`);
+		throw error(500, `Error processing the content of ${slug}`);
 	}
 }
