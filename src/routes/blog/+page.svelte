@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BlogPost from '$lib/components/blog/BlogPost.svelte';
 	import Tag from '$lib/components/blog/Tag.svelte';
+	import SiteHeader from '$lib/components/shared/SiteHeader.svelte';
 
 	export let data;
 	const { posts, allTags } = data;
@@ -11,13 +12,12 @@
 </svelte:head>
 
 <section class="min-h-screen flex justify-center flex-col">
-	<header class="mb-6">
-		<h2>My Blog</h2>
-		<a class="inline-flex text-slate-600" href="/">Ebn Sina</a>
-	</header>
+	<SiteHeader>
+		<span slot="title">Blog</span>
+	</SiteHeader>
 
 	<details>
-		<summary class="mb-2">All Tags</summary>
+		<summary class="mb-2 text-sm text-slate-600 uppercase tracking-wider">Tags</summary>
 		<div>
 			<div class="flex gap-2.5 items-center flex-wrap">
 				{#each allTags as tag}

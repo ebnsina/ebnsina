@@ -11,10 +11,7 @@
 </svelte:head>
 
 <section>
-	<header class="mb-6">
-		<h2>My Blog</h2>
-		<a class="inline-flex text-slate-600" href="/">Ebn Sina</a>
-	</header>
+	<a class="block text-sm uppercase mb-4 hover:underline" href="/blog">← All Blog</a>
 
 	<article class="prose prose-slate prose-headings:text-2xl prose-headings:font-medium mx-auto">
 		<h1>{post.title}</h1>
@@ -24,7 +21,7 @@
 			<span>{post.readingTime} minutes to read</span>
 		</div>
 
-		<div class="mb-4 space-x-2 items-center">
+		<div class="mb-4 flex gap-2 flex-wrap items-center">
 			{#each post.tags as tag}
 				<Tag {tag} />
 			{/each}

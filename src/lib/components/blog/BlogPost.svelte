@@ -25,7 +25,7 @@
 		<p class="text-slate-600 text-sm flex-1 truncate">{post.excerpt}</p>
 	</div>
 
-	<div class="flex space-x-2 items-center mb-2">
+	<div class="mb-4 flex gap-2 flex-wrap items-center">
 		{#each post.tags as tag}
 			<Tag {tag} />
 		{/each}

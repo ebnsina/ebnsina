@@ -1,12 +1,15 @@
+<script>
+	import SiteHeader from '$lib/components/shared/SiteHeader.svelte';
+</script>
+
 <svelte:head>
 	<title>My Tech Stack - Ebn Sina - Full Stack Developer | Instructor | JS Evangelist</title>
 </svelte:head>
 
 <section class="min-h-screen">
-	<header class="mb-6">
-		<h2>My Tech Stack</h2>
-		<a class="inline-flex text-slate-600" href="/">Ebn Sina</a>
-	</header>
+	<SiteHeader>
+		<span slot="title">Tech Stack</span>
+	</SiteHeader>
 
 	<div class="text-sm text-slate-700 leading-7 mt-4 space-y-4">
 		<p class="">Here's where I'm currently most productive:</p>

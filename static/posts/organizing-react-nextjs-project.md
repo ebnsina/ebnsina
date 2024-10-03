@@ -125,24 +125,27 @@ This is how every features looks like -
 
 ## Key Points:
 
-/components: Store components specific to the feature/module. These are typically not shared across other modules and are used within the scope of the specific feature.
+- /components: Store components specific to the feature/module. These are typically not shared across other modules and are used within the scope of the specific feature.
 
-/hooks: Feature-specific custom hooks that encapsulate logic related to the feature, like useAuth, useDashboardData, or useProfile.
+- /hooks: Feature-specific custom hooks that encapsulate logic related to the feature, like useAuth, useDashboardData, or useProfile.
 
-/context: Context API files for managing the state related to the feature/module. For example, AuthContext for authentication or ProfileContext for profile management.
+- /context: Context API files for managing the state related to the feature/module. For example, AuthContext for authentication or ProfileContext for profile management.
 
-/services: API service files that handle HTTP requests for that specific feature/module. For example, authService.js for login, registration, and token handling.
+- /services: API service files that handle HTTP requests for that specific feature/module. For example, authService.js for login, registration, and token handling.
 
-/types: (Optional) TypeScript type definitions related to the feature (interfaces, types). This is optional, based on your project’s use of TypeScript.
+- /types: (Optional) TypeScript type definitions related to the feature (interfaces, types). This is optional, based on your project’s use of TypeScript.
 
-index.js: (Optional) You can add an index.js file to export all feature-related files for easier imports when using that module elsewhere in the app.
+- index.js: (Optional) You can add an index.js file to export all feature-related files for easier imports when using that module elsewhere in the app.
 
 ## Benefits:
 
 Modular organization: Keeps feature-specific components and logic encapsulated and easily maintainable.
 Separation of concerns: Each feature is self-contained with its own components, logic, and services.
+
 Scalability: As new features or modules are added, they can follow the same structure, maintaining consistency across the codebase.
-For shared components that are used across multiple features, keep them in the /components/common directory. This separation ensures modularity and clean separation between feature-specific and common components.
+For shared components that are used across multiple features, keep them in the /components/common directory.
+
+This separation ensures modularity and clean separation between feature-specific and common components.
 
 Here’s how an index.js file might look for the auth feature module:
 
@@ -188,11 +191,13 @@ import { LoginForm, useAuth, AuthProvider, login } from 'features/auth';
 
 Cleaner imports: It reduces the amount of import clutter, especially for large feature sets.
 Centralized exports: Any changes in file paths or new exports can be handled centrally without changing imports across multiple files.
+
 Scalability: As the module grows with more hooks, components, or services, they can all be added to the index.js and remain organized.
 
 ### Pros of Feature-Based Structure
 
 Modular and self-contained: Each feature is self-contained, with components, services, and hooks living in the same directory.
+
 Scalable: It’s easier to scale and maintain large codebases, as new features can be added without disrupting the structure.
 Easier collaboration: Teams working on different features can work independently in separate feature directories.
 
@@ -272,17 +277,27 @@ Redundancy: Some components or hooks might need to be duplicated if they’re ne
 
 ### Key Directories:
 
-/api: API service files for making HTTP requests, including service logic for each API group (auth, users, products, etc.).
-/components: Reusable UI components, often split into common components, layout, and more complex ones.
-/config: Application-level configuration such as API base URLs, environment variable handling, etc.
-/contexts: React Context API for global state management like authentication or theme.
-/features: Modular organization where each feature (like users, profile, dashboard) has its own folder for components, hooks, contexts, and logic.
-/hooks: Custom React hooks for encapsulating reusable logic.
-/pages: Standard Next.js routing structure with pages for handling routes.
-/store: State management using Redux, Zustand, or other libraries.
-/styles: Tailwind CSS or other styling methods (global styles, theme variables).
-/utils: Helper and utility functions.
-/tests: Unit, integration, and end-to-end tests, along with mocks for testing.
+- /api: API service files for making HTTP requests, including service logic for each API group (auth, users, products, etc.).
+
+- /components: Reusable UI components, often split into common components, layout, and more complex ones.
+
+- /config: Application-level configuration such as API base URLs, environment variable handling, etc.
+
+- /contexts: React Context API for global state management like authentication or theme.
+
+- /features: Modular organization where each feature (like users, profile, dashboard) has its own folder for components, hooks, contexts, and logic.
+
+- /hooks: Custom React hooks for encapsulating reusable logic.
+
+- /pages: Standard Next.js routing structure with pages for handling routes.
+
+- /store: State management using Redux, Zustand, or other libraries.
+
+- /styles: Tailwind CSS or other styling methods (global styles, theme variables).
+
+- /utils: Helper and utility functions.
+
+- /tests: Unit, integration, and end-to-end tests, along with mocks for testing.
 
 This structure helps with modularization, better collaboration among teams, and scalability, crucial for enterprise-level applications.
 
