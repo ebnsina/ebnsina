@@ -3,7 +3,6 @@
 	import { onNavigate } from '$app/navigation';
 	import Footer from '$lib/components/shared/Footer.svelte';
 	import { inject } from '@vercel/analytics';
-
 	import '$lib/styles/tailwind.css';
 
 	onNavigate((navigation) => {
@@ -31,7 +30,11 @@
 	<Footer />
 </div>
 
-<style>
+<style lang="postcss">
+	:global(html) {
+		background-color: theme(colors.gray.100);
+	}
+
 	@keyframes fade-in {
 		from {
 			opacity: 0;
