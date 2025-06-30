@@ -55,7 +55,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 2. Create Auth Context
 ```tsx
-// src/auth.tsx
 // src/context/AuthContext.tsx
 import React, {
   createContext,
