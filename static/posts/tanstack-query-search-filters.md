@@ -1,4 +1,3 @@
-
 ---
 title: TanStack Router + TanStack Query (Suspense) for Data Fetching with Pagination & Search
 date: '2025-06-30'
