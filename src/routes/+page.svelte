@@ -24,7 +24,9 @@
 		]}
 	/>
 
-	<div class="relative text-sm md:text-base text-slate-600 leading-10 mt-4 space-y-4">
+	<div
+		class="relative text-sm md:text-base text-slate-600 leading-loose md:leading-10 mt-4 space-y-4"
+	>
 		<ul>
 			<li>
 				Meet a dedicated and versatile Full Stack Developer who seamlessly blends front-end
