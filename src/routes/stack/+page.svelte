@@ -1,85 +1,101 @@
 <script>
-	import SiteHeader from '$lib/components/shared/SiteHeader.svelte';
 </script>
 
 <svelte:head>
-	<title>My Tech Stack - Ebn Sina - Full Stack Developer | Instructor | JS Evangelist</title>
+	<title>Tech Stack - Ebn Sina</title>
 </svelte:head>
 
 <section class="min-h-screen">
-	<SiteHeader>
-		<span slot="title">Tech Stack</span>
-	</SiteHeader>
+	<div
+		class="py-20 border-b border-slate-200 px-6"
+		style="
+      background-image: 
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 14px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 14px);
+    "
+	>
+		<h1 class="text-xl md:text-3xl xl:text-4xl font-bold mb-4">Tech Stack</h1>
+		<p class="text-sm md:text-base text-slate-600">
+			The tools I rely on daily to build modern web applications.
+		</p>
+	</div>
 
-	<div class="text-sm text-slate-700 leading-7 mt-4 space-y-4">
-		<p class="">Here's where I'm currently most productive:</p>
+	<div class="prose prose-slate px-6 mt-10 max-w-3xl mx-auto">
+		<p>These are the technologies and tools where I feel most productive and confident:</p>
 
-		<ol class="space-y-4">
+		<ol class="space-y-8 list-decimal pl-6">
 			<li>
-				<article>
-					<h2>1. Framework (Svelte/SvelteKit, React/Next.js)</h2>
-					<p>
-						I’ve been working with those since their early days. so I'm most productive here. I
-						start all my projects with TypeScript.
-					</p>
-				</article>
+				<h2 class="font-semibold text-base md:text-lg">Frameworks</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					I primarily use <strong>SvelteKit</strong> and
+					<strong>React (TanStack Start/Remix/Next.js)</strong>. I've been hands-on with both since
+					their early stages. Every project starts with
+					<code>TypeScript</code> for type safety and scalability.
+				</p>
 			</li>
-			<li>
-				<article>
-					<h2>2. Code Editor</h2>
-					<p>
-						I use vscode for long time but recently zed feels way better to me. Now this is my way
-						to go editor of choice.
-					</p>
-				</article>
-			</li>
-			<li>
-				<article>
-					<h2>3. Styling (Tailwind CSS)</h2>
-					<p>
-						Building flexible, accessible components is difficult. You either use (and extend) a
-						component library, or build your own.
-					</p>
-				</article>
-			</li>
-			<li>
-				<article>
-					<h2>4. Database (Postgres and Prisma, sometimes Drizzle)</h2>
-					<p>
-						Postgres is my go-to database. Prisma makes working with Postgres easy, type-safe, and
-						fun. I can view and modify my data using Prisma Studio and run migrations with ease.
-					</p>
-				</article>
-			</li>
-			<li>
-				<article>
-					<h2>5. AI (Claude and ChatGPT)</h2>
-					<p>It helps me edit, refactor, and debug code.</p>
-					<p>
-						It’s especially helpful for more tedious refactors, or restructuring/reformatting code.
-						Since it has up-to-date knowledge of SvelteKit, Svelte, Next.js, React, Prisma, Drizzle,
-						and other web tools, it give me great code suggestions.
-					</p>
-				</article>
-			</li>
-			<li>
-				<article>
-					<h2>6. Coding Patterns</h2>
 
-					<ul class="list-disc list-inside">
-						<li>let > const most of the time</li>
-						<li>Larger files > many small components</li>
-						<li>Colocate code that changes often close together</li>
-						<li>Copy/paste is better than the wrong abstraction</li>
-					</ul>
-				</article>
+			<li>
+				<h2 class="font-semibold text-base md:text-lg">Code Editor</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					I’ve used VS Code for years, but recently switched to <strong>Zed</strong>. It’s fast,
+					elegant, and currently my favorite coding environment.
+				</p>
+			</li>
+
+			<li>
+				<h2 class="font-semibold text-base md:text-lg">Styling</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					<strong>Tailwind CSS</strong> is my preferred choice for styling. I often build my own UI components
+					or extend minimalist UI libraries when needed.
+				</p>
+			</li>
+
+			<li>
+				<h2 class="font-semibold text-base md:text-lg">Database</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					<strong>PostgreSQL</strong> is my go-to database. I typically use <strong>Prisma</strong>
+					for ORM, schema migrations, and dev tooling (e.g. Prisma Studio). Occasionally, I use
+					<strong>Drizzle ORM</strong> depending on the project.
+				</p>
+			</li>
+
+			<li>
+				<h2 class="font-semibold text-base md:text-lg">AI Assistant</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					I regularly use <strong>Claude</strong> and <strong>ChatGPT</strong> for refactoring, debugging,
+					and architectural suggestions. Both have solid knowledge of SvelteKit, Next.js, Prisma, and
+					modern full-stack workflows.
+				</p>
+			</li>
+
+			<li>
+				<h2 class="font-semibold text-base md:text-lg">Coding Principles & Best Practices</h2>
+				<ul class="list-disc list-inside space-y-1 text-sm text-slate-600 leading-loose">
+					<li>Favor <code>let</code> over <code>const</code> when flexibility is required</li>
+					<li>Organize code into larger, cohesive files rather than many fragmented components</li>
+					<li>Keep frequently changing code colocated for easier maintenance and readability</li>
+					<li>
+						Prefer pragmatic copy-pasting over premature abstraction to avoid unnecessary complexity
+					</li>
+					<li>Write clear, self-documenting code with meaningful variable and function names</li>
+					<li>Adopt consistent formatting and linting to maintain code quality</li>
+					<li>Keep functions small and focused; each should have a single responsibility</li>
+					<li>
+						Write unit tests for critical logic to ensure reliability and catch regressions early
+					</li>
+					<li>
+						Use TypeScript or similar tools to enforce type safety and catch errors at compile time
+					</li>
+					<li>Document complex or non-obvious logic for future maintainers</li>
+				</ul>
 			</li>
 			<li>
-				<article>
-					<h2>7. Deploment</h2>
-					<p>Vercel is my way to go for frontend deployment.</p>
-					<p>Sometimes use Deno Deploy or a custom VPS based on need.</p>
-				</article>
+				<h2 class="font-semibold text-base md:text-lg">Deployment</h2>
+				<p class="text-sm text-slate-600 leading-loose">
+					<code>Vercel</code> is my preferred platform for frontend hosting. I also deploy to
+					<code>Netlify</code>, <code>Deno Deploy</code>, or custom <code>VPS</code> setups based on
+					performance or budget needs.
+				</p>
 			</li>
 		</ol>
 	</div>

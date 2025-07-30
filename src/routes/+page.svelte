@@ -1,12 +1,20 @@
 <script>
+	import Cta from '$lib/components/home/CTA.svelte';
 	import Typewriter from '$lib/components/shared/Typewriter.svelte';
 </script>
 
 <svelte:head>
-	<title>Ebn Sina - Full Stack Developer | Instructor | JS Evangelist</title>
+	<title>Marhaba - Ebn Sina</title>
 </svelte:head>
 
-<section>
+<section
+	class="relative py-10 border-b border-slate-200 px-6"
+	style="
+    background-image: 
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px);
+  "
+>
 	<Typewriter
 		sentences={[
 			'Merhaba, ben Ebn Sina, bir full stack geliştiricisiyim.',
@@ -16,31 +24,40 @@
 		]}
 	/>
 
-	<div class="text-sm text-slate-600 leading-7 mt-4 space-y-4">
-		<p>
-			Meet a dedicated and versatile Full Stack Developer who seamlessly blends front-end creativity
-			with back-end logic. With expertise in modern web technologies such as SvelteKit, TypeScript,
-			and Tailwind CSS, I specialize in crafting dynamic, user-centric applications that are both
-			robust and scalable. Whether designing intuitive interfaces or optimizing server-side
-			performance, I thrive on turning complex challenges into elegant, functional solutions that
-			deliver exceptional user experiences. Committed to continuous learning and innovation, I am
-			always exploring new frameworks and tools to enhance my skills. When not coding, I enjoy
-			sharing insights through blog posts and engaging with the developer community.
-		</p>
+	<div class="relative text-sm md:text-base text-slate-600 leading-10 mt-4 space-y-4">
+		<ul>
+			<li>
+				Meet a dedicated and versatile Full Stack Developer who seamlessly blends front-end
+				creativity with back-end logic. With expertise in modern web technologies such as SvelteKit,
+				TypeScript, and Tailwind CSS, I specialize in crafting dynamic, user-centric applications
+				that are both robust and scalable. Whether designing intuitive interfaces or optimizing
+				server-side performance, I thrive on turning complex challenges into elegant, functional
+				solutions that deliver exceptional user experiences. Committed to continuous learning and
+				innovation, I am always exploring new frameworks and tools to enhance my skills. When not
+				coding, I enjoy sharing insights through blog posts and engaging with the developer
+				community.
+			</li>
+			<li>
+				I mostly <a
+					class="inline-flex underline text-primary font-medium decoration-wavy underline-offset-2"
+					href="/stack">work</a
+				> with Svelte/SvelteKit, React/Nextjs to build awesome product that also has top level developer
+				experiences.
+			</li>
+			<li>
+				Sometimes i <a
+					class="inline-flex underline text-primary font-medium decoration-wavy underline-offset-2"
+					href="/blog">write</a
+				> things about web development & native apps development and all other bleeding edge technologies.
+			</li>
+		</ul>
 
-		<p>
-			I mostly <a
-				class="inline-flex underline text-primary font-medium decoration-wavy underline-offset-2"
-				href="/stack">work</a
-			> with Svelte/SvelteKit, React/Nextjs to build awesome product that also has top level developer
-			experiences.
-		</p>
-
-		<p>
-			Sometimes i <a
-				class="inline-flex underline text-primary font-medium decoration-wavy underline-offset-2"
-				href="/blog">write</a
-			> things about web development & native apps development and all other bleeding edge technologies.
-		</p>
+		<img
+			class="absolute -right-16 bottom-28 -rotate-[140deg] size-20"
+			src="/images/fun-arrow.svg"
+			alt="fun arrow"
+		/>
 	</div>
 </section>
+
+<Cta />

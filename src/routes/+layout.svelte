@@ -2,8 +2,9 @@
 	import { dev } from '$app/environment';
 	import { onNavigate } from '$app/navigation';
 	import Footer from '$lib/components/shared/Footer.svelte';
-	import { inject } from '@vercel/analytics';
+	import Header from '$lib/components/shared/Header.svelte';
 	import '$lib/styles/tailwind.css';
+	import { inject } from '@vercel/analytics';
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
@@ -20,56 +21,36 @@
 </script>
 
 <svelte:head>
-	<title>Ebn Sina - Full Stack Developer | Instructor | JS Evangelist</title>
+	<title>Ebn Sina - Svelte Expert & Full Stack Developer | JavaScript Instructor</title>
+	<meta
+		name="description"
+		content="Ebn Sina is a Full Stack Developer specializing in Svelte, JavaScript, Node.js, and modern frontend frameworks. Instructor, mentor, and open-source contributor."
+	/>
+	<meta
+		name="keywords"
+		content="Ebn Sina, Svelte developer, Svelte expert, SvelteKit, JavaScript developer, Full Stack Developer, Node.js, React, Web Developer, Instructor, Frontend Mentor, Open Source, TypeScript, Software Engineer"
+	/>
+	<meta name="author" content="Ebn Sina" />
+	<meta property="og:title" content="Ebn Sina - Svelte Expert & Full Stack Developer" />
+	<meta
+		property="og:description"
+		content="Follow Ebn Sina, a Svelte and Full Stack JavaScript Developer creating high-performance web apps with SvelteKit, Node.js, and modern tech."
+	/>
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://ebnsina.vercel.app" />
+	<meta property="og:image" content="https://ebnsina.vercel.app/og-image.jpg" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Ebn Sina - Svelte Expert & Full Stack Developer" />
+	<meta
+		name="twitter:description"
+		content="Full Stack Developer and Instructor with a focus on SvelteKit, JavaScript, and modern web technologies."
+	/>
+	<meta name="twitter:image" content="https://ebnsina.vercel.app/twitter-card.jpg" />
+	<link rel="canonical" href="https://ebnsina.vercel.app" />
 </svelte:head>
 
-<div class="flex flex-col justify-between min-h-screen">
-	<main class="container mx-auto max-w-xl px-4 md:px-0 py-10">
-		<slot />
-	</main>
-	<Footer />
-</div>
-
-<style lang="postcss">
-	:global(html) {
-		background-color: theme(colors.gray.100);
-	}
-
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-	}
-
-	@keyframes fade-out {
-		to {
-			opacity: 0;
-		}
-	}
-
-	@keyframes slide-from-right {
-		from {
-			transform: translateX(30px);
-		}
-	}
-
-	@keyframes slide-to-left {
-		to {
-			transform: translateX(-30px);
-		}
-	}
-
-	@media (prefers-reduced-motion: no-preference) {
-		:root::view-transition-old(root) {
-			animation:
-				90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-				300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-		}
-
-		:root::view-transition-new(root) {
-			animation:
-				210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-				300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-		}
-	}
-</style>
+<Header />
+<main class="min-h-screen max-w-5xl mx-auto border-x border-slate-200">
+	<slot />
+</main>
+<Footer />

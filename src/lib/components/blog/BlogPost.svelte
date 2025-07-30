@@ -1,33 +1,52 @@
 <script lang="ts">
-	import ClockIcon from '$lib/icons/ClockIcon.svelte';
-	import Tag from './Tag.svelte';
+	import { cardColors } from '$lib/utils/constants';
 
 	export let post: {
 		slug: string;
 		title: string;
+		date: string;
 		excerpt: string;
 		tags: string[];
 		readingTime: number;
 	};
+
+	export let index: number;
+
+	const isEven = index % 2 === 1;
+
+	const randomColor = cardColors[index % cardColors.length];
 </script>
 
-<article
-	class="mb-8 border border-dashed border-slate-300 rounded-md hover:border-primary transition p-6"
->
-	<h2 class="text-lg font-medium mb-2">
-		<a href={`/blog/${post.slug}`} class="hover:underline hover:text-primary">{post.title}</a>
-	</h2>
-
-	<div class="flex space-x-2 items-center mb-2 text-slate-500">
-		<ClockIcon />
-		<p class="text-xs text-slate-500">{post.readingTime} minutes</p>
+<article class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-12">
+	<div class={isEven ? 'md:order-2' : ''}>
+		<time class="text-xs text-slate-600" datetime={post.date}>{post.date}</time>
 		<span>&middot;</span>
-		<p class="text-slate-600 text-sm flex-1 truncate">{post.excerpt}</p>
+		<span class="text-xs text-slate-600">{post.readingTime} minutes to read</span>
+
+		<a class="hover:underline hover:text-primary" href={`/blog/${post.slug}`}>
+			<h1 class="text-xl font-semibold mt-2">{post.title}</h1>
+		</a>
+
+		<p class="mt-2 text-slate-700 text-sm">{post.excerpt}</p>
+
+		<div class="mt-4 flex space-x-2 items-center">
+			<div
+				class={`rounded-xl size-10 -rotate-6 hover:rotate-0 transition-all transform ${randomColor}`}
+			></div>
+			<span class="text-sm text-slate-600">Ebn Sina</span>
+		</div>
 	</div>
 
-	<div class="mb-4 flex gap-2 flex-wrap items-center">
-		{#each post.tags as tag}
-			<Tag {tag} />
-		{/each}
+	<div class={isEven ? 'md:order-1' : ''}>
+		<div
+			class="relative rounded-xl h-56 w-full flex items-center justify-center text-center p-4"
+			style="background: conic-gradient(from 180deg at center, #000000, #1f2937, #4b5563, #000000);"
+		>
+			<h2
+				class={`text-white text-2xl font-extrabold drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] truncate ${isEven ? '-rotate-3' : 'rotate-3'}`}
+			>
+				{post.title}
+			</h2>
+		</div>
 	</div>
 </article>

@@ -35,29 +35,31 @@
 	}
 </script>
 
-<footer class="container mx-auto px-4 md:px-0 pb-6">
-	<ul class="flex space-x-4 items-center justify-center text-slate-600 text-sm">
-		{#each socials as social, index (social.href)}
-			<li>
-				<a
-					class="hover:underline relative"
-					target="_blank"
-					rel="noopener noreferrer"
-					href={social.href}
-					on:mouseenter={() => handleMouseEnter(index)}
-					on:mouseleave={handleMouseLeave}
-				>
-					<span class="block w-[10s0px] bg-">
-						{#if hoveredIndex === index}
-							<span transition:fade={{ duration: 150 }}>
-								{getAnimatedText(social.handler, $animationProgress)}
-							</span>
-						{:else}
-							{social.label}
-						{/if}
-					</span>
-				</a>
-			</li>
-		{/each}
-	</ul>
+<footer class="border-t border-slate-200">
+	<div class="max-w-5xl mx-auto px-4 py-4 border-x">
+		<ul class="flex space-x-4 items-center justify-center text-slate-600 text-sm">
+			{#each socials as social, index (social.href)}
+				<li>
+					<a
+						class="hover:underline relative"
+						target="_blank"
+						rel="noopener noreferrer"
+						href={social.href}
+						on:mouseenter={() => handleMouseEnter(index)}
+						on:mouseleave={handleMouseLeave}
+					>
+						<span class="block w-[10s0px] bg-">
+							{#if hoveredIndex === index}
+								<span transition:fade={{ duration: 150 }}>
+									{getAnimatedText(social.handler, $animationProgress)}
+								</span>
+							{:else}
+								{social.label}
+							{/if}
+						</span>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	</div>
 </footer>
