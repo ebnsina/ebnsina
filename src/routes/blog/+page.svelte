@@ -27,7 +27,7 @@
 		</p>
 	</div>
 
-	<div class="px-6 py-10">
+	<div class="px-6 py-10 border-b border-slate-200">
 		<div class="flex gap-2.5 items-center flex-wrap">
 			{#each allTags as tag, index (tag)}
 				<div animate:flip={{ delay: index * 1000 }}>
