@@ -1,4 +1,5 @@
 <script>
+	import PatternedSection from '$lib/components/shared/PatternedSection.svelte';
 </script>
 
 <svelte:head>
@@ -6,19 +7,10 @@
 </svelte:head>
 
 <section class="min-h-screen">
-	<div
-		class="py-20 border-b border-slate-200 px-6"
-		style="
-      background-image: 
-        repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 14px),
-        repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 14px);
-    "
-	>
-		<h1 class="text-xl md:text-3xl xl:text-4xl font-bold mb-4">Tech Stack</h1>
-		<p class="text-sm md:text-base text-slate-600">
-			The tools I rely on daily to build modern web applications.
-		</p>
-	</div>
+	<PatternedSection
+		title="Tech Stack"
+		description="The tools I rely on daily to build modern web applications."
+	/>
 
 	<div class="prose prose-slate px-6 mt-10 max-w-3xl mx-auto">
 		<p>These are the technologies and tools where I feel most productive and confident:</p>
