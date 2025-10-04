@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { dev } from '$app/environment';
 	import { onNavigate } from '$app/navigation';
 	import Footer from '$lib/components/shared/Footer.svelte';
 	import Header from '$lib/components/shared/Header.svelte';
 	import '$lib/styles/tailwind.css';
-	import { inject } from '@vercel/analytics';
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
@@ -16,8 +14,6 @@
 			});
 		});
 	});
-
-	inject({ mode: dev ? 'development' : 'production' });
 </script>
 
 <svelte:head>

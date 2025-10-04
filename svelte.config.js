@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-vercel';
+import adapter from '@sveltejs/adapter-netlify';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { mdsvex } from 'mdsvex';
 
@@ -13,7 +13,8 @@ const config = {
 	],
 	kit: {
 		adapter: adapter({
-			runtime: 'nodejs20.x'
+			edge: false,
+			split: false
 		})
 	}
 };
