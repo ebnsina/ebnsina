@@ -1,0 +1,6930 @@
+{
+	"blog": [
+		{
+			"slug": "boring-stack",
+			"meta": {
+				"title": "The boring stack ships",
+				"description": "An argument for picking the dullest technology that solves your problem — and a working definition of 'dull'.",
+				"date": "2026-03-14",
+				"tags": [
+					"engineering",
+					"opinions"
+				],
+				"minutesRead": 1
+			}
+		},
+		{
+			"slug": "cdn-openresty-gcore",
+			"meta": {
+				"title": "CDN with OpenResty & Gcore",
+				"description": "Every layer explained — from BGP routing to Lua hooks, cache headers to origin auth — and how to extend each one.",
+				"date": "2026-05-13",
+				"tags": [
+					"cdn",
+					"openresty",
+					"nginx",
+					"lua",
+					"gcore",
+					"caching",
+					"security",
+					"rust",
+					"pingora",
+					"devops"
+				],
+				"minutesRead": 69
+			}
+		},
+		{
+			"slug": "durable-execution-primer",
+			"meta": {
+				"title": "A primer on durable execution",
+				"description": "What durable execution actually buys you, when it's worth the complexity, and the two failure modes nobody warns you about.",
+				"date": "2026-04-28",
+				"tags": [
+					"distributed-systems",
+					"architecture",
+					"reliability"
+				],
+				"minutesRead": 2
+			}
+		},
+		{
+			"slug": "nodejs-supply-chain-hardening",
+			"meta": {
+				"title": "Hardening Your Node.js Supply Chain: A Practical Playbook",
+				"description": "Migrating package managers, enabling supply-chain guards, and building a security baseline that survives real-world threats.",
+				"date": "2026-05-12",
+				"tags": [
+					"security",
+					"nodejs",
+					"supply-chain",
+					"pnpm"
+				],
+				"minutesRead": 13
+			}
+		},
+		{
+			"slug": "vps-deploy-guide",
+			"meta": {
+				"title": "Full-Stack VPS Deployment: React, Node, Go, Postgres, Redis, ClickHouse, Redpanda & More",
+				"description": "A complete guide to deploying a production-ready full-stack application on a fresh VPS — covering server hardening, message streaming, object storage, search, email, task queues, and observability.",
+				"date": "2026-05-12",
+				"tags": [
+					"devops",
+					"vps",
+					"postgresql",
+					"redis",
+					"clickhouse",
+					"nginx",
+					"security",
+					"golang",
+					"nodejs",
+					"react",
+					"redpanda",
+					"kafka",
+					"garage",
+					"typesense",
+					"nats"
+				],
+				"minutesRead": 27
+			}
+		},
+		{
+			"slug": "welcome",
+			"meta": {
+				"title": "Welcome — and what this place is for",
+				"description": "An intro to this site: why it exists, what I'll write here, and what I won't.",
+				"date": "2026-02-01",
+				"tags": [
+					"meta",
+					"writing"
+				],
+				"minutesRead": 1
+			}
+		}
+	],
+	"notes": [
+		{
+			"category": "api-design",
+			"slug": "01-rest-fundamentals",
+			"meta": {
+				"title": "REST Fundamentals",
+				"subtitle": "Understand RESTful principles, HTTP methods, status codes, and resource naming conventions that form the backbone of modern APIs.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"REST",
+					"HTTP methods",
+					"status codes",
+					"resource naming"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "02-api-authentication",
+			"meta": {
+				"title": "API Authentication",
+				"subtitle": "Secure your APIs with API keys, OAuth 2.0, JWT tokens, and session-based auth — understand when to use each approach.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"authentication",
+					"API keys",
+					"OAuth 2.0",
+					"JWT",
+					"sessions"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "03-request-response-design",
+			"meta": {
+				"title": "Request & Response Design",
+				"subtitle": "Design clean request and response structures with proper headers, content negotiation, error formats, and envelope patterns.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"request design",
+					"response design",
+					"headers",
+					"content negotiation",
+					"error handling"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "04-pagination-filtering",
+			"meta": {
+				"title": "Pagination & Filtering",
+				"subtitle": "Implement cursor and offset pagination, filtering, sorting, and field selection to handle large datasets efficiently.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"pagination",
+					"cursor",
+					"offset",
+					"filtering",
+					"sorting",
+					"field selection"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "05-versioning-evolution",
+			"meta": {
+				"title": "Versioning & Evolution",
+				"subtitle": "Evolve your API without breaking existing clients — URL versioning, header versioning, backward compatibility, and deprecation strategies.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"versioning",
+					"backward compatibility",
+					"deprecation",
+					"API evolution"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "06-graphql",
+			"meta": {
+				"title": "GraphQL",
+				"subtitle": "Query exactly the data you need with GraphQL — schemas, queries, mutations, subscriptions, and solving the N+1 problem.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"GraphQL",
+					"schema design",
+					"queries",
+					"mutations",
+					"subscriptions",
+					"N+1 problem"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "07-grpc-protobuf",
+			"meta": {
+				"title": "gRPC & Protocol Buffers",
+				"subtitle": "Build high-performance APIs with gRPC — Protocol Buffers, service definitions, streaming, and when to choose gRPC over REST.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"gRPC",
+					"Protocol Buffers",
+					"protobuf",
+					"streaming",
+					"service definitions"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "08-rate-limiting-throttling",
+			"meta": {
+				"title": "Rate Limiting & Throttling",
+				"subtitle": "Protect your APIs from abuse with token bucket, sliding window, distributed rate limiting, and retry-after patterns.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"rate limiting",
+					"throttling",
+					"token bucket",
+					"sliding window",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "API Gateway — Roadmap",
+				"subtitle": "Build your own with nginx, Kong, or Envoy. Auth, rate limit, route, transform.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "01-what-is-an-api-gateway",
+			"meta": {
+				"title": "What Is an API Gateway",
+				"subtitle": "The single entry point in front of your services — routing, auth, rate limiting, and transformation without touching your backends.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"api gateway",
+					"reverse proxy",
+					"routing",
+					"cross-cutting concerns"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "02-routing-and-load-balancing",
+			"meta": {
+				"title": "Routing & Load Balancing",
+				"subtitle": "Path matching, header-based routing, weighted splits, and health-aware balancing — how the gateway decides where each request goes.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"routing",
+					"load balancing",
+					"weighted traffic",
+					"health checks",
+					"nginx"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "03-auth-at-the-gateway",
+			"meta": {
+				"title": "Auth at the Gateway",
+				"subtitle": "JWT verification, API key validation, OAuth token introspection — handle identity once so your services don't have to.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"JWT",
+					"API keys",
+					"OAuth",
+					"authentication",
+					"authorization"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "04-rate-limiting",
+			"meta": {
+				"title": "Rate Limiting at the Gateway",
+				"subtitle": "Fixed window, sliding window, token bucket — protect your backends from abuse and enforce fair usage without touching service code.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"rate limiting",
+					"token bucket",
+					"sliding window",
+					"Redis",
+					"throttling"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "05-request-transformation",
+			"meta": {
+				"title": "Request & Response Transformation",
+				"subtitle": "Header manipulation, payload reshaping, protocol translation — adapting what clients send to what backends expect.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"transformation",
+					"headers",
+					"payload",
+					"versioning",
+					"protocol translation"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "06-observability-and-production",
+			"meta": {
+				"title": "Observability & Production Gateway",
+				"subtitle": "Access logs, distributed tracing, circuit breakers, and the operational checklist before putting a gateway in front of real traffic.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"observability",
+					"tracing",
+					"circuit breaker",
+					"Kong",
+					"production"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Auth & Security — Roadmap",
+				"subtitle": "Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, and production hardening.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "01-authn-vs-authz",
+			"meta": {
+				"title": "Authentication vs Authorization",
+				"subtitle": "Two different questions: who are you, and what are you allowed to do. Confusing them is how security holes form.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"authentication",
+					"authorization",
+					"sessions",
+					"tokens",
+					"RBAC"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "02-password-hashing",
+			"meta": {
+				"title": "Password Hashing",
+				"subtitle": "Why MD5 and SHA-256 fail for passwords, how bcrypt and Argon2 work, and what to do with the output.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"bcrypt",
+					"argon2",
+					"hashing",
+					"salting",
+					"password storage"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "03-jwt-deep-dive",
+			"meta": {
+				"title": "JWT Deep Dive",
+				"subtitle": "Structure, signing algorithms, validation rules, and the common mistakes that make JWTs insecure.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"JWT",
+					"RS256",
+					"HS256",
+					"JWKS",
+					"token validation"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "04-oauth-and-oidc",
+			"meta": {
+				"title": "OAuth 2.0 & OpenID Connect",
+				"subtitle": "Delegated authorization and federated identity — let users log in with Google without giving you their Google password.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"OAuth 2.0",
+					"OIDC",
+					"authorization code",
+					"PKCE",
+					"federated identity"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "05-api-keys",
+			"meta": {
+				"title": "API Key Management",
+				"subtitle": "Generating, storing, rotating, and revoking API keys — the plumbing behind machine-to-machine auth.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"API keys",
+					"HMAC",
+					"key rotation",
+					"scopes",
+					"machine-to-machine"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "06-common-vulnerabilities",
+			"meta": {
+				"title": "Common Auth Vulnerabilities",
+				"subtitle": "CSRF, session fixation, timing attacks, insecure direct object references — what they are and how to close them.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"CSRF",
+					"session fixation",
+					"IDOR",
+					"timing attacks",
+					"OWASP"
+				]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "07-production-checklist",
+			"meta": {
+				"title": "Auth in Production",
+				"subtitle": "The operational checklist: what to verify before shipping auth to real users, and what to monitor after.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "8 min",
+				"topics": [
+					"production",
+					"checklist",
+					"monitoring",
+					"incident response",
+					"hardening"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Background Jobs — Roadmap",
+				"subtitle": "Worker loops, Redis and Postgres-backed queues, retries, DLQs, idempotency, cron, and production patterns.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "01-why-background-jobs",
+			"meta": {
+				"title": "Why Background Jobs",
+				"subtitle": "What belongs in a job queue, what belongs in the request cycle, and why mixing them breaks both.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 min",
+				"topics": [
+					"background jobs",
+					"queues",
+					"async processing",
+					"request lifecycle"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "02-queue-backends",
+			"meta": {
+				"title": "Queue Backends",
+				"subtitle": "Redis-backed queues with BullMQ, Postgres-backed with pg-boss — internals, trade-offs, and when each fits.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"BullMQ",
+					"pg-boss",
+					"Redis",
+					"PostgreSQL",
+					"queue internals"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "03-retries-and-backoff",
+			"meta": {
+				"title": "Retries & Backoff",
+				"subtitle": "Exponential backoff, jitter, max attempts, and knowing when to stop retrying and give up.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"retries",
+					"exponential backoff",
+					"jitter",
+					"dead-letter queue",
+					"error handling"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "04-idempotency",
+			"meta": {
+				"title": "Idempotency",
+				"subtitle": "Design jobs so running them twice is the same as running them once — because at-least-once delivery guarantees you will run them twice.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"idempotency",
+					"at-least-once",
+					"exactly-once",
+					"deduplication",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "05-cron-and-scheduled-jobs",
+			"meta": {
+				"title": "Cron & Scheduled Jobs",
+				"subtitle": "Running work on a schedule — cron syntax, leader election to avoid duplicate runs, and operational considerations.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 min",
+				"topics": [
+					"cron",
+					"scheduled jobs",
+					"leader election",
+					"clock skew",
+					"distributed cron"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "06-worker-patterns",
+			"meta": {
+				"title": "Worker Patterns & Production",
+				"subtitle": "Graceful shutdown, concurrency limits, priority queues, fan-out, and the operational checklist for running jobs in production.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "10 min",
+				"topics": [
+					"graceful shutdown",
+					"priority queues",
+					"fan-out",
+					"worker pools",
+					"production"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Caching — Roadmap",
+				"subtitle": "In-process LRU first. Self-host Redis. Eviction policies, invalidation, stampedes.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "01-why-caching-exists",
+			"meta": {
+				"title": "Why Caching Exists",
+				"subtitle": "The latency gap between memory, disk, and network — and why every fast system exploits it.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"latency",
+					"memory hierarchy",
+					"cache fundamentals",
+					"performance"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "02-cache-strategies",
+			"meta": {
+				"title": "Cache Strategies",
+				"subtitle": "Cache-aside, read-through, write-through, write-behind — when to use each and what breaks when you don't.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"cache-aside",
+					"read-through",
+					"write-through",
+					"write-behind",
+					"patterns"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "03-eviction-policies",
+			"meta": {
+				"title": "Eviction Policies",
+				"subtitle": "LRU, LFU, TTL, and friends — how caches decide what to throw away when memory fills up.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"LRU",
+					"LFU",
+					"TTL",
+					"eviction",
+					"memory management"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "04-redis-fundamentals",
+			"meta": {
+				"title": "Redis Fundamentals",
+				"subtitle": "Data structures, core commands, persistence modes — everything you need to run Redis confidently in production.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "18 min",
+				"topics": [
+					"Redis",
+					"data structures",
+					"persistence",
+					"commands",
+					"pub/sub"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "05-cache-invalidation",
+			"meta": {
+				"title": "Cache Invalidation",
+				"subtitle": "The hardest problem in computer science — TTL, event-driven purging, versioned keys, and when to accept staleness.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"invalidation",
+					"TTL",
+					"versioned keys",
+					"event-driven",
+					"consistency"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "06-cache-stampede",
+			"meta": {
+				"title": "Cache Stampede & Thundering Herd",
+				"subtitle": "What happens when a popular cache entry expires and a thousand requests hit the database simultaneously — and how to stop it.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"stampede",
+					"thundering herd",
+					"mutex",
+					"probabilistic expiry",
+					"dog pile"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "07-distributed-caching",
+			"meta": {
+				"title": "Distributed Caching",
+				"subtitle": "Sharing cache state across multiple servers — consistent hashing, Redis Cluster, and the failure modes that will surprise you.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"Redis Cluster",
+					"consistent hashing",
+					"sharding",
+					"replication",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "08-http-caching",
+			"meta": {
+				"title": "HTTP Caching & CDN",
+				"subtitle": "Cache-Control, ETags, and CDN edge caching — the layer that can eliminate your server entirely for static content.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"Cache-Control",
+					"ETag",
+					"CDN",
+					"edge caching",
+					"HTTP headers"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "09-application-patterns",
+			"meta": {
+				"title": "Application Caching Patterns",
+				"subtitle": "Fragment caching, query result caching, session stores, computed value memoization — practical patterns for real applications.",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"fragment caching",
+					"query cache",
+					"session store",
+					"memoization",
+					"patterns"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "10-production-caching",
+			"meta": {
+				"title": "Production Caching",
+				"subtitle": "Monitoring hit ratios, detecting hot keys, handling Redis failures gracefully, and knowing when to flush everything.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"monitoring",
+					"hot keys",
+					"circuit breaker",
+					"graceful degradation",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Capacity & Cost — Roadmap",
+				"subtitle": "Sizing from first principles, cloud vs bare metal economics, database cost, redundancy pricing, and optimization that actually saves money.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "01-sizing-fundamentals",
+			"meta": {
+				"title": "Sizing Fundamentals",
+				"subtitle": "CPU, memory, disk, and network — how to translate request load into resource requirements before you buy anything.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"sizing",
+					"capacity planning",
+					"CPU",
+					"memory",
+					"throughput"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "02-cloud-vs-bare-metal",
+			"meta": {
+				"title": "Cloud vs Bare Metal vs VPS",
+				"subtitle": "Unit economics for each deployment model — when managed convenience costs more than it saves, and when it doesn't.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"cloud",
+					"bare metal",
+					"VPS",
+					"unit economics",
+					"TCO"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "03-database-cost",
+			"meta": {
+				"title": "Database Cost & Sizing",
+				"subtitle": "IOPS, storage tiers, connection limits, and the read-replica math that changes your cost curve.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"database sizing",
+					"IOPS",
+					"read replicas",
+					"connection pooling",
+					"storage tiers"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "04-cost-of-redundancy",
+			"meta": {
+				"title": "The Cost of Redundancy",
+				"subtitle": "Multi-AZ, N+1, active-active — what each availability pattern actually costs and the math behind choosing one.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"redundancy",
+					"high availability",
+					"multi-AZ",
+					"N+1",
+					"active-active",
+					"SLA"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "05-cost-optimization",
+			"meta": {
+				"title": "Cost Optimization in Practice",
+				"subtitle": "Finding waste, rightsizing, reserved commitments, and building a culture that treats cloud spend as engineering work.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 min",
+				"topics": [
+					"cost optimization",
+					"rightsizing",
+					"reserved instances",
+					"FinOps",
+					"cloud cost"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Chaos & Resilience — Roadmap",
+				"subtitle": "Fault injection, resilience patterns, GameDays, and the SLO-based feedback loop that turns failure into a learning tool.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "01-what-is-chaos-engineering",
+			"meta": {
+				"title": "What Is Chaos Engineering",
+				"subtitle": "Deliberately injecting failure to discover weaknesses before your users do — and why controlled experiments beat hoping for the best.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"chaos engineering",
+					"resilience",
+					"fault injection",
+					"steady state",
+					"GameDays"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "02-resilience-patterns",
+			"meta": {
+				"title": "Resilience Patterns",
+				"subtitle": "Timeouts, retries, circuit breakers, bulkheads, and graceful degradation — the building blocks that keep failures contained.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"circuit breaker",
+					"bulkhead",
+					"timeout",
+					"retry",
+					"graceful degradation"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "03-fault-injection-tools",
+			"meta": {
+				"title": "Fault Injection Tools",
+				"subtitle": "Pumba for containers, tc for network, kill -9 for processes, AWS FIS for cloud — the practical toolkit for running chaos experiments.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"Pumba",
+					"tc",
+					"AWS FIS",
+					"fault injection",
+					"network partition",
+					"latency injection"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "04-gamedays",
+			"meta": {
+				"title": "GameDays",
+				"subtitle": "How to run a structured chaos experiment with a team — planning, execution, post-mortem, and building a resilience culture.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"GameDay",
+					"incident simulation",
+					"post-mortem",
+					"runbooks",
+					"team exercises"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "05-steady-state-and-slos",
+			"meta": {
+				"title": "Steady State & SLOs",
+				"subtitle": "Defining what 'working' means in measurable terms — SLIs, SLOs, error budgets, and the feedback loop that drives reliability work.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"SLO",
+					"SLI",
+					"error budget",
+					"steady state",
+					"reliability"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "01-client-server",
+			"meta": {
+				"title": "Client-Server Architecture",
+				"subtitle": "Build a real HTTP server that handles JSON API requests with proper routing, parsing, and error handling.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 min",
+				"topics": [
+					"HTTP",
+					"request routing",
+					"JSON",
+					"error handling"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "02-rest-api",
+			"meta": {
+				"title": "REST API Design",
+				"subtitle": "Design and build a complete REST API with proper HTTP semantics, validation, pagination, and filtering.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "20 min",
+				"topics": [
+					"REST",
+					"HTTP methods",
+					"pagination",
+					"validation",
+					"status codes"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "03-database-fundamentals",
+			"meta": {
+				"title": "Database Fundamentals",
+				"subtitle": "Connect to PostgreSQL, design schemas, write safe queries with prepared statements, and manage connection pools.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "20 min",
+				"topics": [
+					"PostgreSQL",
+					"SQL",
+					"connection pooling",
+					"prepared statements",
+					"migrations"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "04-caching",
+			"meta": {
+				"title": "Caching Basics",
+				"subtitle": "Integrate Redis for cache-aside pattern, TTL management, and cache invalidation strategies.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "15 min",
+				"topics": [
+					"Redis",
+					"cache-aside",
+					"TTL",
+					"cache invalidation"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "05-load-balancing",
+			"meta": {
+				"title": "Load Balancing",
+				"subtitle": "Build a reverse proxy with round-robin distribution, health checks, and sticky sessions.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"load balancer",
+					"reverse proxy",
+					"health checks",
+					"round-robin"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "06-message-queues",
+			"meta": {
+				"title": "Message Queues",
+				"subtitle": "Build producers and consumers with RabbitMQ/NATS including acknowledgments, retries, and dead letter queues.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"message queue",
+					"RabbitMQ",
+					"NATS",
+					"async processing",
+					"dead letter queue"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "07-rate-limiting",
+			"meta": {
+				"title": "Rate Limiting",
+				"subtitle": "Implement token bucket and sliding window rate limiters with Redis for production API protection.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"rate limiting",
+					"token bucket",
+					"sliding window",
+					"Redis",
+					"middleware"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "08-database-scaling",
+			"meta": {
+				"title": "Database Sharding & Replication",
+				"subtitle": "Implement read replicas, consistent hashing for sharding, and shard-aware query routing.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"sharding",
+					"replication",
+					"consistent hashing",
+					"read replicas"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "09-distributed-consensus",
+			"meta": {
+				"title": "Distributed Consensus",
+				"subtitle": "Implement simplified Raft leader election with term management, vote requests, and heartbeats.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"Raft",
+					"leader election",
+					"consensus",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "10-event-sourcing",
+			"meta": {
+				"title": "Event Sourcing & CQRS",
+				"subtitle": "Build an event store with projections, command handlers, and event replay for an e-commerce order system.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"event sourcing",
+					"CQRS",
+					"projections",
+					"event store",
+					"domain events"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "11-observability",
+			"meta": {
+				"title": "Observability & Service Mesh",
+				"subtitle": "Implement distributed tracing with OpenTelemetry, Prometheus metrics, and structured logging with correlation IDs.",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "20 min",
+				"topics": [
+					"OpenTelemetry",
+					"Prometheus",
+					"tracing",
+					"metrics",
+					"structured logging"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "12-url-shortener",
+			"meta": {
+				"title": "Case Study: URL Shortener at Scale",
+				"subtitle": "Design and build a production URL shortener with base62 encoding, Snowflake IDs, caching, rate limiting, and analytics.",
+				"chapter": 12,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"system design",
+					"URL shortener",
+					"Snowflake ID",
+					"base62",
+					"analytics pipeline"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "13-authentication",
+			"meta": {
+				"title": "Authentication & Authorization",
+				"subtitle": "Implement JWT-based auth, refresh tokens, RBAC middleware, and secure password hashing from scratch.",
+				"chapter": 13,
+				"level": "beginner",
+				"readingTime": "20 min",
+				"topics": [
+					"JWT",
+					"bcrypt",
+					"RBAC",
+					"refresh tokens",
+					"middleware"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "14-api-gateway",
+			"meta": {
+				"title": "API Gateway",
+				"subtitle": "Build a gateway that handles routing, authentication, rate limiting, and request aggregation in one layer.",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "18 min",
+				"topics": [
+					"API gateway",
+					"reverse proxy",
+					"request aggregation",
+					"middleware pipeline"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "15-cdn-edge-caching",
+			"meta": {
+				"title": "CDN & Edge Caching",
+				"subtitle": "Implement edge caching with cache headers, signed URLs for private content, and cache purging strategies.",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"CDN",
+					"edge caching",
+					"Cache-Control",
+					"signed URLs",
+					"cache purging"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "16-websockets-realtime",
+			"meta": {
+				"title": "WebSockets & Real-time",
+				"subtitle": "Build a real-time chat server with WebSocket connections, rooms, presence tracking, and message history.",
+				"chapter": 16,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"WebSocket",
+					"real-time",
+					"chat",
+					"presence",
+					"pub/sub"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "17-microservices-patterns",
+			"meta": {
+				"title": "Microservices Patterns",
+				"subtitle": "Implement the saga pattern, circuit breakers, service discovery, and distributed transactions.",
+				"chapter": 17,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"saga pattern",
+					"circuit breaker",
+					"service discovery",
+					"distributed transactions"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "18-chat-system-case-study",
+			"meta": {
+				"title": "Case Study: Chat System at Scale",
+				"subtitle": "Design and build a production chat system with message delivery, read receipts, typing indicators, and fan-out.",
+				"chapter": 18,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"chat system",
+					"message delivery",
+					"fan-out",
+					"presence",
+					"read receipts"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "19-notification-system",
+			"meta": {
+				"title": "Case Study: Notification System at Scale",
+				"subtitle": "Design and build a production notification system with multi-channel delivery, fan-out, priority queues, rate limiting, and user preferences.",
+				"chapter": 19,
+				"level": "advanced",
+				"readingTime": "30 min",
+				"topics": [
+					"notification system",
+					"fan-out",
+					"priority queue",
+					"multi-channel delivery",
+					"user preferences"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "20-payment-system",
+			"meta": {
+				"title": "Case Study: Payment System",
+				"subtitle": "Design and build a production payment processing system with idempotency, double-entry ledger, reconciliation, and webhook delivery.",
+				"chapter": 20,
+				"level": "advanced",
+				"readingTime": "35 min",
+				"topics": [
+					"payment system",
+					"idempotency",
+					"double-entry ledger",
+					"reconciliation",
+					"webhooks"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "21-news-feed",
+			"meta": {
+				"title": "Case Study: Social Media News Feed",
+				"subtitle": "Design and build a production news feed with fan-out, ranking, infinite scroll pagination, and real-time updates.",
+				"chapter": 21,
+				"level": "advanced",
+				"readingTime": "32 min",
+				"topics": [
+					"news feed",
+					"fan-out",
+					"ranking algorithm",
+					"pagination",
+					"real-time updates"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "22-tutorial-realtime-dashboard",
+			"meta": {
+				"title": "Tutorial: Build a Real-Time Analytics Dashboard",
+				"subtitle": "Step-by-step guide to building a real-time dashboard with event ingestion, time-series aggregation, WebSocket streaming, and live counters.",
+				"chapter": 22,
+				"level": "intermediate",
+				"readingTime": "28 min",
+				"topics": [
+					"tutorial",
+					"real-time analytics",
+					"time-series",
+					"WebSocket",
+					"event streaming"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "23-tutorial-file-upload",
+			"meta": {
+				"title": "Tutorial: Build a File Upload Service",
+				"subtitle": "Step-by-step guide to building a production file upload service with chunked uploads, resumable transfers, virus scanning, and CDN integration.",
+				"chapter": 23,
+				"level": "intermediate",
+				"readingTime": "26 min",
+				"topics": [
+					"tutorial",
+					"file upload",
+					"chunked upload",
+					"resumable transfer",
+					"content delivery"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "24-video-transcoding",
+			"meta": {
+				"title": "Case Study: Video Transcoding Service",
+				"subtitle": "Design and build a production video transcoding pipeline with VOD processing, adaptive bitrate encoding, job scheduling, and distributed workers.",
+				"chapter": 24,
+				"level": "advanced",
+				"readingTime": "34 min",
+				"topics": [
+					"video transcoding",
+					"VOD",
+					"adaptive bitrate",
+					"job queue",
+					"distributed processing"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "25-live-streaming",
+			"meta": {
+				"title": "Case Study: Live Streaming Platform",
+				"subtitle": "Design and build a production live streaming system with RTMP ingest, real-time transcoding, HLS delivery, chat integration, and viewer scaling.",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "36 min",
+				"topics": [
+					"live streaming",
+					"RTMP",
+					"real-time transcoding",
+					"HLS",
+					"viewer scaling",
+					"low latency"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "26-webinar-platform",
+			"meta": {
+				"title": "Case Study: Webinar & Video Conferencing Platform",
+				"subtitle": "Design and build a production webinar system with multi-party video, screen sharing, Q&A, polls, breakout rooms, and recording.",
+				"chapter": 26,
+				"level": "advanced",
+				"readingTime": "33 min",
+				"topics": [
+					"webinar",
+					"video conferencing",
+					"WebRTC",
+					"SFU",
+					"breakout rooms",
+					"recording"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Containers — Roadmap",
+				"subtitle": "Docker fundamentals, image layers, multi-stage builds, Compose for local dev, and production security hardening.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "01-what-are-containers",
+			"meta": {
+				"title": "What Are Containers",
+				"subtitle": "Namespaces, cgroups, and the union filesystem — what's actually happening under docker run.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"containers",
+					"namespaces",
+					"cgroups",
+					"union filesystem",
+					"OCI"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "02-writing-dockerfiles",
+			"meta": {
+				"title": "Writing Dockerfiles",
+				"subtitle": "Layer caching, multi-stage builds, non-root users, and the instructions that actually matter for production images.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"Dockerfile",
+					"multi-stage builds",
+					"layer cache",
+					"non-root",
+					"image size"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "03-docker-compose",
+			"meta": {
+				"title": "Docker Compose",
+				"subtitle": "Multi-service local environments, dependency ordering, networking, and the patterns that make compose actually useful.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"docker compose",
+					"networking",
+					"volumes",
+					"depends_on",
+					"environment"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "04-image-layers-and-registry",
+			"meta": {
+				"title": "Image Layers & Registries",
+				"subtitle": "How layer sharing works in practice, pushing and pulling efficiently, and running your own registry.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"image layers",
+					"registry",
+					"Docker Hub",
+					"GHCR",
+					"self-hosted registry",
+					"image tagging"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "05-container-security",
+			"meta": {
+				"title": "Container Security",
+				"subtitle": "Attack surface, capabilities, seccomp, read-only filesystems, and what actually matters for production hardening.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 min",
+				"topics": [
+					"container security",
+					"capabilities",
+					"seccomp",
+					"read-only",
+					"rootless",
+					"supply chain"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Data Modeling — Roadmap",
+				"subtitle": "Ten chapters that take you from 'what's a primary key' to deliberate schema design under load — keys, normalization, denormalization, constraints, multi-tenancy, JSONB, and zero-downtime evolution.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"data-modeling",
+					"schemas",
+					"postgres"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "01-what-data-modeling-is",
+			"meta": {
+				"title": "What data modeling is",
+				"subtitle": "Schema design is the most expensive thing you ship. The columns you pick on day one outlast every framework, every refactor, every rewrite. Modeling well is mostly thinking before typing CREATE TABLE.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"data-modeling",
+					"schemas",
+					"orms",
+					"design"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "02-entities-relationships",
+			"meta": {
+				"title": "Entities, attributes, relationships",
+				"subtitle": "Before SQL, before ORMs, draw the boxes and lines. ER thinking is twenty minutes that saves a year of refactoring.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"data-modeling",
+					"er-diagrams",
+					"relationships",
+					"cardinality"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "03-keys",
+			"meta": {
+				"title": "Keys",
+				"subtitle": "The primary key is the most expensive choice in your schema. Pick wrong and you spend years working around it. Pick right and you forget it exists.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"primary keys",
+					"ulid",
+					"uuid",
+					"natural keys"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "04-normalization",
+			"meta": {
+				"title": "Normalization",
+				"subtitle": "1NF, 2NF, 3NF — three rules that prevent the same data from being recorded twice. Ignore them and your schema rots from the inside as data drifts out of sync.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"normalization",
+					"1nf",
+					"2nf",
+					"3nf"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "05-denormalization",
+			"meta": {
+				"title": "Denormalization",
+				"subtitle": "Sometimes the same fact lives in two places on purpose. Done well, it makes hot queries fly. Done badly, it creates the exact drift normalization was designed to prevent.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"data-modeling",
+					"denormalization",
+					"performance",
+					"caching"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "06-constraints",
+			"meta": {
+				"title": "Constraints",
+				"subtitle": "The schema is your last line of defense against application bugs. Constraints encode the rules that should always be true — Postgres enforces them whether your app remembers to or not.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"constraints",
+					"foreign-keys",
+					"check",
+					"unique"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "07-time-soft-delete",
+			"meta": {
+				"title": "Time and soft delete",
+				"subtitle": "Timestamps that survive time zones, soft delete that doesn't poison every query, and history tables that answer 'what did this look like last Tuesday?'",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"timestamps",
+					"soft-delete",
+					"history",
+					"time-zones"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "08-multi-tenancy",
+			"meta": {
+				"title": "Multi-tenancy",
+				"subtitle": "Three architectures for serving many customers from one app: single database with a tenant column, schema per tenant, or a database per tenant. Each has a different cost curve.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"multi-tenancy",
+					"rls",
+					"isolation"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "09-jsonb",
+			"meta": {
+				"title": "JSONB and the schemaless trap",
+				"subtitle": "JSONB is one of Postgres's best features. Used well, it's how you stop fighting your schema. Used badly, it's how you end up with a schemaless mess inside a relational database.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"data-modeling",
+					"jsonb",
+					"postgres",
+					"schemaless"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "10-schema-evolution",
+			"meta": {
+				"title": "Schema evolution",
+				"subtitle": "Every schema change against live data is a deploy. The expand/contract pattern is how you change tables that have a million rows and a thousand concurrent writers without downtime.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"data-modeling",
+					"migrations",
+					"expand-contract",
+					"zero-downtime"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "01-storage-engines",
+			"meta": {
+				"title": "Storage Engines",
+				"subtitle": "How databases actually store data on disk — pages, heaps, and the tradeoffs between read and write optimization.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"storage engine",
+					"pages",
+					"heap",
+					"disk I/O"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "02-b-trees",
+			"meta": {
+				"title": "B-Trees & Indexes",
+				"subtitle": "The data structure behind every relational database index — how B-trees keep data sorted and queries fast.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "16 min",
+				"topics": [
+					"B-tree",
+					"index",
+					"balanced tree",
+					"query performance"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "03-wal",
+			"meta": {
+				"title": "Write-Ahead Logging (WAL)",
+				"subtitle": "How databases survive crashes without losing data — the log-first strategy that makes ACID possible.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"WAL",
+					"durability",
+					"crash recovery",
+					"checkpoints"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "04-mvcc",
+			"meta": {
+				"title": "MVCC — Multi-Version Concurrency Control",
+				"subtitle": "How databases let readers and writers work simultaneously without blocking — snapshots, visibility rules, and isolation levels.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "17 min",
+				"topics": [
+					"MVCC",
+					"transactions",
+					"isolation levels",
+					"snapshots"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "05-query-planning",
+			"meta": {
+				"title": "Query Planning & Execution",
+				"subtitle": "How the database turns your SQL into an execution plan — parsing, optimization, and why EXPLAIN is your best friend.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"query planner",
+					"EXPLAIN",
+					"optimization",
+					"execution plan"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "06-lsm-trees",
+			"meta": {
+				"title": "LSM Trees",
+				"subtitle": "The write-optimized alternative to B-trees — how RocksDB, Cassandra, and LevelDB handle massive write throughput.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"LSM tree",
+					"compaction",
+					"memtable",
+					"SSTable"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "07-transactions",
+			"meta": {
+				"title": "Transactions & ACID",
+				"subtitle": "Atomicity, Consistency, Isolation, Durability — the guarantees that make databases reliable and how they're implemented.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"ACID",
+					"transactions",
+					"atomicity",
+					"isolation"
+				]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "08-replication-sharding",
+			"meta": {
+				"title": "Replication & Sharding",
+				"subtitle": "Scaling databases beyond a single machine — leader-follower replication, consensus, and horizontal partitioning.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"replication",
+					"sharding",
+					"partitioning",
+					"consensus"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "01-containers",
+			"meta": {
+				"title": "Containers & Docker",
+				"subtitle": "What containers actually are — namespaces, cgroups, layers — and how Docker packages your app to run anywhere.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"Docker",
+					"containers",
+					"images",
+					"Dockerfile"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "02-kubernetes",
+			"meta": {
+				"title": "Kubernetes Essentials",
+				"subtitle": "Pods, Deployments, Services — the core building blocks of container orchestration at scale.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "16 min",
+				"topics": [
+					"Kubernetes",
+					"pods",
+					"deployments",
+					"services"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "03-ci-cd",
+			"meta": {
+				"title": "CI/CD Pipelines",
+				"subtitle": "Automate building, testing, and deploying your code — GitHub Actions, pipeline design, and deployment strategies.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "15 min",
+				"topics": [
+					"CI/CD",
+					"GitHub Actions",
+					"pipelines",
+					"deployment"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "04-iac",
+			"meta": {
+				"title": "Infrastructure as Code",
+				"subtitle": "Terraform, declarative infrastructure, state management — define your cloud resources in version-controlled files.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"Terraform",
+					"IaC",
+					"infrastructure",
+					"cloud"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "05-monitoring",
+			"meta": {
+				"title": "Monitoring & Observability",
+				"subtitle": "Metrics, logs, traces — the three pillars of understanding what your system is doing in production.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"monitoring",
+					"observability",
+					"metrics",
+					"logging",
+					"tracing"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "06-networking-infra",
+			"meta": {
+				"title": "Cloud Networking",
+				"subtitle": "VPCs, subnets, security groups, load balancers — how to design a secure cloud network architecture.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"VPC",
+					"subnets",
+					"security groups",
+					"load balancer"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "07-secrets-config",
+			"meta": {
+				"title": "Secrets & Configuration",
+				"subtitle": "Environment variables, secret managers, config as code — how to handle sensitive data without leaking it.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"secrets",
+					"env vars",
+					"config",
+					"security"
+				]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "08-reliability",
+			"meta": {
+				"title": "Reliability & SRE Practices",
+				"subtitle": "SLOs, error budgets, incident response, and chaos engineering — keeping systems running when things go wrong.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"SRE",
+					"SLO",
+					"reliability",
+					"incident response",
+					"chaos engineering"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Disaster Recovery — Roadmap",
+				"subtitle": "RTO and RPO, pg_dump and WAL-G backups, restore drills, multi-region replication, and runbooks that work at 3am.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "01-rto-and-rpo",
+			"meta": {
+				"title": "RTO, RPO, and What They Actually Mean",
+				"subtitle": "Two numbers that define your recovery requirements — and why getting them wrong makes your DR plan useless.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 min",
+				"topics": [
+					"RTO",
+					"RPO",
+					"disaster recovery",
+					"SLA",
+					"business continuity"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "02-backup-strategies",
+			"meta": {
+				"title": "Backup Strategies",
+				"subtitle": "pg_dump for logical backups, WAL-G for continuous archival, S3 lifecycle for retention — the mechanics of actually keeping your data.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"pg_dump",
+					"WAL-G",
+					"WAL archiving",
+					"backups",
+					"S3",
+					"retention"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "03-restore-drills",
+			"meta": {
+				"title": "Restore Drills",
+				"subtitle": "How to actually test your backups — the runbook structure, what to verify, and how to make drills a regular practice.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"restore drills",
+					"runbooks",
+					"backup verification",
+					"PITR",
+					"disaster simulation"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "04-multi-region-replication",
+			"meta": {
+				"title": "Multi-Region Replication",
+				"subtitle": "Streaming replication, logical replication, and the trade-offs of active-passive vs active-active across regions.",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "11 min",
+				"topics": [
+					"streaming replication",
+					"logical replication",
+					"multi-region",
+					"failover",
+					"replication lag"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "05-runbooks-and-incident-response",
+			"meta": {
+				"title": "Runbooks & Incident Response",
+				"subtitle": "Writing runbooks people will actually use, incident commander patterns, post-mortems that produce real change.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"runbooks",
+					"incident response",
+					"post-mortem",
+					"on-call",
+					"communication"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "01-arrays-strings",
+			"meta": {
+				"title": "Arrays & Strings",
+				"subtitle": "Master the two most fundamental data structures — contiguous memory, indexing, and common manipulation patterns.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"arrays",
+					"strings",
+					"two pointers",
+					"sliding window"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "02-hash-maps",
+			"meta": {
+				"title": "Hash Maps & Sets",
+				"subtitle": "Turn O(n) lookups into O(1) with hash-based data structures — the most practically useful tool in your kit.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"hash map",
+					"hash set",
+					"collision handling",
+					"frequency counting"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "03-linked-lists",
+			"meta": {
+				"title": "Linked Lists",
+				"subtitle": "Understand pointer-based data structures — nodes, traversal, and why they matter for queues, LRU caches, and more.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"linked list",
+					"singly linked",
+					"doubly linked",
+					"fast slow pointers"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "04-stacks-queues",
+			"meta": {
+				"title": "Stacks & Queues",
+				"subtitle": "LIFO and FIFO — two simple abstractions that power undo systems, BFS, task schedulers, and expression parsing.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"stack",
+					"queue",
+					"monotonic stack",
+					"BFS"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "05-trees",
+			"meta": {
+				"title": "Binary Trees & BSTs",
+				"subtitle": "Recursive thinking, tree traversals, and binary search trees — the gateway to hierarchical data.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "16 min",
+				"topics": [
+					"binary tree",
+					"BST",
+					"DFS",
+					"BFS",
+					"recursion"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "06-graphs",
+			"meta": {
+				"title": "Graphs",
+				"subtitle": "Represent relationships between entities — social networks, maps, dependencies — with BFS, DFS, and adjacency lists.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "18 min",
+				"topics": [
+					"graph",
+					"adjacency list",
+					"BFS",
+					"DFS",
+					"topological sort"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "07-sorting",
+			"meta": {
+				"title": "Sorting Algorithms",
+				"subtitle": "Merge sort, quicksort, and when to use which — plus the patterns that emerge from sorted data.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"merge sort",
+					"quicksort",
+					"binary search",
+					"sorting"
+				]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "08-dynamic-programming",
+			"meta": {
+				"title": "Dynamic Programming",
+				"subtitle": "Break complex problems into overlapping subproblems — the technique behind shortest paths, text diffing, and optimization.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "20 min",
+				"topics": [
+					"dynamic programming",
+					"memoization",
+					"tabulation",
+					"optimization"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Ethical Hacking — Roadmap",
+				"subtitle": "Zero to professional penetration tester. Recon, exploitation, post-exploitation, reporting — with real labs.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"ethical hacking",
+					"penetration testing",
+					"cybersecurity"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "01-foundations",
+			"meta": {
+				"title": "Foundations",
+				"subtitle": "How networks work, TCP/IP, the OSI model, and the attacker's mental model for finding weaknesses.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"TCP/IP",
+					"OSI model",
+					"networking",
+					"ports",
+					"protocols",
+					"attacker mindset"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "02-linux-for-hackers",
+			"meta": {
+				"title": "Linux for Hackers",
+				"subtitle": "Terminal mastery, file permissions, bash scripting, and the tools that ship on Kali Linux.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"linux",
+					"bash",
+					"kali",
+					"terminal",
+					"file permissions",
+					"processes"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "03-reconnaissance",
+			"meta": {
+				"title": "Reconnaissance",
+				"subtitle": "OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — gathering intelligence without touching the target.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"OSINT",
+					"reconnaissance",
+					"Google dorks",
+					"Shodan",
+					"theHarvester",
+					"passive recon",
+					"active recon"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "04-scanning-enumeration",
+			"meta": {
+				"title": "Scanning & Enumeration",
+				"subtitle": "Nmap mastery, service fingerprinting, banner grabbing, and enumerating SMB, FTP, SNMP, and web directories.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"nmap",
+					"scanning",
+					"enumeration",
+					"SMB",
+					"FTP",
+					"SNMP",
+					"banner grabbing",
+					"gobuster"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "05-vulnerability-analysis",
+			"meta": {
+				"title": "Vulnerability Analysis",
+				"subtitle": "CVE database, CVSS scoring, automated scanners, and manual vulnerability research — finding what's exploitable.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"CVE",
+					"CVSS",
+					"vulnerability scanning",
+					"OpenVAS",
+					"Nessus",
+					"exploit-db",
+					"vulnerability research"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "06-exploitation-basics",
+			"meta": {
+				"title": "Exploitation Basics",
+				"subtitle": "Metasploit framework, manual exploit development, shellcode, payloads, and listeners — turning vulnerabilities into access.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"metasploit",
+					"exploitation",
+					"payloads",
+					"msfvenom",
+					"reverse shell",
+					"bind shell",
+					"shellcode"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "07-web-app-hacking",
+			"meta": {
+				"title": "Web Application Hacking",
+				"subtitle": "OWASP Top 10, Burp Suite, SQL injection, XSS, SSRF, IDOR, command injection — the complete web attacker's toolkit.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"OWASP",
+					"SQL injection",
+					"XSS",
+					"SSRF",
+					"IDOR",
+					"Burp Suite",
+					"command injection",
+					"web hacking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "08-network-attacks",
+			"meta": {
+				"title": "Network Attacks",
+				"subtitle": "ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — attacking the network layer.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"ARP spoofing",
+					"MITM",
+					"Wireshark",
+					"tcpdump",
+					"Bettercap",
+					"DNS poisoning",
+					"network attacks"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "09-privilege-escalation",
+			"meta": {
+				"title": "Privilege Escalation",
+				"subtitle": "Linux and Windows privesc techniques — SUID binaries, sudo misconfigs, kernel exploits, service account abuse, token impersonation.",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "16 min",
+				"topics": [
+					"privilege escalation",
+					"SUID",
+					"sudo",
+					"Linux privesc",
+					"Windows privesc",
+					"token impersonation",
+					"kernel exploit"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "10-post-exploitation",
+			"meta": {
+				"title": "Post-Exploitation",
+				"subtitle": "Lateral movement, persistence, data exfiltration, pivoting through networks — what happens after you have root.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"post-exploitation",
+					"lateral movement",
+					"persistence",
+					"pivoting",
+					"data exfiltration",
+					"Pass-the-Hash"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "11-cryptography-attacks",
+			"meta": {
+				"title": "Cryptography Attacks",
+				"subtitle": "Hash cracking, weak cipher exploitation, PKI weaknesses, JWT attacks, and password analysis.",
+				"chapter": 11,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"hash cracking",
+					"hashcat",
+					"john the ripper",
+					"JWT",
+					"TLS attacks",
+					"cryptography",
+					"password cracking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "12-wireless-security",
+			"meta": {
+				"title": "Wireless Security",
+				"subtitle": "WPA2 handshake capture, WPS attacks, evil twin APs, deauthentication, and wireless network defense.",
+				"chapter": 12,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"wireless",
+					"WPA2",
+					"WPS",
+					"evil twin",
+					"aircrack",
+					"handshake capture",
+					"deauthentication",
+					"WiFi hacking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "13-social-engineering",
+			"meta": {
+				"title": "Social Engineering",
+				"subtitle": "Phishing campaigns, pretexting, vishing, physical intrusion — and the defenses that actually work.",
+				"chapter": 13,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"social engineering",
+					"phishing",
+					"pretexting",
+					"vishing",
+					"spear phishing",
+					"GoPhish",
+					"SET"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "14-ctf-strategy",
+			"meta": {
+				"title": "CTF Strategy",
+				"subtitle": "How to approach Capture the Flag competitions, category breakdowns, platforms, and a methodology for each challenge type.",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"CTF",
+					"Capture the Flag",
+					"HackTheBox",
+					"TryHackMe",
+					"forensics",
+					"reverse engineering",
+					"crypto CTF",
+					"pwn"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "15-pentest-reporting",
+			"meta": {
+				"title": "Pentest Reporting",
+				"subtitle": "Professional report structure, CVSS scoring, evidence documentation, executive summaries, and remediation guidance.",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"pentest report",
+					"reporting",
+					"CVSS",
+					"executive summary",
+					"remediation",
+					"documentation",
+					"bug bounty"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "16-active-directory",
+			"meta": {
+				"title": "Active Directory Attacks",
+				"subtitle": "BloodHound, Kerberoasting, AS-REP Roasting, Pass-the-Ticket, DCSync, Golden Tickets — dominating Windows domains.",
+				"chapter": 16,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"Active Directory",
+					"Kerberos",
+					"BloodHound",
+					"Kerberoasting",
+					"DCSync",
+					"Golden Ticket",
+					"LDAP",
+					"SMB relay"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "17-cloud-security",
+			"meta": {
+				"title": "Cloud Security",
+				"subtitle": "AWS, GCP, and Azure attack techniques — IAM misconfigs, S3 exposure, metadata service abuse, container escapes, and cloud-native threats.",
+				"chapter": 17,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"cloud security",
+					"AWS",
+					"GCP",
+					"Azure",
+					"IAM",
+					"S3",
+					"metadata service",
+					"cloud hacking",
+					"cloud pentesting"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "18-container-kubernetes-security",
+			"meta": {
+				"title": "Container & Kubernetes Security",
+				"subtitle": "Docker escape techniques, Kubernetes attacks, privileged container abuse, secrets in images, and hardening.",
+				"chapter": 18,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"Docker",
+					"Kubernetes",
+					"container escape",
+					"K8s attacks",
+					"privileged container",
+					"pod security",
+					"container security"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "19-malware-analysis",
+			"meta": {
+				"title": "Malware Analysis",
+				"subtitle": "Static and dynamic analysis, sandbox execution, YARA rules, deobfuscation, and reverse engineering malicious code.",
+				"chapter": 19,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"malware analysis",
+					"static analysis",
+					"dynamic analysis",
+					"YARA",
+					"sandbox",
+					"reverse engineering",
+					"deobfuscation",
+					"Ghidra"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "20-exploit-development",
+			"meta": {
+				"title": "Exploit Development",
+				"subtitle": "Advanced buffer overflows, ROP chains, format string exploits, heap exploitation, and writing reliable shellcode.",
+				"chapter": 20,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"exploit development",
+					"buffer overflow",
+					"ROP chains",
+					"shellcode",
+					"heap exploitation",
+					"format string",
+					"pwntools",
+					"ASLR bypass"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "21-incident-response-forensics",
+			"meta": {
+				"title": "Incident Response & Digital Forensics",
+				"subtitle": "Memory forensics with Volatility, disk imaging, timeline analysis, log analysis, and the IR lifecycle from detection to remediation.",
+				"chapter": 21,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"incident response",
+					"digital forensics",
+					"Volatility",
+					"memory forensics",
+					"disk forensics",
+					"DFIR",
+					"timeline analysis",
+					"log analysis"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "22-av-evasion-red-team",
+			"meta": {
+				"title": "AV Evasion & Red Team Operations",
+				"subtitle": "Bypassing antivirus and EDR, LOLBins, C2 frameworks, payload obfuscation, and advanced red team tradecraft.",
+				"chapter": 22,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"AV evasion",
+					"EDR bypass",
+					"C2 framework",
+					"LOLBins",
+					"red team",
+					"payload obfuscation",
+					"Cobalt Strike",
+					"Sliver"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "23-api-security",
+			"meta": {
+				"title": "API Security Testing",
+				"subtitle": "REST and GraphQL attack techniques, broken authentication, mass assignment, rate limiting bypass, BOLA/BFLA, and automated API scanning.",
+				"chapter": 23,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"API security",
+					"REST API",
+					"GraphQL",
+					"BOLA",
+					"BFLA",
+					"mass assignment",
+					"JWT",
+					"API testing",
+					"OWASP API Top 10"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "24-mobile-security",
+			"meta": {
+				"title": "Mobile Security",
+				"subtitle": "Android APK analysis, iOS app testing, dynamic instrumentation with Frida, SSL pinning bypass, and mobile OWASP Top 10.",
+				"chapter": 24,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"mobile security",
+					"Android",
+					"iOS",
+					"APK analysis",
+					"Frida",
+					"SSL pinning bypass",
+					"MobSF",
+					"OWASP mobile",
+					"dynamic analysis"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "25-iot-embedded-security",
+			"meta": {
+				"title": "IoT & Embedded Security",
+				"subtitle": "Firmware extraction and analysis, UART/JTAG debugging, default credentials, protocol attacks, and hardware hacking fundamentals.",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"IoT security",
+					"firmware analysis",
+					"hardware hacking",
+					"UART",
+					"JTAG",
+					"binwalk",
+					"default credentials",
+					"embedded systems"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "26-blue-team-defense",
+			"meta": {
+				"title": "Blue Team & Defense",
+				"subtitle": "SIEM, IDS/IPS, SOC operations, detection engineering, threat hunting, hardening guides, and the defender's toolkit.",
+				"chapter": 26,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"blue team",
+					"SIEM",
+					"IDS",
+					"IPS",
+					"SOC",
+					"detection engineering",
+					"hardening",
+					"threat hunting",
+					"Splunk",
+					"Elastic",
+					"Snort"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "27-threat-intelligence",
+			"meta": {
+				"title": "Threat Intelligence & MITRE ATT&CK",
+				"subtitle": "IOCs, threat actor profiling, STIX/TAXII, ATT&CK Navigator, threat hunting with intelligence, and building a threat intel program.",
+				"chapter": 27,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"threat intelligence",
+					"MITRE ATT&CK",
+					"IOC",
+					"STIX",
+					"TAXII",
+					"threat hunting",
+					"APT",
+					"threat actor",
+					"CTI"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "28-bug-bounty",
+			"meta": {
+				"title": "Bug Bounty",
+				"subtitle": "Methodology, platform selection, recon automation, high-value target selection, triaging, and earning consistently on HackerOne and Bugcrowd.",
+				"chapter": 28,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"bug bounty",
+					"HackerOne",
+					"Bugcrowd",
+					"vulnerability disclosure",
+					"recon automation",
+					"Nuclei",
+					"bug bounty methodology"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "29-fuzzing-vulnerability-research",
+			"meta": {
+				"title": "Fuzzing & Vulnerability Research",
+				"subtitle": "AFL++, LibFuzzer, coverage-guided fuzzing, finding 0-days, code auditing for security, and structured vulnerability research.",
+				"chapter": 29,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"fuzzing",
+					"AFL",
+					"LibFuzzer",
+					"vulnerability research",
+					"0-day",
+					"code audit",
+					"coverage guided fuzzing",
+					"sanitizers"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "30-secure-code-review",
+			"meta": {
+				"title": "Secure Code Review",
+				"subtitle": "SAST tools, manual code auditing, threat modeling, finding vulnerabilities in real codebases, and building security into the SDLC.",
+				"chapter": 30,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"secure code review",
+					"SAST",
+					"code audit",
+					"SDLC",
+					"threat modeling",
+					"Semgrep",
+					"CodeQL",
+					"security review",
+					"AppSec"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Event-Driven & Streaming — Roadmap",
+				"subtitle": "Pub/sub patterns, CDC with Debezium, event sourcing, and schema evolution that doesn't break your consumers.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "01-events-vs-commands",
+			"meta": {
+				"title": "Events vs Commands vs Queries",
+				"subtitle": "Three distinct message types with different semantics — understanding the difference shapes how you design every integration.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"events",
+					"commands",
+					"queries",
+					"CQRS",
+					"message semantics"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "02-pub-sub-patterns",
+			"meta": {
+				"title": "Pub/Sub Patterns",
+				"subtitle": "Topics, consumer groups, fan-out, filtering, and the delivery guarantees that determine what your subscribers can depend on.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"pub/sub",
+					"consumer groups",
+					"fan-out",
+					"Kafka",
+					"SNS",
+					"delivery guarantees"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "03-change-data-capture",
+			"meta": {
+				"title": "Change Data Capture",
+				"subtitle": "Stream every database write as an event using Debezium and PostgreSQL logical replication — without touching application code.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"CDC",
+					"Debezium",
+					"logical replication",
+					"outbox pattern",
+					"event streaming"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "04-event-sourcing",
+			"meta": {
+				"title": "Event Sourcing",
+				"subtitle": "Store events as the primary record instead of current state — rebuild any past state by replaying the event log.",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"event sourcing",
+					"event store",
+					"aggregates",
+					"projections",
+					"snapshots"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "05-schema-evolution",
+			"meta": {
+				"title": "Schema Evolution & Event Versioning",
+				"subtitle": "Events are forever — how to evolve schemas without breaking consumers, and the registry that keeps everyone coordinated.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "9 min",
+				"topics": [
+					"schema evolution",
+					"Avro",
+					"Schema Registry",
+					"backward compatibility",
+					"event versioning"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "01-rendering-patterns",
+			"meta": {
+				"title": "Rendering Patterns",
+				"subtitle": "CSR, SSR, SSG, and ISR — understand when and why to use each rendering strategy for your web application.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 min",
+				"topics": [
+					"CSR",
+					"SSR",
+					"SSG",
+					"ISR",
+					"hydration",
+					"rendering"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "02-component-architecture",
+			"meta": {
+				"title": "Component Architecture",
+				"subtitle": "Composition, props, slots, compound components, and atomic design — building reusable UI that scales.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"components",
+					"composition",
+					"atomic design",
+					"props",
+					"slots",
+					"compound components"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "03-state-management",
+			"meta": {
+				"title": "State Management",
+				"subtitle": "Local state, lifted state, context, global stores, and signals — managing data flow in complex UIs.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"state",
+					"context",
+					"zustand",
+					"redux",
+					"signals",
+					"state machines"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "04-routing-navigation",
+			"meta": {
+				"title": "Routing & Navigation",
+				"subtitle": "Client-side routing, file-based routing, dynamic routes, nested layouts, and middleware for modern web apps.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"routing",
+					"navigation",
+					"dynamic routes",
+					"layouts",
+					"middleware"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "05-data-fetching",
+			"meta": {
+				"title": "Data Fetching Patterns",
+				"subtitle": "Fetch, SWR, React Query, loading states, error boundaries, and caching strategies for robust data layers.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"fetch",
+					"SWR",
+					"react query",
+					"caching",
+					"error boundaries",
+					"loading states"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "06-performance-optimization",
+			"meta": {
+				"title": "Performance Optimization",
+				"subtitle": "Code splitting, lazy loading, tree shaking, bundle analysis, and Core Web Vitals — making your frontend fast.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"performance",
+					"code splitting",
+					"lazy loading",
+					"tree shaking",
+					"core web vitals",
+					"bundle size"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "07-testing-strategies",
+			"meta": {
+				"title": "Testing Strategies",
+				"subtitle": "Unit tests, integration tests, E2E tests, Testing Library patterns, and mocking — building confidence in your code.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"testing",
+					"unit tests",
+					"integration tests",
+					"E2E",
+					"testing library",
+					"mocking"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "08-accessibility-i18n",
+			"meta": {
+				"title": "Accessibility & i18n",
+				"subtitle": "ARIA, semantic HTML, keyboard navigation, screen readers, RTL support, and internationalization patterns.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"accessibility",
+					"a11y",
+					"ARIA",
+					"keyboard navigation",
+					"i18n",
+					"RTL",
+					"screen readers"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "01-getting-started",
+			"meta": {
+				"title": "Getting Started with Go",
+				"subtitle": "Why Go exists, how to set it up, and your first program — understand the philosophy before writing a single line.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 min",
+				"topics": [
+					"setup",
+					"hello world",
+					"go philosophy",
+					"toolchain"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "02-types-variables-control-flow",
+			"meta": {
+				"title": "Types, Variables & Control Flow",
+				"subtitle": "Go's type system is simple but strict — learn the building blocks before you build anything real.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "18 min",
+				"topics": [
+					"types",
+					"variables",
+					"constants",
+					"if/else",
+					"loops",
+					"switch"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "03-functions-error-handling",
+			"meta": {
+				"title": "Functions & Error Handling",
+				"subtitle": "Go's approach to functions and errors is radically different from most languages — explicit, composable, and impossible to ignore.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "20 min",
+				"topics": [
+					"functions",
+					"error handling",
+					"multiple returns",
+					"defer",
+					"closures"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "04-pointers-memory",
+			"meta": {
+				"title": "Pointers & Memory",
+				"subtitle": "Pointers let you share data without copying it — understand them once and never be confused by & and * again.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "16 min",
+				"topics": [
+					"pointers",
+					"memory",
+					"stack",
+					"heap",
+					"nil",
+					"pass by value"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "05-structs-methods",
+			"meta": {
+				"title": "Structs & Methods",
+				"subtitle": "Go doesn't have classes — it has structs with methods. Simpler, more explicit, and surprisingly powerful.",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "18 min",
+				"topics": [
+					"structs",
+					"methods",
+					"receivers",
+					"embedding",
+					"constructors"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "06-interfaces",
+			"meta": {
+				"title": "Interfaces & Polymorphism",
+				"subtitle": "Go interfaces are implicit — no 'implements' keyword needed. This changes everything about how you design software.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"interfaces",
+					"polymorphism",
+					"type assertions",
+					"composition",
+					"dependency injection"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "07-generics",
+			"meta": {
+				"title": "Generics",
+				"subtitle": "Write code that works with any type — Go 1.18's biggest feature eliminates boilerplate without sacrificing type safety.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "18 min",
+				"topics": [
+					"generics",
+					"type parameters",
+					"constraints",
+					"type inference"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "08-packages-modules-testing",
+			"meta": {
+				"title": "Packages, Modules & Testing",
+				"subtitle": "How to organize Go code for real projects — dependency management, package design, and writing tests that catch real bugs.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"packages",
+					"modules",
+					"testing",
+					"benchmarks",
+					"table-driven tests"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "09-strings-runes-encoding",
+			"meta": {
+				"title": "Strings, Runes & Encoding",
+				"subtitle": "Go strings are UTF-8 byte slices — knowing this prevents an entire class of bugs when handling international text, emojis, and binary data.",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"strings",
+					"runes",
+					"UTF-8",
+					"encoding",
+					"bytes",
+					"text processing"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "10-concurrency",
+			"meta": {
+				"title": "Concurrency with Goroutines",
+				"subtitle": "Go's concurrency model is its killer feature — goroutines and channels make concurrent programming feel natural, not terrifying.",
+				"chapter": 10,
+				"level": "intermediate",
+				"readingTime": "22 min",
+				"topics": [
+					"goroutines",
+					"channels",
+					"select",
+					"WaitGroup",
+					"concurrency patterns"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "11-advanced-concurrency",
+			"meta": {
+				"title": "Advanced Concurrency Patterns",
+				"subtitle": "Context, sync primitives, worker pools, and the patterns that power Go at scale — from Uber to Cloudflare.",
+				"chapter": 11,
+				"level": "intermediate",
+				"readingTime": "22 min",
+				"topics": [
+					"context",
+					"sync",
+					"mutex",
+					"semaphore",
+					"pipeline",
+					"errgroup"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "12-working-with-data",
+			"meta": {
+				"title": "Working with Data",
+				"subtitle": "JSON, HTTP clients, databases, and file I/O — the bread and butter of every Go backend service.",
+				"chapter": 12,
+				"level": "intermediate",
+				"readingTime": "22 min",
+				"topics": [
+					"JSON",
+					"HTTP",
+					"database",
+					"SQL",
+					"file I/O",
+					"REST API"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "13-building-rest-apis",
+			"meta": {
+				"title": "Building REST APIs",
+				"subtitle": "A complete, production-grade REST API from scratch — routing, validation, error responses, and the project structure used at real companies.",
+				"chapter": 13,
+				"level": "intermediate",
+				"readingTime": "25 min",
+				"topics": [
+					"REST API",
+					"HTTP",
+					"routing",
+					"validation",
+					"project structure",
+					"CRUD"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "14-authentication-middleware",
+			"meta": {
+				"title": "Authentication & Middleware",
+				"subtitle": "JWT authentication, middleware chains, CORS, rate limiting — the security and cross-cutting concerns every API needs.",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"authentication",
+					"JWT",
+					"middleware",
+					"CORS",
+					"rate limiting",
+					"security"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "15-database-patterns",
+			"meta": {
+				"title": "Database Patterns",
+				"subtitle": "Migrations, repository pattern, connection pooling, and query builders — the database layer that scales.",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "22 min",
+				"topics": [
+					"database",
+					"migrations",
+					"repository pattern",
+					"sqlc",
+					"transactions",
+					"connection pooling"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "16-grpc",
+			"meta": {
+				"title": "gRPC & Protocol Buffers",
+				"subtitle": "High-performance service-to-service communication — gRPC is what REST wants to be when services talk to each other.",
+				"chapter": 16,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"gRPC",
+					"protobuf",
+					"RPC",
+					"microservices",
+					"streaming",
+					"service communication"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "17-websockets-realtime",
+			"meta": {
+				"title": "WebSockets & Real-Time",
+				"subtitle": "Build real-time features in Go — chat, live updates, notifications — using WebSockets and Go's concurrency model.",
+				"chapter": 17,
+				"level": "intermediate",
+				"readingTime": "20 min",
+				"topics": [
+					"WebSockets",
+					"real-time",
+					"chat",
+					"pub/sub",
+					"SSE",
+					"gorilla/websocket"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "18-error-handling-at-scale",
+			"meta": {
+				"title": "Error Handling at Scale",
+				"subtitle": "Beyond 'if err != nil' — error wrapping strategies, domain errors, error budgets, and patterns from large Go codebases.",
+				"chapter": 18,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"error handling",
+					"error wrapping",
+					"domain errors",
+					"error types",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "19-testing-strategies",
+			"meta": {
+				"title": "Testing Strategies",
+				"subtitle": "Unit tests, integration tests, test fixtures, mocking, and testcontainers — testing that catches real bugs, not just checkbox coverage.",
+				"chapter": 19,
+				"level": "advanced",
+				"readingTime": "22 min",
+				"topics": [
+					"testing",
+					"integration tests",
+					"mocking",
+					"testcontainers",
+					"fixtures",
+					"golden files"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "20-observability",
+			"meta": {
+				"title": "Observability",
+				"subtitle": "Logs, metrics, and traces — the three pillars that let you understand what your Go service is doing in production.",
+				"chapter": 20,
+				"level": "advanced",
+				"readingTime": "20 min",
+				"topics": [
+					"observability",
+					"OpenTelemetry",
+					"metrics",
+					"tracing",
+					"Prometheus",
+					"monitoring"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "21-production-go",
+			"meta": {
+				"title": "Production Go",
+				"subtitle": "Logging, configuration, graceful shutdown, profiling, and deployment — everything between 'it works on my machine' and running at scale.",
+				"chapter": 21,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"logging",
+					"configuration",
+					"graceful shutdown",
+					"profiling",
+					"deployment",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "22-cli-tools",
+			"meta": {
+				"title": "Building CLI Tools",
+				"subtitle": "Go's single-binary output makes it perfect for CLI tools — build developer tools, automation scripts, and DevOps utilities.",
+				"chapter": 22,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"CLI",
+					"cobra",
+					"flags",
+					"terminal",
+					"developer tools",
+					"automation"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "23-design-patterns",
+			"meta": {
+				"title": "Design Patterns in Go",
+				"subtitle": "Go's simplicity changes how you apply classic patterns — no classes, no inheritance, just composition and interfaces.",
+				"chapter": 23,
+				"level": "advanced",
+				"readingTime": "20 min",
+				"topics": [
+					"design patterns",
+					"dependency injection",
+					"options pattern",
+					"strategy",
+					"observer",
+					"decorator"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "24-security",
+			"meta": {
+				"title": "Security Best Practices",
+				"subtitle": "SQL injection, XSS, CSRF, secrets management, and cryptography — secure your Go services against real-world attacks.",
+				"chapter": 24,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"security",
+					"SQL injection",
+					"XSS",
+					"CSRF",
+					"bcrypt",
+					"secrets",
+					"HTTPS"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "25-url-shortener",
+			"meta": {
+				"title": "Case Study: URL Shortener",
+				"subtitle": "Build a complete URL shortener from scratch — applying everything you've learned: HTTP, database, caching, testing, and deployment.",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "25 min",
+				"topics": [
+					"project",
+					"URL shortener",
+					"full-stack",
+					"Redis",
+					"PostgreSQL",
+					"end-to-end"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "GraphQL Building — Roadmap",
+				"subtitle": "Ten chapters that go from 'a query is just a string' to a self-hosted GraphQL server with batched resolvers, auth, subscriptions, and depth limits behind nginx.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"graphql",
+					"schema",
+					"resolvers",
+					"dataloader",
+					"federation"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "01-what-graphql-is",
+			"meta": {
+				"title": "What GraphQL is and when to use it",
+				"subtitle": "GraphQL is not a database, not a transport, and not a replacement for HTTP. It is a query language and a typed contract — and that distinction shapes every decision you make from here on.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"graphql",
+					"rest",
+					"api design",
+					"schema"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "02-schema-first-design",
+			"meta": {
+				"title": "Schema-first design",
+				"subtitle": "The schema is your contract with every client that ever exists. The decisions you make in the first afternoon — types, nullability, IDs — are the ones you live with for years.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"graphql",
+					"schema",
+					"sdl",
+					"types",
+					"nullability"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "03-first-server",
+			"meta": {
+				"title": "Running your first server",
+				"subtitle": "graphql-yoga, end-to-end, in sixty lines. By the end of this chapter you will have a real GraphQL server on your laptop, queried with curl, talking to Postgres.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"graphql",
+					"graphql-yoga",
+					"node",
+					"postgres"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "04-resolvers",
+			"meta": {
+				"title": "Resolvers and the execution tree",
+				"subtitle": "A resolver is a function that returns a value. Stack them in a tree, and that tree is your API. Once you see the walk, every weird GraphQL bug becomes obvious.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"graphql",
+					"resolvers",
+					"execution",
+					"context"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "05-n-plus-one",
+			"meta": {
+				"title": "The N+1 problem",
+				"subtitle": "Your GraphQL server runs eleven SQL queries when it should run two. Every backend team learns this the hard way. This chapter is the diagnosis — chapter 6 is the cure.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"graphql",
+					"n+1",
+					"performance",
+					"sql",
+					"postgres"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "06-dataloader",
+			"meta": {
+				"title": "DataLoader",
+				"subtitle": "DataLoader is a tiny library that fixes the N+1 problem by batching loads inside an event loop tick, and caching by key for the duration of one request. Once you wire it in, your resolvers stay clean and the SQL graph collapses.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"graphql",
+					"dataloader",
+					"batching",
+					"performance"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "07-mutations",
+			"meta": {
+				"title": "Mutations, input types, validation",
+				"subtitle": "Writes are not just queries with side effects. They need input types, validation, transactions, idempotency, and a return shape that lets clients update their cache without a second fetch.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"graphql",
+					"mutations",
+					"input types",
+					"validation",
+					"transactions"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "08-auth",
+			"meta": {
+				"title": "Authentication and authorization",
+				"subtitle": "Auth in GraphQL is the same as in REST — JWTs or sessions on HTTP, identity on context — except every field is its own little endpoint that needs an authorization check. Get the layering right or it will haunt you.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"graphql",
+					"authentication",
+					"authorization",
+					"jwt",
+					"directives"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "09-subscriptions",
+			"meta": {
+				"title": "Subscriptions over WebSockets",
+				"subtitle": "Subscriptions are realtime queries — clients open a long-lived connection and the server pushes events as they happen. Different transport, different lifecycle, different failure modes than queries and mutations.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"graphql",
+					"subscriptions",
+					"websockets",
+					"realtime",
+					"pubsub"
+				]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production hardening and self-host",
+				"subtitle": "Depth limits, complexity limits, persisted queries, error sanitisation, federation, and the full self-hosted nginx deploy. Everything between 'works on my laptop' and 'survives a hostile internet.'",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"graphql",
+					"security",
+					"performance",
+					"federation",
+					"nginx",
+					"deployment"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "gRPC Building — Roadmap",
+				"subtitle": "Ten chapters that go from 'protobuf is a config language' to a polyglot, mTLS-secured, observable gRPC service running behind nginx, with streaming RPCs and tight deadlines.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"grpc",
+					"protobuf",
+					"http2",
+					"rpc"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "01-what-grpc-is",
+			"meta": {
+				"title": "What gRPC is and when to use it",
+				"subtitle": "gRPC is HTTP/2, plus protobuf, plus codegen. That trio gives you a typed, fast, polyglot RPC system. Knowing what each layer is doing is half the skill of using it well.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"grpc",
+					"rpc",
+					"rest",
+					"graphql",
+					"protobuf"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "02-protobuf",
+			"meta": {
+				"title": "Protocol Buffers",
+				"subtitle": "Protobuf is the schema language and the wire format. Get the schema rules right and your services stay compatible for a decade. Get them wrong and one bad commit breaks every client at once.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"grpc",
+					"protobuf",
+					"proto3",
+					"schema",
+					"wire format"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "03-http2",
+			"meta": {
+				"title": "HTTP/2 underneath",
+				"subtitle": "gRPC is HTTP/2 with a particular set of headers and a particular way of framing protobuf bytes. Knowing what HTTP/2 actually does explains every gRPC failure mode you will hit in production.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"grpc",
+					"http2",
+					"framing",
+					"multiplexing",
+					"flow control"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "04-first-server",
+			"meta": {
+				"title": "Your first server and client",
+				"subtitle": "End-to-end Go gRPC in one chapter — proto, codegen, server, client, reflection, grpcurl. By the end you have a real binary you could deploy.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"grpc",
+					"go",
+					"protoc",
+					"codegen",
+					"reflection"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "05-polyglot",
+			"meta": {
+				"title": "Polyglot — Node and Python clients",
+				"subtitle": "The same `.proto`, three languages. The whole pitch of gRPC is that the wire is shared and the codegen is free. Once you have done it once it stops feeling like magic.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"grpc",
+					"node",
+					"python",
+					"codegen",
+					"polyglot"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "06-streaming",
+			"meta": {
+				"title": "Streaming RPCs",
+				"subtitle": "Streams are the part of gRPC where it stops resembling REST. Server-streaming, client-streaming, and bidirectional — three shapes that change what kind of services you can build.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"grpc",
+					"streaming",
+					"server stream",
+					"bidi"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "07-errors-deadlines",
+			"meta": {
+				"title": "Errors, deadlines, metadata",
+				"subtitle": "Status codes are a fixed set, deadlines flow with context, metadata rides every call. The three together turn a working gRPC service into one that's debuggable and survivable.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"grpc",
+					"errors",
+					"deadlines",
+					"metadata",
+					"status codes"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "08-interceptors",
+			"meta": {
+				"title": "Interceptors",
+				"subtitle": "Interceptors are gRPC's middleware. Cross-cutting concerns — auth, logging, tracing, retries, panic recovery — live here, once, for every RPC. Get the layering right and your handlers stay tiny.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"grpc",
+					"interceptors",
+					"middleware",
+					"auth",
+					"logging"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "09-tls-mtls",
+			"meta": {
+				"title": "TLS and mTLS",
+				"subtitle": "Server TLS encrypts the wire and proves the server's identity. Mutual TLS adds the same proof for clients. Both ride on the same handshake — and once you have a small CA, both are a few lines of Go.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"grpc",
+					"tls",
+					"mtls",
+					"certificates",
+					"security"
+				]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production self-host",
+				"subtitle": "Load balancing that respects HTTP/2, observability you actually use, health checks the framework supports, and the full systemd + nginx deploy on a VPS.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"grpc",
+					"load balancing",
+					"observability",
+					"nginx",
+					"deployment"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Horizontal Scaling — Roadmap",
+				"subtitle": "Stateless services, load balancers, auto-scaling, database bottlenecks, and WebSocket fan-out across instances.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "01-stateless-services",
+			"meta": {
+				"title": "Stateless Services",
+				"subtitle": "Why stateless is the prerequisite for horizontal scaling — and how to extract state from your application so any instance can handle any request.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"stateless",
+					"horizontal scaling",
+					"sessions",
+					"shared state",
+					"twelve-factor"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "02-load-balancers",
+			"meta": {
+				"title": "Load Balancers",
+				"subtitle": "Layer 4 vs Layer 7, algorithms, health checks, connection draining — the mechanics of distributing traffic across instances.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"load balancer",
+					"L4",
+					"L7",
+					"round robin",
+					"health checks",
+					"connection draining"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "03-auto-scaling",
+			"meta": {
+				"title": "Auto-Scaling",
+				"subtitle": "Scaling out on demand — target tracking, scheduled scaling, scale-in protection, and the metrics that actually drive good decisions.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"auto-scaling",
+					"ASG",
+					"HPA",
+					"target tracking",
+					"scale-in",
+					"KEDA"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "04-database-scaling",
+			"meta": {
+				"title": "Scaling the Database Layer",
+				"subtitle": "Read replicas, connection pooling, and why the database is almost always the horizontal scaling bottleneck.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"read replicas",
+					"connection pooling",
+					"PgBouncer",
+					"database bottleneck",
+					"sharding"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "05-websockets-and-state",
+			"meta": {
+				"title": "WebSockets & Shared State at Scale",
+				"subtitle": "How to handle persistent connections, pub/sub fan-out, and the Redis adapter that makes Socket.io work across instances.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 min",
+				"topics": [
+					"WebSockets",
+					"Socket.io",
+					"Redis adapter",
+					"pub/sub",
+					"sticky sessions"
+				]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Infrastructure as Code — Roadmap",
+				"subtitle": "Ansible playbooks first, then Terraform against your own infrastructure.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "01-why-iac",
+			"meta": {
+				"title": "Why Infrastructure as Code",
+				"subtitle": "The problems with manual infrastructure — drift, undocumented state, unrepeatable environments — and how IaC solves them.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 min",
+				"topics": [
+					"IaC",
+					"infrastructure",
+					"Terraform",
+					"Ansible",
+					"drift",
+					"idempotency"
+				]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "02-ansible-fundamentals",
+			"meta": {
+				"title": "Ansible Fundamentals",
+				"subtitle": "Inventories, playbooks, roles, and variables — configuring servers reliably without installing an agent.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"Ansible",
+					"playbooks",
+					"roles",
+					"inventory",
+					"handlers",
+					"templates"
+				]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "03-terraform-fundamentals",
+			"meta": {
+				"title": "Terraform Fundamentals",
+				"subtitle": "Resources, state, providers, modules, and the plan/apply workflow that makes cloud provisioning reproducible.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"Terraform",
+					"HCL",
+					"state",
+					"providers",
+					"modules",
+					"plan",
+					"apply"
+				]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "04-terraform-patterns",
+			"meta": {
+				"title": "Terraform Patterns & Production",
+				"subtitle": "Module composition, environments, secrets, drift detection, and the practices that keep large Terraform codebases manageable.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"Terraform",
+					"modules",
+					"environments",
+					"secrets",
+					"drift",
+					"refactoring"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Linux & VPS Basics — Roadmap",
+				"subtitle": "Twelve chapters that take you from a brand-new VPS to a hardened, monitored, ready-to-run-real-software box. No managed cloud.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "6 min",
+				"topics": [
+					"roadmap",
+					"linux",
+					"vps",
+					"self-hosted"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "01-picking-a-vps",
+			"meta": {
+				"title": "Picking a VPS",
+				"subtitle": "What a VPS actually is, how to size one, and how to provision your first box without locking yourself into anyone's ecosystem.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"vps",
+					"linux",
+					"provisioning",
+					"hetzner",
+					"ovh",
+					"digitalocean"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "02-ssh-hardening",
+			"meta": {
+				"title": "First Login & SSH Hardening",
+				"subtitle": "Generate a key, disable password login, lock down sshd, and put fail2ban in front. The single most important hour you will ever spend on a VPS.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"ssh",
+					"security",
+					"openssh",
+					"fail2ban",
+					"hardening"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "03-filesystem",
+			"meta": {
+				"title": "The Linux Filesystem",
+				"subtitle": "Where everything lives, why it lives there, and the permissions model that decides what your processes can touch.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"filesystem",
+					"permissions",
+					"fhs",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "04-processes-signals",
+			"meta": {
+				"title": "Processes & Signals",
+				"subtitle": "What a Linux process actually is, how fork and exec build the entire universe, and the signals that decide whether your app shuts down cleanly or dies screaming.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"processes",
+					"signals",
+					"fork",
+					"exec",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "05-systemd",
+			"meta": {
+				"title": "systemd",
+				"subtitle": "Write a unit file. Restart on crash. Survive reboot. Read the journal. The supervisor that runs everything on a modern Linux box.",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"systemd",
+					"services",
+					"journald",
+					"init",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "06-sockets-ports",
+			"meta": {
+				"title": "Sockets, Ports, and What's Listening",
+				"subtitle": "Every network service is a socket. Every open port is a socket someone bound. The four tools that tell you exactly what your VPS is exposing.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"sockets",
+					"ports",
+					"ss",
+					"lsof",
+					"netstat",
+					"tcp"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "07-firewall",
+			"meta": {
+				"title": "Firewall Fundamentals",
+				"subtitle": "How packets actually flow through the kernel, and how to write nftables rules that allow exactly what you want and reject everything else.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"firewall",
+					"nftables",
+					"iptables",
+					"ufw",
+					"netfilter",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "08-users-sudo",
+			"meta": {
+				"title": "Users, Groups, and Sudo",
+				"subtitle": "How Linux identifies who is doing what, why services run as their own users, and how sudo gives you root without making you root.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"users",
+					"groups",
+					"sudo",
+					"permissions",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "09-logs-journalctl",
+			"meta": {
+				"title": "Logs & journalctl",
+				"subtitle": "Where every line of output goes on a modern Linux box, how to query it, how to keep the disk from filling up, and when to ship logs off the host.",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"logs",
+					"journalctl",
+					"journald",
+					"logrotate",
+					"syslog",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "10-resource-limits",
+			"meta": {
+				"title": "Resource Limits",
+				"subtitle": "ulimit, cgroups, and the OOM killer — three layers of resource control that decide whether your services share the box politely or fight to the death.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"cgroups",
+					"ulimit",
+					"oom",
+					"limits",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "11-cron-timers",
+			"meta": {
+				"title": "Cron & systemd Timers",
+				"subtitle": "Two ways to run code on a schedule. Which to pick, how to write each, and how to keep scheduled jobs from silently failing for months.",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "10 min",
+				"topics": [
+					"cron",
+					"systemd",
+					"timers",
+					"scheduling",
+					"linux"
+				]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "12-production-checklist",
+			"meta": {
+				"title": "Production Checklist",
+				"subtitle": "Every step from this track, in one runbook. Provision a fresh VPS and end the day with a hardened, monitored, ready-to-deploy box.",
+				"chapter": 12,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"checklist",
+					"hardening",
+					"production",
+					"linux",
+					"vps"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Load Balancing — Roadmap",
+				"subtitle": "HAProxy and nginx. L4 vs L7, health checks, sticky sessions, weighted routing.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "01-l4-vs-l7",
+			"meta": {
+				"title": "L4 vs L7 Load Balancing",
+				"subtitle": "The difference between routing packets and routing requests — when to use each layer and what each can see.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"load balancing",
+					"L4",
+					"L7",
+					"TCP",
+					"HTTP",
+					"nginx",
+					"HAProxy"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "02-algorithms",
+			"meta": {
+				"title": "Load Balancing Algorithms",
+				"subtitle": "Round-robin, least connections, IP hash, weighted routing — when each algorithm fits and what happens when backends aren't equal.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"load balancing",
+					"round-robin",
+					"least connections",
+					"consistent hashing",
+					"weighted"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "03-health-checks",
+			"meta": {
+				"title": "Health Checks",
+				"subtitle": "Active vs passive detection, failure thresholds, graceful draining — keeping dead backends out of rotation.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"health checks",
+					"HAProxy",
+					"nginx",
+					"active",
+					"passive",
+					"connection draining"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "04-ssl-termination",
+			"meta": {
+				"title": "SSL Termination",
+				"subtitle": "TLS at the load balancer, certificate management, HTTPS between LB and backends, and the trade-offs of offloading vs end-to-end encryption.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"SSL",
+					"TLS",
+					"HTTPS",
+					"certificates",
+					"nginx",
+					"HAProxy",
+					"termination"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "05-haproxy-deep-dive",
+			"meta": {
+				"title": "HAProxy in Depth",
+				"subtitle": "Frontend/backend config, ACLs, the stats page, runtime API, and the patterns that make HAProxy the go-to proxy for demanding deployments.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"HAProxy",
+					"ACLs",
+					"stats",
+					"runtime API",
+					"rate limiting",
+					"canary"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "06-advanced-patterns",
+			"meta": {
+				"title": "Advanced Load Balancing Patterns",
+				"subtitle": "Blue-green deployments, circuit breakers, global load balancing, and anycast — patterns for deployments that can't go wrong.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"blue-green",
+					"canary",
+					"circuit breaker",
+					"global load balancing",
+					"anycast",
+					"GeoDNS"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Messaging & Queues — Roadmap",
+				"subtitle": "Self-host RabbitMQ or NATS. Then run a Kafka cluster across 3 VPS.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "01-why-messaging",
+			"meta": {
+				"title": "Why Messaging Systems",
+				"subtitle": "The problems direct HTTP calls create at scale — and how async messaging solves coupling, backpressure, and reliability.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"messaging",
+					"queues",
+					"async",
+					"decoupling",
+					"backpressure",
+					"pub/sub"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "02-rabbitmq",
+			"meta": {
+				"title": "RabbitMQ",
+				"subtitle": "Exchanges, queues, bindings, dead letter exchanges — the AMQP model and how to use it for reliable task processing.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"RabbitMQ",
+					"AMQP",
+					"exchanges",
+					"queues",
+					"dead letter",
+					"acknowledgements"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "03-kafka",
+			"meta": {
+				"title": "Kafka",
+				"subtitle": "Topics, partitions, consumer groups, retention — the distributed log that makes replay and high-throughput event streaming possible.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"Kafka",
+					"topics",
+					"partitions",
+					"consumer groups",
+					"KafkaJS",
+					"retention",
+					"compaction"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "04-nats",
+			"meta": {
+				"title": "NATS",
+				"subtitle": "Core pub/sub, JetStream persistence, KV store, and running a 3-node cluster — the fast path to reliable messaging without Kafka complexity.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"NATS",
+					"JetStream",
+					"pub/sub",
+					"clustering",
+					"KV store",
+					"subjects"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "05-patterns",
+			"meta": {
+				"title": "Messaging Patterns",
+				"subtitle": "Saga, inbox/outbox, event-driven choreography vs orchestration — the patterns that make distributed systems reliable despite partial failure.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"saga",
+					"outbox",
+					"choreography",
+					"orchestration",
+					"idempotency",
+					"transactional messaging"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Microservices — Roadmap",
+				"subtitle": "When to split a monolith, gRPC between services, service discovery with Consul.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "01-monolith-vs-microservices",
+			"meta": {
+				"title": "Monolith vs Microservices",
+				"subtitle": "The real costs of splitting — when a monolith is the right call, when it isn't, and how to identify the seams before you cut.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"microservices",
+					"monolith",
+					"architecture",
+					"domain boundaries",
+					"decomposition"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "02-grpc",
+			"meta": {
+				"title": "gRPC Between Services",
+				"subtitle": "Protocol Buffers, generated clients, streaming, and why gRPC beats REST for internal service communication.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"gRPC",
+					"Protocol Buffers",
+					"protobuf",
+					"streaming",
+					"service definition",
+					"code generation"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "03-service-discovery",
+			"meta": {
+				"title": "Service Discovery",
+				"subtitle": "How services find each other — DNS-based discovery, Consul, client-side vs server-side load balancing, and health-integrated routing.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"service discovery",
+					"Consul",
+					"DNS",
+					"health checks",
+					"service mesh",
+					"Envoy"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "04-api-gateway",
+			"meta": {
+				"title": "API Gateway",
+				"subtitle": "The entry point for all external traffic — routing, auth, rate limiting, request transformation, and what not to put in a gateway.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"API gateway",
+					"nginx",
+					"Kong",
+					"routing",
+					"rate limiting",
+					"auth",
+					"request transformation"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "05-inter-service-reliability",
+			"meta": {
+				"title": "Inter-Service Reliability",
+				"subtitle": "Timeouts, retries, circuit breakers, and bulkheads — the patterns that prevent one slow service from cascading into a full outage.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"circuit breaker",
+					"retry",
+					"timeout",
+					"bulkhead",
+					"resilience",
+					"cascading failure"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "01-how-internet-works",
+			"meta": {
+				"title": "How the Internet Works",
+				"subtitle": "Packets, routers, and the physical infrastructure that connects billions of devices — the big picture before diving into protocols.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"internet",
+					"packets",
+					"routers",
+					"ISP"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "02-dns",
+			"meta": {
+				"title": "DNS — The Internet's Phone Book",
+				"subtitle": "How domain names become IP addresses — recursive resolvers, authoritative servers, caching, and DNS record types.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"DNS",
+					"domain names",
+					"resolvers",
+					"records"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "03-tcp-ip",
+			"meta": {
+				"title": "TCP/IP — Reliable Delivery",
+				"subtitle": "The three-way handshake, flow control, congestion avoidance — how TCP guarantees every byte arrives in order.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "16 min",
+				"topics": [
+					"TCP",
+					"IP",
+					"handshake",
+					"flow control",
+					"congestion"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "04-udp",
+			"meta": {
+				"title": "UDP — Speed Over Reliability",
+				"subtitle": "When losing a few packets is better than waiting — video calls, gaming, DNS lookups, and building your own reliability.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"UDP",
+					"datagram",
+					"real-time",
+					"gaming"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "05-tls-https",
+			"meta": {
+				"title": "TLS & HTTPS",
+				"subtitle": "Certificates, handshakes, and encryption — how TLS keeps your data private and verifies you're talking to the right server.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"TLS",
+					"HTTPS",
+					"certificates",
+					"encryption",
+					"handshake"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "06-http",
+			"meta": {
+				"title": "HTTP/1.1, HTTP/2, and HTTP/3",
+				"subtitle": "The evolution of the web's protocol — from text-based request/response to multiplexed streams over QUIC.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "17 min",
+				"topics": [
+					"HTTP",
+					"HTTP/2",
+					"HTTP/3",
+					"QUIC",
+					"multiplexing"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "07-websockets",
+			"meta": {
+				"title": "WebSockets & Real-Time",
+				"subtitle": "Full-duplex communication over a single connection — chat, live updates, collaborative editing, and when not to use them.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"WebSocket",
+					"real-time",
+					"SSE",
+					"long polling"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "08-network-security",
+			"meta": {
+				"title": "Network Security",
+				"subtitle": "CORS, CSP, MITM attacks, firewalls — practical security at the network layer that every developer should understand.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"CORS",
+					"CSP",
+					"firewall",
+					"MITM",
+					"security headers"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Observability — Roadmap",
+				"subtitle": "Logs with journald, metrics with Prometheus and Grafana, traces with Jaeger and OpenTelemetry.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "01-three-pillars",
+			"meta": {
+				"title": "The Three Pillars of Observability",
+				"subtitle": "Logs, metrics, and traces — what each tells you, where each falls short, and how they work together to answer 'what's broken and why.'",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"observability",
+					"logs",
+					"metrics",
+					"traces",
+					"SLO",
+					"alerting"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "02-structured-logging",
+			"meta": {
+				"title": "Structured Logging",
+				"subtitle": "JSON logs, log levels, correlation IDs, log aggregation with Loki — building logs you can actually search in production.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"logging",
+					"pino",
+					"Loki",
+					"Promtail",
+					"correlation ID",
+					"structured logs",
+					"journald"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "03-prometheus-grafana",
+			"meta": {
+				"title": "Prometheus & Grafana",
+				"subtitle": "Instrumenting applications, writing PromQL, building dashboards, and alerting on what actually matters.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"Prometheus",
+					"Grafana",
+					"PromQL",
+					"metrics",
+					"alerting",
+					"instrumentation"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "04-distributed-tracing",
+			"meta": {
+				"title": "Distributed Tracing",
+				"subtitle": "OpenTelemetry instrumentation, trace propagation across services, Jaeger, and using traces to find what logs and metrics can't.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"OpenTelemetry",
+					"Jaeger",
+					"traces",
+					"spans",
+					"context propagation",
+					"sampling"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "05-alerting-and-oncall",
+			"meta": {
+				"title": "Alerting & On-Call",
+				"subtitle": "Alerts that fire when users are impacted, not when metrics twitch — SLO-based alerting, runbooks, and on-call practices that don't burn people out.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"alerting",
+					"on-call",
+					"SLO",
+					"error budget",
+					"PagerDuty",
+					"runbooks",
+					"alert fatigue"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Orchestration — Roadmap",
+				"subtitle": "Run a k3s cluster across your own VPS fleet. Not EKS, not GKE — your hardware.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "01-kubernetes-fundamentals",
+			"meta": {
+				"title": "Kubernetes Fundamentals",
+				"subtitle": "Pods, deployments, services, and the control loop — what Kubernetes actually does and the primitives that everything else is built on.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"Kubernetes",
+					"pods",
+					"deployments",
+					"services",
+					"control loop",
+					"kubectl"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "02-k3s-cluster",
+			"meta": {
+				"title": "k3s on Your Own VPS",
+				"subtitle": "A production-grade Kubernetes cluster on bare metal — k3s setup, node joining, persistent storage, and why k3s beats managed Kubernetes for cost-conscious teams.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"k3s",
+					"VPS",
+					"bare metal",
+					"Hetzner",
+					"cluster setup",
+					"Longhorn",
+					"Traefik"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "03-workloads",
+			"meta": {
+				"title": "Kubernetes Workloads",
+				"subtitle": "StatefulSets, DaemonSets, Jobs, CronJobs — the right object for each class of workload and when Deployments aren't enough.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"StatefulSet",
+					"DaemonSet",
+					"Job",
+					"CronJob",
+					"Kubernetes",
+					"workloads"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "04-networking-and-security",
+			"meta": {
+				"title": "Kubernetes Networking & Security",
+				"subtitle": "NetworkPolicies, RBAC, Pod Security Standards, Secrets management, and the default-deny posture that keeps clusters hardened.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"NetworkPolicy",
+					"RBAC",
+					"Pod Security",
+					"Secrets",
+					"mTLS",
+					"Kubernetes security"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "05-gitops-and-deployments",
+			"meta": {
+				"title": "GitOps & Deployments",
+				"subtitle": "ArgoCD, Helm, progressive delivery with Argo Rollouts — cluster state as code, automated sync, and deployments that can't silently go wrong.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"GitOps",
+					"ArgoCD",
+					"Helm",
+					"Argo Rollouts",
+					"canary",
+					"blue-green",
+					"CD"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Performance Engineering — Roadmap",
+				"subtitle": "Profiling with pprof and perf, flamegraphs, latency budgets, p99 thinking.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "01-latency-thinking",
+			"meta": {
+				"title": "Latency Thinking",
+				"subtitle": "P50 vs P99 vs P999, the tail latency problem, latency budgets, and why averages hide the failures that matter most.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"latency",
+					"percentiles",
+					"P99",
+					"tail latency",
+					"latency budget",
+					"SLO"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "02-profiling",
+			"meta": {
+				"title": "Profiling",
+				"subtitle": "Node.js --prof, Go pprof, Linux perf, and flamegraphs — finding where the time actually goes before guessing at optimizations.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"profiling",
+					"flamegraph",
+					"pprof",
+					"perf",
+					"Node.js",
+					"Go",
+					"CPU",
+					"memory"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "03-database-performance",
+			"meta": {
+				"title": "Database Performance",
+				"subtitle": "Query plans, index strategy, N+1 queries, connection pool tuning — the database is almost always the bottleneck.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"PostgreSQL",
+					"query optimization",
+					"EXPLAIN ANALYZE",
+					"indexes",
+					"N+1",
+					"connection pooling"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "04-caching",
+			"meta": {
+				"title": "Caching",
+				"subtitle": "Cache levels, eviction policies, cache stampede, cache invalidation — and why caching is the most over-applied and under-thought optimization.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"caching",
+					"Redis",
+					"CDN",
+					"cache invalidation",
+					"cache stampede",
+					"LRU",
+					"TTL"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "05-load-testing",
+			"meta": {
+				"title": "Load Testing",
+				"subtitle": "k6, autocannon, realistic traffic models, finding the breaking point — and why load testing in staging is different from production.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"load testing",
+					"k6",
+					"autocannon",
+					"throughput",
+					"breaking point",
+					"performance baseline"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Replication & Sharding — Roadmap",
+				"subtitle": "Postgres streaming replicas by hand. Manual shard routing without Vitess.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "01-replication-fundamentals",
+			"meta": {
+				"title": "Replication Fundamentals",
+				"subtitle": "Why replication exists, synchronous vs asynchronous, WAL-based streaming, and the consistency trade-offs every replica introduces.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"replication",
+					"PostgreSQL",
+					"WAL",
+					"synchronous",
+					"asynchronous",
+					"consistency",
+					"read replicas"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "02-postgres-streaming-replication",
+			"meta": {
+				"title": "Postgres Streaming Replication by Hand",
+				"subtitle": "Setting up a primary, configuring pg_basebackup, streaming WAL to a standby — no managed service, no Patroni, just Postgres.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"PostgreSQL",
+					"streaming replication",
+					"pg_basebackup",
+					"WAL",
+					"standby",
+					"failover"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "03-sharding-concepts",
+			"meta": {
+				"title": "Sharding Concepts",
+				"subtitle": "When replication isn't enough, partition keys, shard routing strategies, and the operational complexity you accept when you shard.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"sharding",
+					"partition key",
+					"consistent hashing",
+					"horizontal partitioning",
+					"shard routing"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "04-manual-shard-routing",
+			"meta": {
+				"title": "Manual Shard Routing",
+				"subtitle": "Building a shard router in application code — connection management, transaction boundaries, migration strategies, and avoiding common pitfalls.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"shard routing",
+					"connection management",
+					"transactions",
+					"migration",
+					"TypeScript",
+					"PostgreSQL"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "05-postgres-partitioning",
+			"meta": {
+				"title": "Postgres Table Partitioning",
+				"subtitle": "Range, list, and hash partitioning — the single-server answer to large tables that buys you most of what sharding promises without the operational cost.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"PostgreSQL",
+					"partitioning",
+					"range partition",
+					"hash partition",
+					"partition pruning",
+					"pg_partman"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Search — Roadmap",
+				"subtitle": "Build an inverted index from scratch. Then self-host Meilisearch or Elasticsearch.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "01-how-search-works",
+			"meta": {
+				"title": "How Search Works",
+				"subtitle": "Inverted indexes, tokenization, TF-IDF, BM25 — the mechanics behind every search engine from Postgres full-text to Elasticsearch.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"inverted index",
+					"tokenization",
+					"TF-IDF",
+					"BM25",
+					"full-text search",
+					"relevance"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "02-postgres-full-text",
+			"meta": {
+				"title": "Postgres Full-Text Search",
+				"subtitle": "tsvector, GIN indexes, ranking, highlighting, and when Postgres search is all you need.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"PostgreSQL",
+					"full-text search",
+					"tsvector",
+					"GIN",
+					"ts_rank",
+					"ts_headline"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "03-meilisearch",
+			"meta": {
+				"title": "Meilisearch",
+				"subtitle": "Self-hosting, indexing documents, typo tolerance, faceted search, and keeping Meilisearch in sync with your database.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"Meilisearch",
+					"typo tolerance",
+					"facets",
+					"indexing",
+					"self-hosted",
+					"sync"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "04-elasticsearch",
+			"meta": {
+				"title": "Elasticsearch",
+				"subtitle": "Mappings, analyzers, the Query DSL, aggregations, and running a production cluster — for when Meilisearch isn't enough.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"Elasticsearch",
+					"mappings",
+					"analyzers",
+					"Query DSL",
+					"aggregations",
+					"cluster"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "05-search-in-practice",
+			"meta": {
+				"title": "Search in Practice",
+				"subtitle": "Relevance tuning, synonyms, personalization, analytics, and the operational patterns that keep search working well over time.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"relevance tuning",
+					"synonyms",
+					"analytics",
+					"A/B testing",
+					"search quality",
+					"click-through rate"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "8-Week Roadmap: Fullstack → SRE",
+				"subtitle": "A solid two-month plan to convert a working fullstack engineer into a junior-SRE-ready operator. Daily breakdown, real labs, and a final capstone.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "18 min",
+				"topics": [
+					"roadmap",
+					"learning",
+					"career",
+					"fullstack to SRE",
+					"hands-on"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "01-what-is-sre",
+			"meta": {
+				"title": "What SRE Actually Is",
+				"subtitle": "Class SRE implements DevOps. The error-budget contract, toil cap, and the embedded engineer model that makes Google's reliability work.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"SRE",
+					"error budget",
+					"toil",
+					"DevOps",
+					"reliability"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "02-slis-slos-error-budgets",
+			"meta": {
+				"title": "SLIs, SLOs & Error Budgets",
+				"subtitle": "Pick the right SLI, set an SLO that survives lawyer review, and burn the budget the way Google's CRE team does it.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "18 min",
+				"topics": [
+					"SLI",
+					"SLO",
+					"SLA",
+					"error budget",
+					"burn rate",
+					"Prometheus"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "03-golden-signals-red-use",
+			"meta": {
+				"title": "Golden Signals, RED, and USE",
+				"subtitle": "The three monitoring frameworks that actually matter, when to use each, and the Prometheus + Grafana stack that exposes them all.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "16 min",
+				"topics": [
+					"monitoring",
+					"golden signals",
+					"RED",
+					"USE",
+					"Prometheus",
+					"Grafana"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "04-incident-response",
+			"meta": {
+				"title": "Incident Response & On-Call",
+				"subtitle": "ICS roles, severity classification, comms cadence, and the on-call rotation that doesn't burn engineers out.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "17 min",
+				"topics": [
+					"incident response",
+					"on-call",
+					"ICS",
+					"PagerDuty",
+					"war room"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "05-postmortems",
+			"meta": {
+				"title": "Blameless Postmortems",
+				"subtitle": "The full template Google, Etsy, and Stripe use, with action-item discipline that prevents the same incident twice.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"postmortem",
+					"blameless",
+					"root cause",
+					"five whys",
+					"action items"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "06-capacity-planning",
+			"meta": {
+				"title": "Capacity Planning & Load Testing",
+				"subtitle": "Little's Law, Universal Scalability Law, headroom, and a real k6 + Locust load test you can run today.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "18 min",
+				"topics": [
+					"capacity planning",
+					"load testing",
+					"k6",
+					"queueing theory",
+					"Little's Law"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "07-production-readiness",
+			"meta": {
+				"title": "Production Readiness Reviews",
+				"subtitle": "The PRR checklist that prevents 80% of preventable launches-into-fire, with a real launch gate Terraform module.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "16 min",
+				"topics": [
+					"PRR",
+					"launch review",
+					"runbook",
+					"production readiness",
+					"checklist"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "08-chaos-engineering",
+			"meta": {
+				"title": "Chaos Engineering",
+				"subtitle": "Hypothesis-driven failure injection from Netflix Simian Army to Chaos Mesh, with real experiments and a safety harness.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"chaos engineering",
+					"Chaos Mesh",
+					"Gremlin",
+					"fault injection",
+					"gameday"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "09-disaster-recovery",
+			"meta": {
+				"title": "Disaster Recovery & Backups",
+				"subtitle": "RTO, RPO, multi-region failover, and the restore drill that proves your backups exist.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"disaster recovery",
+					"DR",
+					"RTO",
+					"RPO",
+					"backups",
+					"failover"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "10-toil-automation",
+			"meta": {
+				"title": "Toil & Automation",
+				"subtitle": "Measuring toil, the 50% cap, and the automation taxonomy from one-off scripts to self-healing operators.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"toil",
+					"automation",
+					"operators",
+					"self-healing",
+					"Kubernetes"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "11-scaling-roadmap",
+			"meta": {
+				"title": "Scaling & Distributed Systems — 8-Week Companion Roadmap",
+				"subtitle": "Zero to designing, building, and operating scalable systems. 1–2 hrs/day, 8 weeks, 8 real projects, 5 case studies, mini-YouTube capstone.",
+				"chapter": 11,
+				"level": "beginner",
+				"readingTime": "25 min",
+				"topics": [
+					"scaling",
+					"distributed systems",
+					"roadmap",
+					"capstone",
+					"system design"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "12-linux-performance-mastery",
+			"meta": {
+				"title": "Linux Performance Mastery",
+				"subtitle": "From `top` to `perf`, `bpftrace`, and flame graphs. The senior-SRE toolkit for diagnosing latency, CPU, memory, and I/O at the kernel level — without restarting anything in production.",
+				"chapter": 12,
+				"level": "mastery",
+				"readingTime": "32 min",
+				"topics": [
+					"linux",
+					"perf",
+					"eBPF",
+					"bpftrace",
+					"flame graphs",
+					"USE",
+					"kernel",
+					"performance"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "13-network-engineering",
+			"meta": {
+				"title": "Network Engineering for SREs",
+				"subtitle": "BGP, anycast, ECMP, CDN internals, packet capture, and TCP at scale. The networking layer where 'random' production weirdness actually lives.",
+				"chapter": 13,
+				"level": "mastery",
+				"readingTime": "30 min",
+				"topics": [
+					"networking",
+					"BGP",
+					"anycast",
+					"CDN",
+					"TCP",
+					"tcpdump",
+					"XDP",
+					"load balancing"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "14-database-internals-for-sres",
+			"meta": {
+				"title": "Database Internals for SREs",
+				"subtitle": "MVCC, replication lag, hot rows, query plans, B-tree vs LSM, connection pools at scale. The DB knowledge that separates 'I run Postgres' from 'I keep Postgres up under fire.'",
+				"chapter": 14,
+				"level": "mastery",
+				"readingTime": "30 min",
+				"topics": [
+					"postgres",
+					"mysql",
+					"replication",
+					"MVCC",
+					"query planning",
+					"connection pool",
+					"B-tree",
+					"LSM"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "15-distributed-systems-theory",
+			"meta": {
+				"title": "Distributed Systems Theory for SREs",
+				"subtitle": "CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens. The theory that explains why your distributed system breaks the way it does.",
+				"chapter": 15,
+				"level": "mastery",
+				"readingTime": "32 min",
+				"topics": [
+					"distributed systems",
+					"CAP",
+					"Raft",
+					"Paxos",
+					"consensus",
+					"CRDT",
+					"vector clock",
+					"fencing tokens"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "16-kubernetes-at-scale",
+			"meta": {
+				"title": "Kubernetes at Scale",
+				"subtitle": "1,000+ node clusters, multi-tenancy, RBAC, NetworkPolicy, OPA/Kyverno, GitOps, etcd tuning. The operating model when 'just run kubectl apply' is no longer a strategy.",
+				"chapter": 16,
+				"level": "mastery",
+				"readingTime": "30 min",
+				"topics": [
+					"kubernetes",
+					"etcd",
+					"RBAC",
+					"OPA",
+					"Kyverno",
+					"GitOps",
+					"multi-tenancy",
+					"scale"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "17-service-mesh-internals",
+			"meta": {
+				"title": "Service Mesh Internals",
+				"subtitle": "Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting. What a mesh actually does and when it earns its complexity.",
+				"chapter": 17,
+				"level": "mastery",
+				"readingTime": "28 min",
+				"topics": [
+					"service mesh",
+					"Envoy",
+					"Istio",
+					"Linkerd",
+					"ambient",
+					"mTLS",
+					"xDS",
+					"Cilium"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "18-finops-cost-engineering",
+			"meta": {
+				"title": "FinOps & Cost Engineering",
+				"subtitle": "Unit economics, rightsizing, spot, savings plans, cost-aware SLOs. The senior SRE skill that turns 'the cloud bill is too high' into a tracked, owned, falling number.",
+				"chapter": 18,
+				"level": "mastery",
+				"readingTime": "26 min",
+				"topics": [
+					"FinOps",
+					"cost",
+					"rightsizing",
+					"spot",
+					"savings plans",
+					"unit economics",
+					"cloud bill"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "19-reliability-culture-org",
+			"meta": {
+				"title": "Reliability Culture & SRE Org Design",
+				"subtitle": "Staff+ SRE work, embedding, charters, blame-aware orgs, mentoring, sustainable on-call. The non-technical lever that makes or breaks every reliability program.",
+				"chapter": 19,
+				"level": "mastery",
+				"readingTime": "26 min",
+				"topics": [
+					"org design",
+					"staff SRE",
+					"culture",
+					"embedding",
+					"charters",
+					"on-call",
+					"mentoring"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "20-mastery-roadmap",
+			"meta": {
+				"title": "12-Month Mastery Roadmap — Junior SRE → Senior/Staff",
+				"subtitle": "The year-long plan that picks up where the 8-week roadmap stops. Monthly milestones, real production projects, deep reading, and the artifacts that prove staff-level capability.",
+				"chapter": 20,
+				"level": "mastery",
+				"readingTime": "30 min",
+				"topics": [
+					"roadmap",
+					"career",
+					"mastery",
+					"staff SRE",
+					"year plan",
+					"depth"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "File & Object Storage — Roadmap",
+				"subtitle": "Local disk, NFS, then self-host MinIO. Build a CDN with nginx and Varnish.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "01-storage-primitives",
+			"meta": {
+				"title": "Storage Primitives",
+				"subtitle": "Block, file, and object storage — what each abstraction provides, where each breaks down, and how to choose.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 min",
+				"topics": [
+					"block storage",
+					"file storage",
+					"object storage",
+					"NFS",
+					"S3",
+					"storage architecture"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "02-minio",
+			"meta": {
+				"title": "Self-Hosted Object Storage with MinIO",
+				"subtitle": "Running MinIO on your own hardware, S3-compatible API, distributed mode, lifecycle policies, and using it from application code.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"MinIO",
+					"S3",
+					"object storage",
+					"self-hosted",
+					"distributed",
+					"buckets"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "03-file-uploads",
+			"meta": {
+				"title": "File Uploads",
+				"subtitle": "Multipart parsing, validation, virus scanning, direct-to-storage upload, and processing pipelines.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"file uploads",
+					"multipart",
+					"presigned URLs",
+					"validation",
+					"image processing",
+					"virus scanning"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "04-cdn-nginx-varnish",
+			"meta": {
+				"title": "CDN with nginx and Varnish",
+				"subtitle": "Cache static assets close to users — self-hosted edge caching with nginx proxy_cache and Varnish as a reverse proxy.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"CDN",
+					"nginx",
+					"Varnish",
+					"caching",
+					"edge caching",
+					"cache invalidation",
+					"HTTP headers"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "05-storage-in-practice",
+			"meta": {
+				"title": "Storage in Practice",
+				"subtitle": "Cost optimization, access control, signed URLs for private content, backup strategy, and operational patterns.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 min",
+				"topics": [
+					"storage cost",
+					"access control",
+					"signed URLs",
+					"backup",
+					"disaster recovery",
+					"storage operations"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Testing Strategy — Roadmap",
+				"subtitle": "Unit, integration, contract, e2e. Load test with k6 and wrk. Property-based testing.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "01-testing-strategy",
+			"meta": {
+				"title": "Testing Strategy",
+				"subtitle": "The testing pyramid, what each layer tests, and how to avoid the traps that make test suites slow and fragile.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 min",
+				"topics": [
+					"testing pyramid",
+					"unit tests",
+					"integration tests",
+					"e2e tests",
+					"test strategy",
+					"TDD"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "02-unit-testing",
+			"meta": {
+				"title": "Unit Testing",
+				"subtitle": "Testing pure logic in isolation — Vitest, assertion patterns, test doubles, and what makes a good unit test.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"unit testing",
+					"Vitest",
+					"Jest",
+					"mocking",
+					"spies",
+					"test doubles",
+					"assertions"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "03-integration-testing",
+			"meta": {
+				"title": "Integration Testing",
+				"subtitle": "Testing real boundaries — database queries, HTTP handlers, message queues — without mocking what matters.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"integration testing",
+					"database testing",
+					"HTTP testing",
+					"Testcontainers",
+					"supertest",
+					"migrations"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "04-contract-testing",
+			"meta": {
+				"title": "Contract Testing",
+				"subtitle": "Verify that services agree on the API contract without deploying them together — Pact for consumer-driven contracts.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"contract testing",
+					"Pact",
+					"consumer-driven contracts",
+					"API contracts",
+					"microservices testing"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "05-e2e-testing",
+			"meta": {
+				"title": "End-to-End Testing",
+				"subtitle": "Testing user journeys in a real browser — Playwright setup, selectors, auth, CI, and keeping e2e tests fast and reliable.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 min",
+				"topics": [
+					"e2e testing",
+					"Playwright",
+					"browser automation",
+					"Cypress",
+					"test reliability",
+					"flakiness"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "06-property-based-testing",
+			"meta": {
+				"title": "Property-Based Testing",
+				"subtitle": "Generate hundreds of random inputs automatically — fast-check finds edge cases your example tests miss.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "8 min",
+				"topics": [
+					"property-based testing",
+					"fast-check",
+					"fuzzing",
+					"generative testing",
+					"invariants"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "TLS & Certificates — Roadmap",
+				"subtitle": "Eight chapters that take TLS from mystery to muscle memory — what it actually does, why every part exists, and how to issue, renew, and serve real certificates without a managed service.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"tls",
+					"ssl",
+					"certificates",
+					"letsencrypt"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "01-what-tls-is",
+			"meta": {
+				"title": "What TLS Actually Is",
+				"subtitle": "TLS does two jobs: it encrypts your traffic, and it proves the server is who it says it is. The two halves work together — neither alone is enough.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"tls",
+					"ssl",
+					"encryption",
+					"identity",
+					"https"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "02-tls-handshake",
+			"meta": {
+				"title": "The TLS Handshake",
+				"subtitle": "ClientHello, ServerHello, key exchange, finished. The five-message conversation that turns a TCP connection into a secure session — and how TLS 1.3 cut it in half.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"tls",
+					"handshake",
+					"tls 1.3",
+					"ecdhe",
+					"alpn"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "03-certificates-chain-of-trust",
+			"meta": {
+				"title": "Certificates and the Chain of Trust",
+				"subtitle": "What lives inside a .pem file, what a CSR is, why intermediate certificates exist, and how a browser walks the chain to a root it already trusts.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"certificates",
+					"x509",
+					"csr",
+					"ca",
+					"chain of trust"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "04-letsencrypt-acme",
+			"meta": {
+				"title": "Let's Encrypt & ACME",
+				"subtitle": "The protocol that lets a free CA issue 350 million certificates a year. Account, order, challenge, finalize, download — what every certbot run does behind the scenes.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"letsencrypt",
+					"acme",
+					"certificates",
+					"automation"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "05-issuing-with-certbot",
+			"meta": {
+				"title": "Issuing Your First Cert with certbot",
+				"subtitle": "From bare DNS A record to working HTTPS in ten minutes. Concrete commands, every flag explained, every common failure addressed.",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"certbot",
+					"letsencrypt",
+					"nginx",
+					"http-01",
+					"tls"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "06-wildcard-dns01",
+			"meta": {
+				"title": "Wildcard Certs & DNS-01",
+				"subtitle": "When HTTP validation isn't enough — issuing wildcard certs, automating DNS-01 with provider plugins, and the security tradeoffs of API tokens that can edit DNS.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "10 min",
+				"topics": [
+					"wildcard",
+					"dns-01",
+					"letsencrypt",
+					"cloudflare",
+					"route53"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "07-nginx-tls-config",
+			"meta": {
+				"title": "Configuring nginx for TLS",
+				"subtitle": "A complete TLS server block — protocols, ciphers, OCSP stapling, HSTS, modern key types, perfect forward secrecy. The config that scores A+ without copy-paste cargo.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"nginx",
+					"tls",
+					"ssl",
+					"hsts",
+					"ocsp"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "08-renewal-monitoring",
+			"meta": {
+				"title": "Renewal, Monitoring, and Rotation",
+				"subtitle": "Surviving past 90 days. Renewal hooks, expiration monitoring, key rotation, and the runbook for the night your cert quietly expired and now nobody can reach the site.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "11 min",
+				"topics": [
+					"renewal",
+					"monitoring",
+					"key rotation",
+					"letsencrypt",
+					"tls"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Web Server Fundamentals — Roadmap",
+				"subtitle": "Ten chapters that build a working understanding of web servers — from raw TCP sockets to a tuned, hardened nginx in front of a real backend.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"http",
+					"nginx",
+					"web server",
+					"sockets"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "01-what-is-a-web-server",
+			"meta": {
+				"title": "What is a Web Server",
+				"subtitle": "Anatomy of an HTTP request from socket to response. The four stages every web server runs through, and the names for the parts.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"http",
+					"web server",
+					"tcp",
+					"request lifecycle"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "02-http-from-raw-socket",
+			"meta": {
+				"title": "HTTP from a Raw Socket",
+				"subtitle": "Speak HTTP by hand with netcat. Then write a 60-line Go server that does exactly the same thing — no framework, no surprises.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"http",
+					"sockets",
+					"tcp",
+					"go",
+					"netcat"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "03-building-http-parser",
+			"meta": {
+				"title": "Building a Real HTTP/1.1 Parser",
+				"subtitle": "Request bodies, Content-Length, chunked transfer encoding, and the dozen edge cases that turn a toy parser into one you would trust in production.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"http",
+					"parser",
+					"chunked encoding",
+					"go",
+					"request body"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "04-concurrency-models",
+			"meta": {
+				"title": "Concurrency Models",
+				"subtitle": "Process per request, thread per request, prefork, event loop, hybrid. The five ways web servers handle thousands of concurrent connections — and why each one exists.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"concurrency",
+					"threads",
+					"event loop",
+					"epoll",
+					"go"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "05-static-files",
+			"meta": {
+				"title": "Static Files & MIME",
+				"subtitle": "How a server turns a file path into bytes on the wire — content types, ETags, conditional requests, and the cache headers that keep every browser fast.",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"static files",
+					"mime",
+					"etag",
+					"cache control",
+					"http"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "06-nginx-fundamentals",
+			"meta": {
+				"title": "nginx Fundamentals",
+				"subtitle": "Install, structure the config, write server blocks, understand locations and includes. The nginx mental model that holds for every advanced feature.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"nginx",
+					"configuration",
+					"server blocks",
+					"locations"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "07-reverse-proxy",
+			"meta": {
+				"title": "Reverse Proxy",
+				"subtitle": "nginx in front of your application server. The headers that matter, the timeouts that save you, and the upstream pool that handles failure.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"reverse proxy",
+					"nginx",
+					"proxy_pass",
+					"upstream",
+					"headers"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "08-access-error-logs",
+			"meta": {
+				"title": "Access & Error Logs",
+				"subtitle": "Customize nginx log formats, understand what each field means, find requests by status or duration, and tell access logs apart from error logs the right way.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"nginx",
+					"logs",
+					"access log",
+					"error log",
+					"log format"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "09-edge-caching",
+			"meta": {
+				"title": "Edge Caching with nginx",
+				"subtitle": "proxy_cache, microcaching, stale-while-revalidate, and the cache key rules that turn nginx into a CDN you control.",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"nginx",
+					"caching",
+					"proxy_cache",
+					"microcaching",
+					"cdn"
+				]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "10-performance-hardening",
+			"meta": {
+				"title": "Performance & Hardening",
+				"subtitle": "Workers, sendfile, gzip and brotli, security headers, rate limiting, connection limits, body size caps. The dials that turn a working nginx into a fast, defensible one.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"nginx",
+					"performance",
+					"hardening",
+					"rate limiting",
+					"security headers",
+					"tls"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Webhooks — Roadmap",
+				"subtitle": "Ten chapters that go from 'webhooks are just HTTP POST requests' to a self-hosted, signed, retried, idempotent webhook system that survives the receiver being down for hours.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"webhooks",
+					"hmac",
+					"retries",
+					"idempotency"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "01-what-webhooks-are",
+			"meta": {
+				"title": "What webhooks are and when to use them",
+				"subtitle": "A webhook is an HTTP POST you make to somebody else's server when something happens. The protocol is trivial; the failure modes are not.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"webhooks",
+					"events",
+					"rest",
+					"queues"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "02-event-contract",
+			"meta": {
+				"title": "Event contract design",
+				"subtitle": "The shape of your event payload becomes a contract with everyone who integrates. The decisions you make in the first afternoon are the ones you live with for years.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"webhooks",
+					"events",
+					"schema",
+					"versioning"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "03-sending",
+			"meta": {
+				"title": "Sending webhooks",
+				"subtitle": "End-to-end producer in Go in sixty lines. By the end you have a binary that POSTs JSON to a URL, handles non-2xx, and times out cleanly. Signing, retries, and the outbox come later.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"webhooks",
+					"go",
+					"http client",
+					"producer"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "04-signing",
+			"meta": {
+				"title": "Signing payloads",
+				"subtitle": "An unsigned webhook is a public POST endpoint. Anyone who guesses the URL can forge events. HMAC over a canonical string with a timestamp is the simple, correct fix.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"webhooks",
+					"hmac",
+					"signatures",
+					"security",
+					"replay"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "05-verifying",
+			"meta": {
+				"title": "Verifying signatures",
+				"subtitle": "The receiver's job is to read the raw body, recompute the HMAC, compare in constant time, and reject events older than the replay window. Tiny code, easy to get wrong.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"webhooks",
+					"hmac",
+					"verification",
+					"receiver",
+					"security"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "06-retries",
+			"meta": {
+				"title": "Retries and backoff",
+				"subtitle": "A delivery that fails once is normal. A delivery that fails ten times in a hot loop takes down your service and your customer's. Exponential backoff with jitter and a hard deadline is the simple, correct fix.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"webhooks",
+					"retries",
+					"backoff",
+					"jitter",
+					"deadlines"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "07-idempotency",
+			"meta": {
+				"title": "Idempotency on the receiver",
+				"subtitle": "At-least-once delivery means duplicates. The receiver's job is to process exactly once anyway. The inbox pattern — dedupe keys, atomic claim, idempotent side effects — is how.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"webhooks",
+					"idempotency",
+					"inbox pattern",
+					"dedup",
+					"transactions"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "08-delivery-dlq",
+			"meta": {
+				"title": "Delivery guarantees and the dead-letter queue",
+				"subtitle": "Some events never deliver. The dead-letter queue is where they go, the dashboard is where humans see them, and the manual replay is how you recover. None of these are optional.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"webhooks",
+					"dlq",
+					"delivery",
+					"alerts",
+					"replay"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "09-observability",
+			"meta": {
+				"title": "Observability and replay",
+				"subtitle": "Webhooks are not a fire-and-forget feature. They are an operated feature. The dashboards, metrics, and traces you build for debugging are the difference between a feature you maintain and one that maintains you.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"webhooks",
+					"observability",
+					"metrics",
+					"tracing",
+					"dashboards"
+				]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "10-production",
+			"meta": {
+				"title": "Self-host",
+				"subtitle": "The outbox pattern bridges your domain transactions and the webhook queue. The worker pool drains it. Behind nginx with TLS, on a VPS, with all the operational pieces from chapter 9 wired in.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"webhooks",
+					"outbox",
+					"worker pool",
+					"nginx",
+					"deployment"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "WebSockets & realtime — Roadmap",
+				"subtitle": "Ten chapters that go from 'what is the WebSocket handshake' to a self-hosted, horizontally scaled realtime server with Redis pub/sub, presence, auth, and nginx in front.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"websockets",
+					"sse",
+					"realtime",
+					"pubsub"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "01-what-websockets-are",
+			"meta": {
+				"title": "What WebSockets are and when to use them",
+				"subtitle": "A WebSocket is a bidirectional, persistent TCP connection that starts life as an HTTP request. Useful when neither REST nor RPC fits. Misused often.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"websockets",
+					"sse",
+					"realtime",
+					"polling"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "02-handshake-frames",
+			"meta": {
+				"title": "The handshake and frame protocol",
+				"subtitle": "RFC 6455 in the parts that matter for shipping a server. Upgrade headers, frame layout, masking, opcodes, close codes, and the rules a library follows so you do not have to.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"websockets",
+					"rfc6455",
+					"frames",
+					"handshake"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "03-first-server",
+			"meta": {
+				"title": "Your first server",
+				"subtitle": "End-to-end Go WebSocket server in eighty lines, with a browser client. By the end you have an echo service plus a tiny chat room — both running on localhost, both real.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"websockets",
+					"go",
+					"coder/websocket",
+					"browser"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "04-message-protocols",
+			"meta": {
+				"title": "Message protocols on top",
+				"subtitle": "Raw frames carry bytes. Real apps need types, versions, and request/response correlation. Designing the message envelope before you have ten clients in the wild saves you years of pain.",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"websockets",
+					"json",
+					"protocol",
+					"versioning",
+					"envelope"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "05-sse",
+			"meta": {
+				"title": "Server-Sent Events",
+				"subtitle": "When the client only listens, SSE beats WebSockets in every dimension that matters — simpler protocol, free reconnect, plain HTTP. The default for one-way realtime.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"sse",
+					"server-sent-events",
+					"realtime",
+					"http"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "06-pubsub-scale",
+			"meta": {
+				"title": "Pub/sub at scale",
+				"subtitle": "One process can hold thousands of connections; production needs many. The piece that makes that work is a pub/sub bus that fans events from any process to every connection on every other process.",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"websockets",
+					"pubsub",
+					"redis",
+					"nats",
+					"scaling"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "07-presence-rooms",
+			"meta": {
+				"title": "Presence and rooms",
+				"subtitle": "Knowing who is online and which channel they are watching looks easy in a one-process demo and is genuinely hard at scale. The data model is half the work; the eviction story is the other half.",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"websockets",
+					"presence",
+					"rooms",
+					"redis",
+					"sets"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "08-auth-origin",
+			"meta": {
+				"title": "Auth, origin, and rate limits",
+				"subtitle": "WebSocket handshakes look like normal HTTP, which makes them subject to normal HTTP attacks plus a few WebSocket-specific ones. Verify origin, authenticate at the handshake, and rate-limit at every level you can.",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"websockets",
+					"auth",
+					"origin",
+					"csrf",
+					"rate limiting"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "09-backpressure",
+			"meta": {
+				"title": "Backpressure, reconnects, heartbeats",
+				"subtitle": "Networks drop. Clients stall. Tabs sleep. The patterns in this chapter are the difference between a WebSocket service that runs for a week and one that limps for an hour.",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"websockets",
+					"backpressure",
+					"reconnect",
+					"heartbeat",
+					"resilience"
+				]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production self-host",
+				"subtitle": "Behind nginx with TLS, systemd-managed, observable, scaled across processes via Redis. Same operational shape as the GraphQL and gRPC tracks — different protocol on the wire.",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"websockets",
+					"nginx",
+					"systemd",
+					"observability",
+					"scaling"
+				]
+			}
+		}
+	]
+}

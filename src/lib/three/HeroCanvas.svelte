@@ -1,0 +1,10 @@
+<script lang="ts">
+	import { Canvas } from '@threlte/core';
+	import LaptopCloud from './LaptopCloud.svelte';
+
+	let { accent = '#9c2a45' }: { accent?: string } = $props();
+</script>
+
+<Canvas>
+	<LaptopCloud {accent} />
+</Canvas>
