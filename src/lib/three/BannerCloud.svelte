@@ -103,7 +103,7 @@
 	});
 </script>
 
-<T.PerspectiveCamera makeDefault position={[0.6, 2, 4.8]} fov={42} oncreate={(r) => r.lookAt(0, 0, 0)} />
+<T.PerspectiveCamera makeDefault position={[0.5, 1.85, 4.7]} fov={42} oncreate={(r) => r.lookAt(0, 0, 0)} />
 
 {#if points}
 	<T.Group rotation.y={rotY} rotation.x={rotX}>

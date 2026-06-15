@@ -5,6 +5,6 @@
 	let { accent = '#9c2a45' }: { accent?: string } = $props();
 </script>
 
-<Canvas>
+<Canvas dpr={[1, 1.75]}>
 	<LaptopCloud {accent} />
 </Canvas>

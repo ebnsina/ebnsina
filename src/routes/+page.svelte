@@ -33,7 +33,7 @@
 			Software Engineer
 		</p>
 		<h1
-			class="mb-7 max-w-2xl font-display text-[2.9rem] font-bold leading-[1.02] tracking-[-0.03em] sm:text-7xl"
+			class="mb-7 max-w-xl font-display text-[2.9rem] font-bold leading-[1.02] tracking-[-0.03em] sm:text-7xl"
 		>
 			Building <span class="text-accent">fast, durable</span> systems &mdash; and the craft
 			behind them.

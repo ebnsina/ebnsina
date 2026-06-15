@@ -112,13 +112,13 @@ body {
 	color: #fff;
 	border-radius: 0.85rem;
 	background:
-		linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 46%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 48%),
 		linear-gradient(
 			155deg,
-			color-mix(in oklch, var(--card) 88%, #000),
-			color-mix(in oklch, var(--card) 58%, #000)
+			color-mix(in oklch, var(--card) 97%, #000),
+			color-mix(in oklch, var(--card) 84%, #000)
 		);
-	box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.38);
+	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
 	transition:
 		box-shadow 0.25s ease,
 		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);

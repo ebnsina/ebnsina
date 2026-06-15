@@ -1,29 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Component } from 'svelte';
+	import { colorFor } from '$lib/colors';
+	import { threeEnabled } from './enabled';
 
 	let HeroCanvas = $state<Component<{ accent?: string }> | null>(null);
-	let accent = $state('#9c2a45');
+	const accent = colorFor('hero-laptop');
 
 	onMount(() => {
-		const read = () => {
-			const v = getComputedStyle(document.documentElement)
-				.getPropertyValue('--accent-hex')
-				.trim();
-			if (v) accent = v;
-		};
-		read();
-		window.addEventListener('themechange', read);
-
+		// Skip WebGL entirely on phones / reduced-motion (perf + battery).
+		if (!threeEnabled()) return;
 		// Lazy-load the WebGL bundle so three.js never blocks first paint.
 		let cancelled = false;
 		import('./HeroCanvas.svelte').then((m) => {
 			if (!cancelled) HeroCanvas = m.default;
 		});
-
 		return () => {
 			cancelled = true;
-			window.removeEventListener('themechange', read);
 		};
 	});
 </script>
@@ -40,8 +33,8 @@
 		inset: 0;
 		z-index: 0;
 		pointer-events: none;
-		/* fade the object into the page edges */
-		-webkit-mask-image: radial-gradient(ellipse 56% 70% at 73% 50%, #000 52%, transparent 100%);
-		mask-image: radial-gradient(ellipse 56% 70% at 73% 50%, #000 52%, transparent 100%);
+		/* weight the object to the right; fade its left so it sits behind the headline softly */
+		-webkit-mask-image: radial-gradient(ellipse 60% 72% at 66% 50%, #000 48%, transparent 100%);
+		mask-image: radial-gradient(ellipse 60% 72% at 66% 50%, #000 48%, transparent 100%);
 	}
 </style>

@@ -173,13 +173,13 @@
 
 <T.PerspectiveCamera
 	makeDefault
-	position={[0.3, 2.4, 5.7]}
+	position={[0.3, 2.05, 5.5]}
 	fov={40}
-	oncreate={(r) => r.lookAt(0, 0.55, 0)}
+	oncreate={(r) => r.lookAt(0, 0.5, 0)}
 />
 
 {#if points}
-	<T.Group position.x={1} position.y={0.15} rotation.y={rotY} rotation.x={rotX}>
+	<T.Group scale={1.1} position.x={0.85} position.y={0.15} rotation.y={rotY} rotation.x={rotX}>
 		<T is={points} />
 	</T.Group>
 {/if}

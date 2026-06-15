@@ -6,6 +6,6 @@
 	let { accent = '#9c2a45', shape = 'cubes' }: { accent?: string; shape?: ShapeName } = $props();
 </script>
 
-<Canvas>
+<Canvas dpr={[1, 1.75]}>
 	<BannerCloud {accent} {shape} />
 </Canvas>

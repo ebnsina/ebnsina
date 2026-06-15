@@ -60,7 +60,7 @@
 			<h2 class="mb-4 font-serif text-2xl font-semibold tracking-tight">{g.name}</h2>
 			<dl class="divide-y divide-rule border-y border-rule">
 				{#each g.items as [name, desc] (name)}
-					<div class="grid grid-cols-[10rem_1fr] gap-4 py-3">
+					<div class="grid grid-cols-1 gap-x-4 gap-y-0.5 py-3 sm:grid-cols-[11rem_1fr]">
 						<dt class="font-medium">{name}</dt>
 						<dd class="text-muted">{desc}</dd>
 					</div>
