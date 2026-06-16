@@ -72,6 +72,14 @@ export function getTotalChapters(): number {
 	return noteList.length;
 }
 
+/** Each note category as a "track" with its ordered chapter slugs. */
+export function getTracks(): Array<{ category: string; slugs: string[] }> {
+	return getNoteCategories().map((category) => ({
+		category,
+		slugs: getChapters(category).map((c) => c.slug)
+	}));
+}
+
 export async function loadChapter(category: string, slug: string) {
 	const meta = noteList.find((c) => c.category === category && c.slug === slug)?.meta;
 	const loader = noteComps[`/src/content/notes/${category}/${slug}.md`];

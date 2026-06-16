@@ -24,6 +24,7 @@ export async function load({ params }) {
 		category: params.category,
 		slug: params.slug,
 		categoryLabel: meta.label,
+		trackSlugs: chapters.map((c) => c.slug),
 		total: chapters.length,
 		prev: idx > 0 ? chapters[idx - 1] : null,
 		next: idx < chapters.length - 1 ? chapters[idx + 1] : null

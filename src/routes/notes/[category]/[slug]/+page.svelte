@@ -56,6 +56,8 @@
 			category={data.category}
 			slug={data.slug}
 			level={meta.level}
+			trackSlugs={data.trackSlugs}
+			trackLabel={data.categoryLabel}
 			{nextHref}
 		/>
 		<nav class="mt-10 flex justify-between gap-3">

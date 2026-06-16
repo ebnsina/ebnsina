@@ -6,26 +6,38 @@
 		category,
 		slug,
 		level,
+		trackSlugs = [],
+		trackLabel = '',
 		nextHref = null
-	}: { category: string; slug: string; level: string; nextHref?: string | null } = $props();
+	}: {
+		category: string;
+		slug: string;
+		level: string;
+		trackSlugs?: string[];
+		trackLabel?: string;
+		nextHref?: string | null;
+	} = $props();
 
 	const done = $derived(progress.ready && progress.isDone(category, slug));
 	const xp = $derived(xpForLevel(level));
 
 	let sentinel = $state<HTMLElement>();
 	let toast = $state(false);
+	let trackMastered = $state(false);
 	let toastTimer: ReturnType<typeof setTimeout>;
 
-	function celebrate() {
+	function celebrate(mastered: boolean) {
+		trackMastered = mastered;
 		toast = true;
 		clearTimeout(toastTimer);
-		toastTimer = setTimeout(() => (toast = false), 3200);
+		toastTimer = setTimeout(() => (toast = false), mastered ? 4500 : 3200);
 	}
 
 	function markDone() {
 		if (progress.isDone(category, slug)) return;
 		progress.complete(category, slug, level);
-		celebrate();
+		// completing this chapter may have finished the whole track
+		celebrate(progress.isTrackComplete(category, trackSlugs));
 	}
 
 	function onToggle() {
@@ -91,9 +103,17 @@
 
 {#if toast}
 	<div
-		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-5 py-2.5 font-pixel text-xs text-bg shadow-xl"
+		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full px-5 py-2.5 font-pixel text-xs shadow-xl"
+		class:bg-fg={!trackMastered}
+		class:text-bg={!trackMastered}
+		class:bg-accent={trackMastered}
+		class:text-white={trackMastered}
 		role="status"
 	>
-		🎉 +{xp} XP · {progress.rank.name} · {progress.xp} XP total
+		{#if trackMastered}
+			🏆 Track mastered — {trackLabel}!
+		{:else}
+			🎉 +{xp} XP · {progress.rank.name} · {progress.xp} XP total
+		{/if}
 	</div>
 {/if}

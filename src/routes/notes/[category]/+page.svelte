@@ -2,11 +2,16 @@
 	import { onMount } from 'svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
+	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
+	import { GROUP_ORDER } from '$lib/data/categories';
+	import { cardColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 
 	let { data } = $props();
 
 	onMount(() => progress.hydrate());
+
+	const trackColor = $derived(cardColor(Math.max(0, GROUP_ORDER.indexOf(data.meta.group))));
 
 	const slugs = $derived(data.chapters.map((c) => c.slug));
 	const doneCount = $derived(progress.ready ? progress.doneIn(data.category, slugs) : 0);
@@ -50,7 +55,10 @@
 				<span class="text-muted"> chapters · {trackXp} XP earned</span>
 			</p>
 			{#if allDone}
-				<span class="font-pixel text-sm text-accent">Track complete 🎉</span>
+				<div class="flex items-center gap-3">
+					<span class="font-pixel text-sm text-accent">Track mastered 🎉</span>
+					<TrackBadge label={data.meta.label} color={trackColor} earned size="sm" />
+				</div>
 			{:else if nextChapter}
 				<a
 					href={`/notes/${data.category}/${nextChapter.slug}`}

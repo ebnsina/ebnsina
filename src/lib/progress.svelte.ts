@@ -94,6 +94,11 @@ class Progress {
 		return slugs.reduce((n, s) => n + (this.isDone(category, s) ? 1 : 0), 0);
 	}
 
+	/** A track (category) is "mastered" once every one of its chapters is done. */
+	isTrackComplete(category: string, slugs: string[]) {
+		return slugs.length > 0 && this.doneIn(category, slugs) === slugs.length;
+	}
+
 	get xp() {
 		let sum = 0;
 		for (const k in this.completed) sum += this.completed[k].xp;
