@@ -2173,6 +2173,164 @@
 			}
 		},
 		{
+			"category": "distributed-systems",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Distributed Systems — Roadmap",
+				"subtitle": "From a single machine to many: failure, time, replication, consensus, and the trade-offs that define every distributed system.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "01-what-is-distributed",
+			"meta": {
+				"title": "What Makes a System Distributed",
+				"subtitle": "Why we distribute at all, why independent failure changes everything, and the eight fallacies that trip up every newcomer.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 min",
+				"topics": [
+					"distributed",
+					"fallacies"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "02-failure-and-time",
+			"meta": {
+				"title": "Failure Models & Time",
+				"subtitle": "How nodes fail, why a network partition is the failure that matters, and why clocks and timeouts cannot be trusted to tell slow from dead.",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"failure",
+					"clocks",
+					"timeouts"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "03-replication",
+			"meta": {
+				"title": "Replication",
+				"subtitle": "Keeping copies of data on multiple machines: single-leader, multi-leader, and leaderless designs, sync vs async, and quorums.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 min",
+				"topics": [
+					"replication",
+					"quorum",
+					"leader"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "04-consistency-models",
+			"meta": {
+				"title": "Consistency Models",
+				"subtitle": "What 'consistent' actually means: linearizable, sequential, causal, and eventual consistency, and the trade-offs along the spectrum.",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"consistency",
+					"linearizability",
+					"causal"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "05-cap-pacelc",
+			"meta": {
+				"title": "CAP & PACELC",
+				"subtitle": "The CAP theorem stated precisely, why a partition forces a choice between consistency and availability, and the latency dimension PACELC adds.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 min",
+				"topics": [
+					"cap",
+					"pacelc",
+					"tradeoffs"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "06-consensus",
+			"meta": {
+				"title": "Consensus: Raft & Paxos",
+				"subtitle": "How a group of machines agrees on a single value despite failures: leader election, log replication, and a full walkthrough of Raft.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"consensus",
+					"raft",
+					"paxos"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "07-ordering-clocks",
+			"meta": {
+				"title": "Ordering & Logical Clocks",
+				"subtitle": "Ordering events without a shared clock: happens-before, Lamport timestamps, vector clocks, and hybrid logical clocks.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "11 min",
+				"topics": [
+					"lamport",
+					"vector clocks",
+					"ordering"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "08-distributed-transactions",
+			"meta": {
+				"title": "Distributed Transactions",
+				"subtitle": "Coordinating changes across services: two-phase commit and its blocking problem, sagas, the outbox pattern, and exactly-once myths.",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "12 min",
+				"topics": [
+					"2pc",
+					"saga",
+					"outbox"
+				]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "09-building-reliable",
+			"meta": {
+				"title": "Building Reliable Distributed Systems",
+				"subtitle": "Putting it together: retries with backoff and jitter, idempotency and deduplication, delivery semantics, and durable execution.",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "12 min",
+				"topics": [
+					"idempotency",
+					"retries",
+					"durable execution"
+				]
+			}
+		},
+		{
 			"category": "dsa",
 			"slug": "01-arrays-strings",
 			"meta": {
@@ -4987,6 +5145,149 @@
 			}
 		},
 		{
+			"category": "nosql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "NoSQL — Roadmap",
+				"subtitle": "Four families, one question: what are your access patterns? Key-value, document, wide-column, and graph stores explained.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"nosql"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "01-why-nosql",
+			"meta": {
+				"title": "Why NoSQL",
+				"subtitle": "Where relational databases strain at scale, the four NoSQL families, ACID vs BASE, and the cases where NoSQL is the wrong answer.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"nosql",
+					"base",
+					"cap"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "02-key-value",
+			"meta": {
+				"title": "Key-Value Stores",
+				"subtitle": "The simplest NoSQL model: a giant distributed hash map. Redis, DynamoDB, TTL, and the workloads where nothing beats an O(1) lookup.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 min",
+				"topics": [
+					"key-value",
+					"redis",
+					"dynamodb"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "03-document",
+			"meta": {
+				"title": "Document Databases",
+				"subtitle": "Store whole entities as JSON documents. MongoDB, the embedding vs referencing decision, indexing, and designing schemas around how you read.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"document",
+					"mongodb",
+					"embedding"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "04-wide-column",
+			"meta": {
+				"title": "Wide-Column Stores",
+				"subtitle": "Cassandra and Bigtable: partition keys, clustering keys, query-first modeling, the write-optimized LSM path, and tunable consistency.",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 min",
+				"topics": [
+					"cassandra",
+					"partition key",
+					"clustering"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "05-graph",
+			"meta": {
+				"title": "Graph Databases",
+				"subtitle": "Nodes, edges, and properties as first-class citizens. Neo4j and Cypher, traversals, and the queries where graphs leave joins in the dust.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "11 min",
+				"topics": [
+					"graph",
+					"neo4j",
+					"traversal"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "06-data-modeling-nosql",
+			"meta": {
+				"title": "Data Modeling for NoSQL",
+				"subtitle": "Access-pattern-first design, deliberate denormalization, single-table design in DynamoDB, and relationships when there are no joins.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"access patterns",
+					"single-table",
+					"denormalization"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "07-consistency-replication",
+			"meta": {
+				"title": "Consistency & Replication in NoSQL",
+				"subtitle": "Tunable and eventual consistency, quorum math, conflict resolution with LWW, vector clocks, and CRDTs, plus read repair and anti-entropy.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"consistency",
+					"replication",
+					"conflicts"
+				]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "08-choosing-database",
+			"meta": {
+				"title": "Choosing the Right Database",
+				"subtitle": "A decision framework, polyglot persistence, SQL vs each NoSQL family, the common mistakes, and how to match a workload to a store.",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "12 min",
+				"topics": [
+					"polyglot",
+					"decision",
+					"tradeoffs"
+				]
+			}
+		},
+		{
 			"category": "observability",
 			"slug": "00-roadmap",
 			"meta": {
@@ -5094,6 +5395,149 @@
 					"PagerDuty",
 					"runbooks",
 					"alert fatigue"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Operating Systems — Roadmap",
+				"subtitle": "How the kernel turns raw hardware into the processes, memory, and files your programs depend on.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"operating systems"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "01-what-an-os-does",
+			"meta": {
+				"title": "What an Operating System Does",
+				"subtitle": "The kernel sits between your programs and the hardware — protecting, sharing, and arbitrating every resource.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"kernel",
+					"syscall",
+					"user mode"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "02-processes",
+			"meta": {
+				"title": "Processes",
+				"subtitle": "A running program is a process — its own address space, its own resources, tracked by the kernel from birth to death.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"process",
+					"fork",
+					"exec"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "03-threads-concurrency",
+			"meta": {
+				"title": "Threads & Concurrency",
+				"subtitle": "Multiple flows of execution sharing one address space — fast, powerful, and dangerous without discipline.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "14 min",
+				"topics": [
+					"threads",
+					"context switch",
+					"race condition"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "04-scheduling",
+			"meta": {
+				"title": "CPU Scheduling",
+				"subtitle": "With more runnable threads than cores, the kernel must constantly choose who runs next — quickly and fairly.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"scheduler",
+					"preemption",
+					"cfs"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "05-memory-management",
+			"meta": {
+				"title": "Memory Management & Virtual Memory",
+				"subtitle": "Every process thinks it owns a vast, private memory. The kernel and MMU maintain that illusion over scarce physical RAM.",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"virtual memory",
+					"paging",
+					"tlb"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "06-synchronization",
+			"meta": {
+				"title": "Synchronization",
+				"subtitle": "When threads share data, correctness depends on controlling who touches what, when — with locks, signals, and care.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "15 min",
+				"topics": [
+					"mutex",
+					"semaphore",
+					"deadlock"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "07-file-systems",
+			"meta": {
+				"title": "File Systems",
+				"subtitle": "Turning flat disk blocks into named, hierarchical, durable files — with a cache in the middle that changes everything.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"inode",
+					"page cache",
+					"journaling"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "08-io-syscalls",
+			"meta": {
+				"title": "I/O & System Calls",
+				"subtitle": "How read and write really travel through the kernel — and how one thread watches thousands of connections at once.",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "16 min",
+				"topics": [
+					"epoll",
+					"non-blocking",
+					"io_uring"
 				]
 			}
 		},
@@ -5321,6 +5765,167 @@
 			}
 		},
 		{
+			"category": "redis",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Redis — Roadmap",
+				"subtitle": "An in-memory data structure store: cache, queue, lock, and primary store all in one.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"redis"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "01-what-redis-is",
+			"meta": {
+				"title": "What Redis Is & the Core Model",
+				"subtitle": "An in-memory key-value store with a single-threaded event loop and a dead-simple wire protocol.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "11 min",
+				"topics": [
+					"redis",
+					"in-memory",
+					"single-threaded"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "02-data-structures",
+			"meta": {
+				"title": "Core Data Structures",
+				"subtitle": "Strings, hashes, lists, sets, sorted sets — and the specialized types that ride on top of them.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"strings",
+					"hashes",
+					"lists",
+					"sets",
+					"sorted sets"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "03-keys-expiration-eviction",
+			"meta": {
+				"title": "Keys, Expiration & Eviction",
+				"subtitle": "Naming, TTLs, how Redis reclaims expired keys, and what happens when memory fills up.",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 min",
+				"topics": [
+					"ttl",
+					"expiration",
+					"eviction"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "04-persistence",
+			"meta": {
+				"title": "Persistence: RDB & AOF",
+				"subtitle": "How an in-memory store survives a restart, and what 'durable' really buys you.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 min",
+				"topics": [
+					"rdb",
+					"aof",
+					"durability"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "05-pubsub-streams",
+			"meta": {
+				"title": "Pub/Sub & Streams",
+				"subtitle": "Fire-and-forget messaging versus a durable, replayable log with consumer groups.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "13 min",
+				"topics": [
+					"pubsub",
+					"streams",
+					"consumer groups"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "06-cache-queue-lock",
+			"meta": {
+				"title": "Redis as Cache, Queue & Distributed Lock",
+				"subtitle": "Three workhorse patterns — and the sharp edges hiding in each.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "14 min",
+				"topics": [
+					"cache",
+					"queue",
+					"distributed lock"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "07-transactions-scripting",
+			"meta": {
+				"title": "Transactions & Lua Scripting",
+				"subtitle": "MULTI/EXEC, optimistic locking with WATCH, and atomic multi-step logic with Lua.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"multi",
+					"lua",
+					"atomicity"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "08-replication-cluster",
+			"meta": {
+				"title": "Replication, Sentinel & Cluster",
+				"subtitle": "From one node to many: copies, automatic failover, and sharding across hash slots.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "13 min",
+				"topics": [
+					"replication",
+					"sentinel",
+					"cluster"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "09-production",
+			"meta": {
+				"title": "Operating Redis in Production",
+				"subtitle": "Memory, latency, monitoring, security, and the pitfalls that take instances down.",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "14 min",
+				"topics": [
+					"production",
+					"monitoring",
+					"performance"
+				]
+			}
+		},
+		{
 			"category": "replication-sharding",
 			"slug": "00-roadmap",
 			"meta": {
@@ -5535,6 +6140,167 @@
 					"A/B testing",
 					"search quality",
 					"click-through rate"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "SQL — Roadmap",
+				"subtitle": "Your path from writing your first SELECT to designing schemas and shipping zero-downtime migrations.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 min",
+				"topics": [
+					"roadmap",
+					"sql",
+					"postgres"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "01-relational-model",
+			"meta": {
+				"title": "The Relational Model & Basic Queries",
+				"subtitle": "Tables, rows, columns, types — and the SELECT statement that pulls data back out.",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 min",
+				"topics": [
+					"select",
+					"relational model",
+					"ddl"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "02-aggregation",
+			"meta": {
+				"title": "Filtering, Grouping & Aggregation",
+				"subtitle": "Collapse many rows into summary answers with COUNT, SUM, GROUP BY, and HAVING.",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 min",
+				"topics": [
+					"group by",
+					"aggregate",
+					"having"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "03-joins",
+			"meta": {
+				"title": "Joins",
+				"subtitle": "Combining rows from multiple tables — the operation that makes relational databases relational.",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "16 min",
+				"topics": [
+					"join",
+					"inner join",
+					"outer join"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "04-subqueries-ctes",
+			"meta": {
+				"title": "Subqueries & CTEs",
+				"subtitle": "Queries inside queries — scalar, correlated, derived tables, WITH clauses, and recursion.",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "15 min",
+				"topics": [
+					"subquery",
+					"cte",
+					"recursive"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "05-indexes-query-plans",
+			"meta": {
+				"title": "Indexes & Query Plans",
+				"subtitle": "How the database finds rows fast — B-tree indexes, EXPLAIN, and when an index is useless.",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "17 min",
+				"topics": [
+					"index",
+					"explain",
+					"b-tree"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "06-transactions-isolation",
+			"meta": {
+				"title": "Transactions & Isolation Levels",
+				"subtitle": "ACID, the four isolation levels, MVCC, and the locks and deadlocks that keep concurrent writes correct.",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "18 min",
+				"topics": [
+					"acid",
+					"isolation",
+					"mvcc",
+					"locking"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "07-window-functions",
+			"meta": {
+				"title": "Window Functions",
+				"subtitle": "Aggregate-like calculations that keep every row — rankings, running totals, and row-to-row comparisons.",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "16 min",
+				"topics": [
+					"window function",
+					"partition by",
+					"ranking"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "08-query-optimization",
+			"meta": {
+				"title": "Query Optimization & Performance",
+				"subtitle": "Reading plans in anger, killing N+1 queries, paginating at scale, and avoiding the classic anti-patterns.",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "17 min",
+				"topics": [
+					"optimization",
+					"n+1",
+					"performance"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "09-schema-design-migrations",
+			"meta": {
+				"title": "Schema Design & Migrations",
+				"subtitle": "Constraints, normalization, generated columns, and the expand/contract pattern for zero-downtime change.",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "18 min",
+				"topics": [
+					"schema",
+					"constraints",
+					"migrations"
 				]
 			}
 		},
