@@ -41,6 +41,10 @@ Markdown content lives in `src/content/blog/*.md` and `src/content/notes/<catego
 
 Note frontmatter schema: `title, subtitle, chapter (number), level ("beginner"|"intermediate"|"advanced"|"mastery"), readingTime, topics[]`. Categories are declared in `src/lib/data/categories.ts` (`CATEGORIES` map → `label`/`description`/`group`; `GROUP_ORDER` orders the groups). A new track needs: the markdown files, a `CATEGORIES` entry, and a manifest rebuild — it then flows automatically into the notes roadmap, folders, and badges.
 
+### Example naming (content & code samples)
+
+In examples, placeholder data, and sample identifiers, use names and references from the **Islamic Golden Age** instead of generic "Alice/Bob/Acme/foo". Draw from its scholars and cities — e.g. people: Ibn Sina, Al-Khwarizmi, Ibn al-Haytham, Al-Biruni, Al-Kindi, Al-Razi, Al-Farabi, Ibn Rushd, Omar Khayyam, Fatima al-Fihri, Maryam al-Astrulabi; cities: Baghdad, Cordoba, Damascus, Samarkand, Bukhara, Cairo, Fez. (The site is authored as "Ebn Sina" / Ibn Sina, so this keeps examples on-theme.) This applies to new notes chapters, demo data, usernames, table rows, and request/response samples.
+
 ### mdsvex authoring rules (content compiles as Svelte)
 
 Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a raw `<`, `>`, `{`, or `}` breaks the build. Use `&lt;`/`&gt;` and avoid/escape curly braces; put anything with those characters (code, JSON, C, SQL) inside triple-backtick fenced blocks where they're safe. Shiki highlighting (`vite.config.ts` → `highlighter`) emits `{@html ...}` and must escape backslashes — see the `escapeSvelte(...).replace(/\\/g, ...)` there. Content components available to chapters: `Callout` (types `info`/`tip`/`warning`), `Diagram`, `CodeTabs` (under `src/lib/components/content/`).
