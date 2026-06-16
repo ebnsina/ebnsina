@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Check, Trophy, Sparkles } from '@lucide/svelte';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 
 	let {
@@ -79,7 +80,7 @@
 			aria-label={done ? 'Mark chapter incomplete' : 'Mark chapter complete'}
 		>
 			{#if done}
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+				<Check size={14} strokeWidth={3} color="var(--bg)" />
 			{/if}
 		</button>
 		<div>
@@ -110,10 +111,14 @@
 		class:text-white={trackMastered}
 		role="status"
 	>
-		{#if trackMastered}
-			🏆 Track mastered — {trackLabel}!
-		{:else}
-			🎉 +{xp} XP · {progress.rank.name} · {progress.xp} XP total
-		{/if}
+		<span class="inline-flex items-center gap-2">
+			{#if trackMastered}
+				<Trophy size={14} />
+				Track mastered — {trackLabel}!
+			{:else}
+				<Sparkles size={14} />
+				+{xp} XP · {progress.rank.name} · {progress.xp} XP total
+			{/if}
+		</span>
 	</div>
 {/if}

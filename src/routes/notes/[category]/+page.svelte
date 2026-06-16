@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Check, Trophy } from '@lucide/svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
@@ -56,7 +57,9 @@
 			</p>
 			{#if allDone}
 				<div class="flex items-center gap-3">
-					<span class="font-pixel text-sm text-accent">Track mastered 🎉</span>
+					<span class="inline-flex items-center gap-1.5 font-pixel text-sm text-accent">
+						<Trophy size={15} /> Track mastered
+					</span>
 					<TrackBadge label={data.meta.label} color={trackColor} earned size="sm" />
 				</div>
 			{:else if nextChapter}
@@ -96,7 +99,7 @@
 						class:text-muted={!isDone && !isNext}
 					>
 						{#if isDone}
-							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+							<Check size={13} strokeWidth={3} />
 						{:else}
 							{String(ch.meta.chapter).padStart(2, '0')}
 						{/if}

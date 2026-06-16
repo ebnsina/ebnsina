@@ -65,6 +65,10 @@ Per-chapter `level` should progress monotonically (beginner→mastery) within a 
 
 Brand/visual constraints: no neon/glow; minimal cards; geometric type with a cherry/burgundy accent.
 
+## Icons
+
+Never use emoji in UI. Use icon components from **`@lucide/svelte`** (e.g. `import { Trophy } from '@lucide/svelte'` → `<Trophy size={14} strokeWidth={3} color="var(--bg)" />`); they inherit `currentColor`. Do not hand-roll inline `<svg>` icons either — prefer the Lucide component so icons stay consistent.
+
 ## Conventions
 
 - Svelte 5 runes only (`$props`, `$state`, `$derived`, `$effect`). When a value reads a prop, make it `$derived` (svelte-check flags `state_referenced_locally`).

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Check, Landmark } from '@lucide/svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import { progress } from '$lib/progress.svelte';
 
@@ -119,7 +120,7 @@
 								class:border-[color-mix(in_oklch,var(--fg)_12%,transparent)]={!tdone}
 							>
 								{#if tdone}
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+									<Check size={12} strokeWidth={3} color="var(--accent)" />
 								{/if}
 								<span class="transition-colors group-hover:text-accent">{t.label}</span>
 								<span class="font-pixel text-[0.6rem] text-muted">{td}/{t.slugs.length}</span>
@@ -134,11 +135,11 @@
 		<li class="flex gap-4 sm:gap-5">
 			<div class="flex w-9 shrink-0 justify-center">
 				<span
-					class="grid size-9 place-items-center rounded-xl text-lg"
+					class="grid size-9 place-items-center rounded-xl"
 					style={allDone
 						? 'background: var(--accent); color:#fff;'
 						: 'background: color-mix(in oklch, var(--fg) 7%, transparent); color: color-mix(in oklch, var(--fg) 35%, transparent);'}
-					aria-hidden="true">🏛</span
+					aria-hidden="true"><Landmark size={18} /></span
 				>
 			</div>
 			<div class="flex flex-1 flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] p-5">
