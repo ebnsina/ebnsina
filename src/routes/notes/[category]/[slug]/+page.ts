@@ -22,6 +22,7 @@ export async function load({ params }) {
 		component: loaded.component,
 		meta: loaded.meta,
 		category: params.category,
+		slug: params.slug,
 		categoryLabel: meta.label,
 		total: chapters.length,
 		prev: idx > 0 ? chapters[idx - 1] : null,

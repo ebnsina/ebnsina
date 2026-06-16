@@ -55,6 +55,7 @@
 		"@fontsource-variable/geist-mono": "^5.2.8",
 		"@threlte/core": "^8.5.16",
 		"@threlte/extras": "^9.21.0",
+		"geist": "^1.7.2",
 		"three": "^0.184.0"
 	}
 }

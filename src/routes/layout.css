@@ -4,6 +4,16 @@
 @import '@fontsource-variable/epilogue';
 @import '@fontsource-variable/geist-mono';
 
+/* Geist Pixel (self-hosted from the `geist` package) — used for the notes
+   "journey" game UI. Square variant = classic blocky arcade look. */
+@font-face {
+	font-family: 'Geist Pixel';
+	src: url('/fonts/GeistPixel-Square.woff2') format('woff2');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
@@ -44,6 +54,7 @@
 	--font-display: 'Bricolage Grotesque Variable', 'Epilogue Variable', ui-sans-serif, sans-serif;
 	--font-serif: 'Bricolage Grotesque Variable', 'Epilogue Variable', ui-sans-serif, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+	--font-pixel: 'Geist Pixel', 'Geist Mono Variable', ui-monospace, monospace;
 
 	--color-bg: var(--bg);
 	--color-fg: var(--fg);

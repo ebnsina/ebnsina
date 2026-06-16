@@ -1,11 +1,14 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
 	import { getCategoryGroups, GROUP_ORDER } from '$lib/data/categories';
+	import { getTotalChapters } from '$lib/content';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import NotesFolder from '$lib/components/NotesFolder.svelte';
+	import JourneyHeader from '$lib/components/notes/JourneyHeader.svelte';
 	import { cardColor } from '$lib/colors';
 
 	const groups = getCategoryGroups();
+	const total = getTotalChapters();
 </script>
 
 <Seo title="Notes" description="Deep-dive series on systems, infrastructure, and engineering craft." />
@@ -17,6 +20,8 @@
 		description="Deep-dive series on systems, infrastructure, and engineering craft."
 		shape="graph"
 	/>
+
+	<JourneyHeader {total} />
 
 	<p class="mb-5 font-mono text-xs text-muted">Hover a folder to open its topics.</p>
 	<div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">

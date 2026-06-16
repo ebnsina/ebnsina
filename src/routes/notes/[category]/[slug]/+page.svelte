@@ -2,13 +2,18 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
+	import ReadingBar from '$lib/components/notes/ReadingBar.svelte';
+	import ChapterComplete from '$lib/components/notes/ChapterComplete.svelte';
 
 	let { data } = $props();
 	const Content = $derived(data.component);
 	const meta = $derived(data.meta);
+	const nextHref = $derived(data.next ? `/notes/${data.category}/${data.next.slug}` : null);
 </script>
 
 <Seo title={`${meta.title} — ${data.categoryLabel}`} description={meta.subtitle} type="article" />
+
+<ReadingBar />
 
 <ArticleLayout>
 	{#snippet header()}
@@ -47,7 +52,13 @@
 	<Content />
 
 	{#snippet footer()}
-		<nav class="mt-16 flex justify-between gap-3">
+		<ChapterComplete
+			category={data.category}
+			slug={data.slug}
+			level={meta.level}
+			{nextHref}
+		/>
+		<nav class="mt-10 flex justify-between gap-3">
 			{#if data.prev}
 				<a href={`/notes/${data.category}/${data.prev.slug}`} class="chapter-nav-link">
 					<span class="chapter-nav-label">← Previous</span>

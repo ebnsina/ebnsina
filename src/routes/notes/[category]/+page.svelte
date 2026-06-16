@@ -1,15 +1,36 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import { colorFor } from '$lib/colors';
+	import { progress, xpForLevel } from '$lib/progress.svelte';
 
 	let { data } = $props();
+
+	onMount(() => progress.hydrate());
+
+	const slugs = $derived(data.chapters.map((c) => c.slug));
+	const doneCount = $derived(progress.ready ? progress.doneIn(data.category, slugs) : 0);
+	const trackXp = $derived(
+		progress.ready
+			? data.chapters.reduce(
+					(s, c) => s + (progress.isDone(data.category, c.slug) ? xpForLevel(c.meta.level) : 0),
+					0
+				)
+			: 0
+	);
+	const pct = $derived(data.chapters.length ? Math.round((doneCount / data.chapters.length) * 100) : 0);
+
+	// recommended next = first chapter (in order) not yet completed
+	const nextChapter = $derived(
+		progress.ready ? data.chapters.find((c) => !progress.isDone(data.category, c.slug)) : undefined
+	);
+	const allDone = $derived(progress.ready && doneCount === data.chapters.length && data.chapters.length > 0);
 </script>
 
 <Seo title={`${data.meta.label} — Notes`} description={data.meta.description} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
-	<header class="mb-10">
+	<header class="mb-8">
 		<a
 			href="/notes"
 			class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
@@ -19,21 +40,79 @@
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
 
-	<ol class="space-y-2">
-		{#each data.chapters as ch (ch.slug)}
-			<li>
+	<!-- Track progress + guidance -->
+	<div
+		class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,var(--bg))] p-5"
+	>
+		<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+			<p class="font-pixel text-sm">
+				<span class="text-fg">{doneCount}/{data.chapters.length}</span>
+				<span class="text-muted"> chapters · {trackXp} XP earned</span>
+			</p>
+			{#if allDone}
+				<span class="font-pixel text-sm text-accent">Track complete 🎉</span>
+			{:else if nextChapter}
+				<a
+					href={`/notes/${data.category}/${nextChapter.slug}`}
+					class="rounded-full bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
+					>{doneCount === 0 ? 'Start here' : 'Continue'} →</a
+				>
+			{/if}
+		</div>
+		<div class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]">
+			<div
+				class="h-full rounded-full bg-accent transition-[width] duration-500"
+				style="width: {pct}%"
+			></div>
+		</div>
+	</div>
+
+	<!-- The path -->
+	<ol class="relative space-y-2">
+		{#each data.chapters as ch, i (ch.slug)}
+			{@const isDone = progress.ready && progress.isDone(data.category, ch.slug)}
+			{@const isNext = nextChapter?.slug === ch.slug}
+			<li class="relative flex gap-4">
+				<!-- node + connector rail -->
+				<div class="relative flex w-7 shrink-0 flex-col items-center">
+					{#if i > 0}
+						<span class="absolute -top-2 h-2 w-px bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
+					{/if}
+					<span
+						class="z-10 mt-3.5 grid size-7 place-items-center rounded-full border-2 font-pixel text-[0.6rem] transition-colors"
+						class:border-accent={isDone || isNext}
+						class:bg-accent={isDone}
+						class:text-bg={isDone}
+						class:text-accent={isNext && !isDone}
+						class:border-[color-mix(in_oklch,var(--fg)_18%,transparent)]={!isDone && !isNext}
+						class:text-muted={!isDone && !isNext}
+					>
+						{#if isDone}
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+						{:else}
+							{String(ch.meta.chapter).padStart(2, '0')}
+						{/if}
+					</span>
+					{#if i < data.chapters.length - 1}
+						<span class="w-px flex-1 bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
+					{/if}
+				</div>
+
 				<a
 					href={`/notes/${data.category}/${ch.slug}`}
-					class="glass-card group flex items-center gap-4 px-4 py-3.5"
-					style="--cc: {colorFor(ch.slug)}"
+					class="group mb-1 flex min-w-0 flex-1 items-center gap-4 rounded-xl border px-4 py-3.5 transition-colors"
+					class:border-[color-mix(in_oklch,var(--accent)_40%,transparent)]={isNext}
+					class:border-[color-mix(in_oklch,var(--fg)_8%,transparent)]={!isNext}
 				>
-					<span class="w-6 flex-shrink-0 font-mono text-xs tabular-nums text-muted">
-						{String(ch.meta.chapter).padStart(2, '0')}
-					</span>
 					<span class="min-w-0 flex-1">
-						<span class="font-semibold transition-colors group-hover:text-accent"
-							>{ch.meta.title}</span
-						>
+						<span class="flex items-center gap-2">
+							<span class="truncate font-semibold transition-colors group-hover:text-accent"
+								>{ch.meta.title}</span
+							>
+							{#if isNext}
+								<span class="shrink-0 rounded-full bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">{doneCount === 0 ? 'Start' : 'Next'}</span>
+							{/if}
+						</span>
 						<span class="mt-0.5 block truncate text-sm text-muted">{ch.meta.subtitle}</span>
 					</span>
 					<span class="hidden flex-shrink-0 sm:block"><LevelBadge level={ch.meta.level} /></span>

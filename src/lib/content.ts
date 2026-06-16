@@ -68,6 +68,10 @@ export function getNoteCategories(): string[] {
 	return [...new Set(noteList.map((c) => c.category))];
 }
 
+export function getTotalChapters(): number {
+	return noteList.length;
+}
+
 export async function loadChapter(category: string, slug: string) {
 	const meta = noteList.find((c) => c.category === category && c.slug === slug)?.meta;
 	const loader = noteComps[`/src/content/notes/${category}/${slug}.md`];
