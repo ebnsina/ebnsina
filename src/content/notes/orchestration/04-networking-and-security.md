@@ -183,7 +183,7 @@ metadata:
   name: developer-readonly
 subjects:
   - kind: User
-    name: "jane@example.com"
+    name: "layla@example.com"
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole

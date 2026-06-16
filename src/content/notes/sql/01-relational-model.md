@@ -25,9 +25,9 @@ A table called `users` might look like this:
 
 | id | email             | age | created_at          |
 |----|-------------------|-----|---------------------|
-| 1  | ada@example.com   | 36  | 2026-01-04 09:12:00 |
-| 2  | grace@example.com | 41  | 2026-02-18 14:30:00 |
-| 3  | linus@example.com |     | 2026-03-01 08:00:00 |
+| 1  | lubna@example.com   | 36  | 2026-01-04 09:12:00 |
+| 2  | nusayba@example.com | 41  | 2026-02-18 14:30:00 |
+| 3  | harun@example.com |     | 2026-03-01 08:00:00 |
 
 Notice row 3 has no `age` — that empty cell is a `NULL`, which we'll return to.
 
@@ -76,9 +76,9 @@ Inserting rows uses **DML** (Data Manipulation Language):
 
 ```sql
 INSERT INTO users (email, age) VALUES
-  ('ada@example.com', 36),
-  ('grace@example.com', 41),
-  ('linus@example.com', NULL);
+  ('lubna@example.com', 36),
+  ('nusayba@example.com', 41),
+  ('harun@example.com', NULL);
 ```
 
 ## SELECT: Reading Data

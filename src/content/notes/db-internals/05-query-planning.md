@@ -48,7 +48,7 @@ interface PlanNode {
   children: PlanNode[];
 }
 
-// For: SELECT * FROM users WHERE email = 'alice@example.com'
+// For: SELECT * FROM users WHERE email = 'fatima@example.com'
 
 // Option A: Sequential Scan
 // Read ALL pages, check every row
@@ -150,8 +150,8 @@ ANALYZE users;
 CREATE INDEX idx_users_covering ON users (country) INCLUDE (name, email);
 
 -- 2. Avoid functions on indexed columns
-WHERE LOWER(email) = 'alice@example.com'  -- ✗ can't use index
-WHERE email = 'alice@example.com'          -- ✓ uses index
+WHERE LOWER(email) = 'fatima@example.com'  -- ✗ can't use index
+WHERE email = 'fatima@example.com'          -- ✓ uses index
 
 -- 3. Use partial indexes for filtered queries
 CREATE INDEX idx_active_users ON users (email) WHERE active = true;

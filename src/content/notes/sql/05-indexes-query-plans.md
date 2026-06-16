@@ -13,7 +13,7 @@ topics: ["index", "explain", "b-tree"]
 
 ## The Problem Indexes Solve
 
-Without an index, finding rows that match `WHERE email = 'ada@example.com'` means reading **every row** in the table — a *sequential scan*. On a million-row table that's a million reads to find one row. An index is a separate, sorted data structure that lets the database jump straight to matching rows, the same way a book's index sends you to a page instead of reading cover to cover.
+Without an index, finding rows that match `WHERE email = 'lubna@example.com'` means reading **every row** in the table — a *sequential scan*. On a million-row table that's a million reads to find one row. An index is a separate, sorted data structure that lets the database jump straight to matching rows, the same way a book's index sends you to a page instead of reading cover to cover.
 
 The trade-off: indexes speed up reads but slow down writes (every `INSERT` / `UPDATE` / `DELETE` must also update the index) and consume disk space. Index deliberately, not reflexively.
 
@@ -24,7 +24,7 @@ Postgres's default index type is a **B-tree** (balanced tree). It keeps keys sor
 - Equality: `WHERE id = 42`
 - Ranges: `WHERE created_at >= '2026-01-01'`
 - Sorting: `ORDER BY created_at` (the index is already sorted)
-- Prefix matching: `WHERE email LIKE 'ada%'` (but *not* `LIKE '%ada'`)
+- Prefix matching: `WHERE email LIKE 'lubna%'` (but *not* `LIKE '%lubna'`)
 
 ```sql
 CREATE INDEX idx_users_email ON users (email);
@@ -120,8 +120,8 @@ This is why an index on a boolean or low-cardinality column frequently goes unus
 
 An index on a column is wasted if the query can't use it. Common cases:
 
-- **Function or expression on the column.** `WHERE lower(email) = 'ada@x.com'` can't use a plain index on `email`. Create an *expression index*: `CREATE INDEX ON users (lower(email))`.
-- **Leading wildcard.** `LIKE '%ada'` can't use a B-tree (it's sorted by prefix). Trigram (`GIN` + `pg_trgm`) indexes handle this.
+- **Function or expression on the column.** `WHERE lower(email) = 'lubna@x.com'` can't use a plain index on `email`. Create an *expression index*: `CREATE INDEX ON users (lower(email))`.
+- **Leading wildcard.** `LIKE '%lubna'` can't use a B-tree (it's sorted by prefix). Trigram (`GIN` + `pg_trgm`) indexes handle this.
 - **Type mismatch.** Comparing an indexed `text` column to an integer literal may force a cast that bypasses the index.
 - **Low selectivity**, as above — the planner correctly skips it.
 - **Tiny tables.** Below a few hundred rows, a seq scan is faster than index overhead; the planner won't bother with the index.

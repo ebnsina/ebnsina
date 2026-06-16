@@ -256,7 +256,7 @@ async function main() {
     userId,
     `INSERT INTO users (id, username, email) VALUES ($1, $2, $3)
      ON CONFLICT (id) DO NOTHING`,
-    [userId, "johndoe", "john@example.com"]
+    [userId, "ahmadrazi", "ahmad@example.com"]
   );
 
   // Reads go to replica
