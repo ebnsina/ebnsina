@@ -5,11 +5,25 @@
 	let { total }: { total: number } = $props();
 
 	let fileInput = $state<HTMLInputElement>();
+	let menuEl = $state<HTMLElement>();
 	let menuOpen = $state(false);
 	let confirmReset = $state(false);
 	let importError = $state('');
 
 	onMount(() => progress.hydrate());
+
+	function closeMenu() {
+		menuOpen = false;
+		confirmReset = false;
+	}
+
+	function onWindowClick(e: MouseEvent) {
+		if (menuOpen && menuEl && !menuEl.contains(e.target as Node)) closeMenu();
+	}
+
+	function onWindowKey(e: KeyboardEvent) {
+		if (menuOpen && e.key === 'Escape') closeMenu();
+	}
 
 	const pct = $derived(total ? Math.round((progress.count / total) * 100) : 0);
 
@@ -41,6 +55,8 @@
 		menuOpen = false;
 	}
 </script>
+
+<svelte:window onclick={onWindowClick} onkeydown={onWindowKey} />
 
 <section
 	class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,var(--bg))] p-5 sm:p-6"
@@ -84,7 +100,7 @@
 				{/if}
 			</div>
 
-			<div class="relative">
+			<div class="relative" bind:this={menuEl}>
 				<button
 					type="button"
 					onclick={() => (menuOpen = !menuOpen)}
