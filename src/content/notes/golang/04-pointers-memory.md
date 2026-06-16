@@ -16,12 +16,12 @@ topics: ["pointers", "memory", "stack", "heap", "nil", "pass by value"]
 A pointer is a variable that holds the **memory address** of another variable. Instead of holding the value itself, it holds directions to where the value lives.
 
 ```go
-name := "Alice"     // A string variable
+name := "Fatima"     // A string variable
 ptr := &name        // A pointer to that string (&name = "address of name")
 
-fmt.Println(name)   // "Alice"  — the value
+fmt.Println(name)   // "Fatima"  — the value
 fmt.Println(ptr)    // 0xc0000b4000 — the memory address
-fmt.Println(*ptr)   // "Alice"  — dereferencing: follow the address to get the value
+fmt.Println(*ptr)   // "Fatima"  — dereferencing: follow the address to get the value
 ```
 
 <Callout type="info">
@@ -39,21 +39,21 @@ Go passes everything **by value** — function arguments are always copies. With
 ```go
 // WITHOUT pointers — the original doesn't change
 func tryToModify(name string) {
-    name = "Bob"  // Modifies the COPY, not the original
+    name = "Omar"  // Modifies the COPY, not the original
 }
 
-original := "Alice"
+original := "Fatima"
 tryToModify(original)
-fmt.Println(original)  // Still "Alice"
+fmt.Println(original)  // Still "Fatima"
 
 // WITH pointers — you modify the original
 func actuallyModify(name *string) {
-    *name = "Bob"  // Follow the pointer, modify what's there
+    *name = "Omar"  // Follow the pointer, modify what's there
 }
 
-original := "Alice"
+original := "Fatima"
 actuallyModify(&original)  // Pass the address
-fmt.Println(original)       // "Bob" — it changed!
+fmt.Println(original)       // "Omar" — it changed!
 ```
 
 ## The Two Operators
@@ -135,7 +135,7 @@ func birthday(u *User) {
     // Note: Go automatically dereferences — no need to write (*u).Age++
 }
 
-user := &User{Name: "Alice", Age: 29}
+user := &User{Name: "Fatima", Age: 29}
 birthday(user)
 fmt.Println(user.Age)  // 30
 ```
@@ -153,7 +153,7 @@ Passing a struct by value is like photocopying a document and handing out the co
 Go simplifies struct pointer access — you don't need `(*ptr).Field`:
 
 ```go
-user := &User{Name: "Alice"}
+user := &User{Name: "Fatima"}
 
 // These are equivalent:
 fmt.Println((*user).Name)  // Explicit dereference

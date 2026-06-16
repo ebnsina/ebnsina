@@ -42,12 +42,12 @@ Consider showing an order with the customer's name. Normalized, the order holds 
 {
   "orderId": "8841",
   "customerId": "cust_42",
-  "customerName": "Mira",
+  "customerName": "Zubaida",
   "total": 35
 }
 ```
 
-Now rendering the order is one read. The cost surfaces on writes: if Mira renames herself, every order carrying `customerName` is stale until you update it. You accept that trade because, for most workloads, reads vastly outnumber that kind of write, and a slightly stale display name is harmless.
+Now rendering the order is one read. The cost surfaces on writes: if Zubaida renames herself, every order carrying `customerName` is stale until you update it. You accept that trade because, for most workloads, reads vastly outnumber that kind of write, and a slightly stale display name is harmless.
 
 Denormalization is a deliberate exchange: **cheaper reads and write fan-out, in return for write amplification and the burden of keeping copies in sync.** The skill is choosing *which* fields to duplicate — copy the small, hot, display-only fields; reference the large, volatile, or rarely-shown ones.
 
@@ -64,7 +64,7 @@ DynamoDB's most powerful and counterintuitive pattern is putting *multiple entit
 The trick is overloaded, generic keys — `PK` (partition) and `SK` (sort) — whose meaning is encoded by a prefix:
 
 ```json
-{ "PK": "USER#42", "SK": "PROFILE",      "name": "Mira", "tier": "gold" }
+{ "PK": "USER#42", "SK": "PROFILE",      "name": "Zubaida", "tier": "gold" }
 { "PK": "USER#42", "SK": "ORDER#8841",   "total": 35,    "status": "shipped" }
 { "PK": "USER#42", "SK": "ORDER#8842",   "total": 12,    "status": "pending" }
 { "PK": "USER#42", "SK": "ADDRESS#home", "city": "Dhaka" }
@@ -121,10 +121,10 @@ Suppose a SaaS app needs: get a workspace; list a workspace's projects; list a p
 The first three are a clean hierarchy — co-locate them by workspace and project so each is a single-partition read:
 
 ```json
-{ "PK": "WS#acme",            "SK": "META",            "name": "Acme" }
-{ "PK": "WS#acme",            "SK": "PROJ#web",        "name": "Website" }
-{ "PK": "WS#acme#PROJ#web",   "SK": "TASK#101",        "title": "Fix nav", "assignee": "u_42" }
-{ "PK": "WS#acme#PROJ#web",   "SK": "TASK#102",        "title": "Add auth", "assignee": "u_19" }
+{ "PK": "WS#cordoba",            "SK": "META",            "name": "Cordoba" }
+{ "PK": "WS#cordoba",            "SK": "PROJ#web",        "name": "Website" }
+{ "PK": "WS#cordoba#PROJ#web",   "SK": "TASK#101",        "title": "Fix nav", "assignee": "u_42" }
+{ "PK": "WS#cordoba#PROJ#web",   "SK": "TASK#102",        "title": "Add auth", "assignee": "u_19" }
 ```
 
 The fourth pattern cuts *across* the hierarchy — it doesn't start from a workspace or project, so no partition serves it. That is the textbook case for a secondary index keyed by assignee:

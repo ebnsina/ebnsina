@@ -80,7 +80,7 @@ cluster_known_nodes:6
 cluster_slots_assigned:16384
 127.0.0.1:7000> CLUSTER KEYSLOT user:1042
 (integer) 8326
-127.0.0.1:7000> SET user:1042 "Ada"
+127.0.0.1:7000> SET user:1042 "Lubna"
 -> Redirected to slot [8326] located at 127.0.0.1:7001
 OK
 ```
@@ -93,7 +93,7 @@ Sharding has a real cost: a command touching several keys only works if those ke
 
 ```text
 # Both keys hash on "{1042}" -> same slot -> multi-key ops work
-127.0.0.1:7000> MSET user:{1042}:name "Ada" user:{1042}:email "ada@x.com"
+127.0.0.1:7000> MSET user:{1042}:name "Lubna" user:{1042}:email "lubna@x.com"
 OK
 127.0.0.1:7000> CLUSTER KEYSLOT user:{1042}:name
 (integer) 5439

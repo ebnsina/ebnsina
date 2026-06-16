@@ -62,8 +62,8 @@ CREATE TABLE posts (
 CREATE INDEX posts_author_id_created_at ON posts(author_id, created_at DESC);
 
 INSERT INTO users (name, email) VALUES
-  ('Aoife',  'aoife@example.com'),
-  ('Niamh',  'niamh@example.com');
+  ('Sumayya',  'sumayya@example.com'),
+  ('Aisha',  'aisha@example.com');
 
 INSERT INTO posts (author_id, title, body) VALUES
   (1, 'Why I left Kubernetes', 'A long story...'),

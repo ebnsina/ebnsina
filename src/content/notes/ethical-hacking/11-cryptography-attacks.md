@@ -161,7 +161,7 @@ echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" | base64 -d
 
 # Part 2 (payload):
 echo "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ" | base64 -d
-# {"sub":"1234567890","name":"John Doe","iat":1516239022}
+# {"sub":"1234567890","name":"Ahmad al-Razi","iat":1516239022}
 ```
 
 ### Algorithm Confusion — none Algorithm
@@ -273,16 +273,16 @@ At 400ms/hash:
 # Create a VM with some weak passwords for users
 
 # On target VM (set up for practice):
-echo "alice:$(openssl passwd -6 'password123'):18000:0:99999:7:::" >> /etc/shadow
-echo "bob:$(openssl passwd -6 'letmein'):18000:0:99999:7:::" >> /etc/shadow
-echo "carol:$(openssl passwd -6 'C@r0l#2024!'):18000:0:99999:7:::" >> /etc/shadow
+echo "fatima:$(openssl passwd -6 'password123'):18000:0:99999:7:::" >> /etc/shadow
+echo "omar:$(openssl passwd -6 'letmein'):18000:0:99999:7:::" >> /etc/shadow
+echo "maryam:$(openssl passwd -6 'M@ry@m#2024!'):18000:0:99999:7:::" >> /etc/shadow
 
 # Transfer shadow file to Kali
 # Crack:
 hashcat -m 1800 shadow.txt /usr/share/wordlists/rockyou.txt
-# alice and bob crack immediately
-# carol: create targeted wordlist with cupp + rules
-cupp -w carol.txt   # add mangling rules
-hashcat -m 1800 carol_hash.txt carol.txt -r best64.rule
+# fatima and omar crack immediately
+# maryam: create targeted wordlist with cupp + rules
+cupp -w maryam.txt   # add mangling rules
+hashcat -m 1800 maryam_hash.txt maryam.txt -r best64.rule
 ```
 

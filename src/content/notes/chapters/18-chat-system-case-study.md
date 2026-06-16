@@ -448,38 +448,38 @@ function main(): void {
 
   // Create users
   console.log("=== Setup ===");
-  connMgr.connect("alice", createSendFn("alice"));
-  connMgr.connect("bob", createSendFn("bob"));
-  // charlie is offline
+  connMgr.connect("fatima", createSendFn("fatima"));
+  connMgr.connect("omar", createSendFn("omar"));
+  // yusuf is offline
 
   // Create conversations
-  const conv1 = store.createConversation(["alice", "bob", "charlie"]);
+  const conv1 = store.createConversation(["fatima", "omar", "yusuf"]);
 
-  // Alice sends a message
-  console.log("\n=== Alice sends a message ===");
-  const msg1 = fanout.sendMessage("alice", conv1.id, "Hey team, how is everyone?");
+  // Fatima sends a message
+  console.log("\n=== Fatima sends a message ===");
+  const msg1 = fanout.sendMessage("fatima", conv1.id, "Hey team, how is everyone?");
 
-  // Bob reads the message
-  console.log("\n=== Bob reads the message ===");
-  fanout.sendReadReceipt("bob", conv1.id, msg1.id);
+  // Omar reads the message
+  console.log("\n=== Omar reads the message ===");
+  fanout.sendReadReceipt("omar", conv1.id, msg1.id);
 
-  // Bob starts typing
-  console.log("\n=== Bob types a reply ===");
-  fanout.sendTypingIndicator("bob", conv1.id, true);
+  // Omar starts typing
+  console.log("\n=== Omar types a reply ===");
+  fanout.sendTypingIndicator("omar", conv1.id, true);
 
-  // Bob sends a reply
-  const msg2 = fanout.sendMessage("bob", conv1.id, "Doing great! Working on the new feature.");
-  fanout.sendTypingIndicator("bob", conv1.id, false);
+  // Omar sends a reply
+  const msg2 = fanout.sendMessage("omar", conv1.id, "Doing great! Working on the new feature.");
+  fanout.sendTypingIndicator("omar", conv1.id, false);
 
-  // Charlie comes online and gets pending messages
-  console.log("\n=== Charlie comes online ===");
-  connMgr.connect("charlie", createSendFn("charlie"));
-  fanout.handleUserReconnect("charlie");
-  fanout.broadcastPresence("charlie", true);
+  // Yusuf comes online and gets pending messages
+  console.log("\n=== Yusuf comes online ===");
+  connMgr.connect("yusuf", createSendFn("yusuf"));
+  fanout.handleUserReconnect("yusuf");
+  fanout.broadcastPresence("yusuf", true);
 
-  // Charlie reads all messages
-  console.log("\n=== Charlie reads messages ===");
-  fanout.sendReadReceipt("charlie", conv1.id, msg2.id);
+  // Yusuf reads all messages
+  console.log("\n=== Yusuf reads messages ===");
+  fanout.sendReadReceipt("yusuf", conv1.id, msg2.id);
 
   // Print final state
   console.log("\n=== Final message history ===");
@@ -1009,30 +1009,30 @@ func main() {
 	}
 
 	fmt.Println("=== Setup ===")
-	connMgr.Connect("alice", makeSendFn("alice"))
-	connMgr.Connect("bob", makeSendFn("bob"))
-	// charlie starts offline
+	connMgr.Connect("fatima", makeSendFn("fatima"))
+	connMgr.Connect("omar", makeSendFn("omar"))
+	// yusuf starts offline
 
-	conv1 := store.CreateConversation([]string{"alice", "bob", "charlie"})
+	conv1 := store.CreateConversation([]string{"fatima", "omar", "yusuf"})
 
-	fmt.Println("\n=== Alice sends a message ===")
-	msg1 := fanout.SendMessage("alice", conv1.ID, "Hey team, how is everyone?")
+	fmt.Println("\n=== Fatima sends a message ===")
+	msg1 := fanout.SendMessage("fatima", conv1.ID, "Hey team, how is everyone?")
 
-	fmt.Println("\n=== Bob reads the message ===")
-	fanout.SendReadReceipt("bob", conv1.ID, msg1.ID)
+	fmt.Println("\n=== Omar reads the message ===")
+	fanout.SendReadReceipt("omar", conv1.ID, msg1.ID)
 
-	fmt.Println("\n=== Bob types a reply ===")
-	fanout.SendTypingIndicator("bob", conv1.ID, true)
-	msg2 := fanout.SendMessage("bob", conv1.ID, "Doing great! Working on the new feature.")
-	fanout.SendTypingIndicator("bob", conv1.ID, false)
+	fmt.Println("\n=== Omar types a reply ===")
+	fanout.SendTypingIndicator("omar", conv1.ID, true)
+	msg2 := fanout.SendMessage("omar", conv1.ID, "Doing great! Working on the new feature.")
+	fanout.SendTypingIndicator("omar", conv1.ID, false)
 
-	fmt.Println("\n=== Charlie comes online ===")
-	connMgr.Connect("charlie", makeSendFn("charlie"))
-	fanout.HandleReconnect("charlie")
-	fanout.BroadcastPresence("charlie", true)
+	fmt.Println("\n=== Yusuf comes online ===")
+	connMgr.Connect("yusuf", makeSendFn("yusuf"))
+	fanout.HandleReconnect("yusuf")
+	fanout.BroadcastPresence("yusuf", true)
 
-	fmt.Println("\n=== Charlie reads messages ===")
-	fanout.SendReadReceipt("charlie", conv1.ID, msg2.ID)
+	fmt.Println("\n=== Yusuf reads messages ===")
+	fanout.SendReadReceipt("yusuf", conv1.ID, msg2.ID)
 
 	fmt.Println("\n=== Final message history ===")
 	messages := store.GetMessages(conv1.ID, 50)

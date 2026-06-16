@@ -32,12 +32,12 @@ It's single-threaded for command execution, which gives it predictable latency a
 The simplest type. Stores text, numbers, or binary data up to 512MB. Also supports atomic increment/decrement.
 
 ```bash
-SET user:1:name "Alice"
-GET user:1:name           # "Alice"
+SET user:1:name "Fatima"
+GET user:1:name           # "Fatima"
 SET counter 0
 INCR counter              # 1
 INCRBY counter 10         # 11
-SETNX user:1:name "Bob"   # 0 — key exists, no-op
+SETNX user:1:name "Omar"  # 0 — key exists, no-op
 SETEX session:abc 3600 "data"  # set with TTL in one command
 ```
 
@@ -47,7 +47,7 @@ import { createClient } from 'redis';
 const redis = createClient({ url: 'redis://localhost:6379' });
 await redis.connect();
 
-await redis.set('user:1:name', 'Alice');
+await redis.set('user:1:name', 'Fatima');
 await redis.setEx('session:abc', 3600, JSON.stringify(sessionData));
 
 const name = await redis.get('user:1:name');
@@ -59,8 +59,8 @@ const count = await redis.incr('counter');
 A map of field → value inside a single key. Perfect for storing objects without serializing to JSON.
 
 ```bash
-HSET user:1 name "Alice" email "alice@example.com" age 30
-HGET user:1 name           # "Alice"
+HSET user:1 name "Fatima" email "fatima@example.com" age 30
+HGET user:1 name           # "Fatima"
 HGETALL user:1             # { name, email, age }
 HINCRBY user:1 age 1       # 31
 HDEL user:1 age
@@ -68,13 +68,13 @@ HDEL user:1 age
 
 ```typescript
 await redis.hSet('user:1', {
-  name: 'Alice',
-  email: 'alice@example.com',
+  name: 'Fatima',
+  email: 'fatima@example.com',
   age: '30',
 });
 
 const user = await redis.hGetAll('user:1');
-// { name: 'Alice', email: 'alice@example.com', age: '30' }
+// { name: 'Fatima', email: 'fatima@example.com', age: '30' }
 ```
 
 **Hash vs JSON string:** Hashes let you update individual fields without deserializing the whole object. Use hashes when you frequently update partial objects. Use JSON strings when you always read the whole object.
@@ -128,11 +128,11 @@ SINTER tags:post:1 tags:post:2  # intersection
 Like Sets but each member has a score (float). Members are ordered by score. Used for leaderboards, rate limiting, and priority queues.
 
 ```bash
-ZADD leaderboard 1500 "alice" 1200 "bob" 1800 "carol"
-ZRANK leaderboard "alice"           # rank (0-indexed): 1
-ZREVRANK leaderboard "carol"        # top rank: 0
+ZADD leaderboard 1500 "fatima" 1200 "omar" 1800 "maryam"
+ZRANK leaderboard "fatima"           # rank (0-indexed): 1
+ZREVRANK leaderboard "maryam"        # top rank: 0
 ZRANGE leaderboard 0 2 WITHSCORES  # top 3
-ZINCRBY leaderboard 50 "alice"      # alice score → 1550
+ZINCRBY leaderboard 50 "fatima"      # fatima score → 1550
 ```
 
 ```typescript

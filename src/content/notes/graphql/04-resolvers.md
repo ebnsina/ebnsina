@@ -57,15 +57,15 @@ Look at this query:
 The executor builds a tree of resolver calls:
 
 ```
-Query.user(id: 1)                    -> { id: 1, name: "Aoife", ... }
-  User.name(parent={id:1,...})       -> "Aoife"
+Query.user(id: 1)                    -> { id: 1, name: "Sumayya", ... }
+  User.name(parent={id:1,...})       -> "Sumayya"
   User.posts(parent={id:1,...})      -> [post1, post2]
     Post.title(parent=post1)         -> "Why I left K8s"
-    Post.author(parent=post1)        -> { id: 1, name: "Aoife", ... }
-      User.name(parent={id:1,...})   -> "Aoife"
+    Post.author(parent=post1)        -> { id: 1, name: "Sumayya", ... }
+      User.name(parent={id:1,...})   -> "Sumayya"
     Post.title(parent=post2)         -> "Self-hosting..."
-    Post.author(parent=post2)        -> { id: 1, name: "Aoife", ... }
-      User.name(parent={id:1,...})   -> "Aoife"
+    Post.author(parent=post2)        -> { id: 1, name: "Sumayya", ... }
+      User.name(parent={id:1,...})   -> "Sumayya"
 ```
 
 Every field is a function call. Sibling fields run in parallel. Children wait for their parent.
@@ -80,7 +80,7 @@ You did not write `User.name` in chapter 3. You did not need to. The default res
 parent => parent[fieldName]
 ```
 
-If `parent` is `{ name: "Aoife", email: "..." }` and the field is `name`, the default resolver returns `parent.name`. So the only fields that need explicit resolvers are:
+If `parent` is `{ name: "Sumayya", email: "..." }` and the field is `name`, the default resolver returns `parent.name`. So the only fields that need explicit resolvers are:
 
 - Root fields (`Query.*`, `Mutation.*`) — there is no parent yet.
 - Fields where the parent property name does not match the schema field — `created_at` vs `createdAt`.
@@ -166,7 +166,7 @@ A resolver can throw. The executor catches the throw, attaches the error to the 
 If the field is nullable, the response continues with `null` for that field:
 
 ```json
-{ "data": { "user": { "name": "Aoife", "bio": null } }, "errors": [...] }
+{ "data": { "user": { "name": "Sumayya", "bio": null } }, "errors": [...] }
 ```
 
 If the field is non-null, the `null` propagates up to the nearest nullable parent:

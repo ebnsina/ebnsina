@@ -333,7 +333,7 @@ func (c *Cache[K, V]) Set(key K, value V) {
 
 // Type-safe caches
 userCache := NewCache[int, *User](5 * time.Minute)
-userCache.Set(1, &User{Name: "Alice"})
+userCache.Set(1, &User{Name: "Fatima"})
 
 configCache := NewCache[string, string](1 * time.Hour)
 configCache.Set("theme", "dark")

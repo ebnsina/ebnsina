@@ -122,7 +122,7 @@ expect(arr).toContain('item');
 expect(arr).toEqual(expect.arrayContaining(['a', 'b']));  // subset
 
 // Objects
-expect(obj).toMatchObject({ name: 'Alice' });  // partial match
+expect(obj).toMatchObject({ name: 'Fatima' });  // partial match
 
 // Errors
 expect(() => fn()).toThrow('expected message');
@@ -188,7 +188,7 @@ beforeEach(() => {
 // Async/await (preferred)
 it('resolves with user data', async () => {
   const user = await fetchUser('user-1');
-  expect(user.name).toBe('Alice');
+  expect(user.name).toBe('Fatima');
 });
 
 // Rejected promises

@@ -76,8 +76,8 @@ describe('UserClient', () => {
         headers: { 'Content-Type': 'application/json' },
         body: {
           id: string('123'),        // must be a string, value is example only
-          email: string('alice@example.com'),
-          name: string('Alice'),
+          email: string('fatima@example.com'),
+          name: string('Fatima'),
           role: string('premium'),
         },
       },
@@ -169,7 +169,7 @@ describe('Pact provider verification', () => {
           // Seed the state required by this interaction
           await testDb.query(
             `INSERT INTO users (id, email, name, role)
-             VALUES ('123', 'alice@example.com', 'Alice', 'premium')
+             VALUES ('123', 'fatima@example.com', 'Fatima', 'premium')
              ON CONFLICT (id) DO NOTHING`
           );
         },
@@ -283,7 +283,7 @@ const verifier = new PactV3({
 // BAD: over-specified
 body: {
   id: '123',                     // exact value — breaks on different IDs
-  email: 'alice@example.com',    // exact value
+  email: 'fatima@example.com',    // exact value
   internalServiceId: integer(),  // field consumer doesn't use
   createdAt: string(),           // format not specified — fragile
 },

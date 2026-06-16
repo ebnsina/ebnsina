@@ -156,8 +156,8 @@ Postgres splits the data across partitions. Queries with `WHERE tenant_id = X` o
 Each tenant has their own Postgres *schema* (namespace) inside the same database.
 
 ```sql
-CREATE SCHEMA tenant_acme;
-CREATE TABLE tenant_acme.issues (id BIGSERIAL PRIMARY KEY, ...);
+CREATE SCHEMA tenant_cordoba;
+CREATE TABLE tenant_cordoba.issues (id BIGSERIAL PRIMARY KEY, ...);
 
 CREATE SCHEMA tenant_globex;
 CREATE TABLE tenant_globex.issues (id BIGSERIAL PRIMARY KEY, ...);
@@ -166,8 +166,8 @@ CREATE TABLE tenant_globex.issues (id BIGSERIAL PRIMARY KEY, ...);
 To query the right one, set the search path per request:
 
 ```go
-db.Exec(`SET search_path TO tenant_acme, public`)
-db.Query(`SELECT * FROM issues`) // hits tenant_acme.issues
+db.Exec(`SET search_path TO tenant_cordoba, public`)
+db.Query(`SELECT * FROM issues`) // hits tenant_cordoba.issues
 ```
 
 Pros:
@@ -223,22 +223,22 @@ If you are starting fresh, start single-DB with `tenant_id`. Migrate up if and w
 
 Single-DB:
 ```sql
-INSERT INTO tenants(name, plan) VALUES('Acme', 'pro') RETURNING id;
+INSERT INTO tenants(name, plan) VALUES('Cordoba', 'pro') RETURNING id;
 -- done
 ```
 
 Schema-per-tenant:
 ```sql
-CREATE SCHEMA tenant_acme;
+CREATE SCHEMA tenant_cordoba;
 -- replay schema migrations against the new schema
-SELECT migrate_to('tenant_acme');
-INSERT INTO tenants_meta(name, schema_name) VALUES('Acme', 'tenant_acme');
+SELECT migrate_to('tenant_cordoba');
+INSERT INTO tenants_meta(name, schema_name) VALUES('Cordoba', 'tenant_cordoba');
 ```
 
 DB-per-tenant:
 ```bash
-createdb tenant_acme
-psql tenant_acme < schema.sql
+createdb tenant_cordoba
+psql tenant_cordoba < schema.sql
 # update tenant routing service
 ```
 
@@ -262,9 +262,9 @@ The lesson: **if there's any chance you'll be multi-tenant, design for it from d
 
 Single-DB: a series of DELETEs scoped to `tenant_id`. Mild.
 
-Schema-per-tenant: `DROP SCHEMA tenant_acme CASCADE`. Clean.
+Schema-per-tenant: `DROP SCHEMA tenant_cordoba CASCADE`. Clean.
 
-DB-per-tenant: `DROP DATABASE tenant_acme`. Cleanest.
+DB-per-tenant: `DROP DATABASE tenant_cordoba`. Cleanest.
 
 For compliance-heavy industries, the "drop the whole schema/db" cleanup story is a real selling point.
 

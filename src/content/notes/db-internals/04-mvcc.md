@@ -41,10 +41,10 @@ interface MVCCRow {
 }
 
 // UPDATE doesn't modify in place — it creates a NEW version
-// UPDATE users SET name = 'Bob' WHERE id = 1;
+// UPDATE users SET name = 'Omar' WHERE id = 1;
 //
-// Old version: { data: {id:1, name:'Alice'}, xmin: 100, xmax: 200 }
-// New version: { data: {id:1, name:'Bob'},   xmin: 200, xmax: 0   }
+// Old version: { data: {id:1, name:'Fatima'}, xmin: 100, xmax: 200 }
+// New version: { data: {id:1, name:'Omar'},   xmin: 200, xmax: 0   }
 ```
 
 ## Snapshot Isolation

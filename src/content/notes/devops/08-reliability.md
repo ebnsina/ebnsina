@@ -129,7 +129,7 @@ interface Postmortem {
 
 // Key principle: blame the SYSTEM, not the person
 // "The deployment pipeline lacked a canary phase"
-// NOT "John deployed bad code"
+// NOT "Ahmad deployed bad code"
 ```
 
 ## Chaos Engineering

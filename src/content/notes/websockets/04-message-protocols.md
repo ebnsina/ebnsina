@@ -96,7 +96,7 @@ Pattern: **request includes an `id`; reply echoes it.**
 { "type": "user.lookup", "id": "req-abc", "data": { "id": 42 } }
 
 // server → client
-{ "type": "user.lookup.reply", "id": "req-abc", "data": { "name": "Aoife" } }
+{ "type": "user.lookup.reply", "id": "req-abc", "data": { "name": "Sumayya" } }
 ```
 
 Client side, keep a map of pending request IDs to promise resolvers:

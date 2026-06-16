@@ -150,8 +150,8 @@ type Server struct {
 func New() *Server {
     return &Server{
         users: map[int64]*pb.User{
-            1: {Id: 1, Name: "Aoife",  Email: "aoife@example.com"},
-            2: {Id: 2, Name: "Niamh", Email: "niamh@example.com"},
+            1: {Id: 1, Name: "Sumayya",  Email: "sumayya@example.com"},
+            2: {Id: 2, Name: "Aisha", Email: "aisha@example.com"},
         },
         next: 3,
     }
@@ -257,13 +257,13 @@ grpcurl -plaintext localhost:9000 list user.v1.UserService
 grpcurl -plaintext -d '{"id": 1}' localhost:9000 user.v1.UserService/GetUser
 # {
 #   "id": "1",
-#   "name": "Aoife",
-#   "email": "aoife@example.com"
+#   "name": "Sumayya",
+#   "email": "sumayya@example.com"
 # }
 
-grpcurl -plaintext -d '{"name": "Sinead", "email": "sinead@example.com"}' \
+grpcurl -plaintext -d '{"name": "Ruqayya", "email": "ruqayya@example.com"}' \
   localhost:9000 user.v1.UserService/CreateUser
-# { "id": "3", "name": "Sinead", "email": "sinead@example.com" }
+# { "id": "3", "name": "Ruqayya", "email": "ruqayya@example.com" }
 ```
 
 The `-plaintext` flag is because we are not running TLS yet (chapter 9). The discovery worked because `reflection.Register(s)` was called in main.
@@ -306,8 +306,8 @@ func main() {
     fmt.Printf("got user: %s <%s>\n", u.GetName(), u.GetEmail())
 
     new, err := client.CreateUser(ctx, &pb.CreateUserRequest{
-        Name:  "Cillian",
-        Email: "cillian@example.com",
+        Name:  "Sufyan",
+        Email: "sufyan@example.com",
     })
     if err != nil {
         log.Fatalf("CreateUser: %v", err)
@@ -324,7 +324,7 @@ func main() {
 
 ```bash
 go run ./cmd/client
-# got user: Aoife <aoife@example.com>
+# got user: Sumayya <sumayya@example.com>
 # created user id=3
 # listed 3 users
 ```

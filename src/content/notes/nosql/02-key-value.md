@@ -24,7 +24,7 @@ A coat check at a theater. You hand over your coat and get a numbered ticket. Th
 A key-value store is conceptually a hash map. Each entry is a unique **key** mapped to a **value**. The store treats the value as opaque — it does not look inside it, index it, or let you query by its contents.
 
 ```text
-"user:1042"           → {"name": "Mira", "tier": "gold"}
+"user:1042"           → {"name": "Zubaida", "tier": "gold"}
 "session:abc123"      → {"userId": 1042, "expires": 1718500000}
 "ratelimit:ip:1.2.3.4"→ 47
 ```
@@ -50,11 +50,11 @@ Redis is an in-memory key-value store, prized for sub-millisecond latency. Its t
 INCR page:views:home          → 1, 2, 3 ...
 
 # Hash — fields within one key
-HSET user:1042 name "Mira" tier "gold"
+HSET user:1042 name "Zubaida" tier "gold"
 HGET user:1042 tier           → "gold"
 
 # Sorted set — a leaderboard, scored and ordered
-ZADD leaderboard 4820 "mira"
+ZADD leaderboard 4820 "zubaida"
 ZADD leaderboard 5100 "alex"
 ZREVRANGE leaderboard 0 9     → top 10 players by score
 
@@ -75,7 +75,7 @@ DynamoDB's key is richer than a single string. Each item has a **partition key**
 {
   "PK": "USER#1042",
   "SK": "PROFILE",
-  "name": "Mira",
+  "name": "Zubaida",
   "tier": "gold"
 }
 ```

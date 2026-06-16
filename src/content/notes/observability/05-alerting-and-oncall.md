@@ -146,8 +146,8 @@ Monitor for 5 minutes. If error rate drops: deploy was the cause.
 - If connections exhausted: restart PgBouncer: `systemctl restart pgbouncer`
 
 ## Escalation
-- 15 minutes: escalate to service owner (@jane in #incidents)
-- 30 minutes: escalate to engineering lead (@john)
+- 15 minutes: escalate to service owner (@layla in #incidents)
+- 30 minutes: escalate to engineering lead (@ahmad)
 
 ## Related alerts
 - OrderQueueHigh — queue backing up may indicate processing failures
@@ -233,10 +233,10 @@ pool (50 connections) was exhausted within 45 minutes of the deploy.
 
 | Action | Owner | Due |
 |--------|-------|-----|
-| Add alert: PgBouncer pool > 80% utilized | Jane | 2024-01-22 |
-| Add slow query detection to CI benchmarks | Bob | 2024-01-29 |
-| Increase PgBouncer pool size: 50 → 100 | Jane | 2024-01-17 |
-| Add payment-service circuit breaker in order-service | Alice | 2024-01-24 |
+| Add alert: PgBouncer pool > 80% utilized | Layla | 2024-01-22 |
+| Add slow query detection to CI benchmarks | Omar | 2024-01-29 |
+| Increase PgBouncer pool size: 50 → 100 | Layla | 2024-01-17 |
+| Add payment-service circuit breaker in order-service | Fatima | 2024-01-24 |
 ```
 
 The post-mortem's value is the action items. An incident without action items is a missed opportunity — you'll see the same failure again.

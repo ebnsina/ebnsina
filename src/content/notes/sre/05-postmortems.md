@@ -24,10 +24,10 @@ If engineers fear that incidents will be used against them, they will:
 Blame culture turns a $10k learning opportunity into a $1M outage in the future, every time.
 
 ```
-✗ "Alice deployed bad code at 14:00 and broke checkout."
+✗ "Fatima deployed bad code at 14:00 and broke checkout."
 ✓ "The deployment pipeline allowed an untested config change to reach
    production. The change disabled connection pooling, which had no
-   alert. Alice was the deployer, but the system permitted the failure."
+   alert. Fatima was the deployer, but the system permitted the failure."
 ```
 
 Same incident. The first version produces a fired engineer. The second version produces three durable fixes that prevent the next one.
@@ -77,13 +77,13 @@ single most important action item.
 ## Timeline (UTC)
 
 14:18  First customer support ticket: "checkout button doing nothing"
-14:22  CheckoutErrorBudgetFastBurn fires; @alice paged
-14:24  Alice declares SEV1, opens #inc-2271, pages IC rotation
-14:25  @bob (IC) takes command. @carol (OL) starts investigation
-14:28  Carol identifies elevated 503 rate from EU pods only
+14:22  CheckoutErrorBudgetFastBurn fires; @fatima paged
+14:24  Fatima declares SEV1, opens #inc-2271, pages IC rotation
+14:25  @omar (IC) takes command. @maryam (OL) starts investigation
+14:28  Maryam identifies elevated 503 rate from EU pods only
 14:31  Hypothesis: connection pool exhaustion (db_connections_inuse
        at 50/50 max in EU)
-14:35  Bob authorizes pool size bump to 100 in EU canary
+14:35  Omar authorizes pool size bump to 100 in EU canary
 14:39  Canary healthy; rolling out to full EU fleet
 14:46  Full EU fleet at pool=100; 503 rate dropping
 14:51  503 rate back to baseline; entering MONITORING
@@ -132,7 +132,7 @@ timeouts cascaded into 503 responses.
 ## What went well
 
 - Burn-rate alert fired correctly within 4 minutes
-- IC role transition was clean (Alice → Bob without confusion)
+- IC role transition was clean (Fatima → Omar without confusion)
 - Mitigation took 17 minutes from page to canary fix
 - Status page was updated within 12 minutes (under target)
 
@@ -147,10 +147,10 @@ timeouts cascaded into 503 responses.
 
 | ID | Action | Owner | Priority | Due |
 |----|--------|-------|----------|-----|
-| AI-1 | Add OPA policy: prod config pool size must be >= 75 | @carol | P0 | 2026-05-10 |
-| AI-2 | Add db_connections_inuse / max alert at 80% saturation | @bob | P0 | 2026-05-12 |
-| AI-3 | Link runbook step "check pool" to specific Grafana panel | @alice | P1 | 2026-05-17 |
-| AI-4 | Pre-deploy check: diff config against last 7d baseline | @bob | P1 | 2026-05-24 |
+| AI-1 | Add OPA policy: prod config pool size must be >= 75 | @maryam | P0 | 2026-05-10 |
+| AI-2 | Add db_connections_inuse / max alert at 80% saturation | @omar | P0 | 2026-05-12 |
+| AI-3 | Link runbook step "check pool" to specific Grafana panel | @fatima | P1 | 2026-05-17 |
+| AI-4 | Pre-deploy check: diff config against last 7d baseline | @omar | P1 | 2026-05-24 |
 | AI-5 | On-call IC training module on "when to stop paging more responders" | @sre-lead | P2 | 2026-06-15 |
 
 ## Lessons learned

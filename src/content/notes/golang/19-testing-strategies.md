@@ -88,23 +88,23 @@ func TestUserService_Register(t *testing.T) {
     service := NewUserService(repo, emailer)
 
     user, err := service.Register(context.Background(), RegisterInput{
-        Email: "alice@example.com",
-        Name:  "Alice",
+        Email: "fatima@example.com",
+        Name:  "Fatima",
     })
 
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
-    if user.Email != "alice@example.com" {
-        t.Errorf("email = %q, want %q", user.Email, "alice@example.com")
+    if user.Email != "fatima@example.com" {
+        t.Errorf("email = %q, want %q", user.Email, "fatima@example.com")
     }
 
     // Verify welcome email was sent
     if len(emailer.sent) != 1 {
         t.Fatalf("expected 1 email sent, got %d", len(emailer.sent))
     }
-    if emailer.sent[0].To != "alice@example.com" {
-        t.Errorf("email to = %q, want %q", emailer.sent[0].To, "alice@example.com")
+    if emailer.sent[0].To != "fatima@example.com" {
+        t.Errorf("email to = %q, want %q", emailer.sent[0].To, "fatima@example.com")
     }
 }
 ```

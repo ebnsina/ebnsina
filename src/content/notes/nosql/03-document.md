@@ -26,7 +26,7 @@ A document database stores data as **documents** — self-describing, nested rec
 ```json
 {
   "_id": "order_8841",
-  "customer": { "id": "cust_42", "name": "Mira", "tier": "gold" },
+  "customer": { "id": "cust_42", "name": "Zubaida", "tier": "gold" },
   "items": [
     { "sku": "BK-101", "title": "NoSQL Notes", "qty": 1, "price": 29 },
     { "sku": "PN-007", "title": "Gel Pen", "qty": 3, "price": 2 }
@@ -88,7 +88,7 @@ One read returns the post and its comments. Embedding wins when the child data i
 
 ```json
 { "_id": "post_9", "title": "Why NoSQL", "authorId": "user_42" }
-{ "_id": "user_42", "name": "Mira", "tier": "gold" }
+{ "_id": "user_42", "name": "Zubaida", "tier": "gold" }
 ```
 
 Referencing wins when the related data is **shared, large, or unbounded**.

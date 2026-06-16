@@ -79,9 +79,9 @@ describe('users integration', () => {
   });
 
   it('creates a user and retrieves by email', async () => {
-    const email = 'alice@example.com';
+    const email = 'fatima@example.com';
 
-    const user = await createUser(testDb, { email, name: 'Alice' });
+    const user = await createUser(testDb, { email, name: 'Fatima' });
 
     expect(user.id).toBeDefined();
     expect(user.email).toBe(email);
@@ -91,10 +91,10 @@ describe('users integration', () => {
   });
 
   it('enforces unique email constraint', async () => {
-    await createUser(testDb, { email: 'alice@example.com', name: 'Alice' });
+    await createUser(testDb, { email: 'fatima@example.com', name: 'Fatima' });
 
     await expect(
-      createUser(testDb, { email: 'alice@example.com', name: 'Other' })
+      createUser(testDb, { email: 'fatima@example.com', name: 'Other' })
     ).rejects.toThrow(/unique/i);
   });
 
@@ -181,12 +181,12 @@ describe('POST /users', () => {
   it('creates user and returns 201', async () => {
     const res = await request
       .post('/users')
-      .send({ email: 'bob@example.com', name: 'Bob' })
+      .send({ email: 'omar@example.com', name: 'Omar' })
       .set('Accept', 'application/json');
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeDefined();
-    expect(res.body.email).toBe('bob@example.com');
+    expect(res.body.email).toBe('omar@example.com');
   });
 
   it('returns 400 for duplicate email', async () => {
@@ -203,7 +203,7 @@ describe('POST /users', () => {
   it('returns 422 for invalid email', async () => {
     const res = await request
       .post('/users')
-      .send({ email: 'not-an-email', name: 'Bob' });
+      .send({ email: 'not-an-email', name: 'Omar' });
 
     expect(res.status).toBe(422);
     expect(res.body.errors).toContainEqual(

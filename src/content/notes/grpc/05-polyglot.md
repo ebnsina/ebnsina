@@ -102,7 +102,7 @@ function rpc(method, req) {
 const got = await rpc("GetUser", { id: 1 });
 console.log("got user:", got);
 
-const created = await rpc("CreateUser", { name: "Saoirse", email: "saoirse@example.com" });
+const created = await rpc("CreateUser", { name: "Habiba", email: "habiba@example.com" });
 console.log("created:", created);
 
 const list = await rpc("ListUsers", {});
@@ -111,8 +111,8 @@ console.log("count:", list.users.length);
 
 ```bash
 node client.js
-# got user: { id: '1', name: 'Aoife', email: 'aoife@example.com' }
-# created: { id: '4', name: 'Saoirse', email: 'saoirse@example.com' }
+# got user: { id: '1', name: 'Sumayya', email: 'sumayya@example.com' }
+# created: { id: '4', name: 'Habiba', email: 'habiba@example.com' }
 # count: 4
 ```
 
@@ -161,8 +161,8 @@ with grpc.insecure_channel("localhost:9000") as channel:
     print("got user:", got.name, got.email)
 
     created = stub.CreateUser(user_pb2.CreateUserRequest(
-        name="Maeve",
-        email="maeve@example.com",
+        name="Asma",
+        email="asma@example.com",
     ))
     print("created id:", created.id)
 
@@ -172,7 +172,7 @@ with grpc.insecure_channel("localhost:9000") as channel:
 
 ```bash
 python client.py
-# got user: Aoife aoife@example.com
+# got user: Sumayya sumayya@example.com
 # created id: 5
 # count: 5
 ```
@@ -194,7 +194,7 @@ In a second terminal, the Go client:
 
 ```bash
 go run ./cmd/client
-# got user: Aoife <aoife@example.com>
+# got user: Sumayya <sumayya@example.com>
 ```
 
 Third terminal, Node:
@@ -210,7 +210,7 @@ Fourth terminal, Python:
 ```bash
 cd ../py-client
 python client.py
-# got user: Aoife aoife@example.com
+# got user: Sumayya sumayya@example.com
 ```
 
 All three hit the same server, get the same data. Because protobuf is on the wire, IDs come through as strings in Node (JS numbers can't safely represent int64), strings in Python (where they parse to ints because the language has bignums), and `int64` in Go.

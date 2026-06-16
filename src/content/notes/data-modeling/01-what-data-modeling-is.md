@@ -118,7 +118,7 @@ CREATE TABLE orders (
 
 Same three tables, but now:
 
-- Email uniqueness enforced. `CITEXT` makes it case-insensitive — `Alice@Example.com` and `alice@example.com` are the same row.
+- Email uniqueness enforced. `CITEXT` makes it case-insensitive — `Fatima@Example.com` and `fatima@example.com` are the same row.
 - Foreign keys spell out the relationships. Sellers can't be deleted while they have listings; that's a deliberate choice (`RESTRICT`) instead of an accident.
 - Status is an enum — only the five legal values are accepted.
 - Price is `BIGINT cents`, not floating-point dollars (chapter 3 has the full argument).

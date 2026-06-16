@@ -37,19 +37,19 @@ type User struct {
 // Struct → JSON (Marshal)
 user := User{
     ID:        1,
-    Email:     "alice@example.com",
-    FirstName: "Alice",
-    LastName:  "Smith",
+    Email:     "fatima@example.com",
+    FirstName: "Fatima",
+    LastName:  "al-Khwarizmi",
     Password:  "secret123",
     CreatedAt: time.Now(),
 }
 
 data, err := json.Marshal(user)
-// {"id":1,"email":"alice@example.com","first_name":"Alice","last_name":"Smith","created_at":"2024-01-15T10:30:00Z"}
+// {"id":1,"email":"fatima@example.com","first_name":"Fatima","last_name":"al-Khwarizmi","created_at":"2024-01-15T10:30:00Z"}
 // Note: Password excluded, Bio excluded (empty + omitempty)
 
 // JSON → Struct (Unmarshal)
-jsonStr := `{"id": 1, "email": "alice@example.com", "first_name": "Alice"}`
+jsonStr := `{"id": 1, "email": "fatima@example.com", "first_name": "Fatima"}`
 var parsed User
 err := json.Unmarshal([]byte(jsonStr), &parsed)
 ```
@@ -99,8 +99,8 @@ type User struct {
 }
 
 var users = []User{
-    {ID: 1, Name: "Alice", Email: "alice@example.com"},
-    {ID: 2, Name: "Bob", Email: "bob@example.com"},
+    {ID: 1, Name: "Fatima", Email: "fatima@example.com"},
+    {ID: 2, Name: "Omar", Email: "omar@example.com"},
 }
 
 func main() {

@@ -18,10 +18,10 @@ The reason to choose Redis over a plain memory cache is that its values are not 
 The simplest type: a key mapped to a value up to 512 MB. Despite the name, a string can hold text, a serialized JSON document, a number, or raw bytes. Numeric strings get atomic increment and decrement.
 
 ```text
-127.0.0.1:6379> SET user:1042:name "Ada Lovelace"
+127.0.0.1:6379> SET user:1042:name "Lubna of Cordoba"
 OK
 127.0.0.1:6379> GET user:1042:name
-"Ada Lovelace"
+"Lubna of Cordoba"
 127.0.0.1:6379> SET page:home:views 0
 OK
 127.0.0.1:6379> INCR page:home:views
@@ -41,19 +41,19 @@ OK
 A hash is a map of field-value pairs stored under one key — like a small object. Instead of serializing a whole user into one string, store fields individually so you can read or update one without touching the rest.
 
 ```text
-127.0.0.1:6379> HSET user:1042 name "Ada" age 36 city "London"
+127.0.0.1:6379> HSET user:1042 name "Lubna of Cordoba" age 36 city "Baghdad"
 (integer) 3
 127.0.0.1:6379> HGET user:1042 city
-"London"
+"Baghdad"
 127.0.0.1:6379> HINCRBY user:1042 age 1
 (integer) 37
 127.0.0.1:6379> HGETALL user:1042
 1) "name"
-2) "Ada"
+2) "Lubna of Cordoba"
 3) "age"
 4) "37"
 5) "city"
-6) "London"
+6) "Baghdad"
 ```
 
 **Real-world use:** representing objects (a user profile, a product, a session) where you update single fields. Small hashes are memory-efficient because Redis packs them into a compact encoding.
@@ -109,23 +109,23 @@ An unordered collection of unique strings. Adding a duplicate is a no-op, and me
 The most powerful core type: a set where every member carries a floating-point **score**, and members are kept ordered by that score. You get uniqueness, ordering, and range queries at once.
 
 ```text
-127.0.0.1:6379> ZADD leaderboard 100 alice 250 bob 175 carol
+127.0.0.1:6379> ZADD leaderboard 100 fatima 250 omar 175 maryam
 (integer) 3
-127.0.0.1:6379> ZINCRBY leaderboard 50 alice
+127.0.0.1:6379> ZINCRBY leaderboard 50 fatima
 "150"
 127.0.0.1:6379> ZREVRANGE leaderboard 0 2 WITHSCORES
-1) "bob"
+1) "omar"
 2) "250"
-3) "carol"
+3) "maryam"
 4) "175"
-5) "alice"
+5) "fatima"
 6) "150"
-127.0.0.1:6379> ZRANK leaderboard bob
+127.0.0.1:6379> ZRANK leaderboard omar
 (integer) 2
 127.0.0.1:6379> ZRANGEBYSCORE leaderboard 150 250
-1) "alice"
-2) "carol"
-3) "bob"
+1) "fatima"
+2) "maryam"
+3) "omar"
 ```
 
 **Real-world use:** leaderboards and rankings, priority queues (score = priority), rate limiters and time-series windows (score = timestamp, then `ZRANGEBYSCORE` or `ZREMRANGEBYSCORE` to expire old entries).

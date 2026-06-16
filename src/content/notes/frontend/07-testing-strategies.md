@@ -293,7 +293,7 @@ test.describe("Checkout Flow", () => {
     await page.getByRole("button", { name: "Checkout" }).click();
 
     // Fill shipping info
-    await page.getByLabel("Full Name").fill("Jane Smith");
+    await page.getByLabel("Full Name").fill("Layla al-Khwarizmi");
     await page.getByLabel("Phone").fill("+1-555-0123");
     await page.getByLabel("Address").fill("123 Main St, Springfield");
 

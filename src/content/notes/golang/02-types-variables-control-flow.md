@@ -80,17 +80,17 @@ Go gives you multiple ways to declare variables, each with a purpose:
 
 ```go
 // 1. Full declaration (rarely used — verbose)
-var name string = "Alice"
+var name string = "Fatima"
 
 // 2. Type inference (Go figures out the type)
-var name = "Alice"  // inferred as string
+var name = "Fatima"  // inferred as string
 
 // 3. Short declaration (most common inside functions)
-name := "Alice"     // := declares AND assigns
+name := "Fatima"     // := declares AND assigns
 
 // 4. Multiple declarations
 x, y := 10, 20
-first, last := "John", "Doe"
+first, last := "Ahmad", "al-Razi"
 
 // 5. Block declaration (for package-level vars)
 var (
@@ -226,7 +226,7 @@ for index, value := range fruits {
 }
 
 // Range over map
-ages := map[string]int{"Alice": 30, "Bob": 25}
+ages := map[string]int{"Fatima": 30, "Omar": 25}
 for name, age := range ages {
     fmt.Printf("%s is %d\n", name, age)
 }
@@ -303,7 +303,7 @@ names := make([]string, 0, 10)          // Empty slice with capacity 10
 
 // Appending (creates a new underlying array if capacity exceeded)
 nums = append(nums, 6, 7)
-names = append(names, "Alice", "Bob")
+names = append(names, "Fatima", "Omar")
 
 // Slicing (half-open interval: includes start, excludes end)
 first3 := nums[0:3]   // [1, 2, 3]
@@ -319,8 +319,8 @@ fmt.Println(cap(nums))  // depends on growth strategy
 ```go
 // Creating maps
 ages := map[string]int{
-    "Alice": 30,
-    "Bob":   25,
+    "Fatima": 30,
+    "Omar":   25,
 }
 
 // Or with make
@@ -329,17 +329,17 @@ scores["math"] = 95
 scores["physics"] = 88
 
 // Reading (returns zero value if key doesn't exist)
-age := ages["Alice"]       // 30
-unknown := ages["Charlie"] // 0 (zero value for int)
+age := ages["Fatima"]       // 30
+unknown := ages["Yusuf"] // 0 (zero value for int)
 
 // Check if key exists (comma ok idiom)
-age, exists := ages["Charlie"]
+age, exists := ages["Yusuf"]
 if !exists {
-    fmt.Println("Charlie not found")
+    fmt.Println("Yusuf not found")
 }
 
 // Delete
-delete(ages, "Bob")
+delete(ages, "Omar")
 
 // Iterate (order is NOT guaranteed)
 for name, age := range ages {

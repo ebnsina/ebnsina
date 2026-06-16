@@ -214,8 +214,8 @@ func main() {
     defer cancel()
 
     resp, err := client.CreateUser(ctx, &userv1.CreateUserRequest{
-        Email:    "alice@example.com",
-        Name:     "Alice",
+        Email:    "fatima@example.com",
+        Name:     "Fatima",
         Password: "secret123",
     })
     if err != nil {

@@ -73,12 +73,12 @@ class BTree {
 
 ```sql
 -- Without index: full table scan (reads EVERY page)
-SELECT * FROM users WHERE email = 'alice@example.com';
+SELECT * FROM users WHERE email = 'fatima@example.com';
 -- Reads: ~10,000 pages for a 1M row table
 
 -- With index: B-tree lookup (reads 3-4 pages)
 CREATE INDEX idx_users_email ON users (email);
-SELECT * FROM users WHERE email = 'alice@example.com';
+SELECT * FROM users WHERE email = 'fatima@example.com';
 -- Reads: 3 pages (B-tree traversal) + 1 page (heap fetch)
 ```
 
@@ -91,11 +91,11 @@ CREATE INDEX idx_location ON users (country, city, name);
 -- Uses the index (leftmost prefix match):
 SELECT * FROM users WHERE country = 'US';                        -- ✓
 SELECT * FROM users WHERE country = 'US' AND city = 'NYC';      -- ✓
-SELECT * FROM users WHERE country = 'US' AND city = 'NYC' AND name = 'Alice'; -- ✓
+SELECT * FROM users WHERE country = 'US' AND city = 'NYC' AND name = 'Fatima'; -- ✓
 
 -- Cannot use the index:
 SELECT * FROM users WHERE city = 'NYC';              -- ✗ (skips country)
-SELECT * FROM users WHERE name = 'Alice';            -- ✗ (skips country, city)
+SELECT * FROM users WHERE name = 'Fatima';            -- ✗ (skips country, city)
 ```
 
 <Callout type="tip">

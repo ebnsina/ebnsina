@@ -89,15 +89,15 @@ Personalization from OSINT:
 - Software the company uses (job postings, Shodan)
 
 Example spear phish:
-  "Hi Sarah, I'm reaching out regarding the Kubernetes migration
-   project you're leading. Marcus from DevOps asked me to share
+  "Hi Khadija, I'm reaching out regarding the Kubernetes migration
+   project you're leading. Tariq from DevOps asked me to share
    the updated infrastructure credentials sheet — please review
    and confirm the access is correct: [malicious link]"
 
 This works because:
-- Uses Sarah's name (trust)
+- Uses Khadija's name (trust)
 - References real project name from LinkedIn
-- Names a real colleague (Marcus — also from LinkedIn)
+- Names a real colleague (Tariq — also from LinkedIn)
 - Asks for normal work behavior (reviewing credentials)
 ```
 
@@ -148,10 +148,10 @@ Target: Help desk / IT support employees
 
 Attack flow:
 1. Recon: find employee names from LinkedIn
-2. Pretext: "I'm Alice Johnson from HR, my computer crashed and I
+2. Pretext: "I'm Fatima Johnson from HR, my computer crashed and I
              have a presentation in 20 minutes for the CFO"
 3. Urgency: "I really need to reset my password right now"
-4. Social proof: "I called yesterday and James helped me"
+4. Social proof: "I called yesterday and Jabir helped me"
 5. Close: "Can you just reset it to Temp1234! and I'll change it
            after my meeting?"
 

@@ -59,10 +59,10 @@ func main() {
 
 ```bash
 go build -o greet .
-./greet --name Alice --count 3 --upper
-# HELLO, ALICE!
-# HELLO, ALICE!
-# HELLO, ALICE!
+./greet --name Fatima --count 3 --upper
+# HELLO, FATIMA!
+# HELLO, FATIMA!
+# HELLO, FATIMA!
 ```
 
 ## Production CLI with Cobra

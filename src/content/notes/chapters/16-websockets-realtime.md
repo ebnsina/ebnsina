@@ -46,7 +46,7 @@ Like a phone call vs. sending letters — once a call is connected, both sides c
 
 </Callout>
 
-When you open Slack, your browser establishes a WebSocket connection to Slack's servers. That connection stays open. When someone types a message in your channel, the server pushes it to your browser instantly -- you don't need to refresh or poll. The same connection handles typing indicators, presence updates ("Alice is online"), and read receipts. Discord handles over 5 million concurrent WebSocket connections using this exact architecture.
+When you open Slack, your browser establishes a WebSocket connection to Slack's servers. That connection stays open. When someone types a message in your channel, the server pushes it to your browser instantly -- you don't need to refresh or poll. The same connection handles typing indicators, presence updates ("Fatima is online"), and read receipts. Discord handles over 5 million concurrent WebSocket connections using this exact architecture.
 
 ## Building a Real-Time Chat Server
 

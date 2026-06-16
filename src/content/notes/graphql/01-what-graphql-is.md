@@ -41,7 +41,7 @@ The response:
 {
   "data": {
     "user": {
-      "name": "Aoife",
+      "name": "Sumayya",
       "posts": [
         { "title": "Why I left Kubernetes", "createdAt": "2026-04-12" },
         { "title": "Self-hosting is a skill", "createdAt": "2026-04-08" }

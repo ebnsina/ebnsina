@@ -22,14 +22,14 @@ customers                  orders
 +----+----------+          +----+-------------+--------+
 | id | name     |          | id | customer_id | amount |
 +----+----------+          +----+-------------+--------+
-| 10 | Ada      |          |  1 |     10      | 49.00  |
-| 20 | Grace    |          |  2 |     10      | 12.50  |
-| 30 | Linus    |          |  3 |     20      | 80.00  |
+| 10 | Lubna    |          |  1 |     10      | 49.00  |
+| 20 | Nusayba  |          |  2 |     10      | 12.50  |
+| 30 | Harun    |          |  3 |     20      | 80.00  |
 +----+----------+          |  4 |     99      | 15.00  |  <- orphan: no customer 99
                            +----+-------------+--------+
 ```
 
-Note customer 30 (Linus) has no orders, and order 4 references a non-existent customer 99. These edge cases are exactly where join *types* differ.
+Note customer 30 (Harun) has no orders, and order 4 references a non-existent customer 99. These edge cases are exactly where join *types* differ.
 
 ## INNER JOIN
 
@@ -43,11 +43,11 @@ INNER JOIN customers c ON c.id = o.customer_id;
 
 | o.id | name  | amount |
 |------|-------|--------|
-| 1    | Ada   | 49.00  |
-| 2    | Ada   | 12.50  |
-| 3    | Grace | 80.00  |
+| 1    | Lubna | 49.00  |
+| 2    | Lubna | 12.50  |
+| 3    | Nusayba | 80.00  |
 
-Linus disappears (no orders) and order 4 disappears (no matching customer). `INNER` is the default — you can write just `JOIN`. The `o` and `c` are **table aliases**, which keep multi-table queries readable.
+Harun disappears (no orders) and order 4 disappears (no matching customer). `INNER` is the default — you can write just `JOIN`. The `o` and `c` are **table aliases**, which keep multi-table queries readable.
 
 ## LEFT JOIN (and RIGHT)
 
@@ -61,12 +61,12 @@ LEFT JOIN orders o ON o.customer_id = c.id;
 
 | name  | order_id | amount |
 |-------|----------|--------|
-| Ada   | 1        | 49.00  |
-| Ada   | 2        | 12.50  |
-| Grace | 3        | 80.00  |
-| Linus | *NULL*   | *NULL* |
+| Lubna   | 1        | 49.00  |
+| Lubna   | 2        | 12.50  |
+| Nusayba | 3        | 80.00  |
+| Harun   | *NULL*   | *NULL* |
 
-Now Linus appears with null order columns — that's the whole point. `LEFT JOIN` answers "all customers, *and their orders if any*". A `RIGHT JOIN` is the mirror image, keeping every row from the right table; in practice people just reorder the tables and use `LEFT`, so `RIGHT` is rare.
+Now Harun appears with null order columns — that's the whole point. `LEFT JOIN` answers "all customers, *and their orders if any*". A `RIGHT JOIN` is the mirror image, keeping every row from the right table; in practice people just reorder the tables and use `LEFT`, so `RIGHT` is rare.
 
 <Callout type="tip">
 
@@ -91,7 +91,7 @@ FROM customers c
 FULL OUTER JOIN orders o ON o.customer_id = c.id;
 ```
 
-You get Ada and Grace's matched rows, Linus with a null order, *and* order 4 with a null name. It's the union of left and full join behavior — useful for reconciliation reports where you want to surface mismatches on either side.
+You get Lubna and Nusayba's matched rows, Harun with a null order, *and* order 4 with a null name. It's the union of left and full join behavior — useful for reconciliation reports where you want to surface mismatches on either side.
 
 ## CROSS JOIN
 

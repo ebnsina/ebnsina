@@ -40,15 +40,15 @@ A struct is like a form you fill out at a doctor's office. It has specific field
 // Method 1: Named fields (preferred — order doesn't matter, self-documenting)
 user := User{
     ID:        1,
-    Email:     "alice@example.com",
-    FirstName: "Alice",
-    LastName:  "Smith",
+    Email:     "fatima@example.com",
+    FirstName: "Fatima",
+    LastName:  "al-Khwarizmi",
     CreatedAt: time.Now(),
     IsActive:  true,
 }
 
 // Method 2: Positional (fragile — avoid in production code)
-user := User{1, "alice@example.com", "Alice", "Smith", time.Now(), true}
+user := User{1, "fatima@example.com", "Fatima", "al-Khwarizmi", time.Now(), true}
 
 // Method 3: Zero value (all fields get defaults)
 var user User  // ID=0, Email="", IsActive=false, etc.
@@ -56,7 +56,7 @@ var user User  // ID=0, Email="", IsActive=false, etc.
 // Method 4: Pointer to struct
 user := &User{
     ID:    1,
-    Email: "alice@example.com",
+    Email: "fatima@example.com",
 }
 ```
 
@@ -98,7 +98,7 @@ func NewUser(email, first, last string) (*User, error) {
     }, nil
 }
 
-user, err := NewUser("alice@example.com", "Alice", "Smith")
+user, err := NewUser("fatima@example.com", "Fatima", "al-Khwarizmi")
 ```
 
 ## Methods: Functions Attached to Types
@@ -197,9 +197,9 @@ type User struct {
 }
 
 // JSON serialization respects tags
-user := User{ID: 1, Email: "alice@example.com", FirstName: "Alice", Password: "secret"}
+user := User{ID: 1, Email: "fatima@example.com", FirstName: "Fatima", Password: "secret"}
 data, _ := json.Marshal(user)
-// {"id":1,"email":"alice@example.com","first_name":"Alice","created_at":"0001-01-01T00:00:00Z"}
+// {"id":1,"email":"fatima@example.com","first_name":"Fatima","created_at":"0001-01-01T00:00:00Z"}
 // Note: Password is excluded because of json:"-"
 ```
 
@@ -231,9 +231,9 @@ type Employee struct {
 emp := Employee{
     User: User{
         ID:        1,
-        Email:     "alice@company.com",
-        FirstName: "Alice",
-        LastName:  "Smith",
+        Email:     "fatima@company.com",
+        FirstName: "Fatima",
+        LastName:  "al-Khwarizmi",
     },
     Address: Address{
         Street: "123 Main St",
@@ -245,7 +245,7 @@ emp := Employee{
 }
 
 // Access embedded fields directly (promoted)
-fmt.Println(emp.Email)      // "alice@company.com" (from User)
+fmt.Println(emp.Email)      // "fatima@company.com" (from User)
 fmt.Println(emp.City)       // "Austin" (from Address)
 fmt.Println(emp.Department) // "Engineering" (own field)
 

@@ -30,17 +30,17 @@ Look at this table:
 ```
 order_id | customer_name | customer_email      | product_name  | product_price
 ---------|---------------|---------------------|---------------|---------------
-1001     | Aoife         | aoife@example.com   | Notebook      | 12.00
-1002     | Niamh         | niamh@example.com   | Pen Set       | 8.00
-1003     | Aoife         | aoife@example.com   | Notebook      | 12.00
-1004     | Aoife         | AOIFE@example.com   | Notebook      | 13.00
+1001     | Sumayya       | sumayya@example.com | Notebook      | 12.00
+1002     | Aisha         | aisha@example.com   | Pen Set       | 8.00
+1003     | Sumayya       | sumayya@example.com | Notebook      | 12.00
+1004     | Sumayya       | SUMAYYA@example.com | Notebook      | 13.00
 ```
 
 Three problems lurking:
 
-1. **Aoife's email is recorded three times.** When she changes it, you must update every row. Miss one → drift.
+1. **Sumayya's email is recorded three times.** When she changes it, you must update every row. Miss one → drift.
 2. **Notebook's price is recorded twice as 12.00, once as 13.00.** Which is correct? Maybe a typo on row 1004. Maybe the price changed between orders. The schema can't tell.
-3. **Aoife's name appears multiple times in different cases.** "Aoife" vs implicit other casings. Aggregating "orders by customer" requires manual cleanup.
+3. **Sumayya's name appears multiple times in different cases.** "Sumayya" vs implicit other casings. Aggregating "orders by customer" requires manual cleanup.
 
 This is what un-normalized schemas look like. Every duplicate is a future bug.
 
@@ -55,8 +55,8 @@ Bad:
 ```
 user_id | name  | phone_numbers
 --------|-------|-----------------------
-1       | Aoife | 555-1234, 555-5678
-2       | Niamh | 555-9999
+1       | Sumayya | 555-1234, 555-5678
+2       | Aisha | 555-9999
 ```
 
 `phone_numbers` is a list jammed into one column. Querying "users with this phone" requires `LIKE '%555-1234%'` — slow, error-prone (substring matches), no validation per number.

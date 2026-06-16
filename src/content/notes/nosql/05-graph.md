@@ -28,8 +28,8 @@ A graph database models data as a **property graph** with three elements:
 - **Properties** — key-value data on either nodes or edges.
 
 ```text
-(Person {name: "Mira"})  -[:FOLLOWS {since: 2024}]->  (Person {name: "Alex"})
-(Person {name: "Mira"})  -[:PURCHASED {date: ...}]->  (Product {sku: "BK-101"})
+(Person {name: "Zubaida"})  -[:FOLLOWS {since: 2024}]->  (Person {name: "Idris"})
+(Person {name: "Zubaida"})  -[:PURCHASED {date: ...}]->  (Product {sku: "BK-101"})
 ```
 
 The defining feature is **index-free adjacency**: each node stores direct pointers to its neighbor nodes. Hopping from one node to its neighbors costs the same no matter how large the overall graph is — you follow pointers, you don't search an index. This is what makes deep relationship queries fast where SQL would grind.
@@ -56,35 +56,35 @@ Neo4j is the most widely used graph database. Its query language, **Cypher**, is
 
 ```text
 // Create nodes and a relationship
-CREATE (m:Person {name: "Mira"})
-CREATE (a:Person {name: "Alex"})
+CREATE (m:Person {name: "Zubaida"})
+CREATE (a:Person {name: "Idris"})
 CREATE (m)-[:FOLLOWS {since: 2024}]->(a)
 
-// Find who Mira follows
-MATCH (m:Person {name: "Mira"})-[:FOLLOWS]->(target)
+// Find who Zubaida follows
+MATCH (m:Person {name: "Zubaida"})-[:FOLLOWS]->(target)
 RETURN target.name
 
-// Friends-of-friends Mira does NOT already follow (recommendation)
-MATCH (m:Person {name: "Mira"})-[:FOLLOWS]->()-[:FOLLOWS]->(fof)
+// Friends-of-friends Zubaida does NOT already follow (recommendation)
+MATCH (m:Person {name: "Zubaida"})-[:FOLLOWS]->()-[:FOLLOWS]->(fof)
 WHERE NOT (m)-[:FOLLOWS]->(fof) AND fof <> m
 RETURN fof.name, count(*) AS mutuals
 ORDER BY mutuals DESC
 ```
 
-Read the patterns left to right as a sentence: "match a Person named Mira, who follows someone, who follows a friend-of-friend." The arrow direction matters — `-[:FOLLOWS]->` is not the same as `<-[:FOLLOWS]-`. This declarative, visual style makes traversal queries dramatically clearer than the equivalent nested SQL joins.
+Read the patterns left to right as a sentence: "match a Person named Zubaida, who follows someone, who follows a friend-of-friend." The arrow direction matters — `-[:FOLLOWS]->` is not the same as `<-[:FOLLOWS]-`. This declarative, visual style makes traversal queries dramatically clearer than the equivalent nested SQL joins.
 
 ## Traversals and Path Finding
 
 Beyond fixed-depth patterns, graphs shine at **variable-length** traversals and shortest-path queries — exactly the questions that are painful or impossible in SQL.
 
 ```text
-// Variable depth: anyone reachable from Mira within 1 to 4 FOLLOWS hops
-MATCH (m:Person {name: "Mira"})-[:FOLLOWS*1..4]->(reachable)
+// Variable depth: anyone reachable from Zubaida within 1 to 4 FOLLOWS hops
+MATCH (m:Person {name: "Zubaida"})-[:FOLLOWS*1..4]->(reachable)
 RETURN DISTINCT reachable.name
 
 // Shortest path between two people through any relationship
 MATCH p = shortestPath(
-  (a:Person {name: "Mira"})-[*]-(b:Person {name: "Sam"})
+  (a:Person {name: "Zubaida"})-[*]-(b:Person {name: "Bilal"})
 )
 RETURN p
 ```

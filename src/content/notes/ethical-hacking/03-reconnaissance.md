@@ -164,15 +164,15 @@ theHarvester -d example.com -b google,bing,linkedin,shodan -l 500 -f output.html
 ## LinkedIn / Social Media OSINT
 
 LinkedIn reveals:
-- Employee names → generate username lists (j.smith, john.smith, jsmith)
+- Employee names → generate username lists (a.al-khwarizmi, ahmad.al-khwarizmi, aalkhwarizmi)
 - Job titles → understand tech stack ("Senior Kubernetes Engineer" = K8s in prod)
 - Recent job postings → "AWS Lambda experience required" = they use Lambda
 - Tech stack from profiles → Python, Go, React, Terraform
 
 ```python
 # Generate username variations from names
-first = "John"
-last  = "Smith"
+first = "Ahmad"
+last  = "al-Khwarizmi"
 domain = "example.com"
 
 variants = [
@@ -271,7 +271,7 @@ After passive recon, document:
 ### Employees
 - 47 LinkedIn profiles
 - 23 unique email addresses (format: firstname.lastname@example.com)
-- CTO: john.smith@example.com (from conference speaker bio)
+- CTO: ahmad.al-khwarizmi@example.com (from conference speaker bio)
 
 ### Exposed Services (Shodan)
 - staging.example.com:8080 — Apache Tomcat 8.5.23 (CVE-2020-1938 — check)

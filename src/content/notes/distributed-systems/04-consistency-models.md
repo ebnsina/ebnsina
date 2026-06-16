@@ -45,11 +45,11 @@ A very useful middle point. **Causal consistency** guarantees that operations wh
 Causality is the "happens-before" relationship of chapter 7: if you read a value and then write something based on it, your write is causally *after* that read. The classic example:
 
 ```text
-Alice posts: "I lost my keys."
-Bob replies: "Glad you found them!"   (causally after Alice's post)
+Fatima posts: "I lost my keys."
+Omar replies: "Glad you found them!"   (causally after Fatima's post)
 
-Causal consistency guarantees nobody sees Bob's reply
-before Alice's post. Two unrelated posts may appear in any order.
+Causal consistency guarantees nobody sees Omar's reply
+before Fatima's post. Two unrelated posts may appear in any order.
 ```
 
 Causal consistency is attractive because it forbids the genuinely confusing reorderings (a reply before its question) while remaining **available during partitions** — it can be implemented without cross-replica coordination on the write path, by tracking dependencies (vector clocks). It is the strongest model you can have without sacrificing availability under partition.

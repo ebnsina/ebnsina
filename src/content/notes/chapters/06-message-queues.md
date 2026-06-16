@@ -240,7 +240,7 @@ async function runProducer(): Promise<void> {
     to: "user@example.com",
     subject: "Welcome to the platform",
     template: "welcome",
-    data: { name: "John" },
+    data: { name: "Ahmad" },
     userId: "user-123",
     timestamp: new Date().toISOString(),
   });
@@ -511,7 +511,7 @@ func main() {
 		ctx := context.Background()
 		producer.Publish(ctx, "user.welcome", EmailMessage{
 			To: "user@example.com", Subject: "Welcome",
-			Template: "welcome", Data: map[string]interface{}{"name": "John"},
+			Template: "welcome", Data: map[string]interface{}{"name": "Ahmad"},
 			UserID: "user-123", Timestamp: time.Now().Format(time.RFC3339),
 		})
 		log.Println("Message published")

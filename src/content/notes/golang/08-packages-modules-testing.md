@@ -236,7 +236,7 @@ func TestGetUserHandler(t *testing.T) {
     mockService := &MockUserService{
         GetByIDFunc: func(ctx context.Context, id int) (*User, error) {
             if id == 1 {
-                return &User{ID: 1, Email: "alice@example.com"}, nil
+                return &User{ID: 1, Email: "fatima@example.com"}, nil
             }
             return nil, ErrNotFound
         },
@@ -254,7 +254,7 @@ func TestGetUserHandler(t *testing.T) {
             name:       "existing user",
             url:        "/users/1",
             wantStatus: http.StatusOK,
-            wantBody:   `"email":"alice@example.com"`,
+            wantBody:   `"email":"fatima@example.com"`,
         },
         {
             name:       "not found",
@@ -293,7 +293,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 
 func BenchmarkJSONMarshal(b *testing.B) {
-    user := User{ID: 1, Email: "alice@example.com", FirstName: "Alice"}
+    user := User{ID: 1, Email: "fatima@example.com", FirstName: "Fatima"}
     b.ResetTimer()
 
     for i := 0; i < b.N; i++ {
