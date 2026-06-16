@@ -3,7 +3,7 @@
 	const year = new Date().getFullYear();
 </script>
 
-<footer class="mt-24" style="border-top: 1px solid color-mix(in oklch, var(--fg) 6%, transparent)">
+<footer class="mt-12" style="border-top: 1px solid color-mix(in oklch, var(--fg) 6%, transparent)">
 	<div
 		class="mx-auto flex max-w-5xl flex-col gap-4 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-10"
 	>

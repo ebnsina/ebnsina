@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import PostCard from '$lib/components/PostCard.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import { reveal } from '$lib/actions';
@@ -6,10 +7,7 @@
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>Writing — Ebn Sina</title>
-	<meta name="description" content="Notes on engineering, craft, and the tools I use to build software." />
-</svelte:head>
+<Seo title="Writing" description="Notes on engineering, craft, and the tools I use to build software." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner

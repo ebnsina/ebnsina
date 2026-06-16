@@ -1,13 +1,11 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	const updated = new Date();
 	const label = updated.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 </script>
 
-<svelte:head>
-	<title>Now — Ebn Sina</title>
-	<meta name="description" content="What I'm focused on right now." />
-</svelte:head>
+<Seo title="Now" description="What I'm focused on right now." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner

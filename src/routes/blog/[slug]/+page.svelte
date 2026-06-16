@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import FormattedDate from '$lib/components/FormattedDate.svelte';
 
@@ -7,10 +8,7 @@
 	const meta = $derived(data.meta);
 </script>
 
-<svelte:head>
-	<title>{meta.title} — Ebn Sina</title>
-	<meta name="description" content={meta.description} />
-</svelte:head>
+<Seo title={meta.title} description={meta.description} type="article" image={meta.cover ?? undefined} />
 
 <ArticleLayout>
 	{#snippet header()}

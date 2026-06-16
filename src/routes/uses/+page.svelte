@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import { reveal } from '$lib/actions';
 
@@ -41,10 +42,7 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Uses — Ebn Sina</title>
-	<meta name="description" content="Hardware, software, and services I actually use." />
-</svelte:head>
+<Seo title="Uses" description="Hardware, software, and services I actually use." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner

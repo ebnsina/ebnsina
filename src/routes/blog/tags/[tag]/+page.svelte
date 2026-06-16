@@ -1,13 +1,11 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import PostCard from '$lib/components/PostCard.svelte';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>#{data.tag} — Ebn Sina</title>
-	<meta name="description" content={`Posts tagged #${data.tag}`} />
-</svelte:head>
+<Seo title={`#${data.tag}`} description={`Posts tagged #${data.tag}`} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<header class="mb-10">

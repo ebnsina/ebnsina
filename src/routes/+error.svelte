@@ -1,11 +1,9 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { page } from '$app/state';
 </script>
 
-<svelte:head>
-	<title>{page.status === 404 ? 'Not found' : 'Error'} — Ebn Sina</title>
-	<meta name="robots" content="noindex" />
-</svelte:head>
+<Seo title={page.status === 404 ? 'Not found' : 'Error'} noindex />
 
 <div class="mx-auto max-w-3xl px-5 py-24 sm:px-8 text-center">
 	<p class="mb-4 font-mono text-sm text-muted">{page.status}</p>

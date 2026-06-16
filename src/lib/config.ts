@@ -7,6 +7,8 @@ export const SITE = {
 	author: 'Ebn Sina',
 	email: 'ebnsina.dev@gmail.com',
 	locale: 'en-US',
+	twitterHandle: '@ebns1na',
+	ogImage: '/og.png',
 	social: {
 		github: 'https://github.com/ebnsina',
 		twitter: 'https://twitter.com/ebns1na',

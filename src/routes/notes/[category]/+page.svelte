@@ -1,14 +1,12 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import { colorFor } from '$lib/colors';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.meta.label} — Notes — Ebn Sina</title>
-	<meta name="description" content={data.meta.description} />
-</svelte:head>
+<Seo title={`${data.meta.label} — Notes`} description={data.meta.description} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<header class="mb-10">

@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { SITE } from '$lib/config';
+	import Seo from '$lib/components/Seo.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
+	import ContactCta from '$lib/components/ContactCta.svelte';
 </script>
 
-<svelte:head>
-	<title>About — Ebn Sina</title>
-	<meta name="description" content="A bit about Ebn Sina — engineer, builder, occasional writer." />
-</svelte:head>
+<Seo title="About" description="A bit about Ebn Sina — engineer, builder, occasional writer." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
@@ -48,11 +46,7 @@
 		I finish and take notes in the margins.
 	</p>
 
-	<h2>Get in touch</h2>
-	<p>
-		I'm reachable at <a href={`mailto:${SITE.email}`} class="font-mono text-[0.9em]">{SITE.email}</a
-		>. If you're building something interesting or want to talk through a hard problem, I'm
-		generally up for it.
-	</p>
-</div>
+	</div>
+
+	<ContactCta />
 </div>

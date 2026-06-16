@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 
@@ -7,10 +8,7 @@
 	const meta = $derived(data.meta);
 </script>
 
-<svelte:head>
-	<title>{meta.title} — {data.categoryLabel} — Ebn Sina</title>
-	<meta name="description" content={meta.subtitle} />
-</svelte:head>
+<Seo title={`${meta.title} — ${data.categoryLabel}`} description={meta.subtitle} type="article" />
 
 <ArticleLayout>
 	{#snippet header()}

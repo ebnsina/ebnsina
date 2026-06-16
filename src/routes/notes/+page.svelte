@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { getCategoryGroups, GROUP_ORDER } from '$lib/data/categories';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import NotesFolder from '$lib/components/NotesFolder.svelte';
@@ -7,10 +8,7 @@
 	const groups = getCategoryGroups();
 </script>
 
-<svelte:head>
-	<title>Notes — Ebn Sina</title>
-	<meta name="description" content="Deep-dive series on systems, infrastructure, and engineering craft." />
-</svelte:head>
+<Seo title="Notes" description="Deep-dive series on systems, infrastructure, and engineering craft." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
