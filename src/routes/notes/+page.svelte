@@ -92,7 +92,7 @@
 			<h2 class="font-display text-xl font-bold tracking-tight">Badges</h2>
 			<span class="font-pixel text-xs text-muted">{earnedCount}/{tracks.length} tracks mastered</span>
 		</div>
-		<div class="flex flex-wrap gap-x-3 gap-y-6">
+		<div class="flex flex-wrap justify-center gap-x-3 gap-y-6 sm:justify-start">
 			{#each tracks as t (t.category)}
 				<a href={`/notes/${t.category}`} class="transition-transform hover:-translate-y-0.5">
 					<TrackBadge

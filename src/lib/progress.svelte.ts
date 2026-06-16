@@ -17,14 +17,16 @@ export function xpForLevel(level: string): number {
 	return XP_BY_LEVEL[level as Level] ?? 10;
 }
 
+// Calibrated against the full XP pool (~8.2k across all tracks) so the top
+// rank lands near completion rather than at a third of the way through.
 const RANKS = [
 	{ name: 'Curious', min: 0 },
-	{ name: 'Novice', min: 80 },
-	{ name: 'Apprentice', min: 220 },
-	{ name: 'Practitioner', min: 500 },
-	{ name: 'Engineer', min: 950 },
-	{ name: 'Architect', min: 1700 },
-	{ name: 'Distinguished', min: 3000 }
+	{ name: 'Novice', min: 150 },
+	{ name: 'Apprentice', min: 500 },
+	{ name: 'Practitioner', min: 1200 },
+	{ name: 'Engineer', min: 2400 },
+	{ name: 'Architect', min: 4200 },
+	{ name: 'Distinguished', min: 7000 }
 ] as const;
 
 type Entry = { at: number; xp: number };
