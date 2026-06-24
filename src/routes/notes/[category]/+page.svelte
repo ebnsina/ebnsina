@@ -78,32 +78,37 @@
 		</div>
 	</div>
 
+	<!-- node circle, shared between the desktop rail and the inline mobile badge -->
+	{#snippet stepNode(ch: (typeof data.chapters)[number], isDone: boolean, isNext: boolean)}
+		<span
+			class="grid size-7 shrink-0 place-items-center rounded-full border-2 font-pixel text-[0.6rem] transition-colors"
+			class:border-accent={isDone || isNext}
+			class:bg-accent={isDone}
+			class:text-bg={isDone}
+			class:text-accent={isNext && !isDone}
+			class:border-[color-mix(in_oklch,var(--fg)_18%,transparent)]={!isDone && !isNext}
+			class:text-muted={!isDone && !isNext}
+		>
+			{#if isDone}
+				<Check size={13} strokeWidth={3} />
+			{:else}
+				{String(ch.meta.chapter).padStart(2, '0')}
+			{/if}
+		</span>
+	{/snippet}
+
 	<!-- The path -->
 	<ol class="relative space-y-2">
 		{#each data.chapters as ch, i (ch.slug)}
 			{@const isDone = progress.ready && progress.isDone(data.category, ch.slug)}
 			{@const isNext = nextChapter?.slug === ch.slug}
 			<li class="relative flex gap-4">
-				<!-- node + connector rail -->
-				<div class="relative flex w-7 shrink-0 flex-col items-center">
+				<!-- node + connector rail (desktop only — mobile uses the inline badge in the card) -->
+				<div class="relative hidden w-7 shrink-0 flex-col items-center sm:flex">
 					{#if i > 0}
 						<span class="absolute -top-2 h-2 w-px bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
 					{/if}
-					<span
-						class="z-10 mt-3.5 grid size-7 place-items-center rounded-full border-2 font-pixel text-[0.6rem] transition-colors"
-						class:border-accent={isDone || isNext}
-						class:bg-accent={isDone}
-						class:text-bg={isDone}
-						class:text-accent={isNext && !isDone}
-						class:border-[color-mix(in_oklch,var(--fg)_18%,transparent)]={!isDone && !isNext}
-						class:text-muted={!isDone && !isNext}
-					>
-						{#if isDone}
-							<Check size={13} strokeWidth={3} />
-						{:else}
-							{String(ch.meta.chapter).padStart(2, '0')}
-						{/if}
-					</span>
+					<span class="z-10 mt-3.5">{@render stepNode(ch, isDone, isNext)}</span>
 					{#if i < data.chapters.length - 1}
 						<span class="w-px flex-1 bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
 					{/if}
@@ -111,10 +116,12 @@
 
 				<a
 					href={`/notes/${data.category}/${ch.slug}`}
-					class="group mb-1 flex min-w-0 flex-1 items-center gap-4 rounded-xl border px-4 py-3.5 transition-colors"
+					class="group mb-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors sm:gap-4"
 					class:border-[color-mix(in_oklch,var(--accent)_40%,transparent)]={isNext}
 					class:border-[color-mix(in_oklch,var(--fg)_8%,transparent)]={!isNext}
 				>
+					<!-- inline step badge (mobile only) -->
+					<span class="sm:hidden">{@render stepNode(ch, isDone, isNext)}</span>
 					<span class="min-w-0 flex-1">
 						<span class="flex items-center gap-2">
 							<span class="truncate font-semibold transition-colors group-hover:text-accent"
@@ -132,7 +139,7 @@
 						>{ch.meta.readingTime}</span
 					>
 					<span
-						class="flex-shrink-0 -translate-x-1 text-sm text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100"
+						class="hidden flex-shrink-0 -translate-x-1 text-sm text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 sm:block"
 						>→</span
 					>
 				</a>
