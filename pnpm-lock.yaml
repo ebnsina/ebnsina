@@ -17,6 +17,12 @@ importers:
       '@fontsource-variable/geist-mono':
         specifier: ^5.2.8
         version: 5.2.8
+      '@fontsource-variable/sora':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource/cabin-condensed':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@lucide/svelte':
         specifier: ^1.18.0
         version: 1.18.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))
@@ -200,6 +206,12 @@ packages:
 
   '@fontsource-variable/geist-mono@5.2.8':
     resolution: {integrity: sha512-KI5bj+hkkRiHttYHmccotUZ80ZuZyai+RwI1d7UId0clkx/jXxlo8qYK8j54WzmpBjtMoEMPyllV7faDcj+6RA==}
+
+  '@fontsource-variable/sora@5.2.8':
+    resolution: {integrity: sha512-sP+ILTfi5r3cqmMBntI4ooQNxFI+LyHyD5hcPbWwwL4uh4kKFAkOz0w2veCXjz18fKRdva6OG0dY+5yQ02f30w==}
+
+  '@fontsource/cabin-condensed@5.2.8':
+    resolution: {integrity: sha512-o3OGP5ZOl+kZSVjLxSWuan3YWiFrhrAQbwJhbSO6G9u/0GKlNf/QuUGU7FaCCe+HtOxzNv1Cz818PNaNKdZ8hQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -2315,6 +2327,10 @@ snapshots:
   '@fontsource-variable/epilogue@5.2.8': {}
 
   '@fontsource-variable/geist-mono@5.2.8': {}
+
+  '@fontsource-variable/sora@5.2.8': {}
+
+  '@fontsource/cabin-condensed@5.2.8': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

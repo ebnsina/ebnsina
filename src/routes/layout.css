@@ -1,8 +1,13 @@
 @import 'tailwindcss';
 
 @import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/sora';
 @import '@fontsource-variable/epilogue';
 @import '@fontsource-variable/geist-mono';
+@import '@fontsource/cabin-condensed/400.css';
+@import '@fontsource/cabin-condensed/500.css';
+@import '@fontsource/cabin-condensed/600.css';
+@import '@fontsource/cabin-condensed/700.css';
 
 /* Geist Pixel (self-hosted from the `geist` package) — used for the notes
    "journey" game UI. Square variant = classic blocky arcade look. */
@@ -50,9 +55,9 @@
    `text-accent`, `bg-bg`, `border-rule` are brand-driven AND theme-aware.
    `inline` makes the utilities reference the live var rather than copying it. */
 @theme inline {
-	--font-sans: 'Epilogue Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-display: 'Bricolage Grotesque Variable', 'Epilogue Variable', ui-sans-serif, sans-serif;
-	--font-serif: 'Bricolage Grotesque Variable', 'Epilogue Variable', ui-sans-serif, sans-serif;
+	--font-sans: 'Cabin Condensed', 'Epilogue Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Sora Variable', 'Bricolage Grotesque Variable', ui-sans-serif, sans-serif;
+	--font-serif: 'Sora Variable', 'Bricolage Grotesque Variable', ui-sans-serif, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 	--font-pixel: 'Geist Pixel', 'Geist Mono Variable', ui-monospace, monospace;
 
@@ -68,8 +73,8 @@ html {
 	background: var(--bg);
 	color: var(--fg);
 	font-family: var(--font-sans);
-	font-size: 16px;
-	line-height: 1.65;
+	font-size: 18px;
+	line-height: 1.6;
 	scroll-behavior: smooth;
 	scroll-padding-top: 5.5rem;
 	-webkit-font-smoothing: antialiased;
