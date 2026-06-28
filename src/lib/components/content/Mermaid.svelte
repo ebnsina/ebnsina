@@ -29,9 +29,19 @@
 		}
 	};
 
+	// On phones, horizontal (LR/RL) graphs blow past the viewport and either scroll
+	// or shrink the text to mush. Reflow them top-down so they stack into the column
+	// width and stay readable. Wide chains still scroll as a fallback.
+	function sourceFor(narrow: boolean): string {
+		const src = code.trim();
+		if (!narrow) return src;
+		return src.replace(/^(\s*(?:flowchart|graph))[ \t]+(?:LR|RL)\b/i, '$1 TD');
+	}
+
 	async function render() {
 		if (!code) return;
 		const isDark = document.documentElement.classList.contains('dark');
+		const narrow = window.matchMedia('(max-width: 639px)').matches;
 		const p = isDark ? PALETTE.dark : PALETTE.light;
 		const { default: mermaid } = await import('mermaid');
 		mermaid.initialize({
@@ -42,7 +52,7 @@
 			themeVariables: {
 				darkMode: isDark,
 				background: 'transparent',
-				fontSize: '14px',
+				fontSize: narrow ? '15px' : '14px',
 				primaryColor: p.node,
 				primaryBorderColor: p.accent,
 				primaryTextColor: p.fg,
@@ -73,7 +83,7 @@
 		});
 		try {
 			const id = `mermaid-${seq++}`;
-			const out = await mermaid.render(id, code.trim());
+			const out = await mermaid.render(id, sourceFor(narrow));
 			svg = out.svg;
 			failed = false;
 		} catch {
@@ -83,12 +93,18 @@
 
 	onMount(() => {
 		render();
+		// Re-render on theme toggle and when crossing the phone breakpoint.
 		const observer = new MutationObserver(render);
 		observer.observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ['class']
 		});
-		return () => observer.disconnect();
+		const mq = window.matchMedia('(max-width: 639px)');
+		mq.addEventListener('change', render);
+		return () => {
+			observer.disconnect();
+			mq.removeEventListener('change', render);
+		};
 	});
 </script>
 
@@ -123,6 +139,16 @@
 		margin: 1.5rem 0;
 		overflow-x: auto;
 		background: color-mix(in oklch, var(--fg) 2.5%, transparent);
+	}
+	@media (max-width: 639px) {
+		.diagram {
+			padding: 0.85rem;
+			border-radius: 0.6rem;
+		}
+		.diagram-label {
+			margin-bottom: 0.85rem;
+			padding-bottom: 0.6rem;
+		}
 	}
 	.diagram-label {
 		display: flex;

@@ -35,10 +35,12 @@
 					{String(meta.chapter).padStart(2, '0')} / {String(data.total).padStart(2, '0')}
 				</span>
 			</div>
-			<h1 class="mb-4 font-serif text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl">
+			<h1
+				class="mb-4 font-serif text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl sm:leading-[1.05] lg:text-5xl"
+			>
 				{meta.title}
 			</h1>
-			<p class="text-lg leading-relaxed text-muted">{meta.subtitle}</p>
+			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.subtitle}</p>
 			{#if meta.topics?.length}
 				<div class="mt-5 flex flex-wrap gap-2">
 					{#each meta.topics as t (t)}
