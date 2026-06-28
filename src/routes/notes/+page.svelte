@@ -73,7 +73,7 @@
 
 	<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-10">
 		<a
-			href="/notes/directory"
+			href="/directory"
 			class="group flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] p-5 transition-colors hover:border-[color-mix(in_oklch,var(--accent)_35%,transparent)] hover:bg-[color-mix(in_oklch,var(--fg)_2.5%,transparent)]"
 		>
 			<div class="flex items-center gap-4">
