@@ -1,6 +1,6 @@
 ### Hi, I'm Ebn Sina 👋
 
-SSE @ [Fajr Labs](https://github.com/fajrlabs) · building fast, self-hosted tools · Rajshahi 🇧🇩
+Maker @ [Nile Labs](https://github.com/nilelabs) · building fast, self-hosted tools · Rajshahi 🇧🇩
 
 ```ts
 const ebnsina = {
