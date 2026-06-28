@@ -16,12 +16,6 @@
 />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8 pb-20 pt-12 sm:pt-16">
-	<a
-		href="/notes"
-		class="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
-		>← Notes</a
-	>
-
 	<header class="mb-9 mt-4">
 		<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">The directory</p>
 		<h1 class="mt-1 font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl lg:text-5xl">
