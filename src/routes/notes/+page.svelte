@@ -4,8 +4,8 @@
 	import { getCategoryGroups, GROUP_ORDER, CATEGORIES } from '$lib/data/categories';
 	import { ROADMAP } from '$lib/data/roadmap';
 	import { getTotalChapters, getTracks, getChapters } from '$lib/content';
+	import { FolderOpen, ArrowRight } from '@lucide/svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
-	import NotesFolder from '$lib/components/NotesFolder.svelte';
 	import JourneyHeader from '$lib/components/notes/JourneyHeader.svelte';
 	import Roadmap from '$lib/components/notes/Roadmap.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
@@ -72,18 +72,28 @@
 	<Roadmap {levels} />
 
 	<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-10">
-		<div class="mb-5 flex items-baseline justify-between gap-4">
-			<h2 class="font-display text-xl font-bold tracking-tight">Browse all tracks</h2>
-			<span class="font-mono text-xs text-muted">Hover a folder to open its topics.</span>
-		</div>
-		<div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-			{#each GROUP_ORDER as groupName, gi (groupName)}
-				{@const items = groups[groupName]}
-				{#if items?.length}
-					<NotesFolder name={groupName} {items} color={cardColor(gi)} />
-				{/if}
-			{/each}
-		</div>
+		<a
+			href="/notes/directory"
+			class="group flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] p-5 transition-colors hover:border-[color-mix(in_oklch,var(--accent)_35%,transparent)] hover:bg-[color-mix(in_oklch,var(--fg)_2.5%,transparent)]"
+		>
+			<div class="flex items-center gap-4">
+				<span
+					class="grid size-11 shrink-0 place-items-center rounded-xl text-accent"
+					style="background: color-mix(in oklch, var(--accent) 12%, var(--bg)); border: 1px solid color-mix(in oklch, var(--accent) 25%, transparent);"
+					aria-hidden="true"><FolderOpen size={20} /></span
+				>
+				<div>
+					<p class="font-display font-bold tracking-tight transition-colors group-hover:text-accent">
+						Browse all tracks
+					</p>
+					<p class="text-sm text-muted">All {tracks.length} tracks, grouped by area.</p>
+				</div>
+			</div>
+			<ArrowRight
+				size={18}
+				class="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+			/>
+		</a>
 	</section>
 
 	<!-- Trophy case: a badge per track, earned by completing every chapter in it -->
