@@ -118,15 +118,17 @@ body {
 	color: var(--fg);
 }
 
-/* Squircle (superellipse) corners on every button — layers on top of whatever
-   border-radius each button already sets. Progressive enhancement: browsers
-   without `corner-shape` keep the normal rounded corners. Feature-gated with
-   @supports so the build's CSS processor (Lightning CSS) doesn't prune it. */
+/* Squircle (superellipse) corners everywhere a radius applies — cards, pills,
+   buttons, code blocks, the diagram panel, inputs, images, etc. `corner-shape`
+   only has a visible effect when a `border-radius` is already set, so this is
+   naturally scoped to rounded surfaces and leaves square ones untouched.
+   Progressive enhancement: browsers without `corner-shape` keep normal rounding.
+   Feature-gated with @supports so the build's CSS processor (Lightning CSS)
+   doesn't prune the declaration. */
 @supports (corner-shape: squircle) {
-	button,
-	[type='button'],
-	[type='submit'],
-	[type='reset'] {
+	*,
+	*::before,
+	*::after {
 		corner-shape: squircle;
 	}
 }
