@@ -12,6 +12,9 @@
 	let text = $state('');
 	let animate = $state(false);
 
+	// Reserve the width of the longest title so typing never reflows the layout.
+	const longest = $derived(words.reduce((a, w) => (w.length > a.length ? w : a), ''));
+
 	function shuffle(a: number[]) {
 		const r = [...a];
 		for (let i = r.length - 1; i > 0; i--) {
@@ -69,15 +72,30 @@
 	});
 </script>
 
-<span class="inline-flex items-baseline whitespace-nowrap">
-	<span aria-hidden="true">{animate ? text : words[0]}</span>
+<span class="tw">
+	<span class="tw-sizer" aria-hidden="true">{longest}</span>
+	<span class="tw-live" aria-hidden="true"
+		>{animate ? text : words[0]}{#if animate}<span class="tw-cursor"></span>{/if}</span
+	>
 	<span class="sr-only">{words[0]}</span>
-	{#if animate}
-		<span class="tw-cursor" aria-hidden="true"></span>
-	{/if}
 </span>
 
 <style>
+	.tw {
+		position: relative;
+		display: inline-block;
+		vertical-align: bottom;
+	}
+	.tw-sizer {
+		visibility: hidden;
+		white-space: nowrap;
+	}
+	.tw-live {
+		position: absolute;
+		left: 0;
+		top: 0;
+		white-space: nowrap;
+	}
 	.tw-cursor {
 		display: inline-block;
 		width: 1px;

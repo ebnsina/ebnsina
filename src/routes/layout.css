@@ -28,13 +28,16 @@
 	--fg: oklch(0.21 0.012 20);
 	--muted: oklch(0.52 0.014 22);
 	--rule: oklch(0.9 0.006 30);
-	--accent: oklch(0.47 0.16 16);
-	--accent-soft: oklch(0.9 0.07 18);
-	--brand-accent: oklch(0.47 0.16 16);
+	/* ─────────────────────────────────────────────────────────────────────
+	   BRAND ACCENT — single source of truth. To reskin the whole site, change
+	   these two hex values (this light one + the dark one below). Everything
+	   else — buttons, links, progress, selection, Mermaid diagrams — derives
+	   from --accent, so no other colour needs touching. ───────────────────── */
+	--accent: #5a6c23; /* olive */
+	--accent-soft: color-mix(in oklch, var(--accent) 18%, var(--bg));
+	--brand-accent: var(--accent);
 	/* neutral base for mixing card colours (keeps hues true) */
 	--card-base: oklch(0.995 0 0);
-	/* raw hex accent consumed by three.js (deep cherry) */
-	--accent-hex: #9c2a45;
 }
 
 :root.dark {
@@ -43,11 +46,8 @@
 	--fg: oklch(0.93 0.006 40);
 	--muted: oklch(0.64 0.014 24);
 	--rule: oklch(0.29 0.016 18);
-	--accent: oklch(0.62 0.18 18);
-	--accent-soft: oklch(0.34 0.11 16);
-	--brand-accent: oklch(0.62 0.18 18);
+	--accent: #7e9443; /* olive — the dark-theme half of the single source */
 	--card-base: oklch(0.205 0 0);
-	--accent-hex: #c44560;
 }
 
 /* Expose the runtime vars as Tailwind theme tokens, so utilities like
@@ -55,8 +55,8 @@
    `inline` makes the utilities reference the live var rather than copying it. */
 @theme inline {
 	--font-sans: 'Cabin Condensed', 'Epilogue Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-serif: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Oddval', 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-serif: 'Oddval', 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 	--font-pixel: 'Geist Pixel', 'Geist Mono Variable', ui-monospace, monospace;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Check, Trophy } from '@lucide/svelte';
+	import { Check, Trophy, ArrowRight } from '@lucide/svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
@@ -48,7 +48,7 @@
 
 	<!-- Track progress + guidance -->
 	<div
-		class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,var(--bg))] p-5"
+		class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] p-5"
 	>
 		<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
 			<p class="font-pixel text-sm">
@@ -116,9 +116,7 @@
 
 				<a
 					href={`/notes/${data.category}/${ch.slug}`}
-					class="group mb-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors sm:gap-4"
-					class:border-[color-mix(in_oklch,var(--accent)_40%,transparent)]={isNext}
-					class:border-[color-mix(in_oklch,var(--fg)_8%,transparent)]={!isNext}
+					class="group mb-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-2 sm:gap-4"
 				>
 					<!-- inline step badge (mobile only) -->
 					<span class="sm:hidden">{@render stepNode(ch, isDone, isNext)}</span>
@@ -138,10 +136,10 @@
 						class="hidden flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted sm:block"
 						>{ch.meta.readingTime}</span
 					>
-					<span
-						class="hidden flex-shrink-0 -translate-x-1 text-sm text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 sm:block"
-						>→</span
-					>
+					<ArrowRight
+						size={16}
+						class="hidden shrink-0 -translate-x-1 text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 sm:block"
+					/>
 				</a>
 			</li>
 		{/each}

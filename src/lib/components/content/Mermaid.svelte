@@ -7,27 +7,24 @@
 	let failed = $state(false);
 	let seq = 0;
 
-	// Design-system palettes (cherry/burgundy accent, no glow). Mermaid's colour
-	// maths (khroma) can't parse the oklch tokens in layout.css, so mirror them as
-	// hex per theme.
+	// Neutral palette per theme (mermaid's khroma can't parse the oklch neutral
+	// tokens, so mirror them as hex). The ACCENT is read live from the --accent
+	// CSS var (the single source of truth) so diagrams reskin with the rest of
+	// the site; the node fill is derived from it.
 	const PALETTE = {
-		light: {
-			bg: '#fbfaf9',
-			fg: '#2e2925',
-			muted: '#7a716c',
-			rule: '#e7e2dd',
-			accent: '#9c2a45',
-			node: '#f6e3e1'
-		},
-		dark: {
-			bg: '#211e1d',
-			fg: '#ece9e6',
-			muted: '#a79c98',
-			rule: '#423c3a',
-			accent: '#c44560',
-			node: '#3b2128'
-		}
+		light: { bg: '#fbfaf9', fg: '#2e2925', muted: '#7a716c', rule: '#e7e2dd' },
+		dark: { bg: '#211e1d', fg: '#ece9e6', muted: '#a79c98', rule: '#423c3a' }
 	};
+
+	const clampHex = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+	function hexMix(a: string, b: string, t: number): string {
+		const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+		const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+		return (
+			'#' +
+			pa.map((v, i) => clampHex(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join('')
+		);
+	}
 
 	// On phones, horizontal (LR/RL) graphs blow past the viewport and either scroll
 	// or shrink the text to mush. Reflow them top-down so they stack into the column
@@ -42,7 +39,11 @@
 		if (!code) return;
 		const isDark = document.documentElement.classList.contains('dark');
 		const narrow = window.matchMedia('(max-width: 639px)').matches;
-		const p = isDark ? PALETTE.dark : PALETTE.light;
+		const base = isDark ? PALETTE.dark : PALETTE.light;
+		// brand accent from the single source; node fill derived from it
+		const css = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+		const accent = /^#[0-9a-f]{6}$/i.test(css) ? css : isDark ? '#7e9443' : '#5a6c23';
+		const p = { ...base, accent, node: hexMix(base.bg, accent, isDark ? 0.22 : 0.12) };
 		const { default: mermaid } = await import('mermaid');
 		mermaid.initialize({
 			startOnLoad: false,

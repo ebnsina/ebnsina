@@ -1,9 +1,18 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { SITE } from '$lib/config';
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	let open = $state(false);
+	let scrolled = $state(false);
+
+	onMount(() => {
+		const onScroll = () => (scrolled = window.scrollY > 24);
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	});
 
 	const isActive = (href: string) => {
 		const base = href.split('#')[0];
@@ -19,10 +28,12 @@
 	>
 		<a
 			href="/"
-			class="group shrink-0 font-display text-lg font-semibold tracking-tight"
+			class="logo shrink-0 font-display text-lg font-semibold tracking-tight"
+			class:is-min={scrolled}
 			aria-label={SITE.name}
 		>
-			Ebn <span class="text-accent">Sina</span>
+			<span class="lm-full">Ebn <span class="text-accent">Sina</span></span>
+			<span class="lm-short" aria-hidden="true">E<span class="text-accent">S</span></span>
 		</a>
 
 		<nav class="hidden min-w-0 items-center gap-0.5 text-sm sm:flex">
@@ -92,3 +103,31 @@
 		</div>
 	{/if}
 </header>
+
+<style>
+	/* Logo cross-fades "Ebn Sina" → "ES" on scroll. Both labels stack in one grid
+	   cell so the box stays the full width (nav never shifts) and they fade. */
+	.logo {
+		display: inline-grid;
+	}
+	.lm-full,
+	.lm-short {
+		grid-area: 1 / 1;
+		transition: opacity 0.3s ease;
+	}
+	.lm-short {
+		opacity: 0;
+	}
+	.is-min .lm-full {
+		opacity: 0;
+	}
+	.is-min .lm-short {
+		opacity: 1;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.lm-full,
+		.lm-short {
+			transition: none;
+		}
+	}
+</style>

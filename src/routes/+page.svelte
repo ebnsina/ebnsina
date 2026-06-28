@@ -61,7 +61,7 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<!-- Hero -->
-	<section class="relative -mx-5 mb-6 flex min-h-[82vh] items-center sm:-mx-8">
+	<section class="relative -mx-5 mb-6 flex min-h-[54vh] items-center py-10 sm:-mx-8 sm:min-h-[82vh] sm:py-0">
 		<div class="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
 			<Hero />
 		</div>
