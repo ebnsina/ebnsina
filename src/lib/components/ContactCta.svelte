@@ -16,28 +16,28 @@
 	<div class="mt-7 flex flex-wrap items-center gap-3">
 		<a
 			href={`mailto:${SITE.email}`}
-			class="rounded-full bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent"
+			class="rounded-2xl bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent"
 			>Email me</a
 		>
 		<a
 			href={SITE.social.github}
 			target="_blank"
 			rel="noopener"
-			class="rounded-full border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
+			class="rounded-2xl border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
 			>GitHub</a
 		>
 		<a
 			href={SITE.social.twitter}
 			target="_blank"
 			rel="noopener"
-			class="rounded-full border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
+			class="rounded-2xl border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
 			>Twitter</a
 		>
 		<a
 			href={SITE.social.linkedin}
 			target="_blank"
 			rel="noopener"
-			class="rounded-full border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
+			class="rounded-2xl border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-accent"
 			>LinkedIn</a
 		>
 	</div>

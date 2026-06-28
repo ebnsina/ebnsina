@@ -65,7 +65,7 @@
 			{:else if nextChapter}
 				<a
 					href={`/notes/${data.category}/${nextChapter.slug}`}
-					class="rounded-full bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
+					class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
 					>{doneCount === 0 ? 'Start here' : 'Continue'} →</a
 				>
 			{/if}

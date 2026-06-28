@@ -73,7 +73,7 @@
 			<div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
 				<a
 					href="/projects"
-					class="rounded-full bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent"
+					class="rounded-2xl bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent"
 					>See my work</a
 				>
 				<a

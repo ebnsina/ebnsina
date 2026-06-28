@@ -96,7 +96,7 @@
 	{#if done && nextHref}
 		<a
 			href={nextHref}
-			class="rounded-full bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
+			class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
 			>Next chapter →</a
 		>
 	{/if}
@@ -104,7 +104,7 @@
 
 {#if toast}
 	<div
-		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full px-5 py-2.5 font-pixel text-xs shadow-xl"
+		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-2.5 font-pixel text-xs shadow-xl"
 		class:bg-fg={!trackMastered}
 		class:text-bg={!trackMastered}
 		class:bg-accent={trackMastered}

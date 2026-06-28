@@ -57,7 +57,7 @@
 		{#if !allDone && next}
 			<a
 				href={`/notes/${next.category}/${next.slug}`}
-				class="shrink-0 rounded-full bg-fg px-5 py-2.5 font-pixel text-xs text-bg transition-colors hover:bg-accent"
+				class="shrink-0 rounded-2xl bg-fg px-5 py-2.5 font-pixel text-xs text-bg transition-colors hover:bg-accent"
 				>{doneTotal === 0 ? 'Begin path' : 'Continue path'} →</a
 			>
 		{/if}
@@ -108,22 +108,28 @@
 						<span class="shrink-0 font-pixel text-[0.65rem] text-muted">{done}/{lvl.totalCh} · {fmtTime(lvl.minutes)}</span>
 					</div>
 
-					<div class="mt-4 flex flex-wrap gap-2">
+					<div
+						class="mt-4 grid grid-cols-1 gap-x-7 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-1 sm:grid-cols-2 lg:grid-cols-3"
+					>
 						{#each lvl.tracks as t (t.category)}
 							{@const td = progress.ready ? progress.doneIn(t.category, t.slugs) : 0}
-							{@const tdone = td === t.slugs.length}
+							{@const tdone = t.slugs.length > 0 && td === t.slugs.length}
 							<a
 								href={`/notes/${t.category}`}
-								class="group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
-								class:border-[color-mix(in_oklch,var(--accent)_45%,transparent)]={tdone}
-								class:bg-[color-mix(in_oklch,var(--accent)_8%,transparent)]={tdone}
-								class:border-[color-mix(in_oklch,var(--fg)_12%,transparent)]={!tdone}
+								class="group flex items-center justify-between gap-2 border-b border-[color-mix(in_oklch,var(--fg)_6%,transparent)] py-2 text-sm"
 							>
-								{#if tdone}
-									<Check size={12} strokeWidth={3} color="var(--accent)" />
-								{/if}
-								<span class="transition-colors group-hover:text-accent">{t.label}</span>
-								<span class="font-pixel text-[0.6rem] text-muted">{td}/{t.slugs.length}</span>
+								<span class="flex min-w-0 items-center gap-1.5">
+									{#if tdone}
+										<Check size={12} strokeWidth={3} color="var(--accent)" />
+									{/if}
+									<span
+										class="truncate transition-colors group-hover:text-accent"
+										class:text-accent={tdone}>{t.label}</span
+									>
+								</span>
+								<span class="shrink-0 font-pixel text-[0.6rem] tabular-nums text-muted"
+									>{td}/{t.slugs.length}</span
+								>
 							</a>
 						{/each}
 					</div>
