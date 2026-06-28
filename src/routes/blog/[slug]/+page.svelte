@@ -24,10 +24,12 @@
 					<span>·</span><span>Updated <FormattedDate date={meta.updated} /></span>
 				{/if}
 			</div>
-			<h1 class="mb-4 font-serif text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl">
+			<h1
+				class="mb-4 font-serif text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl sm:leading-[1.05] lg:text-5xl"
+			>
 				{meta.title}
 			</h1>
-			<p class="text-lg leading-relaxed text-muted">{meta.description}</p>
+			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.description}</p>
 			{#if meta.tags?.length}
 				<div class="mt-5 flex flex-wrap gap-2">
 					{#each meta.tags as t (t)}

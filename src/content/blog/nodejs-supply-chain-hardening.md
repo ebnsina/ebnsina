@@ -6,6 +6,10 @@ tags: ["security", "nodejs", "supply-chain", "pnpm"]
 minutesRead: 13
 ---
 
+<script>
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
+</script>
+
 ## Introduction
 
 The JavaScript ecosystem moves fast — and so do the people trying to exploit it. Between typosquatted packages, hijacked maintainer accounts, malicious `postinstall` scripts, and leaked CI secrets, a modern Node.js project carries far more risk than its `package.json` suggests.
@@ -16,6 +20,18 @@ This guide walks through two complementary upgrades every serious project should
 2. **A full security hardening checklist** spanning dependencies, secrets, CI/CD, runtime code, build artifacts, and repository hygiene.
 
 The advice is framework-agnostic and applies equally to libraries, applications, and monorepos.
+
+<Mermaid
+	title="Supply-chain checkpoints"
+	code={`
+graph LR
+  D["Developer"] --> LF["pnpm install<br/>lockfile + release-age guard"]
+  LF --> A["Audit<br/>provenance · advisories"]
+  A --> CI["CI<br/>pinned · no postinstall"]
+  CI --> REG["Registry<br/>signed publish"]
+  REG --> P["Production"]
+`}
+/>
 
 ---
 

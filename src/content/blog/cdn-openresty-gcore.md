@@ -8,6 +8,7 @@ minutesRead: 69
 
 <script>
 	import CdnPlayground from '$lib/components/content/CdnPlayground.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 Every layer explained — from BGP routing to Lua hooks, cache headers to origin auth — and how to extend each one.
@@ -155,6 +156,17 @@ Anycast works differently. Multiple physical servers in different cities all adv
 ## What a CDN Is and Why
 
 Think of a CDN like a chain of local convenience stores. Your main warehouse (the *origin server*) is in New York. Without a CDN, every customer — whether they're in Tokyo, Lagos, or Berlin — has to order directly from that New York warehouse. It takes days (or in internet terms, hundreds of milliseconds). A CDN opens mini-stores in Tokyo, Lagos, and Berlin that each stock copies of your most popular items. Most customers get served immediately from the store down the street.
+
+<Mermaid
+	title="CDN edge: hit fast, miss to origin"
+	code={`
+graph LR
+  C["Client"] --> E["CDN Edge<br/>PoP"]
+  E -->|"cache hit"| C
+  E -->|"cache miss"| O["Origin Server"]
+  O --> E
+`}
+/>
 
 There are two moving parts:
 

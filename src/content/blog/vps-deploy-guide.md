@@ -6,6 +6,10 @@ tags: ["devops", "vps", "postgresql", "redis", "clickhouse", "nginx", "security"
 minutesRead: 27
 ---
 
+<script>
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
+</script>
+
 This guide takes a **fresh Ubuntu 24.04 VPS** from zero to a production-ready deployment running:
 
 - **React** SPA served via Nginx
@@ -1977,33 +1981,26 @@ Add Tempo as a data source in Grafana (URL: `http://127.0.0.1:3200`). You can no
 
 With all these services running, here's how they fit together:
 
-```
-Browser
-  │
-  └─► Nginx (443) ──► React SPA (static)
-                  ──► /api/*  ──► Node.js :3001
-                                     │
-                                     ├─ Postgres (queries)
-                                     ├─ Redis (cache / sessions)
-                                     ├─ Garage (file uploads)
-                                     ├─ Typesense (search)
-                                     └─ Redpanda (produce events)
-                                              │
-                                   ┌──────────┘
-                                   │
-                  ──► /internal/* ──► Go :3002
-                                       │
-                                       ├─ Postgres (writes)
-                                       ├─ ClickHouse (analytics writes)
-                                       ├─ Redpanda (consume events)
-                                       └─ NATS (job dispatch)
-                                                │
-                                        NATS consumers
-                                        (worker processes)
-                                           ├─ send email
-                                           ├─ resize image → Garage
-                                           └─ update search index → Typesense
-```
+<Mermaid
+	title="Service communication — Nginx fronts everything"
+	code={`
+graph TD
+  B["Browser"] --> N["Nginx :443"]
+  N --> SPA["React SPA"]
+  N -->|"/api/*"| API["Node.js :3001"]
+  N -->|"/internal/*"| GO["Go :3002"]
+  API --> PG["Postgres"]
+  API --> RD["Redis"]
+  API --> GA["Garage"]
+  API --> TS["Typesense"]
+  API --> RP["Redpanda"]
+  GO --> PG
+  GO --> CH["ClickHouse"]
+  GO --> RP
+  GO --> NA["NATS"]
+  NA --> WK["Workers<br/>email · image · search index"]
+`}
+/>
 
 **Key rules:**
 - Every service binds to `127.0.0.1`. Nginx is the only public listener.

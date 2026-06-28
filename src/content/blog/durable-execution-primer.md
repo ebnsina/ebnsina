@@ -6,6 +6,10 @@ tags: ["distributed-systems", "architecture", "reliability"]
 minutesRead: 2
 ---
 
+<script>
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
+</script>
+
 Most "background job" systems are durable in name only. They guarantee
 the job was *enqueued*, not that it ran to completion. Durable execution
 flips that promise: the workflow is the source of truth, the code is
@@ -30,6 +34,22 @@ async function chargeAndShip(ctx: Context, orderId: string) {
 If the process dies after `charge` but before `ship`, replay re-enters the
 function, re-reads `load-order` and `charge` from the log (no re-execution),
 sleeps for the *remaining* 15 minutes, and ships.
+
+<Mermaid
+	title="Durable execution: record, then replay"
+	code={`
+graph TD
+  E["Durable Engine"] --> S1["run: load-order"]
+  S1 --> S2["run: charge"]
+  S2 --> S3["sleep 15m"]
+  S3 --> S4["run: ship"]
+  S1 -.->|append| L["Append-only Event Log"]
+  S2 -.->|append| L
+  S3 -.->|append| L
+  S4 -.->|append| L
+  L -.->|replay after crash| E
+`}
+/>
 
 ## When it's worth it
 
