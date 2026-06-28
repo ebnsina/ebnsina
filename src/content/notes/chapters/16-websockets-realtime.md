@@ -10,7 +10,7 @@ topics: ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What are WebSockets?
@@ -19,22 +19,14 @@ topics: ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
 
 Think of HTTP like sending letters back and forth. Each letter is independent, and you wait for a reply. WebSockets are like a phone call -- once the line is open, both parties can talk whenever they want, instantly, until someone hangs up.
 
-<Diagram title="WebSocket Chat Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client A<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">WebSocket</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">WebSocket Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Connection Manager</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Room Manager<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Pub/Sub</span></div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-client">Client B<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">WebSocket</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">WebSocket Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Connection Manager</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Message Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Ring Buffer</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="WebSocket Chat Architecture"
+	code={`
+graph LR
+  A["Client A<br/>WebSocket"] --> WS1["WebSocket Server<br/>Connection Manager"] --> RM["Room Manager<br/>Pub/Sub"]
+  B["Client B<br/>WebSocket"] --> WS2["WebSocket Server<br/>Connection Manager"] --> MS["Message Store<br/>Ring Buffer"]
+`}
+/>
 
 ## Real-World Analogy
 

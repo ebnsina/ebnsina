@@ -10,7 +10,7 @@ topics: ["load balancer", "reverse proxy", "health checks", "round-robin"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Load Balancing?
@@ -25,19 +25,16 @@ Like a bank with multiple teller windows — instead of everyone lining up at on
 
 </Callout>
 
-<Diagram title="Load Balancer Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Clients</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Load Balancer<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Round Robin</span></div>
-    <div class="arrow">---&gt;</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div class="box box-server">Server 1</div>
-      <div class="box box-server">Server 2</div>
-      <div class="box box-server">Server 3</div>
-    </div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Load Balancer Architecture"
+	code={`
+graph LR
+  C["Clients"] --> LB["Load Balancer<br/>Round Robin"]
+  LB --> S1["Server 1"]
+  LB --> S2["Server 2"]
+  LB --> S3["Server 3"]
+`}
+/>
 
 ## Algorithms
 

@@ -10,7 +10,7 @@ topics: ["API gateway", "reverse proxy", "request aggregation", "middleware pipe
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What is an API Gateway?
@@ -27,23 +27,18 @@ Like the reception desk at a large office building — instead of wandering each
 
 </Callout>
 
-<Diagram title="API Gateway Pattern">
-  <div class="diagram-row">
-    <div class="box box-client">Mobile App</div>
-    <div class="box box-client">Web App</div>
-    <div class="box box-client">3rd Party</div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-lb">API Gateway<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Auth + Rate Limit + Route</span></div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-server">User Service</div>
-    <div class="box box-server">Order Service</div>
-    <div class="box box-server">Product Service</div>
-  </div>
-</Diagram>
+<Mermaid
+	title="API Gateway Pattern"
+	code={`
+graph TD
+  M["Mobile App"] --> G
+  W["Web App"] --> G
+  T["3rd Party"] --> G["API Gateway<br/>Auth + Rate Limit + Route"]
+  G --> US["User Service"]
+  G --> OS["Order Service"]
+  G --> PS["Product Service"]
+`}
+/>
 
 ## Gateway Responsibilities
 

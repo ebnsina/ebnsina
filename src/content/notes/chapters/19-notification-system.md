@@ -10,7 +10,7 @@ topics: ["notification system", "fan-out", "priority queue", "multi-channel deli
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What Does a Notification System at Scale Look Like?
@@ -19,25 +19,14 @@ A notification system is the backbone of user engagement in every modern applica
 
 Think of it like a post office that handles express mail, standard mail, and bulk marketing simultaneously. Express packages (critical alerts like security warnings) skip the line and get delivered immediately. Standard mail (transactional notifications like order confirmations) follows normal processing. Bulk marketing (weekly digests, promotional offers) gets batched and delivered during low-traffic hours. Every package has a tracking number, and if delivery fails, the system retries with escalating delays.
 
-<Diagram title="Notification System Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Event Source<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Triggers</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Notification Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Routing & Priority</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Delivery Workers<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Multi-channel</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Notification Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">History</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Priority Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Rate Limited</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">User Preferences<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Channels & Rules</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Notification System Architecture"
+	code={`
+graph TD
+  E["Event Source<br/>Triggers"] --> N["Notification Service<br/>Routing & Priority"] --> W["Delivery Workers<br/>Multi-channel"]
+  W --> S["Notification Store<br/>History"] --> Q["Priority Queue<br/>Rate Limited"] --> P["User Preferences<br/>Channels & Rules"]
+`}
+/>
 
 ## Real-World Analogy
 

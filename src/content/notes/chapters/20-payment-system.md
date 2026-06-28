@@ -10,7 +10,7 @@ topics: ["payment system", "idempotency", "double-entry ledger", "reconciliation
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Payments Are the Hardest Problem in System Design
@@ -29,25 +29,14 @@ Like double-entry bookkeeping — every time money moves, two entries are record
 
 Every time money moves, two entries are recorded: a debit from one account and a credit to another. The books must always balance. If the accountant is interrupted mid-entry, the incomplete transaction is rolled back. And every entry has a unique reference number — if someone accidentally submits the same deposit slip twice, the second one is recognized as a duplicate and ignored.
 
-<Diagram title="Payment System Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Merchant API<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Initiate Payment</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Payment Gateway<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Idempotency Check</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Payment Processor<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">State Machine</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Ledger<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Double Entry</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Webhook Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Event Delivery</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">Reconciliation<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Balance Check</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Payment System Architecture"
+	code={`
+graph TD
+  M["Merchant API<br/>Initiate Payment"] --> G["Payment Gateway<br/>Idempotency Check"] --> P["Payment Processor<br/>State Machine"]
+  P --> L["Ledger<br/>Double Entry"] --> W["Webhook Queue<br/>Event Delivery"] --> R["Reconciliation<br/>Balance Check"]
+`}
+/>
 
 ## Requirements
 

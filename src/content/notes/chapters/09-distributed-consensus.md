@@ -10,7 +10,7 @@ topics: ["Raft", "leader election", "consensus", "distributed systems"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## The Consensus Problem
@@ -27,21 +27,16 @@ Like a board of directors voting — multiple members must agree on a decision, 
 
 </Callout>
 
-<Diagram title="Raft Leader Election">
-  <div class="diagram-row">
-    <div class="box box-server" style="border-color:var(--color-green);color:var(--color-green);">Leader<br/><span style="font-size:0.7rem;font-weight:400;">Term 3</span></div>
-    <div class="arrow">---&gt;</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div class="box box-server" style="opacity:0.7;">Follower 1</div>
-      <div class="box box-server" style="opacity:0.7;">Follower 2</div>
-      <div class="box box-server" style="opacity:0.7;">Follower 3</div>
-      <div class="box box-server" style="opacity:0.7;">Follower 4</div>
-    </div>
-  </div>
-  <div style="text-align:center;margin-top:12px;font-size:0.8rem;color:var(--color-text-muted);">
-    Leader sends heartbeats. If followers don't hear from leader, they start an election.
-  </div>
-</Diagram>
+<Mermaid
+	title="Raft Leader Election"
+	code={`
+graph LR
+  L["Leader<br/>Term 3"] -- heartbeat --> F1["Follower 1"]
+  L -- heartbeat --> F2["Follower 2"]
+  L -- heartbeat --> F3["Follower 3"]
+  L -- heartbeat --> F4["Follower 4"]
+`}
+/>
 
 ## Raft Key Concepts
 

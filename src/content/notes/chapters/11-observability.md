@@ -10,7 +10,7 @@ topics: ["OpenTelemetry", "Prometheus", "tracing", "metrics", "structured loggin
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## The Three Pillars of Observability
@@ -29,21 +29,16 @@ Like a hospital monitoring system — heart rate monitors track vitals (metrics)
 
 </Callout>
 
-<Diagram title="Observability Stack">
-  <div class="diagram-row">
-    <div class="box box-server">Service A</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Service B</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Database</div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-cache">Logs<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">ELK / Loki</span></div>
-    <div class="box box-lb">Metrics<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Prometheus</span></div>
-    <div class="box box-queue">Traces<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Jaeger / Tempo</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Observability Stack"
+	code={`
+graph TD
+  A["Service A"] --> B["Service B"] --> DB["Database"]
+  B --> L["Logs<br/>ELK / Loki"]
+  B --> M["Metrics<br/>Prometheus"]
+  B --> T["Traces<br/>Jaeger / Tempo"]
+`}
+/>
 
 ## Production Observability Setup
 

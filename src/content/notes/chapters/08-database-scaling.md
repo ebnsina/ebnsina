@@ -10,7 +10,7 @@ topics: ["sharding", "replication", "consistent hashing", "read replicas"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## When One Database Isn't Enough
@@ -28,24 +28,16 @@ Like a post office sorting mail by zip code — 90210 goes to Beverly Hills, 100
 
 </Callout>
 
-<Diagram title="Replication + Sharding Architecture">
-  <div class="diagram-row">
-    <div class="box box-server">App Server</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Router<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Read/Write Split</span></div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
-      <div class="box box-db">Primary (Writes)</div>
-      <div style="font-size:0.7rem;color:var(--color-text-muted)">replicates to</div>
-      <div style="display:flex;gap:8px;">
-        <div class="box box-db" style="opacity:0.7;">Replica 1</div>
-        <div class="box box-db" style="opacity:0.7;">Replica 2</div>
-      </div>
-    </div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Replication + Sharding Architecture"
+	code={`
+graph TD
+  A["App Server"] --> R["Router<br/>Read/Write Split"]
+  R --> P["Primary<br/>Writes"]
+  P -- replicates to --> R1["Replica 1"]
+  P -- replicates to --> R2["Replica 2"]
+`}
+/>
 
 ## Consistent Hashing for Sharding
 

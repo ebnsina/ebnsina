@@ -10,7 +10,7 @@ topics: ["system design", "URL shortener", "Snowflake ID", "base62", "analytics 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## The Interview Classic — Done For Real
@@ -31,21 +31,16 @@ Like a coat check at a theater — you hand in a long URL and get a short ticket
 - **Non-functional**: 1000 URL creations/sec, 100K redirects/sec, 99.9% uptime, sub-10ms redirect latency
 - **Storage**: 100M URLs, ~10GB data + analytics
 
-<Diagram title="URL Shortener Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Load Balancer</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">API Servers</div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-cache">Redis Cache<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Hot URLs</span></div>
-    <div class="box box-db">PostgreSQL<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">URL Store</span></div>
-    <div class="box box-queue">Analytics Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Click Events</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="URL Shortener Architecture"
+	code={`
+graph TD
+  C["Client"] --> LB["Load Balancer"] --> S["API Servers"]
+  S --> R["Redis Cache<br/>Hot URLs"]
+  S --> DB["PostgreSQL<br/>URL Store"]
+  S --> Q["Analytics Queue<br/>Click Events"]
+`}
+/>
 
 ## The Complete System
 

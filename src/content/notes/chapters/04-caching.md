@@ -10,7 +10,7 @@ topics: ["Redis", "cache-aside", "TTL", "cache invalidation"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Caching?
@@ -29,21 +29,15 @@ Like keeping your most-used books on your desk instead of walking to the library
 
 The desk is small (limited memory), so you only keep what you actually use.
 
-<Diagram title="Cache-Aside Pattern">
-  <div class="diagram-row">
-    <div class="box box-client">Client</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">App Server</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">Redis Cache<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Check first</span></div>
-  </div>
-  <div class="arrow-down">|<br/>cache miss<br/>v</div>
-  <div class="diagram-row">
-    <div class="box box-server">App Server</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">PostgreSQL<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Fetch & store in cache</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Cache-Aside Pattern"
+	code={`
+graph LR
+  C["Client"] --> S["App Server"] --> R["Redis Cache<br/>Check first"]
+  R -- cache miss --> D["PostgreSQL<br/>Fetch from source"]
+  D -. store in cache .-> R
+`}
+/>
 
 ## Cache-Aside Pattern
 

@@ -10,7 +10,7 @@ topics: ["live streaming", "RTMP", "real-time transcoding", "HLS", "viewer scali
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What Makes Live Streaming Hard?
@@ -27,25 +27,14 @@ Like a live TV broadcast of a sports match — cameras capture the action, the p
 
 Think of it like broadcasting live TV, but every viewer can choose their own quality level, and the broadcast infrastructure must scale from 0 to millions of viewers in seconds when a popular streamer goes live. Unlike VOD where you process the entire video before anyone watches, live streaming must transcode, package, and distribute each second of video as it's created.
 
-<Diagram title="Live Streaming Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Broadcaster<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">RTMP Ingest</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Edge Ingest<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Nearest PoP</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Transcoder<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Multi-Quality</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-cache">Origin Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">HLS Segments</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">CDN Edge<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Global Delivery</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Viewers<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">HLS Player</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Live Streaming Architecture"
+	code={`
+graph TD
+  B["Broadcaster<br/>RTMP Ingest"] --> E["Edge Ingest<br/>Nearest PoP"] --> T["Transcoder<br/>Multi-Quality"]
+  T --> O["Origin Server<br/>HLS Segments"] --> C["CDN Edge<br/>Global Delivery"] --> V["Viewers<br/>HLS Player"]
+`}
+/>
 
 ## Requirements
 

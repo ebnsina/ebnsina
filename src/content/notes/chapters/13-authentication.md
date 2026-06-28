@@ -10,7 +10,7 @@ topics: ["JWT", "bcrypt", "RBAC", "refresh tokens", "middleware"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Authentication vs Authorization
@@ -25,23 +25,14 @@ Like a gym membership card — you verify your identity once at the front desk (
 
 </Callout>
 
-<Diagram title="Auth Flow with JWT">
-  <div class="diagram-row">
-    <div class="box box-client">Client<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">email + password</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Auth Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Verify credentials</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">JWT Token<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">access + refresh</span></div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-client">Client<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Bearer token</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Auth Middleware<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Verify + RBAC</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Protected API</div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Auth Flow with JWT"
+	code={`
+graph TD
+  C["Client<br/>email + password"] --> A["Auth Server<br/>Verify credentials"] --> J["JWT Token<br/>access + refresh"]
+  J --> C2["Client<br/>Bearer token"] --> M["Auth Middleware<br/>Verify + RBAC"] --> P["Protected API"]
+`}
+/>
 
 ## Why JWTs?
 

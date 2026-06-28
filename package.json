@@ -59,6 +59,7 @@
 		"@threlte/core": "^8.5.16",
 		"@threlte/extras": "^9.21.0",
 		"geist": "^1.7.2",
+		"mermaid": "^11.16.0",
 		"three": "^0.184.0"
 	}
 }

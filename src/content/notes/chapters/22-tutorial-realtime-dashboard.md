@@ -10,7 +10,7 @@ topics: ["tutorial", "real-time analytics", "time-series", "WebSocket", "event s
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What We're Building
@@ -27,25 +27,14 @@ Like a stock exchange trading floor — real-time screens show live prices, volu
 
 By the end, you'll have a working system that can ingest 100K+ events per second, aggregate them into queryable time-series data, and push live updates to dashboard clients the instant new data arrives.
 
-<Diagram title="Real-Time Dashboard Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Event SDK<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Track Events</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Ingestion API<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Validate & Buffer</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Aggregator<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Time Buckets</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Time-Series Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Minute/Hour/Day</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">Active Users<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Sliding Window</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">WebSocket Hub<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Live Stream</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Real-Time Dashboard Architecture"
+	code={`
+graph TD
+  E["Event SDK<br/>Track Events"] --> I["Ingestion API<br/>Validate & Buffer"] --> A["Aggregator<br/>Time Buckets"]
+  A --> T["Time-Series Store<br/>Minute/Hour/Day"] --> U["Active Users<br/>Sliding Window"] --> W["WebSocket Hub<br/>Live Stream"]
+`}
+/>
 
 ## Step 1: Event Data Model
 

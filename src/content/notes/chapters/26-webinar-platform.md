@@ -10,7 +10,7 @@ topics: ["webinar", "video conferencing", "WebRTC", "SFU", "breakout rooms", "re
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What Makes Video Conferencing Different from Live Streaming?
@@ -29,25 +29,14 @@ Like a town hall meeting — speakers present on stage, the audience can raise h
 
 A TV broadcast (live streaming) goes one direction — the studio to your screen. A town hall (webinar) has speakers on stage, but the audience can raise their hand, ask questions through a moderator, and vote on proposals. The infrastructure must handle both the broadcast and the interaction simultaneously.
 
-<Diagram title="Webinar Platform Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Presenters<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">WebRTC</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">SFU Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Media Routing</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Attendees<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">View & Interact</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-cache">Signaling Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">WebSocket</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Session Manager<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Rooms & Roles</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Recording<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Composite & Store</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Webinar Platform Architecture"
+	code={`
+graph TD
+  P["Presenters<br/>WebRTC"] --> S["SFU Server<br/>Media Routing"] --> A["Attendees<br/>View & Interact"]
+  S --> SG["Signaling Server<br/>WebSocket"] --> SM["Session Manager<br/>Rooms & Roles"] --> R["Recording<br/>Composite & Store"]
+`}
+/>
 
 ## Requirements
 

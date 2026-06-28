@@ -10,7 +10,7 @@ topics: ["event sourcing", "CQRS", "projections", "event store", "domain events"
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What is Event Sourcing?
@@ -31,26 +31,18 @@ Like the announcement system at a train station — when a train arrives (event)
 
 **Command Query Responsibility Segregation** separates reads from writes. Commands (writes) go through the event store. Queries (reads) go through materialized **projections** — pre-computed views optimized for specific read patterns.
 
-<Diagram title="Event Sourcing + CQRS Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Command Handler<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Validate & Emit Events</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Event Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Append-only log</span></div>
-  </div>
-  <div class="arrow-down">v</div>
-  <div class="diagram-row">
-    <div class="box box-queue">Event Bus</div>
-    <div class="arrow">---&gt;</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div class="box box-cache">Orders Projection</div>
-      <div class="box box-cache">Analytics Projection</div>
-    </div>
-    <div class="arrow">&lt;---</div>
-    <div class="box box-client">Query API<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Read Model</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Event Sourcing + CQRS Architecture"
+	code={`
+graph TD
+  C["Client"] --> CH["Command Handler<br/>Validate & Emit Events"] --> ES["Event Store<br/>Append-only log"]
+  ES --> EB["Event Bus"]
+  EB --> P1["Orders Projection"]
+  EB --> P2["Analytics Projection"]
+  P1 --> Q["Query API<br/>Read Model"]
+  P2 --> Q
+`}
+/>
 
 ## Complete Event Sourcing System
 

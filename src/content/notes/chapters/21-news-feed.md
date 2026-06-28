@@ -10,7 +10,7 @@ topics: ["news feed", "fan-out", "ranking algorithm", "pagination", "real-time u
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## The News Feed Problem
@@ -29,25 +29,14 @@ Like a personalized newspaper — each reader gets a different front page based 
 
 Each reader gets a different front page based on who they follow, what they engage with, and what's trending. The printing press (fan-out service) must produce millions of unique editions simultaneously. And unlike a real newspaper, readers expect new stories to appear the moment they're published.
 
-<Diagram title="News Feed Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Post Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Create Post</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Fan-out Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Write to Feeds</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Feed Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Per-User Timeline</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-cache">Ranking Engine<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Score & Sort</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Social Graph<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Followers</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Real-time Updates<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">New Posts</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="News Feed Architecture"
+	code={`
+graph TD
+  P["Post Service<br/>Create Post"] --> F["Fan-out Service<br/>Write to Feeds"] --> S["Feed Store<br/>Per-User Timeline"]
+  S --> R["Ranking Engine<br/>Score & Sort"] --> G["Social Graph<br/>Followers"] --> U["Real-time Updates<br/>New Posts"]
+`}
+/>
 
 ## Requirements
 

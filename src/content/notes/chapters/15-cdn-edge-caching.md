@@ -10,7 +10,7 @@ topics: ["CDN", "edge caching", "Cache-Control", "signed URLs", "cache purging"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What is CDN & Edge Caching?
@@ -19,17 +19,13 @@ A **Content Delivery Network (CDN)** is a globally distributed network of server
 
 Think of it like a chain of local libraries. The main library (origin server) has every book, but it's across town. Your neighborhood branch (edge node) stocks copies of the most popular books. When you want a bestseller, you grab it from your local branch instantly. Only rare requests need to go to the main library.
 
-<Diagram title="CDN Edge Caching Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Browser / App</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">CDN Edge<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Cache Layer</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Origin Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Cache Headers</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Storage<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Files / Objects</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="CDN Edge Caching Architecture"
+	code={`
+graph LR
+  C["Client<br/>Browser / App"] --> E["CDN Edge<br/>Cache Layer"] --> O["Origin Server<br/>Cache Headers"] --> S["Storage<br/>Files / Objects"]
+`}
+/>
 
 ## Real-World Analogy
 

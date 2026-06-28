@@ -10,7 +10,7 @@ topics: ["tutorial", "file upload", "chunked upload", "resumable transfer", "con
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What We're Building
@@ -27,25 +27,14 @@ Like submitting documents at a government office — you fill out a form, attach
 
 The key insight: you can't just POST a 5GB file in one request. Networks fail, timeouts expire, and servers run out of memory. Instead, we split files into chunks, upload each chunk independently, and assemble them server-side. If the network drops, only the current chunk is lost — resume from where you left off.
 
-<Diagram title="File Upload Service Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Chunked Upload</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Upload API<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Validate & Route</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Chunk Assembler<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Merge & Verify</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Object Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">File Storage</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Processing Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Scan & Transform</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">CDN<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Edge Delivery</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="File Upload Service Architecture"
+	code={`
+graph TD
+  C["Client<br/>Chunked Upload"] --> U["Upload API<br/>Validate & Route"] --> A["Chunk Assembler<br/>Merge & Verify"]
+  A --> O["Object Store<br/>File Storage"] --> Q["Processing Queue<br/>Scan & Transform"] --> CDN["CDN<br/>Edge Delivery"]
+`}
+/>
 
 ## Step 1: The Upload Protocol
 

@@ -10,7 +10,7 @@ topics: ["saga pattern", "circuit breaker", "service discovery", "distributed tr
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What are Microservices Patterns?
@@ -19,23 +19,14 @@ When you break a monolith into microservices, you trade one set of problems for 
 
 Think of it like an orchestra. In a small band, everyone can see each other and stay in sync. But in a 100-piece orchestra, you need a conductor (saga orchestrator) to coordinate, section leaders (circuit breakers) to handle individual failures gracefully, and a seating chart (service registry) so everyone knows where to find each other.
 
-<Diagram title="Saga Orchestration Pattern">
-  <div class="diagram-row">
-    <div class="box box-lb">API Gateway<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Entry Point</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Saga Orchestrator<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Coordinator</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-server">Order Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Step 1</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Inventory Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Step 2</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Payment Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Step 3</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Saga Orchestration Pattern"
+	code={`
+graph TD
+  G["API Gateway<br/>Entry Point"] --> O["Saga Orchestrator<br/>Coordinator"]
+  O --> S1["Order Service<br/>Step 1"] --> S2["Inventory Service<br/>Step 2"] --> S3["Payment Service<br/>Step 3"]
+`}
+/>
 
 ## Real-World Analogy
 

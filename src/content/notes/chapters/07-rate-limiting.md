@@ -10,7 +10,7 @@ topics: ["rate limiting", "token bucket", "sliding window", "Redis", "middleware
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Rate Limiting?
@@ -25,15 +25,13 @@ Like an ATM daily withdrawal limit — you can only withdraw a fixed amount per 
 
 </Callout>
 
-<Diagram title="Rate Limiter as Middleware">
-  <div class="diagram-row">
-    <div class="box box-client">Client</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Rate Limiter<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Allow / Deny</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">API Server</div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Rate Limiter as Middleware"
+	code={`
+graph LR
+  C["Client"] --> RL["Rate Limiter<br/>Allow / Deny"] --> S["API Server"]
+`}
+/>
 
 ## Algorithms Compared
 

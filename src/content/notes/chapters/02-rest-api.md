@@ -10,7 +10,7 @@ topics: ["REST", "HTTP methods", "pagination", "validation", "status codes"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What is REST?
@@ -29,33 +29,17 @@ Like a library catalog — each book (resource) has a unique call number (URL). 
 
 Each book (resource) has a unique call number (URL). You can check books out (GET), add new ones (POST), update information (PUT), or remove them (DELETE). The catalog doesn't remember who you are between visits — you bring your library card (auth token) each time.
 
-<Diagram title="REST Resource Mapping">
-  <div class="diagram-row">
-    <div class="box box-client">GET /users</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">List users</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-client">POST /users</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Create user</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-client">GET /users/42</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Get user 42</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-client">PUT /users/42</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Update user 42</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-client">DELETE /users/42</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Delete user 42</div>
-  </div>
-</Diagram>
+<Mermaid
+	title="REST Resource Mapping"
+	code={`
+graph LR
+  A["GET /users"] --> A2["List users"]
+  B["POST /users"] --> B2["Create user"]
+  C["GET /users/42"] --> C2["Get user 42"]
+  D["PUT /users/42"] --> D2["Update user 42"]
+  E["DELETE /users/42"] --> E2["Delete user 42"]
+`}
+/>
 
 ## HTTP Status Codes That Matter
 

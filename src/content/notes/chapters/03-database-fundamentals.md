@@ -10,7 +10,7 @@ topics: ["PostgreSQL", "SQL", "connection pooling", "prepared statements", "migr
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Databases Matter in System Design
@@ -29,15 +29,13 @@ Like a filing cabinet with a smart secretary — you describe what you want (que
 
 You tell the secretary what you want (query), and they find it for you. If the filing cabinet is well-organized (indexed), lookups are fast. If you hire multiple secretaries (connection pool), you can serve more people simultaneously.
 
-<Diagram title="Application to Database Flow">
-  <div class="diagram-row">
-    <div class="box box-server">App Server</div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">Connection Pool<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Max: 20 conns</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">PostgreSQL<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Primary</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Application to Database Flow"
+	code={`
+graph LR
+  A["App Server"] --> B["Connection Pool<br/>Max: 20 conns"] --> C["PostgreSQL<br/>Primary"]
+`}
+/>
 
 ## Schema Design
 

@@ -10,7 +10,7 @@ topics: ["message queue", "RabbitMQ", "NATS", "async processing", "dead letter q
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Message Queues?
@@ -25,22 +25,16 @@ Like a busy restaurant kitchen — orders come in faster than chefs can cook, so
 
 </Callout>
 
-<Diagram title="Message Queue Architecture">
-  <div class="diagram-row">
-    <div class="box box-server">API Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Producer</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Message Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">RabbitMQ / NATS</span></div>
-    <div class="arrow">---&gt;</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div class="box box-server">Worker 1</div>
-      <div class="box box-server">Worker 2</div>
-    </div>
-  </div>
-  <div class="arrow-down">|<br/>failed messages<br/>v</div>
-  <div class="diagram-row">
-    <div class="box box-queue" style="border-color:var(--color-red);color:var(--color-red);">Dead Letter Queue</div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Message Queue Architecture"
+	code={`
+graph LR
+  P["API Server<br/>Producer"] --> Q["Message Queue<br/>RabbitMQ / NATS"]
+  Q --> W1["Worker 1"]
+  Q --> W2["Worker 2"]
+  Q -- failed messages --> DLQ["Dead Letter Queue"]
+`}
+/>
 
 ## Key Concepts
 

@@ -10,7 +10,7 @@ topics: ["HTTP", "request routing", "JSON", "error handling"]
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What is Client-Server Architecture?
@@ -19,17 +19,13 @@ Every web application you've ever used follows this pattern: a **client** (brows
 
 Think of it like a restaurant. The customer (client) places an order (request) with the waiter (HTTP protocol), who takes it to the kitchen (server). The kitchen processes the order and sends back the food (response).
 
-<Diagram title="Client-Server Request Flow">
-  <div class="diagram-row">
-    <div class="box box-client">Browser<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Client</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">HTTP<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Protocol</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">API Server<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Process & Respond</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-db">Database<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Storage</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Client-Server Request Flow"
+	code={`
+graph LR
+  C["Browser<br/>Client"] --> H["HTTP<br/>Protocol"] --> S["API Server<br/>Process & Respond"] --> D["Database<br/>Storage"]
+`}
+/>
 
 ## Real-World Analogy
 

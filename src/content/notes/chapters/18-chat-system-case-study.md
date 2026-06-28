@@ -10,7 +10,7 @@ topics: ["chat system", "message delivery", "fan-out", "presence", "read receipt
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## What Does a Chat System at Scale Look Like?
@@ -19,25 +19,14 @@ A production chat system is far more than sending messages between two users. It
 
 Think of it like a postal service for a large office building. The mailroom (message router) receives every letter, checks the directory (presence service) to see if the recipient is at their desk, and either delivers it directly or puts it in their mailbox (offline queue). The sender gets a delivery receipt when the letter arrives, and a read receipt when the recipient opens it. Every letter has a timestamp and sequence number so they can be sorted correctly even if they arrive out of order.
 
-<Diagram title="Chat System Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Client A<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">WebSocket</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Connection Manager<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Online Users</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Message Router<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Fan-out</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Message Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Conversations</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Offline Queue<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Pending Delivery</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">Presence Service<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Status Tracking</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Chat System Architecture"
+	code={`
+graph TD
+  A["Client A<br/>WebSocket"] --> CM["Connection Manager<br/>Online Users"] --> MR["Message Router<br/>Fan-out"]
+  MR --> MS["Message Store<br/>Conversations"] --> OQ["Offline Queue<br/>Pending Delivery"] --> PS["Presence Service<br/>Status Tracking"]
+`}
+/>
 
 ## Real-World Analogy
 

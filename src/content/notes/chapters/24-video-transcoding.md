@@ -10,7 +10,7 @@ topics: ["video transcoding", "VOD", "adaptive bitrate", "job queue", "distribut
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 	import CodeTabs from '$lib/components/content/CodeTabs.svelte';
-	import Diagram from '$lib/components/content/Diagram.svelte';
+	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
 ## Why Video Transcoding Is a Distributed Systems Problem
@@ -29,25 +29,14 @@ Like a factory assembly line — raw footage enters, gets processed through mult
 
 Think of it like a printing press that takes one manuscript and simultaneously produces a paperback edition, a hardcover edition, an audiobook, and an e-book — each optimized for its medium. The manuscript must be split into chapters, each chapter sent to a different production line, and the finished chapters reassembled into complete books. If one production line breaks down, its chapters must be reassigned to another line without losing progress or producing duplicates. The printing press must also handle a queue of manuscripts fairly, so one author's 1000-page novel does not block everyone else's short stories.
 
-<Diagram title="Video Transcoding Architecture">
-  <div class="diagram-row">
-    <div class="box box-client">Upload API<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Ingest Video</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-lb">Job Scheduler<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Split & Queue</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-server">Worker Pool<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Transcode</span></div>
-  </div>
-  <div class="diagram-row" style="justify-content:center;">
-    <div class="arrow-down">v</div>
-  </div>
-  <div class="diagram-row">
-    <div class="box box-db">Object Store<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Source & Output</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-queue">Progress Tracker<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">Job Status</span></div>
-    <div class="arrow">---&gt;</div>
-    <div class="box box-cache">CDN<br/><span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">HLS/DASH Delivery</span></div>
-  </div>
-</Diagram>
+<Mermaid
+	title="Video Transcoding Architecture"
+	code={`
+graph TD
+  U["Upload API<br/>Ingest Video"] --> J["Job Scheduler<br/>Split & Queue"] --> W["Worker Pool<br/>Transcode"]
+  W --> O["Object Store<br/>Source & Output"] --> P["Progress Tracker<br/>Job Status"] --> CDN["CDN<br/>HLS / DASH Delivery"]
+`}
+/>
 
 ## Requirements
 
