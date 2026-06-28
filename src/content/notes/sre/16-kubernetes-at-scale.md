@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes at Scale"
+title: 'Kubernetes at Scale'
 subtitle: "1,000+ node clusters, multi-tenancy, RBAC, NetworkPolicy, OPA/Kyverno, GitOps, etcd tuning. The operating model when 'just run kubectl apply' is no longer a strategy."
 chapter: 16
-level: "mastery"
-readingTime: "30 min"
-topics: ["kubernetes", "etcd", "RBAC", "OPA", "Kyverno", "GitOps", "multi-tenancy", "scale"]
+level: 'mastery'
+readingTime: '30 min'
+topics: ['kubernetes', 'etcd', 'RBAC', 'OPA', 'Kyverno', 'GitOps', 'multi-tenancy', 'scale']
 ---
 
 <script>
@@ -45,14 +45,14 @@ CNI plugin             — Pod networking (Calico, Cilium, AWS VPC CNI, ...)
 
 ### Where it breaks at scale
 
-| Component | Symptom of stress | First-line tuning |
-|---|---|---|
-| etcd | 5xx from apiserver, watch lag, "etcdserver: request timed out" | Faster disk (NVMe), defrag, raise quota |
-| apiserver | High p99 on `kubectl get`, watch close storms | More replicas, EncryptionConfig caching |
-| scheduler | Pending pods piling up | Tune `kube-scheduler` parallelism, reduce predicates |
-| kube-proxy | Service latency spikes | Switch iptables → IPVS or eBPF |
-| CoreDNS | Random app DNS errors | NodeLocal DNSCache, raise replicas, autopath |
-| CNI | Slow pod startup, intermittent connectivity | Pre-warm IP pools, raise CNI worker count |
+| Component  | Symptom of stress                                              | First-line tuning                                    |
+| ---------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| etcd       | 5xx from apiserver, watch lag, "etcdserver: request timed out" | Faster disk (NVMe), defrag, raise quota              |
+| apiserver  | High p99 on `kubectl get`, watch close storms                  | More replicas, EncryptionConfig caching              |
+| scheduler  | Pending pods piling up                                         | Tune `kube-scheduler` parallelism, reduce predicates |
+| kube-proxy | Service latency spikes                                         | Switch iptables → IPVS or eBPF                       |
+| CoreDNS    | Random app DNS errors                                          | NodeLocal DNSCache, raise replicas, autopath         |
+| CNI        | Slow pod startup, intermittent connectivity                    | Pre-warm IP pools, raise CNI worker count            |
 
 ## etcd — the heartbeat of the cluster
 
@@ -108,7 +108,7 @@ Cluster size   | etcd size       | Notes
 
 ## Apiserver scaling — the watch problem
 
-Every Kubernetes client (controller, kubelet, operator) opens a *watch* on the apiserver. At 5,000 watches × 200 events/sec, the apiserver does serious work just streaming. The patterns:
+Every Kubernetes client (controller, kubelet, operator) opens a _watch_ on the apiserver. At 5,000 watches × 200 events/sec, the apiserver does serious work just streaming. The patterns:
 
 ```
 - Use field/label selectors on every watch — never list everything.
@@ -123,7 +123,7 @@ Bad pattern that causes a Sev-1: an operator that does `client.List(everyResourc
 
 ## RBAC at scale — the principle of least privilege
 
-Default cluster RBAC is permissive enough that "intern's debug pod" can read all secrets cluster-wide. At scale, you build RBAC around *teams* (not users) and *namespaces* (not the cluster).
+Default cluster RBAC is permissive enough that "intern's debug pod" can read all secrets cluster-wide. At scale, you build RBAC around _teams_ (not users) and _namespaces_ (not the cluster).
 
 ```yaml
 # Pattern: per-team Role + RoleBinding scoped to their namespaces.
@@ -133,15 +133,15 @@ metadata:
   namespace: team-payments
   name: payments-developer
 rules:
-  - apiGroups: ["", "apps"]
-    resources: ["pods", "deployments", "services", "configmaps"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]   # NOT create/update — secrets via SealedSecrets/SOPS
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: []                # exec into pods explicitly denied
+  - apiGroups: ['', 'apps']
+    resources: ['pods', 'deployments', 'services', 'configmaps']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get', 'list'] # NOT create/update — secrets via SealedSecrets/SOPS
+  - apiGroups: ['']
+    resources: ['pods/exec']
+    verbs: [] # exec into pods explicitly denied
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -150,7 +150,7 @@ metadata:
   name: payments-developers
 subjects:
   - kind: Group
-    name: gh:org:payments-team   # OIDC group from GitHub or your IdP
+    name: gh:org:payments-team # OIDC group from GitHub or your IdP
 roleRef:
   kind: Role
   name: payments-developer
@@ -176,7 +176,7 @@ kind: ServiceAccount
 metadata:
   name: payments-api
   namespace: team-payments
-automountServiceAccountToken: true   # only if the pod needs the API
+automountServiceAccountToken: true # only if the pod needs the API
 ---
 # Bind narrow Role to this SA:
 apiVersion: rbac.authorization.k8s.io/v1
@@ -220,7 +220,7 @@ spec:
     - to: [{ podSelector: {} }]
     - to:
         - namespaceSelector: { matchLabels: { name: kube-system } }
-          podSelector:        { matchLabels: { k8s-app: kube-dns } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
       ports: [{ port: 53, protocol: UDP }]
     - to:
         - namespaceSelector: { matchLabels: { name: telemetry } }
@@ -231,7 +231,7 @@ iptables-based CNIs (Calico, AWS VPC CNI) handle this fine up to maybe 5k polici
 
 ## Policy engines — OPA Gatekeeper and Kyverno
 
-RBAC says *who* can do *what*. Policy engines say *what is allowed* — admission-time validation across the cluster.
+RBAC says _who_ can do _what_. Policy engines say _what is allowed_ — admission-time validation across the cluster.
 
 ```yaml
 # Kyverno example: every pod must have CPU + memory requests.
@@ -247,14 +247,14 @@ spec:
         any:
           - resources: { kinds: [Pod] }
       validate:
-        message: "CPU and memory requests are required."
+        message: 'CPU and memory requests are required.'
         pattern:
           spec:
             containers:
               - resources:
                   requests:
-                    cpu: "?*"
-                    memory: "?*"
+                    cpu: '?*'
+                    memory: '?*'
 ```
 
 The two policies that block 80% of production incidents:
@@ -278,7 +278,7 @@ Most teams pick Kyverno first. Gatekeeper if your security team already uses Reg
 
 ## Multi-tenancy — soft, hard, and impossible
 
-Kubernetes is a *soft multi-tenant* platform by default. True isolation between mutually distrusting tenants requires more than namespaces.
+Kubernetes is a _soft multi-tenant_ platform by default. True isolation between mutually distrusting tenants requires more than namespaces.
 
 ```
 Soft multi-tenancy:
@@ -499,4 +499,3 @@ Tier F
 4. **Soft multi-tenancy is what "multi-tenant K8s" usually means.** Hard multi-tenancy needs sandboxes or per-tenant clusters.
 5. **PDB + topology spread + GitOps reconciliation** is how you sleep through cluster upgrades.
 6. **Cluster observability is its own discipline** — kube-prometheus-stack is the floor, not the ceiling.
-

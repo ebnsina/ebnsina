@@ -1,10 +1,10 @@
 ---
-title: "Edge Caching with nginx"
-subtitle: "proxy_cache, microcaching, stale-while-revalidate, and the cache key rules that turn nginx into a CDN you control."
+title: 'Edge Caching with nginx'
+subtitle: 'proxy_cache, microcaching, stale-while-revalidate, and the cache key rules that turn nginx into a CDN you control.'
 chapter: 9
-level: "intermediate"
-readingTime: "12 min"
-topics: ["nginx", "caching", "proxy_cache", "microcaching", "cdn"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['nginx', 'caching', 'proxy_cache', 'microcaching', 'cdn']
 ---
 
 <script>
@@ -58,7 +58,7 @@ What each parameter means:
 
 - **path** — `/var/cache/nginx/main`. Where cached responses are stored on disk.
 - **levels** — directory hierarchy. `1:2` means a two-level directory tree (`a/bc/`) to avoid millions of files in one folder.
-- **keys_zone** — name and size of the shared-memory zone holding cache *keys* (and metadata). 1MB ~ 8000 keys; 10m ~ 80000.
+- **keys_zone** — name and size of the shared-memory zone holding cache _keys_ (and metadata). 1MB ~ 8000 keys; 10m ~ 80000.
 - **max_size** — max disk usage for cached content. Old entries are evicted to make room.
 - **inactive** — entries not accessed for this long are deleted regardless of `max_size`.
 - **use_temp_path=off** — write directly into the cache directory instead of using a temp dir. Faster on the same filesystem.
@@ -151,7 +151,7 @@ proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504
 
 If the backend fails (timeout, 5xx, refused), serve a **stale** cached entry instead of an error. This single directive is the difference between "the site is up" and "the site has a 502 page" during a backend incident.
 
-`updating` is special: while one request is regenerating the cache entry, *other* concurrent requests are served the stale entry. Without it, every concurrent request would queue waiting for the same regeneration — the *thundering herd*.
+`updating` is special: while one request is regenerating the cache entry, _other_ concurrent requests are served the stale entry. Without it, every concurrent request would queue waiting for the same regeneration — the _thundering herd_.
 
 ## proxy_cache_lock — the single regeneration
 
@@ -215,7 +215,7 @@ proxy_cache_lock on;
 
 A one-second cache turns a thousand requests-per-second into one request-per-second hitting the backend. The user-visible staleness is at most 1s, which is invisible in practice. For most "dynamic but not personalized" content (news homepages, listing pages, public APIs), this single trick reduces backend load by 99%.
 
-This is what the term *edge caching* really means in production.
+This is what the term _edge caching_ really means in production.
 
 ## Vary — caching different responses for different clients
 
@@ -276,7 +276,7 @@ sudo find /var/cache/nginx/main -type f -mmin -10 -ls
 
 Each cached file is the response, prefixed with metadata (status, headers, original key). You can `head -50` one to see what nginx stored.
 
-## When *not* to use proxy_cache
+## When _not_ to use proxy_cache
 
 - **Cookies vary the response.** Cache will serve user A's response to user B. Either bypass on `Cookie:`, or strip cookies before caching, or do not cache.
 - **CSRF tokens or per-request unique fields** in the response body. Same problem.
@@ -295,4 +295,3 @@ Each cached file is the response, prefixed with metadata (status, headers, origi
 - For invalidation, prefer cache-busting URLs and short TTLs over manual purge.
 
 Next and final chapter: workers, sendfile, gzip/brotli, security headers, rate limiting — turning a working nginx into a tuned and hardened one.
-

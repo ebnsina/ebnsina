@@ -1,10 +1,10 @@
 ---
-title: "Load Balancers"
-subtitle: "Layer 4 vs Layer 7, algorithms, health checks, connection draining — the mechanics of distributing traffic across instances."
+title: 'Load Balancers'
+subtitle: 'Layer 4 vs Layer 7, algorithms, health checks, connection draining — the mechanics of distributing traffic across instances.'
 chapter: 2
-level: "intermediate"
-readingTime: "10 min"
-topics: ["load balancer", "L4", "L7", "round robin", "health checks", "connection draining"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['load balancer', 'L4', 'L7', 'round robin', 'health checks', 'connection draining']
 ---
 
 <script>
@@ -41,6 +41,7 @@ L7 Load Balancer:
 Most production setups use L7. nginx, HAProxy, AWS ALB, and Traefik are all L7. AWS NLB is L4.
 
 **When to use L4:**
+
 - Non-HTTP protocols (gRPC in raw TCP mode, database proxies)
 - Extreme performance requirements (1M+ connections/second)
 - When you need to preserve client IP through TLS termination
@@ -123,24 +124,25 @@ upstream backend {
 services:
   api:
     labels:
-      - "traefik.http.services.api.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.api.loadbalancer.healthcheck.interval=10s"
-      - "traefik.http.services.api.loadbalancer.healthcheck.timeout=3s"
+      - 'traefik.http.services.api.loadbalancer.healthcheck.path=/health'
+      - 'traefik.http.services.api.loadbalancer.healthcheck.interval=10s'
+      - 'traefik.http.services.api.loadbalancer.healthcheck.timeout=3s'
 ```
 
 **Backend /health endpoint:**
+
 ```typescript
 app.get('/health', async (req, res) => {
-  try {
-    await Promise.all([
-      db.query('SELECT 1'),    // database reachable
-      redis.ping(),            // cache reachable
-    ]);
-    res.json({ status: 'ok', uptime: process.uptime() });
-  } catch (err) {
-    // Return 503 — load balancer will remove this instance
-    res.status(503).json({ status: 'degraded', error: String(err) });
-  }
+	try {
+		await Promise.all([
+			db.query('SELECT 1'), // database reachable
+			redis.ping() // cache reachable
+		]);
+		res.json({ status: 'ok', uptime: process.uptime() });
+	} catch (err) {
+		// Return 503 — load balancer will remove this instance
+		res.status(503).json({ status: 'degraded', error: String(err) });
+	}
 });
 ```
 
@@ -157,6 +159,7 @@ Drain:    [request] → (rejected from this backend) → other backends
 ```
 
 **AWS ALB deregistration delay:**
+
 ```bash
 # Set draining timeout (default: 300s)
 aws elbv2 modify-target-group-attributes \
@@ -165,21 +168,22 @@ aws elbv2 modify-target-group-attributes \
 ```
 
 **Application-side: graceful shutdown must align with drain timeout:**
+
 ```typescript
 // SIGTERM: stop accepting new requests, finish existing ones
 process.on('SIGTERM', async () => {
-  server.close(async () => {
-    // All in-flight requests completed
-    await db.end();
-    await redis.quit();
-    process.exit(0);
-  });
+	server.close(async () => {
+		// All in-flight requests completed
+		await db.end();
+		await redis.quit();
+		process.exit(0);
+	});
 
-  // Timeout: force exit if requests don't drain in time
-  setTimeout(() => {
-    console.error('Drain timeout, forcing exit');
-    process.exit(1);
-  }, 25_000); // 25s < ALB's 30s drain window
+	// Timeout: force exit if requests don't drain in time
+	setTimeout(() => {
+		console.error('Drain timeout, forcing exit');
+		process.exit(1);
+	}, 25_000); // 25s < ALB's 30s drain window
 });
 ```
 
@@ -215,7 +219,7 @@ server {
 app.set('trust proxy', 1); // trust first proxy (the load balancer)
 
 app.get('/log', (req, res) => {
-  const clientIp = req.ip; // reads X-Forwarded-For when trust proxy is set
+	const clientIp = req.ip; // reads X-Forwarded-For when trust proxy is set
 });
 ```
 
@@ -266,6 +270,7 @@ server {
 A single load balancer is a single point of failure. Solutions:
 
 **Active-passive LB pair (traditional):**
+
 ```
 Primary LB → active, handles traffic
 Backup LB  → passive, monitors primary via heartbeat
@@ -273,6 +278,7 @@ If primary fails: backup takes over virtual IP (Keepalived/VRRP)
 ```
 
 **DNS-based multi-LB:**
+
 ```
 api.myapp.com → LB-1 (us-east-1a)
              → LB-2 (us-east-1b)
@@ -280,4 +286,3 @@ Route53 health checks remove failed LBs automatically
 ```
 
 **Managed load balancers** (AWS ALB, GCP Load Balancing, Cloudflare) handle their own HA internally — the right choice for most teams. Don't build LB HA when a managed service does it for you.
-

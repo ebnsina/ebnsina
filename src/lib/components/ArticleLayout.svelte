@@ -2,11 +2,8 @@
 	import type { Snippet } from 'svelte';
 	import { onMount, tick } from 'svelte';
 
-	let {
-		header,
-		children,
-		footer
-	}: { header: Snippet; children: Snippet; footer?: Snippet } = $props();
+	let { header, children, footer }: { header: Snippet; children: Snippet; footer?: Snippet } =
+		$props();
 
 	type Heading = { id: string; text: string; depth: number };
 	let headings = $state<Heading[]>([]);
@@ -28,6 +25,7 @@
 			await tick();
 
 			// 1. assign ids + collect TOC
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local, non-reactive
 			const used = new Set<string>();
 			const hs = Array.from(article!.querySelectorAll<HTMLElement>('h2, h3'));
 			headings = hs.map((h) => {
@@ -54,7 +52,9 @@
 				btn.innerHTML = copyIcon;
 				wrap.appendChild(btn);
 				btn.addEventListener('click', async () => {
-					await navigator.clipboard.writeText(pre.querySelector('code')?.innerText ?? pre.innerText);
+					await navigator.clipboard.writeText(
+						pre.querySelector('code')?.innerText ?? pre.innerText
+					);
 					btn.innerHTML = okIcon;
 					btn.classList.add('copied');
 					setTimeout(() => {

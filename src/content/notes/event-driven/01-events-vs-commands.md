@@ -1,10 +1,10 @@
 ---
-title: "Events vs Commands vs Queries"
-subtitle: "Three distinct message types with different semantics — understanding the difference shapes how you design every integration."
+title: 'Events vs Commands vs Queries'
+subtitle: 'Three distinct message types with different semantics — understanding the difference shapes how you design every integration.'
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["events", "commands", "queries", "CQRS", "message semantics"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['events', 'commands', 'queries', 'CQRS', 'message semantics']
 ---
 
 <script>
@@ -26,17 +26,17 @@ Three different ways to tell a colleague something: "Please send the report" is 
 ```typescript
 // Command: imperative verb, directed, expects handling
 interface SendPasswordResetEmail {
-  type: 'SendPasswordResetEmail';
-  userId: string;
-  email: string;
-  resetToken: string;
+	type: 'SendPasswordResetEmail';
+	userId: string;
+	email: string;
+	resetToken: string;
 }
 
 interface ProcessPayment {
-  type: 'ProcessPayment';
-  orderId: string;
-  amount: number;
-  customerId: string;
+	type: 'ProcessPayment';
+	orderId: string;
+	amount: number;
+	customerId: string;
 }
 ```
 
@@ -45,20 +45,20 @@ interface ProcessPayment {
 ```typescript
 // Event: past tense, records a fact, no specific recipient
 interface UserRegistered {
-  type: 'UserRegistered';
-  userId: string;
-  email: string;
-  plan: string;
-  registeredAt: string; // ISO 8601
+	type: 'UserRegistered';
+	userId: string;
+	email: string;
+	plan: string;
+	registeredAt: string; // ISO 8601
 }
 
 interface OrderPlaced {
-  type: 'OrderPlaced';
-  orderId: string;
-  userId: string;
-  totalAmount: number;
-  items: OrderItem[];
-  placedAt: string;
+	type: 'OrderPlaced';
+	orderId: string;
+	userId: string;
+	totalAmount: number;
+	items: OrderItem[];
+	placedAt: string;
 }
 ```
 
@@ -67,15 +67,15 @@ interface OrderPlaced {
 ```typescript
 // Query: asks a question, expects an answer
 interface GetUserById {
-  type: 'GetUserById';
-  userId: string;
+	type: 'GetUserById';
+	userId: string;
 }
 
 interface GetOrderHistory {
-  type: 'GetOrderHistory';
-  userId: string;
-  fromDate: string;
-  limit: number;
+	type: 'GetOrderHistory';
+	userId: string;
+	fromDate: string;
+	limit: number;
 }
 ```
 
@@ -84,12 +84,15 @@ interface GetOrderHistory {
 The difference isn't just naming convention — it changes the coupling, failure modes, and semantics of your system.
 
 **Commands create coupling:**
+
 ```
 Service A → sends command → Service B
 ```
+
 Service A knows about Service B. If B is down, the command fails. If B's interface changes, A breaks.
 
 **Events decouple:**
+
 ```
 Service A → emits event → Event Bus
                                ↓
@@ -97,17 +100,18 @@ Service A → emits event → Event Bus
                          Service C (subscribes)
                          Service D (subscribes)
 ```
+
 Service A knows nothing about B, C, or D. New subscribers can be added without touching A. If B is down, the event waits in the queue; when B recovers, it processes it.
 
 **Operational consequences:**
 
-| | Command | Event |
-|--|---------|-------|
-| Coupling | Tight — sender knows receiver | Loose — sender knows only the event |
-| Failure | Synchronous — both fail together | Asynchronous — sender unaffected |
-| Recipients | One | Many |
-| Expectation | Must succeed | Fire and forget |
-| Naming | Imperative verb | Past tense |
+|             | Command                          | Event                               |
+| ----------- | -------------------------------- | ----------------------------------- |
+| Coupling    | Tight — sender knows receiver    | Loose — sender knows only the event |
+| Failure     | Synchronous — both fail together | Asynchronous — sender unaffected    |
+| Recipients  | One                              | Many                                |
+| Expectation | Must succeed                     | Fire and forget                     |
+| Naming      | Imperative verb                  | Past tense                          |
 
 ## Event Naming Conventions
 
@@ -115,17 +119,17 @@ Events are facts — name them as such:
 
 ```typescript
 // WRONG — sounds like a command, ambiguous
-'ProcessOrder'
-'UserUpdate'
-'PaymentDone'
+'ProcessOrder';
+'UserUpdate';
+'PaymentDone';
 
 // RIGHT — past tense, specific, unambiguous
-'OrderPlaced'
-'UserEmailChanged'
-'PaymentSucceeded'
-'PaymentFailed'
-'SubscriptionRenewed'
-'InventoryDepleted'
+'OrderPlaced';
+'UserEmailChanged';
+'PaymentSucceeded';
+'PaymentFailed';
+'SubscriptionRenewed';
+'InventoryDepleted';
 ```
 
 A rule of thumb: if you can't use past tense, it's probably a command, not an event.
@@ -136,39 +140,39 @@ Wrap every event in a standard envelope with metadata:
 
 ```typescript
 interface EventEnvelope<T = unknown> {
-  // Routing and identification
-  id: string;           // unique event ID (for deduplication)
-  type: string;         // event type name
-  version: number;      // schema version (for evolution)
+	// Routing and identification
+	id: string; // unique event ID (for deduplication)
+	type: string; // event type name
+	version: number; // schema version (for evolution)
 
-  // Context
-  correlationId: string; // request that triggered this event (for tracing)
-  causationId: string;   // event that caused this event (for event chains)
-  source: string;        // service that emitted this event
+	// Context
+	correlationId: string; // request that triggered this event (for tracing)
+	causationId: string; // event that caused this event (for event chains)
+	source: string; // service that emitted this event
 
-  // Timing
-  timestamp: string;    // ISO 8601 UTC
+	// Timing
+	timestamp: string; // ISO 8601 UTC
 
-  // Payload
-  data: T;
+	// Payload
+	data: T;
 }
 
 // Example
 const event: EventEnvelope<UserRegistered> = {
-  id: crypto.randomUUID(),
-  type: 'UserRegistered',
-  version: 1,
-  correlationId: 'req_abc123',  // from the HTTP request that created the user
-  causationId: '',              // no parent event — triggered by user action
-  source: 'user-service',
-  timestamp: new Date().toISOString(),
-  data: {
-    type: 'UserRegistered',
-    userId: 'u_xyz',
-    email: 'user@example.com',
-    plan: 'starter',
-    registeredAt: new Date().toISOString(),
-  },
+	id: crypto.randomUUID(),
+	type: 'UserRegistered',
+	version: 1,
+	correlationId: 'req_abc123', // from the HTTP request that created the user
+	causationId: '', // no parent event — triggered by user action
+	source: 'user-service',
+	timestamp: new Date().toISOString(),
+	data: {
+		type: 'UserRegistered',
+		userId: 'u_xyz',
+		email: 'user@example.com',
+		plan: 'starter',
+		registeredAt: new Date().toISOString()
+	}
 };
 ```
 
@@ -181,49 +185,49 @@ Command Query Responsibility Segregation separates the models for writing data (
 ```typescript
 // Command side: handles writes, emits events
 class OrderService {
-  async placeOrder(command: PlaceOrderCommand): Promise<void> {
-    // Validate and persist
-    const order = await this.db.orders.create({
-      userId: command.userId,
-      items: command.items,
-      status: 'placed',
-    });
+	async placeOrder(command: PlaceOrderCommand): Promise<void> {
+		// Validate and persist
+		const order = await this.db.orders.create({
+			userId: command.userId,
+			items: command.items,
+			status: 'placed'
+		});
 
-    // Emit event — read side will update its own model
-    await this.eventBus.publish({
-      type: 'OrderPlaced',
-      data: {
-        orderId: order.id,
-        userId: order.userId,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        placedAt: order.createdAt,
-      },
-    });
-  }
+		// Emit event — read side will update its own model
+		await this.eventBus.publish({
+			type: 'OrderPlaced',
+			data: {
+				orderId: order.id,
+				userId: order.userId,
+				items: order.items,
+				totalAmount: order.totalAmount,
+				placedAt: order.createdAt
+			}
+		});
+	}
 }
 
 // Query side: handles reads from a denormalized read model
 class OrderQueryService {
-  // Read model is updated by consuming 'OrderPlaced' events
-  // Optimized for query patterns — might be in a different database
-  async getOrderHistory(userId: string): Promise<OrderSummary[]> {
-    return this.readDb.orderSummaries.findAll({ userId });
-  }
+	// Read model is updated by consuming 'OrderPlaced' events
+	// Optimized for query patterns — might be in a different database
+	async getOrderHistory(userId: string): Promise<OrderSummary[]> {
+		return this.readDb.orderSummaries.findAll({ userId });
+	}
 }
 
 // Event handler: keeps read model in sync
 class OrderReadModelUpdater {
-  async handleOrderPlaced(event: EventEnvelope<OrderPlaced>): Promise<void> {
-    await this.readDb.orderSummaries.upsert({
-      id: event.data.orderId,
-      userId: event.data.userId,
-      itemCount: event.data.items.length,
-      totalAmount: event.data.totalAmount,
-      status: 'placed',
-      placedAt: event.data.placedAt,
-    });
-  }
+	async handleOrderPlaced(event: EventEnvelope<OrderPlaced>): Promise<void> {
+		await this.readDb.orderSummaries.upsert({
+			id: event.data.orderId,
+			userId: event.data.userId,
+			itemCount: event.data.items.length,
+			totalAmount: event.data.totalAmount,
+			status: 'placed',
+			placedAt: event.data.placedAt
+		});
+	}
 }
 ```
 
@@ -232,20 +236,22 @@ CQRS is not always necessary — don't add it to a simple CRUD app. It pays off 
 ## When to Use Each
 
 **Use commands when:**
+
 - You need to know if the operation succeeded before continuing
 - The operation is directed at a specific service
 - The sender needs to handle failure (retry, compensate)
 
 **Use events when:**
+
 - Multiple services care about what happened
 - The sender doesn't need to know the outcome
 - You want to decouple services so they evolve independently
 - You need an audit trail of what happened
 
 **Use queries when:**
+
 - You need current state
 - The response is needed synchronously
 - The operation is read-only (no side effects)
 
 Mixing them deliberately is fine — an HTTP request (query) that triggers a command that emits an event is a common and correct pattern. The naming and semantics just need to be clear.
-

@@ -21,9 +21,9 @@
 	/>
 
 	<p class="mb-8 max-w-2xl text-[1.05rem] leading-[1.75] text-muted">
-		A mix of products, internal platforms, and open-source tools. Most share a theme: take
-		something operationally painful, make it boring and reliable, and get out of the way. A few
-		highlights are below — source is on
+		A mix of products, internal platforms, and open-source tools. Most share a theme: take something
+		operationally painful, make it boring and reliable, and get out of the way. A few highlights are
+		below — source is on
 		<a
 			href={SITE.social.github}
 			target="_blank"
@@ -34,8 +34,8 @@
 	</p>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each sorted as project, i (project.title)}
-			<div use:reveal class="h-full"><ProjectCard {project} index={i} /></div>
+		{#each sorted as project (project.title)}
+			<div use:reveal class="h-full"><ProjectCard {project} /></div>
 		{/each}
 	</div>
 

@@ -1,10 +1,10 @@
 ---
-title: "Case Study: Webinar & Video Conferencing Platform"
-subtitle: "Design and build a production webinar system with multi-party video, screen sharing, Q&A, polls, breakout rooms, and recording."
+title: 'Case Study: Webinar & Video Conferencing Platform'
+subtitle: 'Design and build a production webinar system with multi-party video, screen sharing, Q&A, polls, breakout rooms, and recording.'
 chapter: 26
-level: "advanced"
-readingTime: "33 min"
-topics: ["webinar", "video conferencing", "WebRTC", "SFU", "breakout rooms", "recording"]
+level: 'advanced'
+readingTime: '33 min'
+topics: ['webinar', 'video conferencing', 'WebRTC', 'SFU', 'breakout rooms', 'recording']
 ---
 
 <script>
@@ -30,12 +30,10 @@ Like a town hall meeting — speakers present on stage, the audience can raise h
 A TV broadcast (live streaming) goes one direction — the studio to your screen. A town hall (webinar) has speakers on stage, but the audience can raise their hand, ask questions through a moderator, and vote on proposals. The infrastructure must handle both the broadcast and the interaction simultaneously.
 
 <Mermaid
-	title="Webinar Platform Architecture"
-	code={`
-graph TD
+title="Webinar Platform Architecture"
+code={`graph TD
   P["Presenters<br/>WebRTC"] --> S["SFU Server<br/>Media Routing"] --> A["Attendees<br/>View & Interact"]
-  S --> SG["Signaling Server<br/>WebSocket"] --> SM["Session Manager<br/>Rooms & Roles"] --> R["Recording<br/>Composite & Store"]
-`}
+  S --> SG["Signaling Server<br/>WebSocket"] --> SM["Session Manager<br/>Rooms & Roles"] --> R["Recording<br/>Composite & Store"]`}
 />
 
 ## Requirements
@@ -82,347 +80,385 @@ Before WebRTC media can flow, peers must exchange connection information via a *
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES
 // ===========================================
-type Role = "host" | "presenter" | "attendee";
-type WebinarStatus = "waiting" | "live" | "ended";
+type Role = 'host' | 'presenter' | 'attendee';
+type WebinarStatus = 'waiting' | 'live' | 'ended';
 
 interface Participant {
-  id: string;
-  name: string;
-  role: Role;
-  joinedAt: string;
-  isMuted: boolean;
-  isCameraOn: boolean;
-  isScreenSharing: boolean;
-  isHandRaised: boolean;
-  handRaisedAt: number | null;
+	id: string;
+	name: string;
+	role: Role;
+	joinedAt: string;
+	isMuted: boolean;
+	isCameraOn: boolean;
+	isScreenSharing: boolean;
+	isHandRaised: boolean;
+	handRaisedAt: number | null;
 }
 
 interface Question {
-  id: string;
-  authorId: string;
-  authorName: string;
-  content: string;
-  votes: Set<string>;
-  isAnswered: boolean;
-  createdAt: string;
+	id: string;
+	authorId: string;
+	authorName: string;
+	content: string;
+	votes: Set<string>;
+	isAnswered: boolean;
+	createdAt: string;
 }
 
 interface Poll {
-  id: string;
-  question: string;
-  options: string[];
-  votes: Map<string, number>; // optionIndex -> count
-  voters: Set<string>;
-  isOpen: boolean;
-  createdAt: string;
+	id: string;
+	question: string;
+	options: string[];
+	votes: Map<string, number>; // optionIndex -> count
+	voters: Set<string>;
+	isOpen: boolean;
+	createdAt: string;
 }
 
 interface BreakoutRoom {
-  id: string;
-  name: string;
-  participantIds: Set<string>;
-  createdAt: string;
+	id: string;
+	name: string;
+	participantIds: Set<string>;
+	createdAt: string;
 }
 
 interface WebinarSession {
-  id: string;
-  title: string;
-  hostId: string;
-  status: WebinarStatus;
-  participants: Map<string, Participant>;
-  waitingRoom: Map<string, Participant>;
-  questions: Map<string, Question>;
-  polls: Map<string, Poll>;
-  breakoutRooms: Map<string, BreakoutRoom>;
-  chat: Array<{ id: string; userId: string; name: string; content: string; timestamp: number }>;
-  isRecording: boolean;
-  createdAt: string;
-  startedAt: string | null;
+	id: string;
+	title: string;
+	hostId: string;
+	status: WebinarStatus;
+	participants: Map<string, Participant>;
+	waitingRoom: Map<string, Participant>;
+	questions: Map<string, Question>;
+	polls: Map<string, Poll>;
+	breakoutRooms: Map<string, BreakoutRoom>;
+	chat: Array<{ id: string; userId: string; name: string; content: string; timestamp: number }>;
+	isRecording: boolean;
+	createdAt: string;
+	startedAt: string | null;
 }
 
 // ===========================================
 // 2. WEBINAR MANAGER
 // ===========================================
 class WebinarManager {
-  private sessions = new Map<string, WebinarSession>();
+	private sessions = new Map<string, WebinarSession>();
 
-  create(hostId: string, hostName: string, title: string): WebinarSession {
-    const session: WebinarSession = {
-      id: crypto.randomUUID().slice(0, 8),
-      title, hostId, status: "waiting",
-      participants: new Map(),
-      waitingRoom: new Map(),
-      questions: new Map(),
-      polls: new Map(),
-      breakoutRooms: new Map(),
-      chat: [], isRecording: false,
-      createdAt: new Date().toISOString(), startedAt: null,
-    };
+	create(hostId: string, hostName: string, title: string): WebinarSession {
+		const session: WebinarSession = {
+			id: crypto.randomUUID().slice(0, 8),
+			title,
+			hostId,
+			status: 'waiting',
+			participants: new Map(),
+			waitingRoom: new Map(),
+			questions: new Map(),
+			polls: new Map(),
+			breakoutRooms: new Map(),
+			chat: [],
+			isRecording: false,
+			createdAt: new Date().toISOString(),
+			startedAt: null
+		};
 
-    // Add host as first participant
-    session.participants.set(hostId, {
-      id: hostId, name: hostName, role: "host",
-      joinedAt: new Date().toISOString(),
-      isMuted: false, isCameraOn: true, isScreenSharing: false,
-      isHandRaised: false, handRaisedAt: null,
-    });
+		// Add host as first participant
+		session.participants.set(hostId, {
+			id: hostId,
+			name: hostName,
+			role: 'host',
+			joinedAt: new Date().toISOString(),
+			isMuted: false,
+			isCameraOn: true,
+			isScreenSharing: false,
+			isHandRaised: false,
+			handRaisedAt: null
+		});
 
-    this.sessions.set(session.id, session);
-    return session;
-  }
+		this.sessions.set(session.id, session);
+		return session;
+	}
 
-  join(webinarId: string, userId: string, name: string): { admitted: boolean; session?: WebinarSession } {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
+	join(
+		webinarId: string,
+		userId: string,
+		name: string
+	): { admitted: boolean; session?: WebinarSession } {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
 
-    const participant: Participant = {
-      id: userId, name, role: "attendee",
-      joinedAt: new Date().toISOString(),
-      isMuted: true, isCameraOn: false, isScreenSharing: false,
-      isHandRaised: false, handRaisedAt: null,
-    };
+		const participant: Participant = {
+			id: userId,
+			name,
+			role: 'attendee',
+			joinedAt: new Date().toISOString(),
+			isMuted: true,
+			isCameraOn: false,
+			isScreenSharing: false,
+			isHandRaised: false,
+			handRaisedAt: null
+		};
 
-    if (session.status === "waiting") {
-      // Add to waiting room
-      session.waitingRoom.set(userId, participant);
-      return { admitted: false };
-    }
+		if (session.status === 'waiting') {
+			// Add to waiting room
+			session.waitingRoom.set(userId, participant);
+			return { admitted: false };
+		}
 
-    // Direct join if session is live
-    session.participants.set(userId, participant);
-    return { admitted: true, session };
-  }
+		// Direct join if session is live
+		session.participants.set(userId, participant);
+		return { admitted: true, session };
+	}
 
-  admitFromWaiting(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const participant = session.waitingRoom.get(userId);
-    if (!participant) throw new Error("User not in waiting room");
-    session.waitingRoom.delete(userId);
-    session.participants.set(userId, participant);
-  }
+	admitFromWaiting(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const participant = session.waitingRoom.get(userId);
+		if (!participant) throw new Error('User not in waiting room');
+		session.waitingRoom.delete(userId);
+		session.participants.set(userId, participant);
+	}
 
-  leave(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) return;
-    session.participants.delete(userId);
-    session.waitingRoom.delete(userId);
-  }
+	leave(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) return;
+		session.participants.delete(userId);
+		session.waitingRoom.delete(userId);
+	}
 
-  start(webinarId: string, hostId: string): WebinarSession {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    if (session.hostId !== hostId) throw new Error("Only host can start");
-    session.status = "live";
-    session.startedAt = new Date().toISOString();
+	start(webinarId: string, hostId: string): WebinarSession {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		if (session.hostId !== hostId) throw new Error('Only host can start');
+		session.status = 'live';
+		session.startedAt = new Date().toISOString();
 
-    // Admit all waiting room participants
-    for (const [id, p] of session.waitingRoom) {
-      session.participants.set(id, p);
-    }
-    session.waitingRoom.clear();
-    return session;
-  }
+		// Admit all waiting room participants
+		for (const [id, p] of session.waitingRoom) {
+			session.participants.set(id, p);
+		}
+		session.waitingRoom.clear();
+		return session;
+	}
 
-  end(webinarId: string, hostId: string): WebinarSession {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    if (session.hostId !== hostId) throw new Error("Only host can end");
-    session.status = "ended";
-    return session;
-  }
+	end(webinarId: string, hostId: string): WebinarSession {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		if (session.hostId !== hostId) throw new Error('Only host can end');
+		session.status = 'ended';
+		return session;
+	}
 
-  // Role management
-  promoteToPresenter(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const p = session.participants.get(userId);
-    if (!p) throw new Error("Participant not found");
-    p.role = "presenter";
-    p.isMuted = false;
-    p.isCameraOn = true;
-    p.isHandRaised = false;
-    p.handRaisedAt = null;
-  }
+	// Role management
+	promoteToPresenter(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const p = session.participants.get(userId);
+		if (!p) throw new Error('Participant not found');
+		p.role = 'presenter';
+		p.isMuted = false;
+		p.isCameraOn = true;
+		p.isHandRaised = false;
+		p.handRaisedAt = null;
+	}
 
-  demoteToAttendee(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const p = session.participants.get(userId);
-    if (!p) throw new Error("Participant not found");
-    p.role = "attendee";
-    p.isMuted = true;
-    p.isCameraOn = false;
-    p.isScreenSharing = false;
-  }
+	demoteToAttendee(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const p = session.participants.get(userId);
+		if (!p) throw new Error('Participant not found');
+		p.role = 'attendee';
+		p.isMuted = true;
+		p.isCameraOn = false;
+		p.isScreenSharing = false;
+	}
 
-  // Q&A
-  submitQuestion(webinarId: string, userId: string, name: string, content: string): Question {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const q: Question = {
-      id: crypto.randomUUID().slice(0, 8),
-      authorId: userId, authorName: name, content,
-      votes: new Set([userId]), isAnswered: false,
-      createdAt: new Date().toISOString(),
-    };
-    session.questions.set(q.id, q);
-    return q;
-  }
+	// Q&A
+	submitQuestion(webinarId: string, userId: string, name: string, content: string): Question {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const q: Question = {
+			id: crypto.randomUUID().slice(0, 8),
+			authorId: userId,
+			authorName: name,
+			content,
+			votes: new Set([userId]),
+			isAnswered: false,
+			createdAt: new Date().toISOString()
+		};
+		session.questions.set(q.id, q);
+		return q;
+	}
 
-  upvoteQuestion(webinarId: string, questionId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const q = session.questions.get(questionId);
-    if (!q) throw new Error("Question not found");
-    q.votes.add(userId);
-  }
+	upvoteQuestion(webinarId: string, questionId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const q = session.questions.get(questionId);
+		if (!q) throw new Error('Question not found');
+		q.votes.add(userId);
+	}
 
-  getQuestions(webinarId: string): object[] {
-    const session = this.sessions.get(webinarId);
-    if (!session) return [];
-    return [...session.questions.values()]
-      .map(q => ({ ...q, votes: q.votes.size }))
-      .sort((a, b) => b.votes - a.votes);
-  }
+	getQuestions(webinarId: string): object[] {
+		const session = this.sessions.get(webinarId);
+		if (!session) return [];
+		return [...session.questions.values()]
+			.map((q) => ({ ...q, votes: q.votes.size }))
+			.sort((a, b) => b.votes - a.votes);
+	}
 
-  // Polls
-  createPoll(webinarId: string, question: string, options: string[]): Poll {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const poll: Poll = {
-      id: crypto.randomUUID().slice(0, 8),
-      question, options,
-      votes: new Map(options.map((_, i) => [i, 0] as [number, number])),
-      voters: new Set(), isOpen: true,
-      createdAt: new Date().toISOString(),
-    };
-    // Initialize vote counts
-    for (let i = 0; i < options.length; i++) poll.votes.set(i, 0);
-    session.polls.set(poll.id, poll);
-    return poll;
-  }
+	// Polls
+	createPoll(webinarId: string, question: string, options: string[]): Poll {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const poll: Poll = {
+			id: crypto.randomUUID().slice(0, 8),
+			question,
+			options,
+			votes: new Map(options.map((_, i) => [i, 0] as [number, number])),
+			voters: new Set(),
+			isOpen: true,
+			createdAt: new Date().toISOString()
+		};
+		// Initialize vote counts
+		for (let i = 0; i < options.length; i++) poll.votes.set(i, 0);
+		session.polls.set(poll.id, poll);
+		return poll;
+	}
 
-  votePoll(webinarId: string, pollId: string, userId: string, optionIndex: number): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const poll = session.polls.get(pollId);
-    if (!poll) throw new Error("Poll not found");
-    if (!poll.isOpen) throw new Error("Poll is closed");
-    if (poll.voters.has(userId)) throw new Error("Already voted");
-    poll.voters.add(userId);
-    poll.votes.set(optionIndex, (poll.votes.get(optionIndex) || 0) + 1);
-  }
+	votePoll(webinarId: string, pollId: string, userId: string, optionIndex: number): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const poll = session.polls.get(pollId);
+		if (!poll) throw new Error('Poll not found');
+		if (!poll.isOpen) throw new Error('Poll is closed');
+		if (poll.voters.has(userId)) throw new Error('Already voted');
+		poll.voters.add(userId);
+		poll.votes.set(optionIndex, (poll.votes.get(optionIndex) || 0) + 1);
+	}
 
-  getPollResults(webinarId: string, pollId: string): object {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const poll = session.polls.get(pollId);
-    if (!poll) throw new Error("Poll not found");
-    return {
-      ...poll,
-      votes: Object.fromEntries(poll.votes),
-      totalVotes: poll.voters.size,
-      voters: undefined,
-    };
-  }
+	getPollResults(webinarId: string, pollId: string): object {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const poll = session.polls.get(pollId);
+		if (!poll) throw new Error('Poll not found');
+		return {
+			...poll,
+			votes: Object.fromEntries(poll.votes),
+			totalVotes: poll.voters.size,
+			voters: undefined
+		};
+	}
 
-  // Hand raising
-  raiseHand(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const p = session.participants.get(userId);
-    if (!p) throw new Error("Not a participant");
-    p.isHandRaised = true;
-    p.handRaisedAt = Date.now();
-  }
+	// Hand raising
+	raiseHand(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const p = session.participants.get(userId);
+		if (!p) throw new Error('Not a participant');
+		p.isHandRaised = true;
+		p.handRaisedAt = Date.now();
+	}
 
-  lowerHand(webinarId: string, userId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const p = session.participants.get(userId);
-    if (p) { p.isHandRaised = false; p.handRaisedAt = null; }
-  }
+	lowerHand(webinarId: string, userId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const p = session.participants.get(userId);
+		if (p) {
+			p.isHandRaised = false;
+			p.handRaisedAt = null;
+		}
+	}
 
-  getHandRaisedQueue(webinarId: string): object[] {
-    const session = this.sessions.get(webinarId);
-    if (!session) return [];
-    return [...session.participants.values()]
-      .filter(p => p.isHandRaised)
-      .sort((a, b) => (a.handRaisedAt || 0) - (b.handRaisedAt || 0))
-      .map(p => ({ id: p.id, name: p.name, raisedAt: p.handRaisedAt }));
-  }
+	getHandRaisedQueue(webinarId: string): object[] {
+		const session = this.sessions.get(webinarId);
+		if (!session) return [];
+		return [...session.participants.values()]
+			.filter((p) => p.isHandRaised)
+			.sort((a, b) => (a.handRaisedAt || 0) - (b.handRaisedAt || 0))
+			.map((p) => ({ id: p.id, name: p.name, raisedAt: p.handRaisedAt }));
+	}
 
-  // Breakout rooms
-  createBreakoutRooms(webinarId: string, count: number): BreakoutRoom[] {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const rooms: BreakoutRoom[] = [];
-    const attendees = [...session.participants.values()].filter(p => p.role === "attendee");
-    const perRoom = Math.ceil(attendees.length / count);
+	// Breakout rooms
+	createBreakoutRooms(webinarId: string, count: number): BreakoutRoom[] {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const rooms: BreakoutRoom[] = [];
+		const attendees = [...session.participants.values()].filter((p) => p.role === 'attendee');
+		const perRoom = Math.ceil(attendees.length / count);
 
-    for (let i = 0; i < count; i++) {
-      const room: BreakoutRoom = {
-        id: `room_${i + 1}`, name: `Room ${i + 1}`,
-        participantIds: new Set(), createdAt: new Date().toISOString(),
-      };
-      const start = i * perRoom;
-      const end = Math.min(start + perRoom, attendees.length);
-      for (let j = start; j < end; j++) room.participantIds.add(attendees[j].id);
-      session.breakoutRooms.set(room.id, room);
-      rooms.push(room);
-    }
-    return rooms;
-  }
+		for (let i = 0; i < count; i++) {
+			const room: BreakoutRoom = {
+				id: `room_${i + 1}`,
+				name: `Room ${i + 1}`,
+				participantIds: new Set(),
+				createdAt: new Date().toISOString()
+			};
+			const start = i * perRoom;
+			const end = Math.min(start + perRoom, attendees.length);
+			for (let j = start; j < end; j++) room.participantIds.add(attendees[j].id);
+			session.breakoutRooms.set(room.id, room);
+			rooms.push(room);
+		}
+		return rooms;
+	}
 
-  closeBreakoutRooms(webinarId: string): void {
-    const session = this.sessions.get(webinarId);
-    if (session) session.breakoutRooms.clear();
-  }
+	closeBreakoutRooms(webinarId: string): void {
+		const session = this.sessions.get(webinarId);
+		if (session) session.breakoutRooms.clear();
+	}
 
-  // Chat
-  sendChat(webinarId: string, userId: string, name: string, content: string): object {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    const msg = { id: crypto.randomUUID().slice(0, 8), userId, name, content, timestamp: Date.now() };
-    session.chat.push(msg);
-    if (session.chat.length > 500) session.chat.shift();
-    return msg;
-  }
+	// Chat
+	sendChat(webinarId: string, userId: string, name: string, content: string): object {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		const msg = {
+			id: crypto.randomUUID().slice(0, 8),
+			userId,
+			name,
+			content,
+			timestamp: Date.now()
+		};
+		session.chat.push(msg);
+		if (session.chat.length > 500) session.chat.shift();
+		return msg;
+	}
 
-  // Recording
-  toggleRecording(webinarId: string): boolean {
-    const session = this.sessions.get(webinarId);
-    if (!session) throw new Error("Webinar not found");
-    session.isRecording = !session.isRecording;
-    console.log(`[RECORDING] ${session.isRecording ? "Started" : "Stopped"} for ${webinarId}`);
-    return session.isRecording;
-  }
+	// Recording
+	toggleRecording(webinarId: string): boolean {
+		const session = this.sessions.get(webinarId);
+		if (!session) throw new Error('Webinar not found');
+		session.isRecording = !session.isRecording;
+		console.log(`[RECORDING] ${session.isRecording ? 'Started' : 'Stopped'} for ${webinarId}`);
+		return session.isRecording;
+	}
 
-  getSession(id: string): WebinarSession | null {
-    return this.sessions.get(id) || null;
-  }
+	getSession(id: string): WebinarSession | null {
+		return this.sessions.get(id) || null;
+	}
 
-  getSessionInfo(id: string): object | null {
-    const s = this.sessions.get(id);
-    if (!s) return null;
-    return {
-      id: s.id, title: s.title, status: s.status,
-      participantCount: s.participants.size,
-      waitingRoomCount: s.waitingRoom.size,
-      isRecording: s.isRecording,
-      presenters: [...s.participants.values()].filter(p => p.role !== "attendee").map(p => ({ id: p.id, name: p.name, role: p.role })),
-      questionCount: s.questions.size,
-      activePollCount: [...s.polls.values()].filter(p => p.isOpen).length,
-      breakoutRoomCount: s.breakoutRooms.size,
-    };
-  }
+	getSessionInfo(id: string): object | null {
+		const s = this.sessions.get(id);
+		if (!s) return null;
+		return {
+			id: s.id,
+			title: s.title,
+			status: s.status,
+			participantCount: s.participants.size,
+			waitingRoomCount: s.waitingRoom.size,
+			isRecording: s.isRecording,
+			presenters: [...s.participants.values()]
+				.filter((p) => p.role !== 'attendee')
+				.map((p) => ({ id: p.id, name: p.name, role: p.role })),
+			questionCount: s.questions.size,
+			activePollCount: [...s.polls.values()].filter((p) => p.isOpen).length,
+			breakoutRoomCount: s.breakoutRooms.size
+		};
+	}
 }
 
 // ===========================================
@@ -431,151 +467,196 @@ class WebinarManager {
 const manager = new WebinarManager();
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/webinars — Create
-    if (url.pathname === "/api/webinars" && method === "POST") {
-      const body = await parseBody(req) as any;
-      const session = manager.create(body.hostId || "host", body.hostName || "Host", body.title || "Untitled Webinar");
-      json(res, 201, manager.getSessionInfo(session.id)); return;
-    }
+	try {
+		// POST /api/webinars — Create
+		if (url.pathname === '/api/webinars' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			const session = manager.create(
+				body.hostId || 'host',
+				body.hostName || 'Host',
+				body.title || 'Untitled Webinar'
+			);
+			json(res, 201, manager.getSessionInfo(session.id));
+			return;
+		}
 
-    const idMatch = url.pathname.match(/^\/api\/webinars\/([^/]+)(?:\/(.+))?$/);
-    if (!idMatch) {
-      if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-      json(res, 404, { error: "Not found" }); return;
-    }
+		const idMatch = url.pathname.match(/^\/api\/webinars\/([^/]+)(?:\/(.+))?$/);
+		if (!idMatch) {
+			if (url.pathname === '/health') {
+				json(res, 200, { status: 'ok' });
+				return;
+			}
+			json(res, 404, { error: 'Not found' });
+			return;
+		}
 
-    const [, webinarId, action] = idMatch;
+		const [, webinarId, action] = idMatch;
 
-    // GET /api/webinars/:id
-    if (!action && method === "GET") {
-      const info = manager.getSessionInfo(webinarId);
-      if (!info) { json(res, 404, { error: "Not found" }); return; }
-      json(res, 200, info); return;
-    }
+		// GET /api/webinars/:id
+		if (!action && method === 'GET') {
+			const info = manager.getSessionInfo(webinarId);
+			if (!info) {
+				json(res, 404, { error: 'Not found' });
+				return;
+			}
+			json(res, 200, info);
+			return;
+		}
 
-    const body = method !== "GET" ? await parseBody(req) as any : {};
+		const body = method !== 'GET' ? ((await parseBody(req)) as any) : {};
 
-    switch (action) {
-      case "join":
-        if (method !== "POST") break;
-        const result = manager.join(webinarId, body.userId, body.name);
-        json(res, 200, result); return;
+		switch (action) {
+			case 'join':
+				if (method !== 'POST') break;
+				const result = manager.join(webinarId, body.userId, body.name);
+				json(res, 200, result);
+				return;
 
-      case "leave":
-        if (method !== "POST") break;
-        manager.leave(webinarId, body.userId);
-        json(res, 200, { left: true }); return;
+			case 'leave':
+				if (method !== 'POST') break;
+				manager.leave(webinarId, body.userId);
+				json(res, 200, { left: true });
+				return;
 
-      case "start":
-        if (method !== "POST") break;
-        manager.start(webinarId, body.hostId);
-        json(res, 200, manager.getSessionInfo(webinarId)); return;
+			case 'start':
+				if (method !== 'POST') break;
+				manager.start(webinarId, body.hostId);
+				json(res, 200, manager.getSessionInfo(webinarId));
+				return;
 
-      case "end":
-        if (method !== "POST") break;
-        manager.end(webinarId, body.hostId);
-        json(res, 200, manager.getSessionInfo(webinarId)); return;
+			case 'end':
+				if (method !== 'POST') break;
+				manager.end(webinarId, body.hostId);
+				json(res, 200, manager.getSessionInfo(webinarId));
+				return;
 
-      case "promote":
-        if (method !== "POST") break;
-        manager.promoteToPresenter(webinarId, body.userId);
-        json(res, 200, { promoted: body.userId }); return;
+			case 'promote':
+				if (method !== 'POST') break;
+				manager.promoteToPresenter(webinarId, body.userId);
+				json(res, 200, { promoted: body.userId });
+				return;
 
-      case "demote":
-        if (method !== "POST") break;
-        manager.demoteToAttendee(webinarId, body.userId);
-        json(res, 200, { demoted: body.userId }); return;
+			case 'demote':
+				if (method !== 'POST') break;
+				manager.demoteToAttendee(webinarId, body.userId);
+				json(res, 200, { demoted: body.userId });
+				return;
 
-      case "questions":
-        if (method === "GET") { json(res, 200, { questions: manager.getQuestions(webinarId) }); return; }
-        if (method === "POST") {
-          const q = manager.submitQuestion(webinarId, body.userId, body.name, body.content);
-          json(res, 201, { ...q, votes: q.votes.size }); return;
-        }
-        break;
+			case 'questions':
+				if (method === 'GET') {
+					json(res, 200, { questions: manager.getQuestions(webinarId) });
+					return;
+				}
+				if (method === 'POST') {
+					const q = manager.submitQuestion(webinarId, body.userId, body.name, body.content);
+					json(res, 201, { ...q, votes: q.votes.size });
+					return;
+				}
+				break;
 
-      case "polls":
-        if (method !== "POST") break;
-        const poll = manager.createPoll(webinarId, body.question, body.options);
-        json(res, 201, { id: poll.id, question: poll.question, options: poll.options }); return;
+			case 'polls':
+				if (method !== 'POST') break;
+				const poll = manager.createPoll(webinarId, body.question, body.options);
+				json(res, 201, { id: poll.id, question: poll.question, options: poll.options });
+				return;
 
-      case "hand-raise":
-        if (method !== "POST") break;
-        if (body.action === "lower") { manager.lowerHand(webinarId, body.userId); }
-        else { manager.raiseHand(webinarId, body.userId); }
-        json(res, 200, { queue: manager.getHandRaisedQueue(webinarId) }); return;
+			case 'hand-raise':
+				if (method !== 'POST') break;
+				if (body.action === 'lower') {
+					manager.lowerHand(webinarId, body.userId);
+				} else {
+					manager.raiseHand(webinarId, body.userId);
+				}
+				json(res, 200, { queue: manager.getHandRaisedQueue(webinarId) });
+				return;
 
-      case "breakout-rooms":
-        if (method === "POST") {
-          const rooms = manager.createBreakoutRooms(webinarId, body.count || 4);
-          json(res, 201, { rooms: rooms.map(r => ({ id: r.id, name: r.name, participantCount: r.participantIds.size })) }); return;
-        }
-        if (method === "DELETE") {
-          manager.closeBreakoutRooms(webinarId);
-          json(res, 200, { closed: true }); return;
-        }
-        break;
+			case 'breakout-rooms':
+				if (method === 'POST') {
+					const rooms = manager.createBreakoutRooms(webinarId, body.count || 4);
+					json(res, 201, {
+						rooms: rooms.map((r) => ({
+							id: r.id,
+							name: r.name,
+							participantCount: r.participantIds.size
+						}))
+					});
+					return;
+				}
+				if (method === 'DELETE') {
+					manager.closeBreakoutRooms(webinarId);
+					json(res, 200, { closed: true });
+					return;
+				}
+				break;
 
-      case "chat":
-        if (method === "POST") {
-          const msg = manager.sendChat(webinarId, body.userId, body.name, body.content);
-          json(res, 201, msg); return;
-        }
-        if (method === "GET") {
-          const s = manager.getSession(webinarId);
-          json(res, 200, { messages: s?.chat.slice(-50) || [] }); return;
-        }
-        break;
+			case 'chat':
+				if (method === 'POST') {
+					const msg = manager.sendChat(webinarId, body.userId, body.name, body.content);
+					json(res, 201, msg);
+					return;
+				}
+				if (method === 'GET') {
+					const s = manager.getSession(webinarId);
+					json(res, 200, { messages: s?.chat.slice(-50) || [] });
+					return;
+				}
+				break;
 
-      case "recording/start":
-        json(res, 200, { recording: manager.toggleRecording(webinarId) }); return;
+			case 'recording/start':
+				json(res, 200, { recording: manager.toggleRecording(webinarId) });
+				return;
 
-      case "recording/stop":
-        json(res, 200, { recording: manager.toggleRecording(webinarId) }); return;
-    }
+			case 'recording/stop':
+				json(res, 200, { recording: manager.toggleRecording(webinarId) });
+				return;
+		}
 
-    // Handle question upvote and poll vote
-    const qUpvote = url.pathname.match(/^\/api\/webinars\/([^/]+)\/questions\/([^/]+)\/upvote$/);
-    if (qUpvote && method === "POST") {
-      manager.upvoteQuestion(qUpvote[1], qUpvote[2], body.userId);
-      json(res, 200, { upvoted: true }); return;
-    }
+		// Handle question upvote and poll vote
+		const qUpvote = url.pathname.match(/^\/api\/webinars\/([^/]+)\/questions\/([^/]+)\/upvote$/);
+		if (qUpvote && method === 'POST') {
+			manager.upvoteQuestion(qUpvote[1], qUpvote[2], body.userId);
+			json(res, 200, { upvoted: true });
+			return;
+		}
 
-    const pVote = url.pathname.match(/^\/api\/webinars\/([^/]+)\/polls\/([^/]+)\/vote$/);
-    if (pVote && method === "POST") {
-      manager.votePoll(pVote[1], pVote[2], body.userId, body.optionIndex);
-      json(res, 200, manager.getPollResults(pVote[1], pVote[2])); return;
-    }
+		const pVote = url.pathname.match(/^\/api\/webinars\/([^/]+)\/polls\/([^/]+)\/vote$/);
+		if (pVote && method === 'POST') {
+			manager.votePoll(pVote[1], pVote[2], body.userId, body.optionIndex);
+			json(res, 200, manager.getPollResults(pVote[1], pVote[2]));
+			return;
+		}
 
-    json(res, 404, { error: "Not found" });
-  } catch (err: any) {
-    json(res, 400, { error: err.message || "Internal server error" });
-  }
+		json(res, 404, { error: 'Not found' });
+	} catch (err: any) {
+		json(res, 400, { error: err.message || 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`Webinar Platform on http://localhost:${PORT}`));
-process.on("SIGTERM", () => server.close());
+process.on('SIGTERM', () => server.close());
 ```
 
 </div>
@@ -996,4 +1077,3 @@ Chat is ephemeral, high-volume, and conversational. Q&A is structured, persisten
 - This architecture supports 10K attendees per webinar with sub-200ms audio latency and interactive features
 
 </div>
-

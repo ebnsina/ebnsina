@@ -1,10 +1,10 @@
 ---
-title: "Incident Response & On-Call"
+title: 'Incident Response & On-Call'
 subtitle: "ICS roles, severity classification, comms cadence, and the on-call rotation that doesn't burn engineers out."
 chapter: 4
-level: "intermediate"
-readingTime: "17 min"
-topics: ["incident response", "on-call", "ICS", "PagerDuty", "war room"]
+level: 'intermediate'
+readingTime: '17 min'
+topics: ['incident response', 'on-call', 'ICS', 'PagerDuty', 'war room']
 ---
 
 <script>
@@ -103,21 +103,21 @@ For a SEV1 you fill all four named roles. For a SEV2, IC + OL + Scribe is enough
 ```typescript
 // Anti-patterns that destroy on-call teams:
 const broken = {
-  rotation: "Same 3 people forever",        // burnout in 6 months
-  handoff: "None — silent transition",      // dropped context
-  pageVolume: "10+ pages per shift",        // sleep deprivation
-  daytimeWork: "Same as non-on-call week",  // exhaustion
-  comp: "None — 'it's part of the job'",    // resentment
+	rotation: 'Same 3 people forever', // burnout in 6 months
+	handoff: 'None — silent transition', // dropped context
+	pageVolume: '10+ pages per shift', // sleep deprivation
+	daytimeWork: 'Same as non-on-call week', // exhaustion
+	comp: "None — 'it's part of the job'" // resentment
 };
 
 // What works:
 const sustainable = {
-  rotation:    "8+ engineers, 1-week shifts",
-  handoff:     "30-min sync at start: open issues, recent deploys, watchlist",
-  pageVolume:  "<5 pages/week (else: fix the noise)",
-  daytimeWork: "On-call week is project-light; backlog/runbook focused",
-  comp:        "Per-shift stipend OR comp time off after",
-  followUp:    "Every page reviewed in weekly on-call retro",
+	rotation: '8+ engineers, 1-week shifts',
+	handoff: '30-min sync at start: open issues, recent deploys, watchlist',
+	pageVolume: '<5 pages/week (else: fix the noise)',
+	daytimeWork: 'On-call week is project-light; backlog/runbook focused',
+	comp: 'Per-shift stipend OR comp time off after',
+	followUp: 'Every page reviewed in weekly on-call retro'
 };
 ```
 
@@ -127,26 +127,32 @@ If your team only has 4 engineers, you do not have an on-call rotation. You have
 
 ```markdown
 # On-call handoff: [outgoing engineer] → [incoming engineer]
+
 Date: 2026-05-03
 Time: 09:00 PT
 
 ## Open incidents
+
 - INC-2247: Checkout p99 elevated since Friday. Mitigated by autoscaler bump.
   Root cause TBD. Next step: OL to review traces.
 
 ## Recent deploys (past 48h)
+
 - payment-service v2.14.0 — small refactor, no incidents
 - checkout v3.8.1 — autoscaler config change (related to INC-2247)
 
 ## Watchlist
+
 - DB primary CPU trending up (60% → 75% over 7 days)
 - Kafka consumer lag on order-events occasionally spikes; tolerable for now
 
 ## Known noise
+
 - "S3 5xx burst" alert fires daily at 03:15 UTC during cost-report job
   → Suppressed in PagerDuty until INFRA-882 lands
 
 ## Anything you should know
+
 - Big marketing push tomorrow 10am PT — expect 3-5x normal traffic
 ```
 
@@ -193,18 +199,21 @@ Spin up a dedicated Slack/Teams channel for every SEV1/SEV2. Pin this template a
 **Status page**: status.example.com/incidents/abc123
 
 ## Current hypothesis
+
 Database connection pool exhaustion in EU region.
 
 ## Mitigation in progress
+
 1. Bumping pool size from 50 → 100 (in progress)
 2. Diverting EU traffic to US (decided against — too much latency)
 
 ## Timeline
-14:22  Page fired (CheckoutErrorBudgetFastBurn)
-14:24  IC declared SEV1
-14:28  OL identified DB connection saturation
-14:31  Hypothesis posted, mitigation 1 started
-14:35  Connection pool bump deployed to canary
+
+14:22 Page fired (CheckoutErrorBudgetFastBurn)
+14:24 IC declared SEV1
+14:28 OL identified DB connection saturation
+14:31 Hypothesis posted, mitigation 1 started
+14:35 Connection pool bump deployed to canary
 ...
 ```
 
@@ -218,20 +227,20 @@ You cannot expect people to perform incident response correctly under pressure i
 // Quarterly incident drill template
 
 const drill = {
-  scenario: "Database primary becomes unreachable from app tier",
-  injection: "Block port 5432 with iptables on db-primary",
-  region: "staging",
-  observers: ["sre-lead", "vp-eng"],
-  participants: ["full on-call rotation"],
+	scenario: 'Database primary becomes unreachable from app tier',
+	injection: 'Block port 5432 with iptables on db-primary',
+	region: 'staging',
+	observers: ['sre-lead', 'vp-eng'],
+	participants: ['full on-call rotation'],
 
-  successCriteria: [
-    "IC declared within 5 minutes of first symptom",
-    "Status page updated within 15 minutes (simulated)",
-    "Mitigation (failover) executed within 20 minutes",
-    "Scribe captured complete timeline",
-  ],
+	successCriteria: [
+		'IC declared within 5 minutes of first symptom',
+		'Status page updated within 15 minutes (simulated)',
+		'Mitigation (failover) executed within 20 minutes',
+		'Scribe captured complete timeline'
+	],
 
-  postDrill: "Retro within 24h; action items into Jira",
+	postDrill: 'Retro within 24h; action items into Jira'
 };
 ```
 
@@ -251,4 +260,3 @@ The first drill always exposes that the runbook has a typo, the failover script 
 3. **ICS gives every responder a clear lane** — IC decides, OL debugs, CL communicates
 4. **8+ engineers, 1-week shifts, paid on-call** is the floor for sustainable rotation
 5. **Drill quarterly** — the first time you exercise a runbook should not be in a real outage
-

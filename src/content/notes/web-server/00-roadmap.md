@@ -1,10 +1,10 @@
 ---
-title: "Web Server Fundamentals — Roadmap"
-subtitle: "Ten chapters that build a working understanding of web servers — from raw TCP sockets to a tuned, hardened nginx in front of a real backend."
+title: 'Web Server Fundamentals — Roadmap'
+subtitle: 'Ten chapters that build a working understanding of web servers — from raw TCP sockets to a tuned, hardened nginx in front of a real backend.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "http", "nginx", "web server", "sockets"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'http', 'nginx', 'web server', 'sockets']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will know exactly what happens between "user types a URL" and "your code run
 Read in order. Run every command. The first half builds intuition by writing code you understand. The second half is the production tooling you will actually deploy.
 
 Total reading time: ~2 hours. Hands-on time, the first time: about a weekend.
-

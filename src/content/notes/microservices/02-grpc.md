@@ -1,10 +1,11 @@
 ---
-title: "gRPC Between Services"
-subtitle: "Protocol Buffers, generated clients, streaming, and why gRPC beats REST for internal service communication."
+title: 'gRPC Between Services'
+subtitle: 'Protocol Buffers, generated clients, streaming, and why gRPC beats REST for internal service communication.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["gRPC", "Protocol Buffers", "protobuf", "streaming", "service definition", "code generation"]
+level: 'intermediate'
+readingTime: '11 min'
+topics:
+  ['gRPC', 'Protocol Buffers', 'protobuf', 'streaming', 'service definition', 'code generation']
 ---
 
 <script>
@@ -25,14 +26,14 @@ REST over HTTP/1.1 has no schema enforcement, no code generation, and no streami
 
 gRPC solves this:
 
-| | REST/JSON | gRPC |
-|---|---|---|
-| **Schema** | Optional (OpenAPI) | Required (`.proto`) |
-| **Code generation** | Optional | Built-in |
-| **Serialization** | JSON (text, verbose) | Protobuf (binary, compact) |
-| **Streaming** | No (SSE/WebSocket bolt-on) | First-class (4 modes) |
-| **Performance** | Baseline | ~5-10x faster serialization |
-| **Browser support** | Native | Requires grpc-web proxy |
+|                     | REST/JSON                  | gRPC                        |
+| ------------------- | -------------------------- | --------------------------- |
+| **Schema**          | Optional (OpenAPI)         | Required (`.proto`)         |
+| **Code generation** | Optional                   | Built-in                    |
+| **Serialization**   | JSON (text, verbose)       | Protobuf (binary, compact)  |
+| **Streaming**       | No (SSE/WebSocket bolt-on) | First-class (4 modes)       |
+| **Performance**     | Baseline                   | ~5-10x faster serialization |
+| **Browser support** | Native                     | Requires grpc-web proxy     |
 
 **Internal APIs** (service-to-service): gRPC. **Public APIs** (browser clients): REST or GraphQL.
 
@@ -164,49 +165,49 @@ import { OrderService } from './gen/order/v1/order_connect';
 import { Order, OrderStatus } from './gen/order/v1/order_pb';
 
 export const orderRoutes = (router: ConnectRouter) =>
-  router.service(OrderService, {
-    async createOrder(req) {
-      const order = await db.orders.create({
-        customerId: req.customerId,
-        items: req.items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          priceCents: Number(item.price?.amountCents ?? 0),
-        })),
-      });
+	router.service(OrderService, {
+		async createOrder(req) {
+			const order = await db.orders.create({
+				customerId: req.customerId,
+				items: req.items.map((item) => ({
+					productId: item.productId,
+					quantity: item.quantity,
+					priceCents: Number(item.price?.amountCents ?? 0)
+				}))
+			});
 
-      return {
-        order: toProtoOrder(order),
-      };
-    },
+			return {
+				order: toProtoOrder(order)
+			};
+		},
 
-    async getOrder(req) {
-      const order = await db.orders.findById(req.orderId);
-      if (!order) throw new ConnectError('Order not found', Code.NotFound);
-      return { order: toProtoOrder(order) };
-    },
+		async getOrder(req) {
+			const order = await db.orders.findById(req.orderId);
+			if (!order) throw new ConnectError('Order not found', Code.NotFound);
+			return { order: toProtoOrder(order) };
+		},
 
-    // Server-streaming: client subscribes, server sends multiple responses
-    async *watchOrderStatus(req) {
-      let lastStatus = '';
-      while (true) {
-        const order = await db.orders.findById(req.orderId);
-        if (!order) throw new ConnectError('Order not found', Code.NotFound);
+		// Server-streaming: client subscribes, server sends multiple responses
+		async *watchOrderStatus(req) {
+			let lastStatus = '';
+			while (true) {
+				const order = await db.orders.findById(req.orderId);
+				if (!order) throw new ConnectError('Order not found', Code.NotFound);
 
-        if (order.status !== lastStatus) {
-          lastStatus = order.status;
-          yield {
-            orderId: order.id,
-            status: toProtoStatus(order.status),
-            updatedAt: order.updatedAt.toISOString(),
-          };
-        }
+				if (order.status !== lastStatus) {
+					lastStatus = order.status;
+					yield {
+						orderId: order.id,
+						status: toProtoStatus(order.status),
+						updatedAt: order.updatedAt.toISOString()
+					};
+				}
 
-        if (order.status === 'delivered' || order.status === 'cancelled') break;
-        await sleep(1000);
-      }
-    },
-  });
+				if (order.status === 'delivered' || order.status === 'cancelled') break;
+				await sleep(1000);
+			}
+		}
+	});
 
 // Start server
 import { createServer } from '@connectrpc/connect-node';
@@ -224,25 +225,27 @@ import { createGrpcTransport } from '@connectrpc/connect-node';
 import { OrderService } from './gen/order/v1/order_connect';
 
 const transport = createGrpcTransport({
-  baseUrl: 'https://order-service:50051',
+	baseUrl: 'https://order-service:50051'
 });
 
 const client = createClient(OrderService, transport);
 
 // Unary call
 const { order } = await client.createOrder({
-  customerId: 'cust-123',
-  items: [{
-    productId: 'prod-456',
-    quantity: 2,
-    price: { amountCents: 999n, currency: 'USD' },
-  }],
+	customerId: 'cust-123',
+	items: [
+		{
+			productId: 'prod-456',
+			quantity: 2,
+			price: { amountCents: 999n, currency: 'USD' }
+		}
+	]
 });
 
 // Server-streaming call
 for await (const update of client.watchOrderStatus({ orderId: order.id })) {
-  console.log(`Order ${update.orderId} is now ${update.status}`);
-  if (update.status === OrderStatus.ORDER_STATUS_SHIPPED) break;
+	console.log(`Order ${update.orderId} is now ${update.status}`);
+	if (update.status === OrderStatus.ORDER_STATUS_SHIPPED) break;
 }
 ```
 
@@ -267,14 +270,17 @@ service DataService {
 ```
 
 Use server streaming for:
+
 - Real-time feeds (order status, stock prices, notifications)
 - Large result sets (send 1M rows without buffering all in memory)
 
 Use client streaming for:
+
 - File uploads
 - Bulk data ingestion (send 10k events, get one ack)
 
 Use bidirectional for:
+
 - Chat
 - Collaborative editing
 - Interactive shell sessions
@@ -306,19 +312,20 @@ throw new ConnectError('Request timed out', Code.DeadlineExceeded);
 ```
 
 On the client side:
+
 ```typescript
 import { ConnectError, Code } from '@connectrpc/connect';
 
 try {
-  const { order } = await client.getOrder({ orderId });
+	const { order } = await client.getOrder({ orderId });
 } catch (err) {
-  if (err instanceof ConnectError) {
-    if (err.code === Code.NotFound) return null;
-    if (err.code === Code.Unavailable) {
-      // Retry with backoff
-    }
-  }
-  throw err;
+	if (err instanceof ConnectError) {
+		if (err.code === Code.NotFound) return null;
+		if (err.code === Code.Unavailable) {
+			// Retry with backoff
+		}
+	}
+	throw err;
 }
 ```
 
@@ -328,41 +335,44 @@ try {
 import { Interceptor } from '@connectrpc/connect';
 
 const loggingInterceptor: Interceptor = (next) => async (req) => {
-  const start = Date.now();
-  try {
-    const res = await next(req);
-    console.log(`${req.method.name} OK ${Date.now() - start}ms`);
-    return res;
-  } catch (err) {
-    console.error(`${req.method.name} ERROR ${Date.now() - start}ms`, err);
-    throw err;
-  }
+	const start = Date.now();
+	try {
+		const res = await next(req);
+		console.log(`${req.method.name} OK ${Date.now() - start}ms`);
+		return res;
+	} catch (err) {
+		console.error(`${req.method.name} ERROR ${Date.now() - start}ms`, err);
+		throw err;
+	}
 };
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-  req.header.set('authorization', `Bearer ${getServiceToken()}`);
-  return next(req);
+	req.header.set('authorization', `Bearer ${getServiceToken()}`);
+	return next(req);
 };
 
 const transport = createGrpcTransport({
-  baseUrl: 'https://order-service:50051',
-  interceptors: [loggingInterceptor, authInterceptor],
+	baseUrl: 'https://order-service:50051',
+	interceptors: [loggingInterceptor, authInterceptor]
 });
 ```
 
 ## Schema Evolution
 
 Protobuf fields are identified by number, not name. Safe changes:
+
 - Add a new field (new consumers can use it; old consumers ignore it)
 - Rename a field (number stays the same — wire format unchanged)
 - Add a new enum value
 
 Breaking changes:
+
 - Remove a field and reuse its number
 - Change a field's type
 - Renumber fields
 
 **Reserve removed field numbers** to prevent accidental reuse:
+
 ```protobuf
 message Order {
   reserved 4, 7;        // field numbers never to reuse
@@ -375,4 +385,3 @@ message Order {
 ```
 
 Store `.proto` files in a shared repo with a schema registry (Buf Schema Registry) to enforce compatibility rules via CI.
-

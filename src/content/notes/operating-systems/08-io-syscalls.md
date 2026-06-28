@@ -1,10 +1,10 @@
 ---
-title: "I/O & System Calls"
-subtitle: "How read and write really travel through the kernel — and how one thread watches thousands of connections at once."
+title: 'I/O & System Calls'
+subtitle: 'How read and write really travel through the kernel — and how one thread watches thousands of connections at once.'
 chapter: 8
-level: "mastery"
-readingTime: "16 min"
-topics: ["epoll", "non-blocking", "io_uring"]
+level: 'mastery'
+readingTime: '16 min'
+topics: ['epoll', 'non-blocking', 'io_uring']
 ---
 
 <script>
@@ -40,7 +40,7 @@ if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
 }
 ```
 
-Non-blocking I/O lets a single thread juggle many descriptors — but only if it has a way to know *which* descriptors are ready, instead of spinning over all of them. That mechanism is I/O multiplexing.
+Non-blocking I/O lets a single thread juggle many descriptors — but only if it has a way to know _which_ descriptors are ready, instead of spinning over all of them. That mechanism is I/O multiplexing.
 
 ## Multiplexing: select, poll, epoll
 
@@ -50,7 +50,7 @@ I/O multiplexing lets one thread wait on many descriptors and be told which beca
 
 **`poll`** — same idea with an array instead of a fixed bitmask, lifting the 1024 limit. Still O(n): every call passes the full list and the kernel scans all of it, even if only one fd is ready. At ten thousand mostly-idle connections this is pure waste.
 
-**`epoll`** (Linux) — the scalable answer. You register interest in descriptors *once* with `epoll_ctl`; the kernel keeps that interest set internally. `epoll_wait` then returns only the descriptors that are *actually ready*. Cost scales with the number of *active* connections, not the total registered — O(ready), not O(n).
+**`epoll`** (Linux) — the scalable answer. You register interest in descriptors _once_ with `epoll_ctl`; the kernel keeps that interest set internally. `epoll_wait` then returns only the descriptors that are _actually ready_. Cost scales with the number of _active_ connections, not the total registered — O(ready), not O(n).
 
 ```c
 int ep = epoll_create1(0);
@@ -79,8 +79,8 @@ This is why `epoll` (and the equivalent `kqueue` on BSD/macOS, IOCP on Windows) 
 
 `epoll` offers two notification modes, and confusing them is a classic bug:
 
-- **Level-triggered (LT)** — the default. `epoll_wait` keeps reporting a descriptor as ready *as long as* there is data to read. If you read only part of the buffered data, the next `epoll_wait` reminds you there's more. Forgiving.
-- **Edge-triggered (ET)** — you're notified only on the *transition* from not-ready to ready. You get told *once* when data arrives. If you don't drain everything, you won't be told again until *new* data comes.
+- **Level-triggered (LT)** — the default. `epoll_wait` keeps reporting a descriptor as ready _as long as_ there is data to read. If you read only part of the buffered data, the next `epoll_wait` reminds you there's more. Forgiving.
+- **Edge-triggered (ET)** — you're notified only on the _transition_ from not-ready to ready. You get told _once_ when data arrives. If you don't drain everything, you won't be told again until _new_ data comes.
 
 The rule for edge-triggered: on each notification, **loop reading until you get `EAGAIN`**, so you fully drain the descriptor. ET means fewer wakeups (higher performance) but demands this disciplined draining; forget it and connections silently hang with unread data.
 

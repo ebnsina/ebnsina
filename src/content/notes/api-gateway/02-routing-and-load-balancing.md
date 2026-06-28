@@ -1,10 +1,10 @@
 ---
-title: "Routing & Load Balancing"
-subtitle: "Path matching, header-based routing, weighted splits, and health-aware balancing — how the gateway decides where each request goes."
+title: 'Routing & Load Balancing'
+subtitle: 'Path matching, header-based routing, weighted splits, and health-aware balancing — how the gateway decides where each request goes.'
 chapter: 2
-level: "beginner"
-readingTime: "13 min"
-topics: ["routing", "load balancing", "weighted traffic", "health checks", "nginx"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['routing', 'load balancing', 'weighted traffic', 'health checks', 'nginx']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A traffic management system at a busy intersection — it reads the destination 
 The most common pattern. Route by URL prefix to a backend service.
 
 **nginx:**
+
 ```nginx
 upstream user_service {
     server user-service-1:3001;
@@ -55,19 +56,20 @@ server {
 ```
 
 **Traefik (docker-compose labels):**
+
 ```yaml
 services:
   user-service:
     image: user-service:latest
     labels:
-      - "traefik.http.routers.users.rule=PathPrefix(`/api/users`)"
-      - "traefik.http.services.users.loadbalancer.server.port=3001"
+      - 'traefik.http.routers.users.rule=PathPrefix(`/api/users`)'
+      - 'traefik.http.services.users.loadbalancer.server.port=3001'
 
   order-service:
     image: order-service:latest
     labels:
-      - "traefik.http.routers.orders.rule=PathPrefix(`/api/orders`)"
-      - "traefik.http.services.orders.loadbalancer.server.port=3002"
+      - 'traefik.http.routers.orders.rule=PathPrefix(`/api/orders`)'
+      - 'traefik.http.services.orders.loadbalancer.server.port=3002'
 ```
 
 ## Header-Based Routing
@@ -91,14 +93,14 @@ server {
 ```typescript
 // Kong plugin or custom middleware: route by tenant
 function tenantRouter(req: Request): string {
-  const tenantId = req.headers['x-tenant-id'];
+	const tenantId = req.headers['x-tenant-id'];
 
-  // Enterprise tenants get dedicated instances
-  if (enterpriseTenants.has(tenantId)) {
-    return `http://enterprise-cluster-${tenantId}:3000`;
-  }
+	// Enterprise tenants get dedicated instances
+	if (enterpriseTenants.has(tenantId)) {
+		return `http://enterprise-cluster-${tenantId}:3000`;
+	}
 
-  return 'http://shared-cluster:3000';
+	return 'http://shared-cluster:3000';
 }
 ```
 
@@ -107,6 +109,7 @@ function tenantRouter(req: Request): string {
 Once a route is matched, the gateway picks which backend instance handles the request.
 
 **Round robin** — requests distributed evenly, one at a time:
+
 ```nginx
 upstream backend {
     server backend-1:3000;
@@ -117,6 +120,7 @@ upstream backend {
 ```
 
 **Least connections** — send to the instance with fewest active requests. Better when requests have variable duration:
+
 ```nginx
 upstream backend {
     least_conn;
@@ -127,6 +131,7 @@ upstream backend {
 ```
 
 **IP hash** — same client always hits the same backend (session affinity):
+
 ```nginx
 upstream backend {
     ip_hash;
@@ -136,6 +141,7 @@ upstream backend {
 ```
 
 **Weighted** — send more traffic to higher-capacity instances:
+
 ```nginx
 upstream backend {
     server backend-1:3000 weight=3;  # 3x traffic
@@ -148,6 +154,7 @@ upstream backend {
 The gateway must stop sending traffic to unhealthy backends automatically.
 
 **Passive health checks** (default in nginx) — mark a backend unhealthy after N consecutive failures:
+
 ```nginx
 upstream backend {
     server backend-1:3000 max_fails=3 fail_timeout=30s;
@@ -156,6 +163,7 @@ upstream backend {
 ```
 
 **Active health checks** (nginx Plus / open-source alternatives):
+
 ```nginx
 # nginx Plus
 upstream backend {
@@ -168,26 +176,27 @@ upstream backend {
 ```
 
 **Traefik health checks:**
+
 ```yaml
 services:
   api:
     labels:
-      - "traefik.http.services.api.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.api.loadbalancer.healthcheck.interval=10s"
-      - "traefik.http.services.api.loadbalancer.healthcheck.timeout=3s"
+      - 'traefik.http.services.api.loadbalancer.healthcheck.path=/health'
+      - 'traefik.http.services.api.loadbalancer.healthcheck.interval=10s'
+      - 'traefik.http.services.api.loadbalancer.healthcheck.timeout=3s'
 ```
 
 Your backend `/health` endpoint should check its own dependencies:
 
 ```typescript
 app.get('/health', async (req, res) => {
-  try {
-    await db.query('SELECT 1'); // verify DB connection
-    await redis.ping();          // verify cache connection
-    res.json({ status: 'ok' });
-  } catch (err) {
-    res.status(503).json({ status: 'degraded', error: err.message });
-  }
+	try {
+		await db.query('SELECT 1'); // verify DB connection
+		await redis.ping(); // verify cache connection
+		res.json({ status: 'ok' });
+	} catch (err) {
+		res.status(503).json({ status: 'degraded', error: err.message });
+	}
 });
 ```
 
@@ -219,6 +228,7 @@ server {
 ```
 
 **Kong / Traefik weighted service:**
+
 ```yaml
 # Traefik weighted round-robin
 http:
@@ -249,4 +259,3 @@ location /api/ {
 ```
 
 Match timeouts to your SLOs. A 30-second timeout on a route that should respond in 200ms means 30 seconds of degraded user experience before you detect the problem.
-

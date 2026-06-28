@@ -1,10 +1,19 @@
 ---
-title: "Replication Fundamentals"
-subtitle: "Why replication exists, synchronous vs asynchronous, WAL-based streaming, and the consistency trade-offs every replica introduces."
+title: 'Replication Fundamentals'
+subtitle: 'Why replication exists, synchronous vs asynchronous, WAL-based streaming, and the consistency trade-offs every replica introduces.'
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["replication", "PostgreSQL", "WAL", "synchronous", "asynchronous", "consistency", "read replicas"]
+level: 'beginner'
+readingTime: '8 min'
+topics:
+  [
+    'replication',
+    'PostgreSQL',
+    'WAL',
+    'synchronous',
+    'asynchronous',
+    'consistency',
+    'read replicas'
+  ]
 ---
 
 <script>
@@ -112,6 +121,7 @@ SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag;
 ```
 
 Alert when lag exceeds your tolerance:
+
 ```yaml
 # Prometheus alert
 - alert: ReplicationLagHigh
@@ -120,7 +130,7 @@ Alert when lag exceeds your tolerance:
   labels:
     severity: warning
   annotations:
-    summary: "Replica lag is {{ $value }}s"
+    summary: 'Replica lag is {{ $value }}s'
 ```
 
 ## Read Replicas in Application Code
@@ -135,29 +145,26 @@ const replica = new Pool({ connectionString: process.env.DATABASE_REPLICA_URL })
 
 // Write — always primary
 async function createOrder(order: Order): Promise<Order> {
-  const result = await primary.query(
-    'INSERT INTO orders (customer_id, total) VALUES ($1, $2) RETURNING *',
-    [order.customerId, order.total]
-  );
-  return result.rows[0];
+	const result = await primary.query(
+		'INSERT INTO orders (customer_id, total) VALUES ($1, $2) RETURNING *',
+		[order.customerId, order.total]
+	);
+	return result.rows[0];
 }
 
 // Read — replica (tolerate slight staleness)
 async function listOrders(customerId: string): Promise<Order[]> {
-  const result = await replica.query(
-    'SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC',
-    [customerId]
-  );
-  return result.rows;
+	const result = await replica.query(
+		'SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC',
+		[customerId]
+	);
+	return result.rows;
 }
 
 // Read after write — use primary to avoid reading stale data
 async function getOrderAfterCreate(orderId: string): Promise<Order> {
-  const result = await primary.query(
-    'SELECT * FROM orders WHERE id = $1',
-    [orderId]
-  );
-  return result.rows[0];
+	const result = await primary.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+	return result.rows[0];
 }
 ```
 
@@ -211,4 +218,3 @@ SELECT pg_drop_replication_slot('replica1');
 ```
 
 For Debezium CDC or logical replication, slots are mandatory — they ensure no events are missed. Monitor their lag carefully.
-

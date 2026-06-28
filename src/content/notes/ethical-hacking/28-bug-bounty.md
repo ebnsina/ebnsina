@@ -1,10 +1,19 @@
 ---
-title: "Bug Bounty"
-subtitle: "Methodology, platform selection, recon automation, high-value target selection, triaging, and earning consistently on HackerOne and Bugcrowd."
+title: 'Bug Bounty'
+subtitle: 'Methodology, platform selection, recon automation, high-value target selection, triaging, and earning consistently on HackerOne and Bugcrowd.'
 chapter: 28
-level: "intermediate"
-readingTime: "12 min"
-topics: ["bug bounty", "HackerOne", "Bugcrowd", "vulnerability disclosure", "recon automation", "Nuclei", "bug bounty methodology"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  [
+    'bug bounty',
+    'HackerOne',
+    'Bugcrowd',
+    'vulnerability disclosure',
+    'recon automation',
+    'Nuclei',
+    'bug bounty methodology'
+  ]
 ---
 
 <script>
@@ -202,16 +211,16 @@ info:
 requests:
   - method: GET
     path:
-      - "{{BaseURL}}/api/v1/config"
-      - "{{BaseURL}}/api/settings"
-      - "{{BaseURL}}/.env"
+      - '{{BaseURL}}/api/v1/config'
+      - '{{BaseURL}}/api/settings'
+      - '{{BaseURL}}/.env'
     matchers-condition: and
     matchers:
       - type: word
         words:
-          - "api_key"
-          - "API_KEY"
-          - "secret"
+          - 'api_key'
+          - 'API_KEY'
+          - 'secret'
       - type: status
         status:
           - 200
@@ -232,8 +241,9 @@ requests:
 **CVSS:** 8.8 (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N)
 
 ## Summary
-The password reset endpoint uses sequential, predictable token IDs rather than 
-cryptographically random tokens. An attacker can enumerate recent token IDs to 
+
+The password reset endpoint uses sequential, predictable token IDs rather than
+cryptographically random tokens. An attacker can enumerate recent token IDs to
 reset any user's password.
 
 ## Steps to Reproduce
@@ -245,18 +255,20 @@ reset any user's password.
 2. Request a reset for victim@target.com
 
 3. Try token IDs near yours:
-   ```
-   GET /reset?token=8471
-   GET /reset?token=8473
-   ```
+```
+
+GET /reset?token=8471
+GET /reset?token=8473
+
+```
 
 4. One token resolves to victim's reset — enter a new password
 
 5. Log in as victim with new password
 
 ## Impact
-An attacker who can request a password reset and observe the token structure 
-can take over any account that recently requested a password reset. This 
+An attacker who can request a password reset and observe the token structure
+can take over any account that recently requested a password reset. This
 constitutes complete account takeover affecting all users.
 
 ## Proof of Concept
@@ -298,4 +310,3 @@ Dispute resolution:
 - Understand that "won't fix" ≠ "not a bug"
   → Still valid for your portfolio/experience
 ```
-

@@ -1,10 +1,10 @@
 ---
-title: "HTTP/1.1, HTTP/2, and HTTP/3"
+title: 'HTTP/1.1, HTTP/2, and HTTP/3'
 subtitle: "The evolution of the web's protocol — from text-based request/response to multiplexed streams over QUIC."
 chapter: 6
-level: "intermediate"
-readingTime: "17 min"
-topics: ["HTTP", "HTTP/2", "HTTP/3", "QUIC", "multiplexing"]
+level: 'intermediate'
+readingTime: '17 min'
+topics: ['HTTP', 'HTTP/2', 'HTTP/3', 'QUIC', 'multiplexing']
 ---
 
 <script>
@@ -44,6 +44,7 @@ Content-Length: 27\r
 HTTP/1.1 processes requests **sequentially** on each connection. If request #1 is slow, requests #2 and #3 wait behind it — even if the server could answer them instantly.
 
 Workarounds (all have downsides):
+
 - **Multiple connections** — browsers open 6 parallel connections per domain (wastes resources)
 - **Domain sharding** — serve assets from `img1.example.com`, `img2.example.com` (DNS overhead)
 - **Bundling** — combine many files into one (can't cache individually)
@@ -55,11 +56,11 @@ HTTP/2 solves head-of-line blocking by multiplexing many requests over a **singl
 ```typescript
 // HTTP/2 sends binary frames, not text
 interface HTTP2Frame {
-  length: number;
-  type: "HEADERS" | "DATA" | "SETTINGS" | "PUSH_PROMISE" | "GOAWAY";
-  flags: number;
-  streamId: number; // which request this frame belongs to
-  payload: Uint8Array;
+	length: number;
+	type: 'HEADERS' | 'DATA' | 'SETTINGS' | 'PUSH_PROMISE' | 'GOAWAY';
+	flags: number;
+	streamId: number; // which request this frame belongs to
+	payload: Uint8Array;
 }
 
 // Multiple requests fly simultaneously on one connection:
@@ -116,31 +117,31 @@ HTTP/3 replaces TCP with **QUIC** (built on UDP). Each stream is independent at 
 // QUIC uses connection IDs — survives network changes.
 
 interface QUICConnection {
-  connectionId: Uint8Array; // survives IP changes
-  streams: Map<number, QUICStream>;
-  tlsState: TLSState; // encryption is built-in, not layered on
+	connectionId: Uint8Array; // survives IP changes
+	streams: Map<number, QUICStream>;
+	tlsState: TLSState; // encryption is built-in, not layered on
 }
 
 interface QUICStream {
-  id: number;
-  state: "open" | "half-closed" | "closed";
-  sendBuffer: Uint8Array[];
-  recvBuffer: Uint8Array[];
-  // Each stream has independent flow control
-  // and independent loss recovery
+	id: number;
+	state: 'open' | 'half-closed' | 'closed';
+	sendBuffer: Uint8Array[];
+	recvBuffer: Uint8Array[];
+	// Each stream has independent flow control
+	// and independent loss recovery
 }
 ```
 
 ## Protocol Comparison
 
-| Feature | HTTP/1.1 | HTTP/2 | HTTP/3 |
-|---------|----------|--------|--------|
-| Transport | TCP | TCP | QUIC (UDP) |
-| Multiplexing | No (1 req/conn) | Yes (streams) | Yes (independent streams) |
-| Header format | Text | Binary (HPACK) | Binary (QPACK) |
-| HOL blocking | Application + TCP | TCP only | None |
-| Connection setup | 2-3 RTT | 2-3 RTT | 1 RTT (0-RTT reconnect) |
-| Connection migration | No | No | Yes |
+| Feature              | HTTP/1.1          | HTTP/2         | HTTP/3                    |
+| -------------------- | ----------------- | -------------- | ------------------------- |
+| Transport            | TCP               | TCP            | QUIC (UDP)                |
+| Multiplexing         | No (1 req/conn)   | Yes (streams)  | Yes (independent streams) |
+| Header format        | Text              | Binary (HPACK) | Binary (QPACK)            |
+| HOL blocking         | Application + TCP | TCP only       | None                      |
+| Connection setup     | 2-3 RTT           | 2-3 RTT        | 1 RTT (0-RTT reconnect)   |
+| Connection migration | No                | No             | Yes                       |
 
 ## What to Use
 
@@ -157,16 +158,16 @@ interface QUICStream {
 // }
 
 // Node.js HTTP/2
-import http2 from "node:http2";
+import http2 from 'node:http2';
 
 const server = http2.createSecureServer({
-  key: readFileSync("server.key"),
-  cert: readFileSync("server.crt"),
+	key: readFileSync('server.key'),
+	cert: readFileSync('server.crt')
 });
 
-server.on("stream", (stream, headers) => {
-  stream.respond({ ":status": 200, "content-type": "text/plain" });
-  stream.end("Hello HTTP/2!");
+server.on('stream', (stream, headers) => {
+	stream.respond({ ':status': 200, 'content-type': 'text/plain' });
+	stream.end('Hello HTTP/2!');
 });
 
 server.listen(443);
@@ -185,4 +186,3 @@ server.listen(443);
 3. **HTTP/3 (QUIC) eliminates HOL blocking** entirely with independent streams over UDP
 4. **Connection migration** (QUIC) is critical for mobile — WiFi/cellular switching is seamless
 5. **Enable HTTP/2+ on your reverse proxy** — don't worry about it in application code
-

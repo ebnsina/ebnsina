@@ -1,10 +1,10 @@
 ---
 title: "Sockets, Ports, and What's Listening"
-subtitle: "Every network service is a socket. Every open port is a socket someone bound. The four tools that tell you exactly what your VPS is exposing."
+subtitle: 'Every network service is a socket. Every open port is a socket someone bound. The four tools that tell you exactly what your VPS is exposing.'
 chapter: 6
-level: "intermediate"
-readingTime: "11 min"
-topics: ["sockets", "ports", "ss", "lsof", "netstat", "tcp"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['sockets', 'ports', 'ss', 'lsof', 'netstat', 'tcp']
 ---
 
 <script>
@@ -28,7 +28,7 @@ Every network service on Earth boils down to:
 1. Process calls `socket(AF_INET, SOCK_STREAM, 0)` — "give me a TCP/IP socket."
 2. Process calls `bind(fd, "0.0.0.0:8080")` — "I want this socket to own port 8080."
 3. Process calls `listen(fd, backlog)` — "I am ready to accept connections."
-4. Loop: `accept(fd)` — block until someone connects, then return a *new* socket for that connection.
+4. Loop: `accept(fd)` — block until someone connects, then return a _new_ socket for that connection.
 
 A "port" is a number from 1 to 65535. Ports below 1024 are **privileged** — only root or a process with `CAP_NET_BIND_SERVICE` can bind them. That is why nginx as root can listen on port 80, but your unprivileged Go binary cannot — unless you give it the capability or run it on port 8080 and put nginx in front.
 
@@ -70,13 +70,13 @@ Read it like:
 
 The address a socket binds to determines who can reach it.
 
-| Bind address | Who can connect |
-|---|---|
-| `127.0.0.1` (or `localhost`) | Only this machine. Nothing on the network can reach it. |
-| `0.0.0.0` | Any IPv4 address on any interface — including the public internet. |
-| `::1` | Only this machine, over IPv6. |
-| `::` | Any IPv6 address on any interface. |
-| `192.168.1.10` (a specific IP) | Only connections that arrive on that exact interface/IP. |
+| Bind address                   | Who can connect                                                    |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `127.0.0.1` (or `localhost`)   | Only this machine. Nothing on the network can reach it.            |
+| `0.0.0.0`                      | Any IPv4 address on any interface — including the public internet. |
+| `::1`                          | Only this machine, over IPv6.                                      |
+| `::`                           | Any IPv6 address on any interface.                                 |
+| `192.168.1.10` (a specific IP) | Only connections that arrive on that exact interface/IP.           |
 
 A common mistake: a database "exposed to the internet" because it bound `0.0.0.0:5432` instead of `127.0.0.1:5432`. Even with strong passwords, you do not want random scanners running thousands of authentication attempts. Bind to localhost unless something across the network truly needs to reach it.
 
@@ -141,15 +141,15 @@ ss -tn
 
 The `State` column tells you where each connection is in TCP's state machine. The ones that matter:
 
-| State | Meaning |
-|---|---|
-| `LISTEN` | Server side, waiting for connections. |
-| `SYN-SENT` | Client side, sent SYN, awaiting SYN-ACK. |
-| `SYN-RECV` | Server, received SYN, sent SYN-ACK, awaiting ACK. |
-| `ESTABLISHED` | Connection is open in both directions. Most of your sockets. |
-| `FIN-WAIT-1` / `FIN-WAIT-2` | Local side is closing. |
-| `CLOSE-WAIT` | Remote side closed; *your* app has not closed yet. **Bug indicator.** |
-| `TIME-WAIT` | Connection closed; kernel holds the socket briefly to handle delayed packets. |
+| State                       | Meaning                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| `LISTEN`                    | Server side, waiting for connections.                                         |
+| `SYN-SENT`                  | Client side, sent SYN, awaiting SYN-ACK.                                      |
+| `SYN-RECV`                  | Server, received SYN, sent SYN-ACK, awaiting ACK.                             |
+| `ESTABLISHED`               | Connection is open in both directions. Most of your sockets.                  |
+| `FIN-WAIT-1` / `FIN-WAIT-2` | Local side is closing.                                                        |
+| `CLOSE-WAIT`                | Remote side closed; _your_ app has not closed yet. **Bug indicator.**         |
+| `TIME-WAIT`                 | Connection closed; kernel holds the socket briefly to handle delayed packets. |
 
 A few hundred `TIME-WAIT` is normal on a busy server. A million `CLOSE-WAIT` is your app failing to close sockets after the peer disconnects — a slow file descriptor leak.
 
@@ -229,9 +229,8 @@ If you can run these three on any unfamiliar Linux box and explain every line, y
 - A socket is a file descriptor. A listening socket is one bound to a port and waiting.
 - Bind to `127.0.0.1` for local-only services. Never expose databases publicly.
 - `ss -tlnp` lists listening TCP sockets and their owning processes. Memorize this.
-- TCP states tell you the lifecycle. `CLOSE-WAIT` piling up means *your* app is leaking.
+- TCP states tell you the lifecycle. `CLOSE-WAIT` piling up means _your_ app is leaking.
 - The accept queue is finite — saturated apps drop SYNs, which `netstat -s` reveals.
 - Unix domain sockets exist and are faster for local IPC. Permissions on the socket file gate access.
 
 Next chapter: now that you know what is exposed, the firewall to lock it down.
-

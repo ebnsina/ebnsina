@@ -1,10 +1,10 @@
 ---
-title: "Scanning & Enumeration"
-subtitle: "Nmap mastery, service fingerprinting, banner grabbing, and enumerating SMB, FTP, SNMP, and web directories."
+title: 'Scanning & Enumeration'
+subtitle: 'Nmap mastery, service fingerprinting, banner grabbing, and enumerating SMB, FTP, SNMP, and web directories.'
 chapter: 4
-level: "beginner"
-readingTime: "14 min"
-topics: ["nmap", "scanning", "enumeration", "SMB", "FTP", "SNMP", "banner grabbing", "gobuster"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['nmap', 'scanning', 'enumeration', 'SMB', 'FTP', 'SNMP', 'banner grabbing', 'gobuster']
 ---
 
 <script>
@@ -306,24 +306,26 @@ After scanning, organize by risk:
 ## Scan Results: 192.168.1.100
 
 ### Open Ports
-| Port | Service | Version | Notes |
-|------|---------|---------|-------|
-| 21   | FTP     | vsftpd 2.3.4 | **Anonymous login enabled** |
-| 22   | SSH     | OpenSSH 7.4 | Check CVE-2018-15473 user enum |
+
+| Port | Service | Version       | Notes                                |
+| ---- | ------- | ------------- | ------------------------------------ |
+| 21   | FTP     | vsftpd 2.3.4  | **Anonymous login enabled**          |
+| 22   | SSH     | OpenSSH 7.4   | Check CVE-2018-15473 user enum       |
 | 80   | HTTP    | Apache 2.4.29 | /admin accessible, /backup.zip found |
-| 445  | SMB     | Samba 4.6.3  | Null session allowed |
-| 3306 | MySQL   | 5.7.30 | Exposed to internet |
+| 445  | SMB     | Samba 4.6.3   | Null session allowed                 |
+| 3306 | MySQL   | 5.7.30        | Exposed to internet                  |
 
 ### Critical Findings
+
 1. FTP anonymous login → browse and download files
 2. /backup.zip → may contain source code/credentials
 3. MySQL exposed → try root with no password
 4. vsftpd 2.3.4 → known backdoor (CVE-2011-2523) — test Metasploit module
 
 ### Next Steps
+
 - [ ] Download backup.zip, inspect contents
 - [ ] Run `exploit/unix/ftp/vsftpd_234_backdoor` in Metasploit
 - [ ] Test MySQL: `mysql -h 192.168.1.100 -u root`
 - [ ] Run smb enum: `enum4linux -a 192.168.1.100`
 ```
-

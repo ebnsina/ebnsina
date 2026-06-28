@@ -1,10 +1,10 @@
 ---
-title: "Why Infrastructure as Code"
-subtitle: "The problems with manual infrastructure — drift, undocumented state, unrepeatable environments — and how IaC solves them."
+title: 'Why Infrastructure as Code'
+subtitle: 'The problems with manual infrastructure — drift, undocumented state, unrepeatable environments — and how IaC solves them.'
 chapter: 1
-level: "beginner"
-readingTime: "7 min"
-topics: ["IaC", "infrastructure", "Terraform", "Ansible", "drift", "idempotency"]
+level: 'beginner'
+readingTime: '7 min'
+topics: ['IaC', 'infrastructure', 'Terraform', 'Ansible', 'drift', 'idempotency']
 ---
 
 <script>
@@ -48,7 +48,7 @@ The traditional workflow: SSH into a server, run commands, hope you remember wha
 Three different levels of abstraction:
 
 **Configuration Management (Ansible, Chef, Puppet):**
-Manage software and config *on existing servers*. SSH into a machine, ensure packages are installed, config files have the right content, services are running.
+Manage software and config _on existing servers_. SSH into a machine, ensure packages are installed, config files have the right content, services are running.
 
 ```yaml
 # Ansible: ensure nginx is installed and running
@@ -105,13 +105,13 @@ An idempotent operation produces the same result regardless of how many times yo
     name: appuser
     state: present
     system: true
-
 # Run 1: user doesn't exist → creates it
 # Run 2: user exists → does nothing
 # Run 3: user exists → does nothing
 ```
 
 Compare to a shell script:
+
 ```bash
 # NOT idempotent — fails on second run
 useradd appuser     # Run 1: succeeds
@@ -165,4 +165,3 @@ Infrastructure changes should never go directly to production without going thro
 **No testing:** Apply to prod without testing in staging. IaC needs the same discipline as application code.
 
 **Monolithic configs:** One massive Terraform file or one Ansible playbook for everything. Hard to understand, hard to change safely. Modularize.
-

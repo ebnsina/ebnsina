@@ -1,10 +1,10 @@
 ---
-title: "Schema-first design"
-subtitle: "The schema is your contract with every client that ever exists. The decisions you make in the first afternoon — types, nullability, IDs — are the ones you live with for years."
+title: 'Schema-first design'
+subtitle: 'The schema is your contract with every client that ever exists. The decisions you make in the first afternoon — types, nullability, IDs — are the ones you live with for years.'
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["graphql", "schema", "sdl", "types", "nullability"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['graphql', 'schema', 'sdl', 'types', 'nullability']
 ---
 
 <script>
@@ -29,49 +29,49 @@ A GraphQL schema is like an architectural blueprint — agreed on before a singl
 scalar DateTime
 
 type User {
-  id: ID!
-  name: String!
-  email: String!
-  createdAt: DateTime!
-  posts(last: Int = 10): [Post!]!
+	id: ID!
+	name: String!
+	email: String!
+	createdAt: DateTime!
+	posts(last: Int = 10): [Post!]!
 }
 
 type Post {
-  id: ID!
-  title: String!
-  body: String!
-  createdAt: DateTime!
-  author: User!
+	id: ID!
+	title: String!
+	body: String!
+	createdAt: DateTime!
+	author: User!
 }
 
 type Query {
-  user(id: ID!): User
-  posts(authorId: ID, after: String, first: Int = 20): PostConnection!
+	user(id: ID!): User
+	posts(authorId: ID, after: String, first: Int = 20): PostConnection!
 }
 
 type PostConnection {
-  edges: [PostEdge!]!
-  pageInfo: PageInfo!
+	edges: [PostEdge!]!
+	pageInfo: PageInfo!
 }
 
 type PostEdge {
-  cursor: String!
-  node: Post!
+	cursor: String!
+	node: Post!
 }
 
 type PageInfo {
-  hasNextPage: Boolean!
-  endCursor: String
+	hasNextPage: Boolean!
+	endCursor: String
 }
 
 input CreatePostInput {
-  title: String!
-  body: String!
+	title: String!
+	body: String!
 }
 
 type Mutation {
-  createPost(input: CreatePostInput!): Post!
-  deletePost(id: ID!): Boolean!
+	createPost(input: CreatePostInput!): Post!
+	deletePost(id: ID!): Boolean!
 }
 ```
 
@@ -91,12 +91,12 @@ That is a complete (small) GraphQL API. Every concept you need is in there. Let'
 
 ```graphql
 interface Node {
-  id: ID!
+	id: ID!
 }
 
 type User implements Node {
-  id: ID!
-  name: String!
+	id: ID!
+	name: String!
 }
 
 union SearchResult = User | Post
@@ -118,12 +118,12 @@ Every field is nullable by default. `String` means "may be null." `String!` mean
 
 ```graphql
 type User {
-  id: ID!           # always present
-  name: String!     # always present
-  bio: String       # may be null
-  posts: [Post!]!   # array always present, items always present
-  drafts: [Post!]   # array may be null, items always present
-  flags: [Post]!    # array always present, items may be null
+	id: ID! # always present
+	name: String! # always present
+	bio: String # may be null
+	posts: [Post!]! # array always present, items always present
+	drafts: [Post!] # array may be null, items always present
+	flags: [Post]! # array always present, items may be null
 }
 ```
 
@@ -146,7 +146,7 @@ Fields can take arguments, including on nested fields:
 
 ```graphql
 type User {
-  posts(last: Int = 10, status: PostStatus = PUBLISHED): [Post!]!
+	posts(last: Int = 10, status: PostStatus = PUBLISHED): [Post!]!
 }
 ```
 
@@ -176,7 +176,7 @@ Three ways exist. Two are wrong.
 
 ```graphql
 type Query {
-  posts(after: String, first: Int = 20): PostConnection!
+	posts(after: String, first: Int = 20): PostConnection!
 }
 ```
 
@@ -190,8 +190,8 @@ GraphQL has two error styles and you must pick one.
 
 ```json
 {
-  "data": { "user": null },
-  "errors": [{ "message": "User not found", "path": ["user"] }]
+	"data": { "user": null },
+	"errors": [{ "message": "User not found", "path": ["user"] }]
 }
 ```
 
@@ -201,7 +201,7 @@ GraphQL has two error styles and you must pick one.
 union UserResult = User | NotFoundError | PermissionError
 
 type Query {
-  user(id: ID!): UserResult!
+	user(id: ID!): UserResult!
 }
 ```
 
@@ -214,13 +214,19 @@ For day one, top-level errors are fine. Migrate later if needed.
 Anything in `"""..."""` becomes documentation surfaced in introspection and tools:
 
 ```graphql
-"""A registered user."""
+"""
+A registered user.
+"""
 type User {
-  """Stable, opaque identifier. Do not parse."""
-  id: ID!
+	"""
+	Stable, opaque identifier. Do not parse.
+	"""
+	id: ID!
 
-  """Public display name. Not unique."""
-  name: String!
+	"""
+	Public display name. Not unique.
+	"""
+	name: String!
 }
 ```
 
@@ -279,4 +285,3 @@ graphql-yoga loads them with `loadSchema` and merges them. Same with `gqlgen` an
 - `"""docs"""` are not optional. Naming conventions matter for tooling.
 
 Next: [Running your first server](/notes/graphql/03-first-server) — graphql-yoga, end-to-end, in 60 lines of code.
-

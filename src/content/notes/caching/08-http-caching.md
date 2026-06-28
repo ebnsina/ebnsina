@@ -1,10 +1,10 @@
 ---
-title: "HTTP Caching & CDN"
-subtitle: "Cache-Control, ETags, and CDN edge caching — the layer that can eliminate your server entirely for static content."
+title: 'HTTP Caching & CDN'
+subtitle: 'Cache-Control, ETags, and CDN edge caching — the layer that can eliminate your server entirely for static content.'
 chapter: 8
-level: "intermediate"
-readingTime: "14 min"
-topics: ["Cache-Control", "ETag", "CDN", "edge caching", "HTTP headers"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['Cache-Control', 'ETag', 'CDN', 'edge caching', 'HTTP headers']
 ---
 
 <script>
@@ -35,39 +35,42 @@ Cache-Control: public, max-age=31536000, immutable
 
 **Key directives:**
 
-| Directive | Meaning |
-|-----------|---------|
-| `public` | CDNs and proxies can cache this |
-| `private` | Only the browser can cache (not CDN) |
-| `no-store` | Never cache anywhere |
-| `no-cache` | Cache but revalidate before serving |
-| `max-age=N` | Fresh for N seconds |
-| `s-maxage=N` | CDN freshness (overrides max-age for CDNs) |
-| `stale-while-revalidate=N` | Serve stale for N seconds while refreshing |
-| `immutable` | Never revalidate during max-age (browser hint) |
-| `must-revalidate` | Must contact origin when stale, never serve expired |
+| Directive                  | Meaning                                             |
+| -------------------------- | --------------------------------------------------- |
+| `public`                   | CDNs and proxies can cache this                     |
+| `private`                  | Only the browser can cache (not CDN)                |
+| `no-store`                 | Never cache anywhere                                |
+| `no-cache`                 | Cache but revalidate before serving                 |
+| `max-age=N`                | Fresh for N seconds                                 |
+| `s-maxage=N`               | CDN freshness (overrides max-age for CDNs)          |
+| `stale-while-revalidate=N` | Serve stale for N seconds while refreshing          |
+| `immutable`                | Never revalidate during max-age (browser hint)      |
+| `must-revalidate`          | Must contact origin when stale, never serve expired |
 
 ```typescript
 // Express/Node.js — set cache headers
 app.get('/api/products/:id', async (req, res) => {
-  const product = await getProduct(req.params.id);
+	const product = await getProduct(req.params.id);
 
-  // Public, 5 minute CDN cache, serve stale for 30s while revalidating
-  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');
-  res.json(product);
+	// Public, 5 minute CDN cache, serve stale for 30s while revalidating
+	res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');
+	res.json(product);
 });
 
 // Immutable assets (content-hashed filenames)
-app.use('/assets', express.static('dist/assets', {
-  setHeaders: (res) => {
-    res.set('Cache-Control', 'public, max-age=31536000, immutable');
-  },
-}));
+app.use(
+	'/assets',
+	express.static('dist/assets', {
+		setHeaders: (res) => {
+			res.set('Cache-Control', 'public, max-age=31536000, immutable');
+		}
+	})
+);
 
 // Private, user-specific data
 app.get('/api/me', authenticate, (req, res) => {
-  res.set('Cache-Control', 'private, max-age=60');
-  res.json(req.user);
+	res.set('Cache-Control', 'private, max-age=60');
+	res.json(req.user);
 });
 ```
 
@@ -85,22 +88,22 @@ An ETag is a fingerprint of the response body. On subsequent requests, the brows
 import { createHash } from 'crypto';
 
 function generateETag(content: string): string {
-  return `"${createHash('md5').update(content).digest('hex')}"`;
+	return `"${createHash('md5').update(content).digest('hex')}"`;
 }
 
 app.get('/api/config', async (req, res) => {
-  const config = await getConfig();
-  const body = JSON.stringify(config);
-  const etag = generateETag(body);
+	const config = await getConfig();
+	const body = JSON.stringify(config);
+	const etag = generateETag(body);
 
-  // Client sends If-None-Match: "abc123" on repeat requests
-  if (req.headers['if-none-match'] === etag) {
-    return res.status(304).end(); // Not Modified — no body sent
-  }
+	// Client sends If-None-Match: "abc123" on repeat requests
+	if (req.headers['if-none-match'] === etag) {
+		return res.status(304).end(); // Not Modified — no body sent
+	}
 
-  res.set('ETag', etag);
-  res.set('Cache-Control', 'public, max-age=60, must-revalidate');
-  res.json(config);
+	res.set('ETag', etag);
+	res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+	res.json(config);
 });
 ```
 
@@ -108,16 +111,16 @@ app.get('/api/config', async (req, res) => {
 
 ```typescript
 app.get('/api/posts/:id', async (req, res) => {
-  const post = await getPost(req.params.id);
-  const lastModified = post.updatedAt.toUTCString();
+	const post = await getPost(req.params.id);
+	const lastModified = post.updatedAt.toUTCString();
 
-  if (req.headers['if-modified-since'] === lastModified) {
-    return res.status(304).end();
-  }
+	if (req.headers['if-modified-since'] === lastModified) {
+		return res.status(304).end();
+	}
 
-  res.set('Last-Modified', lastModified);
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json(post);
+	res.set('Last-Modified', lastModified);
+	res.set('Cache-Control', 'public, max-age=300');
+	res.json(post);
 });
 ```
 
@@ -134,24 +137,24 @@ User (London) → Cloudflare London PoP → cached response (2ms)
 ```typescript
 // Cloudflare Cache API (Workers)
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const cacheKey = new Request(request.url, request);
-    const cache = caches.default;
+	async fetch(request: Request, env: Env): Promise<Response> {
+		const cacheKey = new Request(request.url, request);
+		const cache = caches.default;
 
-    // Check edge cache
-    let response = await cache.match(cacheKey);
-    if (response) return response;
+		// Check edge cache
+		let response = await cache.match(cacheKey);
+		if (response) return response;
 
-    // Cache miss — fetch from origin
-    response = await fetch(request);
+		// Cache miss — fetch from origin
+		response = await fetch(request);
 
-    // Cache the response at the edge
-    const responseToCache = new Response(response.body, response);
-    responseToCache.headers.set('Cache-Control', 'public, max-age=300');
-    await cache.put(cacheKey, responseToCache);
+		// Cache the response at the edge
+		const responseToCache = new Response(response.body, response);
+		responseToCache.headers.set('Cache-Control', 'public, max-age=300');
+		await cache.put(cacheKey, responseToCache);
 
-    return response;
-  },
+		return response;
+	}
 };
 ```
 
@@ -160,23 +163,23 @@ export default {
 ```typescript
 // Cloudflare API purge
 async function purgeCloudflare(urls: string[]): Promise<void> {
-  await fetch(`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CLOUDFLARE_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ files: urls }),
-  });
+	await fetch(`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${CLOUDFLARE_TOKEN}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({ files: urls })
+	});
 }
 
 // On product update, purge CDN cache
 async function updateProduct(id: string, data: Partial<Product>): Promise<void> {
-  await db.products.update(id, data);
-  await purgeCloudflare([
-    `https://yoursite.com/api/products/${id}`,
-    `https://yoursite.com/products/${id}`,
-  ]);
+	await db.products.update(id, data);
+	await purgeCloudflare([
+		`https://yoursite.com/api/products/${id}`,
+		`https://yoursite.com/products/${id}`
+	]);
 }
 ```
 
@@ -190,7 +193,7 @@ res.set('Vary', 'User-Agent'); // ⚠️ terrible — too many variations
 
 // Better: use a normalized hint
 res.set('Vary', 'Accept-Encoding'); // compressed vs uncompressed
-res.set('Vary', 'Accept');          // JSON vs HTML
+res.set('Vary', 'Accept'); // JSON vs HTML
 ```
 
 <Callout type="warning">
@@ -202,52 +205,62 @@ res.set('Vary', 'Accept');          // JSON vs HTML
 ## Common Caching Patterns
 
 **Static assets (JS, CSS, images):**
+
 ```http
 Cache-Control: public, max-age=31536000, immutable
 ```
+
 Cache forever. When the file changes, the URL changes (content hash).
 
 **API responses (cacheable):**
+
 ```http
 Cache-Control: public, max-age=60, stale-while-revalidate=30
 ```
+
 Fresh for 1 minute, serve stale for 30 extra seconds while revalidating.
 
 **User-specific API responses:**
+
 ```http
 Cache-Control: private, max-age=30
 ```
+
 Browser can cache, CDN cannot.
 
 **Never cache:**
+
 ```http
 Cache-Control: no-store
 ```
+
 Mutations, payments, sensitive user data.
 
 **HTML pages (SPA shell):**
+
 ```http
 Cache-Control: public, max-age=0, must-revalidate
 ETag: "abc123"
 ```
+
 Always revalidate but serve the cached version if ETag matches (304 response).
 
 ## Cache-Control Strategy by Resource Type
 
 ```typescript
 function getCacheHeaders(resource: 'asset' | 'api' | 'html' | 'user-data'): string {
-  switch (resource) {
-    case 'asset':
-      return 'public, max-age=31536000, immutable';
-    case 'api':
-      return 'public, max-age=60, stale-while-revalidate=30';
-    case 'html':
-      return 'public, max-age=0, must-revalidate';
-    case 'user-data':
-      return 'private, max-age=30';
-    default:
-      return 'no-store';
-  }
+	switch (resource) {
+		case 'asset':
+			return 'public, max-age=31536000, immutable';
+		case 'api':
+			return 'public, max-age=60, stale-while-revalidate=30';
+		case 'html':
+			return 'public, max-age=0, must-revalidate';
+		case 'user-data':
+			return 'private, max-age=30';
+		default:
+			return 'no-store';
+	}
 }
 ```
 
@@ -268,4 +281,3 @@ curl -I https://yoursite.com/api/products/1
 ```
 
 The `Age` header is your best debugging tool. If `Age: 0`, the CDN just fetched from origin. If `Age: 240`, this response has been cached for 4 minutes.
-

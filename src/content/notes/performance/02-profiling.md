@@ -1,10 +1,10 @@
 ---
-title: "Profiling"
-subtitle: "Node.js --prof, Go pprof, Linux perf, and flamegraphs — finding where the time actually goes before guessing at optimizations."
+title: 'Profiling'
+subtitle: 'Node.js --prof, Go pprof, Linux perf, and flamegraphs — finding where the time actually goes before guessing at optimizations.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["profiling", "flamegraph", "pprof", "perf", "Node.js", "Go", "CPU", "memory"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['profiling', 'flamegraph', 'pprof', 'perf', 'Node.js', 'Go', 'CPU', 'memory']
 ---
 
 <script>
@@ -44,6 +44,7 @@ cat profile.txt
 ```
 
 Output:
+
 ```
  [Bottom up (heavy) profile]:
   Note: percentage shows a share of a particular caller in the total
@@ -85,27 +86,31 @@ import fs from 'fs';
 
 // In production, expose via a protected endpoint
 app.get('/debug/heap-snapshot', (req, res) => {
-  const filename = `/tmp/heap-${Date.now()}.heapsnapshot`;
-  const snapshot = v8.writeHeapSnapshot(filename);
-  res.download(filename);
+	const filename = `/tmp/heap-${Date.now()}.heapsnapshot`;
+	const snapshot = v8.writeHeapSnapshot(filename);
+	res.download(filename);
 });
 ```
 
 Load in Chrome DevTools → Memory → Load snapshot. Look for objects that shouldn't be alive, or that accumulate over time.
 
 **Detecting memory leaks in production:**
+
 ```typescript
 import { setInterval } from 'timers';
 
 // Log heap usage every 30 seconds
 setInterval(() => {
-  const mem = process.memoryUsage();
-  log.info({
-    heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
-    heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
-    rss: Math.round(mem.rss / 1024 / 1024),
-    external: Math.round(mem.external / 1024 / 1024),
-  }, 'Memory usage');
+	const mem = process.memoryUsage();
+	log.info(
+		{
+			heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+			heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+			rss: Math.round(mem.rss / 1024 / 1024),
+			external: Math.round(mem.external / 1024 / 1024)
+		},
+		'Memory usage'
+	);
 }, 30_000);
 ```
 
@@ -220,6 +225,7 @@ perf script | \
 `-g` enables call graph (stack traces). `-F 99` = 99 samples/sec (avoids interference with 100Hz timer).
 
 **Useful perf commands:**
+
 ```bash
 # What system calls is the process making?
 strace -p <pid> -c       # count system calls
@@ -252,38 +258,43 @@ const h = monitorEventLoopDelay({ resolution: 20 });
 h.enable();
 
 setInterval(() => {
-  log.info({
-    p50: h.percentile(50) / 1e6,   // convert nanoseconds to ms
-    p99: h.percentile(99) / 1e6,
-    max: h.max / 1e6,
-  }, 'Event loop delay');
-  h.reset();
+	log.info(
+		{
+			p50: h.percentile(50) / 1e6, // convert nanoseconds to ms
+			p99: h.percentile(99) / 1e6,
+			max: h.max / 1e6
+		},
+		'Event loop delay'
+	);
+	h.reset();
 }, 10_000);
 ```
 
 P99 event loop delay > 100ms = something is blocking the loop. Common culprits:
+
 - JSON.parse on large payloads (synchronous, blocking)
 - Crypto operations (use `crypto.subtle` async or worker threads)
 - Large array sorts or regex on big strings
 - Synchronous file system calls (`fs.readFileSync`)
 
 **Offload CPU work:**
+
 ```typescript
 import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 
 // Worker thread for CPU-intensive work
 if (!isMainThread) {
-  const result = heavyCpuWork(workerData.input);
-  parentPort!.postMessage(result);
-  process.exit(0);
+	const result = heavyCpuWork(workerData.input);
+	parentPort!.postMessage(result);
+	process.exit(0);
 }
 
 function runInWorker(input: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(__filename, { workerData: { input } });
-    worker.on('message', resolve);
-    worker.on('error', reject);
-  });
+	return new Promise((resolve, reject) => {
+		const worker = new Worker(__filename, { workerData: { input } });
+		worker.on('message', resolve);
+		worker.on('error', reject);
+	});
 }
 ```
 
@@ -299,15 +310,15 @@ kill -USR2 $(cat server.pid)   # dump profile without stopping process
 ```
 
 **Pyroscope** — continuous profiling service (open source):
+
 ```typescript
 import Pyroscope from '@pyroscope/nodejs';
 
 Pyroscope.init({
-  serverAddress: 'http://pyroscope:4040',
-  appName: 'order-service',
+	serverAddress: 'http://pyroscope:4040',
+	appName: 'order-service'
 });
 Pyroscope.start();
 ```
 
 Pyroscope samples CPU at 100Hz continuously, aggregates, and lets you query "what was the CPU doing between 14:00 and 14:05 yesterday?" — invaluable for post-incident analysis.
-

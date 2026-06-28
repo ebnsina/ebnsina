@@ -1,10 +1,10 @@
 ---
-title: "Structured Logging"
-subtitle: "JSON logs, log levels, correlation IDs, log aggregation with Loki — building logs you can actually search in production."
+title: 'Structured Logging'
+subtitle: 'JSON logs, log levels, correlation IDs, log aggregation with Loki — building logs you can actually search in production.'
 chapter: 2
-level: "beginner"
-readingTime: "10 min"
-topics: ["logging", "pino", "Loki", "Promtail", "correlation ID", "structured logs", "journald"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['logging', 'pino', 'Loki', 'Promtail', 'correlation ID', 'structured logs', 'journald']
 ---
 
 <script>
@@ -22,6 +22,7 @@ A well-organized filing cabinet vs a pile of papers: unstructured logs are a pil
 ## Why Structured Logging
 
 Unstructured log:
+
 ```
 [2024-01-15 10:23:41] ERROR: Payment failed for order ord-123 (user usr-456): card declined
 ```
@@ -29,8 +30,18 @@ Unstructured log:
 To extract `order_id` from this, you write regex. Multiply by 10k log lines per second. Now count how many different developers wrote how many different formats.
 
 Structured log (JSON):
+
 ```json
-{"level":"error","time":"2024-01-15T10:23:41Z","service":"order-service","order_id":"ord-123","user_id":"usr-456","event":"payment_failed","reason":"card_declined","duration_ms":234}
+{
+	"level": "error",
+	"time": "2024-01-15T10:23:41Z",
+	"service": "order-service",
+	"order_id": "ord-123",
+	"user_id": "usr-456",
+	"event": "payment_failed",
+	"reason": "card_declined",
+	"duration_ms": 234
+}
 ```
 
 Every field is a key-value pair. Query: `{service="order-service"} | json | reason="card_declined" | order_id != ""` — instant, no regex.
@@ -43,16 +54,17 @@ Pino is the fastest Node.js logger — synchronous JSON output with minimal allo
 import pino from 'pino';
 
 const log = pino({
-  level: process.env.LOG_LEVEL ?? 'info',
-  base: {
-    service: 'order-service',
-    version: process.env.GIT_SHA ?? 'dev',
-    env: process.env.NODE_ENV,
-  },
-  // In development: pretty-print. In production: raw JSON.
-  transport: process.env.NODE_ENV === 'development'
-    ? { target: 'pino-pretty', options: { colorize: true } }
-    : undefined,
+	level: process.env.LOG_LEVEL ?? 'info',
+	base: {
+		service: 'order-service',
+		version: process.env.GIT_SHA ?? 'dev',
+		env: process.env.NODE_ENV
+	},
+	// In development: pretty-print. In production: raw JSON.
+	transport:
+		process.env.NODE_ENV === 'development'
+			? { target: 'pino-pretty', options: { colorize: true } }
+			: undefined
 });
 
 export { log };
@@ -79,41 +91,42 @@ A request passes through multiple services. To follow it across all logs, genera
 import { randomUUID } from 'crypto';
 
 app.use((req, res, next) => {
-  const correlationId = req.headers['x-correlation-id'] as string ?? randomUUID();
-  req.correlationId = correlationId;
-  res.setHeader('x-correlation-id', correlationId);
-  
-  // Attach to request logger
-  req.log = log.child({ correlationId, method: req.method, path: req.path });
-  next();
+	const correlationId = (req.headers['x-correlation-id'] as string) ?? randomUUID();
+	req.correlationId = correlationId;
+	res.setHeader('x-correlation-id', correlationId);
+
+	// Attach to request logger
+	req.log = log.child({ correlationId, method: req.method, path: req.path });
+	next();
 });
 
 // Request handler
 app.post('/orders', async (req, res) => {
-  req.log.info('Creating order');
-  
-  try {
-    const order = await createOrder(req.body, req.log);
-    req.log.info({ orderId: order.id }, 'Order created');
-    res.json(order);
-  } catch (err) {
-    req.log.error({ err: err.message }, 'Order creation failed');
-    res.status(500).json({ error: 'Order creation failed' });
-  }
+	req.log.info('Creating order');
+
+	try {
+		const order = await createOrder(req.body, req.log);
+		req.log.info({ orderId: order.id }, 'Order created');
+		res.json(order);
+	} catch (err) {
+		req.log.error({ err: err.message }, 'Order creation failed');
+		res.status(500).json({ error: 'Order creation failed' });
+	}
 });
 ```
 
 Pass the correlation ID to downstream services:
+
 ```typescript
 async function callPaymentService(order: Order, log: Logger) {
-  const response = await fetch('http://payment-service/charge', {
-    method: 'POST',
-    headers: {
-      'x-correlation-id': log.bindings().correlationId,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(order),
-  });
+	const response = await fetch('http://payment-service/charge', {
+		method: 'POST',
+		headers: {
+			'x-correlation-id': log.bindings().correlationId,
+			'content-type': 'application/json'
+		},
+		body: JSON.stringify(order)
+	});
 }
 ```
 
@@ -133,27 +146,28 @@ TRACE  — everything (query parameters, raw HTTP bodies); never in production
 
 ```typescript
 // Good level usage
-log.error({ err, orderId }, 'Payment service unreachable');          // alert
+log.error({ err, orderId }, 'Payment service unreachable'); // alert
 log.warn({ queueDepth, threshold }, 'Queue depth approaching limit'); // investigate soon
-log.info({ orderId, total }, 'Order confirmed');                      // business event
-log.debug({ sql, params }, 'Executing query');                        // dev only
+log.info({ orderId, total }, 'Order confirmed'); // business event
+log.debug({ sql, params }, 'Executing query'); // dev only
 
 // Common mistake: ERROR for expected failures
-log.error('Order not found');  // NOT_FOUND is normal — use warn or info
-log.info({ orderId }, 'Order not found, returning 404');  // correct
+log.error('Order not found'); // NOT_FOUND is normal — use warn or info
+log.info({ orderId }, 'Order not found, returning 404'); // correct
 ```
 
 **Dynamic log levels in production:**
+
 ```typescript
 // Change level at runtime without restart
 process.on('SIGUSR1', () => {
-  if (log.level === 'info') {
-    log.level = 'debug';
-    log.info('Debug logging enabled');
-  } else {
-    log.level = 'info';
-    log.info('Debug logging disabled');
-  }
+	if (log.level === 'info') {
+		log.level = 'debug';
+		log.info('Debug logging enabled');
+	} else {
+		log.level = 'info';
+		log.info('Debug logging disabled');
+	}
 });
 ```
 
@@ -166,7 +180,7 @@ Loki stores logs indexed by labels (like Prometheus, but for logs). Promtail shi
 services:
   loki:
     image: grafana/loki:latest
-    ports: ["3100:3100"]
+    ports: ['3100:3100']
     command: -config.file=/etc/loki/loki.yml
     volumes:
       - ./loki.yml:/etc/loki/loki.yml
@@ -175,7 +189,7 @@ services:
   promtail:
     image: grafana/promtail:latest
     volumes:
-      - /var/log:/var/log          # host logs
+      - /var/log:/var/log # host logs
       - /var/run/docker.sock:/var/run/docker.sock
       - ./promtail.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
@@ -228,6 +242,7 @@ journalctl -u order-service --since "2024-01-15 10:00:00" --until "2024-01-15 11
 ```
 
 Forward journald to Loki:
+
 ```yaml
 # promtail.yml — journald source
 scrape_configs:
@@ -268,6 +283,7 @@ rate({service="order-service"} | json | level="error" [5m])
 ## What to Log
 
 **Log these:**
+
 - Business events (order created, payment charged, user registered)
 - All errors with full context (user, resource ID, error code, message)
 - Slow operations (requests > 1s, queries > 100ms)
@@ -275,6 +291,7 @@ rate({service="order-service"} | json | level="error" [5m])
 - Service startup and shutdown
 
 **Don't log these:**
+
 - Passwords, tokens, card numbers (PCI), personal data (GDPR)
 - Successful health checks (100% noise)
 - Debug-level SQL in production (volume)
@@ -283,13 +300,12 @@ rate({service="order-service"} | json | level="error" [5m])
 ```typescript
 // Sanitize sensitive data before logging
 function sanitizeOrder(order: Order) {
-  return {
-    ...order,
-    paymentMethod: { last4: order.paymentMethod.cardNumber.slice(-4) },
-    // never log full card number
-  };
+	return {
+		...order,
+		paymentMethod: { last4: order.paymentMethod.cardNumber.slice(-4) }
+		// never log full card number
+	};
 }
 
 log.info({ order: sanitizeOrder(order) }, 'Order created');
 ```
-

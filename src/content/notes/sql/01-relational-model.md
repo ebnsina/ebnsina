@@ -1,10 +1,10 @@
 ---
-title: "The Relational Model & Basic Queries"
-subtitle: "Tables, rows, columns, types — and the SELECT statement that pulls data back out."
+title: 'The Relational Model & Basic Queries'
+subtitle: 'Tables, rows, columns, types — and the SELECT statement that pulls data back out.'
 chapter: 1
-level: "beginner"
-readingTime: "14 min"
-topics: ["select", "relational model", "ddl"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['select', 'relational model', 'ddl']
 ---
 
 <script>
@@ -13,21 +13,21 @@ topics: ["select", "relational model", "ddl"]
 
 ## The Relational Model
 
-A relational database stores data in **tables** (formally, *relations*). A table is a grid:
+A relational database stores data in **tables** (formally, _relations_). A table is a grid:
 
-- A **row** (or *tuple*) is a single record — one user, one order, one event.
-- A **column** (or *attribute*) describes one property every row has — a name, a price, a created timestamp.
+- A **row** (or _tuple_) is a single record — one user, one order, one event.
+- A **column** (or _attribute_) describes one property every row has — a name, a price, a created timestamp.
 - Every column has a **data type** that constrains what values it can hold.
 
-The model dates to Edgar Codd's 1970 paper, and its power comes from a simple idea: data is just sets of rows, and you describe *what* you want rather than *how* to fetch it. The database figures out the "how".
+The model dates to Edgar Codd's 1970 paper, and its power comes from a simple idea: data is just sets of rows, and you describe _what_ you want rather than _how_ to fetch it. The database figures out the "how".
 
 A table called `users` might look like this:
 
-| id | email             | age | created_at          |
-|----|-------------------|-----|---------------------|
-| 1  | lubna@example.com   | 36  | 2026-01-04 09:12:00 |
-| 2  | nusayba@example.com | 41  | 2026-02-18 14:30:00 |
-| 3  | harun@example.com |     | 2026-03-01 08:00:00 |
+| id  | email               | age | created_at          |
+| --- | ------------------- | --- | ------------------- |
+| 1   | lubna@example.com   | 36  | 2026-01-04 09:12:00 |
+| 2   | nusayba@example.com | 41  | 2026-02-18 14:30:00 |
+| 3   | harun@example.com   |     | 2026-03-01 08:00:00 |
 
 Notice row 3 has no `age` — that empty cell is a `NULL`, which we'll return to.
 
@@ -35,15 +35,15 @@ Notice row 3 has no `age` — that empty cell is a `NULL`, which we'll return to
 
 Picking the right type matters: it controls storage size, what operations are valid, and how the database sorts and compares values. Common PostgreSQL types:
 
-| Type             | Use for                                      |
-|------------------|----------------------------------------------|
-| `integer` / `bigint` | Whole numbers, IDs, counts               |
-| `numeric(p, s)`  | Exact decimals — money, never use `float` here |
-| `text` / `varchar(n)` | Strings                                 |
-| `boolean`        | True/false flags                             |
-| `date` / `timestamptz` | Dates and timezone-aware timestamps    |
-| `uuid`           | Globally unique identifiers                  |
-| `jsonb`          | Semi-structured documents                    |
+| Type                   | Use for                                        |
+| ---------------------- | ---------------------------------------------- |
+| `integer` / `bigint`   | Whole numbers, IDs, counts                     |
+| `numeric(p, s)`        | Exact decimals — money, never use `float` here |
+| `text` / `varchar(n)`  | Strings                                        |
+| `boolean`              | True/false flags                               |
+| `date` / `timestamptz` | Dates and timezone-aware timestamps            |
+| `uuid`                 | Globally unique identifiers                    |
+| `jsonb`                | Semi-structured documents                      |
 
 <Callout type="warning">
 
@@ -129,13 +129,13 @@ When you compare a column to a literal — say, "give me everyone younger than 3
 SELECT DISTINCT age FROM users ORDER BY age;
 ```
 
-This returns each distinct age once. `DISTINCT` applies to the whole selected row, so `SELECT DISTINCT age, email` deduplicates on the *combination* of both columns.
+This returns each distinct age once. `DISTINCT` applies to the whole selected row, so `SELECT DISTINCT age, email` deduplicates on the _combination_ of both columns.
 
 ## NULL Semantics
 
-`NULL` means "unknown" or "absent" — it is *not* zero, and it is *not* an empty string. This trips up nearly everyone at first because `NULL` does not behave like a value in comparisons.
+`NULL` means "unknown" or "absent" — it is _not_ zero, and it is _not_ an empty string. This trips up nearly everyone at first because `NULL` does not behave like a value in comparisons.
 
-Any comparison *with* `NULL` yields `NULL` (which is treated as "not true"), so:
+Any comparison _with_ `NULL` yields `NULL` (which is treated as "not true"), so:
 
 ```sql
 SELECT * FROM users WHERE age = NULL;   -- returns ZERO rows, always
@@ -155,7 +155,7 @@ SELECT * FROM users WHERE age IS NOT NULL;
 
 </Callout>
 
-A practical consequence: if you want "everyone whose age is not 25, *including* people with unknown age", you need to be explicit:
+A practical consequence: if you want "everyone whose age is not 25, _including_ people with unknown age", you need to be explicit:
 
 ```sql
 SELECT * FROM users WHERE age <> 25 OR age IS NULL;

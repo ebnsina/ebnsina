@@ -1,10 +1,10 @@
 ---
-title: "SLIs, SLOs & Error Budgets"
+title: 'SLIs, SLOs & Error Budgets'
 subtitle: "Pick the right SLI, set an SLO that survives lawyer review, and burn the budget the way Google's CRE team does it."
 chapter: 2
-level: "beginner"
-readingTime: "18 min"
-topics: ["SLI", "SLO", "SLA", "error budget", "burn rate", "Prometheus"]
+level: 'beginner'
+readingTime: '18 min'
+topics: ['SLI', 'SLO', 'SLA', 'error budget', 'burn rate', 'Prometheus']
 ---
 
 <script>
@@ -74,25 +74,29 @@ sum(rate(http_request_duration_seconds_count{service="checkout"}[5m]))
 // Reference table: what SLI fits which service shape
 
 const sliMenu = {
-  requestResponse: {  // REST APIs, RPCs
-    availability: "good HTTP responses / total HTTP responses",
-    latency:      "requests under threshold / total requests",
-    quality:      "high-quality responses / total responses",
-  },
-  dataPipeline: {  // ETL, stream processing
-    coverage:     "records processed / records ingested",
-    freshness:    "records processed within N minutes / total records",
-    correctness:  "correct records / total records",
-  },
-  storage: {  // databases, object stores
-    durability:   "objects retrievable / objects written",
-    availability: "successful reads + writes / total operations",
-    latency:      "reads under threshold / total reads",
-  },
-  scheduledJob: {  // crons, batch
-    onTime:       "jobs completed before deadline / scheduled jobs",
-    success:      "successful jobs / scheduled jobs",
-  },
+	requestResponse: {
+		// REST APIs, RPCs
+		availability: 'good HTTP responses / total HTTP responses',
+		latency: 'requests under threshold / total requests',
+		quality: 'high-quality responses / total responses'
+	},
+	dataPipeline: {
+		// ETL, stream processing
+		coverage: 'records processed / records ingested',
+		freshness: 'records processed within N minutes / total records',
+		correctness: 'correct records / total records'
+	},
+	storage: {
+		// databases, object stores
+		durability: 'objects retrievable / objects written',
+		availability: 'successful reads + writes / total operations',
+		latency: 'reads under threshold / total reads'
+	},
+	scheduledJob: {
+		// crons, batch
+		onTime: 'jobs completed before deadline / scheduled jobs',
+		success: 'successful jobs / scheduled jobs'
+	}
 };
 ```
 
@@ -198,8 +202,8 @@ groups:
           severity: page
           slo: checkout_availability
         annotations:
-          summary: "Checkout SLO fast burn — 2% of monthly budget in 1h"
-          runbook: "https://runbooks.example.com/checkout-fast-burn"
+          summary: 'Checkout SLO fast burn — 2% of monthly budget in 1h'
+          runbook: 'https://runbooks.example.com/checkout-fast-burn'
 
       # TICKET: slow burn — would consume 10% over 6 hours
       # Burn rate 6 over 6h consumes 10% of a 30d budget
@@ -232,21 +236,25 @@ The numbers are useless without a written policy. Real teams publish a one-page 
 # Checkout Service — Error Budget Policy
 
 ## SLO
+
 99.9% availability over 30-day rolling window.
 
 ## Budget states
-- HEALTHY (>50% remaining):  Normal velocity. Risky deploys allowed.
+
+- HEALTHY (>50% remaining): Normal velocity. Risky deploys allowed.
 - BURNING (10-50% remaining): Mandatory canary. PRs require SRE LGTM.
 - EXHAUSTED (<10% remaining): Feature freeze. Only:
-    1. Reliability fixes
-    2. Security patches (P0/P1)
-    3. Customer-blocking bugs
-  Lifted when budget recovers above 25%.
+  1. Reliability fixes
+  2. Security patches (P0/P1)
+  3. Customer-blocking bugs
+     Lifted when budget recovers above 25%.
 
 ## Disagreement escalation
+
 Engineering Manager → Director → VP Eng. Decision recorded in writing.
 
 ## Owner
+
 Checkout SRE (rotation: see PagerDuty schedule "checkout-primary")
 ```
 
@@ -290,4 +298,3 @@ This document is signed off by the engineering manager AND the product manager. 
 3. **Each 9 costs ~10x more** — pick the lowest defensible target
 4. **Multi-window multi-burn alerting** is the right way to page on SLO violation
 5. **Error budget policy document** is what makes the budget actually enforceable
-

@@ -1,10 +1,10 @@
 ---
-title: "Foundations"
+title: 'Foundations'
 subtitle: "How networks work, TCP/IP, the OSI model, and the attacker's mental model for finding weaknesses."
 chapter: 1
-level: "beginner"
-readingTime: "12 min"
-topics: ["TCP/IP", "OSI model", "networking", "ports", "protocols", "attacker mindset"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['TCP/IP', 'OSI model', 'networking', 'ports', 'protocols', 'attacker mindset']
 ---
 
 <script>
@@ -53,14 +53,14 @@ Client                    Server
 
 ### TCP Flags
 
-| Flag | Meaning | Attacker Use |
-|------|---------|-------------|
-| SYN | Initiate connection | Port scanning, SYN flood DoS |
-| ACK | Acknowledge | ACK scanning (bypass some firewalls) |
-| FIN | Close connection | FIN scan (evade simple filters) |
-| RST | Reset connection | Forged RSTs to kill connections |
-| PSH | Push data immediately | — |
-| URG | Urgent data | — |
+| Flag | Meaning               | Attacker Use                         |
+| ---- | --------------------- | ------------------------------------ |
+| SYN  | Initiate connection   | Port scanning, SYN flood DoS         |
+| ACK  | Acknowledge           | ACK scanning (bypass some firewalls) |
+| FIN  | Close connection      | FIN scan (evade simple filters)      |
+| RST  | Reset connection      | Forged RSTs to kill connections      |
+| PSH  | Push data immediately | —                                    |
+| URG  | Urgent data           | —                                    |
 
 ### IP Addressing Essentials
 
@@ -88,6 +88,7 @@ Browser → DNS Resolver → Root NS → .com NS → example.com NS → 93.184.2
 ```
 
 **Attack surface:**
+
 - DNS zone transfers expose all hostnames (misconfigured servers leak internal structure)
 - DNS cache poisoning redirects users to attacker-controlled IPs
 - Subdomain enumeration discovers forgotten/exposed assets
@@ -112,6 +113,7 @@ Cookie: session=abc123
 HTTP is stateless but applications maintain state via cookies and tokens. Every header is input — and input can be manipulated.
 
 **Headers attackers pay attention to:**
+
 - `Authorization` — can it be forged, replayed, or brute-forced?
 - `Cookie` — is the session token predictable? HttpOnly? Secure?
 - `X-Forwarded-For` — do apps trust this? Can you spoof your IP?
@@ -154,6 +156,7 @@ Internet
 ### Attack Surface
 
 The attack surface is everything that can receive input:
+
 - Every HTTP endpoint
 - Every CLI argument
 - Every file that gets parsed
@@ -170,7 +173,7 @@ Every security control protects one or more of:
 ```
 Confidentiality — data is only readable by authorized parties
                   Attack: data exfiltration, credential theft
-Integrity       — data is only modifiable by authorized parties  
+Integrity       — data is only modifiable by authorized parties
                   Attack: tampering, SQL injection
 Availability    — system is accessible when needed
                   Attack: DoS/DDoS, ransomware
@@ -219,4 +222,3 @@ tracert google.com      # Windows
 ```
 
 Seeing port 6379 open on a public IP is almost always a critical finding — Redis has no authentication by default and can be used to write arbitrary files (SSH keys, cron jobs) on the server.
-

@@ -1,10 +1,10 @@
 ---
-title: "Backpressure, reconnects, heartbeats"
-subtitle: "Networks drop. Clients stall. Tabs sleep. The patterns in this chapter are the difference between a WebSocket service that runs for a week and one that limps for an hour."
+title: 'Backpressure, reconnects, heartbeats'
+subtitle: 'Networks drop. Clients stall. Tabs sleep. The patterns in this chapter are the difference between a WebSocket service that runs for a week and one that limps for an hour.'
 chapter: 9
-level: "advanced"
-readingTime: "13 min"
-topics: ["websockets", "backpressure", "reconnect", "heartbeat", "resilience"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['websockets', 'backpressure', 'reconnect', 'heartbeat', 'resilience']
 ---
 
 <script>
@@ -116,15 +116,15 @@ Most apps do both: protocol-level pings handled by the library, application-leve
 ```js
 // client side
 setInterval(() => {
-    ws.send(JSON.stringify({ type: "ping", t: Date.now() }));
+	ws.send(JSON.stringify({ type: 'ping', t: Date.now() }));
 }, 30_000);
 
-ws.addEventListener("message", (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === "pong") {
-        const rtt = Date.now() - msg.t;
-        console.log("rtt", rtt, "ms");
-    }
+ws.addEventListener('message', (e) => {
+	const msg = JSON.parse(e.data);
+	if (msg.type === 'pong') {
+		const rtt = Date.now() - msg.t;
+		console.log('rtt', rtt, 'ms');
+	}
 });
 ```
 
@@ -178,41 +178,41 @@ Server has zero state about "this is the same client coming back." All it sees i
 
 ```js
 class ReconnectingWS {
-    constructor(url, onMessage) {
-        this.url = url;
-        this.onMessage = onMessage;
-        this.attempts = 0;
-        this.connect();
-    }
+	constructor(url, onMessage) {
+		this.url = url;
+		this.onMessage = onMessage;
+		this.attempts = 0;
+		this.connect();
+	}
 
-    connect() {
-        this.ws = new WebSocket(this.url);
+	connect() {
+		this.ws = new WebSocket(this.url);
 
-        this.ws.onopen = () => {
-            this.attempts = 0;
-            console.log("ws connected");
-        };
+		this.ws.onopen = () => {
+			this.attempts = 0;
+			console.log('ws connected');
+		};
 
-        this.ws.onmessage = (e) => this.onMessage(JSON.parse(e.data));
+		this.ws.onmessage = (e) => this.onMessage(JSON.parse(e.data));
 
-        this.ws.onclose = (e) => {
-            if (e.code === 1000 || e.code === 1001) {
-                return; // intentional close, do not reconnect
-            }
-            const delay = Math.min(30_000, 500 * 2 ** this.attempts);
-            const jitter = Math.random() * 0.3 * delay;
-            this.attempts++;
-            setTimeout(() => this.connect(), delay + jitter);
-        };
-    }
+		this.ws.onclose = (e) => {
+			if (e.code === 1000 || e.code === 1001) {
+				return; // intentional close, do not reconnect
+			}
+			const delay = Math.min(30_000, 500 * 2 ** this.attempts);
+			const jitter = Math.random() * 0.3 * delay;
+			this.attempts++;
+			setTimeout(() => this.connect(), delay + jitter);
+		};
+	}
 
-    send(msg) {
-        if (this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify(msg));
-        } else {
-            // queue or drop — application choice
-        }
-    }
+	send(msg) {
+		if (this.ws.readyState === WebSocket.OPEN) {
+			this.ws.send(JSON.stringify(msg));
+		} else {
+			// queue or drop — application choice
+		}
+	}
 }
 ```
 
@@ -233,7 +233,7 @@ A reconnect that just opens a fresh stream loses everything that happened during
 Pattern: every server-pushed message has a sequence ID. The client tracks the last one it saw. On reconnect, the client sends `last_seq` and the server replays from there.
 
 ```js
-ws.send({ type: "subscribe", room: "general", lastSeq: this.lastSeq });
+ws.send({ type: 'subscribe', room: 'general', lastSeq: this.lastSeq });
 ```
 
 Server-side requires:
@@ -255,10 +255,10 @@ Two practical effects:
 The `Page Visibility API` lets you handle the transitions:
 
 ```js
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-        // catch up on missed messages, refresh state
-    }
+document.addEventListener('visibilitychange', () => {
+	if (document.visibilityState === 'visible') {
+		// catch up on missed messages, refresh state
+	}
 });
 ```
 
@@ -313,4 +313,3 @@ Combined with client-side backoff and jitter, this lets you deploy without thous
 - Graceful shutdown: stop new connections, hint reconnect, drain, force-close at deadline.
 
 Next: [Production self-host](/notes/websockets/10-production) — nginx, systemd, observability, and scaling out on a VPS.
-

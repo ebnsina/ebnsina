@@ -1,10 +1,10 @@
 ---
-title: "Logs & journalctl"
-subtitle: "Where every line of output goes on a modern Linux box, how to query it, how to keep the disk from filling up, and when to ship logs off the host."
+title: 'Logs & journalctl'
+subtitle: 'Where every line of output goes on a modern Linux box, how to query it, how to keep the disk from filling up, and when to ship logs off the host.'
 chapter: 9
-level: "intermediate"
-readingTime: "11 min"
-topics: ["logs", "journalctl", "journald", "logrotate", "syslog", "linux"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['logs', 'journalctl', 'journald', 'logrotate', 'syslog', 'linux']
 ---
 
 <script>
@@ -30,7 +30,7 @@ A well-organized server uses both: services that respect `stdout`/`stderr` flow 
 
 ## journald — what it actually does
 
-When a systemd service writes to stdout or stderr, journald captures it, attaches metadata (PID, UID, unit name, hostname, timestamp, priority), and stores it in a binary file under `/var/log/journal/`. Querying it later produces the *exact same fields back*, including the metadata.
+When a systemd service writes to stdout or stderr, journald captures it, attaches metadata (PID, UID, unit name, hostname, timestamp, priority), and stores it in a binary file under `/var/log/journal/`. Querying it later produces the _exact same fields back_, including the metadata.
 
 This is genuinely better than text logs because:
 
@@ -271,7 +271,7 @@ For this chapter, the rule is: know how to query the local journal cold. Once yo
 
 ## Application logging — what to write
 
-Best practices for the logs *your app* emits:
+Best practices for the logs _your app_ emits:
 
 - **Write to stdout/stderr.** journald captures it. Do not invent your own log file.
 - **One event per line.** Multi-line stack traces are okay; multi-line "human" log messages are not.
@@ -311,4 +311,3 @@ journalctl --since "03:10" --until "03:20"
 - Ship logs off-host before relying on a single VPS to remember anything important.
 
 Next chapter: limits — the kernel knobs that decide how much your services are allowed to consume.
-

@@ -1,10 +1,10 @@
 ---
-title: "Terraform Patterns & Production"
-subtitle: "Module composition, environments, secrets, drift detection, and the practices that keep large Terraform codebases manageable."
+title: 'Terraform Patterns & Production'
+subtitle: 'Module composition, environments, secrets, drift detection, and the practices that keep large Terraform codebases manageable.'
 chapter: 4
-level: "intermediate"
-readingTime: "10 min"
-topics: ["Terraform", "modules", "environments", "secrets", "drift", "refactoring"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['Terraform', 'modules', 'environments', 'secrets', 'drift', 'refactoring']
 ---
 
 <script>
@@ -80,6 +80,7 @@ module "db" {
 Never put secrets in `.tfvars` files or Terraform state in plaintext.
 
 **AWS SSM Parameter Store:**
+
 ```hcl
 # Reference SSM parameters instead of hardcoding
 data "aws_ssm_parameter" "db_password" {
@@ -102,6 +103,7 @@ aws ssm put-parameter \
 ```
 
 **AWS Secrets Manager:**
+
 ```hcl
 data "aws_secretsmanager_secret_version" "db_creds" {
   secret_id = "production/myapp/db"
@@ -118,6 +120,7 @@ resource "aws_db_instance" "main" {
 ```
 
 **Mark outputs as sensitive** to prevent them appearing in logs:
+
 ```hcl
 output "db_endpoint" {
   value     = aws_db_instance.main.endpoint
@@ -150,6 +153,7 @@ resource "aws_s3_bucket" "uploads" {
 ```
 
 **Targeted applies for risky changes:**
+
 ```bash
 # Only apply changes to specific resources — don't touch everything
 terraform apply -target=aws_instance.web -target=aws_security_group.web
@@ -174,6 +178,7 @@ terraform state mv aws_instance.app aws_instance.web
 ```
 
 **`moved` block (Terraform 1.1+) — the declarative way:**
+
 ```hcl
 # main.tf — document the rename in code
 moved {
@@ -191,7 +196,7 @@ The `moved` block is committed to the repo — other team members get the state 
 name: Drift Detection
 on:
   schedule:
-    - cron: '0 8 * * *'   # every morning at 8am
+    - cron: '0 8 * * *' # every morning at 8am
 
 jobs:
   drift:
@@ -229,6 +234,7 @@ Exit codes: `0` = no changes, `1` = error, `2` = changes detected (drift).
 **`terraform plan`:** Actual diff against current state. Requires credentials.
 
 **Terratest** (Go-based integration testing):
+
 ```go
 // test/web_server_test.go
 func TestWebServer(t *testing.T) {
@@ -270,6 +276,7 @@ Run integration tests in CI against an isolated test environment (separate accou
 ```
 
 **Cross-stack data sources:**
+
 ```hcl
 # networking stack outputs VPC ID
 output "vpc_id" { value = aws_vpc.main.id }
@@ -291,4 +298,3 @@ resource "aws_instance" "web" {
 ```
 
 This gives you decoupled stacks that reference each other without being in the same state file — so a networking change doesn't require touching the app stack at all.
-

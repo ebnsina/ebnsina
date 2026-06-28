@@ -1,10 +1,10 @@
 ---
-title: "WebSockets & Real-time"
-subtitle: "Build a real-time chat server with WebSocket connections, rooms, presence tracking, and message history."
+title: 'WebSockets & Real-time'
+subtitle: 'Build a real-time chat server with WebSocket connections, rooms, presence tracking, and message history.'
 chapter: 16
-level: "intermediate"
-readingTime: "20 min"
-topics: ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['WebSocket', 'real-time', 'chat', 'presence', 'pub/sub']
 ---
 
 <script>
@@ -20,12 +20,10 @@ topics: ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
 Think of HTTP like sending letters back and forth. Each letter is independent, and you wait for a reply. WebSockets are like a phone call -- once the line is open, both parties can talk whenever they want, instantly, until someone hangs up.
 
 <Mermaid
-	title="WebSocket Chat Architecture"
-	code={`
-graph LR
+title="WebSocket Chat Architecture"
+code={`graph LR
   A["Client A<br/>WebSocket"] --> WS1["WebSocket Server<br/>Connection Manager"] --> RM["Room Manager<br/>Pub/Sub"]
-  B["Client B<br/>WebSocket"] --> WS2["WebSocket Server<br/>Connection Manager"] --> MS["Message Store<br/>Ring Buffer"]
-`}
+  B["Client B<br/>WebSocket"] --> WS2["WebSocket Server<br/>Connection Manager"] --> MS["Message Store<br/>Ring Buffer"]`}
 />
 
 ## Real-World Analogy
@@ -48,203 +46,201 @@ Here's a complete WebSocket chat server with rooms, presence tracking, message h
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import { WebSocketServer, WebSocket } from "ws";
-import http from "node:http";
-import crypto from "node:crypto";
+import { WebSocketServer, WebSocket } from 'ws';
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // --- Types ---
 interface ChatMessage {
-  id: string;
-  room: string;
-  userId: string;
-  content: string;
-  timestamp: number;
+	id: string;
+	room: string;
+	userId: string;
+	content: string;
+	timestamp: number;
 }
 
 interface ClientMessage {
-  type: "join" | "leave" | "message" | "history";
-  room?: string;
-  content?: string;
-  userId?: string;
+	type: 'join' | 'leave' | 'message' | 'history';
+	room?: string;
+	content?: string;
+	userId?: string;
 }
 
 interface ServerMessage {
-  type: "message" | "join" | "leave" | "presence" | "history" | "error" | "pong";
-  room?: string;
-  userId?: string;
-  content?: string;
-  messages?: ChatMessage[];
-  users?: string[];
-  timestamp?: number;
+	type: 'message' | 'join' | 'leave' | 'presence' | 'history' | 'error' | 'pong';
+	room?: string;
+	userId?: string;
+	content?: string;
+	messages?: ChatMessage[];
+	users?: string[];
+	timestamp?: number;
 }
 
 interface ConnectedClient {
-  ws: WebSocket;
-  userId: string;
-  rooms: Set<string>;
-  lastPing: number;
-  isAlive: boolean;
+	ws: WebSocket;
+	userId: string;
+	rooms: Set<string>;
+	lastPing: number;
+	isAlive: boolean;
 }
 
 // --- Ring Buffer for message history ---
 class RingBuffer<T> {
-  private buffer: (T | undefined)[];
-  private head: number = 0;
-  private count: number = 0;
+	private buffer: (T | undefined)[];
+	private head: number = 0;
+	private count: number = 0;
 
-  constructor(private capacity: number) {
-    this.buffer = new Array(capacity);
-  }
+	constructor(private capacity: number) {
+		this.buffer = new Array(capacity);
+	}
 
-  push(item: T): void {
-    this.buffer[this.head] = item;
-    this.head = (this.head + 1) % this.capacity;
-    if (this.count < this.capacity) this.count++;
-  }
+	push(item: T): void {
+		this.buffer[this.head] = item;
+		this.head = (this.head + 1) % this.capacity;
+		if (this.count < this.capacity) this.count++;
+	}
 
-  getAll(): T[] {
-    const result: T[] = [];
-    if (this.count === 0) return result;
+	getAll(): T[] {
+		const result: T[] = [];
+		if (this.count === 0) return result;
 
-    const start = this.count < this.capacity
-      ? 0
-      : this.head;
+		const start = this.count < this.capacity ? 0 : this.head;
 
-    for (let i = 0; i < this.count; i++) {
-      const idx = (start + i) % this.capacity;
-      const item = this.buffer[idx];
-      if (item !== undefined) result.push(item);
-    }
-    return result;
-  }
+		for (let i = 0; i < this.count; i++) {
+			const idx = (start + i) % this.capacity;
+			const item = this.buffer[idx];
+			if (item !== undefined) result.push(item);
+		}
+		return result;
+	}
 }
 
 // --- Room Manager ---
 class RoomManager {
-  private rooms = new Map<string, Set<string>>(); // room -> set of userIds
-  private history = new Map<string, RingBuffer<ChatMessage>>(); // room -> messages
+	private rooms = new Map<string, Set<string>>(); // room -> set of userIds
+	private history = new Map<string, RingBuffer<ChatMessage>>(); // room -> messages
 
-  private static readonly MAX_HISTORY = 100;
+	private static readonly MAX_HISTORY = 100;
 
-  join(room: string, userId: string): string[] {
-    if (!this.rooms.has(room)) {
-      this.rooms.set(room, new Set());
-      this.history.set(room, new RingBuffer(RoomManager.MAX_HISTORY));
-    }
-    this.rooms.get(room)!.add(userId);
-    return Array.from(this.rooms.get(room)!);
-  }
+	join(room: string, userId: string): string[] {
+		if (!this.rooms.has(room)) {
+			this.rooms.set(room, new Set());
+			this.history.set(room, new RingBuffer(RoomManager.MAX_HISTORY));
+		}
+		this.rooms.get(room)!.add(userId);
+		return Array.from(this.rooms.get(room)!);
+	}
 
-  leave(room: string, userId: string): string[] {
-    const members = this.rooms.get(room);
-    if (!members) return [];
-    members.delete(userId);
-    if (members.size === 0) {
-      this.rooms.delete(room);
-      this.history.delete(room);
-      return [];
-    }
-    return Array.from(members);
-  }
+	leave(room: string, userId: string): string[] {
+		const members = this.rooms.get(room);
+		if (!members) return [];
+		members.delete(userId);
+		if (members.size === 0) {
+			this.rooms.delete(room);
+			this.history.delete(room);
+			return [];
+		}
+		return Array.from(members);
+	}
 
-  getMembers(room: string): string[] {
-    const members = this.rooms.get(room);
-    return members ? Array.from(members) : [];
-  }
+	getMembers(room: string): string[] {
+		const members = this.rooms.get(room);
+		return members ? Array.from(members) : [];
+	}
 
-  addMessage(room: string, message: ChatMessage): void {
-    const buf = this.history.get(room);
-    if (buf) buf.push(message);
-  }
+	addMessage(room: string, message: ChatMessage): void {
+		const buf = this.history.get(room);
+		if (buf) buf.push(message);
+	}
 
-  getHistory(room: string): ChatMessage[] {
-    const buf = this.history.get(room);
-    return buf ? buf.getAll() : [];
-  }
+	getHistory(room: string): ChatMessage[] {
+		const buf = this.history.get(room);
+		return buf ? buf.getAll() : [];
+	}
 
-  getRoomsForUser(userId: string): string[] {
-    const result: string[] = [];
-    for (const [room, members] of this.rooms) {
-      if (members.has(userId)) result.push(room);
-    }
-    return result;
-  }
+	getRoomsForUser(userId: string): string[] {
+		const result: string[] = [];
+		for (const [room, members] of this.rooms) {
+			if (members.has(userId)) result.push(room);
+		}
+		return result;
+	}
 }
 
 // --- Connection Manager ---
 class ConnectionManager {
-  private clients = new Map<WebSocket, ConnectedClient>();
-  private userConnections = new Map<string, Set<WebSocket>>();
+	private clients = new Map<WebSocket, ConnectedClient>();
+	private userConnections = new Map<string, Set<WebSocket>>();
 
-  add(ws: WebSocket, userId: string): ConnectedClient {
-    const client: ConnectedClient = {
-      ws,
-      userId,
-      rooms: new Set(),
-      lastPing: Date.now(),
-      isAlive: true,
-    };
-    this.clients.set(ws, client);
+	add(ws: WebSocket, userId: string): ConnectedClient {
+		const client: ConnectedClient = {
+			ws,
+			userId,
+			rooms: new Set(),
+			lastPing: Date.now(),
+			isAlive: true
+		};
+		this.clients.set(ws, client);
 
-    if (!this.userConnections.has(userId)) {
-      this.userConnections.set(userId, new Set());
-    }
-    this.userConnections.get(userId)!.add(ws);
+		if (!this.userConnections.has(userId)) {
+			this.userConnections.set(userId, new Set());
+		}
+		this.userConnections.get(userId)!.add(ws);
 
-    return client;
-  }
+		return client;
+	}
 
-  remove(ws: WebSocket): ConnectedClient | undefined {
-    const client = this.clients.get(ws);
-    if (!client) return undefined;
+	remove(ws: WebSocket): ConnectedClient | undefined {
+		const client = this.clients.get(ws);
+		if (!client) return undefined;
 
-    this.clients.delete(ws);
-    const conns = this.userConnections.get(client.userId);
-    if (conns) {
-      conns.delete(ws);
-      if (conns.size === 0) this.userConnections.delete(client.userId);
-    }
-    return client;
-  }
+		this.clients.delete(ws);
+		const conns = this.userConnections.get(client.userId);
+		if (conns) {
+			conns.delete(ws);
+			if (conns.size === 0) this.userConnections.delete(client.userId);
+		}
+		return client;
+	}
 
-  get(ws: WebSocket): ConnectedClient | undefined {
-    return this.clients.get(ws);
-  }
+	get(ws: WebSocket): ConnectedClient | undefined {
+		return this.clients.get(ws);
+	}
 
-  getByRoom(room: string): ConnectedClient[] {
-    const result: ConnectedClient[] = [];
-    for (const client of this.clients.values()) {
-      if (client.rooms.has(room)) result.push(client);
-    }
-    return result;
-  }
+	getByRoom(room: string): ConnectedClient[] {
+		const result: ConnectedClient[] = [];
+		for (const client of this.clients.values()) {
+			if (client.rooms.has(room)) result.push(client);
+		}
+		return result;
+	}
 
-  getAllClients(): ConnectedClient[] {
-    return Array.from(this.clients.values());
-  }
+	getAllClients(): ConnectedClient[] {
+		return Array.from(this.clients.values());
+	}
 }
 
 // --- Broadcast helper ---
 function broadcast(clients: ConnectedClient[], message: ServerMessage, exclude?: WebSocket): void {
-  const data = JSON.stringify(message);
-  for (const client of clients) {
-    if (client.ws !== exclude && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(data);
-    }
-  }
+	const data = JSON.stringify(message);
+	for (const client of clients) {
+		if (client.ws !== exclude && client.ws.readyState === WebSocket.OPEN) {
+			client.ws.send(data);
+		}
+	}
 }
 
 function sendTo(ws: WebSocket, message: ServerMessage): void {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(message));
-  }
+	if (ws.readyState === WebSocket.OPEN) {
+		ws.send(JSON.stringify(message));
+	}
 }
 
 // --- Initialize server ---
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const server = http.createServer((_req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("WebSocket Chat Server");
+	res.writeHead(200, { 'Content-Type': 'text/plain' });
+	res.end('WebSocket Chat Server');
 });
 
 const wss = new WebSocketServer({ server });
@@ -252,178 +248,178 @@ const rooms = new RoomManager();
 const connections = new ConnectionManager();
 
 // --- Handle connections ---
-wss.on("connection", (ws: WebSocket, req: http.IncomingMessage) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const userId = url.searchParams.get("userId") || `anon-${crypto.randomUUID().slice(0, 8)}`;
+wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const userId = url.searchParams.get('userId') || `anon-${crypto.randomUUID().slice(0, 8)}`;
 
-  console.log(`[CONNECT] User ${userId} connected`);
-  const client = connections.add(ws, userId);
+	console.log(`[CONNECT] User ${userId} connected`);
+	const client = connections.add(ws, userId);
 
-  // Setup ping/pong heartbeat
-  ws.on("pong", () => {
-    client.isAlive = true;
-    client.lastPing = Date.now();
-  });
+	// Setup ping/pong heartbeat
+	ws.on('pong', () => {
+		client.isAlive = true;
+		client.lastPing = Date.now();
+	});
 
-  // Handle incoming messages
-  ws.on("message", (raw: Buffer) => {
-    let msg: ClientMessage;
-    try {
-      msg = JSON.parse(raw.toString("utf-8"));
-    } catch {
-      sendTo(ws, { type: "error", content: "Invalid JSON" });
-      return;
-    }
+	// Handle incoming messages
+	ws.on('message', (raw: Buffer) => {
+		let msg: ClientMessage;
+		try {
+			msg = JSON.parse(raw.toString('utf-8'));
+		} catch {
+			sendTo(ws, { type: 'error', content: 'Invalid JSON' });
+			return;
+		}
 
-    switch (msg.type) {
-      case "join": {
-        const room = msg.room;
-        if (!room || typeof room !== "string") {
-          sendTo(ws, { type: "error", content: "room is required" });
-          return;
-        }
-        client.rooms.add(room);
-        const members = rooms.join(room, userId);
-        console.log(`[JOIN] ${userId} joined room ${room} (${members.length} members)`);
+		switch (msg.type) {
+			case 'join': {
+				const room = msg.room;
+				if (!room || typeof room !== 'string') {
+					sendTo(ws, { type: 'error', content: 'room is required' });
+					return;
+				}
+				client.rooms.add(room);
+				const members = rooms.join(room, userId);
+				console.log(`[JOIN] ${userId} joined room ${room} (${members.length} members)`);
 
-        // Send presence update to room
-        broadcast(connections.getByRoom(room), {
-          type: "join",
-          room,
-          userId,
-          users: members,
-          timestamp: Date.now(),
-        });
+				// Send presence update to room
+				broadcast(connections.getByRoom(room), {
+					type: 'join',
+					room,
+					userId,
+					users: members,
+					timestamp: Date.now()
+				});
 
-        // Send history to the joining user
-        const history = rooms.getHistory(room);
-        if (history.length > 0) {
-          sendTo(ws, { type: "history", room, messages: history });
-        }
-        break;
-      }
+				// Send history to the joining user
+				const history = rooms.getHistory(room);
+				if (history.length > 0) {
+					sendTo(ws, { type: 'history', room, messages: history });
+				}
+				break;
+			}
 
-      case "leave": {
-        const room = msg.room;
-        if (!room) return;
-        client.rooms.delete(room);
-        const members = rooms.leave(room, userId);
-        console.log(`[LEAVE] ${userId} left room ${room}`);
+			case 'leave': {
+				const room = msg.room;
+				if (!room) return;
+				client.rooms.delete(room);
+				const members = rooms.leave(room, userId);
+				console.log(`[LEAVE] ${userId} left room ${room}`);
 
-        broadcast(connections.getByRoom(room), {
-          type: "leave",
-          room,
-          userId,
-          users: members,
-          timestamp: Date.now(),
-        });
-        break;
-      }
+				broadcast(connections.getByRoom(room), {
+					type: 'leave',
+					room,
+					userId,
+					users: members,
+					timestamp: Date.now()
+				});
+				break;
+			}
 
-      case "message": {
-        const room = msg.room;
-        const content = msg.content;
-        if (!room || !content || !client.rooms.has(room)) {
-          sendTo(ws, { type: "error", content: "Must join room before sending messages" });
-          return;
-        }
+			case 'message': {
+				const room = msg.room;
+				const content = msg.content;
+				if (!room || !content || !client.rooms.has(room)) {
+					sendTo(ws, { type: 'error', content: 'Must join room before sending messages' });
+					return;
+				}
 
-        const chatMsg: ChatMessage = {
-          id: crypto.randomUUID(),
-          room,
-          userId,
-          content: content.slice(0, 4096), // Limit message size
-          timestamp: Date.now(),
-        };
+				const chatMsg: ChatMessage = {
+					id: crypto.randomUUID(),
+					room,
+					userId,
+					content: content.slice(0, 4096), // Limit message size
+					timestamp: Date.now()
+				};
 
-        rooms.addMessage(room, chatMsg);
+				rooms.addMessage(room, chatMsg);
 
-        // Broadcast to all room members including sender
-        broadcast(connections.getByRoom(room), {
-          type: "message",
-          room,
-          userId,
-          content: chatMsg.content,
-          timestamp: chatMsg.timestamp,
-        });
-        break;
-      }
+				// Broadcast to all room members including sender
+				broadcast(connections.getByRoom(room), {
+					type: 'message',
+					room,
+					userId,
+					content: chatMsg.content,
+					timestamp: chatMsg.timestamp
+				});
+				break;
+			}
 
-      case "history": {
-        const room = msg.room;
-        if (!room) return;
-        const history = rooms.getHistory(room);
-        sendTo(ws, { type: "history", room, messages: history });
-        break;
-      }
+			case 'history': {
+				const room = msg.room;
+				if (!room) return;
+				const history = rooms.getHistory(room);
+				sendTo(ws, { type: 'history', room, messages: history });
+				break;
+			}
 
-      default:
-        sendTo(ws, { type: "error", content: `Unknown message type` });
-    }
-  });
+			default:
+				sendTo(ws, { type: 'error', content: `Unknown message type` });
+		}
+	});
 
-  // Handle disconnection
-  ws.on("close", () => {
-    console.log(`[DISCONNECT] User ${userId} disconnected`);
-    const client = connections.remove(ws);
-    if (!client) return;
+	// Handle disconnection
+	ws.on('close', () => {
+		console.log(`[DISCONNECT] User ${userId} disconnected`);
+		const client = connections.remove(ws);
+		if (!client) return;
 
-    // Leave all rooms and notify members
-    for (const room of client.rooms) {
-      const members = rooms.leave(room, userId);
-      broadcast(connections.getByRoom(room), {
-        type: "leave",
-        room,
-        userId,
-        users: members,
-        timestamp: Date.now(),
-      });
-    }
-  });
+		// Leave all rooms and notify members
+		for (const room of client.rooms) {
+			const members = rooms.leave(room, userId);
+			broadcast(connections.getByRoom(room), {
+				type: 'leave',
+				room,
+				userId,
+				users: members,
+				timestamp: Date.now()
+			});
+		}
+	});
 
-  ws.on("error", (err: Error) => {
-    console.error(`[WS_ERROR] User ${userId}:`, err.message);
-  });
+	ws.on('error', (err: Error) => {
+		console.error(`[WS_ERROR] User ${userId}:`, err.message);
+	});
 });
 
 // --- Heartbeat interval: detect dead connections ---
 const HEARTBEAT_INTERVAL = 30_000;
 const heartbeat = setInterval(() => {
-  for (const client of connections.getAllClients()) {
-    if (!client.isAlive) {
-      console.log(`[TIMEOUT] Terminating dead connection: ${client.userId}`);
-      client.ws.terminate();
-      continue;
-    }
-    client.isAlive = false;
-    client.ws.ping();
-  }
+	for (const client of connections.getAllClients()) {
+		if (!client.isAlive) {
+			console.log(`[TIMEOUT] Terminating dead connection: ${client.userId}`);
+			client.ws.terminate();
+			continue;
+		}
+		client.isAlive = false;
+		client.ws.ping();
+	}
 }, HEARTBEAT_INTERVAL);
 
-wss.on("close", () => clearInterval(heartbeat));
+wss.on('close', () => clearInterval(heartbeat));
 
 // --- Start server ---
 server.listen(PORT, () => {
-  console.log(`Chat server listening on ws://localhost:${PORT}`);
+	console.log(`Chat server listening on ws://localhost:${PORT}`);
 });
 
 function shutdown(signal: string): void {
-  console.log(`\n${signal} received. Shutting down...`);
-  clearInterval(heartbeat);
-  for (const client of connections.getAllClients()) {
-    client.ws.close(1001, "Server shutting down");
-  }
-  wss.close(() => {
-    server.close(() => {
-      console.log("Server closed.");
-      process.exit(0);
-    });
-  });
-  setTimeout(() => process.exit(1), 10_000);
+	console.log(`\n${signal} received. Shutting down...`);
+	clearInterval(heartbeat);
+	for (const client of connections.getAllClients()) {
+		client.ws.close(1001, 'Server shutting down');
+	}
+	wss.close(() => {
+		server.close(() => {
+			console.log('Server closed.');
+			process.exit(0);
+		});
+	});
+	setTimeout(() => process.exit(1), 10_000);
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 ```
 
 </div>
@@ -918,4 +914,3 @@ func main() {
 - When you need sub-second latency, WebSockets beat HTTP polling by 10-100x in both latency and server load
 
 </div>
-

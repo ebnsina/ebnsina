@@ -1,10 +1,10 @@
 ---
-title: "Production hardening and self-host"
+title: 'Production hardening and self-host'
 subtitle: "Depth limits, complexity limits, persisted queries, error sanitisation, federation, and the full self-hosted nginx deploy. Everything between 'works on my laptop' and 'survives a hostile internet.'"
 chapter: 10
-level: "advanced"
-readingTime: "16 min"
-topics: ["graphql", "security", "performance", "federation", "nginx", "deployment"]
+level: 'advanced'
+readingTime: '16 min'
+topics: ['graphql', 'security', 'performance', 'federation', 'nginx', 'deployment']
 ---
 
 <script>
@@ -40,11 +40,11 @@ npm install graphql-depth-limit
 ```
 
 ```js
-import depthLimit from "graphql-depth-limit";
+import depthLimit from 'graphql-depth-limit';
 
 const yoga = createYoga({
-  schema,
-  validationRules: [depthLimit(10)],
+	schema,
+	validationRules: [depthLimit(10)]
 });
 ```
 
@@ -59,17 +59,19 @@ npm install graphql-query-complexity
 ```
 
 ```js
-import { createComplexityRule, simpleEstimator } from "graphql-query-complexity";
+import { createComplexityRule, simpleEstimator } from 'graphql-query-complexity';
 
 const yoga = createYoga({
-  schema,
-  validationRules: [
-    createComplexityRule({
-      maximumComplexity: 1000,
-      estimators: [simpleEstimator({ defaultComplexity: 1 })],
-      onComplete: (cost) => { /* log to metrics */ },
-    }),
-  ],
+	schema,
+	validationRules: [
+		createComplexityRule({
+			maximumComplexity: 1000,
+			estimators: [simpleEstimator({ defaultComplexity: 1 })],
+			onComplete: (cost) => {
+				/* log to metrics */
+			}
+		})
+	]
 });
 ```
 
@@ -77,8 +79,8 @@ Annotate expensive fields with higher cost in the schema (via directives) or via
 
 ```js
 const fieldEstimator = ({ args, childComplexity }) => {
-  const first = args.first ?? 20;
-  return first * (childComplexity || 1);
+	const first = args.first ?? 20;
+	return first * (childComplexity || 1);
 };
 ```
 
@@ -89,14 +91,14 @@ Now `users(first: 1000) { posts(first: 100) { title } }` is `1000 * 100 = 100_00
 Introspection is the magic that powers GraphiQL. It is also a public schema dump on a path most attackers know to look at.
 
 ```js
-import { createYoga, useDisableIntrospection } from "graphql-yoga";
+import { createYoga, useDisableIntrospection } from 'graphql-yoga';
 
 const yoga = createYoga({
-  schema,
-  graphiql: process.env.NODE_ENV !== "production",
-  plugins: [
-    process.env.NODE_ENV === "production" ? useDisableIntrospection() : null,
-  ].filter(Boolean),
+	schema,
+	graphiql: process.env.NODE_ENV !== 'production',
+	plugins: [process.env.NODE_ENV === 'production' ? useDisableIntrospection() : null].filter(
+		Boolean
+	)
 });
 ```
 
@@ -104,9 +106,10 @@ Some teams keep introspection on in production for tooling. If you do, gate it b
 
 ## Persisted queries
 
-The pinnacle of GraphQL hardening. Instead of accepting arbitrary queries, only accept query *IDs* that map to known queries.
+The pinnacle of GraphQL hardening. Instead of accepting arbitrary queries, only accept query _IDs_ that map to known queries.
 
 The flow:
+
 1. At build time, your client extracts every GraphQL query and computes its hash. Maps `hash → query` and ships the map to the server.
 2. At runtime, clients send `{ id: "abc123", variables: {...} }` instead of the query string.
 3. Server looks up the query by ID. Unknown IDs are rejected.
@@ -114,17 +117,17 @@ The flow:
 graphql-yoga has a plugin (`@graphql-yoga/plugin-persisted-operations`):
 
 ```js
-import { usePersistedOperations } from "@graphql-yoga/plugin-persisted-operations";
-import operations from "./persisted-operations.json"; // built from your client
+import { usePersistedOperations } from '@graphql-yoga/plugin-persisted-operations';
+import operations from './persisted-operations.json'; // built from your client
 
 const yoga = createYoga({
-  schema,
-  plugins: [
-    usePersistedOperations({
-      getPersistedOperation: (key) => operations[key],
-      allowArbitraryOperations: process.env.NODE_ENV !== "production",
-    }),
-  ],
+	schema,
+	plugins: [
+		usePersistedOperations({
+			getPersistedOperation: (key) => operations[key],
+			allowArbitraryOperations: process.env.NODE_ENV !== 'production'
+		})
+	]
 });
 ```
 
@@ -142,23 +145,23 @@ For public APIs, persisted queries are a hard requirement. For internal or first
 In production, do not leak stack traces, SQL strings, or internal identifiers in `errors[]`.
 
 ```js
-import { useMaskedErrors } from "@envelop/core";
+import { useMaskedErrors } from '@envelop/core';
 
 const yoga = createYoga({
-  schema,
-  plugins: [
-    useMaskedErrors({
-      maskError: (error, message) => {
-        if (error?.extensions?.code === "GRAPHQL_VALIDATION_FAILED") return error;
-        if (error?.extensions?.exposed) return error;
-        // unknown errors: hide
-        console.error("Unhandled GraphQL error:", error);
-        return new GraphQLError("Internal server error", {
-          extensions: { code: "INTERNAL_SERVER_ERROR" },
-        });
-      },
-    }),
-  ],
+	schema,
+	plugins: [
+		useMaskedErrors({
+			maskError: (error, message) => {
+				if (error?.extensions?.code === 'GRAPHQL_VALIDATION_FAILED') return error;
+				if (error?.extensions?.exposed) return error;
+				// unknown errors: hide
+				console.error('Unhandled GraphQL error:', error);
+				return new GraphQLError('Internal server error', {
+					extensions: { code: 'INTERNAL_SERVER_ERROR' }
+				});
+			}
+		})
+	]
 });
 ```
 
@@ -188,20 +191,20 @@ Apollo Federation lets multiple GraphQL services compose into one schema. Each s
 ```graphql
 # users service
 type User @key(fields: "id") {
-  id: ID!
-  name: String!
+	id: ID!
+	name: String!
 }
 
 # posts service — extends User without owning it
 extend type User @key(fields: "id") {
-  id: ID! @external
-  posts: [Post!]!
+	id: ID! @external
+	posts: [Post!]!
 }
 
 type Post @key(fields: "id") {
-  id: ID!
-  title: String!
-  author: User!
+	id: ID!
+	title: String!
+	author: User!
 }
 ```
 
@@ -306,14 +309,14 @@ For multi-instance, run multiple Node processes (one per CPU core or thereabouts
 Node is single-threaded. One CPU core max per process. Production Node services run multiple processes — one per core, behind nginx upstream:
 
 ```js
-import cluster from "node:cluster";
-import os from "node:os";
+import cluster from 'node:cluster';
+import os from 'node:os';
 
 if (cluster.isPrimary) {
-  for (let i = 0; i < os.cpus().length; i++) cluster.fork();
+	for (let i = 0; i < os.cpus().length; i++) cluster.fork();
 } else {
-  // start server (use a port from env, e.g. 4000 + WORKER_INDEX)
-  startServer();
+	// start server (use a port from env, e.g. 4000 + WORKER_INDEX)
+	startServer();
 }
 ```
 
@@ -381,4 +384,3 @@ If half the boxes are unchecked, you are not ready. Spend the day. The internet 
 - Pre-launch checklist or it bites you.
 
 That is the full Backend Engineering Path's GraphQL track. Next topic in the path: [gRPC building](/notes/grpc) — when REST and GraphQL are not the right shape and you want a typed RPC across services.
-

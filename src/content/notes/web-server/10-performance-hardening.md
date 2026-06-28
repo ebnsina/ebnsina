@@ -1,10 +1,10 @@
 ---
-title: "Performance & Hardening"
-subtitle: "Workers, sendfile, gzip and brotli, security headers, rate limiting, connection limits, body size caps. The dials that turn a working nginx into a fast, defensible one."
+title: 'Performance & Hardening'
+subtitle: 'Workers, sendfile, gzip and brotli, security headers, rate limiting, connection limits, body size caps. The dials that turn a working nginx into a fast, defensible one.'
 chapter: 10
-level: "advanced"
-readingTime: "14 min"
-topics: ["nginx", "performance", "hardening", "rate limiting", "security headers", "tls"]
+level: 'advanced'
+readingTime: '14 min'
+topics: ['nginx', 'performance', 'hardening', 'rate limiting', 'security headers', 'tls']
 ---
 
 <script>
@@ -266,7 +266,7 @@ The `always` parameter is essential — without it, headers are dropped on error
 
 ## ngx_http_realip_module — restoring the client IP
 
-When nginx is behind a CDN or another load balancer, `$remote_addr` is the *upstream proxy*, not the client. Configure nginx to trust `X-Forwarded-For`:
+When nginx is behind a CDN or another load balancer, `$remote_addr` is the _upstream proxy_, not the client. Configure nginx to trust `X-Forwarded-For`:
 
 ```nginx
 set_real_ip_from 10.0.0.0/8;
@@ -402,4 +402,3 @@ Bottlenecks usually appear at predictable points: backend exhaustion (5xx in ups
 - `wrk` to load-test, `htop` and access logs to find bottlenecks.
 
 This is the end of the Web Server Fundamentals track. You now have a working mental model of HTTP from raw sockets all the way to a hardened production nginx — and can read, modify, and trust your own config.
-

@@ -1,10 +1,10 @@
 ---
-title: "Distributed Consensus"
-subtitle: "Implement simplified Raft leader election with term management, vote requests, and heartbeats."
+title: 'Distributed Consensus'
+subtitle: 'Implement simplified Raft leader election with term management, vote requests, and heartbeats.'
 chapter: 9
-level: "advanced"
-readingTime: "25 min"
-topics: ["Raft", "leader election", "consensus", "distributed systems"]
+level: 'advanced'
+readingTime: '25 min'
+topics: ['Raft', 'leader election', 'consensus', 'distributed systems']
 ---
 
 <script>
@@ -28,14 +28,12 @@ Like a board of directors voting — multiple members must agree on a decision, 
 </Callout>
 
 <Mermaid
-	title="Raft Leader Election"
-	code={`
-graph LR
+title="Raft Leader Election"
+code={`graph LR
   L["Leader<br/>Term 3"] -- heartbeat --> F1["Follower 1"]
   L -- heartbeat --> F2["Follower 2"]
   L -- heartbeat --> F3["Follower 3"]
-  L -- heartbeat --> F4["Follower 4"]
-`}
+  L -- heartbeat --> F4["Follower 4"]`}
 />
 
 ## Raft Key Concepts
@@ -50,294 +48,284 @@ graph LR
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import dgram from "node:dgram";
+import dgram from 'node:dgram';
 
 // --- Types ---
-type NodeState = "follower" | "candidate" | "leader";
+type NodeState = 'follower' | 'candidate' | 'leader';
 
 interface VoteRequest {
-  type: "vote_request";
-  term: number;
-  candidateId: string;
-  lastLogIndex: number;
-  lastLogTerm: number;
+	type: 'vote_request';
+	term: number;
+	candidateId: string;
+	lastLogIndex: number;
+	lastLogTerm: number;
 }
 
 interface VoteResponse {
-  type: "vote_response";
-  term: number;
-  voteGranted: boolean;
-  voterId: string;
+	type: 'vote_response';
+	term: number;
+	voteGranted: boolean;
+	voterId: string;
 }
 
 interface Heartbeat {
-  type: "heartbeat";
-  term: number;
-  leaderId: string;
+	type: 'heartbeat';
+	term: number;
+	leaderId: string;
 }
 
 interface HeartbeatResponse {
-  type: "heartbeat_response";
-  term: number;
-  nodeId: string;
-  success: boolean;
+	type: 'heartbeat_response';
+	term: number;
+	nodeId: string;
+	success: boolean;
 }
 
 type RaftMessage = VoteRequest | VoteResponse | Heartbeat | HeartbeatResponse;
 
 interface Peer {
-  id: string;
-  host: string;
-  port: number;
+	id: string;
+	host: string;
+	port: number;
 }
 
 // --- Raft Node ---
 class RaftNode {
-  private state: NodeState = "follower";
-  private currentTerm = 0;
-  private votedFor: string | null = null;
-  private leaderId: string | null = null;
-  private votesReceived = new Set<string>();
+	private state: NodeState = 'follower';
+	private currentTerm = 0;
+	private votedFor: string | null = null;
+	private leaderId: string | null = null;
+	private votesReceived = new Set<string>();
 
-  private electionTimeout: ReturnType<typeof setTimeout> | null = null;
-  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+	private electionTimeout: ReturnType<typeof setTimeout> | null = null;
+	private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
-  private socket: dgram.Socket;
+	private socket: dgram.Socket;
 
-  // Timing (randomized to prevent split votes)
-  private readonly ELECTION_TIMEOUT_MIN = 1500;  // ms
-  private readonly ELECTION_TIMEOUT_MAX = 3000;
-  private readonly HEARTBEAT_INTERVAL = 500;
+	// Timing (randomized to prevent split votes)
+	private readonly ELECTION_TIMEOUT_MIN = 1500; // ms
+	private readonly ELECTION_TIMEOUT_MAX = 3000;
+	private readonly HEARTBEAT_INTERVAL = 500;
 
-  constructor(
-    private readonly id: string,
-    private readonly port: number,
-    private readonly peers: Peer[],
-    private readonly logIndex: number = 0,
-    private readonly logTerm: number = 0
-  ) {
-    this.socket = dgram.createSocket("udp4");
-    this.socket.on("message", (data) => this.handleMessage(data));
-    this.socket.bind(port);
-  }
+	constructor(
+		private readonly id: string,
+		private readonly port: number,
+		private readonly peers: Peer[],
+		private readonly logIndex: number = 0,
+		private readonly logTerm: number = 0
+	) {
+		this.socket = dgram.createSocket('udp4');
+		this.socket.on('message', (data) => this.handleMessage(data));
+		this.socket.bind(port);
+	}
 
-  start(): void {
-    console.log(`[${this.id}] Starting as follower (term ${this.currentTerm})`);
-    this.resetElectionTimeout();
-  }
+	start(): void {
+		console.log(`[${this.id}] Starting as follower (term ${this.currentTerm})`);
+		this.resetElectionTimeout();
+	}
 
-  private randomElectionTimeout(): number {
-    return (
-      this.ELECTION_TIMEOUT_MIN +
-      Math.random() * (this.ELECTION_TIMEOUT_MAX - this.ELECTION_TIMEOUT_MIN)
-    );
-  }
+	private randomElectionTimeout(): number {
+		return (
+			this.ELECTION_TIMEOUT_MIN +
+			Math.random() * (this.ELECTION_TIMEOUT_MAX - this.ELECTION_TIMEOUT_MIN)
+		);
+	}
 
-  private resetElectionTimeout(): void {
-    if (this.electionTimeout) clearTimeout(this.electionTimeout);
-    this.electionTimeout = setTimeout(
-      () => this.startElection(),
-      this.randomElectionTimeout()
-    );
-  }
+	private resetElectionTimeout(): void {
+		if (this.electionTimeout) clearTimeout(this.electionTimeout);
+		this.electionTimeout = setTimeout(() => this.startElection(), this.randomElectionTimeout());
+	}
 
-  // --- State transitions ---
-  private startElection(): void {
-    this.state = "candidate";
-    this.currentTerm++;
-    this.votedFor = this.id;
-    this.votesReceived.clear();
-    this.votesReceived.add(this.id); // vote for self
+	// --- State transitions ---
+	private startElection(): void {
+		this.state = 'candidate';
+		this.currentTerm++;
+		this.votedFor = this.id;
+		this.votesReceived.clear();
+		this.votesReceived.add(this.id); // vote for self
 
-    console.log(`[${this.id}] Starting election for term ${this.currentTerm}`);
+		console.log(`[${this.id}] Starting election for term ${this.currentTerm}`);
 
-    // Request votes from all peers
-    const request: VoteRequest = {
-      type: "vote_request",
-      term: this.currentTerm,
-      candidateId: this.id,
-      lastLogIndex: this.logIndex,
-      lastLogTerm: this.logTerm,
-    };
+		// Request votes from all peers
+		const request: VoteRequest = {
+			type: 'vote_request',
+			term: this.currentTerm,
+			candidateId: this.id,
+			lastLogIndex: this.logIndex,
+			lastLogTerm: this.logTerm
+		};
 
-    for (const peer of this.peers) {
-      this.send(peer, request);
-    }
+		for (const peer of this.peers) {
+			this.send(peer, request);
+		}
 
-    this.resetElectionTimeout();
-  }
+		this.resetElectionTimeout();
+	}
 
-  private becomeLeader(): void {
-    if (this.state !== "candidate") return;
+	private becomeLeader(): void {
+		if (this.state !== 'candidate') return;
 
-    this.state = "leader";
-    this.leaderId = this.id;
-    console.log(
-      `[${this.id}] Became LEADER for term ${this.currentTerm}`
-    );
+		this.state = 'leader';
+		this.leaderId = this.id;
+		console.log(`[${this.id}] Became LEADER for term ${this.currentTerm}`);
 
-    // Stop election timer
-    if (this.electionTimeout) clearTimeout(this.electionTimeout);
+		// Stop election timer
+		if (this.electionTimeout) clearTimeout(this.electionTimeout);
 
-    // Start sending heartbeats
-    this.sendHeartbeats();
-    this.heartbeatInterval = setInterval(
-      () => this.sendHeartbeats(),
-      this.HEARTBEAT_INTERVAL
-    );
-  }
+		// Start sending heartbeats
+		this.sendHeartbeats();
+		this.heartbeatInterval = setInterval(() => this.sendHeartbeats(), this.HEARTBEAT_INTERVAL);
+	}
 
-  private stepDown(newTerm: number): void {
-    console.log(
-      `[${this.id}] Stepping down. Old term: ${this.currentTerm}, new term: ${newTerm}`
-    );
-    this.state = "follower";
-    this.currentTerm = newTerm;
-    this.votedFor = null;
-    this.leaderId = null;
+	private stepDown(newTerm: number): void {
+		console.log(`[${this.id}] Stepping down. Old term: ${this.currentTerm}, new term: ${newTerm}`);
+		this.state = 'follower';
+		this.currentTerm = newTerm;
+		this.votedFor = null;
+		this.leaderId = null;
 
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
+		if (this.heartbeatInterval) {
+			clearInterval(this.heartbeatInterval);
+			this.heartbeatInterval = null;
+		}
 
-    this.resetElectionTimeout();
-  }
+		this.resetElectionTimeout();
+	}
 
-  // --- Message handling ---
-  private handleMessage(data: Buffer): void {
-    const msg: RaftMessage = JSON.parse(data.toString());
+	// --- Message handling ---
+	private handleMessage(data: Buffer): void {
+		const msg: RaftMessage = JSON.parse(data.toString());
 
-    switch (msg.type) {
-      case "vote_request":
-        this.handleVoteRequest(msg);
-        break;
-      case "vote_response":
-        this.handleVoteResponse(msg);
-        break;
-      case "heartbeat":
-        this.handleHeartbeat(msg);
-        break;
-      case "heartbeat_response":
-        this.handleHeartbeatResponse(msg);
-        break;
-    }
-  }
+		switch (msg.type) {
+			case 'vote_request':
+				this.handleVoteRequest(msg);
+				break;
+			case 'vote_response':
+				this.handleVoteResponse(msg);
+				break;
+			case 'heartbeat':
+				this.handleHeartbeat(msg);
+				break;
+			case 'heartbeat_response':
+				this.handleHeartbeatResponse(msg);
+				break;
+		}
+	}
 
-  private handleVoteRequest(req: VoteRequest): void {
-    // If request has higher term, step down
-    if (req.term > this.currentTerm) {
-      this.stepDown(req.term);
-    }
+	private handleVoteRequest(req: VoteRequest): void {
+		// If request has higher term, step down
+		if (req.term > this.currentTerm) {
+			this.stepDown(req.term);
+		}
 
-    let granted = false;
+		let granted = false;
 
-    if (
-      req.term >= this.currentTerm &&
-      (this.votedFor === null || this.votedFor === req.candidateId) &&
-      (req.lastLogTerm > this.logTerm ||
-        (req.lastLogTerm === this.logTerm && req.lastLogIndex >= this.logIndex))
-    ) {
-      granted = true;
-      this.votedFor = req.candidateId;
-      this.resetElectionTimeout(); // reset since we granted a vote
-    }
+		if (
+			req.term >= this.currentTerm &&
+			(this.votedFor === null || this.votedFor === req.candidateId) &&
+			(req.lastLogTerm > this.logTerm ||
+				(req.lastLogTerm === this.logTerm && req.lastLogIndex >= this.logIndex))
+		) {
+			granted = true;
+			this.votedFor = req.candidateId;
+			this.resetElectionTimeout(); // reset since we granted a vote
+		}
 
-    const response: VoteResponse = {
-      type: "vote_response",
-      term: this.currentTerm,
-      voteGranted: granted,
-      voterId: this.id,
-    };
+		const response: VoteResponse = {
+			type: 'vote_response',
+			term: this.currentTerm,
+			voteGranted: granted,
+			voterId: this.id
+		};
 
-    const peer = this.peers.find((p) => p.id === req.candidateId);
-    if (peer) this.send(peer, response);
-  }
+		const peer = this.peers.find((p) => p.id === req.candidateId);
+		if (peer) this.send(peer, response);
+	}
 
-  private handleVoteResponse(res: VoteResponse): void {
-    if (res.term > this.currentTerm) {
-      this.stepDown(res.term);
-      return;
-    }
+	private handleVoteResponse(res: VoteResponse): void {
+		if (res.term > this.currentTerm) {
+			this.stepDown(res.term);
+			return;
+		}
 
-    if (this.state !== "candidate" || res.term !== this.currentTerm) return;
+		if (this.state !== 'candidate' || res.term !== this.currentTerm) return;
 
-    if (res.voteGranted) {
-      this.votesReceived.add(res.voterId);
-      const majority = Math.floor((this.peers.length + 1) / 2) + 1;
+		if (res.voteGranted) {
+			this.votesReceived.add(res.voterId);
+			const majority = Math.floor((this.peers.length + 1) / 2) + 1;
 
-      console.log(
-        `[${this.id}] Got vote from ${res.voterId} (${this.votesReceived.size}/${majority} needed)`
-      );
+			console.log(
+				`[${this.id}] Got vote from ${res.voterId} (${this.votesReceived.size}/${majority} needed)`
+			);
 
-      if (this.votesReceived.size >= majority) {
-        this.becomeLeader();
-      }
-    }
-  }
+			if (this.votesReceived.size >= majority) {
+				this.becomeLeader();
+			}
+		}
+	}
 
-  private handleHeartbeat(hb: Heartbeat): void {
-    if (hb.term >= this.currentTerm) {
-      if (this.state !== "follower") {
-        this.stepDown(hb.term);
-      }
-      this.currentTerm = hb.term;
-      this.leaderId = hb.leaderId;
-      this.resetElectionTimeout();
-    }
+	private handleHeartbeat(hb: Heartbeat): void {
+		if (hb.term >= this.currentTerm) {
+			if (this.state !== 'follower') {
+				this.stepDown(hb.term);
+			}
+			this.currentTerm = hb.term;
+			this.leaderId = hb.leaderId;
+			this.resetElectionTimeout();
+		}
 
-    const peer = this.peers.find((p) => p.id === hb.leaderId);
-    if (peer) {
-      const response: HeartbeatResponse = {
-        type: "heartbeat_response",
-        term: this.currentTerm,
-        nodeId: this.id,
-        success: hb.term >= this.currentTerm,
-      };
-      this.send(peer, response);
-    }
-  }
+		const peer = this.peers.find((p) => p.id === hb.leaderId);
+		if (peer) {
+			const response: HeartbeatResponse = {
+				type: 'heartbeat_response',
+				term: this.currentTerm,
+				nodeId: this.id,
+				success: hb.term >= this.currentTerm
+			};
+			this.send(peer, response);
+		}
+	}
 
-  private handleHeartbeatResponse(_res: HeartbeatResponse): void {
-    // In a full implementation, track which followers are up-to-date
-  }
+	private handleHeartbeatResponse(_res: HeartbeatResponse): void {
+		// In a full implementation, track which followers are up-to-date
+	}
 
-  // --- Communication ---
-  private sendHeartbeats(): void {
-    const hb: Heartbeat = {
-      type: "heartbeat",
-      term: this.currentTerm,
-      leaderId: this.id,
-    };
-    for (const peer of this.peers) {
-      this.send(peer, hb);
-    }
-  }
+	// --- Communication ---
+	private sendHeartbeats(): void {
+		const hb: Heartbeat = {
+			type: 'heartbeat',
+			term: this.currentTerm,
+			leaderId: this.id
+		};
+		for (const peer of this.peers) {
+			this.send(peer, hb);
+		}
+	}
 
-  private send(peer: Peer, msg: RaftMessage): void {
-    const data = Buffer.from(JSON.stringify(msg));
-    this.socket.send(data, peer.port, peer.host);
-  }
+	private send(peer: Peer, msg: RaftMessage): void {
+		const data = Buffer.from(JSON.stringify(msg));
+		this.socket.send(data, peer.port, peer.host);
+	}
 
-  getStatus(): object {
-    return {
-      id: this.id,
-      state: this.state,
-      term: this.currentTerm,
-      leader: this.leaderId,
-      votedFor: this.votedFor,
-    };
-  }
+	getStatus(): object {
+		return {
+			id: this.id,
+			state: this.state,
+			term: this.currentTerm,
+			leader: this.leaderId,
+			votedFor: this.votedFor
+		};
+	}
 }
 
 // --- Run a node ---
-const nodeId = process.argv[2] || "node-1";
-const port = parseInt(process.argv[3] || "4001");
+const nodeId = process.argv[2] || 'node-1';
+const port = parseInt(process.argv[3] || '4001');
 
 const allNodes: Peer[] = [
-  { id: "node-1", host: "127.0.0.1", port: 4001 },
-  { id: "node-2", host: "127.0.0.1", port: 4002 },
-  { id: "node-3", host: "127.0.0.1", port: 4003 },
+	{ id: 'node-1', host: '127.0.0.1', port: 4001 },
+	{ id: 'node-2', host: '127.0.0.1', port: 4002 },
+	{ id: 'node-3', host: '127.0.0.1', port: 4003 }
 ];
 
 const peers = allNodes.filter((n) => n.id !== nodeId);
@@ -346,10 +334,10 @@ node.start();
 
 // Print status periodically
 setInterval(() => {
-  console.log(`[${nodeId}] Status:`, node.getStatus());
+	console.log(`[${nodeId}] Status:`, node.getStatus());
 }, 5000);
 
-process.on("SIGINT", () => process.exit(0));
+process.on('SIGINT', () => process.exit(0));
 ```
 
 </div>
@@ -705,4 +693,3 @@ func main() {
 - You rarely implement consensus yourself. Use etcd, ZooKeeper, or Consul. But understanding Raft helps you debug and operate these systems.
 
 </div>
-

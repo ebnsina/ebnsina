@@ -1,10 +1,10 @@
 ---
-title: "Signing payloads"
-subtitle: "An unsigned webhook is a public POST endpoint. Anyone who guesses the URL can forge events. HMAC over a canonical string with a timestamp is the simple, correct fix."
+title: 'Signing payloads'
+subtitle: 'An unsigned webhook is a public POST endpoint. Anyone who guesses the URL can forge events. HMAC over a canonical string with a timestamp is the simple, correct fix.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["webhooks", "hmac", "signatures", "security", "replay"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['webhooks', 'hmac', 'signatures', 'security', 'replay']
 ---
 
 <script>
@@ -187,7 +187,7 @@ HMAC over SHA-256 is the right default. Notes:
 - **Don't use MD5.** Broken.
 - **Asymmetric signatures (Ed25519, ECDSA)** are an option for high-security cases — the receiver verifies with a public key, no shared secret. Slower to compute, more complex; HMAC-SHA256 covers 99% of needs.
 
-The `crypto/hmac` package in Go uses constant-time comparison for `hmac.Equal` — important on the *receiver* side (chapter 5) to avoid timing attacks. The producer just computes; only the receiver compares.
+The `crypto/hmac` package in Go uses constant-time comparison for `hmac.Equal` — important on the _receiver_ side (chapter 5) to avoid timing attacks. The producer just computes; only the receiver compares.
 
 <Callout type="info">
 
@@ -240,13 +240,13 @@ Don't make the signing secret part of the URL itself (`POST /webhooks/secret-her
 - Browser history if anyone tested the URL by hand.
 - HTTP referer headers if the receiver redirects.
 
-Secrets must travel in the body or headers, never the path. The URL is for identifying *which* subscription; the secret is for proving authenticity.
+Secrets must travel in the body or headers, never the path. The URL is for identifying _which_ subscription; the secret is for proving authenticity.
 
 ## Anti-pattern: sending the secret in the request
 
 Some early webhook systems put the secret in a header (`X-Auth-Token: secret-here`). The receiver compares to the expected secret. This is what HMAC was designed to replace — sending the secret on every request means a single intercepted request leaks it.
 
-HMAC sends a *signature* derived from the secret, not the secret itself. The secret never crosses the wire after subscription creation.
+HMAC sends a _signature_ derived from the secret, not the secret itself. The secret never crosses the wire after subscription creation.
 
 ## Sample full POST
 
@@ -281,4 +281,3 @@ The body bytes are the input to HMAC alongside the timestamp. Any byte changes d
 - Never put the secret in the URL or send it as a header.
 
 Next: [Verifying signatures](/notes/webhooks/05-verifying) — the receiver side, with timing-safe compare and the framework body-parsing trap.
-

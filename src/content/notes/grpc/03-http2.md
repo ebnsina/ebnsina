@@ -1,10 +1,10 @@
 ---
-title: "HTTP/2 underneath"
-subtitle: "gRPC is HTTP/2 with a particular set of headers and a particular way of framing protobuf bytes. Knowing what HTTP/2 actually does explains every gRPC failure mode you will hit in production."
+title: 'HTTP/2 underneath'
+subtitle: 'gRPC is HTTP/2 with a particular set of headers and a particular way of framing protobuf bytes. Knowing what HTTP/2 actually does explains every gRPC failure mode you will hit in production.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["grpc", "http2", "framing", "multiplexing", "flow control"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['grpc', 'http2', 'framing', 'multiplexing', 'flow control']
 ---
 
 <script>
@@ -55,7 +55,7 @@ Server → Client: HEADERS  grpc-status=0  grpc-message=...
                           (END_STREAM flag set; this is "trailers")
 ```
 
-That last HEADERS frame — sent *after* the DATA — is gRPC's **trailers**. HTTP/1.1 cannot send headers after the body started; HTTP/2 can. gRPC uses trailers to carry the status code and message. That is why every gRPC client demands trailer support.
+That last HEADERS frame — sent _after_ the DATA — is gRPC's **trailers**. HTTP/1.1 cannot send headers after the body started; HTTP/2 can. gRPC uses trailers to carry the status code and message. That is why every gRPC client demands trailer support.
 
 For streaming RPCs, multiple DATA frames flow on the same stream. The framing format is `[1-byte compressed flag][4-byte length][message bytes]`, repeated. A reader pulls one length-prefixed message at a time.
 
@@ -65,12 +65,12 @@ One TCP connection. Hundreds of concurrent streams. No connection setup per call
 
 For service-to-service traffic that is normally chatty, this is huge. Compare:
 
-| | HTTP/1.1 | HTTP/2 |
-|---|---|---|
-| TCP handshakes for 100 calls | 100 (or 17 with keep-alive + pool of 6) | 1 |
-| TLS handshakes | 100 (or 17) | 1 |
-| Concurrent in-flight | 6 per origin (browser limit) | hundreds |
-| Head-of-line blocking | yes (next request waits for prior) | no (per-stream) |
+|                              | HTTP/1.1                                | HTTP/2          |
+| ---------------------------- | --------------------------------------- | --------------- |
+| TCP handshakes for 100 calls | 100 (or 17 with keep-alive + pool of 6) | 1               |
+| TLS handshakes               | 100 (or 17)                             | 1               |
+| Concurrent in-flight         | 6 per origin (browser limit)            | hundreds        |
+| Head-of-line blocking        | yes (next request waits for prior)      | no (per-stream) |
 
 Real-world impact: a Go service calling another Go service over gRPC sustains tens of thousands of RPCs per second on one connection without breaking a sweat. The same workload on HTTP/1.1 + JSON spends most of its time on connection churn.
 
@@ -142,7 +142,7 @@ Code that ignores `ctx` will keep working after the client gave up. Wasted CPU, 
 
 ## Load balancing — where HTTP/2 makes life harder
 
-HTTP/2 long-lived connections + multiplexing are great for throughput. They are *terrible* for naïve load balancing.
+HTTP/2 long-lived connections + multiplexing are great for throughput. They are _terrible_ for naïve load balancing.
 
 A standard L4 (TCP) load balancer sees one connection from the client and routes it to one backend. All hundreds of streams ride that connection. The other backends sit idle. You scaled to ten replicas; one is taking 100% of the traffic.
 
@@ -226,4 +226,3 @@ If a client is supposed to multiplex but you see fifty connections, your client 
 - `grpcurl` and Wireshark are your debugging eyes.
 
 Next: [Your first server and client](/notes/grpc/04-first-server) — Go end-to-end, codegen included, in code you understand.
-

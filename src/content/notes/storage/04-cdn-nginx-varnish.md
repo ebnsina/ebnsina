@@ -1,10 +1,10 @@
 ---
-title: "CDN with nginx and Varnish"
-subtitle: "Cache static assets close to users — self-hosted edge caching with nginx proxy_cache and Varnish as a reverse proxy."
+title: 'CDN with nginx and Varnish'
+subtitle: 'Cache static assets close to users — self-hosted edge caching with nginx proxy_cache and Varnish as a reverse proxy.'
 chapter: 4
-level: "intermediate"
-readingTime: "10 min"
-topics: ["CDN", "nginx", "Varnish", "caching", "edge caching", "cache invalidation", "HTTP headers"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['CDN', 'nginx', 'Varnish', 'caching', 'edge caching', 'cache invalidation', 'HTTP headers']
 ---
 
 <script>
@@ -205,9 +205,7 @@ acl purge_acl {
 ```typescript
 // Purge from application code after updating a file
 async function purgeFromCDN(keys: string[]) {
-  await Promise.all(keys.map(key =>
-    fetch(`http://varnish:6081/${key}`, { method: 'PURGE' })
-  ));
+	await Promise.all(keys.map((key) => fetch(`http://varnish:6081/${key}`, { method: 'PURGE' })));
 }
 ```
 
@@ -226,10 +224,10 @@ sub vcl_backend_response {
 ```typescript
 // Purge all objects tagged with a product ID
 async function purgeByTag(tag: string) {
-  await fetch(`http://varnish:6081/`, {
-    method: 'PURGE',
-    headers: { 'xkey-purge': tag },
-  });
+	await fetch(`http://varnish:6081/`, {
+		method: 'PURGE',
+		headers: { 'xkey-purge': tag }
+	});
 }
 
 // When product-123 image changes, purge all its cached representations
@@ -252,7 +250,7 @@ services:
   varnish:
     image: varnish:7.4
     ports:
-      - "6081:6081"
+      - '6081:6081'
     volumes:
       - ./varnish/default.vcl:/etc/varnish/default.vcl
     command: varnishd -F -f /etc/varnish/default.vcl -s malloc,2g
@@ -262,8 +260,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -330,26 +328,27 @@ Pre-populate cache after deploy or cache flush:
 
 ```typescript
 async function warmCache(keys: string[]) {
-  const CDN_BASE = process.env.CDN_URL;
-  const CONCURRENCY = 10;
+	const CDN_BASE = process.env.CDN_URL;
+	const CONCURRENCY = 10;
 
-  // Process in batches of CONCURRENCY
-  for (let i = 0; i < keys.length; i += CONCURRENCY) {
-    const batch = keys.slice(i, i + CONCURRENCY);
-    await Promise.all(
-      batch.map(key =>
-        fetch(`${CDN_BASE}/${key}`, { method: 'HEAD' })
-          .catch(err => console.warn(`Warm failed for ${key}:`, err.message))
-      )
-    );
-  }
+	// Process in batches of CONCURRENCY
+	for (let i = 0; i < keys.length; i += CONCURRENCY) {
+		const batch = keys.slice(i, i + CONCURRENCY);
+		await Promise.all(
+			batch.map((key) =>
+				fetch(`${CDN_BASE}/${key}`, { method: 'HEAD' }).catch((err) =>
+					console.warn(`Warm failed for ${key}:`, err.message)
+				)
+			)
+		);
+	}
 }
 
 // After a deploy, warm the most popular assets
 const popularKeys = await db.query(
-  'SELECT storage_key FROM files ORDER BY access_count DESC LIMIT 500'
+	'SELECT storage_key FROM files ORDER BY access_count DESC LIMIT 500'
 );
-await warmCache(popularKeys.rows.map(r => r.storage_key));
+await warmCache(popularKeys.rows.map((r) => r.storage_key));
 ```
 
 ## Monitoring Cache Performance
@@ -373,19 +372,19 @@ varnishlog -g request -q 'ReqURL ~ "\.jpg$"'
 ```typescript
 // Monitor X-Cache-Status header in your app
 app.use((req, res, next) => {
-  res.on('finish', () => {
-    const cacheStatus = res.getHeader('X-Cache-Status');
-    if (cacheStatus) {
-      metrics.increment(`cdn.${String(cacheStatus).toLowerCase()}`);
-    }
-  });
-  next();
+	res.on('finish', () => {
+		const cacheStatus = res.getHeader('X-Cache-Status');
+		if (cacheStatus) {
+			metrics.increment(`cdn.${String(cacheStatus).toLowerCase()}`);
+		}
+	});
+	next();
 });
 ```
 
 **Target:** >90% cache hit rate for static assets. If below, check:
+
 - `Vary` header fragmenting the cache by user-agent/cookie
 - Short TTLs preventing effective caching
 - Cache too small for working set (`max_size`)
 - Cookies on asset requests bypassing cache
-

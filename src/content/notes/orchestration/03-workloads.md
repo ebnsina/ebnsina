@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes Workloads"
+title: 'Kubernetes Workloads'
 subtitle: "StatefulSets, DaemonSets, Jobs, CronJobs — the right object for each class of workload and when Deployments aren't enough."
 chapter: 3
-level: "intermediate"
-readingTime: "10 min"
-topics: ["StatefulSet", "DaemonSet", "Job", "CronJob", "Kubernetes", "workloads"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['StatefulSet', 'DaemonSet', 'Job', 'CronJob', 'Kubernetes', 'workloads']
 ---
 
 <script>
@@ -55,7 +55,7 @@ metadata:
   name: postgres
   namespace: production
 spec:
-  serviceName: postgres              # headless service — required for stable DNS
+  serviceName: postgres # headless service — required for stable DNS
   replicas: 3
   selector:
     matchLabels:
@@ -79,7 +79,7 @@ spec:
               mountPath: /var/lib/postgresql/data
           ports:
             - containerPort: 5432
-  volumeClaimTemplates:              # creates one PVC per pod
+  volumeClaimTemplates: # creates one PVC per pod
     - metadata:
         name: data
       spec:
@@ -91,6 +91,7 @@ spec:
 ```
 
 Headless Service for stable DNS per pod:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -98,7 +99,7 @@ metadata:
   name: postgres
   namespace: production
 spec:
-  clusterIP: None      # headless — no VIP, returns individual pod IPs
+  clusterIP: None # headless — no VIP, returns individual pod IPs
   selector:
     app: postgres
   ports:
@@ -106,6 +107,7 @@ spec:
 ```
 
 With this, pods are reachable by DNS:
+
 ```
 postgres-0.postgres.production.svc.cluster.local
 postgres-1.postgres.production.svc.cluster.local
@@ -134,13 +136,13 @@ spec:
         app: promtail
     spec:
       tolerations:
-        - key: node-role.kubernetes.io/control-plane   # also run on control-plane nodes
+        - key: node-role.kubernetes.io/control-plane # also run on control-plane nodes
           effect: NoSchedule
           operator: Exists
       containers:
         - name: promtail
           image: grafana/promtail:latest
-          args: ["-config.file=/etc/promtail/config.yml"]
+          args: ['-config.file=/etc/promtail/config.yml']
           volumeMounts:
             - name: varlog
               mountPath: /var/log
@@ -169,15 +171,15 @@ metadata:
   name: db-migration
   namespace: production
 spec:
-  backoffLimit: 3          # retry up to 3 times on failure
-  activeDeadlineSeconds: 300   # fail if not done in 5 minutes
+  backoffLimit: 3 # retry up to 3 times on failure
+  activeDeadlineSeconds: 300 # fail if not done in 5 minutes
   template:
     spec:
-      restartPolicy: OnFailure   # Never or OnFailure (not Always)
+      restartPolicy: OnFailure # Never or OnFailure (not Always)
       containers:
         - name: migrate
           image: myorg/order-service:1.2.0
-          command: ["node", "dist/migrate.js"]
+          command: ['node', 'dist/migrate.js']
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -201,10 +203,11 @@ kubectl delete job db-migration -n production
 ```
 
 **Parallel Jobs** — process a workload in parallel:
+
 ```yaml
 spec:
-  completions: 100       # run 100 total completions
-  parallelism: 10        # run 10 at a time
+  completions: 100 # run 100 total completions
+  parallelism: 10 # run 10 at a time
 ```
 
 Use Jobs for: database migrations, batch processing, one-time data imports, backups.
@@ -220,9 +223,9 @@ metadata:
   name: daily-report
   namespace: production
 spec:
-  schedule: "0 6 * * *"        # 6am every day (UTC)
-  timeZone: "America/New_York"  # Kubernetes 1.27+
-  concurrencyPolicy: Forbid     # don't run if previous run is still going
+  schedule: '0 6 * * *' # 6am every day (UTC)
+  timeZone: 'America/New_York' # Kubernetes 1.27+
+  concurrencyPolicy: Forbid # don't run if previous run is still going
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
   jobTemplate:
@@ -234,13 +237,14 @@ spec:
           containers:
             - name: report
               image: myorg/reporting:latest
-              command: ["node", "dist/generate-report.js"]
+              command: ['node', 'dist/generate-report.js']
               env:
                 - name: REPORT_DATE
-                  value: "yesterday"
+                  value: 'yesterday'
 ```
 
 `concurrencyPolicy`:
+
 - `Allow` — start a new run even if previous is still running
 - `Forbid` — skip the new run if previous is still running
 - `Replace` — stop the previous run and start a new one
@@ -260,7 +264,7 @@ spec:
 
     - name: run-migrations
       image: myorg/order-service:1.2.0
-      command: ["node", "dist/migrate.js"]
+      command: ['node', 'dist/migrate.js']
       env:
         - name: DATABASE_URL
           valueFrom:
@@ -299,7 +303,7 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70   # scale when avg CPU > 70%
+          averageUtilization: 70 # scale when avg CPU > 70%
     - type: Resource
       resource:
         name: memory
@@ -321,7 +325,7 @@ metadata:
   name: order-service-pdb
   namespace: production
 spec:
-  minAvailable: 2       # at least 2 pods must be available
+  minAvailable: 2 # at least 2 pods must be available
   # OR:
   # maxUnavailable: 1   # at most 1 pod can be down
   selector:
@@ -330,4 +334,3 @@ spec:
 ```
 
 With PDB: `kubectl drain` will not evict pods if doing so would violate the budget. It waits until replacements are ready.
-

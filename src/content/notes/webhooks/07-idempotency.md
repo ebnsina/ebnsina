@@ -1,17 +1,17 @@
 ---
-title: "Idempotency on the receiver"
+title: 'Idempotency on the receiver'
 subtitle: "At-least-once delivery means duplicates. The receiver's job is to process exactly once anyway. The inbox pattern — dedupe keys, atomic claim, idempotent side effects — is how."
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["webhooks", "idempotency", "inbox pattern", "dedup", "transactions"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['webhooks', 'idempotency', 'inbox pattern', 'dedup', 'transactions']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The producer retries until acknowledged. The receiver crashes occasionally between processing and ACK. Both behaviours are correct. The unavoidable consequence is that some webhooks are delivered, processed, and *then* the producer retries because it never saw the ACK.
+The producer retries until acknowledged. The receiver crashes occasionally between processing and ACK. Both behaviours are correct. The unavoidable consequence is that some webhooks are delivered, processed, and _then_ the producer retries because it never saw the ACK.
 
 The receiver must handle that. Process every event exactly once, even when it arrives twice (or ten times). This chapter is the receiver's idempotency story — small in code, large in correctness.
 
@@ -241,7 +241,7 @@ Returning anything else (4xx, 5xx) makes the producer keep retrying. Worst case,
 
 ## Ordering — webhooks don't guarantee it
 
-A retry pattern produces *out-of-order* delivery. Event A is sent at t=0, fails. Event B is sent at t=1, succeeds. Event A retries at t=60 — receiver sees A *after* B.
+A retry pattern produces _out-of-order_ delivery. Event A is sent at t=0, fails. Event B is sent at t=1, succeeds. Event A retries at t=60 — receiver sees A _after_ B.
 
 If you depend on order ("user.created must arrive before user.updated"), you have a problem. Three approaches:
 
@@ -276,7 +276,7 @@ For most webhook handlers, the work is small (update a record, enqueue a job). O
 
 ## Receiver-side replay
 
-When debugging, you may want to *re-process* a specific event. The simplest path: clear its inbox row, then trigger redelivery from the producer. Receivers should not have a "force re-process" button that bypasses the inbox — too easy to double-process by accident.
+When debugging, you may want to _re-process_ a specific event. The simplest path: clear its inbox row, then trigger redelivery from the producer. Receivers should not have a "force re-process" button that bypasses the inbox — too easy to double-process by accident.
 
 ## Recap
 
@@ -292,4 +292,3 @@ When debugging, you may want to *re-process* a specific event. The simplest path
 - Long handlers: split into "claim → work → mark processed" if you need to avoid long transactions.
 
 Next: [Delivery guarantees and the dead-letter queue](/notes/webhooks/08-delivery-dlq) — what happens when retries run out, and the operator interface for deciding what to do.
-

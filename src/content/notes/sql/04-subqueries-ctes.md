@@ -1,10 +1,10 @@
 ---
-title: "Subqueries & CTEs"
-subtitle: "Queries inside queries — scalar, correlated, derived tables, WITH clauses, and recursion."
+title: 'Subqueries & CTEs'
+subtitle: 'Queries inside queries — scalar, correlated, derived tables, WITH clauses, and recursion.'
 chapter: 4
-level: "intermediate"
-readingTime: "15 min"
-topics: ["subquery", "cte", "recursive"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['subquery', 'cte', 'recursive']
 ---
 
 <script>
@@ -29,14 +29,14 @@ The inner query computes the overall average once; each row subtracts it. If a s
 
 ## Subqueries in WHERE: IN and EXISTS
 
-To filter against a *set* of values, use a subquery with `IN`:
+To filter against a _set_ of values, use a subquery with `IN`:
 
 ```sql
 SELECT name FROM customers
 WHERE id IN (SELECT customer_id FROM orders WHERE amount > 100);
 ```
 
-This finds customers who have at least one order over 100. `EXISTS` expresses the same idea differently — it tests whether the subquery returns *any* row at all:
+This finds customers who have at least one order over 100. `EXISTS` expresses the same idea differently — it tests whether the subquery returns _any_ row at all:
 
 ```sql
 SELECT name FROM customers c
@@ -48,7 +48,7 @@ WHERE EXISTS (
 
 <Callout type="warning">
 
-**`NOT IN` with nulls is a trap.** If the subquery returns even one `NULL`, `NOT IN` returns *no rows at all*, because `x <> NULL` is unknown for every comparison. `WHERE id NOT IN (SELECT customer_id FROM orders)` silently breaks if `customer_id` can be null. Prefer `NOT EXISTS`, which handles nulls correctly and is usually optimized just as well.
+**`NOT IN` with nulls is a trap.** If the subquery returns even one `NULL`, `NOT IN` returns _no rows at all_, because `x <> NULL` is unknown for every comparison. `WHERE id NOT IN (SELECT customer_id FROM orders)` silently breaks if `customer_id` can be null. Prefer `NOT EXISTS`, which handles nulls correctly and is usually optimized just as well.
 
 </Callout>
 
@@ -119,13 +119,13 @@ SELECT * FROM per_customer WHERE total > 50;
 
 <Callout type="info">
 
-**CTEs and performance.** Historically Postgres treated CTEs as an "optimization fence" — always materializing them, sometimes hurting performance. Since Postgres 12, simple non-recursive CTEs referenced once are *inlined* (optimized like a subquery) by default. You can force the old behavior with `WITH ... AS MATERIALIZED` when you genuinely want to compute a result once and reuse it.
+**CTEs and performance.** Historically Postgres treated CTEs as an "optimization fence" — always materializing them, sometimes hurting performance. Since Postgres 12, simple non-recursive CTEs referenced once are _inlined_ (optimized like a subquery) by default. You can force the old behavior with `WITH ... AS MATERIALIZED` when you genuinely want to compute a result once and reuse it.
 
 </Callout>
 
 ## Recursive CTEs
 
-A `WITH RECURSIVE` CTE references *itself*, letting you traverse hierarchies and graphs — org charts, category trees, bill-of-materials. It has two parts joined by `UNION ALL`:
+A `WITH RECURSIVE` CTE references _itself_, letting you traverse hierarchies and graphs — org charts, category trees, bill-of-materials. It has two parts joined by `UNION ALL`:
 
 1. The **anchor** — the starting rows.
 2. The **recursive term** — rows derived from the previous iteration, run repeatedly until it produces nothing.
@@ -159,7 +159,7 @@ Each iteration finds the direct reports of the rows discovered last round, accum
 
 </Callout>
 
-A common companion query is "everything *under* a given node" — flip the join direction (`org.id = e.manager_id` becomes `e.manager_id = org.id`) and start the anchor at the node you care about rather than the root.
+A common companion query is "everything _under_ a given node" — flip the join direction (`org.id = e.manager_id` becomes `e.manager_id = org.id`) and start the anchor at the node you care about rather than the root.
 
 ## Choosing Between Them
 
@@ -170,4 +170,4 @@ A common companion query is "everything *under* a given node" — flip the join 
 
 ## Recap
 
-Subqueries let you compose queries in stages; CTEs give those stages names and make complex logic readable; recursive CTEs unlock tree and graph traversal. Mind the `NOT IN`-with-nulls trap and watch correlated subqueries on large tables. Next we make all of this *fast* with indexes and query plans.
+Subqueries let you compose queries in stages; CTEs give those stages names and make complex logic readable; recursive CTEs unlock tree and graph traversal. Mind the `NOT IN`-with-nulls trap and watch correlated subqueries on large tables. Next we make all of this _fast_ with indexes and query plans.

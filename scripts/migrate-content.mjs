@@ -58,7 +58,10 @@ function detectComponents(body) {
 
 function convertCodeTabs(body) {
 	return body
-		.replace(/<Fragment\s+slot="ts">[ \t]*\n/g, '<div class="ct-panel ct-active" data-lang="ts">\n\n')
+		.replace(
+			/<Fragment\s+slot="ts">[ \t]*\n/g,
+			'<div class="ct-panel ct-active" data-lang="ts">\n\n'
+		)
 		.replace(/<Fragment\s+slot="go">[ \t]*\n/g, '<div class="ct-panel" data-lang="go">\n\n')
 		.replace(/\n[ \t]*<\/Fragment>/g, '\n\n</div>');
 }

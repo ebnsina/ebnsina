@@ -1,10 +1,10 @@
 ---
-title: "Cache Invalidation"
-subtitle: "The hardest problem in computer science — TTL, event-driven purging, versioned keys, and when to accept staleness."
+title: 'Cache Invalidation'
+subtitle: 'The hardest problem in computer science — TTL, event-driven purging, versioned keys, and when to accept staleness.'
 chapter: 5
-level: "intermediate"
-readingTime: "14 min"
-topics: ["invalidation", "TTL", "versioned keys", "event-driven", "consistency"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['invalidation', 'TTL', 'versioned keys', 'event-driven', 'consistency']
 ---
 
 <script>
@@ -25,7 +25,7 @@ A whiteboard in an office shows the quarterly targets. The finance team updates 
 
 </Callout>
 
-Phil Karlton's quip stands: *"There are only two hard things in computer science: cache invalidation and naming things."* The difficulty is fundamental — cache and database are two sources of truth, and distributed systems have no perfect solution, only tradeoffs.
+Phil Karlton's quip stands: _"There are only two hard things in computer science: cache invalidation and naming things."_ The difficulty is fundamental — cache and database are two sources of truth, and distributed systems have no perfect solution, only tradeoffs.
 
 ## Strategy 1 — TTL (Time-Based Expiry)
 
@@ -62,24 +62,24 @@ Delete the cache entry whenever the underlying data changes. The next read repop
 
 ```typescript
 class ProductService {
-  async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
-    // 1. Write to DB
-    const product = await this.db.products.update(id, data);
+	async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+		// 1. Write to DB
+		const product = await this.db.products.update(id, data);
 
-    // 2. Invalidate cache — next read will repopulate
-    await this.redis.del(`product:${id}`);
+		// 2. Invalidate cache — next read will repopulate
+		await this.redis.del(`product:${id}`);
 
-    return product;
-  }
+		return product;
+	}
 
-  async getProduct(id: string): Promise<Product> {
-    const cached = await this.redis.get(`product:${id}`);
-    if (cached) return JSON.parse(cached);
+	async getProduct(id: string): Promise<Product> {
+		const cached = await this.redis.get(`product:${id}`);
+		if (cached) return JSON.parse(cached);
 
-    const product = await this.db.products.findById(id);
-    await this.redis.setEx(`product:${id}`, 300, JSON.stringify(product));
-    return product;
-  }
+		const product = await this.db.products.findById(id);
+		await this.redis.setEx(`product:${id}`, 300, JSON.stringify(product));
+		return product;
+	}
 }
 ```
 
@@ -99,36 +99,36 @@ Instead of invalidating, change the key. Old key stays in cache until evicted, n
 
 ```typescript
 class VersionedCache {
-  async getVersion(entity: string, id: string): Promise<number> {
-    const v = await this.redis.get(`version:${entity}:${id}`);
-    return v ? parseInt(v) : 1;
-  }
+	async getVersion(entity: string, id: string): Promise<number> {
+		const v = await this.redis.get(`version:${entity}:${id}`);
+		return v ? parseInt(v) : 1;
+	}
 
-  async bumpVersion(entity: string, id: string): Promise<number> {
-    return this.redis.incr(`version:${entity}:${id}`);
-  }
+	async bumpVersion(entity: string, id: string): Promise<number> {
+		return this.redis.incr(`version:${entity}:${id}`);
+	}
 
-  cacheKey(entity: string, id: string, version: number): string {
-    return `${entity}:${id}:v${version}`;
-  }
+	cacheKey(entity: string, id: string, version: number): string {
+		return `${entity}:${id}:v${version}`;
+	}
 
-  async get<T>(entity: string, id: string): Promise<T | null> {
-    const version = await this.getVersion(entity, id);
-    const key = this.cacheKey(entity, id, version);
-    const cached = await this.redis.get(key);
-    return cached ? JSON.parse(cached) : null;
-  }
+	async get<T>(entity: string, id: string): Promise<T | null> {
+		const version = await this.getVersion(entity, id);
+		const key = this.cacheKey(entity, id, version);
+		const cached = await this.redis.get(key);
+		return cached ? JSON.parse(cached) : null;
+	}
 
-  async set<T>(entity: string, id: string, value: T, ttl: number): Promise<void> {
-    const version = await this.getVersion(entity, id);
-    const key = this.cacheKey(entity, id, version);
-    await this.redis.setEx(key, ttl, JSON.stringify(value));
-  }
+	async set<T>(entity: string, id: string, value: T, ttl: number): Promise<void> {
+		const version = await this.getVersion(entity, id);
+		const key = this.cacheKey(entity, id, version);
+		await this.redis.setEx(key, ttl, JSON.stringify(value));
+	}
 
-  async invalidate(entity: string, id: string): Promise<void> {
-    // Just bump the version — old keys expire naturally
-    await this.bumpVersion(entity, id);
-  }
+	async invalidate(entity: string, id: string): Promise<void> {
+		// Just bump the version — old keys expire naturally
+		await this.bumpVersion(entity, id);
+	}
 }
 ```
 
@@ -143,16 +143,16 @@ Publish invalidation events via a message bus. All cache nodes subscribe and pur
 ```typescript
 // Publisher (in the service that writes)
 async function updateUser(id: string, data: Partial<User>): Promise<User> {
-  const user = await db.users.update(id, data);
-  await eventBus.publish('user.updated', { id, fields: Object.keys(data) });
-  return user;
+	const user = await db.users.update(id, data);
+	await eventBus.publish('user.updated', { id, fields: Object.keys(data) });
+	return user;
 }
 
 // Subscriber (cache invalidation worker)
 eventBus.subscribe('user.updated', async ({ id }) => {
-  await redis.del(`user:${id}`);
-  await redis.del(`user:${id}:permissions`); // invalidate related keys too
-  console.log(`Invalidated cache for user:${id}`);
+	await redis.del(`user:${id}`);
+	await redis.del(`user:${id}:permissions`); // invalidate related keys too
+	console.log(`Invalidated cache for user:${id}`);
 });
 ```
 
@@ -171,8 +171,8 @@ await subscriber.connect();
 
 // Notified whenever a key expires or is deleted
 await subscriber.subscribe('__keyevent@0__:expired', (key) => {
-  console.log(`Key expired: ${key}`);
-  // Pre-warm replacement if needed
+	console.log(`Key expired: ${key}`);
+	// Pre-warm replacement if needed
 });
 ```
 
@@ -182,12 +182,12 @@ For most applications, this combination is enough:
 
 ```typescript
 async function get<T>(key: string, loader: () => Promise<T>, ttl = 60): Promise<T> {
-  const cached = await redis.get(key);
-  if (cached) return JSON.parse(cached);
+	const cached = await redis.get(key);
+	if (cached) return JSON.parse(cached);
 
-  const value = await loader();
-  await redis.setEx(key, ttl, JSON.stringify(value));
-  return value;
+	const value = await loader();
+	await redis.setEx(key, ttl, JSON.stringify(value));
+	return value;
 }
 
 // Short TTL handles most staleness without event plumbing
@@ -202,21 +202,21 @@ Group keys under logical tags, then invalidate all keys with a tag at once.
 
 ```typescript
 class TaggedCache {
-  async set(key: string, value: unknown, tags: string[], ttl: number): Promise<void> {
-    await this.redis.setEx(key, ttl, JSON.stringify(value));
-    // Register this key under each tag
-    for (const tag of tags) {
-      await this.redis.sAdd(`tag:${tag}`, key);
-    }
-  }
+	async set(key: string, value: unknown, tags: string[], ttl: number): Promise<void> {
+		await this.redis.setEx(key, ttl, JSON.stringify(value));
+		// Register this key under each tag
+		for (const tag of tags) {
+			await this.redis.sAdd(`tag:${tag}`, key);
+		}
+	}
 
-  async invalidateTag(tag: string): Promise<void> {
-    const keys = await this.redis.sMembers(`tag:${tag}`);
-    if (keys.length === 0) return;
+	async invalidateTag(tag: string): Promise<void> {
+		const keys = await this.redis.sMembers(`tag:${tag}`);
+		if (keys.length === 0) return;
 
-    await this.redis.del(...keys);       // delete all tagged keys
-    await this.redis.del(`tag:${tag}`); // clean up tag set
-  }
+		await this.redis.del(...keys); // delete all tagged keys
+		await this.redis.del(`tag:${tag}`); // clean up tag set
+	}
 }
 
 // All user-related cache entries tagged
@@ -246,5 +246,4 @@ Invalidating groups of related keys?
   → Tag-based invalidation.
 ```
 
-The wrong choice isn't using TTL — it's using *too long* a TTL and not deleting on writes. Most bugs come from forgetting to invalidate after a write, not from choosing the wrong strategy.
-
+The wrong choice isn't using TTL — it's using _too long_ a TTL and not deleting on writes. Most bugs come from forgetting to invalidate after a write, not from choosing the wrong strategy.

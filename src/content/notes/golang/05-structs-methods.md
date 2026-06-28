@@ -1,10 +1,10 @@
 ---
-title: "Structs & Methods"
+title: 'Structs & Methods'
 subtitle: "Go doesn't have classes — it has structs with methods. Simpler, more explicit, and surprisingly powerful."
 chapter: 5
-level: "beginner"
-readingTime: "18 min"
-topics: ["structs", "methods", "receivers", "embedding", "constructors"]
+level: 'beginner'
+readingTime: '18 min'
+topics: ['structs', 'methods', 'receivers', 'embedding', 'constructors']
 ---
 
 <script>
@@ -170,12 +170,12 @@ fmt.Println(acc.Balance)  // 150
 
 ### When to Use Which?
 
-| Use pointer receiver `*T` when... | Use value receiver `T` when... |
-|---|---|
-| The method modifies the struct | The method only reads fields |
-| The struct is large (avoids copying) | The struct is small (a few fields) |
-| Consistency — if any method needs a pointer, use pointer for all | The type is immutable by design |
-| The struct contains a `sync.Mutex` or similar | Primitive-like types (Point, Color) |
+| Use pointer receiver `*T` when...                                | Use value receiver `T` when...      |
+| ---------------------------------------------------------------- | ----------------------------------- |
+| The method modifies the struct                                   | The method only reads fields        |
+| The struct is large (avoids copying)                             | The struct is small (a few fields)  |
+| Consistency — if any method needs a pointer, use pointer for all | The type is immutable by design     |
+| The struct contains a `sync.Mutex` or similar                    | Primitive-like types (Point, Color) |
 
 <Callout type="tip">
 
@@ -204,6 +204,7 @@ data, _ := json.Marshal(user)
 ```
 
 Common tag formats:
+
 - `json:"field_name"` — JSON encoding/decoding
 - `json:"field_name,omitempty"` — skip if zero value
 - `db:"column_name"` — database column mapping (sqlx, gorm)
@@ -342,4 +343,3 @@ func (s *UserService) Create(ctx context.Context, input CreateUserInput) (*User,
 4. **Struct tags** control serialization (`json`, `db`, `validate`)
 5. **Embedding provides composition** — fields and methods are promoted, not inherited
 6. **Keep structs focused** — a `UserService` holds its dependencies and provides methods. This is the core pattern for all Go services
-

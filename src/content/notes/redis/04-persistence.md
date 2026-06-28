@@ -1,10 +1,10 @@
 ---
-title: "Persistence: RDB & AOF"
+title: 'Persistence: RDB & AOF'
 subtitle: "How an in-memory store survives a restart, and what 'durable' really buys you."
 chapter: 4
-level: "intermediate"
-readingTime: "12 min"
-topics: ["rdb", "aof", "durability"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['rdb', 'aof', 'durability']
 ---
 
 <script>
@@ -15,7 +15,7 @@ If everything lives in RAM, a crash or restart should wipe it all — yet a well
 
 ## What "in-memory" means for durability
 
-The authoritative copy of your data is in RAM. Disk persistence is a *backup* that lets Redis reconstruct that RAM image after a restart. This is the opposite of a traditional database, where disk is the source of truth and memory is a cache of it.
+The authoritative copy of your data is in RAM. Disk persistence is a _backup_ that lets Redis reconstruct that RAM image after a restart. This is the opposite of a traditional database, where disk is the source of truth and memory is a cache of it.
 
 The consequence: between the last successful disk write and a crash, whatever was only in memory is gone. How much that window holds — zero, one second, several minutes — depends entirely on how you configure persistence. Redis does not force a choice; it gives you knobs.
 
@@ -39,7 +39,7 @@ When a snapshot triggers, Redis calls `fork()`. The child process inherits a cop
 
 **Strengths.** A single compact file, trivial to copy off the box for backups or to seed a replica. Fast restart — loading one binary file is quicker than replaying a log. Minimal runtime overhead between snapshots.
 
-**Weakness.** It is a *point-in-time* backup. If you snapshot every five minutes and crash four minutes in, you lose four minutes of writes. RDB alone is for data where some loss is acceptable.
+**Weakness.** It is a _point-in-time_ backup. If you snapshot every five minutes and crash four minutes in, you lose four minutes of writes. RDB alone is for data where some loss is acceptable.
 
 ## AOF: the append-only log
 
@@ -53,11 +53,11 @@ appendfsync everysec      # fsync policy (see below)
 
 The durability of AOF hinges on **when the log is flushed from the OS buffer to disk** — the `fsync` policy:
 
-| `appendfsync` | Behavior | Worst-case loss | Speed |
-|---|---|---|---|
-| `always` | fsync after every write | a single command | slowest |
-| `everysec` | fsync once per second | about one second | fast (default) |
-| `no` | let the OS decide when | up to ~30s | fastest |
+| `appendfsync` | Behavior                | Worst-case loss  | Speed          |
+| ------------- | ----------------------- | ---------------- | -------------- |
+| `always`      | fsync after every write | a single command | slowest        |
+| `everysec`    | fsync once per second   | about one second | fast (default) |
+| `no`          | let the OS decide when  | up to ~30s       | fastest        |
 
 `everysec` is the sweet spot most deployments use: at most about one second of writes lost, with throughput close to no-fsync.
 
@@ -74,7 +74,7 @@ Background append only file rewriting started
 
 <Callout type="info">
 
-**Note:** `fsync` is the key concept behind every durability claim. Writing to a file does not mean the data is safely on disk — the OS buffers it in a page cache and writes lazily. Only `fsync` forces those bytes to the physical device. "How often do we fsync?" *is* the durability question, for Redis and for databases generally.
+**Note:** `fsync` is the key concept behind every durability claim. Writing to a file does not mean the data is safely on disk — the OS buffers it in a page cache and writes lazily. Only `fsync` forces those bytes to the physical device. "How often do we fsync?" _is_ the durability question, for Redis and for databases generally.
 
 </Callout>
 

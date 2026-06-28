@@ -1,10 +1,21 @@
 ---
-title: "API Security Testing"
-subtitle: "REST and GraphQL attack techniques, broken authentication, mass assignment, rate limiting bypass, BOLA/BFLA, and automated API scanning."
+title: 'API Security Testing'
+subtitle: 'REST and GraphQL attack techniques, broken authentication, mass assignment, rate limiting bypass, BOLA/BFLA, and automated API scanning.'
 chapter: 23
-level: "intermediate"
-readingTime: "12 min"
-topics: ["API security", "REST API", "GraphQL", "BOLA", "BFLA", "mass assignment", "JWT", "API testing", "OWASP API Top 10"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  [
+    'API security',
+    'REST API',
+    'GraphQL',
+    'BOLA',
+    'BFLA',
+    'mass assignment',
+    'JWT',
+    'API testing',
+    'OWASP API Top 10'
+  ]
 ---
 
 <script>
@@ -205,6 +216,7 @@ python3 arjun.py -u https://api.target.com/v1/search
 
 ```markdown
 ## Authentication
+
 - [ ] No rate limiting on /auth/login → brute force
 - [ ] No rate limiting on /auth/reset → email flooding
 - [ ] JWT: test alg:none, weak secret, RS256→HS256
@@ -213,6 +225,7 @@ python3 arjun.py -u https://api.target.com/v1/search
 - [ ] Refresh token rotation (old token invalidated)
 
 ## Authorization
+
 - [ ] BOLA: change object ID to another user's
 - [ ] BFLA: call admin endpoints as regular user
 - [ ] Mass assignment: add role/admin/balance fields to updates
@@ -220,15 +233,17 @@ python3 arjun.py -u https://api.target.com/v1/search
 - [ ] Vertical privilege: access resources of higher-privilege user
 
 ## Input Validation
+
 - [ ] SQL injection in all string parameters
 - [ ] NoSQL injection (MongoDB: $where, $ne, $gt)
 - [ ] Command injection in all parameters
 - [ ] SSRF in URL/webhook parameters
 
 ## Misc
+
 - [ ] Introspection enabled (GraphQL)
 - [ ] Verbose error messages revealing stack traces
-- [ ] CORS: Access-Control-Allow-Origin: * with credentials
+- [ ] CORS: Access-Control-Allow-Origin: \* with credentials
 - [ ] Exposed Swagger/OpenAPI documentation
 - [ ] Deprecated API versions accessible (/v1/ when /v3/ is current)
 - [ ] No pagination limits (GET /users → returns all 500k users)
@@ -254,4 +269,3 @@ docker-compose -f crAPI/deploy/docker/docker-compose.yml up
 # 6. Find the video service SSRF
 # 7. Find leaked PII in the community forum
 ```
-

@@ -1,10 +1,10 @@
 ---
-title: "FinOps & Cost Engineering"
+title: 'FinOps & Cost Engineering'
 subtitle: "Unit economics, rightsizing, spot, savings plans, cost-aware SLOs. The senior SRE skill that turns 'the cloud bill is too high' into a tracked, owned, falling number."
 chapter: 18
-level: "mastery"
-readingTime: "26 min"
-topics: ["FinOps", "cost", "rightsizing", "spot", "savings plans", "unit economics", "cloud bill"]
+level: 'mastery'
+readingTime: '26 min'
+topics: ['FinOps', 'cost', 'rightsizing', 'spot', 'savings plans', 'unit economics', 'cloud bill']
 ---
 
 <script>
@@ -25,7 +25,7 @@ CFO walks into engineering: "AWS bill is up 40% this quarter. Why?"
 
 Nobody knows. Engineering doesn't see the bill. Finance doesn't understand `c6g.4xlarge`. The bill keeps growing 5% a month until layoffs are on the table.
 
-This is the gap FinOps fills. The senior SREs at every well-run modern shop own — at minimum — the *unit economics* of their service: cost per request, cost per active user, cost per gigabyte stored. Those numbers turn cloud spend into an engineering problem with a measurable target.
+This is the gap FinOps fills. The senior SREs at every well-run modern shop own — at minimum — the _unit economics_ of their service: cost per request, cost per active user, cost per gigabyte stored. Those numbers turn cloud spend into an engineering problem with a measurable target.
 
 ## The three FinOps phases
 
@@ -103,7 +103,7 @@ Without these, the cost-explorer dashboard is a single line at the top of the or
 
 K8s clusters share nodes across teams. Naïve allocation says "team X used 30% of CPU, so they pay 30%." But team X also held 50% of memory reservation idle. **OpenCost / Kubecost** allocate by the actual scheduling cost: max(CPU%, memory%, GPU%) of requests, weighted by node price.
 
-Once you ship that to teams as a Slack-bot weekly, behaviors change in two weeks. Suddenly people *do* set the right requests.
+Once you ship that to teams as a Slack-bot weekly, behaviors change in two weeks. Suddenly people _do_ set the right requests.
 
 ## Rightsizing — the lowest-hanging fruit
 
@@ -159,7 +159,7 @@ The strategy senior teams converge on:
 ~10% On-demand              (covers spikes + non-spot-tolerant workloads)
 ```
 
-Underneath the commit %, your *actual* coverage matters: aim for **95% of compute hours covered by RIs/SPs.** Below that, you're paying on-demand for steady load.
+Underneath the commit %, your _actual_ coverage matters: aim for **95% of compute hours covered by RIs/SPs.** Below that, you're paying on-demand for steady load.
 
 ### Spot strategy
 
@@ -330,7 +330,7 @@ Post-incident:
   - Action items to prevent recurrence (often: a guardrail or quota)
 ```
 
-A real incident: a developer enabled CloudFront access logs to a bucket with no lifecycle policy. 90 days later, the bucket was 200 TB. Postmortem fixed the lifecycle policy *and* the IaC template that should have enforced it.
+A real incident: a developer enabled CloudFront access logs to a bucket with no lifecycle policy. 90 days later, the bucket was 200 TB. Postmortem fixed the lifecycle policy _and_ the IaC template that should have enforced it.
 
 ## Reserved capacity for compute beyond commits
 
@@ -389,4 +389,3 @@ Cultural:
 5. **Network egress is the cost no one expects** — VPC endpoints, topology-aware routing, in-region aggregation.
 6. **Cost-aware SLOs make reliability a product conversation** instead of a slogan.
 7. **A cost spike is an incident** — treat it with the same rigor as latency.
-

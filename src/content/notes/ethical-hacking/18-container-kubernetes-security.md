@@ -1,10 +1,19 @@
 ---
-title: "Container & Kubernetes Security"
-subtitle: "Docker escape techniques, Kubernetes attacks, privileged container abuse, secrets in images, and hardening."
+title: 'Container & Kubernetes Security'
+subtitle: 'Docker escape techniques, Kubernetes attacks, privileged container abuse, secrets in images, and hardening.'
 chapter: 18
-level: "advanced"
-readingTime: "14 min"
-topics: ["Docker", "Kubernetes", "container escape", "K8s attacks", "privileged container", "pod security", "container security"]
+level: 'advanced'
+readingTime: '14 min'
+topics:
+  [
+    'Docker',
+    'Kubernetes',
+    'container escape',
+    'K8s attacks',
+    'privileged container',
+    'pod security',
+    'container security'
+  ]
 ---
 
 <script>
@@ -225,7 +234,7 @@ kubectl create clusterrolebinding pwned-admin \
 #   verbs: ["*"]
 
 # Find overpermissioned accounts
-kubectl get clusterrolebindings -o json | jq '.items[] | 
+kubectl get clusterrolebindings -o json | jq '.items[] |
   select(.roleRef.name == "cluster-admin") | .subjects'
 
 # exec privilege → container escape
@@ -302,4 +311,3 @@ kubectl run juiceshop --image=bkimminich/juice-shop --port=3000
 kubectl expose pod juiceshop --type=NodePort --port=3000
 # Attack the app, escape the container, pivot to cluster admin
 ```
-

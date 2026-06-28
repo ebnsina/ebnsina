@@ -1,10 +1,10 @@
 ---
-title: "JSONB and the schemaless trap"
+title: 'JSONB and the schemaless trap'
 subtitle: "JSONB is one of Postgres's best features. Used well, it's how you stop fighting your schema. Used badly, it's how you end up with a schemaless mess inside a relational database."
 chapter: 9
-level: "advanced"
-readingTime: "12 min"
-topics: ["data-modeling", "jsonb", "postgres", "schemaless"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['data-modeling', 'jsonb', 'postgres', 'schemaless']
 ---
 
 <script>
@@ -266,4 +266,3 @@ Plan for this from the start. The JSONB is your prototyping ground; the columns 
 - Don't use for: relational data with FKs, numeric aggregations, hot updates of small fields.
 
 Next: [Schema evolution](/notes/data-modeling/10-schema-evolution) — expand/contract migrations, zero-downtime changes, backfills.
-

@@ -1,10 +1,10 @@
 ---
-title: "CPU Scheduling"
-subtitle: "With more runnable threads than cores, the kernel must constantly choose who runs next — quickly and fairly."
+title: 'CPU Scheduling'
+subtitle: 'With more runnable threads than cores, the kernel must constantly choose who runs next — quickly and fairly.'
 chapter: 4
-level: "intermediate"
-readingTime: "13 min"
-topics: ["scheduler", "preemption", "cfs"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['scheduler', 'preemption', 'cfs']
 ---
 
 <script>
@@ -28,7 +28,7 @@ Optimizing for throughput (run each job to completion) hurts responsiveness. Opt
 
 Two fundamental models:
 
-- **Cooperative** — a thread runs until it *voluntarily* yields (blocks on I/O or calls a yield function). Simple, but one misbehaving thread that never yields hangs the whole system.
+- **Cooperative** — a thread runs until it _voluntarily_ yields (blocks on I/O or calls a yield function). Simple, but one misbehaving thread that never yields hangs the whole system.
 - **Preemptive** — the kernel can forcibly take the CPU back. A hardware **timer interrupt** fires periodically; the interrupt handler runs the scheduler, which may switch to another thread.
 
 The slice of time a thread gets before it might be preempted is its **time quantum** (or time slice). Linux and every modern general-purpose OS is preemptive — no single program can monopolize a core.
@@ -43,7 +43,7 @@ The slice of time a thread gets before it might be preempted is its **time quant
 
 A tour of the building-block algorithms:
 
-**First-Come, First-Served (FCFS).** Run jobs in arrival order, to completion. Simple and fair in ordering, but a long job at the front makes everyone behind it wait — the *convoy effect*. A 10-second job blocks a 10-millisecond one stuck behind it.
+**First-Come, First-Served (FCFS).** Run jobs in arrival order, to completion. Simple and fair in ordering, but a long job at the front makes everyone behind it wait — the _convoy effect_. A 10-second job blocks a 10-millisecond one stuck behind it.
 
 **Round Robin (RR).** Give each thread a fixed quantum, then move it to the back of the queue. Naturally fair and responsive. The quantum size is a trade-off: too large and it degrades toward FCFS; too small and context-switch overhead dominates.
 
@@ -55,11 +55,11 @@ run:  [A ] [B ] [C ] [A ] [B ] [C ] ...
 
 **Priority Scheduling.** Each thread has a priority; the scheduler runs the highest-priority ready thread. Great for important work, but a steady stream of high-priority threads can **starve** low-priority ones indefinitely.
 
-**Multi-Level Feedback Queue (MLFQ).** Multiple priority queues. New threads start high. A thread that uses its whole quantum (CPU-bound) is demoted; a thread that blocks early (interactive, I/O-bound) stays high. This automatically favors responsive, interactive work without knowing anything about the threads in advance. Periodic *priority boosts* lift everyone back up to prevent permanent starvation.
+**Multi-Level Feedback Queue (MLFQ).** Multiple priority queues. New threads start high. A thread that uses its whole quantum (CPU-bound) is demoted; a thread that blocks early (interactive, I/O-bound) stays high. This automatically favors responsive, interactive work without knowing anything about the threads in advance. Periodic _priority boosts_ lift everyone back up to prevent permanent starvation.
 
 ## Linux CFS
 
-For years Linux's default scheduler was the **Completely Fair Scheduler (CFS)**. Its idea: instead of fixed time slices, track how much CPU time each thread has received and always run the one that has gotten the *least*.
+For years Linux's default scheduler was the **Completely Fair Scheduler (CFS)**. Its idea: instead of fixed time slices, track how much CPU time each thread has received and always run the one that has gotten the _least_.
 
 CFS keeps a per-thread **virtual runtime** (`vruntime`) — roughly the CPU time consumed, weighted by priority (the "nice" value). All runnable threads sit in a red-black tree ordered by `vruntime`. The scheduler picks the leftmost node — the thread with the smallest `vruntime`, i.e. the one most "owed" CPU. As a thread runs, its `vruntime` grows and it sinks rightward in the tree, eventually yielding to others.
 

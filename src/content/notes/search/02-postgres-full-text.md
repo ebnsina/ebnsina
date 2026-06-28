@@ -1,10 +1,10 @@
 ---
-title: "Postgres Full-Text Search"
-subtitle: "tsvector, GIN indexes, ranking, highlighting, and when Postgres search is all you need."
+title: 'Postgres Full-Text Search'
+subtitle: 'tsvector, GIN indexes, ranking, highlighting, and when Postgres search is all you need.'
 chapter: 2
-level: "beginner"
-readingTime: "10 min"
-topics: ["PostgreSQL", "full-text search", "tsvector", "GIN", "ts_rank", "ts_headline"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['PostgreSQL', 'full-text search', 'tsvector', 'GIN', 'ts_rank', 'ts_headline']
 ---
 
 <script>
@@ -22,6 +22,7 @@ A reference librarian who also manages the card catalogue: they know the collect
 ## When Postgres FTS Is Enough
 
 Use Postgres full-text search when:
+
 - Your searchable data is already in Postgres
 - You need basic keyword search (not typo tolerance, not ML-based ranking)
 - You don't need faceted search with real-time facet counts
@@ -29,6 +30,7 @@ Use Postgres full-text search when:
 - Operational simplicity matters more than search feature richness
 
 Use a dedicated search engine (Meilisearch, Elasticsearch) when:
+
 - You need typo tolerance out of the box
 - You need facets with counts and filtering
 - You need sub-100ms search at high QPS on large corpora
@@ -116,17 +118,17 @@ WHERE search_vector @@ websearch_to_tsquery('english', user_input)
 ```typescript
 // Application code
 async function searchArticles(query: string, limit = 20): Promise<Article[]> {
-  const result = await db.query(
-    `SELECT id, title, published_at,
+	const result = await db.query(
+		`SELECT id, title, published_at,
             ts_rank(search_vector, query) AS rank
      FROM articles,
           websearch_to_tsquery('english', $1) query
      WHERE search_vector @@ query
      ORDER BY rank DESC
      LIMIT $2`,
-    [query, limit]
-  );
-  return result.rows;
+		[query, limit]
+	);
+	return result.rows;
 }
 ```
 
@@ -147,7 +149,7 @@ ORDER BY rank DESC;
 
 -- Boost by recency (combine text rank with time signal)
 SELECT title,
-  ts_rank(search_vector, query) * 
+  ts_rank(search_vector, query) *
   (1.0 / (1 + EXTRACT(EPOCH FROM (NOW() - published_at)) / 86400)) AS boosted_rank
 FROM articles, websearch_to_tsquery('english', 'database') query
 WHERE search_vector @@ query
@@ -305,4 +307,3 @@ CREATE INDEX article_search_vector_idx ON article_search USING GIN(search_vector
 -- Refresh after bulk imports or on a schedule
 REFRESH MATERIALIZED VIEW CONCURRENTLY article_search;
 ```
-

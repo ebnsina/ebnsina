@@ -1,10 +1,10 @@
 ---
-title: "Functions & Error Handling"
+title: 'Functions & Error Handling'
 subtitle: "Go's approach to functions and errors is radically different from most languages — explicit, composable, and impossible to ignore."
 chapter: 3
-level: "beginner"
-readingTime: "20 min"
-topics: ["functions", "error handling", "multiple returns", "defer", "closures"]
+level: 'beginner'
+readingTime: '20 min'
+topics: ['functions', 'error handling', 'multiple returns', 'defer', 'closures']
 ---
 
 <script>
@@ -189,6 +189,7 @@ if err != nil {
 <Callout type="tip">
 
 **The `if err != nil` pattern appears roughly every 3 lines in Go code.** It's verbose, but it means:
+
 - Every error is visible in the code path
 - You can't accidentally ignore an error
 - Reading Go code, you always know what can fail and how it's handled
@@ -285,6 +286,7 @@ if errors.As(err, &valErr) {
 <Callout type="info">
 
 **`errors.Is` vs `errors.As`:**
+
 - **`errors.Is(err, target)`** — "Is this error (or any wrapped error in the chain) equal to this specific value?" Used for sentinel errors.
 - **`errors.As(err, &target)`** — "Can I extract a specific error type from this chain?" Used for custom error types.
 
@@ -404,4 +406,3 @@ func safeHandler(next http.Handler) http.Handler {
 4. **`errors.Is` for sentinel errors**, **`errors.As` for typed errors** — both traverse the wrapped chain
 5. **`defer` guarantees cleanup** — use it for files, locks, transactions, and connections
 6. **Panic is for programmer errors**, not runtime failures — if the user can trigger it, use an error return instead
-

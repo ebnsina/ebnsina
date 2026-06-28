@@ -1,10 +1,10 @@
 ---
-title: "Testing Strategies"
-subtitle: "Unit tests, integration tests, test fixtures, mocking, and testcontainers — testing that catches real bugs, not just checkbox coverage."
+title: 'Testing Strategies'
+subtitle: 'Unit tests, integration tests, test fixtures, mocking, and testcontainers — testing that catches real bugs, not just checkbox coverage.'
 chapter: 19
-level: "advanced"
-readingTime: "22 min"
-topics: ["testing", "integration tests", "mocking", "testcontainers", "fixtures", "golden files"]
+level: 'advanced'
+readingTime: '22 min'
+topics: ['testing', 'integration tests', 'mocking', 'testcontainers', 'fixtures', 'golden files']
 ---
 
 <script>
@@ -393,4 +393,3 @@ internal/
 5. **Golden files** for complex output comparison — update with `-update` flag
 6. **Always run `-race`** — data races are bugs, not warnings
 7. **Test fixtures with functional options** — `NewTestUser(func(u *User) { u.Role = "admin" })`
-

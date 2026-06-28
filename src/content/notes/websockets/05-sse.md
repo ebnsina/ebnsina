@@ -1,10 +1,10 @@
 ---
-title: "Server-Sent Events"
-subtitle: "When the client only listens, SSE beats WebSockets in every dimension that matters — simpler protocol, free reconnect, plain HTTP. The default for one-way realtime."
+title: 'Server-Sent Events'
+subtitle: 'When the client only listens, SSE beats WebSockets in every dimension that matters — simpler protocol, free reconnect, plain HTTP. The default for one-way realtime.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["sse", "server-sent-events", "realtime", "http"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['sse', 'server-sent-events', 'realtime', 'http']
 ---
 
 <script>
@@ -120,20 +120,20 @@ Two pieces worth pointing at.
 ```html
 <!doctype html>
 <html>
-<body>
-<pre id="log"></pre>
-<script>
-const log = document.getElementById("log");
-const es = new EventSource("/events");
+	<body>
+		<pre id="log"></pre>
+		<script>
+			const log = document.getElementById('log');
+			const es = new EventSource('/events');
 
-es.onopen = () => log.textContent += "connected\n";
-es.onerror = (e) => log.textContent += `error / reconnect...\n`;
+			es.onopen = () => (log.textContent += 'connected\n');
+			es.onerror = (e) => (log.textContent += `error / reconnect...\n`);
 
-es.addEventListener("tick", (e) => {
-    log.textContent += `tick: ${e.data}\n`;
-});
-</script>
-</body>
+			es.addEventListener('tick', (e) => {
+				log.textContent += `tick: ${e.data}\n`;
+			});
+		</script>
+	</body>
 </html>
 ```
 
@@ -280,4 +280,3 @@ fmt.Fprintf(w, "data: %s\n\n", string(jsonBytes))
 - LLM streaming and most "live updates" features fit SSE perfectly.
 
 Next: [Pub/sub at scale](/notes/websockets/06-pubsub-scale) — fanning out events across many WebSocket or SSE worker processes with Redis or NATS.
-

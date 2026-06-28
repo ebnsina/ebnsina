@@ -1,10 +1,21 @@
 ---
-title: "Threat Intelligence & MITRE ATT&CK"
-subtitle: "IOCs, threat actor profiling, STIX/TAXII, ATT&CK Navigator, threat hunting with intelligence, and building a threat intel program."
+title: 'Threat Intelligence & MITRE ATT&CK'
+subtitle: 'IOCs, threat actor profiling, STIX/TAXII, ATT&CK Navigator, threat hunting with intelligence, and building a threat intel program.'
 chapter: 27
-level: "intermediate"
-readingTime: "10 min"
-topics: ["threat intelligence", "MITRE ATT&CK", "IOC", "STIX", "TAXII", "threat hunting", "APT", "threat actor", "CTI"]
+level: 'intermediate'
+readingTime: '10 min'
+topics:
+  [
+    'threat intelligence',
+    'MITRE ATT&CK',
+    'IOC',
+    'STIX',
+    'TAXII',
+    'threat hunting',
+    'APT',
+    'threat actor',
+    'CTI'
+  ]
 ---
 
 <script>
@@ -224,7 +235,7 @@ FIN7 — Criminal, Eastern Europe
 # Data source: Windows Event Log 4688 (Process Creation)
 
 # Splunk query:
-# index=windows EventCode=4688 ParentProcessName="winword.exe" 
+# index=windows EventCode=4688 ParentProcessName="winword.exe"
 #   (ProcessName="powershell.exe" OR ProcessName="cmd.exe")
 # | table _time, ComputerName, Account_Name, CommandLine
 # | eval suspicion = if(match(CommandLine, "(?i)-enc|-EncodedCommand"), "HIGH", "MEDIUM")
@@ -284,4 +295,3 @@ Robtex               → robtex.com (IP/domain investigation)
 CIRCL                 → circl.lu/doc/misp/ (MISP training)
 CISA Advisories       → cisa.gov/known-exploited-vulnerabilities-catalog
 ```
-

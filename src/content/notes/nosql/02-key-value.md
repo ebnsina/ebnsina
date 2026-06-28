@@ -1,10 +1,10 @@
 ---
-title: "Key-Value Stores"
-subtitle: "The simplest NoSQL model: a giant distributed hash map. Redis, DynamoDB, TTL, and the workloads where nothing beats an O(1) lookup."
+title: 'Key-Value Stores'
+subtitle: 'The simplest NoSQL model: a giant distributed hash map. Redis, DynamoDB, TTL, and the workloads where nothing beats an O(1) lookup.'
 chapter: 2
-level: "beginner"
-readingTime: "10 min"
-topics: ["key-value", "redis", "dynamodb"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['key-value', 'redis', 'dynamodb']
 ---
 
 <script>
@@ -69,14 +69,14 @@ Because Redis holds data in RAM, it is fast but bounded by memory size, and dura
 
 DynamoDB is AWS's managed key-value (and document) store. Unlike Redis, it is disk-backed, durable, and scales to enormous size with predictable single-digit-millisecond latency. Its data lives on SSDs across many partitions, and AWS handles replication and partitioning for you.
 
-DynamoDB's key is richer than a single string. Each item has a **partition key** (which node/partition holds it) and an optional **sort key** (ordering within a partition). This lets one "key" address a *range* of related items — the foundation of single-table design, covered in chapter 6.
+DynamoDB's key is richer than a single string. Each item has a **partition key** (which node/partition holds it) and an optional **sort key** (ordering within a partition). This lets one "key" address a _range_ of related items — the foundation of single-table design, covered in chapter 6.
 
 ```json
 {
-  "PK": "USER#1042",
-  "SK": "PROFILE",
-  "name": "Zubaida",
-  "tier": "gold"
+	"PK": "USER#1042",
+	"SK": "PROFILE",
+	"name": "Zubaida",
+	"tier": "gold"
 }
 ```
 

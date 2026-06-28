@@ -1,17 +1,17 @@
 ---
-title: "Building Reliable Distributed Systems"
-subtitle: "Putting it together: retries with backoff and jitter, idempotency and deduplication, delivery semantics, and durable execution."
+title: 'Building Reliable Distributed Systems'
+subtitle: 'Putting it together: retries with backoff and jitter, idempotency and deduplication, delivery semantics, and durable execution.'
 chapter: 9
-level: "mastery"
-readingTime: "12 min"
-topics: ["idempotency", "retries", "durable execution"]
+level: 'mastery'
+readingTime: '12 min'
+topics: ['idempotency', 'retries', 'durable execution']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Everything so far has been about understanding distributed systems. This final chapter is about *operating* in one: the concrete, hard-won patterns that turn the inevitability of partial failure into something your system survives gracefully. The unifying mindset is simple to state and hard to internalize — **assume every remote call can fail, time out, or succeed-but-look-like-it-failed, and design so that handling that case is the normal path, not the exception.**
+Everything so far has been about understanding distributed systems. This final chapter is about _operating_ in one: the concrete, hard-won patterns that turn the inevitability of partial failure into something your system survives gracefully. The unifying mindset is simple to state and hard to internalize — **assume every remote call can fail, time out, or succeed-but-look-like-it-failed, and design so that handling that case is the normal path, not the exception.**
 
 ## Retries
 
@@ -19,7 +19,7 @@ When a remote call fails or times out, the first instinct is to retry — and it
 
 ### The thundering herd
 
-If a service hiccups and a thousand clients all retry immediately, they hit the recovering service with a synchronized wall of traffic, knocking it down again. The retries *cause* the next outage. The defenses are backoff and jitter.
+If a service hiccups and a thousand clients all retry immediately, they hit the recovering service with a synchronized wall of traffic, knocking it down again. The retries _cause_ the next outage. The defenses are backoff and jitter.
 
 **Exponential backoff:** wait longer after each successive failure — 1s, 2s, 4s, 8s — giving the struggling service room to recover instead of hammering it.
 
@@ -36,7 +36,7 @@ wait = random_between(0, min(cap, base * 2^attempt))
 
 ### Knowing when not to retry
 
-Retries only make sense for *transient* failures. Retrying a deterministic error (a `400 Bad Request`, a validation failure) just wastes resources — it will fail identically every time. And retries must be **bounded**: cap the number of attempts and the total time, then give up and surface the failure. Unbounded retries turn a transient blip into a permanent resource leak. Pair retries with a **circuit breaker**: after too many failures to a dependency, stop calling it for a cooldown period, failing fast instead of piling up.
+Retries only make sense for _transient_ failures. Retrying a deterministic error (a `400 Bad Request`, a validation failure) just wastes resources — it will fail identically every time. And retries must be **bounded**: cap the number of attempts and the total time, then give up and surface the failure. Unbounded retries turn a transient blip into a permanent resource leak. Pair retries with a **circuit breaker**: after too many failures to a dependency, stop calling it for a cooldown period, failing fast instead of piling up.
 
 <Callout type="warning">
 
@@ -46,7 +46,7 @@ Retries only make sense for *transient* failures. Retrying a deterministic error
 
 ## Idempotency is the prerequisite for retries
 
-Here is the catch that makes the previous chapter essential: **you cannot safely retry an operation unless it is idempotent.** Recall the slow-vs-dead ambiguity (chapter 2) — when a call times out, the operation may have *already succeeded*; the response just got lost. If you retry a non-idempotent operation in that situation, you do it twice: a double charge, a duplicate order, a doubled balance.
+Here is the catch that makes the previous chapter essential: **you cannot safely retry an operation unless it is idempotent.** Recall the slow-vs-dead ambiguity (chapter 2) — when a call times out, the operation may have _already succeeded_; the response just got lost. If you retry a non-idempotent operation in that situation, you do it twice: a double charge, a duplicate order, a doubled balance.
 
 So retries and idempotency are inseparable. Before you add a retry anywhere, ensure the target operation is idempotent — naturally (setting a value, which is the same however many times you do it) or via an **idempotency key** (chapter 8) that lets the server recognize and de-duplicate a repeated request.
 
@@ -54,17 +54,17 @@ So retries and idempotency are inseparable. Before you add a retry anywhere, ens
 
 Every message-passing system makes one of three guarantees. Knowing which one you have — and which one you need — is fundamental.
 
-| Semantic | Guarantee | Risk | How |
-| --- | --- | --- | --- |
-| **At-most-once** | Delivered zero or one time | May **lose** messages | Send and forget; never retry |
-| **At-least-once** | Delivered one or more times | May **duplicate** messages | Retry until acknowledged |
-| **Exactly-once** | Effect happens once | (Impossible as pure delivery) | At-least-once **+** idempotent consumer |
+| Semantic          | Guarantee                   | Risk                          | How                                     |
+| ----------------- | --------------------------- | ----------------------------- | --------------------------------------- |
+| **At-most-once**  | Delivered zero or one time  | May **lose** messages         | Send and forget; never retry            |
+| **At-least-once** | Delivered one or more times | May **duplicate** messages    | Retry until acknowledged                |
+| **Exactly-once**  | Effect happens once         | (Impossible as pure delivery) | At-least-once **+** idempotent consumer |
 
 The practical takeaways:
 
 - **At-most-once** is acceptable only when losing a message is harmless — metrics, best-effort notifications.
 - **At-least-once** is the sensible default for anything that matters: retry until you get an acknowledgment, accept that duplicates will happen.
-- **Exactly-once** processing is achieved, not delivered: at-least-once plus a deduplicating, idempotent consumer (chapter 8). Stop chasing exactly-once *delivery*; it does not exist on an unreliable network.
+- **Exactly-once** processing is achieved, not delivered: at-least-once plus a deduplicating, idempotent consumer (chapter 8). Stop chasing exactly-once _delivery_; it does not exist on an unreliable network.
 
 ## Deduplication
 
@@ -98,7 +98,7 @@ For replay to be correct, the durable engine relies on the very ideas from this 
 
 <Callout type="info">
 
-**Note:** Durable execution does not repeal the laws of distributed systems — it *encapsulates* the patterns you would otherwise build by hand. Your activities still must be idempotent, your timeouts still can't tell slow from dead, and "exactly-once" is still really at-least-once plus dedup. The engine just removes the boilerplate of persisting and resuming workflow state.
+**Note:** Durable execution does not repeal the laws of distributed systems — it _encapsulates_ the patterns you would otherwise build by hand. Your activities still must be idempotent, your timeouts still can't tell slow from dead, and "exactly-once" is still really at-least-once plus dedup. The engine just removes the boilerplate of persisting and resuming workflow state.
 
 </Callout>
 

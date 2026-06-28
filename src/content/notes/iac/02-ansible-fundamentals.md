@@ -1,10 +1,10 @@
 ---
-title: "Ansible Fundamentals"
-subtitle: "Inventories, playbooks, roles, and variables — configuring servers reliably without installing an agent."
+title: 'Ansible Fundamentals'
+subtitle: 'Inventories, playbooks, roles, and variables — configuring servers reliably without installing an agent.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["Ansible", "playbooks", "roles", "inventory", "handlers", "templates"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['Ansible', 'playbooks', 'roles', 'inventory', 'handlers', 'templates']
 ---
 
 <script>
@@ -55,6 +55,7 @@ db
 ```
 
 **Dynamic inventory** (for cloud environments — hosts change as you scale):
+
 ```bash
 # AWS dynamic inventory
 ansible-inventory -i aws_ec2.yml --list
@@ -79,7 +80,7 @@ A playbook is a list of plays. Each play applies tasks to a group of hosts.
 ---
 - name: Configure web servers
   hosts: web
-  become: true           # sudo
+  become: true # sudo
   vars:
     app_port: 3000
     nginx_worker_processes: auto
@@ -88,7 +89,7 @@ A playbook is a list of plays. Each play applies tasks to a group of hosts.
     - name: Update apt cache
       apt:
         update_cache: true
-        cache_valid_time: 3600  # only update if cache is > 1hr old
+        cache_valid_time: 3600 # only update if cache is > 1hr old
 
     - name: Install packages
       apt:
@@ -111,7 +112,7 @@ A playbook is a list of plays. Each play applies tasks to a group of hosts.
         owner: root
         group: root
         mode: '0644'
-      notify: Reload nginx     # triggers handler only if this task changed something
+      notify: Reload nginx # triggers handler only if this task changed something
 
     - name: Enable nginx site
       file:
@@ -123,7 +124,7 @@ A playbook is a list of plays. Each play applies tasks to a group of hosts.
     - name: Reload nginx
       service:
         name: nginx
-        state: reloaded        # reload (not restart) — avoids dropping connections
+        state: reloaded # reload (not restart) — avoids dropping connections
 ```
 
 ```bash
@@ -185,6 +186,7 @@ nginx_worker_connections: 2048
 ```
 
 Ansible variable precedence (lower number = lower priority, overridden by higher):
+
 ```
 1. Role defaults
 2. Inventory vars
@@ -265,7 +267,7 @@ tasks:
     template:
       src: vhost.conf.j2
       dest: /etc/nginx/sites-available/myapp
-    notify: Reload nginx  # notified twice, but handler runs once
+    notify: Reload nginx # notified twice, but handler runs once
 
 handlers:
   - name: Reload nginx
@@ -295,11 +297,11 @@ ansible-playbook site.yml --ask-vault-pass
 
 ```yaml
 # group_vars/production/secrets.yml (encrypted at rest)
-db_password: "{{ vault_db_password }}"
-api_key: "{{ vault_api_key }}"
+db_password: '{{ vault_db_password }}'
+api_key: '{{ vault_api_key }}'
 
 # group_vars/production/vars.yml (plaintext, references vault vars)
-database_url: "postgresql://app:{{ db_password }}@db.internal/mydb"
+database_url: 'postgresql://app:{{ db_password }}@db.internal/mydb'
 ```
 
 Store `vault_pass` in CI secrets, not in the repo. The encrypted files can be committed safely.
@@ -317,21 +319,22 @@ Store `vault_pass` in CI secrets, not in the repo. The encrypted files can be co
     - group_vars/all/secrets.yml
 
   roles:
-    - common           # base packages, users, sshd config, ufw
-    - nginx            # install, configure
-    - node             # install node via nvm
-    - app              # deploy application, systemd unit
+    - common # base packages, users, sshd config, ufw
+    - nginx # install, configure
+    - node # install node via nvm
+    - app # deploy application, systemd unit
 
   post_tasks:
     - name: Verify app is running
       uri:
-        url: "http://localhost:3000/health"
+        url: 'http://localhost:3000/health'
         status_code: 200
       retries: 5
       delay: 5
 ```
 
 Run against a new server after it's provisioned:
+
 ```bash
 ansible-playbook \
   -i "newserver.example.com," \  # comma = treat as list, not file
@@ -340,4 +343,3 @@ ansible-playbook \
 ```
 
 The same playbook that configures a new server can be re-run later to apply config changes or update the application. Idempotent all the way down.
-

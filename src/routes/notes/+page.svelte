@@ -49,14 +49,21 @@
 				color: catColor(Math.max(0, GROUP_ORDER.indexOf(meta?.group ?? '')))
 			};
 		})
-		.sort((a, b) => GROUP_ORDER.indexOf(CATEGORIES[a.category]?.group) - GROUP_ORDER.indexOf(CATEGORIES[b.category]?.group));
+		.sort(
+			(a, b) =>
+				GROUP_ORDER.indexOf(CATEGORIES[a.category]?.group) -
+				GROUP_ORDER.indexOf(CATEGORIES[b.category]?.group)
+		);
 
 	const earnedCount = $derived(
 		progress.ready ? tracks.filter((t) => progress.isTrackComplete(t.category, t.slugs)).length : 0
 	);
 </script>
 
-<Seo title="Notes" description="Deep-dive series on systems, infrastructure, and engineering craft." />
+<Seo
+	title="Notes"
+	description="Deep-dive series on systems, infrastructure, and engineering craft."
+/>
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
@@ -74,7 +81,9 @@
 	<section class="mt-14 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-10">
 		<div class="mb-6 flex items-baseline justify-between gap-4">
 			<h2 class="font-display text-xl font-bold tracking-tight">Badges</h2>
-			<span class="font-pixel text-xs text-muted">{earnedCount}/{tracks.length} tracks mastered</span>
+			<span class="font-pixel text-xs text-muted"
+				>{earnedCount}/{tracks.length} tracks mastered</span
+			>
 		</div>
 		<div class="flex flex-wrap justify-center gap-x-3 gap-y-6 sm:justify-start">
 			{#each tracks as t (t.category)}

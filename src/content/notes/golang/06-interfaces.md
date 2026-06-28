@@ -1,10 +1,10 @@
 ---
-title: "Interfaces & Polymorphism"
+title: 'Interfaces & Polymorphism'
 subtitle: "Go interfaces are implicit — no 'implements' keyword needed. This changes everything about how you design software."
 chapter: 6
-level: "intermediate"
-readingTime: "20 min"
-topics: ["interfaces", "polymorphism", "type assertions", "composition", "dependency injection"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['interfaces', 'polymorphism', 'type assertions', 'composition', 'dependency injection']
 ---
 
 <script>
@@ -352,4 +352,3 @@ func doWork() error {
 4. **Define interfaces where they're used**, not where they're implemented — the consumer knows what it needs
 5. **Interfaces enable testing** — swap real implementations for mocks without changing business logic
 6. **Watch for nil interfaces** — a nil pointer in an interface is NOT a nil interface
-

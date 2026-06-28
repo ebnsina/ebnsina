@@ -1,10 +1,10 @@
 ---
-title: "Cloud vs Bare Metal vs VPS"
+title: 'Cloud vs Bare Metal vs VPS'
 subtitle: "Unit economics for each deployment model — when managed convenience costs more than it saves, and when it doesn't."
 chapter: 2
-level: "intermediate"
-readingTime: "10 min"
-topics: ["cloud", "bare metal", "VPS", "unit economics", "TCO"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['cloud', 'bare metal', 'VPS', 'unit economics', 'TCO']
 ---
 
 <script>
@@ -22,18 +22,21 @@ Renting vs buying a car: renting (cloud) costs more per mile but you can return 
 ## The Three Models
 
 **Cloud (AWS, GCP, Azure):**
+
 - Pay per hour of use — no upfront cost
 - Provision in minutes, deprovision immediately
 - Managed services for everything (RDS, ElastiCache, S3)
 - Premium pricing: 3-5x the cost of equivalent bare metal
 
 **VPS (Hetzner, Linode, DigitalOcean, Vultr):**
+
 - Fixed monthly cost for a virtual machine
 - Good managed add-ons (managed Postgres, load balancers)
 - 60-80% cheaper than AWS for equivalent specs
 - No spot instances, limited auto-scaling
 
 **Bare Metal (Hetzner Dedicated, OVH, Equinix):**
+
 - Physical server, rented or owned
 - Cheapest per-core and per-GB-RAM at scale
 - No virtualization overhead
@@ -44,13 +47,13 @@ Renting vs buying a car: renting (cloud) costs more per mile but you can return 
 
 Comparing a roughly equivalent 8-core / 32GB RAM setup (2024 pricing):
 
-| Provider | Type | Monthly Cost | Notes |
-|----------|------|-------------|-------|
-| AWS (m7g.2xlarge) | Cloud | ~$230 on-demand | More with data transfer |
-| AWS (m7g.2xlarge) | Reserved 1yr | ~$140 | Commit upfront |
-| Hetzner CX52 | VPS | ~$55 | ARM-based, EU/US regions |
-| DigitalOcean | VPS | ~$96 | More regions, better support |
-| Hetzner AX102 | Bare Metal | ~$90 | 14-core, 64GB, NVMe |
+| Provider          | Type         | Monthly Cost    | Notes                        |
+| ----------------- | ------------ | --------------- | ---------------------------- |
+| AWS (m7g.2xlarge) | Cloud        | ~$230 on-demand | More with data transfer      |
+| AWS (m7g.2xlarge) | Reserved 1yr | ~$140           | Commit upfront               |
+| Hetzner CX52      | VPS          | ~$55            | ARM-based, EU/US regions     |
+| DigitalOcean      | VPS          | ~$96            | More regions, better support |
+| Hetzner AX102     | Bare Metal   | ~$90            | 14-core, 64GB, NVMe          |
 
 The same workload that costs $2,000/month on AWS on-demand runs for $500-600/month on Hetzner. The gap grows with data transfer and managed service costs.
 
@@ -59,6 +62,7 @@ The same workload that costs $2,000/month on AWS on-demand runs for $500-600/mon
 Cloud bills have multipliers that the headline instance price hides:
 
 **Data transfer (egress):**
+
 ```
 AWS: $0.09/GB out to internet
 At 10TB/month: $900/month just for egress
@@ -68,6 +72,7 @@ Cloudflare (for static): free egress
 ```
 
 **Managed services premium:**
+
 ```
 RDS db.t3.medium (2 vCPU, 4GB):
   AWS RDS:        $60/month
@@ -79,6 +84,7 @@ ElastiCache cache.t3.micro (1 vCPU, 0.5GB):
 ```
 
 **Operational overhead of self-hosting:**
+
 ```
 Self-hosted Postgres:
   Backup setup: 4 hours
@@ -91,6 +97,7 @@ RDS buys back this time — worth it until you're large enough to hire DBAs
 ## The Real Decision Framework
 
 **Use cloud when:**
+
 - Team is small and ops bandwidth is limited — managed services are worth the premium
 - Traffic is spiky or unpredictable — auto-scaling and pay-per-use matter
 - You need global regions quickly
@@ -98,12 +105,14 @@ RDS buys back this time — worth it until you're large enough to hire DBAs
 - You need specific managed services (ML, analytics, compliance tools)
 
 **Use VPS when:**
+
 - Steady, predictable load
 - You have ops bandwidth to manage your own infra
 - Cost matters — common at Series A and beyond
 - You want simplicity without the complexity of cloud primitives
 
 **Use bare metal when:**
+
 - High, sustained compute need (ML training, video transcoding, large databases)
 - Your team has infrastructure engineering capacity
 - You've verified the workload — no over-provisioning on unused capacity
@@ -114,11 +123,13 @@ RDS buys back this time — worth it until you're large enough to hire DBAs
 Cloud providers sell excess capacity at 70-90% discount as spot (AWS) or preemptible (GCP) instances — but they can be terminated with 2 minutes warning.
 
 **Good uses:**
+
 - Stateless workers pulling from a queue (a terminated worker just loses its current job, which retries)
 - Batch processing jobs that checkpoint progress
 - CI/CD runners
 
 **Bad uses:**
+
 - Primary database — termination mid-write causes corruption
 - Stateful services with no fast failover
 - Jobs longer than 2 minutes without checkpointing
@@ -128,14 +139,14 @@ Cloud providers sell excess capacity at 70-90% discount as spot (AWS) or preempt
 nodeGroups:
   - name: on-demand
     instanceType: m5.xlarge
-    minSize: 2         # always-on baseline
+    minSize: 2 # always-on baseline
     maxSize: 10
 
   - name: spot
     instanceTypes: [m5.xlarge, m5.2xlarge, m4.xlarge]
     spot: true
     minSize: 0
-    maxSize: 20        # burst on spot
+    maxSize: 20 # burst on spot
     taints:
       - key: spot
         effect: NoSchedule
@@ -163,6 +174,7 @@ aws cloudwatch get-metric-statistics \
 If your instances run at 10-15% CPU, you're massively overprovisioned. Downsize or pack more workloads per instance.
 
 **Packing workloads (multi-tenancy on a single host):**
+
 ```
 Instead of: 4 × m5.xlarge (4 vCPU, 16GB each) for 4 services at 20% CPU
 Consider:   1 × m5.4xlarge (16 vCPU, 64GB) running all 4 services
@@ -201,9 +213,7 @@ As you scale, CPR should decrease (economies of scale). If CPR is flat or rising
 
 ```typescript
 // Dashboard metric
-const costPerThousandRequests =
-  totalMonthlyCostUsd / (totalMonthlyRequests / 1000);
+const costPerThousandRequests = totalMonthlyCostUsd / (totalMonthlyRequests / 1000);
 ```
 
 Track this weekly. It tells you whether your infrastructure spend is growing proportionally to usage (expected) or faster (a problem).
-

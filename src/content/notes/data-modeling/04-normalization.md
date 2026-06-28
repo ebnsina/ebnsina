@@ -1,10 +1,10 @@
 ---
-title: "Normalization"
-subtitle: "1NF, 2NF, 3NF — three rules that prevent the same data from being recorded twice. Ignore them and your schema rots from the inside as data drifts out of sync."
+title: 'Normalization'
+subtitle: '1NF, 2NF, 3NF — three rules that prevent the same data from being recorded twice. Ignore them and your schema rots from the inside as data drifts out of sync.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["data-modeling", "normalization", "1nf", "2nf", "3nf"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['data-modeling', 'normalization', '1nf', '2nf', '3nf']
 ---
 
 <script>
@@ -82,9 +82,9 @@ Other 1NF violations:
 
 The exception: **JSONB**. Postgres lets you store structured data as JSONB. That isn't a 1NF violation if the JSONB is treated as opaque (stored together, queried as a unit). It becomes one if you start needing to filter, index, and join on inner fields — at that point the data wants to be normalized into columns. Chapter 9 covers this in detail.
 
-## 2NF — every non-key column depends on the *whole* key
+## 2NF — every non-key column depends on the _whole_ key
 
-**Second Normal Form** only matters when you have a *composite* primary key. The rule: every non-key column must depend on the entire key, not just part of it.
+**Second Normal Form** only matters when you have a _composite_ primary key. The rule: every non-key column must depend on the entire key, not just part of it.
 
 Imagine a course-enrollments table:
 
@@ -125,11 +125,11 @@ CREATE TABLE enrollments (
 
 Note: with surrogate keys (chapter 3), 2NF is rarely an issue — your single-column `id` PK can't be partially dependent on. 2NF problems mostly appear when you use composite natural keys.
 
-## 3NF — non-key columns depend *only* on the key
+## 3NF — non-key columns depend _only_ on the key
 
 **Third Normal Form:** non-key columns must depend on the key, the whole key, and nothing but the key. (The classic mnemonic.)
 
-3NF is about *transitive* dependencies — column A depends on column B, which depends on the PK.
+3NF is about _transitive_ dependencies — column A depends on column B, which depends on the PK.
 
 Bad:
 
@@ -142,7 +142,7 @@ CREATE TABLE orders (
 );
 ```
 
-`customer_country_name` depends on `customer_country_code`, which depends on `customer_id`. The country *name* is a fact about the *country*, not about the *order*. If a country changes its display name (this happens — "Czech Republic" → "Czechia"), every order with that country code must be updated.
+`customer_country_name` depends on `customer_country_code`, which depends on `customer_id`. The country _name_ is a fact about the _country_, not about the _order_. If a country changes its display name (this happens — "Czech Republic" → "Czechia"), every order with that country code must be updated.
 
 Fixed: countries get their own table.
 
@@ -227,6 +227,7 @@ CREATE TABLE order_items (
 ```
 
 Each fact lives in exactly one place:
+
 - User identity → `users`.
 - Product info → `products`.
 - The order header → `orders`.
@@ -244,7 +245,7 @@ Three honest tensions:
 
 **3. The model needs to evolve under load.** Adding a column to a hot table is cheap; splitting one table into three is a major migration. Pragmatic schemas often keep some 3NF violations in flight.
 
-These aren't reasons to avoid normalization. They are reasons to know *why* you're breaking it when you break it.
+These aren't reasons to avoid normalization. They are reasons to know _why_ you're breaking it when you break it.
 
 <Callout type="tip">
 
@@ -265,10 +266,10 @@ If a senior engineer says "this is a 4NF violation," nine times out of ten they 
 ## The shortest summary
 
 - **1NF**: each cell holds one value.
-- **2NF**: every non-key column depends on the *whole* key.
+- **2NF**: every non-key column depends on the _whole_ key.
 - **3NF**: every non-key column depends only on the key, not on another column.
 
-In a single sentence: *every fact lives in exactly one place, identified by its primary key.*
+In a single sentence: _every fact lives in exactly one place, identified by its primary key._
 
 ## A normalization workflow
 
@@ -292,4 +293,3 @@ Twenty seconds of these four questions catches most violations before they ship.
 - Default to 3NF; break it deliberately when measurements demand.
 
 Next: [Denormalization](/notes/data-modeling/05-denormalization) — when, why, and the bookkeeping it forces.
-

@@ -1,10 +1,10 @@
 ---
-title: "State Management"
-subtitle: "Local state, lifted state, context, global stores, and signals — managing data flow in complex UIs."
+title: 'State Management'
+subtitle: 'Local state, lifted state, context, global stores, and signals — managing data flow in complex UIs.'
 chapter: 3
-level: "intermediate"
-readingTime: "15 min"
-topics: ["state", "context", "zustand", "redux", "signals", "state machines"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['state', 'context', 'zustand', 'redux', 'signals', 'state machines']
 ---
 
 <script>
@@ -317,6 +317,7 @@ function CartTotal() {
 <Callout type="tip">
 
 **State management decision tree:**
+
 1. Does only one component need it? → `useState` / `useReducer`
 2. Do a parent and its direct children need it? → Lift state up
 3. Do many components across a subtree need it? → Context
@@ -356,4 +357,3 @@ function Counter() {
 4. **Zustand** gives you global state with selector-based subscriptions and zero boilerplate.
 5. **Signals** offer fine-grained reactivity without the virtual DOM diffing cost.
 6. **Never put everything in global state** — most state is local. Global stores are for truly shared, app-wide data.
-

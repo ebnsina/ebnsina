@@ -1,10 +1,18 @@
 ---
-title: "Performance Optimization"
-subtitle: "Code splitting, lazy loading, tree shaking, bundle analysis, and Core Web Vitals — making your frontend fast."
+title: 'Performance Optimization'
+subtitle: 'Code splitting, lazy loading, tree shaking, bundle analysis, and Core Web Vitals — making your frontend fast.'
 chapter: 6
-level: "advanced"
-readingTime: "15 min"
-topics: ["performance", "code splitting", "lazy loading", "tree shaking", "core web vitals", "bundle size"]
+level: 'advanced'
+readingTime: '15 min'
+topics:
+  [
+    'performance',
+    'code splitting',
+    'lazy loading',
+    'tree shaking',
+    'core web vitals',
+    'bundle size'
+  ]
 ---
 
 <script>
@@ -27,22 +35,22 @@ Like optimizing a factory production line — code splitting is having separate 
 
 Google's three metrics that measure real user experience:
 
-| Metric | What It Measures | Good | Needs Work | Poor |
-|--------|-----------------|------|------------|------|
-| **LCP** (Largest Contentful Paint) | Loading performance | &lt; 2.5s | 2.5–4s | > 4s |
-| **INP** (Interaction to Next Paint) | Responsiveness | &lt; 200ms | 200–500ms | > 500ms |
-| **CLS** (Cumulative Layout Shift) | Visual stability | &lt; 0.1 | 0.1–0.25 | > 0.25 |
+| Metric                              | What It Measures    | Good       | Needs Work | Poor    |
+| ----------------------------------- | ------------------- | ---------- | ---------- | ------- |
+| **LCP** (Largest Contentful Paint)  | Loading performance | &lt; 2.5s  | 2.5–4s     | > 4s    |
+| **INP** (Interaction to Next Paint) | Responsiveness      | &lt; 200ms | 200–500ms  | > 500ms |
+| **CLS** (Cumulative Layout Shift)   | Visual stability    | &lt; 0.1   | 0.1–0.25   | > 0.25  |
 
 ```typescript
 // Measure Core Web Vitals in your app
-import { onLCP, onINP, onCLS } from "web-vitals";
+import { onLCP, onINP, onCLS } from 'web-vitals';
 
 function sendToAnalytics(metric: { name: string; value: number; id: string }) {
-  fetch("/api/analytics", {
-    method: "POST",
-    body: JSON.stringify(metric),
-    headers: { "Content-Type": "application/json" },
-  });
+	fetch('/api/analytics', {
+		method: 'POST',
+		body: JSON.stringify(metric),
+		headers: { 'Content-Type': 'application/json' }
+	});
 }
 
 onLCP(sendToAnalytics);
@@ -160,6 +168,7 @@ function LazySection({ children }: { children: React.ReactNode }) {
 <Callout type="tip">
 
 **Performance optimization priority:**
+
 1. **Measure first** — use Lighthouse, Chrome DevTools Performance tab, or `web-vitals`
 2. **Reduce bundle size** — code splitting, tree shaking, smaller libraries
 3. **Optimize images** — use WebP/AVIF, responsive srcsets, lazy loading
@@ -174,14 +183,24 @@ Tree shaking removes unused exports from your final bundle. It works with ES mod
 
 ```typescript
 // math.ts — library module
-export function add(a: number, b: number) { return a + b; }
-export function subtract(a: number, b: number) { return a - b; }
-export function multiply(a: number, b: number) { return a * b; }
-export function divide(a: number, b: number) { return a / b; }
-export function power(a: number, b: number) { return Math.pow(a, b); }
+export function add(a: number, b: number) {
+	return a + b;
+}
+export function subtract(a: number, b: number) {
+	return a - b;
+}
+export function multiply(a: number, b: number) {
+	return a * b;
+}
+export function divide(a: number, b: number) {
+	return a / b;
+}
+export function power(a: number, b: number) {
+	return Math.pow(a, b);
+}
 
 // app.ts — only uses add
-import { add } from "./math";
+import { add } from './math';
 console.log(add(1, 2));
 
 // After tree shaking: subtract, multiply, divide, power are removed from bundle
@@ -189,15 +208,15 @@ console.log(add(1, 2));
 
 ```typescript
 // BAD: imports entire library (no tree shaking)
-import _ from "lodash";
+import _ from 'lodash';
 _.debounce(fn, 300);
 
 // GOOD: import only what you need
-import debounce from "lodash/debounce";
+import debounce from 'lodash/debounce';
 debounce(fn, 300);
 
 // BETTER: use a tree-shakeable alternative
-import { debounce } from "lodash-es";
+import { debounce } from 'lodash-es';
 debounce(fn, 300);
 ```
 
@@ -293,6 +312,7 @@ function ProductPage() {
 <Callout type="warning">
 
 **Do not memoize everything:**
+
 - `memo` has a cost — it must compare all props on every render. Only use it on components that re-render with the same props frequently.
 - `useMemo` and `useCallback` add complexity. Profile first, optimize only where measurements show a problem.
 - Premature optimization makes code harder to read with no measurable benefit.
@@ -315,6 +335,7 @@ npx webpack-bundle-analyzer dist/stats.json
 ```
 
 Common findings and fixes:
+
 - `moment.js` (300KB) — replace with `date-fns` (tree-shakeable) or `dayjs` (2KB)
 - `lodash` (70KB) — use `lodash-es` for tree shaking or individual imports
 - Duplicate dependencies — check with `npm ls <package>`
@@ -328,4 +349,3 @@ Common findings and fixes:
 4. **Tree shaking** works with ES modules — use named imports and tree-shakeable libraries
 5. **Virtualize** long lists instead of rendering thousands of DOM nodes
 6. **Measure before optimizing** — use Lighthouse, bundle analyzers, and DevTools profiler
-

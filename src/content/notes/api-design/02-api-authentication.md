@@ -1,10 +1,10 @@
 ---
-title: "API Authentication"
-subtitle: "Secure your APIs with API keys, OAuth 2.0, JWT tokens, and session-based auth — understand when to use each approach."
+title: 'API Authentication'
+subtitle: 'Secure your APIs with API keys, OAuth 2.0, JWT tokens, and session-based auth — understand when to use each approach.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["authentication", "API keys", "OAuth 2.0", "JWT", "sessions"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['authentication', 'API keys', 'OAuth 2.0', 'JWT', 'sessions']
 ---
 
 <script>
@@ -34,33 +34,33 @@ The simplest form of authentication. The server generates a unique key, and the 
 
 ```typescript
 // Client sends API key in header
-const response = await fetch("https://api.example.com/data", {
-  headers: {
-    "X-API-Key": "sk_live_abc123def456",
-  },
+const response = await fetch('https://api.example.com/data', {
+	headers: {
+		'X-API-Key': 'sk_live_abc123def456'
+	}
 });
 
 // Server validates the key
-import express from "express";
+import express from 'express';
 
 function apiKeyAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const apiKey = req.headers["x-api-key"];
+	const apiKey = req.headers['x-api-key'];
 
-  if (!apiKey) {
-    return res.status(401).json({ error: "API key is required" });
-  }
+	if (!apiKey) {
+		return res.status(401).json({ error: 'API key is required' });
+	}
 
-  const client = await db.apiKeys.findOne({ key: apiKey, active: true });
-  if (!client) {
-    return res.status(401).json({ error: "Invalid API key" });
-  }
+	const client = await db.apiKeys.findOne({ key: apiKey, active: true });
+	if (!client) {
+		return res.status(401).json({ error: 'Invalid API key' });
+	}
 
-  // Attach client info for authorization later
-  req.client = client;
-  next();
+	// Attach client info for authorization later
+	req.client = client;
+	next();
 }
 
-app.use("/api", apiKeyAuth);
+app.use('/api', apiKeyAuth);
 ```
 
 <Callout type="warning">
@@ -114,93 +114,87 @@ HMACSHA256(
 ### Implementing JWT Auth
 
 ```typescript
-import jwt from "jsonwebtoken";
-import express from "express";
+import jwt from 'jsonwebtoken';
+import express from 'express';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
-const ACCESS_TOKEN_TTL = "15m";
-const REFRESH_TOKEN_TTL = "7d";
+const ACCESS_TOKEN_TTL = '15m';
+const REFRESH_TOKEN_TTL = '7d';
 
 // Login endpoint — issue tokens
-app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+app.post('/api/auth/login', async (req, res) => {
+	const { email, password } = req.body;
 
-  const user = await db.users.findByEmail(email);
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
+	const user = await db.users.findByEmail(email);
+	if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+		return res.status(401).json({ error: 'Invalid credentials' });
+	}
 
-  const accessToken = jwt.sign(
-    { sub: user.id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
-  );
+	const accessToken = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, {
+		expiresIn: ACCESS_TOKEN_TTL
+	});
 
-  const refreshToken = jwt.sign(
-    { sub: user.id, type: "refresh" },
-    JWT_SECRET,
-    { expiresIn: REFRESH_TOKEN_TTL }
-  );
+	const refreshToken = jwt.sign({ sub: user.id, type: 'refresh' }, JWT_SECRET, {
+		expiresIn: REFRESH_TOKEN_TTL
+	});
 
-  // Store refresh token hash in DB for revocation
-  await db.refreshTokens.create({
-    userId: user.id,
-    tokenHash: hashToken(refreshToken),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  });
+	// Store refresh token hash in DB for revocation
+	await db.refreshTokens.create({
+		userId: user.id,
+		tokenHash: hashToken(refreshToken),
+		expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+	});
 
-  res.json({ accessToken, refreshToken });
+	res.json({ accessToken, refreshToken });
 });
 
 // Middleware — verify JWT on protected routes
 function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing token" });
-  }
+	const authHeader = req.headers.authorization;
+	if (!authHeader?.startsWith('Bearer ')) {
+		return res.status(401).json({ error: 'Missing token' });
+	}
 
-  const token = authHeader.slice(7);
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
-    req.user = { id: payload.sub, role: payload.role };
-    next();
-  } catch (err) {
-    if (err instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ error: "Token expired" });
-    }
-    return res.status(401).json({ error: "Invalid token" });
-  }
+	const token = authHeader.slice(7);
+	try {
+		const payload = jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
+		req.user = { id: payload.sub, role: payload.role };
+		next();
+	} catch (err) {
+		if (err instanceof jwt.TokenExpiredError) {
+			return res.status(401).json({ error: 'Token expired' });
+		}
+		return res.status(401).json({ error: 'Invalid token' });
+	}
 }
 
 // Refresh endpoint — issue a new access token
-app.post("/api/auth/refresh", async (req, res) => {
-  const { refreshToken } = req.body;
+app.post('/api/auth/refresh', async (req, res) => {
+	const { refreshToken } = req.body;
 
-  try {
-    const payload = jwt.verify(refreshToken, JWT_SECRET) as { sub: string; type: string };
-    if (payload.type !== "refresh") {
-      return res.status(401).json({ error: "Invalid token type" });
-    }
+	try {
+		const payload = jwt.verify(refreshToken, JWT_SECRET) as { sub: string; type: string };
+		if (payload.type !== 'refresh') {
+			return res.status(401).json({ error: 'Invalid token type' });
+		}
 
-    // Check if refresh token is still valid in DB
-    const stored = await db.refreshTokens.findOne({
-      userId: payload.sub,
-      tokenHash: hashToken(refreshToken),
-    });
-    if (!stored) {
-      return res.status(401).json({ error: "Token revoked" });
-    }
+		// Check if refresh token is still valid in DB
+		const stored = await db.refreshTokens.findOne({
+			userId: payload.sub,
+			tokenHash: hashToken(refreshToken)
+		});
+		if (!stored) {
+			return res.status(401).json({ error: 'Token revoked' });
+		}
 
-    const accessToken = jwt.sign(
-      { sub: payload.sub, role: "user" },
-      JWT_SECRET,
-      { expiresIn: ACCESS_TOKEN_TTL }
-    );
+		const accessToken = jwt.sign({ sub: payload.sub, role: 'user' }, JWT_SECRET, {
+			expiresIn: ACCESS_TOKEN_TTL
+		});
 
-    res.json({ accessToken });
-  } catch {
-    res.status(401).json({ error: "Invalid refresh token" });
-  }
+		res.json({ accessToken });
+	} catch {
+		res.status(401).json({ error: 'Invalid refresh token' });
+	}
 });
 ```
 
@@ -226,54 +220,54 @@ This is the most common flow for web applications:
 
 ```typescript
 // Step 1: Redirect user to authorization server
-const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-authUrl.searchParams.set("client_id", CLIENT_ID);
-authUrl.searchParams.set("redirect_uri", "https://myapp.com/callback");
-authUrl.searchParams.set("response_type", "code");
-authUrl.searchParams.set("scope", "openid email profile");
-authUrl.searchParams.set("state", generateRandomState()); // CSRF protection
+const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+authUrl.searchParams.set('client_id', CLIENT_ID);
+authUrl.searchParams.set('redirect_uri', 'https://myapp.com/callback');
+authUrl.searchParams.set('response_type', 'code');
+authUrl.searchParams.set('scope', 'openid email profile');
+authUrl.searchParams.set('state', generateRandomState()); // CSRF protection
 
 // Redirect: window.location.href = authUrl.toString();
 
 // Step 2: Handle callback — exchange code for tokens
-app.get("/callback", async (req, res) => {
-  const { code, state } = req.query;
+app.get('/callback', async (req, res) => {
+	const { code, state } = req.query;
 
-  // Verify state to prevent CSRF
-  if (state !== req.session.oauthState) {
-    return res.status(403).json({ error: "Invalid state" });
-  }
+	// Verify state to prevent CSRF
+	if (state !== req.session.oauthState) {
+		return res.status(403).json({ error: 'Invalid state' });
+	}
 
-  // Exchange authorization code for tokens
-  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code: code as string,
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      redirect_uri: "https://myapp.com/callback",
-      grant_type: "authorization_code",
-    }),
-  });
+	// Exchange authorization code for tokens
+	const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			code: code as string,
+			client_id: CLIENT_ID,
+			client_secret: CLIENT_SECRET,
+			redirect_uri: 'https://myapp.com/callback',
+			grant_type: 'authorization_code'
+		})
+	});
 
-  const { access_token, refresh_token, id_token } = await tokenResponse.json();
+	const { access_token, refresh_token, id_token } = await tokenResponse.json();
 
-  // Step 3: Use access token to get user info
-  const userInfo = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-    headers: { Authorization: `Bearer ${access_token}` },
-  }).then((r) => r.json());
+	// Step 3: Use access token to get user info
+	const userInfo = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+		headers: { Authorization: `Bearer ${access_token}` }
+	}).then((r) => r.json());
 
-  // Create or update user in your database
-  const user = await db.users.upsert({
-    email: userInfo.email,
-    name: userInfo.name,
-    googleId: userInfo.id,
-  });
+	// Create or update user in your database
+	const user = await db.users.upsert({
+		email: userInfo.email,
+		name: userInfo.name,
+		googleId: userInfo.id
+	});
 
-  // Issue your own JWT
-  const jwt = issueJWT(user);
-  res.redirect(`/dashboard?token=${jwt}`);
+	// Issue your own JWT
+	const jwt = issueJWT(user);
+	res.redirect(`/dashboard?token=${jwt}`);
 });
 ```
 
@@ -282,59 +276,59 @@ app.get("/callback", async (req, res) => {
 The traditional approach — server stores session data, client stores a session ID cookie.
 
 ```typescript
-import session from "express-session";
-import RedisStore from "connect-redis";
-import { createClient } from "redis";
+import session from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
 
 const redisClient = createClient({ url: process.env.REDIS_URL });
 await redisClient.connect();
 
 app.use(
-  session({
-    store: new RedisStore({ client: redisClient }),
-    secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: true,       // HTTPS only
-      httpOnly: true,      // No JavaScript access
-      sameSite: "strict",  // CSRF protection
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  })
+	session({
+		store: new RedisStore({ client: redisClient }),
+		secret: process.env.SESSION_SECRET!,
+		resave: false,
+		saveUninitialized: false,
+		cookie: {
+			secure: true, // HTTPS only
+			httpOnly: true, // No JavaScript access
+			sameSite: 'strict', // CSRF protection
+			maxAge: 24 * 60 * 60 * 1000 // 24 hours
+		}
+	})
 );
 
 // Login — create session
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = await db.users.findByEmail(email);
+app.post('/api/login', async (req, res) => {
+	const { email, password } = req.body;
+	const user = await db.users.findByEmail(email);
 
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
+	if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+		return res.status(401).json({ error: 'Invalid credentials' });
+	}
 
-  req.session.userId = user.id;
-  req.session.role = user.role;
-  res.json({ message: "Logged in" });
+	req.session.userId = user.id;
+	req.session.role = user.role;
+	res.json({ message: 'Logged in' });
 });
 
 // Middleware — check session
 function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  next();
+	if (!req.session.userId) {
+		return res.status(401).json({ error: 'Not authenticated' });
+	}
+	next();
 }
 ```
 
 ## Choosing the Right Method
 
-| Method | Best For | Stateless? | Scalability |
-|--------|----------|------------|-------------|
-| API Keys | Server-to-server, public APIs | Yes | High |
-| JWT | SPAs, mobile apps, microservices | Yes | High |
-| Sessions | Traditional web apps, SSR | No | Medium |
-| OAuth 2.0 | Third-party access, SSO | Depends | High |
+| Method    | Best For                         | Stateless? | Scalability |
+| --------- | -------------------------------- | ---------- | ----------- |
+| API Keys  | Server-to-server, public APIs    | Yes        | High        |
+| JWT       | SPAs, mobile apps, microservices | Yes        | High        |
+| Sessions  | Traditional web apps, SSR        | No         | Medium      |
+| OAuth 2.0 | Third-party access, SSO          | Depends    | High        |
 
 <Callout type="tip">
 
@@ -355,4 +349,3 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
 3. **JWTs** are stateless and scalable but require short expiry + refresh token rotation
 4. **OAuth 2.0** delegates authorization — the user grants your app permission without sharing their password
 5. **Sessions** are stateful but simpler to implement and easier to revoke
-

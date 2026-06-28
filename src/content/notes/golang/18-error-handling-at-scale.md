@@ -1,10 +1,10 @@
 ---
-title: "Error Handling at Scale"
+title: 'Error Handling at Scale'
 subtitle: "Beyond 'if err != nil' — error wrapping strategies, domain errors, error budgets, and patterns from large Go codebases."
 chapter: 18
-level: "advanced"
-readingTime: "18 min"
-topics: ["error handling", "error wrapping", "domain errors", "error types", "observability"]
+level: 'advanced'
+readingTime: '18 min'
+topics: ['error handling', 'error wrapping', 'domain errors', 'error types', 'observability']
 ---
 
 <script>
@@ -14,6 +14,7 @@ topics: ["error handling", "error wrapping", "domain errors", "error types", "ob
 ## The Problem with Naive Error Handling
 
 In small projects, `if err != nil { return err }` works fine. In large codebases with dozens of services, you need:
+
 - **Context**: Where did this error originate?
 - **Classification**: Is this a user error, a bug, or a transient failure?
 - **Actionability**: Should we retry, alert, or return a 400?
@@ -299,4 +300,3 @@ func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 4. **Separate user errors from developer errors** — users see "not found", logs show the full chain
 5. **Distinguish retryable vs permanent errors** — retry logic needs to know the difference
 6. **`errors.Is` for sentinel values**, **`errors.As` for typed errors** — both traverse the wrapped chain
-

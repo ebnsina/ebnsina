@@ -1,10 +1,10 @@
 ---
-title: "UDP — Speed Over Reliability"
-subtitle: "When losing a few packets is better than waiting — video calls, gaming, DNS lookups, and building your own reliability."
+title: 'UDP — Speed Over Reliability'
+subtitle: 'When losing a few packets is better than waiting — video calls, gaming, DNS lookups, and building your own reliability.'
 chapter: 4
-level: "beginner"
-readingTime: "10 min"
-topics: ["UDP", "datagram", "real-time", "gaming"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['UDP', 'datagram', 'real-time', 'gaming']
 ---
 
 <script>
@@ -36,11 +36,11 @@ A UDP datagram has an 8-byte header. That's it:
 
 ```typescript
 interface UDPDatagram {
-  sourcePort: number;      // 2 bytes
-  destinationPort: number; // 2 bytes
-  length: number;          // 2 bytes
-  checksum: number;        // 2 bytes
-  payload: Uint8Array;     // your data
+	sourcePort: number; // 2 bytes
+	destinationPort: number; // 2 bytes
+	length: number; // 2 bytes
+	checksum: number; // 2 bytes
+	payload: Uint8Array; // your data
 }
 
 // Compare to TCP's 20+ byte header with sequence numbers,
@@ -52,24 +52,24 @@ No connection setup, no teardown, no state. Send a packet and move on.
 ## Building a UDP Server
 
 ```typescript
-import dgram from "node:dgram";
+import dgram from 'node:dgram';
 
-const server = dgram.createSocket("udp4");
+const server = dgram.createSocket('udp4');
 
-server.on("message", (msg, rinfo) => {
-  console.log(`Received: ${msg} from ${rinfo.address}:${rinfo.port}`);
+server.on('message', (msg, rinfo) => {
+	console.log(`Received: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
-  // Echo it back
-  server.send(`ACK: ${msg}`, rinfo.port, rinfo.address);
+	// Echo it back
+	server.send(`ACK: ${msg}`, rinfo.port, rinfo.address);
 });
 
 server.bind(3000, () => {
-  console.log("UDP server listening on port 3000");
+	console.log('UDP server listening on port 3000');
 });
 
 // Client
-const client = dgram.createSocket("udp4");
-client.send("Hello UDP!", 3000, "localhost");
+const client = dgram.createSocket('udp4');
+client.send('Hello UDP!', 3000, 'localhost');
 ```
 
 ## When You Need Some Reliability
@@ -79,48 +79,49 @@ Many real-time protocols use UDP as the transport but add their own lightweight 
 ```typescript
 // Game server: reliable for critical events, unreliable for positions
 interface GamePacket {
-  sequence: number;
-  timestamp: number;
-  reliable: boolean; // should we retry if lost?
-  type: "position" | "chat" | "damage" | "inventory";
-  data: unknown;
+	sequence: number;
+	timestamp: number;
+	reliable: boolean; // should we retry if lost?
+	type: 'position' | 'chat' | 'damage' | 'inventory';
+	data: unknown;
 }
 
 class ReliableUDP {
-  private pending = new Map<number, { packet: GamePacket; sentAt: number }>();
-  private sequence = 0;
+	private pending = new Map<number, { packet: GamePacket; sentAt: number }>();
+	private sequence = 0;
 
-  send(packet: GamePacket): void {
-    packet.sequence = this.sequence++;
+	send(packet: GamePacket): void {
+		packet.sequence = this.sequence++;
 
-    this.transmit(packet);
+		this.transmit(packet);
 
-    if (packet.reliable) {
-      this.pending.set(packet.sequence, {
-        packet,
-        sentAt: Date.now(),
-      });
-    }
-  }
+		if (packet.reliable) {
+			this.pending.set(packet.sequence, {
+				packet,
+				sentAt: Date.now()
+			});
+		}
+	}
 
-  onAck(sequence: number): void {
-    this.pending.delete(sequence);
-  }
+	onAck(sequence: number): void {
+		this.pending.delete(sequence);
+	}
 
-  // Retransmit unacked reliable packets
-  tick(): void {
-    const now = Date.now();
-    for (const [seq, entry] of this.pending) {
-      if (now - entry.sentAt > 100) { // 100ms timeout
-        this.transmit(entry.packet);
-        entry.sentAt = now;
-      }
-    }
-  }
+	// Retransmit unacked reliable packets
+	tick(): void {
+		const now = Date.now();
+		for (const [seq, entry] of this.pending) {
+			if (now - entry.sentAt > 100) {
+				// 100ms timeout
+				this.transmit(entry.packet);
+				entry.sentAt = now;
+			}
+		}
+	}
 
-  private transmit(packet: GamePacket): void {
-    // Serialize and send via UDP socket
-  }
+	private transmit(packet: GamePacket): void {
+		// Serialize and send via UDP socket
+	}
 }
 ```
 
@@ -132,13 +133,13 @@ class ReliableUDP {
 
 ## TCP vs UDP Decision Guide
 
-| Question | TCP | UDP |
-|----------|-----|-----|
-| Must every byte arrive? | Yes | No |
-| Is ordering critical? | Yes | No |
-| Is latency more important than completeness? | No | Yes |
-| Is the data small (fits in one packet)? | Overhead | Perfect |
-| Do you need custom reliability? | Overkill | Build what you need |
+| Question                                     | TCP      | UDP                 |
+| -------------------------------------------- | -------- | ------------------- |
+| Must every byte arrive?                      | Yes      | No                  |
+| Is ordering critical?                        | Yes      | No                  |
+| Is latency more important than completeness? | No       | Yes                 |
+| Is the data small (fits in one packet)?      | Overhead | Perfect             |
+| Do you need custom reliability?              | Overkill | Build what you need |
 
 ## Key Takeaways
 
@@ -146,4 +147,3 @@ class ReliableUDP {
 2. **Use UDP when freshness beats completeness** — real-time audio/video, gaming, DNS
 3. **You can build selective reliability on top of UDP** — only retransmit what matters
 4. **QUIC (HTTP/3) proves UDP's flexibility** — modern protocols choose UDP as a foundation and build up from there
-

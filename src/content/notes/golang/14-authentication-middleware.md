@@ -1,10 +1,10 @@
 ---
-title: "Authentication & Middleware"
-subtitle: "JWT authentication, middleware chains, CORS, rate limiting — the security and cross-cutting concerns every API needs."
+title: 'Authentication & Middleware'
+subtitle: 'JWT authentication, middleware chains, CORS, rate limiting — the security and cross-cutting concerns every API needs.'
 chapter: 14
-level: "intermediate"
-readingTime: "20 min"
-topics: ["authentication", "JWT", "middleware", "CORS", "rate limiting", "security"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['authentication', 'JWT', 'middleware', 'CORS', 'rate limiting', 'security']
 ---
 
 <script>
@@ -387,4 +387,3 @@ func main() {
 5. **CORS is mandatory** for browser clients — handle OPTIONS preflight
 6. **Rate limit per IP** in production — global rate limits don't protect against individual abuse
 7. **Apply auth selectively** — not every route needs authentication
-

@@ -1,10 +1,10 @@
 ---
-title: "CDN & Edge Caching"
-subtitle: "Implement edge caching with cache headers, signed URLs for private content, and cache purging strategies."
+title: 'CDN & Edge Caching'
+subtitle: 'Implement edge caching with cache headers, signed URLs for private content, and cache purging strategies.'
 chapter: 15
-level: "intermediate"
-readingTime: "15 min"
-topics: ["CDN", "edge caching", "Cache-Control", "signed URLs", "cache purging"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['CDN', 'edge caching', 'Cache-Control', 'signed URLs', 'cache purging']
 ---
 
 <script>
@@ -20,11 +20,9 @@ A **Content Delivery Network (CDN)** is a globally distributed network of server
 Think of it like a chain of local libraries. The main library (origin server) has every book, but it's across town. Your neighborhood branch (edge node) stocks copies of the most popular books. When you want a bestseller, you grab it from your local branch instantly. Only rare requests need to go to the main library.
 
 <Mermaid
-	title="CDN Edge Caching Architecture"
-	code={`
-graph LR
-  C["Client<br/>Browser / App"] --> E["CDN Edge<br/>Cache Layer"] --> O["Origin Server<br/>Cache Headers"] --> S["Storage<br/>Files / Objects"]
-`}
+title="CDN Edge Caching Architecture"
+code={`graph LR
+  C["Client<br/>Browser / App"] --> E["CDN Edge<br/>Cache Layer"] --> O["Origin Server<br/>Cache Headers"] --> S["Storage<br/>Files / Objects"]`}
 />
 
 ## Real-World Analogy
@@ -47,29 +45,29 @@ Here's a complete origin server that implements proper cache headers, conditiona
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import fs from "node:fs";
-import path from "node:path";
-import crypto from "node:crypto";
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
 // --- Configuration ---
-const PORT = parseInt(process.env.PORT || "3000", 10);
-const STATIC_DIR = process.env.STATIC_DIR || "./public";
-const SIGNING_SECRET = process.env.SIGNING_SECRET || "change-me-in-production";
-const PURGE_API_KEY = process.env.PURGE_API_KEY || "purge-secret-key";
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const STATIC_DIR = process.env.STATIC_DIR || './public';
+const SIGNING_SECRET = process.env.SIGNING_SECRET || 'change-me-in-production';
+const PURGE_API_KEY = process.env.PURGE_API_KEY || 'purge-secret-key';
 
 // --- Types ---
 interface CacheEntry {
-  etag: string;
-  lastModified: Date;
-  contentType: string;
-  size: number;
+	etag: string;
+	lastModified: Date;
+	contentType: string;
+	size: number;
 }
 
 interface SignedURLParams {
-  filePath: string;
-  expiresAt: number;
-  signature: string;
+	filePath: string;
+	expiresAt: number;
+	signature: string;
 }
 
 // --- In-memory cache metadata registry ---
@@ -78,362 +76,349 @@ const purgedPaths = new Set<string>();
 
 // --- Content type detection ---
 const MIME_TYPES: Record<string, string> = {
-  ".html": "text/html",
-  ".css": "text/css",
-  ".js": "application/javascript",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".woff2": "font/woff2",
-  ".mp4": "video/mp4",
+	'.html': 'text/html',
+	'.css': 'text/css',
+	'.js': 'application/javascript',
+	'.json': 'application/json',
+	'.png': 'image/png',
+	'.jpg': 'image/jpeg',
+	'.gif': 'image/gif',
+	'.svg': 'image/svg+xml',
+	'.woff2': 'font/woff2',
+	'.mp4': 'video/mp4'
 };
 
 function getContentType(filePath: string): string {
-  const ext = path.extname(filePath).toLowerCase();
-  return MIME_TYPES[ext] || "application/octet-stream";
+	const ext = path.extname(filePath).toLowerCase();
+	return MIME_TYPES[ext] || 'application/octet-stream';
 }
 
 // --- ETag generation using file content hash ---
 function generateETag(content: Buffer): string {
-  const hash = crypto.createHash("sha256").update(content).digest("hex");
-  return `"${hash.substring(0, 32)}"`;
+	const hash = crypto.createHash('sha256').update(content).digest('hex');
+	return `"${hash.substring(0, 32)}"`;
 }
 
 // --- Cache-Control header based on file type ---
 function getCacheControl(filePath: string): string {
-  const ext = path.extname(filePath).toLowerCase();
-  // Immutable assets (hashed filenames) -- cache for 1 year
-  if (filePath.includes(".hash.") || filePath.includes("/immutable/")) {
-    return "public, max-age=31536000, immutable";
-  }
-  // HTML -- always revalidate
-  if (ext === ".html") {
-    return "public, no-cache, must-revalidate";
-  }
-  // Images and fonts -- cache 30 days with stale-while-revalidate
-  if ([".png", ".jpg", ".gif", ".svg", ".woff2"].includes(ext)) {
-    return "public, max-age=2592000, stale-while-revalidate=86400";
-  }
-  // CSS/JS -- cache 7 days
-  if ([".css", ".js"].includes(ext)) {
-    return "public, max-age=604800, stale-while-revalidate=3600";
-  }
-  // Default -- short cache with revalidation
-  return "public, max-age=300, must-revalidate";
+	const ext = path.extname(filePath).toLowerCase();
+	// Immutable assets (hashed filenames) -- cache for 1 year
+	if (filePath.includes('.hash.') || filePath.includes('/immutable/')) {
+		return 'public, max-age=31536000, immutable';
+	}
+	// HTML -- always revalidate
+	if (ext === '.html') {
+		return 'public, no-cache, must-revalidate';
+	}
+	// Images and fonts -- cache 30 days with stale-while-revalidate
+	if (['.png', '.jpg', '.gif', '.svg', '.woff2'].includes(ext)) {
+		return 'public, max-age=2592000, stale-while-revalidate=86400';
+	}
+	// CSS/JS -- cache 7 days
+	if (['.css', '.js'].includes(ext)) {
+		return 'public, max-age=604800, stale-while-revalidate=3600';
+	}
+	// Default -- short cache with revalidation
+	return 'public, max-age=300, must-revalidate';
 }
 
 // --- Signed URL generation and validation ---
 function generateSignedURL(filePath: string, ttlSeconds: number): string {
-  const expiresAt = Math.floor(Date.now() / 1000) + ttlSeconds;
-  const payload = `${filePath}:${expiresAt}`;
-  const signature = crypto
-    .createHmac("sha256", SIGNING_SECRET)
-    .update(payload)
-    .digest("hex");
+	const expiresAt = Math.floor(Date.now() / 1000) + ttlSeconds;
+	const payload = `${filePath}:${expiresAt}`;
+	const signature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
 
-  const params = new URLSearchParams({
-    file: filePath,
-    expires: String(expiresAt),
-    sig: signature,
-  });
-  return `/private?${params.toString()}`;
+	const params = new URLSearchParams({
+		file: filePath,
+		expires: String(expiresAt),
+		sig: signature
+	});
+	return `/private?${params.toString()}`;
 }
 
 function validateSignedURL(params: URLSearchParams): SignedURLParams | null {
-  const filePath = params.get("file");
-  const expiresStr = params.get("expires");
-  const signature = params.get("sig");
+	const filePath = params.get('file');
+	const expiresStr = params.get('expires');
+	const signature = params.get('sig');
 
-  if (!filePath || !expiresStr || !signature) return null;
+	if (!filePath || !expiresStr || !signature) return null;
 
-  const expiresAt = parseInt(expiresStr, 10);
-  if (isNaN(expiresAt)) return null;
+	const expiresAt = parseInt(expiresStr, 10);
+	if (isNaN(expiresAt)) return null;
 
-  // Check expiration
-  const now = Math.floor(Date.now() / 1000);
-  if (now > expiresAt) return null;
+	// Check expiration
+	const now = Math.floor(Date.now() / 1000);
+	if (now > expiresAt) return null;
 
-  // Verify HMAC signature
-  const payload = `${filePath}:${expiresAt}`;
-  const expected = crypto
-    .createHmac("sha256", SIGNING_SECRET)
-    .update(payload)
-    .digest("hex");
+	// Verify HMAC signature
+	const payload = `${filePath}:${expiresAt}`;
+	const expected = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return null;
-  }
+	if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+		return null;
+	}
 
-  return { filePath, expiresAt, signature };
+	return { filePath, expiresAt, signature };
 }
 
 // --- Serve static file with caching headers ---
 async function serveStaticFile(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  filePath: string,
-  isPrivate: boolean
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	filePath: string,
+	isPrivate: boolean
 ): Promise<void> {
-  const fullPath = path.resolve(STATIC_DIR, filePath);
+	const fullPath = path.resolve(STATIC_DIR, filePath);
 
-  // Prevent directory traversal
-  if (!fullPath.startsWith(path.resolve(STATIC_DIR))) {
-    res.writeHead(403, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Forbidden" }));
-    return;
-  }
+	// Prevent directory traversal
+	if (!fullPath.startsWith(path.resolve(STATIC_DIR))) {
+		res.writeHead(403, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Forbidden' }));
+		return;
+	}
 
-  let stat: fs.Stats;
-  let content: Buffer;
-  try {
-    stat = await fs.promises.stat(fullPath);
-    content = await fs.promises.readFile(fullPath);
-  } catch {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "File not found" }));
-    return;
-  }
+	let stat: fs.Stats;
+	let content: Buffer;
+	try {
+		stat = await fs.promises.stat(fullPath);
+		content = await fs.promises.readFile(fullPath);
+	} catch {
+		res.writeHead(404, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'File not found' }));
+		return;
+	}
 
-  const etag = generateETag(content);
-  const lastModified = stat.mtime;
-  const contentType = getContentType(filePath);
+	const etag = generateETag(content);
+	const lastModified = stat.mtime;
+	const contentType = getContentType(filePath);
 
-  // Update cache registry
-  cacheRegistry.set(filePath, {
-    etag,
-    lastModified,
-    contentType,
-    size: stat.size,
-  });
+	// Update cache registry
+	cacheRegistry.set(filePath, {
+		etag,
+		lastModified,
+		contentType,
+		size: stat.size
+	});
 
-  // --- Conditional request: If-None-Match (ETag) ---
-  const ifNoneMatch = req.headers["if-none-match"];
-  if (ifNoneMatch && ifNoneMatch === etag) {
-    res.writeHead(304, {
-      ETag: etag,
-      "Cache-Control": isPrivate ? "private, no-store" : getCacheControl(filePath),
-    });
-    res.end();
-    return;
-  }
+	// --- Conditional request: If-None-Match (ETag) ---
+	const ifNoneMatch = req.headers['if-none-match'];
+	if (ifNoneMatch && ifNoneMatch === etag) {
+		res.writeHead(304, {
+			ETag: etag,
+			'Cache-Control': isPrivate ? 'private, no-store' : getCacheControl(filePath)
+		});
+		res.end();
+		return;
+	}
 
-  // --- Conditional request: If-Modified-Since ---
-  const ifModifiedSince = req.headers["if-modified-since"];
-  if (ifModifiedSince) {
-    const clientDate = new Date(ifModifiedSince);
-    if (lastModified <= clientDate) {
-      res.writeHead(304, {
-        ETag: etag,
-        "Last-Modified": lastModified.toUTCString(),
-        "Cache-Control": isPrivate ? "private, no-store" : getCacheControl(filePath),
-      });
-      res.end();
-      return;
-    }
-  }
+	// --- Conditional request: If-Modified-Since ---
+	const ifModifiedSince = req.headers['if-modified-since'];
+	if (ifModifiedSince) {
+		const clientDate = new Date(ifModifiedSince);
+		if (lastModified <= clientDate) {
+			res.writeHead(304, {
+				ETag: etag,
+				'Last-Modified': lastModified.toUTCString(),
+				'Cache-Control': isPrivate ? 'private, no-store' : getCacheControl(filePath)
+			});
+			res.end();
+			return;
+		}
+	}
 
-  // --- Full response ---
-  const headers: Record<string, string> = {
-    "Content-Type": contentType,
-    "Content-Length": String(content.length),
-    ETag: etag,
-    "Last-Modified": lastModified.toUTCString(),
-    "Cache-Control": isPrivate ? "private, no-store" : getCacheControl(filePath),
-    "Accept-Ranges": "bytes",
-    Vary: "Accept-Encoding",
-  };
+	// --- Full response ---
+	const headers: Record<string, string> = {
+		'Content-Type': contentType,
+		'Content-Length': String(content.length),
+		ETag: etag,
+		'Last-Modified': lastModified.toUTCString(),
+		'Cache-Control': isPrivate ? 'private, no-store' : getCacheControl(filePath),
+		'Accept-Ranges': 'bytes',
+		Vary: 'Accept-Encoding'
+	};
 
-  // Add CDN-specific headers
-  if (!isPrivate) {
-    headers["CDN-Cache-Control"] = getCacheControl(filePath);
-    headers["Surrogate-Control"] = getCacheControl(filePath);
-  }
+	// Add CDN-specific headers
+	if (!isPrivate) {
+		headers['CDN-Cache-Control'] = getCacheControl(filePath);
+		headers['Surrogate-Control'] = getCacheControl(filePath);
+	}
 
-  res.writeHead(200, headers);
-  res.end(content);
+	res.writeHead(200, headers);
+	res.end(content);
 }
 
 // --- Cache purge handler ---
-function handlePurge(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  body: string
-): void {
-  // Verify API key
-  const apiKey = req.headers["x-purge-key"];
-  if (apiKey !== PURGE_API_KEY) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
+function handlePurge(req: http.IncomingMessage, res: http.ServerResponse, body: string): void {
+	// Verify API key
+	const apiKey = req.headers['x-purge-key'];
+	if (apiKey !== PURGE_API_KEY) {
+		res.writeHead(401, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Unauthorized' }));
+		return;
+	}
 
-  let parsed: { paths?: string[] };
-  try {
-    parsed = JSON.parse(body);
-  } catch {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Invalid JSON body" }));
-    return;
-  }
+	let parsed: { paths?: string[] };
+	try {
+		parsed = JSON.parse(body);
+	} catch {
+		res.writeHead(400, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+		return;
+	}
 
-  if (!Array.isArray(parsed.paths) || parsed.paths.length === 0) {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "paths array is required" }));
-    return;
-  }
+	if (!Array.isArray(parsed.paths) || parsed.paths.length === 0) {
+		res.writeHead(400, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'paths array is required' }));
+		return;
+	}
 
-  const purged: string[] = [];
-  for (const p of parsed.paths) {
-    cacheRegistry.delete(p);
-    purgedPaths.add(p);
-    purged.push(p);
-  }
+	const purged: string[] = [];
+	for (const p of parsed.paths) {
+		cacheRegistry.delete(p);
+		purgedPaths.add(p);
+		purged.push(p);
+	}
 
-  console.log(`[PURGE] Purged ${purged.length} paths: ${purged.join(", ")}`);
+	console.log(`[PURGE] Purged ${purged.length} paths: ${purged.join(', ')}`);
 
-  res.writeHead(200, {
-    "Content-Type": "application/json",
-    "Surrogate-Control": "no-store",
-    "Cache-Control": "no-store",
-  });
-  res.end(JSON.stringify({ purged, count: purged.length }));
+	res.writeHead(200, {
+		'Content-Type': 'application/json',
+		'Surrogate-Control': 'no-store',
+		'Cache-Control': 'no-store'
+	});
+	res.end(JSON.stringify({ purged, count: purged.length }));
 }
 
 // --- Signed URL generation endpoint ---
 function handleGenerateSignedURL(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  body: string
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	body: string
 ): void {
-  const apiKey = req.headers["x-api-key"];
-  if (apiKey !== PURGE_API_KEY) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
+	const apiKey = req.headers['x-api-key'];
+	if (apiKey !== PURGE_API_KEY) {
+		res.writeHead(401, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Unauthorized' }));
+		return;
+	}
 
-  let parsed: { path?: string; ttl?: number };
-  try {
-    parsed = JSON.parse(body);
-  } catch {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Invalid JSON" }));
-    return;
-  }
+	let parsed: { path?: string; ttl?: number };
+	try {
+		parsed = JSON.parse(body);
+	} catch {
+		res.writeHead(400, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Invalid JSON' }));
+		return;
+	}
 
-  const filePath = parsed.path;
-  const ttl = parsed.ttl || 3600; // Default 1 hour
+	const filePath = parsed.path;
+	const ttl = parsed.ttl || 3600; // Default 1 hour
 
-  if (!filePath) {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "path is required" }));
-    return;
-  }
+	if (!filePath) {
+		res.writeHead(400, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'path is required' }));
+		return;
+	}
 
-  const signedURL = generateSignedURL(filePath, ttl);
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ url: signedURL, expiresIn: ttl }));
+	const signedURL = generateSignedURL(filePath, ttl);
+	res.writeHead(200, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify({ url: signedURL, expiresIn: ttl }));
 }
 
 // --- Request body reader ---
 function readBody(req: http.IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    req.on("data", (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > 1024 * 1024) {
-        reject(new Error("Body too large"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		let size = 0;
+		req.on('data', (chunk: Buffer) => {
+			size += chunk.length;
+			if (size > 1024 * 1024) {
+				reject(new Error('Body too large'));
+				req.destroy();
+				return;
+			}
+			chunks.push(chunk);
+		});
+		req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+		req.on('error', reject);
+	});
 }
 
 // --- Router ---
-async function router(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+async function router(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // Serve private content via signed URL
-    if (url.pathname === "/private" && method === "GET") {
-      const validated = validateSignedURL(url.searchParams);
-      if (!validated) {
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid or expired signed URL" }));
-        return;
-      }
-      await serveStaticFile(req, res, validated.filePath, true);
-      return;
-    }
+	try {
+		// Serve private content via signed URL
+		if (url.pathname === '/private' && method === 'GET') {
+			const validated = validateSignedURL(url.searchParams);
+			if (!validated) {
+				res.writeHead(403, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ error: 'Invalid or expired signed URL' }));
+				return;
+			}
+			await serveStaticFile(req, res, validated.filePath, true);
+			return;
+		}
 
-    // Cache purge API
-    if (url.pathname === "/api/purge" && method === "POST") {
-      const body = await readBody(req);
-      handlePurge(req, res, body);
-      return;
-    }
+		// Cache purge API
+		if (url.pathname === '/api/purge' && method === 'POST') {
+			const body = await readBody(req);
+			handlePurge(req, res, body);
+			return;
+		}
 
-    // Generate signed URL
-    if (url.pathname === "/api/sign" && method === "POST") {
-      const body = await readBody(req);
-      handleGenerateSignedURL(req, res, body);
-      return;
-    }
+		// Generate signed URL
+		if (url.pathname === '/api/sign' && method === 'POST') {
+			const body = await readBody(req);
+			handleGenerateSignedURL(req, res, body);
+			return;
+		}
 
-    // Cache registry status
-    if (url.pathname === "/api/cache-status" && method === "GET") {
-      const entries = Object.fromEntries(cacheRegistry);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ cached: entries, count: cacheRegistry.size }));
-      return;
-    }
+		// Cache registry status
+		if (url.pathname === '/api/cache-status' && method === 'GET') {
+			const entries = Object.fromEntries(cacheRegistry);
+			res.writeHead(200, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ cached: entries, count: cacheRegistry.size }));
+			return;
+		}
 
-    // Serve static files from /assets/*
-    if (url.pathname.startsWith("/assets/") && method === "GET") {
-      const filePath = url.pathname.slice(1); // Remove leading /
-      await serveStaticFile(req, res, filePath, false);
-      return;
-    }
+		// Serve static files from /assets/*
+		if (url.pathname.startsWith('/assets/') && method === 'GET') {
+			const filePath = url.pathname.slice(1); // Remove leading /
+			await serveStaticFile(req, res, filePath, false);
+			return;
+		}
 
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Not found" }));
-  } catch (err) {
-    console.error(`[ERROR] ${method} ${url.pathname}:`, err);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Internal server error" }));
-  }
+		res.writeHead(404, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Not found' }));
+	} catch (err) {
+		console.error(`[ERROR] ${method} ${url.pathname}:`, err);
+		res.writeHead(500, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Internal server error' }));
+	}
 }
 
 // --- Server with graceful shutdown ---
 const server = http.createServer(router);
 
 server.listen(PORT, () => {
-  console.log(`CDN origin server listening on http://localhost:${PORT}`);
-  console.log(`Serving static files from: ${path.resolve(STATIC_DIR)}`);
+	console.log(`CDN origin server listening on http://localhost:${PORT}`);
+	console.log(`Serving static files from: ${path.resolve(STATIC_DIR)}`);
 });
 
 function shutdown(signal: string): void {
-  console.log(`\n${signal} received. Shutting down...`);
-  server.close(() => {
-    console.log("Server closed.");
-    process.exit(0);
-  });
-  setTimeout(() => process.exit(1), 10_000);
+	console.log(`\n${signal} received. Shutting down...`);
+	server.close(() => {
+		console.log('Server closed.');
+		process.exit(0);
+	});
+	setTimeout(() => process.exit(1), 10_000);
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 ```
 
 </div>
@@ -865,4 +850,3 @@ func main() {
 - **Vercel** uses signed URLs and edge caching to serve Next.js static assets with immutable cache headers
 
 </div>
-

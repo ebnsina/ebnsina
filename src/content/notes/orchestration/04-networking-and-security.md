@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes Networking & Security"
-subtitle: "NetworkPolicies, RBAC, Pod Security Standards, Secrets management, and the default-deny posture that keeps clusters hardened."
+title: 'Kubernetes Networking & Security'
+subtitle: 'NetworkPolicies, RBAC, Pod Security Standards, Secrets management, and the default-deny posture that keeps clusters hardened.'
 chapter: 4
-level: "intermediate"
-readingTime: "10 min"
-topics: ["NetworkPolicy", "RBAC", "Pod Security", "Secrets", "mTLS", "Kubernetes security"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['NetworkPolicy', 'RBAC', 'Pod Security', 'Secrets', 'mTLS', 'Kubernetes security']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A secure office building: every employee has a badge (RBAC — controls who can 
 By default, all pods can communicate with all other pods in the cluster. NetworkPolicies restrict this.
 
 **Default-deny for a namespace:**
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -31,7 +32,7 @@ metadata:
   name: default-deny-all
   namespace: production
 spec:
-  podSelector: {}          # applies to all pods
+  podSelector: {} # applies to all pods
   policyTypes:
     - Ingress
     - Egress
@@ -40,6 +41,7 @@ spec:
 Now no pod in `production` can receive or send any traffic. Add policies to allow what's needed.
 
 **Allow specific ingress:**
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -56,16 +58,17 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: api-gateway    # only from the gateway
+              app: api-gateway # only from the gateway
         - namespaceSelector:
             matchLabels:
-              name: monitoring    # and from the monitoring namespace (Prometheus scrape)
+              name: monitoring # and from the monitoring namespace (Prometheus scrape)
       ports:
         - protocol: TCP
           port: 3000
 ```
 
 **Allow egress to specific services:**
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -93,7 +96,7 @@ spec:
       ports:
         - protocol: TCP
           port: 6379
-    - to:                   # allow DNS
+    - to: # allow DNS
         - namespaceSelector: {}
       ports:
         - protocol: UDP
@@ -117,6 +120,7 @@ helm install cilium cilium/cilium \
 Kubernetes RBAC controls who can do what to which resources.
 
 **Three objects:**
+
 - **Role/ClusterRole** — defines permissions (what verbs on what resources)
 - **ServiceAccount** — identity for a pod
 - **RoleBinding/ClusterRoleBinding** — binds a Role to a ServiceAccount (or user)
@@ -138,13 +142,13 @@ metadata:
   name: order-service-role
   namespace: production
 rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]            # can only read secrets, not list/create/delete
-    resourceNames: ["order-service-secrets"]   # only this specific secret
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get'] # can only read secrets, not list/create/delete
+    resourceNames: ['order-service-secrets'] # only this specific secret
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'list', 'watch']
 ```
 
 ```yaml
@@ -175,6 +179,7 @@ spec:
 **Principle of least privilege:** each service account only has the permissions it actually needs.
 
 **For humans (kubectl access):**
+
 ```yaml
 # Grant a developer read-only access to production
 apiVersion: rbac.authorization.k8s.io/v1
@@ -183,11 +188,11 @@ metadata:
   name: developer-readonly
 subjects:
   - kind: User
-    name: "layla@example.com"
+    name: 'layla@example.com'
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: view              # built-in: read-only for most resources
+  name: view # built-in: read-only for most resources
   apiGroup: rbac.authorization.k8s.io
 ```
 
@@ -208,6 +213,7 @@ Kubernetes has three built-in security profiles:
 - **Restricted** — hardened, follows security best practices
 
 Apply at the namespace level:
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -220,6 +226,7 @@ metadata:
 ```
 
 With `restricted`, pods must:
+
 - Run as non-root
 - Use `securityContext.runAsNonRoot: true`
 - Set `allowPrivilegeEscalation: false`
@@ -237,12 +244,12 @@ spec:
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: true
         capabilities:
-          drop: ["ALL"]
+          drop: ['ALL']
         seccompProfile:
           type: RuntimeDefault
       volumeMounts:
         - name: tmp
-          mountPath: /tmp         # writable tmp since root is read-only
+          mountPath: /tmp # writable tmp since root is read-only
   volumes:
     - name: tmp
       emptyDir: {}
@@ -253,6 +260,7 @@ spec:
 Kubernetes Secrets are base64-encoded, not encrypted. Anyone with RBAC access to Secrets can read them. Harden with:
 
 **Encryption at rest:**
+
 ```yaml
 # Enable in kube-apiserver config
 --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
@@ -290,7 +298,7 @@ spec:
     name: aws-secretsmanager
     kind: ClusterSecretStore
   target:
-    name: order-service-secrets    # creates/updates this K8s Secret
+    name: order-service-secrets # creates/updates this K8s Secret
   data:
     - secretKey: database_url
       remoteRef:
@@ -330,6 +338,7 @@ The controller decrypts on the cluster; the encrypted form is useless outside th
 For zero-trust networking — every service-to-service call is mutually authenticated and encrypted:
 
 **Cilium (simpler):**
+
 ```yaml
 # Enable mTLS for the namespace
 apiVersion: cilium.io/v2alpha1
@@ -345,12 +354,13 @@ spec:
             io.cilium.k8s.policy.serviceaccount: order-service
       toPorts:
         - ports:
-            - port: "3000"
+            - port: '3000'
           rules:
             l7proto: http
 ```
 
 **Istio (comprehensive):**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -359,8 +369,7 @@ metadata:
   namespace: production
 spec:
   mtls:
-    mode: STRICT    # all traffic must use mTLS
+    mode: STRICT # all traffic must use mTLS
 ```
 
 With mTLS in STRICT mode, no unencrypted or unauthenticated traffic is accepted. Services prove their identity via certificates managed by Istio's CA. No application code changes needed — the Envoy sidecar handles it.
-

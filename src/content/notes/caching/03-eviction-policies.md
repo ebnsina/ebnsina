@@ -1,10 +1,10 @@
 ---
-title: "Eviction Policies"
-subtitle: "LRU, LFU, TTL, and friends — how caches decide what to throw away when memory fills up."
+title: 'Eviction Policies'
+subtitle: 'LRU, LFU, TTL, and friends — how caches decide what to throw away when memory fills up.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["LRU", "LFU", "TTL", "eviction", "memory management"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['LRU', 'LFU', 'TTL', 'eviction', 'memory management']
 ---
 
 <script>
@@ -36,31 +36,31 @@ The simplest and most important mechanism. Every cache entry has an expiration t
 
 ```typescript
 interface CacheEntry<T> {
-  value: T;
-  expiresAt: number; // unix ms
+	value: T;
+	expiresAt: number; // unix ms
 }
 
 class TTLCache<T> {
-  private store = new Map<string, CacheEntry<T>>();
+	private store = new Map<string, CacheEntry<T>>();
 
-  set(key: string, value: T, ttlSeconds: number): void {
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    });
-  }
+	set(key: string, value: T, ttlSeconds: number): void {
+		this.store.set(key, {
+			value,
+			expiresAt: Date.now() + ttlSeconds * 1000
+		});
+	}
 
-  get(key: string): T | undefined {
-    const entry = this.store.get(key);
-    if (!entry) return undefined;
+	get(key: string): T | undefined {
+		const entry = this.store.get(key);
+		if (!entry) return undefined;
 
-    if (Date.now() > entry.expiresAt) {
-      this.store.delete(key); // lazy expiration
-      return undefined;
-    }
+		if (Date.now() > entry.expiresAt) {
+			this.store.delete(key); // lazy expiration
+			return undefined;
+		}
 
-    return entry.value;
-  }
+		return entry.value;
+	}
 }
 ```
 
@@ -78,33 +78,33 @@ Evicts the entry that hasn't been accessed for the longest time. Works on the as
 
 ```typescript
 class LRUCache<K, V> {
-  private capacity: number;
-  private map = new Map<K, V>();
+	private capacity: number;
+	private map = new Map<K, V>();
 
-  constructor(capacity: number) {
-    this.capacity = capacity;
-  }
+	constructor(capacity: number) {
+		this.capacity = capacity;
+	}
 
-  get(key: K): V | undefined {
-    if (!this.map.has(key)) return undefined;
+	get(key: K): V | undefined {
+		if (!this.map.has(key)) return undefined;
 
-    // Move to end (most recently used)
-    const value = this.map.get(key)!;
-    this.map.delete(key);
-    this.map.set(key, value);
-    return value;
-  }
+		// Move to end (most recently used)
+		const value = this.map.get(key)!;
+		this.map.delete(key);
+		this.map.set(key, value);
+		return value;
+	}
 
-  set(key: K, value: V): void {
-    if (this.map.has(key)) {
-      this.map.delete(key);
-    } else if (this.map.size >= this.capacity) {
-      // Delete least recently used (first item in Map)
-      const firstKey = this.map.keys().next().value;
-      this.map.delete(firstKey);
-    }
-    this.map.set(key, value);
-  }
+	set(key: K, value: V): void {
+		if (this.map.has(key)) {
+			this.map.delete(key);
+		} else if (this.map.size >= this.capacity) {
+			// Delete least recently used (first item in Map)
+			const firstKey = this.map.keys().next().value;
+			this.map.delete(firstKey);
+		}
+		this.map.set(key, value);
+	}
 }
 
 // JavaScript Maps maintain insertion order
@@ -121,66 +121,66 @@ Evicts the entry accessed the fewest times. Protects genuinely popular items fro
 
 ```typescript
 class LFUCache<K, V> {
-  private capacity: number;
-  private keyToVal = new Map<K, V>();
-  private keyToFreq = new Map<K, number>();
-  private freqToKeys = new Map<number, Set<K>>();
-  private minFreq = 0;
+	private capacity: number;
+	private keyToVal = new Map<K, V>();
+	private keyToFreq = new Map<K, number>();
+	private freqToKeys = new Map<number, Set<K>>();
+	private minFreq = 0;
 
-  constructor(capacity: number) {
-    this.capacity = capacity;
-  }
+	constructor(capacity: number) {
+		this.capacity = capacity;
+	}
 
-  get(key: K): V | undefined {
-    if (!this.keyToVal.has(key)) return undefined;
-    this.incrementFreq(key);
-    return this.keyToVal.get(key);
-  }
+	get(key: K): V | undefined {
+		if (!this.keyToVal.has(key)) return undefined;
+		this.incrementFreq(key);
+		return this.keyToVal.get(key);
+	}
 
-  set(key: K, value: V): void {
-    if (this.capacity <= 0) return;
+	set(key: K, value: V): void {
+		if (this.capacity <= 0) return;
 
-    if (this.keyToVal.has(key)) {
-      this.keyToVal.set(key, value);
-      this.incrementFreq(key);
-      return;
-    }
+		if (this.keyToVal.has(key)) {
+			this.keyToVal.set(key, value);
+			this.incrementFreq(key);
+			return;
+		}
 
-    if (this.keyToVal.size >= this.capacity) {
-      this.evict();
-    }
+		if (this.keyToVal.size >= this.capacity) {
+			this.evict();
+		}
 
-    this.keyToVal.set(key, value);
-    this.keyToFreq.set(key, 1);
-    if (!this.freqToKeys.has(1)) this.freqToKeys.set(1, new Set());
-    this.freqToKeys.get(1)!.add(key);
-    this.minFreq = 1;
-  }
+		this.keyToVal.set(key, value);
+		this.keyToFreq.set(key, 1);
+		if (!this.freqToKeys.has(1)) this.freqToKeys.set(1, new Set());
+		this.freqToKeys.get(1)!.add(key);
+		this.minFreq = 1;
+	}
 
-  private incrementFreq(key: K): void {
-    const freq = this.keyToFreq.get(key)!;
-    this.keyToFreq.set(key, freq + 1);
-    this.freqToKeys.get(freq)!.delete(key);
+	private incrementFreq(key: K): void {
+		const freq = this.keyToFreq.get(key)!;
+		this.keyToFreq.set(key, freq + 1);
+		this.freqToKeys.get(freq)!.delete(key);
 
-    if (this.freqToKeys.get(freq)!.size === 0) {
-      this.freqToKeys.delete(freq);
-      if (this.minFreq === freq) this.minFreq++;
-    }
+		if (this.freqToKeys.get(freq)!.size === 0) {
+			this.freqToKeys.delete(freq);
+			if (this.minFreq === freq) this.minFreq++;
+		}
 
-    if (!this.freqToKeys.has(freq + 1)) {
-      this.freqToKeys.set(freq + 1, new Set());
-    }
-    this.freqToKeys.get(freq + 1)!.add(key);
-  }
+		if (!this.freqToKeys.has(freq + 1)) {
+			this.freqToKeys.set(freq + 1, new Set());
+		}
+		this.freqToKeys.get(freq + 1)!.add(key);
+	}
 
-  private evict(): void {
-    const keys = this.freqToKeys.get(this.minFreq)!;
-    const evictKey = keys.values().next().value;
-    keys.delete(evictKey);
-    if (keys.size === 0) this.freqToKeys.delete(this.minFreq);
-    this.keyToVal.delete(evictKey);
-    this.keyToFreq.delete(evictKey);
-  }
+	private evict(): void {
+		const keys = this.freqToKeys.get(this.minFreq)!;
+		const evictKey = keys.values().next().value;
+		keys.delete(evictKey);
+		if (keys.size === 0) this.freqToKeys.delete(this.minFreq);
+		this.keyToVal.delete(evictKey);
+		this.keyToFreq.delete(evictKey);
+	}
 }
 ```
 
@@ -237,33 +237,33 @@ A cache too small misses constantly. Too large wastes memory. The right size dep
 ```typescript
 // Instrument your cache to find the right size
 class InstrumentedCache<K, V> {
-  private hits = 0;
-  private misses = 0;
-  private evictions = 0;
-  private inner: LRUCache<K, V>;
+	private hits = 0;
+	private misses = 0;
+	private evictions = 0;
+	private inner: LRUCache<K, V>;
 
-  constructor(capacity: number) {
-    this.inner = new LRUCache(capacity);
-  }
+	constructor(capacity: number) {
+		this.inner = new LRUCache(capacity);
+	}
 
-  get(key: K): V | undefined {
-    const val = this.inner.get(key);
-    if (val !== undefined) {
-      this.hits++;
-    } else {
-      this.misses++;
-    }
-    return val;
-  }
+	get(key: K): V | undefined {
+		const val = this.inner.get(key);
+		if (val !== undefined) {
+			this.hits++;
+		} else {
+			this.misses++;
+		}
+		return val;
+	}
 
-  stats() {
-    const total = this.hits + this.misses;
-    return {
-      hitRatio: total === 0 ? 0 : this.hits / total,
-      evictions: this.evictions,
-      total,
-    };
-  }
+	stats() {
+		const total = this.hits + this.misses;
+		return {
+			hitRatio: total === 0 ? 0 : this.hits / total,
+			evictions: this.evictions,
+			total
+		};
+	}
 }
 ```
 
@@ -275,27 +275,26 @@ Production caches combine both: entries expire after their TTL (for freshness) a
 
 ```typescript
 class TTLLRUCache<K, V> {
-  private lru: LRUCache<K, { value: V; expiresAt: number }>;
+	private lru: LRUCache<K, { value: V; expiresAt: number }>;
 
-  constructor(capacity: number) {
-    this.lru = new LRUCache(capacity);
-  }
+	constructor(capacity: number) {
+		this.lru = new LRUCache(capacity);
+	}
 
-  set(key: K, value: V, ttlSeconds: number): void {
-    this.lru.set(key, {
-      value,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    });
-  }
+	set(key: K, value: V, ttlSeconds: number): void {
+		this.lru.set(key, {
+			value,
+			expiresAt: Date.now() + ttlSeconds * 1000
+		});
+	}
 
-  get(key: K): V | undefined {
-    const entry = this.lru.get(key);
-    if (!entry) return undefined;
-    if (Date.now() > entry.expiresAt) return undefined; // expired
-    return entry.value;
-  }
+	get(key: K): V | undefined {
+		const entry = this.lru.get(key);
+		if (!entry) return undefined;
+		if (Date.now() > entry.expiresAt) return undefined; // expired
+		return entry.value;
+	}
 }
 ```
 
 TTL handles correctness (stale data). LRU handles memory (eviction under pressure). Neither alone is enough in production.
-

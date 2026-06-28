@@ -1,10 +1,10 @@
 ---
-title: "Memory Management & Virtual Memory"
-subtitle: "Every process thinks it owns a vast, private memory. The kernel and MMU maintain that illusion over scarce physical RAM."
+title: 'Memory Management & Virtual Memory'
+subtitle: 'Every process thinks it owns a vast, private memory. The kernel and MMU maintain that illusion over scarce physical RAM.'
 chapter: 5
-level: "advanced"
-readingTime: "15 min"
-topics: ["virtual memory", "paging", "tlb"]
+level: 'advanced'
+readingTime: '15 min'
+topics: ['virtual memory', 'paging', 'tlb']
 ---
 
 <script>
@@ -54,7 +54,7 @@ The CPU register `CR3` points to the top of the current process's page table. A 
 
 ## The TLB
 
-Walking a four-level page table on *every* memory access would be ruinously slow — four extra memory reads per access. The fix is a cache inside the CPU called the **TLB** (Translation Lookaside Buffer). It caches recent virtual-to-physical translations.
+Walking a four-level page table on _every_ memory access would be ruinously slow — four extra memory reads per access. The fix is a cache inside the CPU called the **TLB** (Translation Lookaside Buffer). It caches recent virtual-to-physical translations.
 
 - **TLB hit** — the translation is cached; the address resolves in essentially zero extra time.
 - **TLB miss** — the MMU walks the page table, then caches the result for next time.
@@ -77,7 +77,7 @@ When a process accesses a virtual page that has no valid mapping in the page tab
 
 <Callout type="tip">
 
-**Tip:** `ps` shows minor and major fault counts. A high *major* fault rate means the working set doesn't fit in RAM and the system is hitting disk constantly — the symptom of thrashing.
+**Tip:** `ps` shows minor and major fault counts. A high _major_ fault rate means the working set doesn't fit in RAM and the system is hitting disk constantly — the symptom of thrashing.
 
 </Callout>
 
@@ -85,11 +85,11 @@ When a process accesses a virtual page that has no valid mapping in the page tab
 
 The kernel is lazy on purpose. **Demand paging** means a page is only loaded into physical RAM when it's actually touched. When you `exec` a 100 MB binary, the kernel doesn't read 100 MB up front — it sets up the mappings and lets page faults pull in only the pages the program actually runs. This makes startup fast and avoids loading code that's never executed.
 
-When physical RAM fills up, the kernel must evict pages to make room. It picks victim pages (approximating *least-recently-used*) and:
+When physical RAM fills up, the kernel must evict pages to make room. It picks victim pages (approximating _least-recently-used_) and:
 
 - If the page is clean and backed by a file (like program code), it's simply dropped — it can be re-read from the file later.
 - If the page is dirty (modified anonymous memory), it must be written out to the **swap** area on disk first.
 
 Bringing that page back later causes a major page fault. If the active working set is larger than RAM, the system spends all its time swapping pages in and out — **thrashing** — and throughput collapses while the disk stays pegged.
 
-This is the fundamental tension of memory management: virtual memory lets you allocate more than you have, but performance falls off a cliff once your *active* footprint exceeds physical RAM. The next chapter turns to coordinating access to this shared memory safely: synchronization.
+This is the fundamental tension of memory management: virtual memory lets you allocate more than you have, but performance falls off a cliff once your _active_ footprint exceeds physical RAM. The next chapter turns to coordinating access to this shared memory safely: synchronization.

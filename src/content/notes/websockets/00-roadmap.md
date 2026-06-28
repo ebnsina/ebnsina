@@ -1,10 +1,10 @@
 ---
-title: "WebSockets & realtime — Roadmap"
+title: 'WebSockets & realtime — Roadmap'
 subtitle: "Ten chapters that go from 'what is the WebSocket handshake' to a self-hosted, horizontally scaled realtime server with Redis pub/sub, presence, auth, and nginx in front."
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "websockets", "sse", "realtime", "pubsub"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'websockets', 'sse', 'realtime', 'pubsub']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will know exactly what a WebSocket is at the wire level, when to use one and
 Read in order. The first three chapters explain what a WebSocket is and ship a working server. From chapter 4 onward each chapter adds a real production capability. Total reading time: ~3 hours. Hands-on time, the first time you build it all: a long weekend.
 
 You need Go 1.22+, Redis (for chapter 6 onward), and a VPS with a domain pointed at it for chapter 10. Everything else runs on `localhost`.
-

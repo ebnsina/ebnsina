@@ -1,10 +1,10 @@
 ---
-title: "TLS & HTTPS"
+title: 'TLS & HTTPS'
 subtitle: "Certificates, handshakes, and encryption — how TLS keeps your data private and verifies you're talking to the right server."
 chapter: 5
-level: "intermediate"
-readingTime: "15 min"
-topics: ["TLS", "HTTPS", "certificates", "encryption", "handshake"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['TLS', 'HTTPS', 'certificates', 'encryption', 'handshake']
 ---
 
 <script>
@@ -55,13 +55,13 @@ TLS 1.3 reduced the handshake from 2 round-trips (TLS 1.2) to just 1:
 //    - Application data can now flow!
 
 interface TLSClientHello {
-  supportedVersions: ["TLS 1.3"];
-  cipherSuites: string[];
-  keyShare: {
-    group: "x25519" | "secp256r1";
-    publicKey: Uint8Array;
-  };
-  sni: string; // "api.example.com"
+	supportedVersions: ['TLS 1.3'];
+	cipherSuites: string[];
+	keyShare: {
+		group: 'x25519' | 'secp256r1';
+		publicKey: Uint8Array;
+	};
+	sni: string; // "api.example.com"
 }
 ```
 
@@ -70,41 +70,42 @@ interface TLSClientHello {
 How does your browser know it's really talking to `google.com`?
 
 **Certificate chain:**
+
 1. Google's server presents a **certificate** signed by a Certificate Authority (CA)
 2. The CA's certificate is signed by a **root CA**
 3. Root CA certificates are pre-installed in your browser/OS (the **trust store**)
 
 ```typescript
 interface X509Certificate {
-  subject: string;          // "*.google.com"
-  issuer: string;           // "Google Trust Services"
-  validFrom: Date;
-  validTo: Date;
-  publicKey: Uint8Array;
-  signature: Uint8Array;    // signed by issuer's private key
-  extensions: {
-    subjectAltNames: string[]; // domains this cert covers
-    keyUsage: string[];
-  };
+	subject: string; // "*.google.com"
+	issuer: string; // "Google Trust Services"
+	validFrom: Date;
+	validTo: Date;
+	publicKey: Uint8Array;
+	signature: Uint8Array; // signed by issuer's private key
+	extensions: {
+		subjectAltNames: string[]; // domains this cert covers
+		keyUsage: string[];
+	};
 }
 
 function verifyCertChain(certs: X509Certificate[]): boolean {
-  for (let i = 0; i < certs.length - 1; i++) {
-    const cert = certs[i];
-    const issuer = certs[i + 1];
+	for (let i = 0; i < certs.length - 1; i++) {
+		const cert = certs[i];
+		const issuer = certs[i + 1];
 
-    // Verify signature
-    if (!verifySignature(cert, issuer.publicKey)) return false;
+		// Verify signature
+		if (!verifySignature(cert, issuer.publicKey)) return false;
 
-    // Check expiration
-    if (cert.validTo < new Date()) return false;
+		// Check expiration
+		if (cert.validTo < new Date()) return false;
 
-    // Check issuer matches
-    if (cert.issuer !== issuer.subject) return false;
-  }
+		// Check issuer matches
+		if (cert.issuer !== issuer.subject) return false;
+	}
 
-  // Last cert must be in trust store
-  return trustStore.has(certs[certs.length - 1]);
+	// Last cert must be in trust store
+	return trustStore.has(certs[certs.length - 1]);
 }
 ```
 
@@ -141,13 +142,11 @@ TLS uses Diffie-Hellman to create a shared secret without ever sending it over t
 
 ```typescript
 // Certificate pinning — extra security for mobile apps
-const PINNED_HASHES = [
-  "sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
-];
+const PINNED_HASHES = ['sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg='];
 
 function verifyPin(cert: X509Certificate): boolean {
-  const hash = sha256(cert.publicKey);
-  return PINNED_HASHES.includes(`sha256/${base64(hash)}`);
+	const hash = sha256(cert.publicKey);
+	return PINNED_HASHES.includes(`sha256/${base64(hash)}`);
 }
 
 // Mixed content — loading HTTP resources on HTTPS page
@@ -171,4 +170,3 @@ function verifyPin(cert: X509Certificate): boolean {
 3. **Certificates form a chain of trust** back to pre-installed root CAs
 4. **Diffie-Hellman key exchange** creates shared secrets without sending them over the wire
 5. **Perfect Forward Secrecy** means compromising today's key doesn't reveal yesterday's traffic
-

@@ -1,10 +1,10 @@
 ---
-title: "Case Study: Payment System"
-subtitle: "Design and build a production payment processing system with idempotency, double-entry ledger, reconciliation, and webhook delivery."
+title: 'Case Study: Payment System'
+subtitle: 'Design and build a production payment processing system with idempotency, double-entry ledger, reconciliation, and webhook delivery.'
 chapter: 20
-level: "advanced"
-readingTime: "35 min"
-topics: ["payment system", "idempotency", "double-entry ledger", "reconciliation", "webhooks"]
+level: 'advanced'
+readingTime: '35 min'
+topics: ['payment system', 'idempotency', 'double-entry ledger', 'reconciliation', 'webhooks']
 ---
 
 <script>
@@ -30,12 +30,10 @@ Like double-entry bookkeeping — every time money moves, two entries are record
 Every time money moves, two entries are recorded: a debit from one account and a credit to another. The books must always balance. If the accountant is interrupted mid-entry, the incomplete transaction is rolled back. And every entry has a unique reference number — if someone accidentally submits the same deposit slip twice, the second one is recognized as a duplicate and ignored.
 
 <Mermaid
-	title="Payment System Architecture"
-	code={`
-graph TD
+title="Payment System Architecture"
+code={`graph TD
   M["Merchant API<br/>Initiate Payment"] --> G["Payment Gateway<br/>Idempotency Check"] --> P["Payment Processor<br/>State Machine"]
-  P --> L["Ledger<br/>Double Entry"] --> W["Webhook Queue<br/>Event Delivery"] --> R["Reconciliation<br/>Balance Check"]
-`}
+  P --> L["Ledger<br/>Double Entry"] --> W["Webhook Queue<br/>Event Delivery"] --> R["Reconciliation<br/>Balance Check"]`}
 />
 
 ## Requirements
@@ -59,282 +57,320 @@ graph TD
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES & STATE MACHINE
 // ===========================================
-type PaymentStatus = "pending" | "processing" | "completed" | "failed" | "refunded";
+type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 
 const VALID_TRANSITIONS: Record<PaymentStatus, PaymentStatus[]> = {
-  pending: ["processing", "failed"],
-  processing: ["completed", "failed"],
-  completed: ["refunded"],
-  failed: [],
-  refunded: [],
+	pending: ['processing', 'failed'],
+	processing: ['completed', 'failed'],
+	completed: ['refunded'],
+	failed: [],
+	refunded: []
 };
 
 interface Payment {
-  id: string;
-  merchantId: string;
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-  idempotencyKey: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-  metadata: Record<string, string>;
+	id: string;
+	merchantId: string;
+	amount: number;
+	currency: string;
+	status: PaymentStatus;
+	idempotencyKey: string;
+	description: string;
+	createdAt: string;
+	updatedAt: string;
+	metadata: Record<string, string>;
 }
 
 interface LedgerEntry {
-  id: string;
-  paymentId: string;
-  accountId: string;
-  amount: number; // positive = credit, negative = debit
-  type: "debit" | "credit";
-  createdAt: string;
+	id: string;
+	paymentId: string;
+	accountId: string;
+	amount: number; // positive = credit, negative = debit
+	type: 'debit' | 'credit';
+	createdAt: string;
 }
 
 interface WebhookEvent {
-  id: string;
-  paymentId: string;
-  type: string;
-  data: unknown;
-  webhookUrl: string;
-  secret: string;
-  attempts: number;
-  lastAttempt: string | null;
-  delivered: boolean;
+	id: string;
+	paymentId: string;
+	type: string;
+	data: unknown;
+	webhookUrl: string;
+	secret: string;
+	attempts: number;
+	lastAttempt: string | null;
+	delivered: boolean;
 }
 
 // ===========================================
 // 2. IDEMPOTENCY MANAGER
 // ===========================================
 class IdempotencyManager {
-  private keys = new Map<string, { response: unknown; createdAt: number }>();
+	private keys = new Map<string, { response: unknown; createdAt: number }>();
 
-  check(key: string): unknown | null {
-    const entry = this.keys.get(key);
-    if (!entry) return null;
-    // Expire after 24 hours
-    if (Date.now() - entry.createdAt > 86400000) {
-      this.keys.delete(key);
-      return null;
-    }
-    return entry.response;
-  }
+	check(key: string): unknown | null {
+		const entry = this.keys.get(key);
+		if (!entry) return null;
+		// Expire after 24 hours
+		if (Date.now() - entry.createdAt > 86400000) {
+			this.keys.delete(key);
+			return null;
+		}
+		return entry.response;
+	}
 
-  store(key: string, response: unknown): void {
-    this.keys.set(key, { response, createdAt: Date.now() });
-  }
+	store(key: string, response: unknown): void {
+		this.keys.set(key, { response, createdAt: Date.now() });
+	}
 }
 
 // ===========================================
 // 3. DOUBLE-ENTRY LEDGER
 // ===========================================
 class Ledger {
-  private entries: LedgerEntry[] = [];
+	private entries: LedgerEntry[] = [];
 
-  record(paymentId: string, fromAccount: string, toAccount: string, amount: number): void {
-    const timestamp = new Date().toISOString();
+	record(paymentId: string, fromAccount: string, toAccount: string, amount: number): void {
+		const timestamp = new Date().toISOString();
 
-    // Debit entry (money leaves source account)
-    this.entries.push({
-      id: crypto.randomUUID(),
-      paymentId,
-      accountId: fromAccount,
-      amount: -amount,
-      type: "debit",
-      createdAt: timestamp,
-    });
+		// Debit entry (money leaves source account)
+		this.entries.push({
+			id: crypto.randomUUID(),
+			paymentId,
+			accountId: fromAccount,
+			amount: -amount,
+			type: 'debit',
+			createdAt: timestamp
+		});
 
-    // Credit entry (money enters destination account)
-    this.entries.push({
-      id: crypto.randomUUID(),
-      paymentId,
-      accountId: toAccount,
-      amount: amount,
-      type: "credit",
-      createdAt: timestamp,
-    });
-  }
+		// Credit entry (money enters destination account)
+		this.entries.push({
+			id: crypto.randomUUID(),
+			paymentId,
+			accountId: toAccount,
+			amount: amount,
+			type: 'credit',
+			createdAt: timestamp
+		});
+	}
 
-  getBalance(accountId: string): number {
-    return this.entries
-      .filter((e) => e.accountId === accountId)
-      .reduce((sum, e) => sum + e.amount, 0);
-  }
+	getBalance(accountId: string): number {
+		return this.entries
+			.filter((e) => e.accountId === accountId)
+			.reduce((sum, e) => sum + e.amount, 0);
+	}
 
-  getEntries(accountId: string): LedgerEntry[] {
-    return this.entries.filter((e) => e.accountId === accountId);
-  }
+	getEntries(accountId: string): LedgerEntry[] {
+		return this.entries.filter((e) => e.accountId === accountId);
+	}
 
-  // Reconciliation: all entries must sum to zero
-  reconcile(): { balanced: boolean; totalDebits: number; totalCredits: number; difference: number } {
-    let totalDebits = 0;
-    let totalCredits = 0;
+	// Reconciliation: all entries must sum to zero
+	reconcile(): {
+		balanced: boolean;
+		totalDebits: number;
+		totalCredits: number;
+		difference: number;
+	} {
+		let totalDebits = 0;
+		let totalCredits = 0;
 
-    for (const entry of this.entries) {
-      if (entry.amount < 0) totalDebits += Math.abs(entry.amount);
-      else totalCredits += entry.amount;
-    }
+		for (const entry of this.entries) {
+			if (entry.amount < 0) totalDebits += Math.abs(entry.amount);
+			else totalCredits += entry.amount;
+		}
 
-    const difference = Math.abs(totalCredits - totalDebits);
-    return {
-      balanced: difference < 0.01, // floating point tolerance
-      totalDebits,
-      totalCredits,
-      difference,
-    };
-  }
+		const difference = Math.abs(totalCredits - totalDebits);
+		return {
+			balanced: difference < 0.01, // floating point tolerance
+			totalDebits,
+			totalCredits,
+			difference
+		};
+	}
 }
 
 // ===========================================
 // 4. WEBHOOK DELIVERY
 // ===========================================
 class WebhookDelivery {
-  private queue: WebhookEvent[] = [];
-  private interval: ReturnType<typeof setInterval>;
+	private queue: WebhookEvent[] = [];
+	private interval: ReturnType<typeof setInterval>;
 
-  constructor() {
-    this.interval = setInterval(() => this.processQueue(), 5000);
-  }
+	constructor() {
+		this.interval = setInterval(() => this.processQueue(), 5000);
+	}
 
-  enqueue(paymentId: string, type: string, data: unknown, webhookUrl: string, secret: string): void {
-    this.queue.push({
-      id: crypto.randomUUID(),
-      paymentId, type, data, webhookUrl, secret,
-      attempts: 0, lastAttempt: null, delivered: false,
-    });
-  }
+	enqueue(
+		paymentId: string,
+		type: string,
+		data: unknown,
+		webhookUrl: string,
+		secret: string
+	): void {
+		this.queue.push({
+			id: crypto.randomUUID(),
+			paymentId,
+			type,
+			data,
+			webhookUrl,
+			secret,
+			attempts: 0,
+			lastAttempt: null,
+			delivered: false
+		});
+	}
 
-  private async processQueue(): Promise<void> {
-    const pending = this.queue.filter((e) => !e.delivered && e.attempts < 5);
-    for (const event of pending) {
-      event.attempts++;
-      event.lastAttempt = new Date().toISOString();
+	private async processQueue(): Promise<void> {
+		const pending = this.queue.filter((e) => !e.delivered && e.attempts < 5);
+		for (const event of pending) {
+			event.attempts++;
+			event.lastAttempt = new Date().toISOString();
 
-      // Create HMAC signature
-      const payload = JSON.stringify({ id: event.id, type: event.type, data: event.data });
-      const signature = crypto.createHmac("sha256", event.secret).update(payload).digest("hex");
+			// Create HMAC signature
+			const payload = JSON.stringify({ id: event.id, type: event.type, data: event.data });
+			const signature = crypto.createHmac('sha256', event.secret).update(payload).digest('hex');
 
-      try {
-        // In production: actual HTTP POST to webhookUrl
-        console.log(`[WEBHOOK] → ${event.webhookUrl} | ${event.type} | sig:${signature.slice(0, 8)}...`);
-        event.delivered = true;
-      } catch {
-        const delay = Math.pow(2, event.attempts) * 1000;
-        console.log(`[WEBHOOK RETRY] attempt ${event.attempts}/5, next in ${delay}ms`);
-      }
-    }
-  }
+			try {
+				// In production: actual HTTP POST to webhookUrl
+				console.log(
+					`[WEBHOOK] → ${event.webhookUrl} | ${event.type} | sig:${signature.slice(0, 8)}...`
+				);
+				event.delivered = true;
+			} catch {
+				const delay = Math.pow(2, event.attempts) * 1000;
+				console.log(`[WEBHOOK RETRY] attempt ${event.attempts}/5, next in ${delay}ms`);
+			}
+		}
+	}
 
-  stop(): void { clearInterval(this.interval); }
+	stop(): void {
+		clearInterval(this.interval);
+	}
 }
 
 // ===========================================
 // 5. PAYMENT PROCESSOR
 // ===========================================
 class PaymentProcessor {
-  private payments = new Map<string, Payment>();
-  private idempotency = new IdempotencyManager();
-  private ledger = new Ledger();
-  private webhooks = new WebhookDelivery();
-  private merchantWebhooks = new Map<string, { url: string; secret: string }>();
+	private payments = new Map<string, Payment>();
+	private idempotency = new IdempotencyManager();
+	private ledger = new Ledger();
+	private webhooks = new WebhookDelivery();
+	private merchantWebhooks = new Map<string, { url: string; secret: string }>();
 
-  constructor() {
-    // Register test merchant webhook
-    this.merchantWebhooks.set("merchant_1", {
-      url: "https://merchant.example.com/webhooks",
-      secret: "whsec_test_secret_key",
-    });
-  }
+	constructor() {
+		// Register test merchant webhook
+		this.merchantWebhooks.set('merchant_1', {
+			url: 'https://merchant.example.com/webhooks',
+			secret: 'whsec_test_secret_key'
+		});
+	}
 
-  async createPayment(
-    merchantId: string, amount: number, currency: string,
-    description: string, idempotencyKey: string,
-    metadata: Record<string, string> = {}
-  ): Promise<Payment> {
-    // Idempotency check
-    const cached = this.idempotency.check(idempotencyKey);
-    if (cached) return cached as Payment;
+	async createPayment(
+		merchantId: string,
+		amount: number,
+		currency: string,
+		description: string,
+		idempotencyKey: string,
+		metadata: Record<string, string> = {}
+	): Promise<Payment> {
+		// Idempotency check
+		const cached = this.idempotency.check(idempotencyKey);
+		if (cached) return cached as Payment;
 
-    const payment: Payment = {
-      id: `pay_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`,
-      merchantId, amount, currency, status: "pending",
-      idempotencyKey, description,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      metadata,
-    };
+		const payment: Payment = {
+			id: `pay_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`,
+			merchantId,
+			amount,
+			currency,
+			status: 'pending',
+			idempotencyKey,
+			description,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			metadata
+		};
 
-    this.payments.set(payment.id, payment);
+		this.payments.set(payment.id, payment);
 
-    // Process payment
-    this.transition(payment, "processing");
+		// Process payment
+		this.transition(payment, 'processing');
 
-    // Simulate processing (in production: call payment provider)
-    const success = amount < 10000; // Fail payments over $100 for demo
-    if (success) {
-      this.transition(payment, "completed");
+		// Simulate processing (in production: call payment provider)
+		const success = amount < 10000; // Fail payments over $100 for demo
+		if (success) {
+			this.transition(payment, 'completed');
 
-      // Record in ledger: debit customer, credit merchant
-      this.ledger.record(payment.id, `customer:${payment.id}`, `merchant:${merchantId}`, amount);
+			// Record in ledger: debit customer, credit merchant
+			this.ledger.record(payment.id, `customer:${payment.id}`, `merchant:${merchantId}`, amount);
 
-      // Fire webhook
-      const hook = this.merchantWebhooks.get(merchantId);
-      if (hook) {
-        this.webhooks.enqueue(payment.id, "payment.completed", payment, hook.url, hook.secret);
-      }
-    } else {
-      this.transition(payment, "failed");
-    }
+			// Fire webhook
+			const hook = this.merchantWebhooks.get(merchantId);
+			if (hook) {
+				this.webhooks.enqueue(payment.id, 'payment.completed', payment, hook.url, hook.secret);
+			}
+		} else {
+			this.transition(payment, 'failed');
+		}
 
-    this.idempotency.store(idempotencyKey, payment);
-    return payment;
-  }
+		this.idempotency.store(idempotencyKey, payment);
+		return payment;
+	}
 
-  async refund(paymentId: string): Promise<Payment> {
-    const payment = this.payments.get(paymentId);
-    if (!payment) throw new Error("Payment not found");
+	async refund(paymentId: string): Promise<Payment> {
+		const payment = this.payments.get(paymentId);
+		if (!payment) throw new Error('Payment not found');
 
-    this.transition(payment, "refunded");
+		this.transition(payment, 'refunded');
 
-    // Reverse ledger entry
-    this.ledger.record(payment.id + "_refund", `merchant:${payment.merchantId}`, `customer:${paymentId}`, payment.amount);
+		// Reverse ledger entry
+		this.ledger.record(
+			payment.id + '_refund',
+			`merchant:${payment.merchantId}`,
+			`customer:${paymentId}`,
+			payment.amount
+		);
 
-    const hook = this.merchantWebhooks.get(payment.merchantId);
-    if (hook) {
-      this.webhooks.enqueue(payment.id, "payment.refunded", payment, hook.url, hook.secret);
-    }
+		const hook = this.merchantWebhooks.get(payment.merchantId);
+		if (hook) {
+			this.webhooks.enqueue(payment.id, 'payment.refunded', payment, hook.url, hook.secret);
+		}
 
-    return payment;
-  }
+		return payment;
+	}
 
-  private transition(payment: Payment, newStatus: PaymentStatus): void {
-    const allowed = VALID_TRANSITIONS[payment.status];
-    if (!allowed.includes(newStatus)) {
-      throw new Error(`Invalid transition: ${payment.status} → ${newStatus}`);
-    }
-    payment.status = newStatus;
-    payment.updatedAt = new Date().toISOString();
-  }
+	private transition(payment: Payment, newStatus: PaymentStatus): void {
+		const allowed = VALID_TRANSITIONS[payment.status];
+		if (!allowed.includes(newStatus)) {
+			throw new Error(`Invalid transition: ${payment.status} → ${newStatus}`);
+		}
+		payment.status = newStatus;
+		payment.updatedAt = new Date().toISOString();
+	}
 
-  getPayment(id: string): Payment | null {
-    return this.payments.get(id) || null;
-  }
+	getPayment(id: string): Payment | null {
+		return this.payments.get(id) || null;
+	}
 
-  getLedger(accountId: string) {
-    return { balance: this.ledger.getBalance(accountId), entries: this.ledger.getEntries(accountId) };
-  }
+	getLedger(accountId: string) {
+		return {
+			balance: this.ledger.getBalance(accountId),
+			entries: this.ledger.getEntries(accountId)
+		};
+	}
 
-  reconcile() {
-    return this.ledger.reconcile();
-  }
+	reconcile() {
+		return this.ledger.reconcile();
+	}
 
-  shutdown(): void { this.webhooks.stop(); }
+	shutdown(): void {
+		this.webhooks.stop();
+	}
 }
 
 // ===========================================
@@ -343,80 +379,103 @@ class PaymentProcessor {
 const processor = new PaymentProcessor();
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/payments — Create payment
-    if (url.pathname === "/api/payments" && method === "POST") {
-      const idempotencyKey = req.headers["idempotency-key"] as string;
-      if (!idempotencyKey) {
-        json(res, 400, { error: "Idempotency-Key header is required" }); return;
-      }
-      const body = await parseBody(req) as any;
-      if (!body.merchantId || !body.amount || !body.currency) {
-        json(res, 400, { error: "merchantId, amount, and currency are required" }); return;
-      }
-      const payment = await processor.createPayment(
-        body.merchantId, body.amount, body.currency,
-        body.description || "", idempotencyKey, body.metadata || {}
-      );
-      json(res, 201, payment); return;
-    }
+	try {
+		// POST /api/payments — Create payment
+		if (url.pathname === '/api/payments' && method === 'POST') {
+			const idempotencyKey = req.headers['idempotency-key'] as string;
+			if (!idempotencyKey) {
+				json(res, 400, { error: 'Idempotency-Key header is required' });
+				return;
+			}
+			const body = (await parseBody(req)) as any;
+			if (!body.merchantId || !body.amount || !body.currency) {
+				json(res, 400, { error: 'merchantId, amount, and currency are required' });
+				return;
+			}
+			const payment = await processor.createPayment(
+				body.merchantId,
+				body.amount,
+				body.currency,
+				body.description || '',
+				idempotencyKey,
+				body.metadata || {}
+			);
+			json(res, 201, payment);
+			return;
+		}
 
-    // POST /api/payments/:id/refund
-    const refundMatch = url.pathname.match(/^\/api\/payments\/([^/]+)\/refund$/);
-    if (refundMatch && method === "POST") {
-      const payment = await processor.refund(refundMatch[1]);
-      json(res, 200, payment); return;
-    }
+		// POST /api/payments/:id/refund
+		const refundMatch = url.pathname.match(/^\/api\/payments\/([^/]+)\/refund$/);
+		if (refundMatch && method === 'POST') {
+			const payment = await processor.refund(refundMatch[1]);
+			json(res, 200, payment);
+			return;
+		}
 
-    // GET /api/payments/:id
-    const paymentMatch = url.pathname.match(/^\/api\/payments\/([^/]+)$/);
-    if (paymentMatch && method === "GET") {
-      const payment = processor.getPayment(paymentMatch[1]);
-      if (!payment) { json(res, 404, { error: "Payment not found" }); return; }
-      json(res, 200, payment); return;
-    }
+		// GET /api/payments/:id
+		const paymentMatch = url.pathname.match(/^\/api\/payments\/([^/]+)$/);
+		if (paymentMatch && method === 'GET') {
+			const payment = processor.getPayment(paymentMatch[1]);
+			if (!payment) {
+				json(res, 404, { error: 'Payment not found' });
+				return;
+			}
+			json(res, 200, payment);
+			return;
+		}
 
-    // GET /api/ledger/:accountId
-    const ledgerMatch = url.pathname.match(/^\/api\/ledger\/([^/]+)$/);
-    if (ledgerMatch && method === "GET") {
-      json(res, 200, processor.getLedger(ledgerMatch[1])); return;
-    }
+		// GET /api/ledger/:accountId
+		const ledgerMatch = url.pathname.match(/^\/api\/ledger\/([^/]+)$/);
+		if (ledgerMatch && method === 'GET') {
+			json(res, 200, processor.getLedger(ledgerMatch[1]));
+			return;
+		}
 
-    // POST /api/reconcile
-    if (url.pathname === "/api/reconcile" && method === "POST") {
-      json(res, 200, processor.reconcile()); return;
-    }
+		// POST /api/reconcile
+		if (url.pathname === '/api/reconcile' && method === 'POST') {
+			json(res, 200, processor.reconcile());
+			return;
+		}
 
-    if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-    json(res, 404, { error: "Not found" });
-  } catch (err: any) {
-    console.error("Error:", err);
-    json(res, 400, { error: err.message || "Internal server error" });
-  }
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
+		json(res, 404, { error: 'Not found' });
+	} catch (err: any) {
+		console.error('Error:', err);
+		json(res, 400, { error: err.message || 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`Payment Service on http://localhost:${PORT}`));
-process.on("SIGTERM", () => { processor.shutdown(); server.close(); });
+process.on('SIGTERM', () => {
+	processor.shutdown();
+	server.close();
+});
 ```
 
 </div>
@@ -841,4 +900,3 @@ Merchants receive webhooks at their server endpoints. Without signatures, anyone
 - This architecture handles real-money transactions with zero-loss guarantees through idempotency and double-entry bookkeeping
 
 </div>
-

@@ -1,10 +1,10 @@
 ---
-title: "Query Optimization & Performance"
-subtitle: "Reading plans in anger, killing N+1 queries, paginating at scale, and avoiding the classic anti-patterns."
+title: 'Query Optimization & Performance'
+subtitle: 'Reading plans in anger, killing N+1 queries, paginating at scale, and avoiding the classic anti-patterns.'
 chapter: 8
-level: "advanced"
-readingTime: "17 min"
-topics: ["optimization", "n+1", "performance"]
+level: 'advanced'
+readingTime: '17 min'
+topics: ['optimization', 'n+1', 'performance']
 ---
 
 <script>
@@ -29,7 +29,7 @@ Use `EXPLAIN (ANALYZE, BUFFERS)` to also see how many pages came from cache vs d
 
 ## The N+1 Problem
 
-The single most common performance bug in application code isn't a slow query — it's *too many* queries. You fetch a list, then loop and issue one more query per item:
+The single most common performance bug in application code isn't a slow query — it's _too many_ queries. You fetch a list, then loop and issue one more query per item:
 
 ```text
 SELECT * FROM posts LIMIT 20;            -- 1 query
@@ -62,9 +62,9 @@ SELECT * FROM posts ORDER BY created_at DESC
 LIMIT 20 OFFSET 10000;   -- page 501
 ```
 
-The problem: the database must **generate and discard** all 10,000 skipped rows before returning your 20. `OFFSET` gets linearly slower the deeper you page — page 1 is instant, page 500 crawls. It's also *unstable*: if a row is inserted while a user pages, rows shift and they see a duplicate or skip one.
+The problem: the database must **generate and discard** all 10,000 skipped rows before returning your 20. `OFFSET` gets linearly slower the deeper you page — page 1 is instant, page 500 crawls. It's also _unstable_: if a row is inserted while a user pages, rows shift and they see a duplicate or skip one.
 
-**Keyset pagination** (also called cursor or seek pagination) instead remembers the last row seen and asks for rows *after* it:
+**Keyset pagination** (also called cursor or seek pagination) instead remembers the last row seen and asks for rows _after_ it:
 
 ```sql
 -- First page
@@ -79,16 +79,16 @@ LIMIT 20;
 
 The `WHERE` uses a B-tree index to jump straight to the cursor position, so **every page is equally fast** regardless of depth. The trade-off: you can't jump to an arbitrary page number, only "next"/"previous". Include a unique tie-breaker (`id`) in the order so the cursor is unambiguous.
 
-| | Offset | Keyset |
-|---|---|---|
-| Deep-page speed | degrades linearly | constant |
-| Jump to page N | yes | no |
-| Stable under inserts | no | yes |
+|                      | Offset            | Keyset   |
+| -------------------- | ----------------- | -------- |
+| Deep-page speed      | degrades linearly | constant |
+| Jump to page N       | yes               | no       |
+| Stable under inserts | no                | yes      |
 
 ## Common Anti-Patterns
 
 - **`SELECT *` in application code** — fetches columns you don't use (wasting I/O and bandwidth) and breaks index-only scans. List the columns you need.
-- **Functions on indexed columns** — `WHERE date_trunc('day', ts) = '2026-05-01'` can't use an index on `ts`. Rewrite as a range: `WHERE ts >= '2026-05-01' AND ts < '2026-05-02'`. Such index-friendly conditions are called *sargable*.
+- **Functions on indexed columns** — `WHERE date_trunc('day', ts) = '2026-05-01'` can't use an index on `ts`. Rewrite as a range: `WHERE ts >= '2026-05-01' AND ts < '2026-05-02'`. Such index-friendly conditions are called _sargable_.
 - **Implicit type casts** — comparing an indexed column to a mismatched type can silently force a cast that disables the index.
 - **Leading-wildcard `LIKE`** — `'%term'` can't use a B-tree; use full-text search or trigram indexes.
 - **`OR` across columns** — sometimes prevents index use; a `UNION ALL` of two indexed queries can be far faster.
@@ -96,13 +96,13 @@ The `WHERE` uses a B-tree index to jump straight to the cursor position, so **ev
 
 <Callout type="tip">
 
-**Make conditions sargable.** A "sargable" predicate is one the planner can satisfy with an index range. The mechanical rule: keep the indexed column *bare* on one side of the comparison and do any transformation on the *literal* side. `WHERE price > 100 * 1.2` is sargable; `WHERE price / 1.2 > 100` is not.
+**Make conditions sargable.** A "sargable" predicate is one the planner can satisfy with an index range. The mechanical rule: keep the indexed column _bare_ on one side of the comparison and do any transformation on the _literal_ side. `WHERE price > 100 * 1.2` is sargable; `WHERE price / 1.2 > 100` is not.
 
 </Callout>
 
 ## When to Denormalize
 
-Normalization (chapter 9) is the right default — it prevents update anomalies and keeps data consistent. But sometimes a read is so hot, and the join so expensive, that storing redundant data wins. Denormalize *deliberately* when:
+Normalization (chapter 9) is the right default — it prevents update anomalies and keeps data consistent. But sometimes a read is so hot, and the join so expensive, that storing redundant data wins. Denormalize _deliberately_ when:
 
 - A heavily-read value requires joining many tables every time (e.g. a cached `comment_count` on `posts` instead of `COUNT`-ing comments on each page load).
 - An aggregate is read far more than it's written — maintain it with a trigger or in application code.
@@ -117,7 +117,7 @@ Performance isn't only about the query text:
 - **Connection pooling.** Postgres connections are heavyweight (each is a process). Opening one per request exhausts the server. Put a pooler (PgBouncer, or your framework's pool) in front and reuse connections.
 - **Prepared statements** let the database parse and plan a query once and reuse the plan, saving overhead on hot paths — but a cached generic plan can occasionally be worse than one planned for specific parameters.
 - **Batch writes.** Inserting 10,000 rows with one multi-row `INSERT` (or `COPY`) is vastly faster than 10,000 single-row inserts, each with its own round trip and transaction.
-- **Keep transactions short.** As chapter 6 noted, long transactions hold locks and block `VACUUM`, causing bloat that slows *everything* over time.
+- **Keep transactions short.** As chapter 6 noted, long transactions hold locks and block `VACUUM`, causing bloat that slows _everything_ over time.
 
 ## A Diagnostic Checklist
 

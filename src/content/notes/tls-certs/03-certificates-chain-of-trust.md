@@ -1,10 +1,10 @@
 ---
-title: "Certificates and the Chain of Trust"
-subtitle: "What lives inside a .pem file, what a CSR is, why intermediate certificates exist, and how a browser walks the chain to a root it already trusts."
+title: 'Certificates and the Chain of Trust'
+subtitle: 'What lives inside a .pem file, what a CSR is, why intermediate certificates exist, and how a browser walks the chain to a root it already trusts.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["certificates", "x509", "csr", "ca", "chain of trust"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['certificates', 'x509', 'csr', 'ca', 'chain of trust']
 ---
 
 <script>
@@ -72,7 +72,7 @@ Certificate:
 
 Read it as:
 
-- **Subject** — who this certificate is *for*. `CN=example.com` is the legacy field; modern validation uses **Subject Alternative Name (SAN)**, which can list many domains.
+- **Subject** — who this certificate is _for_. `CN=example.com` is the legacy field; modern validation uses **Subject Alternative Name (SAN)**, which can list many domains.
 - **Issuer** — the CA that signed this certificate. `Let's Encrypt R3` here.
 - **Validity** — start and end dates. Outside this window, the certificate is invalid.
 - **Subject Public Key Info** — the actual public key. RSA 2048 here; modern certs increasingly use ECDSA P-256.
@@ -81,7 +81,7 @@ Read it as:
 
 ## The chain of trust
 
-Browsers do not trust Let's Encrypt's R3 directly. They trust a small set of *root* CAs preinstalled in the operating system or browser. Every other certificate has to chain back to one of those roots.
+Browsers do not trust Let's Encrypt's R3 directly. They trust a small set of _root_ CAs preinstalled in the operating system or browser. Every other certificate has to chain back to one of those roots.
 
 ```text
 Root CA (ISRG Root X1, in browser's trust store)
@@ -119,7 +119,7 @@ The server's `fullchain.pem` is the concatenation of these — the leaf cert, th
 
 You might wonder: why not have the root CA sign every certificate directly? Two reasons:
 
-1. **Security.** The root CA's private key is the most valuable secret in the entire PKI. If it leaks, every certificate ever signed by it becomes worthless. Roots are kept *offline* — physically air-gapped, only accessed for ceremonies that issue intermediates. The intermediate CAs are online and do the day-to-day signing. If an intermediate's key is compromised, only certs it signed need to be revoked, not the root.
+1. **Security.** The root CA's private key is the most valuable secret in the entire PKI. If it leaks, every certificate ever signed by it becomes worthless. Roots are kept _offline_ — physically air-gapped, only accessed for ceremonies that issue intermediates. The intermediate CAs are online and do the day-to-day signing. If an intermediate's key is compromised, only certs it signed need to be revoked, not the root.
 
 2. **Operational separation.** A CA might have many intermediates for different purposes (TLS server certs, code signing, S/MIME). Compromise of one does not compromise the others.
 
@@ -129,7 +129,7 @@ This is why you see `Let's Encrypt R3` (intermediate) issuing your cert, and `IS
 
 When the server presents its chain in the handshake, the client validates:
 
-1. **Domain match.** The cert's `Subject Alternative Name` (or, fallback, `CN`) must match the hostname being connected to. `example.com` matches `example.com`; a cert for `*.example.com` matches `foo.example.com` but *not* `example.com` itself or `foo.bar.example.com`.
+1. **Domain match.** The cert's `Subject Alternative Name` (or, fallback, `CN`) must match the hostname being connected to. `example.com` matches `example.com`; a cert for `*.example.com` matches `foo.example.com` but _not_ `example.com` itself or `foo.bar.example.com`.
 
 2. **Validity dates.** Today must be between `Not Before` and `Not After`.
 
@@ -141,7 +141,7 @@ When the server presents its chain in the handshake, the client validates:
 
 6. **Revocation status.** Has this cert been revoked since issuance? Two ways to check:
    - **CRL** (Certificate Revocation List) — the CA publishes a list of revoked certs. Big and slow.
-   - **OCSP** — the client asks the CA's OCSP responder "is this cert still valid?" The response is signed and short. **OCSP stapling** has the *server* fetch the OCSP response and include it in the handshake, so the client does not need to make an extra request.
+   - **OCSP** — the client asks the CA's OCSP responder "is this cert still valid?" The response is signed and short. **OCSP stapling** has the _server_ fetch the OCSP response and include it in the handshake, so the client does not need to make an extra request.
 
 If everything passes, the connection is established with full trust. If anything fails, the browser shows that big red warning.
 
@@ -149,14 +149,14 @@ If everything passes, the connection is established with full trust. If anything
 
 Files relating to certificates come in many encodings:
 
-| Extension | Format | Contents |
-|---|---|---|
-| `.pem` | Base64 with `-----BEGIN/END-----` markers | Anything — cert, key, chain. Most common. |
-| `.crt`, `.cer` | Same as `.pem` (or DER) | A certificate (often). |
-| `.key` | PEM | A private key. |
-| `.csr` | PEM | A certificate signing request. |
-| `.der` | Binary | The same X.509 data, not Base64. |
-| `.pfx`, `.p12` | PKCS#12, binary | Cert + chain + private key in one password-protected blob. Microsoft-flavored. |
+| Extension      | Format                                    | Contents                                                                       |
+| -------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
+| `.pem`         | Base64 with `-----BEGIN/END-----` markers | Anything — cert, key, chain. Most common.                                      |
+| `.crt`, `.cer` | Same as `.pem` (or DER)                   | A certificate (often).                                                         |
+| `.key`         | PEM                                       | A private key.                                                                 |
+| `.csr`         | PEM                                       | A certificate signing request.                                                 |
+| `.der`         | Binary                                    | The same X.509 data, not Base64.                                               |
+| `.pfx`, `.p12` | PKCS#12, binary                           | Cert + chain + private key in one password-protected blob. Microsoft-flavored. |
 
 For Linux + nginx + Let's Encrypt, you live entirely in `.pem`. PEM is just Base64-encoded DER with header/footer markers.
 
@@ -171,7 +171,7 @@ MIIFazCCBFOgAwIBAgISA9UD...
 
 ## Private keys
 
-The key file is what makes the entire system work. If anyone else has your private key, they *are* you, until the cert expires or is revoked.
+The key file is what makes the entire system work. If anyone else has your private key, they _are_ you, until the cert expires or is revoked.
 
 ```text
 -----BEGIN PRIVATE KEY-----
@@ -226,7 +226,7 @@ For everyday TLS, DV is fine. EV/OV exist for compliance reasons in some industr
 
 ## Revocation — when a cert must die early
 
-Certs have an expiration date, but sometimes a cert must be invalidated *before* expiration:
+Certs have an expiration date, but sometimes a cert must be invalidated _before_ expiration:
 
 - The private key was compromised (lost laptop, leaked from a CI system, server breach).
 - The domain ownership changed.
@@ -290,4 +290,3 @@ Always use `fullchain.pem`, not `cert.pem` — without the intermediate, browser
 - Self-signed certs are for development only. Use mkcert for a friendlier local TLS setup.
 
 Next chapter: how Let's Encrypt actually issues a cert — the ACME protocol, end to end.
-

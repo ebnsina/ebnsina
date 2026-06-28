@@ -1,10 +1,10 @@
 ---
-title: "Storage Primitives"
-subtitle: "Block, file, and object storage — what each abstraction provides, where each breaks down, and how to choose."
+title: 'Storage Primitives'
+subtitle: 'Block, file, and object storage — what each abstraction provides, where each breaks down, and how to choose.'
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["block storage", "file storage", "object storage", "NFS", "S3", "storage architecture"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['block storage', 'file storage', 'object storage', 'NFS', 'S3', 'storage architecture']
 ---
 
 <script>
@@ -34,6 +34,7 @@ Physical disk or network-attached block (EBS, Longhorn, Ceph)
 ```
 
 **Characteristics:**
+
 - Low-level — the OS decides how to organize data
 - Random access — seek to any byte position
 - Single-attach — one server mounts a block device at a time (with exceptions)
@@ -55,6 +56,7 @@ Server A              Server B
 ```
 
 **Characteristics:**
+
 - Familiar filesystem API (`open`, `read`, `write`, `ls`)
 - Multi-mount — many servers read/write simultaneously
 - Distributed locking (with caveats — file locking over NFS is unreliable)
@@ -64,6 +66,7 @@ Server A              Server B
 **Use for:** shared configuration files, legacy application data that expects a filesystem, media files accessed by a rendering cluster, WordPress uploads shared across app servers.
 
 **NFS quick setup:**
+
 ```bash
 # Server
 apt install nfs-kernel-server
@@ -90,6 +93,7 @@ DELETE /bucket/user-avatars/user-123.jpg (delete)
 ```
 
 **Characteristics:**
+
 - Infinite scale — no capacity planning, no "disk full"
 - HTTP API — presigned URLs, direct browser upload
 - Eventual consistency (now strongly consistent on AWS S3)
@@ -101,15 +105,15 @@ DELETE /bucket/user-avatars/user-123.jpg (delete)
 
 ## Comparison
 
-| | Block | File (NFS) | Object (S3) |
-|---|---|---|---|
-| **Abstraction** | Raw disk | Filesystem | Key-value |
-| **Access pattern** | Random read/write | Sequential + random | Full-object GET/PUT |
-| **Multi-mount** | No (mostly) | Yes | Yes (HTTP) |
-| **Scale** | Finite (volume size) | Finite (NAS capacity) | Effectively infinite |
-| **Speed** | Fastest | Medium | Medium (HTTP overhead) |
-| **Cost** | Highest | Medium | Cheapest |
-| **Use case** | Databases, VMs | Legacy apps, shared FS | User files, media, backups |
+|                    | Block                | File (NFS)             | Object (S3)                |
+| ------------------ | -------------------- | ---------------------- | -------------------------- |
+| **Abstraction**    | Raw disk             | Filesystem             | Key-value                  |
+| **Access pattern** | Random read/write    | Sequential + random    | Full-object GET/PUT        |
+| **Multi-mount**    | No (mostly)          | Yes                    | Yes (HTTP)                 |
+| **Scale**          | Finite (volume size) | Finite (NAS capacity)  | Effectively infinite       |
+| **Speed**          | Fastest              | Medium                 | Medium (HTTP overhead)     |
+| **Cost**           | Highest              | Medium                 | Cheapest                   |
+| **Use case**       | Databases, VMs       | Legacy apps, shared FS | User files, media, backups |
 
 ## Choosing in Practice
 
@@ -139,7 +143,7 @@ Every stateless server instance must reach the same storage. Local disk breaks h
 import fs from 'fs/promises';
 
 async function saveAvatar(userId: string, buffer: Buffer) {
-  await fs.writeFile(`/data/uploads/${userId}.jpg`, buffer);
+	await fs.writeFile(`/data/uploads/${userId}.jpg`, buffer);
 }
 
 // GOOD — object storage, works across any number of servers
@@ -148,12 +152,14 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 const s3 = new S3Client({ region: 'us-east-1' });
 
 async function saveAvatar(userId: string, buffer: Buffer) {
-  await s3.send(new PutObjectCommand({
-    Bucket: 'my-uploads',
-    Key: `avatars/${userId}.jpg`,
-    Body: buffer,
-    ContentType: 'image/jpeg',
-  }));
+	await s3.send(
+		new PutObjectCommand({
+			Bucket: 'my-uploads',
+			Key: `avatars/${userId}.jpg`,
+			Body: buffer,
+			ContentType: 'image/jpeg'
+		})
+	);
 }
 ```
 
@@ -190,14 +196,15 @@ Use lifecycle policies to move data automatically:
 
 ```json
 {
-  "Rules": [{
-    "Status": "Enabled",
-    "Transitions": [
-      { "Days": 30, "StorageClass": "STANDARD_IA" },
-      { "Days": 90, "StorageClass": "GLACIER" }
-    ],
-    "Expiration": { "Days": 365 }
-  }]
+	"Rules": [
+		{
+			"Status": "Enabled",
+			"Transitions": [
+				{ "Days": 30, "StorageClass": "STANDARD_IA" },
+				{ "Days": 90, "StorageClass": "GLACIER" }
+			],
+			"Expiration": { "Days": 365 }
+		}
+	]
 }
 ```
-

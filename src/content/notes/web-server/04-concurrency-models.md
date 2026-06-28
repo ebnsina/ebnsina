@@ -1,10 +1,10 @@
 ---
-title: "Concurrency Models"
-subtitle: "Process per request, thread per request, prefork, event loop, hybrid. The five ways web servers handle thousands of concurrent connections — and why each one exists."
+title: 'Concurrency Models'
+subtitle: 'Process per request, thread per request, prefork, event loop, hybrid. The five ways web servers handle thousands of concurrent connections — and why each one exists.'
 chapter: 4
-level: "beginner"
-readingTime: "13 min"
-topics: ["concurrency", "threads", "event loop", "epoll", "go"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['concurrency', 'threads', 'event loop', 'epoll', 'go']
 ---
 
 <script>
@@ -48,7 +48,7 @@ while (1) {
 
 **Pros.** Maximum isolation — a crash in one request takes down only that child. No shared memory means no concurrency bugs. CGI worked this way; original inetd worked this way.
 
-**Cons.** Forking is *expensive* — kernel allocates a new process control block, copies page tables, sets up file descriptors. Hundreds of microseconds per fork. At a thousand requests per second on a small VPS, you spend more time forking than handling requests. Memory blows up linearly.
+**Cons.** Forking is _expensive_ — kernel allocates a new process control block, copies page tables, sets up file descriptors. Hundreds of microseconds per fork. At a thousand requests per second on a small VPS, you spend more time forking than handling requests. Memory blows up linearly.
 
 **Where you still see it.** Old CGI scripts, qmail, some specialty cron-driven setups. Rare for modern web.
 
@@ -73,7 +73,7 @@ Threads share memory with the parent, so spawning is much cheaper than forking �
 
 ## Model 3 — Prefork (worker pool)
 
-Fix forking-per-request by *preforking* a fixed pool of worker processes at startup. Each worker has its own accept loop on the shared listener:
+Fix forking-per-request by _preforking_ a fixed pool of worker processes at startup. Each worker has its own accept loop on the shared listener:
 
 ```c
 // at startup
@@ -102,7 +102,7 @@ The kernel handles `accept()` from multiple processes correctly — only one wak
 
 ## Model 4 — Event loop (reactor pattern)
 
-A single thread runs an *event loop*. When a connection arrives, the kernel notifies the loop via `epoll` (Linux), `kqueue` (BSD/macOS), or `IOCP` (Windows). The loop registers callbacks for "this socket is readable" and "this socket is writable," then continues spinning.
+A single thread runs an _event loop_. When a connection arrives, the kernel notifies the loop via `epoll` (Linux), `kqueue` (BSD/macOS), or `IOCP` (Windows). The loop registers callbacks for "this socket is readable" and "this socket is writable," then continues spinning.
 
 ```c
 int ep = epoll_create1(0);
@@ -128,7 +128,7 @@ while (1) {
 
 The loop never blocks on a single connection. While one connection is waiting on disk I/O, the loop is happily reading from another connection's socket. The OS stays out of the way.
 
-**Pros.** One thread can comfortably manage 10K+ connections. RAM usage scales with *connections*, not threads (~10KB per connection). Latency is low because there is no context-switching.
+**Pros.** One thread can comfortably manage 10K+ connections. RAM usage scales with _connections_, not threads (~10KB per connection). Latency is low because there is no context-switching.
 
 **Cons.** Programming model is harder. Every blocking call must be made non-blocking (`fcntl(F_SETFL, O_NONBLOCK)`) or run on a separate thread, or the whole loop stalls. If your handler accidentally does a synchronous `pg_query()`, every other client waits. This is the **single-threaded blocking** trap and the source of most "Node went down because someone called `fs.readFileSync`" stories.
 
@@ -144,7 +144,7 @@ In 1999 Dan Kegel wrote a paper asking how to handle 10,000 concurrent connectio
 
 ## Model 5 — M:N goroutines (or virtual threads)
 
-A hybrid: many *lightweight* userspace threads multiplexed onto few OS threads. The runtime schedules them. When one blocks (on I/O, lock, channel), the runtime parks it and runs another on the same OS thread.
+A hybrid: many _lightweight_ userspace threads multiplexed onto few OS threads. The runtime schedules them. When one blocks (on I/O, lock, channel), the runtime parks it and runs another on the same OS thread.
 
 This is **goroutines** in Go. It is **virtual threads** (Loom) in Java 21+. It is **fibers** in some other languages.
 
@@ -168,13 +168,13 @@ The Go runtime under the hood uses `epoll`/`kqueue`. When `handle(conn)` calls `
 
 Imagine a single small VPS, four cores, 4GB RAM, expected workload of 5,000 concurrent connections, each doing one DB query that takes 50ms.
 
-| Model | Memory | Throughput | Bottleneck |
-|---|---|---|---|
-| Process-per-request | ~5GB+ | Falls over forking | Process create cost |
-| Thread-per-request | ~500MB | Decent until ~2K | Scheduler, RAM |
-| Prefork worker pool of 100 | ~200MB | Caps at 100 in flight | Pool size |
-| Event loop | ~50MB | Handles all 5K | Blocking syscalls |
-| Goroutines | ~100MB | Handles all 5K | Runtime scheduler |
+| Model                      | Memory | Throughput            | Bottleneck          |
+| -------------------------- | ------ | --------------------- | ------------------- |
+| Process-per-request        | ~5GB+  | Falls over forking    | Process create cost |
+| Thread-per-request         | ~500MB | Decent until ~2K      | Scheduler, RAM      |
+| Prefork worker pool of 100 | ~200MB | Caps at 100 in flight | Pool size           |
+| Event loop                 | ~50MB  | Handles all 5K        | Blocking syscalls   |
+| Goroutines                 | ~100MB | Handles all 5K        | Runtime scheduler   |
 
 Event loop and goroutines are the only two that comfortably handle the workload on a small box.
 
@@ -196,7 +196,7 @@ That `go c.serve(ctx)` is the entire concurrency model. Cheap, simple, scales to
 
 ## What nginx actually is
 
-nginx is a *master* process plus a small number of *worker* processes, each running its own event loop. The default is one worker per CPU core (`worker_processes auto`). Each worker can handle thousands of connections concurrently via `epoll`.
+nginx is a _master_ process plus a small number of _worker_ processes, each running its own event loop. The default is one worker per CPU core (`worker_processes auto`). Each worker can handle thousands of connections concurrently via `epoll`.
 
 ```text
 master (root, port 80/443)
@@ -217,7 +217,7 @@ If you are choosing — usually by picking a language and framework — here is 
 - **Mixed I/O-heavy + CPU-medium with developer ergonomics** — goroutines (Go), virtual threads (Java 21+), or async/await (Rust, modern Python).
 - **PHP / classic Ruby / classic Python** — prefork worker pool. PHP-FPM, Unicorn, Gunicorn sync workers. Simple, debuggable, fine for most apps under a few thousand RPS.
 
-## Why most production setups use *two* models
+## Why most production setups use _two_ models
 
 Front a Go application server (goroutines) with nginx (event loop). Why both?
 
@@ -229,7 +229,7 @@ Each is doing what it is good at. Trying to do TLS termination in Go is fine —
 ## Common mistakes
 
 - **Calling sync I/O in an event loop.** `fs.readFileSync` in Node, `time.sleep()` in `asyncio`. The whole loop stalls.
-- **Spawning a goroutine per shed-record-of-the-database.** Goroutines are cheap but not free. A goroutine per *connection* is right; a goroutine per inner-loop iteration over millions of records is a leak.
+- **Spawning a goroutine per shed-record-of-the-database.** Goroutines are cheap but not free. A goroutine per _connection_ is right; a goroutine per inner-loop iteration over millions of records is a leak.
 - **Underprovisioning prefork workers.** PHP-FPM with `pm.max_children = 5` will queue every request beyond the fifth. Set it based on memory headroom, not the default.
 - **Overprovisioning threads.** A JVM with `-Xss8m` and 10,000 threads is asking for OOM. Use virtual threads on Java 21+ or move to async.
 
@@ -238,8 +238,7 @@ Each is doing what it is good at. Trying to do TLS termination in Go is fine —
 - Five common models: process-per-request, thread-per-request, prefork pool, event loop, goroutines/virtual threads.
 - Event loops scale to many connections per CPU; programming is harder; never block.
 - Goroutines (and virtual threads) give synchronous-looking code with event-loop performance.
-- Production typically pairs a goroutine/event-loop *application* server with an event-loop *reverse proxy* (nginx).
+- Production typically pairs a goroutine/event-loop _application_ server with an event-loop _reverse proxy_ (nginx).
 - The right model depends on workload: I/O-bound vs CPU-bound vs concurrency level.
 
-Next chapter: serving static files — the half of "web server" that nginx is *embarrassingly* better at than your app.
-
+Next chapter: serving static files — the half of "web server" that nginx is _embarrassingly_ better at than your app.

@@ -88,7 +88,9 @@
 					<span>{progress.ready ? progress.rank.name : 'Curious'}</span>
 					<span>{progress.ready && progress.rank.next ? progress.rank.next.name : 'Max'}</span>
 				</div>
-				<div class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]">
+				<div
+					class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
+				>
 					<div
 						class="h-full rounded-full bg-accent transition-[width] duration-500"
 						style="width: {progress.ready ? progress.rank.pct : 0}%"

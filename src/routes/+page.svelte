@@ -52,7 +52,10 @@
 	const toolkit = [
 		{ group: 'Languages', items: ['Go', 'Rust', 'TypeScript', 'Python'] },
 		{ group: 'Data', items: ['PostgreSQL', 'Redis', 'NATS', 'Kafka'] },
-		{ group: 'Infrastructure', items: ['Kubernetes', 'Terraform', 'nginx / OpenResty', 'Cloudflare'] },
+		{
+			group: 'Infrastructure',
+			items: ['Kubernetes', 'Terraform', 'nginx / OpenResty', 'Cloudflare']
+		},
 		{ group: 'Observability', items: ['OpenTelemetry', 'Prometheus', 'Grafana'] }
 	];
 </script>
@@ -61,21 +64,24 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<!-- Hero -->
-	<section class="relative -mx-5 mb-6 flex min-h-[54vh] items-center py-10 sm:-mx-8 sm:min-h-[82vh] sm:py-0">
+	<section
+		class="relative -mx-5 mb-6 flex min-h-[54vh] items-center py-10 sm:-mx-8 sm:min-h-[82vh] sm:py-0"
+	>
 		<div class="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
 			<Hero />
 		</div>
 
 		<div class="relative z-10 px-5 sm:px-8">
-			<p class="mb-6 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-muted">
+			<p
+				class="mb-6 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-muted"
+			>
 				<span class="corner-round inline-block size-1.5 rounded-full bg-accent"></span>
 				<Typewriter words={TITLES} />
 			</p>
 			<h1
 				class="mb-7 max-w-xl font-display text-[2.2rem] font-bold leading-[1.05] tracking-[-0.03em] sm:text-5xl lg:text-6xl"
 			>
-				Building <span class="text-accent">fast, durable</span> systems &mdash; and the craft
-				behind them.
+				Building <span class="text-accent">fast, durable</span> systems &mdash; and the craft behind them.
 			</h1>
 			<p class="max-w-xl text-lg leading-[1.65] text-muted sm:text-xl">
 				I'm {SITE.name}. I design and ship product-grade software: distributed backends, snappy
@@ -110,8 +116,8 @@
 				<p>
 					I've spent the last several years shipping software that real people rely on — backend
 					services, developer tools, and the occasional deeply unfashionable internal CLI. Right now
-					I'm deep in <span class="text-fg">video infrastructure</span>: ingest pipelines, transcoding
-					at scale, and the edge caching that gets frames to viewers fast.
+					I'm deep in <span class="text-fg">video infrastructure</span>: ingest pipelines,
+					transcoding at scale, and the edge caching that gets frames to viewers fast.
 				</p>
 				<p>
 					I care about correctness, taste, and shipping. I write here mostly to think out loud —
@@ -143,7 +149,9 @@
 	<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16" use:reveal>
 		<div class="mb-6 flex items-end justify-between gap-6">
 			<div>
-				<p class="mb-2 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Selected work</p>
+				<p class="mb-2 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">
+					Selected work
+				</p>
 				<h2 class="font-display text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
 					Things I've shipped
 				</h2>
@@ -153,15 +161,18 @@
 			>
 		</div>
 		<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			{#each featured as project, i (project.title)}
-				<div class="h-full"><ProjectCard {project} index={i} /></div>
+			{#each featured as project (project.title)}
+				<div class="h-full"><ProjectCard {project} /></div>
 			{/each}
 		</div>
 	</section>
 
 	<!-- Recent writing -->
 	{#if data.posts.length}
-		<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16" use:reveal>
+		<section
+			class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16"
+			use:reveal
+		>
 			<div class="mb-6 flex items-end justify-between gap-6">
 				<div>
 					<p class="mb-2 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Writing</p>
@@ -180,7 +191,6 @@
 							href={`/blog/${post.slug}`}
 							title={post.meta.title}
 							description={post.meta.description}
-							date={post.meta.date}
 						/>
 					</div>
 				{/each}
@@ -189,7 +199,10 @@
 	{/if}
 
 	<!-- Currently + Toolkit -->
-	<section class="grid gap-12 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16 lg:grid-cols-2" use:reveal>
+	<section
+		class="grid gap-12 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16 lg:grid-cols-2"
+		use:reveal
+	>
 		<div>
 			<div class="mb-6 flex items-baseline justify-between">
 				<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Currently</p>

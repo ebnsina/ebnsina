@@ -1,10 +1,10 @@
 ---
-title: "Processes"
-subtitle: "A running program is a process — its own address space, its own resources, tracked by the kernel from birth to death."
+title: 'Processes'
+subtitle: 'A running program is a process — its own address space, its own resources, tracked by the kernel from birth to death.'
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["process", "fork", "exec"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['process', 'fork', 'exec']
 ---
 
 <script>
@@ -46,7 +46,7 @@ low addresses
 - **heap** — dynamic memory from `malloc`, growing toward higher addresses.
 - **stack** — function call frames and locals, growing toward lower addresses.
 
-These addresses are *virtual*. Two processes can both use address `0x400000` and the kernel maps each to different physical RAM.
+These addresses are _virtual_. Two processes can both use address `0x400000` and the kernel maps each to different physical RAM.
 
 ## The Process Control Block
 
@@ -65,12 +65,12 @@ When the kernel switches from one process to another, it saves the current regis
 
 A process moves through a small state machine:
 
-| State | Meaning |
-|-------|---------|
-| **Running** | Currently executing on a CPU |
-| **Ready** | Runnable, waiting for a CPU to be free |
-| **Blocked** | Waiting for an event (disk read, network, lock) |
-| **Zombie** | Finished, but its exit status hasn't been collected |
+| State       | Meaning                                             |
+| ----------- | --------------------------------------------------- |
+| **Running** | Currently executing on a CPU                        |
+| **Ready**   | Runnable, waiting for a CPU to be free              |
+| **Blocked** | Waiting for an event (disk read, network, lock)     |
+| **Zombie**  | Finished, but its exit status hasn't been collected |
 
 A typical life: a process is **ready**, the scheduler runs it (**running**), it asks to read a file and goes **blocked** until the disk responds, then becomes **ready** again. Most processes spend most of their life blocked, not running.
 
@@ -132,8 +132,8 @@ Two failure modes:
 
 <Callout type="info">
 
-**Note:** A zombie can't be killed with `kill` — it's already dead. The cure is to make the *parent* call `wait`, or to terminate the parent so the zombie is reparented to PID 1 and reaped.
+**Note:** A zombie can't be killed with `kill` — it's already dead. The cure is to make the _parent_ call `wait`, or to terminate the parent so the zombie is reparented to PID 1 and reaped.
 
 </Callout>
 
-With processes understood as isolated units, the next chapter looks at running multiple flows of execution *inside* one process: threads.
+With processes understood as isolated units, the next chapter looks at running multiple flows of execution _inside_ one process: threads.

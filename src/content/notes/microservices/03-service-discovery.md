@@ -1,10 +1,10 @@
 ---
-title: "Service Discovery"
-subtitle: "How services find each other — DNS-based discovery, Consul, client-side vs server-side load balancing, and health-integrated routing."
+title: 'Service Discovery'
+subtitle: 'How services find each other — DNS-based discovery, Consul, client-side vs server-side load balancing, and health-integrated routing.'
 chapter: 3
-level: "intermediate"
-readingTime: "10 min"
-topics: ["service discovery", "Consul", "DNS", "health checks", "service mesh", "Envoy"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['service discovery', 'Consul', 'DNS', 'health checks', 'service mesh', 'Envoy']
 ---
 
 <script>
@@ -22,6 +22,7 @@ A company directory vs a receptionist: the directory lists everyone's extension 
 ## The Problem
 
 In a monolith, calling a function is just a pointer dereference. In microservices, calling a service requires:
+
 1. Knowing its current IP and port
 2. Knowing which instances are healthy
 3. Deciding which instance to call (load balancing)
@@ -33,6 +34,7 @@ These can't be hardcoded — containers restart with new IPs, instances scale in
 The simplest approach: each service has a stable DNS name that resolves to one or more IPs.
 
 **In Kubernetes:** every Service gets a stable DNS name automatically.
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -48,6 +50,7 @@ spec:
 ```
 
 Within the cluster:
+
 ```
 order-service.production.svc.cluster.local:50051
 # Or just:
@@ -57,6 +60,7 @@ order-service:50051  (within same namespace)
 Kubernetes DNS resolves this to the ClusterIP, which routes to any healthy pod. No service registry needed — Kubernetes is the registry.
 
 **Outside Kubernetes:** use Route 53 or any DNS server with health checks.
+
 ```bash
 # Route 53 with health check
 aws route53 create-health-check \
@@ -108,20 +112,21 @@ consul agent \
 ```
 
 **Service registration:**
+
 ```json
 // /etc/consul.d/order-service.json
 {
-  "service": {
-    "name": "order-service",
-    "id": "order-service-1",
-    "port": 50051,
-    "tags": ["grpc", "v1"],
-    "check": {
-      "grpc": "localhost:50051",
-      "interval": "10s",
-      "deregister_critical_service_after": "1m"
-    }
-  }
+	"service": {
+		"name": "order-service",
+		"id": "order-service-1",
+		"port": 50051,
+		"tags": ["grpc", "v1"],
+		"check": {
+			"grpc": "localhost:50051",
+			"interval": "10s",
+			"deregister_critical_service_after": "1m"
+		}
+	}
 }
 ```
 
@@ -131,6 +136,7 @@ consul reload
 ```
 
 **Querying Consul:**
+
 ```bash
 # DNS interface (built-in)
 dig @127.0.0.1 -p 8600 order-service.service.consul SRV
@@ -141,34 +147,39 @@ curl http://localhost:8500/v1/health/service/order-service?passing=true
 ```
 
 **Application integration:**
+
 ```typescript
 import Consul from 'consul';
 
 const consul = new Consul();
 
 async function discoverService(name: string): Promise<string> {
-  const services = await consul.health.service({
-    service: name,
-    passing: true,   // only healthy instances
-  });
+	const services = await consul.health.service({
+		service: name,
+		passing: true // only healthy instances
+	});
 
-  if (services.length === 0) throw new Error(`No healthy instances of ${name}`);
+	if (services.length === 0) throw new Error(`No healthy instances of ${name}`);
 
-  // Simple round-robin
-  const instance = services[Math.floor(Math.random() * services.length)];
-  const { Address, Port } = instance.Service;
-  return `${Address}:${Port}`;
+	// Simple round-robin
+	const instance = services[Math.floor(Math.random() * services.length)];
+	const { Address, Port } = instance.Service;
+	return `${Address}:${Port}`;
 }
 
 const orderServiceAddr = await discoverService('order-service');
-const client = createClient(OrderService, createGrpcTransport({
-  baseUrl: `https://${orderServiceAddr}`,
-}));
+const client = createClient(
+	OrderService,
+	createGrpcTransport({
+		baseUrl: `https://${orderServiceAddr}`
+	})
+);
 ```
 
 ## Client-Side vs Server-Side Load Balancing
 
 **Server-side (traditional):**
+
 ```
 Client → Load Balancer → [picks instance] → Service instance
 ```
@@ -176,6 +187,7 @@ Client → Load Balancer → [picks instance] → Service instance
 The LB has all the knowledge. Clients just call a single stable address.
 
 **Client-side:**
+
 ```
 Client → Consul (get all instances) → Client picks one → Service instance
 ```
@@ -187,9 +199,9 @@ gRPC with a service registry naturally uses client-side load balancing — the g
 ```typescript
 // gRPC client-side LB with multiple addresses
 const transport = createGrpcTransport({
-  baseUrl: 'https://order-service:50051',
-  // The resolver queries Consul and returns all instance addresses
-  // gRPC runtime round-robins across them
+	baseUrl: 'https://order-service:50051'
+	// The resolver queries Consul and returns all instance addresses
+	// gRPC runtime round-robins across them
 });
 ```
 
@@ -204,7 +216,7 @@ kind: Pod
 metadata:
   name: order-service
   annotations:
-    sidecar.istio.io/inject: "true"
+    sidecar.istio.io/inject: 'true'
 spec:
   containers:
     - name: order-service
@@ -215,6 +227,7 @@ spec:
 ```
 
 **Traffic policy with Istio:**
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -232,7 +245,7 @@ spec:
         - destination:
             host: order-service
             subset: v2
-          weight: 10     # canary: 10% to v2
+          weight: 10 # canary: 10% to v2
 ```
 
 ```yaml
@@ -245,11 +258,11 @@ spec:
   trafficPolicy:
     connectionPool:
       http:
-        h2UpgradePolicy: UPGRADE   # HTTP/2 for gRPC
+        h2UpgradePolicy: UPGRADE # HTTP/2 for gRPC
     outlierDetection:
       consecutiveErrors: 5
       interval: 30s
-      baseEjectionTime: 30s        # circuit breaker: eject failing instances
+      baseEjectionTime: 30s # circuit breaker: eject failing instances
   subsets:
     - name: v1
       labels:
@@ -266,40 +279,42 @@ The application knows nothing about canary routing or circuit breaking — Envoy
 Services must expose health checks that discovery systems can query:
 
 **gRPC Health Check Protocol:**
+
 ```typescript
 import { HealthImplementation } from 'grpc-health-check';
 
 const healthImpl = new HealthImplementation({
-  '': ServingStatus.SERVING,
-  'order.v1.OrderService': ServingStatus.SERVING,
+	'': ServingStatus.SERVING,
+	'order.v1.OrderService': ServingStatus.SERVING
 });
 
 // Update when service degrades
 async function checkDatabaseHealth() {
-  try {
-    await db.query('SELECT 1');
-    healthImpl.setStatus('order.v1.OrderService', ServingStatus.SERVING);
-  } catch {
-    healthImpl.setStatus('order.v1.OrderService', ServingStatus.NOT_SERVING);
-  }
+	try {
+		await db.query('SELECT 1');
+		healthImpl.setStatus('order.v1.OrderService', ServingStatus.SERVING);
+	} catch {
+		healthImpl.setStatus('order.v1.OrderService', ServingStatus.NOT_SERVING);
+	}
 }
 
 setInterval(checkDatabaseHealth, 10_000);
 ```
 
 **HTTP health check (for non-gRPC services):**
+
 ```typescript
 app.get('/health/ready', async (req, res) => {
-  try {
-    await Promise.all([db.query('SELECT 1'), redis.ping()]);
-    res.json({ status: 'ready' });
-  } catch (err) {
-    res.status(503).json({ status: 'not ready', error: err.message });
-  }
+	try {
+		await Promise.all([db.query('SELECT 1'), redis.ping()]);
+		res.json({ status: 'ready' });
+	} catch (err) {
+		res.status(503).json({ status: 'not ready', error: err.message });
+	}
 });
 
 app.get('/health/live', (req, res) => {
-  res.json({ status: 'alive' });
+	res.json({ status: 'alive' });
 });
 ```
 
@@ -315,8 +330,8 @@ The moment between "old instance stops" and "new instance is ready" is when disc
 spec:
   strategy:
     rollingUpdate:
-      maxSurge: 1         # spin up 1 new pod before killing old
-      maxUnavailable: 0   # never kill before replacement is ready
+      maxSurge: 1 # spin up 1 new pod before killing old
+      maxUnavailable: 0 # never kill before replacement is ready
   template:
     spec:
       containers:
@@ -329,8 +344,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["sleep", "5"]   # wait for LB to deregister before SIGTERM
+                command: ['sleep', '5'] # wait for LB to deregister before SIGTERM
 ```
 
 The `preStop` sleep ensures Kubernetes has time to remove the pod from service endpoints before the process receives SIGTERM. Without it: a brief window where the LB still routes to a pod that's stopping.
-

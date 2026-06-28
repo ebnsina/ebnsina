@@ -1,10 +1,10 @@
 ---
-title: "Steady State & SLOs"
+title: 'Steady State & SLOs'
 subtitle: "Defining what 'working' means in measurable terms — SLIs, SLOs, error budgets, and the feedback loop that drives reliability work."
 chapter: 5
-level: "intermediate"
-readingTime: "10 min"
-topics: ["SLO", "SLI", "error budget", "steady state", "reliability"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['SLO', 'SLI', 'error budget', 'steady state', 'reliability']
 ---
 
 <script>
@@ -24,9 +24,11 @@ A thermostat: it doesn't just know that temperature matters — it has a specifi
 "The system is working" is meaningless for chaos engineering. You need a measurable definition:
 
 **Bad steady state definition:**
+
 > "The system is up and handling requests normally."
 
 **Good steady state definition:**
+
 > "p99 request latency &lt; 300ms, error rate &lt; 0.5%, successful checkout rate > 99.2%, all measured over a 5-minute rolling window."
 
 Now you can answer: "Is this still true with 200ms of injected latency?" The answer is either yes or no, measurable in real time.
@@ -52,32 +54,34 @@ const errorRate = errorRequests / totalRequests;
 SLIs measure what users experience, not what your infrastructure shows. CPU at 80% is not an SLI — it doesn't tell you if users are getting good service. 99.5% requests completing under 300ms is an SLI.
 
 **Implementing SLI collection:**
+
 ```typescript
 const requestDuration = new Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'HTTP request duration',
-  labelNames: ['method', 'route', 'status_code'],
-  buckets: [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5],
+	name: 'http_request_duration_seconds',
+	help: 'HTTP request duration',
+	labelNames: ['method', 'route', 'status_code'],
+	buckets: [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5]
 });
 
 const requestTotal = new Counter({
-  name: 'http_requests_total',
-  help: 'Total HTTP requests',
-  labelNames: ['method', 'route', 'status_code'],
+	name: 'http_requests_total',
+	help: 'Total HTTP requests',
+	labelNames: ['method', 'route', 'status_code']
 });
 
 // Middleware
 app.use((req, res, next) => {
-  const end = requestDuration.startTimer({ method: req.method, route: req.route?.path });
-  res.on('finish', () => {
-    end({ status_code: res.statusCode });
-    requestTotal.inc({ method: req.method, route: req.route?.path, status_code: res.statusCode });
-  });
-  next();
+	const end = requestDuration.startTimer({ method: req.method, route: req.route?.path });
+	res.on('finish', () => {
+		end({ status_code: res.statusCode });
+		requestTotal.inc({ method: req.method, route: req.route?.path, status_code: res.statusCode });
+	});
+	next();
 });
 ```
 
 **Prometheus queries for your SLIs:**
+
 ```promql
 # Availability SLI (5m window)
 sum(rate(http_requests_total{status_code!~"5.."}[5m]))
@@ -108,6 +112,7 @@ SLO: > 99.2% of checkout attempts succeed
 SLOs are aspirational targets — not contractual guarantees (those are SLAs). Setting them slightly below your actual capability gives you room to experiment and improve without burning your error budget.
 
 **Setting realistic SLOs:**
+
 ```
 Step 1: Measure your current actual performance over 30 days
 Step 2: Set SLO slightly below your actual best (not your worst)
@@ -135,37 +140,38 @@ SLO: 99.99% availability
 ```
 
 The error budget drives decisions:
+
 - **Budget remaining:** Confidence to run chaos experiments, deploy risky changes, take calculated risks.
 - **Budget exhausted:** Freeze feature deployments, focus on reliability improvements, cancel chaos experiments until budget recovers.
 
 ```typescript
 interface ErrorBudget {
-  sloPercent: number;        // e.g., 99.9
-  windowDays: number;        // e.g., 30
-  budgetMinutes: number;     // 43.2
-  usedMinutes: number;       // measured from incidents
-  remainingMinutes: number;  // budget - used
-  remainingPercent: number;  // remaining / budget
+	sloPercent: number; // e.g., 99.9
+	windowDays: number; // e.g., 30
+	budgetMinutes: number; // 43.2
+	usedMinutes: number; // measured from incidents
+	remainingMinutes: number; // budget - used
+	remainingPercent: number; // remaining / budget
 }
 
 function calculateErrorBudget(
-  sloPercent: number,
-  windowDays: number,
-  actualAvailability: number,
+	sloPercent: number,
+	windowDays: number,
+	actualAvailability: number
 ): ErrorBudget {
-  const windowMinutes = windowDays * 24 * 60;
-  const budgetPercent = 100 - sloPercent;
-  const budgetMinutes = windowMinutes * (budgetPercent / 100);
-  const usedMinutes = windowMinutes * ((100 - actualAvailability * 100) / 100);
+	const windowMinutes = windowDays * 24 * 60;
+	const budgetPercent = 100 - sloPercent;
+	const budgetMinutes = windowMinutes * (budgetPercent / 100);
+	const usedMinutes = windowMinutes * ((100 - actualAvailability * 100) / 100);
 
-  return {
-    sloPercent,
-    windowDays,
-    budgetMinutes,
-    usedMinutes,
-    remainingMinutes: budgetMinutes - usedMinutes,
-    remainingPercent: (budgetMinutes - usedMinutes) / budgetMinutes,
-  };
+	return {
+		sloPercent,
+		windowDays,
+		budgetMinutes,
+		usedMinutes,
+		remainingMinutes: budgetMinutes - usedMinutes,
+		remainingPercent: (budgetMinutes - usedMinutes) / budgetMinutes
+	};
 }
 ```
 
@@ -177,22 +183,26 @@ Document what the team does at different budget levels:
 ## Error Budget Policy
 
 ### > 50% remaining
+
 - Normal operations
 - Chaos experiments encouraged
 - Feature deployments proceed
 - Risky infrastructure changes OK with review
 
 ### 25-50% remaining
+
 - Slow chaos experiment cadence
 - Require post-mortems for any SLO violations
 - Review and improve monitoring
 
 ### < 25% remaining
+
 - Freeze non-critical feature deployments
 - Focus engineering time on reliability improvements
 - Cancel chaos experiments until budget recovers
 
 ### Exhausted (0%)
+
 - Feature freeze (critical fixes only)
 - Incident review for all SLO violations
 - Executive visibility
@@ -205,18 +215,18 @@ Chaos experiments intentionally consume error budget — that's the point. Track
 
 ```typescript
 interface ChaosExperiment {
-  name: string;
-  plannedBudgetCost: number; // estimated minutes of budget consumed
-  actualBudgetCost: number;  // measured after experiment
-  hypothesis: string;
-  result: 'passed' | 'failed' | 'aborted';
-  findings: string[];
+	name: string;
+	plannedBudgetCost: number; // estimated minutes of budget consumed
+	actualBudgetCost: number; // measured after experiment
+	hypothesis: string;
+	result: 'passed' | 'failed' | 'aborted';
+	findings: string[];
 }
 
 // Before running an experiment:
 function canRunExperiment(budget: ErrorBudget, experiment: ChaosExperiment): boolean {
-  // Don't run if experiment would exhaust remaining budget
-  return budget.remainingMinutes > experiment.plannedBudgetCost * 2; // 2x safety margin
+	// Don't run if experiment would exhaust remaining budget
+	return budget.remainingMinutes > experiment.plannedBudgetCost * 2; // 2x safety margin
 }
 ```
 
@@ -257,4 +267,3 @@ Main reliability dashboard:
 ```
 
 This dashboard tells you in 10 seconds whether the system is healthy and how much risk budget you have. Reference it before every chaos experiment and every major deployment.
-

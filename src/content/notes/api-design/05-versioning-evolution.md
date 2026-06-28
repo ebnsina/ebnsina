@@ -1,10 +1,10 @@
 ---
-title: "Versioning & Evolution"
-subtitle: "Evolve your API without breaking existing clients — URL versioning, header versioning, backward compatibility, and deprecation strategies."
+title: 'Versioning & Evolution'
+subtitle: 'Evolve your API without breaking existing clients — URL versioning, header versioning, backward compatibility, and deprecation strategies.'
 chapter: 5
-level: "intermediate"
-readingTime: "10 min"
-topics: ["versioning", "backward compatibility", "deprecation", "API evolution"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['versioning', 'backward compatibility', 'deprecation', 'API evolution']
 ---
 
 <script>
@@ -31,41 +31,43 @@ The most common and most visible approach:
 
 ```typescript
 // Version in the URL path
-GET /api/v1/users
-GET /api/v2/users
+GET / api / v1 / users;
+GET / api / v2 / users;
 
 // Express implementation
-import v1Router from "./routes/v1";
-import v2Router from "./routes/v2";
+import v1Router from './routes/v1';
+import v2Router from './routes/v2';
 
-app.use("/api/v1", v1Router);
-app.use("/api/v2", v2Router);
+app.use('/api/v1', v1Router);
+app.use('/api/v2', v2Router);
 
 // routes/v1/users.ts
-router.get("/users", async (req, res) => {
-  const users = await db.users.find();
-  // v1 returns flat structure
-  res.json(users.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-  })));
+router.get('/users', async (req, res) => {
+	const users = await db.users.find();
+	// v1 returns flat structure
+	res.json(
+		users.map((u) => ({
+			id: u.id,
+			name: u.name,
+			email: u.email
+		}))
+	);
 });
 
 // routes/v2/users.ts
-router.get("/users", async (req, res) => {
-  const users = await db.users.find();
-  // v2 returns envelope with split name
-  res.json({
-    data: users.map((u) => ({
-      id: u.id,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      email: u.email,
-      createdAt: u.createdAt,
-    })),
-    meta: { total: users.length },
-  });
+router.get('/users', async (req, res) => {
+	const users = await db.users.find();
+	// v2 returns envelope with split name
+	res.json({
+		data: users.map((u) => ({
+			id: u.id,
+			firstName: u.firstName,
+			lastName: u.lastName,
+			email: u.email,
+			createdAt: u.createdAt
+		})),
+		meta: { total: users.length }
+	});
 });
 ```
 
@@ -179,49 +181,49 @@ When you need to retire an old version:
 
 ```typescript
 // Step 1: Mark endpoints as deprecated with headers
-app.use("/api/v1", (req, res, next) => {
-  res.set("Deprecation", "true");
-  res.set("Sunset", "Sat, 01 Jun 2026 00:00:00 GMT");
-  res.set("Link", '</api/v2>; rel="successor-version"');
+app.use('/api/v1', (req, res, next) => {
+	res.set('Deprecation', 'true');
+	res.set('Sunset', 'Sat, 01 Jun 2026 00:00:00 GMT');
+	res.set('Link', '</api/v2>; rel="successor-version"');
 
-  // Log deprecated usage for monitoring
-  metrics.increment("api.v1.deprecated_call", {
-    endpoint: req.path,
-    client: req.headers["user-agent"],
-  });
+	// Log deprecated usage for monitoring
+	metrics.increment('api.v1.deprecated_call', {
+		endpoint: req.path,
+		client: req.headers['user-agent']
+	});
 
-  next();
+	next();
 });
 
 // Step 2: Return warnings in response body
 function deprecationWrapper(handler: express.RequestHandler): express.RequestHandler {
-  return async (req, res, next) => {
-    const originalJson = res.json.bind(res);
-    res.json = (body: unknown) => {
-      if (typeof body === "object" && body !== null) {
-        (body as Record<string, unknown>)._warnings = [
-          {
-            code: "DEPRECATED_VERSION",
-            message: "API v1 is deprecated. Please migrate to v2 by June 2026.",
-            docs: "https://docs.myapi.com/migration/v1-to-v2",
-          },
-        ];
-      }
-      return originalJson(body);
-    };
-    handler(req, res, next);
-  };
+	return async (req, res, next) => {
+		const originalJson = res.json.bind(res);
+		res.json = (body: unknown) => {
+			if (typeof body === 'object' && body !== null) {
+				(body as Record<string, unknown>)._warnings = [
+					{
+						code: 'DEPRECATED_VERSION',
+						message: 'API v1 is deprecated. Please migrate to v2 by June 2026.',
+						docs: 'https://docs.myapi.com/migration/v1-to-v2'
+					}
+				];
+			}
+			return originalJson(body);
+		};
+		handler(req, res, next);
+	};
 }
 
 // Step 3: After sunset date, return 410 Gone
-app.use("/api/v1", (req, res) => {
-  res.status(410).json({
-    error: {
-      code: "VERSION_RETIRED",
-      message: "API v1 has been retired. Please use v2.",
-      migrationGuide: "https://docs.myapi.com/migration/v1-to-v2",
-    },
-  });
+app.use('/api/v1', (req, res) => {
+	res.status(410).json({
+		error: {
+			code: 'VERSION_RETIRED',
+			message: 'API v1 has been retired. Please use v2.',
+			migrationGuide: 'https://docs.myapi.com/migration/v1-to-v2'
+		}
+	});
 });
 ```
 
@@ -232,31 +234,31 @@ Always provide a clear migration guide when introducing a new version:
 ```typescript
 // Document every breaking change
 const migrationGuide = {
-  from: "v1",
-  to: "v2",
-  changes: [
-    {
-      type: "field_renamed",
-      endpoint: "GET /users",
-      before: { field: "name", type: "string" },
-      after: { fields: ["firstName", "lastName"], type: "string" },
-      migration: "Split the 'name' field on space, or use the new fields directly",
-    },
-    {
-      type: "response_wrapped",
-      endpoint: "ALL",
-      before: "Direct array/object response",
-      after: "Wrapped in { data, meta } envelope",
-      migration: "Access response.data instead of response directly",
-    },
-    {
-      type: "field_type_changed",
-      endpoint: "GET /users",
-      before: { field: "id", type: "number" },
-      after: { field: "id", type: "string", format: "user_<number>" },
-      migration: "Update ID comparisons to use string matching",
-    },
-  ],
+	from: 'v1',
+	to: 'v2',
+	changes: [
+		{
+			type: 'field_renamed',
+			endpoint: 'GET /users',
+			before: { field: 'name', type: 'string' },
+			after: { fields: ['firstName', 'lastName'], type: 'string' },
+			migration: "Split the 'name' field on space, or use the new fields directly"
+		},
+		{
+			type: 'response_wrapped',
+			endpoint: 'ALL',
+			before: 'Direct array/object response',
+			after: 'Wrapped in { data, meta } envelope',
+			migration: 'Access response.data instead of response directly'
+		},
+		{
+			type: 'field_type_changed',
+			endpoint: 'GET /users',
+			before: { field: 'id', type: 'number' },
+			after: { field: 'id', type: 'string', format: 'user_<number>' },
+			migration: 'Update ID comparisons to use string matching'
+		}
+	]
 };
 ```
 
@@ -279,4 +281,3 @@ const migrationGuide = {
 4. **Deprecation is a process** — announce, warn, sunset, then retire
 5. **Support at most two versions** at a time to keep maintenance manageable
 6. **Monitor deprecated endpoint usage** to know when it is safe to remove old versions
-

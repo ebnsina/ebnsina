@@ -1,10 +1,10 @@
 ---
-title: "Runbooks & Incident Response"
-subtitle: "Writing runbooks people will actually use, incident commander patterns, post-mortems that produce real change."
+title: 'Runbooks & Incident Response'
+subtitle: 'Writing runbooks people will actually use, incident commander patterns, post-mortems that produce real change.'
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["runbooks", "incident response", "post-mortem", "on-call", "communication"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['runbooks', 'incident response', 'post-mortem', 'on-call', 'communication']
 ---
 
 <script>
@@ -24,10 +24,12 @@ An ER triage protocol: not a guide for doctors who have time to think — it's a
 Most runbooks fail not because they're wrong, but because they're not actually useful in an incident:
 
 **Useless runbook:**
+
 > "When the database is unavailable, restore service according to the DR procedure and notify stakeholders."
 
 **Useful runbook:**
-```markdown
+
+````markdown
 # Database Unavailable Runbook
 
 **Trigger:** PagerDuty alert "database-primary-down" fires
@@ -40,21 +42,26 @@ Most runbooks fail not because they're wrong, but because they're not actually u
    ```bash
    psql $DATABASE_URL -c "SELECT 1" 2>&1
    ```
-   If this returns: "connection refused" → primary is down, continue
-   If this returns data → false alarm, acknowledge and close
+````
+
+If this returns: "connection refused" → primary is down, continue
+If this returns data → false alarm, acknowledge and close
 
 2. Check if replica is available:
+
    ```bash
    psql $REPLICA_DATABASE_URL -c "SELECT 1" 2>&1
    ```
+
    Yes → Go to Section A (failover to replica)
-   No  → Go to Section B (restore from backup)
+   No → Go to Section B (restore from backup)
 
 3. Open incident:
    - PagerDuty: escalate to secondary if no response in 5 min
    - Slack: post in #incidents "Database outage in progress, investigating"
    - Status page: set to "Investigating"
-```
+
+````
 
 Good runbooks are **imperative** (do this, then this), **specific** (exact commands, not descriptions), and **decision-tree shaped** (if X, do Y; if Z, do W).
 
@@ -101,13 +108,14 @@ Good runbooks are **imperative** (do this, then this), **specific** (exact comma
 - [ ] Post timeline in #incidents
 - [ ] Open post-mortem within 48 hours
 - [ ] Update this runbook if any steps were wrong
-```
+````
 
 ## Incident Roles
 
 Clear roles prevent the "too many cooks" problem where everyone is acting and nobody is coordinating.
 
 **Incident Commander (IC):**
+
 - Owns the incident timeline and decisions
 - Delegates investigation tasks, doesn't do them personally
 - Manages external communication
@@ -115,15 +123,18 @@ Clear roles prevent the "too many cooks" problem where everyone is acting and no
 - One person — if there are two ICs, there is none
 
 **Technical Lead:**
+
 - Drives investigation and resolution
 - Reports findings to IC
 - Can ask for help without losing ownership
 
 **Communicator:**
+
 - Updates status page, Slack, customer communications
 - Frees technical leads from context-switching to comms
 
 **Scribe:**
+
 - Documents timeline in real time (timestamps, what was tried, what was found)
 - Invaluable for post-mortem — memory fades fast under stress
 
@@ -175,15 +186,15 @@ detection. Recovery involved manually restarting the WAL sender process.
 
 ## Timeline
 
-| Time  | Event |
-|-------|-------|
+| Time  | Event                                   |
+| ----- | --------------------------------------- |
 | 09:55 | WAL sender process crashes (undetected) |
-| 09:55 | Replication lag begins growing |
-| 10:02 | Alert fires: "replica lag > 5 minutes" |
-| 10:02 | On-call @alice paged |
-| 10:04 | alice identifies crashed WAL sender |
-| 10:06 | WAL sender restarted |
-| 10:25 | Lag recovered, p99 latency baseline |
+| 09:55 | Replication lag begins growing          |
+| 10:02 | Alert fires: "replica lag > 5 minutes"  |
+| 10:02 | On-call @alice paged                    |
+| 10:04 | alice identifies crashed WAL sender     |
+| 10:06 | WAL sender restarted                    |
+| 10:25 | Lag recovered, p99 latency baseline     |
 
 ## Root cause
 
@@ -212,12 +223,12 @@ the WAL sender process.
 
 ## Action items
 
-| Action | Owner | Due |
-|--------|-------|-----|
-| Alert on WAL sender process count (should be > 0) | @alice | Jan 29 |
-| Move analytical queries to read replica | @carol | Feb 5 |
-| Lower memory alert threshold to 80% | @alice | Jan 25 |
-| Add status page access for all on-call engineers | @bob | Jan 24 |
+| Action                                               | Owner  | Due    |
+| ---------------------------------------------------- | ------ | ------ |
+| Alert on WAL sender process count (should be > 0)    | @alice | Jan 29 |
+| Move analytical queries to read replica              | @carol | Feb 5  |
+| Lower memory alert threshold to 80%                  | @alice | Jan 25 |
+| Add status page access for all on-call engineers     | @bob   | Jan 24 |
 | Update runbook with memory pressure diagnostic steps | @alice | Jan 29 |
 ```
 
@@ -251,4 +262,3 @@ Good incident response requires healthy on-call practices:
 ```
 
 Burnout from on-call is an engineering effectiveness problem. Each incident handled by an exhausted engineer takes longer, resolves less well, and produces worse post-mortems.
-

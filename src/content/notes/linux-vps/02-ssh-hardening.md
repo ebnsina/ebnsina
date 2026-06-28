@@ -1,10 +1,10 @@
 ---
-title: "First Login & SSH Hardening"
-subtitle: "Generate a key, disable password login, lock down sshd, and put fail2ban in front. The single most important hour you will ever spend on a VPS."
+title: 'First Login & SSH Hardening'
+subtitle: 'Generate a key, disable password login, lock down sshd, and put fail2ban in front. The single most important hour you will ever spend on a VPS.'
 chapter: 2
-level: "beginner"
-readingTime: "13 min"
-topics: ["ssh", "security", "openssh", "fail2ban", "hardening"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['ssh', 'security', 'openssh', 'fail2ban', 'hardening']
 ---
 
 <script>
@@ -27,7 +27,7 @@ If you do nothing else, lock down SSH first. Everything else can wait.
 
 <Callout type="warn">
 
-The actions in this chapter are **non-optional**. A VPS with password auth and root SSH enabled will be compromised. Not "might be" — *will be*.
+The actions in this chapter are **non-optional**. A VPS with password auth and root SSH enabled will be compromised. Not "might be" — _will be_.
 
 </Callout>
 
@@ -168,7 +168,7 @@ Open a brand new terminal and try `ssh deploy@49.13.123.45`. If it works, you ar
 
 ## Step 5 — Move SSH to a non-standard port (optional)
 
-This does not improve security in any deep sense — port scans find anything — but it dramatically reduces *noise* in your logs. Pick a port between 1024 and 65535 that you can remember:
+This does not improve security in any deep sense — port scans find anything — but it dramatically reduces _noise_ in your logs. Pick a port between 1024 and 65535 that you can remember:
 
 ```text
 Port 2222
@@ -259,4 +259,3 @@ done
 - Save your laptop's `~/.ssh/config` host alias so future commands stay short.
 
 In chapter 3, we explore the filesystem you just landed in.
-

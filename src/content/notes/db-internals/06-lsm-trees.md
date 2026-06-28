@@ -1,10 +1,10 @@
 ---
-title: "LSM Trees"
-subtitle: "The write-optimized alternative to B-trees — how RocksDB, Cassandra, and LevelDB handle massive write throughput."
+title: 'LSM Trees'
+subtitle: 'The write-optimized alternative to B-trees — how RocksDB, Cassandra, and LevelDB handle massive write throughput.'
 chapter: 6
-level: "intermediate"
-readingTime: "14 min"
-topics: ["LSM tree", "compaction", "memtable", "SSTable"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['LSM tree', 'compaction', 'memtable', 'SSTable']
 ---
 
 <script>
@@ -29,46 +29,46 @@ Like a donation drop-off center — donors (writes) rapidly drop items into temp
 
 ```typescript
 class LSMTree {
-  private memtable: SortedMap<string, Row>; // in-memory, sorted
-  private immutableMemtables: SortedMap<string, Row>[] = []; // being flushed
-  private levels: SSTable[][] = [[], [], [], []]; // L0, L1, L2, L3
+	private memtable: SortedMap<string, Row>; // in-memory, sorted
+	private immutableMemtables: SortedMap<string, Row>[] = []; // being flushed
+	private levels: SSTable[][] = [[], [], [], []]; // L0, L1, L2, L3
 
-  // WRITE: always goes to memtable (RAM) — blazing fast
-  async put(key: string, value: Row): Promise<void> {
-    // 1. Write to WAL (for durability)
-    await this.wal.append(key, value);
+	// WRITE: always goes to memtable (RAM) — blazing fast
+	async put(key: string, value: Row): Promise<void> {
+		// 1. Write to WAL (for durability)
+		await this.wal.append(key, value);
 
-    // 2. Insert into memtable (in-memory sorted structure)
-    this.memtable.set(key, value);
+		// 2. Insert into memtable (in-memory sorted structure)
+		this.memtable.set(key, value);
 
-    // 3. If memtable is full, flush to disk
-    if (this.memtable.size >= this.maxMemtableSize) {
-      this.immutableMemtables.push(this.memtable);
-      this.memtable = new SortedMap();
-      await this.flush();
-    }
-  }
+		// 3. If memtable is full, flush to disk
+		if (this.memtable.size >= this.maxMemtableSize) {
+			this.immutableMemtables.push(this.memtable);
+			this.memtable = new SortedMap();
+			await this.flush();
+		}
+	}
 
-  // READ: check memtable first, then each level
-  async get(key: string): Promise<Row | null> {
-    // 1. Check active memtable
-    if (this.memtable.has(key)) return this.memtable.get(key)!;
+	// READ: check memtable first, then each level
+	async get(key: string): Promise<Row | null> {
+		// 1. Check active memtable
+		if (this.memtable.has(key)) return this.memtable.get(key)!;
 
-    // 2. Check immutable memtables (being flushed)
-    for (const mem of this.immutableMemtables) {
-      if (mem.has(key)) return mem.get(key)!;
-    }
+		// 2. Check immutable memtables (being flushed)
+		for (const mem of this.immutableMemtables) {
+			if (mem.has(key)) return mem.get(key)!;
+		}
 
-    // 3. Check SSTable levels (L0 first, then L1, L2, ...)
-    for (const level of this.levels) {
-      for (const sst of level) {
-        const result = await sst.get(key);
-        if (result !== null) return result;
-      }
-    }
+		// 3. Check SSTable levels (L0 first, then L1, L2, ...)
+		for (const level of this.levels) {
+			for (const sst of level) {
+				const result = await sst.get(key);
+				if (result !== null) return result;
+			}
+		}
 
-    return null;
-  }
+		return null;
+	}
 }
 ```
 
@@ -115,18 +115,18 @@ Over time, LSM trees accumulate many SSTable files. **Compaction** merges them t
 ```typescript
 // Level-based compaction (used by LevelDB, RocksDB)
 async function compact(level: number): Promise<void> {
-  // Pick overlapping SSTables from this level and the next
-  const source = selectSSTables(level);
-  const target = findOverlapping(level + 1, source);
+	// Pick overlapping SSTables from this level and the next
+	const source = selectSSTables(level);
+	const target = findOverlapping(level + 1, source);
 
-  // Merge-sort all entries
-  const merged = mergeSorted([...source, ...target]);
+	// Merge-sort all entries
+	const merged = mergeSorted([...source, ...target]);
 
-  // Write new SSTables to level + 1
-  const newSSTables = await writeNewSSTables(merged, level + 1);
+	// Write new SSTables to level + 1
+	const newSSTables = await writeNewSSTables(merged, level + 1);
 
-  // Remove old SSTables
-  await deleteOldSSTables([...source, ...target]);
+	// Remove old SSTables
+	await deleteOldSSTables([...source, ...target]);
 }
 
 // Size-tiered compaction (used by Cassandra)
@@ -136,13 +136,13 @@ async function compact(level: number): Promise<void> {
 
 ## Tradeoffs: Read/Write/Space Amplification
 
-| | B-Tree | LSM Tree |
-|--|--------|----------|
-| Write amplification | ~10x (page splits, in-place updates) | ~10-30x (compaction rewrites) |
-| Read amplification | 1x (single B-tree lookup) | ~1-5x (check multiple levels) |
-| Space amplification | ~1.5x (page fill factor) | ~1.1-2x (temporary duplicates) |
-| Write throughput | Lower (random I/O) | Higher (sequential I/O) |
-| Read latency | Lower (predictable) | Higher (varies) |
+|                     | B-Tree                               | LSM Tree                       |
+| ------------------- | ------------------------------------ | ------------------------------ |
+| Write amplification | ~10x (page splits, in-place updates) | ~10-30x (compaction rewrites)  |
+| Read amplification  | 1x (single B-tree lookup)            | ~1-5x (check multiple levels)  |
+| Space amplification | ~1.5x (page fill factor)             | ~1.1-2x (temporary duplicates) |
+| Write throughput    | Lower (random I/O)                   | Higher (sequential I/O)        |
+| Read latency        | Lower (predictable)                  | Higher (varies)                |
 
 <Callout type="tip">
 
@@ -156,4 +156,3 @@ async function compact(level: number): Promise<void> {
 2. **Reads check multiple levels** — bloom filters and sparse indexes minimize disk reads
 3. **Compaction merges files** to keep read performance manageable and reclaim space
 4. **B-trees win on reads, LSM trees win on writes** — pick based on your workload
-

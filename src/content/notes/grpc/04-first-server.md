@@ -1,10 +1,10 @@
 ---
-title: "Your first server and client"
-subtitle: "End-to-end Go gRPC in one chapter — proto, codegen, server, client, reflection, grpcurl. By the end you have a real binary you could deploy."
+title: 'Your first server and client'
+subtitle: 'End-to-end Go gRPC in one chapter — proto, codegen, server, client, reflection, grpcurl. By the end you have a real binary you could deploy.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["grpc", "go", "protoc", "codegen", "reflection"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['grpc', 'go', 'protoc', 'codegen', 'reflection']
 ---
 
 <script>
@@ -401,4 +401,3 @@ Copy `bin/server` to a VPS, write a systemd unit, done. No runtime to install.
 - Builds a static binary with `CGO_ENABLED=0 go build`.
 
 Next: [Polyglot — Node and Python clients](/notes/grpc/05-polyglot) — same `.proto`, three languages, all talking to the same server.
-

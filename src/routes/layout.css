@@ -1,12 +1,32 @@
 @import 'tailwindcss';
 
 @import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/space-grotesk';
 @import '@fontsource-variable/epilogue';
 @import '@fontsource-variable/geist-mono';
 @import '@fontsource/cabin-condensed/400.css';
 @import '@fontsource/cabin-condensed/500.css';
 @import '@fontsource/cabin-condensed/600.css';
 @import '@fontsource/cabin-condensed/700.css';
+
+/* Oddval — the heading face, self-hosted. Only one weight (SemiBold) is
+   available, so the @font-face claims the whole 400–700 range, letting the
+   browser use the real glyphs across heading weights instead of faux-bolding.
+   Falls back to Space Grotesk while loading / if absent. */
+@font-face {
+	font-family: 'Oddval';
+	src: url('/fonts/Oddval-SemiBold.woff') format('woff');
+	font-weight: 400 700;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Oddval';
+	src: url('/fonts/Oddval-SemiBoldItalic.woff') format('woff');
+	font-weight: 400 700;
+	font-style: italic;
+	font-display: swap;
+}
 
 /* Geist Pixel (self-hosted from the `geist` package) — used for the notes
    "journey" game UI. Square variant = classic blocky arcade look. */
@@ -55,8 +75,8 @@
    `inline` makes the utilities reference the live var rather than copying it. */
 @theme inline {
 	--font-sans: 'Cabin Condensed', 'Epilogue Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-display: 'Oddval', 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-serif: 'Oddval', 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Oddval', 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-serif: 'Oddval', 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 	--font-pixel: 'Geist Pixel', 'Geist Mono Variable', ui-monospace, monospace;
 
@@ -81,7 +101,9 @@ html {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
-	font-feature-settings: 'kern' 1, 'liga' 1;
+	font-feature-settings:
+		'kern' 1,
+		'liga' 1;
 }
 @media (min-width: 480px) {
 	html {
@@ -101,7 +123,9 @@ html {
 
 body {
 	min-height: 100dvh;
-	font-feature-settings: 'kern' 1, 'liga' 1;
+	font-feature-settings:
+		'kern' 1,
+		'liga' 1;
 }
 
 /* tighter, balanced display headings everywhere */

@@ -1,10 +1,10 @@
 ---
-title: "Client-Server Architecture"
-subtitle: "Build a real HTTP server that handles JSON API requests with proper routing, parsing, and error handling."
+title: 'Client-Server Architecture'
+subtitle: 'Build a real HTTP server that handles JSON API requests with proper routing, parsing, and error handling.'
 chapter: 1
-level: "beginner"
-readingTime: "15 min"
-topics: ["HTTP", "request routing", "JSON", "error handling"]
+level: 'beginner'
+readingTime: '15 min'
+topics: ['HTTP', 'request routing', 'JSON', 'error handling']
 ---
 
 <script>
@@ -20,11 +20,9 @@ Every web application you've ever used follows this pattern: a **client** (brows
 Think of it like a restaurant. The customer (client) places an order (request) with the waiter (HTTP protocol), who takes it to the kitchen (server). The kitchen processes the order and sends back the food (response).
 
 <Mermaid
-	title="Client-Server Request Flow"
-	code={`
-graph LR
-  C["Browser<br/>Client"] --> H["HTTP<br/>Protocol"] --> S["API Server<br/>Process & Respond"] --> D["Database<br/>Storage"]
-`}
+title="Client-Server Request Flow"
+code={`graph LR
+  C["Browser<br/>Client"] --> H["HTTP<br/>Protocol"] --> S["API Server<br/>Process & Respond"] --> D["Database<br/>Storage"]`}
 />
 
 ## Real-World Analogy
@@ -47,20 +45,20 @@ Here's a complete HTTP server with JSON API routing, request validation, structu
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
+import http from 'node:http';
 
 // --- Types ---
 interface Todo {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: string;
+	id: string;
+	title: string;
+	completed: boolean;
+	createdAt: string;
 }
 
 interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  status: number;
+	data?: T;
+	error?: string;
+	status: number;
 }
 
 // --- In-memory store (replace with DB in production) ---
@@ -68,187 +66,171 @@ const todos = new Map<string, Todo>();
 let nextId = 1;
 
 // --- Helpers ---
-function jsonResponse<T>(
-  res: http.ServerResponse,
-  statusCode: number,
-  body: ApiResponse<T>
-): void {
-  res.writeHead(statusCode, {
-    "Content-Type": "application/json",
-    "X-Request-Id": crypto.randomUUID(),
-  });
-  res.end(JSON.stringify(body));
+function jsonResponse<T>(res: http.ServerResponse, statusCode: number, body: ApiResponse<T>): void {
+	res.writeHead(statusCode, {
+		'Content-Type': 'application/json',
+		'X-Request-Id': crypto.randomUUID()
+	});
+	res.end(JSON.stringify(body));
 }
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    const MAX_BODY = 1024 * 1024; // 1MB limit
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		let size = 0;
+		const MAX_BODY = 1024 * 1024; // 1MB limit
 
-    req.on("data", (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > MAX_BODY) {
-        reject(new Error("Request body too large"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
+		req.on('data', (chunk: Buffer) => {
+			size += chunk.length;
+			if (size > MAX_BODY) {
+				reject(new Error('Request body too large'));
+				req.destroy();
+				return;
+			}
+			chunks.push(chunk);
+		});
 
-    req.on("end", () => {
-      try {
-        const raw = Buffer.concat(chunks).toString("utf-8");
-        resolve(raw ? JSON.parse(raw) : null);
-      } catch {
-        reject(new Error("Invalid JSON"));
-      }
-    });
+		req.on('end', () => {
+			try {
+				const raw = Buffer.concat(chunks).toString('utf-8');
+				resolve(raw ? JSON.parse(raw) : null);
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
 
-    req.on("error", reject);
-  });
+		req.on('error', reject);
+	});
 }
 
 // --- Route handlers ---
-function handleListTodos(
-  _req: http.IncomingMessage,
-  res: http.ServerResponse
-): void {
-  const items = Array.from(todos.values());
-  jsonResponse(res, 200, { data: items, status: 200 });
+function handleListTodos(_req: http.IncomingMessage, res: http.ServerResponse): void {
+	const items = Array.from(todos.values());
+	jsonResponse(res, 200, { data: items, status: 200 });
 }
 
-function handleGetTodo(
-  res: http.ServerResponse,
-  id: string
-): void {
-  const todo = todos.get(id);
-  if (!todo) {
-    jsonResponse(res, 404, { error: "Todo not found", status: 404 });
-    return;
-  }
-  jsonResponse(res, 200, { data: todo, status: 200 });
+function handleGetTodo(res: http.ServerResponse, id: string): void {
+	const todo = todos.get(id);
+	if (!todo) {
+		jsonResponse(res, 404, { error: 'Todo not found', status: 404 });
+		return;
+	}
+	jsonResponse(res, 200, { data: todo, status: 200 });
 }
 
 async function handleCreateTodo(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
+	req: http.IncomingMessage,
+	res: http.ServerResponse
 ): Promise<void> {
-  const body = (await parseBody(req)) as { title?: string } | null;
+	const body = (await parseBody(req)) as { title?: string } | null;
 
-  if (!body?.title || typeof body.title !== "string" || body.title.trim().length === 0) {
-    jsonResponse(res, 400, {
-      error: "title is required and must be a non-empty string",
-      status: 400,
-    });
-    return;
-  }
+	if (!body?.title || typeof body.title !== 'string' || body.title.trim().length === 0) {
+		jsonResponse(res, 400, {
+			error: 'title is required and must be a non-empty string',
+			status: 400
+		});
+		return;
+	}
 
-  const todo: Todo = {
-    id: String(nextId++),
-    title: body.title.trim(),
-    completed: false,
-    createdAt: new Date().toISOString(),
-  };
+	const todo: Todo = {
+		id: String(nextId++),
+		title: body.title.trim(),
+		completed: false,
+		createdAt: new Date().toISOString()
+	};
 
-  todos.set(todo.id, todo);
-  jsonResponse(res, 201, { data: todo, status: 201 });
+	todos.set(todo.id, todo);
+	jsonResponse(res, 201, { data: todo, status: 201 });
 }
 
 async function handleUpdateTodo(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  id: string
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	id: string
 ): Promise<void> {
-  const existing = todos.get(id);
-  if (!existing) {
-    jsonResponse(res, 404, { error: "Todo not found", status: 404 });
-    return;
-  }
+	const existing = todos.get(id);
+	if (!existing) {
+		jsonResponse(res, 404, { error: 'Todo not found', status: 404 });
+		return;
+	}
 
-  const body = (await parseBody(req)) as {
-    title?: string;
-    completed?: boolean;
-  } | null;
+	const body = (await parseBody(req)) as {
+		title?: string;
+		completed?: boolean;
+	} | null;
 
-  if (body?.title !== undefined) existing.title = body.title.trim();
-  if (body?.completed !== undefined) existing.completed = body.completed;
+	if (body?.title !== undefined) existing.title = body.title.trim();
+	if (body?.completed !== undefined) existing.completed = body.completed;
 
-  jsonResponse(res, 200, { data: existing, status: 200 });
+	jsonResponse(res, 200, { data: existing, status: 200 });
 }
 
-function handleDeleteTodo(
-  res: http.ServerResponse,
-  id: string
-): void {
-  if (!todos.delete(id)) {
-    jsonResponse(res, 404, { error: "Todo not found", status: 404 });
-    return;
-  }
-  jsonResponse(res, 204, { status: 204 });
+function handleDeleteTodo(res: http.ServerResponse, id: string): void {
+	if (!todos.delete(id)) {
+		jsonResponse(res, 404, { error: 'Todo not found', status: 404 });
+		return;
+	}
+	jsonResponse(res, 204, { status: 204 });
 }
 
 // --- Router ---
-async function router(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const path = url.pathname;
-  const method = req.method || "GET";
+async function router(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const path = url.pathname;
+	const method = req.method || 'GET';
 
-  // Simple pattern matching
-  const todoMatch = path.match(/^\/api\/todos\/([a-zA-Z0-9]+)$/);
+	// Simple pattern matching
+	const todoMatch = path.match(/^\/api\/todos\/([a-zA-Z0-9]+)$/);
 
-  try {
-    if (path === "/api/todos" && method === "GET") {
-      return handleListTodos(req, res);
-    }
-    if (path === "/api/todos" && method === "POST") {
-      return await handleCreateTodo(req, res);
-    }
-    if (todoMatch && method === "GET") {
-      return handleGetTodo(res, todoMatch[1]);
-    }
-    if (todoMatch && method === "PUT") {
-      return await handleUpdateTodo(req, res, todoMatch[1]);
-    }
-    if (todoMatch && method === "DELETE") {
-      return handleDeleteTodo(res, todoMatch[1]);
-    }
+	try {
+		if (path === '/api/todos' && method === 'GET') {
+			return handleListTodos(req, res);
+		}
+		if (path === '/api/todos' && method === 'POST') {
+			return await handleCreateTodo(req, res);
+		}
+		if (todoMatch && method === 'GET') {
+			return handleGetTodo(res, todoMatch[1]);
+		}
+		if (todoMatch && method === 'PUT') {
+			return await handleUpdateTodo(req, res, todoMatch[1]);
+		}
+		if (todoMatch && method === 'DELETE') {
+			return handleDeleteTodo(res, todoMatch[1]);
+		}
 
-    jsonResponse(res, 404, { error: "Not found", status: 404 });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error(`[ERROR] ${method} ${path}:`, err);
-    jsonResponse(res, 500, { error: message, status: 500 });
-  }
+		jsonResponse(res, 404, { error: 'Not found', status: 404 });
+	} catch (err) {
+		const message = err instanceof Error ? err.message : 'Internal server error';
+		console.error(`[ERROR] ${method} ${path}:`, err);
+		jsonResponse(res, 500, { error: message, status: 500 });
+	}
 }
 
 // --- Server with graceful shutdown ---
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const server = http.createServer(router);
 
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+	console.log(`Server listening on http://localhost:${PORT}`);
 });
 
 function shutdown(signal: string): void {
-  console.log(`\n${signal} received. Shutting down gracefully...`);
-  server.close(() => {
-    console.log("Server closed. Exiting.");
-    process.exit(0);
-  });
+	console.log(`\n${signal} received. Shutting down gracefully...`);
+	server.close(() => {
+		console.log('Server closed. Exiting.');
+		process.exit(0);
+	});
 
-  // Force exit after 10s
-  setTimeout(() => {
-    console.error("Forced shutdown after timeout");
-    process.exit(1);
-  }, 10_000);
+	// Force exit after 10s
+	setTimeout(() => {
+		console.error('Forced shutdown after timeout');
+		process.exit(1);
+	}, 10_000);
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 ```
 
 </div>
@@ -531,4 +513,3 @@ func main() {
 - When your traffic grows beyond what one server can handle, you'll add a load balancer in front (Chapter 5)
 
 </div>
-

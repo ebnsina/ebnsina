@@ -1,10 +1,10 @@
 ---
-title: "Failure Models & Time"
-subtitle: "How nodes fail, why a network partition is the failure that matters, and why clocks and timeouts cannot be trusted to tell slow from dead."
+title: 'Failure Models & Time'
+subtitle: 'How nodes fail, why a network partition is the failure that matters, and why clocks and timeouts cannot be trusted to tell slow from dead.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["failure", "clocks", "timeouts"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['failure', 'clocks', 'timeouts']
 ---
 
 <script>
@@ -29,11 +29,11 @@ The node is alive but drops some messages. A **send omission** loses an outgoing
 
 The node behaves arbitrarily: it may send wrong, inconsistent, or actively malicious messages, telling one peer it voted yes and another that it voted no. The name comes from the "Byzantine Generals Problem." This is the hardest model and matters when nodes can be compromised or are run by parties who may cheat — for example, in blockchains. Tolerating Byzantine faults requires more replicas and far more expensive protocols, so most internal systems assume only crash and omission failures.
 
-| Model | Node behavior | Difficulty | Typical use |
-| --- | --- | --- | --- |
-| Crash / fail-stop | Stops cleanly | Easiest | Internal services, most databases |
-| Omission | Drops messages | Moderate | Realistic networks |
-| Byzantine | Arbitrary or malicious | Hardest | Blockchains, untrusted parties |
+| Model             | Node behavior          | Difficulty | Typical use                       |
+| ----------------- | ---------------------- | ---------- | --------------------------------- |
+| Crash / fail-stop | Stops cleanly          | Easiest    | Internal services, most databases |
+| Omission          | Drops messages         | Moderate   | Realistic networks                |
+| Byzantine         | Arbitrary or malicious | Hardest    | Blockchains, untrusted parties    |
 
 <Callout type="info">
 
@@ -96,7 +96,7 @@ A sends request to B, starts a timer.
 A's timer fires. A sees the same thing in all three cases: nothing.
 ```
 
-This is not a limitation of any particular language or library. It is provable. In a model where messages can be arbitrarily delayed (an **asynchronous network**), there is no algorithm that can reliably tell a crashed node from a slow one. This result is the practical face of the famous **FLP impossibility**, which shows that consensus cannot be guaranteed in a fully asynchronous system with even one possible crash. Real systems escape it by assuming the network is *mostly* timely and using timeouts as a practical — but fallible — failure detector.
+This is not a limitation of any particular language or library. It is provable. In a model where messages can be arbitrarily delayed (an **asynchronous network**), there is no algorithm that can reliably tell a crashed node from a slow one. This result is the practical face of the famous **FLP impossibility**, which shows that consensus cannot be guaranteed in a fully asynchronous system with even one possible crash. Real systems escape it by assuming the network is _mostly_ timely and using timeouts as a practical — but fallible — failure detector.
 
 <Callout type="tip">
 

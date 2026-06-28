@@ -42,6 +42,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.5.0(jiti@2.7.0))
+      '@fontsource-variable/space-grotesk':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
@@ -215,6 +218,9 @@ packages:
 
   '@fontsource-variable/geist-mono@5.2.8':
     resolution: {integrity: sha512-KI5bj+hkkRiHttYHmccotUZ80ZuZyai+RwI1d7UId0clkx/jXxlo8qYK8j54WzmpBjtMoEMPyllV7faDcj+6RA==}
+
+  '@fontsource-variable/space-grotesk@5.2.10':
+    resolution: {integrity: sha512-yJQO/o35/hAP3CFnpdFTwQku2yzJOae2HIpBmqkOVoxhhXJaQP3g+b6Jrz7u+eI7A5ZdCIf88uMWpBJdFiGr5w==}
 
   '@fontsource/cabin-condensed@5.2.8':
     resolution: {integrity: sha512-o3OGP5ZOl+kZSVjLxSWuan3YWiFrhrAQbwJhbSO6G9u/0GKlNf/QuUGU7FaCCe+HtOxzNv1Cz818PNaNKdZ8hQ==}
@@ -2708,6 +2714,8 @@ snapshots:
   '@fontsource-variable/epilogue@5.2.8': {}
 
   '@fontsource-variable/geist-mono@5.2.8': {}
+
+  '@fontsource-variable/space-grotesk@5.2.10': {}
 
   '@fontsource/cabin-condensed@5.2.8': {}
 

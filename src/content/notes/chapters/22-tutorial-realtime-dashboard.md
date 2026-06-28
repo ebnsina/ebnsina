@@ -1,10 +1,10 @@
 ---
-title: "Tutorial: Build a Real-Time Analytics Dashboard"
-subtitle: "Step-by-step guide to building a real-time dashboard with event ingestion, time-series aggregation, WebSocket streaming, and live counters."
+title: 'Tutorial: Build a Real-Time Analytics Dashboard'
+subtitle: 'Step-by-step guide to building a real-time dashboard with event ingestion, time-series aggregation, WebSocket streaming, and live counters.'
 chapter: 22
-level: "intermediate"
-readingTime: "28 min"
-topics: ["tutorial", "real-time analytics", "time-series", "WebSocket", "event streaming"]
+level: 'intermediate'
+readingTime: '28 min'
+topics: ['tutorial', 'real-time analytics', 'time-series', 'WebSocket', 'event streaming']
 ---
 
 <script>
@@ -28,12 +28,10 @@ Like a stock exchange trading floor — real-time screens show live prices, volu
 By the end, you'll have a working system that can ingest 100K+ events per second, aggregate them into queryable time-series data, and push live updates to dashboard clients the instant new data arrives.
 
 <Mermaid
-	title="Real-Time Dashboard Architecture"
-	code={`
-graph TD
+title="Real-Time Dashboard Architecture"
+code={`graph TD
   E["Event SDK<br/>Track Events"] --> I["Ingestion API<br/>Validate & Buffer"] --> A["Aggregator<br/>Time Buckets"]
-  A --> T["Time-Series Store<br/>Minute/Hour/Day"] --> U["Active Users<br/>Sliding Window"] --> W["WebSocket Hub<br/>Live Stream"]
-`}
+  A --> T["Time-Series Store<br/>Minute/Hour/Day"] --> U["Active Users<br/>Sliding Window"] --> W["WebSocket Hub<br/>Live Stream"]`}
 />
 
 ## Step 1: Event Data Model
@@ -66,221 +64,230 @@ Finally, we need endpoints to query historical data. The API supports time range
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. EVENT DATA MODEL
 // ===========================================
 interface AnalyticsEvent {
-  name: string;
-  visitorId: string;
-  userId?: string;
-  properties: Record<string, string>;
-  timestamp: number;
-  url?: string;
-  userAgent?: string;
+	name: string;
+	visitorId: string;
+	userId?: string;
+	properties: Record<string, string>;
+	timestamp: number;
+	url?: string;
+	userAgent?: string;
 }
 
-type Granularity = "minute" | "hour" | "day";
+type Granularity = 'minute' | 'hour' | 'day';
 
 interface TimeBucket {
-  key: string; // "2024-01-15T10:30" for minute
-  timestamp: number;
-  granularity: Granularity;
-  totalEvents: number;
-  uniqueVisitors: Set<string>;
-  eventCounts: Map<string, number>;
+	key: string; // "2024-01-15T10:30" for minute
+	timestamp: number;
+	granularity: Granularity;
+	totalEvents: number;
+	uniqueVisitors: Set<string>;
+	eventCounts: Map<string, number>;
 }
 
 // ===========================================
 // 2. TIME-SERIES AGGREGATOR
 // ===========================================
 class TimeSeriesStore {
-  private minuteBuckets = new Map<string, TimeBucket>();
-  private hourBuckets = new Map<string, TimeBucket>();
-  private dayBuckets = new Map<string, TimeBucket>();
+	private minuteBuckets = new Map<string, TimeBucket>();
+	private hourBuckets = new Map<string, TimeBucket>();
+	private dayBuckets = new Map<string, TimeBucket>();
 
-  private getBucketKey(timestamp: number, granularity: Granularity): string {
-    const d = new Date(timestamp);
-    switch (granularity) {
-      case "minute":
-        return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}T${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
-      case "hour":
-        return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}T${String(d.getUTCHours()).padStart(2, "0")}`;
-      case "day":
-        return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-    }
-  }
+	private getBucketKey(timestamp: number, granularity: Granularity): string {
+		const d = new Date(timestamp);
+		switch (granularity) {
+			case 'minute':
+				return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}T${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+			case 'hour':
+				return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}T${String(d.getUTCHours()).padStart(2, '0')}`;
+			case 'day':
+				return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+		}
+	}
 
-  private getStore(g: Granularity): Map<string, TimeBucket> {
-    switch (g) {
-      case "minute": return this.minuteBuckets;
-      case "hour": return this.hourBuckets;
-      case "day": return this.dayBuckets;
-    }
-  }
+	private getStore(g: Granularity): Map<string, TimeBucket> {
+		switch (g) {
+			case 'minute':
+				return this.minuteBuckets;
+			case 'hour':
+				return this.hourBuckets;
+			case 'day':
+				return this.dayBuckets;
+		}
+	}
 
-  record(event: AnalyticsEvent): void {
-    for (const granularity of ["minute", "hour", "day"] as Granularity[]) {
-      const key = this.getBucketKey(event.timestamp, granularity);
-      const store = this.getStore(granularity);
+	record(event: AnalyticsEvent): void {
+		for (const granularity of ['minute', 'hour', 'day'] as Granularity[]) {
+			const key = this.getBucketKey(event.timestamp, granularity);
+			const store = this.getStore(granularity);
 
-      let bucket = store.get(key);
-      if (!bucket) {
-        bucket = {
-          key, timestamp: event.timestamp, granularity,
-          totalEvents: 0, uniqueVisitors: new Set(), eventCounts: new Map(),
-        };
-        store.set(key, bucket);
-      }
+			let bucket = store.get(key);
+			if (!bucket) {
+				bucket = {
+					key,
+					timestamp: event.timestamp,
+					granularity,
+					totalEvents: 0,
+					uniqueVisitors: new Set(),
+					eventCounts: new Map()
+				};
+				store.set(key, bucket);
+			}
 
-      bucket.totalEvents++;
-      bucket.uniqueVisitors.add(event.visitorId);
-      bucket.eventCounts.set(event.name, (bucket.eventCounts.get(event.name) || 0) + 1);
-    }
-  }
+			bucket.totalEvents++;
+			bucket.uniqueVisitors.add(event.visitorId);
+			bucket.eventCounts.set(event.name, (bucket.eventCounts.get(event.name) || 0) + 1);
+		}
+	}
 
-  query(from: number, to: number, granularity: Granularity): object[] {
-    const store = this.getStore(granularity);
-    const results: object[] = [];
+	query(from: number, to: number, granularity: Granularity): object[] {
+		const store = this.getStore(granularity);
+		const results: object[] = [];
 
-    for (const [key, bucket] of store) {
-      const bucketTime = new Date(key).getTime();
-      if (bucketTime >= from && bucketTime <= to) {
-        results.push({
-          key: bucket.key,
-          totalEvents: bucket.totalEvents,
-          uniqueVisitors: bucket.uniqueVisitors.size,
-          eventCounts: Object.fromEntries(bucket.eventCounts),
-        });
-      }
-    }
+		for (const [key, bucket] of store) {
+			const bucketTime = new Date(key).getTime();
+			if (bucketTime >= from && bucketTime <= to) {
+				results.push({
+					key: bucket.key,
+					totalEvents: bucket.totalEvents,
+					uniqueVisitors: bucket.uniqueVisitors.size,
+					eventCounts: Object.fromEntries(bucket.eventCounts)
+				});
+			}
+		}
 
-    return results.sort((a: any, b: any) => a.key.localeCompare(b.key));
-  }
+		return results.sort((a: any, b: any) => a.key.localeCompare(b.key));
+	}
 
-  getCurrentMinute(): object | null {
-    const key = this.getBucketKey(Date.now(), "minute");
-    const bucket = this.minuteBuckets.get(key);
-    if (!bucket) return null;
-    return {
-      key: bucket.key,
-      totalEvents: bucket.totalEvents,
-      uniqueVisitors: bucket.uniqueVisitors.size,
-      eventCounts: Object.fromEntries(bucket.eventCounts),
-    };
-  }
+	getCurrentMinute(): object | null {
+		const key = this.getBucketKey(Date.now(), 'minute');
+		const bucket = this.minuteBuckets.get(key);
+		if (!bucket) return null;
+		return {
+			key: bucket.key,
+			totalEvents: bucket.totalEvents,
+			uniqueVisitors: bucket.uniqueVisitors.size,
+			eventCounts: Object.fromEntries(bucket.eventCounts)
+		};
+	}
 }
 
 // ===========================================
 // 3. ACTIVE USER TRACKER (Sliding Window)
 // ===========================================
 class ActiveUserTracker {
-  private visitors = new Map<string, number>(); // visitorId -> lastSeen timestamp
-  private readonly windowMs: number;
+	private visitors = new Map<string, number>(); // visitorId -> lastSeen timestamp
+	private readonly windowMs: number;
 
-  constructor(windowMinutes = 5) {
-    this.windowMs = windowMinutes * 60 * 1000;
-    // Cleanup expired entries every 30 seconds
-    setInterval(() => this.cleanup(), 30000);
-  }
+	constructor(windowMinutes = 5) {
+		this.windowMs = windowMinutes * 60 * 1000;
+		// Cleanup expired entries every 30 seconds
+		setInterval(() => this.cleanup(), 30000);
+	}
 
-  track(visitorId: string): void {
-    this.visitors.set(visitorId, Date.now());
-  }
+	track(visitorId: string): void {
+		this.visitors.set(visitorId, Date.now());
+	}
 
-  getActiveCount(): number {
-    const cutoff = Date.now() - this.windowMs;
-    let count = 0;
-    for (const lastSeen of this.visitors.values()) {
-      if (lastSeen > cutoff) count++;
-    }
-    return count;
-  }
+	getActiveCount(): number {
+		const cutoff = Date.now() - this.windowMs;
+		let count = 0;
+		for (const lastSeen of this.visitors.values()) {
+			if (lastSeen > cutoff) count++;
+		}
+		return count;
+	}
 
-  private cleanup(): void {
-    const cutoff = Date.now() - this.windowMs;
-    for (const [id, lastSeen] of this.visitors) {
-      if (lastSeen <= cutoff) this.visitors.delete(id);
-    }
-  }
+	private cleanup(): void {
+		const cutoff = Date.now() - this.windowMs;
+		for (const [id, lastSeen] of this.visitors) {
+			if (lastSeen <= cutoff) this.visitors.delete(id);
+		}
+	}
 }
 
 // ===========================================
 // 4. EVENT BUFFER (Batch Processing)
 // ===========================================
 class EventBuffer {
-  private buffer: AnalyticsEvent[] = [];
-  private timeSeries: TimeSeriesStore;
-  private activeUsers: ActiveUserTracker;
-  private wsHub: WebSocketHub;
-  private flushInterval: ReturnType<typeof setInterval>;
+	private buffer: AnalyticsEvent[] = [];
+	private timeSeries: TimeSeriesStore;
+	private activeUsers: ActiveUserTracker;
+	private wsHub: WebSocketHub;
+	private flushInterval: ReturnType<typeof setInterval>;
 
-  constructor(ts: TimeSeriesStore, au: ActiveUserTracker, ws: WebSocketHub) {
-    this.timeSeries = ts;
-    this.activeUsers = au;
-    this.wsHub = ws;
-    this.flushInterval = setInterval(() => this.flush(), 1000);
-  }
+	constructor(ts: TimeSeriesStore, au: ActiveUserTracker, ws: WebSocketHub) {
+		this.timeSeries = ts;
+		this.activeUsers = au;
+		this.wsHub = ws;
+		this.flushInterval = setInterval(() => this.flush(), 1000);
+	}
 
-  add(event: AnalyticsEvent): void {
-    this.buffer.push(event);
-  }
+	add(event: AnalyticsEvent): void {
+		this.buffer.push(event);
+	}
 
-  private flush(): void {
-    if (this.buffer.length === 0) return;
-    const batch = this.buffer.splice(0);
+	private flush(): void {
+		if (this.buffer.length === 0) return;
+		const batch = this.buffer.splice(0);
 
-    for (const event of batch) {
-      this.timeSeries.record(event);
-      this.activeUsers.track(event.visitorId);
-    }
+		for (const event of batch) {
+			this.timeSeries.record(event);
+			this.activeUsers.track(event.visitorId);
+		}
 
-    // Broadcast current stats to dashboard clients
-    const current = this.timeSeries.getCurrentMinute();
-    const activeCount = this.activeUsers.getActiveCount();
-    this.wsHub.broadcast({
-      type: "stats_update",
-      data: { currentMinute: current, activeUsers: activeCount, batchSize: batch.length },
-    });
+		// Broadcast current stats to dashboard clients
+		const current = this.timeSeries.getCurrentMinute();
+		const activeCount = this.activeUsers.getActiveCount();
+		this.wsHub.broadcast({
+			type: 'stats_update',
+			data: { currentMinute: current, activeUsers: activeCount, batchSize: batch.length }
+		});
 
-    console.log(`[FLUSH] Processed ${batch.length} events | Active users: ${activeCount}`);
-  }
+		console.log(`[FLUSH] Processed ${batch.length} events | Active users: ${activeCount}`);
+	}
 
-  stop(): void { clearInterval(this.flushInterval); }
+	stop(): void {
+		clearInterval(this.flushInterval);
+	}
 }
 
 // ===========================================
 // 5. WEBSOCKET HUB (Simulated)
 // ===========================================
 class WebSocketHub {
-  private clients = new Set<string>();
-  private messages: object[] = [];
+	private clients = new Set<string>();
+	private messages: object[] = [];
 
-  connect(clientId: string): void {
-    this.clients.add(clientId);
-    console.log(`[WS] Client ${clientId} connected (${this.clients.size} total)`);
-  }
+	connect(clientId: string): void {
+		this.clients.add(clientId);
+		console.log(`[WS] Client ${clientId} connected (${this.clients.size} total)`);
+	}
 
-  disconnect(clientId: string): void {
-    this.clients.delete(clientId);
-  }
+	disconnect(clientId: string): void {
+		this.clients.delete(clientId);
+	}
 
-  broadcast(message: object): void {
-    this.messages.push(message);
-    // In production: push to all WebSocket connections
-    // For demo: store for polling via /ws/dashboard endpoint
-    if (this.messages.length > 100) this.messages.shift();
-  }
+	broadcast(message: object): void {
+		this.messages.push(message);
+		// In production: push to all WebSocket connections
+		// For demo: store for polling via /ws/dashboard endpoint
+		if (this.messages.length > 100) this.messages.shift();
+	}
 
-  getRecent(since = 0): object[] {
-    return this.messages.slice(since);
-  }
+	getRecent(since = 0): object[] {
+		return this.messages.slice(since);
+	}
 
-  getClientCount(): number {
-    return this.clients.size;
-  }
+	getClientCount(): number {
+		return this.clients.size;
+	}
 }
 
 // ===========================================
@@ -292,91 +299,113 @@ const wsHub = new WebSocketHub();
 const eventBuffer = new EventBuffer(timeSeries, activeUsers, wsHub);
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/events — Single event ingestion
-    if (url.pathname === "/api/events" && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!body.name || !body.visitorId) {
-        json(res, 400, { error: "name and visitorId required" }); return;
-      }
-      const event: AnalyticsEvent = {
-        name: body.name, visitorId: body.visitorId,
-        userId: body.userId, properties: body.properties || {},
-        timestamp: body.timestamp || Date.now(),
-        url: body.url, userAgent: body.userAgent,
-      };
-      eventBuffer.add(event);
-      json(res, 202, { status: "accepted" }); return;
-    }
+	try {
+		// POST /api/events — Single event ingestion
+		if (url.pathname === '/api/events' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!body.name || !body.visitorId) {
+				json(res, 400, { error: 'name and visitorId required' });
+				return;
+			}
+			const event: AnalyticsEvent = {
+				name: body.name,
+				visitorId: body.visitorId,
+				userId: body.userId,
+				properties: body.properties || {},
+				timestamp: body.timestamp || Date.now(),
+				url: body.url,
+				userAgent: body.userAgent
+			};
+			eventBuffer.add(event);
+			json(res, 202, { status: 'accepted' });
+			return;
+		}
 
-    // POST /api/events/batch — Batch event ingestion
-    if (url.pathname === "/api/events/batch" && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!Array.isArray(body.events)) {
-        json(res, 400, { error: "events array required" }); return;
-      }
-      for (const e of body.events) {
-        if (e.name && e.visitorId) {
-          eventBuffer.add({
-            name: e.name, visitorId: e.visitorId,
-            userId: e.userId, properties: e.properties || {},
-            timestamp: e.timestamp || Date.now(),
-            url: e.url, userAgent: e.userAgent,
-          });
-        }
-      }
-      json(res, 202, { accepted: body.events.length }); return;
-    }
+		// POST /api/events/batch — Batch event ingestion
+		if (url.pathname === '/api/events/batch' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!Array.isArray(body.events)) {
+				json(res, 400, { error: 'events array required' });
+				return;
+			}
+			for (const e of body.events) {
+				if (e.name && e.visitorId) {
+					eventBuffer.add({
+						name: e.name,
+						visitorId: e.visitorId,
+						userId: e.userId,
+						properties: e.properties || {},
+						timestamp: e.timestamp || Date.now(),
+						url: e.url,
+						userAgent: e.userAgent
+					});
+				}
+			}
+			json(res, 202, { accepted: body.events.length });
+			return;
+		}
 
-    // GET /api/metrics — Query time-series data
-    if (url.pathname === "/api/metrics" && method === "GET") {
-      const from = parseInt(url.searchParams.get("from") || String(Date.now() - 3600000));
-      const to = parseInt(url.searchParams.get("to") || String(Date.now()));
-      const granularity = (url.searchParams.get("granularity") || "minute") as Granularity;
-      const data = timeSeries.query(from, to, granularity);
-      json(res, 200, { data, granularity, from, to }); return;
-    }
+		// GET /api/metrics — Query time-series data
+		if (url.pathname === '/api/metrics' && method === 'GET') {
+			const from = parseInt(url.searchParams.get('from') || String(Date.now() - 3600000));
+			const to = parseInt(url.searchParams.get('to') || String(Date.now()));
+			const granularity = (url.searchParams.get('granularity') || 'minute') as Granularity;
+			const data = timeSeries.query(from, to, granularity);
+			json(res, 200, { data, granularity, from, to });
+			return;
+		}
 
-    // GET /api/active-users
-    if (url.pathname === "/api/active-users" && method === "GET") {
-      json(res, 200, { activeUsers: activeUsers.getActiveCount() }); return;
-    }
+		// GET /api/active-users
+		if (url.pathname === '/api/active-users' && method === 'GET') {
+			json(res, 200, { activeUsers: activeUsers.getActiveCount() });
+			return;
+		}
 
-    // GET /api/dashboard/stream — Simulated WebSocket (polling fallback)
-    if (url.pathname === "/api/dashboard/stream" && method === "GET") {
-      const since = parseInt(url.searchParams.get("since") || "0");
-      json(res, 200, { messages: wsHub.getRecent(since), clients: wsHub.getClientCount() }); return;
-    }
+		// GET /api/dashboard/stream — Simulated WebSocket (polling fallback)
+		if (url.pathname === '/api/dashboard/stream' && method === 'GET') {
+			const since = parseInt(url.searchParams.get('since') || '0');
+			json(res, 200, { messages: wsHub.getRecent(since), clients: wsHub.getClientCount() });
+			return;
+		}
 
-    if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-    json(res, 404, { error: "Not found" });
-  } catch (err: any) {
-    json(res, 500, { error: err.message || "Internal server error" });
-  }
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
+		json(res, 404, { error: 'Not found' });
+	} catch (err: any) {
+		json(res, 500, { error: err.message || 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`Analytics Dashboard on http://localhost:${PORT}`));
-process.on("SIGTERM", () => { eventBuffer.stop(); server.close(); });
+process.on('SIGTERM', () => {
+	eventBuffer.stop();
+	server.close();
+});
 ```
 
 </div>
@@ -737,4 +766,3 @@ A dashboard polling every second generates 60 requests/minute per client. With 1
 - This architecture handles 100K+ events/second with sub-second dashboard updates
 
 </div>
-

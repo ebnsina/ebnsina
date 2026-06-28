@@ -1,10 +1,10 @@
 ---
-title: "Terraform Fundamentals"
-subtitle: "Resources, state, providers, modules, and the plan/apply workflow that makes cloud provisioning reproducible."
+title: 'Terraform Fundamentals'
+subtitle: 'Resources, state, providers, modules, and the plan/apply workflow that makes cloud provisioning reproducible.'
 chapter: 3
-level: "intermediate"
-readingTime: "13 min"
-topics: ["Terraform", "HCL", "state", "providers", "modules", "plan", "apply"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['Terraform', 'HCL', 'state', 'providers', 'modules', 'plan', 'apply']
 ---
 
 <script>
@@ -219,6 +219,7 @@ terraform show
 State is Terraform's record of what it has created. It maps configuration to real resources.
 
 **Remote state is required for teams:**
+
 ```bash
 # Configure S3 backend (in terraform.tf)
 # Create the bucket first (bootstrap problem — create manually or with a separate config)
@@ -239,6 +240,7 @@ aws dynamodb create-table \
 ```
 
 **State commands:**
+
 ```bash
 # List resources in state
 terraform state list
@@ -305,6 +307,7 @@ output "web_ip" {
 ```
 
 **Public registry modules** (use carefully — audit before trusting):
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -368,4 +371,3 @@ Alternative: separate state files per environment with different `tfvars`. Both 
 ```
 
 Never auto-apply to production without a human reviewing the plan. Auto-apply to staging is fine for fast feedback.
-

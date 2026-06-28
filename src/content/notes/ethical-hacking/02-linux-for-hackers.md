@@ -1,10 +1,10 @@
 ---
-title: "Linux for Hackers"
-subtitle: "Terminal mastery, file permissions, bash scripting, and the tools that ship on Kali Linux."
+title: 'Linux for Hackers'
+subtitle: 'Terminal mastery, file permissions, bash scripting, and the tools that ship on Kali Linux.'
 chapter: 2
-level: "beginner"
-readingTime: "10 min"
-topics: ["linux", "bash", "kali", "terminal", "file permissions", "processes"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['linux', 'bash', 'kali', 'terminal', 'file permissions', 'processes']
 ---
 
 <script>
@@ -300,4 +300,3 @@ cat /etc/crontab
 ls /etc/cron.d/
 crontab -l
 ```
-

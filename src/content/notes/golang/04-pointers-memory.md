@@ -1,10 +1,10 @@
 ---
-title: "Pointers & Memory"
-subtitle: "Pointers let you share data without copying it — understand them once and never be confused by & and * again."
+title: 'Pointers & Memory'
+subtitle: 'Pointers let you share data without copying it — understand them once and never be confused by & and * again.'
 chapter: 4
-level: "beginner"
-readingTime: "16 min"
-topics: ["pointers", "memory", "stack", "heap", "nil", "pass by value"]
+level: 'beginner'
+readingTime: '16 min'
+topics: ['pointers', 'memory', 'stack', 'heap', 'nil', 'pass by value']
 ---
 
 <script>
@@ -58,10 +58,10 @@ fmt.Println(original)       // "Omar" — it changed!
 
 ## The Two Operators
 
-| Operator | Name | What It Does | Example |
-|----------|------|-------------|---------|
-| `&` | Address-of | Gets the memory address of a variable | `ptr := &name` |
-| `*` | Dereference | Follows a pointer to get/set the value | `value := *ptr` |
+| Operator | Name        | What It Does                           | Example         |
+| -------- | ----------- | -------------------------------------- | --------------- |
+| `&`      | Address-of  | Gets the memory address of a variable  | `ptr := &name`  |
+| `*`      | Dereference | Follows a pointer to get/set the value | `value := *ptr` |
 
 ```go
 x := 42
@@ -197,6 +197,7 @@ go build -gcflags="-m" ./...
 ```
 
 **Rules of thumb:**
+
 - If you return a pointer to a local variable, it escapes to heap
 - If you store a pointer in a long-lived struct, it escapes
 - If a variable is too large for the stack, it goes to heap
@@ -264,13 +265,13 @@ func processReport(r *Report) { ... }
 
 ## When to Use Pointers vs Values
 
-| Use a pointer `*T` | Use a value `T` |
-|---|---|
-| Need to modify the original | Read-only access |
-| Struct is large (>64 bytes) | Small structs (Point, Color, Time) |
-| Representing "optional" (nil = absent) | Value is always required |
-| Sharing data between goroutines | Independent copies are fine |
-| Satisfying an interface with pointer receivers | Immutable data types |
+| Use a pointer `*T`                             | Use a value `T`                    |
+| ---------------------------------------------- | ---------------------------------- |
+| Need to modify the original                    | Read-only access                   |
+| Struct is large (>64 bytes)                    | Small structs (Point, Color, Time) |
+| Representing "optional" (nil = absent)         | Value is always required           |
+| Sharing data between goroutines                | Independent copies are fine        |
+| Satisfying an interface with pointer receivers | Immutable data types               |
 
 <Callout type="tip">
 
@@ -287,4 +288,3 @@ func processReport(r *Report) { ... }
 5. **Stack is fast, heap needs GC** — returning pointers to locals moves them to the heap
 6. **Use pointers for optionality** — `*float64` where nil means "not specified"
 7. **Use pointers for large structs** — avoids copying kilobytes of data per function call
-

@@ -8,7 +8,12 @@
 	const meta = $derived(data.meta);
 </script>
 
-<Seo title={meta.title} description={meta.description} type="article" image={meta.cover ?? undefined} />
+<Seo
+	title={meta.title}
+	description={meta.description}
+	type="article"
+	image={meta.cover ?? undefined}
+/>
 
 <ArticleLayout>
 	{#snippet header()}

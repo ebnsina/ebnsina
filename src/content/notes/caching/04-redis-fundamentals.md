@@ -1,10 +1,10 @@
 ---
-title: "Redis Fundamentals"
-subtitle: "Data structures, core commands, persistence modes — everything you need to run Redis confidently in production."
+title: 'Redis Fundamentals'
+subtitle: 'Data structures, core commands, persistence modes — everything you need to run Redis confidently in production.'
 chapter: 4
-level: "intermediate"
-readingTime: "18 min"
-topics: ["Redis", "data structures", "persistence", "commands", "pub/sub"]
+level: 'intermediate'
+readingTime: '18 min'
+topics: ['Redis', 'data structures', 'persistence', 'commands', 'pub/sub']
 ---
 
 <script>
@@ -68,9 +68,9 @@ HDEL user:1 age
 
 ```typescript
 await redis.hSet('user:1', {
-  name: 'Fatima',
-  email: 'fatima@example.com',
-  age: '30',
+	name: 'Fatima',
+	email: 'fatima@example.com',
+	age: '30'
 });
 
 const user = await redis.hGetAll('user:1');
@@ -96,14 +96,14 @@ BLPOP jobs 30
 ```typescript
 // Simple job queue
 async function enqueue(job: Job): Promise<void> {
-  await redis.rPush('jobs', JSON.stringify(job));
+	await redis.rPush('jobs', JSON.stringify(job));
 }
 
 async function dequeue(): Promise<Job | null> {
-  // Block for up to 5 seconds waiting for a job
-  const result = await redis.blPop('jobs', 5);
-  if (!result) return null;
-  return JSON.parse(result.element);
+	// Block for up to 5 seconds waiting for a job
+	const result = await redis.blPop('jobs', 5);
+	if (!result) return null;
+	return JSON.parse(result.element);
 }
 ```
 
@@ -138,19 +138,19 @@ ZINCRBY leaderboard 50 "fatima"      # fatima score → 1550
 ```typescript
 // Rate limiter using sorted set
 async function isRateLimited(userId: string, limit: number, windowMs: number): Promise<boolean> {
-  const now = Date.now();
-  const windowStart = now - windowMs;
-  const key = `ratelimit:${userId}`;
+	const now = Date.now();
+	const windowStart = now - windowMs;
+	const key = `ratelimit:${userId}`;
 
-  await redis
-    .multi()
-    .zRemRangeByScore(key, '-inf', windowStart) // remove old entries
-    .zAdd(key, { score: now, value: `${now}` }) // add current request
-    .expire(key, Math.ceil(windowMs / 1000))    // auto-cleanup
-    .exec();
+	await redis
+		.multi()
+		.zRemRangeByScore(key, '-inf', windowStart) // remove old entries
+		.zAdd(key, { score: now, value: `${now}` }) // add current request
+		.expire(key, Math.ceil(windowMs / 1000)) // auto-cleanup
+		.exec();
 
-  const count = await redis.zCard(key);
-  return count > limit;
+	const count = await redis.zCard(key);
+	return count > limit;
 }
 ```
 
@@ -178,10 +178,10 @@ PERSIST session:abc                # remove TTL, make permanent
 
 ```typescript
 async function transferPoints(from: string, to: string, points: number): Promise<void> {
-  const multi = redis.multi();
-  multi.decrBy(`points:${from}`, points);
-  multi.incrBy(`points:${to}`, points);
-  await multi.exec();
+	const multi = redis.multi();
+	multi.decrBy(`points:${from}`, points);
+	multi.incrBy(`points:${to}`, points);
+	await multi.exec();
 }
 ```
 
@@ -189,20 +189,17 @@ For conditional logic, use `WATCH`:
 
 ```typescript
 async function compareAndSwap(key: string, expected: string, next: string): Promise<boolean> {
-  await redis.watch(key);
+	await redis.watch(key);
 
-  const current = await redis.get(key);
-  if (current !== expected) {
-    await redis.unwatch();
-    return false;
-  }
+	const current = await redis.get(key);
+	if (current !== expected) {
+		await redis.unwatch();
+		return false;
+	}
 
-  const result = await redis
-    .multi()
-    .set(key, next)
-    .exec();
+	const result = await redis.multi().set(key, next).exec();
 
-  return result !== null; // null means WATCH key changed — transaction aborted
+	return result !== null; // null means WATCH key changed — transaction aborted
 }
 ```
 
@@ -220,8 +217,8 @@ await publisher.publish('notifications', JSON.stringify({ userId: '123', msg: 'H
 const subscriber = createClient();
 await subscriber.connect();
 await subscriber.subscribe('notifications', (message) => {
-  const data = JSON.parse(message);
-  console.log('Received:', data);
+	const data = JSON.parse(message);
+	console.log('Received:', data);
 });
 ```
 
@@ -255,12 +252,12 @@ appendfsync everysec   # fsync every second (good balance)
 
 **Which to use:**
 
-| | RDB | AOF |
-|--|-----|-----|
-| Recovery speed | Fast | Slow |
-| Data loss | Up to minutes | Up to 1 second |
-| File size | Small | Large |
-| Use case | Cache | Session store, queues |
+|                | RDB           | AOF                   |
+| -------------- | ------------- | --------------------- |
+| Recovery speed | Fast          | Slow                  |
+| Data loss      | Up to minutes | Up to 1 second        |
+| File size      | Small         | Large                 |
+| Use case       | Cache         | Session store, queues |
 
 For a pure cache, RDB is fine — losing a few minutes of cache is acceptable since it repopulates from the DB. For sessions or queues, use AOF or disable persistence entirely and accept losing state on restart.
 
@@ -307,4 +304,3 @@ Key metrics to watch:
 - `used_memory` vs `maxmemory` → headroom
 - `connected_clients` → connection pool health
 - `blocked_clients` → queue depth (BLPOP waits)
-

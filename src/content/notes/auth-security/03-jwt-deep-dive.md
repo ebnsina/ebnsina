@@ -1,10 +1,10 @@
 ---
-title: "JWT Deep Dive"
-subtitle: "Structure, signing algorithms, validation rules, and the common mistakes that make JWTs insecure."
+title: 'JWT Deep Dive'
+subtitle: 'Structure, signing algorithms, validation rules, and the common mistakes that make JWTs insecure.'
 chapter: 3
-level: "intermediate"
-readingTime: "12 min"
-topics: ["JWT", "RS256", "HS256", "JWKS", "token validation"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['JWT', 'RS256', 'HS256', 'JWKS', 'token validation']
 ---
 
 <script>
@@ -28,20 +28,22 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsInJvbGUiOiJhZG1pbiI
 ```
 
 **Header** — algorithm and token type:
+
 ```json
 { "alg": "RS256", "typ": "JWT" }
 ```
 
 **Payload** — claims (user data + metadata):
+
 ```json
 {
-  "sub": "user_123",        // subject — user ID
-  "iss": "https://auth.yourapp.com", // issuer
-  "aud": "api",             // audience
-  "iat": 1700000000,        // issued at (Unix timestamp)
-  "exp": 1700003600,        // expires at
-  "role": "admin",          // custom claim
-  "email": "user@example.com"
+	"sub": "user_123", // subject — user ID
+	"iss": "https://auth.yourapp.com", // issuer
+	"aud": "api", // audience
+	"iat": 1700000000, // issued at (Unix timestamp)
+	"exp": 1700003600, // expires at
+	"role": "admin", // custom claim
+	"email": "user@example.com"
 }
 ```
 
@@ -59,16 +61,16 @@ import jwt from 'jsonwebtoken';
 const SECRET = process.env.JWT_SECRET!; // same secret everywhere
 
 const token = jwt.sign({ sub: userId, role: 'user' }, SECRET, {
-  algorithm: 'HS256',
-  expiresIn: '1h',
-  issuer: 'https://auth.yourapp.com',
-  audience: 'api',
+	algorithm: 'HS256',
+	expiresIn: '1h',
+	issuer: 'https://auth.yourapp.com',
+	audience: 'api'
 });
 
 const payload = jwt.verify(token, SECRET, {
-  algorithms: ['HS256'],
-  issuer: 'https://auth.yourapp.com',
-  audience: 'api',
+	algorithms: ['HS256'],
+	issuer: 'https://auth.yourapp.com',
+	audience: 'api'
 });
 ```
 
@@ -84,27 +86,25 @@ import { SignJWT, jwtVerify, createRemoteJWKSet } from 'jose';
 const privateKey = createPrivateKey(process.env.JWT_PRIVATE_KEY!);
 
 async function issueToken(userId: string, role: string): Promise<string> {
-  return new SignJWT({ sub: userId, role })
-    .setProtectedHeader({ alg: 'RS256' })
-    .setIssuedAt()
-    .setIssuer('https://auth.yourapp.com')
-    .setAudience('api')
-    .setExpirationTime('1h')
-    .sign(privateKey);
+	return new SignJWT({ sub: userId, role })
+		.setProtectedHeader({ alg: 'RS256' })
+		.setIssuedAt()
+		.setIssuer('https://auth.yourapp.com')
+		.setAudience('api')
+		.setExpirationTime('1h')
+		.sign(privateKey);
 }
 
 // Any service — only needs public key (or JWKS URL)
-const JWKS = createRemoteJWKSet(
-  new URL('https://auth.yourapp.com/.well-known/jwks.json')
-);
+const JWKS = createRemoteJWKSet(new URL('https://auth.yourapp.com/.well-known/jwks.json'));
 
 async function verifyToken(token: string) {
-  const { payload } = await jwtVerify(token, JWKS, {
-    issuer: 'https://auth.yourapp.com',
-    audience: 'api',
-    algorithms: ['RS256'],
-  });
-  return payload;
+	const { payload } = await jwtVerify(token, JWKS, {
+		issuer: 'https://auth.yourapp.com',
+		audience: 'api',
+		algorithms: ['RS256']
+	});
+	return payload;
 }
 ```
 
@@ -113,7 +113,7 @@ async function verifyToken(token: string) {
 ```typescript
 // Generate a P-256 key pair
 const { privateKey, publicKey } = crypto.generateKeyPairSync('ec', {
-  namedCurve: 'P-256',
+	namedCurve: 'P-256'
 });
 ```
 
@@ -129,24 +129,28 @@ let currentKeyPair = await generateKeyPair('ES256', { extractable: true });
 let currentKeyId = 'key-2024-01';
 
 app.get('/.well-known/jwks.json', async (req, res) => {
-  const publicJwk = await exportJWK(currentKeyPair.publicKey);
+	const publicJwk = await exportJWK(currentKeyPair.publicKey);
 
-  res.json({
-    keys: [{
-      ...publicJwk,
-      kid: currentKeyId, // key ID — clients use this to pick the right key
-      use: 'sig',        // intended use: signature verification
-      alg: 'ES256',
-    }],
-  });
+	res.json({
+		keys: [
+			{
+				...publicJwk,
+				kid: currentKeyId, // key ID — clients use this to pick the right key
+				use: 'sig', // intended use: signature verification
+				alg: 'ES256'
+			}
+		]
+	});
 });
 
 // Sign tokens with kid in header so verifiers know which key to use
 async function sign(payload: Record<string, unknown>): Promise<string> {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'ES256', kid: currentKeyId })
-    // ...
-    .sign(currentKeyPair.privateKey);
+	return (
+		new SignJWT(payload)
+			.setProtectedHeader({ alg: 'ES256', kid: currentKeyId })
+			// ...
+			.sign(currentKeyPair.privateKey)
+	);
 }
 ```
 
@@ -158,31 +162,31 @@ Verifying a JWT signature is not enough. Validate all of these:
 
 ```typescript
 async function validateToken(token: string): Promise<TokenPayload> {
-  // 1. Verify signature against JWKS
-  const { payload } = await jwtVerify(token, JWKS, {
-    // 2. Check algorithm — NEVER allow 'none'
-    algorithms: ['ES256', 'RS256'],
+	// 1. Verify signature against JWKS
+	const { payload } = await jwtVerify(token, JWKS, {
+		// 2. Check algorithm — NEVER allow 'none'
+		algorithms: ['ES256', 'RS256'],
 
-    // 3. Verify issuer matches expected auth server
-    issuer: 'https://auth.yourapp.com',
+		// 3. Verify issuer matches expected auth server
+		issuer: 'https://auth.yourapp.com',
 
-    // 4. Verify audience matches this service
-    audience: 'api',
+		// 4. Verify audience matches this service
+		audience: 'api'
 
-    // 5. Expiry (exp) checked automatically by jwtVerify
-    // 6. Not-before (nbf) checked automatically by jwtVerify
-  });
+		// 5. Expiry (exp) checked automatically by jwtVerify
+		// 6. Not-before (nbf) checked automatically by jwtVerify
+	});
 
-  // 7. Check required claims exist
-  if (!payload.sub) throw new Error('Missing sub claim');
-  if (!payload.role) throw new Error('Missing role claim');
+	// 7. Check required claims exist
+	if (!payload.sub) throw new Error('Missing sub claim');
+	if (!payload.role) throw new Error('Missing role claim');
 
-  // 8. Optionally check token ID (jti) against a revocation list
-  if (payload.jti && await isRevoked(payload.jti as string)) {
-    throw new Error('Token revoked');
-  }
+	// 8. Optionally check token ID (jti) against a revocation list
+	if (payload.jti && (await isRevoked(payload.jti as string))) {
+		throw new Error('Token revoked');
+	}
 
-  return payload as TokenPayload;
+	return payload as TokenPayload;
 }
 ```
 
@@ -214,10 +218,10 @@ Fix: never allow both symmetric and asymmetric algorithms for the same use case.
 
 ```typescript
 // WRONG — accepts both
-algorithms: ['RS256', 'HS256']
+algorithms: ['RS256', 'HS256'];
 
 // RIGHT — one or the other
-algorithms: ['RS256']
+algorithms: ['RS256'];
 ```
 
 ## Token Lifetime and Refresh
@@ -227,35 +231,35 @@ Short-lived access tokens + long-lived refresh tokens:
 ```typescript
 // Issue both on login
 async function issueTokens(userId: string): Promise<{ accessToken: string; refreshToken: string }> {
-  const accessToken = await signAccessToken(userId, '15m');  // short-lived
-  const refreshToken = await signRefreshToken(userId, '30d'); // long-lived
+	const accessToken = await signAccessToken(userId, '15m'); // short-lived
+	const refreshToken = await signRefreshToken(userId, '30d'); // long-lived
 
-  // Store refresh token hash in DB for revocation
-  await db.refreshTokens.insert({
-    tokenHash: hashToken(refreshToken),
-    userId,
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-  });
+	// Store refresh token hash in DB for revocation
+	await db.refreshTokens.insert({
+		tokenHash: hashToken(refreshToken),
+		userId,
+		expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+	});
 
-  return { accessToken, refreshToken };
+	return { accessToken, refreshToken };
 }
 
 // Refresh endpoint
 app.post('/auth/refresh', async (req, res) => {
-  const { refreshToken } = req.body;
+	const { refreshToken } = req.body;
 
-  const tokenHash = hashToken(refreshToken);
-  const stored = await db.refreshTokens.findByHash(tokenHash);
+	const tokenHash = hashToken(refreshToken);
+	const stored = await db.refreshTokens.findByHash(tokenHash);
 
-  if (!stored || stored.expiresAt < new Date()) {
-    return res.status(401).json({ error: 'Invalid refresh token' });
-  }
+	if (!stored || stored.expiresAt < new Date()) {
+		return res.status(401).json({ error: 'Invalid refresh token' });
+	}
 
-  // Rotate: invalidate old, issue new
-  await db.refreshTokens.delete(stored.id);
-  const tokens = await issueTokens(stored.userId);
+	// Rotate: invalidate old, issue new
+	await db.refreshTokens.delete(stored.id);
+	const tokens = await issueTokens(stored.userId);
 
-  res.json(tokens);
+	res.json(tokens);
 });
 ```
 
@@ -263,23 +267,22 @@ app.post('/auth/refresh', async (req, res) => {
 
 ## Where to Store Tokens in Browsers
 
-| Storage | XSS | CSRF | Notes |
-|---------|-----|------|-------|
-| `localStorage` | Vulnerable | Safe | Any script can read it |
-| `sessionStorage` | Vulnerable | Safe | Cleared on tab close |
-| `httpOnly` cookie | Safe | Vulnerable | JS can't read it; needs CSRF protection |
-| Memory (JS variable) | Safe | Safe | Lost on page refresh |
+| Storage              | XSS        | CSRF       | Notes                                   |
+| -------------------- | ---------- | ---------- | --------------------------------------- |
+| `localStorage`       | Vulnerable | Safe       | Any script can read it                  |
+| `sessionStorage`     | Vulnerable | Safe       | Cleared on tab close                    |
+| `httpOnly` cookie    | Safe       | Vulnerable | JS can't read it; needs CSRF protection |
+| Memory (JS variable) | Safe       | Safe       | Lost on page refresh                    |
 
 **Recommendation:** `httpOnly`, `Secure`, `SameSite=Strict` cookies for the refresh token. Access token in memory (JS variable), re-fetched from refresh endpoint on page load.
 
 ```typescript
 // Set refresh token as httpOnly cookie
 res.cookie('refreshToken', refreshToken, {
-  httpOnly: true,   // not accessible to JS
-  secure: true,     // HTTPS only
-  sameSite: 'strict', // no cross-site requests
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  path: '/auth/refresh', // only sent to refresh endpoint
+	httpOnly: true, // not accessible to JS
+	secure: true, // HTTPS only
+	sameSite: 'strict', // no cross-site requests
+	maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+	path: '/auth/refresh' // only sent to refresh endpoint
 });
 ```
-

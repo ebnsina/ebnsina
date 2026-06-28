@@ -1,10 +1,10 @@
 ---
-title: "Authentication & Authorization"
-subtitle: "Implement JWT-based auth, refresh tokens, RBAC middleware, and secure password hashing from scratch."
+title: 'Authentication & Authorization'
+subtitle: 'Implement JWT-based auth, refresh tokens, RBAC middleware, and secure password hashing from scratch.'
 chapter: 13
-level: "beginner"
-readingTime: "20 min"
-topics: ["JWT", "bcrypt", "RBAC", "refresh tokens", "middleware"]
+level: 'beginner'
+readingTime: '20 min'
+topics: ['JWT', 'bcrypt', 'RBAC', 'refresh tokens', 'middleware']
 ---
 
 <script>
@@ -26,12 +26,10 @@ Like a gym membership card — you verify your identity once at the front desk (
 </Callout>
 
 <Mermaid
-	title="Auth Flow with JWT"
-	code={`
-graph TD
+title="Auth Flow with JWT"
+code={`graph TD
   C["Client<br/>email + password"] --> A["Auth Server<br/>Verify credentials"] --> J["JWT Token<br/>access + refresh"]
-  J --> C2["Client<br/>Bearer token"] --> M["Auth Middleware<br/>Verify + RBAC"] --> P["Protected API"]
-`}
+  J --> C2["Client<br/>Bearer token"] --> M["Auth Middleware<br/>Verify + RBAC"] --> P["Protected API"]`}
 />
 
 ## Why JWTs?
@@ -46,320 +44,331 @@ The tradeoff: you can't revoke a JWT before it expires without maintaining a bla
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // --- Password Hashing (using scrypt — built into Node, no deps) ---
 async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString("hex");
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 64, (err, derived) => {
-      if (err) reject(err);
-      resolve(`${salt}:${derived.toString("hex")}`);
-    });
-  });
+	const salt = crypto.randomBytes(16).toString('hex');
+	return new Promise((resolve, reject) => {
+		crypto.scrypt(password, salt, 64, (err, derived) => {
+			if (err) reject(err);
+			resolve(`${salt}:${derived.toString('hex')}`);
+		});
+	});
 }
 
 async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const [salt, key] = hash.split(":");
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 64, (err, derived) => {
-      if (err) reject(err);
-      resolve(crypto.timingSafeEqual(Buffer.from(key, "hex"), derived));
-    });
-  });
+	const [salt, key] = hash.split(':');
+	return new Promise((resolve, reject) => {
+		crypto.scrypt(password, salt, 64, (err, derived) => {
+			if (err) reject(err);
+			resolve(crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived));
+		});
+	});
 }
 
 // --- JWT Implementation (no external deps) ---
 interface JWTPayload {
-  sub: string;        // user ID
-  email: string;
-  role: string;
-  iat: number;        // issued at
-  exp: number;        // expires at
+	sub: string; // user ID
+	email: string;
+	role: string;
+	iat: number; // issued at
+	exp: number; // expires at
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const ACCESS_TOKEN_TTL = 15 * 60;      // 15 minutes
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 3600; // 7 days
 
 function base64url(data: string | Buffer): string {
-  const buf = typeof data === "string" ? Buffer.from(data) : data;
-  return buf.toString("base64url");
+	const buf = typeof data === 'string' ? Buffer.from(data) : data;
+	return buf.toString('base64url');
 }
 
-function signJWT(payload: Omit<JWTPayload, "iat" | "exp">, ttl: number): string {
-  const header = base64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const now = Math.floor(Date.now() / 1000);
-  const body = base64url(
-    JSON.stringify({ ...payload, iat: now, exp: now + ttl })
-  );
-  const signature = crypto
-    .createHmac("sha256", JWT_SECRET)
-    .update(`${header}.${body}`)
-    .digest("base64url");
-  return `${header}.${body}.${signature}`;
+function signJWT(payload: Omit<JWTPayload, 'iat' | 'exp'>, ttl: number): string {
+	const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+	const now = Math.floor(Date.now() / 1000);
+	const body = base64url(JSON.stringify({ ...payload, iat: now, exp: now + ttl }));
+	const signature = crypto
+		.createHmac('sha256', JWT_SECRET)
+		.update(`${header}.${body}`)
+		.digest('base64url');
+	return `${header}.${body}.${signature}`;
 }
 
 function verifyJWT(token: string): JWTPayload | null {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
+	const parts = token.split('.');
+	if (parts.length !== 3) return null;
 
-  const [header, body, signature] = parts;
-  const expected = crypto
-    .createHmac("sha256", JWT_SECRET)
-    .update(`${header}.${body}`)
-    .digest("base64url");
+	const [header, body, signature] = parts;
+	const expected = crypto
+		.createHmac('sha256', JWT_SECRET)
+		.update(`${header}.${body}`)
+		.digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return null; // invalid signature
-  }
+	if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+		return null; // invalid signature
+	}
 
-  const payload: JWTPayload = JSON.parse(
-    Buffer.from(body, "base64url").toString()
-  );
+	const payload: JWTPayload = JSON.parse(Buffer.from(body, 'base64url').toString());
 
-  if (payload.exp < Math.floor(Date.now() / 1000)) {
-    return null; // expired
-  }
+	if (payload.exp < Math.floor(Date.now() / 1000)) {
+		return null; // expired
+	}
 
-  return payload;
+	return payload;
 }
 
 // --- User Store (replace with database) ---
 interface User {
-  id: string;
-  email: string;
-  passwordHash: string;
-  role: "user" | "admin" | "editor";
-  name: string;
+	id: string;
+	email: string;
+	passwordHash: string;
+	role: 'user' | 'admin' | 'editor';
+	name: string;
 }
 
 const users = new Map<string, User>();
 const refreshTokens = new Map<string, { userId: string; expiresAt: number }>();
 
 // --- RBAC (Role-Based Access Control) ---
-type Permission = "read:posts" | "write:posts" | "delete:posts" | "manage:users";
+type Permission = 'read:posts' | 'write:posts' | 'delete:posts' | 'manage:users';
 
 const rolePermissions: Record<string, Permission[]> = {
-  user:   ["read:posts"],
-  editor: ["read:posts", "write:posts"],
-  admin:  ["read:posts", "write:posts", "delete:posts", "manage:users"],
+	user: ['read:posts'],
+	editor: ['read:posts', 'write:posts'],
+	admin: ['read:posts', 'write:posts', 'delete:posts', 'manage:users']
 };
 
 function hasPermission(role: string, permission: Permission): boolean {
-  return rolePermissions[role]?.includes(permission) ?? false;
+	return rolePermissions[role]?.includes(permission) ?? false;
 }
 
 // --- Auth Middleware ---
 interface AuthenticatedRequest extends http.IncomingMessage {
-  user?: JWTPayload;
+	user?: JWTPayload;
 }
 
 function requireAuth(
-  handler: (req: AuthenticatedRequest, res: http.ServerResponse) => void | Promise<void>
+	handler: (req: AuthenticatedRequest, res: http.ServerResponse) => void | Promise<void>
 ) {
-  return async (req: AuthenticatedRequest, res: http.ServerResponse) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      json(res, 401, { error: "Missing or invalid Authorization header" });
-      return;
-    }
+	return async (req: AuthenticatedRequest, res: http.ServerResponse) => {
+		const authHeader = req.headers.authorization;
+		if (!authHeader?.startsWith('Bearer ')) {
+			json(res, 401, { error: 'Missing or invalid Authorization header' });
+			return;
+		}
 
-    const token = authHeader.slice(7);
-    const payload = verifyJWT(token);
-    if (!payload) {
-      json(res, 401, { error: "Invalid or expired token" });
-      return;
-    }
+		const token = authHeader.slice(7);
+		const payload = verifyJWT(token);
+		if (!payload) {
+			json(res, 401, { error: 'Invalid or expired token' });
+			return;
+		}
 
-    req.user = payload;
-    await handler(req, res);
-  };
+		req.user = payload;
+		await handler(req, res);
+	};
 }
 
 function requirePermission(permission: Permission) {
-  return (
-    handler: (req: AuthenticatedRequest, res: http.ServerResponse) => void | Promise<void>
-  ) => {
-    return requireAuth(async (req, res) => {
-      if (!req.user || !hasPermission(req.user.role, permission)) {
-        json(res, 403, { error: "Insufficient permissions" });
-        return;
-      }
-      await handler(req, res);
-    });
-  };
+	return (
+		handler: (req: AuthenticatedRequest, res: http.ServerResponse) => void | Promise<void>
+	) => {
+		return requireAuth(async (req, res) => {
+			if (!req.user || !hasPermission(req.user.role, permission)) {
+				json(res, 403, { error: 'Insufficient permissions' });
+				return;
+			}
+			await handler(req, res);
+		});
+	};
 }
 
 // --- Helpers ---
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 function parseBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 // --- Route Handlers ---
 async function handleRegister(req: http.IncomingMessage, res: http.ServerResponse) {
-  const body = await parseBody(req);
-  const email = body.email as string;
-  const password = body.password as string;
-  const name = body.name as string;
+	const body = await parseBody(req);
+	const email = body.email as string;
+	const password = body.password as string;
+	const name = body.name as string;
 
-  if (!email || !password || password.length < 8) {
-    json(res, 400, { error: "Email and password (min 8 chars) are required" });
-    return;
-  }
+	if (!email || !password || password.length < 8) {
+		json(res, 400, { error: 'Email and password (min 8 chars) are required' });
+		return;
+	}
 
-  // Check existing user
-  for (const u of users.values()) {
-    if (u.email === email) {
-      json(res, 409, { error: "Email already registered" });
-      return;
-    }
-  }
+	// Check existing user
+	for (const u of users.values()) {
+		if (u.email === email) {
+			json(res, 409, { error: 'Email already registered' });
+			return;
+		}
+	}
 
-  const id = crypto.randomUUID();
-  const passwordHash = await hashPassword(password);
-  const user: User = { id, email, passwordHash, role: "user", name: name || "" };
-  users.set(id, user);
+	const id = crypto.randomUUID();
+	const passwordHash = await hashPassword(password);
+	const user: User = { id, email, passwordHash, role: 'user', name: name || '' };
+	users.set(id, user);
 
-  const accessToken = signJWT({ sub: id, email, role: user.role }, ACCESS_TOKEN_TTL);
-  const refreshToken = crypto.randomBytes(32).toString("hex");
+	const accessToken = signJWT({ sub: id, email, role: user.role }, ACCESS_TOKEN_TTL);
+	const refreshToken = crypto.randomBytes(32).toString('hex');
 
-  refreshTokens.set(refreshToken, {
-    userId: id,
-    expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000,
-  });
+	refreshTokens.set(refreshToken, {
+		userId: id,
+		expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000
+	});
 
-  json(res, 201, {
-    user: { id, email, name, role: user.role },
-    accessToken,
-    refreshToken,
-    expiresIn: ACCESS_TOKEN_TTL,
-  });
+	json(res, 201, {
+		user: { id, email, name, role: user.role },
+		accessToken,
+		refreshToken,
+		expiresIn: ACCESS_TOKEN_TTL
+	});
 }
 
 async function handleLogin(req: http.IncomingMessage, res: http.ServerResponse) {
-  const body = await parseBody(req);
-  const email = body.email as string;
-  const password = body.password as string;
+	const body = await parseBody(req);
+	const email = body.email as string;
+	const password = body.password as string;
 
-  let user: User | undefined;
-  for (const u of users.values()) {
-    if (u.email === email) { user = u; break; }
-  }
+	let user: User | undefined;
+	for (const u of users.values()) {
+		if (u.email === email) {
+			user = u;
+			break;
+		}
+	}
 
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    // Use same error message to prevent user enumeration
-    json(res, 401, { error: "Invalid email or password" });
-    return;
-  }
+	if (!user || !(await verifyPassword(password, user.passwordHash))) {
+		// Use same error message to prevent user enumeration
+		json(res, 401, { error: 'Invalid email or password' });
+		return;
+	}
 
-  const accessToken = signJWT(
-    { sub: user.id, email: user.email, role: user.role },
-    ACCESS_TOKEN_TTL
-  );
-  const refreshToken = crypto.randomBytes(32).toString("hex");
+	const accessToken = signJWT(
+		{ sub: user.id, email: user.email, role: user.role },
+		ACCESS_TOKEN_TTL
+	);
+	const refreshToken = crypto.randomBytes(32).toString('hex');
 
-  refreshTokens.set(refreshToken, {
-    userId: user.id,
-    expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000,
-  });
+	refreshTokens.set(refreshToken, {
+		userId: user.id,
+		expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000
+	});
 
-  json(res, 200, {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
-    accessToken,
-    refreshToken,
-    expiresIn: ACCESS_TOKEN_TTL,
-  });
+	json(res, 200, {
+		user: { id: user.id, email: user.email, name: user.name, role: user.role },
+		accessToken,
+		refreshToken,
+		expiresIn: ACCESS_TOKEN_TTL
+	});
 }
 
 async function handleRefresh(req: http.IncomingMessage, res: http.ServerResponse) {
-  const body = await parseBody(req);
-  const token = body.refreshToken as string;
+	const body = await parseBody(req);
+	const token = body.refreshToken as string;
 
-  const stored = refreshTokens.get(token);
-  if (!stored || stored.expiresAt < Date.now()) {
-    json(res, 401, { error: "Invalid or expired refresh token" });
-    return;
-  }
+	const stored = refreshTokens.get(token);
+	if (!stored || stored.expiresAt < Date.now()) {
+		json(res, 401, { error: 'Invalid or expired refresh token' });
+		return;
+	}
 
-  // Rotate refresh token (invalidate old one)
-  refreshTokens.delete(token);
+	// Rotate refresh token (invalidate old one)
+	refreshTokens.delete(token);
 
-  const user = users.get(stored.userId);
-  if (!user) {
-    json(res, 401, { error: "User not found" });
-    return;
-  }
+	const user = users.get(stored.userId);
+	if (!user) {
+		json(res, 401, { error: 'User not found' });
+		return;
+	}
 
-  const accessToken = signJWT(
-    { sub: user.id, email: user.email, role: user.role },
-    ACCESS_TOKEN_TTL
-  );
-  const newRefreshToken = crypto.randomBytes(32).toString("hex");
+	const accessToken = signJWT(
+		{ sub: user.id, email: user.email, role: user.role },
+		ACCESS_TOKEN_TTL
+	);
+	const newRefreshToken = crypto.randomBytes(32).toString('hex');
 
-  refreshTokens.set(newRefreshToken, {
-    userId: user.id,
-    expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000,
-  });
+	refreshTokens.set(newRefreshToken, {
+		userId: user.id,
+		expiresAt: Date.now() + REFRESH_TOKEN_TTL * 1000
+	});
 
-  json(res, 200, {
-    accessToken,
-    refreshToken: newRefreshToken,
-    expiresIn: ACCESS_TOKEN_TTL,
-  });
+	json(res, 200, {
+		accessToken,
+		refreshToken: newRefreshToken,
+		expiresIn: ACCESS_TOKEN_TTL
+	});
 }
 
 // --- Protected route examples ---
 const handleGetProfile = requireAuth(async (req, res) => {
-  const user = users.get(req.user!.sub);
-  if (!user) {
-    json(res, 404, { error: "User not found" });
-    return;
-  }
-  json(res, 200, {
-    id: user.id, email: user.email, name: user.name, role: user.role,
-  });
+	const user = users.get(req.user!.sub);
+	if (!user) {
+		json(res, 404, { error: 'User not found' });
+		return;
+	}
+	json(res, 200, {
+		id: user.id,
+		email: user.email,
+		name: user.name,
+		role: user.role
+	});
 });
 
-const handleAdminUsers = requirePermission("manage:users")(async (_req, res) => {
-  const allUsers = Array.from(users.values()).map((u) => ({
-    id: u.id, email: u.email, name: u.name, role: u.role,
-  }));
-  json(res, 200, { users: allUsers });
+const handleAdminUsers = requirePermission('manage:users')(async (_req, res) => {
+	const allUsers = Array.from(users.values()).map((u) => ({
+		id: u.id,
+		email: u.email,
+		name: u.name,
+		role: u.role
+	}));
+	json(res, 200, { users: allUsers });
 });
 
 // --- Router ---
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method!;
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method!;
 
-  try {
-    if (url.pathname === "/auth/register" && method === "POST") return await handleRegister(req, res);
-    if (url.pathname === "/auth/login" && method === "POST") return await handleLogin(req, res);
-    if (url.pathname === "/auth/refresh" && method === "POST") return await handleRefresh(req, res);
-    if (url.pathname === "/api/profile" && method === "GET") return await handleGetProfile(req, res);
-    if (url.pathname === "/api/admin/users" && method === "GET") return await handleAdminUsers(req, res);
-    json(res, 404, { error: "Not found" });
-  } catch (err) {
-    console.error(err);
-    json(res, 500, { error: "Internal server error" });
-  }
+	try {
+		if (url.pathname === '/auth/register' && method === 'POST')
+			return await handleRegister(req, res);
+		if (url.pathname === '/auth/login' && method === 'POST') return await handleLogin(req, res);
+		if (url.pathname === '/auth/refresh' && method === 'POST') return await handleRefresh(req, res);
+		if (url.pathname === '/api/profile' && method === 'GET')
+			return await handleGetProfile(req, res);
+		if (url.pathname === '/api/admin/users' && method === 'GET')
+			return await handleAdminUsers(req, res);
+		json(res, 404, { error: 'Not found' });
+	} catch (err) {
+		console.error(err);
+		json(res, 500, { error: 'Internal server error' });
+	}
 });
 
-server.listen(3000, () => console.log("Auth server on http://localhost:3000"));
+server.listen(3000, () => console.log('Auth server on http://localhost:3000'));
 ```
 
 </div>
@@ -727,4 +736,3 @@ func main() {
 - For most apps, use a managed auth service (Auth0, Clerk, Supabase Auth). Build custom only if you have specific compliance needs.
 
 </div>
-

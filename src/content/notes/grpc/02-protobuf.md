@@ -1,10 +1,10 @@
 ---
-title: "Protocol Buffers"
-subtitle: "Protobuf is the schema language and the wire format. Get the schema rules right and your services stay compatible for a decade. Get them wrong and one bad commit breaks every client at once."
+title: 'Protocol Buffers'
+subtitle: 'Protobuf is the schema language and the wire format. Get the schema rules right and your services stay compatible for a decade. Get them wrong and one bad commit breaks every client at once.'
 chapter: 2
-level: "beginner"
-readingTime: "13 min"
-topics: ["grpc", "protobuf", "proto3", "schema", "wire format"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['grpc', 'protobuf', 'proto3', 'schema', 'wire format']
 ---
 
 <script>
@@ -96,7 +96,7 @@ Read it slowly. Every concept you need for 90% of `.proto` files is in there.
 
 ## Field numbers — the most important rule
 
-Every field has a number. That number is the *only* thing that goes on the wire — names are stripped. So the contract is the numbers, not the names.
+Every field has a number. That number is the _only_ thing that goes on the wire — names are stripped. So the contract is the numbers, not the names.
 
 **The rules:**
 
@@ -127,17 +127,17 @@ If you do not reserve, someone adds `string country = 4` next year and clients w
 
 ## Scalar types
 
-| Proto type | Go type | Notes |
-|---|---|---|
-| `double` | `float64` | |
-| `float` | `float32` | |
-| `int32` / `int64` | `int32` / `int64` | varint encoded; smaller for small values |
-| `uint32` / `uint64` | `uint32` / `uint64` | unsigned varint |
-| `sint32` / `sint64` | `int32` / `int64` | zigzag encoded; better for negatives |
+| Proto type            | Go type             | Notes                                              |
+| --------------------- | ------------------- | -------------------------------------------------- |
+| `double`              | `float64`           |                                                    |
+| `float`               | `float32`           |                                                    |
+| `int32` / `int64`     | `int32` / `int64`   | varint encoded; smaller for small values           |
+| `uint32` / `uint64`   | `uint32` / `uint64` | unsigned varint                                    |
+| `sint32` / `sint64`   | `int32` / `int64`   | zigzag encoded; better for negatives               |
 | `fixed32` / `fixed64` | `uint32` / `uint64` | always 4 / 8 bytes; better for large random values |
-| `bool` | `bool` | |
-| `string` | `string` | UTF-8 |
-| `bytes` | `[]byte` | arbitrary bytes |
+| `bool`                | `bool`              |                                                    |
+| `string`              | `string`            | UTF-8                                              |
+| `bytes`               | `[]byte`            | arbitrary bytes                                    |
 
 The integer choice matters. `int64` for "user IDs" — if some IDs are large, varint costs many bytes per ID. `fixed64` for opaque large IDs (random hashes). `sint32` for "delta" values that can be negative.
 
@@ -216,19 +216,19 @@ You do not need to encode protobuf by hand, but knowing the shape helps debuggin
 
 Each field on the wire is `(tag, value)`. The tag packs the field number and the wire type. There are five wire types:
 
-| Wire type | Used for |
-|---|---|
-| 0 — Varint | int32, int64, uint32, uint64, bool, enum |
-| 1 — 64-bit | fixed64, sfixed64, double |
+| Wire type            | Used for                                   |
+| -------------------- | ------------------------------------------ |
+| 0 — Varint           | int32, int64, uint32, uint64, bool, enum   |
+| 1 — 64-bit           | fixed64, sfixed64, double                  |
 | 2 — Length-delimited | string, bytes, embedded messages, repeated |
-| 5 — 32-bit | fixed32, sfixed32, float |
+| 5 — 32-bit           | fixed32, sfixed32, float                   |
 
 Default values are skipped. Unknown fields are preserved on round-trips (so a server that doesn't know about a new field still passes it through). Endianness is little-endian for fixed types.
 
 Two practical consequences:
 
 1. **Varint encoding rewards small numbers.** Field numbers 1–15 take one byte for the tag. Field numbers 16+ take two bytes. Same for integer values: small unsigned ints are tiny, large ones are bigger.
-2. **You can decode a protobuf without the schema** — `protoc --decode_raw` shows the wire structure. You see field numbers, types, and bytes; you do not see field *names* (those are stripped).
+2. **You can decode a protobuf without the schema** — `protoc --decode_raw` shows the wire structure. You see field numbers, types, and bytes; you do not see field _names_ (those are stripped).
 
 `protoc --decode_raw &lt; captured-message.bin` is the gRPC equivalent of "open it in a hex editor."
 
@@ -288,7 +288,7 @@ lint:
   use:
     - DEFAULT
   except:
-    - PACKAGE_VERSION_SUFFIX  # if you don't use versioned packages yet
+    - PACKAGE_VERSION_SUFFIX # if you don't use versioned packages yet
 ```
 
 ```yaml
@@ -319,4 +319,3 @@ plugins:
 - Use `buf` for lint, format, breaking-change checks. Run in CI.
 
 Next: [HTTP/2 underneath](/notes/grpc/03-http2) — the transport that makes gRPC fast, and what its features mean for your service.
-

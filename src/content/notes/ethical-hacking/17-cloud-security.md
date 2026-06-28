@@ -1,10 +1,21 @@
 ---
-title: "Cloud Security"
-subtitle: "AWS, GCP, and Azure attack techniques — IAM misconfigs, S3 exposure, metadata service abuse, container escapes, and cloud-native threats."
+title: 'Cloud Security'
+subtitle: 'AWS, GCP, and Azure attack techniques — IAM misconfigs, S3 exposure, metadata service abuse, container escapes, and cloud-native threats.'
 chapter: 17
-level: "advanced"
-readingTime: "16 min"
-topics: ["cloud security", "AWS", "GCP", "Azure", "IAM", "S3", "metadata service", "cloud hacking", "cloud pentesting"]
+level: 'advanced'
+readingTime: '16 min'
+topics:
+  [
+    'cloud security',
+    'AWS',
+    'GCP',
+    'Azure',
+    'IAM',
+    'S3',
+    'metadata service',
+    'cloud hacking',
+    'cloud pentesting'
+  ]
 ---
 
 <script>
@@ -349,4 +360,3 @@ python3 cloudgoat.py create vulnerable_lambda
 
 # Each scenario provides starting credentials and a walkthrough
 ```
-

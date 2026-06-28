@@ -1,10 +1,10 @@
 ---
-title: "Accessibility & i18n"
-subtitle: "ARIA, semantic HTML, keyboard navigation, screen readers, RTL support, and internationalization patterns."
+title: 'Accessibility & i18n'
+subtitle: 'ARIA, semantic HTML, keyboard navigation, screen readers, RTL support, and internationalization patterns.'
 chapter: 8
-level: "advanced"
-readingTime: "12 min"
-topics: ["accessibility", "a11y", "ARIA", "keyboard navigation", "i18n", "RTL", "screen readers"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['accessibility', 'a11y', 'ARIA', 'keyboard navigation', 'i18n', 'RTL', 'screen readers']
 ---
 
 <script>
@@ -30,48 +30,72 @@ The single most impactful thing you can do for accessibility is use the correct 
 ```html
 <!-- BAD: div soup — screen readers see nothing meaningful -->
 <div class="header">
-  <div class="nav">
-    <div class="nav-item" onclick="navigate('/')">Home</div>
-    <div class="nav-item" onclick="navigate('/about')">About</div>
-  </div>
+	<div class="nav">
+		<div class="nav-item" onclick="navigate('/')">Home</div>
+		<div class="nav-item" onclick="navigate('/about')">About</div>
+	</div>
 </div>
 <div class="main">
-  <div class="article">
-    <div class="title">Understanding Accessibility</div>
-    <div class="content">...</div>
-  </div>
+	<div class="article">
+		<div class="title">Understanding Accessibility</div>
+		<div class="content">...</div>
+	</div>
 </div>
 
 <!-- GOOD: semantic elements — screen readers announce structure -->
 <header>
-  <nav aria-label="Main navigation">
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-  </nav>
+	<nav aria-label="Main navigation">
+		<a href="/">Home</a>
+		<a href="/about">About</a>
+	</nav>
 </header>
 <main>
-  <article>
-    <h1>Understanding Accessibility</h1>
-    <p>...</p>
-  </article>
+	<article>
+		<h1>Understanding Accessibility</h1>
+		<p>...</p>
+	</article>
 </main>
 ```
 
 Key semantic elements and their purposes:
 
 ```html
-<header>    <!-- Site or section header -->
-<nav>       <!-- Navigation links -->
-<main>      <!-- Primary content (one per page) -->
-<article>   <!-- Self-contained content -->
-<section>   <!-- Thematic grouping with a heading -->
-<aside>     <!-- Tangentially related content (sidebar) -->
-<footer>    <!-- Site or section footer -->
-<button>    <!-- Clickable action (NOT <div onclick>) -->
-<a>         <!-- Navigation to a URL -->
-<form>      <!-- User input collection -->
-<label>     <!-- Describes a form input -->
-<table>     <!-- Tabular data (NOT for layout) -->
+<header>
+	<!-- Site or section header -->
+	<nav>
+		<!-- Navigation links -->
+		<main>
+			<!-- Primary content (one per page) -->
+			<article>
+				<!-- Self-contained content -->
+				<section>
+					<!-- Thematic grouping with a heading -->
+					<aside>
+						<!-- Tangentially related content (sidebar) -->
+						<footer>
+							<!-- Site or section footer -->
+							<button>
+								<!-- Clickable action (NOT <div onclick>) -->
+								<a>
+									<!-- Navigation to a URL -->
+									<form>
+										<!-- User input collection -->
+										<label>
+											<!-- Describes a form input -->
+											<table>
+												<!-- Tabular data (NOT for layout) -->
+											</table></label
+										>
+									</form></a
+								>
+							</button>
+						</footer>
+					</aside>
+				</section>
+			</article>
+		</main>
+	</nav>
+</header>
 ```
 
 ## ARIA: When HTML Is Not Enough
@@ -141,6 +165,7 @@ function SearchResults({ count }: { count: number }) {
 <Callout type="warning">
 
 **Common ARIA mistakes:**
+
 - **`role="button"` on a div** — just use `<button>`. You would also need to add `tabindex`, `onKeyDown` for Enter and Space, and focus styles. The `<button>` element gives you all of that for free.
 - **Missing label on icon-only buttons** — `<button aria-label="Close modal"><XIcon /></button>` is required for screen readers.
 - **`aria-hidden="true"` on interactive elements** — this removes them from the accessibility tree. Users relying on screen readers cannot interact with them.
@@ -226,34 +251,35 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
 ```css
 /* Visible focus indicators — critical for keyboard users */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
 }
 
 /* Only show focus ring for keyboard navigation, not mouse clicks */
 :focus:not(:focus-visible) {
-  outline: none;
+	outline: none;
 }
 
 /* Skip navigation link for keyboard users */
 .skip-link {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  padding: 8px 16px;
-  background: var(--color-accent);
-  color: white;
-  z-index: 100;
+	position: absolute;
+	top: -100%;
+	left: 0;
+	padding: 8px 16px;
+	background: var(--color-accent);
+	color: white;
+	z-index: 100;
 }
 
 .skip-link:focus {
-  top: 0;
+	top: 0;
 }
 ```
 
 <Callout type="tip">
 
 **Accessibility testing checklist:**
+
 1. **Keyboard**: Can you Tab to every interactive element and activate it with Enter/Space?
 2. **Screen reader**: Does VoiceOver (Mac) or NVDA (Windows) announce content meaningfully?
 3. **Zoom**: Does the layout work at 200% zoom?
@@ -341,18 +367,18 @@ If your app supports Arabic, Hebrew, Urdu, or other RTL languages, your layout m
 /* Use logical properties instead of physical ones */
 /* BAD — breaks in RTL */
 .card {
-  margin-left: 16px;
-  padding-right: 12px;
-  text-align: left;
-  border-left: 2px solid blue;
+	margin-left: 16px;
+	padding-right: 12px;
+	text-align: left;
+	border-left: 2px solid blue;
 }
 
 /* GOOD — works in both LTR and RTL */
 .card {
-  margin-inline-start: 16px;
-  padding-inline-end: 12px;
-  text-align: start;
-  border-inline-start: 2px solid blue;
+	margin-inline-start: 16px;
+	padding-inline-end: 12px;
+	text-align: start;
+	border-inline-start: 2px solid blue;
 }
 ```
 
@@ -377,4 +403,3 @@ function RootLayout({ locale, children }: { locale: string; children: React.Reac
 4. **i18n** should be built in from the start — externalize strings, use ICU message format for plurals and formatting, leverage the Intl API
 5. **RTL support** comes from using CSS logical properties (`inline-start` instead of `left`)
 6. **Test with real tools** — VoiceOver, NVDA, Lighthouse accessibility audit, axe DevTools
-

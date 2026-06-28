@@ -1,10 +1,10 @@
 ---
-title: "Synchronization"
-subtitle: "When threads share data, correctness depends on controlling who touches what, when — with locks, signals, and care."
+title: 'Synchronization'
+subtitle: 'When threads share data, correctness depends on controlling who touches what, when — with locks, signals, and care.'
 chapter: 6
-level: "advanced"
-readingTime: "15 min"
-topics: ["mutex", "semaphore", "deadlock"]
+level: 'advanced'
+readingTime: '15 min'
+topics: ['mutex', 'semaphore', 'deadlock']
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["mutex", "semaphore", "deadlock"]
 
 ## Critical Sections
 
-Chapter 3 showed how `counter++` from two threads loses updates. The root cause is that several instructions that *together* must appear atomic get interleaved. The span of code that accesses shared state and must not run concurrently with itself is a **critical section**.
+Chapter 3 showed how `counter++` from two threads loses updates. The root cause is that several instructions that _together_ must appear atomic get interleaved. The span of code that accesses shared state and must not run concurrently with itself is a **critical section**.
 
 Correct synchronization guarantees:
 
@@ -25,7 +25,7 @@ The tools below are mechanisms for enforcing these guarantees.
 
 ## Mutexes
 
-A **mutex** (mutual exclusion lock) is the workhorse. A thread *locks* it before the critical section and *unlocks* it after. While one thread holds the lock, any other that tries to lock it blocks until the lock is released.
+A **mutex** (mutual exclusion lock) is the workhorse. A thread _locks_ it before the critical section and _unlocks_ it after. While one thread holds the lock, any other that tries to lock it blocks until the lock is released.
 
 ```c
 #include <pthread.h>
@@ -50,7 +50,7 @@ Only one thread can be between `lock` and `unlock` at a time, so the increment i
 
 ## Semaphores
 
-A **semaphore** is a counter with two atomic operations: *wait* (decrement; block if it would go below zero) and *post* (increment; possibly wake a waiter). It generalizes the mutex:
+A **semaphore** is a counter with two atomic operations: _wait_ (decrement; block if it would go below zero) and _post_ (increment; possibly wake a waiter). It generalizes the mutex:
 
 - A **binary semaphore** (count 0 or 1) acts like a lock.
 - A **counting semaphore** (count N) allows up to N threads through at once — perfect for a resource pool, like "5 database connections available."
@@ -59,7 +59,7 @@ Semaphores also coordinate ordering between threads (signaling), not just exclus
 
 ## Condition Variables
 
-A mutex protects data; a **condition variable** lets a thread *wait for a condition to become true* without busy-spinning. It is always paired with a mutex.
+A mutex protects data; a **condition variable** lets a thread _wait for a condition to become true_ without busy-spinning. It is always paired with a mutex.
 
 A waiter atomically releases the mutex and sleeps until signaled; a signaler wakes one (or all) waiters:
 
@@ -97,7 +97,7 @@ Break **any one** and deadlock becomes impossible.
 - **No hold-and-wait** — acquire all needed locks at once, or release everything and retry if you can't get them all (`trylock`).
 - **Timeouts** approximate preemption — a thread that can't acquire a lock within a deadline backs off and retries, breaking a potential cycle.
 
-**Avoidance** is more dynamic: the system tracks resource requests and refuses any allocation that *could* lead to an unsafe state (the Banker's algorithm). It's mostly of theoretical interest — real systems overwhelmingly rely on disciplined lock ordering and timeouts.
+**Avoidance** is more dynamic: the system tracks resource requests and refuses any allocation that _could_ lead to an unsafe state (the Banker's algorithm). It's mostly of theoretical interest — real systems overwhelmingly rely on disciplined lock ordering and timeouts.
 
 <Callout type="tip">
 

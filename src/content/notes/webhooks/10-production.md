@@ -1,10 +1,10 @@
 ---
-title: "Self-host"
-subtitle: "The outbox pattern bridges your domain transactions and the webhook queue. The worker pool drains it. Behind nginx with TLS, on a VPS, with all the operational pieces from chapter 9 wired in."
+title: 'Self-host'
+subtitle: 'The outbox pattern bridges your domain transactions and the webhook queue. The worker pool drains it. Behind nginx with TLS, on a VPS, with all the operational pieces from chapter 9 wired in.'
 chapter: 10
-level: "advanced"
-readingTime: "14 min"
-topics: ["webhooks", "outbox", "worker pool", "nginx", "deployment"]
+level: 'advanced'
+readingTime: '14 min'
+topics: ['webhooks', 'outbox', 'worker pool', 'nginx', 'deployment']
 ---
 
 <script>
@@ -38,7 +38,7 @@ func ChargeCustomer(customerID string, amount int) error {
 }
 ```
 
-The fix: write the *intent* to send the webhook into the same transaction as the domain change. A separate process drains the outbox.
+The fix: write the _intent_ to send the webhook into the same transaction as the domain change. A separate process drains the outbox.
 
 ```sql
 CREATE TABLE webhook_outbox (
@@ -406,4 +406,3 @@ Half unchecked? Not yet. The good news: webhooks rarely break in dramatic ways o
 - Self-hosted cost ~$30/month for moderate volume.
 
 That is the full Backend Engineering Path's webhooks track. Next topic in the path: [Data modeling](/notes/data-modeling) — designing schemas, choosing keys, normalising and denormalising for the kinds of queries you actually run.
-

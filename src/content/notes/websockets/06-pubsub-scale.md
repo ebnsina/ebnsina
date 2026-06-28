@@ -1,10 +1,10 @@
 ---
-title: "Pub/sub at scale"
-subtitle: "One process can hold thousands of connections; production needs many. The piece that makes that work is a pub/sub bus that fans events from any process to every connection on every other process."
+title: 'Pub/sub at scale'
+subtitle: 'One process can hold thousands of connections; production needs many. The piece that makes that work is a pub/sub bus that fans events from any process to every connection on every other process.'
 chapter: 6
-level: "intermediate"
-readingTime: "12 min"
-topics: ["websockets", "pubsub", "redis", "nats", "scaling"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['websockets', 'pubsub', 'redis', 'nats', 'scaling']
 ---
 
 <script>
@@ -330,4 +330,3 @@ Confirms the bus is healthy without any of your code involved. If your service p
 - Test fan-out with `redis-cli` before blaming your code.
 
 Next: [Presence and rooms](/notes/websockets/07-presence-rooms) — tracking who is online, joining and leaving channels, and the operational patterns that work.
-

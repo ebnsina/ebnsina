@@ -1,10 +1,10 @@
 ---
-title: "Database Fundamentals"
-subtitle: "Connect to PostgreSQL, design schemas, write safe queries with prepared statements, and manage connection pools."
+title: 'Database Fundamentals'
+subtitle: 'Connect to PostgreSQL, design schemas, write safe queries with prepared statements, and manage connection pools.'
 chapter: 3
-level: "beginner"
-readingTime: "20 min"
-topics: ["PostgreSQL", "SQL", "connection pooling", "prepared statements", "migrations"]
+level: 'beginner'
+readingTime: '20 min'
+topics: ['PostgreSQL', 'SQL', 'connection pooling', 'prepared statements', 'migrations']
 ---
 
 <script>
@@ -30,11 +30,9 @@ Like a filing cabinet with a smart secretary — you describe what you want (que
 You tell the secretary what you want (query), and they find it for you. If the filing cabinet is well-organized (indexed), lookups are fast. If you hire multiple secretaries (connection pool), you can serve more people simultaneously.
 
 <Mermaid
-	title="Application to Database Flow"
-	code={`
-graph LR
-  A["App Server"] --> B["Connection Pool<br/>Max: 20 conns"] --> C["PostgreSQL<br/>Primary"]
-`}
+title="Application to Database Flow"
+code={`graph LR
+  A["App Server"] --> B["Connection Pool<br/>Max: 20 conns"] --> C["PostgreSQL<br/>Primary"]`}
 />
 
 ## Schema Design
@@ -83,7 +81,7 @@ CREATE INDEX idx_comments_created ON comments(created_at DESC);
 
 <Callout type="info" title="Partial Indexes">
 
-  The `WHERE published = TRUE` on `idx_posts_published` is a partial index — it only indexes published posts. Since most queries filter by `published = TRUE`, this index is smaller and faster than indexing all rows.
+The `WHERE published = TRUE` on `idx_posts_published` is a partial index — it only indexes published posts. Since most queries filter by `published = TRUE`, this index is smaller and faster than indexing all rows.
 
 </Callout>
 
@@ -93,76 +91,76 @@ CREATE INDEX idx_comments_created ON comments(created_at DESC);
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import pg from "pg";
+import pg from 'pg';
 
 // --- Connection Pool ---
 const pool = new pg.Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT || "5432"),
-  database: process.env.DB_NAME || "blog",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
-  max: 20,                    // max connections in pool
-  idleTimeoutMillis: 30000,   // close idle connections after 30s
-  connectionTimeoutMillis: 5000,
+	host: process.env.DB_HOST || 'localhost',
+	port: parseInt(process.env.DB_PORT || '5432'),
+	database: process.env.DB_NAME || 'blog',
+	user: process.env.DB_USER || 'postgres',
+	password: process.env.DB_PASSWORD || 'postgres',
+	max: 20, // max connections in pool
+	idleTimeoutMillis: 30000, // close idle connections after 30s
+	connectionTimeoutMillis: 5000
 });
 
-pool.on("error", (err) => {
-  console.error("Unexpected pool error:", err);
+pool.on('error', (err) => {
+	console.error('Unexpected pool error:', err);
 });
 
 // --- Types ---
 interface User {
-  id: string;
-  username: string;
-  email: string;
-  bio: string;
-  createdAt: Date;
+	id: string;
+	username: string;
+	email: string;
+	bio: string;
+	createdAt: Date;
 }
 
 interface Post {
-  id: string;
-  authorId: string;
-  slug: string;
-  title: string;
-  body: string;
-  published: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  author?: User;
-  commentCount?: number;
+	id: string;
+	authorId: string;
+	slug: string;
+	title: string;
+	body: string;
+	published: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+	author?: User;
+	commentCount?: number;
 }
 
 interface ListPostsParams {
-  authorId?: string;
-  published?: boolean;
-  cursor?: string;
-  limit?: number;
+	authorId?: string;
+	published?: boolean;
+	cursor?: string;
+	limit?: number;
 }
 
 // --- Repository ---
 class PostRepository {
-  // Create a post with prepared statement (prevents SQL injection)
-  async create(data: {
-    authorId: string;
-    slug: string;
-    title: string;
-    body: string;
-  }): Promise<Post> {
-    const result = await pool.query<Post>(
-      `INSERT INTO posts (author_id, slug, title, body)
+	// Create a post with prepared statement (prevents SQL injection)
+	async create(data: {
+		authorId: string;
+		slug: string;
+		title: string;
+		body: string;
+	}): Promise<Post> {
+		const result = await pool.query<Post>(
+			`INSERT INTO posts (author_id, slug, title, body)
        VALUES ($1, $2, $3, $4)
        RETURNING id, author_id AS "authorId", slug, title, body,
                  published, created_at AS "createdAt", updated_at AS "updatedAt"`,
-      [data.authorId, data.slug, data.title, data.body]
-    );
-    return result.rows[0];
-  }
+			[data.authorId, data.slug, data.title, data.body]
+		);
+		return result.rows[0];
+	}
 
-  // Get a single post with author info using JOIN
-  async getBySlug(slug: string): Promise<Post | null> {
-    const result = await pool.query<Post & { authorUsername: string; authorEmail: string }>(
-      `SELECT
+	// Get a single post with author info using JOIN
+	async getBySlug(slug: string): Promise<Post | null> {
+		const result = await pool.query<Post & { authorUsername: string; authorEmail: string }>(
+			`SELECT
          p.id, p.author_id AS "authorId", p.slug, p.title, p.body,
          p.published, p.created_at AS "createdAt", p.updated_at AS "updatedAt",
          u.username AS "authorUsername", u.email AS "authorEmail",
@@ -170,50 +168,50 @@ class PostRepository {
        FROM posts p
        JOIN users u ON u.id = p.author_id
        WHERE p.slug = $1`,
-      [slug]
-    );
+			[slug]
+		);
 
-    if (result.rows.length === 0) return null;
+		if (result.rows.length === 0) return null;
 
-    const row = result.rows[0];
-    return {
-      ...row,
-      author: {
-        id: row.authorId,
-        username: row.authorUsername,
-        email: row.authorEmail,
-        bio: "",
-        createdAt: row.createdAt,
-      },
-    };
-  }
+		const row = result.rows[0];
+		return {
+			...row,
+			author: {
+				id: row.authorId,
+				username: row.authorUsername,
+				email: row.authorEmail,
+				bio: '',
+				createdAt: row.createdAt
+			}
+		};
+	}
 
-  // List posts with cursor pagination, filtering, and JOIN
-  async list(params: ListPostsParams): Promise<{ posts: Post[]; hasMore: boolean }> {
-    const limit = Math.min(params.limit || 20, 100);
-    const conditions: string[] = [];
-    const values: unknown[] = [];
-    let paramIndex = 1;
+	// List posts with cursor pagination, filtering, and JOIN
+	async list(params: ListPostsParams): Promise<{ posts: Post[]; hasMore: boolean }> {
+		const limit = Math.min(params.limit || 20, 100);
+		const conditions: string[] = [];
+		const values: unknown[] = [];
+		let paramIndex = 1;
 
-    if (params.authorId) {
-      conditions.push(`p.author_id = $${paramIndex++}`);
-      values.push(params.authorId);
-    }
-    if (params.published !== undefined) {
-      conditions.push(`p.published = $${paramIndex++}`);
-      values.push(params.published);
-    }
-    if (params.cursor) {
-      conditions.push(`p.created_at < (SELECT created_at FROM posts WHERE id = $${paramIndex++})`);
-      values.push(params.cursor);
-    }
+		if (params.authorId) {
+			conditions.push(`p.author_id = $${paramIndex++}`);
+			values.push(params.authorId);
+		}
+		if (params.published !== undefined) {
+			conditions.push(`p.published = $${paramIndex++}`);
+			values.push(params.published);
+		}
+		if (params.cursor) {
+			conditions.push(`p.created_at < (SELECT created_at FROM posts WHERE id = $${paramIndex++})`);
+			values.push(params.cursor);
+		}
 
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+		const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    values.push(limit + 1); // fetch one extra to check hasMore
+		values.push(limit + 1); // fetch one extra to check hasMore
 
-    const result = await pool.query<Post>(
-      `SELECT
+		const result = await pool.query<Post>(
+			`SELECT
          p.id, p.author_id AS "authorId", p.slug, p.title,
          LEFT(p.body, 200) AS body,
          p.published, p.created_at AS "createdAt", p.updated_at AS "updatedAt"
@@ -221,86 +219,86 @@ class PostRepository {
        ${where}
        ORDER BY p.created_at DESC
        LIMIT $${paramIndex}`,
-      values
-    );
+			values
+		);
 
-    const hasMore = result.rows.length > limit;
-    const posts = hasMore ? result.rows.slice(0, limit) : result.rows;
+		const hasMore = result.rows.length > limit;
+		const posts = hasMore ? result.rows.slice(0, limit) : result.rows;
 
-    return { posts, hasMore };
-  }
+		return { posts, hasMore };
+	}
 
-  // Update with optimistic locking pattern
-  async update(
-    id: string,
-    data: Partial<Pick<Post, "title" | "body" | "published">>
-  ): Promise<Post | null> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-    let idx = 1;
+	// Update with optimistic locking pattern
+	async update(
+		id: string,
+		data: Partial<Pick<Post, 'title' | 'body' | 'published'>>
+	): Promise<Post | null> {
+		const fields: string[] = [];
+		const values: unknown[] = [];
+		let idx = 1;
 
-    if (data.title !== undefined) {
-      fields.push(`title = $${idx++}`);
-      values.push(data.title);
-    }
-    if (data.body !== undefined) {
-      fields.push(`body = $${idx++}`);
-      values.push(data.body);
-    }
-    if (data.published !== undefined) {
-      fields.push(`published = $${idx++}`);
-      values.push(data.published);
-    }
+		if (data.title !== undefined) {
+			fields.push(`title = $${idx++}`);
+			values.push(data.title);
+		}
+		if (data.body !== undefined) {
+			fields.push(`body = $${idx++}`);
+			values.push(data.body);
+		}
+		if (data.published !== undefined) {
+			fields.push(`published = $${idx++}`);
+			values.push(data.published);
+		}
 
-    if (fields.length === 0) return null;
+		if (fields.length === 0) return null;
 
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
+		fields.push(`updated_at = NOW()`);
+		values.push(id);
 
-    const result = await pool.query<Post>(
-      `UPDATE posts SET ${fields.join(", ")}
+		const result = await pool.query<Post>(
+			`UPDATE posts SET ${fields.join(', ')}
        WHERE id = $${idx}
        RETURNING id, author_id AS "authorId", slug, title, body,
                  published, created_at AS "createdAt", updated_at AS "updatedAt"`,
-      values
-    );
+			values
+		);
 
-    return result.rows[0] || null;
-  }
+		return result.rows[0] || null;
+	}
 
-  // Transaction: delete post and all related data
-  async delete(id: string): Promise<boolean> {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query("DELETE FROM comments WHERE post_id = $1", [id]);
-      const result = await client.query("DELETE FROM posts WHERE id = $1", [id]);
-      await client.query("COMMIT");
-      return (result.rowCount ?? 0) > 0;
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
-    }
-  }
+	// Transaction: delete post and all related data
+	async delete(id: string): Promise<boolean> {
+		const client = await pool.connect();
+		try {
+			await client.query('BEGIN');
+			await client.query('DELETE FROM comments WHERE post_id = $1', [id]);
+			const result = await client.query('DELETE FROM posts WHERE id = $1', [id]);
+			await client.query('COMMIT');
+			return (result.rowCount ?? 0) > 0;
+		} catch (err) {
+			await client.query('ROLLBACK');
+			throw err;
+		} finally {
+			client.release();
+		}
+	}
 }
 
 // --- Health check ---
 async function checkDB(): Promise<boolean> {
-  try {
-    const result = await pool.query("SELECT 1 AS ok");
-    return result.rows[0]?.ok === 1;
-  } catch {
-    return false;
-  }
+	try {
+		const result = await pool.query('SELECT 1 AS ok');
+		return result.rows[0]?.ok === 1;
+	} catch {
+		return false;
+	}
 }
 
 // --- Cleanup on shutdown ---
 async function shutdown(): Promise<void> {
-  console.log("Closing database pool...");
-  await pool.end();
-  console.log("Pool closed.");
+	console.log('Closing database pool...');
+	await pool.end();
+	console.log('Pool closed.');
 }
 
 export { PostRepository, checkDB, shutdown };
@@ -570,4 +568,3 @@ func main() {
 - Start with PostgreSQL — it handles more scale than most companies will ever need
 
 </div>
-

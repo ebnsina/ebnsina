@@ -1,10 +1,10 @@
 ---
-title: "Data Fetching Patterns"
-subtitle: "Fetch, SWR, React Query, loading states, error boundaries, and caching strategies for robust data layers."
+title: 'Data Fetching Patterns'
+subtitle: 'Fetch, SWR, React Query, loading states, error boundaries, and caching strategies for robust data layers.'
 chapter: 5
-level: "intermediate"
-readingTime: "14 min"
-topics: ["fetch", "SWR", "react query", "caching", "error boundaries", "loading states"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['fetch', 'SWR', 'react query', 'caching', 'error boundaries', 'loading states']
 ---
 
 <script>
@@ -72,6 +72,7 @@ function ProductList() {
 ```
 
 Problems with this approach:
+
 - Boilerplate repeated in every data-fetching component
 - No caching — refetching on every mount
 - No deduplication — two components fetching the same URL make two requests
@@ -234,6 +235,7 @@ function ProductCard({ product }: { product: Product }) {
 <Callout type="tip">
 
 **React Query cache key strategy:**
+
 - Use arrays: `["products", category, { sort, page }]`
 - Be specific: `["product", id]` not just `["product"]`
 - Use `queryClient.invalidateQueries({ queryKey: ["products"] })` to invalidate all product queries regardless of filters
@@ -300,6 +302,7 @@ class ErrorBoundary extends Component<Props, State> {
 <Callout type="warning">
 
 **Common data fetching mistakes:**
+
 - **Fetching in useEffect without cleanup** — causes state updates on unmounted components and race conditions.
 - **Not handling loading and error states** — users see broken UI or empty screens.
 - **Waterfall fetching** — fetching B only after A resolves when they are independent. Fetch in parallel with `Promise.all` or colocate queries.
@@ -349,4 +352,3 @@ function InfiniteProductList() {
 4. **Error boundaries** prevent one broken component from crashing the entire page
 5. **Fetch in parallel** — independent requests should use `Promise.all`, not sequential `await`
 6. **Cache keys** should be descriptive arrays that map to the data they represent
-

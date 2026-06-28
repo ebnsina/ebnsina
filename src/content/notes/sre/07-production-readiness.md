@@ -1,10 +1,10 @@
 ---
-title: "Production Readiness Reviews"
-subtitle: "The PRR checklist that prevents 80% of preventable launches-into-fire, with a real launch gate Terraform module."
+title: 'Production Readiness Reviews'
+subtitle: 'The PRR checklist that prevents 80% of preventable launches-into-fire, with a real launch gate Terraform module.'
 chapter: 7
-level: "intermediate"
-readingTime: "16 min"
-topics: ["PRR", "launch review", "runbook", "production readiness", "checklist"]
+level: 'intermediate'
+readingTime: '16 min'
+topics: ['PRR', 'launch review', 'runbook', 'production readiness', 'checklist']
 ---
 
 <script>
@@ -33,12 +33,14 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 # PRR: [Service Name] — [Owner Team] — [Launch Date]
 
 ## 1. Architecture
+
 - [ ] Architecture diagram exists and is current
 - [ ] All dependencies documented (services, databases, external APIs)
 - [ ] Failure mode for each dependency documented
 - [ ] Single points of failure identified and accepted (or eliminated)
 
 ## 2. Reliability
+
 - [ ] SLI defined and measurable in production
 - [ ] SLO target agreed by product + SRE, written down
 - [ ] Error budget policy signed off
@@ -46,6 +48,7 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] Load test passed at expected launch traffic + 2x
 
 ## 3. Observability
+
 - [ ] RED metrics for every endpoint
 - [ ] USE metrics for every infrastructure component
 - [ ] Structured logging with correlation IDs
@@ -54,12 +57,14 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] Cardinality budget reviewed (no unbounded labels)
 
 ## 4. Alerting
+
 - [ ] Symptom-based alerts on SLO burn rate
 - [ ] Every alert has a linked runbook
 - [ ] Alert threshold tested in staging (false-positive rate under 5%)
 - [ ] Escalation path defined in PagerDuty
 
 ## 5. Deploy + Rollback
+
 - [ ] CI runs unit + integration + smoke tests
 - [ ] Deploy is automated (no manual steps)
 - [ ] Canary stage with at least 5% traffic for 30 min
@@ -67,6 +72,7 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] Database migrations are forward + backward compatible
 
 ## 6. Security
+
 - [ ] Secrets in vault, not in env or repo
 - [ ] mTLS or equivalent for service-to-service auth
 - [ ] AuthZ rules reviewed by security team
@@ -74,6 +80,7 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] PII handling reviewed (if applicable)
 
 ## 7. Operations
+
 - [ ] Runbook exists with at least: alert→diagnosis→mitigation
 - [ ] On-call rotation populated and acknowledges service ownership
 - [ ] Backup + restore tested in the last 90 days (if stateful)
@@ -81,6 +88,7 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] Cost forecasted for steady-state and 10x scale
 
 ## 8. Launch
+
 - [ ] Feature flag exists for emergency disable
 - [ ] Status page entry created
 - [ ] Customer support team trained on common questions
@@ -187,24 +195,29 @@ To launch a new service, a team must invoke this module. They cannot create a se
 
 Runbooks are the artifact most teams produce worst. A real runbook follows a structured shape:
 
-```markdown
+````markdown
 # Runbook: payment-service / PaymentLatencyHigh
 
 ## Alert
+
 PaymentLatencyHigh — p99 latency > 500ms for 5 minutes.
 
 ## Severity
+
 SEV2 if duration < 30 min. SEV1 if revenue impact > $1k/min.
 
 ## Owner
+
 Team: payments-platform
 Slack: #payments-oncall
 PagerDuty: payments-primary
 
 ## What this means for users
+
 Checkout still works but feels slow. Cart abandonment may rise.
 
 ## Diagnostic steps
+
 1. **Check the dashboard:** [direct deep link](https://grafana.example.com/d/abc/payment-service?from=now-1h)
 2. **Identify which endpoint:** Look at the "p99 by endpoint" panel.
 3. **Check recent deploys:** `kubectl rollout history deployment/payment-service`
@@ -216,12 +229,16 @@ Checkout still works but feels slow. Cart abandonment may rise.
 ## Mitigations (try in order)
 
 ### 1. If recent deploy correlates with onset
+
 ```bash
 kubectl rollout undo deployment/payment-service -n payments
 ```
+````
+
 Wait 60s. Confirm latency drops on dashboard.
 
 ### 2. If database is the bottleneck (CPU > 80%)
+
 ```bash
 # Failover to read replica for non-critical reads
 kubectl patch configmap payment-config \
@@ -231,7 +248,9 @@ kubectl rollout restart deployment/payment-service
 ```
 
 ### 3. If Stripe is the bottleneck
+
 Enable degraded mode (cash-on-delivery only):
+
 ```bash
 kubectl patch configmap payment-config \
   --type merge \
@@ -239,13 +258,16 @@ kubectl patch configmap payment-config \
 ```
 
 ## Escalation
+
 - After 15 min unresolved → page payments-secondary
 - After 30 min unresolved → page engineering manager
 - If revenue > $5k/min impact → page VP Eng
 
 ## Last reviewed
+
 2026-04-15 by @alice
-```
+
+````
 
 The hallmarks: deep links (not "go look at Grafana"), copy-pasteable commands, ordered mitigations from least-risky to most-risky.
 
@@ -274,7 +296,7 @@ const launchShift = {
     activity: "Normal on-call; launch tag still active for prioritization",
   },
 };
-```
+````
 
 ## Annual recertification
 
@@ -312,4 +334,3 @@ Failed recertification means SRE escalates to the engineering manager. Not punit
 3. **Bake the baseline into Terraform** — the right way becomes the only way
 4. **Runbooks need deep links and copy-pasteable commands**, not vague pointers
 5. **Recertify annually** — services drift, drift causes outages, drift is preventable
-

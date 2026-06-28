@@ -1,10 +1,10 @@
 ---
-title: "Window Functions"
-subtitle: "Aggregate-like calculations that keep every row — rankings, running totals, and row-to-row comparisons."
+title: 'Window Functions'
+subtitle: 'Aggregate-like calculations that keep every row — rankings, running totals, and row-to-row comparisons.'
 chapter: 7
-level: "advanced"
-readingTime: "16 min"
-topics: ["window function", "partition by", "ranking"]
+level: 'advanced'
+readingTime: '16 min'
+topics: ['window function', 'partition by', 'ranking']
 ---
 
 <script>
@@ -13,9 +13,9 @@ topics: ["window function", "partition by", "ranking"]
 
 ## The Gap Window Functions Fill
 
-`GROUP BY` collapses rows: ten orders per customer become one summary row. But often you want a calculation *across* a set of rows while **keeping every individual row** — rank each order within its customer, show each row's share of the total, compare each row to the previous one. That's exactly what **window functions** do.
+`GROUP BY` collapses rows: ten orders per customer become one summary row. But often you want a calculation _across_ a set of rows while **keeping every individual row** — rank each order within its customer, show each row's share of the total, compare each row to the previous one. That's exactly what **window functions** do.
 
-A window function looks like an aggregate but with an `OVER` clause attached. The `OVER` clause defines the "window" of rows the function sees, *without* collapsing the result.
+A window function looks like an aggregate but with an `OVER` clause attached. The `OVER` clause defines the "window" of rows the function sees, _without_ collapsing the result.
 
 ```sql
 SELECT
@@ -41,7 +41,7 @@ function(...) OVER (
 
 - **`PARTITION BY`** divides rows into groups; the function restarts for each group. Omit it and the whole result is one partition.
 - **`ORDER BY`** orders rows within a partition — essential for ranking, running totals, and `LAG`/`LEAD`.
-- **Frame clause** narrows the window to a range of rows *relative to the current row* (more below).
+- **Frame clause** narrows the window to a range of rows _relative to the current row_ (more below).
 
 An empty `OVER ()` means "the entire result set as one unordered window" — useful for "each row's percentage of the grand total":
 
@@ -66,11 +66,11 @@ FROM orders;
 
 They differ only in how they handle **ties**:
 
-| Function       | Behavior on ties                          | Example sequence  |
-|----------------|-------------------------------------------|-------------------|
-| `ROW_NUMBER()` | Always distinct, arbitrary tie-break      | 1, 2, 3, 4        |
-| `RANK()`       | Ties share a rank, then *skip* numbers    | 1, 2, 2, 4        |
-| `DENSE_RANK()` | Ties share a rank, *no* gaps              | 1, 2, 2, 3        |
+| Function       | Behavior on ties                       | Example sequence |
+| -------------- | -------------------------------------- | ---------------- |
+| `ROW_NUMBER()` | Always distinct, arbitrary tie-break   | 1, 2, 3, 4       |
+| `RANK()`       | Ties share a rank, then _skip_ numbers | 1, 2, 2, 4       |
+| `DENSE_RANK()` | Ties share a rank, _no_ gaps           | 1, 2, 2, 3       |
 
 <Callout type="tip">
 
@@ -92,7 +92,7 @@ You can't filter on a window function in `WHERE` directly (it's computed in `SEL
 
 ## LAG and LEAD: Looking at Neighbors
 
-`LAG` and `LEAD` pull a value from a row *before* or *after* the current one within the partition — perfect for period-over-period comparisons:
+`LAG` and `LEAD` pull a value from a row _before_ or _after_ the current one within the partition — perfect for period-over-period comparisons:
 
 ```sql
 SELECT
@@ -133,7 +133,7 @@ FROM orders;
 The frame clause has two common forms:
 
 - **`ROWS`** — counts a physical number of rows (`2 PRECEDING` = the two rows above).
-- **`RANGE`** — counts rows by *value* of the `ORDER BY` column (all rows with the same value are one peer group).
+- **`RANGE`** — counts rows by _value_ of the `ORDER BY` column (all rows with the same value are one peer group).
 
 <Callout type="warning">
 
@@ -163,7 +163,7 @@ WINDOW w AS (PARTITION BY customer_id ORDER BY amount DESC);
 
 ## A Mental Model
 
-Think of a window function as running in two passes. First the engine produces the normal result set (after `FROM`/`WHERE`/`GROUP BY`). Then, for each row, it looks at that row's *window* of related rows and computes the function — annotating, never collapsing. Because window functions run *after* `WHERE` and `GROUP BY` but *before* the final `ORDER BY`, you filter their output in an outer query, as the top-N example showed.
+Think of a window function as running in two passes. First the engine produces the normal result set (after `FROM`/`WHERE`/`GROUP BY`). Then, for each row, it looks at that row's _window_ of related rows and computes the function — annotating, never collapsing. Because window functions run _after_ `WHERE` and `GROUP BY` but _before_ the final `ORDER BY`, you filter their output in an outer query, as the top-N example showed.
 
 ## Recap
 

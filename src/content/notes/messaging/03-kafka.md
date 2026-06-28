@@ -1,10 +1,10 @@
 ---
-title: "Kafka"
-subtitle: "Topics, partitions, consumer groups, retention — the distributed log that makes replay and high-throughput event streaming possible."
+title: 'Kafka'
+subtitle: 'Topics, partitions, consumer groups, retention — the distributed log that makes replay and high-throughput event streaming possible.'
 chapter: 3
-level: "intermediate"
-readingTime: "13 min"
-topics: ["Kafka", "topics", "partitions", "consumer groups", "KafkaJS", "retention", "compaction"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['Kafka', 'topics', 'partitions', 'consumer groups', 'KafkaJS', 'retention', 'compaction']
 ---
 
 <script>
@@ -31,6 +31,7 @@ Topic: "orders"
 ```
 
 Key properties:
+
 - **Partitions** — unit of parallelism. More partitions = more consumers processing in parallel.
 - **Offset** — position of a message within a partition. Monotonically increasing.
 - **Consumer group** — group of consumers that coordinate to process partitions. Each partition assigned to one consumer in the group.
@@ -38,16 +39,16 @@ Key properties:
 
 ## Kafka vs RabbitMQ
 
-| | Kafka | RabbitMQ |
-|---|---|---|
-| **Message removal** | Never (retention-based) | On acknowledgement |
-| **Replay** | Yes — seek to any offset | No |
-| **Ordering** | Per-partition | Per-queue |
-| **Push vs pull** | Pull (consumer controls rate) | Push |
-| **Protocol** | Custom binary | AMQP |
-| **Throughput** | 1M+ msg/sec | 50k msg/sec |
-| **Routing** | Topic only | Exchange + binding rules |
-| **Use when** | Event log, replay, auditing | Task queues, RPC |
+|                     | Kafka                         | RabbitMQ                 |
+| ------------------- | ----------------------------- | ------------------------ |
+| **Message removal** | Never (retention-based)       | On acknowledgement       |
+| **Replay**          | Yes — seek to any offset      | No                       |
+| **Ordering**        | Per-partition                 | Per-queue                |
+| **Push vs pull**    | Pull (consumer controls rate) | Push                     |
+| **Protocol**        | Custom binary                 | AMQP                     |
+| **Throughput**      | 1M+ msg/sec                   | 50k msg/sec              |
+| **Routing**         | Topic only                    | Exchange + binding rules |
+| **Use when**        | Event log, replay, auditing   | Task queues, RPC         |
 
 ## Running Kafka
 
@@ -87,41 +88,43 @@ kafka-topics.sh --create \
 import { Kafka } from 'kafkajs';
 
 const kafka = new Kafka({
-  clientId: 'order-service',
-  brokers: ['kafka1:9092', 'kafka2:9092', 'kafka3:9092'],
-  retry: {
-    retries: 8,
-    initialRetryTime: 300,
-  },
+	clientId: 'order-service',
+	brokers: ['kafka1:9092', 'kafka2:9092', 'kafka3:9092'],
+	retry: {
+		retries: 8,
+		initialRetryTime: 300
+	}
 });
 
 const producer = kafka.producer({
-  allowAutoTopicCreation: false,
-  transactionTimeout: 30_000,
+	allowAutoTopicCreation: false,
+	transactionTimeout: 30_000
 });
 
 await producer.connect();
 
 // Single message
 await producer.send({
-  topic: 'orders',
-  messages: [{
-    key: order.customerId,       // same customer → same partition → ordered
-    value: JSON.stringify(order),
-    headers: {
-      'event-type': 'order.created',
-      'schema-version': '1',
-    },
-  }],
+	topic: 'orders',
+	messages: [
+		{
+			key: order.customerId, // same customer → same partition → ordered
+			value: JSON.stringify(order),
+			headers: {
+				'event-type': 'order.created',
+				'schema-version': '1'
+			}
+		}
+	]
 });
 
 // Batch for throughput
 await producer.send({
-  topic: 'orders',
-  messages: orders.map(order => ({
-    key: order.customerId,
-    value: JSON.stringify(order),
-  })),
+	topic: 'orders',
+	messages: orders.map((order) => ({
+		key: order.customerId,
+		value: JSON.stringify(order)
+	}))
 });
 ```
 
@@ -131,28 +134,28 @@ await producer.send({
 
 ```typescript
 const consumer = kafka.consumer({
-  groupId: 'payment-service',
-  sessionTimeout: 30_000,
-  heartbeatInterval: 3_000,
-  maxBytesPerPartition: 1_048_576,  // 1MB per fetch
+	groupId: 'payment-service',
+	sessionTimeout: 30_000,
+	heartbeatInterval: 3_000,
+	maxBytesPerPartition: 1_048_576 // 1MB per fetch
 });
 
 await consumer.connect();
 await consumer.subscribe({ topic: 'orders', fromBeginning: false });
 
 await consumer.run({
-  eachMessage: async ({ topic, partition, message }) => {
-    const order = JSON.parse(message.value!.toString());
-    const offset = message.offset;
-    
-    try {
-      await processOrder(order);
-      // Offset committed automatically after successful return
-    } catch (err) {
-      // Don't ack — consumer will retry from this offset
-      throw err;
-    }
-  },
+	eachMessage: async ({ topic, partition, message }) => {
+		const order = JSON.parse(message.value!.toString());
+		const offset = message.offset;
+
+		try {
+			await processOrder(order);
+			// Offset committed automatically after successful return
+		} catch (err) {
+			// Don't ack — consumer will retry from this offset
+			throw err;
+		}
+	}
 });
 ```
 
@@ -164,29 +167,31 @@ By default KafkaJS auto-commits offsets. For exactly-once semantics (process + c
 
 ```typescript
 await consumer.run({
-  autoCommit: false,
-  eachMessage: async ({ topic, partition, message, heartbeat }) => {
-    const order = JSON.parse(message.value!.toString());
-    
-    // Process and persist atomically
-    await db.transaction(async (tx) => {
-      await processOrderInTx(tx, order);
-      // Record the offset so we know where to resume
-      await tx.query(
-        'INSERT INTO kafka_offsets (topic, partition, offset) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET offset = $3',
-        [topic, partition, message.offset]
-      );
-    });
-    
-    // Commit only after successful DB write
-    await consumer.commitOffsets([{
-      topic,
-      partition,
-      offset: (BigInt(message.offset) + 1n).toString(),
-    }]);
-    
-    await heartbeat();  // prevent session timeout during long processing
-  },
+	autoCommit: false,
+	eachMessage: async ({ topic, partition, message, heartbeat }) => {
+		const order = JSON.parse(message.value!.toString());
+
+		// Process and persist atomically
+		await db.transaction(async (tx) => {
+			await processOrderInTx(tx, order);
+			// Record the offset so we know where to resume
+			await tx.query(
+				'INSERT INTO kafka_offsets (topic, partition, offset) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET offset = $3',
+				[topic, partition, message.offset]
+			);
+		});
+
+		// Commit only after successful DB write
+		await consumer.commitOffsets([
+			{
+				topic,
+				partition,
+				offset: (BigInt(message.offset) + 1n).toString()
+			}
+		]);
+
+		await heartbeat(); // prevent session timeout during long processing
+	}
 });
 ```
 
@@ -212,6 +217,7 @@ Alert when lag grows beyond a threshold. Use `kafka_consumer_lag_seconds` in Pro
 ## Retention and Compaction
 
 **Time-based retention (default):**
+
 ```bash
 kafka-configs.sh --alter \
   --bootstrap-server localhost:9092 \
@@ -221,6 +227,7 @@ kafka-configs.sh --alter \
 ```
 
 **Size-based retention:**
+
 ```
 --add-config "retention.bytes=10737418240"  # 10GB per partition
 ```
@@ -241,8 +248,8 @@ Compaction is lazy — Kafka runs compaction in the background. Old segments are
 
 ```typescript
 const producer = kafka.producer({
-  transactionalId: 'order-processor-1',   // unique per producer instance
-  idempotent: true,
+	transactionalId: 'order-processor-1', // unique per producer instance
+	idempotent: true
 });
 
 await producer.connect();
@@ -250,20 +257,20 @@ await producer.connect();
 const transaction = await producer.transaction();
 
 try {
-  await transaction.send({
-    topic: 'payments',
-    messages: [{ key: order.id, value: JSON.stringify(payment) }],
-  });
-  
-  await transaction.send({
-    topic: 'notifications',
-    messages: [{ key: order.id, value: JSON.stringify(notification) }],
-  });
+	await transaction.send({
+		topic: 'payments',
+		messages: [{ key: order.id, value: JSON.stringify(payment) }]
+	});
 
-  await transaction.commit();
+	await transaction.send({
+		topic: 'notifications',
+		messages: [{ key: order.id, value: JSON.stringify(notification) }]
+	});
+
+	await transaction.commit();
 } catch (err) {
-  await transaction.abort();
-  throw err;
+	await transaction.abort();
+	throw err;
 }
 ```
 
@@ -287,8 +294,8 @@ min.insync.replicas=2       # require 2 of 3 to ack writes
 ```
 
 With `replication-factor=3` and `min.insync.replicas=2`:
+
 - 1 broker can fail without data loss or availability impact
 - Writes require 2 brokers to be up (otherwise producer gets `NotEnoughReplicasException`)
 
 This is the production baseline. Never run Kafka with replication factor &lt; 3 for data you care about.
-

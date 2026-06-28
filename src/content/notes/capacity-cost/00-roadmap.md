@@ -1,10 +1,10 @@
 ---
-title: "Capacity & Cost — Roadmap"
-subtitle: "Sizing from first principles, cloud vs bare metal economics, database cost, redundancy pricing, and optimization that actually saves money."
+title: 'Capacity & Cost — Roadmap'
+subtitle: 'Sizing from first principles, cloud vs bare metal economics, database cost, redundancy pricing, and optimization that actually saves money.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Cloud bills grow faster than user counts because teams make infrastructure decis
 3. **Database Cost & Sizing** — IOPS, storage tiers, connection pooling, read replica math
 4. **The Cost of Redundancy** — N+1, multi-AZ, active-active — what each buys and what it costs
 5. **Cost Optimization in Practice** — finding waste, rightsizing, reserved instances, FinOps culture
-

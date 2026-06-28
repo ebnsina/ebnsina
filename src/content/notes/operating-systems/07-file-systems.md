@@ -1,10 +1,10 @@
 ---
-title: "File Systems"
-subtitle: "Turning flat disk blocks into named, hierarchical, durable files — with a cache in the middle that changes everything."
+title: 'File Systems'
+subtitle: 'Turning flat disk blocks into named, hierarchical, durable files — with a cache in the middle that changes everything.'
 chapter: 7
-level: "advanced"
-readingTime: "14 min"
-topics: ["inode", "page cache", "journaling"]
+level: 'advanced'
+readingTime: '14 min'
+topics: ['inode', 'page cache', 'journaling']
 ---
 
 <script>
@@ -17,11 +17,11 @@ A disk presents itself as a flat array of fixed-size **blocks**, numbered from z
 
 A **file** is a named sequence of bytes plus metadata (size, owner, permissions, timestamps). A **directory** is itself just a special file whose contents are a list of names mapped to the on-disk objects they refer to. The familiar tree — `/home/user/notes.txt` — is built by directories pointing to other directories and files.
 
-On Unix the abstraction goes further: *almost everything is a file*. Devices (`/dev/sda`), pipes, and sockets all present the same `read`/`write` interface, so the same code can talk to a disk file, a terminal, or a network connection.
+On Unix the abstraction goes further: _almost everything is a file_. Devices (`/dev/sda`), pipes, and sockets all present the same `read`/`write` interface, so the same code can talk to a disk file, a terminal, or a network connection.
 
 ## Inodes
 
-A name is not the file. The actual file — its metadata and the pointers to its data blocks — is an **inode** (index node). A directory entry maps a *name* to an *inode number*; the inode holds everything else:
+A name is not the file. The actual file — its metadata and the pointers to its data blocks — is an **inode** (index node). A directory entry maps a _name_ to an _inode number_; the inode holds everything else:
 
 ```text
 directory entry            inode (#8123)
@@ -37,7 +37,7 @@ directory entry            inode (#8123)
 
 Crucial consequences of this split:
 
-- **Hard links** — two directory entries can point to the *same* inode. The file has multiple names; the inode's *link count* tracks how many. The data is freed only when the count hits zero.
+- **Hard links** — two directory entries can point to the _same_ inode. The file has multiple names; the inode's _link count_ tracks how many. The data is freed only when the count hits zero.
 - **The name isn't in the inode.** Renaming a file just edits directory entries; the inode and data don't move.
 - Large files use **indirect blocks** — the inode points to a block that points to more data blocks — so file size isn't limited by the handful of direct pointers an inode holds.
 
@@ -52,9 +52,9 @@ Crucial consequences of this split:
 Disks are orders of magnitude slower than RAM, so the kernel keeps recently used file data in memory in the **page cache**. This is one of the most consequential things the OS does for performance.
 
 - On `read`, the kernel first checks the page cache. A hit returns data at memory speed with no disk access at all.
-- On `write`, data normally goes *into the page cache first* and is marked **dirty**. The syscall returns immediately, before anything touches the disk. The kernel flushes dirty pages to disk later (write-back).
+- On `write`, data normally goes _into the page cache first_ and is marked **dirty**. The syscall returns immediately, before anything touches the disk. The kernel flushes dirty pages to disk later (write-back).
 
-This is why the *second* read of a file is far faster than the first, and why "free" RAM on a busy Linux box is mostly page cache — memory the kernel will instantly reclaim if a program needs it. Idle RAM is wasted RAM, so the kernel fills it with cached file data.
+This is why the _second_ read of a file is far faster than the first, and why "free" RAM on a busy Linux box is mostly page cache — memory the kernel will instantly reclaim if a program needs it. Idle RAM is wasted RAM, so the kernel fills it with cached file data.
 
 ## Buffered vs Direct I/O
 
@@ -82,7 +82,7 @@ Either way the file system returns to a consistent state quickly, without scanni
 
 ## fsync and Durability
 
-To *guarantee* data has reached stable storage, a program must explicitly flush:
+To _guarantee_ data has reached stable storage, a program must explicitly flush:
 
 ```c
 int fd = open("data.txt", O_WRONLY | O_CREAT, 0644);

@@ -1,10 +1,10 @@
 ---
-title: "WebSockets & Real-Time"
+title: 'WebSockets & Real-Time'
 subtitle: "Build real-time features in Go — chat, live updates, notifications — using WebSockets and Go's concurrency model."
 chapter: 17
-level: "intermediate"
-readingTime: "20 min"
-topics: ["WebSockets", "real-time", "chat", "pub/sub", "SSE", "gorilla/websocket"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['WebSockets', 'real-time', 'chat', 'pub/sub', 'SSE', 'gorilla/websocket']
 ---
 
 <script>
@@ -276,6 +276,7 @@ func handleSSE(w http.ResponseWriter, r *http.Request) {
 ```
 
 **When to use SSE vs WebSockets:**
+
 - **SSE** — server pushes updates to client (live scores, stock tickers, notifications). Simpler, auto-reconnects, works over HTTP/2.
 - **WebSockets** — bidirectional communication (chat, collaborative editing, gaming). More complex but more powerful.
 
@@ -328,4 +329,3 @@ func (dh *DistributedHub) Broadcast(ctx context.Context, message []byte) {
 4. **Ping/pong keeps connections alive** — detect dead clients before they pile up
 5. **Buffered send channels** with overflow detection prevent slow clients from blocking the hub
 6. **Redis pub/sub** for scaling across multiple server instances
-

@@ -1,10 +1,10 @@
 ---
-title: "Replication & Sharding — Roadmap"
-subtitle: "Postgres streaming replicas by hand. Manual shard routing without Vitess."
+title: 'Replication & Sharding — Roadmap'
+subtitle: 'Postgres streaming replicas by hand. Manual shard routing without Vitess.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Replication solves availability and read scale. Sharding solves write scale. Thi
 3. **Sharding Concepts** — when to shard, shard key selection, range vs hash vs consistent hashing
 4. **Manual Shard Routing** — shard manager, repository pattern, cross-shard operations, migrations
 5. **Postgres Partitioning** — range, list, hash partitioning, pg_partman, partition pruning
-

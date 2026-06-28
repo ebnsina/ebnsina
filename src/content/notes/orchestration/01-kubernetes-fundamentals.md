@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes Fundamentals"
-subtitle: "Pods, deployments, services, and the control loop — what Kubernetes actually does and the primitives that everything else is built on."
+title: 'Kubernetes Fundamentals'
+subtitle: 'Pods, deployments, services, and the control loop — what Kubernetes actually does and the primitives that everything else is built on.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["Kubernetes", "pods", "deployments", "services", "control loop", "kubectl"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['Kubernetes', 'pods', 'deployments', 'services', 'control loop', 'kubectl']
 ---
 
 <script>
@@ -59,11 +59,11 @@ spec:
               key: database_url
       resources:
         requests:
-          memory: "128Mi"
-          cpu: "100m"
+          memory: '128Mi'
+          cpu: '100m'
         limits:
-          memory: "256Mi"
-          cpu: "500m"
+          memory: '256Mi'
+          cpu: '500m'
 ```
 
 **Deployment:** manages a ReplicaSet which manages Pods. Handles rolling updates and rollbacks.
@@ -82,13 +82,13 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1          # create 1 extra pod before killing old
-      maxUnavailable: 0    # never go below desired replicas during update
+      maxSurge: 1 # create 1 extra pod before killing old
+      maxUnavailable: 0 # never go below desired replicas during update
   template:
     metadata:
       labels:
         app: order-service
-        version: "1.2.0"
+        version: '1.2.0'
     spec:
       containers:
         - name: order-service
@@ -110,15 +110,15 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: '256Mi'
+              cpu: '250m'
             limits:
-              memory: "512Mi"
-              cpu: "1000m"
+              memory: '512Mi'
+              cpu: '1000m'
           lifecycle:
             preStop:
               exec:
-                command: ["sleep", "5"]
+                command: ['sleep', '5']
       terminationGracePeriodSeconds: 35
 ```
 
@@ -132,14 +132,15 @@ metadata:
   namespace: production
 spec:
   selector:
-    app: order-service         # routes to pods with this label
+    app: order-service # routes to pods with this label
   ports:
     - port: 80
       targetPort: 3000
-  type: ClusterIP              # internal only
+  type: ClusterIP # internal only
 ```
 
 Service types:
+
 - `ClusterIP` — internal cluster IP only (default)
 - `NodePort` — exposes on a static port on every node
 - `LoadBalancer` — provisions cloud load balancer (AWS ALB, GCP LB)
@@ -200,9 +201,9 @@ metadata:
   name: order-service-config
   namespace: production
 data:
-  LOG_LEVEL: "info"
-  QUEUE_CONCURRENCY: "10"
-  FEATURE_NEW_CHECKOUT: "true"
+  LOG_LEVEL: 'info'
+  QUEUE_CONCURRENCY: '10'
+  FEATURE_NEW_CHECKOUT: 'true'
 ```
 
 ```yaml
@@ -219,6 +220,7 @@ data:
 ```
 
 Reference in pods:
+
 ```yaml
 spec:
   containers:
@@ -244,11 +246,11 @@ spec:
 ```yaml
 resources:
   requests:
-    memory: "256Mi"
-    cpu: "250m"      # 250 millicores = 0.25 CPU cores
+    memory: '256Mi'
+    cpu: '250m' # 250 millicores = 0.25 CPU cores
   limits:
-    memory: "512Mi"
-    cpu: "1000m"     # 1 full core
+    memory: '512Mi'
+    cpu: '1000m' # 1 full core
 ```
 
 **Memory:** always set limits. An OOM-killed pod restarts; an OOM node evicts everything.
@@ -266,8 +268,8 @@ metadata:
   name: api-ingress
   namespace: production
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
 spec:
   ingressClassName: nginx
   tls:
@@ -313,4 +315,3 @@ kubectl label pod order-service-7d4b5-xyz app=order-service-debug --overwrite -n
 # Service selector no longer matches — this pod gets no traffic
 # Use this to debug a single instance under real conditions
 ```
-

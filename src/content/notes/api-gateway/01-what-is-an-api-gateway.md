@@ -1,10 +1,10 @@
 ---
-title: "What Is an API Gateway"
-subtitle: "The single entry point in front of your services — routing, auth, rate limiting, and transformation without touching your backends."
+title: 'What Is an API Gateway'
+subtitle: 'The single entry point in front of your services — routing, auth, rate limiting, and transformation without touching your backends.'
 chapter: 1
-level: "beginner"
-readingTime: "11 min"
-topics: ["api gateway", "reverse proxy", "routing", "cross-cutting concerns"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['api gateway', 'reverse proxy', 'routing', 'cross-cutting concerns']
 ---
 
 <script>
@@ -47,6 +47,7 @@ The gateway owns cross-cutting concerns. Services handle business logic only.
 ## What a Gateway Does
 
 **Routing** — map incoming paths to backend services:
+
 ```
 GET  /users/*        → user-service
 GET  /orders/*       → order-service
@@ -69,13 +70,13 @@ POST /payments/*     → payment-service
 
 These terms overlap but have distinct meanings:
 
-| | Reverse Proxy | Load Balancer | API Gateway |
-|--|---------------|---------------|-------------|
-| Routes by | URL/host | Connection | URL + headers + method |
-| Auth | No | No | Yes |
-| Rate limiting | No | No | Yes |
-| Transforms payloads | Rarely | No | Yes |
-| Examples | nginx, Caddy | HAProxy, AWS NLB | Kong, AWS API Gateway, Traefik |
+|                     | Reverse Proxy | Load Balancer    | API Gateway                    |
+| ------------------- | ------------- | ---------------- | ------------------------------ |
+| Routes by           | URL/host      | Connection       | URL + headers + method         |
+| Auth                | No            | No               | Yes                            |
+| Rate limiting       | No            | No               | Yes                            |
+| Transforms payloads | Rarely        | No               | Yes                            |
+| Examples            | nginx, Caddy  | HAProxy, AWS NLB | Kong, AWS API Gateway, Traefik |
 
 A gateway is a reverse proxy with application-layer awareness. Many tools blur these lines — nginx can do gateway work with plugins, Traefik is a proxy with gateway features built in.
 
@@ -100,53 +101,52 @@ import httpProxy from 'http-proxy';
 const proxy = httpProxy.createProxyServer({});
 
 const routes: Record<string, string> = {
-  '/users':    'http://user-service:3001',
-  '/orders':   'http://order-service:3002',
-  '/products': 'http://product-service:3003',
+	'/users': 'http://user-service:3001',
+	'/orders': 'http://order-service:3002',
+	'/products': 'http://product-service:3003'
 };
 
 function matchRoute(path: string): string | null {
-  for (const [prefix, target] of Object.entries(routes)) {
-    if (path.startsWith(prefix)) return target;
-  }
-  return null;
+	for (const [prefix, target] of Object.entries(routes)) {
+		if (path.startsWith(prefix)) return target;
+	}
+	return null;
 }
 
 const gateway = http.createServer((req, res) => {
-  // 1. Auth
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!verifyJWT(token)) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized' }));
-    return;
-  }
+	// 1. Auth
+	const token = req.headers['authorization']?.split(' ')[1];
+	if (!verifyJWT(token)) {
+		res.writeHead(401, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Unauthorized' }));
+		return;
+	}
 
-  // 2. Rate limiting (simplified)
-  const clientIp = req.socket.remoteAddress!;
-  if (isRateLimited(clientIp)) {
-    res.writeHead(429, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Too Many Requests' }));
-    return;
-  }
+	// 2. Rate limiting (simplified)
+	const clientIp = req.socket.remoteAddress!;
+	if (isRateLimited(clientIp)) {
+		res.writeHead(429, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Too Many Requests' }));
+		return;
+	}
 
-  // 3. Route
-  const target = matchRoute(req.url ?? '/');
-  if (!target) {
-    res.writeHead(404);
-    res.end(JSON.stringify({ error: 'Not Found' }));
-    return;
-  }
+	// 3. Route
+	const target = matchRoute(req.url ?? '/');
+	if (!target) {
+		res.writeHead(404);
+		res.end(JSON.stringify({ error: 'Not Found' }));
+		return;
+	}
 
-  // 4. Add internal headers
-  req.headers['x-request-id'] = crypto.randomUUID();
-  req.headers['x-forwarded-for'] = clientIp;
+	// 4. Add internal headers
+	req.headers['x-request-id'] = crypto.randomUUID();
+	req.headers['x-forwarded-for'] = clientIp;
 
-  // 5. Proxy
-  proxy.web(req, res, { target });
+	// 5. Proxy
+	proxy.web(req, res, { target });
 });
 
 gateway.listen(3000);
 ```
 
 Production gateways are this loop — vastly optimized and hardened.
-

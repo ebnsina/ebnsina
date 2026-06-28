@@ -1,10 +1,10 @@
 ---
-title: "Reverse Proxy"
-subtitle: "nginx in front of your application server. The headers that matter, the timeouts that save you, and the upstream pool that handles failure."
+title: 'Reverse Proxy'
+subtitle: 'nginx in front of your application server. The headers that matter, the timeouts that save you, and the upstream pool that handles failure.'
 chapter: 7
-level: "intermediate"
-readingTime: "13 min"
-topics: ["reverse proxy", "nginx", "proxy_pass", "upstream", "headers"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['reverse proxy', 'nginx', 'proxy_pass', 'upstream', 'headers']
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["reverse proxy", "nginx", "proxy_pass", "upstream", "headers"]
 
 ## What a reverse proxy is
 
-A reverse proxy is a server that accepts a client's request, forwards it to one of several backend servers, and returns the backend's response to the client. The client never knows the backend exists — from its point of view, nginx *is* the server.
+A reverse proxy is a server that accepts a client's request, forwards it to one of several backend servers, and returns the backend's response to the client. The client never knows the backend exists — from its point of view, nginx _is_ the server.
 
 ```text
    client  ──► nginx (:443) ──► your-app (:8080)
@@ -196,7 +196,7 @@ upstream app_backend {
 - **`fail_timeout=30s`** — keep it down for 30 seconds, then try again.
 - **`backup`** — only used if all primaries are down.
 
-Note: open-source nginx uses *passive* health checks — it learns a backend is down only by trying to use it and failing. Active health checks (probing `/health` periodically) are an nginx Plus feature, or you bolt it on with a separate process. Most teams accept passive checks.
+Note: open-source nginx uses _passive_ health checks — it learns a backend is down only by trying to use it and failing. Active health checks (probing `/health` periodically) are an nginx Plus feature, or you bolt it on with a separate process. Most teams accept passive checks.
 
 ## Timeouts — the difference between slow and dead
 
@@ -215,7 +215,7 @@ For typical APIs:
 
 When a timeout expires, nginx returns `504 Gateway Timeout` to the client. The backend's request, if still in flight, continues — the backend has no idea nginx gave up. Long-running backend work that needs to outlive the client should be triggered as a job, not handled in-band.
 
-Send-timeout matters for large uploads. If a client uploads slowly, `proxy_send_timeout` controls how long nginx waits for the next byte from the *client*. Too short and slow uploads fail; too long and Slowloris attacks tie up workers.
+Send-timeout matters for large uploads. If a client uploads slowly, `proxy_send_timeout` controls how long nginx waits for the next byte from the _client_. Too short and slow uploads fail; too long and Slowloris attacks tie up workers.
 
 ## Buffering — what nginx does with the response
 
@@ -350,4 +350,3 @@ If you get the 502 cleanly when the backend is down, your timeouts and upstream 
 - Trailing slashes in `proxy_pass` change behavior — test before deploying.
 
 Next chapter: making sense of the logs both nginx and your app produce — formats, fields, and the queries you will run a thousand times.
-

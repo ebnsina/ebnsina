@@ -1,10 +1,10 @@
 ---
-title: "Constraints"
-subtitle: "The schema is your last line of defense against application bugs. Constraints encode the rules that should always be true — Postgres enforces them whether your app remembers to or not."
+title: 'Constraints'
+subtitle: 'The schema is your last line of defense against application bugs. Constraints encode the rules that should always be true — Postgres enforces them whether your app remembers to or not.'
 chapter: 6
-level: "intermediate"
-readingTime: "12 min"
-topics: ["data-modeling", "constraints", "foreign-keys", "check", "unique"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['data-modeling', 'constraints', 'foreign-keys', 'check', 'unique']
 ---
 
 <script>
@@ -48,7 +48,7 @@ CREATE TABLE users (
 
 Default to NOT NULL on every column. Only allow NULL when "no value yet" or "not applicable" is a meaningful state.
 
-The discipline: when adding a nullable column, ask *what does NULL mean here?* If the answer is "I don't know, it's just optional", make it NOT NULL with a sensible default.
+The discipline: when adding a nullable column, ask _what does NULL mean here?_ If the answer is "I don't know, it's just optional", make it NOT NULL with a sensible default.
 
 A few common cases where NULL is right:
 
@@ -133,7 +133,7 @@ Skipping foreign keys "for performance" is a bad trade. The cost of FK validatio
 CREATE INDEX ON orders(customer_id);
 ```
 
-Without that index, "find all orders for user X" is a full table scan, *and* deleting a user is a full table scan to check for orphans.
+Without that index, "find all orders for user X" is a full table scan, _and_ deleting a user is a full table scan to check for orphans.
 
 <Callout type="warn">
 
@@ -242,11 +242,13 @@ Postgres has STORED (computed at write time) and (in newer versions) VIRTUAL (co
 A common question: should this validation live in the schema or in app code?
 
 **Schema** when:
+
 - The rule is universal (every code path must obey).
 - The rule can be expressed in SQL (range, format, FK, uniqueness).
 - The rule is about "what is true," not "what should happen."
 
 **Application** when:
+
 - The rule needs context the DB doesn't have (current user, feature flags, business rules).
 - The rule produces friendly error messages with multiple field-level violations.
 - The rule cross-references external services.
@@ -301,7 +303,7 @@ ALTER TABLE big_table
 ALTER TABLE big_table VALIDATE CONSTRAINT big_table_x_check;
 ```
 
-`NOT VALID` makes the constraint apply to *new* writes immediately while existing rows are not checked. `VALIDATE` then scans existing rows without holding an exclusive lock. Two-step migration; zero downtime.
+`NOT VALID` makes the constraint apply to _new_ writes immediately while existing rows are not checked. `VALIDATE` then scans existing rows without holding an exclusive lock. Two-step migration; zero downtime.
 
 For NOT NULL, the same idea works via a CHECK first, then promoting:
 
@@ -337,4 +339,3 @@ Chapter 10 covers more of these expand/contract patterns.
 - Constraints are the last line; layer with app validation for UX and edge cases.
 
 Next: [Time and soft delete](/notes/data-modeling/07-time-soft-delete) — timestamps, time zones, history, and the soft-delete trap.
-

@@ -1,10 +1,11 @@
 ---
-title: "Production Go"
+title: 'Production Go'
 subtitle: "Logging, configuration, graceful shutdown, profiling, and deployment — everything between 'it works on my machine' and running at scale."
 chapter: 21
-level: "advanced"
-readingTime: "25 min"
-topics: ["logging", "configuration", "graceful shutdown", "profiling", "deployment", "observability"]
+level: 'advanced'
+readingTime: '25 min'
+topics:
+  ['logging', 'configuration', 'graceful shutdown', 'profiling', 'deployment', 'observability']
 ---
 
 <script>
@@ -487,4 +488,3 @@ func getKeys(m map[string]int) []string {
 6. **Multi-stage Docker builds** — final image is ~10MB with just the binary
 7. **Connection retry with exponential backoff** — databases and caches aren't always ready instantly
 8. **Pre-allocate slices, use `sync.Pool`, avoid `fmt.Sprintf` in hot paths** — small optimizations compound at scale
-

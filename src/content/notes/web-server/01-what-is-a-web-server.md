@@ -1,10 +1,10 @@
 ---
-title: "What is a Web Server"
-subtitle: "Anatomy of an HTTP request from socket to response. The four stages every web server runs through, and the names for the parts."
+title: 'What is a Web Server'
+subtitle: 'Anatomy of an HTTP request from socket to response. The four stages every web server runs through, and the names for the parts.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["http", "web server", "tcp", "request lifecycle"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['http', 'web server', 'tcp', 'request lifecycle']
 ---
 
 <script>
@@ -90,7 +90,7 @@ Content-Length: 13
 hello, world
 ```
 
-`curl` prints `hello, world` and exits. Congratulations — you just *were* a web server, by hand, with `nc`.
+`curl` prints `hello, world` and exits. Congratulations — you just _were_ a web server, by hand, with `nc`.
 
 <Callout type="info">
 
@@ -110,15 +110,15 @@ Three fields, separated by single spaces:
 
 **Method** — what to do.
 
-| Method | Idempotent? | Has body? | Typical use |
-|---|---|---|---|
-| `GET` | Yes | No | Read a resource. |
-| `POST` | No | Yes | Create something. |
-| `PUT` | Yes | Yes | Replace a resource. |
-| `PATCH` | No | Yes | Modify a resource. |
-| `DELETE` | Yes | No | Remove a resource. |
-| `HEAD` | Yes | No | Like `GET` but response has no body — for metadata. |
-| `OPTIONS` | Yes | No | What methods are supported? CORS preflight. |
+| Method    | Idempotent? | Has body? | Typical use                                         |
+| --------- | ----------- | --------- | --------------------------------------------------- |
+| `GET`     | Yes         | No        | Read a resource.                                    |
+| `POST`    | No          | Yes       | Create something.                                   |
+| `PUT`     | Yes         | Yes       | Replace a resource.                                 |
+| `PATCH`   | No          | Yes       | Modify a resource.                                  |
+| `DELETE`  | Yes         | No        | Remove a resource.                                  |
+| `HEAD`    | Yes         | No        | Like `GET` but response has no body — for metadata. |
+| `OPTIONS` | Yes         | No        | What methods are supported? CORS preflight.         |
 
 Idempotent means "doing it twice has the same effect as doing it once." Important for retries — `GET` and `PUT` are safe to retry; `POST` may not be.
 
@@ -141,7 +141,7 @@ Headers are `Name: Value` pairs. Names are case-insensitive (`Host` and `host` a
 
 Six headers worth memorizing:
 
-- **Host** — *which* virtual host on this server. Required in HTTP/1.1. The same IP can serve many domains via the `Host` header.
+- **Host** — _which_ virtual host on this server. Required in HTTP/1.1. The same IP can serve many domains via the `Host` header.
 - **Content-Type** — the MIME type of the body (`text/html`, `application/json`, `image/png`, ...).
 - **Content-Length** — body length in bytes. Required for non-chunked bodies.
 - **Transfer-Encoding: chunked** — alternative to Content-Length, for streaming.
@@ -160,15 +160,15 @@ HTTP/1.1 503 Service Unavailable
 
 Five categories, by first digit:
 
-| Range | Meaning | Common codes |
-|---|---|---|
-| **1xx** | Informational | `100 Continue` |
-| **2xx** | Success | `200 OK`, `201 Created`, `204 No Content` |
-| **3xx** | Redirect | `301 Moved Permanently`, `302 Found`, `304 Not Modified` |
-| **4xx** | Client error | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `429 Too Many Requests` |
-| **5xx** | Server error | `500 Internal Server Error`, `502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout` |
+| Range   | Meaning       | Common codes                                                                                     |
+| ------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| **1xx** | Informational | `100 Continue`                                                                                   |
+| **2xx** | Success       | `200 OK`, `201 Created`, `204 No Content`                                                        |
+| **3xx** | Redirect      | `301 Moved Permanently`, `302 Found`, `304 Not Modified`                                         |
+| **4xx** | Client error  | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `429 Too Many Requests` |
+| **5xx** | Server error  | `500 Internal Server Error`, `502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout` |
 
-`4xx` means *the client did something wrong*. `5xx` means *the server did something wrong*. Knowing which side broke is the first question in any debugging session.
+`4xx` means _the client did something wrong_. `5xx` means _the server did something wrong_. Knowing which side broke is the first question in any debugging session.
 
 ## Connection lifecycle — keep-alive
 
@@ -189,11 +189,11 @@ Servers cap how long they hold an idle keep-alive socket (`keepalive_timeout`, t
 
 ## Pipelining and HTTP/2
 
-Even with keep-alive, HTTP/1.1 is *serial* per connection — you must finish reading response A before you can send request B. **Pipelining** allowed sending B before A's response, but it was poorly supported and head-of-line blocking made it fragile. Most clients never used it.
+Even with keep-alive, HTTP/1.1 is _serial_ per connection — you must finish reading response A before you can send request B. **Pipelining** allowed sending B before A's response, but it was poorly supported and head-of-line blocking made it fragile. Most clients never used it.
 
 HTTP/2 fixed this with **multiplexing** — multiple logical streams over one TCP connection, interleaved frame by frame. This is one of the main reasons to put nginx (or a similar proxy) in front of your application: you get HTTP/2 termination for free, while your backend speaks plain HTTP/1.1.
 
-HTTP/3 takes it further by replacing TCP with QUIC (UDP-based) to eliminate head-of-line blocking at the *transport* layer. Same multiplexed-streams model.
+HTTP/3 takes it further by replacing TCP with QUIC (UDP-based) to eliminate head-of-line blocking at the _transport_ layer. Same multiplexed-streams model.
 
 ## What "running on port 80" actually means
 
@@ -213,7 +213,7 @@ A few things going on:
 
 - `0.0.0.0` means "any interface." `127.0.0.1` would be loopback only.
 - Ports below 1024 require root or `CAP_NET_BIND_SERVICE` (chapter 8 of Linux & VPS).
-- `listen(128)` sets the *backlog* — how many fully-handshaked connections can queue up waiting for `accept()`. Too low, and bursts get dropped at the kernel.
+- `listen(128)` sets the _backlog_ — how many fully-handshaked connections can queue up waiting for `accept()`. Too low, and bursts get dropped at the kernel.
 - Each `accept()` returns a new socket for that one connection. The original listening socket keeps accepting new ones.
 
 Whether the server then handles `conn` in the same thread, hands it to a worker pool, or registers it with an event loop is a design choice — chapter 4 covers it.
@@ -227,8 +227,8 @@ A web server can serve two kinds of content:
 
 For dynamic content, "the server" is often two processes:
 
-1. A *reverse proxy* (nginx) accepting raw HTTP, handling TLS, applying rate limits, serving static assets directly.
-2. An *application server* (your Go binary, Node process, Python WSGI/ASGI app) handling the dynamic routes, fronted by the proxy.
+1. A _reverse proxy_ (nginx) accepting raw HTTP, handling TLS, applying rate limits, serving static assets directly.
+2. An _application server_ (your Go binary, Node process, Python WSGI/ASGI app) handling the dynamic routes, fronted by the proxy.
 
 Most production setups look like this. Chapters 6 and 7 cover the proxy half.
 
@@ -242,4 +242,3 @@ Most production setups look like this. Chapters 6 and 7 cover the proxy half.
 - Static content comes from disk. Dynamic content comes from your application server, usually behind a reverse proxy.
 
 Next chapter: speak HTTP yourself with `nc` and a few hundred lines of Go.
-

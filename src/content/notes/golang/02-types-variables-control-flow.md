@@ -1,10 +1,10 @@
 ---
-title: "Types, Variables & Control Flow"
+title: 'Types, Variables & Control Flow'
 subtitle: "Go's type system is simple but strict — learn the building blocks before you build anything real."
 chapter: 2
-level: "beginner"
-readingTime: "18 min"
-topics: ["types", "variables", "constants", "if/else", "loops", "switch"]
+level: 'beginner'
+readingTime: '18 min'
+topics: ['types', 'variables', 'constants', 'if/else', 'loops', 'switch']
 ---
 
 <script>
@@ -362,4 +362,3 @@ for name, age := range ages {
 5. **Slices over arrays** — use `make` for pre-allocation, `append` for growing
 6. **Maps need the comma-ok idiom** — `v, ok := m[key]` to distinguish "not found" from "zero value"
 7. **No implicit type conversions** — `float64(myInt)` is required, Go won't guess for you
-

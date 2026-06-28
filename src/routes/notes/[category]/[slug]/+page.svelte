@@ -72,7 +72,10 @@
 				<div></div>
 			{/if}
 			{#if data.next}
-				<a href={`/notes/${data.category}/${data.next.slug}`} class="chapter-nav-link ml-auto text-right">
+				<a
+					href={`/notes/${data.category}/${data.next.slug}`}
+					class="chapter-nav-link ml-auto text-right"
+				>
 					<span class="chapter-nav-label">Next →</span>
 					<span class="chapter-nav-title">{data.next.meta.title}</span>
 				</a>

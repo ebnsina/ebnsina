@@ -1,10 +1,11 @@
 ---
-title: "Social Engineering"
-subtitle: "Phishing campaigns, pretexting, vishing, physical intrusion — and the defenses that actually work."
+title: 'Social Engineering'
+subtitle: 'Phishing campaigns, pretexting, vishing, physical intrusion — and the defenses that actually work.'
 chapter: 13
-level: "intermediate"
-readingTime: "10 min"
-topics: ["social engineering", "phishing", "pretexting", "vishing", "spear phishing", "GoPhish", "SET"]
+level: 'intermediate'
+readingTime: '10 min'
+topics:
+  ['social engineering', 'phishing', 'pretexting', 'vishing', 'spear phishing', 'GoPhish', 'SET']
 ---
 
 <script>
@@ -59,18 +60,10 @@ unzip gophish-linux-64bit.zip
 
 ```html
 <!-- Example: IT helpdesk credential phishing -->
-Subject: ACTION REQUIRED: Your account will be suspended
-
-Dear {{.FirstName}},
-
-Our security systems detected unusual sign-in activity on your account.
-To prevent unauthorized access, please verify your identity within 24 hours.
-
-Verify Now: {{.URL}}
-
-If you don't verify, your account will be temporarily suspended.
-
-IT Security Team
+Subject: ACTION REQUIRED: Your account will be suspended Dear {{.FirstName}}, Our security systems
+detected unusual sign-in activity on your account. To prevent unauthorized access, please verify
+your identity within 24 hours. Verify Now: {{.URL}} If you don't verify, your account will be
+temporarily suspended. IT Security Team
 ```
 
 **GoPhish variables:** `{{.FirstName}}`, `{{.LastName}}`, `{{.Email}}`, `{{.URL}}` (unique tracking link per user)
@@ -233,3 +226,4 @@ Process:
   Visitor management system       → escort, badge, sign-in
   Clean desk policy               → no passwords on sticky notes
   Document destruction policy     → shred, don't recycle bin
+```

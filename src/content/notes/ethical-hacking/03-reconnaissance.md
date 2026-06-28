@@ -1,10 +1,19 @@
 ---
-title: "Reconnaissance"
-subtitle: "OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — gathering intelligence without touching the target."
+title: 'Reconnaissance'
+subtitle: 'OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — gathering intelligence without touching the target.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["OSINT", "reconnaissance", "Google dorks", "Shodan", "theHarvester", "passive recon", "active recon"]
+level: 'beginner'
+readingTime: '12 min'
+topics:
+  [
+    'OSINT',
+    'reconnaissance',
+    'Google dorks',
+    'Shodan',
+    'theHarvester',
+    'passive recon',
+    'active recon'
+  ]
 ---
 
 <script>
@@ -141,6 +150,7 @@ shodan host 93.184.216.34
 ```
 
 **Common Shodan findings:**
+
 - `port:6379` — Redis with no auth
 - `port:9200` — Elasticsearch with no auth
 - `port:27017` — MongoDB with no auth
@@ -164,6 +174,7 @@ theHarvester -d example.com -b google,bing,linkedin,shodan -l 500 -f output.html
 ## LinkedIn / Social Media OSINT
 
 LinkedIn reveals:
+
 - Employee names → generate username lists (a.al-khwarizmi, ahmad.al-khwarizmi, aalkhwarizmi)
 - Job titles → understand tech stack ("Senior Kubernetes Engineer" = K8s in prod)
 - Recent job postings → "AWS Lambda experience required" = they use Lambda
@@ -250,38 +261,43 @@ After passive recon, document:
 ## Target: example.com
 
 ### Infrastructure
+
 - IP ranges: 93.184.216.0/24, 198.51.100.0/24
 - Hosting: AWS us-east-1 (from TXT records + Shodan)
 - CDN: Cloudflare (IP resolves to CF range)
 - Name servers: ns1.cloudflare.com, ns2.cloudflare.com
 
 ### Subdomains Found (47 total)
-- api.example.com         → 93.184.216.10
-- staging.example.com     → 93.184.216.11  ← interesting
-- dev.example.com         → 10.0.1.5       ← private IP leaked!
-- mail.example.com        → 198.51.100.5
-- vpn.example.com         → 198.51.100.6   ← VPN exposed
+
+- api.example.com → 93.184.216.10
+- staging.example.com → 93.184.216.11 ← interesting
+- dev.example.com → 10.0.1.5 ← private IP leaked!
+- mail.example.com → 198.51.100.5
+- vpn.example.com → 198.51.100.6 ← VPN exposed
 
 ### Technology Stack
+
 - Web: nginx/1.18.0 (from Shodan banner)
 - App: Node.js (from X-Powered-By header)
 - DB: likely PostgreSQL (job postings mention it)
 - Email: Google Workspace (MX: aspmx.l.google.com)
 
 ### Employees
+
 - 47 LinkedIn profiles
 - 23 unique email addresses (format: firstname.lastname@example.com)
 - CTO: ahmad.al-khwarizmi@example.com (from conference speaker bio)
 
 ### Exposed Services (Shodan)
+
 - staging.example.com:8080 — Apache Tomcat 8.5.23 (CVE-2020-1938 — check)
 - 93.184.216.15:6379 — Redis, no auth detected
 
 ### GitHub Findings
+
 - 3 repos mention "example.com"
 - AWS key in commit abc123 (now deleted, still in history)
   Key: AKIAIOSFODNN7EXAMPLE
 ```
 
 This document becomes the input for your scanning phase.
-

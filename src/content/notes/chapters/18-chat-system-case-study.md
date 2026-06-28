@@ -1,10 +1,10 @@
 ---
-title: "Case Study: Chat System at Scale"
-subtitle: "Design and build a production chat system with message delivery, read receipts, typing indicators, and fan-out."
+title: 'Case Study: Chat System at Scale'
+subtitle: 'Design and build a production chat system with message delivery, read receipts, typing indicators, and fan-out.'
 chapter: 18
-level: "advanced"
-readingTime: "25 min"
-topics: ["chat system", "message delivery", "fan-out", "presence", "read receipts"]
+level: 'advanced'
+readingTime: '25 min'
+topics: ['chat system', 'message delivery', 'fan-out', 'presence', 'read receipts']
 ---
 
 <script>
@@ -20,12 +20,10 @@ A production chat system is far more than sending messages between two users. It
 Think of it like a postal service for a large office building. The mailroom (message router) receives every letter, checks the directory (presence service) to see if the recipient is at their desk, and either delivers it directly or puts it in their mailbox (offline queue). The sender gets a delivery receipt when the letter arrives, and a read receipt when the recipient opens it. Every letter has a timestamp and sequence number so they can be sorted correctly even if they arrive out of order.
 
 <Mermaid
-	title="Chat System Architecture"
-	code={`
-graph TD
+title="Chat System Architecture"
+code={`graph TD
   A["Client A<br/>WebSocket"] --> CM["Connection Manager<br/>Online Users"] --> MR["Message Router<br/>Fan-out"]
-  MR --> MS["Message Store<br/>Conversations"] --> OQ["Offline Queue<br/>Pending Delivery"] --> PS["Presence Service<br/>Status Tracking"]
-`}
+  MR --> MS["Message Store<br/>Conversations"] --> OQ["Offline Queue<br/>Pending Delivery"] --> PS["Presence Service<br/>Status Tracking"]`}
 />
 
 ## Real-World Analogy
@@ -48,442 +46,448 @@ Here's a complete chat system with message storage, fan-out on write, read recei
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import crypto from "node:crypto";
+import crypto from 'node:crypto';
 
 // --- Lamport Clock for message ordering ---
 class LamportClock {
-  private counter: number = 0;
+	private counter: number = 0;
 
-  tick(): number {
-    return ++this.counter;
-  }
+	tick(): number {
+		return ++this.counter;
+	}
 
-  update(received: number): number {
-    this.counter = Math.max(this.counter, received) + 1;
-    return this.counter;
-  }
+	update(received: number): number {
+		this.counter = Math.max(this.counter, received) + 1;
+		return this.counter;
+	}
 
-  current(): number {
-    return this.counter;
-  }
+	current(): number {
+		return this.counter;
+	}
 }
 
 // --- Types ---
 interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  content: string;
-  timestamp: number;
-  lamportTs: number;
-  status: "sent" | "delivered" | "read";
+	id: string;
+	conversationId: string;
+	senderId: string;
+	content: string;
+	timestamp: number;
+	lamportTs: number;
+	status: 'sent' | 'delivered' | 'read';
 }
 
 interface Conversation {
-  id: string;
-  participants: string[];
-  lastMessageAt: number;
-  createdAt: number;
+	id: string;
+	participants: string[];
+	lastMessageAt: number;
+	createdAt: number;
 }
 
 interface ReadReceipt {
-  userId: string;
-  conversationId: string;
-  lastReadMessageId: string;
-  lastReadTimestamp: number;
+	userId: string;
+	conversationId: string;
+	lastReadMessageId: string;
+	lastReadTimestamp: number;
 }
 
 interface TypingEvent {
-  userId: string;
-  conversationId: string;
-  isTyping: boolean;
-  timestamp: number;
+	userId: string;
+	conversationId: string;
+	isTyping: boolean;
+	timestamp: number;
 }
 
 interface UserConnection {
-  userId: string;
-  online: boolean;
-  lastSeen: number;
-  send: (event: ChatEvent) => void;
+	userId: string;
+	online: boolean;
+	lastSeen: number;
+	send: (event: ChatEvent) => void;
 }
 
 type ChatEvent =
-  | { type: "message"; data: Message }
-  | { type: "delivered"; data: { messageId: string; conversationId: string } }
-  | { type: "read_receipt"; data: ReadReceipt }
-  | { type: "typing"; data: TypingEvent }
-  | { type: "presence"; data: { userId: string; online: boolean } }
-  | { type: "offline_messages"; data: Message[] };
+	| { type: 'message'; data: Message }
+	| { type: 'delivered'; data: { messageId: string; conversationId: string } }
+	| { type: 'read_receipt'; data: ReadReceipt }
+	| { type: 'typing'; data: TypingEvent }
+	| { type: 'presence'; data: { userId: string; online: boolean } }
+	| { type: 'offline_messages'; data: Message[] };
 
 // --- Message Store ---
 class MessageStore {
-  private messages = new Map<string, Message[]>(); // conversationId -> messages
-  private conversations = new Map<string, Conversation>();
-  private readReceipts = new Map<string, ReadReceipt>(); // `userId:convId` -> receipt
+	private messages = new Map<string, Message[]>(); // conversationId -> messages
+	private conversations = new Map<string, Conversation>();
+	private readReceipts = new Map<string, ReadReceipt>(); // `userId:convId` -> receipt
 
-  createConversation(participants: string[]): Conversation {
-    const id = `conv-${crypto.randomUUID().slice(0, 8)}`;
-    const conv: Conversation = {
-      id,
-      participants: [...participants],
-      lastMessageAt: 0,
-      createdAt: Date.now(),
-    };
-    this.conversations.set(id, conv);
-    this.messages.set(id, []);
-    console.log(`[STORE] Created conversation ${id} with participants: ${participants.join(", ")}`);
-    return conv;
-  }
+	createConversation(participants: string[]): Conversation {
+		const id = `conv-${crypto.randomUUID().slice(0, 8)}`;
+		const conv: Conversation = {
+			id,
+			participants: [...participants],
+			lastMessageAt: 0,
+			createdAt: Date.now()
+		};
+		this.conversations.set(id, conv);
+		this.messages.set(id, []);
+		console.log(`[STORE] Created conversation ${id} with participants: ${participants.join(', ')}`);
+		return conv;
+	}
 
-  storeMessage(msg: Message): void {
-    const msgs = this.messages.get(msg.conversationId);
-    if (!msgs) throw new Error(`Conversation ${msg.conversationId} not found`);
+	storeMessage(msg: Message): void {
+		const msgs = this.messages.get(msg.conversationId);
+		if (!msgs) throw new Error(`Conversation ${msg.conversationId} not found`);
 
-    msgs.push(msg);
-    const conv = this.conversations.get(msg.conversationId);
-    if (conv) conv.lastMessageAt = msg.timestamp;
+		msgs.push(msg);
+		const conv = this.conversations.get(msg.conversationId);
+		if (conv) conv.lastMessageAt = msg.timestamp;
 
-    console.log(`[STORE] Stored message ${msg.id} in ${msg.conversationId} (lamport: ${msg.lamportTs})`);
-  }
+		console.log(
+			`[STORE] Stored message ${msg.id} in ${msg.conversationId} (lamport: ${msg.lamportTs})`
+		);
+	}
 
-  getMessages(conversationId: string, limit: number = 50): Message[] {
-    const msgs = this.messages.get(conversationId) || [];
-    return msgs.slice(-limit).sort((a, b) => a.lamportTs - b.lamportTs);
-  }
+	getMessages(conversationId: string, limit: number = 50): Message[] {
+		const msgs = this.messages.get(conversationId) || [];
+		return msgs.slice(-limit).sort((a, b) => a.lamportTs - b.lamportTs);
+	}
 
-  getConversation(id: string): Conversation | undefined {
-    return this.conversations.get(id);
-  }
+	getConversation(id: string): Conversation | undefined {
+		return this.conversations.get(id);
+	}
 
-  getConversationsForUser(userId: string): Conversation[] {
-    const result: Conversation[] = [];
-    for (const conv of this.conversations.values()) {
-      if (conv.participants.includes(userId)) {
-        result.push(conv);
-      }
-    }
-    return result.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-  }
+	getConversationsForUser(userId: string): Conversation[] {
+		const result: Conversation[] = [];
+		for (const conv of this.conversations.values()) {
+			if (conv.participants.includes(userId)) {
+				result.push(conv);
+			}
+		}
+		return result.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+	}
 
-  setReadReceipt(userId: string, conversationId: string, messageId: string): ReadReceipt {
-    const key = `${userId}:${conversationId}`;
-    const receipt: ReadReceipt = {
-      userId,
-      conversationId,
-      lastReadMessageId: messageId,
-      lastReadTimestamp: Date.now(),
-    };
-    this.readReceipts.set(key, receipt);
+	setReadReceipt(userId: string, conversationId: string, messageId: string): ReadReceipt {
+		const key = `${userId}:${conversationId}`;
+		const receipt: ReadReceipt = {
+			userId,
+			conversationId,
+			lastReadMessageId: messageId,
+			lastReadTimestamp: Date.now()
+		};
+		this.readReceipts.set(key, receipt);
 
-    // Mark messages as read
-    const msgs = this.messages.get(conversationId) || [];
-    let found = false;
-    for (const msg of msgs) {
-      if (msg.id === messageId) found = true;
-      if (!found && msg.senderId !== userId && msg.status !== "read") {
-        msg.status = "read";
-      }
-      if (msg.id === messageId) {
-        msg.status = "read";
-        break;
-      }
-    }
+		// Mark messages as read
+		const msgs = this.messages.get(conversationId) || [];
+		let found = false;
+		for (const msg of msgs) {
+			if (msg.id === messageId) found = true;
+			if (!found && msg.senderId !== userId && msg.status !== 'read') {
+				msg.status = 'read';
+			}
+			if (msg.id === messageId) {
+				msg.status = 'read';
+				break;
+			}
+		}
 
-    return receipt;
-  }
+		return receipt;
+	}
 
-  getReadReceipt(userId: string, conversationId: string): ReadReceipt | undefined {
-    return this.readReceipts.get(`${userId}:${conversationId}`);
-  }
+	getReadReceipt(userId: string, conversationId: string): ReadReceipt | undefined {
+		return this.readReceipts.get(`${userId}:${conversationId}`);
+	}
 
-  markDelivered(conversationId: string, messageId: string): void {
-    const msgs = this.messages.get(conversationId) || [];
-    const msg = msgs.find((m) => m.id === messageId);
-    if (msg && msg.status === "sent") {
-      msg.status = "delivered";
-    }
-  }
+	markDelivered(conversationId: string, messageId: string): void {
+		const msgs = this.messages.get(conversationId) || [];
+		const msg = msgs.find((m) => m.id === messageId);
+		if (msg && msg.status === 'sent') {
+			msg.status = 'delivered';
+		}
+	}
 }
 
 // --- Offline Queue ---
 class OfflineQueue {
-  private queues = new Map<string, Message[]>(); // userId -> pending messages
+	private queues = new Map<string, Message[]>(); // userId -> pending messages
 
-  enqueue(userId: string, message: Message): void {
-    if (!this.queues.has(userId)) {
-      this.queues.set(userId, []);
-    }
-    this.queues.get(userId)!.push(message);
-    console.log(`[OFFLINE] Queued message ${message.id} for offline user ${userId}`);
-  }
+	enqueue(userId: string, message: Message): void {
+		if (!this.queues.has(userId)) {
+			this.queues.set(userId, []);
+		}
+		this.queues.get(userId)!.push(message);
+		console.log(`[OFFLINE] Queued message ${message.id} for offline user ${userId}`);
+	}
 
-  drain(userId: string): Message[] {
-    const messages = this.queues.get(userId) || [];
-    this.queues.delete(userId);
-    if (messages.length > 0) {
-      console.log(`[OFFLINE] Draining ${messages.length} messages for user ${userId}`);
-    }
-    return messages;
-  }
+	drain(userId: string): Message[] {
+		const messages = this.queues.get(userId) || [];
+		this.queues.delete(userId);
+		if (messages.length > 0) {
+			console.log(`[OFFLINE] Draining ${messages.length} messages for user ${userId}`);
+		}
+		return messages;
+	}
 
-  getQueueSize(userId: string): number {
-    return (this.queues.get(userId) || []).length;
-  }
+	getQueueSize(userId: string): number {
+		return (this.queues.get(userId) || []).length;
+	}
 }
 
 // --- Connection Manager (Presence) ---
 class ConnectionManager {
-  private connections = new Map<string, UserConnection>();
+	private connections = new Map<string, UserConnection>();
 
-  connect(userId: string, sendFn: (event: ChatEvent) => void): UserConnection {
-    const conn: UserConnection = {
-      userId,
-      online: true,
-      lastSeen: Date.now(),
-      send: sendFn,
-    };
-    this.connections.set(userId, conn);
-    console.log(`[PRESENCE] User ${userId} is now ONLINE`);
-    return conn;
-  }
+	connect(userId: string, sendFn: (event: ChatEvent) => void): UserConnection {
+		const conn: UserConnection = {
+			userId,
+			online: true,
+			lastSeen: Date.now(),
+			send: sendFn
+		};
+		this.connections.set(userId, conn);
+		console.log(`[PRESENCE] User ${userId} is now ONLINE`);
+		return conn;
+	}
 
-  disconnect(userId: string): void {
-    const conn = this.connections.get(userId);
-    if (conn) {
-      conn.online = false;
-      conn.lastSeen = Date.now();
-      console.log(`[PRESENCE] User ${userId} is now OFFLINE (last seen: ${new Date(conn.lastSeen).toISOString()})`);
-    }
-  }
+	disconnect(userId: string): void {
+		const conn = this.connections.get(userId);
+		if (conn) {
+			conn.online = false;
+			conn.lastSeen = Date.now();
+			console.log(
+				`[PRESENCE] User ${userId} is now OFFLINE (last seen: ${new Date(conn.lastSeen).toISOString()})`
+			);
+		}
+	}
 
-  isOnline(userId: string): boolean {
-    const conn = this.connections.get(userId);
-    return conn?.online ?? false;
-  }
+	isOnline(userId: string): boolean {
+		const conn = this.connections.get(userId);
+		return conn?.online ?? false;
+	}
 
-  getConnection(userId: string): UserConnection | undefined {
-    const conn = this.connections.get(userId);
-    return conn?.online ? conn : undefined;
-  }
+	getConnection(userId: string): UserConnection | undefined {
+		const conn = this.connections.get(userId);
+		return conn?.online ? conn : undefined;
+	}
 
-  getOnlineUsers(): string[] {
-    const online: string[] = [];
-    for (const [userId, conn] of this.connections) {
-      if (conn.online) online.push(userId);
-    }
-    return online;
-  }
+	getOnlineUsers(): string[] {
+		const online: string[] = [];
+		for (const [userId, conn] of this.connections) {
+			if (conn.online) online.push(userId);
+		}
+		return online;
+	}
 
-  getLastSeen(userId: string): number | undefined {
-    return this.connections.get(userId)?.lastSeen;
-  }
+	getLastSeen(userId: string): number | undefined {
+		return this.connections.get(userId)?.lastSeen;
+	}
 }
 
 // --- Fan-out Service (Message Router) ---
 class FanOutService {
-  constructor(
-    private store: MessageStore,
-    private connections: ConnectionManager,
-    private offlineQueue: OfflineQueue,
-    private clock: LamportClock
-  ) {}
+	constructor(
+		private store: MessageStore,
+		private connections: ConnectionManager,
+		private offlineQueue: OfflineQueue,
+		private clock: LamportClock
+	) {}
 
-  sendMessage(senderId: string, conversationId: string, content: string): Message {
-    const conv = this.store.getConversation(conversationId);
-    if (!conv) throw new Error(`Conversation ${conversationId} not found`);
-    if (!conv.participants.includes(senderId)) {
-      throw new Error(`User ${senderId} is not in conversation ${conversationId}`);
-    }
+	sendMessage(senderId: string, conversationId: string, content: string): Message {
+		const conv = this.store.getConversation(conversationId);
+		if (!conv) throw new Error(`Conversation ${conversationId} not found`);
+		if (!conv.participants.includes(senderId)) {
+			throw new Error(`User ${senderId} is not in conversation ${conversationId}`);
+		}
 
-    const message: Message = {
-      id: `msg-${crypto.randomUUID().slice(0, 8)}`,
-      conversationId,
-      senderId,
-      content: content.slice(0, 4096),
-      timestamp: Date.now(),
-      lamportTs: this.clock.tick(),
-      status: "sent",
-    };
+		const message: Message = {
+			id: `msg-${crypto.randomUUID().slice(0, 8)}`,
+			conversationId,
+			senderId,
+			content: content.slice(0, 4096),
+			timestamp: Date.now(),
+			lamportTs: this.clock.tick(),
+			status: 'sent'
+		};
 
-    // Store the message
-    this.store.storeMessage(message);
+		// Store the message
+		this.store.storeMessage(message);
 
-    // Fan-out to all participants
-    console.log(`[FANOUT] Distributing message ${message.id} to ${conv.participants.length} participants`);
+		// Fan-out to all participants
+		console.log(
+			`[FANOUT] Distributing message ${message.id} to ${conv.participants.length} participants`
+		);
 
-    for (const participantId of conv.participants) {
-      if (participantId === senderId) continue; // Don't send to self
+		for (const participantId of conv.participants) {
+			if (participantId === senderId) continue; // Don't send to self
 
-      const conn = this.connections.getConnection(participantId);
-      if (conn) {
-        // User is online -- deliver immediately
-        conn.send({ type: "message", data: message });
-        this.store.markDelivered(conversationId, message.id);
-        console.log(`[FANOUT] Delivered ${message.id} to ${participantId} (online)`);
+			const conn = this.connections.getConnection(participantId);
+			if (conn) {
+				// User is online -- deliver immediately
+				conn.send({ type: 'message', data: message });
+				this.store.markDelivered(conversationId, message.id);
+				console.log(`[FANOUT] Delivered ${message.id} to ${participantId} (online)`);
 
-        // Send delivery receipt to sender
-        const senderConn = this.connections.getConnection(senderId);
-        if (senderConn) {
-          senderConn.send({
-            type: "delivered",
-            data: { messageId: message.id, conversationId },
-          });
-        }
-      } else {
-        // User is offline -- queue for later delivery
-        this.offlineQueue.enqueue(participantId, message);
-      }
-    }
+				// Send delivery receipt to sender
+				const senderConn = this.connections.getConnection(senderId);
+				if (senderConn) {
+					senderConn.send({
+						type: 'delivered',
+						data: { messageId: message.id, conversationId }
+					});
+				}
+			} else {
+				// User is offline -- queue for later delivery
+				this.offlineQueue.enqueue(participantId, message);
+			}
+		}
 
-    return message;
-  }
+		return message;
+	}
 
-  sendReadReceipt(userId: string, conversationId: string, messageId: string): void {
-    const receipt = this.store.setReadReceipt(userId, conversationId, messageId);
-    const conv = this.store.getConversation(conversationId);
-    if (!conv) return;
+	sendReadReceipt(userId: string, conversationId: string, messageId: string): void {
+		const receipt = this.store.setReadReceipt(userId, conversationId, messageId);
+		const conv = this.store.getConversation(conversationId);
+		if (!conv) return;
 
-    // Notify other participants about the read receipt
-    for (const participantId of conv.participants) {
-      if (participantId === userId) continue;
-      const conn = this.connections.getConnection(participantId);
-      if (conn) {
-        conn.send({ type: "read_receipt", data: receipt });
-        console.log(`[RECEIPT] Sent read receipt to ${participantId} (read by ${userId})`);
-      }
-    }
-  }
+		// Notify other participants about the read receipt
+		for (const participantId of conv.participants) {
+			if (participantId === userId) continue;
+			const conn = this.connections.getConnection(participantId);
+			if (conn) {
+				conn.send({ type: 'read_receipt', data: receipt });
+				console.log(`[RECEIPT] Sent read receipt to ${participantId} (read by ${userId})`);
+			}
+		}
+	}
 
-  sendTypingIndicator(userId: string, conversationId: string, isTyping: boolean): void {
-    const conv = this.store.getConversation(conversationId);
-    if (!conv) return;
+	sendTypingIndicator(userId: string, conversationId: string, isTyping: boolean): void {
+		const conv = this.store.getConversation(conversationId);
+		if (!conv) return;
 
-    const event: TypingEvent = {
-      userId,
-      conversationId,
-      isTyping,
-      timestamp: Date.now(),
-    };
+		const event: TypingEvent = {
+			userId,
+			conversationId,
+			isTyping,
+			timestamp: Date.now()
+		};
 
-    for (const participantId of conv.participants) {
-      if (participantId === userId) continue;
-      const conn = this.connections.getConnection(participantId);
-      if (conn) {
-        conn.send({ type: "typing", data: event });
-      }
-    }
-  }
+		for (const participantId of conv.participants) {
+			if (participantId === userId) continue;
+			const conn = this.connections.getConnection(participantId);
+			if (conn) {
+				conn.send({ type: 'typing', data: event });
+			}
+		}
+	}
 
-  handleUserReconnect(userId: string): void {
-    const pending = this.offlineQueue.drain(userId);
-    if (pending.length === 0) return;
+	handleUserReconnect(userId: string): void {
+		const pending = this.offlineQueue.drain(userId);
+		if (pending.length === 0) return;
 
-    const conn = this.connections.getConnection(userId);
-    if (!conn) return;
+		const conn = this.connections.getConnection(userId);
+		if (!conn) return;
 
-    // Deliver all pending messages
-    conn.send({ type: "offline_messages", data: pending });
+		// Deliver all pending messages
+		conn.send({ type: 'offline_messages', data: pending });
 
-    // Send delivery receipts to senders
-    for (const msg of pending) {
-      this.store.markDelivered(msg.conversationId, msg.id);
-      const senderConn = this.connections.getConnection(msg.senderId);
-      if (senderConn) {
-        senderConn.send({
-          type: "delivered",
-          data: { messageId: msg.id, conversationId: msg.conversationId },
-        });
-      }
-    }
+		// Send delivery receipts to senders
+		for (const msg of pending) {
+			this.store.markDelivered(msg.conversationId, msg.id);
+			const senderConn = this.connections.getConnection(msg.senderId);
+			if (senderConn) {
+				senderConn.send({
+					type: 'delivered',
+					data: { messageId: msg.id, conversationId: msg.conversationId }
+				});
+			}
+		}
 
-    console.log(`[RECONNECT] Delivered ${pending.length} offline messages to ${userId}`);
-  }
+		console.log(`[RECONNECT] Delivered ${pending.length} offline messages to ${userId}`);
+	}
 
-  broadcastPresence(userId: string, online: boolean): void {
-    // Notify users in shared conversations
-    const conversations = this.store.getConversationsForUser(userId);
-    const notified = new Set<string>();
+	broadcastPresence(userId: string, online: boolean): void {
+		// Notify users in shared conversations
+		const conversations = this.store.getConversationsForUser(userId);
+		const notified = new Set<string>();
 
-    for (const conv of conversations) {
-      for (const participantId of conv.participants) {
-        if (participantId === userId || notified.has(participantId)) continue;
-        notified.add(participantId);
+		for (const conv of conversations) {
+			for (const participantId of conv.participants) {
+				if (participantId === userId || notified.has(participantId)) continue;
+				notified.add(participantId);
 
-        const conn = this.connections.getConnection(participantId);
-        if (conn) {
-          conn.send({ type: "presence", data: { userId, online } });
-        }
-      }
-    }
-  }
+				const conn = this.connections.getConnection(participantId);
+				if (conn) {
+					conn.send({ type: 'presence', data: { userId, online } });
+				}
+			}
+		}
+	}
 }
 
 // --- Demo simulation ---
 function main(): void {
-  const store = new MessageStore();
-  const connMgr = new ConnectionManager();
-  const offlineQueue = new OfflineQueue();
-  const clock = new LamportClock();
-  const fanout = new FanOutService(store, connMgr, offlineQueue, clock);
+	const store = new MessageStore();
+	const connMgr = new ConnectionManager();
+	const offlineQueue = new OfflineQueue();
+	const clock = new LamportClock();
+	const fanout = new FanOutService(store, connMgr, offlineQueue, clock);
 
-  // Simulate event handlers for users
-  const eventLog: { user: string; event: ChatEvent }[] = [];
-  function createSendFn(userId: string) {
-    return (event: ChatEvent) => {
-      eventLog.push({ user: userId, event });
-      console.log(`  >> [${userId}] received ${event.type}`);
-    };
-  }
+	// Simulate event handlers for users
+	const eventLog: { user: string; event: ChatEvent }[] = [];
+	function createSendFn(userId: string) {
+		return (event: ChatEvent) => {
+			eventLog.push({ user: userId, event });
+			console.log(`  >> [${userId}] received ${event.type}`);
+		};
+	}
 
-  // Create users
-  console.log("=== Setup ===");
-  connMgr.connect("fatima", createSendFn("fatima"));
-  connMgr.connect("omar", createSendFn("omar"));
-  // yusuf is offline
+	// Create users
+	console.log('=== Setup ===');
+	connMgr.connect('fatima', createSendFn('fatima'));
+	connMgr.connect('omar', createSendFn('omar'));
+	// yusuf is offline
 
-  // Create conversations
-  const conv1 = store.createConversation(["fatima", "omar", "yusuf"]);
+	// Create conversations
+	const conv1 = store.createConversation(['fatima', 'omar', 'yusuf']);
 
-  // Fatima sends a message
-  console.log("\n=== Fatima sends a message ===");
-  const msg1 = fanout.sendMessage("fatima", conv1.id, "Hey team, how is everyone?");
+	// Fatima sends a message
+	console.log('\n=== Fatima sends a message ===');
+	const msg1 = fanout.sendMessage('fatima', conv1.id, 'Hey team, how is everyone?');
 
-  // Omar reads the message
-  console.log("\n=== Omar reads the message ===");
-  fanout.sendReadReceipt("omar", conv1.id, msg1.id);
+	// Omar reads the message
+	console.log('\n=== Omar reads the message ===');
+	fanout.sendReadReceipt('omar', conv1.id, msg1.id);
 
-  // Omar starts typing
-  console.log("\n=== Omar types a reply ===");
-  fanout.sendTypingIndicator("omar", conv1.id, true);
+	// Omar starts typing
+	console.log('\n=== Omar types a reply ===');
+	fanout.sendTypingIndicator('omar', conv1.id, true);
 
-  // Omar sends a reply
-  const msg2 = fanout.sendMessage("omar", conv1.id, "Doing great! Working on the new feature.");
-  fanout.sendTypingIndicator("omar", conv1.id, false);
+	// Omar sends a reply
+	const msg2 = fanout.sendMessage('omar', conv1.id, 'Doing great! Working on the new feature.');
+	fanout.sendTypingIndicator('omar', conv1.id, false);
 
-  // Yusuf comes online and gets pending messages
-  console.log("\n=== Yusuf comes online ===");
-  connMgr.connect("yusuf", createSendFn("yusuf"));
-  fanout.handleUserReconnect("yusuf");
-  fanout.broadcastPresence("yusuf", true);
+	// Yusuf comes online and gets pending messages
+	console.log('\n=== Yusuf comes online ===');
+	connMgr.connect('yusuf', createSendFn('yusuf'));
+	fanout.handleUserReconnect('yusuf');
+	fanout.broadcastPresence('yusuf', true);
 
-  // Yusuf reads all messages
-  console.log("\n=== Yusuf reads messages ===");
-  fanout.sendReadReceipt("yusuf", conv1.id, msg2.id);
+	// Yusuf reads all messages
+	console.log('\n=== Yusuf reads messages ===');
+	fanout.sendReadReceipt('yusuf', conv1.id, msg2.id);
 
-  // Print final state
-  console.log("\n=== Final message history ===");
-  const messages = store.getMessages(conv1.id);
-  for (const msg of messages) {
-    console.log(`  [${msg.lamportTs}] ${msg.senderId}: ${msg.content} (${msg.status})`);
-  }
+	// Print final state
+	console.log('\n=== Final message history ===');
+	const messages = store.getMessages(conv1.id);
+	for (const msg of messages) {
+		console.log(`  [${msg.lamportTs}] ${msg.senderId}: ${msg.content} (${msg.status})`);
+	}
 
-  console.log("\n=== Online users ===");
-  console.log(`  ${connMgr.getOnlineUsers().join(", ")}`);
+	console.log('\n=== Online users ===');
+	console.log(`  ${connMgr.getOnlineUsers().join(', ')}`);
 
-  console.log(`\n=== Event log (${eventLog.length} events) ===`);
-  for (const entry of eventLog) {
-    console.log(`  ${entry.user}: ${entry.event.type}`);
-  }
+	console.log(`\n=== Event log (${eventLog.length} events) ===`);
+	for (const entry of eventLog) {
+		console.log(`  ${entry.user}: ${entry.event.type}`);
+	}
 }
 
 main();
@@ -1074,4 +1078,3 @@ func main() {
 - **Slack** uses a combination of WebSockets for real-time delivery and REST API for message history retrieval
 
 </div>
-

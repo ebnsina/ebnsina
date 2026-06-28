@@ -6,10 +6,7 @@
 				"title": "The boring stack ships",
 				"description": "An argument for picking the dullest technology that solves your problem — and a working definition of 'dull'.",
 				"date": "2026-03-14",
-				"tags": [
-					"engineering",
-					"opinions"
-				],
+				"tags": ["engineering", "opinions"],
 				"minutesRead": 1
 			}
 		},
@@ -40,11 +37,7 @@
 				"title": "A primer on durable execution",
 				"description": "What durable execution actually buys you, when it's worth the complexity, and the two failure modes nobody warns you about.",
 				"date": "2026-04-28",
-				"tags": [
-					"distributed-systems",
-					"architecture",
-					"reliability"
-				],
+				"tags": ["distributed-systems", "architecture", "reliability"],
 				"minutesRead": 2
 			}
 		},
@@ -54,12 +47,7 @@
 				"title": "Hardening Your Node.js Supply Chain: A Practical Playbook",
 				"description": "Migrating package managers, enabling supply-chain guards, and building a security baseline that survives real-world threats.",
 				"date": "2026-05-12",
-				"tags": [
-					"security",
-					"nodejs",
-					"supply-chain",
-					"pnpm"
-				],
+				"tags": ["security", "nodejs", "supply-chain", "pnpm"],
 				"minutesRead": 13
 			}
 		},
@@ -95,10 +83,7 @@
 				"title": "Welcome — and what this place is for",
 				"description": "An intro to this site: why it exists, what I'll write here, and what I won't.",
 				"date": "2026-02-01",
-				"tags": [
-					"meta",
-					"writing"
-				],
+				"tags": ["meta", "writing"],
 				"minutesRead": 1
 			}
 		}
@@ -113,12 +98,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"REST",
-					"HTTP methods",
-					"status codes",
-					"resource naming"
-				]
+				"topics": ["REST", "HTTP methods", "status codes", "resource naming"]
 			}
 		},
 		{
@@ -130,13 +110,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"authentication",
-					"API keys",
-					"OAuth 2.0",
-					"JWT",
-					"sessions"
-				]
+				"topics": ["authentication", "API keys", "OAuth 2.0", "JWT", "sessions"]
 			}
 		},
 		{
@@ -166,14 +140,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"pagination",
-					"cursor",
-					"offset",
-					"filtering",
-					"sorting",
-					"field selection"
-				]
+				"topics": ["pagination", "cursor", "offset", "filtering", "sorting", "field selection"]
 			}
 		},
 		{
@@ -185,12 +152,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"versioning",
-					"backward compatibility",
-					"deprecation",
-					"API evolution"
-				]
+				"topics": ["versioning", "backward compatibility", "deprecation", "API evolution"]
 			}
 		},
 		{
@@ -221,13 +183,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"gRPC",
-					"Protocol Buffers",
-					"protobuf",
-					"streaming",
-					"service definitions"
-				]
+				"topics": ["gRPC", "Protocol Buffers", "protobuf", "streaming", "service definitions"]
 			}
 		},
 		{
@@ -257,9 +213,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -271,12 +225,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"api gateway",
-					"reverse proxy",
-					"routing",
-					"cross-cutting concerns"
-				]
+				"topics": ["api gateway", "reverse proxy", "routing", "cross-cutting concerns"]
 			}
 		},
 		{
@@ -288,13 +237,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"routing",
-					"load balancing",
-					"weighted traffic",
-					"health checks",
-					"nginx"
-				]
+				"topics": ["routing", "load balancing", "weighted traffic", "health checks", "nginx"]
 			}
 		},
 		{
@@ -306,13 +249,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"JWT",
-					"API keys",
-					"OAuth",
-					"authentication",
-					"authorization"
-				]
+				"topics": ["JWT", "API keys", "OAuth", "authentication", "authorization"]
 			}
 		},
 		{
@@ -324,13 +261,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"rate limiting",
-					"token bucket",
-					"sliding window",
-					"Redis",
-					"throttling"
-				]
+				"topics": ["rate limiting", "token bucket", "sliding window", "Redis", "throttling"]
 			}
 		},
 		{
@@ -342,13 +273,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"transformation",
-					"headers",
-					"payload",
-					"versioning",
-					"protocol translation"
-				]
+				"topics": ["transformation", "headers", "payload", "versioning", "protocol translation"]
 			}
 		},
 		{
@@ -360,13 +285,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"observability",
-					"tracing",
-					"circuit breaker",
-					"Kong",
-					"production"
-				]
+				"topics": ["observability", "tracing", "circuit breaker", "Kong", "production"]
 			}
 		},
 		{
@@ -378,9 +297,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -392,13 +309,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"authentication",
-					"authorization",
-					"sessions",
-					"tokens",
-					"RBAC"
-				]
+				"topics": ["authentication", "authorization", "sessions", "tokens", "RBAC"]
 			}
 		},
 		{
@@ -410,13 +321,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"bcrypt",
-					"argon2",
-					"hashing",
-					"salting",
-					"password storage"
-				]
+				"topics": ["bcrypt", "argon2", "hashing", "salting", "password storage"]
 			}
 		},
 		{
@@ -428,13 +333,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"JWT",
-					"RS256",
-					"HS256",
-					"JWKS",
-					"token validation"
-				]
+				"topics": ["JWT", "RS256", "HS256", "JWKS", "token validation"]
 			}
 		},
 		{
@@ -446,13 +345,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"OAuth 2.0",
-					"OIDC",
-					"authorization code",
-					"PKCE",
-					"federated identity"
-				]
+				"topics": ["OAuth 2.0", "OIDC", "authorization code", "PKCE", "federated identity"]
 			}
 		},
 		{
@@ -464,13 +357,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"API keys",
-					"HMAC",
-					"key rotation",
-					"scopes",
-					"machine-to-machine"
-				]
+				"topics": ["API keys", "HMAC", "key rotation", "scopes", "machine-to-machine"]
 			}
 		},
 		{
@@ -482,13 +369,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"CSRF",
-					"session fixation",
-					"IDOR",
-					"timing attacks",
-					"OWASP"
-				]
+				"topics": ["CSRF", "session fixation", "IDOR", "timing attacks", "OWASP"]
 			}
 		},
 		{
@@ -500,13 +381,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "8 min",
-				"topics": [
-					"production",
-					"checklist",
-					"monitoring",
-					"incident response",
-					"hardening"
-				]
+				"topics": ["production", "checklist", "monitoring", "incident response", "hardening"]
 			}
 		},
 		{
@@ -518,9 +393,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -532,12 +405,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "7 min",
-				"topics": [
-					"background jobs",
-					"queues",
-					"async processing",
-					"request lifecycle"
-				]
+				"topics": ["background jobs", "queues", "async processing", "request lifecycle"]
 			}
 		},
 		{
@@ -549,13 +417,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"BullMQ",
-					"pg-boss",
-					"Redis",
-					"PostgreSQL",
-					"queue internals"
-				]
+				"topics": ["BullMQ", "pg-boss", "Redis", "PostgreSQL", "queue internals"]
 			}
 		},
 		{
@@ -603,13 +465,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "8 min",
-				"topics": [
-					"cron",
-					"scheduled jobs",
-					"leader election",
-					"clock skew",
-					"distributed cron"
-				]
+				"topics": ["cron", "scheduled jobs", "leader election", "clock skew", "distributed cron"]
 			}
 		},
 		{
@@ -621,13 +477,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "10 min",
-				"topics": [
-					"graceful shutdown",
-					"priority queues",
-					"fan-out",
-					"worker pools",
-					"production"
-				]
+				"topics": ["graceful shutdown", "priority queues", "fan-out", "worker pools", "production"]
 			}
 		},
 		{
@@ -639,9 +489,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -653,12 +501,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"latency",
-					"memory hierarchy",
-					"cache fundamentals",
-					"performance"
-				]
+				"topics": ["latency", "memory hierarchy", "cache fundamentals", "performance"]
 			}
 		},
 		{
@@ -670,13 +513,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"cache-aside",
-					"read-through",
-					"write-through",
-					"write-behind",
-					"patterns"
-				]
+				"topics": ["cache-aside", "read-through", "write-through", "write-behind", "patterns"]
 			}
 		},
 		{
@@ -688,13 +525,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"LRU",
-					"LFU",
-					"TTL",
-					"eviction",
-					"memory management"
-				]
+				"topics": ["LRU", "LFU", "TTL", "eviction", "memory management"]
 			}
 		},
 		{
@@ -706,13 +537,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "18 min",
-				"topics": [
-					"Redis",
-					"data structures",
-					"persistence",
-					"commands",
-					"pub/sub"
-				]
+				"topics": ["Redis", "data structures", "persistence", "commands", "pub/sub"]
 			}
 		},
 		{
@@ -724,13 +549,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"invalidation",
-					"TTL",
-					"versioned keys",
-					"event-driven",
-					"consistency"
-				]
+				"topics": ["invalidation", "TTL", "versioned keys", "event-driven", "consistency"]
 			}
 		},
 		{
@@ -742,13 +561,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"stampede",
-					"thundering herd",
-					"mutex",
-					"probabilistic expiry",
-					"dog pile"
-				]
+				"topics": ["stampede", "thundering herd", "mutex", "probabilistic expiry", "dog pile"]
 			}
 		},
 		{
@@ -778,13 +591,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"Cache-Control",
-					"ETag",
-					"CDN",
-					"edge caching",
-					"HTTP headers"
-				]
+				"topics": ["Cache-Control", "ETag", "CDN", "edge caching", "HTTP headers"]
 			}
 		},
 		{
@@ -796,13 +603,7 @@
 				"chapter": 9,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"fragment caching",
-					"query cache",
-					"session store",
-					"memoization",
-					"patterns"
-				]
+				"topics": ["fragment caching", "query cache", "session store", "memoization", "patterns"]
 			}
 		},
 		{
@@ -832,9 +633,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -846,13 +645,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "9 min",
-				"topics": [
-					"sizing",
-					"capacity planning",
-					"CPU",
-					"memory",
-					"throughput"
-				]
+				"topics": ["sizing", "capacity planning", "CPU", "memory", "throughput"]
 			}
 		},
 		{
@@ -864,13 +657,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"cloud",
-					"bare metal",
-					"VPS",
-					"unit economics",
-					"TCO"
-				]
+				"topics": ["cloud", "bare metal", "VPS", "unit economics", "TCO"]
 			}
 		},
 		{
@@ -900,14 +687,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"redundancy",
-					"high availability",
-					"multi-AZ",
-					"N+1",
-					"active-active",
-					"SLA"
-				]
+				"topics": ["redundancy", "high availability", "multi-AZ", "N+1", "active-active", "SLA"]
 			}
 		},
 		{
@@ -919,13 +699,7 @@
 				"chapter": 5,
 				"level": "advanced",
 				"readingTime": "10 min",
-				"topics": [
-					"cost optimization",
-					"rightsizing",
-					"reserved instances",
-					"FinOps",
-					"cloud cost"
-				]
+				"topics": ["cost optimization", "rightsizing", "reserved instances", "FinOps", "cloud cost"]
 			}
 		},
 		{
@@ -937,9 +711,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -951,13 +723,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"chaos engineering",
-					"resilience",
-					"fault injection",
-					"steady state",
-					"GameDays"
-				]
+				"topics": ["chaos engineering", "resilience", "fault injection", "steady state", "GameDays"]
 			}
 		},
 		{
@@ -969,13 +735,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"circuit breaker",
-					"bulkhead",
-					"timeout",
-					"retry",
-					"graceful degradation"
-				]
+				"topics": ["circuit breaker", "bulkhead", "timeout", "retry", "graceful degradation"]
 			}
 		},
 		{
@@ -1006,13 +766,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"GameDay",
-					"incident simulation",
-					"post-mortem",
-					"runbooks",
-					"team exercises"
-				]
+				"topics": ["GameDay", "incident simulation", "post-mortem", "runbooks", "team exercises"]
 			}
 		},
 		{
@@ -1024,13 +778,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"SLO",
-					"SLI",
-					"error budget",
-					"steady state",
-					"reliability"
-				]
+				"topics": ["SLO", "SLI", "error budget", "steady state", "reliability"]
 			}
 		},
 		{
@@ -1042,12 +790,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "15 min",
-				"topics": [
-					"HTTP",
-					"request routing",
-					"JSON",
-					"error handling"
-				]
+				"topics": ["HTTP", "request routing", "JSON", "error handling"]
 			}
 		},
 		{
@@ -1059,13 +802,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "20 min",
-				"topics": [
-					"REST",
-					"HTTP methods",
-					"pagination",
-					"validation",
-					"status codes"
-				]
+				"topics": ["REST", "HTTP methods", "pagination", "validation", "status codes"]
 			}
 		},
 		{
@@ -1077,13 +814,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "20 min",
-				"topics": [
-					"PostgreSQL",
-					"SQL",
-					"connection pooling",
-					"prepared statements",
-					"migrations"
-				]
+				"topics": ["PostgreSQL", "SQL", "connection pooling", "prepared statements", "migrations"]
 			}
 		},
 		{
@@ -1095,12 +826,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "15 min",
-				"topics": [
-					"Redis",
-					"cache-aside",
-					"TTL",
-					"cache invalidation"
-				]
+				"topics": ["Redis", "cache-aside", "TTL", "cache invalidation"]
 			}
 		},
 		{
@@ -1112,12 +838,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"load balancer",
-					"reverse proxy",
-					"health checks",
-					"round-robin"
-				]
+				"topics": ["load balancer", "reverse proxy", "health checks", "round-robin"]
 			}
 		},
 		{
@@ -1129,13 +850,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"message queue",
-					"RabbitMQ",
-					"NATS",
-					"async processing",
-					"dead letter queue"
-				]
+				"topics": ["message queue", "RabbitMQ", "NATS", "async processing", "dead letter queue"]
 			}
 		},
 		{
@@ -1147,13 +862,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"rate limiting",
-					"token bucket",
-					"sliding window",
-					"Redis",
-					"middleware"
-				]
+				"topics": ["rate limiting", "token bucket", "sliding window", "Redis", "middleware"]
 			}
 		},
 		{
@@ -1165,12 +874,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"sharding",
-					"replication",
-					"consistent hashing",
-					"read replicas"
-				]
+				"topics": ["sharding", "replication", "consistent hashing", "read replicas"]
 			}
 		},
 		{
@@ -1182,12 +886,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "25 min",
-				"topics": [
-					"Raft",
-					"leader election",
-					"consensus",
-					"distributed systems"
-				]
+				"topics": ["Raft", "leader election", "consensus", "distributed systems"]
 			}
 		},
 		{
@@ -1199,13 +898,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "25 min",
-				"topics": [
-					"event sourcing",
-					"CQRS",
-					"projections",
-					"event store",
-					"domain events"
-				]
+				"topics": ["event sourcing", "CQRS", "projections", "event store", "domain events"]
 			}
 		},
 		{
@@ -1217,13 +910,7 @@
 				"chapter": 11,
 				"level": "advanced",
 				"readingTime": "20 min",
-				"topics": [
-					"OpenTelemetry",
-					"Prometheus",
-					"tracing",
-					"metrics",
-					"structured logging"
-				]
+				"topics": ["OpenTelemetry", "Prometheus", "tracing", "metrics", "structured logging"]
 			}
 		},
 		{
@@ -1235,13 +922,7 @@
 				"chapter": 12,
 				"level": "advanced",
 				"readingTime": "25 min",
-				"topics": [
-					"system design",
-					"URL shortener",
-					"Snowflake ID",
-					"base62",
-					"analytics pipeline"
-				]
+				"topics": ["system design", "URL shortener", "Snowflake ID", "base62", "analytics pipeline"]
 			}
 		},
 		{
@@ -1253,13 +934,7 @@
 				"chapter": 13,
 				"level": "beginner",
 				"readingTime": "20 min",
-				"topics": [
-					"JWT",
-					"bcrypt",
-					"RBAC",
-					"refresh tokens",
-					"middleware"
-				]
+				"topics": ["JWT", "bcrypt", "RBAC", "refresh tokens", "middleware"]
 			}
 		},
 		{
@@ -1271,12 +946,7 @@
 				"chapter": 14,
 				"level": "intermediate",
 				"readingTime": "18 min",
-				"topics": [
-					"API gateway",
-					"reverse proxy",
-					"request aggregation",
-					"middleware pipeline"
-				]
+				"topics": ["API gateway", "reverse proxy", "request aggregation", "middleware pipeline"]
 			}
 		},
 		{
@@ -1288,13 +958,7 @@
 				"chapter": 15,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"CDN",
-					"edge caching",
-					"Cache-Control",
-					"signed URLs",
-					"cache purging"
-				]
+				"topics": ["CDN", "edge caching", "Cache-Control", "signed URLs", "cache purging"]
 			}
 		},
 		{
@@ -1306,13 +970,7 @@
 				"chapter": 16,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"WebSocket",
-					"real-time",
-					"chat",
-					"presence",
-					"pub/sub"
-				]
+				"topics": ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
 			}
 		},
 		{
@@ -1341,13 +999,7 @@
 				"chapter": 18,
 				"level": "advanced",
 				"readingTime": "25 min",
-				"topics": [
-					"chat system",
-					"message delivery",
-					"fan-out",
-					"presence",
-					"read receipts"
-				]
+				"topics": ["chat system", "message delivery", "fan-out", "presence", "read receipts"]
 			}
 		},
 		{
@@ -1395,13 +1047,7 @@
 				"chapter": 21,
 				"level": "advanced",
 				"readingTime": "32 min",
-				"topics": [
-					"news feed",
-					"fan-out",
-					"ranking algorithm",
-					"pagination",
-					"real-time updates"
-				]
+				"topics": ["news feed", "fan-out", "ranking algorithm", "pagination", "real-time updates"]
 			}
 		},
 		{
@@ -1413,13 +1059,7 @@
 				"chapter": 22,
 				"level": "intermediate",
 				"readingTime": "28 min",
-				"topics": [
-					"tutorial",
-					"real-time analytics",
-					"time-series",
-					"WebSocket",
-					"event streaming"
-				]
+				"topics": ["tutorial", "real-time analytics", "time-series", "WebSocket", "event streaming"]
 			}
 		},
 		{
@@ -1486,14 +1126,7 @@
 				"chapter": 26,
 				"level": "advanced",
 				"readingTime": "33 min",
-				"topics": [
-					"webinar",
-					"video conferencing",
-					"WebRTC",
-					"SFU",
-					"breakout rooms",
-					"recording"
-				]
+				"topics": ["webinar", "video conferencing", "WebRTC", "SFU", "breakout rooms", "recording"]
 			}
 		},
 		{
@@ -1505,9 +1138,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -1519,13 +1150,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "9 min",
-				"topics": [
-					"containers",
-					"namespaces",
-					"cgroups",
-					"union filesystem",
-					"OCI"
-				]
+				"topics": ["containers", "namespaces", "cgroups", "union filesystem", "OCI"]
 			}
 		},
 		{
@@ -1537,13 +1162,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"Dockerfile",
-					"multi-stage builds",
-					"layer cache",
-					"non-root",
-					"image size"
-				]
+				"topics": ["Dockerfile", "multi-stage builds", "layer cache", "non-root", "image size"]
 			}
 		},
 		{
@@ -1555,13 +1174,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"docker compose",
-					"networking",
-					"volumes",
-					"depends_on",
-					"environment"
-				]
+				"topics": ["docker compose", "networking", "volumes", "depends_on", "environment"]
 			}
 		},
 		{
@@ -1611,12 +1224,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"data-modeling",
-					"schemas",
-					"postgres"
-				]
+				"topics": ["roadmap", "data-modeling", "schemas", "postgres"]
 			}
 		},
 		{
@@ -1628,12 +1236,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"data-modeling",
-					"schemas",
-					"orms",
-					"design"
-				]
+				"topics": ["data-modeling", "schemas", "orms", "design"]
 			}
 		},
 		{
@@ -1645,12 +1248,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"data-modeling",
-					"er-diagrams",
-					"relationships",
-					"cardinality"
-				]
+				"topics": ["data-modeling", "er-diagrams", "relationships", "cardinality"]
 			}
 		},
 		{
@@ -1662,13 +1260,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"primary keys",
-					"ulid",
-					"uuid",
-					"natural keys"
-				]
+				"topics": ["data-modeling", "primary keys", "ulid", "uuid", "natural keys"]
 			}
 		},
 		{
@@ -1680,13 +1272,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"normalization",
-					"1nf",
-					"2nf",
-					"3nf"
-				]
+				"topics": ["data-modeling", "normalization", "1nf", "2nf", "3nf"]
 			}
 		},
 		{
@@ -1698,12 +1284,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"data-modeling",
-					"denormalization",
-					"performance",
-					"caching"
-				]
+				"topics": ["data-modeling", "denormalization", "performance", "caching"]
 			}
 		},
 		{
@@ -1715,13 +1296,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"constraints",
-					"foreign-keys",
-					"check",
-					"unique"
-				]
+				"topics": ["data-modeling", "constraints", "foreign-keys", "check", "unique"]
 			}
 		},
 		{
@@ -1733,13 +1308,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"timestamps",
-					"soft-delete",
-					"history",
-					"time-zones"
-				]
+				"topics": ["data-modeling", "timestamps", "soft-delete", "history", "time-zones"]
 			}
 		},
 		{
@@ -1751,12 +1320,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"multi-tenancy",
-					"rls",
-					"isolation"
-				]
+				"topics": ["data-modeling", "multi-tenancy", "rls", "isolation"]
 			}
 		},
 		{
@@ -1768,12 +1332,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"data-modeling",
-					"jsonb",
-					"postgres",
-					"schemaless"
-				]
+				"topics": ["data-modeling", "jsonb", "postgres", "schemaless"]
 			}
 		},
 		{
@@ -1785,12 +1344,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"data-modeling",
-					"migrations",
-					"expand-contract",
-					"zero-downtime"
-				]
+				"topics": ["data-modeling", "migrations", "expand-contract", "zero-downtime"]
 			}
 		},
 		{
@@ -1802,12 +1356,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"storage engine",
-					"pages",
-					"heap",
-					"disk I/O"
-				]
+				"topics": ["storage engine", "pages", "heap", "disk I/O"]
 			}
 		},
 		{
@@ -1819,12 +1368,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "16 min",
-				"topics": [
-					"B-tree",
-					"index",
-					"balanced tree",
-					"query performance"
-				]
+				"topics": ["B-tree", "index", "balanced tree", "query performance"]
 			}
 		},
 		{
@@ -1836,12 +1380,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"WAL",
-					"durability",
-					"crash recovery",
-					"checkpoints"
-				]
+				"topics": ["WAL", "durability", "crash recovery", "checkpoints"]
 			}
 		},
 		{
@@ -1853,12 +1392,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "17 min",
-				"topics": [
-					"MVCC",
-					"transactions",
-					"isolation levels",
-					"snapshots"
-				]
+				"topics": ["MVCC", "transactions", "isolation levels", "snapshots"]
 			}
 		},
 		{
@@ -1870,12 +1404,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"query planner",
-					"EXPLAIN",
-					"optimization",
-					"execution plan"
-				]
+				"topics": ["query planner", "EXPLAIN", "optimization", "execution plan"]
 			}
 		},
 		{
@@ -1887,12 +1416,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"LSM tree",
-					"compaction",
-					"memtable",
-					"SSTable"
-				]
+				"topics": ["LSM tree", "compaction", "memtable", "SSTable"]
 			}
 		},
 		{
@@ -1904,12 +1428,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"ACID",
-					"transactions",
-					"atomicity",
-					"isolation"
-				]
+				"topics": ["ACID", "transactions", "atomicity", "isolation"]
 			}
 		},
 		{
@@ -1921,12 +1440,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "18 min",
-				"topics": [
-					"replication",
-					"sharding",
-					"partitioning",
-					"consensus"
-				]
+				"topics": ["replication", "sharding", "partitioning", "consensus"]
 			}
 		},
 		{
@@ -1938,12 +1452,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"Docker",
-					"containers",
-					"images",
-					"Dockerfile"
-				]
+				"topics": ["Docker", "containers", "images", "Dockerfile"]
 			}
 		},
 		{
@@ -1955,12 +1464,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "16 min",
-				"topics": [
-					"Kubernetes",
-					"pods",
-					"deployments",
-					"services"
-				]
+				"topics": ["Kubernetes", "pods", "deployments", "services"]
 			}
 		},
 		{
@@ -1972,12 +1476,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "15 min",
-				"topics": [
-					"CI/CD",
-					"GitHub Actions",
-					"pipelines",
-					"deployment"
-				]
+				"topics": ["CI/CD", "GitHub Actions", "pipelines", "deployment"]
 			}
 		},
 		{
@@ -1989,12 +1488,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"Terraform",
-					"IaC",
-					"infrastructure",
-					"cloud"
-				]
+				"topics": ["Terraform", "IaC", "infrastructure", "cloud"]
 			}
 		},
 		{
@@ -2006,13 +1500,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"monitoring",
-					"observability",
-					"metrics",
-					"logging",
-					"tracing"
-				]
+				"topics": ["monitoring", "observability", "metrics", "logging", "tracing"]
 			}
 		},
 		{
@@ -2024,12 +1512,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"VPC",
-					"subnets",
-					"security groups",
-					"load balancer"
-				]
+				"topics": ["VPC", "subnets", "security groups", "load balancer"]
 			}
 		},
 		{
@@ -2041,12 +1524,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"secrets",
-					"env vars",
-					"config",
-					"security"
-				]
+				"topics": ["secrets", "env vars", "config", "security"]
 			}
 		},
 		{
@@ -2058,13 +1536,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"SRE",
-					"SLO",
-					"reliability",
-					"incident response",
-					"chaos engineering"
-				]
+				"topics": ["SRE", "SLO", "reliability", "incident response", "chaos engineering"]
 			}
 		},
 		{
@@ -2076,9 +1548,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -2090,13 +1560,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "7 min",
-				"topics": [
-					"RTO",
-					"RPO",
-					"disaster recovery",
-					"SLA",
-					"business continuity"
-				]
+				"topics": ["RTO", "RPO", "disaster recovery", "SLA", "business continuity"]
 			}
 		},
 		{
@@ -2108,14 +1572,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"pg_dump",
-					"WAL-G",
-					"WAL archiving",
-					"backups",
-					"S3",
-					"retention"
-				]
+				"topics": ["pg_dump", "WAL-G", "WAL archiving", "backups", "S3", "retention"]
 			}
 		},
 		{
@@ -2163,13 +1620,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"runbooks",
-					"incident response",
-					"post-mortem",
-					"on-call",
-					"communication"
-				]
+				"topics": ["runbooks", "incident response", "post-mortem", "on-call", "communication"]
 			}
 		},
 		{
@@ -2181,10 +1632,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"distributed systems"
-				]
+				"topics": ["roadmap", "distributed systems"]
 			}
 		},
 		{
@@ -2196,10 +1644,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "9 min",
-				"topics": [
-					"distributed",
-					"fallacies"
-				]
+				"topics": ["distributed", "fallacies"]
 			}
 		},
 		{
@@ -2211,11 +1656,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"failure",
-					"clocks",
-					"timeouts"
-				]
+				"topics": ["failure", "clocks", "timeouts"]
 			}
 		},
 		{
@@ -2227,11 +1668,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"replication",
-					"quorum",
-					"leader"
-				]
+				"topics": ["replication", "quorum", "leader"]
 			}
 		},
 		{
@@ -2243,11 +1680,7 @@
 				"chapter": 4,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"consistency",
-					"linearizability",
-					"causal"
-				]
+				"topics": ["consistency", "linearizability", "causal"]
 			}
 		},
 		{
@@ -2259,11 +1692,7 @@
 				"chapter": 5,
 				"level": "advanced",
 				"readingTime": "10 min",
-				"topics": [
-					"cap",
-					"pacelc",
-					"tradeoffs"
-				]
+				"topics": ["cap", "pacelc", "tradeoffs"]
 			}
 		},
 		{
@@ -2275,11 +1704,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"consensus",
-					"raft",
-					"paxos"
-				]
+				"topics": ["consensus", "raft", "paxos"]
 			}
 		},
 		{
@@ -2291,11 +1716,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "11 min",
-				"topics": [
-					"lamport",
-					"vector clocks",
-					"ordering"
-				]
+				"topics": ["lamport", "vector clocks", "ordering"]
 			}
 		},
 		{
@@ -2307,11 +1728,7 @@
 				"chapter": 8,
 				"level": "mastery",
 				"readingTime": "12 min",
-				"topics": [
-					"2pc",
-					"saga",
-					"outbox"
-				]
+				"topics": ["2pc", "saga", "outbox"]
 			}
 		},
 		{
@@ -2323,11 +1740,7 @@
 				"chapter": 9,
 				"level": "mastery",
 				"readingTime": "12 min",
-				"topics": [
-					"idempotency",
-					"retries",
-					"durable execution"
-				]
+				"topics": ["idempotency", "retries", "durable execution"]
 			}
 		},
 		{
@@ -2339,12 +1752,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"arrays",
-					"strings",
-					"two pointers",
-					"sliding window"
-				]
+				"topics": ["arrays", "strings", "two pointers", "sliding window"]
 			}
 		},
 		{
@@ -2356,12 +1764,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"hash map",
-					"hash set",
-					"collision handling",
-					"frequency counting"
-				]
+				"topics": ["hash map", "hash set", "collision handling", "frequency counting"]
 			}
 		},
 		{
@@ -2373,12 +1776,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"linked list",
-					"singly linked",
-					"doubly linked",
-					"fast slow pointers"
-				]
+				"topics": ["linked list", "singly linked", "doubly linked", "fast slow pointers"]
 			}
 		},
 		{
@@ -2390,12 +1788,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"stack",
-					"queue",
-					"monotonic stack",
-					"BFS"
-				]
+				"topics": ["stack", "queue", "monotonic stack", "BFS"]
 			}
 		},
 		{
@@ -2407,13 +1800,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "16 min",
-				"topics": [
-					"binary tree",
-					"BST",
-					"DFS",
-					"BFS",
-					"recursion"
-				]
+				"topics": ["binary tree", "BST", "DFS", "BFS", "recursion"]
 			}
 		},
 		{
@@ -2425,13 +1812,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "18 min",
-				"topics": [
-					"graph",
-					"adjacency list",
-					"BFS",
-					"DFS",
-					"topological sort"
-				]
+				"topics": ["graph", "adjacency list", "BFS", "DFS", "topological sort"]
 			}
 		},
 		{
@@ -2443,12 +1824,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"merge sort",
-					"quicksort",
-					"binary search",
-					"sorting"
-				]
+				"topics": ["merge sort", "quicksort", "binary search", "sorting"]
 			}
 		},
 		{
@@ -2460,12 +1836,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "20 min",
-				"topics": [
-					"dynamic programming",
-					"memoization",
-					"tabulation",
-					"optimization"
-				]
+				"topics": ["dynamic programming", "memoization", "tabulation", "optimization"]
 			}
 		},
 		{
@@ -2477,12 +1848,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"ethical hacking",
-					"penetration testing",
-					"cybersecurity"
-				]
+				"topics": ["roadmap", "ethical hacking", "penetration testing", "cybersecurity"]
 			}
 		},
 		{
@@ -2494,14 +1860,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"TCP/IP",
-					"OSI model",
-					"networking",
-					"ports",
-					"protocols",
-					"attacker mindset"
-				]
+				"topics": ["TCP/IP", "OSI model", "networking", "ports", "protocols", "attacker mindset"]
 			}
 		},
 		{
@@ -2513,14 +1872,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"linux",
-					"bash",
-					"kali",
-					"terminal",
-					"file permissions",
-					"processes"
-				]
+				"topics": ["linux", "bash", "kali", "terminal", "file permissions", "processes"]
 			}
 		},
 		{
@@ -3116,9 +2468,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -3130,13 +2480,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"events",
-					"commands",
-					"queries",
-					"CQRS",
-					"message semantics"
-				]
+				"topics": ["events", "commands", "queries", "CQRS", "message semantics"]
 			}
 		},
 		{
@@ -3148,14 +2492,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"pub/sub",
-					"consumer groups",
-					"fan-out",
-					"Kafka",
-					"SNS",
-					"delivery guarantees"
-				]
+				"topics": ["pub/sub", "consumer groups", "fan-out", "Kafka", "SNS", "delivery guarantees"]
 			}
 		},
 		{
@@ -3167,13 +2504,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"CDC",
-					"Debezium",
-					"logical replication",
-					"outbox pattern",
-					"event streaming"
-				]
+				"topics": ["CDC", "Debezium", "logical replication", "outbox pattern", "event streaming"]
 			}
 		},
 		{
@@ -3185,13 +2516,7 @@
 				"chapter": 4,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"event sourcing",
-					"event store",
-					"aggregates",
-					"projections",
-					"snapshots"
-				]
+				"topics": ["event sourcing", "event store", "aggregates", "projections", "snapshots"]
 			}
 		},
 		{
@@ -3221,14 +2546,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "15 min",
-				"topics": [
-					"CSR",
-					"SSR",
-					"SSG",
-					"ISR",
-					"hydration",
-					"rendering"
-				]
+				"topics": ["CSR", "SSR", "SSG", "ISR", "hydration", "rendering"]
 			}
 		},
 		{
@@ -3259,14 +2577,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"state",
-					"context",
-					"zustand",
-					"redux",
-					"signals",
-					"state machines"
-				]
+				"topics": ["state", "context", "zustand", "redux", "signals", "state machines"]
 			}
 		},
 		{
@@ -3278,13 +2589,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"routing",
-					"navigation",
-					"dynamic routes",
-					"layouts",
-					"middleware"
-				]
+				"topics": ["routing", "navigation", "dynamic routes", "layouts", "middleware"]
 			}
 		},
 		{
@@ -3296,14 +2601,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"fetch",
-					"SWR",
-					"react query",
-					"caching",
-					"error boundaries",
-					"loading states"
-				]
+				"topics": ["fetch", "SWR", "react query", "caching", "error boundaries", "loading states"]
 			}
 		},
 		{
@@ -3373,12 +2671,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "15 min",
-				"topics": [
-					"setup",
-					"hello world",
-					"go philosophy",
-					"toolchain"
-				]
+				"topics": ["setup", "hello world", "go philosophy", "toolchain"]
 			}
 		},
 		{
@@ -3390,14 +2683,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "18 min",
-				"topics": [
-					"types",
-					"variables",
-					"constants",
-					"if/else",
-					"loops",
-					"switch"
-				]
+				"topics": ["types", "variables", "constants", "if/else", "loops", "switch"]
 			}
 		},
 		{
@@ -3409,13 +2695,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "20 min",
-				"topics": [
-					"functions",
-					"error handling",
-					"multiple returns",
-					"defer",
-					"closures"
-				]
+				"topics": ["functions", "error handling", "multiple returns", "defer", "closures"]
 			}
 		},
 		{
@@ -3427,14 +2707,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "16 min",
-				"topics": [
-					"pointers",
-					"memory",
-					"stack",
-					"heap",
-					"nil",
-					"pass by value"
-				]
+				"topics": ["pointers", "memory", "stack", "heap", "nil", "pass by value"]
 			}
 		},
 		{
@@ -3446,13 +2719,7 @@
 				"chapter": 5,
 				"level": "beginner",
 				"readingTime": "18 min",
-				"topics": [
-					"structs",
-					"methods",
-					"receivers",
-					"embedding",
-					"constructors"
-				]
+				"topics": ["structs", "methods", "receivers", "embedding", "constructors"]
 			}
 		},
 		{
@@ -3482,12 +2749,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "18 min",
-				"topics": [
-					"generics",
-					"type parameters",
-					"constraints",
-					"type inference"
-				]
+				"topics": ["generics", "type parameters", "constraints", "type inference"]
 			}
 		},
 		{
@@ -3499,13 +2761,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"packages",
-					"modules",
-					"testing",
-					"benchmarks",
-					"table-driven tests"
-				]
+				"topics": ["packages", "modules", "testing", "benchmarks", "table-driven tests"]
 			}
 		},
 		{
@@ -3517,14 +2773,7 @@
 				"chapter": 9,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"strings",
-					"runes",
-					"UTF-8",
-					"encoding",
-					"bytes",
-					"text processing"
-				]
+				"topics": ["strings", "runes", "UTF-8", "encoding", "bytes", "text processing"]
 			}
 		},
 		{
@@ -3536,13 +2785,7 @@
 				"chapter": 10,
 				"level": "intermediate",
 				"readingTime": "22 min",
-				"topics": [
-					"goroutines",
-					"channels",
-					"select",
-					"WaitGroup",
-					"concurrency patterns"
-				]
+				"topics": ["goroutines", "channels", "select", "WaitGroup", "concurrency patterns"]
 			}
 		},
 		{
@@ -3554,14 +2797,7 @@
 				"chapter": 11,
 				"level": "intermediate",
 				"readingTime": "22 min",
-				"topics": [
-					"context",
-					"sync",
-					"mutex",
-					"semaphore",
-					"pipeline",
-					"errgroup"
-				]
+				"topics": ["context", "sync", "mutex", "semaphore", "pipeline", "errgroup"]
 			}
 		},
 		{
@@ -3573,14 +2809,7 @@
 				"chapter": 12,
 				"level": "intermediate",
 				"readingTime": "22 min",
-				"topics": [
-					"JSON",
-					"HTTP",
-					"database",
-					"SQL",
-					"file I/O",
-					"REST API"
-				]
+				"topics": ["JSON", "HTTP", "database", "SQL", "file I/O", "REST API"]
 			}
 		},
 		{
@@ -3592,14 +2821,7 @@
 				"chapter": 13,
 				"level": "intermediate",
 				"readingTime": "25 min",
-				"topics": [
-					"REST API",
-					"HTTP",
-					"routing",
-					"validation",
-					"project structure",
-					"CRUD"
-				]
+				"topics": ["REST API", "HTTP", "routing", "validation", "project structure", "CRUD"]
 			}
 		},
 		{
@@ -3611,14 +2833,7 @@
 				"chapter": 14,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"authentication",
-					"JWT",
-					"middleware",
-					"CORS",
-					"rate limiting",
-					"security"
-				]
+				"topics": ["authentication", "JWT", "middleware", "CORS", "rate limiting", "security"]
 			}
 		},
 		{
@@ -3649,14 +2864,7 @@
 				"chapter": 16,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"gRPC",
-					"protobuf",
-					"RPC",
-					"microservices",
-					"streaming",
-					"service communication"
-				]
+				"topics": ["gRPC", "protobuf", "RPC", "microservices", "streaming", "service communication"]
 			}
 		},
 		{
@@ -3668,14 +2876,7 @@
 				"chapter": 17,
 				"level": "intermediate",
 				"readingTime": "20 min",
-				"topics": [
-					"WebSockets",
-					"real-time",
-					"chat",
-					"pub/sub",
-					"SSE",
-					"gorilla/websocket"
-				]
+				"topics": ["WebSockets", "real-time", "chat", "pub/sub", "SSE", "gorilla/websocket"]
 			}
 		},
 		{
@@ -3762,14 +2963,7 @@
 				"chapter": 22,
 				"level": "advanced",
 				"readingTime": "18 min",
-				"topics": [
-					"CLI",
-					"cobra",
-					"flags",
-					"terminal",
-					"developer tools",
-					"automation"
-				]
+				"topics": ["CLI", "cobra", "flags", "terminal", "developer tools", "automation"]
 			}
 		},
 		{
@@ -3800,15 +2994,7 @@
 				"chapter": 24,
 				"level": "advanced",
 				"readingTime": "18 min",
-				"topics": [
-					"security",
-					"SQL injection",
-					"XSS",
-					"CSRF",
-					"bcrypt",
-					"secrets",
-					"HTTPS"
-				]
+				"topics": ["security", "SQL injection", "XSS", "CSRF", "bcrypt", "secrets", "HTTPS"]
 			}
 		},
 		{
@@ -3820,14 +3006,7 @@
 				"chapter": 25,
 				"level": "advanced",
 				"readingTime": "25 min",
-				"topics": [
-					"project",
-					"URL shortener",
-					"full-stack",
-					"Redis",
-					"PostgreSQL",
-					"end-to-end"
-				]
+				"topics": ["project", "URL shortener", "full-stack", "Redis", "PostgreSQL", "end-to-end"]
 			}
 		},
 		{
@@ -3839,14 +3018,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"graphql",
-					"schema",
-					"resolvers",
-					"dataloader",
-					"federation"
-				]
+				"topics": ["roadmap", "graphql", "schema", "resolvers", "dataloader", "federation"]
 			}
 		},
 		{
@@ -3858,12 +3030,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"graphql",
-					"rest",
-					"api design",
-					"schema"
-				]
+				"topics": ["graphql", "rest", "api design", "schema"]
 			}
 		},
 		{
@@ -3875,13 +3042,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"graphql",
-					"schema",
-					"sdl",
-					"types",
-					"nullability"
-				]
+				"topics": ["graphql", "schema", "sdl", "types", "nullability"]
 			}
 		},
 		{
@@ -3893,12 +3054,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"graphql",
-					"graphql-yoga",
-					"node",
-					"postgres"
-				]
+				"topics": ["graphql", "graphql-yoga", "node", "postgres"]
 			}
 		},
 		{
@@ -3910,12 +3066,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"graphql",
-					"resolvers",
-					"execution",
-					"context"
-				]
+				"topics": ["graphql", "resolvers", "execution", "context"]
 			}
 		},
 		{
@@ -3927,13 +3078,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"graphql",
-					"n+1",
-					"performance",
-					"sql",
-					"postgres"
-				]
+				"topics": ["graphql", "n+1", "performance", "sql", "postgres"]
 			}
 		},
 		{
@@ -3945,12 +3090,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"graphql",
-					"dataloader",
-					"batching",
-					"performance"
-				]
+				"topics": ["graphql", "dataloader", "batching", "performance"]
 			}
 		},
 		{
@@ -3962,13 +3102,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"graphql",
-					"mutations",
-					"input types",
-					"validation",
-					"transactions"
-				]
+				"topics": ["graphql", "mutations", "input types", "validation", "transactions"]
 			}
 		},
 		{
@@ -3980,13 +3114,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"graphql",
-					"authentication",
-					"authorization",
-					"jwt",
-					"directives"
-				]
+				"topics": ["graphql", "authentication", "authorization", "jwt", "directives"]
 			}
 		},
 		{
@@ -3998,13 +3126,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"graphql",
-					"subscriptions",
-					"websockets",
-					"realtime",
-					"pubsub"
-				]
+				"topics": ["graphql", "subscriptions", "websockets", "realtime", "pubsub"]
 			}
 		},
 		{
@@ -4016,14 +3138,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"graphql",
-					"security",
-					"performance",
-					"federation",
-					"nginx",
-					"deployment"
-				]
+				"topics": ["graphql", "security", "performance", "federation", "nginx", "deployment"]
 			}
 		},
 		{
@@ -4035,13 +3150,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"grpc",
-					"protobuf",
-					"http2",
-					"rpc"
-				]
+				"topics": ["roadmap", "grpc", "protobuf", "http2", "rpc"]
 			}
 		},
 		{
@@ -4053,13 +3162,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"grpc",
-					"rpc",
-					"rest",
-					"graphql",
-					"protobuf"
-				]
+				"topics": ["grpc", "rpc", "rest", "graphql", "protobuf"]
 			}
 		},
 		{
@@ -4071,13 +3174,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"grpc",
-					"protobuf",
-					"proto3",
-					"schema",
-					"wire format"
-				]
+				"topics": ["grpc", "protobuf", "proto3", "schema", "wire format"]
 			}
 		},
 		{
@@ -4089,13 +3186,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"grpc",
-					"http2",
-					"framing",
-					"multiplexing",
-					"flow control"
-				]
+				"topics": ["grpc", "http2", "framing", "multiplexing", "flow control"]
 			}
 		},
 		{
@@ -4107,13 +3198,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"grpc",
-					"go",
-					"protoc",
-					"codegen",
-					"reflection"
-				]
+				"topics": ["grpc", "go", "protoc", "codegen", "reflection"]
 			}
 		},
 		{
@@ -4125,13 +3210,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"grpc",
-					"node",
-					"python",
-					"codegen",
-					"polyglot"
-				]
+				"topics": ["grpc", "node", "python", "codegen", "polyglot"]
 			}
 		},
 		{
@@ -4143,12 +3222,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"grpc",
-					"streaming",
-					"server stream",
-					"bidi"
-				]
+				"topics": ["grpc", "streaming", "server stream", "bidi"]
 			}
 		},
 		{
@@ -4160,13 +3234,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"grpc",
-					"errors",
-					"deadlines",
-					"metadata",
-					"status codes"
-				]
+				"topics": ["grpc", "errors", "deadlines", "metadata", "status codes"]
 			}
 		},
 		{
@@ -4178,13 +3246,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"grpc",
-					"interceptors",
-					"middleware",
-					"auth",
-					"logging"
-				]
+				"topics": ["grpc", "interceptors", "middleware", "auth", "logging"]
 			}
 		},
 		{
@@ -4196,13 +3258,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"grpc",
-					"tls",
-					"mtls",
-					"certificates",
-					"security"
-				]
+				"topics": ["grpc", "tls", "mtls", "certificates", "security"]
 			}
 		},
 		{
@@ -4214,13 +3270,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "15 min",
-				"topics": [
-					"grpc",
-					"load balancing",
-					"observability",
-					"nginx",
-					"deployment"
-				]
+				"topics": ["grpc", "load balancing", "observability", "nginx", "deployment"]
 			}
 		},
 		{
@@ -4232,9 +3282,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -4246,13 +3294,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"stateless",
-					"horizontal scaling",
-					"sessions",
-					"shared state",
-					"twelve-factor"
-				]
+				"topics": ["stateless", "horizontal scaling", "sessions", "shared state", "twelve-factor"]
 			}
 		},
 		{
@@ -4283,14 +3325,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"auto-scaling",
-					"ASG",
-					"HPA",
-					"target tracking",
-					"scale-in",
-					"KEDA"
-				]
+				"topics": ["auto-scaling", "ASG", "HPA", "target tracking", "scale-in", "KEDA"]
 			}
 		},
 		{
@@ -4320,13 +3355,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "8 min",
-				"topics": [
-					"WebSockets",
-					"Socket.io",
-					"Redis adapter",
-					"pub/sub",
-					"sticky sessions"
-				]
+				"topics": ["WebSockets", "Socket.io", "Redis adapter", "pub/sub", "sticky sessions"]
 			}
 		},
 		{
@@ -4338,9 +3367,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -4352,14 +3379,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "7 min",
-				"topics": [
-					"IaC",
-					"infrastructure",
-					"Terraform",
-					"Ansible",
-					"drift",
-					"idempotency"
-				]
+				"topics": ["IaC", "infrastructure", "Terraform", "Ansible", "drift", "idempotency"]
 			}
 		},
 		{
@@ -4371,14 +3391,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"Ansible",
-					"playbooks",
-					"roles",
-					"inventory",
-					"handlers",
-					"templates"
-				]
+				"topics": ["Ansible", "playbooks", "roles", "inventory", "handlers", "templates"]
 			}
 		},
 		{
@@ -4390,15 +3403,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"Terraform",
-					"HCL",
-					"state",
-					"providers",
-					"modules",
-					"plan",
-					"apply"
-				]
+				"topics": ["Terraform", "HCL", "state", "providers", "modules", "plan", "apply"]
 			}
 		},
 		{
@@ -4410,14 +3415,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"Terraform",
-					"modules",
-					"environments",
-					"secrets",
-					"drift",
-					"refactoring"
-				]
+				"topics": ["Terraform", "modules", "environments", "secrets", "drift", "refactoring"]
 			}
 		},
 		{
@@ -4429,12 +3427,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "6 min",
-				"topics": [
-					"roadmap",
-					"linux",
-					"vps",
-					"self-hosted"
-				]
+				"topics": ["roadmap", "linux", "vps", "self-hosted"]
 			}
 		},
 		{
@@ -4446,14 +3439,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "9 min",
-				"topics": [
-					"vps",
-					"linux",
-					"provisioning",
-					"hetzner",
-					"ovh",
-					"digitalocean"
-				]
+				"topics": ["vps", "linux", "provisioning", "hetzner", "ovh", "digitalocean"]
 			}
 		},
 		{
@@ -4465,13 +3451,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"ssh",
-					"security",
-					"openssh",
-					"fail2ban",
-					"hardening"
-				]
+				"topics": ["ssh", "security", "openssh", "fail2ban", "hardening"]
 			}
 		},
 		{
@@ -4483,12 +3463,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"filesystem",
-					"permissions",
-					"fhs",
-					"linux"
-				]
+				"topics": ["filesystem", "permissions", "fhs", "linux"]
 			}
 		},
 		{
@@ -4500,13 +3475,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"processes",
-					"signals",
-					"fork",
-					"exec",
-					"linux"
-				]
+				"topics": ["processes", "signals", "fork", "exec", "linux"]
 			}
 		},
 		{
@@ -4518,13 +3487,7 @@
 				"chapter": 5,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"systemd",
-					"services",
-					"journald",
-					"init",
-					"linux"
-				]
+				"topics": ["systemd", "services", "journald", "init", "linux"]
 			}
 		},
 		{
@@ -4536,14 +3499,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"sockets",
-					"ports",
-					"ss",
-					"lsof",
-					"netstat",
-					"tcp"
-				]
+				"topics": ["sockets", "ports", "ss", "lsof", "netstat", "tcp"]
 			}
 		},
 		{
@@ -4555,14 +3511,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"firewall",
-					"nftables",
-					"iptables",
-					"ufw",
-					"netfilter",
-					"linux"
-				]
+				"topics": ["firewall", "nftables", "iptables", "ufw", "netfilter", "linux"]
 			}
 		},
 		{
@@ -4574,13 +3523,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"users",
-					"groups",
-					"sudo",
-					"permissions",
-					"linux"
-				]
+				"topics": ["users", "groups", "sudo", "permissions", "linux"]
 			}
 		},
 		{
@@ -4592,14 +3535,7 @@
 				"chapter": 9,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"logs",
-					"journalctl",
-					"journald",
-					"logrotate",
-					"syslog",
-					"linux"
-				]
+				"topics": ["logs", "journalctl", "journald", "logrotate", "syslog", "linux"]
 			}
 		},
 		{
@@ -4611,13 +3547,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"cgroups",
-					"ulimit",
-					"oom",
-					"limits",
-					"linux"
-				]
+				"topics": ["cgroups", "ulimit", "oom", "limits", "linux"]
 			}
 		},
 		{
@@ -4629,13 +3559,7 @@
 				"chapter": 11,
 				"level": "advanced",
 				"readingTime": "10 min",
-				"topics": [
-					"cron",
-					"systemd",
-					"timers",
-					"scheduling",
-					"linux"
-				]
+				"topics": ["cron", "systemd", "timers", "scheduling", "linux"]
 			}
 		},
 		{
@@ -4647,13 +3571,7 @@
 				"chapter": 12,
 				"level": "advanced",
 				"readingTime": "15 min",
-				"topics": [
-					"checklist",
-					"hardening",
-					"production",
-					"linux",
-					"vps"
-				]
+				"topics": ["checklist", "hardening", "production", "linux", "vps"]
 			}
 		},
 		{
@@ -4665,9 +3583,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -4679,15 +3595,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"load balancing",
-					"L4",
-					"L7",
-					"TCP",
-					"HTTP",
-					"nginx",
-					"HAProxy"
-				]
+				"topics": ["load balancing", "L4", "L7", "TCP", "HTTP", "nginx", "HAProxy"]
 			}
 		},
 		{
@@ -4717,14 +3625,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"health checks",
-					"HAProxy",
-					"nginx",
-					"active",
-					"passive",
-					"connection draining"
-				]
+				"topics": ["health checks", "HAProxy", "nginx", "active", "passive", "connection draining"]
 			}
 		},
 		{
@@ -4736,15 +3637,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "9 min",
-				"topics": [
-					"SSL",
-					"TLS",
-					"HTTPS",
-					"certificates",
-					"nginx",
-					"HAProxy",
-					"termination"
-				]
+				"topics": ["SSL", "TLS", "HTTPS", "certificates", "nginx", "HAProxy", "termination"]
 			}
 		},
 		{
@@ -4756,14 +3649,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"HAProxy",
-					"ACLs",
-					"stats",
-					"runtime API",
-					"rate limiting",
-					"canary"
-				]
+				"topics": ["HAProxy", "ACLs", "stats", "runtime API", "rate limiting", "canary"]
 			}
 		},
 		{
@@ -4794,9 +3680,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -4808,14 +3692,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"messaging",
-					"queues",
-					"async",
-					"decoupling",
-					"backpressure",
-					"pub/sub"
-				]
+				"topics": ["messaging", "queues", "async", "decoupling", "backpressure", "pub/sub"]
 			}
 		},
 		{
@@ -4827,14 +3704,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"RabbitMQ",
-					"AMQP",
-					"exchanges",
-					"queues",
-					"dead letter",
-					"acknowledgements"
-				]
+				"topics": ["RabbitMQ", "AMQP", "exchanges", "queues", "dead letter", "acknowledgements"]
 			}
 		},
 		{
@@ -4866,14 +3736,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"NATS",
-					"JetStream",
-					"pub/sub",
-					"clustering",
-					"KV store",
-					"subjects"
-				]
+				"topics": ["NATS", "JetStream", "pub/sub", "clustering", "KV store", "subjects"]
 			}
 		},
 		{
@@ -4904,9 +3767,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -4955,14 +3816,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"service discovery",
-					"Consul",
-					"DNS",
-					"health checks",
-					"service mesh",
-					"Envoy"
-				]
+				"topics": ["service discovery", "Consul", "DNS", "health checks", "service mesh", "Envoy"]
 			}
 		},
 		{
@@ -5013,12 +3867,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"internet",
-					"packets",
-					"routers",
-					"ISP"
-				]
+				"topics": ["internet", "packets", "routers", "ISP"]
 			}
 		},
 		{
@@ -5030,12 +3879,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"DNS",
-					"domain names",
-					"resolvers",
-					"records"
-				]
+				"topics": ["DNS", "domain names", "resolvers", "records"]
 			}
 		},
 		{
@@ -5047,13 +3891,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "16 min",
-				"topics": [
-					"TCP",
-					"IP",
-					"handshake",
-					"flow control",
-					"congestion"
-				]
+				"topics": ["TCP", "IP", "handshake", "flow control", "congestion"]
 			}
 		},
 		{
@@ -5065,12 +3903,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"UDP",
-					"datagram",
-					"real-time",
-					"gaming"
-				]
+				"topics": ["UDP", "datagram", "real-time", "gaming"]
 			}
 		},
 		{
@@ -5082,13 +3915,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"TLS",
-					"HTTPS",
-					"certificates",
-					"encryption",
-					"handshake"
-				]
+				"topics": ["TLS", "HTTPS", "certificates", "encryption", "handshake"]
 			}
 		},
 		{
@@ -5100,13 +3927,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "17 min",
-				"topics": [
-					"HTTP",
-					"HTTP/2",
-					"HTTP/3",
-					"QUIC",
-					"multiplexing"
-				]
+				"topics": ["HTTP", "HTTP/2", "HTTP/3", "QUIC", "multiplexing"]
 			}
 		},
 		{
@@ -5118,12 +3939,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"WebSocket",
-					"real-time",
-					"SSE",
-					"long polling"
-				]
+				"topics": ["WebSocket", "real-time", "SSE", "long polling"]
 			}
 		},
 		{
@@ -5135,13 +3951,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"CORS",
-					"CSP",
-					"firewall",
-					"MITM",
-					"security headers"
-				]
+				"topics": ["CORS", "CSP", "firewall", "MITM", "security headers"]
 			}
 		},
 		{
@@ -5153,10 +3963,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"nosql"
-				]
+				"topics": ["roadmap", "nosql"]
 			}
 		},
 		{
@@ -5168,11 +3975,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"nosql",
-					"base",
-					"cap"
-				]
+				"topics": ["nosql", "base", "cap"]
 			}
 		},
 		{
@@ -5184,11 +3987,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"key-value",
-					"redis",
-					"dynamodb"
-				]
+				"topics": ["key-value", "redis", "dynamodb"]
 			}
 		},
 		{
@@ -5200,11 +3999,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"document",
-					"mongodb",
-					"embedding"
-				]
+				"topics": ["document", "mongodb", "embedding"]
 			}
 		},
 		{
@@ -5216,11 +4011,7 @@
 				"chapter": 4,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"cassandra",
-					"partition key",
-					"clustering"
-				]
+				"topics": ["cassandra", "partition key", "clustering"]
 			}
 		},
 		{
@@ -5232,11 +4023,7 @@
 				"chapter": 5,
 				"level": "advanced",
 				"readingTime": "11 min",
-				"topics": [
-					"graph",
-					"neo4j",
-					"traversal"
-				]
+				"topics": ["graph", "neo4j", "traversal"]
 			}
 		},
 		{
@@ -5248,11 +4035,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"access patterns",
-					"single-table",
-					"denormalization"
-				]
+				"topics": ["access patterns", "single-table", "denormalization"]
 			}
 		},
 		{
@@ -5264,11 +4047,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"consistency",
-					"replication",
-					"conflicts"
-				]
+				"topics": ["consistency", "replication", "conflicts"]
 			}
 		},
 		{
@@ -5280,11 +4059,7 @@
 				"chapter": 8,
 				"level": "mastery",
 				"readingTime": "12 min",
-				"topics": [
-					"polyglot",
-					"decision",
-					"tradeoffs"
-				]
+				"topics": ["polyglot", "decision", "tradeoffs"]
 			}
 		},
 		{
@@ -5296,9 +4071,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -5310,14 +4083,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"observability",
-					"logs",
-					"metrics",
-					"traces",
-					"SLO",
-					"alerting"
-				]
+				"topics": ["observability", "logs", "metrics", "traces", "SLO", "alerting"]
 			}
 		},
 		{
@@ -5349,14 +4115,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"Prometheus",
-					"Grafana",
-					"PromQL",
-					"metrics",
-					"alerting",
-					"instrumentation"
-				]
+				"topics": ["Prometheus", "Grafana", "PromQL", "metrics", "alerting", "instrumentation"]
 			}
 		},
 		{
@@ -5368,14 +4127,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"OpenTelemetry",
-					"Jaeger",
-					"traces",
-					"spans",
-					"context propagation",
-					"sampling"
-				]
+				"topics": ["OpenTelemetry", "Jaeger", "traces", "spans", "context propagation", "sampling"]
 			}
 		},
 		{
@@ -5407,10 +4159,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"operating systems"
-				]
+				"topics": ["roadmap", "operating systems"]
 			}
 		},
 		{
@@ -5422,11 +4171,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"kernel",
-					"syscall",
-					"user mode"
-				]
+				"topics": ["kernel", "syscall", "user mode"]
 			}
 		},
 		{
@@ -5438,11 +4183,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"process",
-					"fork",
-					"exec"
-				]
+				"topics": ["process", "fork", "exec"]
 			}
 		},
 		{
@@ -5454,11 +4195,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "14 min",
-				"topics": [
-					"threads",
-					"context switch",
-					"race condition"
-				]
+				"topics": ["threads", "context switch", "race condition"]
 			}
 		},
 		{
@@ -5470,11 +4207,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"scheduler",
-					"preemption",
-					"cfs"
-				]
+				"topics": ["scheduler", "preemption", "cfs"]
 			}
 		},
 		{
@@ -5486,11 +4219,7 @@
 				"chapter": 5,
 				"level": "advanced",
 				"readingTime": "15 min",
-				"topics": [
-					"virtual memory",
-					"paging",
-					"tlb"
-				]
+				"topics": ["virtual memory", "paging", "tlb"]
 			}
 		},
 		{
@@ -5502,11 +4231,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "15 min",
-				"topics": [
-					"mutex",
-					"semaphore",
-					"deadlock"
-				]
+				"topics": ["mutex", "semaphore", "deadlock"]
 			}
 		},
 		{
@@ -5518,11 +4243,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"inode",
-					"page cache",
-					"journaling"
-				]
+				"topics": ["inode", "page cache", "journaling"]
 			}
 		},
 		{
@@ -5534,11 +4255,7 @@
 				"chapter": 8,
 				"level": "mastery",
 				"readingTime": "16 min",
-				"topics": [
-					"epoll",
-					"non-blocking",
-					"io_uring"
-				]
+				"topics": ["epoll", "non-blocking", "io_uring"]
 			}
 		},
 		{
@@ -5550,9 +4267,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -5564,14 +4279,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"Kubernetes",
-					"pods",
-					"deployments",
-					"services",
-					"control loop",
-					"kubectl"
-				]
+				"topics": ["Kubernetes", "pods", "deployments", "services", "control loop", "kubectl"]
 			}
 		},
 		{
@@ -5583,15 +4291,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"k3s",
-					"VPS",
-					"bare metal",
-					"Hetzner",
-					"cluster setup",
-					"Longhorn",
-					"Traefik"
-				]
+				"topics": ["k3s", "VPS", "bare metal", "Hetzner", "cluster setup", "Longhorn", "Traefik"]
 			}
 		},
 		{
@@ -5603,14 +4303,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"StatefulSet",
-					"DaemonSet",
-					"Job",
-					"CronJob",
-					"Kubernetes",
-					"workloads"
-				]
+				"topics": ["StatefulSet", "DaemonSet", "Job", "CronJob", "Kubernetes", "workloads"]
 			}
 		},
 		{
@@ -5641,15 +4334,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"GitOps",
-					"ArgoCD",
-					"Helm",
-					"Argo Rollouts",
-					"canary",
-					"blue-green",
-					"CD"
-				]
+				"topics": ["GitOps", "ArgoCD", "Helm", "Argo Rollouts", "canary", "blue-green", "CD"]
 			}
 		},
 		{
@@ -5661,9 +4346,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -5675,14 +4358,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "8 min",
-				"topics": [
-					"latency",
-					"percentiles",
-					"P99",
-					"tail latency",
-					"latency budget",
-					"SLO"
-				]
+				"topics": ["latency", "percentiles", "P99", "tail latency", "latency budget", "SLO"]
 			}
 		},
 		{
@@ -5694,16 +4370,7 @@
 				"chapter": 2,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"profiling",
-					"flamegraph",
-					"pprof",
-					"perf",
-					"Node.js",
-					"Go",
-					"CPU",
-					"memory"
-				]
+				"topics": ["profiling", "flamegraph", "pprof", "perf", "Node.js", "Go", "CPU", "memory"]
 			}
 		},
 		{
@@ -5734,15 +4401,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"caching",
-					"Redis",
-					"CDN",
-					"cache invalidation",
-					"cache stampede",
-					"LRU",
-					"TTL"
-				]
+				"topics": ["caching", "Redis", "CDN", "cache invalidation", "cache stampede", "LRU", "TTL"]
 			}
 		},
 		{
@@ -5773,10 +4432,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"redis"
-				]
+				"topics": ["roadmap", "redis"]
 			}
 		},
 		{
@@ -5788,11 +4444,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"redis",
-					"in-memory",
-					"single-threaded"
-				]
+				"topics": ["redis", "in-memory", "single-threaded"]
 			}
 		},
 		{
@@ -5804,13 +4456,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"strings",
-					"hashes",
-					"lists",
-					"sets",
-					"sorted sets"
-				]
+				"topics": ["strings", "hashes", "lists", "sets", "sorted sets"]
 			}
 		},
 		{
@@ -5822,11 +4468,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"ttl",
-					"expiration",
-					"eviction"
-				]
+				"topics": ["ttl", "expiration", "eviction"]
 			}
 		},
 		{
@@ -5838,11 +4480,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"rdb",
-					"aof",
-					"durability"
-				]
+				"topics": ["rdb", "aof", "durability"]
 			}
 		},
 		{
@@ -5854,11 +4492,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"pubsub",
-					"streams",
-					"consumer groups"
-				]
+				"topics": ["pubsub", "streams", "consumer groups"]
 			}
 		},
 		{
@@ -5870,11 +4504,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"cache",
-					"queue",
-					"distributed lock"
-				]
+				"topics": ["cache", "queue", "distributed lock"]
 			}
 		},
 		{
@@ -5886,11 +4516,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"multi",
-					"lua",
-					"atomicity"
-				]
+				"topics": ["multi", "lua", "atomicity"]
 			}
 		},
 		{
@@ -5902,11 +4528,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"replication",
-					"sentinel",
-					"cluster"
-				]
+				"topics": ["replication", "sentinel", "cluster"]
 			}
 		},
 		{
@@ -5918,11 +4540,7 @@
 				"chapter": 9,
 				"level": "mastery",
 				"readingTime": "14 min",
-				"topics": [
-					"production",
-					"monitoring",
-					"performance"
-				]
+				"topics": ["production", "monitoring", "performance"]
 			}
 		},
 		{
@@ -5934,9 +4552,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -6043,9 +4659,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "3 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -6076,14 +4690,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"PostgreSQL",
-					"full-text search",
-					"tsvector",
-					"GIN",
-					"ts_rank",
-					"ts_headline"
-				]
+				"topics": ["PostgreSQL", "full-text search", "tsvector", "GIN", "ts_rank", "ts_headline"]
 			}
 		},
 		{
@@ -6095,14 +4702,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"Meilisearch",
-					"typo tolerance",
-					"facets",
-					"indexing",
-					"self-hosted",
-					"sync"
-				]
+				"topics": ["Meilisearch", "typo tolerance", "facets", "indexing", "self-hosted", "sync"]
 			}
 		},
 		{
@@ -6114,14 +4714,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"Elasticsearch",
-					"mappings",
-					"analyzers",
-					"Query DSL",
-					"aggregations",
-					"cluster"
-				]
+				"topics": ["Elasticsearch", "mappings", "analyzers", "Query DSL", "aggregations", "cluster"]
 			}
 		},
 		{
@@ -6152,11 +4745,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"sql",
-					"postgres"
-				]
+				"topics": ["roadmap", "sql", "postgres"]
 			}
 		},
 		{
@@ -6168,11 +4757,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"select",
-					"relational model",
-					"ddl"
-				]
+				"topics": ["select", "relational model", "ddl"]
 			}
 		},
 		{
@@ -6184,11 +4769,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"group by",
-					"aggregate",
-					"having"
-				]
+				"topics": ["group by", "aggregate", "having"]
 			}
 		},
 		{
@@ -6200,11 +4781,7 @@
 				"chapter": 3,
 				"level": "intermediate",
 				"readingTime": "16 min",
-				"topics": [
-					"join",
-					"inner join",
-					"outer join"
-				]
+				"topics": ["join", "inner join", "outer join"]
 			}
 		},
 		{
@@ -6216,11 +4793,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"subquery",
-					"cte",
-					"recursive"
-				]
+				"topics": ["subquery", "cte", "recursive"]
 			}
 		},
 		{
@@ -6232,11 +4805,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "17 min",
-				"topics": [
-					"index",
-					"explain",
-					"b-tree"
-				]
+				"topics": ["index", "explain", "b-tree"]
 			}
 		},
 		{
@@ -6248,12 +4817,7 @@
 				"chapter": 6,
 				"level": "advanced",
 				"readingTime": "18 min",
-				"topics": [
-					"acid",
-					"isolation",
-					"mvcc",
-					"locking"
-				]
+				"topics": ["acid", "isolation", "mvcc", "locking"]
 			}
 		},
 		{
@@ -6265,11 +4829,7 @@
 				"chapter": 7,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"window function",
-					"partition by",
-					"ranking"
-				]
+				"topics": ["window function", "partition by", "ranking"]
 			}
 		},
 		{
@@ -6281,11 +4841,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "17 min",
-				"topics": [
-					"optimization",
-					"n+1",
-					"performance"
-				]
+				"topics": ["optimization", "n+1", "performance"]
 			}
 		},
 		{
@@ -6297,11 +4853,7 @@
 				"chapter": 9,
 				"level": "mastery",
 				"readingTime": "18 min",
-				"topics": [
-					"schema",
-					"constraints",
-					"migrations"
-				]
+				"topics": ["schema", "constraints", "migrations"]
 			}
 		},
 		{
@@ -6313,13 +4865,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "18 min",
-				"topics": [
-					"roadmap",
-					"learning",
-					"career",
-					"fullstack to SRE",
-					"hands-on"
-				]
+				"topics": ["roadmap", "learning", "career", "fullstack to SRE", "hands-on"]
 			}
 		},
 		{
@@ -6331,13 +4877,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "14 min",
-				"topics": [
-					"SRE",
-					"error budget",
-					"toil",
-					"DevOps",
-					"reliability"
-				]
+				"topics": ["SRE", "error budget", "toil", "DevOps", "reliability"]
 			}
 		},
 		{
@@ -6349,14 +4889,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "18 min",
-				"topics": [
-					"SLI",
-					"SLO",
-					"SLA",
-					"error budget",
-					"burn rate",
-					"Prometheus"
-				]
+				"topics": ["SLI", "SLO", "SLA", "error budget", "burn rate", "Prometheus"]
 			}
 		},
 		{
@@ -6368,14 +4901,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "16 min",
-				"topics": [
-					"monitoring",
-					"golden signals",
-					"RED",
-					"USE",
-					"Prometheus",
-					"Grafana"
-				]
+				"topics": ["monitoring", "golden signals", "RED", "USE", "Prometheus", "Grafana"]
 			}
 		},
 		{
@@ -6387,13 +4913,7 @@
 				"chapter": 4,
 				"level": "intermediate",
 				"readingTime": "17 min",
-				"topics": [
-					"incident response",
-					"on-call",
-					"ICS",
-					"PagerDuty",
-					"war room"
-				]
+				"topics": ["incident response", "on-call", "ICS", "PagerDuty", "war room"]
 			}
 		},
 		{
@@ -6405,13 +4925,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "15 min",
-				"topics": [
-					"postmortem",
-					"blameless",
-					"root cause",
-					"five whys",
-					"action items"
-				]
+				"topics": ["postmortem", "blameless", "root cause", "five whys", "action items"]
 			}
 		},
 		{
@@ -6423,13 +4937,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "18 min",
-				"topics": [
-					"capacity planning",
-					"load testing",
-					"k6",
-					"queueing theory",
-					"Little's Law"
-				]
+				"topics": ["capacity planning", "load testing", "k6", "queueing theory", "Little's Law"]
 			}
 		},
 		{
@@ -6441,13 +4949,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "16 min",
-				"topics": [
-					"PRR",
-					"launch review",
-					"runbook",
-					"production readiness",
-					"checklist"
-				]
+				"topics": ["PRR", "launch review", "runbook", "production readiness", "checklist"]
 			}
 		},
 		{
@@ -6459,13 +4961,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"chaos engineering",
-					"Chaos Mesh",
-					"Gremlin",
-					"fault injection",
-					"gameday"
-				]
+				"topics": ["chaos engineering", "Chaos Mesh", "Gremlin", "fault injection", "gameday"]
 			}
 		},
 		{
@@ -6477,14 +4973,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "16 min",
-				"topics": [
-					"disaster recovery",
-					"DR",
-					"RTO",
-					"RPO",
-					"backups",
-					"failover"
-				]
+				"topics": ["disaster recovery", "DR", "RTO", "RPO", "backups", "failover"]
 			}
 		},
 		{
@@ -6496,13 +4985,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "15 min",
-				"topics": [
-					"toil",
-					"automation",
-					"operators",
-					"self-healing",
-					"Kubernetes"
-				]
+				"topics": ["toil", "automation", "operators", "self-healing", "Kubernetes"]
 			}
 		},
 		{
@@ -6514,13 +4997,7 @@
 				"chapter": 11,
 				"level": "beginner",
 				"readingTime": "25 min",
-				"topics": [
-					"scaling",
-					"distributed systems",
-					"roadmap",
-					"capstone",
-					"system design"
-				]
+				"topics": ["scaling", "distributed systems", "roadmap", "capstone", "system design"]
 			}
 		},
 		{
@@ -6553,16 +5030,7 @@
 				"chapter": 13,
 				"level": "mastery",
 				"readingTime": "30 min",
-				"topics": [
-					"networking",
-					"BGP",
-					"anycast",
-					"CDN",
-					"TCP",
-					"tcpdump",
-					"XDP",
-					"load balancing"
-				]
+				"topics": ["networking", "BGP", "anycast", "CDN", "TCP", "tcpdump", "XDP", "load balancing"]
 			}
 		},
 		{
@@ -6637,16 +5105,7 @@
 				"chapter": 17,
 				"level": "mastery",
 				"readingTime": "28 min",
-				"topics": [
-					"service mesh",
-					"Envoy",
-					"Istio",
-					"Linkerd",
-					"ambient",
-					"mTLS",
-					"xDS",
-					"Cilium"
-				]
+				"topics": ["service mesh", "Envoy", "Istio", "Linkerd", "ambient", "mTLS", "xDS", "Cilium"]
 			}
 		},
 		{
@@ -6698,14 +5157,7 @@
 				"chapter": 20,
 				"level": "mastery",
 				"readingTime": "30 min",
-				"topics": [
-					"roadmap",
-					"career",
-					"mastery",
-					"staff SRE",
-					"year plan",
-					"depth"
-				]
+				"topics": ["roadmap", "career", "mastery", "staff SRE", "year plan", "depth"]
 			}
 		},
 		{
@@ -6717,9 +5169,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -6750,14 +5200,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"MinIO",
-					"S3",
-					"object storage",
-					"self-hosted",
-					"distributed",
-					"buckets"
-				]
+				"topics": ["MinIO", "S3", "object storage", "self-hosted", "distributed", "buckets"]
 			}
 		},
 		{
@@ -6827,9 +5270,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap"
-				]
+				"topics": ["roadmap"]
 			}
 		},
 		{
@@ -6954,13 +5395,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"tls",
-					"ssl",
-					"certificates",
-					"letsencrypt"
-				]
+				"topics": ["roadmap", "tls", "ssl", "certificates", "letsencrypt"]
 			}
 		},
 		{
@@ -6972,13 +5407,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "9 min",
-				"topics": [
-					"tls",
-					"ssl",
-					"encryption",
-					"identity",
-					"https"
-				]
+				"topics": ["tls", "ssl", "encryption", "identity", "https"]
 			}
 		},
 		{
@@ -6990,13 +5419,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"tls",
-					"handshake",
-					"tls 1.3",
-					"ecdhe",
-					"alpn"
-				]
+				"topics": ["tls", "handshake", "tls 1.3", "ecdhe", "alpn"]
 			}
 		},
 		{
@@ -7008,13 +5431,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"certificates",
-					"x509",
-					"csr",
-					"ca",
-					"chain of trust"
-				]
+				"topics": ["certificates", "x509", "csr", "ca", "chain of trust"]
 			}
 		},
 		{
@@ -7026,12 +5443,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"letsencrypt",
-					"acme",
-					"certificates",
-					"automation"
-				]
+				"topics": ["letsencrypt", "acme", "certificates", "automation"]
 			}
 		},
 		{
@@ -7043,13 +5455,7 @@
 				"chapter": 5,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"certbot",
-					"letsencrypt",
-					"nginx",
-					"http-01",
-					"tls"
-				]
+				"topics": ["certbot", "letsencrypt", "nginx", "http-01", "tls"]
 			}
 		},
 		{
@@ -7061,13 +5467,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "10 min",
-				"topics": [
-					"wildcard",
-					"dns-01",
-					"letsencrypt",
-					"cloudflare",
-					"route53"
-				]
+				"topics": ["wildcard", "dns-01", "letsencrypt", "cloudflare", "route53"]
 			}
 		},
 		{
@@ -7079,13 +5479,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"nginx",
-					"tls",
-					"ssl",
-					"hsts",
-					"ocsp"
-				]
+				"topics": ["nginx", "tls", "ssl", "hsts", "ocsp"]
 			}
 		},
 		{
@@ -7097,13 +5491,7 @@
 				"chapter": 8,
 				"level": "advanced",
 				"readingTime": "11 min",
-				"topics": [
-					"renewal",
-					"monitoring",
-					"key rotation",
-					"letsencrypt",
-					"tls"
-				]
+				"topics": ["renewal", "monitoring", "key rotation", "letsencrypt", "tls"]
 			}
 		},
 		{
@@ -7115,13 +5503,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"http",
-					"nginx",
-					"web server",
-					"sockets"
-				]
+				"topics": ["roadmap", "http", "nginx", "web server", "sockets"]
 			}
 		},
 		{
@@ -7133,12 +5515,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"http",
-					"web server",
-					"tcp",
-					"request lifecycle"
-				]
+				"topics": ["http", "web server", "tcp", "request lifecycle"]
 			}
 		},
 		{
@@ -7150,13 +5527,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"http",
-					"sockets",
-					"tcp",
-					"go",
-					"netcat"
-				]
+				"topics": ["http", "sockets", "tcp", "go", "netcat"]
 			}
 		},
 		{
@@ -7168,13 +5539,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"http",
-					"parser",
-					"chunked encoding",
-					"go",
-					"request body"
-				]
+				"topics": ["http", "parser", "chunked encoding", "go", "request body"]
 			}
 		},
 		{
@@ -7186,13 +5551,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "13 min",
-				"topics": [
-					"concurrency",
-					"threads",
-					"event loop",
-					"epoll",
-					"go"
-				]
+				"topics": ["concurrency", "threads", "event loop", "epoll", "go"]
 			}
 		},
 		{
@@ -7204,13 +5563,7 @@
 				"chapter": 5,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"static files",
-					"mime",
-					"etag",
-					"cache control",
-					"http"
-				]
+				"topics": ["static files", "mime", "etag", "cache control", "http"]
 			}
 		},
 		{
@@ -7222,12 +5575,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"nginx",
-					"configuration",
-					"server blocks",
-					"locations"
-				]
+				"topics": ["nginx", "configuration", "server blocks", "locations"]
 			}
 		},
 		{
@@ -7239,13 +5587,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "13 min",
-				"topics": [
-					"reverse proxy",
-					"nginx",
-					"proxy_pass",
-					"upstream",
-					"headers"
-				]
+				"topics": ["reverse proxy", "nginx", "proxy_pass", "upstream", "headers"]
 			}
 		},
 		{
@@ -7257,13 +5599,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"nginx",
-					"logs",
-					"access log",
-					"error log",
-					"log format"
-				]
+				"topics": ["nginx", "logs", "access log", "error log", "log format"]
 			}
 		},
 		{
@@ -7275,13 +5611,7 @@
 				"chapter": 9,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"nginx",
-					"caching",
-					"proxy_cache",
-					"microcaching",
-					"cdn"
-				]
+				"topics": ["nginx", "caching", "proxy_cache", "microcaching", "cdn"]
 			}
 		},
 		{
@@ -7293,14 +5623,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"nginx",
-					"performance",
-					"hardening",
-					"rate limiting",
-					"security headers",
-					"tls"
-				]
+				"topics": ["nginx", "performance", "hardening", "rate limiting", "security headers", "tls"]
 			}
 		},
 		{
@@ -7312,13 +5635,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"webhooks",
-					"hmac",
-					"retries",
-					"idempotency"
-				]
+				"topics": ["roadmap", "webhooks", "hmac", "retries", "idempotency"]
 			}
 		},
 		{
@@ -7330,12 +5647,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"webhooks",
-					"events",
-					"rest",
-					"queues"
-				]
+				"topics": ["webhooks", "events", "rest", "queues"]
 			}
 		},
 		{
@@ -7347,12 +5659,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"webhooks",
-					"events",
-					"schema",
-					"versioning"
-				]
+				"topics": ["webhooks", "events", "schema", "versioning"]
 			}
 		},
 		{
@@ -7364,12 +5671,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"webhooks",
-					"go",
-					"http client",
-					"producer"
-				]
+				"topics": ["webhooks", "go", "http client", "producer"]
 			}
 		},
 		{
@@ -7381,13 +5683,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"webhooks",
-					"hmac",
-					"signatures",
-					"security",
-					"replay"
-				]
+				"topics": ["webhooks", "hmac", "signatures", "security", "replay"]
 			}
 		},
 		{
@@ -7399,13 +5695,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"webhooks",
-					"hmac",
-					"verification",
-					"receiver",
-					"security"
-				]
+				"topics": ["webhooks", "hmac", "verification", "receiver", "security"]
 			}
 		},
 		{
@@ -7417,13 +5707,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"webhooks",
-					"retries",
-					"backoff",
-					"jitter",
-					"deadlines"
-				]
+				"topics": ["webhooks", "retries", "backoff", "jitter", "deadlines"]
 			}
 		},
 		{
@@ -7435,13 +5719,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"webhooks",
-					"idempotency",
-					"inbox pattern",
-					"dedup",
-					"transactions"
-				]
+				"topics": ["webhooks", "idempotency", "inbox pattern", "dedup", "transactions"]
 			}
 		},
 		{
@@ -7453,13 +5731,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"webhooks",
-					"dlq",
-					"delivery",
-					"alerts",
-					"replay"
-				]
+				"topics": ["webhooks", "dlq", "delivery", "alerts", "replay"]
 			}
 		},
 		{
@@ -7471,13 +5743,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "12 min",
-				"topics": [
-					"webhooks",
-					"observability",
-					"metrics",
-					"tracing",
-					"dashboards"
-				]
+				"topics": ["webhooks", "observability", "metrics", "tracing", "dashboards"]
 			}
 		},
 		{
@@ -7489,13 +5755,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"webhooks",
-					"outbox",
-					"worker pool",
-					"nginx",
-					"deployment"
-				]
+				"topics": ["webhooks", "outbox", "worker pool", "nginx", "deployment"]
 			}
 		},
 		{
@@ -7507,13 +5767,7 @@
 				"chapter": 0,
 				"level": "beginner",
 				"readingTime": "5 min",
-				"topics": [
-					"roadmap",
-					"websockets",
-					"sse",
-					"realtime",
-					"pubsub"
-				]
+				"topics": ["roadmap", "websockets", "sse", "realtime", "pubsub"]
 			}
 		},
 		{
@@ -7525,12 +5779,7 @@
 				"chapter": 1,
 				"level": "beginner",
 				"readingTime": "10 min",
-				"topics": [
-					"websockets",
-					"sse",
-					"realtime",
-					"polling"
-				]
+				"topics": ["websockets", "sse", "realtime", "polling"]
 			}
 		},
 		{
@@ -7542,12 +5791,7 @@
 				"chapter": 2,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"websockets",
-					"rfc6455",
-					"frames",
-					"handshake"
-				]
+				"topics": ["websockets", "rfc6455", "frames", "handshake"]
 			}
 		},
 		{
@@ -7559,12 +5803,7 @@
 				"chapter": 3,
 				"level": "beginner",
 				"readingTime": "11 min",
-				"topics": [
-					"websockets",
-					"go",
-					"coder/websocket",
-					"browser"
-				]
+				"topics": ["websockets", "go", "coder/websocket", "browser"]
 			}
 		},
 		{
@@ -7576,13 +5815,7 @@
 				"chapter": 4,
 				"level": "beginner",
 				"readingTime": "12 min",
-				"topics": [
-					"websockets",
-					"json",
-					"protocol",
-					"versioning",
-					"envelope"
-				]
+				"topics": ["websockets", "json", "protocol", "versioning", "envelope"]
 			}
 		},
 		{
@@ -7594,12 +5827,7 @@
 				"chapter": 5,
 				"level": "intermediate",
 				"readingTime": "11 min",
-				"topics": [
-					"sse",
-					"server-sent-events",
-					"realtime",
-					"http"
-				]
+				"topics": ["sse", "server-sent-events", "realtime", "http"]
 			}
 		},
 		{
@@ -7611,13 +5839,7 @@
 				"chapter": 6,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"websockets",
-					"pubsub",
-					"redis",
-					"nats",
-					"scaling"
-				]
+				"topics": ["websockets", "pubsub", "redis", "nats", "scaling"]
 			}
 		},
 		{
@@ -7629,13 +5851,7 @@
 				"chapter": 7,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"websockets",
-					"presence",
-					"rooms",
-					"redis",
-					"sets"
-				]
+				"topics": ["websockets", "presence", "rooms", "redis", "sets"]
 			}
 		},
 		{
@@ -7647,13 +5863,7 @@
 				"chapter": 8,
 				"level": "intermediate",
 				"readingTime": "12 min",
-				"topics": [
-					"websockets",
-					"auth",
-					"origin",
-					"csrf",
-					"rate limiting"
-				]
+				"topics": ["websockets", "auth", "origin", "csrf", "rate limiting"]
 			}
 		},
 		{
@@ -7665,13 +5875,7 @@
 				"chapter": 9,
 				"level": "advanced",
 				"readingTime": "13 min",
-				"topics": [
-					"websockets",
-					"backpressure",
-					"reconnect",
-					"heartbeat",
-					"resilience"
-				]
+				"topics": ["websockets", "backpressure", "reconnect", "heartbeat", "resilience"]
 			}
 		},
 		{
@@ -7683,13 +5887,7 @@
 				"chapter": 10,
 				"level": "advanced",
 				"readingTime": "14 min",
-				"topics": [
-					"websockets",
-					"nginx",
-					"systemd",
-					"observability",
-					"scaling"
-				]
+				"topics": ["websockets", "nginx", "systemd", "observability", "scaling"]
 			}
 		}
 	]

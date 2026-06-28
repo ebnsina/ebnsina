@@ -1,10 +1,10 @@
 ---
-title: "API Gateway — Roadmap"
-subtitle: "Build your own with nginx, Kong, or Envoy. Auth, rate limit, route, transform."
+title: 'API Gateway — Roadmap'
+subtitle: 'Build your own with nginx, Kong, or Envoy. Auth, rate limit, route, transform.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -31,4 +31,3 @@ An API gateway is the single door into your system. Done well, it centralizes cr
 4. **Rate Limiting at the Gateway** — fixed window, sliding window, token bucket, per-user and per-endpoint limits
 5. **Request & Response Transformation** — header manipulation, payload reshaping, protocol translation REST→gRPC
 6. **Observability & Production Gateway** — access logs, distributed tracing, circuit breakers, operational checklist
-

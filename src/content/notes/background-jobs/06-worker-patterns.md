@@ -1,10 +1,10 @@
 ---
-title: "Worker Patterns & Production"
-subtitle: "Graceful shutdown, concurrency limits, priority queues, fan-out, and the operational checklist for running jobs in production."
+title: 'Worker Patterns & Production'
+subtitle: 'Graceful shutdown, concurrency limits, priority queues, fan-out, and the operational checklist for running jobs in production.'
 chapter: 6
-level: "advanced"
-readingTime: "10 min"
-topics: ["graceful shutdown", "priority queues", "fan-out", "worker pools", "production"]
+level: 'advanced'
+readingTime: '10 min'
+topics: ['graceful shutdown', 'priority queues', 'fan-out', 'worker pools', 'production']
 ---
 
 <script>
@@ -30,23 +30,23 @@ const worker = new Worker('jobs', jobHandler, { connection, concurrency: 10 });
 
 // Graceful shutdown handler
 async function shutdown(): Promise<void> {
-  logger.info('Shutting down worker...');
+	logger.info('Shutting down worker...');
 
-  // Stop picking up new jobs
-  await worker.pause();
+	// Stop picking up new jobs
+	await worker.pause();
 
-  // Wait for in-progress jobs to complete (up to 30s)
-  const timeout = setTimeout(async () => {
-    logger.warn('Shutdown timeout — forcing close');
-    await worker.close(true); // force close
-    process.exit(1);
-  }, 30_000);
+	// Wait for in-progress jobs to complete (up to 30s)
+	const timeout = setTimeout(async () => {
+		logger.warn('Shutdown timeout — forcing close');
+		await worker.close(true); // force close
+		process.exit(1);
+	}, 30_000);
 
-  await worker.close(); // waits for active jobs to finish
-  clearTimeout(timeout);
+	await worker.close(); // waits for active jobs to finish
+	clearTimeout(timeout);
 
-  logger.info('Worker shutdown complete');
-  process.exit(0);
+	logger.info('Worker shutdown complete');
+	process.exit(0);
 }
 
 process.on('SIGTERM', shutdown);
@@ -71,18 +71,20 @@ spec:
 Some jobs are more urgent than others. Implement multiple queues with dedicated workers per priority tier, or use BullMQ's built-in priority:
 
 **Multiple queues (explicit control):**
+
 ```typescript
 const criticalQueue = new Queue('critical', { connection });
-const defaultQueue  = new Queue('default',  { connection });
-const bulkQueue     = new Queue('bulk',     { connection });
+const defaultQueue = new Queue('default', { connection });
+const bulkQueue = new Queue('bulk', { connection });
 
 // More workers on critical queue
 const criticalWorker = new Worker('critical', handler, { connection, concurrency: 20 });
-const defaultWorker  = new Worker('default',  handler, { connection, concurrency: 5 });
-const bulkWorker     = new Worker('bulk',     handler, { connection, concurrency: 2 });
+const defaultWorker = new Worker('default', handler, { connection, concurrency: 5 });
+const bulkWorker = new Worker('bulk', handler, { connection, concurrency: 2 });
 ```
 
 **BullMQ priority (single queue, ordered by priority value):**
+
 ```typescript
 // Lower number = higher priority
 await queue.add('send-alert', { userId }, { priority: 1 }); // picked first
@@ -99,32 +101,37 @@ One job spawns many child jobs. Useful for bulk operations where you want per-it
 ```typescript
 // Parent job: dispatch work to children
 async function processOrderBatch(job: Job<{ orderIds: string[] }>): Promise<void> {
-  const { orderIds } = job.data;
+	const { orderIds } = job.data;
 
-  // Fan out — one child per order
-  await Promise.all(
-    orderIds.map((orderId) =>
-      childQueue.add('process-order', { orderId }, {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      }),
-    ),
-  );
+	// Fan out — one child per order
+	await Promise.all(
+		orderIds.map((orderId) =>
+			childQueue.add(
+				'process-order',
+				{ orderId },
+				{
+					attempts: 3,
+					backoff: { type: 'exponential', delay: 1000 }
+				}
+			)
+		)
+	);
 
-  logger.info({ count: orderIds.length }, 'Dispatched order processing jobs');
+	logger.info({ count: orderIds.length }, 'Dispatched order processing jobs');
 }
 
 // Child job: handles one order, retried independently if it fails
 async function processOrder(job: Job<{ orderId: string }>): Promise<void> {
-  const order = await db.orders.findById(job.data.orderId);
-  if (!order) return; // already deleted — skip
+	const order = await db.orders.findById(job.data.orderId);
+	if (!order) return; // already deleted — skip
 
-  await fulfillOrder(order);
-  await sendConfirmationEmail(order);
+	await fulfillOrder(order);
+	await sendConfirmationEmail(order);
 }
 ```
 
 Fan-out gives you:
+
 - Independent retry per item (one bad order doesn't block others)
 - Parallelism (many workers handle children simultaneously)
 - Progress visibility (see completed/failed counts per child)
@@ -140,35 +147,35 @@ const flowProducer = new FlowProducer({ connection });
 
 // Parent runs only after all children complete
 await flowProducer.add({
-  name: 'generate-invoice',
-  queueName: 'invoicing',
-  data: { invoiceId: 'inv_123' },
-  children: [
-    {
-      name: 'fetch-line-items',
-      queueName: 'data',
-      data: { invoiceId: 'inv_123' },
-    },
-    {
-      name: 'calculate-tax',
-      queueName: 'data',
-      data: { invoiceId: 'inv_123' },
-    },
-    {
-      name: 'apply-discounts',
-      queueName: 'data',
-      data: { invoiceId: 'inv_123' },
-    },
-  ],
+	name: 'generate-invoice',
+	queueName: 'invoicing',
+	data: { invoiceId: 'inv_123' },
+	children: [
+		{
+			name: 'fetch-line-items',
+			queueName: 'data',
+			data: { invoiceId: 'inv_123' }
+		},
+		{
+			name: 'calculate-tax',
+			queueName: 'data',
+			data: { invoiceId: 'inv_123' }
+		},
+		{
+			name: 'apply-discounts',
+			queueName: 'data',
+			data: { invoiceId: 'inv_123' }
+		}
+	]
 });
 
 // Parent handler receives results from all children
 const invoicingWorker = new Worker('invoicing', async (job) => {
-  const childResults = await job.getChildrenValues();
-  // childResults: { 'fetch-line-items': [...], 'calculate-tax': {...}, ... }
+	const childResults = await job.getChildrenValues();
+	// childResults: { 'fetch-line-items': [...], 'calculate-tax': {...}, ... }
 
-  const invoice = buildInvoice(childResults);
-  await db.invoices.update(job.data.invoiceId, invoice);
+	const invoice = buildInvoice(childResults);
+	await db.invoices.update(job.data.invoiceId, invoice);
 });
 ```
 
@@ -182,20 +189,25 @@ import { RateLimiter } from 'limiter';
 // 10 requests per second to external API
 const rateLimiter = new RateLimiter({ tokensPerInterval: 10, interval: 'second' });
 
-const worker = new Worker('api-sync', async (job) => {
-  await rateLimiter.removeTokens(1); // blocks until token available
-  await externalApi.sync(job.data);
-}, { connection, concurrency: 20 }); // 20 concurrent, but rate-limited to 10/s
+const worker = new Worker(
+	'api-sync',
+	async (job) => {
+		await rateLimiter.removeTokens(1); // blocks until token available
+		await externalApi.sync(job.data);
+	},
+	{ connection, concurrency: 20 }
+); // 20 concurrent, but rate-limited to 10/s
 ```
 
 BullMQ also supports queue-level rate limiting:
+
 ```typescript
 const worker = new Worker('api-sync', handler, {
-  connection,
-  limiter: {
-    max: 10,      // max 10 jobs
-    duration: 1000, // per 1000ms
-  },
+	connection,
+	limiter: {
+		max: 10, // max 10 jobs
+		duration: 1000 // per 1000ms
+	}
 });
 ```
 
@@ -204,25 +216,26 @@ const worker = new Worker('api-sync', handler, {
 ```typescript
 // Emit metrics for each job
 worker.on('completed', (job, result) => {
-  metrics.histogram('job.duration', Date.now() - job.processedOn!, {
-    type: job.name,
-  });
-  metrics.increment('job.completed', { type: job.name });
+	metrics.histogram('job.duration', Date.now() - job.processedOn!, {
+		type: job.name
+	});
+	metrics.increment('job.completed', { type: job.name });
 });
 
 worker.on('failed', (job, err) => {
-  metrics.increment('job.failed', { type: job?.name ?? 'unknown' });
-  logger.error({ jobId: job?.id, error: err.message, type: job?.name }, 'Job failed');
+	metrics.increment('job.failed', { type: job?.name ?? 'unknown' });
+	logger.error({ jobId: job?.id, error: err.message, type: job?.name }, 'Job failed');
 });
 
 // Stalled job detection (BullMQ auto-detects these)
 worker.on('stalled', (jobId) => {
-  logger.warn({ jobId }, 'Job stalled — worker may have crashed mid-job');
-  metrics.increment('job.stalled');
+	logger.warn({ jobId }, 'Job stalled — worker may have crashed mid-job');
+	metrics.increment('job.stalled');
 });
 ```
 
 **Key production metrics:**
+
 - `job.duration` p50/p95/p99 per job type
 - `job.completed` and `job.failed` rates
 - Queue depth (waiting count) per queue
@@ -247,10 +260,11 @@ worker.on('stalled', (jobId) => {
 ```
 
 **Job payload size discipline:**
+
 ```typescript
 // WRONG — large payload in queue
 await queue.add('process-upload', {
-  fileContents: Buffer.from(file).toString('base64'), // MB of data
+	fileContents: Buffer.from(file).toString('base64') // MB of data
 });
 
 // RIGHT — store large data separately, pass reference
@@ -259,4 +273,3 @@ await queue.add('process-upload', { s3Key }); // tiny payload
 ```
 
 Job payloads live in Redis/Postgres — keep them small. Aim for under 1KB. If you need more, store it in S3 or a DB table and reference it by ID.
-

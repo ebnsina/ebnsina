@@ -1,10 +1,10 @@
 ---
-title: "Why NoSQL"
-subtitle: "Where relational databases strain at scale, the four NoSQL families, ACID vs BASE, and the cases where NoSQL is the wrong answer."
+title: 'Why NoSQL'
+subtitle: 'Where relational databases strain at scale, the four NoSQL families, ACID vs BASE, and the cases where NoSQL is the wrong answer.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["nosql", "base", "cap"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['nosql', 'base', 'cap']
 ---
 
 <script>
@@ -37,14 +37,14 @@ NoSQL databases trade away parts of the relational model — joins, a rich query
 
 NoSQL is an umbrella over four genuinely different designs.
 
-| Family | Data shape | Lookup by | Examples | Best for |
-|---|---|---|---|---|
-| Key-value | Opaque value behind a key | Exact key | Redis, DynamoDB, Memcached | Cache, sessions, counters |
-| Document | Self-contained JSON document | Key or indexed fields | MongoDB, Couchbase, Firestore | Evolving entities, content |
-| Wide-column | Rows of dynamic columns, grouped by partition | Partition + clustering key | Cassandra, Bigtable, ScyllaDB | Massive writes, time-series |
-| Graph | Nodes connected by edges | Traversal from a node | Neo4j, Neptune, JanusGraph | Relationships, recommendations |
+| Family      | Data shape                                    | Lookup by                  | Examples                      | Best for                       |
+| ----------- | --------------------------------------------- | -------------------------- | ----------------------------- | ------------------------------ |
+| Key-value   | Opaque value behind a key                     | Exact key                  | Redis, DynamoDB, Memcached    | Cache, sessions, counters      |
+| Document    | Self-contained JSON document                  | Key or indexed fields      | MongoDB, Couchbase, Firestore | Evolving entities, content     |
+| Wide-column | Rows of dynamic columns, grouped by partition | Partition + clustering key | Cassandra, Bigtable, ScyllaDB | Massive writes, time-series    |
+| Graph       | Nodes connected by edges                      | Traversal from a node      | Neo4j, Neptune, JanusGraph    | Relationships, recommendations |
 
-A key distinction: key-value, document, and wide-column stores are **aggregate-oriented**. They store a self-contained chunk of data per key and are happy as long as you access by that key. Graph databases are the opposite — they are built entirely around the connections *between* records.
+A key distinction: key-value, document, and wide-column stores are **aggregate-oriented**. They store a self-contained chunk of data per key and are happy as long as you access by that key. Graph databases are the opposite — they are built entirely around the connections _between_ records.
 
 ## ACID vs BASE
 
@@ -65,7 +65,7 @@ The reason for this trade-off is the **CAP theorem**: when a network partition s
 
 <Callout type="tip">
 
-**Note:** Modern NoSQL is rarely all-or-nothing. DynamoDB, Cassandra, and MongoDB all offer *tunable* consistency — you choose per operation whether you want a fast, possibly-stale read or a slower, strongly-consistent one. CAP is a constraint, not a permanent product label. We cover tunable consistency in depth in chapter 7.
+**Note:** Modern NoSQL is rarely all-or-nothing. DynamoDB, Cassandra, and MongoDB all offer _tunable_ consistency — you choose per operation whether you want a fast, possibly-stale read or a slower, strongly-consistent one. CAP is a constraint, not a permanent product label. We cover tunable consistency in depth in chapter 7.
 
 </Callout>
 
@@ -78,7 +78,7 @@ Strongly consistent read:   correct now, ~150ms cross-region latency
 Eventually consistent read: ~5ms local latency, may be a few seconds stale
 ```
 
-For a shopping cart, eventual consistency is usually fine — a "merge carts" step at checkout fixes any divergence. For the final "charge this card" step, you want strong consistency. The lesson: consistency is a *per-operation* business decision, not a database-wide religion.
+For a shopping cart, eventual consistency is usually fine — a "merge carts" step at checkout fixes any divergence. For the final "charge this card" step, you want strong consistency. The lesson: consistency is a _per-operation_ business decision, not a database-wide religion.
 
 ## When NOT to Use NoSQL
 

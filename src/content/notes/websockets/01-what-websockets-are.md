@@ -1,10 +1,10 @@
 ---
-title: "What WebSockets are and when to use them"
-subtitle: "A WebSocket is a bidirectional, persistent TCP connection that starts life as an HTTP request. Useful when neither REST nor RPC fits. Misused often."
+title: 'What WebSockets are and when to use them'
+subtitle: 'A WebSocket is a bidirectional, persistent TCP connection that starts life as an HTTP request. Useful when neither REST nor RPC fits. Misused often.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["websockets", "sse", "realtime", "polling"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['websockets', 'sse', 'realtime', 'polling']
 ---
 
 <script>
@@ -57,13 +57,13 @@ The handshake is HTTP. The post-handshake traffic is its own protocol (RFC 6455)
 
 ## The four shapes of "realtime"
 
-| | Direction | Connection | Latency | Browser native |
-|---|---|---|---|---|
-| **Polling** | client → server | one per poll | high (poll interval) | yes |
-| **Long-polling** | client → server | one per cycle, idle until update | medium | yes |
-| **SSE** (Server-Sent Events) | server → client | one persistent | low | yes |
-| **WebSockets** | both | one persistent | low | yes |
-| **gRPC streams** | both | one persistent (HTTP/2) | low | no (needs proxy) |
+|                              | Direction       | Connection                       | Latency              | Browser native   |
+| ---------------------------- | --------------- | -------------------------------- | -------------------- | ---------------- |
+| **Polling**                  | client → server | one per poll                     | high (poll interval) | yes              |
+| **Long-polling**             | client → server | one per cycle, idle until update | medium               | yes              |
+| **SSE** (Server-Sent Events) | server → client | one persistent                   | low                  | yes              |
+| **WebSockets**               | both            | one persistent                   | low                  | yes              |
+| **gRPC streams**             | both            | one persistent (HTTP/2)          | low                  | no (needs proxy) |
 
 Picking the wrong one is a category of bug.
 
@@ -79,7 +79,7 @@ Picking the wrong one is a category of bug.
 
 <Callout type="warn">
 
-**WebSockets are not a magic upgrade for "more realtime."** A REST endpoint polled every 200 ms is faster than a WebSocket reconnecting every 30 s. The win is not in the protocol; it is in the *connection model* — one persistent pipe avoids the per-call overhead. If your data updates once a minute, polling is the right answer.
+**WebSockets are not a magic upgrade for "more realtime."** A REST endpoint polled every 200 ms is faster than a WebSocket reconnecting every 30 s. The win is not in the protocol; it is in the _connection model_ — one persistent pipe avoids the per-call overhead. If your data updates once a minute, polling is the right answer.
 
 </Callout>
 
@@ -170,4 +170,3 @@ Same operational shape as the GraphQL and gRPC tracks. Vendor-neutral, on a VPS,
 - Library: `coder/websocket` for Go in this track. Patterns generalize.
 
 Next: [The handshake and frame protocol](/notes/websockets/02-handshake-frames) — what's actually on the wire, byte by byte.
-

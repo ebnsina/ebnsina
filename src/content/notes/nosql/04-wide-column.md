@@ -1,10 +1,10 @@
 ---
-title: "Wide-Column Stores"
-subtitle: "Cassandra and Bigtable: partition keys, clustering keys, query-first modeling, the write-optimized LSM path, and tunable consistency."
+title: 'Wide-Column Stores'
+subtitle: 'Cassandra and Bigtable: partition keys, clustering keys, query-first modeling, the write-optimized LSM path, and tunable consistency.'
 chapter: 4
-level: "advanced"
-readingTime: "12 min"
-topics: ["cassandra", "partition key", "clustering"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['cassandra', 'partition key', 'clustering']
 ---
 
 <script>
@@ -32,7 +32,7 @@ PRIMARY KEY ( (partition_key) , clustering_key1, clustering_key2 )
               the data
 ```
 
-The **partition key** decides which node in the cluster stores the data (via a hash). The **clustering key(s)** decide the sort order of rows *inside* that partition. Together they uniquely identify a row.
+The **partition key** decides which node in the cluster stores the data (via a hash). The **clustering key(s)** decide the sort order of rows _inside_ that partition. Together they uniquely identify a row.
 
 ## Partition Key vs Clustering Key
 
@@ -69,7 +69,7 @@ Two design rules fall out of this. The partition key must spread data **evenly**
 
 In a relational database you design tables around entities and let the planner figure out queries. In Cassandra you do the reverse: **you list your queries first, then create one table per query**, each laid out so the query is a single-partition read. The same data is duplicated across several tables, each keyed differently.
 
-If you need messages both *by user* and *by conversation*, you build two tables:
+If you need messages both _by user_ and _by conversation_, you build two tables:
 
 ```sql
 CREATE TABLE messages_by_user (
@@ -83,11 +83,11 @@ CREATE TABLE messages_by_conversation (
 );
 ```
 
-Writing a message inserts into both tables. This denormalization feels wasteful coming from SQL, but storage is cheap and the payoff is that *every* read is a fast single-partition lookup. There is no join engine to fall back on, so you trade write amplification and duplication for predictable read performance at any scale.
+Writing a message inserts into both tables. This denormalization feels wasteful coming from SQL, but storage is cheap and the payoff is that _every_ read is a fast single-partition lookup. There is no join engine to fall back on, so you trade write amplification and duplication for predictable read performance at any scale.
 
 <Callout type="tip">
 
-**Note:** A useful mantra for wide-column modeling: "joins and ad-hoc filters are not available, so design the table to *be* the answer." If a new query appears that no existing table serves efficiently, the fix is usually a new table (or a materialized view), not a clever `WHERE` clause.
+**Note:** A useful mantra for wide-column modeling: "joins and ad-hoc filters are not available, so design the table to _be_ the answer." If a new query appears that no existing table serves efficiently, the fix is usually a new table (or a materialized view), not a clever `WHERE` clause.
 
 </Callout>
 
@@ -126,7 +126,7 @@ The famous guarantee: if **R + W &gt; RF** (read replicas plus write replicas ex
 
 <Callout type="warning">
 
-**Warning:** Choosing low consistency levels (`ONE`) for both reads and writes maximizes availability and speed but means a read can easily miss a recent write — `1 + 1` is not greater than `3`. Decide consistency *per operation* based on how much staleness that specific read or write can tolerate. We dig into quorums, conflict resolution, and read repair in chapter 7.
+**Warning:** Choosing low consistency levels (`ONE`) for both reads and writes maximizes availability and speed but means a read can easily miss a recent write — `1 + 1` is not greater than `3`. Decide consistency _per operation_ based on how much staleness that specific read or write can tolerate. We dig into quorums, conflict resolution, and read repair in chapter 7.
 
 </Callout>
 

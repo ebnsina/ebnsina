@@ -1,10 +1,10 @@
 ---
-title: "Database Sharding & Replication"
-subtitle: "Implement read replicas, consistent hashing for sharding, and shard-aware query routing."
+title: 'Database Sharding & Replication'
+subtitle: 'Implement read replicas, consistent hashing for sharding, and shard-aware query routing.'
 chapter: 8
-level: "intermediate"
-readingTime: "20 min"
-topics: ["sharding", "replication", "consistent hashing", "read replicas"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['sharding', 'replication', 'consistent hashing', 'read replicas']
 ---
 
 <script>
@@ -29,14 +29,12 @@ Like a post office sorting mail by zip code — 90210 goes to Beverly Hills, 100
 </Callout>
 
 <Mermaid
-	title="Replication + Sharding Architecture"
-	code={`
-graph TD
+title="Replication + Sharding Architecture"
+code={`graph TD
   A["App Server"] --> R["Router<br/>Read/Write Split"]
   R --> P["Primary<br/>Writes"]
   P -- replicates to --> R1["Replica 1"]
-  P -- replicates to --> R2["Replica 2"]
-`}
+  P -- replicates to --> R2["Replica 2"]`}
 />
 
 ## Consistent Hashing for Sharding
@@ -47,227 +45,212 @@ When you shard data across N databases, you need to consistently route `user_123
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import crypto from "node:crypto";
-import pg from "pg";
+import crypto from 'node:crypto';
+import pg from 'pg';
 
 // --- Consistent Hash Ring ---
 class ConsistentHashRing {
-  private ring: Map<number, string> = new Map();
-  private sortedKeys: number[] = [];
-  private virtualNodes: number;
+	private ring: Map<number, string> = new Map();
+	private sortedKeys: number[] = [];
+	private virtualNodes: number;
 
-  constructor(nodes: string[], virtualNodes = 150) {
-    this.virtualNodes = virtualNodes;
-    for (const node of nodes) {
-      this.addNode(node);
-    }
-  }
+	constructor(nodes: string[], virtualNodes = 150) {
+		this.virtualNodes = virtualNodes;
+		for (const node of nodes) {
+			this.addNode(node);
+		}
+	}
 
-  private hash(key: string): number {
-    const h = crypto.createHash("md5").update(key).digest();
-    return h.readUInt32BE(0);
-  }
+	private hash(key: string): number {
+		const h = crypto.createHash('md5').update(key).digest();
+		return h.readUInt32BE(0);
+	}
 
-  addNode(node: string): void {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const virtualKey = `${node}:v${i}`;
-      const hash = this.hash(virtualKey);
-      this.ring.set(hash, node);
-      this.sortedKeys.push(hash);
-    }
-    this.sortedKeys.sort((a, b) => a - b);
-  }
+	addNode(node: string): void {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const virtualKey = `${node}:v${i}`;
+			const hash = this.hash(virtualKey);
+			this.ring.set(hash, node);
+			this.sortedKeys.push(hash);
+		}
+		this.sortedKeys.sort((a, b) => a - b);
+	}
 
-  removeNode(node: string): void {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const virtualKey = `${node}:v${i}`;
-      const hash = this.hash(virtualKey);
-      this.ring.delete(hash);
-      this.sortedKeys = this.sortedKeys.filter((k) => k !== hash);
-    }
-  }
+	removeNode(node: string): void {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const virtualKey = `${node}:v${i}`;
+			const hash = this.hash(virtualKey);
+			this.ring.delete(hash);
+			this.sortedKeys = this.sortedKeys.filter((k) => k !== hash);
+		}
+	}
 
-  getNode(key: string): string {
-    if (this.sortedKeys.length === 0) {
-      throw new Error("No nodes in the ring");
-    }
+	getNode(key: string): string {
+		if (this.sortedKeys.length === 0) {
+			throw new Error('No nodes in the ring');
+		}
 
-    const hash = this.hash(key);
+		const hash = this.hash(key);
 
-    // Binary search for the first node clockwise from the hash
-    let low = 0;
-    let high = this.sortedKeys.length - 1;
+		// Binary search for the first node clockwise from the hash
+		let low = 0;
+		let high = this.sortedKeys.length - 1;
 
-    if (hash > this.sortedKeys[high]) {
-      // Wrap around to first node
-      return this.ring.get(this.sortedKeys[0])!;
-    }
+		if (hash > this.sortedKeys[high]) {
+			// Wrap around to first node
+			return this.ring.get(this.sortedKeys[0])!;
+		}
 
-    while (low < high) {
-      const mid = (low + high) >>> 1;
-      if (this.sortedKeys[mid] < hash) {
-        low = mid + 1;
-      } else {
-        high = mid;
-      }
-    }
+		while (low < high) {
+			const mid = (low + high) >>> 1;
+			if (this.sortedKeys[mid] < hash) {
+				low = mid + 1;
+			} else {
+				high = mid;
+			}
+		}
 
-    return this.ring.get(this.sortedKeys[low])!;
-  }
+		return this.ring.get(this.sortedKeys[low])!;
+	}
 }
 
 // --- Shard Manager ---
 interface ShardConfig {
-  name: string;
-  connectionString: string;
+	name: string;
+	connectionString: string;
 }
 
 class ShardManager {
-  private shards: Map<string, pg.Pool> = new Map();
-  private ring: ConsistentHashRing;
-  private readReplicas: Map<string, pg.Pool[]> = new Map();
+	private shards: Map<string, pg.Pool> = new Map();
+	private ring: ConsistentHashRing;
+	private readReplicas: Map<string, pg.Pool[]> = new Map();
 
-  constructor(
-    shardConfigs: ShardConfig[],
-    replicaConfigs?: Record<string, string[]>
-  ) {
-    // Create connection pools for each shard
-    const nodeNames: string[] = [];
-    for (const config of shardConfigs) {
-      const pool = new pg.Pool({
-        connectionString: config.connectionString,
-        max: 10,
-        idleTimeoutMillis: 30000,
-      });
-      this.shards.set(config.name, pool);
-      nodeNames.push(config.name);
-    }
+	constructor(shardConfigs: ShardConfig[], replicaConfigs?: Record<string, string[]>) {
+		// Create connection pools for each shard
+		const nodeNames: string[] = [];
+		for (const config of shardConfigs) {
+			const pool = new pg.Pool({
+				connectionString: config.connectionString,
+				max: 10,
+				idleTimeoutMillis: 30000
+			});
+			this.shards.set(config.name, pool);
+			nodeNames.push(config.name);
+		}
 
-    // Create read replica pools
-    if (replicaConfigs) {
-      for (const [shard, replicas] of Object.entries(replicaConfigs)) {
-        const pools = replicas.map(
-          (connStr) => new pg.Pool({ connectionString: connStr, max: 10 })
-        );
-        this.readReplicas.set(shard, pools);
-      }
-    }
+		// Create read replica pools
+		if (replicaConfigs) {
+			for (const [shard, replicas] of Object.entries(replicaConfigs)) {
+				const pools = replicas.map(
+					(connStr) => new pg.Pool({ connectionString: connStr, max: 10 })
+				);
+				this.readReplicas.set(shard, pools);
+			}
+		}
 
-    this.ring = new ConsistentHashRing(nodeNames);
-  }
+		this.ring = new ConsistentHashRing(nodeNames);
+	}
 
-  // Get the shard for a given key
-  getShardName(shardKey: string): string {
-    return this.ring.getNode(shardKey);
-  }
+	// Get the shard for a given key
+	getShardName(shardKey: string): string {
+		return this.ring.getNode(shardKey);
+	}
 
-  // Get write pool (primary)
-  getWritePool(shardKey: string): pg.Pool {
-    const shardName = this.getShardName(shardKey);
-    const pool = this.shards.get(shardName);
-    if (!pool) throw new Error(`Shard ${shardName} not found`);
-    return pool;
-  }
+	// Get write pool (primary)
+	getWritePool(shardKey: string): pg.Pool {
+		const shardName = this.getShardName(shardKey);
+		const pool = this.shards.get(shardName);
+		if (!pool) throw new Error(`Shard ${shardName} not found`);
+		return pool;
+	}
 
-  // Get read pool (replica or primary fallback)
-  getReadPool(shardKey: string): pg.Pool {
-    const shardName = this.getShardName(shardKey);
-    const replicas = this.readReplicas.get(shardName);
+	// Get read pool (replica or primary fallback)
+	getReadPool(shardKey: string): pg.Pool {
+		const shardName = this.getShardName(shardKey);
+		const replicas = this.readReplicas.get(shardName);
 
-    if (replicas && replicas.length > 0) {
-      // Round-robin across replicas
-      const idx = Math.floor(Math.random() * replicas.length);
-      return replicas[idx];
-    }
+		if (replicas && replicas.length > 0) {
+			// Round-robin across replicas
+			const idx = Math.floor(Math.random() * replicas.length);
+			return replicas[idx];
+		}
 
-    // Fallback to primary
-    return this.getWritePool(shardKey);
-  }
+		// Fallback to primary
+		return this.getWritePool(shardKey);
+	}
 
-  // --- Query helpers ---
-  async writeQuery<T>(
-    shardKey: string,
-    sql: string,
-    params: unknown[]
-  ): Promise<T[]> {
-    const pool = this.getWritePool(shardKey);
-    const result = await pool.query(sql, params);
-    return result.rows;
-  }
+	// --- Query helpers ---
+	async writeQuery<T>(shardKey: string, sql: string, params: unknown[]): Promise<T[]> {
+		const pool = this.getWritePool(shardKey);
+		const result = await pool.query(sql, params);
+		return result.rows;
+	}
 
-  async readQuery<T>(
-    shardKey: string,
-    sql: string,
-    params: unknown[]
-  ): Promise<T[]> {
-    const pool = this.getReadPool(shardKey);
-    const result = await pool.query(sql, params);
-    return result.rows;
-  }
+	async readQuery<T>(shardKey: string, sql: string, params: unknown[]): Promise<T[]> {
+		const pool = this.getReadPool(shardKey);
+		const result = await pool.query(sql, params);
+		return result.rows;
+	}
 
-  // Scatter-gather: query all shards and merge results
-  async queryAllShards<T>(sql: string, params: unknown[]): Promise<T[]> {
-    const promises = Array.from(this.shards.values()).map((pool) =>
-      pool.query(sql, params).then((r) => r.rows as T[])
-    );
+	// Scatter-gather: query all shards and merge results
+	async queryAllShards<T>(sql: string, params: unknown[]): Promise<T[]> {
+		const promises = Array.from(this.shards.values()).map((pool) =>
+			pool.query(sql, params).then((r) => r.rows as T[])
+		);
 
-    const results = await Promise.all(promises);
-    return results.flat();
-  }
+		const results = await Promise.all(promises);
+		return results.flat();
+	}
 
-  async close(): Promise<void> {
-    for (const pool of this.shards.values()) {
-      await pool.end();
-    }
-    for (const replicas of this.readReplicas.values()) {
-      for (const pool of replicas) {
-        await pool.end();
-      }
-    }
-  }
+	async close(): Promise<void> {
+		for (const pool of this.shards.values()) {
+			await pool.end();
+		}
+		for (const replicas of this.readReplicas.values()) {
+			for (const pool of replicas) {
+				await pool.end();
+			}
+		}
+	}
 }
 
 // --- Usage Example ---
 async function main() {
-  const manager = new ShardManager(
-    [
-      { name: "shard-1", connectionString: "postgres://localhost:5432/blog_shard1" },
-      { name: "shard-2", connectionString: "postgres://localhost:5433/blog_shard2" },
-      { name: "shard-3", connectionString: "postgres://localhost:5434/blog_shard3" },
-    ],
-    {
-      "shard-1": ["postgres://localhost:5435/blog_shard1_replica"],
-      "shard-2": ["postgres://localhost:5436/blog_shard2_replica"],
-    }
-  );
+	const manager = new ShardManager(
+		[
+			{ name: 'shard-1', connectionString: 'postgres://localhost:5432/blog_shard1' },
+			{ name: 'shard-2', connectionString: 'postgres://localhost:5433/blog_shard2' },
+			{ name: 'shard-3', connectionString: 'postgres://localhost:5434/blog_shard3' }
+		],
+		{
+			'shard-1': ['postgres://localhost:5435/blog_shard1_replica'],
+			'shard-2': ['postgres://localhost:5436/blog_shard2_replica']
+		}
+	);
 
-  const userId = "user-12345";
+	const userId = 'user-12345';
 
-  // Writes go to primary
-  await manager.writeQuery(
-    userId,
-    `INSERT INTO users (id, username, email) VALUES ($1, $2, $3)
+	// Writes go to primary
+	await manager.writeQuery(
+		userId,
+		`INSERT INTO users (id, username, email) VALUES ($1, $2, $3)
      ON CONFLICT (id) DO NOTHING`,
-    [userId, "ahmadrazi", "ahmad@example.com"]
-  );
+		[userId, 'ahmadrazi', 'ahmad@example.com']
+	);
 
-  // Reads go to replica
-  const user = await manager.readQuery(
-    userId,
-    "SELECT * FROM users WHERE id = $1",
-    [userId]
-  );
+	// Reads go to replica
+	const user = await manager.readQuery(userId, 'SELECT * FROM users WHERE id = $1', [userId]);
 
-  console.log(`User on shard: ${manager.getShardName(userId)}`, user);
+	console.log(`User on shard: ${manager.getShardName(userId)}`, user);
 
-  // Cross-shard query (scatter-gather)
-  const allUsers = await manager.queryAllShards(
-    "SELECT id, username FROM users ORDER BY created_at DESC LIMIT 10",
-    []
-  );
-  console.log("Users across all shards:", allUsers.length);
+	// Cross-shard query (scatter-gather)
+	const allUsers = await manager.queryAllShards(
+		'SELECT id, username FROM users ORDER BY created_at DESC LIMIT 10',
+		[]
+	);
+	console.log('Users across all shards:', allUsers.length);
 
-  await manager.close();
+	await manager.close();
 }
 
 main().catch(console.error);
@@ -518,7 +501,7 @@ func main() {
 
 <Callout type="warning" title="Cross-Shard Queries Are Expensive">
 
-  Once data is sharded, JOINs across shards become scatter-gather operations. They're slower and more complex. Choose your shard key carefully — it should be the dimension you query by most often (usually `user_id` or `tenant_id`).
+Once data is sharded, JOINs across shards become scatter-gather operations. They're slower and more complex. Choose your shard key carefully — it should be the dimension you query by most often (usually `user_id` or `tenant_id`).
 
 </Callout>
 
@@ -544,4 +527,3 @@ func main() {
 - You probably don't need sharding until you have hundreds of millions of rows. Start with read replicas and better indexing.
 
 </div>
-

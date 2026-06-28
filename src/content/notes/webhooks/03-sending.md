@@ -1,17 +1,17 @@
 ---
-title: "Sending webhooks"
-subtitle: "End-to-end producer in Go in sixty lines. By the end you have a binary that POSTs JSON to a URL, handles non-2xx, and times out cleanly. Signing, retries, and the outbox come later."
+title: 'Sending webhooks'
+subtitle: 'End-to-end producer in Go in sixty lines. By the end you have a binary that POSTs JSON to a URL, handles non-2xx, and times out cleanly. Signing, retries, and the outbox come later.'
 chapter: 3
-level: "beginner"
-readingTime: "10 min"
-topics: ["webhooks", "go", "http client", "producer"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['webhooks', 'go', 'http client', 'producer']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-This chapter ships a working webhook producer. Real Go code. We focus only on the *sending* — signing in chapter 4, retries in chapter 6, the outbox pattern in chapter 10. By the end you have a tiny program that delivers an event to any URL and reports success or failure honestly.
+This chapter ships a working webhook producer. Real Go code. We focus only on the _sending_ — signing in chapter 4, retries in chapter 6, the outbox pattern in chapter 10. By the end you have a tiny program that delivers an event to any URL and reports success or failure honestly.
 
 <Callout type="info">
 
@@ -155,7 +155,7 @@ That is roughly 60 lines for a working sender. The shape is universal: build an 
 
 ## What to read carefully
 
-**`http.Client` with explicit `Timeout`.** The default Go HTTP client has *no timeout*. A receiver that accepts the connection and never responds will hang your sender forever. Always set one. 10 seconds is generous; 5 is more aggressive.
+**`http.Client` with explicit `Timeout`.** The default Go HTTP client has _no timeout_. A receiver that accepts the connection and never responds will hang your sender forever. Always set one. 10 seconds is generous; 5 is more aggressive.
 
 **`Transport` with idle conn pooling.** Reusing TCP connections to the same host avoids the handshake on each call. For a sender that delivers thousands of events to the same receiver, this is meaningful. For one event, irrelevant.
 
@@ -330,4 +330,3 @@ That's most of a real system. But knowing how the basic POST works first means e
 - Sign, retry, persist, dashboard — coming next.
 
 Next: [Signing payloads](/notes/webhooks/04-signing) — HMAC, the canonical string, and timestamps that defend against replay.
-

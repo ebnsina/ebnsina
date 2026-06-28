@@ -1,8 +1,25 @@
 ---
-title: "Full-Stack VPS Deployment: React, Node, Go, Postgres, Redis, ClickHouse, Redpanda & More"
-description: "A complete guide to deploying a production-ready full-stack application on a fresh VPS — covering server hardening, message streaming, object storage, search, email, task queues, and observability."
+title: 'Full-Stack VPS Deployment: React, Node, Go, Postgres, Redis, ClickHouse, Redpanda & More'
+description: 'A complete guide to deploying a production-ready full-stack application on a fresh VPS — covering server hardening, message streaming, object storage, search, email, task queues, and observability.'
 date: 2026-05-12
-tags: ["devops", "vps", "postgresql", "redis", "clickhouse", "nginx", "security", "golang", "nodejs", "react", "redpanda", "kafka", "garage", "typesense", "nats"]
+tags:
+  [
+    'devops',
+    'vps',
+    'postgresql',
+    'redis',
+    'clickhouse',
+    'nginx',
+    'security',
+    'golang',
+    'nodejs',
+    'react',
+    'redpanda',
+    'kafka',
+    'garage',
+    'typesense',
+    'nats'
+  ]
 minutesRead: 27
 ---
 
@@ -416,14 +433,14 @@ TTL created_at + INTERVAL 1 YEAR;
 
 ### 6.4 Useful ClickHouse extensions / table engines
 
-| Engine | Use case |
-|---|---|
-| `MergeTree` | Default OLAP; time-series, events |
-| `ReplacingMergeTree` | Upsert-like deduplication |
-| `SummingMergeTree` | Pre-aggregated counters |
-| `AggregatingMergeTree` | Materialized aggregations |
-| `Kafka` | Stream ingest directly from Kafka |
-| `PostgreSQL` | Read Postgres tables from CH queries |
+| Engine                 | Use case                             |
+| ---------------------- | ------------------------------------ |
+| `MergeTree`            | Default OLAP; time-series, events    |
+| `ReplacingMergeTree`   | Upsert-like deduplication            |
+| `SummingMergeTree`     | Pre-aggregated counters              |
+| `AggregatingMergeTree` | Materialized aggregations            |
+| `Kafka`                | Stream ingest directly from Kafka    |
+| `PostgreSQL`           | Read Postgres tables from CH queries |
 
 Enable the Postgres engine (to join CH with PG data):
 
@@ -465,23 +482,25 @@ Create `ecosystem.config.js`:
 
 ```js
 module.exports = {
-  apps: [{
-    name: 'api',
-    script: './dist/server.js',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3001,
-      DATABASE_URL: 'postgresql://appuser:strong_random_password@127.0.0.1:5432/appdb',
-      REDIS_URL: 'redis://:your_redis_password@127.0.0.1:6379',
-    },
-    error_file: '/var/log/deploy/api-error.log',
-    out_file: '/var/log/deploy/api-out.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    max_memory_restart: '512M',
-  }]
-}
+	apps: [
+		{
+			name: 'api',
+			script: './dist/server.js',
+			instances: 'max',
+			exec_mode: 'cluster',
+			env: {
+				NODE_ENV: 'production',
+				PORT: 3001,
+				DATABASE_URL: 'postgresql://appuser:strong_random_password@127.0.0.1:5432/appdb',
+				REDIS_URL: 'redis://:your_redis_password@127.0.0.1:6379'
+			},
+			error_file: '/var/log/deploy/api-error.log',
+			out_file: '/var/log/deploy/api-out.log',
+			log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+			max_memory_restart: '512M'
+		}
+	]
+};
 ```
 
 ```bash
@@ -954,15 +973,15 @@ LIMIT 100;
 **Node.js** — use `pino` for structured JSON logs:
 
 ```js
-import pino from 'pino'
+import pino from 'pino';
 
 const logger = pino({
-  level: process.env.LOG_LEVEL ?? 'info',
-  timestamp: pino.stdTimeFunctions.isoTime,
-  redact: ['req.headers.authorization', 'body.password'],
-})
+	level: process.env.LOG_LEVEL ?? 'info',
+	timestamp: pino.stdTimeFunctions.isoTime,
+	redact: ['req.headers.authorization', 'body.password']
+});
 
-export default logger
+export default logger;
 ```
 
 **Go** — use `log/slog` (stdlib, Go 1.21+):
@@ -1136,7 +1155,7 @@ redpanda:
     - address: 127.0.0.1
       port: 9644
   developer_mode: false
-  auto_create_topics_enabled: false   # explicit topic creation only
+  auto_create_topics_enabled: false # explicit topic creation only
 ```
 
 ```bash
@@ -1192,35 +1211,35 @@ npm install kafkajs
 ```
 
 ```js
-import { Kafka } from 'kafkajs'
+import { Kafka } from 'kafkajs';
 
 const kafka = new Kafka({
-  clientId: 'my-app',
-  brokers: ['127.0.0.1:9092'],
-  sasl: { mechanism: 'scram-sha-256', username: 'app-producer', password: 'app_pass' },
-})
+	clientId: 'my-app',
+	brokers: ['127.0.0.1:9092'],
+	sasl: { mechanism: 'scram-sha-256', username: 'app-producer', password: 'app_pass' }
+});
 
-const producer = kafka.producer()
-await producer.connect()
+const producer = kafka.producer();
+await producer.connect();
 await producer.send({
-  topic: 'orders',
-  messages: [{ key: orderId, value: JSON.stringify(order) }],
-})
-await producer.disconnect()
+	topic: 'orders',
+	messages: [{ key: orderId, value: JSON.stringify(order) }]
+});
+await producer.disconnect();
 ```
 
 Consumer:
 
 ```js
-const consumer = kafka.consumer({ groupId: 'order-processor' })
-await consumer.connect()
-await consumer.subscribe({ topic: 'orders', fromBeginning: false })
+const consumer = kafka.consumer({ groupId: 'order-processor' });
+await consumer.connect();
+await consumer.subscribe({ topic: 'orders', fromBeginning: false });
 await consumer.run({
-  eachMessage: async ({ message }) => {
-    const order = JSON.parse(message.value.toString())
-    await processOrder(order)
-  },
-})
+	eachMessage: async ({ message }) => {
+		const order = JSON.parse(message.value.toString());
+		await processOrder(order);
+	}
+});
 ```
 
 ### 16.6 Produce and consume — Go
@@ -1264,7 +1283,7 @@ sudo nano /etc/redpanda-console/config.yaml
 
 ```yaml
 kafka:
-  brokers: ["127.0.0.1:9092"]
+  brokers: ['127.0.0.1:9092']
   sasl:
     enabled: true
     username: admin
@@ -1382,21 +1401,21 @@ npm install nats
 ```
 
 ```js
-import { connect, StringCodec } from 'nats'
+import { connect, StringCodec } from 'nats';
 
-const nc = await connect({ servers: '127.0.0.1:4222', token: 'your_nats_token' })
-const sc = StringCodec()
-const js = nc.jetstream()
+const nc = await connect({ servers: '127.0.0.1:4222', token: 'your_nats_token' });
+const sc = StringCodec();
+const js = nc.jetstream();
 
 // Publish to stream
-await js.publish('jobs.email', sc.encode(JSON.stringify({ to: 'user@example.com' })))
+await js.publish('jobs.email', sc.encode(JSON.stringify({ to: 'user@example.com' })));
 
 // Worker consume
-const consumer = await js.consumers.get('JOBS', 'worker')
-const messages = await consumer.consume()
+const consumer = await js.consumers.get('JOBS', 'worker');
+const messages = await consumer.consume();
 for await (const msg of messages) {
-  await processJob(JSON.parse(sc.decode(msg.data)))
-  msg.ack()
+	await processJob(JSON.parse(sc.decode(msg.data)));
+	msg.ack();
 }
 ```
 
@@ -1411,9 +1430,9 @@ nats kv get CONFIG feature.dark_mode
 ```
 
 ```js
-const kv = await js.views.kv('CONFIG')
-await kv.put('feature.dark_mode', sc.encode('true'))
-const entry = await kv.get('feature.dark_mode')
+const kv = await js.views.kv('CONFIG');
+await kv.put('feature.dark_mode', sc.encode('true'));
+const entry = await kv.get('feature.dark_mode');
 ```
 
 ---
@@ -1539,29 +1558,35 @@ npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
 ```js
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const s3 = new S3Client({
-  endpoint: 'http://127.0.0.1:3900',
-  region: 'garage',                   // must match garage.toml s3_region
-  credentials: { accessKeyId: 'GK...', secretAccessKey: '...' },
-  forcePathStyle: true,               // required for path-style S3
-})
+	endpoint: 'http://127.0.0.1:3900',
+	region: 'garage', // must match garage.toml s3_region
+	credentials: { accessKeyId: 'GK...', secretAccessKey: '...' },
+	forcePathStyle: true // required for path-style S3
+});
 
 // Upload
-await s3.send(new PutObjectCommand({
-  Bucket: 'uploads',
-  Key: `users/${userId}/${filename}`,
-  Body: fileBuffer,
-  ContentType: 'image/jpeg',
-}))
+await s3.send(
+	new PutObjectCommand({
+		Bucket: 'uploads',
+		Key: `users/${userId}/${filename}`,
+		Body: fileBuffer,
+		ContentType: 'image/jpeg'
+	})
+);
 
 // Pre-signed URL (expiry 1 hour)
-const url = await getSignedUrl(s3, new GetObjectCommand({
-  Bucket: 'uploads',
-  Key: `users/${userId}/${filename}`,
-}), { expiresIn: 3600 })
+const url = await getSignedUrl(
+	s3,
+	new GetObjectCommand({
+		Bucket: 'uploads',
+		Key: `users/${userId}/${filename}`
+	}),
+	{ expiresIn: 3600 }
+);
 ```
 
 ### 18.6 Use from Go
@@ -1717,27 +1742,27 @@ npm install typesense
 ```
 
 ```js
-import Typesense from 'typesense'
+import Typesense from 'typesense';
 
 const client = new Typesense.Client({
-  nodes: [{ host: '127.0.0.1', port: 8108, protocol: 'http' }],
-  apiKey: 'your_admin_api_key',   // use search-only key on frontend
-  connectionTimeoutSeconds: 2,
-})
+	nodes: [{ host: '127.0.0.1', port: 8108, protocol: 'http' }],
+	apiKey: 'your_admin_api_key', // use search-only key on frontend
+	connectionTimeoutSeconds: 2
+});
 
 // Index documents
-await client.collections('products').documents().import(products, { action: 'upsert' })
+await client.collections('products').documents().import(products, { action: 'upsert' });
 
 // Search
 const results = await client.collections('products').documents().search({
-  q:               'wireless headphones',
-  query_by:        'name,description,tags',
-  filter_by:       'category:=electronics && in_stock:=true',
-  sort_by:         'price:asc',
-  facet_by:        'category,tags',
-  per_page:        20,
-  typo_tokens_threshold: 1,
-})
+	q: 'wireless headphones',
+	query_by: 'name,description,tags',
+	filter_by: 'category:=electronics && in_stock:=true',
+	sort_by: 'price:asc',
+	facet_by: 'category,tags',
+	per_page: 20,
+	typo_tokens_threshold: 1
+});
 ```
 
 ### 19.6 Use from Go
@@ -1782,8 +1807,8 @@ results, err := client.Collection("products").Documents().Search(ctx, params)
 **Simple pattern** — write to Postgres first, then upsert to Typesense in the same request handler:
 
 ```js
-await db.query('INSERT INTO products ...', values)
-await client.collections('products').documents().upsert({ id, name, description, category, price })
+await db.query('INSERT INTO products ...', values);
+await client.collections('products').documents().upsert({ id, name, description, category, price });
 ```
 
 **Robust pattern** — publish a Redpanda event on every write; a dedicated indexer service consumes it and calls Typesense. Decoupled, retryable, no blocking the API path.
@@ -1791,9 +1816,11 @@ await client.collections('products').documents().upsert({ id, name, description,
 **Bulk re-index** from Postgres:
 
 ```js
-const { rows } = await db.query('SELECT id, name, description, category, price, in_stock FROM products')
+const { rows } = await db.query(
+	'SELECT id, name, description, category, price, in_stock FROM products'
+);
 // Typesense import accepts up to 40 docs/batch by default; chunking is handled internally
-await client.collections('products').documents().import(rows, { action: 'upsert' })
+await client.collections('products').documents().import(rows, { action: 'upsert' });
 ```
 
 ---
@@ -1834,7 +1861,7 @@ processors:
 
 exporters:
   prometheus:
-    endpoint: "127.0.0.1:8889"   # scrape this from Prometheus
+    endpoint: '127.0.0.1:8889' # scrape this from Prometheus
   debug:
     verbosity: basic
 
@@ -1866,26 +1893,28 @@ npm install @opentelemetry/sdk-node \
 Create `instrumentation.js` — loaded **before** your app:
 
 ```js
-import { NodeSDK } from '@opentelemetry/sdk-node'
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 
 const sdk = new NodeSDK({
-  serviceName: 'api',
-  traceExporter: new OTLPTraceExporter({ url: 'http://127.0.0.1:4318/v1/traces' }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({ url: 'http://127.0.0.1:4318/v1/metrics' }),
-    exportIntervalMillis: 15_000,
-  }),
-  instrumentations: [getNodeAutoInstrumentations({
-    '@opentelemetry/instrumentation-fs': { enabled: false }, // too noisy
-  })],
-})
+	serviceName: 'api',
+	traceExporter: new OTLPTraceExporter({ url: 'http://127.0.0.1:4318/v1/traces' }),
+	metricReader: new PeriodicExportingMetricReader({
+		exporter: new OTLPMetricExporter({ url: 'http://127.0.0.1:4318/v1/metrics' }),
+		exportIntervalMillis: 15_000
+	}),
+	instrumentations: [
+		getNodeAutoInstrumentations({
+			'@opentelemetry/instrumentation-fs': { enabled: false } // too noisy
+		})
+	]
+});
 
-sdk.start()
-process.on('SIGTERM', () => sdk.shutdown())
+sdk.start();
+process.on('SIGTERM', () => sdk.shutdown());
 ```
 
 Start your app with:
@@ -1963,7 +1992,7 @@ Update the OTel collector to export traces to Tempo instead of (or in addition t
 ```yaml
 exporters:
   otlp/tempo:
-    endpoint: "127.0.0.1:4317"
+    endpoint: '127.0.0.1:4317'
     tls:
       insecure: true
 
@@ -1982,9 +2011,8 @@ Add Tempo as a data source in Grafana (URL: `http://127.0.0.1:3200`). You can no
 With all these services running, here's how they fit together:
 
 <Mermaid
-	title="Service communication — Nginx fronts everything"
-	code={`
-graph TD
+title="Service communication — Nginx fronts everything"
+code={`graph TD
   B["Browser"] --> N["Nginx :443"]
   N --> SPA["React SPA"]
   N -->|"/api/*"| API["Node.js :3001"]
@@ -1998,11 +2026,11 @@ graph TD
   GO --> CH["ClickHouse"]
   GO --> RP
   GO --> NA["NATS"]
-  NA --> WK["Workers<br/>email · image · search index"]
-`}
+  NA --> WK["Workers<br/>email · image · search index"]`}
 />
 
 **Key rules:**
+
 - Every service binds to `127.0.0.1`. Nginx is the only public listener.
 - Node.js handles user-facing API; Go handles heavy background workloads and analytics ingestion.
 - Redpanda decouples producers from consumers — a slow consumer doesn't slow the API.
@@ -2026,4 +2054,3 @@ graph TD
 - [Vector documentation](https://vector.dev/docs/)
 - [Mozilla SSL Configuration Generator](https://ssl-config.mozilla.org/)
 - [Lynis](https://cisofy.com/lynis/) — full system security audit tool
-

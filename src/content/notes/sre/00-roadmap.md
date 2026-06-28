@@ -1,10 +1,10 @@
 ---
-title: "8-Week Roadmap: Fullstack → SRE"
-subtitle: "A solid two-month plan to convert a working fullstack engineer into a junior-SRE-ready operator. Daily breakdown, real labs, and a final capstone."
+title: '8-Week Roadmap: Fullstack → SRE'
+subtitle: 'A solid two-month plan to convert a working fullstack engineer into a junior-SRE-ready operator. Daily breakdown, real labs, and a final capstone.'
 chapter: 0
-level: "beginner"
-readingTime: "18 min"
-topics: ["roadmap", "learning", "career", "fullstack to SRE", "hands-on"]
+level: 'beginner'
+readingTime: '18 min'
+topics: ['roadmap', 'learning', 'career', 'fullstack to SRE', 'hands-on']
 ---
 
 <script>
@@ -88,14 +88,17 @@ k6 version                  # >= 0.50
 ## Week 1 — The mental model
 
 ### Goals
+
 Internalize the SRE worldview: SLI/SLO/error budget, the four golden signals, the deploy-vs-reliability tradeoff.
 
 ### Reading (Mon-Tue)
+
 - Chapters 1, 2, 3 of this course (you are reading them anyway)
-- Google SRE Book, free online: chapters 1, 2, 4 — *Introduction*, *Production Environment*, *Service Level Objectives*
+- Google SRE Book, free online: chapters 1, 2, 4 — _Introduction_, _Production Environment_, _Service Level Objectives_
 - Charity Majors, "The Engineer/Manager Pendulum" blog post (sets the mindset)
 
 ### Lab (Wed-Fri)
+
 **Build a Go HTTP service with RED metrics.**
 
 ```go
@@ -127,12 +130,15 @@ var (
 Spin up Prometheus locally to scrape it. Build a Grafana dashboard with three panels: rate, errors, p99 duration.
 
 ### Saturday project work
+
 Deploy the service to Fly.io (or your cloud of choice). Wire Grafana Cloud to scrape it remotely.
 
 ### Deliverable
+
 A live URL serving fake traffic, with a public Grafana dashboard you can share. Commit the repo to GitHub — you will extend it every week.
 
 ### Success criteria
+
 You can answer: "What is the p99 latency of /api/orders over the last 5 minutes?" by looking only at your dashboard.
 
 ---
@@ -140,13 +146,16 @@ You can answer: "What is the p99 latency of /api/orders over the last 5 minutes?
 ## Week 2 — Containers and Kubernetes basics
 
 ### Goals
+
 Get past "Docker for dev" into "Kubernetes for production." Pods, deployments, services, namespaces, kubectl muscle memory.
 
 ### Reading (Mon-Tue)
-- *Kubernetes Up & Running* (3rd ed) — chapters 1-7
+
+- _Kubernetes Up & Running_ (3rd ed) — chapters 1-7
 - The Kubernetes "concepts" docs: Pod, Deployment, Service, ConfigMap
 
 ### Lab (Wed-Fri)
+
 **Migrate your Week 1 service to Kubernetes.**
 
 ```bash
@@ -193,16 +202,19 @@ spec:
             periodSeconds: 10
           resources:
             requests: { cpu: 100m, memory: 128Mi }
-            limits:   { cpu: 500m, memory: 512Mi }
+            limits: { cpu: 500m, memory: 512Mi }
 ```
 
 ### Saturday project work
+
 Add a sidecar container that runs a small log shipper. Get logs into stdout, view with `kubectl logs`.
 
 ### Deliverable
+
 Service running on local kind cluster with 3 replicas, health probes, resource limits, structured logs.
 
 ### Success criteria
+
 You can `kubectl rollout restart deployment/my-svc` and watch zero-downtime rolling restarts in your Grafana dashboard.
 
 ---
@@ -210,11 +222,13 @@ You can `kubectl rollout restart deployment/my-svc` and watch zero-downtime roll
 ## Week 3 — Observability: metrics, logs, traces
 
 ### Goals
+
 Wire up the three pillars properly. Stop using `console.log` for production debugging.
 
 ### Reading (Mon-Tue)
+
 - This course: chapter 3 (re-read deeply)
-- *Observability Engineering* (Charity Majors et al), chapters 1-4
+- _Observability Engineering_ (Charity Majors et al), chapters 1-4
 - OpenTelemetry "concepts" docs
 
 ### Lab (Wed-Fri)
@@ -257,12 +271,15 @@ defer span.End()
 Promtail or Grafana Agent ships container logs to Loki. View in Grafana with LogQL.
 
 ### Saturday project work
+
 Build a "diagnose this slow request" exercise. Inject random 200-500ms latency into one endpoint. Use traces to find which span is slow. Then use logs (filtered by trace_id) to pinpoint the line.
 
 ### Deliverable
+
 Single-pane Grafana view: dashboard panel → click a slow request → drill into trace → drill into logs.
 
 ### Success criteria
+
 Given a trace ID, you can find the corresponding logs in under 10 seconds.
 
 ---
@@ -270,9 +287,11 @@ Given a trace ID, you can find the corresponding logs in under 10 seconds.
 ## Week 4 — SLOs and burn-rate alerting
 
 ### Goals
+
 Define an SLO for your service, implement burn-rate alerts, and prove they fire on injected failures.
 
 ### Reading (Mon-Tue)
+
 - This course: chapter 2 (deep re-read)
 - Google SRE Workbook chapter 5: "Alerting on SLOs"
 - The `sloth` tool docs (you will use it on Friday)
@@ -316,12 +335,15 @@ curl -X POST http://your-svc/admin/chaos -d '{"errorRate": 0.1, "duration": "10m
 Watch your fast-burn alert fire in 2-5 minutes.
 
 ### Saturday project work
+
 Write a one-page **error budget policy** for your service. What happens at 50% budget? At 0%? Treat it as if you had a real product team to negotiate with.
 
 ### Deliverable
+
 SLO dashboard showing burn rate, alerts wired to PagerDuty (use the free tier), at least one demonstrated "alert fired during chaos test" screenshot.
 
 ### Success criteria
+
 You can predict, given a burn rate, exactly how many days of error budget remain.
 
 ---
@@ -329,11 +351,13 @@ You can predict, given a burn rate, exactly how many days of error budget remain
 ## Week 5 — Incident response
 
 ### Goals
+
 Run a realistic incident from page to postmortem. Know the ICS roles by heart.
 
 ### Reading (Mon-Tue)
+
 - This course: chapters 4 and 5
-- Pagerduty's free *Incident Response* docs (they are exceptional)
+- Pagerduty's free _Incident Response_ docs (they are exceptional)
 - 3 real public postmortems: Cloudflare 2019-07-02, GitLab 2017-01-31, AWS S3 2017-02-28
 
 ### Lab (Wed-Fri)
@@ -348,12 +372,15 @@ Run a realistic incident from page to postmortem. Know the ICS roles by heart.
 **Drill 2: paired roles.** Get a friend to play OL while you play IC. Inject a multi-cause failure (e.g., DB latency spike + a stuck deployment). Practice the handoff between roles.
 
 ### Saturday project work
+
 Write a **full postmortem** for the Drill 2 incident. Use the template from chapter 5 verbatim. Include action items with dates.
 
 ### Deliverable
+
 A postmortem doc you would not be embarrassed to share publicly.
 
 ### Success criteria
+
 Your timeline has timestamps to the minute. Your action items are sized, owned, dated. Your root cause statement names the system, not the person.
 
 ---
@@ -361,11 +388,13 @@ Your timeline has timestamps to the minute. Your action items are sized, owned, 
 ## Week 6 — Infrastructure as code
 
 ### Goals
+
 Stop hand-editing cloud consoles. Express infrastructure as Terraform; review it like code.
 
 ### Reading (Mon-Tue)
+
 - HashiCorp's official Terraform tutorials (the AWS or GCP track depending on your cloud)
-- *Terraform Up and Running* (3rd ed), chapters 1-5
+- _Terraform Up and Running_ (3rd ed), chapters 1-5
 
 ### Lab (Wed-Fri)
 
@@ -403,12 +432,15 @@ resource "fly_machine" "svc" {
 **Module-ize the service.** Build `modules/observable-service` that bundles the deployment + dashboard + alerts. Now adding a new service is a 10-line `module "x"` call.
 
 ### Saturday project work
+
 Write a small Terraform module that, given a service name and SLO target, generates the SLO recording rules + burn-rate alerts as Kubernetes manifests. This is the "PRR baseline" pattern from chapter 7.
 
 ### Deliverable
+
 Your service deployed end-to-end via `git push` → CI → terraform apply. No manual cloud-console clicks.
 
 ### Success criteria
+
 You can stand up an identical staging environment by running `terraform workspace new staging && terraform apply` with the same code.
 
 ---
@@ -416,11 +448,13 @@ You can stand up an identical staging environment by running `terraform workspac
 ## Week 7 — Capacity planning and load testing
 
 ### Goals
+
 Predict where your service breaks before it breaks. Use real load tests in CI.
 
 ### Reading (Mon-Tue)
+
 - This course: chapter 6
-- Brendan Gregg, *Systems Performance* (2nd ed) — chapters 1, 2, 6 (CPU)
+- Brendan Gregg, _Systems Performance_ (2nd ed) — chapters 1, 2, 6 (CPU)
 - Neil Gunther's USL paper or summary blog post
 
 ### Lab (Wed-Fri)
@@ -428,40 +462,43 @@ Predict where your service breaks before it breaks. Use real load tests in CI.
 **Write a k6 load test** for your service:
 
 ```javascript
-import http from "k6/http";
-import { check } from "k6";
+import http from 'k6/http';
+import { check } from 'k6';
 
 export const options = {
-  stages: [
-    { duration: "2m", target: 50 },
-    { duration: "5m", target: 50 },
-    { duration: "2m", target: 200 },
-    { duration: "5m", target: 200 },
-    { duration: "2m", target: 0 },
-  ],
-  thresholds: {
-    "http_req_duration": ["p(99)<300"],
-    "http_req_failed":   ["rate<0.005"],
-  },
+	stages: [
+		{ duration: '2m', target: 50 },
+		{ duration: '5m', target: 50 },
+		{ duration: '2m', target: 200 },
+		{ duration: '5m', target: 200 },
+		{ duration: '2m', target: 0 }
+	],
+	thresholds: {
+		http_req_duration: ['p(99)<300'],
+		http_req_failed: ['rate<0.005']
+	}
 };
 
 export default function () {
-  const r = http.get("https://my-svc.fly.dev/api/orders");
-  check(r, { "200": (r) => r.status === 200 });
+	const r = http.get('https://my-svc.fly.dev/api/orders');
+	check(r, { 200: (r) => r.status === 200 });
 }
 ```
 
-**Run it as a stress test** to find the cliff. Increase concurrency until SLO breaks. Note the number — that is your *measured* capacity.
+**Run it as a stress test** to find the cliff. Increase concurrency until SLO breaks. Note the number — that is your _measured_ capacity.
 
 **Apply Little's Law** to derive how many replicas you need at 2x current traffic. Verify with another load test.
 
 ### Saturday project work
+
 Wire k6 into CI — block merges if the load test fails the thresholds.
 
 ### Deliverable
+
 A capacity table for your service, with measured numbers, Little's Law math, and recommended replica count for 1x/2x/5x current traffic.
 
 ### Success criteria
+
 You can answer "if traffic 3x next month, what breaks first?" with an actual number, not a guess.
 
 ---
@@ -469,11 +506,13 @@ You can answer "if traffic 3x next month, what breaks first?" with an actual num
 ## Week 8 — Capstone: chaos + DR + the writeup
 
 ### Goals
+
 Combine everything. Run a real chaos experiment with guardrails. Test a DR procedure. Write up the whole 8 weeks.
 
 ### Reading (Mon-Tue)
+
 - This course: chapters 8, 9, 10
-- *Chaos Engineering* (Casey Rosenthal, Nora Jones) — relevant chapters
+- _Chaos Engineering_ (Casey Rosenthal, Nora Jones) — relevant chapters
 - 1-2 chaos engineering case studies (Netflix, LinkedIn)
 
 ### Lab (Wed-Fri)
@@ -497,7 +536,9 @@ Write a public blog post (or detailed README) summarizing the 8 weeks:
 # 8 weeks from fullstack to SRE — what I built and what I learned
 
 ## The project
+
 A Go service running on Kubernetes with:
+
 - Defined SLO + burn-rate alerts
 - Full RED + USE observability
 - Terraform-managed infra
@@ -506,24 +547,30 @@ A Go service running on Kubernetes with:
 - Tested DR runbook
 
 ## What surprised me
+
 [your real surprises]
 
 ## What I'd do differently
+
 [your honest critique]
 
 ## Resources that were worth the time
+
 [your top 5]
 
 ## Resources that were not
+
 [your top "skip these"]
 ```
 
 ### Deliverable
+
 - A working capstone project on GitHub (anyone can clone and stand up the full system)
 - A public writeup
 - A clear plan for what to learn next
 
 ### Success criteria
+
 You can interview for a junior SRE role and credibly walk through a real production system you built and operated.
 
 ---
@@ -582,4 +629,3 @@ This roadmap is curated for 2026. Tools shift fast. For live references:
 3. **The labs are the curriculum** — reading is supporting material
 4. **End with a public artifact** — a real system + a real writeup is what unlocks the next role
 5. **Plan for week 9 onward** — eight weeks gets you to junior; depth comes from real production
-

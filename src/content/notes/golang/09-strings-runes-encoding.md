@@ -1,10 +1,10 @@
 ---
-title: "Strings, Runes & Encoding"
-subtitle: "Go strings are UTF-8 byte slices — knowing this prevents an entire class of bugs when handling international text, emojis, and binary data."
+title: 'Strings, Runes & Encoding'
+subtitle: 'Go strings are UTF-8 byte slices — knowing this prevents an entire class of bugs when handling international text, emojis, and binary data.'
 chapter: 9
-level: "intermediate"
-readingTime: "15 min"
-topics: ["strings", "runes", "UTF-8", "encoding", "bytes", "text processing"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['strings', 'runes', 'UTF-8', 'encoding', 'bytes', 'text processing']
 ---
 
 <script>
@@ -149,6 +149,7 @@ result := buf.Bytes()  // []byte("Hello World")
 ```
 
 **When to use which:**
+
 - `string` — text that shouldn't change (JSON keys, log messages, user display)
 - `[]byte` — data you need to modify, binary data, I/O buffers
 - `strings.Builder` — building strings incrementally
@@ -210,4 +211,3 @@ sanitizeUsername("a")           // error: too short
 4. **`string(65)` is `"A"`**, not `"65"` — use `strconv.Itoa` for number formatting
 5. **`[]byte` for mutable data**, `string` for immutable text — conversion copies the data
 6. **Use `unicode` package** for character classification — `unicode.IsLetter`, `unicode.IsDigit`
-

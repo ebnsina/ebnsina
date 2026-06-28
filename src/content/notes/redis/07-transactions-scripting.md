@@ -1,10 +1,10 @@
 ---
-title: "Transactions & Lua Scripting"
-subtitle: "MULTI/EXEC, optimistic locking with WATCH, and atomic multi-step logic with Lua."
+title: 'Transactions & Lua Scripting'
+subtitle: 'MULTI/EXEC, optimistic locking with WATCH, and atomic multi-step logic with Lua.'
 chapter: 7
-level: "advanced"
-readingTime: "13 min"
-topics: ["multi", "lua", "atomicity"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['multi', 'lua', 'atomicity']
 ---
 
 <script>
@@ -36,7 +36,7 @@ Between `MULTI` and `EXEC`, no other client runs. The three commands above execu
 
 ## Why these are not rollback transactions
 
-Coming from SQL, you expect a transaction to be all-or-nothing: if any statement fails, the whole thing rolls back. **Redis does not do this.** If a queued command fails *at execution time*, the other commands still run, and there is no rollback.
+Coming from SQL, you expect a transaction to be all-or-nothing: if any statement fails, the whole thing rolls back. **Redis does not do this.** If a queued command fails _at execution time_, the other commands still run, and there is no rollback.
 
 ```text
 127.0.0.1:6379> SET counter "not-a-number"
@@ -55,7 +55,7 @@ QUEUED
 There are two kinds of failure to distinguish:
 
 - **Errors detected at queue time** (a syntactically wrong command, an unknown command) abort the whole transaction — `EXEC` refuses to run it. This is checked since modern Redis versions.
-- **Errors detected at run time** (like `INCR` on a non-numeric value) do *not* abort the others. The bad command returns an error inside the `EXEC` result array, and everything else still applies.
+- **Errors detected at run time** (like `INCR` on a non-numeric value) do _not_ abort the others. The bad command returns an error inside the `EXEC` result array, and everything else still applies.
 
 Redis's author defends this deliberately: run-time errors are almost always programming bugs that would be caught in development, and omitting rollback keeps the server simple and fast. The practical takeaway is to stop thinking "transaction = safety net" and think "transaction = these commands run together, isolated, with no rollback." If a step can fail meaningfully, you must handle it yourself — and Lua is usually the better fit.
 
@@ -87,7 +87,7 @@ If another client modified `stock:item42` after the `WATCH` but before the `EXEC
 
 ## Lua scripting: atomic logic on the server
 
-`WATCH` retries get awkward when the logic is complex. Lua scripting sidesteps that entirely: you send a script with `EVAL`, and Redis runs the *whole script* atomically — no other command interleaves, no network round-trips between steps, and the script can branch on values it reads.
+`WATCH` retries get awkward when the logic is complex. Lua scripting sidesteps that entirely: you send a script with `EVAL`, and Redis runs the _whole script_ atomically — no other command interleaves, no network round-trips between steps, and the script can branch on values it reads.
 
 ```lua
 -- Atomic conditional decrement: only if stock remains
@@ -124,7 +124,7 @@ Why Lua beats a `WATCH` loop for hard cases: the entire decision-and-mutation ha
 
 <Callout type="info">
 
-**Note:** Because a script blocks the single thread until it finishes, keep scripts short and avoid long loops or O(N) work over big collections inside them. A slow script stalls every other client, exactly like a slow command. Lua is for *atomic*, *small* multi-step logic — not for batch processing.
+**Note:** Because a script blocks the single thread until it finishes, keep scripts short and avoid long loops or O(N) work over big collections inside them. A slow script stalls every other client, exactly like a slow command. Lua is for _atomic_, _small_ multi-step logic — not for batch processing.
 
 </Callout>
 

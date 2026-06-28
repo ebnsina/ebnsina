@@ -1,10 +1,10 @@
 ---
-title: "GraphQL Building — Roadmap"
+title: 'GraphQL Building — Roadmap'
 subtitle: "Ten chapters that go from 'a query is just a string' to a self-hosted GraphQL server with batched resolvers, auth, subscriptions, and depth limits behind nginx."
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "graphql", "schema", "resolvers", "dataloader", "federation"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'graphql', 'schema', 'resolvers', 'dataloader', 'federation']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will be able to design a real GraphQL schema, run a self-hosted server (grap
 Read in order. The early chapters are conceptual; from chapter 3 onward you are running real servers and curling them. By chapter 6 you should be sceptical of any GraphQL article that does not mention DataLoader. Total reading time: ~2.5 hours. Hands-on time, the first time you build it all: a long weekend.
 
 You need Node 20+, Postgres, and a domain pointed at a VPS for the deployment chapter. Everything else runs on `localhost`.
-

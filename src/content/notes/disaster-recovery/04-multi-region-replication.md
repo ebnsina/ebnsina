@@ -1,10 +1,11 @@
 ---
-title: "Multi-Region Replication"
-subtitle: "Streaming replication, logical replication, and the trade-offs of active-passive vs active-active across regions."
+title: 'Multi-Region Replication'
+subtitle: 'Streaming replication, logical replication, and the trade-offs of active-passive vs active-active across regions.'
 chapter: 4
-level: "advanced"
-readingTime: "11 min"
-topics: ["streaming replication", "logical replication", "multi-region", "failover", "replication lag"]
+level: 'advanced'
+readingTime: '11 min'
+topics:
+  ['streaming replication', 'logical replication', 'multi-region', 'failover', 'replication lag']
 ---
 
 <script>
@@ -24,12 +25,14 @@ Two branches of a bank: one is the main branch (primary), one is a backup branch
 PostgreSQL streaming replication sends WAL records from primary to standby in real time. The standby replays them continuously, staying within seconds of the primary.
 
 **How it works:**
+
 ```
 Primary:  Write transaction → WAL record → Send to replica
 Replica:  Receive WAL → Replay → State matches primary (with lag)
 ```
 
 **Setup on primary (`postgresql.conf`):**
+
 ```ini
 wal_level = replica
 max_wal_senders = 5          # allow up to 5 standbys
@@ -38,16 +41,19 @@ synchronous_standby_names = '' # async replication (see sync section below)
 ```
 
 **Create replication user:**
+
 ```sql
 CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD 'reppassword';
 ```
 
 **pg_hba.conf on primary:**
+
 ```
 host    replication  replicator  10.0.2.0/24  scram-sha-256
 ```
 
 **Set up standby:**
+
 ```bash
 # On standby server: take base backup from primary
 pg_basebackup \
@@ -63,6 +69,7 @@ pg_basebackup \
 ```
 
 **Start standby:**
+
 ```bash
 systemctl start postgresql
 
@@ -113,6 +120,7 @@ synchronous_standby_names = 'FIRST 1 (standby1, standby2)'
 ```
 
 **The trade-off:**
+
 ```
 Async replication:
   Commit latency: +0ms (fire and forget)
@@ -138,6 +146,7 @@ synchronous_standby_names = 'FIRST 1 (standby-az2)'
 Physical replication copies WAL byte-for-byte — requires identical PostgreSQL versions and OS. Logical replication decodes WAL into logical changes (INSERT/UPDATE/DELETE) and replays them on the subscriber.
 
 Use cases:
+
 - Replicate to a different PostgreSQL major version (upgrade path)
 - Replicate specific tables, not the full database
 - Replicate to a different schema or transform data during replication
@@ -162,6 +171,7 @@ FROM pg_stat_subscription;
 ```
 
 **Logical replication limitations:**
+
 - DDL (schema changes) are not replicated — must apply manually on both sides
 - Sequences not replicated — subscriber starts at its own position
 - Large objects not replicated
@@ -187,6 +197,7 @@ psql -c "SELECT pg_is_in_recovery();"
 ```
 
 **After promotion — update connection strings:**
+
 ```bash
 # Update application environment to point to new primary
 aws ssm put-parameter \
@@ -217,10 +228,10 @@ etcd:
 
 bootstrap:
   dcs:
-    ttl: 30               # primary lease duration (seconds)
-    loop_wait: 10         # check interval
+    ttl: 30 # primary lease duration (seconds)
+    loop_wait: 10 # check interval
     retry_timeout: 10
-    maximum_lag_on_failover: 1048576  # only failover if lag < 1MB
+    maximum_lag_on_failover: 1048576 # only failover if lag < 1MB
 
 postgresql:
   listen: 0.0.0.0:5432
@@ -250,6 +261,7 @@ Region: us-west-2 (DR)
 **Read traffic to cross-region replica** reduces query latency for west-coast users and keeps the DR replica warm (it's already serving production traffic, so promotion is less disruptive).
 
 **Failover procedure for region failure:**
+
 ```bash
 # 1. Confirm primary region is unavailable
 aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].State'
@@ -292,4 +304,3 @@ aws ssm put-parameter --region us-west-2 \
 □ DNS/load balancer failover tested (not just DB promotion)
 □ Application reconnection after failover tested (connection pool behavior)
 ```
-

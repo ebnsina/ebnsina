@@ -1,10 +1,10 @@
 ---
-title: "RTO, RPO, and What They Actually Mean"
-subtitle: "Two numbers that define your recovery requirements — and why getting them wrong makes your DR plan useless."
+title: 'RTO, RPO, and What They Actually Mean'
+subtitle: 'Two numbers that define your recovery requirements — and why getting them wrong makes your DR plan useless.'
 chapter: 1
-level: "beginner"
-readingTime: "7 min"
-topics: ["RTO", "RPO", "disaster recovery", "SLA", "business continuity"]
+level: 'beginner'
+readingTime: '7 min'
+topics: ['RTO', 'RPO', 'disaster recovery', 'SLA', 'business continuity']
 ---
 
 <script>
@@ -47,6 +47,7 @@ These are objectives — targets you design your system to meet. They're not aut
 Don't pick numbers arbitrarily. Work backwards from business impact:
 
 **RTO calculation:**
+
 ```
 What is the hourly cost of downtime?
   Lost revenue:          $5,000/hour
@@ -65,6 +66,7 @@ At what point does the cumulative loss justify the cost of faster recovery?
 ```
 
 **RPO calculation:**
+
 ```
 What is the cost of losing N hours of data?
   Losing 1 hour of orders: ~500 orders × $80 avg = $40,000 unrecoverable
@@ -76,13 +78,13 @@ What is the cost of losing N hours of data?
 
 Different parts of your system have different RTO/RPO requirements:
 
-| System | RTO | RPO | Reason |
-|--------|-----|-----|--------|
-| Order database | 1 hour | 5 minutes | Revenue impact |
-| User accounts | 4 hours | 1 hour | Login disruption |
-| Analytics DB | 24 hours | 24 hours | Non-operational |
-| Email logs | 72 hours | 24 hours | Compliance, not ops |
-| CDN assets | Minutes (CDN failover) | N/A (no writes) | — |
+| System         | RTO                    | RPO             | Reason              |
+| -------------- | ---------------------- | --------------- | ------------------- |
+| Order database | 1 hour                 | 5 minutes       | Revenue impact      |
+| User accounts  | 4 hours                | 1 hour          | Login disruption    |
+| Analytics DB   | 24 hours               | 24 hours        | Non-operational     |
+| Email logs     | 72 hours               | 24 hours        | Compliance, not ops |
+| CDN assets     | Minutes (CDN failover) | N/A (no writes) | —                   |
 
 Design and budget per system. Don't apply the tightest requirement uniformly.
 
@@ -91,24 +93,28 @@ Design and budget per system. Don't apply the tightest requirement uniformly.
 RTO/RPO targets map to infrastructure tiers with different costs:
 
 **Tier 1: Cold Standby (RTO: hours–days, RPO: hours)**
+
 - Backups stored in S3/object storage
 - No hot infrastructure waiting
 - Recovery: provision new server, restore from backup, catch up
 - Cost: storage only (~$20/month for 100GB of daily backups)
 
 **Tier 2: Warm Standby (RTO: 15 min–1 hour, RPO: minutes)**
+
 - Backup infrastructure running at reduced scale
 - Replication keeping it near-current
 - Recovery: scale up + promote replica + redirect traffic
 - Cost: 30-50% of full production cost
 
 **Tier 3: Hot Standby (RTO: seconds–minutes, RPO: seconds)**
+
 - Full duplicate production environment
 - Synchronous replication
 - Recovery: DNS failover or load balancer redirect
 - Cost: ~100% additional (2x total infrastructure cost)
 
 **Tier 4: Active-Active (RTO: ~0, RPO: ~0)**
+
 - Traffic distributed across multiple sites simultaneously
 - Automatic failover with no human intervention
 - Cost: 2x+ infrastructure + significant engineering complexity
@@ -158,4 +164,3 @@ If you've never actually restored from backup, your RPO is theoretical. If you'v
 **No runbook, knowledge in one person's head:** The person who knows the restore procedure is on vacation. Or left the company.
 
 **Document the actual measured RTO from your last drill.** If it was 4 hours and your SLA says 2 hours, you have a gap to close — not a plan to point to.
-

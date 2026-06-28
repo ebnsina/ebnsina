@@ -7,7 +7,10 @@
 	let { data } = $props();
 </script>
 
-<Seo title="Writing" description="Notes on engineering, craft, and the tools I use to build software." />
+<Seo
+	title="Writing"
+	description="Notes on engineering, craft, and the tools I use to build software."
+/>
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
@@ -25,15 +28,12 @@
 	{/if}
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each data.posts as post, i (post.slug)}
+		{#each data.posts as post (post.slug)}
 			<div use:reveal class="h-full">
 				<PostCard
 					href={`/blog/${post.slug}`}
 					title={post.meta.title}
 					description={post.meta.description}
-					date={post.meta.date}
-					tags={post.meta.tags}
-					index={i}
 				/>
 			</div>
 		{/each}

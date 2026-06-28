@@ -1,10 +1,10 @@
 ---
-title: "Issuing Your First Cert with certbot"
-subtitle: "From bare DNS A record to working HTTPS in ten minutes. Concrete commands, every flag explained, every common failure addressed."
+title: 'Issuing Your First Cert with certbot'
+subtitle: 'From bare DNS A record to working HTTPS in ten minutes. Concrete commands, every flag explained, every common failure addressed.'
 chapter: 5
-level: "beginner"
-readingTime: "11 min"
-topics: ["certbot", "letsencrypt", "nginx", "http-01", "tls"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['certbot', 'letsencrypt', 'nginx', 'http-01', 'tls']
 ---
 
 <script>
@@ -281,7 +281,7 @@ Open the port (chapter 7 of Linux & VPS), make sure nginx is listening on it.
 
 certbot placed the challenge file but nginx is not serving it. Usually because of a wrong document root or a `location /` that catches everything before the well-known prefix is matched.
 
-Add this snippet *above* any other `location /` block:
+Add this snippet _above_ any other `location /` block:
 
 ```nginx
 location /.well-known/acme-challenge/ {
@@ -378,4 +378,3 @@ A fresh certbot install should score A or A+. If you see lower, the next chapter
 - For more control, use `certonly` and edit nginx by hand.
 
 Next chapter: when HTTP-01 is not enough — wildcards and DNS-01 challenges.
-

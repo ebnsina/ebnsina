@@ -1,10 +1,10 @@
 ---
-title: "Rate Limiting at the Gateway"
-subtitle: "Fixed window, sliding window, token bucket — protect your backends from abuse and enforce fair usage without touching service code."
+title: 'Rate Limiting at the Gateway'
+subtitle: 'Fixed window, sliding window, token bucket — protect your backends from abuse and enforce fair usage without touching service code.'
 chapter: 4
-level: "intermediate"
-readingTime: "13 min"
-topics: ["rate limiting", "token bucket", "sliding window", "Redis", "throttling"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'throttling']
 ---
 
 <script>
@@ -33,25 +33,25 @@ Count requests in a fixed time window (e.g., current minute). Simple but has a b
 
 ```typescript
 class FixedWindowLimiter {
-  constructor(
-    private redis: RedisClient,
-    private limit: number,
-    private windowSeconds: number,
-  ) {}
+	constructor(
+		private redis: RedisClient,
+		private limit: number,
+		private windowSeconds: number
+	) {}
 
-  async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
-    const windowKey = `ratelimit:fw:${key}:${Math.floor(Date.now() / (this.windowSeconds * 1000))}`;
+	async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
+		const windowKey = `ratelimit:fw:${key}:${Math.floor(Date.now() / (this.windowSeconds * 1000))}`;
 
-    const count = await this.redis.incr(windowKey);
+		const count = await this.redis.incr(windowKey);
 
-    if (count === 1) {
-      // First request in window — set expiry
-      await this.redis.expire(windowKey, this.windowSeconds);
-    }
+		if (count === 1) {
+			// First request in window — set expiry
+			await this.redis.expire(windowKey, this.windowSeconds);
+		}
 
-    const allowed = count <= this.limit;
-    return { allowed, remaining: Math.max(0, this.limit - count) };
-  }
+		const allowed = count <= this.limit;
+		return { allowed, remaining: Math.max(0, this.limit - count) };
+	}
 }
 ```
 
@@ -63,28 +63,28 @@ Count requests in the last N seconds, not in the current calendar window:
 
 ```typescript
 class SlidingWindowLimiter {
-  constructor(
-    private redis: RedisClient,
-    private limit: number,
-    private windowMs: number,
-  ) {}
+	constructor(
+		private redis: RedisClient,
+		private limit: number,
+		private windowMs: number
+	) {}
 
-  async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
-    const now = Date.now();
-    const windowStart = now - this.windowMs;
-    const redisKey = `ratelimit:sw:${key}`;
+	async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
+		const now = Date.now();
+		const windowStart = now - this.windowMs;
+		const redisKey = `ratelimit:sw:${key}`;
 
-    const [, , count] = await this.redis
-      .multi()
-      .zRemRangeByScore(redisKey, '-inf', windowStart) // remove old entries
-      .zAdd(redisKey, { score: now, value: `${now}-${Math.random()}` })
-      .zCard(redisKey)
-      .expire(redisKey, Math.ceil(this.windowMs / 1000))
-      .exec() as [unknown, unknown, number, unknown];
+		const [, , count] = (await this.redis
+			.multi()
+			.zRemRangeByScore(redisKey, '-inf', windowStart) // remove old entries
+			.zAdd(redisKey, { score: now, value: `${now}-${Math.random()}` })
+			.zCard(redisKey)
+			.expire(redisKey, Math.ceil(this.windowMs / 1000))
+			.exec()) as [unknown, unknown, number, unknown];
 
-    const allowed = count <= this.limit;
-    return { allowed, remaining: Math.max(0, this.limit - count) };
-  }
+		const allowed = count <= this.limit;
+		return { allowed, remaining: Math.max(0, this.limit - count) };
+	}
 }
 ```
 
@@ -96,18 +96,18 @@ The smoothest algorithm. A bucket fills at a constant rate (refill rate). Each r
 
 ```typescript
 class TokenBucketLimiter {
-  constructor(
-    private redis: RedisClient,
-    private capacity: number,    // max tokens (burst size)
-    private refillRate: number,  // tokens per second
-  ) {}
+	constructor(
+		private redis: RedisClient,
+		private capacity: number, // max tokens (burst size)
+		private refillRate: number // tokens per second
+	) {}
 
-  async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
-    const now = Date.now() / 1000; // seconds
-    const bucketKey = `ratelimit:tb:${key}`;
+	async isAllowed(key: string): Promise<{ allowed: boolean; remaining: number }> {
+		const now = Date.now() / 1000; // seconds
+		const bucketKey = `ratelimit:tb:${key}`;
 
-    // Lua script for atomicity
-    const script = `
+		// Lua script for atomicity
+		const script = `
       local key = KEYS[1]
       local capacity = tonumber(ARGV[1])
       local refill_rate = tonumber(ARGV[2])
@@ -134,12 +134,18 @@ class TokenBucketLimiter {
       return { allowed, math.floor(tokens) }
     `;
 
-    const [allowed, remaining] = await this.redis.eval(
-      script, 1, bucketKey, this.capacity, this.refillRate, now, 1
-    ) as [number, number];
+		const [allowed, remaining] = (await this.redis.eval(
+			script,
+			1,
+			bucketKey,
+			this.capacity,
+			this.refillRate,
+			now,
+			1
+		)) as [number, number];
 
-    return { allowed: allowed === 1, remaining };
-  }
+		return { allowed: allowed === 1, remaining };
+	}
 }
 ```
 
@@ -149,23 +155,23 @@ Always tell clients their rate limit status:
 
 ```typescript
 function applyRateLimitHeaders(
-  res: Response,
-  limit: number,
-  remaining: number,
-  resetSeconds: number,
+	res: Response,
+	limit: number,
+	remaining: number,
+	resetSeconds: number
 ): void {
-  res.set({
-    'X-RateLimit-Limit':     String(limit),
-    'X-RateLimit-Remaining': String(remaining),
-    'X-RateLimit-Reset':     String(Math.floor(Date.now() / 1000) + resetSeconds),
-    'Retry-After':           remaining === 0 ? String(resetSeconds) : undefined,
-  });
+	res.set({
+		'X-RateLimit-Limit': String(limit),
+		'X-RateLimit-Remaining': String(remaining),
+		'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + resetSeconds),
+		'Retry-After': remaining === 0 ? String(resetSeconds) : undefined
+	});
 }
 
 // When limited:
 res.status(429).json({
-  error: 'Too Many Requests',
-  retryAfter: resetSeconds,
+	error: 'Too Many Requests',
+	retryAfter: resetSeconds
 });
 ```
 
@@ -177,34 +183,35 @@ What you limit on determines the attack surface:
 
 ```typescript
 function getLimitKey(req: Request): string {
-  // Option 1: by authenticated user (most fair)
-  if (req.headers['x-user-id']) {
-    return `user:${req.headers['x-user-id']}`;
-  }
+	// Option 1: by authenticated user (most fair)
+	if (req.headers['x-user-id']) {
+		return `user:${req.headers['x-user-id']}`;
+	}
 
-  // Option 2: by API key
-  if (req.headers['x-api-key']) {
-    return `apikey:${hashApiKey(req.headers['x-api-key'] as string)}`;
-  }
+	// Option 2: by API key
+	if (req.headers['x-api-key']) {
+		return `apikey:${hashApiKey(req.headers['x-api-key'] as string)}`;
+	}
 
-  // Option 3: by IP (for unauthenticated routes)
-  return `ip:${req.ip}`;
+	// Option 3: by IP (for unauthenticated routes)
+	return `ip:${req.ip}`;
 }
 ```
 
 **Layered limits** — apply multiple limits simultaneously:
+
 ```typescript
 async function checkRateLimits(req: Request): Promise<void> {
-  const userId = req.headers['x-user-id'] as string;
+	const userId = req.headers['x-user-id'] as string;
 
-  await Promise.all([
-    // Global: 1000 req/min per user
-    limiter.check(`global:${userId}`, 1000, 60),
-    // Per-route: 100 req/min on expensive endpoints
-    limiter.check(`route:${req.path}:${userId}`, 100, 60),
-    // Burst: max 20 req/sec
-    limiter.check(`burst:${userId}`, 20, 1),
-  ]);
+	await Promise.all([
+		// Global: 1000 req/min per user
+		limiter.check(`global:${userId}`, 1000, 60),
+		// Per-route: 100 req/min on expensive endpoints
+		limiter.check(`route:${req.path}:${userId}`, 100, 60),
+		// Burst: max 20 req/sec
+		limiter.check(`burst:${userId}`, 20, 1)
+	]);
 }
 ```
 
@@ -222,9 +229,8 @@ plugins:
       policy: redis
       redis_host: redis
       redis_port: 6379
-      limit_by: consumer  # or ip, credential, header
+      limit_by: consumer # or ip, credential, header
       hide_client_headers: false
 ```
 
 Kong handles the Redis atomicity, header injection, and 429 responses. Your job is configuring the limits per route and per consumer tier.
-

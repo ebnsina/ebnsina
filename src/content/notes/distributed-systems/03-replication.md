@@ -1,17 +1,17 @@
 ---
-title: "Replication"
-subtitle: "Keeping copies of data on multiple machines: single-leader, multi-leader, and leaderless designs, sync vs async, and quorums."
+title: 'Replication'
+subtitle: 'Keeping copies of data on multiple machines: single-leader, multi-leader, and leaderless designs, sync vs async, and quorums.'
 chapter: 3
-level: "intermediate"
-readingTime: "11 min"
-topics: ["replication", "quorum", "leader"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['replication', 'quorum', 'leader']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-**Replication** means keeping a copy of the same data on more than one machine. You do it for three reasons: to survive the loss of a machine (availability), to serve reads from nearby or additional copies (scale and latency), and to keep data close to users (locality). The hard part is not making copies — it is keeping them consistent while machines and networks fail. Every replication design is a different answer to one question: *where are writes allowed to happen?*
+**Replication** means keeping a copy of the same data on more than one machine. You do it for three reasons: to survive the loss of a machine (availability), to serve reads from nearby or additional copies (scale and latency), and to keep data close to users (locality). The hard part is not making copies — it is keeping them consistent while machines and networks fail. Every replication design is a different answer to one question: _where are writes allowed to happen?_
 
 ## Single-leader replication
 
@@ -45,7 +45,7 @@ Because writes and reads talk to overlapping sets of replicas directly, the syst
 
 ## Synchronous vs asynchronous replication
 
-Cutting across all three designs is *when* the write is acknowledged to the client.
+Cutting across all three designs is _when_ the write is acknowledged to the client.
 
 - **Synchronous:** the leader waits for the follower to confirm it has the write before telling the client "done." The follower is guaranteed up to date, so a failover loses nothing — but the client waits for the slowest follower, and if that follower is down, writes stall.
 - **Asynchronous:** the leader acknowledges immediately and ships the write to followers afterward. Writes are fast and the leader doesn't depend on followers being up, but a follower can lag (**replication lag**), and if the leader dies before a write reaches any follower, that write is **lost**.
@@ -63,8 +63,8 @@ Most systems use a pragmatic middle ground: **semi-synchronous**, where the lead
 Leaderless systems make the trade-off explicit and tunable. Let:
 
 - **N** = the number of replicas each piece of data is stored on.
-- **W** = the number of replicas that must acknowledge a *write* for it to count as successful.
-- **R** = the number of replicas that must respond to a *read* before the client accepts the result.
+- **W** = the number of replicas that must acknowledge a _write_ for it to count as successful.
+- **R** = the number of replicas that must respond to a _read_ before the client accepts the result.
 
 The key insight: if **W + R &gt; N**, then the set of replicas a read contacts is guaranteed to **overlap** the set that acknowledged the latest write by at least one replica. That overlapping replica has the newest value, so the read is guaranteed to see it (the reader then picks the newest among the responses, using version numbers).
 
@@ -78,21 +78,21 @@ N = 3.  Choose W = 2, R = 2.   W + R = 4 > 3, so reads and writes overlap.
 
 Tuning W and R lets you slide along a spectrum:
 
-| Setting | Effect |
-| --- | --- |
-| W = N, R = 1 | Fast reads, slow/fragile writes, strong read consistency |
-| W = 1, R = N | Fast writes, slow reads, write always available |
-| W = R = (N+1)/2 | Balanced "quorum" — survives a minority of failures |
+| Setting         | Effect                                                   |
+| --------------- | -------------------------------------------------------- |
+| W = N, R = 1    | Fast reads, slow/fragile writes, strong read consistency |
+| W = 1, R = N    | Fast writes, slow reads, write always available          |
+| W = R = (N+1)/2 | Balanced "quorum" — survives a minority of failures      |
 
 <Callout type="info">
 
-**Note:** A quorum with W + R &gt; N is not the same as linearizability. With concurrent writes, clock skew, or failed writes that partially succeeded, quorum reads can still return stale or ambiguous values. Quorums make staleness *unlikely and bounded*; they do not by themselves give the strong guarantees of chapter 4.
+**Note:** A quorum with W + R &gt; N is not the same as linearizability. With concurrent writes, clock skew, or failed writes that partially succeeded, quorum reads can still return stale or ambiguous values. Quorums make staleness _unlikely and bounded_; they do not by themselves give the strong guarantees of chapter 4.
 
 </Callout>
 
 ## Read-your-writes consistency
 
-Replication lag produces a jarring user-facing bug. A user updates their profile (write goes to the leader), then immediately reloads the page (read served by a lagging follower that hasn't received the update yet) — and sees their *old* profile. It looks like the write was lost.
+Replication lag produces a jarring user-facing bug. A user updates their profile (write goes to the leader), then immediately reloads the page (read served by a lagging follower that hasn't received the update yet) — and sees their _old_ profile. It looks like the write was lost.
 
 **Read-your-writes consistency** (also called read-after-write) guarantees that a user always sees their own most recent writes, even if other users might briefly see stale data. Common techniques:
 

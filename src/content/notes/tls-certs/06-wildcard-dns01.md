@@ -1,10 +1,10 @@
 ---
-title: "Wildcard Certs & DNS-01"
+title: 'Wildcard Certs & DNS-01'
 subtitle: "When HTTP validation isn't enough — issuing wildcard certs, automating DNS-01 with provider plugins, and the security tradeoffs of API tokens that can edit DNS."
 chapter: 6
-level: "intermediate"
-readingTime: "10 min"
-topics: ["wildcard", "dns-01", "letsencrypt", "cloudflare", "route53"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['wildcard', 'dns-01', 'letsencrypt', 'cloudflare', 'route53']
 ---
 
 <script>
@@ -35,12 +35,12 @@ DNS-01 is the answer to all of these. Instead of placing a file at a URL, you pl
 
 A `*.example.com` certificate matches any **single-level** subdomain:
 
-| Domain | Matches `*.example.com`? |
-|---|---|
-| `www.example.com` | yes |
-| `api.example.com` | yes |
-| `app.staging.example.com` | **no** — multi-level |
-| `example.com` | **no** — wildcard does not match the apex |
+| Domain                    | Matches `*.example.com`?                  |
+| ------------------------- | ----------------------------------------- |
+| `www.example.com`         | yes                                       |
+| `api.example.com`         | yes                                       |
+| `app.staging.example.com` | **no** — multi-level                      |
+| `example.com`             | **no** — wildcard does not match the apex |
 
 To cover both the apex and the wildcard, request both:
 
@@ -87,15 +87,15 @@ The manual flow works once but is awful for renewal — you would have to babysi
 
 certbot has plugins for major DNS providers. They use the provider's API to add and remove the TXT record automatically.
 
-| Provider | Plugin |
-|---|---|
-| Cloudflare | `python3-certbot-dns-cloudflare` |
-| Route53 (AWS) | `python3-certbot-dns-route53` |
-| DigitalOcean | `python3-certbot-dns-digitalocean` |
-| Google Cloud DNS | `python3-certbot-dns-google` |
-| Linode | `python3-certbot-dns-linode` |
-| OVH | `python3-certbot-dns-ovh` |
-| RFC2136 (BIND, dynamic DNS) | `python3-certbot-dns-rfc2136` |
+| Provider                    | Plugin                             |
+| --------------------------- | ---------------------------------- |
+| Cloudflare                  | `python3-certbot-dns-cloudflare`   |
+| Route53 (AWS)               | `python3-certbot-dns-route53`      |
+| DigitalOcean                | `python3-certbot-dns-digitalocean` |
+| Google Cloud DNS            | `python3-certbot-dns-google`       |
+| Linode                      | `python3-certbot-dns-linode`       |
+| OVH                         | `python3-certbot-dns-ovh`          |
+| RFC2136 (BIND, dynamic DNS) | `python3-certbot-dns-rfc2136`      |
 
 For other providers (Hetzner, Namecheap, Porkbun, generic ACME-DNS), use third-party plugins via pip, or use `acme.sh` which has wider provider support.
 
@@ -184,22 +184,19 @@ Authentication via IAM (the cleanest path):
 
    ```json
    {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "route53:ListHostedZones",
-           "route53:GetChange"
-         ],
-         "Resource": ["*"]
-       },
-       {
-         "Effect": "Allow",
-         "Action": ["route53:ChangeResourceRecordSets"],
-         "Resource": ["arn:aws:route53:::hostedzone/Z1234567890ABC"]
-       }
-     ]
+   	"Version": "2012-10-17",
+   	"Statement": [
+   		{
+   			"Effect": "Allow",
+   			"Action": ["route53:ListHostedZones", "route53:GetChange"],
+   			"Resource": ["*"]
+   		},
+   		{
+   			"Effect": "Allow",
+   			"Action": ["route53:ChangeResourceRecordSets"],
+   			"Resource": ["arn:aws:route53:::hostedzone/Z1234567890ABC"]
+   		}
+   	]
    }
    ```
 
@@ -261,7 +258,7 @@ acme.sh installs its own renewal cron job. Certs end up in `~/.acme.sh/example.c
 
 ## DNS-01 for service mesh and internal services
 
-For internal-only services (`internal.example.com` resolvable only inside your VPC), DNS-01 is the only Let's Encrypt option. The trick is that the *public* CA still has to query *public* DNS for `_acme-challenge.internal.example.com` — so you need to add that TXT record in your *public* DNS, even though `internal.example.com` itself is not in public DNS.
+For internal-only services (`internal.example.com` resolvable only inside your VPC), DNS-01 is the only Let's Encrypt option. The trick is that the _public_ CA still has to query _public_ DNS for `_acme-challenge.internal.example.com` — so you need to add that TXT record in your _public_ DNS, even though `internal.example.com` itself is not in public DNS.
 
 This is fine and standard. The TXT record only proves you control the parent zone, not that the host actually exists publicly.
 
@@ -299,4 +296,3 @@ A common pattern: HTTP-01 for public web servers (simple, no API tokens needed),
 - Renewal works automatically via the same systemd timer — DNS-01 is a one-time setup cost.
 
 Next chapter: putting these certs to work in nginx with a battle-tested TLS config.
-

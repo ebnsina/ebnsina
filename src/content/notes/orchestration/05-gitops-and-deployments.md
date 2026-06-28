@@ -1,10 +1,10 @@
 ---
-title: "GitOps & Deployments"
+title: 'GitOps & Deployments'
 subtitle: "ArgoCD, Helm, progressive delivery with Argo Rollouts — cluster state as code, automated sync, and deployments that can't silently go wrong."
 chapter: 5
-level: "intermediate"
-readingTime: "10 min"
-topics: ["GitOps", "ArgoCD", "Helm", "Argo Rollouts", "canary", "blue-green", "CD"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['GitOps', 'ArgoCD', 'Helm', 'Argo Rollouts', 'canary', 'blue-green', 'CD']
 ---
 
 <script>
@@ -27,6 +27,7 @@ A version-controlled building blueprint: the blueprint in the vault (git) is alw
 4. **Reconciled** — the controller continuously ensures cluster state matches git
 
 Benefits:
+
 - Cluster state is always in git — audit log for free
 - Roll back a deployment = `git revert`
 - Drift is detected and corrected automatically
@@ -53,18 +54,16 @@ my-chart/
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "order-service.fullname" . }}
-  labels:
-    {{- include "order-service.labels" . | nindent 4 }}
+  name: { { include "order-service.fullname" . } }
+  labels: { { - include "order-service.labels" . | nindent 4 } }
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: { { .Values.replicaCount } }
   template:
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+        - name: { { .Chart.Name } }
+          image: '{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          resources: { { - toYaml .Values.resources | nindent 12 } }
 ```
 
 ```yaml
@@ -87,7 +86,7 @@ resources:
 # values-production.yaml — override for production
 replicaCount: 5
 image:
-  tag: "1.2.0"    # pin exact version in production
+  tag: '1.2.0' # pin exact version in production
 
 resources:
   requests:
@@ -132,6 +131,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 **Application definition:**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -155,8 +155,8 @@ spec:
 
   syncPolicy:
     automated:
-      prune: true       # delete resources removed from git
-      selfHeal: true    # revert manual changes to cluster
+      prune: true # delete resources removed from git
+      selfHeal: true # revert manual changes to cluster
     syncOptions:
       - CreateNamespace=true
 ```
@@ -164,6 +164,7 @@ spec:
 With `automated.selfHeal: true`, any manual `kubectl apply` or `kubectl edit` is immediately reverted to match git. Cluster state is fully controlled by git.
 
 **ArgoCD ApplicationSet** — deploy the same app to multiple clusters/environments:
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -182,7 +183,7 @@ spec:
             values_file: values-production.yaml
   template:
     metadata:
-      name: "order-service-{{cluster}}"
+      name: 'order-service-{{cluster}}'
     spec:
       source:
         repoURL: https://github.com/myorg/k8s-config
@@ -190,15 +191,16 @@ spec:
         helm:
           valueFiles:
             - values.yaml
-            - "{{values_file}}"
+            - '{{values_file}}'
       destination:
-        server: "{{url}}"
+        server: '{{url}}'
         namespace: production
 ```
 
 ## Progressive Delivery with Argo Rollouts
 
 Standard Kubernetes rolling updates are binary — you're either on old or new. Argo Rollouts adds:
+
 - **Canary** — send X% of traffic to new version, watch metrics, gradually increase
 - **Blue-green** — run both versions simultaneously, switch traffic atomically
 
@@ -208,6 +210,7 @@ kubectl apply -n argo-rollouts \
 ```
 
 **Canary with analysis:**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -219,16 +222,16 @@ spec:
   strategy:
     canary:
       steps:
-        - setWeight: 10     # send 10% to new version
-        - pause: {duration: 10m}   # wait 10 minutes
+        - setWeight: 10 # send 10% to new version
+        - pause: { duration: 10m } # wait 10 minutes
         - analysis:
             templates:
               - templateName: success-rate
         - setWeight: 30
-        - pause: {duration: 10m}
+        - pause: { duration: 10m }
         - setWeight: 60
-        - pause: {duration: 10m}
-        - setWeight: 100   # fully roll out
+        - pause: { duration: 10m }
+        - setWeight: 100 # fully roll out
 
       canaryService: order-service-canary
       stableService: order-service-stable
@@ -257,7 +260,7 @@ spec:
   metrics:
     - name: success-rate
       interval: 1m
-      successCondition: result[0] >= 0.99   # 99%+ success rate
+      successCondition: result[0] >= 0.99 # 99%+ success rate
       failureLimit: 3
       provider:
         prometheus:
@@ -310,10 +313,10 @@ jobs:
         run: |
           git clone https://x-token:${{ secrets.GITOPS_TOKEN }}@github.com/myorg/k8s-config
           cd k8s-config
-          
+
           # Update the tag in values file
           sed -i "s/tag: .*/tag: \"${{ github.sha }}\"/" apps/order-service/values-production.yaml
-          
+
           git config user.email "ci@myorg.com"
           git config user.name "CI"
           git commit -am "deploy order-service ${{ github.sha }}"
@@ -323,7 +326,7 @@ jobs:
 ```
 
 The CI pipeline never touches `kubectl` or the cluster directly. It only updates git. ArgoCD handles the rest. This means:
+
 - CI doesn't need cluster credentials
 - Every deploy is a git commit (full audit log)
 - Rollback = `git revert` + ArgoCD syncs
-

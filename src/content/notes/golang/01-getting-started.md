@@ -1,10 +1,10 @@
 ---
-title: "Getting Started with Go"
-subtitle: "Why Go exists, how to set it up, and your first program — understand the philosophy before writing a single line."
+title: 'Getting Started with Go'
+subtitle: 'Why Go exists, how to set it up, and your first program — understand the philosophy before writing a single line.'
 chapter: 1
-level: "beginner"
-readingTime: "15 min"
-topics: ["setup", "hello world", "go philosophy", "toolchain"]
+level: 'beginner'
+readingTime: '15 min'
+topics: ['setup', 'hello world', 'go philosophy', 'toolchain']
 ---
 
 <script>
@@ -166,14 +166,14 @@ In most languages, code formatting is a style choice. In Go, `gofmt` is the stan
 
 ## Go vs Other Languages: A Quick Comparison
 
-| Feature | Go | Python | Java | Rust |
-|---------|-----|--------|------|------|
-| Compilation | Fast (~seconds) | Interpreted | Slow (~minutes) | Slow (~minutes) |
-| Concurrency | Goroutines (built-in) | asyncio / threads | Threads / Virtual Threads | async / threads |
-| Error handling | Explicit returns | Exceptions | Exceptions | Result type |
-| Memory | GC (low-latency) | GC | GC | No GC (ownership) |
-| Binary output | Single static binary | Requires runtime | Requires JVM | Single static binary |
-| Learning curve | Low | Very low | Medium | High |
+| Feature        | Go                    | Python            | Java                      | Rust                 |
+| -------------- | --------------------- | ----------------- | ------------------------- | -------------------- |
+| Compilation    | Fast (~seconds)       | Interpreted       | Slow (~minutes)           | Slow (~minutes)      |
+| Concurrency    | Goroutines (built-in) | asyncio / threads | Threads / Virtual Threads | async / threads      |
+| Error handling | Explicit returns      | Exceptions        | Exceptions                | Result type          |
+| Memory         | GC (low-latency)      | GC                | GC                        | No GC (ownership)    |
+| Binary output  | Single static binary  | Requires runtime  | Requires JVM              | Single static binary |
+| Learning curve | Low                   | Very low          | Medium                    | High                 |
 
 ## Key Takeaways
 
@@ -182,4 +182,3 @@ In most languages, code formatting is a style choice. In Go, `gofmt` is the stan
 3. **Tooling is built in** — formatting, testing, benchmarking, profiling, documentation all ship with the language
 4. **Exported = capitalized** — `fmt.Println` is public, `fmt.println` would be private. No `public`/`private` keywords needed
 5. **Modules manage dependencies** — `go mod init` starts a project, `go mod tidy` keeps it clean
-

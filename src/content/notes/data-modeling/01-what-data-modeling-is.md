@@ -1,10 +1,10 @@
 ---
-title: "What data modeling is"
-subtitle: "Schema design is the most expensive thing you ship. The columns you pick on day one outlast every framework, every refactor, every rewrite. Modeling well is mostly thinking before typing CREATE TABLE."
+title: 'What data modeling is'
+subtitle: 'Schema design is the most expensive thing you ship. The columns you pick on day one outlast every framework, every refactor, every rewrite. Modeling well is mostly thinking before typing CREATE TABLE.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["data-modeling", "schemas", "orms", "design"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['data-modeling', 'schemas', 'orms', 'design']
 ---
 
 <script>
@@ -37,11 +37,11 @@ This track focuses on the logical model with one foot in the physical (Postgres)
 
 ## What it is not
 
-**It is not "designing the ORM models."** Active Record, Sequelize, Prisma — all helpful for *expressing* a schema in code, but the schema exists with or without them. Designing the ORM first leads to schemas that read well in code and badly in SQL — N+1, polymorphic FK gymnastics, denormalized junk fields nobody can drop.
+**It is not "designing the ORM models."** Active Record, Sequelize, Prisma — all helpful for _expressing_ a schema in code, but the schema exists with or without them. Designing the ORM first leads to schemas that read well in code and badly in SQL — N+1, polymorphic FK gymnastics, denormalized junk fields nobody can drop.
 
-**It is not "the database the API returns."** Your API response is *projected* from the schema, but the schema is the source of truth. A common mistake: making the table match the JSON shape the frontend wants today, then discovering tomorrow's frontend wants a different shape and the schema can't easily produce it.
+**It is not "the database the API returns."** Your API response is _projected_ from the schema, but the schema is the source of truth. A common mistake: making the table match the JSON shape the frontend wants today, then discovering tomorrow's frontend wants a different shape and the schema can't easily produce it.
 
-**It is not just "what columns to add."** It is what *invariants* the schema enforces. A `status` column on `orders` with no constraint is just a string. A `CHECK (status IN ('pending','paid','shipped','canceled'))` is the schema saying *these are the only legal values*. The first lets bugs in; the second forbids them.
+**It is not just "what columns to add."** It is what _invariants_ the schema enforces. A `status` column on `orders` with no constraint is just a string. A `CHECK (status IN ('pending','paid','shipped','canceled'))` is the schema saying _these are the only legal values_. The first lets bugs in; the second forbids them.
 
 ## Why schemas outlast everything else
 
@@ -59,7 +59,7 @@ A good schema answers these without asking the application code:
 
 **1. What can be stored?** Types, lengths, NOT NULL, regex constraints. The schema rejects bad data at insert time. No `if x.length > 200` in app code; just `varchar(200) NOT NULL`.
 
-**2. What is true at all times?** Foreign keys mean "every order belongs to a user that exists." Unique constraints mean "no two users share an email." CHECK constraints mean "amount > 0." These are *invariants* — properties of the data that cannot be temporarily broken without an explicit transaction.
+**2. What is true at all times?** Foreign keys mean "every order belongs to a user that exists." Unique constraints mean "no two users share an email." CHECK constraints mean "amount > 0." These are _invariants_ — properties of the data that cannot be temporarily broken without an explicit transaction.
 
 **3. How are things related?** Foreign keys spell out one-to-many and many-to-many relationships. The schema is the truth; the application reads it.
 
@@ -125,7 +125,7 @@ Same three tables, but now:
 - Every table has `created_at`. Hard to overstate how much this helps in production.
 - Listings have an `archived_at` for soft delete (chapter 7) instead of being physically removed.
 
-The columns and tables didn't change. The *promises the schema makes* did. That is what data modeling is.
+The columns and tables didn't change. The _promises the schema makes_ did. That is what data modeling is.
 
 ## Modeling pays the most in the boring cases
 
@@ -144,7 +144,7 @@ None of these features are clever. All of them save real time, real money, real 
 
 </Callout>
 
-## When *not* to model heavily up front
+## When _not_ to model heavily up front
 
 The opposite mistake exists too. Spending two weeks on the perfect schema for an idea that may not survive its first user is wasted work. Three honest cases for moving fast:
 
@@ -177,4 +177,3 @@ Postgres-specific power tools — `pg_stat_statements`, `pg_stat_user_indexes`, 
 - Tools: `psql`, ER sketches, a real migration tool, EXPLAIN.
 
 Next: [Entities, attributes, relationships](/notes/data-modeling/02-entities-relationships) — ER thinking, before SQL.
-

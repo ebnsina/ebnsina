@@ -1,10 +1,10 @@
 ---
-title: "Routing & Navigation"
-subtitle: "Client-side routing, file-based routing, dynamic routes, nested layouts, and middleware for modern web apps."
+title: 'Routing & Navigation'
+subtitle: 'Client-side routing, file-based routing, dynamic routes, nested layouts, and middleware for modern web apps.'
 chapter: 4
-level: "intermediate"
-readingTime: "12 min"
-topics: ["routing", "navigation", "dynamic routes", "layouts", "middleware"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['routing', 'navigation', 'dynamic routes', 'layouts', 'middleware']
 ---
 
 <script>
@@ -30,22 +30,22 @@ At its core, client-side routing uses the History API to change the URL without 
 ```typescript
 // How client-side routing works under the hood
 // 1. Intercept clicks on <a> tags
-document.addEventListener("click", (e) => {
-  const anchor = (e.target as HTMLElement).closest("a");
-  if (!anchor || anchor.origin !== window.location.origin) return;
+document.addEventListener('click', (e) => {
+	const anchor = (e.target as HTMLElement).closest('a');
+	if (!anchor || anchor.origin !== window.location.origin) return;
 
-  e.preventDefault();
+	e.preventDefault();
 
-  // 2. Push the new URL to browser history
-  window.history.pushState({}, "", anchor.href);
+	// 2. Push the new URL to browser history
+	window.history.pushState({}, '', anchor.href);
 
-  // 3. Match the URL to a component and render it
-  renderRoute(anchor.pathname);
+	// 3. Match the URL to a component and render it
+	renderRoute(anchor.pathname);
 });
 
 // 4. Handle browser back/forward
-window.addEventListener("popstate", () => {
-  renderRoute(window.location.pathname);
+window.addEventListener('popstate', () => {
+	renderRoute(window.location.pathname);
 });
 ```
 
@@ -173,6 +173,7 @@ export default function AnalyticsPage() {
 <Callout type="tip">
 
 **Layout design principles:**
+
 - Root layout handles global concerns: fonts, theme provider, error boundaries
 - Section layouts handle navigation: sidebar, breadcrumbs, sub-navigation
 - Keep layouts thin — they should orchestrate, not contain business logic
@@ -187,33 +188,33 @@ Middleware runs before a route renders. Use it for authentication checks, redire
 ```typescript
 // Next.js middleware — runs on the edge before every request
 // src/middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value;
-  const { pathname } = request.nextUrl;
+	const token = request.cookies.get('auth-token')?.value;
+	const { pathname } = request.nextUrl;
 
-  // Redirect unauthenticated users from protected routes
-  const protectedPaths = ["/dashboard", "/settings", "/orders"];
-  const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
+	// Redirect unauthenticated users from protected routes
+	const protectedPaths = ['/dashboard', '/settings', '/orders'];
+	const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
-  if (isProtected && !token) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+	if (isProtected && !token) {
+		const loginUrl = new URL('/login', request.url);
+		loginUrl.searchParams.set('redirect', pathname);
+		return NextResponse.redirect(loginUrl);
+	}
 
-  // Redirect authenticated users away from auth pages
-  if (token && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+	// Redirect authenticated users away from auth pages
+	if (token && (pathname === '/login' || pathname === '/register')) {
+		return NextResponse.redirect(new URL('/dashboard', request.url));
+	}
 
-  return NextResponse.next();
+	return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/settings/:path*", "/orders/:path*", "/login", "/register"],
+	matcher: ['/dashboard/:path*', '/settings/:path*', '/orders/:path*', '/login', '/register']
 };
 ```
 
@@ -250,6 +251,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 <Callout type="warning">
 
 **Common routing mistakes:**
+
 - **Client-only auth guards** are not secure. Always validate tokens on the server. A client guard only improves UX — it prevents a flash of the protected page.
 - **Forgetting the catch-all route** — always add a 404 page for unmatched URLs.
 - **Hardcoding URLs** — use route constants or a type-safe router to avoid broken links when routes change.
@@ -297,4 +299,3 @@ function ProductListPage() {
 4. **Nested layouts** share UI chrome across route groups and only re-render what changes
 5. **Middleware and guards** handle auth, redirects, and request processing before rendering
 6. **URL search params** are state — use them for filters, pagination, and shareable views
-

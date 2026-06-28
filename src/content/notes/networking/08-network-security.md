@@ -1,10 +1,10 @@
 ---
-title: "Network Security"
-subtitle: "CORS, CSP, MITM attacks, firewalls — practical security at the network layer that every developer should understand."
+title: 'Network Security'
+subtitle: 'CORS, CSP, MITM attacks, firewalls — practical security at the network layer that every developer should understand.'
 chapter: 8
-level: "advanced"
-readingTime: "16 min"
-topics: ["CORS", "CSP", "firewall", "MITM", "security headers"]
+level: 'advanced'
+readingTime: '16 min'
+topics: ['CORS', 'CSP', 'firewall', 'MITM', 'security headers']
 ---
 
 <script>
@@ -39,15 +39,17 @@ When `app.example.com` makes a request to `api.example.com`, the browser sends a
 // Access-Control-Max-Age: 86400
 
 // Express middleware
-import cors from "cors";
+import cors from 'cors';
 
-app.use(cors({
-  origin: ["https://app.example.com", "https://staging.example.com"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // allow cookies
-  maxAge: 86400,      // cache preflight for 24h
-}));
+app.use(
+	cors({
+		origin: ['https://app.example.com', 'https://staging.example.com'],
+		methods: ['GET', 'POST', 'PUT', 'DELETE'],
+		allowedHeaders: ['Content-Type', 'Authorization'],
+		credentials: true, // allow cookies
+		maxAge: 86400 // cache preflight for 24h
+	})
+);
 ```
 
 <Callout type="warning">
@@ -61,30 +63,30 @@ app.use(cors({
 ```typescript
 // Essential security headers for any web application
 const securityHeaders = {
-  // Prevent clickjacking (embedding your site in an iframe)
-  "X-Frame-Options": "DENY",
+	// Prevent clickjacking (embedding your site in an iframe)
+	'X-Frame-Options': 'DENY',
 
-  // Prevent MIME type sniffing
-  "X-Content-Type-Options": "nosniff",
+	// Prevent MIME type sniffing
+	'X-Content-Type-Options': 'nosniff',
 
-  // Force HTTPS for 1 year
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+	// Force HTTPS for 1 year
+	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 
-  // Control what the browser can load
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    "script-src 'self' 'nonce-abc123'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
-    "connect-src 'self' https://api.example.com",
-    "frame-ancestors 'none'",
-  ].join("; "),
+	// Control what the browser can load
+	'Content-Security-Policy': [
+		"default-src 'self'",
+		"script-src 'self' 'nonce-abc123'",
+		"style-src 'self' 'unsafe-inline'",
+		"img-src 'self' data: https:",
+		"connect-src 'self' https://api.example.com",
+		"frame-ancestors 'none'"
+	].join('; '),
 
-  // Control what info is sent in Referer header
-  "Referrer-Policy": "strict-origin-when-cross-origin",
+	// Control what info is sent in Referer header
+	'Referrer-Policy': 'strict-origin-when-cross-origin',
 
-  // Opt into browser security features
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+	// Opt into browser security features
+	'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
 };
 ```
 
@@ -98,21 +100,21 @@ CSP tells the browser exactly what resources your page is allowed to load. This 
 
 // Nonce-based CSP (recommended)
 // Server generates a random nonce for each request
-import crypto from "node:crypto";
+import crypto from 'node:crypto';
 
 function generateCSP(): { header: string; nonce: string } {
-  const nonce = crypto.randomBytes(16).toString("base64");
+	const nonce = crypto.randomBytes(16).toString('base64');
 
-  return {
-    nonce,
-    header: [
-      "default-src 'self'",
-      `script-src 'nonce-${nonce}' 'strict-dynamic'`,
-      "style-src 'self' 'unsafe-inline'",
-      "object-src 'none'",
-      "base-uri 'self'",
-    ].join("; "),
-  };
+	return {
+		nonce,
+		header: [
+			"default-src 'self'",
+			`script-src 'nonce-${nonce}' 'strict-dynamic'`,
+			"style-src 'self' 'unsafe-inline'",
+			"object-src 'none'",
+			"base-uri 'self'"
+		].join('; ')
+	};
 }
 
 // In your HTML template:
@@ -125,6 +127,7 @@ function generateCSP(): { header: string; nonce: string } {
 An attacker positions themselves between client and server, intercepting or modifying traffic.
 
 **Defenses:**
+
 - **TLS everywhere** — encrypted traffic can't be read or modified
 - **HSTS** — prevents SSL stripping (downgrading HTTPS to HTTP)
 - **Certificate pinning** — mobile apps verify the exact certificate, not just the chain
@@ -135,29 +138,29 @@ An attacker positions themselves between client and server, intercepting or modi
 ```typescript
 // Simple token bucket rate limiter
 class RateLimiter {
-  private tokens: Map<string, { count: number; resetAt: number }> = new Map();
+	private tokens: Map<string, { count: number; resetAt: number }> = new Map();
 
-  constructor(
-    private maxRequests: number,
-    private windowMs: number
-  ) {}
+	constructor(
+		private maxRequests: number,
+		private windowMs: number
+	) {}
 
-  isAllowed(clientIP: string): boolean {
-    const now = Date.now();
-    const bucket = this.tokens.get(clientIP);
+	isAllowed(clientIP: string): boolean {
+		const now = Date.now();
+		const bucket = this.tokens.get(clientIP);
 
-    if (!bucket || bucket.resetAt < now) {
-      this.tokens.set(clientIP, { count: 1, resetAt: now + this.windowMs });
-      return true;
-    }
+		if (!bucket || bucket.resetAt < now) {
+			this.tokens.set(clientIP, { count: 1, resetAt: now + this.windowMs });
+			return true;
+		}
 
-    if (bucket.count >= this.maxRequests) {
-      return false; // 429 Too Many Requests
-    }
+		if (bucket.count >= this.maxRequests) {
+			return false; // 429 Too Many Requests
+		}
 
-    bucket.count++;
-    return true;
-  }
+		bucket.count++;
+		return true;
+	}
 }
 
 // Usage: 100 requests per minute per IP
@@ -177,4 +180,3 @@ const limiter = new RateLimiter(100, 60_000);
 3. **CSP prevents XSS** even when your code has injection vulnerabilities
 4. **TLS + HSTS together** prevent MITM and SSL stripping
 5. **Rate limiting at the network layer** is your first line of defense against abuse
-

@@ -1,10 +1,10 @@
 ---
-title: "Cache Strategies"
+title: 'Cache Strategies'
 subtitle: "Cache-aside, read-through, write-through, write-behind — when to use each and what breaks when you don't."
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["cache-aside", "read-through", "write-through", "write-behind", "patterns"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['cache-aside', 'read-through', 'write-through', 'write-behind', 'patterns']
 ---
 
 <script>
@@ -23,12 +23,12 @@ A cook who preps ingredients before service (write-through) versus one who grabs
 
 Every caching system is built on one of four patterns — or a combination. The choice determines who owns cache population, how stale data appears, and what happens on writes.
 
-| Strategy | Who reads from DB | Who writes to DB | Consistency |
-|----------|-------------------|------------------|-------------|
-| Cache-aside | Application | Application | Eventual |
-| Read-through | Cache layer | Application | Eventual |
-| Write-through | Application | Cache layer → DB | Strong |
-| Write-behind | Application | Cache layer (async) | Eventual |
+| Strategy      | Who reads from DB | Who writes to DB    | Consistency |
+| ------------- | ----------------- | ------------------- | ----------- |
+| Cache-aside   | Application       | Application         | Eventual    |
+| Read-through  | Cache layer       | Application         | Eventual    |
+| Write-through | Application       | Cache layer → DB    | Strong      |
+| Write-behind  | Application       | Cache layer (async) | Eventual    |
 
 ## Cache-Aside (Lazy Loading)
 
@@ -36,36 +36,36 @@ The most common pattern. The application owns all the logic: check cache, miss �
 
 ```typescript
 class UserService {
-  constructor(
-    private cache: RedisClient,
-    private db: Database,
-  ) {}
+	constructor(
+		private cache: RedisClient,
+		private db: Database
+	) {}
 
-  async getUser(id: string): Promise<User> {
-    const cacheKey = `user:${id}`;
+	async getUser(id: string): Promise<User> {
+		const cacheKey = `user:${id}`;
 
-    // 1. Try cache
-    const cached = await this.cache.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+		// 1. Try cache
+		const cached = await this.cache.get(cacheKey);
+		if (cached) return JSON.parse(cached);
 
-    // 2. Cache miss — fetch from DB
-    const user = await this.db.users.findById(id);
-    if (!user) throw new NotFoundError(`User ${id} not found`);
+		// 2. Cache miss — fetch from DB
+		const user = await this.db.users.findById(id);
+		if (!user) throw new NotFoundError(`User ${id} not found`);
 
-    // 3. Populate cache (TTL: 5 minutes)
-    await this.cache.setex(cacheKey, 300, JSON.stringify(user));
+		// 3. Populate cache (TTL: 5 minutes)
+		await this.cache.setex(cacheKey, 300, JSON.stringify(user));
 
-    return user;
-  }
+		return user;
+	}
 
-  async updateUser(id: string, data: Partial<User>): Promise<User> {
-    const user = await this.db.users.update(id, data);
+	async updateUser(id: string, data: Partial<User>): Promise<User> {
+		const user = await this.db.users.update(id, data);
 
-    // Invalidate — don't update cache, let next read repopulate
-    await this.cache.del(`user:${id}`);
+		// Invalidate — don't update cache, let next read repopulate
+		await this.cache.del(`user:${id}`);
 
-    return user;
-  }
+		return user;
+	}
 }
 ```
 
@@ -86,27 +86,25 @@ The cache layer itself fetches from the database on a miss, transparently to the
 ```typescript
 // The cache wraps the data source
 class ReadThroughCache<T> {
-  private store = new Map<string, { value: T; expiresAt: number }>();
+	private store = new Map<string, { value: T; expiresAt: number }>();
 
-  constructor(private loader: (key: string) => Promise<T>) {}
+	constructor(private loader: (key: string) => Promise<T>) {}
 
-  async get(key: string): Promise<T> {
-    const entry = this.store.get(key);
-    if (entry && Date.now() < entry.expiresAt) {
-      return entry.value; // hit
-    }
+	async get(key: string): Promise<T> {
+		const entry = this.store.get(key);
+		if (entry && Date.now() < entry.expiresAt) {
+			return entry.value; // hit
+		}
 
-    // miss — load through
-    const value = await this.loader(key);
-    this.store.set(key, { value, expiresAt: Date.now() + 300_000 });
-    return value;
-  }
+		// miss — load through
+		const value = await this.loader(key);
+		this.store.set(key, { value, expiresAt: Date.now() + 300_000 });
+		return value;
+	}
 }
 
 // Application just calls get — doesn't know about DB
-const userCache = new ReadThroughCache<User>(
-  (id) => db.users.findById(id),
-);
+const userCache = new ReadThroughCache<User>((id) => db.users.findById(id));
 
 const user = await userCache.get('user:123');
 ```
@@ -121,25 +119,25 @@ Every write goes through the cache to the database. Cache and DB are always in s
 
 ```typescript
 class WriteThroughUserCache {
-  async saveUser(user: User): Promise<void> {
-    // Write to DB and cache atomically
-    await Promise.all([
-      this.db.users.upsert(user),
-      this.cache.setex(`user:${user.id}`, 3600, JSON.stringify(user)),
-    ]);
-  }
+	async saveUser(user: User): Promise<void> {
+		// Write to DB and cache atomically
+		await Promise.all([
+			this.db.users.upsert(user),
+			this.cache.setex(`user:${user.id}`, 3600, JSON.stringify(user))
+		]);
+	}
 
-  async getUser(id: string): Promise<User | null> {
-    const cached = await this.cache.get(`user:${id}`);
-    if (cached) return JSON.parse(cached);
+	async getUser(id: string): Promise<User | null> {
+		const cached = await this.cache.get(`user:${id}`);
+		if (cached) return JSON.parse(cached);
 
-    // Only miss on first access or after eviction
-    const user = await this.db.users.findById(id);
-    if (user) {
-      await this.cache.setex(`user:${id}`, 3600, JSON.stringify(user));
-    }
-    return user;
-  }
+		// Only miss on first access or after eviction
+		const user = await this.db.users.findById(id);
+		if (user) {
+			await this.cache.setex(`user:${id}`, 3600, JSON.stringify(user));
+		}
+		return user;
+	}
 }
 ```
 
@@ -159,41 +157,41 @@ Writes go to cache immediately, then the cache asynchronously flushes to the dat
 
 ```typescript
 class WriteBehindCache {
-  private dirtyKeys = new Set<string>();
-  private flushInterval: NodeJS.Timeout;
+	private dirtyKeys = new Set<string>();
+	private flushInterval: NodeJS.Timeout;
 
-  constructor(
-    private cache: Map<string, unknown>,
-    private db: Database,
-    flushEveryMs = 1000,
-  ) {
-    // Flush dirty keys to DB every second
-    this.flushInterval = setInterval(() => this.flush(), flushEveryMs);
-  }
+	constructor(
+		private cache: Map<string, unknown>,
+		private db: Database,
+		flushEveryMs = 1000
+	) {
+		// Flush dirty keys to DB every second
+		this.flushInterval = setInterval(() => this.flush(), flushEveryMs);
+	}
 
-  async write(key: string, value: unknown): Promise<void> {
-    this.cache.set(key, value); // immediate, synchronous
-    this.dirtyKeys.add(key);   // mark for async flush
-    // Returns immediately — DB write happens later
-  }
+	async write(key: string, value: unknown): Promise<void> {
+		this.cache.set(key, value); // immediate, synchronous
+		this.dirtyKeys.add(key); // mark for async flush
+		// Returns immediately — DB write happens later
+	}
 
-  private async flush(): Promise<void> {
-    const keys = [...this.dirtyKeys];
-    this.dirtyKeys.clear();
+	private async flush(): Promise<void> {
+		const keys = [...this.dirtyKeys];
+		this.dirtyKeys.clear();
 
-    await Promise.all(
-      keys.map(async (key) => {
-        const value = this.cache.get(key);
-        if (value !== undefined) {
-          await this.db.set(key, value);
-        }
-      }),
-    );
-  }
+		await Promise.all(
+			keys.map(async (key) => {
+				const value = this.cache.get(key);
+				if (value !== undefined) {
+					await this.db.set(key, value);
+				}
+			})
+		);
+	}
 
-  destroy(): void {
-    clearInterval(this.flushInterval);
-  }
+	destroy(): void {
+		clearInterval(this.flushInterval);
+	}
 }
 ```
 
@@ -213,44 +211,47 @@ Proactively refresh cache before entries expire, based on access patterns.
 
 ```typescript
 class RefreshAheadCache<T> {
-  private store = new Map<string, {
-    value: T;
-    expiresAt: number;
-    refreshAt: number; // refresh when this passes, before expiry
-  }>();
+	private store = new Map<
+		string,
+		{
+			value: T;
+			expiresAt: number;
+			refreshAt: number; // refresh when this passes, before expiry
+		}
+	>();
 
-  constructor(
-    private loader: (key: string) => Promise<T>,
-    private ttlMs: number,
-    private refreshThreshold = 0.8, // refresh when 80% of TTL has passed
-  ) {}
+	constructor(
+		private loader: (key: string) => Promise<T>,
+		private ttlMs: number,
+		private refreshThreshold = 0.8 // refresh when 80% of TTL has passed
+	) {}
 
-  async get(key: string): Promise<T | null> {
-    const entry = this.store.get(key);
+	async get(key: string): Promise<T | null> {
+		const entry = this.store.get(key);
 
-    if (!entry) return null; // cold miss
+		if (!entry) return null; // cold miss
 
-    const now = Date.now();
+		const now = Date.now();
 
-    // Trigger background refresh if nearing expiry
-    if (now > entry.refreshAt && now < entry.expiresAt) {
-      this.refreshInBackground(key); // don't await
-    }
+		// Trigger background refresh if nearing expiry
+		if (now > entry.refreshAt && now < entry.expiresAt) {
+			this.refreshInBackground(key); // don't await
+		}
 
-    if (now > entry.expiresAt) return null; // expired
+		if (now > entry.expiresAt) return null; // expired
 
-    return entry.value;
-  }
+		return entry.value;
+	}
 
-  private async refreshInBackground(key: string): Promise<void> {
-    const value = await this.loader(key);
-    const now = Date.now();
-    this.store.set(key, {
-      value,
-      expiresAt: now + this.ttlMs,
-      refreshAt: now + this.ttlMs * this.refreshThreshold,
-    });
-  }
+	private async refreshInBackground(key: string): Promise<void> {
+		const value = await this.loader(key);
+		const now = Date.now();
+		this.store.set(key, {
+			value,
+			expiresAt: now + this.ttlMs,
+			refreshAt: now + this.ttlMs * this.refreshThreshold
+		});
+	}
 }
 ```
 
@@ -301,4 +302,3 @@ const key = `catalog:product:${productId}`;
 import { stringify } from 'fast-json-stable-stringify';
 const key = `search:${stringify({ query, page, filters })}`;
 ```
-

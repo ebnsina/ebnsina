@@ -1,10 +1,10 @@
 ---
-title: "Redis — Roadmap"
-subtitle: "An in-memory data structure store: cache, queue, lock, and primary store all in one."
+title: 'Redis — Roadmap'
+subtitle: 'An in-memory data structure store: cache, queue, lock, and primary store all in one.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "redis"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'redis']
 ---
 
 <script>

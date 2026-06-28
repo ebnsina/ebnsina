@@ -1,10 +1,10 @@
 ---
-title: "Threads & Concurrency"
-subtitle: "Multiple flows of execution sharing one address space — fast, powerful, and dangerous without discipline."
+title: 'Threads & Concurrency'
+subtitle: 'Multiple flows of execution sharing one address space — fast, powerful, and dangerous without discipline.'
 chapter: 3
-level: "intermediate"
-readingTime: "14 min"
-topics: ["threads", "context switch", "race condition"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['threads', 'context switch', 'race condition']
 ---
 
 <script>
@@ -17,13 +17,13 @@ A process can contain more than one **thread** of execution. Each thread has its
 
 That sharing is the whole point and the whole danger.
 
-| | Process | Thread |
-|---|---|---|
-| Address space | Private | Shared with siblings |
-| Creation cost | Higher | Lower |
-| Communication | Pipes, sockets, shared memory | Just read/write shared memory |
-| Isolation | Strong | None within a process |
-| A crash affects | Only itself | The whole process |
+|                 | Process                       | Thread                        |
+| --------------- | ----------------------------- | ----------------------------- |
+| Address space   | Private                       | Shared with siblings          |
+| Creation cost   | Higher                        | Lower                         |
+| Communication   | Pipes, sockets, shared memory | Just read/write shared memory |
+| Isolation       | Strong                        | None within a process         |
+| A crash affects | Only itself                   | The whole process             |
 
 Use multiple **processes** when you want isolation and fault containment. Use multiple **threads** when tasks need to share data cheaply and you accept that a bug in one can corrupt all of them.
 
@@ -48,7 +48,7 @@ When the kernel moves a CPU from one thread to another, it performs a **context 
 
 1. Save the current thread's registers (including the program counter and stack pointer) into its kernel structure.
 2. Load the next thread's saved registers.
-3. If switching to a thread in a *different* process, also switch the page tables, which flushes parts of the **TLB** (Chapter 5).
+3. If switching to a thread in a _different_ process, also switch the page tables, which flushes parts of the **TLB** (Chapter 5).
 
 A switch between threads of the same process is cheaper than between processes, because the address space doesn't change. Even so, context switches aren't free — each costs microseconds plus the indirect cost of cache and TLB pollution. A system that switches too often (thousands of times per second per core, visible in `vmstat` as high `cs`) spends real time shuffling state instead of doing work.
 
@@ -92,7 +92,7 @@ Thread B: store 1      <-- one increment lost
 
 Both threads ran `counter++`, but the result is 1, not 2. This is a **race condition**: the outcome depends on the unpredictable timing of how operations interleave. Run the two-thread program above and the final count is almost never 2,000,000.
 
-Races are insidious because the code *looks* correct and usually *works* — until the scheduler happens to interleave at the wrong moment, often only under load or on a faster machine.
+Races are insidious because the code _looks_ correct and usually _works_ — until the scheduler happens to interleave at the wrong moment, often only under load or on a faster machine.
 
 The shared region of code that must not be interleaved is called a **critical section**. Protecting it requires synchronization — mutexes, atomics, and the tools of Chapter 6.
 
@@ -120,4 +120,4 @@ tasks ->|   work queue    |
 
 Workers pull tasks, run them, and loop back for the next. This caps concurrency, reuses threads, and keeps the context-switch rate sane. Web servers, database connection pools, and language runtimes all use this pattern.
 
-Next we look at how the kernel decides *which* of all these ready threads actually gets a CPU: scheduling.
+Next we look at how the kernel decides _which_ of all these ready threads actually gets a CPU: scheduling.

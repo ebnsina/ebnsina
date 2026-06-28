@@ -1,10 +1,10 @@
 ---
-title: "Storage Engines"
-subtitle: "How databases actually store data on disk — pages, heaps, and the tradeoffs between read and write optimization."
+title: 'Storage Engines'
+subtitle: 'How databases actually store data on disk — pages, heaps, and the tradeoffs between read and write optimization.'
 chapter: 1
-level: "beginner"
-readingTime: "14 min"
-topics: ["storage engine", "pages", "heap", "disk I/O"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['storage engine', 'pages', 'heap', 'disk I/O']
 ---
 
 <script>
@@ -16,6 +16,7 @@ topics: ["storage engine", "pages", "heap", "disk I/O"]
 A storage engine is the component that handles how data is physically stored on disk and retrieved into memory. It's the layer between your SQL query and the actual bytes on an SSD.
 
 Different storage engines make different tradeoffs:
+
 - **Read-optimized**: Fast queries, slower writes (B-tree based — PostgreSQL, MySQL InnoDB)
 - **Write-optimized**: Fast writes, slower reads (LSM-tree based — RocksDB, Cassandra)
 
@@ -34,15 +35,15 @@ Databases don't read individual rows — they read **pages** (typically 4KB, 8KB
 ```typescript
 // A database page (simplified)
 interface Page {
-  pageId: number;
-  pageType: "data" | "index" | "overflow";
-  freeSpace: number;
-  itemCount: number;
-  items: Row[];        // actual row data
-  pageHeader: {
-    lsn: number;       // log sequence number (for WAL)
-    checksum: number;   // corruption detection
-  };
+	pageId: number;
+	pageType: 'data' | 'index' | 'overflow';
+	freeSpace: number;
+	itemCount: number;
+	items: Row[]; // actual row data
+	pageHeader: {
+		lsn: number; // log sequence number (for WAL)
+		checksum: number; // corruption detection
+	};
 }
 
 // PostgreSQL uses 8KB pages by default
@@ -86,52 +87,56 @@ Reading from disk is ~1000x slower than reading from memory. The **buffer pool**
 
 ```typescript
 class BufferPool {
-  private pages = new Map<number, { data: Page; dirty: boolean; pinCount: number }>();
-  private maxPages: number;
+	private pages = new Map<number, { data: Page; dirty: boolean; pinCount: number }>();
+	private maxPages: number;
 
-  constructor(memorySizeMB: number, pageSizeBytes: number) {
-    this.maxPages = Math.floor((memorySizeMB * 1024 * 1024) / pageSizeBytes);
-  }
+	constructor(memorySizeMB: number, pageSizeBytes: number) {
+		this.maxPages = Math.floor((memorySizeMB * 1024 * 1024) / pageSizeBytes);
+	}
 
-  async getPage(pageId: number): Promise<Page> {
-    // Cache hit — return from memory
-    if (this.pages.has(pageId)) {
-      const entry = this.pages.get(pageId)!;
-      entry.pinCount++;
-      return entry.data;
-    }
+	async getPage(pageId: number): Promise<Page> {
+		// Cache hit — return from memory
+		if (this.pages.has(pageId)) {
+			const entry = this.pages.get(pageId)!;
+			entry.pinCount++;
+			return entry.data;
+		}
 
-    // Cache miss — read from disk
-    if (this.pages.size >= this.maxPages) {
-      this.evict(); // remove least-recently-used page
-    }
+		// Cache miss — read from disk
+		if (this.pages.size >= this.maxPages) {
+			this.evict(); // remove least-recently-used page
+		}
 
-    const page = await this.readFromDisk(pageId);
-    this.pages.set(pageId, { data: page, dirty: false, pinCount: 1 });
-    return page;
-  }
+		const page = await this.readFromDisk(pageId);
+		this.pages.set(pageId, { data: page, dirty: false, pinCount: 1 });
+		return page;
+	}
 
-  markDirty(pageId: number): void {
-    const entry = this.pages.get(pageId);
-    if (entry) entry.dirty = true;
-    // Dirty pages are written back to disk later (by background writer or at checkpoint)
-  }
+	markDirty(pageId: number): void {
+		const entry = this.pages.get(pageId);
+		if (entry) entry.dirty = true;
+		// Dirty pages are written back to disk later (by background writer or at checkpoint)
+	}
 
-  private evict(): void {
-    // LRU or clock sweep — find unpinned page to remove
-    for (const [id, entry] of this.pages) {
-      if (entry.pinCount === 0) {
-        if (entry.dirty) {
-          this.writeToDisk(id, entry.data); // flush before evicting
-        }
-        this.pages.delete(id);
-        return;
-      }
-    }
-  }
+	private evict(): void {
+		// LRU or clock sweep — find unpinned page to remove
+		for (const [id, entry] of this.pages) {
+			if (entry.pinCount === 0) {
+				if (entry.dirty) {
+					this.writeToDisk(id, entry.data); // flush before evicting
+				}
+				this.pages.delete(id);
+				return;
+			}
+		}
+	}
 
-  private async readFromDisk(pageId: number): Promise<Page> { /* ... */ }
-  private writeToDisk(pageId: number, page: Page): void { /* ... */ }
+	private async readFromDisk(pageId: number): Promise<Page> {
+		/* ... */
+	}
+	private writeToDisk(pageId: number, page: Page): void {
+		/* ... */
+	}
 }
 ```
 
@@ -147,4 +152,3 @@ class BufferPool {
 2. **Heap storage** stores rows in insertion order; **clustered storage** orders by primary key
 3. **The buffer pool** is critical — keeping hot pages in RAM avoids disk I/O
 4. **Storage engine choice** determines your read/write tradeoff profile
-

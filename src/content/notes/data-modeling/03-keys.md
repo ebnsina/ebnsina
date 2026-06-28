@@ -1,10 +1,10 @@
 ---
-title: "Keys"
-subtitle: "The primary key is the most expensive choice in your schema. Pick wrong and you spend years working around it. Pick right and you forget it exists."
+title: 'Keys'
+subtitle: 'The primary key is the most expensive choice in your schema. Pick wrong and you spend years working around it. Pick right and you forget it exists.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["data-modeling", "primary keys", "ulid", "uuid", "natural keys"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['data-modeling', 'primary keys', 'ulid', 'uuid', 'natural keys']
 ---
 
 <script>
@@ -32,7 +32,7 @@ A primary key uniquely identifies a row. Two consequences:
 
 Postgres enforces both automatically and creates a unique B-tree index for fast lookup. That index is also the fundamental access path — every other index references the primary key under the hood (in InnoDB; Postgres is slightly different but behaves similarly in practice).
 
-A primary key is forever. Or at least: it is *as good as* forever. Migrating to a different key is a multi-day operation on any table with significant data, so the choice is high-stakes.
+A primary key is forever. Or at least: it is _as good as_ forever. Migrating to a different key is a multi-day operation on any table with significant data, so the choice is high-stakes.
 
 ## The four options
 
@@ -48,12 +48,14 @@ CREATE TABLE users (
 `BIGSERIAL` is shorthand for `BIGINT NOT NULL DEFAULT nextval('users_id_seq')`. Postgres assigns 1, 2, 3, ... to inserted rows.
 
 **Pros:**
+
 - 8 bytes. Smallest of the surrogate options. Fastest indexes.
 - Sequential. New rows land at the end of the index — cache-friendly inserts.
 - Easy to read in logs. `user 4271` is something you can ask about.
 - Naturally orderable by insertion. `ORDER BY id DESC` returns newest first.
 
 **Cons:**
+
 - Predictable. `/api/users/42` invites enumeration attacks ("can I see user 41? user 43?").
 - Single source of truth — you can't generate IDs offline or in another service.
 - Hard to merge data from two sources without renumbering.
@@ -72,11 +74,13 @@ CREATE TABLE users (
 128-bit random number. `gen_random_uuid()` is built into Postgres 13+; before that, install `pgcrypto`.
 
 **Pros:**
+
 - Globally unique. Two services can mint IDs without coordination.
 - Unguessable. Public APIs can use them without enumeration risk.
 - Mergeable. Two databases' rows can be combined without conflict.
 
 **Cons:**
+
 - 16 bytes — twice the size of `BIGSERIAL`. Indexes are bigger.
 - Random. New rows land all over the index — page splits, more I/O.
 - Hard to read. `0d6b3e07-2d5d-4aab-9a8e-1bafa20fbb02` is opaque.
@@ -97,12 +101,14 @@ CREATE TABLE users (
 UUIDv7 is a UUID with the first 48 bits being a millisecond timestamp; the rest random. **ULID** is the same idea with a different encoding — 26 chars of Crockford base32.
 
 **Pros:**
+
 - Globally unique like UUIDv4.
 - Time-prefixed: new rows land at the end of the index. Insert-friendly.
 - Sortable by creation time without a separate column.
 - ULIDs are slightly more readable: `01HF5J7XK4TG6N2VRT9P0M3DZ4`.
 
 **Cons:**
+
 - Still 16 bytes (UUIDv7) or 26 chars (ULID).
 - Slightly less random — first 48 bits are predictable (time). Doesn't matter for security in most cases; matters for theoretical privacy in rare ones.
 - ULIDs aren't natively typed in Postgres — you store as `text` or `bytea`.
@@ -121,11 +127,13 @@ CREATE TABLE countries (
 ```
 
 **Pros:**
+
 - No surrogate column needed. Schema is one column smaller.
 - Joins are self-explanatory: `WHERE country = 'US'` doesn't need a separate lookup.
 
 **Cons:**
-- Real-world values change. Country codes are stable; emails are not. Anything that *could* change is a bad PK.
+
+- Real-world values change. Country codes are stable; emails are not. Anything that _could_ change is a bad PK.
 - Mistakes propagate. A typo in the natural key requires updating every foreign key.
 - Composite keys (multiple columns) make joins verbose.
 
@@ -163,11 +171,13 @@ CREATE TABLE org_memberships (
 The pair `(user_id, org_id)` is unique — a user is in an org at most once.
 
 **When composite is right:**
+
 - Pure join tables (chapter 2): both FKs together identify the relationship.
 - Time-series partitions: `(metric_id, bucket_start)`.
 - Append-only logs: `(stream_id, sequence)`.
 
 **When composite is wrong:**
+
 - The table represents an entity with its own life (it grows attributes, gets referenced elsewhere). Add a surrogate ID. Composite keys make foreign keys from other tables verbose.
 
 The rule: if any other table will reference this table, prefer a single surrogate key. Two-column FKs cascade through every related table and become a maintenance burden.
@@ -194,7 +204,7 @@ func newID(prefix string) string {
 
 Stripe-style IDs are not just aesthetic. They prevent a common bug: passing a customer ID where a payment ID was expected. The prefix mismatch surfaces the bug at the API boundary.
 
-## When to *not* use a single primary key
+## When to _not_ use a single primary key
 
 Some shapes don't fit "one row, one key":
 
@@ -241,6 +251,7 @@ CREATE TABLE users (
 If you change a primary key type, every foreign key referencing it must change too. The cost grows linearly with the number of related tables.
 
 **Going from `BIGSERIAL` to `UUID`** on an existing table:
+
 1. Add a new `uuid_id` column to the parent.
 2. Backfill new UUIDs for every row.
 3. Add `uuid_<parent>_id` columns to every child. Backfill via JOIN.
@@ -286,4 +297,3 @@ This is the "leftmost prefix rule" of B-tree indexes. Forgetting it leaves half 
 - Composite PKs index only the leading column; add explicit indexes for the rest.
 
 Next: [Normalization](/notes/data-modeling/04-normalization) — 1NF, 2NF, 3NF in plain English with real examples.
-

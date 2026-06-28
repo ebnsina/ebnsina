@@ -1,10 +1,11 @@
 ---
-title: "Database Performance"
-subtitle: "Query plans, index strategy, N+1 queries, connection pool tuning — the database is almost always the bottleneck."
+title: 'Database Performance'
+subtitle: 'Query plans, index strategy, N+1 queries, connection pool tuning — the database is almost always the bottleneck.'
 chapter: 3
-level: "intermediate"
-readingTime: "12 min"
-topics: ["PostgreSQL", "query optimization", "EXPLAIN ANALYZE", "indexes", "N+1", "connection pooling"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  ['PostgreSQL', 'query optimization', 'EXPLAIN ANALYZE', 'indexes', 'N+1', 'connection pooling']
 ---
 
 <script>
@@ -49,6 +50,7 @@ Execution Time: 45.456 ms
 ```
 
 **What to look for:**
+
 - `Seq Scan` on a large table → needs an index
 - `Rows Removed by Filter: 89432` → index isn't selective enough (wrong index or wrong column order)
 - `loops=100` on an inner scan → N+1 pattern (100 separate queries for 100 customers)
@@ -85,12 +87,14 @@ CREATE INDEX orders_metadata_idx ON orders USING gin(metadata);
 ```
 
 **Which columns to index:**
+
 - Foreign keys (JOINs)
 - Columns in `WHERE` clauses with high cardinality (status has 3 values = low cardinality = bad candidate alone)
 - Columns in `ORDER BY` on large result sets
 - Columns used in both `WHERE` and `ORDER BY` — composite index
 
 **Check for missing indexes:**
+
 ```sql
 -- Tables doing sequential scans that should be indexed
 SELECT schemaname, tablename, seq_scan, idx_scan,
@@ -108,9 +112,9 @@ The classic ORM trap: fetch 100 orders, then fetch each order's customer separat
 // BAD — N+1
 const orders = await db.query('SELECT * FROM orders LIMIT 100');
 for (const order of orders) {
-  // 100 separate queries
-  const customer = await db.query('SELECT * FROM customers WHERE id = $1', [order.customerId]);
-  order.customer = customer.rows[0];
+	// 100 separate queries
+	const customer = await db.query('SELECT * FROM customers WHERE id = $1', [order.customerId]);
+	order.customer = customer.rows[0];
 }
 // Total: 101 queries
 
@@ -125,17 +129,15 @@ const orders = await db.query(`
 
 // GOOD — batch fetch (when JOIN isn't appropriate)
 const orders = await db.query('SELECT * FROM orders LIMIT 100');
-const customerIds = [...new Set(orders.rows.map(o => o.customerId))];
-const customers = await db.query(
-  'SELECT * FROM customers WHERE id = ANY($1)',
-  [customerIds]
-);
-const customerMap = Object.fromEntries(customers.rows.map(c => [c.id, c]));
-orders.rows.forEach(o => o.customer = customerMap[o.customerId]);
+const customerIds = [...new Set(orders.rows.map((o) => o.customerId))];
+const customers = await db.query('SELECT * FROM customers WHERE id = ANY($1)', [customerIds]);
+const customerMap = Object.fromEntries(customers.rows.map((c) => [c.id, c]));
+orders.rows.forEach((o) => (o.customer = customerMap[o.customerId]));
 // Total: 2 queries
 ```
 
 Detect N+1 in production:
+
 ```typescript
 // Log queries with pg (postgres client)
 const pool = new Pool({ connectionString: DATABASE_URL });
@@ -144,26 +146,26 @@ const originalQuery = pool.query.bind(pool);
 let queryCount = 0;
 
 pool.query = async (...args: any[]) => {
-  queryCount++;
-  const start = Date.now();
-  const result = await originalQuery(...args);
-  const duration = Date.now() - start;
-  
-  if (duration > 100) {
-    log.warn({ sql: args[0], duration }, 'Slow query');
-  }
-  return result;
+	queryCount++;
+	const start = Date.now();
+	const result = await originalQuery(...args);
+	const duration = Date.now() - start;
+
+	if (duration > 100) {
+		log.warn({ sql: args[0], duration }, 'Slow query');
+	}
+	return result;
 };
 
 // Reset per request, log if > 10 queries
 app.use((req, res, next) => {
-  queryCount = 0;
-  res.on('finish', () => {
-    if (queryCount > 10) {
-      log.warn({ queryCount, path: req.path }, 'Possible N+1');
-    }
-  });
-  next();
+	queryCount = 0;
+	res.on('finish', () => {
+		if (queryCount > 10) {
+			log.warn({ queryCount, path: req.path }, 'Possible N+1');
+		}
+	});
+	next();
 });
 ```
 
@@ -173,17 +175,17 @@ app.use((req, res, next) => {
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  connectionString: DATABASE_URL,
-  max: 20,                        // max connections
-  min: 5,                         // keep 5 warm
-  idleTimeoutMillis: 30_000,      // close idle connections after 30s
-  connectionTimeoutMillis: 3_000, // fail fast if pool is exhausted
-  statement_timeout: 30_000,      // kill queries running > 30s
-  query_timeout: 30_000,
+	connectionString: DATABASE_URL,
+	max: 20, // max connections
+	min: 5, // keep 5 warm
+	idleTimeoutMillis: 30_000, // close idle connections after 30s
+	connectionTimeoutMillis: 3_000, // fail fast if pool is exhausted
+	statement_timeout: 30_000, // kill queries running > 30s
+	query_timeout: 30_000
 });
 
 pool.on('error', (err) => {
-  log.error({ err }, 'Unexpected error on idle client');
+	log.error({ err }, 'Unexpected error on idle client');
 });
 ```
 
@@ -239,6 +241,7 @@ cat slow-queries.json | jq '.slowest_queries[:10][] | {query, mean_time, count}'
 ## Query Optimization Patterns
 
 **Pagination — avoid OFFSET for deep pages:**
+
 ```sql
 -- BAD — offset scans all previous rows
 SELECT * FROM orders ORDER BY created_at DESC OFFSET 10000 LIMIT 20;
@@ -251,6 +254,7 @@ LIMIT 20;
 ```
 
 **Avoid functions on indexed columns:**
+
 ```sql
 -- BAD — function prevents index use
 WHERE DATE(created_at) = '2024-01-15'
@@ -266,6 +270,7 @@ CREATE INDEX customers_email_lower_idx ON customers (LOWER(email));
 ```
 
 **Batch upserts:**
+
 ```sql
 -- Single roundtrip for 1000 rows
 INSERT INTO events (id, type, payload, created_at)
@@ -277,18 +282,19 @@ ON CONFLICT (id) DO UPDATE SET
 
 ```typescript
 // Build arrays for batch insert
-const ids = events.map(e => e.id);
-const types = events.map(e => e.type);
-const payloads = events.map(e => JSON.stringify(e.payload));
-const timestamps = events.map(e => e.createdAt);
+const ids = events.map((e) => e.id);
+const types = events.map((e) => e.type);
+const payloads = events.map((e) => JSON.stringify(e.payload));
+const timestamps = events.map((e) => e.createdAt);
 
 await db.query(
-  'INSERT INTO events (id, type, payload, created_at) SELECT * FROM unnest($1::uuid[], $2::text[], $3::jsonb[], $4::timestamptz[]) ON CONFLICT (id) DO NOTHING',
-  [ids, types, payloads, timestamps]
+	'INSERT INTO events (id, type, payload, created_at) SELECT * FROM unnest($1::uuid[], $2::text[], $3::jsonb[], $4::timestamptz[]) ON CONFLICT (id) DO NOTHING',
+	[ids, types, payloads, timestamps]
 );
 ```
 
 **Materialized views for expensive aggregations:**
+
 ```sql
 -- Expensive to compute on every request
 CREATE MATERIALIZED VIEW order_stats AS
@@ -306,4 +312,3 @@ CREATE UNIQUE INDEX order_stats_day_idx ON order_stats (day);
 REFRESH MATERIALIZED VIEW CONCURRENTLY order_stats;
 -- CONCURRENTLY: doesn't lock reads during refresh
 ```
-

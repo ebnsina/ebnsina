@@ -1,10 +1,10 @@
 ---
-title: "Sizing Fundamentals"
-subtitle: "CPU, memory, disk, and network — how to translate request load into resource requirements before you buy anything."
+title: 'Sizing Fundamentals'
+subtitle: 'CPU, memory, disk, and network — how to translate request load into resource requirements before you buy anything.'
 chapter: 1
-level: "beginner"
-readingTime: "9 min"
-topics: ["sizing", "capacity planning", "CPU", "memory", "throughput"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['sizing', 'capacity planning', 'CPU', 'memory', 'throughput']
 ---
 
 <script>
@@ -38,23 +38,23 @@ Before sizing anything, measure what a single request costs:
 ```typescript
 // Instrument your handlers to capture resource use
 app.use(async (req, res, next) => {
-  const start = process.hrtime.bigint();
-  const memBefore = process.memoryUsage().heapUsed;
+	const start = process.hrtime.bigint();
+	const memBefore = process.memoryUsage().heapUsed;
 
-  res.on('finish', () => {
-    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
-    const memDelta = process.memoryUsage().heapUsed - memBefore;
+	res.on('finish', () => {
+		const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+		const memDelta = process.memoryUsage().heapUsed - memBefore;
 
-    logger.info({
-      path: req.route?.path,
-      durationMs,
-      memDeltaKb: memDelta / 1024,
-      responseBytes: parseInt(res.get('content-length') ?? '0'),
-      status: res.statusCode,
-    });
-  });
+		logger.info({
+			path: req.route?.path,
+			durationMs,
+			memDeltaKb: memDelta / 1024,
+			responseBytes: parseInt(res.get('content-length') ?? '0'),
+			status: res.statusCode
+		});
+	});
 
-  next();
+	next();
 });
 ```
 
@@ -84,6 +84,7 @@ CPU required:
 ```
 
 **Little's Law:** `L = λ × W`
+
 - L = average number of concurrent requests
 - λ = arrival rate (RPS)
 - W = average request duration (seconds)
@@ -92,16 +93,16 @@ This tells you how many concurrent connections your server must support — whic
 
 ```typescript
 function estimateConcurrency(rps: number, avgDurationMs: number): number {
-  return rps * (avgDurationMs / 1000);
+	return rps * (avgDurationMs / 1000);
 }
 
 function estimateCpuCores(rps: number, cpuTimePerRequestMs: number): number {
-  return (rps * cpuTimePerRequestMs) / 1000;
+	return (rps * cpuTimePerRequestMs) / 1000;
 }
 
 // Example
 const concurrency = estimateConcurrency(500, 50); // 25
-const coresNeeded = estimateCpuCores(500, 2);      // 1 core
+const coresNeeded = estimateCpuCores(500, 2); // 1 core
 ```
 
 ## Memory Sizing
@@ -109,6 +110,7 @@ const coresNeeded = estimateCpuCores(500, 2);      // 1 core
 Memory has three main consumers:
 
 **Per-connection overhead:**
+
 ```
 Node.js: ~1-2MB per connection (including V8 overhead)
 Go: ~8KB per goroutine
@@ -118,23 +120,25 @@ At 25 concurrent: Node.js ~50MB connection overhead
 ```
 
 **Application working set:**
+
 - In-memory cache (if using node-cache, LRU, etc.)
 - Database query result buffers
 - Request/response bodies in flight
 
 **Runtime overhead:**
+
 - V8 heap (Node.js): base ~50MB
 - JVM: depends on heap settings
 - Go binary: base ~10MB
 
 ```typescript
 function estimateMemoryMb(
-  concurrentRequests: number,
-  perRequestMb: number,
-  cacheMb: number,
-  runtimeMb: number,
+	concurrentRequests: number,
+	perRequestMb: number,
+	cacheMb: number,
+	runtimeMb: number
 ): number {
-  return concurrentRequests * perRequestMb + cacheMb + runtimeMb;
+	return concurrentRequests * perRequestMb + cacheMb + runtimeMb;
 }
 
 // Minimum memory: 25 × 2MB + 256MB cache + 50MB runtime = 356MB
@@ -216,4 +220,3 @@ npx autocannon -c 50 -d 30 http://localhost:3000/api/users
 ```
 
 Don't guess at bottlenecks. Load test, watch metrics, and let the data tell you where the ceiling is.
-

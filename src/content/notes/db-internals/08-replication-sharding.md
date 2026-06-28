@@ -1,10 +1,10 @@
 ---
-title: "Replication & Sharding"
-subtitle: "Scaling databases beyond a single machine — leader-follower replication, consensus, and horizontal partitioning."
+title: 'Replication & Sharding'
+subtitle: 'Scaling databases beyond a single machine — leader-follower replication, consensus, and horizontal partitioning.'
 chapter: 8
-level: "advanced"
-readingTime: "18 min"
-topics: ["replication", "sharding", "partitioning", "consensus"]
+level: 'advanced'
+readingTime: '18 min'
+topics: ['replication', 'sharding', 'partitioning', 'consensus']
 ---
 
 <script>
@@ -14,6 +14,7 @@ topics: ["replication", "sharding", "partitioning", "consensus"]
 ## Why Replicate?
 
 A single database server is a single point of failure. Replication copies data to multiple machines for:
+
 - **High availability**: if one server dies, another takes over
 - **Read scaling**: spread read traffic across replicas
 - **Geographic distribution**: put data close to users
@@ -32,29 +33,27 @@ The most common model. One leader accepts writes, followers replicate from the l
 
 ```typescript
 class ReplicationManager {
-  private leader: Database;
-  private followers: Database[];
+	private leader: Database;
+	private followers: Database[];
 
-  // Writes always go to the leader
-  async write(query: string): Promise<void> {
-    const walRecord = await this.leader.execute(query);
+	// Writes always go to the leader
+	async write(query: string): Promise<void> {
+		const walRecord = await this.leader.execute(query);
 
-    // Stream WAL to followers
-    await Promise.allSettled(
-      this.followers.map(f => f.applyWAL(walRecord))
-    );
-  }
+		// Stream WAL to followers
+		await Promise.allSettled(this.followers.map((f) => f.applyWAL(walRecord)));
+	}
 
-  // Reads can go to any replica
-  async read(query: string): Promise<Row[]> {
-    const target = this.selectReplica();
-    return target.execute(query);
-  }
+	// Reads can go to any replica
+	async read(query: string): Promise<Row[]> {
+		const target = this.selectReplica();
+		return target.execute(query);
+	}
 
-  private selectReplica(): Database {
-    // Round-robin, least-connections, or random
-    return this.followers[Math.floor(Math.random() * this.followers.length)];
-  }
+	private selectReplica(): Database {
+		// Round-robin, least-connections, or random
+		return this.followers[Math.floor(Math.random() * this.followers.length)];
+	}
 }
 ```
 
@@ -89,32 +88,31 @@ When the leader dies, a follower must be promoted:
 
 ```typescript
 async function failover(deadLeader: Database, followers: Database[]): Promise<Database> {
-  // 1. Detect failure (heartbeat timeout)
-  // 2. Choose the most up-to-date follower
-  const candidates = await Promise.all(
-    followers.map(async f => ({
-      follower: f,
-      lag: await f.getReplicationLag(),
-    }))
-  );
+	// 1. Detect failure (heartbeat timeout)
+	// 2. Choose the most up-to-date follower
+	const candidates = await Promise.all(
+		followers.map(async (f) => ({
+			follower: f,
+			lag: await f.getReplicationLag()
+		}))
+	);
 
-  const newLeader = candidates
-    .sort((a, b) => a.lag - b.lag)[0].follower;
+	const newLeader = candidates.sort((a, b) => a.lag - b.lag)[0].follower;
 
-  // 3. Promote to leader
-  await newLeader.promote();
+	// 3. Promote to leader
+	await newLeader.promote();
 
-  // 4. Redirect all other followers to new leader
-  for (const f of followers) {
-    if (f !== newLeader) {
-      await f.followNewLeader(newLeader);
-    }
-  }
+	// 4. Redirect all other followers to new leader
+	for (const f of followers) {
+		if (f !== newLeader) {
+			await f.followNewLeader(newLeader);
+		}
+	}
 
-  // 5. Update connection routing
-  await updateDNS(newLeader.address);
+	// 5. Update connection routing
+	await updateDNS(newLeader.address);
 
-  return newLeader;
+	return newLeader;
 }
 ```
 
@@ -124,49 +122,45 @@ When data outgrows a single machine, split it across multiple databases by a **s
 
 ```typescript
 class ShardRouter {
-  private shards: Database[];
+	private shards: Database[];
 
-  constructor(shardCount: number) {
-    this.shards = Array.from({ length: shardCount }, (_, i) =>
-      connectToShard(i)
-    );
-  }
+	constructor(shardCount: number) {
+		this.shards = Array.from({ length: shardCount }, (_, i) => connectToShard(i));
+	}
 
-  // Hash-based sharding
-  getShard(key: string): Database {
-    const hash = this.hashKey(key);
-    const shardIndex = hash % this.shards.length;
-    return this.shards[shardIndex];
-  }
+	// Hash-based sharding
+	getShard(key: string): Database {
+		const hash = this.hashKey(key);
+		const shardIndex = hash % this.shards.length;
+		return this.shards[shardIndex];
+	}
 
-  // Range-based sharding
-  getShardByRange(userId: number): Database {
-    if (userId < 1_000_000) return this.shards[0];
-    if (userId < 2_000_000) return this.shards[1];
-    return this.shards[2];
-  }
+	// Range-based sharding
+	getShardByRange(userId: number): Database {
+		if (userId < 1_000_000) return this.shards[0];
+		if (userId < 2_000_000) return this.shards[1];
+		return this.shards[2];
+	}
 
-  async query(key: string, sql: string): Promise<Row[]> {
-    const shard = this.getShard(key);
-    return shard.execute(sql);
-  }
+	async query(key: string, sql: string): Promise<Row[]> {
+		const shard = this.getShard(key);
+		return shard.execute(sql);
+	}
 
-  // Cross-shard queries are expensive — avoid them
-  async queryAll(sql: string): Promise<Row[]> {
-    const results = await Promise.all(
-      this.shards.map(s => s.execute(sql))
-    );
-    return results.flat(); // merge results from all shards
-  }
+	// Cross-shard queries are expensive — avoid them
+	async queryAll(sql: string): Promise<Row[]> {
+		const results = await Promise.all(this.shards.map((s) => s.execute(sql)));
+		return results.flat(); // merge results from all shards
+	}
 
-  private hashKey(key: string): number {
-    // Consistent hashing for better rebalancing
-    let hash = 0;
-    for (const char of key) {
-      hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
-    }
-    return Math.abs(hash);
-  }
+	private hashKey(key: string): number {
+		// Consistent hashing for better rebalancing
+		let hash = 0;
+		for (const char of key) {
+			hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+		}
+		return Math.abs(hash);
+	}
 }
 ```
 
@@ -199,4 +193,3 @@ class ShardRouter {
 2. **Failover** promotes a follower to leader when the leader dies — automate it
 3. **Sharding** splits data across machines by a shard key — choose keys that distribute evenly
 4. **Avoid sharding until necessary** — it adds complexity to every operation
-

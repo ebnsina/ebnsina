@@ -1,10 +1,10 @@
 ---
-title: "Infrastructure as Code — Roadmap"
-subtitle: "Ansible playbooks first, then Terraform against your own infrastructure."
+title: 'Infrastructure as Code — Roadmap'
+subtitle: 'Ansible playbooks first, then Terraform against your own infrastructure.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -29,4 +29,3 @@ Manual infrastructure drifts, can't be reproduced, and leaves no audit trail. Th
 2. **Ansible Fundamentals** — inventory, playbooks, templates, roles, handlers, Vault
 3. **Terraform Fundamentals** — providers, resources, state, modules, the plan/apply workflow
 4. **Terraform Patterns & Production** — module composition, environments, secrets, drift detection, refactoring
-

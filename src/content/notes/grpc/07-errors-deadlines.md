@@ -1,10 +1,10 @@
 ---
-title: "Errors, deadlines, metadata"
+title: 'Errors, deadlines, metadata'
 subtitle: "Status codes are a fixed set, deadlines flow with context, metadata rides every call. The three together turn a working gRPC service into one that's debuggable and survivable."
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["grpc", "errors", "deadlines", "metadata", "status codes"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['grpc', 'errors', 'deadlines', 'metadata', 'status codes']
 ---
 
 <script>
@@ -25,24 +25,24 @@ Errors and deadlines in gRPC are like a restaurant kitchen with a ticket expiry 
 
 gRPC has 17 status codes. Memorize the common ones; do not invent new ones.
 
-| Code | Use for |
-|---|---|
-| `OK` | success (the only one with no error) |
-| `CANCELLED` | client cancelled the call (rarely returned by the server) |
-| `INVALID_ARGUMENT` | request shape is wrong; not an auth or state issue |
-| `DEADLINE_EXCEEDED` | call took too long |
-| `NOT_FOUND` | resource missing |
-| `ALREADY_EXISTS` | tried to create something that exists |
-| `PERMISSION_DENIED` | authorized but not allowed |
-| `UNAUTHENTICATED` | authentication is missing or invalid |
-| `RESOURCE_EXHAUSTED` | rate limit, quota, no capacity |
-| `FAILED_PRECONDITION` | wrong system state for this op |
-| `ABORTED` | concurrency conflict, retryable after fixing state |
-| `OUT_OF_RANGE` | argument outside an allowed range (rare) |
-| `UNIMPLEMENTED` | RPC not implemented |
-| `INTERNAL` | broken invariant on the server |
-| `UNAVAILABLE` | transient failure, retryable |
-| `DATA_LOSS` | unrecoverable data corruption |
+| Code                  | Use for                                                   |
+| --------------------- | --------------------------------------------------------- |
+| `OK`                  | success (the only one with no error)                      |
+| `CANCELLED`           | client cancelled the call (rarely returned by the server) |
+| `INVALID_ARGUMENT`    | request shape is wrong; not an auth or state issue        |
+| `DEADLINE_EXCEEDED`   | call took too long                                        |
+| `NOT_FOUND`           | resource missing                                          |
+| `ALREADY_EXISTS`      | tried to create something that exists                     |
+| `PERMISSION_DENIED`   | authorized but not allowed                                |
+| `UNAUTHENTICATED`     | authentication is missing or invalid                      |
+| `RESOURCE_EXHAUSTED`  | rate limit, quota, no capacity                            |
+| `FAILED_PRECONDITION` | wrong system state for this op                            |
+| `ABORTED`             | concurrency conflict, retryable after fixing state        |
+| `OUT_OF_RANGE`        | argument outside an allowed range (rare)                  |
+| `UNIMPLEMENTED`       | RPC not implemented                                       |
+| `INTERNAL`            | broken invariant on the server                            |
+| `UNAVAILABLE`         | transient failure, retryable                              |
+| `DATA_LOSS`           | unrecoverable data corruption                             |
 
 Two pairs to never confuse:
 
@@ -161,7 +161,7 @@ If the inbound caller had 100 ms left and the downstream takes 110 ms, the downs
 
 A frontend gets a request with a 1-second budget. It calls service A (target 200 ms), then B (target 300 ms), then C. The naive code passes 1 second to all three. If A is slow, B and C inherit a tight budget anyway — no problem. But if B is slow, you may have time left for C, but A already burned half the budget.
 
-The safe pattern: set per-service tight deadlines based on what each is supposed to do, but never exceed the inbound deadline. `context.WithTimeout(ctx, smaller)` returns a context with the *smaller* of the existing deadline and the new one. Always pass through.
+The safe pattern: set per-service tight deadlines based on what each is supposed to do, but never exceed the inbound deadline. `context.WithTimeout(ctx, smaller)` returns a context with the _smaller_ of the existing deadline and the new one. Always pass through.
 
 Some teams encode budgets in metadata:
 
@@ -235,16 +235,18 @@ gRPC supports declarative retries via service config. The client config:
 
 ```json
 {
-  "methodConfig": [{
-    "name": [{"service": "user.v1.UserService"}],
-    "retryPolicy": {
-      "maxAttempts": 4,
-      "initialBackoff": "0.1s",
-      "maxBackoff": "1s",
-      "backoffMultiplier": 2,
-      "retryableStatusCodes": ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
-    }
-  }]
+	"methodConfig": [
+		{
+			"name": [{ "service": "user.v1.UserService" }],
+			"retryPolicy": {
+				"maxAttempts": 4,
+				"initialBackoff": "0.1s",
+				"maxBackoff": "1s",
+				"backoffMultiplier": 2,
+				"retryableStatusCodes": ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
+			}
+		}
+	]
 }
 ```
 
@@ -305,4 +307,3 @@ This is one line per call. Aggregate it and you have RPS, error rate, p99 latenc
 - Log every call: method, duration, code, peer, identity, request ID.
 
 Next: [Interceptors](/notes/grpc/08-interceptors) — the middleware pattern for auth, logging, retries, and recovery.
-

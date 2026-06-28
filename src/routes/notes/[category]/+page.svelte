@@ -24,13 +24,17 @@
 				)
 			: 0
 	);
-	const pct = $derived(data.chapters.length ? Math.round((doneCount / data.chapters.length) * 100) : 0);
+	const pct = $derived(
+		data.chapters.length ? Math.round((doneCount / data.chapters.length) * 100) : 0
+	);
 
 	// recommended next = first chapter (in order) not yet completed
 	const nextChapter = $derived(
 		progress.ready ? data.chapters.find((c) => !progress.isDone(data.category, c.slug)) : undefined
 	);
-	const allDone = $derived(progress.ready && doneCount === data.chapters.length && data.chapters.length > 0);
+	const allDone = $derived(
+		progress.ready && doneCount === data.chapters.length && data.chapters.length > 0
+	);
 </script>
 
 <Seo title={`${data.meta.label} — Notes`} description={data.meta.description} />
@@ -70,7 +74,9 @@
 				>
 			{/if}
 		</div>
-		<div class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]">
+		<div
+			class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
+		>
 			<div
 				class="h-full rounded-full bg-accent transition-[width] duration-500"
 				style="width: {pct}%"
@@ -106,7 +112,9 @@
 				<!-- node + connector rail (desktop only — mobile uses the inline badge in the card) -->
 				<div class="relative hidden w-7 shrink-0 flex-col items-center sm:flex">
 					{#if i > 0}
-						<span class="absolute -top-2 h-2 w-px bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
+						<span
+							class="absolute -top-2 h-2 w-px bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"
+						></span>
 					{/if}
 					<span class="z-10 mt-3.5">{@render stepNode(ch, isDone, isNext)}</span>
 					{#if i < data.chapters.length - 1}
@@ -126,7 +134,10 @@
 								>{ch.meta.title}</span
 							>
 							{#if isNext}
-								<span class="shrink-0 rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">{doneCount === 0 ? 'Start' : 'Next'}</span>
+								<span
+									class="shrink-0 rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg"
+									>{doneCount === 0 ? 'Start' : 'Next'}</span
+								>
 							{/if}
 						</span>
 						<span class="mt-0.5 block truncate text-sm text-muted">{ch.meta.subtitle}</span>

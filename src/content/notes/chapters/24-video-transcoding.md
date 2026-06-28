@@ -1,10 +1,10 @@
 ---
-title: "Case Study: Video Transcoding Service"
-subtitle: "Design and build a production video transcoding pipeline with VOD processing, adaptive bitrate encoding, job scheduling, and distributed workers."
+title: 'Case Study: Video Transcoding Service'
+subtitle: 'Design and build a production video transcoding pipeline with VOD processing, adaptive bitrate encoding, job scheduling, and distributed workers.'
 chapter: 24
-level: "advanced"
-readingTime: "34 min"
-topics: ["video transcoding", "VOD", "adaptive bitrate", "job queue", "distributed processing"]
+level: 'advanced'
+readingTime: '34 min'
+topics: ['video transcoding', 'VOD', 'adaptive bitrate', 'job queue', 'distributed processing']
 ---
 
 <script>
@@ -30,12 +30,10 @@ Like a factory assembly line — raw footage enters, gets processed through mult
 Think of it like a printing press that takes one manuscript and simultaneously produces a paperback edition, a hardcover edition, an audiobook, and an e-book — each optimized for its medium. The manuscript must be split into chapters, each chapter sent to a different production line, and the finished chapters reassembled into complete books. If one production line breaks down, its chapters must be reassigned to another line without losing progress or producing duplicates. The printing press must also handle a queue of manuscripts fairly, so one author's 1000-page novel does not block everyone else's short stories.
 
 <Mermaid
-	title="Video Transcoding Architecture"
-	code={`
-graph TD
+title="Video Transcoding Architecture"
+code={`graph TD
   U["Upload API<br/>Ingest Video"] --> J["Job Scheduler<br/>Split & Queue"] --> W["Worker Pool<br/>Transcode"]
-  W --> O["Object Store<br/>Source & Output"] --> P["Progress Tracker<br/>Job Status"] --> CDN["CDN<br/>HLS / DASH Delivery"]
-`}
+  W --> O["Object Store<br/>Source & Output"] --> P["Progress Tracker<br/>Job Status"] --> CDN["CDN<br/>HLS / DASH Delivery"]`}
 />
 
 ## Requirements
@@ -100,76 +98,84 @@ Here is the complete transcoding service with job scheduling, worker pool, progr
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES & CONSTANTS
 // ===========================================
 
-type JobStatus = "pending" | "probing" | "splitting" | "transcoding" | "merging" | "completed" | "failed" | "cancelled";
-type SegmentStatus = "pending" | "assigned" | "processing" | "completed" | "failed";
-type WorkerStatus = "idle" | "busy" | "draining" | "offline";
+type JobStatus =
+	| 'pending'
+	| 'probing'
+	| 'splitting'
+	| 'transcoding'
+	| 'merging'
+	| 'completed'
+	| 'failed'
+	| 'cancelled';
+type SegmentStatus = 'pending' | 'assigned' | 'processing' | 'completed' | 'failed';
+type WorkerStatus = 'idle' | 'busy' | 'draining' | 'offline';
 
 interface TranscodeProfile {
-  name: string;
-  width: number;
-  height: number;
-  bitrate: number;       // kbps
-  codec: string;
-  preset: string;
+	name: string;
+	width: number;
+	height: number;
+	bitrate: number; // kbps
+	codec: string;
+	preset: string;
 }
 
 interface VideoSegment {
-  id: string;
-  jobId: string;
-  index: number;
-  startTime: number;     // seconds
-  duration: number;      // seconds
-  profileName: string;
-  status: SegmentStatus;
-  assignedWorker: string | null;
-  assignedAt: number;
-  completedAt: number;
-  outputPath: string;
-  retryCount: number;
+	id: string;
+	jobId: string;
+	index: number;
+	startTime: number; // seconds
+	duration: number; // seconds
+	profileName: string;
+	status: SegmentStatus;
+	assignedWorker: string | null;
+	assignedAt: number;
+	completedAt: number;
+	outputPath: string;
+	retryCount: number;
 }
 
 interface TranscodeJob {
-  id: string;
-  userId: string;
-  sourceUrl: string;
-  status: JobStatus;
-  priority: number;      // lower = higher priority
-  createdAt: number;
-  startedAt: number;
-  completedAt: number;
-  sourceMeta: VideoMetadata | null;
-  profiles: TranscodeProfile[];
-  segments: VideoSegment[];
-  webhookUrl: string;
-  outputBaseUrl: string;
-  error: string;
+	id: string;
+	userId: string;
+	sourceUrl: string;
+	status: JobStatus;
+	priority: number; // lower = higher priority
+	createdAt: number;
+	startedAt: number;
+	completedAt: number;
+	sourceMeta: VideoMetadata | null;
+	profiles: TranscodeProfile[];
+	segments: VideoSegment[];
+	webhookUrl: string;
+	outputBaseUrl: string;
+	error: string;
 }
 
 interface VideoMetadata {
-  width: number;
-  height: number;
-  duration: number;      // seconds
-  codec: string;
-  bitrate: number;       // kbps
-  frameRate: number;
-  fileSize: number;      // bytes
+	width: number;
+	height: number;
+	duration: number; // seconds
+	codec: string;
+	bitrate: number; // kbps
+	frameRate: number;
+	fileSize: number; // bytes
 }
 
 interface WorkerInfo {
-  id: string;
-  status: WorkerStatus;
-  currentTask: string | null;
-  lastHeartbeat: number;
-  tasksCompleted: number;
-  tasksFailed: number;
-  registeredAt: number;
+	id: string;
+	status: WorkerStatus;
+	currentTask: string | null;
+	lastHeartbeat: number;
+	tasksCompleted: number;
+	tasksFailed: number;
+	registeredAt: number;
 }
 
 // ===========================================
@@ -177,10 +183,10 @@ interface WorkerInfo {
 // ===========================================
 
 const DEFAULT_PROFILES: TranscodeProfile[] = [
-  { name: "1080p", width: 1920, height: 1080, bitrate: 5000, codec: "h264", preset: "medium" },
-  { name: "720p",  width: 1280, height: 720,  bitrate: 2800, codec: "h264", preset: "medium" },
-  { name: "480p",  width: 854,  height: 480,  bitrate: 1400, codec: "h264", preset: "fast" },
-  { name: "360p",  width: 640,  height: 360,  bitrate: 800,  codec: "h264", preset: "fast" },
+	{ name: '1080p', width: 1920, height: 1080, bitrate: 5000, codec: 'h264', preset: 'medium' },
+	{ name: '720p', width: 1280, height: 720, bitrate: 2800, codec: 'h264', preset: 'medium' },
+	{ name: '480p', width: 854, height: 480, bitrate: 1400, codec: 'h264', preset: 'fast' },
+	{ name: '360p', width: 640, height: 360, bitrate: 800, codec: 'h264', preset: 'fast' }
 ];
 
 const SEGMENT_DURATION = 6; // seconds
@@ -192,58 +198,58 @@ const MAX_RETRIES = 3;
 // ===========================================
 
 class FairPriorityQueue {
-  private queues: Map<string, TranscodeJob[]> = new Map();
-  private roundRobinIndex: number = 0;
+	private queues: Map<string, TranscodeJob[]> = new Map();
+	private roundRobinIndex: number = 0;
 
-  enqueue(job: TranscodeJob): void {
-    const userQueue = this.queues.get(job.userId) || [];
-    // Insert by priority within user queue
-    let inserted = false;
-    for (let i = 0; i < userQueue.length; i++) {
-      if (job.priority < userQueue[i].priority) {
-        userQueue.splice(i, 0, job);
-        inserted = true;
-        break;
-      }
-    }
-    if (!inserted) userQueue.push(job);
-    this.queues.set(job.userId, userQueue);
-  }
+	enqueue(job: TranscodeJob): void {
+		const userQueue = this.queues.get(job.userId) || [];
+		// Insert by priority within user queue
+		let inserted = false;
+		for (let i = 0; i < userQueue.length; i++) {
+			if (job.priority < userQueue[i].priority) {
+				userQueue.splice(i, 0, job);
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted) userQueue.push(job);
+		this.queues.set(job.userId, userQueue);
+	}
 
-  dequeue(): TranscodeJob | null {
-    const userIds = Array.from(this.queues.keys()).filter(
-      (uid) => (this.queues.get(uid)?.length ?? 0) > 0
-    );
-    if (userIds.length === 0) return null;
+	dequeue(): TranscodeJob | null {
+		const userIds = Array.from(this.queues.keys()).filter(
+			(uid) => (this.queues.get(uid)?.length ?? 0) > 0
+		);
+		if (userIds.length === 0) return null;
 
-    // Round-robin across users for fairness
-    this.roundRobinIndex = this.roundRobinIndex % userIds.length;
-    const userId = userIds[this.roundRobinIndex];
-    this.roundRobinIndex++;
+		// Round-robin across users for fairness
+		this.roundRobinIndex = this.roundRobinIndex % userIds.length;
+		const userId = userIds[this.roundRobinIndex];
+		this.roundRobinIndex++;
 
-    const queue = this.queues.get(userId)!;
-    const job = queue.shift()!;
-    if (queue.length === 0) this.queues.delete(userId);
-    return job;
-  }
+		const queue = this.queues.get(userId)!;
+		const job = queue.shift()!;
+		if (queue.length === 0) this.queues.delete(userId);
+		return job;
+	}
 
-  remove(jobId: string): boolean {
-    for (const [userId, queue] of this.queues) {
-      const idx = queue.findIndex((j) => j.id === jobId);
-      if (idx !== -1) {
-        queue.splice(idx, 1);
-        if (queue.length === 0) this.queues.delete(userId);
-        return true;
-      }
-    }
-    return false;
-  }
+	remove(jobId: string): boolean {
+		for (const [userId, queue] of this.queues) {
+			const idx = queue.findIndex((j) => j.id === jobId);
+			if (idx !== -1) {
+				queue.splice(idx, 1);
+				if (queue.length === 0) this.queues.delete(userId);
+				return true;
+			}
+		}
+		return false;
+	}
 
-  size(): number {
-    let total = 0;
-    for (const queue of this.queues.values()) total += queue.length;
-    return total;
-  }
+	size(): number {
+		let total = 0;
+		for (const queue of this.queues.values()) total += queue.length;
+		return total;
+	}
 }
 
 // ===========================================
@@ -251,65 +257,76 @@ class FairPriorityQueue {
 // ===========================================
 
 class ProgressTracker {
-  private jobs: Map<string, TranscodeJob> = new Map();
+	private jobs: Map<string, TranscodeJob> = new Map();
 
-  registerJob(job: TranscodeJob): void {
-    this.jobs.set(job.id, job);
-  }
+	registerJob(job: TranscodeJob): void {
+		this.jobs.set(job.id, job);
+	}
 
-  getJob(jobId: string): TranscodeJob | null {
-    return this.jobs.get(jobId) || null;
-  }
+	getJob(jobId: string): TranscodeJob | null {
+		return this.jobs.get(jobId) || null;
+	}
 
-  getAllJobs(): TranscodeJob[] {
-    return Array.from(this.jobs.values());
-  }
+	getAllJobs(): TranscodeJob[] {
+		return Array.from(this.jobs.values());
+	}
 
-  updateSegmentStatus(jobId: string, segmentId: string, status: SegmentStatus, outputPath?: string): void {
-    const job = this.jobs.get(jobId);
-    if (!job) return;
-    const segment = job.segments.find((s) => s.id === segmentId);
-    if (!segment) return;
+	updateSegmentStatus(
+		jobId: string,
+		segmentId: string,
+		status: SegmentStatus,
+		outputPath?: string
+	): void {
+		const job = this.jobs.get(jobId);
+		if (!job) return;
+		const segment = job.segments.find((s) => s.id === segmentId);
+		if (!segment) return;
 
-    segment.status = status;
-    if (status === "completed") {
-      segment.completedAt = Date.now();
-      if (outputPath) segment.outputPath = outputPath;
-    }
-  }
+		segment.status = status;
+		if (status === 'completed') {
+			segment.completedAt = Date.now();
+			if (outputPath) segment.outputPath = outputPath;
+		}
+	}
 
-  getJobProgress(jobId: string): { total: number; completed: number; failed: number; percent: number; eta: number } {
-    const job = this.jobs.get(jobId);
-    if (!job) return { total: 0, completed: 0, failed: 0, percent: 0, eta: 0 };
+	getJobProgress(jobId: string): {
+		total: number;
+		completed: number;
+		failed: number;
+		percent: number;
+		eta: number;
+	} {
+		const job = this.jobs.get(jobId);
+		if (!job) return { total: 0, completed: 0, failed: 0, percent: 0, eta: 0 };
 
-    const total = job.segments.length;
-    const completed = job.segments.filter((s) => s.status === "completed").length;
-    const failed = job.segments.filter((s) => s.status === "failed").length;
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+		const total = job.segments.length;
+		const completed = job.segments.filter((s) => s.status === 'completed').length;
+		const failed = job.segments.filter((s) => s.status === 'failed').length;
+		const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // ETA calculation based on throughput
-    let eta = 0;
-    if (completed > 0 && job.startedAt > 0) {
-      const elapsed = Date.now() - job.startedAt;
-      const avgPerSegment = elapsed / completed;
-      const remaining = total - completed - failed;
-      eta = Math.round(avgPerSegment * remaining);
-    }
+		// ETA calculation based on throughput
+		let eta = 0;
+		if (completed > 0 && job.startedAt > 0) {
+			const elapsed = Date.now() - job.startedAt;
+			const avgPerSegment = elapsed / completed;
+			const remaining = total - completed - failed;
+			eta = Math.round(avgPerSegment * remaining);
+		}
 
-    return { total, completed, failed, percent, eta };
-  }
+		return { total, completed, failed, percent, eta };
+	}
 
-  isJobComplete(jobId: string): boolean {
-    const job = this.jobs.get(jobId);
-    if (!job) return false;
-    return job.segments.every((s) => s.status === "completed" || s.status === "failed");
-  }
+	isJobComplete(jobId: string): boolean {
+		const job = this.jobs.get(jobId);
+		if (!job) return false;
+		return job.segments.every((s) => s.status === 'completed' || s.status === 'failed');
+	}
 
-  hasFailures(jobId: string): boolean {
-    const job = this.jobs.get(jobId);
-    if (!job) return false;
-    return job.segments.some((s) => s.status === "failed" && s.retryCount >= MAX_RETRIES);
-  }
+	hasFailures(jobId: string): boolean {
+		const job = this.jobs.get(jobId);
+		if (!job) return false;
+		return job.segments.some((s) => s.status === 'failed' && s.retryCount >= MAX_RETRIES);
+	}
 }
 
 // ===========================================
@@ -317,89 +334,89 @@ class ProgressTracker {
 // ===========================================
 
 class WorkerPool {
-  private workers: Map<string, WorkerInfo> = new Map();
-  private maxConcurrency: number;
+	private workers: Map<string, WorkerInfo> = new Map();
+	private maxConcurrency: number;
 
-  constructor(maxConcurrency: number = 10) {
-    this.maxConcurrency = maxConcurrency;
-  }
+	constructor(maxConcurrency: number = 10) {
+		this.maxConcurrency = maxConcurrency;
+	}
 
-  registerWorker(workerId: string): WorkerInfo {
-    const worker: WorkerInfo = {
-      id: workerId,
-      status: "idle",
-      currentTask: null,
-      lastHeartbeat: Date.now(),
-      tasksCompleted: 0,
-      tasksFailed: 0,
-      registeredAt: Date.now(),
-    };
-    this.workers.set(workerId, worker);
-    console.log(`[WORKER] Registered worker ${workerId}`);
-    return worker;
-  }
+	registerWorker(workerId: string): WorkerInfo {
+		const worker: WorkerInfo = {
+			id: workerId,
+			status: 'idle',
+			currentTask: null,
+			lastHeartbeat: Date.now(),
+			tasksCompleted: 0,
+			tasksFailed: 0,
+			registeredAt: Date.now()
+		};
+		this.workers.set(workerId, worker);
+		console.log(`[WORKER] Registered worker ${workerId}`);
+		return worker;
+	}
 
-  heartbeat(workerId: string): boolean {
-    const worker = this.workers.get(workerId);
-    if (!worker) return false;
-    worker.lastHeartbeat = Date.now();
-    return true;
-  }
+	heartbeat(workerId: string): boolean {
+		const worker = this.workers.get(workerId);
+		if (!worker) return false;
+		worker.lastHeartbeat = Date.now();
+		return true;
+	}
 
-  assignTask(workerId: string, taskId: string): boolean {
-    const worker = this.workers.get(workerId);
-    if (!worker || worker.status !== "idle") return false;
-    worker.status = "busy";
-    worker.currentTask = taskId;
-    return true;
-  }
+	assignTask(workerId: string, taskId: string): boolean {
+		const worker = this.workers.get(workerId);
+		if (!worker || worker.status !== 'idle') return false;
+		worker.status = 'busy';
+		worker.currentTask = taskId;
+		return true;
+	}
 
-  completeTask(workerId: string, success: boolean): void {
-    const worker = this.workers.get(workerId);
-    if (!worker) return;
-    worker.status = "idle";
-    worker.currentTask = null;
-    if (success) worker.tasksCompleted++;
-    else worker.tasksFailed++;
-  }
+	completeTask(workerId: string, success: boolean): void {
+		const worker = this.workers.get(workerId);
+		if (!worker) return;
+		worker.status = 'idle';
+		worker.currentTask = null;
+		if (success) worker.tasksCompleted++;
+		else worker.tasksFailed++;
+	}
 
-  getIdleWorkers(): WorkerInfo[] {
-    return Array.from(this.workers.values()).filter((w) => w.status === "idle");
-  }
+	getIdleWorkers(): WorkerInfo[] {
+		return Array.from(this.workers.values()).filter((w) => w.status === 'idle');
+	}
 
-  getStaleWorkers(): WorkerInfo[] {
-    const now = Date.now();
-    return Array.from(this.workers.values()).filter(
-      (w) => w.status === "busy" && now - w.lastHeartbeat > HEARTBEAT_TIMEOUT
-    );
-  }
+	getStaleWorkers(): WorkerInfo[] {
+		const now = Date.now();
+		return Array.from(this.workers.values()).filter(
+			(w) => w.status === 'busy' && now - w.lastHeartbeat > HEARTBEAT_TIMEOUT
+		);
+	}
 
-  drainWorker(workerId: string): void {
-    const worker = this.workers.get(workerId);
-    if (worker) {
-      worker.status = "draining";
-      console.log(`[WORKER] Draining worker ${workerId}`);
-    }
-  }
+	drainWorker(workerId: string): void {
+		const worker = this.workers.get(workerId);
+		if (worker) {
+			worker.status = 'draining';
+			console.log(`[WORKER] Draining worker ${workerId}`);
+		}
+	}
 
-  removeWorker(workerId: string): void {
-    this.workers.delete(workerId);
-    console.log(`[WORKER] Removed worker ${workerId}`);
-  }
+	removeWorker(workerId: string): void {
+		this.workers.delete(workerId);
+		console.log(`[WORKER] Removed worker ${workerId}`);
+	}
 
-  getStatus(): { total: number; idle: number; busy: number; draining: number } {
-    const workers = Array.from(this.workers.values());
-    return {
-      total: workers.length,
-      idle: workers.filter((w) => w.status === "idle").length,
-      busy: workers.filter((w) => w.status === "busy").length,
-      draining: workers.filter((w) => w.status === "draining").length,
-    };
-  }
+	getStatus(): { total: number; idle: number; busy: number; draining: number } {
+		const workers = Array.from(this.workers.values());
+		return {
+			total: workers.length,
+			idle: workers.filter((w) => w.status === 'idle').length,
+			busy: workers.filter((w) => w.status === 'busy').length,
+			draining: workers.filter((w) => w.status === 'draining').length
+		};
+	}
 
-  getAllWorkers(): WorkerInfo[] {
-    return Array.from(this.workers.values());
-  }
+	getAllWorkers(): WorkerInfo[] {
+		return Array.from(this.workers.values());
+	}
 }
 
 // ===========================================
@@ -407,35 +424,35 @@ class WorkerPool {
 // ===========================================
 
 function createSegments(job: TranscodeJob): VideoSegment[] {
-  if (!job.sourceMeta) return [];
+	if (!job.sourceMeta) return [];
 
-  const duration = job.sourceMeta.duration;
-  const segmentCount = Math.ceil(duration / SEGMENT_DURATION);
-  const segments: VideoSegment[] = [];
+	const duration = job.sourceMeta.duration;
+	const segmentCount = Math.ceil(duration / SEGMENT_DURATION);
+	const segments: VideoSegment[] = [];
 
-  for (const profile of job.profiles) {
-    for (let i = 0; i < segmentCount; i++) {
-      const startTime = i * SEGMENT_DURATION;
-      const segDuration = Math.min(SEGMENT_DURATION, duration - startTime);
+	for (const profile of job.profiles) {
+		for (let i = 0; i < segmentCount; i++) {
+			const startTime = i * SEGMENT_DURATION;
+			const segDuration = Math.min(SEGMENT_DURATION, duration - startTime);
 
-      segments.push({
-        id: `${job.id}-${profile.name}-seg${i.toString().padStart(4, "0")}`,
-        jobId: job.id,
-        index: i,
-        startTime,
-        duration: segDuration,
-        profileName: profile.name,
-        status: "pending",
-        assignedWorker: null,
-        assignedAt: 0,
-        completedAt: 0,
-        outputPath: "",
-        retryCount: 0,
-      });
-    }
-  }
+			segments.push({
+				id: `${job.id}-${profile.name}-seg${i.toString().padStart(4, '0')}`,
+				jobId: job.id,
+				index: i,
+				startTime,
+				duration: segDuration,
+				profileName: profile.name,
+				status: 'pending',
+				assignedWorker: null,
+				assignedAt: 0,
+				completedAt: 0,
+				outputPath: '',
+				retryCount: 0
+			});
+		}
+	}
 
-  return segments;
+	return segments;
 }
 
 // ===========================================
@@ -443,33 +460,33 @@ function createSegments(job: TranscodeJob): VideoSegment[] {
 // ===========================================
 
 function generateMasterPlaylist(job: TranscodeJob): string {
-  let manifest = "#EXTM3U\n#EXT-X-VERSION:3\n\n";
+	let manifest = '#EXTM3U\n#EXT-X-VERSION:3\n\n';
 
-  for (const profile of job.profiles) {
-    const bandwidth = profile.bitrate * 1000; // convert kbps to bps
-    manifest += `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${profile.width}x${profile.height},CODECS="avc1.640028"\n`;
-    manifest += `${profile.name}/playlist.m3u8\n\n`;
-  }
+	for (const profile of job.profiles) {
+		const bandwidth = profile.bitrate * 1000; // convert kbps to bps
+		manifest += `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${profile.width}x${profile.height},CODECS="avc1.640028"\n`;
+		manifest += `${profile.name}/playlist.m3u8\n\n`;
+	}
 
-  return manifest;
+	return manifest;
 }
 
 function generateVariantPlaylist(job: TranscodeJob, profileName: string): string {
-  const profileSegments = job.segments
-    .filter((s) => s.profileName === profileName && s.status === "completed")
-    .sort((a, b) => a.index - b.index);
+	const profileSegments = job.segments
+		.filter((s) => s.profileName === profileName && s.status === 'completed')
+		.sort((a, b) => a.index - b.index);
 
-  let manifest = "#EXTM3U\n#EXT-X-VERSION:3\n";
-  manifest += `#EXT-X-TARGETDURATION:${SEGMENT_DURATION}\n`;
-  manifest += "#EXT-X-MEDIA-SEQUENCE:0\n\n";
+	let manifest = '#EXTM3U\n#EXT-X-VERSION:3\n';
+	manifest += `#EXT-X-TARGETDURATION:${SEGMENT_DURATION}\n`;
+	manifest += '#EXT-X-MEDIA-SEQUENCE:0\n\n';
 
-  for (const segment of profileSegments) {
-    manifest += `#EXTINF:${segment.duration.toFixed(3)},\n`;
-    manifest += `segment${segment.index.toString().padStart(4, "0")}.ts\n`;
-  }
+	for (const segment of profileSegments) {
+		manifest += `#EXTINF:${segment.duration.toFixed(3)},\n`;
+		manifest += `segment${segment.index.toString().padStart(4, '0')}.ts\n`;
+	}
 
-  manifest += "#EXT-X-ENDLIST\n";
-  return manifest;
+	manifest += '#EXT-X-ENDLIST\n';
+	return manifest;
 }
 
 // ===========================================
@@ -477,37 +494,39 @@ function generateVariantPlaylist(job: TranscodeJob, profileName: string): string
 // ===========================================
 
 class WebhookNotifier {
-  private pending: Array<{ url: string; payload: object; retries: number }> = [];
+	private pending: Array<{ url: string; payload: object; retries: number }> = [];
 
-  async notify(url: string, payload: object): Promise<void> {
-    if (!url) return;
+	async notify(url: string, payload: object): Promise<void> {
+		if (!url) return;
 
-    console.log(`[WEBHOOK] Sending notification to ${url}`);
-    // In production, this would be an HTTP POST request.
-    // Simulating the webhook delivery with retry logic.
-    this.pending.push({ url, payload, retries: 0 });
-    await this.deliver();
-  }
+		console.log(`[WEBHOOK] Sending notification to ${url}`);
+		// In production, this would be an HTTP POST request.
+		// Simulating the webhook delivery with retry logic.
+		this.pending.push({ url, payload, retries: 0 });
+		await this.deliver();
+	}
 
-  private async deliver(): Promise<void> {
-    const batch = [...this.pending];
-    this.pending = [];
+	private async deliver(): Promise<void> {
+		const batch = [...this.pending];
+		this.pending = [];
 
-    for (const entry of batch) {
-      try {
-        // Simulated delivery — in production: fetch(entry.url, { method: "POST", body: JSON.stringify(entry.payload) })
-        console.log(`[WEBHOOK] Delivered to ${entry.url}: ${JSON.stringify(entry.payload).slice(0, 120)}...`);
-      } catch (err) {
-        if (entry.retries < 3) {
-          entry.retries++;
-          this.pending.push(entry);
-          console.log(`[WEBHOOK] Retry ${entry.retries} for ${entry.url}`);
-        } else {
-          console.log(`[WEBHOOK] Failed permanently for ${entry.url}`);
-        }
-      }
-    }
-  }
+		for (const entry of batch) {
+			try {
+				// Simulated delivery — in production: fetch(entry.url, { method: "POST", body: JSON.stringify(entry.payload) })
+				console.log(
+					`[WEBHOOK] Delivered to ${entry.url}: ${JSON.stringify(entry.payload).slice(0, 120)}...`
+				);
+			} catch (err) {
+				if (entry.retries < 3) {
+					entry.retries++;
+					this.pending.push(entry);
+					console.log(`[WEBHOOK] Retry ${entry.retries} for ${entry.url}`);
+				} else {
+					console.log(`[WEBHOOK] Failed permanently for ${entry.url}`);
+				}
+			}
+		}
+	}
 }
 
 // ===========================================
@@ -515,268 +534,275 @@ class WebhookNotifier {
 // ===========================================
 
 class TranscodingService {
-  private queue: FairPriorityQueue;
-  private tracker: ProgressTracker;
-  private pool: WorkerPool;
-  private notifier: WebhookNotifier;
-  private processing: boolean = false;
-  private shutdownRequested: boolean = false;
+	private queue: FairPriorityQueue;
+	private tracker: ProgressTracker;
+	private pool: WorkerPool;
+	private notifier: WebhookNotifier;
+	private processing: boolean = false;
+	private shutdownRequested: boolean = false;
 
-  constructor(workerCount: number = 4) {
-    this.queue = new FairPriorityQueue();
-    this.tracker = new ProgressTracker();
-    this.pool = new WorkerPool(workerCount);
-    this.notifier = new WebhookNotifier();
+	constructor(workerCount: number = 4) {
+		this.queue = new FairPriorityQueue();
+		this.tracker = new ProgressTracker();
+		this.pool = new WorkerPool(workerCount);
+		this.notifier = new WebhookNotifier();
 
-    // Register simulated workers
-    for (let i = 0; i < workerCount; i++) {
-      this.pool.registerWorker(`worker-${i}`);
-    }
-  }
+		// Register simulated workers
+		for (let i = 0; i < workerCount; i++) {
+			this.pool.registerWorker(`worker-${i}`);
+		}
+	}
 
-  submitJob(userId: string, sourceUrl: string, webhookUrl: string = "", priority: number = 5): TranscodeJob {
-    const job: TranscodeJob = {
-      id: crypto.randomUUID(),
-      userId,
-      sourceUrl,
-      status: "pending",
-      priority,
-      createdAt: Date.now(),
-      startedAt: 0,
-      completedAt: 0,
-      sourceMeta: null,
-      profiles: [],
-      segments: [],
-      webhookUrl,
-      outputBaseUrl: "",
-      error: "",
-    };
+	submitJob(
+		userId: string,
+		sourceUrl: string,
+		webhookUrl: string = '',
+		priority: number = 5
+	): TranscodeJob {
+		const job: TranscodeJob = {
+			id: crypto.randomUUID(),
+			userId,
+			sourceUrl,
+			status: 'pending',
+			priority,
+			createdAt: Date.now(),
+			startedAt: 0,
+			completedAt: 0,
+			sourceMeta: null,
+			profiles: [],
+			segments: [],
+			webhookUrl,
+			outputBaseUrl: '',
+			error: ''
+		};
 
-    this.tracker.registerJob(job);
-    this.queue.enqueue(job);
-    console.log(`[JOB] Submitted job ${job.id} for user ${userId} (priority ${priority})`);
-    return job;
-  }
+		this.tracker.registerJob(job);
+		this.queue.enqueue(job);
+		console.log(`[JOB] Submitted job ${job.id} for user ${userId} (priority ${priority})`);
+		return job;
+	}
 
-  async processNextJob(): Promise<void> {
-    if (this.shutdownRequested) return;
+	async processNextJob(): Promise<void> {
+		if (this.shutdownRequested) return;
 
-    const job = this.queue.dequeue();
-    if (!job) return;
+		const job = this.queue.dequeue();
+		if (!job) return;
 
-    this.processing = true;
-    job.startedAt = Date.now();
+		this.processing = true;
+		job.startedAt = Date.now();
 
-    try {
-      // Step 1: Probe video
-      job.status = "probing";
-      console.log(`[JOB] Probing ${job.id}...`);
-      job.sourceMeta = this.probeVideo(job.sourceUrl);
+		try {
+			// Step 1: Probe video
+			job.status = 'probing';
+			console.log(`[JOB] Probing ${job.id}...`);
+			job.sourceMeta = this.probeVideo(job.sourceUrl);
 
-      // Step 2: Select profiles based on source resolution
-      job.status = "splitting";
-      job.profiles = this.selectProfiles(job.sourceMeta);
-      console.log(`[JOB] Selected ${job.profiles.length} profiles for ${job.id}`);
+			// Step 2: Select profiles based on source resolution
+			job.status = 'splitting';
+			job.profiles = this.selectProfiles(job.sourceMeta);
+			console.log(`[JOB] Selected ${job.profiles.length} profiles for ${job.id}`);
 
-      // Step 3: Create segments
-      job.segments = createSegments(job);
-      console.log(`[JOB] Created ${job.segments.length} segments for ${job.id}`);
+			// Step 3: Create segments
+			job.segments = createSegments(job);
+			console.log(`[JOB] Created ${job.segments.length} segments for ${job.id}`);
 
-      // Step 4: Transcode segments via worker pool
-      job.status = "transcoding";
-      await this.transcodeSegments(job);
+			// Step 4: Transcode segments via worker pool
+			job.status = 'transcoding';
+			await this.transcodeSegments(job);
 
-      // Step 5: Check for failures
-      if (this.tracker.hasFailures(job.id)) {
-        job.status = "failed";
-        job.error = "Some segments failed after max retries";
-        console.log(`[JOB] Job ${job.id} FAILED`);
-      } else {
-        // Step 6: Generate manifests
-        job.status = "merging";
-        job.outputBaseUrl = `/output/${job.id}`;
-        console.log(`[JOB] Generating manifests for ${job.id}`);
+			// Step 5: Check for failures
+			if (this.tracker.hasFailures(job.id)) {
+				job.status = 'failed';
+				job.error = 'Some segments failed after max retries';
+				console.log(`[JOB] Job ${job.id} FAILED`);
+			} else {
+				// Step 6: Generate manifests
+				job.status = 'merging';
+				job.outputBaseUrl = `/output/${job.id}`;
+				console.log(`[JOB] Generating manifests for ${job.id}`);
 
-        const masterPlaylist = generateMasterPlaylist(job);
-        console.log(`[MANIFEST] Master playlist:\n${masterPlaylist}`);
+				const masterPlaylist = generateMasterPlaylist(job);
+				console.log(`[MANIFEST] Master playlist:\n${masterPlaylist}`);
 
-        for (const profile of job.profiles) {
-          const variantPlaylist = generateVariantPlaylist(job, profile.name);
-          console.log(`[MANIFEST] Variant ${profile.name}:\n${variantPlaylist}`);
-        }
+				for (const profile of job.profiles) {
+					const variantPlaylist = generateVariantPlaylist(job, profile.name);
+					console.log(`[MANIFEST] Variant ${profile.name}:\n${variantPlaylist}`);
+				}
 
-        job.status = "completed";
-        job.completedAt = Date.now();
-        const elapsed = ((job.completedAt - job.startedAt) / 1000).toFixed(1);
-        console.log(`[JOB] Job ${job.id} COMPLETED in ${elapsed}s`);
-      }
+				job.status = 'completed';
+				job.completedAt = Date.now();
+				const elapsed = ((job.completedAt - job.startedAt) / 1000).toFixed(1);
+				console.log(`[JOB] Job ${job.id} COMPLETED in ${elapsed}s`);
+			}
 
-      // Step 7: Webhook notification
-      await this.notifier.notify(job.webhookUrl, {
-        jobId: job.id,
-        status: job.status,
-        outputBaseUrl: job.outputBaseUrl,
-        manifestUrl: `${job.outputBaseUrl}/master.m3u8`,
-        completedAt: job.completedAt,
-      });
-    } catch (err) {
-      job.status = "failed";
-      job.error = err instanceof Error ? err.message : "Unknown error";
-      console.log(`[JOB] Job ${job.id} FAILED: ${job.error}`);
-    }
+			// Step 7: Webhook notification
+			await this.notifier.notify(job.webhookUrl, {
+				jobId: job.id,
+				status: job.status,
+				outputBaseUrl: job.outputBaseUrl,
+				manifestUrl: `${job.outputBaseUrl}/master.m3u8`,
+				completedAt: job.completedAt
+			});
+		} catch (err) {
+			job.status = 'failed';
+			job.error = err instanceof Error ? err.message : 'Unknown error';
+			console.log(`[JOB] Job ${job.id} FAILED: ${job.error}`);
+		}
 
-    this.processing = false;
-  }
+		this.processing = false;
+	}
 
-  private probeVideo(sourceUrl: string): VideoMetadata {
-    // Simulates ffprobe — in production this runs ffprobe on the source file
-    return {
-      width: 1920,
-      height: 1080,
-      duration: 120, // 2 minutes
-      codec: "h264",
-      bitrate: 8000,
-      frameRate: 30,
-      fileSize: 120_000_000,
-    };
-  }
+	private probeVideo(sourceUrl: string): VideoMetadata {
+		// Simulates ffprobe — in production this runs ffprobe on the source file
+		return {
+			width: 1920,
+			height: 1080,
+			duration: 120, // 2 minutes
+			codec: 'h264',
+			bitrate: 8000,
+			frameRate: 30,
+			fileSize: 120_000_000
+		};
+	}
 
-  private selectProfiles(meta: VideoMetadata): TranscodeProfile[] {
-    // Only include profiles at or below the source resolution
-    return DEFAULT_PROFILES.filter((p) => p.height <= meta.height);
-  }
+	private selectProfiles(meta: VideoMetadata): TranscodeProfile[] {
+		// Only include profiles at or below the source resolution
+		return DEFAULT_PROFILES.filter((p) => p.height <= meta.height);
+	}
 
-  private async transcodeSegments(job: TranscodeJob): Promise<void> {
-    const pendingSegments = () => job.segments.filter((s) => s.status === "pending");
-    const activeSegments = () => job.segments.filter((s) => s.status === "assigned" || s.status === "processing");
+	private async transcodeSegments(job: TranscodeJob): Promise<void> {
+		const pendingSegments = () => job.segments.filter((s) => s.status === 'pending');
+		const activeSegments = () =>
+			job.segments.filter((s) => s.status === 'assigned' || s.status === 'processing');
 
-    while (pendingSegments().length > 0 || activeSegments().length > 0) {
-      if (this.shutdownRequested) {
-        console.log(`[JOB] Shutdown requested, draining active tasks for ${job.id}`);
-        break;
-      }
+		while (pendingSegments().length > 0 || activeSegments().length > 0) {
+			if (this.shutdownRequested) {
+				console.log(`[JOB] Shutdown requested, draining active tasks for ${job.id}`);
+				break;
+			}
 
-      // Check for stale workers and reassign their segments
-      this.handleStaleWorkers(job);
+			// Check for stale workers and reassign their segments
+			this.handleStaleWorkers(job);
 
-      // Assign pending segments to idle workers
-      const idle = this.pool.getIdleWorkers();
-      const pending = pendingSegments();
+			// Assign pending segments to idle workers
+			const idle = this.pool.getIdleWorkers();
+			const pending = pendingSegments();
 
-      for (const worker of idle) {
-        if (pending.length === 0) break;
-        const segment = pending.shift()!;
+			for (const worker of idle) {
+				if (pending.length === 0) break;
+				const segment = pending.shift()!;
 
-        if (this.pool.assignTask(worker.id, segment.id)) {
-          segment.status = "assigned";
-          segment.assignedWorker = worker.id;
-          segment.assignedAt = Date.now();
+				if (this.pool.assignTask(worker.id, segment.id)) {
+					segment.status = 'assigned';
+					segment.assignedWorker = worker.id;
+					segment.assignedAt = Date.now();
 
-          // Simulate async transcoding
-          this.simulateTranscode(job.id, segment, worker.id);
-        }
-      }
+					// Simulate async transcoding
+					this.simulateTranscode(job.id, segment, worker.id);
+				}
+			}
 
-      // Wait before checking again
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  }
+			// Wait before checking again
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
+	}
 
-  private simulateTranscode(jobId: string, segment: VideoSegment, workerId: string): void {
-    segment.status = "processing";
+	private simulateTranscode(jobId: string, segment: VideoSegment, workerId: string): void {
+		segment.status = 'processing';
 
-    // Simulate transcoding time (50-200ms in simulation, minutes in reality)
-    const transcodeTime = 50 + Math.random() * 150;
+		// Simulate transcoding time (50-200ms in simulation, minutes in reality)
+		const transcodeTime = 50 + Math.random() * 150;
 
-    setTimeout(() => {
-      // Simulate 5% failure rate
-      const success = Math.random() > 0.05;
+		setTimeout(() => {
+			// Simulate 5% failure rate
+			const success = Math.random() > 0.05;
 
-      if (success) {
-        const outputPath = `/output/${jobId}/${segment.profileName}/segment${segment.index.toString().padStart(4, "0")}.ts`;
-        this.tracker.updateSegmentStatus(jobId, segment.id, "completed", outputPath);
-        this.pool.completeTask(workerId, true);
-        this.pool.heartbeat(workerId);
-      } else {
-        segment.retryCount++;
-        if (segment.retryCount < MAX_RETRIES) {
-          segment.status = "pending"; // Re-queue for retry
-          segment.assignedWorker = null;
-          console.log(`[RETRY] Segment ${segment.id} retry ${segment.retryCount}/${MAX_RETRIES}`);
-        } else {
-          this.tracker.updateSegmentStatus(jobId, segment.id, "failed");
-          console.log(`[FAIL] Segment ${segment.id} permanently failed`);
-        }
-        this.pool.completeTask(workerId, false);
-      }
-    }, transcodeTime);
-  }
+			if (success) {
+				const outputPath = `/output/${jobId}/${segment.profileName}/segment${segment.index.toString().padStart(4, '0')}.ts`;
+				this.tracker.updateSegmentStatus(jobId, segment.id, 'completed', outputPath);
+				this.pool.completeTask(workerId, true);
+				this.pool.heartbeat(workerId);
+			} else {
+				segment.retryCount++;
+				if (segment.retryCount < MAX_RETRIES) {
+					segment.status = 'pending'; // Re-queue for retry
+					segment.assignedWorker = null;
+					console.log(`[RETRY] Segment ${segment.id} retry ${segment.retryCount}/${MAX_RETRIES}`);
+				} else {
+					this.tracker.updateSegmentStatus(jobId, segment.id, 'failed');
+					console.log(`[FAIL] Segment ${segment.id} permanently failed`);
+				}
+				this.pool.completeTask(workerId, false);
+			}
+		}, transcodeTime);
+	}
 
-  private handleStaleWorkers(job: TranscodeJob): void {
-    const stale = this.pool.getStaleWorkers();
-    for (const worker of stale) {
-      console.log(`[HEARTBEAT] Worker ${worker.id} stale, reassigning task`);
-      const segment = job.segments.find(
-        (s) => s.assignedWorker === worker.id && (s.status === "assigned" || s.status === "processing")
-      );
-      if (segment) {
-        segment.status = "pending";
-        segment.assignedWorker = null;
-        segment.retryCount++;
-      }
-      this.pool.removeWorker(worker.id);
-      // Re-register as a fresh worker (simulates replacement)
-      this.pool.registerWorker(worker.id);
-    }
-  }
+	private handleStaleWorkers(job: TranscodeJob): void {
+		const stale = this.pool.getStaleWorkers();
+		for (const worker of stale) {
+			console.log(`[HEARTBEAT] Worker ${worker.id} stale, reassigning task`);
+			const segment = job.segments.find(
+				(s) =>
+					s.assignedWorker === worker.id && (s.status === 'assigned' || s.status === 'processing')
+			);
+			if (segment) {
+				segment.status = 'pending';
+				segment.assignedWorker = null;
+				segment.retryCount++;
+			}
+			this.pool.removeWorker(worker.id);
+			// Re-register as a fresh worker (simulates replacement)
+			this.pool.registerWorker(worker.id);
+		}
+	}
 
-  cancelJob(jobId: string): boolean {
-    const job = this.tracker.getJob(jobId);
-    if (!job) return false;
+	cancelJob(jobId: string): boolean {
+		const job = this.tracker.getJob(jobId);
+		if (!job) return false;
 
-    if (job.status === "pending") {
-      this.queue.remove(jobId);
-    }
+		if (job.status === 'pending') {
+			this.queue.remove(jobId);
+		}
 
-    job.status = "cancelled";
-    console.log(`[JOB] Cancelled job ${jobId}`);
-    return true;
-  }
+		job.status = 'cancelled';
+		console.log(`[JOB] Cancelled job ${jobId}`);
+		return true;
+	}
 
-  getJob(jobId: string): TranscodeJob | null {
-    return this.tracker.getJob(jobId);
-  }
+	getJob(jobId: string): TranscodeJob | null {
+		return this.tracker.getJob(jobId);
+	}
 
-  getJobProgress(jobId: string) {
-    return this.tracker.getJobProgress(jobId);
-  }
+	getJobProgress(jobId: string) {
+		return this.tracker.getJobProgress(jobId);
+	}
 
-  getWorkerStatus() {
-    return {
-      pool: this.pool.getStatus(),
-      workers: this.pool.getAllWorkers(),
-    };
-  }
+	getWorkerStatus() {
+		return {
+			pool: this.pool.getStatus(),
+			workers: this.pool.getAllWorkers()
+		};
+	}
 
-  async gracefulShutdown(): Promise<void> {
-    console.log("[SHUTDOWN] Initiating graceful shutdown...");
-    this.shutdownRequested = true;
+	async gracefulShutdown(): Promise<void> {
+		console.log('[SHUTDOWN] Initiating graceful shutdown...');
+		this.shutdownRequested = true;
 
-    // Drain all workers — let them finish current tasks
-    for (const worker of this.pool.getAllWorkers()) {
-      if (worker.status === "busy") {
-        this.pool.drainWorker(worker.id);
-      }
-    }
+		// Drain all workers — let them finish current tasks
+		for (const worker of this.pool.getAllWorkers()) {
+			if (worker.status === 'busy') {
+				this.pool.drainWorker(worker.id);
+			}
+		}
 
-    // Wait for active tasks to complete (with timeout)
-    const deadline = Date.now() + 30_000;
-    while (this.processing && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+		// Wait for active tasks to complete (with timeout)
+		const deadline = Date.now() + 30_000;
+		while (this.processing && Date.now() < deadline) {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+		}
 
-    console.log("[SHUTDOWN] Graceful shutdown complete");
-  }
+		console.log('[SHUTDOWN] Graceful shutdown complete');
+	}
 }
 
 // ===========================================
@@ -786,155 +812,175 @@ class TranscodingService {
 const service = new TranscodingService(4);
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  // Parse JSON body for POST requests
-  const readBody = (): Promise<any> =>
-    new Promise((resolve) => {
-      let data = "";
-      req.on("data", (chunk) => (data += chunk));
-      req.on("end", () => {
-        try { resolve(JSON.parse(data)); }
-        catch { resolve({}); }
-      });
-    });
+	// Parse JSON body for POST requests
+	const readBody = (): Promise<any> =>
+		new Promise((resolve) => {
+			let data = '';
+			req.on('data', (chunk) => (data += chunk));
+			req.on('end', () => {
+				try {
+					resolve(JSON.parse(data));
+				} catch {
+					resolve({});
+				}
+			});
+		});
 
-  const json = (status: number, body: object) => {
-    res.writeHead(status, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(body, null, 2));
-  };
+	const json = (status: number, body: object) => {
+		res.writeHead(status, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify(body, null, 2));
+	};
 
-  // POST /api/transcode — Submit a new transcoding job
-  if (method === "POST" && url.pathname === "/api/transcode") {
-    const body = await readBody();
-    if (!body.sourceUrl || !body.userId) {
-      return json(400, { error: "sourceUrl and userId are required" });
-    }
-    const job = service.submitJob(body.userId, body.sourceUrl, body.webhookUrl || "", body.priority || 5);
-    // Start processing asynchronously
-    service.processNextJob();
-    return json(201, { jobId: job.id, status: job.status });
-  }
+	// POST /api/transcode — Submit a new transcoding job
+	if (method === 'POST' && url.pathname === '/api/transcode') {
+		const body = await readBody();
+		if (!body.sourceUrl || !body.userId) {
+			return json(400, { error: 'sourceUrl and userId are required' });
+		}
+		const job = service.submitJob(
+			body.userId,
+			body.sourceUrl,
+			body.webhookUrl || '',
+			body.priority || 5
+		);
+		// Start processing asynchronously
+		service.processNextJob();
+		return json(201, { jobId: job.id, status: job.status });
+	}
 
-  // GET /api/jobs/:id — Get job status and progress
-  const jobMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)$/);
-  if (method === "GET" && jobMatch) {
-    const job = service.getJob(jobMatch[1]);
-    if (!job) return json(404, { error: "Job not found" });
-    const progress = service.getJobProgress(job.id);
-    return json(200, {
-      id: job.id,
-      userId: job.userId,
-      status: job.status,
-      progress,
-      sourceMeta: job.sourceMeta,
-      profiles: job.profiles.map((p) => p.name),
-      createdAt: job.createdAt,
-      startedAt: job.startedAt,
-      completedAt: job.completedAt,
-      error: job.error || undefined,
-    });
-  }
+	// GET /api/jobs/:id — Get job status and progress
+	const jobMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)$/);
+	if (method === 'GET' && jobMatch) {
+		const job = service.getJob(jobMatch[1]);
+		if (!job) return json(404, { error: 'Job not found' });
+		const progress = service.getJobProgress(job.id);
+		return json(200, {
+			id: job.id,
+			userId: job.userId,
+			status: job.status,
+			progress,
+			sourceMeta: job.sourceMeta,
+			profiles: job.profiles.map((p) => p.name),
+			createdAt: job.createdAt,
+			startedAt: job.startedAt,
+			completedAt: job.completedAt,
+			error: job.error || undefined
+		});
+	}
 
-  // GET /api/jobs/:id/manifest — Get HLS master playlist
-  const manifestMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/manifest$/);
-  if (method === "GET" && manifestMatch) {
-    const job = service.getJob(manifestMatch[1]);
-    if (!job) return json(404, { error: "Job not found" });
-    if (job.status !== "completed") {
-      return json(409, { error: "Job not yet completed", status: job.status });
-    }
-    const manifest = generateMasterPlaylist(job);
-    res.writeHead(200, { "Content-Type": "application/vnd.apple.mpegurl" });
-    return res.end(manifest);
-  }
+	// GET /api/jobs/:id/manifest — Get HLS master playlist
+	const manifestMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/manifest$/);
+	if (method === 'GET' && manifestMatch) {
+		const job = service.getJob(manifestMatch[1]);
+		if (!job) return json(404, { error: 'Job not found' });
+		if (job.status !== 'completed') {
+			return json(409, { error: 'Job not yet completed', status: job.status });
+		}
+		const manifest = generateMasterPlaylist(job);
+		res.writeHead(200, { 'Content-Type': 'application/vnd.apple.mpegurl' });
+		return res.end(manifest);
+	}
 
-  // DELETE /api/jobs/:id — Cancel a job
-  const cancelMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)$/);
-  if (method === "DELETE" && cancelMatch) {
-    const success = service.cancelJob(cancelMatch[1]);
-    if (!success) return json(404, { error: "Job not found" });
-    return json(200, { status: "cancelled" });
-  }
+	// DELETE /api/jobs/:id — Cancel a job
+	const cancelMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)$/);
+	if (method === 'DELETE' && cancelMatch) {
+		const success = service.cancelJob(cancelMatch[1]);
+		if (!success) return json(404, { error: 'Job not found' });
+		return json(200, { status: 'cancelled' });
+	}
 
-  // GET /api/workers — Worker pool status
-  if (method === "GET" && url.pathname === "/api/workers") {
-    return json(200, service.getWorkerStatus());
-  }
+	// GET /api/workers — Worker pool status
+	if (method === 'GET' && url.pathname === '/api/workers') {
+		return json(200, service.getWorkerStatus());
+	}
 
-  json(404, { error: "Not found" });
+	json(404, { error: 'Not found' });
 });
 
 // Graceful shutdown handlers
-process.on("SIGINT", async () => {
-  await service.gracefulShutdown();
-  server.close();
-  process.exit(0);
+process.on('SIGINT', async () => {
+	await service.gracefulShutdown();
+	server.close();
+	process.exit(0);
 });
 
-process.on("SIGTERM", async () => {
-  await service.gracefulShutdown();
-  server.close();
-  process.exit(0);
+process.on('SIGTERM', async () => {
+	await service.gracefulShutdown();
+	server.close();
+	process.exit(0);
 });
 
 // --- Demo ---
 async function demo() {
-  console.log("=== Video Transcoding Service Demo ===\n");
+	console.log('=== Video Transcoding Service Demo ===\n');
 
-  // Submit jobs from different users
-  const job1 = service.submitJob("user-alice", "/uploads/alice-vacation.mp4", "https://example.com/webhook", 3);
-  const job2 = service.submitJob("user-bob", "/uploads/bob-tutorial.mp4", "", 5);
-  const job3 = service.submitJob("user-alice", "/uploads/alice-concert.mp4", "https://example.com/webhook", 7);
+	// Submit jobs from different users
+	const job1 = service.submitJob(
+		'user-alice',
+		'/uploads/alice-vacation.mp4',
+		'https://example.com/webhook',
+		3
+	);
+	const job2 = service.submitJob('user-bob', '/uploads/bob-tutorial.mp4', '', 5);
+	const job3 = service.submitJob(
+		'user-alice',
+		'/uploads/alice-concert.mp4',
+		'https://example.com/webhook',
+		7
+	);
 
-  console.log(`\nQueue: 3 jobs submitted\n`);
+	console.log(`\nQueue: 3 jobs submitted\n`);
 
-  // Process first job
-  console.log("--- Processing Job 1 ---");
-  await service.processNextJob();
+	// Process first job
+	console.log('--- Processing Job 1 ---');
+	await service.processNextJob();
 
-  // Wait for transcoding to finish
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+	// Wait for transcoding to finish
+	await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  // Check progress
-  const progress = service.getJobProgress(job1.id);
-  console.log(`\nJob 1 progress: ${progress.percent}% (${progress.completed}/${progress.total} segments)`);
+	// Check progress
+	const progress = service.getJobProgress(job1.id);
+	console.log(
+		`\nJob 1 progress: ${progress.percent}% (${progress.completed}/${progress.total} segments)`
+	);
 
-  const finalJob = service.getJob(job1.id);
-  console.log(`Job 1 status: ${finalJob?.status}`);
+	const finalJob = service.getJob(job1.id);
+	console.log(`Job 1 status: ${finalJob?.status}`);
 
-  if (finalJob?.status === "completed") {
-    console.log("\n--- HLS Master Playlist ---");
-    console.log(generateMasterPlaylist(finalJob));
-  }
+	if (finalJob?.status === 'completed') {
+		console.log('\n--- HLS Master Playlist ---');
+		console.log(generateMasterPlaylist(finalJob));
+	}
 
-  // Worker pool status
-  console.log("--- Worker Pool ---");
-  console.log(JSON.stringify(service.getWorkerStatus().pool, null, 2));
+	// Worker pool status
+	console.log('--- Worker Pool ---');
+	console.log(JSON.stringify(service.getWorkerStatus().pool, null, 2));
 
-  // Process remaining jobs
-  console.log("\n--- Processing Job 2 ---");
-  await service.processNextJob();
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+	// Process remaining jobs
+	console.log('\n--- Processing Job 2 ---');
+	await service.processNextJob();
+	await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  console.log("\n--- Processing Job 3 ---");
-  await service.processNextJob();
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+	console.log('\n--- Processing Job 3 ---');
+	await service.processNextJob();
+	await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  console.log("\n=== All jobs processed ===");
+	console.log('\n=== All jobs processed ===');
 
-  // Start HTTP server
-  const PORT = 3900;
-  server.listen(PORT, () => {
-    console.log(`\nHTTP server listening on http://localhost:${PORT}`);
-    console.log("Endpoints:");
-    console.log("  POST /api/transcode        — Submit job");
-    console.log("  GET  /api/jobs/:id          — Job status");
-    console.log("  GET  /api/jobs/:id/manifest — HLS manifest");
-    console.log("  DELETE /api/jobs/:id        — Cancel job");
-    console.log("  GET  /api/workers           — Worker pool status");
-  });
+	// Start HTTP server
+	const PORT = 3900;
+	server.listen(PORT, () => {
+		console.log(`\nHTTP server listening on http://localhost:${PORT}`);
+		console.log('Endpoints:');
+		console.log('  POST /api/transcode        — Submit job');
+		console.log('  GET  /api/jobs/:id          — Job status');
+		console.log('  GET  /api/jobs/:id/manifest — HLS manifest');
+		console.log('  DELETE /api/jobs/:id        — Cancel job');
+		console.log('  GET  /api/workers           — Worker pool status');
+	});
 }
 
 demo().catch(console.error);
@@ -2046,4 +2092,3 @@ Heartbeats solve this by requiring each worker to send a periodic signal (every 
 - This architecture handles 1000+ concurrent transcoding jobs with segment-level parallelism and fair scheduling
 
 </div>
-

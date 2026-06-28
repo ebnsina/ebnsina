@@ -1,10 +1,10 @@
 ---
-title: "Case Study: URL Shortener at Scale"
-subtitle: "Design and build a production URL shortener with base62 encoding, Snowflake IDs, caching, rate limiting, and analytics."
+title: 'Case Study: URL Shortener at Scale'
+subtitle: 'Design and build a production URL shortener with base62 encoding, Snowflake IDs, caching, rate limiting, and analytics.'
 chapter: 12
-level: "advanced"
-readingTime: "25 min"
-topics: ["system design", "URL shortener", "Snowflake ID", "base62", "analytics pipeline"]
+level: 'advanced'
+readingTime: '25 min'
+topics: ['system design', 'URL shortener', 'Snowflake ID', 'base62', 'analytics pipeline']
 ---
 
 <script>
@@ -32,14 +32,12 @@ Like a coat check at a theater — you hand in a long URL and get a short ticket
 - **Storage**: 100M URLs, ~10GB data + analytics
 
 <Mermaid
-	title="URL Shortener Architecture"
-	code={`
-graph TD
+title="URL Shortener Architecture"
+code={`graph TD
   C["Client"] --> LB["Load Balancer"] --> S["API Servers"]
   S --> R["Redis Cache<br/>Hot URLs"]
   S --> DB["PostgreSQL<br/>URL Store"]
-  S --> Q["Analytics Queue<br/>Click Events"]
-`}
+  S --> Q["Analytics Queue<br/>Click Events"]`}
 />
 
 ## The Complete System
@@ -48,87 +46,85 @@ graph TD
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. SNOWFLAKE ID GENERATOR
 // ===========================================
 class SnowflakeIDGenerator {
-  private sequence = 0n;
-  private lastTimestamp = -1n;
-  private readonly epoch = 1700000000000n; // custom epoch
-  private readonly workerIdBits = 10n;
-  private readonly sequenceBits = 12n;
-  private readonly maxSequence = (1n << this.sequenceBits) - 1n;
-  private readonly workerIdShift = this.sequenceBits;
-  private readonly timestampShift = this.sequenceBits + this.workerIdBits;
+	private sequence = 0n;
+	private lastTimestamp = -1n;
+	private readonly epoch = 1700000000000n; // custom epoch
+	private readonly workerIdBits = 10n;
+	private readonly sequenceBits = 12n;
+	private readonly maxSequence = (1n << this.sequenceBits) - 1n;
+	private readonly workerIdShift = this.sequenceBits;
+	private readonly timestampShift = this.sequenceBits + this.workerIdBits;
 
-  constructor(private readonly workerId: bigint) {
-    if (workerId < 0n || workerId >= (1n << this.workerIdBits)) {
-      throw new Error(`Worker ID must be between 0 and ${(1n << this.workerIdBits) - 1n}`);
-    }
-  }
+	constructor(private readonly workerId: bigint) {
+		if (workerId < 0n || workerId >= 1n << this.workerIdBits) {
+			throw new Error(`Worker ID must be between 0 and ${(1n << this.workerIdBits) - 1n}`);
+		}
+	}
 
-  generate(): bigint {
-    let timestamp = BigInt(Date.now()) - this.epoch;
+	generate(): bigint {
+		let timestamp = BigInt(Date.now()) - this.epoch;
 
-    if (timestamp === this.lastTimestamp) {
-      this.sequence = (this.sequence + 1n) & this.maxSequence;
-      if (this.sequence === 0n) {
-        // Wait for next millisecond
-        while (timestamp <= this.lastTimestamp) {
-          timestamp = BigInt(Date.now()) - this.epoch;
-        }
-      }
-    } else {
-      this.sequence = 0n;
-    }
+		if (timestamp === this.lastTimestamp) {
+			this.sequence = (this.sequence + 1n) & this.maxSequence;
+			if (this.sequence === 0n) {
+				// Wait for next millisecond
+				while (timestamp <= this.lastTimestamp) {
+					timestamp = BigInt(Date.now()) - this.epoch;
+				}
+			}
+		} else {
+			this.sequence = 0n;
+		}
 
-    this.lastTimestamp = timestamp;
+		this.lastTimestamp = timestamp;
 
-    return (
-      (timestamp << this.timestampShift) |
-      (this.workerId << this.workerIdShift) |
-      this.sequence
-    );
-  }
+		return (
+			(timestamp << this.timestampShift) | (this.workerId << this.workerIdShift) | this.sequence
+		);
+	}
 }
 
 // ===========================================
 // 2. BASE62 ENCODER
 // ===========================================
-const BASE62_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const BASE62_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 function base62Encode(num: bigint): string {
-  if (num === 0n) return BASE62_CHARS[0];
-  let result = "";
-  while (num > 0n) {
-    result = BASE62_CHARS[Number(num % 62n)] + result;
-    num = num / 62n;
-  }
-  return result;
+	if (num === 0n) return BASE62_CHARS[0];
+	let result = '';
+	while (num > 0n) {
+		result = BASE62_CHARS[Number(num % 62n)] + result;
+		num = num / 62n;
+	}
+	return result;
 }
 
 function base62Decode(str: string): bigint {
-  let result = 0n;
-  for (const char of str) {
-    result = result * 62n + BigInt(BASE62_CHARS.indexOf(char));
-  }
-  return result;
+	let result = 0n;
+	for (const char of str) {
+		result = result * 62n + BigInt(BASE62_CHARS.indexOf(char));
+	}
+	return result;
 }
 
 // ===========================================
 // 3. STORAGE (in-memory, replace with PG)
 // ===========================================
 interface URLRecord {
-  id: string;
-  shortCode: string;
-  originalUrl: string;
-  userId: string;
-  createdAt: string;
-  expiresAt: string | null;
-  clickCount: number;
+	id: string;
+	shortCode: string;
+	originalUrl: string;
+	userId: string;
+	createdAt: string;
+	expiresAt: string | null;
+	clickCount: number;
 }
 
 // In production: PostgreSQL table
@@ -151,327 +147,337 @@ const codeToId = new Map<string, string>();
 // 4. CACHE (in-memory, replace with Redis)
 // ===========================================
 class LRUCache {
-  private cache = new Map<string, { value: string; expiry: number }>();
-  private maxSize: number;
+	private cache = new Map<string, { value: string; expiry: number }>();
+	private maxSize: number;
 
-  constructor(maxSize = 10000) {
-    this.maxSize = maxSize;
-  }
+	constructor(maxSize = 10000) {
+		this.maxSize = maxSize;
+	}
 
-  get(key: string): string | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-    // Move to end (most recently used)
-    this.cache.delete(key);
-    this.cache.set(key, entry);
-    return entry.value;
-  }
+	get(key: string): string | null {
+		const entry = this.cache.get(key);
+		if (!entry) return null;
+		if (Date.now() > entry.expiry) {
+			this.cache.delete(key);
+			return null;
+		}
+		// Move to end (most recently used)
+		this.cache.delete(key);
+		this.cache.set(key, entry);
+		return entry.value;
+	}
 
-  set(key: string, value: string, ttlMs: number): void {
-    if (this.cache.size >= this.maxSize) {
-      // Evict oldest entry
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) this.cache.delete(firstKey);
-    }
-    this.cache.set(key, { value, expiry: Date.now() + ttlMs });
-  }
+	set(key: string, value: string, ttlMs: number): void {
+		if (this.cache.size >= this.maxSize) {
+			// Evict oldest entry
+			const firstKey = this.cache.keys().next().value;
+			if (firstKey) this.cache.delete(firstKey);
+		}
+		this.cache.set(key, { value, expiry: Date.now() + ttlMs });
+	}
 
-  delete(key: string): void {
-    this.cache.delete(key);
-  }
+	delete(key: string): void {
+		this.cache.delete(key);
+	}
 }
 
 // ===========================================
 // 5. RATE LIMITER (in-memory sliding window)
 // ===========================================
 class RateLimiter {
-  private windows = new Map<string, number[]>();
+	private windows = new Map<string, number[]>();
 
-  isAllowed(key: string, maxRequests: number, windowMs: number): boolean {
-    const now = Date.now();
-    const timestamps = this.windows.get(key) || [];
+	isAllowed(key: string, maxRequests: number, windowMs: number): boolean {
+		const now = Date.now();
+		const timestamps = this.windows.get(key) || [];
 
-    // Remove expired entries
-    const valid = timestamps.filter((t) => t > now - windowMs);
-    valid.push(now);
-    this.windows.set(key, valid);
+		// Remove expired entries
+		const valid = timestamps.filter((t) => t > now - windowMs);
+		valid.push(now);
+		this.windows.set(key, valid);
 
-    return valid.length <= maxRequests;
-  }
+		return valid.length <= maxRequests;
+	}
 }
 
 // ===========================================
 // 6. ANALYTICS (async click tracking)
 // ===========================================
 interface ClickEvent {
-  shortCode: string;
-  timestamp: string;
-  ip: string;
-  userAgent: string;
-  referer: string;
+	shortCode: string;
+	timestamp: string;
+	ip: string;
+	userAgent: string;
+	referer: string;
 }
 
 class AnalyticsCollector {
-  private buffer: ClickEvent[] = [];
-  private flushInterval: ReturnType<typeof setInterval>;
+	private buffer: ClickEvent[] = [];
+	private flushInterval: ReturnType<typeof setInterval>;
 
-  constructor() {
-    // Flush every 5 seconds (in production: write to Kafka/SQS)
-    this.flushInterval = setInterval(() => this.flush(), 5000);
-  }
+	constructor() {
+		// Flush every 5 seconds (in production: write to Kafka/SQS)
+		this.flushInterval = setInterval(() => this.flush(), 5000);
+	}
 
-  track(event: ClickEvent): void {
-    this.buffer.push(event);
-  }
+	track(event: ClickEvent): void {
+		this.buffer.push(event);
+	}
 
-  private flush(): void {
-    if (this.buffer.length === 0) return;
-    const batch = this.buffer.splice(0);
-    // In production: send to analytics pipeline
-    console.log(`[Analytics] Flushed ${batch.length} click events`);
-  }
+	private flush(): void {
+		if (this.buffer.length === 0) return;
+		const batch = this.buffer.splice(0);
+		// In production: send to analytics pipeline
+		console.log(`[Analytics] Flushed ${batch.length} click events`);
+	}
 
-  stop(): void {
-    clearInterval(this.flushInterval);
-    this.flush();
-  }
+	stop(): void {
+		clearInterval(this.flushInterval);
+		this.flush();
+	}
 }
 
 // ===========================================
 // 7. URL SHORTENER SERVICE
 // ===========================================
 class URLShortenerService {
-  private idGen: SnowflakeIDGenerator;
-  private cache: LRUCache;
-  private rateLimiter: RateLimiter;
-  private analytics: AnalyticsCollector;
-  private readonly baseUrl: string;
+	private idGen: SnowflakeIDGenerator;
+	private cache: LRUCache;
+	private rateLimiter: RateLimiter;
+	private analytics: AnalyticsCollector;
+	private readonly baseUrl: string;
 
-  constructor(workerId: number, baseUrl: string) {
-    this.idGen = new SnowflakeIDGenerator(BigInt(workerId));
-    this.cache = new LRUCache(50000);
-    this.rateLimiter = new RateLimiter();
-    this.analytics = new AnalyticsCollector();
-    this.baseUrl = baseUrl;
-  }
+	constructor(workerId: number, baseUrl: string) {
+		this.idGen = new SnowflakeIDGenerator(BigInt(workerId));
+		this.cache = new LRUCache(50000);
+		this.rateLimiter = new RateLimiter();
+		this.analytics = new AnalyticsCollector();
+		this.baseUrl = baseUrl;
+	}
 
-  // Create short URL
-  async createShortURL(originalUrl: string, userId: string, expiresIn?: number): Promise<{
-    shortUrl: string;
-    shortCode: string;
-  }> {
-    // Validate URL
-    try {
-      new URL(originalUrl);
-    } catch {
-      throw new Error("Invalid URL format");
-    }
+	// Create short URL
+	async createShortURL(
+		originalUrl: string,
+		userId: string,
+		expiresIn?: number
+	): Promise<{
+		shortUrl: string;
+		shortCode: string;
+	}> {
+		// Validate URL
+		try {
+			new URL(originalUrl);
+		} catch {
+			throw new Error('Invalid URL format');
+		}
 
-    // Check for existing URL (deduplication)
-    for (const record of urlStore.values()) {
-      if (record.originalUrl === originalUrl && record.userId === userId) {
-        return {
-          shortUrl: `${this.baseUrl}/${record.shortCode}`,
-          shortCode: record.shortCode,
-        };
-      }
-    }
+		// Check for existing URL (deduplication)
+		for (const record of urlStore.values()) {
+			if (record.originalUrl === originalUrl && record.userId === userId) {
+				return {
+					shortUrl: `${this.baseUrl}/${record.shortCode}`,
+					shortCode: record.shortCode
+				};
+			}
+		}
 
-    // Generate unique ID using Snowflake
-    const id = this.idGen.generate();
-    const shortCode = base62Encode(id);
+		// Generate unique ID using Snowflake
+		const id = this.idGen.generate();
+		const shortCode = base62Encode(id);
 
-    const record: URLRecord = {
-      id: id.toString(),
-      shortCode,
-      originalUrl,
-      userId,
-      createdAt: new Date().toISOString(),
-      expiresAt: expiresIn
-        ? new Date(Date.now() + expiresIn * 1000).toISOString()
-        : null,
-      clickCount: 0,
-    };
+		const record: URLRecord = {
+			id: id.toString(),
+			shortCode,
+			originalUrl,
+			userId,
+			createdAt: new Date().toISOString(),
+			expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
+			clickCount: 0
+		};
 
-    // Store in DB
-    urlStore.set(record.id, record);
-    codeToId.set(shortCode, record.id);
+		// Store in DB
+		urlStore.set(record.id, record);
+		codeToId.set(shortCode, record.id);
 
-    // Pre-warm cache
-    this.cache.set(shortCode, originalUrl, 3600000); // 1 hour
+		// Pre-warm cache
+		this.cache.set(shortCode, originalUrl, 3600000); // 1 hour
 
-    return {
-      shortUrl: `${this.baseUrl}/${shortCode}`,
-      shortCode,
-    };
-  }
+		return {
+			shortUrl: `${this.baseUrl}/${shortCode}`,
+			shortCode
+		};
+	}
 
-  // Resolve short URL (redirect)
-  async resolve(shortCode: string, ip: string, userAgent: string, referer: string): Promise<string | null> {
-    // 1. Check cache
-    const cached = this.cache.get(shortCode);
-    if (cached) {
-      this.trackClick(shortCode, ip, userAgent, referer);
-      return cached;
-    }
+	// Resolve short URL (redirect)
+	async resolve(
+		shortCode: string,
+		ip: string,
+		userAgent: string,
+		referer: string
+	): Promise<string | null> {
+		// 1. Check cache
+		const cached = this.cache.get(shortCode);
+		if (cached) {
+			this.trackClick(shortCode, ip, userAgent, referer);
+			return cached;
+		}
 
-    // 2. Check database
-    const id = codeToId.get(shortCode);
-    if (!id) return null;
+		// 2. Check database
+		const id = codeToId.get(shortCode);
+		if (!id) return null;
 
-    const record = urlStore.get(id);
-    if (!record) return null;
+		const record = urlStore.get(id);
+		if (!record) return null;
 
-    // Check expiration
-    if (record.expiresAt && new Date(record.expiresAt) < new Date()) {
-      return null;
-    }
+		// Check expiration
+		if (record.expiresAt && new Date(record.expiresAt) < new Date()) {
+			return null;
+		}
 
-    // Update cache
-    this.cache.set(shortCode, record.originalUrl, 3600000);
+		// Update cache
+		this.cache.set(shortCode, record.originalUrl, 3600000);
 
-    // Track click (async, don't block redirect)
-    this.trackClick(shortCode, ip, userAgent, referer);
-    record.clickCount++;
+		// Track click (async, don't block redirect)
+		this.trackClick(shortCode, ip, userAgent, referer);
+		record.clickCount++;
 
-    return record.originalUrl;
-  }
+		return record.originalUrl;
+	}
 
-  private trackClick(shortCode: string, ip: string, userAgent: string, referer: string): void {
-    this.analytics.track({
-      shortCode,
-      timestamp: new Date().toISOString(),
-      ip,
-      userAgent,
-      referer,
-    });
-  }
+	private trackClick(shortCode: string, ip: string, userAgent: string, referer: string): void {
+		this.analytics.track({
+			shortCode,
+			timestamp: new Date().toISOString(),
+			ip,
+			userAgent,
+			referer
+		});
+	}
 
-  // Get analytics
-  async getStats(shortCode: string): Promise<URLRecord | null> {
-    const id = codeToId.get(shortCode);
-    if (!id) return null;
-    return urlStore.get(id) || null;
-  }
+	// Get analytics
+	async getStats(shortCode: string): Promise<URLRecord | null> {
+		const id = codeToId.get(shortCode);
+		if (!id) return null;
+		return urlStore.get(id) || null;
+	}
 
-  checkRateLimit(ip: string): boolean {
-    return this.rateLimiter.isAllowed(ip, 10, 60000); // 10 req/min
-  }
+	checkRateLimit(ip: string): boolean {
+		return this.rateLimiter.isAllowed(ip, 10, 60000); // 10 req/min
+	}
 
-  shutdown(): void {
-    this.analytics.stop();
-  }
+	shutdown(): void {
+		this.analytics.stop();
+	}
 }
 
 // ===========================================
 // 8. HTTP SERVER
 // ===========================================
 const service = new URLShortenerService(
-  parseInt(process.env.WORKER_ID || "1"),
-  process.env.BASE_URL || "http://localhost:3000"
+	parseInt(process.env.WORKER_ID || '1'),
+	process.env.BASE_URL || 'http://localhost:3000'
 );
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
-  const ip = req.socket.remoteAddress || "unknown";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
+	const ip = req.socket.remoteAddress || 'unknown';
 
-  try {
-    // Rate limiting
-    if (!service.checkRateLimit(ip)) {
-      json(res, 429, { error: "Too many requests" });
-      return;
-    }
+	try {
+		// Rate limiting
+		if (!service.checkRateLimit(ip)) {
+			json(res, 429, { error: 'Too many requests' });
+			return;
+		}
 
-    // POST /api/shorten — Create short URL
-    if (url.pathname === "/api/shorten" && method === "POST") {
-      const body = (await parseBody(req)) as { url: string; userId?: string; expiresIn?: number };
+		// POST /api/shorten — Create short URL
+		if (url.pathname === '/api/shorten' && method === 'POST') {
+			const body = (await parseBody(req)) as { url: string; userId?: string; expiresIn?: number };
 
-      if (!body.url) {
-        json(res, 400, { error: "url is required" });
-        return;
-      }
+			if (!body.url) {
+				json(res, 400, { error: 'url is required' });
+				return;
+			}
 
-      const result = await service.createShortURL(
-        body.url,
-        body.userId || "anonymous",
-        body.expiresIn
-      );
-      json(res, 201, result);
-      return;
-    }
+			const result = await service.createShortURL(
+				body.url,
+				body.userId || 'anonymous',
+				body.expiresIn
+			);
+			json(res, 201, result);
+			return;
+		}
 
-    // GET /api/stats/:code — Get analytics
-    const statsMatch = url.pathname.match(/^\/api\/stats\/([a-zA-Z0-9]+)$/);
-    if (statsMatch && method === "GET") {
-      const stats = await service.getStats(statsMatch[1]);
-      if (!stats) {
-        json(res, 404, { error: "URL not found" });
-        return;
-      }
-      json(res, 200, stats);
-      return;
-    }
+		// GET /api/stats/:code — Get analytics
+		const statsMatch = url.pathname.match(/^\/api\/stats\/([a-zA-Z0-9]+)$/);
+		if (statsMatch && method === 'GET') {
+			const stats = await service.getStats(statsMatch[1]);
+			if (!stats) {
+				json(res, 404, { error: 'URL not found' });
+				return;
+			}
+			json(res, 200, stats);
+			return;
+		}
 
-    // GET /:code — Redirect
-    const codeMatch = url.pathname.match(/^\/([a-zA-Z0-9]+)$/);
-    if (codeMatch && method === "GET") {
-      const originalUrl = await service.resolve(
-        codeMatch[1],
-        ip,
-        req.headers["user-agent"] || "",
-        req.headers.referer || ""
-      );
+		// GET /:code — Redirect
+		const codeMatch = url.pathname.match(/^\/([a-zA-Z0-9]+)$/);
+		if (codeMatch && method === 'GET') {
+			const originalUrl = await service.resolve(
+				codeMatch[1],
+				ip,
+				req.headers['user-agent'] || '',
+				req.headers.referer || ''
+			);
 
-      if (!originalUrl) {
-        json(res, 404, { error: "Short URL not found or expired" });
-        return;
-      }
+			if (!originalUrl) {
+				json(res, 404, { error: 'Short URL not found or expired' });
+				return;
+			}
 
-      res.writeHead(301, { Location: originalUrl, "Cache-Control": "private, max-age=90" });
-      res.end();
-      return;
-    }
+			res.writeHead(301, { Location: originalUrl, 'Cache-Control': 'private, max-age=90' });
+			res.end();
+			return;
+		}
 
-    // Health check
-    if (url.pathname === "/health") {
-      json(res, 200, { status: "ok" });
-      return;
-    }
+		// Health check
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
 
-    json(res, 404, { error: "Not found" });
-  } catch (err) {
-    console.error("Error:", err);
-    json(res, 500, { error: "Internal server error" });
-  }
+		json(res, 404, { error: 'Not found' });
+	} catch (err) {
+		console.error('Error:', err);
+		json(res, 500, { error: 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`URL Shortener on http://localhost:${PORT}`));
 
-process.on("SIGTERM", () => {
-  service.shutdown();
-  server.close();
+process.on('SIGTERM', () => {
+	service.shutdown();
+	server.close();
 });
 ```
 
@@ -917,4 +923,3 @@ Click tracking should never slow down redirects. We buffer events and flush them
 - This architecture handles 100K+ redirects/second on modest hardware. For more, add Redis caching and horizontal scaling.
 
 </div>
-

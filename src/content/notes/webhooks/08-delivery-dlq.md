@@ -1,10 +1,10 @@
 ---
-title: "Delivery guarantees and the dead-letter queue"
-subtitle: "Some events never deliver. The dead-letter queue is where they go, the dashboard is where humans see them, and the manual replay is how you recover. None of these are optional."
+title: 'Delivery guarantees and the dead-letter queue'
+subtitle: 'Some events never deliver. The dead-letter queue is where they go, the dashboard is where humans see them, and the manual replay is how you recover. None of these are optional.'
 chapter: 8
-level: "intermediate"
-readingTime: "11 min"
-topics: ["webhooks", "dlq", "delivery", "alerts", "replay"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['webhooks', 'dlq', 'delivery', 'alerts', 'replay']
 ---
 
 <script>
@@ -62,7 +62,7 @@ Three terminal states a delivery can reach:
 - **failed (permanent)** — receiver returned a permanent-class error.
 - **expired** — retry deadline passed without a 2xx.
 
-`failed` and `expired` both end in the dead-letter queue. They differ in *why* — important for alerting, not for storage.
+`failed` and `expired` both end in the dead-letter queue. They differ in _why_ — important for alerting, not for storage.
 
 ## The DLQ as a table
 
@@ -150,7 +150,7 @@ A first email at 1 hour, a second at 24 hours, a third before expiry. After expi
   expr: rate(webhook_deliveries_failed_total[5m]) > 10
   for: 10m
   annotations:
-    summary: "Webhook DLQ rate is {{ $value }} per second"
+    summary: 'Webhook DLQ rate is {{ $value }} per second'
 ```
 
 Tuning these thresholds is per-environment. Start tight; relax based on noise.
@@ -285,4 +285,3 @@ Customers signed up to your webhooks based on a promise. The promise is the cont
 - Document the contract publicly.
 
 Next: [Observability and replay](/notes/webhooks/09-observability) — dashboards, metrics, traces, and the full operator UI.
-

@@ -1,10 +1,10 @@
 ---
-title: "12-Month Mastery Roadmap — Junior SRE → Senior/Staff"
-subtitle: "The year-long plan that picks up where the 8-week roadmap stops. Monthly milestones, real production projects, deep reading, and the artifacts that prove staff-level capability."
+title: '12-Month Mastery Roadmap — Junior SRE → Senior/Staff'
+subtitle: 'The year-long plan that picks up where the 8-week roadmap stops. Monthly milestones, real production projects, deep reading, and the artifacts that prove staff-level capability.'
 chapter: 20
-level: "mastery"
-readingTime: "30 min"
-topics: ["roadmap", "career", "mastery", "staff SRE", "year plan", "depth"]
+level: 'mastery'
+readingTime: '30 min'
+topics: ['roadmap', 'career', 'mastery', 'staff SRE', 'year plan', 'depth']
 ---
 
 <script>
@@ -46,19 +46,23 @@ The 8-week plan was 15-18 hrs/week of self-study. This one assumes you have an S
 ## Months 1-2 — Linux performance + observability mastery
 
 ### Reading
-- *Systems Performance* (Brendan Gregg, 2nd ed) — chapters 1-9 deeply.
-- *BPF Performance Tools* (Brendan Gregg) — at least a thorough skim, chapters 1-6 deep.
-- *Observability Engineering* (Charity Majors et al) — re-read with production lens.
+
+- _Systems Performance_ (Brendan Gregg, 2nd ed) — chapters 1-9 deeply.
+- _BPF Performance Tools_ (Brendan Gregg) — at least a thorough skim, chapters 1-6 deep.
+- _Observability Engineering_ (Charity Majors et al) — re-read with production lens.
 
 ### Skill targets
+
 - Run the 60-second performance triage from memory (chapter 12 here).
 - Generate on-CPU and off-CPU flame graphs for at least three services in your prod fleet.
 - Write five `bpftrace` one-liners that solved a real production question.
 
 ### Production project
+
 Pick the slowest-tail-latency service in your fleet that you have access to. Investigate p99 with kernel tools. Find the root cause (lock contention, GC, slow disk, network retransmits — find which). Write a postmortem-style writeup of the investigation and the fix.
 
 ### Artifact
+
 Publish the writeup internally. Aim for the kind of doc that makes another team go "wait, are we doing that too?" — that is the senior signal.
 
 ---
@@ -66,40 +70,48 @@ Publish the writeup internally. Aim for the kind of doc that makes another team 
 ## Month 3 — Network engineering depth
 
 ### Reading
-- *High Performance Browser Networking* (Ilya Grigorik, free online) — refresh.
-- *TCP/IP Illustrated, Vol 1* (Stevens) — chapters 17-25 (TCP) deep.
+
+- _High Performance Browser Networking_ (Ilya Grigorik, free online) — refresh.
+- _TCP/IP Illustrated, Vol 1_ (Stevens) — chapters 17-25 (TCP) deep.
 - BGP RFC 4271 (skim, but learn the AS-PATH attribute well).
 - 2 Cloudflare engineering blog posts on their L4 LB or network architecture.
 
 ### Skill targets
+
 - Read `ss -ti`, `tcpdump`, and `mtr` output and tell a story from each.
 - Decrypt a TLS capture in Wireshark using SSLKEYLOGFILE.
 - Explain anycast + ECMP at a whiteboard with no notes.
 
 ### Production project
+
 Audit cross-AZ data transfer in your largest workload. Find at least one architectural change that cuts it (topology-aware routing, gateway endpoint, regional proximity). Quantify the cost savings.
 
 ### Artifact
-Internal RFC for the change. Reviewed by the cost owner *and* a senior network engineer.
+
+Internal RFC for the change. Reviewed by the cost owner _and_ a senior network engineer.
 
 ---
 
 ## Month 4 — Database internals depth
 
 ### Reading
-- *Database Internals* (Alex Petrov) — chapters on storage engines, replication, transactions.
-- *Designing Data-Intensive Applications* (Kleppmann) — re-read chapters 5-9 with operator's lens.
-- One Postgres or MySQL deep-dive: *PostgreSQL 14 Internals* (Egor Rogov) is excellent.
+
+- _Database Internals_ (Alex Petrov) — chapters on storage engines, replication, transactions.
+- _Designing Data-Intensive Applications_ (Kleppmann) — re-read chapters 5-9 with operator's lens.
+- One Postgres or MySQL deep-dive: _PostgreSQL 14 Internals_ (Egor Rogov) is excellent.
 
 ### Skill targets
+
 - Read an `EXPLAIN ANALYZE` and predict the plan-flip risk.
 - Understand and write a CONCURRENT migration for a 100M-row table.
 - Detect a long-running transaction within 60 seconds using `pg_stat_activity`.
 
 ### Production project
+
 Take the most-used SQL query in your largest service. Profile it. Add the right index (or remove the wrong one). Measure the impact. Bonus: identify a query whose plan is one statistics update away from disaster, and pin it.
 
 ### Artifact
+
 A "DB health" dashboard for one of your services with: top queries by total time, replication lag, connection-pool saturation, vacuum activity, table bloat. Wire alerts on the high-leverage ones.
 
 ---
@@ -107,6 +119,7 @@ A "DB health" dashboard for one of your services with: top queries by total time
 ## Month 5 — Distributed systems theory and the papers
 
 ### Reading (the real reading list)
+
 - "Time, Clocks, and the Ordering of Events" — Lamport, 1978.
 - "The Part-Time Parliament" or "Paxos Made Simple" — Lamport.
 - "In Search of an Understandable Consensus Algorithm" — Raft, Ongaro 2014.
@@ -115,14 +128,17 @@ A "DB health" dashboard for one of your services with: top queries by total time
 - 2-3 Jepsen reports of databases you operate.
 
 ### Skill targets
+
 - Explain Raft to another engineer at a whiteboard with no notes.
 - For each system you operate, name CAP/PACELC stance and the consistency model.
 - Identify a distributed lock in your codebase that doesn't use fencing tokens.
 
 ### Production project
+
 Find a piece of "exactly-once" behavior in your system. Audit whether it's actually idempotent end-to-end. Fix at least one place where it isn't. Prove the fix with a chaos test.
 
 ### Artifact
+
 Brown-bag talk at your team or guild on Raft or on the consistency model of one system you operate. Recorded if possible.
 
 ---
@@ -130,19 +146,23 @@ Brown-bag talk at your team or guild on Raft or on the consistency model of one 
 ## Month 6 — On-call mastery + incident command
 
 ### Reading
-- *Incident Management for Operations* (Schnepp et al) — a short, dense book.
-- *The Field Guide to Understanding Human Error* (Sidney Dekker) — for postmortem maturity.
+
+- _Incident Management for Operations_ (Schnepp et al) — a short, dense book.
+- _The Field Guide to Understanding Human Error_ (Sidney Dekker) — for postmortem maturity.
 - 6 public postmortems from companies bigger than yours (Cloudflare, Stripe, GitHub, AWS).
 
 ### Skill targets
+
 - Comfortable as Incident Commander for a Sev-2 with 5+ engineers in the channel.
 - Can run an effective postmortem meeting with 10+ attendees.
 - Know your rotation's page volume and after-hours percentage by heart.
 
 ### Production project
+
 Run a tabletop incident exercise with your team. Pick a realistic scenario from the postmortems you've read; brief the team; play out the incident; debrief on what worked. Repeat quarterly.
 
 ### Artifact
+
 Either: write your team's "incident response playbook" if it doesn't exist, OR publish an internal critique of the existing one with proposed changes.
 
 ---
@@ -150,23 +170,27 @@ Either: write your team's "incident response playbook" if it doesn't exist, OR p
 ## Month 7 — Kubernetes/platform deep dive
 
 ### Reading
-- *Kubernetes Up & Running* (3rd ed) — re-read chapters 8+ with operator's lens.
-- *Programming Kubernetes* (Hausenblas, Schimanski) — informers, controllers, CRDs.
+
+- _Kubernetes Up & Running_ (3rd ed) — re-read chapters 8+ with operator's lens.
+- _Programming Kubernetes_ (Hausenblas, Schimanski) — informers, controllers, CRDs.
 - The Kubernetes scheduler design doc.
 - Etcd operations docs end to end.
 
 ### Skill targets
+
 - Operate (or shadow ops on) a 500+ node cluster.
 - Diagnose an apiserver or etcd performance issue using metrics, not guesses.
 - Write a small custom controller using controller-runtime.
 
 ### Production project
+
 Either:
 (a) Lead an etcd tuning / defrag / upgrade exercise on a real cluster.
 (b) Write a small operator or admission webhook that solves a real org pain.
 (c) Migrate a workload off an opaque managed runtime onto K8s with full observability.
 
 ### Artifact
+
 Talk or writeup on the project, with metrics before/after.
 
 ---
@@ -174,19 +198,23 @@ Talk or writeup on the project, with metrics before/after.
 ## Month 8 — Observability program (org-level, not service-level)
 
 ### Reading
-- *Observability Engineering* (Majors et al) — chapters 7+ on org adoption.
+
+- _Observability Engineering_ (Majors et al) — chapters 7+ on org adoption.
 - OpenTelemetry spec (the parts you actually use).
 - Cardinality, exemplars, and the cost-of-observability papers from Honeycomb/Grafana blogs.
 
 ### Skill targets
+
 - Define the SLI taxonomy used by 3+ teams in your org consistently.
 - Build a "service-level golden signals" template that any team can adopt in a day.
 - Cap observability spend with cardinality budgets — and justify the cap.
 
 ### Production project
+
 Standardize SLOs across at least 5 services. Roll up to a team-level dashboard. Brief leadership on the rollup quarterly.
 
 ### Artifact
+
 A "how SLOs work here" doc that becomes the company's reference. Plus the standardized dashboards.
 
 ---
@@ -194,19 +222,23 @@ A "how SLOs work here" doc that becomes the company's reference. Plus the standa
 ## Month 9 — Cost engineering / FinOps program
 
 ### Reading
-- *Cloud FinOps* (J.R. Storment, Mike Fuller).
+
+- _Cloud FinOps_ (J.R. Storment, Mike Fuller).
 - AWS Well-Architected Framework — Cost Optimization pillar.
 - Vantage / Cast.AI engineering blog posts on real customer optimizations.
 
 ### Skill targets
+
 - Compute cost-per-request for at least 3 services.
 - Recommend (and quantify) an instance-type or commitment optimization that saves > $50k/year.
 - Run a quarterly cost review with engineering leadership.
 
 ### Production project
+
 Build a per-team cost allocation dashboard. Drive at least one optimization to completion (rightsizing, Graviton migration, NAT-to-VPC-endpoint, lifecycle policies).
 
 ### Artifact
+
 The dashboard, plus a writeup of the optimization with dollar impact.
 
 ---
@@ -231,7 +263,7 @@ Take 2-3 junior engineers from "knows the basics" to "can run an incident solo" 
 
 ### What the capstone proves
 
-A staff-track SRE doesn't get there by being the best individual debugger. They get there by *making other people more reliable* — through programs, platforms, mentoring, or external knowledge transfer. The capstone is your proof you can do that.
+A staff-track SRE doesn't get there by being the best individual debugger. They get there by _making other people more reliable_ — through programs, platforms, mentoring, or external knowledge transfer. The capstone is your proof you can do that.
 
 ### Artifact
 
@@ -322,4 +354,3 @@ You are not "done." The next 5-10 years are about depth in 1-2 areas (DBs, netwo
 4. **The capstone proves leverage** — making other people more reliable, not just being the best debugger.
 5. **External community pressure** is what turns competent IC into senior IC.
 6. **Sustainable pace beats heroics** — 5-8 hours of deliberate study per week, every week, for 52 weeks.
-

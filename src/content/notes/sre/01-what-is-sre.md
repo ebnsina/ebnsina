@@ -1,10 +1,10 @@
 ---
-title: "What SRE Actually Is"
+title: 'What SRE Actually Is'
 subtitle: "Class SRE implements DevOps. The error-budget contract, toil cap, and the embedded engineer model that makes Google's reliability work."
 chapter: 1
-level: "beginner"
-readingTime: "14 min"
-topics: ["SRE", "error budget", "toil", "DevOps", "reliability"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['SRE', 'error budget', 'toil', 'DevOps', 'reliability']
 ---
 
 <script>
@@ -22,11 +22,11 @@ That sentence is the whole discipline. SRE replaces shell-script-driven ops with
 
 These three terms get used interchangeably and they are not the same.
 
-| Discipline | Owns | Optimizes for | Headline metric |
-|------------|------|---------------|-----------------|
-| **DevOps** | Pipeline + culture | Deploy frequency | Lead time, MTTR |
-| **Platform Eng** | Internal developer platform (IDP) | Developer self-service | Time-to-first-deploy |
-| **SRE** | Production reliability | Error budget compliance | SLO attainment |
+| Discipline       | Owns                              | Optimizes for           | Headline metric      |
+| ---------------- | --------------------------------- | ----------------------- | -------------------- |
+| **DevOps**       | Pipeline + culture                | Deploy frequency        | Lead time, MTTR      |
+| **Platform Eng** | Internal developer platform (IDP) | Developer self-service  | Time-to-first-deploy |
+| **SRE**          | Production reliability            | Error budget compliance | SLO attainment       |
 
 You can think of it as: DevOps is a philosophy, Platform Engineering is a product, SRE is a job role with hard numerical constraints.
 
@@ -45,8 +45,8 @@ The single most important SRE concept. It turns reliability into a negotiable cu
 ```typescript
 // Service Level Objective — the promise to users
 const checkoutSLO = {
-  target: 0.999,        // 99.9% of requests must succeed
-  window: "30d rolling",
+	target: 0.999, // 99.9% of requests must succeed
+	window: '30d rolling'
 };
 
 // Error budget — the inverse of the SLO
@@ -70,14 +70,17 @@ const allowedFailures = monthlyRequests * errorBudget; // 100,000
 // Pre-SRE world: ops vetoes every risky deploy
 // Post-SRE world: deploys are governed by budget state
 
-type BudgetState = "healthy" | "burning" | "exhausted";
+type BudgetState = 'healthy' | 'burning' | 'exhausted';
 
 function deployPolicy(state: BudgetState) {
-  switch (state) {
-    case "healthy":   return "Ship aggressively. Try the risky migration.";
-    case "burning":   return "Ship carefully. Canary at 1% for 24h before full rollout.";
-    case "exhausted": return "Feature freeze. Reliability work only until budget recovers.";
-  }
+	switch (state) {
+		case 'healthy':
+			return 'Ship aggressively. Try the risky migration.';
+		case 'burning':
+			return 'Ship carefully. Canary at 1% for 24h before full rollout.';
+		case 'exhausted':
+			return 'Feature freeze. Reliability work only until budget recovers.';
+	}
 }
 ```
 
@@ -90,18 +93,18 @@ The second pillar. Toil is manual, repetitive, automatable, tactical work that s
 ```typescript
 // Toil examples (must be eliminated):
 const toil = [
-  "Manually restarting a stuck pod every Tuesday",
-  "Filing the same Jira ticket after every release",
-  "Copy-pasting cert renewal commands every 90 days",
-  "Hand-editing a load balancer config to add a new shard",
+	'Manually restarting a stuck pod every Tuesday',
+	'Filing the same Jira ticket after every release',
+	'Copy-pasting cert renewal commands every 90 days',
+	'Hand-editing a load balancer config to add a new shard'
 ];
 
 // Engineering work (the other 50%+):
 const engineering = [
-  "Writing a controller that auto-restarts stuck pods",
-  "Building a release-notes generator",
-  "Implementing cert-manager with auto-renewal",
-  "Adding consistent hashing so the LB scales itself",
+	'Writing a controller that auto-restarts stuck pods',
+	'Building a release-notes generator',
+	'Implementing cert-manager with auto-renewal',
+	'Adding consistent hashing so the LB scales itself'
 ];
 ```
 
@@ -137,24 +140,24 @@ The "returning the pager" mechanism is the back-pressure that prevents product t
 // Three real-world SRE org patterns
 
 const patterns = {
-  google: {
-    structure: "Embedded SRE per product (Search SRE, Ads SRE, ...)",
-    pager: "SRE holds the pager for services they accept",
-    pro: "Deep service expertise",
-    con: "Hard to share knowledge across SRE teams",
-  },
-  netflix: {
-    structure: "No SRE. CORE team owns shared resilience tooling.",
-    pager: "Product teams hold their own pager (you build it, you run it)",
-    pro: "No reliability silo, full ownership",
-    con: "Requires extreme engineering maturity",
-  },
-  stripe: {
-    structure: "Hybrid — Foundation SRE + embedded SRE per critical surface",
-    pager: "Foundation SRE owns infra pager; product owns app pager",
-    pro: "Clear infra/app split",
-    con: "Boundary disputes during incidents",
-  },
+	google: {
+		structure: 'Embedded SRE per product (Search SRE, Ads SRE, ...)',
+		pager: 'SRE holds the pager for services they accept',
+		pro: 'Deep service expertise',
+		con: 'Hard to share knowledge across SRE teams'
+	},
+	netflix: {
+		structure: 'No SRE. CORE team owns shared resilience tooling.',
+		pager: 'Product teams hold their own pager (you build it, you run it)',
+		pro: 'No reliability silo, full ownership',
+		con: 'Requires extreme engineering maturity'
+	},
+	stripe: {
+		structure: 'Hybrid — Foundation SRE + embedded SRE per critical surface',
+		pager: 'Foundation SRE owns infra pager; product owns app pager',
+		pro: 'Clear infra/app split',
+		con: 'Boundary disputes during incidents'
+	}
 };
 ```
 
@@ -184,16 +187,13 @@ Not every company should have an SRE team. Honest signals you are not ready:
 ```typescript
 // You probably don't need dedicated SRE if:
 const skipSRE =
-  monthlyActiveUsers < 100_000 ||
-  engineerCount < 50 ||
-  serviceCount < 10 ||
-  !hasOnCallCulture;
+	monthlyActiveUsers < 100_000 || engineerCount < 50 || serviceCount < 10 || !hasOnCallCulture;
 
 // Hire your first SRE when:
 const hireFirstSRE =
-  pagerDutyAlertsPerWeek > 30 ||
-  postmortemsPerMonth > 3 ||
-  productEngineersSpendingMoreThanThirtyPercentOnOps;
+	pagerDutyAlertsPerWeek > 30 ||
+	postmortemsPerMonth > 3 ||
+	productEngineersSpendingMoreThanThirtyPercentOnOps;
 ```
 
 Spinning up an SRE team prematurely creates the same silo problem SRE was invented to solve.
@@ -212,4 +212,3 @@ Spinning up an SRE team prematurely creates the same silo problem SRE was invent
 3. **50% toil cap is non-negotiable** — without it SRE collapses into ops
 4. **Embedding + return-the-pager** keeps product teams accountable for what they build
 5. **Don't hire SRE before you have the scale to justify it** — premature SRE is just expensive ops
-

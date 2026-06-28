@@ -1,10 +1,11 @@
 ---
-title: "Database Internals for SREs"
+title: 'Database Internals for SREs'
 subtitle: "MVCC, replication lag, hot rows, query plans, B-tree vs LSM, connection pools at scale. The DB knowledge that separates 'I run Postgres' from 'I keep Postgres up under fire.'"
 chapter: 14
-level: "mastery"
-readingTime: "30 min"
-topics: ["postgres", "mysql", "replication", "MVCC", "query planning", "connection pool", "B-tree", "LSM"]
+level: 'mastery'
+readingTime: '30 min'
+topics:
+  ['postgres', 'mysql', 'replication', 'MVCC', 'query planning', 'connection pool', 'B-tree', 'LSM']
 ---
 
 <script>
@@ -23,7 +24,7 @@ Knowing how a car engine works even though you're a driver — you don't rebuild
 
 A backend dev can ship a feature with `SELECT * FROM users WHERE id = $1`. A senior SRE has to answer: why does that query use 12 GB of RAM today, why did the replica lag jump to 40 minutes at 3 AM, why did `pg_stat_activity` show 800 idle-in-transaction connections, and why does the same query plan flip from index scan to seq scan once a quarter.
 
-This chapter is the operating layer of databases. It assumes you can write SQL; it teaches you what the database *does* when you submit it.
+This chapter is the operating layer of databases. It assumes you can write SQL; it teaches you what the database _does_ when you submit it.
 
 ## Storage engines — B-tree vs LSM, and why it matters
 
@@ -53,15 +54,15 @@ Two families dominate modern databases. The choice constrains everything downstr
 
 ### Operational implications
 
-| | B-tree (Postgres) | LSM (Cassandra/Rocks) |
-|---|---|---|
-| What spikes p99 | Vacuum, autovacuum on hot tables | Compaction storms |
-| What spikes disk | WAL bursts, full-page writes | SSTable rewrite during compaction |
-| What spikes memory | Connection sort/hash work | Bloom filter + block cache |
-| Tail-latency knob | `checkpoint_timeout`, `bgwriter_delay` | Compaction throttle, level sizing |
-| Backup pattern | pg_basebackup + WAL replay | snapshot SSTables (immutable!) |
+|                    | B-tree (Postgres)                      | LSM (Cassandra/Rocks)             |
+| ------------------ | -------------------------------------- | --------------------------------- |
+| What spikes p99    | Vacuum, autovacuum on hot tables       | Compaction storms                 |
+| What spikes disk   | WAL bursts, full-page writes           | SSTable rewrite during compaction |
+| What spikes memory | Connection sort/hash work              | Bloom filter + block cache        |
+| Tail-latency knob  | `checkpoint_timeout`, `bgwriter_delay` | Compaction throttle, level sizing |
+| Backup pattern     | pg_basebackup + WAL replay             | snapshot SSTables (immutable!)    |
 
-You don't pick the engine, the team picks the database. But knowing which family you're operating tells you which knobs *exist*.
+You don't pick the engine, the team picks the database. But knowing which family you're operating tells you which knobs _exist_.
 
 ## MVCC — the source of half of Postgres's surprises
 
@@ -254,7 +255,7 @@ Transaction pooling breaks code that uses `SET search_path` or `LISTEN/NOTIFY` o
 
 ### Sizing the pool
 
-Underrated math. Pool too small: requests queue, latency rises. Pool too large: you spend cycles on lock contention and context switches in the database, throughput *drops*.
+Underrated math. Pool too small: requests queue, latency rises. Pool too large: you spend cycles on lock contention and context switches in the database, throughput _drops_.
 
 ```
 Optimal pool size ≈ ((cores * 2) + effective_spindle_count)
@@ -377,11 +378,11 @@ The app-side rules that prevent most DB outages:
 // 1. Set statement_timeout per query class.
 //    OLTP: 5s. Reports: 60s. Background: 5min.
 await db.query("SET LOCAL statement_timeout = '5s'");
-await db.query("SELECT ...");
+await db.query('SELECT ...');
 
 // 2. Always set lock_timeout for any DDL.
 await db.query("SET LOCAL lock_timeout = '5s'");
-await db.query("ALTER TABLE ...");
+await db.query('ALTER TABLE ...');
 
 // 3. Use a queue for big batch work, not a single transaction.
 //    Long transactions block vacuum (see MVCC section).
@@ -437,4 +438,3 @@ Tier F
 4. **Pool with PgBouncer; size at ~2x cores** — bigger is slower, not faster.
 5. **Plan-flips cause silent outages** — `pg_stat_statements` is your earliest warning.
 6. **Untested backups don't exist** — quarterly restore drill, with the timer running.
-

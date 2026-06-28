@@ -1,10 +1,11 @@
 ---
-title: "Messaging Patterns"
-subtitle: "Saga, inbox/outbox, event-driven choreography vs orchestration — the patterns that make distributed systems reliable despite partial failure."
+title: 'Messaging Patterns'
+subtitle: 'Saga, inbox/outbox, event-driven choreography vs orchestration — the patterns that make distributed systems reliable despite partial failure.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["saga", "outbox", "choreography", "orchestration", "idempotency", "transactional messaging"]
+level: 'intermediate'
+readingTime: '11 min'
+topics:
+  ['saga', 'outbox', 'choreography', 'orchestration', 'idempotency', 'transactional messaging']
 ---
 
 <script>
@@ -26,11 +27,11 @@ The most common reliability mistake: writing to a database AND publishing an eve
 ```typescript
 // WRONG — dual write
 async function createOrder(order: Order) {
-  await db.insert('orders', order);          // succeeds
-  await kafka.publish('orders', order);       // crash here → event never sent
-  // OR:
-  await kafka.publish('orders', order);       // succeeds
-  await db.insert('orders', order);           // crash here → event sent but no DB record
+	await db.insert('orders', order); // succeeds
+	await kafka.publish('orders', order); // crash here → event never sent
+	// OR:
+	await kafka.publish('orders', order); // succeeds
+	await db.insert('orders', order); // crash here → event sent but no DB record
 }
 ```
 
@@ -55,47 +56,47 @@ CREATE TABLE outbox (
 ```typescript
 // Atomic: business write + event write in one transaction
 async function createOrder(order: Order) {
-  await db.transaction(async (tx) => {
-    await tx.query(
-      'INSERT INTO orders (id, customer_id, total) VALUES ($1, $2, $3)',
-      [order.id, order.customerId, order.total]
-    );
-    
-    await tx.query(
-      'INSERT INTO outbox (topic, key, payload) VALUES ($1, $2, $3)',
-      ['orders', order.id, JSON.stringify({ event: 'order.created', ...order })]
-    );
-  });
+	await db.transaction(async (tx) => {
+		await tx.query('INSERT INTO orders (id, customer_id, total) VALUES ($1, $2, $3)', [
+			order.id,
+			order.customerId,
+			order.total
+		]);
+
+		await tx.query('INSERT INTO outbox (topic, key, payload) VALUES ($1, $2, $3)', [
+			'orders',
+			order.id,
+			JSON.stringify({ event: 'order.created', ...order })
+		]);
+	});
 }
 
 // Outbox publisher — runs separately, polls for undelivered events
 async function publishOutbox() {
-  while (true) {
-    const rows = await db.query(
-      `SELECT * FROM outbox
+	while (true) {
+		const rows = await db.query(
+			`SELECT * FROM outbox
        WHERE published_at IS NULL
        ORDER BY created_at
        LIMIT 100
        FOR UPDATE SKIP LOCKED`
-    );
-    
-    for (const row of rows.rows) {
-      await kafka.publish(row.topic, { key: row.key, value: row.payload });
-      
-      await db.query(
-        'UPDATE outbox SET published_at = NOW() WHERE id = $1',
-        [row.id]
-      );
-    }
-    
-    await sleep(1000);
-  }
+		);
+
+		for (const row of rows.rows) {
+			await kafka.publish(row.topic, { key: row.key, value: row.payload });
+
+			await db.query('UPDATE outbox SET published_at = NOW() WHERE id = $1', [row.id]);
+		}
+
+		await sleep(1000);
+	}
 }
 ```
 
 `FOR UPDATE SKIP LOCKED` lets multiple publisher instances run without duplicate publishing — each row is claimed by one publisher.
 
 **Cleanup:** delete published rows after a retention window:
+
 ```sql
 DELETE FROM outbox WHERE published_at < NOW() - INTERVAL '7 days';
 ```
@@ -116,21 +117,21 @@ CREATE TABLE inbox (
 
 ```typescript
 async function handleOrder(msg: KafkaMessage) {
-  const messageId = `${msg.topic}-${msg.partition}-${msg.offset}`;
-  
-  await db.transaction(async (tx) => {
-    // Check if already processed
-    const result = await tx.query(
-      'INSERT INTO inbox (message_id, topic) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING message_id',
-      [messageId, msg.topic]
-    );
-    
-    // No rows returned = conflict = already processed
-    if (result.rows.length === 0) return;
-    
-    const order = JSON.parse(msg.value!.toString());
-    await processOrder(tx, order);
-  });
+	const messageId = `${msg.topic}-${msg.partition}-${msg.offset}`;
+
+	await db.transaction(async (tx) => {
+		// Check if already processed
+		const result = await tx.query(
+			'INSERT INTO inbox (message_id, topic) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING message_id',
+			[messageId, msg.topic]
+		);
+
+		// No rows returned = conflict = already processed
+		if (result.rows.length === 0) return;
+
+		const order = JSON.parse(msg.value!.toString());
+		await processOrder(tx, order);
+	});
 }
 ```
 
@@ -154,19 +155,19 @@ OrderService publishes order.created
 ```typescript
 // Each service is autonomous
 class PaymentService {
-  async onOrderCreated(event: OrderCreated) {
-    try {
-      const payment = await chargeCard(event.customerId, event.total);
-      await publish('payment.completed', { orderId: event.orderId, paymentId: payment.id });
-    } catch {
-      await publish('payment.failed', { orderId: event.orderId, reason: 'card_declined' });
-    }
-  }
-  
-  async onOrderCancelled(event: OrderCancelled) {
-    // Compensation: refund if payment was taken
-    await refundPayment(event.orderId);
-  }
+	async onOrderCreated(event: OrderCreated) {
+		try {
+			const payment = await chargeCard(event.customerId, event.total);
+			await publish('payment.completed', { orderId: event.orderId, paymentId: payment.id });
+		} catch {
+			await publish('payment.failed', { orderId: event.orderId, reason: 'card_declined' });
+		}
+	}
+
+	async onOrderCancelled(event: OrderCancelled) {
+		// Compensation: refund if payment was taken
+		await refundPayment(event.orderId);
+	}
 }
 ```
 
@@ -177,43 +178,42 @@ A central coordinator (the saga) tracks the state of a distributed transaction a
 ```typescript
 // Saga state machine
 interface OrderSagaState {
-  orderId: string;
-  step: 'payment' | 'inventory' | 'fulfillment' | 'completed' | 'failed';
-  paymentId?: string;
-  compensations: Array<() => Promise<void>>;
+	orderId: string;
+	step: 'payment' | 'inventory' | 'fulfillment' | 'completed' | 'failed';
+	paymentId?: string;
+	compensations: Array<() => Promise<void>>;
 }
 
 class OrderSaga {
-  async execute(order: Order): Promise<void> {
-    const state: OrderSagaState = {
-      orderId: order.id,
-      step: 'payment',
-      compensations: [],
-    };
+	async execute(order: Order): Promise<void> {
+		const state: OrderSagaState = {
+			orderId: order.id,
+			step: 'payment',
+			compensations: []
+		};
 
-    try {
-      // Step 1: Payment
-      const payment = await paymentClient.charge(order);
-      state.paymentId = payment.id;
-      state.compensations.push(() => paymentClient.refund(payment.id));
+		try {
+			// Step 1: Payment
+			const payment = await paymentClient.charge(order);
+			state.paymentId = payment.id;
+			state.compensations.push(() => paymentClient.refund(payment.id));
 
-      // Step 2: Reserve inventory
-      await inventoryClient.reserve(order.items);
-      state.compensations.push(() => inventoryClient.release(order.items));
+			// Step 2: Reserve inventory
+			await inventoryClient.reserve(order.items);
+			state.compensations.push(() => inventoryClient.release(order.items));
 
-      // Step 3: Fulfill
-      await fulfillmentClient.ship(order);
-      state.step = 'completed';
-
-    } catch (err) {
-      state.step = 'failed';
-      // Run compensations in reverse order
-      for (const compensate of state.compensations.reverse()) {
-        await compensate().catch(console.error);  // best-effort
-      }
-      throw err;
-    }
-  }
+			// Step 3: Fulfill
+			await fulfillmentClient.ship(order);
+			state.step = 'completed';
+		} catch (err) {
+			state.step = 'failed';
+			// Run compensations in reverse order
+			for (const compensate of state.compensations.reverse()) {
+				await compensate().catch(console.error); // best-effort
+			}
+			throw err;
+		}
+	}
 }
 ```
 
@@ -247,6 +247,7 @@ Queue: [msg1, msg2, msg3, msg4, msg5]
 ```
 
 Works automatically with:
+
 - RabbitMQ: multiple consumers on the same queue
 - Kafka: multiple consumers in the same consumer group (up to partition count)
 - NATS JetStream: multiple pull consumers on same durable
@@ -258,6 +259,7 @@ The key invariant: each message processed by exactly one worker. Guaranteed by t
 One event consumed by multiple independent services:
 
 **Per-consumer queues (RabbitMQ):**
+
 ```typescript
 // Exchange with one binding per service
 await ch.assertExchange('orders', 'topic', { durable: true });
@@ -287,34 +289,34 @@ const analyticsConsumer = kafka.consumer({ groupId: 'analytics-service' });
 A message that always causes consumer failure, blocking the queue.
 
 Detection:
+
 ```typescript
 ch.consume('orders', async (msg) => {
-  const attempt = (msg.properties.headers['x-attempt'] || 0) as number;
-  
-  try {
-    await processOrder(JSON.parse(msg.content.toString()));
-    ch.ack(msg);
-  } catch (err) {
-    if (attempt >= 3) {
-      // Poison pill — move to DLQ with diagnostic headers
-      ch.publish('orders.dlx', 'created', msg.content, {
-        headers: {
-          ...msg.properties.headers,
-          'x-failed-reason': err.message,
-          'x-failed-at': new Date().toISOString(),
-        }
-      });
-      ch.ack(msg);
-    } else {
-      // Retry
-      ch.publish('orders', 'created', msg.content, {
-        headers: { 'x-attempt': attempt + 1 }
-      });
-      ch.ack(msg);
-    }
-  }
+	const attempt = (msg.properties.headers['x-attempt'] || 0) as number;
+
+	try {
+		await processOrder(JSON.parse(msg.content.toString()));
+		ch.ack(msg);
+	} catch (err) {
+		if (attempt >= 3) {
+			// Poison pill — move to DLQ with diagnostic headers
+			ch.publish('orders.dlx', 'created', msg.content, {
+				headers: {
+					...msg.properties.headers,
+					'x-failed-reason': err.message,
+					'x-failed-at': new Date().toISOString()
+				}
+			});
+			ch.ack(msg);
+		} else {
+			// Retry
+			ch.publish('orders', 'created', msg.content, {
+				headers: { 'x-attempt': attempt + 1 }
+			});
+			ch.ack(msg);
+		}
+	}
 });
 ```
 
 Always have a DLQ. A queue without a DLQ eventually blocks on a poison pill indefinitely.
-

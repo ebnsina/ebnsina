@@ -1,10 +1,10 @@
 ---
-title: "Containers — Roadmap"
-subtitle: "Docker fundamentals, image layers, multi-stage builds, Compose for local dev, and production security hardening."
+title: 'Containers — Roadmap'
+subtitle: 'Docker fundamentals, image layers, multi-stage builds, Compose for local dev, and production security hardening.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Containers have become the standard unit of deployment, but most engineers use t
 3. **Docker Compose** — multi-service environments, networking, depends_on with health checks, profiles
 4. **Image Layers & Registries** — layer sharing, tagging strategy, GHCR/ECR, self-hosted, multi-platform
 5. **Container Security** — non-root, read-only filesystem, capabilities, seccomp, supply chain, secrets
-

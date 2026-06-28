@@ -1,10 +1,10 @@
 ---
-title: "Prometheus & Grafana"
-subtitle: "Instrumenting applications, writing PromQL, building dashboards, and alerting on what actually matters."
+title: 'Prometheus & Grafana'
+subtitle: 'Instrumenting applications, writing PromQL, building dashboards, and alerting on what actually matters.'
 chapter: 3
-level: "intermediate"
-readingTime: "12 min"
-topics: ["Prometheus", "Grafana", "PromQL", "metrics", "alerting", "instrumentation"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['Prometheus', 'Grafana', 'PromQL', 'metrics', 'alerting', 'instrumentation']
 ---
 
 <script>
@@ -30,6 +30,7 @@ http_request_duration_seconds{quantile="0.99"}                   0.847 @17053122
 ```
 
 **Metric types:**
+
 - **Counter** — monotonically increasing (requests, errors, bytes). Never decreases except on restart.
 - **Gauge** — current value (queue depth, active connections, memory). Can go up or down.
 - **Histogram** — distribution of observations (request duration, response size). Includes buckets and sum/count.
@@ -47,45 +48,49 @@ collectDefaultMetrics({ register: registry });
 
 // Custom metrics
 export const httpRequestsTotal = new Counter({
-  name: 'http_requests_total',
-  help: 'Total HTTP requests',
-  labelNames: ['method', 'path', 'status'],
-  registers: [registry],
+	name: 'http_requests_total',
+	help: 'Total HTTP requests',
+	labelNames: ['method', 'path', 'status'],
+	registers: [registry]
 });
 
 export const httpRequestDuration = new Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'HTTP request duration',
-  labelNames: ['method', 'path', 'status'],
-  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
-  registers: [registry],
+	name: 'http_request_duration_seconds',
+	help: 'HTTP request duration',
+	labelNames: ['method', 'path', 'status'],
+	buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+	registers: [registry]
 });
 
 export const queueDepth = new Gauge({
-  name: 'order_queue_depth',
-  help: 'Current order processing queue depth',
-  registers: [registry],
+	name: 'order_queue_depth',
+	help: 'Current order processing queue depth',
+	registers: [registry]
 });
 
 // Middleware
 app.use((req, res, next) => {
-  const end = httpRequestDuration.startTimer({
-    method: req.method,
-    path: req.route?.path ?? req.path,  // use route pattern, not full URL
-  });
+	const end = httpRequestDuration.startTimer({
+		method: req.method,
+		path: req.route?.path ?? req.path // use route pattern, not full URL
+	});
 
-  res.on('finish', () => {
-    const labels = { method: req.method, path: req.route?.path ?? req.path, status: String(res.statusCode) };
-    httpRequestsTotal.inc(labels);
-    end(labels);
-  });
-  next();
+	res.on('finish', () => {
+		const labels = {
+			method: req.method,
+			path: req.route?.path ?? req.path,
+			status: String(res.statusCode)
+		};
+		httpRequestsTotal.inc(labels);
+		end(labels);
+	});
+	next();
 });
 
 // Metrics endpoint
 app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', registry.contentType);
-  res.send(await registry.metrics());
+	res.set('Content-Type', registry.contentType);
+	res.send(await registry.metrics());
 });
 ```
 
@@ -132,6 +137,7 @@ scrape_configs:
 ```
 
 For Kubernetes, use service discovery instead of static configs:
+
 ```yaml
 scrape_configs:
   - job_name: 'kubernetes-pods'
@@ -140,7 +146,7 @@ scrape_configs:
     relabel_configs:
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
         action: keep
-        regex: "true"
+        regex: 'true'
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
         target_label: __address__
         regex: (.+)
@@ -181,6 +187,7 @@ node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100
 ```
 
 **Key PromQL functions:**
+
 - `rate()` — per-second rate of increase of a counter over a window
 - `irate()` — instant rate (last two data points) — more responsive, noisier
 - `increase()` — total increase over a window (rate × window)
@@ -205,6 +212,7 @@ services:
 ```
 
 **Provision data sources and dashboards as code:**
+
 ```yaml
 # grafana/provisioning/datasources/prometheus.yml
 apiVersion: 1
@@ -227,11 +235,13 @@ providers:
 Dashboard JSON goes in `/var/lib/grafana/dashboards/` — committed to git, provisioned on startup.
 
 **USE method panels for services:**
+
 - Utilization (CPU, memory as % of limit)
 - Saturation (queue depth, connection pool usage)
 - Errors (error rate, 5xx rate)
 
 **RED method panels for requests:**
+
 - Rate (requests/sec)
 - Errors (error rate)
 - Duration (P50, P95, P99 latency)
@@ -256,9 +266,9 @@ groups:
           severity: critical
           team: backend
         annotations:
-          summary: "High error rate on order-service"
-          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
-          runbook: "https://runbooks.internal/order-service/high-error-rate"
+          summary: 'High error rate on order-service'
+          description: 'Error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+          runbook: 'https://runbooks.internal/order-service/high-error-rate'
 
       # Latency SLO breach
       - alert: HighP99Latency
@@ -270,7 +280,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "P99 latency above 1s"
+          summary: 'P99 latency above 1s'
 
       # Queue backing up
       - alert: OrderQueueHigh
@@ -279,7 +289,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Order queue depth is {{ $value }}"
+          summary: 'Order queue depth is {{ $value }}'
 
       # Service down
       - alert: ServiceDown
@@ -288,7 +298,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "order-service is down"
+          summary: 'order-service is down'
 ```
 
 ## Alertmanager
@@ -311,7 +321,7 @@ route:
     - match:
         severity: critical
       receiver: 'pagerduty'
-      continue: true   # also send to slack
+      continue: true # also send to slack
     - match:
         severity: critical
       receiver: 'slack-critical'
@@ -366,4 +376,3 @@ groups:
 ```
 
 Dashboard queries then use `job:http_errors:rate5m` — instant, no computation at query time.
-

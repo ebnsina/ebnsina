@@ -67,7 +67,10 @@
 	});
 </script>
 
-<div bind:this={sentinel} class="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,var(--bg))] px-5 py-4">
+<div
+	bind:this={sentinel}
+	class="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] px-5 py-4"
+>
 	<div class="flex items-center gap-3">
 		<button
 			type="button"

@@ -1,10 +1,10 @@
 ---
-title: "What Are Containers"
+title: 'What Are Containers'
 subtitle: "Namespaces, cgroups, and the union filesystem — what's actually happening under docker run."
 chapter: 1
-level: "beginner"
-readingTime: "9 min"
-topics: ["containers", "namespaces", "cgroups", "union filesystem", "OCI"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['containers', 'namespaces', 'cgroups', 'union filesystem', 'OCI']
 ---
 
 <script>
@@ -39,15 +39,15 @@ Containers are built on three Linux kernel features:
 
 Namespaces make a process think it's alone on the system by giving it its own view of specific resources:
 
-| Namespace | Isolates |
-|-----------|---------|
-| `pid` | Process IDs — container sees its process as PID 1 |
-| `net` | Network interfaces, routing tables, ports |
-| `mnt` | Filesystem mount points |
-| `uts` | Hostname and domain name |
-| `ipc` | Message queues, semaphores, shared memory |
-| `user` | User and group IDs |
-| `cgroup` | Cgroup hierarchy view |
+| Namespace | Isolates                                          |
+| --------- | ------------------------------------------------- |
+| `pid`     | Process IDs — container sees its process as PID 1 |
+| `net`     | Network interfaces, routing tables, ports         |
+| `mnt`     | Filesystem mount points                           |
+| `uts`     | Hostname and domain name                          |
+| `ipc`     | Message queues, semaphores, shared memory         |
+| `user`    | User and group IDs                                |
+| `cgroup`  | Cgroup hierarchy view                             |
 
 ```bash
 # See namespaces of a running container
@@ -195,4 +195,3 @@ docker run --tmpfs /tmp myapp
 ```
 
 Volumes are the correct approach for database data, user uploads, and anything that must outlive a container restart. The container filesystem is for application code and runtime — not for data.
-

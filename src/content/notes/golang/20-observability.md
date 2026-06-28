@@ -1,10 +1,10 @@
 ---
-title: "Observability"
-subtitle: "Logs, metrics, and traces — the three pillars that let you understand what your Go service is doing in production."
+title: 'Observability'
+subtitle: 'Logs, metrics, and traces — the three pillars that let you understand what your Go service is doing in production.'
 chapter: 20
-level: "advanced"
-readingTime: "20 min"
-topics: ["observability", "OpenTelemetry", "metrics", "tracing", "Prometheus", "monitoring"]
+level: 'advanced'
+readingTime: '20 min'
+topics: ['observability', 'OpenTelemetry', 'metrics', 'tracing', 'Prometheus', 'monitoring']
 ---
 
 <script>
@@ -15,11 +15,11 @@ topics: ["observability", "OpenTelemetry", "metrics", "tracing", "Prometheus", "
 
 Production services need three types of observability data:
 
-| Pillar | Question It Answers | Example |
-|--------|-------------------|---------|
-| **Logs** | What happened? | "User 42 login failed: invalid password" |
-| **Metrics** | How is the system performing? | "p99 latency = 250ms, error rate = 0.5%" |
-| **Traces** | How does a request flow? | "Request → API Gateway → User Service → Database (total: 180ms)" |
+| Pillar      | Question It Answers           | Example                                                          |
+| ----------- | ----------------------------- | ---------------------------------------------------------------- |
+| **Logs**    | What happened?                | "User 42 login failed: invalid password"                         |
+| **Metrics** | How is the system performing? | "p99 latency = 250ms, error rate = 0.5%"                         |
+| **Traces**  | How does a request flow?      | "Request → API Gateway → User Service → Database (total: 180ms)" |
 
 <Callout type="info">
 
@@ -333,4 +333,3 @@ func (h *HealthHandler) DetailedHealth(w http.ResponseWriter, r *http.Request) {
 5. **Traces follow requests across services** — each span is a unit of work with timing
 6. **Expose `/metrics` for Prometheus**, `/health` for load balancers, `/debug/pprof` for profiling
 7. **Don't over-instrument** — start with RED metrics and add specific ones when investigating issues
-

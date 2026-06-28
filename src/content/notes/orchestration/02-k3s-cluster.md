@@ -1,10 +1,10 @@
 ---
-title: "k3s on Your Own VPS"
-subtitle: "A production-grade Kubernetes cluster on bare metal — k3s setup, node joining, persistent storage, and why k3s beats managed Kubernetes for cost-conscious teams."
+title: 'k3s on Your Own VPS'
+subtitle: 'A production-grade Kubernetes cluster on bare metal — k3s setup, node joining, persistent storage, and why k3s beats managed Kubernetes for cost-conscious teams.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["k3s", "VPS", "bare metal", "Hetzner", "cluster setup", "Longhorn", "Traefik"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['k3s', 'VPS', 'bare metal', 'Hetzner', 'cluster setup', 'Longhorn', 'Traefik']
 ---
 
 <script>
@@ -24,6 +24,7 @@ Renting vs owning: EKS costs $0.10/hour just for the control plane (~$72/month) 
 k3s is a lightweight Kubernetes distribution by Rancher. The entire control plane runs as a single binary (~70MB). It removes alpha features, uses SQLite instead of etcd by default (PostgreSQL for production), and bundles Traefik as an ingress controller.
 
 Compared to full Kubernetes:
+
 - Same API surface — all `kubectl` commands work
 - Same YAML manifests — no changes needed
 - Embedded etcd or external PostgreSQL — no separate etcd cluster to operate
@@ -178,12 +179,12 @@ kind: StorageClass
 metadata:
   name: longhorn
   annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
+    storageclass.kubernetes.io/is-default-class: 'true'
 provisioner: driver.longhorn.io
 parameters:
-  numberOfReplicas: "2"
-  staleReplicaTimeout: "2880"
-reclaimPolicy: Retain   # don't delete data when PVC is deleted
+  numberOfReplicas: '2'
+  staleReplicaTimeout: '2880'
+reclaimPolicy: Retain # don't delete data when PVC is deleted
 ```
 
 ```yaml
@@ -269,6 +270,7 @@ k3s etcd-snapshot restore \
 ```
 
 Automate with a cron job:
+
 ```bash
 # /etc/cron.d/k3s-backup
 0 2 * * * root k3s etcd-snapshot save && \
@@ -292,4 +294,3 @@ Savings: ~$130/mo ($1,560/yr) for equivalent capacity
 ```
 
 The trade-off: you operate the control plane. With k3s that's: one command to join nodes, one snapshot command for backup, `apt upgrade` + `curl | sh` to upgrade k3s. For a 3-node cluster: 30 minutes/month of maintenance.
-

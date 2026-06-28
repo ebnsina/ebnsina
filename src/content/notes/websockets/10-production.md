@@ -1,10 +1,10 @@
 ---
-title: "Production self-host"
-subtitle: "Behind nginx with TLS, systemd-managed, observable, scaled across processes via Redis. Same operational shape as the GraphQL and gRPC tracks — different protocol on the wire."
+title: 'Production self-host'
+subtitle: 'Behind nginx with TLS, systemd-managed, observable, scaled across processes via Redis. Same operational shape as the GraphQL and gRPC tracks — different protocol on the wire.'
 chapter: 10
-level: "advanced"
-readingTime: "14 min"
-topics: ["websockets", "nginx", "systemd", "observability", "scaling"]
+level: 'advanced'
+readingTime: '14 min'
+topics: ['websockets', 'nginx', 'systemd', 'observability', 'scaling']
 ---
 
 <script>
@@ -351,5 +351,4 @@ Total cost of ownership beats every managed service for the small-to-medium scal
 - Scale plateau: ~50K connections/process; multiple processes per box; multiple boxes when you need them.
 - Pre-launch checklist or it bites.
 
-That is the full Backend Engineering Path's WebSockets track. Next topic in the path: [Webhooks](/notes/webhooks) — when push goes the other direction, between *services*, and "deliver-or-die" semantics matter.
-
+That is the full Backend Engineering Path's WebSockets track. Next topic in the path: [Webhooks](/notes/webhooks) — when push goes the other direction, between _services_, and "deliver-or-die" semantics matter.

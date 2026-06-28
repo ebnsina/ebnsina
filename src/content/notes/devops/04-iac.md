@@ -1,10 +1,10 @@
 ---
-title: "Infrastructure as Code"
-subtitle: "Terraform, declarative infrastructure, state management — define your cloud resources in version-controlled files."
+title: 'Infrastructure as Code'
+subtitle: 'Terraform, declarative infrastructure, state management — define your cloud resources in version-controlled files.'
 chapter: 4
-level: "intermediate"
-readingTime: "14 min"
-topics: ["Terraform", "IaC", "infrastructure", "cloud"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['Terraform', 'IaC', 'infrastructure', 'cloud']
 ---
 
 <script>
@@ -14,6 +14,7 @@ topics: ["Terraform", "IaC", "infrastructure", "cloud"]
 ## Why Infrastructure as Code?
 
 Clicking through cloud consoles to create resources is:
+
 - **Not reproducible**: can you recreate your entire infrastructure from scratch?
 - **Not auditable**: who changed what, when?
 - **Not scalable**: setting up a new environment means clicking through everything again
@@ -165,4 +166,3 @@ module "order_api" {
 2. **`terraform plan` before `apply`** — always review what will change
 3. **Remote state with locking** is mandatory for teams — prevents corruption
 4. **Modules** let you reuse infrastructure patterns across projects
-

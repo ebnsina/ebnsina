@@ -1,10 +1,10 @@
 ---
-title: "Postgres Streaming Replication by Hand"
-subtitle: "Setting up a primary, configuring pg_basebackup, streaming WAL to a standby — no managed service, no Patroni, just Postgres."
+title: 'Postgres Streaming Replication by Hand'
+subtitle: 'Setting up a primary, configuring pg_basebackup, streaming WAL to a standby — no managed service, no Patroni, just Postgres.'
 chapter: 2
-level: "intermediate"
-readingTime: "12 min"
-topics: ["PostgreSQL", "streaming replication", "pg_basebackup", "WAL", "standby", "failover"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['PostgreSQL', 'streaming replication', 'pg_basebackup', 'WAL', 'standby', 'failover']
 ---
 
 <script>
@@ -72,6 +72,7 @@ pg_basebackup \
 ```
 
 `--write-recovery-conf` creates two files:
+
 - `standby.signal` — presence of this file tells Postgres to start as a standby
 - `postgresql.auto.conf` — contains `primary_conninfo` pointing to the primary
 
@@ -127,6 +128,7 @@ SELECT
 ```
 
 Write a row on the primary, check it appears on the replica:
+
 ```bash
 # Primary
 psql -h 10.0.0.10 -c "INSERT INTO test_replication VALUES (1);"
@@ -151,11 +153,13 @@ psql -c "SELECT pg_is_in_recovery();"
 ```
 
 After promotion:
+
 1. Update application connection strings to point to the new primary
 2. Re-point any other replicas to the new primary
 3. If the old primary recovers, it must be rebuilt as a replica (it has diverged)
 
 **Rebuilding the old primary as a new replica:**
+
 ```bash
 # On old primary (now demoted)
 pg_ctlcluster 16 main stop
@@ -184,6 +188,7 @@ synchronous_standby_names = 'ANY 1 (replica1, replica2)'
 ```
 
 Cascade replication (replica replicates from another replica):
+
 ```bash
 # replica2 replicates from replica1 instead of primary
 # primary_conninfo in replica2's postgresql.auto.conf
@@ -258,4 +263,3 @@ touch /var/lib/postgresql/16/restore/recovery.signal
 # 4. Start Postgres — it replays WAL up to the target time
 pg_ctlcluster 16 restore start
 ```
-

@@ -1,10 +1,10 @@
 ---
-title: "Renewal, Monitoring, and Rotation"
-subtitle: "Surviving past 90 days. Renewal hooks, expiration monitoring, key rotation, and the runbook for the night your cert quietly expired and now nobody can reach the site."
+title: 'Renewal, Monitoring, and Rotation'
+subtitle: 'Surviving past 90 days. Renewal hooks, expiration monitoring, key rotation, and the runbook for the night your cert quietly expired and now nobody can reach the site.'
 chapter: 8
-level: "advanced"
-readingTime: "11 min"
-topics: ["renewal", "monitoring", "key rotation", "letsencrypt", "tls"]
+level: 'advanced'
+readingTime: '11 min'
+topics: ['renewal', 'monitoring', 'key rotation', 'letsencrypt', 'tls']
 ---
 
 <script>
@@ -21,7 +21,7 @@ A passport expiry alert — the credential is still valid today, but you need to
 
 ## The 90-day cliff
 
-Let's Encrypt certificates expire after 90 days. This is deliberate — short lifetimes limit damage from undetected key compromise and force everyone to automate. But it also means that any setup that *worked once* but no longer renews quietly walks toward a hard outage.
+Let's Encrypt certificates expire after 90 days. This is deliberate — short lifetimes limit damage from undetected key compromise and force everyone to automate. But it also means that any setup that _worked once_ but no longer renews quietly walks toward a hard outage.
 
 You have one job: make renewal work, prove it works, and notice if it breaks. This chapter covers all three.
 
@@ -66,7 +66,7 @@ If this passes for every cert listed, real renewals will too.
 
 ## Renewal hooks — reload the right service
 
-When a cert renews, the new files appear, but services holding the *old* cert in memory keep using it until reloaded. nginx, postgres, dovecot, every TLS-using daemon needs to be told.
+When a cert renews, the new files appear, but services holding the _old_ cert in memory keep using it until reloaded. nginx, postgres, dovecot, every TLS-using daemon needs to be told.
 
 certbot supports hooks:
 
@@ -105,7 +105,7 @@ The hook only runs after this specific cert's successful renewal.
 
 ## Monitoring expiration
 
-Even with all the automation, things can break — a misconfigured nginx, a deleted A record, a DNS plugin's stale credentials, an upstream change in the ACME protocol. You need to *notice* before the cert expires.
+Even with all the automation, things can break — a misconfigured nginx, a deleted A record, a DNS plugin's stale credentials, an upstream change in the ACME protocol. You need to _notice_ before the cert expires.
 
 Three layers, in order of value:
 
@@ -197,7 +197,7 @@ If the script exits non-zero, the systemd unit fails. Configure systemd to email
 
 ### 3. External monitoring
 
-The script above runs *on the server*. If the server is gone (network partition, power outage, deletion), the check is gone too. External monitoring catches those:
+The script above runs _on the server_. If the server is gone (network partition, power outage, deletion), the check is gone too. External monitoring catches those:
 
 - **UptimeRobot, Pingdom, Better Uptime, Healthchecks.io** — most have a "TLS expiry" check that hits your domain and reads the cert from the outside. Free tiers cover small fleets.
 - **Self-hosted: blackbox_exporter** + Prometheus — `probe_ssl_earliest_cert_expiry` metric. Alert when within N days.
@@ -324,7 +324,7 @@ If you ever see a cert for your domain that you did not request, treat it as a s
 
 Older guidance: pin a specific cert in browsers (HPKP). Modern guidance: **do not**. HPKP was deprecated by browsers around 2018 because of the risk of pinning yourself into a corner — if you lose the pinned key, the site is unreachable for the pin's lifetime.
 
-If you have a pinning use case (mobile app talking to your API), pin in the app — but pin the *public key* (SPKI), not the cert itself, and pin a backup key as well.
+If you have a pinning use case (mobile app talking to your API), pin in the app — but pin the _public key_ (SPKI), not the cert itself, and pin a backup key as well.
 
 ## Recap
 
@@ -336,4 +336,3 @@ If you have a pinning use case (mobile app talking to your API), pin in the app 
 - Use Certificate Transparency monitors to catch unexpected certs issued for your domain.
 
 This is the end of the **TLS & Certificates** track. You can now issue, configure, deploy, monitor, and renew real TLS certificates without touching a managed service. Every domain you ever own will have HTTPS in 60 seconds.
-

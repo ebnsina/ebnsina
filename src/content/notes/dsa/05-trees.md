@@ -1,10 +1,10 @@
 ---
-title: "Binary Trees & BSTs"
-subtitle: "Recursive thinking, tree traversals, and binary search trees — the gateway to hierarchical data."
+title: 'Binary Trees & BSTs'
+subtitle: 'Recursive thinking, tree traversals, and binary search trees — the gateway to hierarchical data.'
 chapter: 5
-level: "intermediate"
-readingTime: "16 min"
-topics: ["binary tree", "BST", "DFS", "BFS", "recursion"]
+level: 'intermediate'
+readingTime: '16 min'
+topics: ['binary tree', 'BST', 'DFS', 'BFS', 'recursion']
 ---
 
 <script>
@@ -27,13 +27,13 @@ Like a company org chart — CEO at the top, VPs below, directors under them, th
 
 ```typescript
 class TreeNode {
-  val: number;
-  left: TreeNode | null = null;
-  right: TreeNode | null = null;
+	val: number;
+	left: TreeNode | null = null;
+	right: TreeNode | null = null;
 
-  constructor(val: number) {
-    this.val = val;
-  }
+	constructor(val: number) {
+		this.val = val;
+	}
 }
 ```
 
@@ -44,40 +44,40 @@ There are four ways to visit every node. The order matters for different problem
 ```typescript
 // In-order: left → root → right (gives sorted order for BST)
 function inorder(root: TreeNode | null): number[] {
-  if (!root) return [];
-  return [...inorder(root.left), root.val, ...inorder(root.right)];
+	if (!root) return [];
+	return [...inorder(root.left), root.val, ...inorder(root.right)];
 }
 
 // Pre-order: root → left → right (copy/serialize a tree)
 function preorder(root: TreeNode | null): number[] {
-  if (!root) return [];
-  return [root.val, ...preorder(root.left), ...preorder(root.right)];
+	if (!root) return [];
+	return [root.val, ...preorder(root.left), ...preorder(root.right)];
 }
 
 // Post-order: left → right → root (delete a tree, evaluate expressions)
 function postorder(root: TreeNode | null): number[] {
-  if (!root) return [];
-  return [...postorder(root.left), ...postorder(root.right), root.val];
+	if (!root) return [];
+	return [...postorder(root.left), ...postorder(root.right), root.val];
 }
 
 // Level-order: BFS — see each "row" of the tree
 function levelOrder(root: TreeNode | null): number[][] {
-  if (!root) return [];
-  const result: number[][] = [];
-  const queue: TreeNode[] = [root];
+	if (!root) return [];
+	const result: number[][] = [];
+	const queue: TreeNode[] = [root];
 
-  while (queue.length) {
-    const level: number[] = [];
-    const size = queue.length;
-    for (let i = 0; i < size; i++) {
-      const node = queue.shift()!;
-      level.push(node.val);
-      if (node.left) queue.push(node.left);
-      if (node.right) queue.push(node.right);
-    }
-    result.push(level);
-  }
-  return result;
+	while (queue.length) {
+		const level: number[] = [];
+		const size = queue.length;
+		for (let i = 0; i < size; i++) {
+			const node = queue.shift()!;
+			level.push(node.val);
+			if (node.left) queue.push(node.left);
+			if (node.right) queue.push(node.right);
+		}
+		result.push(level);
+	}
+	return result;
 }
 ```
 
@@ -87,8 +87,8 @@ function levelOrder(root: TreeNode | null): number[][] {
 
 ```typescript
 function maxDepth(root: TreeNode | null): number {
-  if (!root) return 0;
-  return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
+	if (!root) return 0;
+	return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
 }
 ```
 
@@ -96,27 +96,23 @@ function maxDepth(root: TreeNode | null): number {
 
 ```typescript
 function invertTree(root: TreeNode | null): TreeNode | null {
-  if (!root) return null;
-  [root.left, root.right] = [invertTree(root.right), invertTree(root.left)];
-  return root;
+	if (!root) return null;
+	[root.left, root.right] = [invertTree(root.right), invertTree(root.left)];
+	return root;
 }
 ```
 
 ### Lowest Common Ancestor
 
 ```typescript
-function lowestCommonAncestor(
-  root: TreeNode | null,
-  p: TreeNode,
-  q: TreeNode
-): TreeNode | null {
-  if (!root || root === p || root === q) return root;
+function lowestCommonAncestor(root: TreeNode | null, p: TreeNode, q: TreeNode): TreeNode | null {
+	if (!root || root === p || root === q) return root;
 
-  const left = lowestCommonAncestor(root.left, p, q);
-  const right = lowestCommonAncestor(root.right, p, q);
+	const left = lowestCommonAncestor(root.left, p, q);
+	const right = lowestCommonAncestor(root.right, p, q);
 
-  if (left && right) return root; // p and q are on different sides
-  return left || right;
+	if (left && right) return root; // p and q are on different sides
+	return left || right;
 }
 ```
 
@@ -126,27 +122,27 @@ A BST maintains the invariant: left child &lt; parent &lt; right child. This giv
 
 ```typescript
 class BST {
-  root: TreeNode | null = null;
+	root: TreeNode | null = null;
 
-  insert(val: number): void {
-    this.root = this._insert(this.root, val);
-  }
+	insert(val: number): void {
+		this.root = this._insert(this.root, val);
+	}
 
-  private _insert(node: TreeNode | null, val: number): TreeNode {
-    if (!node) return new TreeNode(val);
-    if (val < node.val) node.left = this._insert(node.left, val);
-    else node.right = this._insert(node.right, val);
-    return node;
-  }
+	private _insert(node: TreeNode | null, val: number): TreeNode {
+		if (!node) return new TreeNode(val);
+		if (val < node.val) node.left = this._insert(node.left, val);
+		else node.right = this._insert(node.right, val);
+		return node;
+	}
 
-  search(val: number): boolean {
-    let current = this.root;
-    while (current) {
-      if (val === current.val) return true;
-      current = val < current.val ? current.left : current.right;
-    }
-    return false;
-  }
+	search(val: number): boolean {
+		let current = this.root;
+		while (current) {
+			if (val === current.val) return true;
+			current = val < current.val ? current.left : current.right;
+		}
+		return false;
+	}
 }
 ```
 
@@ -162,4 +158,3 @@ class BST {
 2. **Know all four traversals** and when to use each
 3. **BSTs give O(log n) operations** but degrade to O(n) if unbalanced
 4. **DFS** (pre/in/post-order) uses a stack; **BFS** (level-order) uses a queue
-

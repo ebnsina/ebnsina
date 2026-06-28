@@ -1,10 +1,10 @@
 ---
-title: "Picking a VPS"
+title: 'Picking a VPS'
 subtitle: "What a VPS actually is, how to size one, and how to provision your first box without locking yourself into anyone's ecosystem."
 chapter: 1
-level: "beginner"
-readingTime: "9 min"
-topics: ["vps", "linux", "provisioning", "hetzner", "ovh", "digitalocean"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['vps', 'linux', 'provisioning', 'hetzner', 'ovh', 'digitalocean']
 ---
 
 <script>
@@ -43,13 +43,13 @@ Because you understand exactly what you are paying for and exactly what is runni
 
 Any of these will do for learning. Pick one based on price, region, and reputation:
 
-| Provider | Smallest plan | Notes |
-|---|---|---|
-| **Hetzner Cloud** | ~€4/mo (2 vCPU, 4GB RAM, 40GB SSD) | Best price/performance. EU and US regions. |
-| **OVH / Public Cloud** | ~€3/mo | Cheap, French, occasionally rough UI. |
-| **DigitalOcean** | $4/mo (1 vCPU, 512MB RAM, 10GB) | Polished docs, slightly pricier. |
-| **Linode (Akamai)** | $5/mo (1 vCPU, 1GB RAM, 25GB) | Solid, similar to DO. |
-| **Vultr** | $3.50/mo | Many regions worldwide. |
+| Provider               | Smallest plan                      | Notes                                      |
+| ---------------------- | ---------------------------------- | ------------------------------------------ |
+| **Hetzner Cloud**      | ~€4/mo (2 vCPU, 4GB RAM, 40GB SSD) | Best price/performance. EU and US regions. |
+| **OVH / Public Cloud** | ~€3/mo                             | Cheap, French, occasionally rough UI.      |
+| **DigitalOcean**       | $4/mo (1 vCPU, 512MB RAM, 10GB)    | Polished docs, slightly pricier.           |
+| **Linode (Akamai)**    | $5/mo (1 vCPU, 1GB RAM, 25GB)      | Solid, similar to DO.                      |
+| **Vultr**              | $3.50/mo                           | Many regions worldwide.                    |
 
 The skill is **identical** across all of them. The hardening, the firewall rules, the systemd units — none of it changes. Pick one.
 
@@ -82,6 +82,7 @@ Pick **Debian 12 (Bookworm)** or **Ubuntu Server LTS (24.04)** for your first bo
 - **Ubuntu** is friendlier, has slightly more recent packages, more tutorials online.
 
 Avoid for now:
+
 - **Alpine** — different libc, occasional gotchas with prebuilt binaries.
 - **Arch / rolling distros** — fast-moving, fine for a desktop, painful for a server.
 - **CentOS Stream / RHEL clones** — the dnf/yum world is fine but every other tutorial assumes apt.
@@ -145,4 +146,3 @@ A fresh VPS with password auth and root SSH enabled will start getting brute-for
 - Pick Hetzner, OVH, DigitalOcean, Linode, or Vultr — the skills transfer.
 - Default to Debian 12 or Ubuntu LTS, smallest plan with ≥1GB RAM.
 - Provision, SSH in as root, take a snapshot of what you see — then move on to hardening.
-

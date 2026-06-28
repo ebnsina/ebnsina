@@ -1,10 +1,10 @@
 ---
-title: "Transactions & Isolation Levels"
-subtitle: "ACID, the four isolation levels, MVCC, and the locks and deadlocks that keep concurrent writes correct."
+title: 'Transactions & Isolation Levels'
+subtitle: 'ACID, the four isolation levels, MVCC, and the locks and deadlocks that keep concurrent writes correct.'
 chapter: 6
-level: "advanced"
-readingTime: "18 min"
-topics: ["acid", "isolation", "mvcc", "locking"]
+level: 'advanced'
+readingTime: '18 min'
+topics: ['acid', 'isolation', 'mvcc', 'locking']
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["acid", "isolation", "mvcc", "locking"]
 
 ## What a Transaction Is
 
-A **transaction** groups several statements into one all-or-nothing unit. The canonical example is a bank transfer: debit one account, credit another. If the system crashes between the two, you must *not* end up with money debited but never credited. A transaction guarantees both happen or neither does.
+A **transaction** groups several statements into one all-or-nothing unit. The canonical example is a bank transfer: debit one account, credit another. If the system crashes between the two, you must _not_ end up with money debited but never credited. A transaction guarantees both happen or neither does.
 
 ```sql
 BEGIN;
@@ -37,31 +37,31 @@ Transactions provide four guarantees, abbreviated **ACID**:
 
 - **Atomicity** — all statements commit together or none do. No partial transactions.
 - **Consistency** — a transaction moves the database from one valid state to another; constraints (foreign keys, checks) are never left violated.
-- **Isolation** — concurrent transactions don't step on each other; each runs *as if* it had the database to itself (the degree of this is the *isolation level*).
+- **Isolation** — concurrent transactions don't step on each other; each runs _as if_ it had the database to itself (the degree of this is the _isolation level_).
 - **Durability** — once `COMMIT` returns, the data survives crashes and power loss (Postgres achieves this with a write-ahead log, covered in db-internals).
 
 Isolation is the subtle one, because perfect isolation (every transaction truly serial) is expensive. SQL defines weaker levels that trade some isolation for concurrency.
 
 ## Concurrency Anomalies
 
-Weaker isolation permits specific *anomalies* — surprising results caused by interleaving transactions. The SQL standard names three:
+Weaker isolation permits specific _anomalies_ — surprising results caused by interleaving transactions. The SQL standard names three:
 
-- **Dirty read** — you read a row another transaction has modified but *not yet committed*. If that transaction rolls back, you acted on data that never officially existed.
-- **Non-repeatable read** — you read a row, another transaction commits an *update* to it, you read it again in the *same* transaction and get a different value.
-- **Phantom read** — you run a query (`WHERE status = 'pending'`), another transaction *inserts* a new matching row and commits, you re-run the query and a new "phantom" row appears.
+- **Dirty read** — you read a row another transaction has modified but _not yet committed_. If that transaction rolls back, you acted on data that never officially existed.
+- **Non-repeatable read** — you read a row, another transaction commits an _update_ to it, you read it again in the _same_ transaction and get a different value.
+- **Phantom read** — you run a query (`WHERE status = 'pending'`), another transaction _inserts_ a new matching row and commits, you re-run the query and a new "phantom" row appears.
 
 A fourth, **lost update**, occurs when two transactions read a value, both modify it, and the second overwrites the first's change.
 
 ## The Four Isolation Levels
 
-Each level *forbids* progressively more anomalies. From weakest to strongest:
+Each level _forbids_ progressively more anomalies. From weakest to strongest:
 
 | Level              | Dirty read | Non-repeatable read | Phantom read |
-|--------------------|-----------|---------------------|--------------|
-| `READ UNCOMMITTED` | possible* | possible            | possible     |
-| `READ COMMITTED`   | no        | possible            | possible     |
-| `REPEATABLE READ`  | no        | no                  | possible**   |
-| `SERIALIZABLE`     | no        | no                  | no           |
+| ------------------ | ---------- | ------------------- | ------------ |
+| `READ UNCOMMITTED` | possible\* | possible            | possible     |
+| `READ COMMITTED`   | no         | possible            | possible     |
+| `REPEATABLE READ`  | no         | no                  | possible\*\* |
+| `SERIALIZABLE`     | no         | no                  | no           |
 
 ```sql
 BEGIN ISOLATION LEVEL SERIALIZABLE;
@@ -71,10 +71,10 @@ COMMIT;
 
 A few PostgreSQL-specific notes (marked above):
 
-- *Postgres has no true `READ UNCOMMITTED` — it treats it as `READ COMMITTED`, so dirty reads never happen at all.
-- **At `REPEATABLE READ`, Postgres's MVCC implementation actually *also* prevents phantom reads (it gives you a stable snapshot), so it's stronger than the standard requires.
+- \*Postgres has no true `READ UNCOMMITTED` — it treats it as `READ COMMITTED`, so dirty reads never happen at all.
+- \**At `REPEATABLE READ`, Postgres's MVCC implementation actually *also\* prevents phantom reads (it gives you a stable snapshot), so it's stronger than the standard requires.
 - `READ COMMITTED` is the **default**, and a fine choice for most applications.
-- `SERIALIZABLE` in Postgres uses Serializable Snapshot Isolation (SSI): it lets transactions run concurrently but aborts one with a serialization error if their combination *could not* have happened in some serial order. You must be ready to retry.
+- `SERIALIZABLE` in Postgres uses Serializable Snapshot Isolation (SSI): it lets transactions run concurrently but aborts one with a serialization error if their combination _could not_ have happened in some serial order. You must be ready to retry.
 
 <Callout type="info">
 
@@ -84,9 +84,9 @@ A few PostgreSQL-specific notes (marked above):
 
 ## MVCC: How Postgres Avoids Read Locks
 
-PostgreSQL implements isolation with **MVCC** — Multi-Version Concurrency Control. Instead of locking rows for reads, it keeps *multiple versions* of each row. An `UPDATE` doesn't overwrite in place; it writes a new row version and marks the old one as expired. Each transaction sees the version that was current as of its snapshot.
+PostgreSQL implements isolation with **MVCC** — Multi-Version Concurrency Control. Instead of locking rows for reads, it keeps _multiple versions_ of each row. An `UPDATE` doesn't overwrite in place; it writes a new row version and marks the old one as expired. Each transaction sees the version that was current as of its snapshot.
 
-The headline benefit: **readers never block writers, and writers never block readers.** A long analytics query sees a consistent snapshot while writes continue around it. The cost is *bloat* — dead row versions accumulate and must be cleaned up by the `VACUUM` process (autovacuum runs automatically, but heavily-updated tables need attention).
+The headline benefit: **readers never block writers, and writers never block readers.** A long analytics query sees a consistent snapshot while writes continue around it. The cost is _bloat_ — dead row versions accumulate and must be cleaned up by the `VACUUM` process (autovacuum runs automatically, but heavily-updated tables need attention).
 
 ```text
 Time →
@@ -97,7 +97,7 @@ Time →
 
 ## Locks for Writes
 
-Reads use MVCC, but *writes* still need locks to prevent two transactions from modifying the same row simultaneously. When you `UPDATE` or `DELETE` a row, Postgres takes a **row-level lock**; a second transaction trying to write the same row *waits* until the first commits or rolls back.
+Reads use MVCC, but _writes_ still need locks to prevent two transactions from modifying the same row simultaneously. When you `UPDATE` or `DELETE` a row, Postgres takes a **row-level lock**; a second transaction trying to write the same row _waits_ until the first commits or rolls back.
 
 You can lock rows explicitly to coordinate read-modify-write sequences and avoid lost updates:
 
@@ -127,7 +127,7 @@ T2: locks row B ... wants row A
    → neither can proceed
 ```
 
-Postgres detects deadlocks automatically and kills one transaction with a `deadlock detected` error so the other can continue. The victim must retry. To *prevent* deadlocks:
+Postgres detects deadlocks automatically and kills one transaction with a `deadlock detected` error so the other can continue. The victim must retry. To _prevent_ deadlocks:
 
 - **Acquire locks in a consistent order.** If every transaction locks rows in ascending id order, no cycle can form.
 - **Keep transactions short.** The less time a transaction holds locks, the smaller the window for conflict.

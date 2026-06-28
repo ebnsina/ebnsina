@@ -1,10 +1,10 @@
 ---
-title: "Your first server"
-subtitle: "End-to-end Go WebSocket server in eighty lines, with a browser client. By the end you have an echo service plus a tiny chat room — both running on localhost, both real."
+title: 'Your first server'
+subtitle: 'End-to-end Go WebSocket server in eighty lines, with a browser client. By the end you have an echo service plus a tiny chat room — both running on localhost, both real.'
 chapter: 3
-level: "beginner"
-readingTime: "11 min"
-topics: ["websockets", "go", "coder/websocket", "browser"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['websockets', 'go', 'coder/websocket', 'browser']
 ---
 
 <script>
@@ -101,27 +101,27 @@ Read the moving parts.
 <!-- static/index.html -->
 <!doctype html>
 <html>
-<body>
-<input id="msg" placeholder="say something">
-<button onclick="send()">send</button>
-<pre id="log"></pre>
+	<body>
+		<input id="msg" placeholder="say something" />
+		<button onclick="send()">send</button>
+		<pre id="log"></pre>
 
-<script>
-const ws = new WebSocket(`ws://${location.host}/ws`);
-const log = document.getElementById("log");
+		<script>
+			const ws = new WebSocket(`ws://${location.host}/ws`);
+			const log = document.getElementById('log');
 
-ws.onopen    = () => log.textContent += "connected\n";
-ws.onmessage = (e) => log.textContent += `recv: ${e.data}\n`;
-ws.onclose   = (e) => log.textContent += `closed (${e.code})\n`;
-ws.onerror   = (e) => log.textContent += `error\n`;
+			ws.onopen = () => (log.textContent += 'connected\n');
+			ws.onmessage = (e) => (log.textContent += `recv: ${e.data}\n`);
+			ws.onclose = (e) => (log.textContent += `closed (${e.code})\n`);
+			ws.onerror = (e) => (log.textContent += `error\n`);
 
-function send() {
-  const v = document.getElementById("msg").value;
-  ws.send(v);
-  log.textContent += `sent: ${v}\n`;
-}
-</script>
-</body>
+			function send() {
+				const v = document.getElementById('msg').value;
+				ws.send(v);
+				log.textContent += `sent: ${v}\n`;
+			}
+		</script>
+	</body>
 </html>
 ```
 
@@ -383,4 +383,3 @@ Cheap. Always present.
 - Reader is mandatory even on push-only services to detect disconnects and handle pings.
 
 Next: [Message protocols on top](/notes/websockets/04-message-protocols) — JSON, msgpack, framing, versioning, and the request/response patterns you build on raw frames.
-

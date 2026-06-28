@@ -1,10 +1,10 @@
 ---
-title: "HTTP from a Raw Socket"
-subtitle: "Speak HTTP by hand with netcat. Then write a 60-line Go server that does exactly the same thing — no framework, no surprises."
+title: 'HTTP from a Raw Socket'
+subtitle: 'Speak HTTP by hand with netcat. Then write a 60-line Go server that does exactly the same thing — no framework, no surprises.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["http", "sockets", "tcp", "go", "netcat"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['http', 'sockets', 'tcp', 'go', 'netcat']
 ---
 
 <script>
@@ -103,7 +103,7 @@ Same request, encrypted in transit.
 
 ## Step 3 — Write a real server in Go
 
-Now the code. We will write the entire request/response loop using only the standard `net` package — no `net/http`, no frameworks. The point is to *see the bytes*.
+Now the code. We will write the entire request/response loop using only the standard `net` package — no `net/http`, no frameworks. The point is to _see the bytes_.
 
 ```go
 // main.go
@@ -232,7 +232,7 @@ Sixty lines, no framework, real HTTP. `curl`, `Postman`, your browser — all of
 - **No HTTPS.** Plain text. We add TLS in the next track.
 - **Headers parsed naively.** `Set-Cookie` can appear multiple times; this implementation overwrites.
 
-These are not "weaknesses" — they are features deliberately *not* added so the structure stays visible. Next chapter we add real parsing. After that, the standard library's `net/http` will do all of this for you, and you will know exactly what it is doing.
+These are not "weaknesses" — they are features deliberately _not_ added so the structure stays visible. Next chapter we add real parsing. After that, the standard library's `net/http` will do all of this for you, and you will know exactly what it is doing.
 
 ## Comparing to net/http
 
@@ -305,23 +305,23 @@ while True:
 import { createServer } from 'node:net';
 
 createServer((conn) => {
-  let buf = '';
-  conn.on('data', (chunk) => {
-    buf += chunk.toString();
-    if (buf.includes('\r\n\r\n')) {
-      const [line] = buf.split('\r\n');
-      const [, path] = line.split(' ');
-      const body = `hello, ${path}\n`;
-      conn.write(
-        `HTTP/1.1 200 OK\r\n` +
-        `Content-Type: text/plain\r\n` +
-        `Content-Length: ${Buffer.byteLength(body)}\r\n` +
-        `Connection: close\r\n\r\n` +
-        body
-      );
-      conn.end();
-    }
-  });
+	let buf = '';
+	conn.on('data', (chunk) => {
+		buf += chunk.toString();
+		if (buf.includes('\r\n\r\n')) {
+			const [line] = buf.split('\r\n');
+			const [, path] = line.split(' ');
+			const body = `hello, ${path}\n`;
+			conn.write(
+				`HTTP/1.1 200 OK\r\n` +
+					`Content-Type: text/plain\r\n` +
+					`Content-Length: ${Buffer.byteLength(body)}\r\n` +
+					`Connection: close\r\n\r\n` +
+					body
+			);
+			conn.end();
+		}
+	});
 }).listen(8080, () => console.log('listening on :8080'));
 ```
 
@@ -335,4 +335,3 @@ The languages differ. The model does not.
 - Real frameworks add: timeouts, limits, body parsing, keep-alive, HTTP/2, TLS — all of which are essential, none of which are mysterious.
 
 Next chapter: turn the toy parser into a real HTTP/1.1 parser that handles bodies and chunked encoding.
-

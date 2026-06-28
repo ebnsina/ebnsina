@@ -1,10 +1,10 @@
 ---
-title: "Case Study: URL Shortener"
+title: 'Case Study: URL Shortener'
 subtitle: "Build a complete URL shortener from scratch — applying everything you've learned: HTTP, database, caching, testing, and deployment."
 chapter: 25
-level: "advanced"
-readingTime: "25 min"
-topics: ["project", "URL shortener", "full-stack", "Redis", "PostgreSQL", "end-to-end"]
+level: 'advanced'
+readingTime: '25 min'
+topics: ['project', 'URL shortener', 'full-stack', 'Redis', 'PostgreSQL', 'end-to-end']
 ---
 
 <script>
@@ -16,6 +16,7 @@ topics: ["project", "URL shortener", "full-stack", "Redis", "PostgreSQL", "end-t
 A production-grade URL shortener like bit.ly. Users submit a long URL, get a short code, and visitors are redirected.
 
 **Features:**
+
 - Create short URLs (POST /api/shorten)
 - Redirect to original URL (GET /:code)
 - Click analytics (GET /api/stats/:code)
@@ -560,4 +561,3 @@ curl http://localhost:8080/api/stats/aB3xK9m
 4. **Collision handling** — retry code generation up to 5 times on duplicate
 5. **Graceful shutdown** — finish in-flight redirects before stopping
 6. **This project uses every concept from the course** — structs, interfaces, goroutines, context, error handling, testing, middleware, database patterns, and deployment
-

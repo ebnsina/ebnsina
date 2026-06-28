@@ -1,10 +1,10 @@
 ---
-title: "Core Data Structures"
-subtitle: "Strings, hashes, lists, sets, sorted sets — and the specialized types that ride on top of them."
+title: 'Core Data Structures'
+subtitle: 'Strings, hashes, lists, sets, sorted sets — and the specialized types that ride on top of them.'
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["strings", "hashes", "lists", "sets", "sorted sets"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['strings', 'hashes', 'lists', 'sets', 'sorted sets']
 ---
 
 <script>
@@ -102,7 +102,7 @@ An unordered collection of unique strings. Adding a duplicate is a no-op, and me
 
 **Real-world use:** tags, unique visitor tracking, "users who did X," and relationships. `SINTER`, `SUNION`, and `SDIFF` compute intersections, unions, and differences in the server — for example, mutual friends or common tags.
 
-**Complexity:** `SADD`/`SISMEMBER` are O(1); `SINTER` is roughly O(N*M) across set sizes, so be careful intersecting very large sets.
+**Complexity:** `SADD`/`SISMEMBER` are O(1); `SINTER` is roughly O(N\*M) across set sizes, so be careful intersecting very large sets.
 
 ## Sorted sets (ZSET)
 
@@ -194,15 +194,15 @@ Built on sorted sets, geo commands store longitude/latitude and answer radius qu
 
 ## Choosing quickly
 
-| You need | Structure | Key command |
-|---|---|---|
-| A single value or counter | String | `SET`, `INCR` |
-| An object with fields | Hash | `HSET`, `HGET` |
-| A queue or stack | List | `LPUSH`, `BRPOP` |
-| Unique items / set math | Set | `SADD`, `SINTER` |
-| Ranked / range-queried items | Sorted set | `ZADD`, `ZRANGEBYSCORE` |
-| Large boolean array | Bitmap | `SETBIT`, `BITCOUNT` |
-| Approximate unique count | HyperLogLog | `PFADD`, `PFCOUNT` |
-| Location proximity | Geo | `GEOADD`, `GEOSEARCH` |
+| You need                     | Structure   | Key command             |
+| ---------------------------- | ----------- | ----------------------- |
+| A single value or counter    | String      | `SET`, `INCR`           |
+| An object with fields        | Hash        | `HSET`, `HGET`          |
+| A queue or stack             | List        | `LPUSH`, `BRPOP`        |
+| Unique items / set math      | Set         | `SADD`, `SINTER`        |
+| Ranked / range-queried items | Sorted set  | `ZADD`, `ZRANGEBYSCORE` |
+| Large boolean array          | Bitmap      | `SETBIT`, `BITCOUNT`    |
+| Approximate unique count     | HyperLogLog | `PFADD`, `PFCOUNT`      |
+| Location proximity           | Geo         | `GEOADD`, `GEOSEARCH`   |
 
 The discipline that makes Redis effective is matching the access pattern to the structure before you write a line of code.

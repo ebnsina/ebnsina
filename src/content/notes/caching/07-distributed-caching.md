@@ -1,10 +1,10 @@
 ---
-title: "Distributed Caching"
-subtitle: "Sharing cache state across multiple servers — consistent hashing, Redis Cluster, and the failure modes that will surprise you."
+title: 'Distributed Caching'
+subtitle: 'Sharing cache state across multiple servers — consistent hashing, Redis Cluster, and the failure modes that will surprise you.'
 chapter: 7
-level: "intermediate"
-readingTime: "15 min"
-topics: ["Redis Cluster", "consistent hashing", "sharding", "replication", "distributed systems"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['Redis Cluster', 'consistent hashing', 'sharding', 'replication', 'distributed systems']
 ---
 
 <script>
@@ -31,20 +31,20 @@ The simple approach: `nodeIndex = hash(key) % numNodes`.
 
 ```typescript
 class ModuloShardedCache {
-  constructor(private nodes: RedisClient[]) {}
+	constructor(private nodes: RedisClient[]) {}
 
-  private nodeFor(key: string): RedisClient {
-    const hash = murmurhash(key); // deterministic hash
-    return this.nodes[hash % this.nodes.length];
-  }
+	private nodeFor(key: string): RedisClient {
+		const hash = murmurhash(key); // deterministic hash
+		return this.nodes[hash % this.nodes.length];
+	}
 
-  async get(key: string): Promise<string | null> {
-    return this.nodeFor(key).get(key);
-  }
+	async get(key: string): Promise<string | null> {
+		return this.nodeFor(key).get(key);
+	}
 
-  async set(key: string, value: string, ttl: number): Promise<void> {
-    await this.nodeFor(key).setEx(key, ttl, value);
-  }
+	async set(key: string, value: string, ttl: number): Promise<void> {
+		await this.nodeFor(key).setEx(key, ttl, value);
+	}
 }
 ```
 
@@ -58,46 +58,46 @@ Map both keys and nodes onto a circular ring (0 to 2³²). Each key is stored on
 import { createHash } from 'crypto';
 
 class ConsistentHashRing {
-  private ring = new Map<number, string>();       // position → node id
-  private sortedPositions: number[] = [];
-  private virtualNodes: number;
+	private ring = new Map<number, string>(); // position → node id
+	private sortedPositions: number[] = [];
+	private virtualNodes: number;
 
-  constructor(virtualNodes = 150) {
-    this.virtualNodes = virtualNodes;
-  }
+	constructor(virtualNodes = 150) {
+		this.virtualNodes = virtualNodes;
+	}
 
-  addNode(nodeId: string): void {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const hash = this.hash(`${nodeId}:${i}`);
-      this.ring.set(hash, nodeId);
-    }
-    this.sortedPositions = [...this.ring.keys()].sort((a, b) => a - b);
-  }
+	addNode(nodeId: string): void {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const hash = this.hash(`${nodeId}:${i}`);
+			this.ring.set(hash, nodeId);
+		}
+		this.sortedPositions = [...this.ring.keys()].sort((a, b) => a - b);
+	}
 
-  removeNode(nodeId: string): void {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const hash = this.hash(`${nodeId}:${i}`);
-      this.ring.delete(hash);
-    }
-    this.sortedPositions = [...this.ring.keys()].sort((a, b) => a - b);
-  }
+	removeNode(nodeId: string): void {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const hash = this.hash(`${nodeId}:${i}`);
+			this.ring.delete(hash);
+		}
+		this.sortedPositions = [...this.ring.keys()].sort((a, b) => a - b);
+	}
 
-  getNode(key: string): string {
-    const hash = this.hash(key);
+	getNode(key: string): string {
+		const hash = this.hash(key);
 
-    // Find first position >= hash (clockwise on ring)
-    for (const pos of this.sortedPositions) {
-      if (hash <= pos) return this.ring.get(pos)!;
-    }
+		// Find first position >= hash (clockwise on ring)
+		for (const pos of this.sortedPositions) {
+			if (hash <= pos) return this.ring.get(pos)!;
+		}
 
-    // Wrap around — return first node on ring
-    return this.ring.get(this.sortedPositions[0])!;
-  }
+		// Wrap around — return first node on ring
+		return this.ring.get(this.sortedPositions[0])!;
+	}
 
-  private hash(input: string): number {
-    const buf = createHash('md5').update(input).digest();
-    return buf.readUInt32BE(0);
-  }
+	private hash(input: string): number {
+		const buf = createHash('md5').update(input).digest();
+		return buf.readUInt32BE(0);
+	}
 }
 
 const ring = new ConsistentHashRing(150);
@@ -129,14 +129,14 @@ redis-cli --cluster create \
 import { createCluster } from 'redis';
 
 const cluster = createCluster({
-  rootNodes: [
-    { url: 'redis://node1:6379' },
-    { url: 'redis://node2:6379' },
-    { url: 'redis://node3:6379' },
-  ],
-  defaults: {
-    socket: { connectTimeout: 500 },
-  },
+	rootNodes: [
+		{ url: 'redis://node1:6379' },
+		{ url: 'redis://node2:6379' },
+		{ url: 'redis://node3:6379' }
+	],
+	defaults: {
+		socket: { connectTimeout: 500 }
+	}
 });
 
 await cluster.connect();
@@ -199,22 +199,23 @@ const clusterWithReplicas = createCluster({
 
 ```typescript
 async function resilientSet(key: string, value: string, ttl: number): Promise<void> {
-  const maxRetries = 3;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      await cluster.setEx(key, ttl, value);
-      return;
-    } catch (err) {
-      if (attempt === maxRetries - 1) throw err;
-      await new Promise((r) => setTimeout(r, 100 * 2 ** attempt)); // exponential backoff
-    }
-  }
+	const maxRetries = 3;
+	for (let attempt = 0; attempt < maxRetries; attempt++) {
+		try {
+			await cluster.setEx(key, ttl, value);
+			return;
+		} catch (err) {
+			if (attempt === maxRetries - 1) throw err;
+			await new Promise((r) => setTimeout(r, 100 * 2 ** attempt)); // exponential backoff
+		}
+	}
 }
 ```
 
 **Hot keys:** One key (a trending post, viral product) gets millions of reads per second. All reads go to the same node — it becomes a bottleneck regardless of cluster size.
 
 Solutions for hot keys:
+
 1. **Local in-process cache** — cache the hot key in every app instance's memory for 1–5 seconds
 2. **Key fanning** — store copies at `hot-key:0`, `hot-key:1`, ..., `hot-key:N` and read randomly
 
@@ -223,14 +224,14 @@ Solutions for hot keys:
 const localCache = new Map<string, { value: string; expiresAt: number }>();
 
 async function getWithLocalCache(key: string): Promise<string | null> {
-  const local = localCache.get(key);
-  if (local && Date.now() < local.expiresAt) return local.value;
+	const local = localCache.get(key);
+	if (local && Date.now() < local.expiresAt) return local.value;
 
-  const value = await redis.get(key);
-  if (value) {
-    localCache.set(key, { value, expiresAt: Date.now() + 2000 }); // 2s local cache
-  }
-  return value;
+	const value = await redis.get(key);
+	if (value) {
+		localCache.set(key, { value, expiresAt: Date.now() + 2000 }); // 2s local cache
+	}
+	return value;
 }
 ```
 
@@ -250,4 +251,3 @@ sentinel failover-timeout mymaster 10000
 **Redis Cluster** — automatic sharding across N masters, each with replicas. Horizontal scale + HA. Use this when your dataset exceeds a single node's memory.
 
 **Managed Redis** — AWS ElastiCache, Google Cloud Memorystore, Upstash. Cluster management is handled for you. Almost always the right choice unless you have very specific requirements.
-

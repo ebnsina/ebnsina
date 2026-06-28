@@ -1,10 +1,10 @@
 ---
-title: "Authentication and authorization"
-subtitle: "Auth in GraphQL is the same as in REST — JWTs or sessions on HTTP, identity on context — except every field is its own little endpoint that needs an authorization check. Get the layering right or it will haunt you."
+title: 'Authentication and authorization'
+subtitle: 'Auth in GraphQL is the same as in REST — JWTs or sessions on HTTP, identity on context — except every field is its own little endpoint that needs an authorization check. Get the layering right or it will haunt you.'
 chapter: 8
-level: "intermediate"
-readingTime: "13 min"
-topics: ["graphql", "authentication", "authorization", "jwt", "directives"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['graphql', 'authentication', 'authorization', 'jwt', 'directives']
 ---
 
 <script>
@@ -50,33 +50,33 @@ Both end at the same place: a verified `userId`. From here on the rest of the ch
 A JWT-style middleware in graphql-yoga:
 
 ```js
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET;
 
 function getUserFromRequest(req) {
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return null;
+	const auth = req.headers.get('authorization');
+	if (!auth?.startsWith('Bearer ')) return null;
 
-  const token = auth.slice(7);
-  try {
-    const payload = jwt.verify(token, SECRET);
-    return { id: payload.sub, roles: payload.roles || [] };
-  } catch {
-    return null;
-  }
+	const token = auth.slice(7);
+	try {
+		const payload = jwt.verify(token, SECRET);
+		return { id: payload.sub, roles: payload.roles || [] };
+	} catch {
+		return null;
+	}
 }
 
 const yoga = createYoga({
-  schema,
-  context: ({ request }) => {
-    const user = getUserFromRequest(request);
-    return {
-      db: pool,
-      loaders: buildLoaders(pool),
-      currentUser: user, // null if anonymous
-    };
-  },
+	schema,
+	context: ({ request }) => {
+		const user = getUserFromRequest(request);
+		return {
+			db: pool,
+			loaders: buildLoaders(pool),
+			currentUser: user // null if anonymous
+		};
+	}
 });
 ```
 
@@ -88,12 +88,12 @@ Login is just another mutation:
 
 ```graphql
 type Mutation {
-  login(email: String!, password: String!): AuthPayload!
+	login(email: String!, password: String!): AuthPayload!
 }
 
 type AuthPayload {
-  token: String!
-  user: User!
+	token: String!
+	user: User!
 }
 ```
 
@@ -211,51 +211,54 @@ Repeating `requireUser` in every resolver is tedious and error-prone (one missed
 ```graphql
 directive @auth(requires: Role = MEMBER) on FIELD_DEFINITION
 
-enum Role { MEMBER ADMIN }
+enum Role {
+	MEMBER
+	ADMIN
+}
 
 type Mutation {
-  createPost(input: CreatePostInput!): Post! @auth
-  deletePost(id: ID!): Boolean! @auth
-  banUser(id: ID!): Boolean! @auth(requires: ADMIN)
+	createPost(input: CreatePostInput!): Post! @auth
+	deletePost(id: ID!): Boolean! @auth
+	banUser(id: ID!): Boolean! @auth(requires: ADMIN)
 }
 
 type Query {
-  publicPosts: [Post!]!     # no @auth — open
-  myDrafts: [Post!]! @auth  # logged-in only
+	publicPosts: [Post!]! # no @auth — open
+	myDrafts: [Post!]! @auth # logged-in only
 }
 ```
 
 A directive transformer (the `@graphql-tools/utils` utility `mapSchema` is the standard) wraps each annotated field's resolver:
 
 ```js
-import { mapSchema, MapperKind, getDirective } from "@graphql-tools/utils";
+import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
 
 function authDirectiveTransformer(schema) {
-  return mapSchema(schema, {
-    [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
-      const directive = getDirective(schema, fieldConfig, "auth")?.[0];
-      if (!directive) return;
+	return mapSchema(schema, {
+		[MapperKind.OBJECT_FIELD]: (fieldConfig) => {
+			const directive = getDirective(schema, fieldConfig, 'auth')?.[0];
+			if (!directive) return;
 
-      const { requires = "MEMBER" } = directive;
-      const original = fieldConfig.resolve;
+			const { requires = 'MEMBER' } = directive;
+			const original = fieldConfig.resolve;
 
-      fieldConfig.resolve = (parent, args, ctx, info) => {
-        if (!ctx.currentUser) {
-          throw new GraphQLError("Not authenticated", {
-            extensions: { code: "UNAUTHENTICATED" },
-          });
-        }
-        if (requires === "ADMIN" && !ctx.currentUser.roles.includes("admin")) {
-          throw new GraphQLError("Forbidden", {
-            extensions: { code: "FORBIDDEN" },
-          });
-        }
-        return original?.(parent, args, ctx, info) ?? parent[fieldConfig.name];
-      };
+			fieldConfig.resolve = (parent, args, ctx, info) => {
+				if (!ctx.currentUser) {
+					throw new GraphQLError('Not authenticated', {
+						extensions: { code: 'UNAUTHENTICATED' }
+					});
+				}
+				if (requires === 'ADMIN' && !ctx.currentUser.roles.includes('admin')) {
+					throw new GraphQLError('Forbidden', {
+						extensions: { code: 'FORBIDDEN' }
+					});
+				}
+				return original?.(parent, args, ctx, info) ?? parent[fieldConfig.name];
+			};
 
-      return fieldConfig;
-    },
-  });
+			return fieldConfig;
+		}
+	});
 }
 ```
 
@@ -268,20 +271,20 @@ This pattern scales. Real production graphs add `@orgScoped`, `@featureFlag`, `@
 If you do not want to write transformers, `graphql-shield` is a permissions middleware library. You define a rules tree mapping fields to permissions:
 
 ```js
-import { rule, shield, allow, and } from "graphql-shield";
+import { rule, shield, allow, and } from 'graphql-shield';
 
 const isAuthenticated = rule()((p, a, ctx) => !!ctx.currentUser);
-const isAdmin = rule()((p, a, ctx) => ctx.currentUser?.roles.includes("admin"));
+const isAdmin = rule()((p, a, ctx) => ctx.currentUser?.roles.includes('admin'));
 
 const permissions = shield({
-  Query: {
-    publicPosts: allow,
-    myDrafts: isAuthenticated,
-  },
-  Mutation: {
-    createPost: isAuthenticated,
-    banUser: and(isAuthenticated, isAdmin),
-  },
+	Query: {
+		publicPosts: allow,
+		myDrafts: isAuthenticated
+	},
+	Mutation: {
+		createPost: isAuthenticated,
+		banUser: and(isAuthenticated, isAdmin)
+	}
 });
 ```
 
@@ -289,7 +292,7 @@ Apply as middleware on the schema. Same idea, different ergonomics.
 
 ## Auth and DataLoader — be careful
 
-Loaders cache without consulting auth. If you `userLoader.load(42)` from one resolver that already authorized the request, then another resolver loads the same user — both get the row. That is correct behavior *for that request*, since auth was already checked once.
+Loaders cache without consulting auth. If you `userLoader.load(42)` from one resolver that already authorized the request, then another resolver loads the same user — both get the row. That is correct behavior _for that request_, since auth was already checked once.
 
 But: if your auth check is per-field (the email visibility example), do not put the auth check inside the loader. The loader returns the raw row. Resolvers that read sensitive fields off the row do their own auth.
 
@@ -311,7 +314,7 @@ Auth and rate limiting are different problems but live next to each other. graph
 directive @rateLimit(window: String = "1m", max: Int = 60) on FIELD_DEFINITION
 
 type Mutation {
-  login(email: String!, password: String!): AuthPayload! @rateLimit(window: "1m", max: 5)
+	login(email: String!, password: String!): AuthPayload! @rateLimit(window: "1m", max: 5)
 }
 ```
 
@@ -329,4 +332,3 @@ Throttle login by IP, expensive queries by user, public fields globally. Chapter
 - DataLoader does not enforce auth. Auth gates the resolver, the loader fetches data.
 
 Next: [Subscriptions over WebSockets](/notes/graphql/09-subscriptions) — realtime done right, on graphql-ws.
-

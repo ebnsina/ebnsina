@@ -1,17 +1,17 @@
 ---
-title: "Multi-tenancy"
-subtitle: "Three architectures for serving many customers from one app: single database with a tenant column, schema per tenant, or a database per tenant. Each has a different cost curve."
+title: 'Multi-tenancy'
+subtitle: 'Three architectures for serving many customers from one app: single database with a tenant column, schema per tenant, or a database per tenant. Each has a different cost curve.'
 chapter: 8
-level: "intermediate"
-readingTime: "12 min"
-topics: ["data-modeling", "multi-tenancy", "rls", "isolation"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['data-modeling', 'multi-tenancy', 'rls', 'isolation']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A multi-tenant app is one where many customers (tenants) share the same application code, but each customer's data is isolated from others. Slack, Notion, Linear, GitHub Organisations — all multi-tenant. The decision of *how* to isolate happens at the data layer, and it's hard to reverse later.
+A multi-tenant app is one where many customers (tenants) share the same application code, but each customer's data is isolated from others. Slack, Notion, Linear, GitHub Organisations — all multi-tenant. The decision of _how_ to isolate happens at the data layer, and it's hard to reverse later.
 
 This chapter is the three architectures, when each fits, and the gotchas that haunt every one.
 
@@ -25,16 +25,16 @@ An apartment building where each tenant has their own space but shares the same 
 
 ## The three architectures
 
-| | Single DB, tenant column | Schema-per-tenant | DB-per-tenant |
-|---|---|---|---|
-| Tenants share | one table | one database, separate schemas | nothing |
-| Isolation | row-level | schema-level | physical |
-| Onboarding cost | INSERT | CREATE SCHEMA + tables | provision DB |
-| Backup granularity | all tenants together | per schema (pg_dump) | per database |
-| Query complexity | every query needs `WHERE tenant_id` | search_path or schema-qualified | none (each DB is one tenant) |
-| Per-tenant migrations | impossible — all on same shape | possible | trivial |
-| Scale ceiling (rows) | tens of millions per tenant ok | a few hundred tenants | thousands of tenants |
-| Cost per tenant | $0 | small | large |
+|                       | Single DB, tenant column            | Schema-per-tenant               | DB-per-tenant                |
+| --------------------- | ----------------------------------- | ------------------------------- | ---------------------------- |
+| Tenants share         | one table                           | one database, separate schemas  | nothing                      |
+| Isolation             | row-level                           | schema-level                    | physical                     |
+| Onboarding cost       | INSERT                              | CREATE SCHEMA + tables          | provision DB                 |
+| Backup granularity    | all tenants together                | per schema (pg_dump)            | per database                 |
+| Query complexity      | every query needs `WHERE tenant_id` | search_path or schema-qualified | none (each DB is one tenant) |
+| Per-tenant migrations | impossible — all on same shape      | possible                        | trivial                      |
+| Scale ceiling (rows)  | tens of millions per tenant ok      | a few hundred tenants           | thousands of tenants         |
+| Cost per tenant       | $0                                  | small                           | large                        |
 
 Most modern SaaS uses single-DB with a tenant column. It's the cheapest, simplest, and scales remarkably far. The other two are special cases.
 
@@ -153,7 +153,7 @@ Postgres splits the data across partitions. Queries with `WHERE tenant_id = X` o
 
 ## Pattern 2: schema-per-tenant
 
-Each tenant has their own Postgres *schema* (namespace) inside the same database.
+Each tenant has their own Postgres _schema_ (namespace) inside the same database.
 
 ```sql
 CREATE SCHEMA tenant_cordoba;
@@ -171,11 +171,13 @@ db.Query(`SELECT * FROM issues`) // hits tenant_cordoba.issues
 ```
 
 Pros:
+
 - Strong isolation. SQL queries can't accidentally reach another tenant.
 - Per-schema `pg_dump` for backups, exports, GDPR-style data extraction.
 - Per-tenant data shapes (rare but possible — feature-flagged columns).
 
 Cons:
+
 - **Schema migrations are N times the work.** Adding a column means iterating every schema. Tooling helps; complexity grows.
 - **Connection pool considerations.** Search path is a session setting; pools need careful handling.
 - **Hard limit on tenant count.** Postgres handles thousands of schemas, but at some point catalog overhead bites.
@@ -192,12 +194,14 @@ Used by some Postgres-heavy products (Supabase, Citus). Right when:
 Each tenant gets a separate Postgres database (or even a separate cluster).
 
 Pros:
+
 - Hardest possible isolation. No SQL can cross databases without explicit FDW (foreign data wrapper).
 - Per-tenant scaling. Big tenant gets a bigger DB; small tenants share a small one.
 - Per-tenant restore from backup is trivial.
 - Compliance and data residency: customer can host their own DB; your app connects.
 
 Cons:
+
 - **Operational cost is high.** Provisioning, monitoring, backing up, upgrading N databases.
 - **Migrations are even more work** than schema-per-tenant.
 - **Cross-tenant queries are essentially impossible.** Analytics need a separate aggregation layer.
@@ -222,12 +226,14 @@ If you are starting fresh, start single-DB with `tenant_id`. Migrate up if and w
 ## Tenant onboarding flow
 
 Single-DB:
+
 ```sql
 INSERT INTO tenants(name, plan) VALUES('Cordoba', 'pro') RETURNING id;
 -- done
 ```
 
 Schema-per-tenant:
+
 ```sql
 CREATE SCHEMA tenant_cordoba;
 -- replay schema migrations against the new schema
@@ -236,6 +242,7 @@ INSERT INTO tenants_meta(name, schema_name) VALUES('Cordoba', 'tenant_cordoba');
 ```
 
 DB-per-tenant:
+
 ```bash
 createdb tenant_cordoba
 psql tenant_cordoba < schema.sql
@@ -249,7 +256,7 @@ The first is one row. The second is a few hundred milliseconds. The third can be
 Adding `tenant_id` to a table that already has data is painful:
 
 1. Add nullable column.
-2. Backfill — for existing data, *what tenant does it belong to?*
+2. Backfill — for existing data, _what tenant does it belong to?_
 3. NOT NULL constraint.
 4. Update every query.
 5. Add indexes.
@@ -282,4 +289,3 @@ For compliance-heavy industries, the "drop the whole schema/db" cleanup story is
 - Design for multi-tenancy from day one. Adding `tenant_id` later is a project.
 
 Next: [JSONB and the schemaless trap](/notes/data-modeling/09-jsonb) — when to use JSONB and when it bites.
-

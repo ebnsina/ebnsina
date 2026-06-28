@@ -1,10 +1,20 @@
 ---
-title: "CTF Strategy"
-subtitle: "How to approach Capture the Flag competitions, category breakdowns, platforms, and a methodology for each challenge type."
+title: 'CTF Strategy'
+subtitle: 'How to approach Capture the Flag competitions, category breakdowns, platforms, and a methodology for each challenge type.'
 chapter: 14
-level: "intermediate"
-readingTime: "12 min"
-topics: ["CTF", "Capture the Flag", "HackTheBox", "TryHackMe", "forensics", "reverse engineering", "crypto CTF", "pwn"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  [
+    'CTF',
+    'Capture the Flag',
+    'HackTheBox',
+    'TryHackMe',
+    'forensics',
+    'reverse engineering',
+    'crypto CTF',
+    'pwn'
+  ]
 ---
 
 <script>
@@ -323,4 +333,3 @@ pip install pwntools cryptography sympy
 # factordb.com (RSA factor database)
 # Decompilers: dogbolt.org, godbolt.org
 ```
-

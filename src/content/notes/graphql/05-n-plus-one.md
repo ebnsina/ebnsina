@@ -1,10 +1,10 @@
 ---
-title: "The N+1 problem"
-subtitle: "Your GraphQL server runs eleven SQL queries when it should run two. Every backend team learns this the hard way. This chapter is the diagnosis — chapter 6 is the cure."
+title: 'The N+1 problem'
+subtitle: 'Your GraphQL server runs eleven SQL queries when it should run two. Every backend team learns this the hard way. This chapter is the diagnosis — chapter 6 is the cure.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["graphql", "n+1", "performance", "sql", "postgres"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['graphql', 'n+1', 'performance', 'sql', 'postgres']
 ---
 
 <script>
@@ -28,12 +28,12 @@ Use the server from chapter 3. Add SQL logging so you can see what is happening:
 ```js
 // server.js
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-pool.on("connect", (c) => {
-  const orig = c.query.bind(c);
-  c.query = (text, ...rest) => {
-    console.log("[sql]", typeof text === "string" ? text : text.text);
-    return orig(text, ...rest);
-  };
+pool.on('connect', (c) => {
+	const orig = c.query.bind(c);
+	c.query = (text, ...rest) => {
+		console.log('[sql]', typeof text === 'string' ? text : text.text);
+		return orig(text, ...rest);
+	};
 });
 ```
 
@@ -41,12 +41,12 @@ Now run this query in GraphiQL:
 
 ```graphql
 {
-  users {
-    name
-    posts {
-      title
-    }
-  }
+	users {
+		name
+		posts {
+			title
+		}
+	}
 }
 ```
 
@@ -82,11 +82,11 @@ Resolvers do not know about siblings. They cannot see "ten users were resolved t
 
 A single round trip to a DB on the same machine is maybe **0.5 ms**. To a DB across a region is **5–20 ms**. So:
 
-| Users | Local DB | Remote DB |
-|---|---|---|
-| 10 | ~5 ms | ~50–200 ms |
-| 100 | ~50 ms | ~500 ms–2 s |
-| 1000 | ~500 ms | unusable |
+| Users | Local DB | Remote DB   |
+| ----- | -------- | ----------- |
+| 10    | ~5 ms    | ~50–200 ms  |
+| 100   | ~50 ms   | ~500 ms–2 s |
+| 1000  | ~500 ms  | unusable    |
 
 That is just SQL latency. Connection pool contention makes it worse — a single GraphQL request can hold ten or twenty connections at once, blocking other requests.
 
@@ -105,7 +105,7 @@ REST hides the problem. A REST endpoint `GET /users-with-posts` is one handler �
 
 GraphQL clients drive shape. If a client adds `posts {}` to a query, the server's resolvers fire the next day. There is no opportunity for a backend engineer to write a JOIN — the engineer never knew the client was about to ask.
 
-So GraphQL needs a *general* solution that batches arbitrary children at runtime. The general solution is **DataLoader** (chapter 6). But before we use it, see two simpler fixes that work in narrower cases.
+So GraphQL needs a _general_ solution that batches arbitrary children at runtime. The general solution is **DataLoader** (chapter 6). But before we use it, see two simpler fixes that work in narrower cases.
 
 ## Fix 1: hand-write a JOIN
 
@@ -140,7 +140,7 @@ User: {
 
 One SQL query for `{ users { posts {} } }`. Fast.
 
-The downside: you eagerly load posts even when the client did *not* ask for them. The client sends `{ users { name } }` and you still pay the JOIN.
+The downside: you eagerly load posts even when the client did _not_ ask for them. The client sends `{ users { name } }` and you still pay the JOIN.
 
 A common compromise — **selection-aware queries** — uses the `info` argument to detect whether `posts` is in the selection set and only JOINs when it is. Powerful but verbose. ORMs like Prisma, Drizzle's relations, and `objection.js` automate this.
 
@@ -175,7 +175,7 @@ Query: {
 },
 ```
 
-Two SQL queries, no JOIN. Same outcome. The pattern — `ANY($1::bigint[])` plus a `Map` keyed by parent ID — is the *exact* operation DataLoader will do for you in chapter 6, just generalized.
+Two SQL queries, no JOIN. Same outcome. The pattern — `ANY($1::bigint[])` plus a `Map` keyed by parent ID — is the _exact_ operation DataLoader will do for you in chapter 6, just generalized.
 
 ## Fix 3: don't expose the dangerous field
 
@@ -188,13 +188,29 @@ This is not a cop-out. Schema design is performance design. A schema that lets c
 It is not just child arrays. Singletons N+1 too:
 
 ```graphql
-{ posts { author { name } } }
+{
+	posts {
+		author {
+			name
+		}
+	}
+}
 ```
 
 Ten posts, each calls `Post.author` → ten SQL queries for users, often **the same user**. No batching, no caching.
 
 ```graphql
-{ users { posts { comments { author { name } } } } }
+{
+	users {
+		posts {
+			comments {
+				author {
+					name
+				}
+			}
+		}
+	}
+}
 ```
 
 Three layers of N+1. Easy to put a graph into the second-per-request range with twenty rows of data.
@@ -202,7 +218,11 @@ Three layers of N+1. Easy to put a graph into the second-per-request range with 
 Permission checks N+1 too:
 
 ```graphql
-{ posts { canEdit } }
+{
+	posts {
+		canEdit
+	}
+}
 ```
 
 If `Post.canEdit` calls a permissions service, that is N service calls per request.
@@ -236,4 +256,3 @@ For self-hosted: `pg_stat_statements` is free, fast, and ships with Postgres. Tu
 - The schema itself can be the problem. Pagination is a fix.
 
 Next: [DataLoader](/notes/graphql/06-dataloader) — the general fix that batches and caches, per request, with no schema changes.
-

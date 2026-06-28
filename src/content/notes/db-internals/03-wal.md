@@ -1,10 +1,10 @@
 ---
-title: "Write-Ahead Logging (WAL)"
-subtitle: "How databases survive crashes without losing data — the log-first strategy that makes ACID possible."
+title: 'Write-Ahead Logging (WAL)'
+subtitle: 'How databases survive crashes without losing data — the log-first strategy that makes ACID possible.'
 chapter: 3
-level: "beginner"
-readingTime: "13 min"
-topics: ["WAL", "durability", "crash recovery", "checkpoints"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['WAL', 'durability', 'crash recovery', 'checkpoints']
 ---
 
 <script>
@@ -29,34 +29,34 @@ Like a cashier's notepad at a busy shop — before updating the main ledger, eve
 
 ```typescript
 interface WALRecord {
-  lsn: number;           // Log Sequence Number (monotonically increasing)
-  transactionId: number;
-  operation: "INSERT" | "UPDATE" | "DELETE" | "COMMIT" | "ABORT";
-  tableId: number;
-  pageId: number;
-  offset: number;
-  beforeImage?: Uint8Array; // old data (for undo)
-  afterImage: Uint8Array;   // new data (for redo)
+	lsn: number; // Log Sequence Number (monotonically increasing)
+	transactionId: number;
+	operation: 'INSERT' | 'UPDATE' | 'DELETE' | 'COMMIT' | 'ABORT';
+	tableId: number;
+	pageId: number;
+	offset: number;
+	beforeImage?: Uint8Array; // old data (for undo)
+	afterImage: Uint8Array; // new data (for redo)
 }
 
 class WriteAheadLog {
-  private lsn = 0;
-  private logFile: FileHandle;
-  private buffer: WALRecord[] = [];
+	private lsn = 0;
+	private logFile: FileHandle;
+	private buffer: WALRecord[] = [];
 
-  async append(record: Omit<WALRecord, "lsn">): Promise<number> {
-    const walRecord: WALRecord = { ...record, lsn: ++this.lsn };
-    this.buffer.push(walRecord);
-    return walRecord.lsn;
-  }
+	async append(record: Omit<WALRecord, 'lsn'>): Promise<number> {
+		const walRecord: WALRecord = { ...record, lsn: ++this.lsn };
+		this.buffer.push(walRecord);
+		return walRecord.lsn;
+	}
 
-  // Force WAL to disk — called on COMMIT
-  async flush(): Promise<void> {
-    const data = this.serialize(this.buffer);
-    await this.logFile.write(data);
-    await this.logFile.sync(); // fsync — guarantees data is on disk
-    this.buffer = [];
-  }
+	// Force WAL to disk — called on COMMIT
+	async flush(): Promise<void> {
+		const data = this.serialize(this.buffer);
+		await this.logFile.write(data);
+		await this.logFile.sync(); // fsync — guarantees data is on disk
+		this.buffer = [];
+	}
 }
 ```
 
@@ -66,29 +66,29 @@ The key rule: **the WAL record must be on disk BEFORE the dirty data page is wri
 
 ```typescript
 async function executeInsert(table: string, row: Row): Promise<void> {
-  // 1. Write WAL record (in memory buffer)
-  const lsn = await wal.append({
-    transactionId: currentTx,
-    operation: "INSERT",
-    tableId: getTableId(table),
-    pageId: targetPage,
-    offset: slotOffset,
-    afterImage: serialize(row),
-  });
+	// 1. Write WAL record (in memory buffer)
+	const lsn = await wal.append({
+		transactionId: currentTx,
+		operation: 'INSERT',
+		tableId: getTableId(table),
+		pageId: targetPage,
+		offset: slotOffset,
+		afterImage: serialize(row)
+	});
 
-  // 2. Modify the page in buffer pool (RAM only)
-  const page = await bufferPool.getPage(targetPage);
-  page.items.push(row);
-  page.pageHeader.lsn = lsn; // track which WAL record this page reflects
-  bufferPool.markDirty(targetPage);
+	// 2. Modify the page in buffer pool (RAM only)
+	const page = await bufferPool.getPage(targetPage);
+	page.items.push(row);
+	page.pageHeader.lsn = lsn; // track which WAL record this page reflects
+	bufferPool.markDirty(targetPage);
 
-  // 3. On COMMIT: flush WAL to disk (fsync)
-  await wal.flush();
-  // Data page is NOT written to disk yet!
-  // It will be flushed later by the background writer or at checkpoint
+	// 3. On COMMIT: flush WAL to disk (fsync)
+	await wal.flush();
+	// Data page is NOT written to disk yet!
+	// It will be flushed later by the background writer or at checkpoint
 
-  // 4. Return success to client
-  // Even if we crash now, the WAL has the data
+	// 4. Return success to client
+	// Even if we crash now, the WAL has the data
 }
 ```
 
@@ -104,25 +104,25 @@ On startup after a crash, the database replays the WAL:
 
 ```typescript
 async function recover(): Promise<void> {
-  // Find the last checkpoint (known-good state)
-  const checkpoint = await findLastCheckpoint();
+	// Find the last checkpoint (known-good state)
+	const checkpoint = await findLastCheckpoint();
 
-  // Replay all WAL records after the checkpoint
-  const records = await readWALFrom(checkpoint.lsn);
+	// Replay all WAL records after the checkpoint
+	const records = await readWALFrom(checkpoint.lsn);
 
-  for (const record of records) {
-    const page = await readPageFromDisk(record.pageId);
+	for (const record of records) {
+		const page = await readPageFromDisk(record.pageId);
 
-    if (page.pageHeader.lsn < record.lsn) {
-      // Page is stale — apply the WAL record (REDO)
-      applyRecord(page, record);
-      await writePageToDisk(page);
-    }
-    // If page.lsn >= record.lsn, the change was already applied
-  }
+		if (page.pageHeader.lsn < record.lsn) {
+			// Page is stale — apply the WAL record (REDO)
+			applyRecord(page, record);
+			await writePageToDisk(page);
+		}
+		// If page.lsn >= record.lsn, the change was already applied
+	}
 
-  // Undo any uncommitted transactions
-  await rollbackUncommitted();
+	// Undo any uncommitted transactions
+	await rollbackUncommitted();
 }
 ```
 
@@ -132,20 +132,20 @@ Without checkpoints, recovery would replay the entire WAL from the beginning of 
 
 ```typescript
 async function checkpoint(): Promise<void> {
-  // 1. Record checkpoint start in WAL
-  const checkpointLSN = await wal.append({ operation: "CHECKPOINT_START" });
+	// 1. Record checkpoint start in WAL
+	const checkpointLSN = await wal.append({ operation: 'CHECKPOINT_START' });
 
-  // 2. Flush all dirty pages to disk
-  for (const [pageId, entry] of bufferPool.dirtyPages()) {
-    await writePageToDisk(entry.data);
-    entry.dirty = false;
-  }
+	// 2. Flush all dirty pages to disk
+	for (const [pageId, entry] of bufferPool.dirtyPages()) {
+		await writePageToDisk(entry.data);
+		entry.dirty = false;
+	}
 
-  // 3. Record checkpoint end in WAL
-  await wal.append({ operation: "CHECKPOINT_END" });
+	// 3. Record checkpoint end in WAL
+	await wal.append({ operation: 'CHECKPOINT_END' });
 
-  // 4. WAL segments before this checkpoint can be recycled
-  await wal.truncateBefore(checkpointLSN);
+	// 4. WAL segments before this checkpoint can be recycled
+	await wal.truncateBefore(checkpointLSN);
 }
 
 // PostgreSQL runs checkpoints every 5 minutes or every 1GB of WAL
@@ -163,4 +163,3 @@ async function checkpoint(): Promise<void> {
 2. **COMMIT = WAL flush (fsync)** — once the log is on disk, the transaction is durable
 3. **Crash recovery replays the WAL** from the last checkpoint, redoing committed and undoing uncommitted work
 4. **Checkpoints limit recovery time** by periodically flushing dirty pages to disk
-

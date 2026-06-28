@@ -1,10 +1,10 @@
 ---
-title: "Choosing the Right Database"
-subtitle: "A decision framework, polyglot persistence, SQL vs each NoSQL family, the common mistakes, and how to match a workload to a store."
+title: 'Choosing the Right Database'
+subtitle: 'A decision framework, polyglot persistence, SQL vs each NoSQL family, the common mistakes, and how to match a workload to a store.'
 chapter: 8
-level: "mastery"
-readingTime: "12 min"
-topics: ["polyglot", "decision", "tradeoffs"]
+level: 'mastery'
+readingTime: '12 min'
+topics: ['polyglot', 'decision', 'tradeoffs']
 ---
 
 <script>
@@ -15,7 +15,7 @@ topics: ["polyglot", "decision", "tradeoffs"]
 
 **Real-World Analogy**
 
-You don't own one vehicle for every trip. A bicycle for the corner shop, a sedan for the commute, a van for moving house, a truck for freight. Each is "best" only relative to a journey. Picking a database is the same: there is no universally best store, only the best fit for *this* workload's shape, scale, and consistency needs. The expert's skill is reading the journey before choosing the vehicle.
+You don't own one vehicle for every trip. A bicycle for the corner shop, a sedan for the commute, a van for moving house, a truck for freight. Each is "best" only relative to a journey. Picking a database is the same: there is no universally best store, only the best fit for _this_ workload's shape, scale, and consistency needs. The expert's skill is reading the journey before choosing the vehicle.
 
 </Callout>
 
@@ -30,7 +30,7 @@ Every database conversation that begins "should we use MongoDB / Cassandra / Pos
 - **Read/write mix** — read-heavy, write-heavy, or append-only?
 - **Query flexibility** — are the queries known in advance, or will analysts slice the data in unpredictable ways?
 
-Only after answering these does a store suggest itself. The database is the *conclusion* of the analysis, never its premise.
+Only after answering these does a store suggest itself. The database is the _conclusion_ of the analysis, never its premise.
 
 ## A Decision Framework
 
@@ -62,17 +62,17 @@ The ordering is deliberate: **start at relational and move away only when a conc
 
 ## SQL vs Each NoSQL Family
 
-| Need | Relational | Key-value | Document | Wide-column | Graph |
-|---|---|---|---|---|---|
-| Ad-hoc queries | Excellent | None | Good | Poor | Poor |
-| Joins / relationships | Excellent | None | Manual | None | Excellent (traversal) |
-| Horizontal write scale | Hard | Excellent | Good | Excellent | Hard |
-| Flexible / evolving schema | Rigid | N/A | Excellent | Flexible | Flexible |
-| Strong consistency | Excellent | Varies | Tunable | Tunable | Good |
-| Lookup latency by key | Good | Excellent | Good | Good | N/A |
-| Best at | Integrity + flexibility | Speed + simplicity | Whole-entity reads | Write volume + scale | Connectedness |
+| Need                       | Relational              | Key-value          | Document           | Wide-column          | Graph                 |
+| -------------------------- | ----------------------- | ------------------ | ------------------ | -------------------- | --------------------- |
+| Ad-hoc queries             | Excellent               | None               | Good               | Poor                 | Poor                  |
+| Joins / relationships      | Excellent               | None               | Manual             | None                 | Excellent (traversal) |
+| Horizontal write scale     | Hard                    | Excellent          | Good               | Excellent            | Hard                  |
+| Flexible / evolving schema | Rigid                   | N/A                | Excellent          | Flexible             | Flexible              |
+| Strong consistency         | Excellent               | Varies             | Tunable            | Tunable              | Good                  |
+| Lookup latency by key      | Good                    | Excellent          | Good               | Good                 | N/A                   |
+| Best at                    | Integrity + flexibility | Speed + simplicity | Whole-entity reads | Write volume + scale | Connectedness         |
 
-No row is all "Excellent" — every store trades something. Reading this table the right way means noticing which weaknesses your workload *doesn't care about*. A telemetry pipeline shrugs at "no ad-hoc queries"; a graph store's shaky horizontal scaling is irrelevant if your graph fits comfortably on a few nodes.
+No row is all "Excellent" — every store trades something. Reading this table the right way means noticing which weaknesses your workload _doesn't care about_. A telemetry pipeline shrugs at "no ad-hoc queries"; a graph store's shaky horizontal scaling is irrelevant if your graph fits comfortably on a few nodes.
 
 ## Polyglot Persistence
 
@@ -87,7 +87,7 @@ Cassandra     → clickstream / event log        (write volume, scale)
 Neo4j         → "customers also bought"        (recommendation graph)
 ```
 
-The benefit is using the best tool for each job; the cost is real **operational complexity** — more systems to run, monitor, back up, and keep in sync — plus the hard problem of consistency *across* stores (often solved with event streaming or change-data-capture rather than distributed transactions).
+The benefit is using the best tool for each job; the cost is real **operational complexity** — more systems to run, monitor, back up, and keep in sync — plus the hard problem of consistency _across_ stores (often solved with event streaming or change-data-capture rather than distributed transactions).
 
 <Callout type="tip">
 
@@ -109,7 +109,7 @@ The benefit is using the best tool for each job; the cost is real **operational 
 
 <Callout type="warning">
 
-**Warning:** "We chose NoSQL because it's web-scale / modern / what the big companies use" is not an engineering reason. The big companies adopted these stores to solve specific, extreme problems — and they kept relational databases for everything else. Cargo-culting their database choices without their workloads gives you their complexity without their problems. Choose for *your* workload.
+**Warning:** "We chose NoSQL because it's web-scale / modern / what the big companies use" is not an engineering reason. The big companies adopted these stores to solve specific, extreme problems — and they kept relational databases for everything else. Cargo-culting their database choices without their workloads gives you their complexity without their problems. Choose for _your_ workload.
 
 </Callout>
 

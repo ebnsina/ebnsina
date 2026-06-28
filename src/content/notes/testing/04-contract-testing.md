@@ -1,10 +1,17 @@
 ---
-title: "Contract Testing"
-subtitle: "Verify that services agree on the API contract without deploying them together — Pact for consumer-driven contracts."
+title: 'Contract Testing'
+subtitle: 'Verify that services agree on the API contract without deploying them together — Pact for consumer-driven contracts.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["contract testing", "Pact", "consumer-driven contracts", "API contracts", "microservices testing"]
+level: 'intermediate'
+readingTime: '9 min'
+topics:
+  [
+    'contract testing',
+    'Pact',
+    'consumer-driven contracts',
+    'API contracts',
+    'microservices testing'
+  ]
 ---
 
 <script>
@@ -56,64 +63,64 @@ import path from 'path';
 const { like, string, integer } = MatchersV3;
 
 const provider = new PactV3({
-  consumer: 'OrderService',
-  provider: 'UserService',
-  dir: path.resolve(process.cwd(), 'pacts'),  // pact files written here
+	consumer: 'OrderService',
+	provider: 'UserService',
+	dir: path.resolve(process.cwd(), 'pacts') // pact files written here
 });
 
 describe('UserClient', () => {
-  it('gets a user by ID', async () => {
-    await provider.addInteraction({
-      states: [{ description: 'user 123 exists' }],
-      uponReceiving: 'a request for user 123',
-      withRequest: {
-        method: 'GET',
-        path: '/users/123',
-        headers: { Accept: 'application/json' },
-      },
-      willRespondWith: {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: {
-          id: string('123'),        // must be a string, value is example only
-          email: string('fatima@example.com'),
-          name: string('Fatima'),
-          role: string('premium'),
-        },
-      },
-    });
+	it('gets a user by ID', async () => {
+		await provider.addInteraction({
+			states: [{ description: 'user 123 exists' }],
+			uponReceiving: 'a request for user 123',
+			withRequest: {
+				method: 'GET',
+				path: '/users/123',
+				headers: { Accept: 'application/json' }
+			},
+			willRespondWith: {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+				body: {
+					id: string('123'), // must be a string, value is example only
+					email: string('fatima@example.com'),
+					name: string('Fatima'),
+					role: string('premium')
+				}
+			}
+		});
 
-    await provider.executeTest(async (mockProvider) => {
-      const client = new UserClient(mockProvider.url);
-      const user = await client.getUser('123');
+		await provider.executeTest(async (mockProvider) => {
+			const client = new UserClient(mockProvider.url);
+			const user = await client.getUser('123');
 
-      expect(user.id).toBe('123');
-      expect(user.email).toBeDefined();
-    });
-  });
+			expect(user.id).toBe('123');
+			expect(user.email).toBeDefined();
+		});
+	});
 
-  it('returns 404 for missing user', async () => {
-    await provider.addInteraction({
-      states: [{ description: 'user 999 does not exist' }],
-      uponReceiving: 'a request for a missing user',
-      withRequest: {
-        method: 'GET',
-        path: '/users/999',
-        headers: { Accept: 'application/json' },
-      },
-      willRespondWith: {
-        status: 404,
-        body: {
-          error: string('User not found'),
-        },
-      },
-    });
+	it('returns 404 for missing user', async () => {
+		await provider.addInteraction({
+			states: [{ description: 'user 999 does not exist' }],
+			uponReceiving: 'a request for a missing user',
+			withRequest: {
+				method: 'GET',
+				path: '/users/999',
+				headers: { Accept: 'application/json' }
+			},
+			willRespondWith: {
+				status: 404,
+				body: {
+					error: string('User not found')
+				}
+			}
+		});
 
-    await provider.executeTest(async (mockProvider) => {
-      const client = new UserClient(mockProvider.url);
-      await expect(client.getUser('999')).rejects.toThrow('User not found');
-    });
-  });
+		await provider.executeTest(async (mockProvider) => {
+			const client = new UserClient(mockProvider.url);
+			await expect(client.getUser('999')).rejects.toThrow('User not found');
+		});
+	});
 });
 ```
 
@@ -124,18 +131,18 @@ Running these tests generates a `pacts/OrderService-UserService.json` file — t
 ```typescript
 // order-service/src/user-client.ts
 export class UserClient {
-  constructor(private baseUrl: string) {}
+	constructor(private baseUrl: string) {}
 
-  async getUser(userId: string): Promise<User> {
-    const res = await fetch(`${this.baseUrl}/users/${userId}`, {
-      headers: { Accept: 'application/json' },
-    });
+	async getUser(userId: string): Promise<User> {
+		const res = await fetch(`${this.baseUrl}/users/${userId}`, {
+			headers: { Accept: 'application/json' }
+		});
 
-    if (res.status === 404) throw new Error('User not found');
-    if (!res.ok) throw new Error(`UserService error: ${res.status}`);
+		if (res.status === 404) throw new Error('User not found');
+		if (!res.ok) throw new Error(`UserService error: ${res.status}`);
 
-    return res.json();
-  }
+		return res.json();
+	}
 }
 ```
 
@@ -151,37 +158,35 @@ import path from 'path';
 import { testDb } from './test/setup';
 
 describe('Pact provider verification', () => {
-  it('fulfills OrderService contract', async () => {
-    const server = app.listen(0);  // random port
-    const port = (server.address() as AddressInfo).port;
+	it('fulfills OrderService contract', async () => {
+		const server = app.listen(0); // random port
+		const port = (server.address() as AddressInfo).port;
 
-    const verifier = new PactV3({
-      provider: 'UserService',
-      providerBaseUrl: `http://localhost:${port}`,
-      pactUrls: [
-        path.resolve(__dirname, '../../order-service/pacts/OrderService-UserService.json')
-      ],
-    });
+		const verifier = new PactV3({
+			provider: 'UserService',
+			providerBaseUrl: `http://localhost:${port}`,
+			pactUrls: [path.resolve(__dirname, '../../order-service/pacts/OrderService-UserService.json')]
+		});
 
-    await verifier.verifyProvider({
-      stateHandlers: {
-        'user 123 exists': async () => {
-          // Seed the state required by this interaction
-          await testDb.query(
-            `INSERT INTO users (id, email, name, role)
+		await verifier.verifyProvider({
+			stateHandlers: {
+				'user 123 exists': async () => {
+					// Seed the state required by this interaction
+					await testDb.query(
+						`INSERT INTO users (id, email, name, role)
              VALUES ('123', 'fatima@example.com', 'Fatima', 'premium')
              ON CONFLICT (id) DO NOTHING`
-          );
-        },
-        'user 999 does not exist': async () => {
-          // Ensure user 999 doesn't exist
-          await testDb.query('DELETE FROM users WHERE id = $1', ['999']);
-        },
-      },
-    });
+					);
+				},
+				'user 999 does not exist': async () => {
+					// Ensure user 999 doesn't exist
+					await testDb.query('DELETE FROM users WHERE id = $1', ['999']);
+				}
+			}
+		});
 
-    await new Promise(resolve => server.close(resolve));
-  });
+		await new Promise((resolve) => server.close(resolve));
+	});
 });
 ```
 
@@ -197,7 +202,7 @@ services:
   pact-broker:
     image: pactfoundation/pact-broker
     ports:
-      - "9292:9292"
+      - '9292:9292'
     environment:
       PACT_BROKER_DATABASE_URL: postgres://pact:pact@postgres/pact
       PACT_BROKER_BASIC_AUTH_USERNAME: admin
@@ -214,28 +219,28 @@ services:
 ```typescript
 // Publish pacts to broker (run after consumer tests)
 const publisher = new PactV3({
-  consumer: 'OrderService',
-  provider: 'UserService',
-  pactBrokerUrl: 'http://localhost:9292',
-  pactBrokerUsername: 'admin',
-  pactBrokerPassword: 'password',
-  publishVerificationResults: true,
-  providerVersion: process.env.GIT_SHA ?? '1.0.0',
+	consumer: 'OrderService',
+	provider: 'UserService',
+	pactBrokerUrl: 'http://localhost:9292',
+	pactBrokerUsername: 'admin',
+	pactBrokerPassword: 'password',
+	publishVerificationResults: true,
+	providerVersion: process.env.GIT_SHA ?? '1.0.0'
 });
 
 // Provider pulls from broker
 const verifier = new PactV3({
-  provider: 'UserService',
-  providerBaseUrl: `http://localhost:${port}`,
-  pactBrokerUrl: 'http://localhost:9292',
-  pactBrokerUsername: 'admin',
-  pactBrokerPassword: 'password',
-  consumerVersionSelectors: [
-    { mainBranch: true },   // contracts from main branch of consumers
-    { deployedOrReleased: true },  // contracts from deployed consumers
-  ],
-  publishVerificationResults: true,
-  providerVersion: process.env.GIT_SHA,
+	provider: 'UserService',
+	providerBaseUrl: `http://localhost:${port}`,
+	pactBrokerUrl: 'http://localhost:9292',
+	pactBrokerUsername: 'admin',
+	pactBrokerPassword: 'password',
+	consumerVersionSelectors: [
+		{ mainBranch: true }, // contracts from main branch of consumers
+		{ deployedOrReleased: true } // contracts from deployed consumers
+	],
+	publishVerificationResults: true,
+	providerVersion: process.env.GIT_SHA
 });
 ```
 
@@ -270,11 +275,13 @@ const verifier = new PactV3({
 ## What Makes a Good Contract
 
 **Include:**
+
 - Fields your consumer actually uses (not every field the provider returns)
 - Response status codes for success and known error states
 - Required headers (Content-Type, auth)
 
 **Don't include:**
+
 - Optional fields your consumer ignores — adding them to the contract breaks you when the provider removes them
 - Exact values where only the type matters — use `like()` matchers
 - Provider implementation details — test the interface, not the internals
@@ -306,9 +313,9 @@ For smaller teams or REST-only APIs, simpler alternatives work:
 import { createOpenApiSpec } from 'openapi-backend';
 
 it('GET /users/:id matches OpenAPI spec', async () => {
-  const res = await request.get('/users/123');
-  const valid = spec.validateResponse(res, 'GET', '/users/{id}');
-  expect(valid.errors).toHaveLength(0);
+	const res = await request.get('/users/123');
+	const valid = spec.validateResponse(res, 'GET', '/users/{id}');
+	expect(valid.errors).toHaveLength(0);
 });
 
 // Or: generate types from OpenAPI and use them in both consumer and provider
@@ -316,4 +323,3 @@ it('GET /users/:id matches OpenAPI spec', async () => {
 ```
 
 Contract tests pay off proportional to the number of service boundaries. One service → don't bother. Ten services with shared APIs → essential.
-

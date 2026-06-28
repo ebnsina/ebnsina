@@ -1,10 +1,10 @@
 ---
-title: "Access & Error Logs"
-subtitle: "Customize nginx log formats, understand what each field means, find requests by status or duration, and tell access logs apart from error logs the right way."
+title: 'Access & Error Logs'
+subtitle: 'Customize nginx log formats, understand what each field means, find requests by status or duration, and tell access logs apart from error logs the right way.'
 chapter: 8
-level: "intermediate"
-readingTime: "11 min"
-topics: ["nginx", "logs", "access log", "error log", "log format"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['nginx', 'logs', 'access log', 'error log', 'log format']
 ---
 
 <script>
@@ -36,16 +36,16 @@ Access and error logs are like a security camera recording every visitor — you
 
 Fields, separated by spaces (with quoting):
 
-| Field | Variable | Meaning |
-|---|---|---|
-| `192.0.2.4` | `$remote_addr` | Client IP (or proxy IP if there is one in front) |
-| `-` | `$remote_user` | Auth user (rare) |
-| `[04/May/2026:10:42:11 +0000]` | `$time_local` | Local timestamp |
-| `"GET /api/users HTTP/1.1"` | `$request` | Request line |
-| `200` | `$status` | Response status |
-| `1234` | `$body_bytes_sent` | Response body size in bytes |
-| `"https://example.com/"` | `$http_referer` | Referer header |
-| `"Mozilla/5.0 ..."` | `$http_user_agent` | User-Agent header |
+| Field                          | Variable           | Meaning                                          |
+| ------------------------------ | ------------------ | ------------------------------------------------ |
+| `192.0.2.4`                    | `$remote_addr`     | Client IP (or proxy IP if there is one in front) |
+| `-`                            | `$remote_user`     | Auth user (rare)                                 |
+| `[04/May/2026:10:42:11 +0000]` | `$time_local`      | Local timestamp                                  |
+| `"GET /api/users HTTP/1.1"`    | `$request`         | Request line                                     |
+| `200`                          | `$status`          | Response status                                  |
+| `1234`                         | `$body_bytes_sent` | Response body size in bytes                      |
+| `"https://example.com/"`       | `$http_referer`    | Referer header                                   |
+| `"Mozilla/5.0 ..."`            | `$http_user_agent` | User-Agent header                                |
 
 This is the **combined** format — the de-facto standard since Apache. Every log analyzer, GoAccess, AWStats, ELK, every grep pattern on the internet expects something close to it.
 
@@ -304,11 +304,11 @@ A single VPS holds its own logs. They die with the box. For real systems:
 - **rsyslog** with TCP/TLS forwarding — older but rock-solid.
 - **`journalctl -o json -f` piped through a forwarder** — when nginx is configured to log to journald (via stdout) instead of files.
 
-For this chapter, the rule is: *be able to query the local logs cold*. Once you can, exporting them is a five-line config.
+For this chapter, the rule is: _be able to query the local logs cold_. Once you can, exporting them is a five-line config.
 
 ## Application logs — what to log from your app
 
-nginx logs the request envelope. Your application logs the *content* — what business decision was made, which user did what, why a 500 happened. Pair them:
+nginx logs the request envelope. Your application logs the _content_ — what business decision was made, which user did what, why a 500 happened. Pair them:
 
 - Both nginx and the app log the same `$request_id`.
 - App logs JSON (or another structured format).
@@ -336,4 +336,3 @@ journalctl -u myapp --since "10 min ago" | grep "<request_id>"
 - Pair nginx logs and app logs via shared `$request_id` for cross-system debugging.
 
 Next chapter: caching at the edge — how nginx can answer 80% of your requests from RAM without ever touching the backend.
-

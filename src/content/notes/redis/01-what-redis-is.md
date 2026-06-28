@@ -1,10 +1,10 @@
 ---
-title: "What Redis Is & the Core Model"
-subtitle: "An in-memory key-value store with a single-threaded event loop and a dead-simple wire protocol."
+title: 'What Redis Is & the Core Model'
+subtitle: 'An in-memory key-value store with a single-threaded event loop and a dead-simple wire protocol.'
 chapter: 1
-level: "beginner"
-readingTime: "11 min"
-topics: ["redis", "in-memory", "single-threaded"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['redis', 'in-memory', 'single-threaded']
 ---
 
 <script>
@@ -29,7 +29,7 @@ A single-threaded core does not mean a single process. Modern Redis offloads som
 
 <Callout type="tip">
 
-**Note:** Because commands are atomic and serialized, you never need a lock to make a single Redis command safe. The trouble starts only when a *business operation* spans several commands — that is what transactions and Lua scripting (chapter 7) are for.
+**Note:** Because commands are atomic and serialized, you never need a lock to make a single Redis command safe. The trouble starts only when a _business operation_ spans several commands — that is what transactions and Lua scripting (chapter 7) are for.
 
 </Callout>
 

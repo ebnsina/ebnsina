@@ -1,10 +1,10 @@
 ---
-title: "Distributed Systems — Roadmap"
-subtitle: "From a single machine to many: failure, time, replication, consensus, and the trade-offs that define every distributed system."
+title: 'Distributed Systems — Roadmap'
+subtitle: 'From a single machine to many: failure, time, replication, consensus, and the trade-offs that define every distributed system.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "distributed systems"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'distributed systems']
 ---
 
 <script>

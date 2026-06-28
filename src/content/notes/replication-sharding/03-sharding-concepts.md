@@ -1,10 +1,11 @@
 ---
-title: "Sharding Concepts"
+title: 'Sharding Concepts'
 subtitle: "When replication isn't enough, partition keys, shard routing strategies, and the operational complexity you accept when you shard."
 chapter: 3
-level: "intermediate"
-readingTime: "10 min"
-topics: ["sharding", "partition key", "consistent hashing", "horizontal partitioning", "shard routing"]
+level: 'intermediate'
+readingTime: '10 min'
+topics:
+  ['sharding', 'partition key', 'consistent hashing', 'horizontal partitioning', 'shard routing']
 ---
 
 <script>
@@ -70,17 +71,20 @@ Shard 3 (server C): customers 666k–1M
 The most consequential decision. Get it wrong and you have hotspots, cross-shard queries everywhere, and a rebalancing nightmare.
 
 **Good shard key properties:**
+
 - High cardinality (many distinct values)
 - Evenly distributed (no hotspots)
 - Stable (doesn't change after creation)
 - Appears in most queries (avoids scatter-gather)
 
 **Common choices:**
+
 - `customer_id` — all data for a customer is on one shard; most queries include customer_id
 - `tenant_id` — for multi-tenant SaaS; all tenant data on one shard
 - `user_id` — same pattern
 
 **Bad shard keys:**
+
 - `created_at` — all new writes go to the latest shard (hotspot)
 - `status` — low cardinality (few distinct values → uneven distribution)
 - `country_code` — uneven distribution (US has 100x more data than Luxembourg)
@@ -112,9 +116,9 @@ Shard 3: customer_id 2,000,001–3,000,000
 
 ```typescript
 function getShardForCustomer(customerId: number): number {
-  if (customerId <= 1_000_000) return 1;
-  if (customerId <= 2_000_000) return 2;
-  return 3;
+	if (customerId <= 1_000_000) return 1;
+	if (customerId <= 2_000_000) return 2;
+	return 3;
 }
 ```
 
@@ -128,9 +132,9 @@ import { createHash } from 'crypto';
 const SHARD_COUNT = 4;
 
 function getShardForCustomer(customerId: string): number {
-  const hash = createHash('sha256').update(customerId).digest('hex');
-  const hashInt = parseInt(hash.slice(0, 8), 16);
-  return hashInt % SHARD_COUNT;
+	const hash = createHash('sha256').update(customerId).digest('hex');
+	const hashInt = parseInt(hash.slice(0, 8), 16);
+	return hashInt % SHARD_COUNT;
 }
 
 // customer "cust-123" → always goes to shard 2
@@ -147,41 +151,41 @@ Reduces data movement when adding/removing shards. Instead of `hash % N`, place 
 
 ```typescript
 class ConsistentHashRing {
-  private ring = new Map<number, string>();
-  private sortedKeys: number[] = [];
-  private readonly virtualNodes = 150;  // multiple points per shard for balance
+	private ring = new Map<number, string>();
+	private sortedKeys: number[] = [];
+	private readonly virtualNodes = 150; // multiple points per shard for balance
 
-  addShard(shardId: string) {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const hash = this.hash(`${shardId}:${i}`);
-      this.ring.set(hash, shardId);
-    }
-    this.sortedKeys = Array.from(this.ring.keys()).sort((a, b) => a - b);
-  }
+	addShard(shardId: string) {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const hash = this.hash(`${shardId}:${i}`);
+			this.ring.set(hash, shardId);
+		}
+		this.sortedKeys = Array.from(this.ring.keys()).sort((a, b) => a - b);
+	}
 
-  removeShard(shardId: string) {
-    for (let i = 0; i < this.virtualNodes; i++) {
-      const hash = this.hash(`${shardId}:${i}`);
-      this.ring.delete(hash);
-    }
-    this.sortedKeys = Array.from(this.ring.keys()).sort((a, b) => a - b);
-  }
+	removeShard(shardId: string) {
+		for (let i = 0; i < this.virtualNodes; i++) {
+			const hash = this.hash(`${shardId}:${i}`);
+			this.ring.delete(hash);
+		}
+		this.sortedKeys = Array.from(this.ring.keys()).sort((a, b) => a - b);
+	}
 
-  getShard(key: string): string {
-    const hash = this.hash(key);
-    // Find first shard clockwise from this position
-    for (const ringKey of this.sortedKeys) {
-      if (ringKey >= hash) {
-        return this.ring.get(ringKey)!;
-      }
-    }
-    return this.ring.get(this.sortedKeys[0])!;  // wrap around
-  }
+	getShard(key: string): string {
+		const hash = this.hash(key);
+		// Find first shard clockwise from this position
+		for (const ringKey of this.sortedKeys) {
+			if (ringKey >= hash) {
+				return this.ring.get(ringKey)!;
+			}
+		}
+		return this.ring.get(this.sortedKeys[0])!; // wrap around
+	}
 
-  private hash(key: string): number {
-    const h = createHash('md5').update(key).digest('hex');
-    return parseInt(h.slice(0, 8), 16);
-  }
+	private hash(key: string): number {
+		const h = createHash('md5').update(key).digest('hex');
+		return parseInt(h.slice(0, 8), 16);
+	}
 }
 
 const ring = new ConsistentHashRing();
@@ -189,7 +193,7 @@ ring.addShard('shard-1');
 ring.addShard('shard-2');
 ring.addShard('shard-3');
 
-ring.getShard('customer-123')  // → 'shard-2'
+ring.getShard('customer-123'); // → 'shard-2'
 // Adding shard-4: only ~25% of keys move (vs 75% with hash-mod)
 ```
 
@@ -200,28 +204,28 @@ The most painful part of sharding. A query that doesn't include the shard key mu
 ```typescript
 // Single-shard: fast
 async function getCustomerOrders(customerId: string): Promise<Order[]> {
-  const shard = ring.getShard(customerId);
-  const db = getConnection(shard);
-  return db.query('SELECT * FROM orders WHERE customer_id = $1', [customerId]);
+	const shard = ring.getShard(customerId);
+	const db = getConnection(shard);
+	return db.query('SELECT * FROM orders WHERE customer_id = $1', [customerId]);
 }
 
 // Cross-shard scatter-gather: expensive
 async function getRecentOrders(since: Date): Promise<Order[]> {
-  // Must query all shards
-  const results = await Promise.all(
-    ALL_SHARDS.map(shard =>
-      getConnection(shard).query(
-        'SELECT * FROM orders WHERE created_at > $1 ORDER BY created_at DESC LIMIT 100',
-        [since]
-      )
-    )
-  );
+	// Must query all shards
+	const results = await Promise.all(
+		ALL_SHARDS.map((shard) =>
+			getConnection(shard).query(
+				'SELECT * FROM orders WHERE created_at > $1 ORDER BY created_at DESC LIMIT 100',
+				[since]
+			)
+		)
+	);
 
-  // Merge and re-sort results from all shards
-  return results
-    .flatMap(r => r.rows)
-    .sort((a, b) => b.created_at - a.created_at)
-    .slice(0, 100);
+	// Merge and re-sort results from all shards
+	return results
+		.flatMap((r) => r.rows)
+		.sort((a, b) => b.created_at - a.created_at)
+		.slice(0, 100);
 }
 ```
 
@@ -242,17 +246,17 @@ CREATE TABLE shard_directory (
 
 ```typescript
 async function getShardForCustomer(customerId: string): Promise<string> {
-  const cached = shardCache.get(customerId);
-  if (cached) return cached;
+	const cached = shardCache.get(customerId);
+	if (cached) return cached;
 
-  const result = await directory.query(
-    'SELECT shard_id FROM shard_directory WHERE customer_id = $1',
-    [customerId]
-  );
+	const result = await directory.query(
+		'SELECT shard_id FROM shard_directory WHERE customer_id = $1',
+		[customerId]
+	);
 
-  const shardId = result.rows[0].shard_id;
-  shardCache.set(customerId, shardId);
-  return shardId;
+	const shardId = result.rows[0].shard_id;
+	shardCache.set(customerId, shardId);
+	return shardId;
 }
 ```
 
@@ -271,4 +275,3 @@ Sharding introduces:
 - **Backup complexity** — must backup all shards consistently
 
 Accept these costs consciously. Most teams would be better served by Postgres table partitioning + a bigger server than by application-level sharding.
-

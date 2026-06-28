@@ -1,10 +1,10 @@
 ---
-title: "Interceptors"
+title: 'Interceptors'
 subtitle: "Interceptors are gRPC's middleware. Cross-cutting concerns — auth, logging, tracing, retries, panic recovery — live here, once, for every RPC. Get the layering right and your handlers stay tiny."
 chapter: 8
-level: "intermediate"
-readingTime: "13 min"
-topics: ["grpc", "interceptors", "middleware", "auth", "logging"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['grpc', 'interceptors', 'middleware', 'auth', 'logging']
 ---
 
 <script>
@@ -375,4 +375,3 @@ A clean handler reads context, calls a service-layer function, returns. The inte
 - Handlers should be tiny: read ctx, call domain, return. Cross-cutting goes in interceptors.
 
 Next: [TLS and mTLS](/notes/grpc/09-tls-mtls) — encryption, identity, and peer authentication.
-

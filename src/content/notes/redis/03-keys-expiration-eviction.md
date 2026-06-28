@@ -1,10 +1,10 @@
 ---
-title: "Keys, Expiration & Eviction"
-subtitle: "Naming, TTLs, how Redis reclaims expired keys, and what happens when memory fills up."
+title: 'Keys, Expiration & Eviction'
+subtitle: 'Naming, TTLs, how Redis reclaims expired keys, and what happens when memory fills up.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["ttl", "expiration", "eviction"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['ttl', 'expiration', 'eviction']
 ---
 
 <script>
@@ -59,7 +59,7 @@ OK
 
 <Callout type="warning">
 
-**Note:** Most write commands that *replace* a key's value also clear its TTL. If you `SET` a key that had an expiry without re-specifying `EX`, the key becomes permanent. Commands that modify in place (`HSET`, `APPEND`, `INCR`) keep the existing TTL. When in doubt, check `TTL` after a write.
+**Note:** Most write commands that _replace_ a key's value also clear its TTL. If you `SET` a key that had an expiry without re-specifying `EX`, the key becomes permanent. Commands that modify in place (`HSET`, `APPEND`, `INCR`) keep the existing TTL. When in doubt, check `TTL` after a write.
 
 </Callout>
 
@@ -74,7 +74,7 @@ The practical consequence: never assume a key vanishes at its exact expiry secon
 
 ## Eviction: when memory runs out
 
-Expiration handles keys you *told* to expire. Eviction handles the harder case: memory is full and a new write arrives. You bound memory with `maxmemory`, then choose a policy for what to drop.
+Expiration handles keys you _told_ to expire. Eviction handles the harder case: memory is full and a new write arrives. You bound memory with `maxmemory`, then choose a policy for what to drop.
 
 ```text
 127.0.0.1:6379> CONFIG SET maxmemory 512mb
@@ -86,21 +86,21 @@ OK
 2) "allkeys-lru"
 ```
 
-The policies split along two axes: *which* keys are candidates (all keys, or only keys that have a TTL — the `volatile-` family), and *how* a victim is chosen.
+The policies split along two axes: _which_ keys are candidates (all keys, or only keys that have a TTL — the `volatile-` family), and _how_ a victim is chosen.
 
-| Policy | Candidates | Victim chosen by |
-|---|---|---|
-| `noeviction` | none | writes fail with an error |
-| `allkeys-lru` | all keys | least recently used |
-| `allkeys-lfu` | all keys | least frequently used |
-| `allkeys-random` | all keys | random |
-| `volatile-lru` | keys with a TTL | least recently used |
-| `volatile-lfu` | keys with a TTL | least frequently used |
-| `volatile-ttl` | keys with a TTL | nearest expiry first |
-| `volatile-random` | keys with a TTL | random |
+| Policy            | Candidates      | Victim chosen by          |
+| ----------------- | --------------- | ------------------------- |
+| `noeviction`      | none            | writes fail with an error |
+| `allkeys-lru`     | all keys        | least recently used       |
+| `allkeys-lfu`     | all keys        | least frequently used     |
+| `allkeys-random`  | all keys        | random                    |
+| `volatile-lru`    | keys with a TTL | least recently used       |
+| `volatile-lfu`    | keys with a TTL | least frequently used     |
+| `volatile-ttl`    | keys with a TTL | nearest expiry first      |
+| `volatile-random` | keys with a TTL | random                    |
 
 - **`noeviction`** is the safe default for a primary store: when full, writes are rejected rather than silently losing data. Reads still work.
-- **LRU vs LFU.** LRU (least *recently* used) evicts what has not been touched lately. LFU (least *frequently* used) tracks an access counter and evicts what is rarely used — better when some keys are accessed in bursts then forgotten while others are steadily popular. Redis's LRU and LFU are *approximate*: they sample a handful of keys rather than maintaining a perfect global order, trading a little accuracy for a lot of speed.
+- **LRU vs LFU.** LRU (least _recently_ used) evicts what has not been touched lately. LFU (least _frequently_ used) tracks an access counter and evicts what is rarely used — better when some keys are accessed in bursts then forgotten while others are steadily popular. Redis's LRU and LFU are _approximate_: they sample a handful of keys rather than maintaining a perfect global order, trading a little accuracy for a lot of speed.
 - **The `volatile-` family** only evicts keys that carry a TTL. This is useful when you mix permanent data and disposable cache in one instance — but if no expirable key exists and memory is full, these policies behave like `noeviction` and writes fail.
 
 <Callout type="tip">

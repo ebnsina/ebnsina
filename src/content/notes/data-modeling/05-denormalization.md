@@ -1,10 +1,10 @@
 ---
-title: "Denormalization"
-subtitle: "Sometimes the same fact lives in two places on purpose. Done well, it makes hot queries fly. Done badly, it creates the exact drift normalization was designed to prevent."
+title: 'Denormalization'
+subtitle: 'Sometimes the same fact lives in two places on purpose. Done well, it makes hot queries fly. Done badly, it creates the exact drift normalization was designed to prevent.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["data-modeling", "denormalization", "performance", "caching"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['data-modeling', 'denormalization', 'performance', 'caching']
 ---
 
 <script>
@@ -194,7 +194,7 @@ CREATE TABLE order_items (
 
 When the seller changes the product price six months from now, this order's history doesn't change. The customer paid `4200`; the receipt says `4200`. The ledger is permanent.
 
-This is the right answer for any *event*, *transaction*, or *historical record*. Snapshot the relevant fields at write time. The source-of-truth tables can change freely.
+This is the right answer for any _event_, _transaction_, or _historical record_. Snapshot the relevant fields at write time. The source-of-truth tables can change freely.
 
 The bookkeeping rule: **historical denormalization is write-once.** Once the order is created, those columns never update. No triggers needed.
 
@@ -218,7 +218,7 @@ The orders service subscribes to a user.updated event stream from the user servi
 
 This is fundamentally the same pattern as the GraphQL track's chapter on N+1 — duplicate the data, accept the eventual consistency, get the fast read.
 
-The trade-off here is real: data is *eventually* consistent. A user who renames themselves will have orders with the old name for some seconds (or minutes). Acceptable for display; not acceptable for billing or compliance.
+The trade-off here is real: data is _eventually_ consistent. A user who renames themselves will have orders with the old name for some seconds (or minutes). Acceptable for display; not acceptable for billing or compliance.
 
 ## Things people denormalize wrong
 
@@ -293,4 +293,3 @@ ALTER TABLE invoices ADD COLUMN total NUMERIC GENERATED ALWAYS AS (subtotal * (1
 - Postgres tools — generated columns, partitions, arrays, tsvector — give you denormalization with less risk.
 
 Next: [Constraints](/notes/data-modeling/06-constraints) — the schema's last line of defense.
-

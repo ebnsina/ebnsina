@@ -1,10 +1,10 @@
 ---
-title: "Ethical Hacking — Roadmap"
-subtitle: "Zero to professional penetration tester. Recon, exploitation, post-exploitation, reporting — with real labs."
+title: 'Ethical Hacking — Roadmap'
+subtitle: 'Zero to professional penetration tester. Recon, exploitation, post-exploitation, reporting — with real labs.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "ethical hacking", "penetration testing", "cybersecurity"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'ethical hacking', 'penetration testing', 'cybersecurity']
 ---
 
 <script>
@@ -87,9 +87,9 @@ Before every engagement:
 Hacking without written permission is a crime regardless of intent. In the US: Computer Fraud and Abuse Act (CFAA). In the UK: Computer Misuse Act. In the EU: Directive 2013/40/EU.
 
 Use these platforms for legal practice:
+
 - **TryHackMe** — guided rooms, beginner-friendly
 - **HackTheBox** — realistic machines, intermediate+
 - **VulnHub** — downloadable VMs, offline practice
 - **DVWA** — intentionally vulnerable web app, local install
 - **PentesterLab** — web-focused exercises with solutions
-

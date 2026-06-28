@@ -1,10 +1,10 @@
 ---
-title: "The Linux Filesystem"
-subtitle: "Where everything lives, why it lives there, and the permissions model that decides what your processes can touch."
+title: 'The Linux Filesystem'
+subtitle: 'Where everything lives, why it lives there, and the permissions model that decides what your processes can touch.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["filesystem", "permissions", "fhs", "linux"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['filesystem', 'permissions', 'fhs', 'linux']
 ---
 
 <script>
@@ -29,27 +29,27 @@ This matters because the same tools (`cat`, `ls`, `cp`, `>`, `<`) work everywher
 
 Every mainstream distribution lays things out the same way. Memorize this map — it pays back forever.
 
-| Path | What lives there |
-|---|---|
-| `/` | The root of everything. Mount point for the root filesystem. |
-| `/bin`, `/sbin` | Essential commands. `ls`, `cp`, `mount`, `ip`. (On modern distros these symlink to `/usr/bin`.) |
-| `/usr/bin`, `/usr/sbin` | Most commands installed by the package manager. |
-| `/usr/local/bin` | Stuff *you* install by hand, outside the package manager. |
-| `/etc` | All system configuration. Editable text files. |
-| `/var` | Variable data: logs (`/var/log`), spool, mail, package caches. |
-| `/var/log` | Where log files go. `journald` keeps its own binary log here. |
-| `/home` | User home directories. `/home/deploy` is yours. |
-| `/root` | Root's home. Yes, separate from `/home`. |
-| `/tmp` | Wiped at every reboot. Use for scratch only. |
-| `/opt` | Vendor-installed software, often self-contained. |
-| `/srv` | Data served by the system (web roots, samba shares). |
-| `/dev` | Device files. Disks, terminals, random sources. |
-| `/proc` | Live kernel state. Each process has a directory `/proc/<pid>`. |
-| `/sys` | Like `/proc` but for hardware and kernel objects. |
-| `/run` | Runtime state since boot. Sockets, PID files. Wiped on reboot. |
-| `/boot` | Kernel and bootloader. Touch with extreme care. |
-| `/mnt`, `/media` | Manual mount points and removable media. |
-| `/lib`, `/lib64` | Shared libraries. Symlinked to `/usr/lib` on modern systems. |
+| Path                    | What lives there                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `/`                     | The root of everything. Mount point for the root filesystem.                                    |
+| `/bin`, `/sbin`         | Essential commands. `ls`, `cp`, `mount`, `ip`. (On modern distros these symlink to `/usr/bin`.) |
+| `/usr/bin`, `/usr/sbin` | Most commands installed by the package manager.                                                 |
+| `/usr/local/bin`        | Stuff _you_ install by hand, outside the package manager.                                       |
+| `/etc`                  | All system configuration. Editable text files.                                                  |
+| `/var`                  | Variable data: logs (`/var/log`), spool, mail, package caches.                                  |
+| `/var/log`              | Where log files go. `journald` keeps its own binary log here.                                   |
+| `/home`                 | User home directories. `/home/deploy` is yours.                                                 |
+| `/root`                 | Root's home. Yes, separate from `/home`.                                                        |
+| `/tmp`                  | Wiped at every reboot. Use for scratch only.                                                    |
+| `/opt`                  | Vendor-installed software, often self-contained.                                                |
+| `/srv`                  | Data served by the system (web roots, samba shares).                                            |
+| `/dev`                  | Device files. Disks, terminals, random sources.                                                 |
+| `/proc`                 | Live kernel state. Each process has a directory `/proc/<pid>`.                                  |
+| `/sys`                  | Like `/proc` but for hardware and kernel objects.                                               |
+| `/run`                  | Runtime state since boot. Sockets, PID files. Wiped on reboot.                                  |
+| `/boot`                 | Kernel and bootloader. Touch with extreme care.                                                 |
+| `/mnt`, `/media`        | Manual mount points and removable media.                                                        |
+| `/lib`, `/lib64`        | Shared libraries. Symlinked to `/usr/lib` on modern systems.                                    |
 
 If you put your application in `/opt/myapp` and its data in `/var/lib/myapp`, every other Linux engineer who has ever lived knows where to look. Follow the convention.
 
@@ -65,7 +65,7 @@ If you put your application in `/opt/myapp` and its data in `/var/lib/myapp`, ev
 
 `pwd` prints where you are. `cd -` jumps back to where you came from. `cd` with no argument goes home.
 
-## Inodes — what a file *really* is
+## Inodes — what a file _really_ is
 
 A file on disk is two things: the **inode** (metadata + pointer to data blocks) and the **directory entry** (the name pointing at the inode).
 
@@ -111,12 +111,12 @@ Read it as four parts:
 In octal:
 
 | Octal | Binary | Permissions |
-|---|---|---|
-| 7 | 111 | rwx |
-| 6 | 110 | rw- |
-| 5 | 101 | r-x |
-| 4 | 100 | r-- |
-| 0 | 000 | --- |
+| ----- | ------ | ----------- |
+| 7     | 111    | rwx         |
+| 6     | 110    | rw-         |
+| 5     | 101    | r-x         |
+| 4     | 100    | r--         |
+| 0     | 000    | ---         |
 
 Common modes you will use:
 
@@ -143,7 +143,7 @@ chmod o=r public.txt            # set other to read only
 
 ## What "execute" means on a directory
 
-For a *file*, `x` means "you can run this." For a *directory*, `x` means "you can `cd` into this and access files inside it." `r` on a directory means "you can `ls` its contents." That is why `chmod 700 ~/.ssh` works — you can enter and read it, others cannot even `ls` it.
+For a _file_, `x` means "you can run this." For a _directory_, `x` means "you can `cd` into this and access files inside it." `r` on a directory means "you can `ls` its contents." That is why `chmod 700 ~/.ssh` works — you can enter and read it, others cannot even `ls` it.
 
 ## Ownership
 
@@ -170,7 +170,7 @@ ls -l /usr/bin/passwd
 # -rwsr-xr-x 1 root root 68208 ... /usr/bin/passwd
 ```
 
-The `s` in place of `x` is **setuid** — when this binary runs, it runs as the *owner* (root) regardless of who launched it. That is how an unprivileged user can change their password (which requires writing to `/etc/shadow`, owned by root).
+The `s` in place of `x` is **setuid** — when this binary runs, it runs as the _owner_ (root) regardless of who launched it. That is how an unprivileged user can change their password (which requires writing to `/etc/shadow`, owned by root).
 
 `setuid` is dangerous — every setuid binary on the system is a privilege escalation surface. Audit them with:
 
@@ -200,7 +200,7 @@ df -h
 # tmpfs           390M  1.2M  389M   1% /run
 ```
 
-When `df` says you are out of space, you are out of space on a *specific filesystem*. `/` being full does not necessarily mean `/var` is.
+When `df` says you are out of space, you are out of space on a _specific filesystem_. `/` being full does not necessarily mean `/var` is.
 
 ## Hidden files
 
@@ -236,4 +236,3 @@ Three or four commands and you have a complete map.
 - `df` and `mount` show what is mounted where; out-of-space is per-filesystem.
 
 Next chapter: what a "process" actually is on Linux, and why your app is not special.
-

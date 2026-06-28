@@ -1,10 +1,10 @@
 ---
-title: "Orchestration — Roadmap"
-subtitle: "Run a k3s cluster across your own VPS fleet. Not EKS, not GKE — your hardware."
+title: 'Orchestration — Roadmap'
+subtitle: 'Run a k3s cluster across your own VPS fleet. Not EKS, not GKE — your hardware.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Container orchestration removes the burden of manually deciding where workloads 
 3. **Workloads** — StatefulSets, DaemonSets, Jobs, CronJobs, HPA, init containers
 4. **Networking & Security** — NetworkPolicies, RBAC, Pod Security Standards, Secrets, mTLS
 5. **GitOps & Deployments** — ArgoCD, Helm, Argo Rollouts, canary with Prometheus analysis
-

@@ -1,10 +1,10 @@
 ---
-title: "Case Study: Social Media News Feed"
-subtitle: "Design and build a production news feed with fan-out, ranking, infinite scroll pagination, and real-time updates."
+title: 'Case Study: Social Media News Feed'
+subtitle: 'Design and build a production news feed with fan-out, ranking, infinite scroll pagination, and real-time updates.'
 chapter: 21
-level: "advanced"
-readingTime: "32 min"
-topics: ["news feed", "fan-out", "ranking algorithm", "pagination", "real-time updates"]
+level: 'advanced'
+readingTime: '32 min'
+topics: ['news feed', 'fan-out', 'ranking algorithm', 'pagination', 'real-time updates']
 ---
 
 <script>
@@ -30,12 +30,10 @@ Like a personalized newspaper — each reader gets a different front page based 
 Each reader gets a different front page based on who they follow, what they engage with, and what's trending. The printing press (fan-out service) must produce millions of unique editions simultaneously. And unlike a real newspaper, readers expect new stories to appear the moment they're published.
 
 <Mermaid
-	title="News Feed Architecture"
-	code={`
-graph TD
+title="News Feed Architecture"
+code={`graph TD
   P["Post Service<br/>Create Post"] --> F["Fan-out Service<br/>Write to Feeds"] --> S["Feed Store<br/>Per-User Timeline"]
-  S --> R["Ranking Engine<br/>Score & Sort"] --> G["Social Graph<br/>Followers"] --> U["Real-time Updates<br/>New Posts"]
-`}
+  S --> R["Ranking Engine<br/>Score & Sort"] --> G["Social Graph<br/>Followers"] --> U["Real-time Updates<br/>New Posts"]`}
 />
 
 ## Requirements
@@ -71,266 +69,270 @@ The fundamental question in news feed design is: **when does a post reach a user
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES
 // ===========================================
 interface Post {
-  id: string;
-  authorId: string;
-  content: string;
-  likes: number;
-  comments: number;
-  createdAt: number;
+	id: string;
+	authorId: string;
+	content: string;
+	likes: number;
+	comments: number;
+	createdAt: number;
 }
 
 interface FeedItem {
-  postId: string;
-  score: number;
-  addedAt: number;
+	postId: string;
+	score: number;
+	addedAt: number;
 }
 
 interface FeedPage {
-  posts: Post[];
-  cursor: string | null;
-  hasMore: boolean;
-  newCount: number;
+	posts: Post[];
+	cursor: string | null;
+	hasMore: boolean;
+	newCount: number;
 }
 
 // ===========================================
 // 2. SOCIAL GRAPH
 // ===========================================
 class SocialGraph {
-  private followers = new Map<string, Set<string>>(); // userId -> followerIds
-  private following = new Map<string, Set<string>>(); // userId -> followingIds
-  private readonly celebrityThreshold = 10000;
+	private followers = new Map<string, Set<string>>(); // userId -> followerIds
+	private following = new Map<string, Set<string>>(); // userId -> followingIds
+	private readonly celebrityThreshold = 10000;
 
-  follow(followerId: string, followeeId: string): void {
-    if (!this.followers.has(followeeId)) this.followers.set(followeeId, new Set());
-    if (!this.following.has(followerId)) this.following.set(followerId, new Set());
-    this.followers.get(followeeId)!.add(followerId);
-    this.following.get(followerId)!.add(followeeId);
-  }
+	follow(followerId: string, followeeId: string): void {
+		if (!this.followers.has(followeeId)) this.followers.set(followeeId, new Set());
+		if (!this.following.has(followerId)) this.following.set(followerId, new Set());
+		this.followers.get(followeeId)!.add(followerId);
+		this.following.get(followerId)!.add(followeeId);
+	}
 
-  unfollow(followerId: string, followeeId: string): void {
-    this.followers.get(followeeId)?.delete(followerId);
-    this.following.get(followeeId)?.delete(followerId);
-  }
+	unfollow(followerId: string, followeeId: string): void {
+		this.followers.get(followeeId)?.delete(followerId);
+		this.following.get(followeeId)?.delete(followerId);
+	}
 
-  getFollowers(userId: string): string[] {
-    return [...(this.followers.get(userId) || [])];
-  }
+	getFollowers(userId: string): string[] {
+		return [...(this.followers.get(userId) || [])];
+	}
 
-  getFollowing(userId: string): string[] {
-    return [...(this.following.get(userId) || [])];
-  }
+	getFollowing(userId: string): string[] {
+		return [...(this.following.get(userId) || [])];
+	}
 
-  isCelebrity(userId: string): boolean {
-    return (this.followers.get(userId)?.size || 0) >= this.celebrityThreshold;
-  }
+	isCelebrity(userId: string): boolean {
+		return (this.followers.get(userId)?.size || 0) >= this.celebrityThreshold;
+	}
 
-  getFollowerCount(userId: string): number {
-    return this.followers.get(userId)?.size || 0;
-  }
+	getFollowerCount(userId: string): number {
+		return this.followers.get(userId)?.size || 0;
+	}
 }
 
 // ===========================================
 // 3. POST STORE
 // ===========================================
 class PostStore {
-  private posts = new Map<string, Post>();
-  private userPosts = new Map<string, string[]>(); // userId -> postIds
+	private posts = new Map<string, Post>();
+	private userPosts = new Map<string, string[]>(); // userId -> postIds
 
-  create(authorId: string, content: string): Post {
-    const post: Post = {
-      id: crypto.randomUUID(),
-      authorId, content,
-      likes: 0, comments: 0,
-      createdAt: Date.now(),
-    };
-    this.posts.set(post.id, post);
-    const list = this.userPosts.get(authorId) || [];
-    list.push(post.id);
-    this.userPosts.set(authorId, list);
-    return post;
-  }
+	create(authorId: string, content: string): Post {
+		const post: Post = {
+			id: crypto.randomUUID(),
+			authorId,
+			content,
+			likes: 0,
+			comments: 0,
+			createdAt: Date.now()
+		};
+		this.posts.set(post.id, post);
+		const list = this.userPosts.get(authorId) || [];
+		list.push(post.id);
+		this.userPosts.set(authorId, list);
+		return post;
+	}
 
-  get(id: string): Post | null {
-    return this.posts.get(id) || null;
-  }
+	get(id: string): Post | null {
+		return this.posts.get(id) || null;
+	}
 
-  getByUser(userId: string, limit = 50): Post[] {
-    const ids = this.userPosts.get(userId) || [];
-    return ids.slice(-limit).reverse()
-      .map((id) => this.posts.get(id)!)
-      .filter(Boolean);
-  }
+	getByUser(userId: string, limit = 50): Post[] {
+		const ids = this.userPosts.get(userId) || [];
+		return ids
+			.slice(-limit)
+			.reverse()
+			.map((id) => this.posts.get(id)!)
+			.filter(Boolean);
+	}
 
-  getByIds(ids: string[]): Post[] {
-    return ids.map((id) => this.posts.get(id)!).filter(Boolean);
-  }
+	getByIds(ids: string[]): Post[] {
+		return ids.map((id) => this.posts.get(id)!).filter(Boolean);
+	}
 
-  like(postId: string): void {
-    const post = this.posts.get(postId);
-    if (post) post.likes++;
-  }
+	like(postId: string): void {
+		const post = this.posts.get(postId);
+		if (post) post.likes++;
+	}
 }
 
 // ===========================================
 // 4. FEED STORE (Per-user timeline)
 // ===========================================
 class FeedStore {
-  private feeds = new Map<string, FeedItem[]>();
-  private readonly maxFeedSize = 1000;
+	private feeds = new Map<string, FeedItem[]>();
+	private readonly maxFeedSize = 1000;
 
-  addToFeed(userId: string, postId: string, score: number): void {
-    const feed = this.feeds.get(userId) || [];
-    feed.push({ postId, score, addedAt: Date.now() });
-    // Keep feed bounded
-    if (feed.length > this.maxFeedSize) {
-      feed.sort((a, b) => b.score - a.score);
-      feed.length = this.maxFeedSize;
-    }
-    this.feeds.set(userId, feed);
-  }
+	addToFeed(userId: string, postId: string, score: number): void {
+		const feed = this.feeds.get(userId) || [];
+		feed.push({ postId, score, addedAt: Date.now() });
+		// Keep feed bounded
+		if (feed.length > this.maxFeedSize) {
+			feed.sort((a, b) => b.score - a.score);
+			feed.length = this.maxFeedSize;
+		}
+		this.feeds.set(userId, feed);
+	}
 
-  getFeed(userId: string): FeedItem[] {
-    return (this.feeds.get(userId) || []).sort((a, b) => b.score - a.score);
-  }
+	getFeed(userId: string): FeedItem[] {
+		return (this.feeds.get(userId) || []).sort((a, b) => b.score - a.score);
+	}
 }
 
 // ===========================================
 // 5. RANKING ENGINE
 // ===========================================
 class RankingEngine {
-  score(post: Post, viewerId: string, graph: SocialGraph): number {
-    const ageHours = (Date.now() - post.createdAt) / 3600000;
-    const recencyScore = Math.max(0, 100 - ageHours * 2); // Decay over 50 hours
-    const engagementScore = (post.likes * 2) + (post.comments * 3);
+	score(post: Post, viewerId: string, graph: SocialGraph): number {
+		const ageHours = (Date.now() - post.createdAt) / 3600000;
+		const recencyScore = Math.max(0, 100 - ageHours * 2); // Decay over 50 hours
+		const engagementScore = post.likes * 2 + post.comments * 3;
 
-    // Author affinity: boost posts from users the viewer follows closely
-    const viewerFollowing = graph.getFollowing(viewerId);
-    const affinityScore = viewerFollowing.includes(post.authorId) ? 10 : 0;
+		// Author affinity: boost posts from users the viewer follows closely
+		const viewerFollowing = graph.getFollowing(viewerId);
+		const affinityScore = viewerFollowing.includes(post.authorId) ? 10 : 0;
 
-    return recencyScore + engagementScore + affinityScore;
-  }
+		return recencyScore + engagementScore + affinityScore;
+	}
 }
 
 // ===========================================
 // 6. FAN-OUT SERVICE
 // ===========================================
 class FanOutService {
-  constructor(
-    private graph: SocialGraph,
-    private feedStore: FeedStore,
-    private ranking: RankingEngine,
-  ) {}
+	constructor(
+		private graph: SocialGraph,
+		private feedStore: FeedStore,
+		private ranking: RankingEngine
+	) {}
 
-  async fanOut(post: Post): Promise<number> {
-    if (this.graph.isCelebrity(post.authorId)) {
-      // Celebrity: skip fan-out on write, will be fetched on read
-      console.log(`[FAN-OUT] Celebrity post ${post.id} — skip push, will pull on read`);
-      return 0;
-    }
+	async fanOut(post: Post): Promise<number> {
+		if (this.graph.isCelebrity(post.authorId)) {
+			// Celebrity: skip fan-out on write, will be fetched on read
+			console.log(`[FAN-OUT] Celebrity post ${post.id} — skip push, will pull on read`);
+			return 0;
+		}
 
-    const followers = this.graph.getFollowers(post.authorId);
-    let count = 0;
+		const followers = this.graph.getFollowers(post.authorId);
+		let count = 0;
 
-    for (const followerId of followers) {
-      const score = this.ranking.score(post, followerId, this.graph);
-      this.feedStore.addToFeed(followerId, post.id, score);
-      count++;
-    }
+		for (const followerId of followers) {
+			const score = this.ranking.score(post, followerId, this.graph);
+			this.feedStore.addToFeed(followerId, post.id, score);
+			count++;
+		}
 
-    console.log(`[FAN-OUT] Post ${post.id} pushed to ${count} feeds`);
-    return count;
-  }
+		console.log(`[FAN-OUT] Post ${post.id} pushed to ${count} feeds`);
+		return count;
+	}
 }
 
 // ===========================================
 // 7. FEED GENERATOR
 // ===========================================
 class FeedGenerator {
-  constructor(
-    private postStore: PostStore,
-    private feedStore: FeedStore,
-    private graph: SocialGraph,
-    private ranking: RankingEngine,
-  ) {}
+	constructor(
+		private postStore: PostStore,
+		private feedStore: FeedStore,
+		private graph: SocialGraph,
+		private ranking: RankingEngine
+	) {}
 
-  generate(userId: string, cursor: string | null, limit = 20): FeedPage {
-    // 1. Get pre-computed feed items (fan-out on write)
-    const feedItems = this.feedStore.getFeed(userId);
+	generate(userId: string, cursor: string | null, limit = 20): FeedPage {
+		// 1. Get pre-computed feed items (fan-out on write)
+		const feedItems = this.feedStore.getFeed(userId);
 
-    // 2. Merge celebrity posts (fan-out on read)
-    const following = this.graph.getFollowing(userId);
-    const celebrityPosts: Post[] = [];
+		// 2. Merge celebrity posts (fan-out on read)
+		const following = this.graph.getFollowing(userId);
+		const celebrityPosts: Post[] = [];
 
-    for (const followeeId of following) {
-      if (this.graph.isCelebrity(followeeId)) {
-        const recent = this.postStore.getByUser(followeeId, 10);
-        celebrityPosts.push(...recent);
-      }
-    }
+		for (const followeeId of following) {
+			if (this.graph.isCelebrity(followeeId)) {
+				const recent = this.postStore.getByUser(followeeId, 10);
+				celebrityPosts.push(...recent);
+			}
+		}
 
-    // 3. Combine and deduplicate
-    const allPostIds = new Set<string>();
-    const allPosts: { post: Post; score: number }[] = [];
+		// 3. Combine and deduplicate
+		const allPostIds = new Set<string>();
+		const allPosts: { post: Post; score: number }[] = [];
 
-    for (const item of feedItems) {
-      if (allPostIds.has(item.postId)) continue;
-      const post = this.postStore.get(item.postId);
-      if (!post) continue;
-      allPostIds.add(item.postId);
-      allPosts.push({ post, score: item.score });
-    }
+		for (const item of feedItems) {
+			if (allPostIds.has(item.postId)) continue;
+			const post = this.postStore.get(item.postId);
+			if (!post) continue;
+			allPostIds.add(item.postId);
+			allPosts.push({ post, score: item.score });
+		}
 
-    for (const post of celebrityPosts) {
-      if (allPostIds.has(post.id)) continue;
-      allPostIds.add(post.id);
-      const score = this.ranking.score(post, userId, this.graph);
-      allPosts.push({ post, score });
-    }
+		for (const post of celebrityPosts) {
+			if (allPostIds.has(post.id)) continue;
+			allPostIds.add(post.id);
+			const score = this.ranking.score(post, userId, this.graph);
+			allPosts.push({ post, score });
+		}
 
-    // 4. Sort by score
-    allPosts.sort((a, b) => b.score - a.score);
+		// 4. Sort by score
+		allPosts.sort((a, b) => b.score - a.score);
 
-    // 5. Cursor-based pagination
-    let startIdx = 0;
-    if (cursor) {
-      const cursorIdx = allPosts.findIndex((p) => p.post.id === cursor);
-      if (cursorIdx >= 0) startIdx = cursorIdx + 1;
-    }
+		// 5. Cursor-based pagination
+		let startIdx = 0;
+		if (cursor) {
+			const cursorIdx = allPosts.findIndex((p) => p.post.id === cursor);
+			if (cursorIdx >= 0) startIdx = cursorIdx + 1;
+		}
 
-    const page = allPosts.slice(startIdx, startIdx + limit);
-    const hasMore = startIdx + limit < allPosts.length;
-    const nextCursor = page.length > 0 ? page[page.length - 1].post.id : null;
+		const page = allPosts.slice(startIdx, startIdx + limit);
+		const hasMore = startIdx + limit < allPosts.length;
+		const nextCursor = page.length > 0 ? page[page.length - 1].post.id : null;
 
-    return {
-      posts: page.map((p) => p.post),
-      cursor: hasMore ? nextCursor : null,
-      hasMore,
-      newCount: 0,
-    };
-  }
+		return {
+			posts: page.map((p) => p.post),
+			cursor: hasMore ? nextCursor : null,
+			hasMore,
+			newCount: 0
+		};
+	}
 }
 
 // ===========================================
 // 8. REAL-TIME NEW POST COUNTER
 // ===========================================
 class NewPostTracker {
-  private lastSeen = new Map<string, number>(); // userId -> timestamp
+	private lastSeen = new Map<string, number>(); // userId -> timestamp
 
-  markSeen(userId: string): void {
-    this.lastSeen.set(userId, Date.now());
-  }
+	markSeen(userId: string): void {
+		this.lastSeen.set(userId, Date.now());
+	}
 
-  getNewCount(userId: string, feedItems: FeedItem[]): number {
-    const lastSeen = this.lastSeen.get(userId) || 0;
-    return feedItems.filter((item) => item.addedAt > lastSeen).length;
-  }
+	getNewCount(userId: string, feedItems: FeedItem[]): number {
+		const lastSeen = this.lastSeen.get(userId) || 0;
+		return feedItems.filter((item) => item.addedAt > lastSeen).length;
+	}
 }
 
 // ===========================================
@@ -345,84 +347,108 @@ const feedGen = new FeedGenerator(postStore, feedStore, graph, ranking);
 const tracker = new NewPostTracker();
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/posts
-    if (url.pathname === "/api/posts" && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!body.authorId || !body.content) {
-        json(res, 400, { error: "authorId and content required" }); return;
-      }
-      const post = postStore.create(body.authorId, body.content);
-      await fanOut.fanOut(post);
-      json(res, 201, post); return;
-    }
+	try {
+		// POST /api/posts
+		if (url.pathname === '/api/posts' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!body.authorId || !body.content) {
+				json(res, 400, { error: 'authorId and content required' });
+				return;
+			}
+			const post = postStore.create(body.authorId, body.content);
+			await fanOut.fanOut(post);
+			json(res, 201, post);
+			return;
+		}
 
-    // POST /api/follow/:userId
-    const followMatch = url.pathname.match(/^\/api\/follow\/([^/]+)$/);
-    if (followMatch && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!body.followerId) { json(res, 400, { error: "followerId required" }); return; }
-      graph.follow(body.followerId, followMatch[1]);
-      json(res, 200, { followed: followMatch[1] }); return;
-    }
+		// POST /api/follow/:userId
+		const followMatch = url.pathname.match(/^\/api\/follow\/([^/]+)$/);
+		if (followMatch && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!body.followerId) {
+				json(res, 400, { error: 'followerId required' });
+				return;
+			}
+			graph.follow(body.followerId, followMatch[1]);
+			json(res, 200, { followed: followMatch[1] });
+			return;
+		}
 
-    // DELETE /api/follow/:userId
-    if (followMatch && method === "DELETE") {
-      const body = await parseBody(req) as any;
-      if (!body.followerId) { json(res, 400, { error: "followerId required" }); return; }
-      graph.unfollow(body.followerId, followMatch[1]);
-      json(res, 200, { unfollowed: followMatch[1] }); return;
-    }
+		// DELETE /api/follow/:userId
+		if (followMatch && method === 'DELETE') {
+			const body = (await parseBody(req)) as any;
+			if (!body.followerId) {
+				json(res, 400, { error: 'followerId required' });
+				return;
+			}
+			graph.unfollow(body.followerId, followMatch[1]);
+			json(res, 200, { unfollowed: followMatch[1] });
+			return;
+		}
 
-    // GET /api/feed?userId=&cursor=&limit=
-    if (url.pathname === "/api/feed" && method === "GET") {
-      const userId = url.searchParams.get("userId");
-      if (!userId) { json(res, 400, { error: "userId required" }); return; }
-      const cursor = url.searchParams.get("cursor");
-      const limit = parseInt(url.searchParams.get("limit") || "20");
-      const feed = feedGen.generate(userId, cursor, limit);
-      tracker.markSeen(userId);
-      json(res, 200, feed); return;
-    }
+		// GET /api/feed?userId=&cursor=&limit=
+		if (url.pathname === '/api/feed' && method === 'GET') {
+			const userId = url.searchParams.get('userId');
+			if (!userId) {
+				json(res, 400, { error: 'userId required' });
+				return;
+			}
+			const cursor = url.searchParams.get('cursor');
+			const limit = parseInt(url.searchParams.get('limit') || '20');
+			const feed = feedGen.generate(userId, cursor, limit);
+			tracker.markSeen(userId);
+			json(res, 200, feed);
+			return;
+		}
 
-    // GET /api/feed/new-count?userId=
-    if (url.pathname === "/api/feed/new-count" && method === "GET") {
-      const userId = url.searchParams.get("userId");
-      if (!userId) { json(res, 400, { error: "userId required" }); return; }
-      const items = feedStore.getFeed(userId);
-      const count = tracker.getNewCount(userId, items);
-      json(res, 200, { newCount: count }); return;
-    }
+		// GET /api/feed/new-count?userId=
+		if (url.pathname === '/api/feed/new-count' && method === 'GET') {
+			const userId = url.searchParams.get('userId');
+			if (!userId) {
+				json(res, 400, { error: 'userId required' });
+				return;
+			}
+			const items = feedStore.getFeed(userId);
+			const count = tracker.getNewCount(userId, items);
+			json(res, 200, { newCount: count });
+			return;
+		}
 
-    if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-    json(res, 404, { error: "Not found" });
-  } catch (err: any) {
-    json(res, 500, { error: err.message || "Internal server error" });
-  }
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
+		json(res, 404, { error: 'Not found' });
+	} catch (err: any) {
+		json(res, 500, { error: err.message || 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`News Feed on http://localhost:${PORT}`));
-process.on("SIGTERM", () => server.close());
+process.on('SIGTERM', () => server.close());
 ```
 
 </div>
@@ -820,4 +846,3 @@ When a user posts, their followers don't need to see it in their feed instantly.
 - This architecture serves personalized feeds in under 200ms for 500M+ daily active users
 
 </div>
-

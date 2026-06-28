@@ -1,10 +1,10 @@
 ---
-title: "Blameless Postmortems"
-subtitle: "The full template Google, Etsy, and Stripe use, with action-item discipline that prevents the same incident twice."
+title: 'Blameless Postmortems'
+subtitle: 'The full template Google, Etsy, and Stripe use, with action-item discipline that prevents the same incident twice.'
 chapter: 5
-level: "intermediate"
-readingTime: "15 min"
-topics: ["postmortem", "blameless", "root cause", "five whys", "action items"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['postmortem', 'blameless', 'root cause', 'five whys', 'action items']
 ---
 
 <script>
@@ -76,18 +76,18 @@ single most important action item.
 
 ## Timeline (UTC)
 
-14:18  First customer support ticket: "checkout button doing nothing"
-14:22  CheckoutErrorBudgetFastBurn fires; @fatima paged
-14:24  Fatima declares SEV1, opens #inc-2271, pages IC rotation
-14:25  @omar (IC) takes command. @maryam (OL) starts investigation
-14:28  Maryam identifies elevated 503 rate from EU pods only
-14:31  Hypothesis: connection pool exhaustion (db_connections_inuse
-       at 50/50 max in EU)
-14:35  Omar authorizes pool size bump to 100 in EU canary
-14:39  Canary healthy; rolling out to full EU fleet
-14:46  Full EU fleet at pool=100; 503 rate dropping
-14:51  503 rate back to baseline; entering MONITORING
-15:09  IC declares incident RESOLVED after 18min stable
+14:18 First customer support ticket: "checkout button doing nothing"
+14:22 CheckoutErrorBudgetFastBurn fires; @fatima paged
+14:24 Fatima declares SEV1, opens #inc-2271, pages IC rotation
+14:25 @omar (IC) takes command. @maryam (OL) starts investigation
+14:28 Maryam identifies elevated 503 rate from EU pods only
+14:31 Hypothesis: connection pool exhaustion (db_connections_inuse
+at 50/50 max in EU)
+14:35 Omar authorizes pool size bump to 100 in EU canary
+14:39 Canary healthy; rolling out to full EU fleet
+14:46 Full EU fleet at pool=100; 503 rate dropping
+14:51 503 rate back to baseline; entering MONITORING
+15:09 IC declares incident RESOLVED after 18min stable
 
 ## Root cause
 
@@ -145,13 +145,13 @@ timeouts cascaded into 503 responses.
 
 ## Action items
 
-| ID | Action | Owner | Priority | Due |
-|----|--------|-------|----------|-----|
-| AI-1 | Add OPA policy: prod config pool size must be >= 75 | @maryam | P0 | 2026-05-10 |
-| AI-2 | Add db_connections_inuse / max alert at 80% saturation | @omar | P0 | 2026-05-12 |
-| AI-3 | Link runbook step "check pool" to specific Grafana panel | @fatima | P1 | 2026-05-17 |
-| AI-4 | Pre-deploy check: diff config against last 7d baseline | @omar | P1 | 2026-05-24 |
-| AI-5 | On-call IC training module on "when to stop paging more responders" | @sre-lead | P2 | 2026-06-15 |
+| ID   | Action                                                              | Owner     | Priority | Due        |
+| ---- | ------------------------------------------------------------------- | --------- | -------- | ---------- |
+| AI-1 | Add OPA policy: prod config pool size must be >= 75                 | @maryam   | P0       | 2026-05-10 |
+| AI-2 | Add db_connections_inuse / max alert at 80% saturation              | @omar     | P0       | 2026-05-12 |
+| AI-3 | Link runbook step "check pool" to specific Grafana panel            | @fatima   | P1       | 2026-05-17 |
+| AI-4 | Pre-deploy check: diff config against last 7d baseline              | @omar     | P1       | 2026-05-24 |
+| AI-5 | On-call IC training module on "when to stop paging more responders" | @sre-lead | P2       | 2026-06-15 |
 
 ## Lessons learned
 
@@ -169,18 +169,18 @@ A postmortem with action items that never ship is worse than no postmortem — i
 // The action item rule set, enforced by tooling
 
 const actionItemRules = {
-  format: "Each AI is a single, owned, dated, sized work item",
-  tracking: "Created in Jira/Linear; tagged with the incident ID",
-  sizing:   "Must be smaller than 2 sprints. Bigger? Break it down.",
-  staffing: "Owner allocates time in the next sprint, not 'when free'",
+	format: 'Each AI is a single, owned, dated, sized work item',
+	tracking: 'Created in Jira/Linear; tagged with the incident ID',
+	sizing: 'Must be smaller than 2 sprints. Bigger? Break it down.',
+	staffing: "Owner allocates time in the next sprint, not 'when free'",
 
-  enforcement: {
-    "P0 action items": "Block the responsible team's sprint planning",
-    "Aging > 30 days": "Escalates to engineering manager",
-    "Aging > 60 days": "Escalates to director, written justification",
-  },
+	enforcement: {
+		'P0 action items': "Block the responsible team's sprint planning",
+		'Aging > 30 days': 'Escalates to engineering manager',
+		'Aging > 60 days': 'Escalates to director, written justification'
+	},
 
-  audit: "Quarterly review of all action items across postmortems",
+	audit: 'Quarterly review of all action items across postmortems'
 };
 ```
 
@@ -218,18 +218,25 @@ Individual postmortems prevent specific incidents. Aggregated postmortems preven
 
 ```typescript
 // Quarterly postmortem aggregation
-type IncidentTag = "config" | "deploy" | "capacity" | "dependency"
-                 | "security" | "data" | "human-error" | "third-party";
+type IncidentTag =
+	| 'config'
+	| 'deploy'
+	| 'capacity'
+	| 'dependency'
+	| 'security'
+	| 'data'
+	| 'human-error'
+	| 'third-party';
 
 interface PostmortemSummary {
-  id: string;
-  date: Date;
-  severity: "SEV1" | "SEV2";
-  tags: IncidentTag[];
-  rootCauseCategory: string;
-  durationMin: number;
-  actionItemsTotal: number;
-  actionItemsCompleted: number;
+	id: string;
+	date: Date;
+	severity: 'SEV1' | 'SEV2';
+	tags: IncidentTag[];
+	rootCauseCategory: string;
+	durationMin: number;
+	actionItemsTotal: number;
+	actionItemsCompleted: number;
 }
 
 // At quarterly review:
@@ -269,4 +276,3 @@ Cloudflare's public postmortems are the gold standard — read 2-3 of them befor
 3. **Action items must be sized, owned, dated, and tracked** — or the postmortem was decorative
 4. **A fresh-eyes critic in the review meeting** finds what the team is too close to see
 5. **Aggregate quarterly** to spot incident classes that need a project, not a patch
-

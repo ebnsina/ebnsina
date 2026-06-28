@@ -1,10 +1,10 @@
 ---
-title: "Chaos & Resilience — Roadmap"
-subtitle: "Fault injection, resilience patterns, GameDays, and the SLO-based feedback loop that turns failure into a learning tool."
+title: 'Chaos & Resilience — Roadmap'
+subtitle: 'Fault injection, resilience patterns, GameDays, and the SLO-based feedback loop that turns failure into a learning tool.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Most systems are only as resilient as their last incident. Chaos engineering cha
 3. **Fault Injection Tools** — Pumba, `tc`, Chaos Mesh, AWS FIS, application-level injection
 4. **GameDays** — planning, roles, running the exercise, post-mortems, building a chaos culture
 5. **Steady State & SLOs** — SLIs, SLOs, error budgets, the policy that connects reliability to engineering decisions
-

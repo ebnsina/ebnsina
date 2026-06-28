@@ -1,10 +1,10 @@
 ---
-title: "Why Caching Exists"
-subtitle: "The latency gap between memory, disk, and network — and why every fast system exploits it."
+title: 'Why Caching Exists'
+subtitle: 'The latency gap between memory, disk, and network — and why every fast system exploits it.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["latency", "memory hierarchy", "cache fundamentals", "performance"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['latency', 'memory hierarchy', 'cache fundamentals', 'performance']
 ---
 
 <script>
@@ -17,14 +17,14 @@ Your CPU can read from L1 cache in **0.5 nanoseconds**. Reading from RAM takes ~
 
 That's a six-order-of-magnitude difference between L1 cache and a transatlantic request.
 
-| Storage | Latency | Relative |
-|---------|---------|----------|
-| L1 CPU cache | 0.5 ns | 1x |
-| L2 CPU cache | 5 ns | 10x |
-| RAM | 100 ns | 200x |
-| NVMe SSD | 100 µs | 200,000x |
-| Network (same DC) | 500 µs | 1,000,000x |
-| Network (cross-region) | 100 ms | 200,000,000x |
+| Storage                | Latency | Relative     |
+| ---------------------- | ------- | ------------ |
+| L1 CPU cache           | 0.5 ns  | 1x           |
+| L2 CPU cache           | 5 ns    | 10x          |
+| RAM                    | 100 ns  | 200x         |
+| NVMe SSD               | 100 µs  | 200,000x     |
+| Network (same DC)      | 500 µs  | 1,000,000x   |
+| Network (cross-region) | 100 ms  | 200,000,000x |
 
 Caching is the art of **storing results closer to where they're needed**, trading memory space for time.
 
@@ -57,22 +57,26 @@ The fundamental metric. If 95 out of 100 requests are served from cache, your hi
 
 ```typescript
 class CacheMetrics {
-  private hits = 0;
-  private misses = 0;
+	private hits = 0;
+	private misses = 0;
 
-  recordHit() { this.hits++; }
-  recordMiss() { this.misses++; }
+	recordHit() {
+		this.hits++;
+	}
+	recordMiss() {
+		this.misses++;
+	}
 
-  hitRatio(): number {
-    const total = this.hits + this.misses;
-    if (total === 0) return 0;
-    return this.hits / total;
-  }
+	hitRatio(): number {
+		const total = this.hits + this.misses;
+		if (total === 0) return 0;
+		return this.hits / total;
+	}
 
-  // A 95% hit ratio means your DB sees 1/20th the read load
-  effectiveDbLoad(): number {
-    return 1 - this.hitRatio();
-  }
+	// A 95% hit ratio means your DB sees 1/20th the read load
+	effectiveDbLoad(): number {
+		return 1 - this.hitRatio();
+	}
 }
 ```
 
@@ -84,17 +88,17 @@ Every cache miss has a cost: the time to fetch from the origin plus the time to 
 
 ```typescript
 async function getUser(id: string): Promise<User> {
-  // 1. Check cache (~0.5ms)
-  const cached = await cache.get(`user:${id}`);
-  if (cached) return JSON.parse(cached); // cache hit — done
+	// 1. Check cache (~0.5ms)
+	const cached = await cache.get(`user:${id}`);
+	if (cached) return JSON.parse(cached); // cache hit — done
 
-  // 2. Cache miss — fall through to DB (~5ms)
-  const user = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+	// 2. Cache miss — fall through to DB (~5ms)
+	const user = await db.query('SELECT * FROM users WHERE id = $1', [id]);
 
-  // 3. Populate cache for next time
-  await cache.set(`user:${id}`, JSON.stringify(user), { ttl: 300 });
+	// 3. Populate cache for next time
+	await cache.set(`user:${id}`, JSON.stringify(user), { ttl: 300 });
 
-  return user;
+	return user;
 }
 ```
 
@@ -133,45 +137,45 @@ User → Browser cache
 
 ```typescript
 interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
+	value: T;
+	expiresAt: number;
 }
 
 class SimpleCache<T> {
-  private store = new Map<string, CacheEntry<T>>();
+	private store = new Map<string, CacheEntry<T>>();
 
-  set(key: string, value: T, ttlSeconds: number): void {
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    });
-  }
+	set(key: string, value: T, ttlSeconds: number): void {
+		this.store.set(key, {
+			value,
+			expiresAt: Date.now() + ttlSeconds * 1000
+		});
+	}
 
-  get(key: string): T | null {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      this.store.delete(key);
-      return null;
-    }
-    return entry.value;
-  }
+	get(key: string): T | null {
+		const entry = this.store.get(key);
+		if (!entry) return null;
+		if (Date.now() > entry.expiresAt) {
+			this.store.delete(key);
+			return null;
+		}
+		return entry.value;
+	}
 
-  delete(key: string): void {
-    this.store.delete(key);
-  }
+	delete(key: string): void {
+		this.store.delete(key);
+	}
 }
 
 // Usage
 const cache = new SimpleCache<User>();
 
 async function getUser(id: string): Promise<User> {
-  const cached = cache.get(`user:${id}`);
-  if (cached) return cached;
+	const cached = cache.get(`user:${id}`);
+	if (cached) return cached;
 
-  const user = await db.findUser(id);
-  cache.set(`user:${id}`, user, 60); // cache for 60s
-  return user;
+	const user = await db.findUser(id);
+	cache.set(`user:${id}`, user, 60); // cache for 60s
+	return user;
 }
 ```
 
@@ -200,4 +204,3 @@ Both are solvable. Later chapters cover them in depth. For now, know that cachin
 - Hit ratio is the key metric — even 99% is meaningfully better than 95%
 - Caches exist at every layer: browser, CDN, application, distributed, database
 - Start simple (in-process Map), add Redis when you need shared state
-

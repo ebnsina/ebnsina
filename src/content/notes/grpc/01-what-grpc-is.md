@@ -1,10 +1,10 @@
 ---
-title: "What gRPC is and when to use it"
-subtitle: "gRPC is HTTP/2, plus protobuf, plus codegen. That trio gives you a typed, fast, polyglot RPC system. Knowing what each layer is doing is half the skill of using it well."
+title: 'What gRPC is and when to use it'
+subtitle: 'gRPC is HTTP/2, plus protobuf, plus codegen. That trio gives you a typed, fast, polyglot RPC system. Knowing what each layer is doing is half the skill of using it well.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["grpc", "rpc", "rest", "graphql", "protobuf"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['grpc', 'rpc', 'rest', 'graphql', 'protobuf']
 ---
 
 <script>
@@ -83,18 +83,18 @@ Most of your time is at layer 3. But when something goes wrong — a connection 
 
 ## RPC vs REST vs GraphQL
 
-| | REST | GraphQL | gRPC |
-|---|---|---|---|
-| Transport | HTTP/1.1 | HTTP/1.1 | HTTP/2 |
-| Wire format | JSON | JSON | Protobuf binary |
-| Contract | OpenAPI (optional) | SDL | `.proto` (mandatory) |
-| Codegen | optional | optional | mandatory |
-| Streaming | SSE / WebSocket | Subscriptions | Built-in (4 kinds) |
-| Browser-native | yes | yes | no — needs gateway |
-| Polyglot | yes (manual) | yes (manual) | yes (free, codegen) |
-| Discoverability | URLs, curl | introspection | reflection, server side |
-| Debugging | great | good | needs tooling |
-| Speed | baseline | baseline | 2–10× faster |
+|                 | REST               | GraphQL       | gRPC                    |
+| --------------- | ------------------ | ------------- | ----------------------- |
+| Transport       | HTTP/1.1           | HTTP/1.1      | HTTP/2                  |
+| Wire format     | JSON               | JSON          | Protobuf binary         |
+| Contract        | OpenAPI (optional) | SDL           | `.proto` (mandatory)    |
+| Codegen         | optional           | optional      | mandatory               |
+| Streaming       | SSE / WebSocket    | Subscriptions | Built-in (4 kinds)      |
+| Browser-native  | yes                | yes           | no — needs gateway      |
+| Polyglot        | yes (manual)       | yes (manual)  | yes (free, codegen)     |
+| Discoverability | URLs, curl         | introspection | reflection, server side |
+| Debugging       | great              | good          | needs tooling           |
+| Speed           | baseline           | baseline      | 2–10× faster            |
 
 Three numbers worth memorizing:
 
@@ -121,7 +121,7 @@ For service-to-service traffic in a tight cluster, those numbers compound.
 
 <Callout type="warn">
 
-**gRPC is not magic speed.** A naive gRPC service can be slower than a tuned REST one. The wins come from the *combination* of HTTP/2 reuse, binary serialization, codegen, and streaming. If you are using gRPC over HTTP/1.1 (gRPC-Web fallback) without streaming and with small messages, JSON over keep-alive HTTP/1.1 is comparable.
+**gRPC is not magic speed.** A naive gRPC service can be slower than a tuned REST one. The wins come from the _combination_ of HTTP/2 reuse, binary serialization, codegen, and streaming. If you are using gRPC over HTTP/1.1 (gRPC-Web fallback) without streaming and with small messages, JSON over keep-alive HTTP/1.1 is comparable.
 
 </Callout>
 
@@ -182,4 +182,3 @@ If you are starting a service that is purely backend-to-backend, you do not need
 - Self-hosted, on a VPS, behind nginx — same operational shape as the rest of the path.
 
 Next: [Protocol Buffers](/notes/grpc/02-protobuf) — the schema language, the wire format, and the evolution rules that keep your services compatible for years.
-

@@ -1,10 +1,10 @@
 ---
-title: "Building CLI Tools"
+title: 'Building CLI Tools'
 subtitle: "Go's single-binary output makes it perfect for CLI tools — build developer tools, automation scripts, and DevOps utilities."
 chapter: 22
-level: "advanced"
-readingTime: "18 min"
-topics: ["CLI", "cobra", "flags", "terminal", "developer tools", "automation"]
+level: 'advanced'
+readingTime: '18 min'
+topics: ['CLI', 'cobra', 'flags', 'terminal', 'developer tools', 'automation']
 ---
 
 <script>
@@ -324,14 +324,14 @@ builds:
 
 archives:
   - format: tar.gz
-    name_template: "{{.ProjectName}}_{{.Os}}_{{.Arch}}"
+    name_template: '{{.ProjectName}}_{{.Os}}_{{.Arch}}'
 
 brews:
   - repository:
       owner: yourname
       name: homebrew-tap
-    homepage: "https://github.com/yourname/taskr"
-    description: "A simple task manager"
+    homepage: 'https://github.com/yourname/taskr'
+    description: 'A simple task manager'
 ```
 
 ```bash
@@ -346,4 +346,3 @@ goreleaser release --clean
 4. **Cross-compile** with `GOOS` and `GOARCH` — build for any platform from any platform
 5. **Viper** for configuration — YAML files, env vars, and defaults in one package
 6. **GoReleaser** automates builds, packaging, and distribution including Homebrew taps
-

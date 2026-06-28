@@ -1,10 +1,20 @@
 ---
-title: "Incident Response & Digital Forensics"
-subtitle: "Memory forensics with Volatility, disk imaging, timeline analysis, log analysis, and the IR lifecycle from detection to remediation."
+title: 'Incident Response & Digital Forensics'
+subtitle: 'Memory forensics with Volatility, disk imaging, timeline analysis, log analysis, and the IR lifecycle from detection to remediation.'
 chapter: 21
-level: "advanced"
-readingTime: "14 min"
-topics: ["incident response", "digital forensics", "Volatility", "memory forensics", "disk forensics", "DFIR", "timeline analysis", "log analysis"]
+level: 'advanced'
+readingTime: '14 min'
+topics:
+  [
+    'incident response',
+    'digital forensics',
+    'Volatility',
+    'memory forensics',
+    'disk forensics',
+    'DFIR',
+    'timeline analysis',
+    'log analysis'
+  ]
 ---
 
 <script>
@@ -46,6 +56,7 @@ Collect the most volatile evidence first — it disappears when the machine is p
 ```
 
 **Never do these before imaging:**
+
 - Reboot the machine
 - Run antivirus (modifies timestamps, may delete evidence)
 - Install tools on the live system (modifies filesystem)
@@ -207,8 +218,8 @@ grep -iE "(sqlmap|nikto|nmap|masscan|dirbuster|gobuster)" /var/log/nginx/access.
 # 7045 → New service installed
 
 # View events (PowerShell)
-Get-WinEvent -LogName Security -FilterHashtable @{Id=4625} | 
-  Select-Object TimeCreated, Message | 
+Get-WinEvent -LogName Security -FilterHashtable @{Id=4625} |
+  Select-Object TimeCreated, Message |
   Where-Object {$_.TimeCreated -gt (Get-Date).AddDays(-1)}
 
 # Find lateral movement (network logons from unusual IPs)
@@ -226,7 +237,7 @@ Proactive searching for attackers who have evaded detection:
 
 ```bash
 # Hunt for unusual scheduled tasks
-schtasks /query /fo LIST /v | grep -E "(Task Name|Run As User|Task To Run)" 
+schtasks /query /fo LIST /v | grep -E "(Task Name|Run As User|Task To Run)"
 
 # Hunt for unusual services
 sc query type= all | grep -v "RUNNING\|STOPPED"
@@ -260,25 +271,25 @@ title: Suspicious PowerShell Encoded Command
 status: stable
 description: Detects PowerShell execution with encoded commands
 logsource:
-    product: windows
-    category: process_creation
+  product: windows
+  category: process_creation
 detection:
-    selection:
-        EventID: 4688
-        CommandLine|contains:
-            - '-EncodedCommand'
-            - '-enc '
-            - '-e '
-        Image|endswith:
-            - '\powershell.exe'
-            - '\pwsh.exe'
-    condition: selection
+  selection:
+    EventID: 4688
+    CommandLine|contains:
+      - '-EncodedCommand'
+      - '-enc '
+      - '-e '
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  condition: selection
 falsepositives:
-    - Some administrative scripts use encoded commands
+  - Some administrative scripts use encoded commands
 level: medium
 tags:
-    - attack.execution
-    - attack.t1059.001
+  - attack.execution
+  - attack.t1059.001
 ```
 
 ## Real Project: IR Scenario
@@ -323,4 +334,3 @@ iptables -A INPUT -s ATTACKER_IP -j DROP
 # 10. Recover: verify clean state, bring system back
 # 11. Lessons learned: how did they get in? How do we detect it next time?
 ```
-

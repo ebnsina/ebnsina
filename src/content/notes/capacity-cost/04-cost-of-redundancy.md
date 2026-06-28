@@ -1,10 +1,10 @@
 ---
-title: "The Cost of Redundancy"
-subtitle: "Multi-AZ, N+1, active-active — what each availability pattern actually costs and the math behind choosing one."
+title: 'The Cost of Redundancy'
+subtitle: 'Multi-AZ, N+1, active-active — what each availability pattern actually costs and the math behind choosing one.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["redundancy", "high availability", "multi-AZ", "N+1", "active-active", "SLA"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['redundancy', 'high availability', 'multi-AZ', 'N+1', 'active-active', 'SLA']
 ---
 
 <script>
@@ -173,6 +173,7 @@ Total redundancy cost: ~$350/month
 Hardware cost is visible. Operational cost is not:
 
 **Complexity tax:**
+
 - More components to monitor
 - More failure modes to test
 - More runbooks to write and maintain
@@ -181,4 +182,3 @@ Hardware cost is visible. Operational cost is not:
 **Testing debt:** Untested failover fails at the worst moment. Add chaos testing (chapter in chaos-resilience) and game days. Budget 1-2 engineer-days per quarter for HA testing.
 
 **The simplicity premium:** Many teams run their production on 2 app servers + managed DB + managed Redis. Simple to reason about, fast to fix when something breaks, cheap to operate. Add complexity only when the math above shows it pays off.
-

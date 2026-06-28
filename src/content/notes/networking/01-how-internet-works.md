@@ -1,10 +1,10 @@
 ---
-title: "How the Internet Works"
-subtitle: "Packets, routers, and the physical infrastructure that connects billions of devices — the big picture before diving into protocols."
+title: 'How the Internet Works'
+subtitle: 'Packets, routers, and the physical infrastructure that connects billions of devices — the big picture before diving into protocols.'
 chapter: 1
-level: "beginner"
-readingTime: "12 min"
-topics: ["internet", "packets", "routers", "ISP"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['internet', 'packets', 'routers', 'ISP']
 ---
 
 <script>
@@ -32,14 +32,14 @@ Why packets instead of a continuous stream? Because sharing is efficient. A sing
 ```typescript
 // Conceptual model of a packet
 interface Packet {
-  header: {
-    sourceIP: string;      // "192.168.1.5"
-    destinationIP: string;  // "93.184.216.34"
-    protocol: "TCP" | "UDP";
-    sequenceNumber: number; // for reassembly
-    ttl: number;            // time to live (hop limit)
-  };
-  payload: Uint8Array;      // up to ~1460 bytes of actual data
+	header: {
+		sourceIP: string; // "192.168.1.5"
+		destinationIP: string; // "93.184.216.34"
+		protocol: 'TCP' | 'UDP';
+		sequenceNumber: number; // for reassembly
+		ttl: number; // time to live (hop limit)
+	};
+	payload: Uint8Array; // up to ~1460 bytes of actual data
 }
 ```
 
@@ -61,20 +61,20 @@ Each router has a **routing table** — a lookup table that maps destination IP 
 ```typescript
 // Simplified routing table
 const routingTable: Record<string, string> = {
-  "10.0.0.0/8":     "eth0",          // local network
-  "172.16.0.0/12":  "192.168.1.1",   // forward to gateway
-  "0.0.0.0/0":      "203.0.113.1",   // default route (ISP)
+	'10.0.0.0/8': 'eth0', // local network
+	'172.16.0.0/12': '192.168.1.1', // forward to gateway
+	'0.0.0.0/0': '203.0.113.1' // default route (ISP)
 };
 
 function route(destinationIP: string): string {
-  // Find the most specific matching prefix
-  // In reality, this uses a trie (prefix tree) for efficiency
-  for (const [prefix, nextHop] of Object.entries(routingTable)) {
-    if (matchesCIDR(destinationIP, prefix)) {
-      return nextHop;
-    }
-  }
-  return routingTable["0.0.0.0/0"]; // default route
+	// Find the most specific matching prefix
+	// In reality, this uses a trie (prefix tree) for efficiency
+	for (const [prefix, nextHop] of Object.entries(routingTable)) {
+		if (matchesCIDR(destinationIP, prefix)) {
+			return nextHop;
+		}
+	}
+	return routingTable['0.0.0.0/0']; // default route
 }
 ```
 
@@ -89,30 +89,31 @@ function route(destinationIP: string): string {
 Every device on the internet needs an address. IPv4 addresses are 32-bit numbers written as four octets: `192.168.1.1`. There are only ~4.3 billion possible IPv4 addresses — not enough for every device on earth.
 
 Solutions:
+
 - **NAT (Network Address Translation)** — many devices share one public IP, using port numbers to distinguish them
 - **IPv6** — 128-bit addresses (`2001:0db8:85a3::8a2e:0370:7334`), enough for trillions of devices
 
 ```typescript
 // IPv4 is just a 32-bit number
 function ipToNumber(ip: string): number {
-  return ip.split(".").reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+	return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
 }
 
 // "192.168.1.1" → 3232235777
-console.log(ipToNumber("192.168.1.1"));
+console.log(ipToNumber('192.168.1.1'));
 ```
 
 ## The OSI Model (Simplified)
 
 Networking is built in layers. Each layer handles one concern:
 
-| Layer | Name | What it does | Example |
-|-------|------|-------------|---------|
-| 7 | Application | Your app's protocol | HTTP, WebSocket |
-| 4 | Transport | Reliable delivery | TCP, UDP |
-| 3 | Network | Addressing & routing | IP |
-| 2 | Data Link | Local network frames | Ethernet, WiFi |
-| 1 | Physical | Bits on a wire | Fiber optic, radio |
+| Layer | Name        | What it does         | Example            |
+| ----- | ----------- | -------------------- | ------------------ |
+| 7     | Application | Your app's protocol  | HTTP, WebSocket    |
+| 4     | Transport   | Reliable delivery    | TCP, UDP           |
+| 3     | Network     | Addressing & routing | IP                 |
+| 2     | Data Link   | Local network frames | Ethernet, WiFi     |
+| 1     | Physical    | Bits on a wire       | Fiber optic, radio |
 
 Each layer wraps the layer above it. An HTTP message goes inside a TCP segment, inside an IP packet, inside an Ethernet frame, onto a wire.
 
@@ -122,4 +123,3 @@ Each layer wraps the layer above it. An HTTP message goes inside a TCP segment, 
 2. **Packets are small, independent units** — they can take different paths and arrive out of order
 3. **Routers only know the next hop** — no single device knows the full path
 4. **Layers separate concerns** — each protocol handles one job and builds on the layer below
-

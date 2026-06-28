@@ -1,10 +1,10 @@
 ---
-title: "Database Cost & Sizing"
-subtitle: "IOPS, storage tiers, connection limits, and the read-replica math that changes your cost curve."
+title: 'Database Cost & Sizing'
+subtitle: 'IOPS, storage tiers, connection limits, and the read-replica math that changes your cost curve.'
 chapter: 3
-level: "intermediate"
-readingTime: "9 min"
-topics: ["database sizing", "IOPS", "read replicas", "connection pooling", "storage tiers"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['database sizing', 'IOPS', 'read replicas', 'connection pooling', 'storage tiers']
 ---
 
 <script>
@@ -51,6 +51,7 @@ Cold (Object storage):
 ```
 
 **PostgreSQL table partitioning by date:**
+
 ```sql
 -- Partition orders by month — move old partitions to slower storage
 CREATE TABLE orders (
@@ -86,6 +87,7 @@ io2:          $0.065/GB/month + $0.065/IOPS-month
 ```
 
 **Measure your actual IOPS before provisioning:**
+
 ```bash
 # On RDS: check CloudWatch metrics
 aws cloudwatch get-metric-statistics \
@@ -116,6 +118,7 @@ For a 32GB instance:
 ```
 
 **Cache hit ratio:**
+
 ```sql
 -- Check your Postgres buffer hit rate
 SELECT
@@ -174,30 +177,30 @@ Cost:
 ```
 
 **Route reads to replicas in your application:**
+
 ```typescript
 import { Pool } from 'pg';
 
 const primaryPool = new Pool({ host: 'primary.db.internal' });
 const replicaPool = new Pool({
-  host: 'replica.db.internal', // or a load balancer across replicas
+	host: 'replica.db.internal' // or a load balancer across replicas
 });
 
 // Write operations → primary
 async function createOrder(data: OrderData): Promise<Order> {
-  const { rows } = await primaryPool.query(
-    'INSERT INTO orders (...) VALUES (...) RETURNING *',
-    [...values],
-  );
-  return rows[0];
+	const { rows } = await primaryPool.query('INSERT INTO orders (...) VALUES (...) RETURNING *', [
+		...values
+	]);
+	return rows[0];
 }
 
 // Read operations → replica
 async function getOrderHistory(userId: string): Promise<Order[]> {
-  const { rows } = await replicaPool.query(
-    'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
-    [userId],
-  );
-  return rows;
+	const { rows } = await replicaPool.query(
+		'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
+		[userId]
+	);
+	return rows;
 }
 ```
 
@@ -205,10 +208,10 @@ async function getOrderHistory(userId: string): Promise<Order[]> {
 
 ```typescript
 async function createAndFetchOrder(data: OrderData): Promise<Order> {
-  const order = await createOrder(data); // writes to primary
+	const order = await createOrder(data); // writes to primary
 
-  // Read from PRIMARY — replica might not have this yet
-  return fetchOrder(order.id, { useReplica: false });
+	// Read from PRIMARY — replica might not have this yet
+	return fetchOrder(order.id, { useReplica: false });
 }
 ```
 
@@ -250,6 +253,7 @@ Managed databases are worth it until you have dedicated infrastructure engineers
 ```
 
 **Finding unused indexes:**
+
 ```sql
 SELECT
   schemaname,
@@ -263,4 +267,3 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
 Every unused index wastes storage and slows writes. Drop them.
-

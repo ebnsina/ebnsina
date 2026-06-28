@@ -1,10 +1,10 @@
 ---
-title: "API Gateway"
-subtitle: "Build a gateway that handles routing, authentication, rate limiting, and request aggregation in one layer."
+title: 'API Gateway'
+subtitle: 'Build a gateway that handles routing, authentication, rate limiting, and request aggregation in one layer.'
 chapter: 14
-level: "intermediate"
-readingTime: "18 min"
-topics: ["API gateway", "reverse proxy", "request aggregation", "middleware pipeline"]
+level: 'intermediate'
+readingTime: '18 min'
+topics: ['API gateway', 'reverse proxy', 'request aggregation', 'middleware pipeline']
 ---
 
 <script>
@@ -28,28 +28,26 @@ Like the reception desk at a large office building — instead of wandering each
 </Callout>
 
 <Mermaid
-	title="API Gateway Pattern"
-	code={`
-graph TD
+title="API Gateway Pattern"
+code={`graph TD
   M["Mobile App"] --> G
   W["Web App"] --> G
   T["3rd Party"] --> G["API Gateway<br/>Auth + Rate Limit + Route"]
   G --> US["User Service"]
   G --> OS["Order Service"]
-  G --> PS["Product Service"]
-`}
+  G --> PS["Product Service"]`}
 />
 
 ## Gateway Responsibilities
 
-| Concern | What It Does |
-|---------|-------------|
-| Routing | Forward `/users/*` to user service, `/orders/*` to order service |
-| Authentication | Verify JWT tokens before forwarding |
-| Rate Limiting | Throttle per API key or IP |
-| Request Aggregation | Combine responses from multiple services into one |
-| Circuit Breaking | Stop forwarding to a service that's failing |
-| Logging/Tracing | Add correlation IDs, log all requests |
+| Concern             | What It Does                                                     |
+| ------------------- | ---------------------------------------------------------------- |
+| Routing             | Forward `/users/*` to user service, `/orders/*` to order service |
+| Authentication      | Verify JWT tokens before forwarding                              |
+| Rate Limiting       | Throttle per API key or IP                                       |
+| Request Aggregation | Combine responses from multiple services into one                |
+| Circuit Breaking    | Stop forwarding to a service that's failing                      |
+| Logging/Tracing     | Add correlation IDs, log all requests                            |
 
 ## Production API Gateway
 
@@ -57,63 +55,63 @@ graph TD
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // --- Types ---
 interface RouteConfig {
-  prefix: string;
-  target: string;
-  stripPrefix: boolean;
-  rateLimit: { maxRequests: number; windowMs: number };
-  requireAuth: boolean;
-  timeout: number;
+	prefix: string;
+	target: string;
+	stripPrefix: boolean;
+	rateLimit: { maxRequests: number; windowMs: number };
+	requireAuth: boolean;
+	timeout: number;
 }
 
 interface ServiceHealth {
-  healthy: boolean;
-  consecutiveFailures: number;
-  lastCheck: number;
-  circuitOpen: boolean;
+	healthy: boolean;
+	consecutiveFailures: number;
+	lastCheck: number;
+	circuitOpen: boolean;
 }
 
 // --- Configuration ---
 const routes: RouteConfig[] = [
-  {
-    prefix: "/api/users",
-    target: "http://localhost:3001",
-    stripPrefix: false,
-    rateLimit: { maxRequests: 100, windowMs: 60000 },
-    requireAuth: true,
-    timeout: 5000,
-  },
-  {
-    prefix: "/api/orders",
-    target: "http://localhost:3002",
-    stripPrefix: false,
-    rateLimit: { maxRequests: 50, windowMs: 60000 },
-    requireAuth: true,
-    timeout: 10000,
-  },
-  {
-    prefix: "/api/products",
-    target: "http://localhost:3003",
-    stripPrefix: false,
-    rateLimit: { maxRequests: 200, windowMs: 60000 },
-    requireAuth: false,
-    timeout: 5000,
-  },
+	{
+		prefix: '/api/users',
+		target: 'http://localhost:3001',
+		stripPrefix: false,
+		rateLimit: { maxRequests: 100, windowMs: 60000 },
+		requireAuth: true,
+		timeout: 5000
+	},
+	{
+		prefix: '/api/orders',
+		target: 'http://localhost:3002',
+		stripPrefix: false,
+		rateLimit: { maxRequests: 50, windowMs: 60000 },
+		requireAuth: true,
+		timeout: 10000
+	},
+	{
+		prefix: '/api/products',
+		target: 'http://localhost:3003',
+		stripPrefix: false,
+		rateLimit: { maxRequests: 200, windowMs: 60000 },
+		requireAuth: false,
+		timeout: 5000
+	}
 ];
 
 // --- Rate Limiter ---
 const rateLimitWindows = new Map<string, number[]>();
 
 function checkRateLimit(key: string, max: number, windowMs: number): boolean {
-  const now = Date.now();
-  const timestamps = (rateLimitWindows.get(key) || []).filter(t => t > now - windowMs);
-  timestamps.push(now);
-  rateLimitWindows.set(key, timestamps);
-  return timestamps.length <= max;
+	const now = Date.now();
+	const timestamps = (rateLimitWindows.get(key) || []).filter((t) => t > now - windowMs);
+	timestamps.push(now);
+	rateLimitWindows.set(key, timestamps);
+	return timestamps.length <= max;
 }
 
 // --- Circuit Breaker ---
@@ -122,226 +120,228 @@ const FAILURE_THRESHOLD = 5;
 const CIRCUIT_RESET_MS = 30000;
 
 function getServiceHealth(target: string): ServiceHealth {
-  if (!serviceHealth.has(target)) {
-    serviceHealth.set(target, {
-      healthy: true, consecutiveFailures: 0,
-      lastCheck: Date.now(), circuitOpen: false,
-    });
-  }
-  return serviceHealth.get(target)!;
+	if (!serviceHealth.has(target)) {
+		serviceHealth.set(target, {
+			healthy: true,
+			consecutiveFailures: 0,
+			lastCheck: Date.now(),
+			circuitOpen: false
+		});
+	}
+	return serviceHealth.get(target)!;
 }
 
 function recordSuccess(target: string): void {
-  const health = getServiceHealth(target);
-  health.consecutiveFailures = 0;
-  health.healthy = true;
-  health.circuitOpen = false;
+	const health = getServiceHealth(target);
+	health.consecutiveFailures = 0;
+	health.healthy = true;
+	health.circuitOpen = false;
 }
 
 function recordFailure(target: string): void {
-  const health = getServiceHealth(target);
-  health.consecutiveFailures++;
-  if (health.consecutiveFailures >= FAILURE_THRESHOLD) {
-    health.circuitOpen = true;
-    health.lastCheck = Date.now();
-    console.log(`Circuit OPEN for ${target}`);
-  }
+	const health = getServiceHealth(target);
+	health.consecutiveFailures++;
+	if (health.consecutiveFailures >= FAILURE_THRESHOLD) {
+		health.circuitOpen = true;
+		health.lastCheck = Date.now();
+		console.log(`Circuit OPEN for ${target}`);
+	}
 }
 
 function isCircuitOpen(target: string): boolean {
-  const health = getServiceHealth(target);
-  if (!health.circuitOpen) return false;
-  // Allow a probe after reset period
-  if (Date.now() - health.lastCheck > CIRCUIT_RESET_MS) {
-    health.circuitOpen = false;
-    console.log(`Circuit HALF-OPEN for ${target} (allowing probe)`);
-    return false;
-  }
-  return true;
+	const health = getServiceHealth(target);
+	if (!health.circuitOpen) return false;
+	// Allow a probe after reset period
+	if (Date.now() - health.lastCheck > CIRCUIT_RESET_MS) {
+		health.circuitOpen = false;
+		console.log(`Circuit HALF-OPEN for ${target} (allowing probe)`);
+		return false;
+	}
+	return true;
 }
 
 // --- JWT Verification (simplified) ---
 function verifyToken(authHeader: string | undefined): { sub: string; role: string } | null {
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  // In production: verify JWT signature
-  // This is a simplified check for the gateway example
-  try {
-    const token = authHeader.slice(7);
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
-    return { sub: payload.sub, role: payload.role };
-  } catch {
-    return null;
-  }
+	if (!authHeader?.startsWith('Bearer ')) return null;
+	// In production: verify JWT signature
+	// This is a simplified check for the gateway example
+	try {
+		const token = authHeader.slice(7);
+		const parts = token.split('.');
+		if (parts.length !== 3) return null;
+		const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+		if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+		return { sub: payload.sub, role: payload.role };
+	} catch {
+		return null;
+	}
 }
 
 // --- Request Aggregation ---
 async function aggregateRequest(
-  endpoints: { name: string; url: string }[],
-  headers: Record<string, string>,
-  timeout: number
+	endpoints: { name: string; url: string }[],
+	headers: Record<string, string>,
+	timeout: number
 ): Promise<Record<string, unknown>> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), timeout);
 
-  const results = await Promise.allSettled(
-    endpoints.map(async (ep) => {
-      const res = await fetch(ep.url, {
-        headers,
-        signal: controller.signal,
-      });
-      return { name: ep.name, data: await res.json(), status: res.status };
-    })
-  );
+	const results = await Promise.allSettled(
+		endpoints.map(async (ep) => {
+			const res = await fetch(ep.url, {
+				headers,
+				signal: controller.signal
+			});
+			return { name: ep.name, data: await res.json(), status: res.status };
+		})
+	);
 
-  clearTimeout(timer);
+	clearTimeout(timer);
 
-  const aggregated: Record<string, unknown> = {};
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      aggregated[result.value.name] = result.value.data;
-    } else {
-      aggregated[(result as PromiseRejectedResult).reason?.name || "unknown"] = {
-        error: "Service unavailable",
-      };
-    }
-  }
+	const aggregated: Record<string, unknown> = {};
+	for (const result of results) {
+		if (result.status === 'fulfilled') {
+			aggregated[result.value.name] = result.value.data;
+		} else {
+			aggregated[(result as PromiseRejectedResult).reason?.name || 'unknown'] = {
+				error: 'Service unavailable'
+			};
+		}
+	}
 
-  return aggregated;
+	return aggregated;
 }
 
 // --- Proxy ---
 async function proxyRequest(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  route: RouteConfig,
-  requestId: string
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	route: RouteConfig,
+	requestId: string
 ): Promise<void> {
-  let targetPath = req.url || "/";
-  if (route.stripPrefix) {
-    targetPath = targetPath.slice(route.prefix.length) || "/";
-  }
+	let targetPath = req.url || '/';
+	if (route.stripPrefix) {
+		targetPath = targetPath.slice(route.prefix.length) || '/';
+	}
 
-  const targetUrl = `${route.target}${targetPath}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), route.timeout);
+	const targetUrl = `${route.target}${targetPath}`;
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), route.timeout);
 
-  try {
-    const body = await readBody(req);
-    const proxyRes = await fetch(targetUrl, {
-      method: req.method,
-      headers: {
-        "content-type": req.headers["content-type"] || "application/json",
-        "x-request-id": requestId,
-        "x-forwarded-for": req.socket.remoteAddress || "",
-        authorization: req.headers.authorization || "",
-      },
-      body: ["GET", "HEAD"].includes(req.method || "GET") ? undefined : body,
-      signal: controller.signal,
-      redirect: "manual",
-    });
+	try {
+		const body = await readBody(req);
+		const proxyRes = await fetch(targetUrl, {
+			method: req.method,
+			headers: {
+				'content-type': req.headers['content-type'] || 'application/json',
+				'x-request-id': requestId,
+				'x-forwarded-for': req.socket.remoteAddress || '',
+				authorization: req.headers.authorization || ''
+			},
+			body: ['GET', 'HEAD'].includes(req.method || 'GET') ? undefined : body,
+			signal: controller.signal,
+			redirect: 'manual'
+		});
 
-    clearTimeout(timer);
-    recordSuccess(route.target);
+		clearTimeout(timer);
+		recordSuccess(route.target);
 
-    res.writeHead(proxyRes.status, Object.fromEntries(proxyRes.headers));
-    if (proxyRes.body) {
-      const reader = proxyRes.body.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(value);
-      }
-    }
-    res.end();
-  } catch (err) {
-    clearTimeout(timer);
-    recordFailure(route.target);
+		res.writeHead(proxyRes.status, Object.fromEntries(proxyRes.headers));
+		if (proxyRes.body) {
+			const reader = proxyRes.body.getReader();
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				res.write(value);
+			}
+		}
+		res.end();
+	} catch (err) {
+		clearTimeout(timer);
+		recordFailure(route.target);
 
-    const isTimeout = (err as Error).name === "AbortError";
-    const status = isTimeout ? 504 : 502;
-    const message = isTimeout ? "Gateway timeout" : "Bad gateway";
+		const isTimeout = (err as Error).name === 'AbortError';
+		const status = isTimeout ? 504 : 502;
+		const message = isTimeout ? 'Gateway timeout' : 'Bad gateway';
 
-    res.writeHead(status, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: message, requestId }));
-  }
+		res.writeHead(status, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: message, requestId }));
+	}
 }
 
 function readBody(req: http.IncomingMessage): Promise<Buffer> {
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => resolve(Buffer.concat(chunks)));
-  });
+	return new Promise((resolve) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => resolve(Buffer.concat(chunks)));
+	});
 }
 
 // --- Gateway Server ---
 const server = http.createServer(async (req, res) => {
-  const requestId = crypto.randomUUID();
-  const start = performance.now();
-  const clientIP = req.socket.remoteAddress || "unknown";
+	const requestId = crypto.randomUUID();
+	const start = performance.now();
+	const clientIP = req.socket.remoteAddress || 'unknown';
 
-  res.setHeader("X-Request-Id", requestId);
+	res.setHeader('X-Request-Id', requestId);
 
-  // Aggregation endpoint
-  if (req.url === "/api/dashboard" && req.method === "GET") {
-    const data = await aggregateRequest(
-      [
-        { name: "user", url: "http://localhost:3001/api/users/me" },
-        { name: "orders", url: "http://localhost:3002/api/orders?limit=5" },
-        { name: "recommendations", url: "http://localhost:3003/api/products/recommended" },
-      ],
-      { authorization: req.headers.authorization || "" },
-      5000
-    );
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(data));
-    return;
-  }
+	// Aggregation endpoint
+	if (req.url === '/api/dashboard' && req.method === 'GET') {
+		const data = await aggregateRequest(
+			[
+				{ name: 'user', url: 'http://localhost:3001/api/users/me' },
+				{ name: 'orders', url: 'http://localhost:3002/api/orders?limit=5' },
+				{ name: 'recommendations', url: 'http://localhost:3003/api/products/recommended' }
+			],
+			{ authorization: req.headers.authorization || '' },
+			5000
+		);
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify(data));
+		return;
+	}
 
-  // Find matching route
-  const route = routes.find((r) => req.url?.startsWith(r.prefix));
-  if (!route) {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "No route matched", requestId }));
-    return;
-  }
+	// Find matching route
+	const route = routes.find((r) => req.url?.startsWith(r.prefix));
+	if (!route) {
+		res.writeHead(404, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'No route matched', requestId }));
+		return;
+	}
 
-  // Auth check
-  if (route.requireAuth) {
-    const user = verifyToken(req.headers.authorization);
-    if (!user) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Unauthorized", requestId }));
-      return;
-    }
-  }
+	// Auth check
+	if (route.requireAuth) {
+		const user = verifyToken(req.headers.authorization);
+		if (!user) {
+			res.writeHead(401, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ error: 'Unauthorized', requestId }));
+			return;
+		}
+	}
 
-  // Rate limit check
-  const rlKey = `${clientIP}:${route.prefix}`;
-  if (!checkRateLimit(rlKey, route.rateLimit.maxRequests, route.rateLimit.windowMs)) {
-    res.writeHead(429, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Too many requests", requestId }));
-    return;
-  }
+	// Rate limit check
+	const rlKey = `${clientIP}:${route.prefix}`;
+	if (!checkRateLimit(rlKey, route.rateLimit.maxRequests, route.rateLimit.windowMs)) {
+		res.writeHead(429, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Too many requests', requestId }));
+		return;
+	}
 
-  // Circuit breaker check
-  if (isCircuitOpen(route.target)) {
-    res.writeHead(503, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Service temporarily unavailable", requestId }));
-    return;
-  }
+	// Circuit breaker check
+	if (isCircuitOpen(route.target)) {
+		res.writeHead(503, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Service temporarily unavailable', requestId }));
+		return;
+	}
 
-  // Proxy request
-  await proxyRequest(req, res, route, requestId);
+	// Proxy request
+	await proxyRequest(req, res, route, requestId);
 
-  const duration = (performance.now() - start).toFixed(1);
-  console.log(`${req.method} ${req.url} -> ${route.target} [${duration}ms] id=${requestId}`);
+	const duration = (performance.now() - start).toFixed(1);
+	console.log(`${req.method} ${req.url} -> ${route.target} [${duration}ms] id=${requestId}`);
 });
 
-server.listen(8080, () => console.log("API Gateway on http://localhost:8080"));
+server.listen(8080, () => console.log('API Gateway on http://localhost:8080'));
 ```
 
 </div>
@@ -633,4 +633,3 @@ func main() {
 - Use a managed gateway unless you need custom routing logic. Build custom for request aggregation or domain-specific auth flows.
 
 </div>
-

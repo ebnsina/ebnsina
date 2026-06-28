@@ -1,10 +1,10 @@
 ---
-title: "Load Balancing — Roadmap"
-subtitle: "HAProxy and nginx. L4 vs L7, health checks, sticky sessions, weighted routing."
+title: 'Load Balancing — Roadmap'
+subtitle: 'HAProxy and nginx. L4 vs L7, health checks, sticky sessions, weighted routing.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -31,4 +31,3 @@ One server has a ceiling. Load balancers remove it — but only if you understan
 4. **SSL Termination** — TLS at the LB, cert automation, end-to-end encryption, SNI
 5. **HAProxy in Depth** — frontends, backends, ACLs, stats page, runtime API, rate limiting
 6. **Advanced Patterns** — blue-green deployments, global load balancing, GeoDNS, anycast
-

@@ -1,10 +1,10 @@
 ---
-title: "NATS"
-subtitle: "Core pub/sub, JetStream persistence, KV store, and running a 3-node cluster — the fast path to reliable messaging without Kafka complexity."
+title: 'NATS'
+subtitle: 'Core pub/sub, JetStream persistence, KV store, and running a 3-node cluster — the fast path to reliable messaging without Kafka complexity.'
 chapter: 4
-level: "intermediate"
-readingTime: "10 min"
-topics: ["NATS", "JetStream", "pub/sub", "clustering", "KV store", "subjects"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['NATS', 'JetStream', 'pub/sub', 'clustering', 'KV store', 'subjects']
 ---
 
 <script>
@@ -22,6 +22,7 @@ Walkie-talkies vs a recorded dispatch system: core NATS is walkie-talkies — in
 ## Why NATS
 
 NATS is a cloud-native messaging system written in Go. The server is a single ~20MB binary. Core characteristics:
+
 - 1M+ messages/sec on modest hardware
 - Sub-millisecond latency
 - Subjects are strings with wildcards (`>`, `*`)
@@ -71,21 +72,27 @@ const sc = StringCodec();
 // Subscribe
 const sub = nc.subscribe('orders.created');
 (async () => {
-  for await (const msg of sub) {
-    const order = JSON.parse(sc.decode(msg.data));
-    console.log('Order received:', order.id);
-  }
+	for await (const msg of sub) {
+		const order = JSON.parse(sc.decode(msg.data));
+		console.log('Order received:', order.id);
+	}
 })();
 
 // Publish
-nc.publish('orders.created', sc.encode(JSON.stringify({
-  id: 'ord-123',
-  customerId: 'cust-456',
-  total: 99.99,
-})));
+nc.publish(
+	'orders.created',
+	sc.encode(
+		JSON.stringify({
+			id: 'ord-123',
+			customerId: 'cust-456',
+			total: 99.99
+		})
+	)
+);
 ```
 
 Subject wildcards:
+
 - `orders.*` — matches `orders.created`, `orders.cancelled` but not `orders.payment.failed`
 - `orders.>` — matches `orders.created`, `orders.payment.failed`, any depth
 
@@ -105,21 +112,21 @@ const jc = JSONCodec();
 
 // Create stream — subjects it captures
 await jsm.streams.add({
-  name: 'ORDERS',
-  subjects: ['orders.>'],
-  retention: RetentionPolicy.Limits,
-  storage: StorageType.File,
-  max_age: 7 * 24 * 60 * 60 * 1e9,   // 7 days in nanoseconds
-  max_msgs: -1,                         // unlimited
-  num_replicas: 3,                      // replicate across 3 nodes
-  duplicate_window: 2 * 60 * 1e9,       // 2-minute deduplication window
+	name: 'ORDERS',
+	subjects: ['orders.>'],
+	retention: RetentionPolicy.Limits,
+	storage: StorageType.File,
+	max_age: 7 * 24 * 60 * 60 * 1e9, // 7 days in nanoseconds
+	max_msgs: -1, // unlimited
+	num_replicas: 3, // replicate across 3 nodes
+	duplicate_window: 2 * 60 * 1e9 // 2-minute deduplication window
 });
 
 // Publish to stream
 await js.publish(
-  'orders.created',
-  jc.encode({ id: 'ord-123', customerId: 'cust-456' }),
-  { msgID: 'ord-123' }   // deduplication key
+	'orders.created',
+	jc.encode({ id: 'ord-123', customerId: 'cust-456' }),
+	{ msgID: 'ord-123' } // deduplication key
 );
 ```
 
@@ -128,28 +135,28 @@ await js.publish(
 ```typescript
 // Push consumer — server pushes to a subject
 const pushConsumer = await jsm.consumers.add('ORDERS', {
-  durable_name: 'payment-service',     // named = durable = remembers position
-  deliver_subject: '_INBOX.payments',  // server pushes here
-  deliver_policy: DeliverPolicy.New,   // start from new messages only
-  ack_policy: AckPolicy.Explicit,      // must ack each message
-  max_deliver: 5,                      // retry up to 5 times
-  ack_wait: 30 * 1e9,                  // 30s to ack before redeliver
-  filter_subject: 'orders.created',    // only this subject
+	durable_name: 'payment-service', // named = durable = remembers position
+	deliver_subject: '_INBOX.payments', // server pushes here
+	deliver_policy: DeliverPolicy.New, // start from new messages only
+	ack_policy: AckPolicy.Explicit, // must ack each message
+	max_deliver: 5, // retry up to 5 times
+	ack_wait: 30 * 1e9, // 30s to ack before redeliver
+	filter_subject: 'orders.created' // only this subject
 });
 
 // Pull consumer — consumer requests batches (preferred for workers)
 const pullConsumer = await jsm.consumers.add('ORDERS', {
-  durable_name: 'analytics',
-  ack_policy: AckPolicy.Explicit,
-  filter_subject: 'orders.>',
+	durable_name: 'analytics',
+	ack_policy: AckPolicy.Explicit,
+	filter_subject: 'orders.>'
 });
 
 // Pull a batch
 const messages = await js.fetch('ORDERS', 'analytics', { batch: 100, expires: 5000 });
 for await (const msg of messages) {
-  const order = jc.decode(msg.data);
-  await processForAnalytics(order);
-  msg.ack();
+	const order = jc.decode(msg.data);
+	await processForAnalytics(order);
+	msg.ack();
 }
 ```
 
@@ -160,19 +167,19 @@ JetStream work queues: each message delivered to exactly one consumer in the gro
 ```typescript
 // Create work queue stream
 await jsm.streams.add({
-  name: 'EMAIL_JOBS',
-  subjects: ['jobs.email.>'],
-  retention: RetentionPolicy.WorkQueue,  // delete on ack
-  storage: StorageType.File,
-  num_replicas: 3,
+	name: 'EMAIL_JOBS',
+	subjects: ['jobs.email.>'],
+	retention: RetentionPolicy.WorkQueue, // delete on ack
+	storage: StorageType.File,
+	num_replicas: 3
 });
 
 // Multiple workers consume from same durable consumer
 // Each message goes to exactly one worker
 await jsm.consumers.add('EMAIL_JOBS', {
-  durable_name: 'email-workers',
-  ack_policy: AckPolicy.Explicit,
-  max_ack_pending: 50,   // max outstanding unacked per consumer
+	durable_name: 'email-workers',
+	ack_policy: AckPolicy.Explicit,
+	max_ack_pending: 50 // max outstanding unacked per consumer
 });
 
 // Worker process (run multiple instances)
@@ -180,8 +187,8 @@ const consumer = await js.consumers.get('EMAIL_JOBS', 'email-workers');
 const iter = await consumer.consume({ max_messages: 10 });
 
 for await (const msg of iter) {
-  await sendEmail(jc.decode(msg.data));
-  msg.ack();
+	await sendEmail(jc.decode(msg.data));
+	msg.ack();
 }
 ```
 
@@ -191,8 +198,8 @@ JetStream includes a distributed key-value store:
 
 ```typescript
 const kv = await js.views.kv('config', {
-  ttl: 3600 * 1e9,   // 1 hour TTL
-  replicas: 3,
+	ttl: 3600 * 1e9, // 1 hour TTL
+	replicas: 3
 });
 
 // Put
@@ -205,8 +212,8 @@ const flags = jc.decode(entry.value);
 // Watch for changes (reactive config)
 const watcher = await kv.watch({ key: 'feature-flags' });
 for await (const entry of watcher) {
-  const flags = jc.decode(entry.value);
-  updateFeatureFlags(flags);
+	const flags = jc.decode(entry.value);
+	updateFeatureFlags(flags);
 }
 ```
 
@@ -219,19 +226,15 @@ NATS has built-in request-reply — no setup needed:
 ```typescript
 // Server
 nc.subscribe('user.lookup', {
-  callback: async (err, msg) => {
-    const { userId } = jc.decode(msg.data);
-    const user = await db.findUser(userId);
-    msg.respond(jc.encode(user));
-  }
+	callback: async (err, msg) => {
+		const { userId } = jc.decode(msg.data);
+		const user = await db.findUser(userId);
+		msg.respond(jc.encode(user));
+	}
 });
 
 // Client
-const response = await nc.request(
-  'user.lookup',
-  jc.encode({ userId: '123' }),
-  { timeout: 5000 }
-);
+const response = await nc.request('user.lookup', jc.encode({ userId: '123' }), { timeout: 5000 });
 const user = jc.decode(response.data);
 ```
 
@@ -260,6 +263,7 @@ Prometheus metrics via `nats-server` built-in exporter (enable with `-m 8222`), 
 ## When to Use NATS Over Kafka
 
 **Use NATS when:**
+
 - You want a single binary to deploy and operate
 - You need request-reply as a first-class primitive
 - Your throughput requirements are &lt; 1M msg/sec per node
@@ -267,9 +271,9 @@ Prometheus metrics via `nats-server` built-in exporter (enable with `-m 8222`), 
 - Operational simplicity matters more than Kafka's ecosystem
 
 **Use Kafka when:**
+
 - You need long-term event retention (weeks/months)
 - You're building stream processing (Kafka Streams, Flink)
 - You need the Kafka Connect ecosystem (hundreds of connectors)
 - Your team already knows Kafka
 - Log compaction is a primary requirement
-

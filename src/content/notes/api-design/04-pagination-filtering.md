@@ -1,10 +1,10 @@
 ---
-title: "Pagination & Filtering"
-subtitle: "Implement cursor and offset pagination, filtering, sorting, and field selection to handle large datasets efficiently."
+title: 'Pagination & Filtering'
+subtitle: 'Implement cursor and offset pagination, filtering, sorting, and field selection to handle large datasets efficiently.'
 chapter: 4
-level: "intermediate"
-readingTime: "12 min"
-topics: ["pagination", "cursor", "offset", "filtering", "sorting", "field selection"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['pagination', 'cursor', 'offset', 'filtering', 'sorting', 'field selection']
 ---
 
 <script>
@@ -34,26 +34,26 @@ The simplest approach. The client sends `page` and `limit` (or `offset` and `lim
 // GET /api/products?page=3&limit=20
 
 // Server implementation
-app.get("/api/products", async (req, res) => {
-  const page = Math.max(1, Number(req.query.page) || 1);
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
-  const offset = (page - 1) * limit;
+app.get('/api/products', async (req, res) => {
+	const page = Math.max(1, Number(req.query.page) || 1);
+	const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+	const offset = (page - 1) * limit;
 
-  const [products, total] = await Promise.all([
-    db.products.find().skip(offset).limit(limit),
-    db.products.count(),
-  ]);
+	const [products, total] = await Promise.all([
+		db.products.find().skip(offset).limit(limit),
+		db.products.count()
+	]);
 
-  res.json({
-    data: products,
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasMore: page * limit < total,
-    },
-  });
+	res.json({
+		data: products,
+		meta: {
+			page,
+			limit,
+			total,
+			totalPages: Math.ceil(total / limit),
+			hasMore: page * limit < total
+		}
+	});
 });
 ```
 
@@ -95,47 +95,46 @@ Cursor pagination uses a pointer (usually an ID or timestamp) to fetch the next 
 // GET /api/products?limit=20&after=prod_abc123
 
 // Server implementation
-app.get("/api/products", async (req, res) => {
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
-  const after = req.query.after as string | undefined;
+app.get('/api/products', async (req, res) => {
+	const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+	const after = req.query.after as string | undefined;
 
-  // Build query
-  const query: Record<string, unknown> = {};
-  if (after) {
-    // Decode the cursor
-    const cursor = decodeCursor(after);
-    query._id = { $gt: cursor.id };
-  }
+	// Build query
+	const query: Record<string, unknown> = {};
+	if (after) {
+		// Decode the cursor
+		const cursor = decodeCursor(after);
+		query._id = { $gt: cursor.id };
+	}
 
-  const products = await db.products
-    .find(query)
-    .sort({ _id: 1 })
-    .limit(limit + 1); // Fetch one extra to check if there are more
+	const products = await db.products
+		.find(query)
+		.sort({ _id: 1 })
+		.limit(limit + 1); // Fetch one extra to check if there are more
 
-  const hasMore = products.length > limit;
-  if (hasMore) products.pop(); // Remove the extra item
+	const hasMore = products.length > limit;
+	if (hasMore) products.pop(); // Remove the extra item
 
-  const endCursor = products.length > 0
-    ? encodeCursor({ id: products[products.length - 1]._id })
-    : null;
+	const endCursor =
+		products.length > 0 ? encodeCursor({ id: products[products.length - 1]._id }) : null;
 
-  res.json({
-    data: products,
-    meta: {
-      hasMore,
-      endCursor,
-      limit,
-    },
-  });
+	res.json({
+		data: products,
+		meta: {
+			hasMore,
+			endCursor,
+			limit
+		}
+	});
 });
 
 // Cursor encoding/decoding
 function encodeCursor(data: Record<string, unknown>): string {
-  return Buffer.from(JSON.stringify(data)).toString("base64url");
+	return Buffer.from(JSON.stringify(data)).toString('base64url');
 }
 
 function decodeCursor(cursor: string): Record<string, unknown> {
-  return JSON.parse(Buffer.from(cursor, "base64url").toString("utf-8"));
+	return JSON.parse(Buffer.from(cursor, 'base64url').toString('utf-8'));
 }
 ```
 
@@ -144,51 +143,49 @@ function decodeCursor(cursor: string): Record<string, unknown> {
 When you sort by a non-unique field (like `createdAt`), you need a compound cursor:
 
 ```typescript
-app.get("/api/products", async (req, res) => {
-  const limit = Math.min(100, Number(req.query.limit) || 20);
-  const after = req.query.after as string | undefined;
-  const sortField = "createdAt";
+app.get('/api/products', async (req, res) => {
+	const limit = Math.min(100, Number(req.query.limit) || 20);
+	const after = req.query.after as string | undefined;
+	const sortField = 'createdAt';
 
-  const query: Record<string, unknown> = {};
-  if (after) {
-    const cursor = decodeCursor(after);
-    // Compound cursor: sort field + unique tiebreaker
-    query.$or = [
-      { [sortField]: { $gt: cursor.sortValue } },
-      { [sortField]: cursor.sortValue, _id: { $gt: cursor.id } },
-    ];
-  }
+	const query: Record<string, unknown> = {};
+	if (after) {
+		const cursor = decodeCursor(after);
+		// Compound cursor: sort field + unique tiebreaker
+		query.$or = [
+			{ [sortField]: { $gt: cursor.sortValue } },
+			{ [sortField]: cursor.sortValue, _id: { $gt: cursor.id } }
+		];
+	}
 
-  const products = await db.products
-    .find(query)
-    .sort({ [sortField]: 1, _id: 1 })
-    .limit(limit + 1);
+	const products = await db.products
+		.find(query)
+		.sort({ [sortField]: 1, _id: 1 })
+		.limit(limit + 1);
 
-  const hasMore = products.length > limit;
-  if (hasMore) products.pop();
+	const hasMore = products.length > limit;
+	if (hasMore) products.pop();
 
-  const last = products[products.length - 1];
-  const endCursor = last
-    ? encodeCursor({ sortValue: last[sortField], id: last._id })
-    : null;
+	const last = products[products.length - 1];
+	const endCursor = last ? encodeCursor({ sortValue: last[sortField], id: last._id }) : null;
 
-  res.json({
-    data: products,
-    meta: { hasMore, endCursor },
-  });
+	res.json({
+		data: products,
+		meta: { hasMore, endCursor }
+	});
 });
 ```
 
 ## Offset vs Cursor: When to Use Each
 
-| Feature | Offset | Cursor |
-|---------|--------|--------|
-| Jump to page N | Yes | No |
-| Performance at scale | Poor | Excellent |
-| Data consistency | Drift possible | Stable |
-| Implementation complexity | Simple | Moderate |
-| SEO-friendly URLs | Yes | No |
-| Infinite scroll | Possible | Ideal |
+| Feature                   | Offset         | Cursor    |
+| ------------------------- | -------------- | --------- |
+| Jump to page N            | Yes            | No        |
+| Performance at scale      | Poor           | Excellent |
+| Data consistency          | Drift possible | Stable    |
+| Implementation complexity | Simple         | Moderate  |
+| SEO-friendly URLs         | Yes            | No        |
+| Infinite scroll           | Possible       | Ideal     |
 
 <Callout type="tip">
 
@@ -207,44 +204,37 @@ Let clients narrow down results using query parameters:
 ```typescript
 // GET /api/products?category=electronics&min_price=1000&max_price=50000&in_stock=true
 
-app.get("/api/products", async (req, res) => {
-  const {
-    category,
-    min_price,
-    max_price,
-    in_stock,
-    brand,
-    search,
-  } = req.query;
+app.get('/api/products', async (req, res) => {
+	const { category, min_price, max_price, in_stock, brand, search } = req.query;
 
-  const filters: Record<string, unknown> = {};
+	const filters: Record<string, unknown> = {};
 
-  if (category) {
-    filters.category = category;
-  }
+	if (category) {
+		filters.category = category;
+	}
 
-  if (min_price || max_price) {
-    filters.price = {};
-    if (min_price) filters.price.$gte = Number(min_price);
-    if (max_price) filters.price.$lte = Number(max_price);
-  }
+	if (min_price || max_price) {
+		filters.price = {};
+		if (min_price) filters.price.$gte = Number(min_price);
+		if (max_price) filters.price.$lte = Number(max_price);
+	}
 
-  if (in_stock !== undefined) {
-    filters.inStock = in_stock === "true";
-  }
+	if (in_stock !== undefined) {
+		filters.inStock = in_stock === 'true';
+	}
 
-  if (brand) {
-    // Support multiple brands: ?brand=samsung&brand=apple
-    const brands = Array.isArray(brand) ? brand : [brand];
-    filters.brand = { $in: brands };
-  }
+	if (brand) {
+		// Support multiple brands: ?brand=samsung&brand=apple
+		const brands = Array.isArray(brand) ? brand : [brand];
+		filters.brand = { $in: brands };
+	}
 
-  if (search) {
-    filters.$text = { $search: search as string };
-  }
+	if (search) {
+		filters.$text = { $search: search as string };
+	}
 
-  const products = await db.products.find(filters).limit(20);
-  res.json({ data: products });
+	const products = await db.products.find(filters).limit(20);
+	res.json({ data: products });
 });
 ```
 
@@ -258,32 +248,29 @@ Allow clients to specify sort order:
 // GET /api/products?sort=-createdAt,price  (multiple fields)
 
 function parseSortParam(sort: string | undefined, allowedFields: string[]) {
-  if (!sort) return { createdAt: -1 }; // default sort
+	if (!sort) return { createdAt: -1 }; // default sort
 
-  const sortObj: Record<string, 1 | -1> = {};
+	const sortObj: Record<string, 1 | -1> = {};
 
-  for (const field of sort.split(",")) {
-    const trimmed = field.trim();
-    const descending = trimmed.startsWith("-");
-    const fieldName = descending ? trimmed.slice(1) : trimmed;
+	for (const field of sort.split(',')) {
+		const trimmed = field.trim();
+		const descending = trimmed.startsWith('-');
+		const fieldName = descending ? trimmed.slice(1) : trimmed;
 
-    // Only allow whitelisted fields
-    if (allowedFields.includes(fieldName)) {
-      sortObj[fieldName] = descending ? -1 : 1;
-    }
-  }
+		// Only allow whitelisted fields
+		if (allowedFields.includes(fieldName)) {
+			sortObj[fieldName] = descending ? -1 : 1;
+		}
+	}
 
-  return Object.keys(sortObj).length > 0 ? sortObj : { createdAt: -1 };
+	return Object.keys(sortObj).length > 0 ? sortObj : { createdAt: -1 };
 }
 
-app.get("/api/products", async (req, res) => {
-  const sort = parseSortParam(
-    req.query.sort as string,
-    ["price", "name", "createdAt", "rating"]
-  );
+app.get('/api/products', async (req, res) => {
+	const sort = parseSortParam(req.query.sort as string, ['price', 'name', 'createdAt', 'rating']);
 
-  const products = await db.products.find().sort(sort).limit(20);
-  res.json({ data: products });
+	const products = await db.products.find().sort(sort).limit(20);
+	res.json({ data: products });
 });
 ```
 
@@ -295,33 +282,38 @@ Let clients request only the fields they need to reduce payload size:
 // GET /api/products?fields=id,name,price
 
 function parseFields(fields: string | undefined, allowedFields: string[]) {
-  if (!fields) return null; // return all fields
+	if (!fields) return null; // return all fields
 
-  const requested = fields.split(",").map((f) => f.trim());
-  const projection: Record<string, 1> = {};
+	const requested = fields.split(',').map((f) => f.trim());
+	const projection: Record<string, 1> = {};
 
-  for (const field of requested) {
-    if (allowedFields.includes(field)) {
-      projection[field] = 1;
-    }
-  }
+	for (const field of requested) {
+		if (allowedFields.includes(field)) {
+			projection[field] = 1;
+		}
+	}
 
-  // Always include id
-  projection._id = 1;
-  return projection;
+	// Always include id
+	projection._id = 1;
+	return projection;
 }
 
-app.get("/api/products", async (req, res) => {
-  const projection = parseFields(
-    req.query.fields as string,
-    ["name", "price", "category", "brand", "inStock", "rating", "imageUrl"]
-  );
+app.get('/api/products', async (req, res) => {
+	const projection = parseFields(req.query.fields as string, [
+		'name',
+		'price',
+		'category',
+		'brand',
+		'inStock',
+		'rating',
+		'imageUrl'
+	]);
 
-  const query = db.products.find();
-  if (projection) query.select(projection);
+	const query = db.products.find();
+	if (projection) query.select(projection);
 
-  const products = await query.limit(20);
-  res.json({ data: products });
+	const products = await query.limit(20);
+	res.json({ data: products });
 });
 ```
 
@@ -341,4 +333,3 @@ Always use an allowlist of fields. Never let clients request arbitrary fields â€
 4. **Filtering** should use query params with whitelisted fields
 5. **Sorting** with `-field` for descending is a clean, standard pattern
 6. **Field selection** reduces payload size but must use an allowlist for security
-

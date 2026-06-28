@@ -1,10 +1,19 @@
 ---
-title: "Privilege Escalation"
-subtitle: "Linux and Windows privesc techniques — SUID binaries, sudo misconfigs, kernel exploits, service account abuse, token impersonation."
+title: 'Privilege Escalation'
+subtitle: 'Linux and Windows privesc techniques — SUID binaries, sudo misconfigs, kernel exploits, service account abuse, token impersonation.'
 chapter: 9
-level: "intermediate"
-readingTime: "16 min"
-topics: ["privilege escalation", "SUID", "sudo", "Linux privesc", "Windows privesc", "token impersonation", "kernel exploit"]
+level: 'intermediate'
+readingTime: '16 min'
+topics:
+  [
+    'privilege escalation',
+    'SUID',
+    'sudo',
+    'Linux privesc',
+    'Windows privesc',
+    'token impersonation',
+    'kernel exploit'
+  ]
 ---
 
 <script>
@@ -375,4 +384,3 @@ find / -name "*.php" -readable 2>/dev/null | xargs grep -l "password" 2>/dev/nul
 # 7. Check for world-writable scripts called by root processes
 # 8. Check kernel version as last resort
 ```
-

@@ -1,10 +1,10 @@
 ---
-title: "What Makes a System Distributed"
-subtitle: "Why we distribute at all, why independent failure changes everything, and the eight fallacies that trip up every newcomer."
+title: 'What Makes a System Distributed'
+subtitle: 'Why we distribute at all, why independent failure changes everything, and the eight fallacies that trip up every newcomer.'
 chapter: 1
-level: "beginner"
-readingTime: "9 min"
-topics: ["distributed", "fallacies"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['distributed', 'fallacies']
 ---
 
 <script>
@@ -62,13 +62,13 @@ Each fallacy is a comfortable assumption from single-machine programming that qu
 
 It helps to see the shift concretely. The same concept behaves very differently once it crosses a network.
 
-| Concept | Single machine | Distributed system |
-| --- | --- | --- |
-| Function call | Always returns or throws | May time out with unknown outcome |
-| Clock | One clock, monotonic | Many clocks, all drifting |
-| Failure | All-or-nothing | Partial; some nodes up, some down |
-| Memory | Shared, instantly consistent | No shared memory; state is copied and lags |
-| Ordering | Program order is obvious | No global order without extra machinery |
+| Concept       | Single machine               | Distributed system                         |
+| ------------- | ---------------------------- | ------------------------------------------ |
+| Function call | Always returns or throws     | May time out with unknown outcome          |
+| Clock         | One clock, monotonic         | Many clocks, all drifting                  |
+| Failure       | All-or-nothing               | Partial; some nodes up, some down          |
+| Memory        | Shared, instantly consistent | No shared memory; state is copied and lags |
+| Ordering      | Program order is obvious     | No global order without extra machinery    |
 
 Consider a simple example. On one machine, incrementing a counter is a single instruction and is automatically consistent. Across two machines, "increment the counter" becomes: read the current value over the network, add one locally, and write it back. If two machines do this at once, they can both read 5, both write 6, and you have lost an update — a bug that the single-machine version made impossible.
 

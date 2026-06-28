@@ -1,10 +1,10 @@
 ---
-title: "Containers & Docker"
-subtitle: "What containers actually are — namespaces, cgroups, layers — and how Docker packages your app to run anywhere."
+title: 'Containers & Docker'
+subtitle: 'What containers actually are — namespaces, cgroups, layers — and how Docker packages your app to run anywhere.'
 chapter: 1
-level: "beginner"
-readingTime: "14 min"
-topics: ["Docker", "containers", "images", "Dockerfile"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['Docker', 'containers', 'images', 'Dockerfile']
 ---
 
 <script>
@@ -24,25 +24,26 @@ Like a shipping container at a port — it doesn't matter what's inside (electro
 </Callout>
 
 Under the hood, containers use two Linux kernel features:
+
 - **Namespaces**: isolate what a process can see (PIDs, network, filesystems, users)
 - **Cgroups**: limit what a process can use (CPU, memory, I/O)
 
 ```typescript
 // Conceptual model — a container is just a confined process
 interface Container {
-  namespaces: {
-    pid: number;     // process sees its own PID tree
-    net: string;     // its own network stack
-    mnt: string;     // its own filesystem
-    user: string;    // its own user IDs
-  };
-  cgroups: {
-    cpuLimit: number;     // e.g., 0.5 = half a core
-    memoryLimit: string;  // e.g., "512m"
-    ioWeight: number;
-  };
-  rootfs: string;   // the container's filesystem (image layers)
-  entrypoint: string[];  // what to run
+	namespaces: {
+		pid: number; // process sees its own PID tree
+		net: string; // its own network stack
+		mnt: string; // its own filesystem
+		user: string; // its own user IDs
+	};
+	cgroups: {
+		cpuLimit: number; // e.g., 0.5 = half a core
+		memoryLimit: string; // e.g., "512m"
+		ioWeight: number;
+	};
+	rootfs: string; // the container's filesystem (image layers)
+	entrypoint: string[]; // what to run
 }
 ```
 
@@ -111,7 +112,7 @@ services:
   api:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       DATABASE_URL: postgres://postgres:secret@db:5432/myapp
       REDIS_URL: redis://cache:6379
@@ -127,7 +128,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ['CMD-SHELL', 'pg_isready']
       interval: 5s
       timeout: 3s
 
@@ -150,4 +151,3 @@ volumes:
 2. **Images are layered filesystems** — order your Dockerfile for maximum cache hits
 3. **Multi-stage builds** dramatically reduce image size
 4. **Docker Compose** orchestrates multi-container development environments
-

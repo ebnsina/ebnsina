@@ -48,11 +48,15 @@
 			.toUpperCase();
 
 	const ordered = $derived(
-		levels.flatMap((l) => l.tracks.flatMap((t) => t.slugs.map((s) => ({ category: t.category, slug: s }))))
+		levels.flatMap((l) =>
+			l.tracks.flatMap((t) => t.slugs.map((s) => ({ category: t.category, slug: s })))
+		)
 	);
 	const totalCh = $derived(ordered.length);
 	const doneTotal = $derived(
-		progress.ready ? ordered.reduce((n, c) => n + (progress.isDone(c.category, c.slug) ? 1 : 0), 0) : 0
+		progress.ready
+			? ordered.reduce((n, c) => n + (progress.isDone(c.category, c.slug) ? 1 : 0), 0)
+			: 0
 	);
 	const next = $derived(
 		progress.ready ? ordered.find((c) => !progress.isDone(c.category, c.slug)) : undefined
@@ -62,8 +66,10 @@
 	// stable colour index per track, in path order — so vivid avatars cycle through
 	// the palette and adjacent tracks never share a hue.
 	const catIndex = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local, non-reactive
 		const m = new Map<string, number>();
-		for (const l of levels) for (const t of l.tracks) if (!m.has(t.category)) m.set(t.category, m.size);
+		for (const l of levels)
+			for (const t of l.tracks) if (!m.has(t.category)) m.set(t.category, m.size);
 		return m;
 	});
 </script>
@@ -90,9 +96,10 @@
 
 	<div class="space-y-12 lg:space-y-16">
 		{#each levels as lvl (lvl.n)}
-			{@const done = progress.ready ? lvl.tracks.reduce((n, t) => n + progress.doneIn(t.category, t.slugs), 0) : 0}
+			{@const done = progress.ready
+				? lvl.tracks.reduce((n, t) => n + progress.doneIn(t.category, t.slugs), 0)
+				: 0}
 			{@const pct = lvl.totalCh ? Math.round((done / lvl.totalCh) * 100) : 0}
-			{@const isCurrent = next ? lvl.tracks.some((t) => t.category === next.category) : false}
 			{@const color = LEVEL_COLOR[lvl.level]}
 			<div class="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[19rem_1fr]">
 				<!-- left: sticky level card -->
@@ -123,14 +130,17 @@
 
 						<p class="mt-4 text-sm leading-relaxed text-muted">{lvl.blurb}</p>
 
-						<div class="mt-5 border-t pt-4" style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);">
+						<div
+							class="mt-5 border-t pt-4"
+							style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);"
+						>
 							<p class="mb-2.5 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted">
 								You'll learn
 							</p>
 							<ul class="space-y-1.5">
 								{#each lvl.outcomes as o (o)}
 									<li class="flex items-start gap-2 text-sm">
-										<Check size={14} strokeWidth={3} color={color} class="mt-1 shrink-0" />
+										<Check size={14} strokeWidth={3} {color} class="mt-1 shrink-0" />
 										<span>{o}</span>
 									</li>
 								{/each}
@@ -138,10 +148,16 @@
 						</div>
 
 						<div class="mt-5 flex items-center gap-3">
-							<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]">
-								<div class="h-full rounded-full bg-accent transition-[width] duration-500" style="width: {pct}%"></div>
+							<div
+								class="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
+							>
+								<div
+									class="h-full rounded-full bg-accent transition-[width] duration-500"
+									style="width: {pct}%"
+								></div>
 							</div>
-							<span class="shrink-0 font-pixel text-[0.62rem] text-muted">{done}/{lvl.totalCh}</span>
+							<span class="shrink-0 font-pixel text-[0.62rem] text-muted">{done}/{lvl.totalCh}</span
+							>
 						</div>
 					</div>
 				</div>
@@ -168,7 +184,9 @@
 										: 'background: var(--bg); border-color: color-mix(in oklch, var(--fg) 25%, transparent);'}
 								>
 									{#if isNext}
-										<span class="corner-round absolute -inset-1.5 -z-10 rounded-full bg-[color-mix(in_oklch,var(--accent)_22%,transparent)]"></span>
+										<span
+											class="corner-round absolute -inset-1.5 -z-10 rounded-full bg-[color-mix(in_oklch,var(--accent)_22%,transparent)]"
+										></span>
 									{/if}
 								</span>
 							</div>
@@ -185,7 +203,8 @@
 								>
 								<span class="min-w-0 flex-1">
 									<span class="flex items-center gap-2">
-										<span class="font-semibold tracking-tight transition-colors group-hover:text-accent"
+										<span
+											class="font-semibold tracking-tight transition-colors group-hover:text-accent"
 											>{t.label}</span
 										>
 										{#if tdone}
@@ -193,7 +212,8 @@
 										{/if}
 									</span>
 									<span class="mt-0.5 block font-mono text-xs text-muted">
-										{t.slugs.length} chapters · {fmtH(t.minutes)}{#if td > 0 && !tdone} · {td} done{/if}
+										{t.slugs.length} chapters · {fmtH(t.minutes)}{#if td > 0 && !tdone}
+											· {td} done{/if}
 									</span>
 								</span>
 								<ArrowRight

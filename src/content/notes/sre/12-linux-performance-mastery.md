@@ -1,10 +1,10 @@
 ---
-title: "Linux Performance Mastery"
-subtitle: "From `top` to `perf`, `bpftrace`, and flame graphs. The senior-SRE toolkit for diagnosing latency, CPU, memory, and I/O at the kernel level — without restarting anything in production."
+title: 'Linux Performance Mastery'
+subtitle: 'From `top` to `perf`, `bpftrace`, and flame graphs. The senior-SRE toolkit for diagnosing latency, CPU, memory, and I/O at the kernel level — without restarting anything in production.'
 chapter: 12
-level: "mastery"
-readingTime: "32 min"
-topics: ["linux", "perf", "eBPF", "bpftrace", "flame graphs", "USE", "kernel", "performance"]
+level: 'mastery'
+readingTime: '32 min'
+topics: ['linux', 'perf', 'eBPF', 'bpftrace', 'flame graphs', 'USE', 'kernel', 'performance']
 ---
 
 <script>
@@ -21,7 +21,7 @@ This chapter teaches the toolchain Brendan Gregg, Netflix performance engineers,
 
 **Real-World Analogy**
 
-Application metrics are like the dashboard on a car. They tell you you're going slow. Kernel-level tools are the OBD-II port plus a stethoscope on the engine block — they tell you *which cylinder is misfiring*. You can drive without them. You cannot fix the car.
+Application metrics are like the dashboard on a car. They tell you you're going slow. Kernel-level tools are the OBD-II port plus a stethoscope on the engine block — they tell you _which cylinder is misfiring_. You can drive without them. You cannot fix the car.
 
 </Callout>
 
@@ -44,13 +44,13 @@ top                   # the catch-all — sort by %CPU, then by RES
 
 What each tells you, in priority:
 
-| Signal | Tool | What it rules out |
-|--------|------|-------------------|
-| `load avg` >> CPU count | `uptime` | "the box is idle" |
-| `wa` column high in vmstat | `vmstat` | CPU bottleneck (it's I/O) |
-| One CPU at 100% in `mpstat` | `mpstat` | "we need more cores" |
-| `await` >> 10ms in `iostat` | `iostat` | "the disk is fine" |
-| TCP retransmits > 0.1% | `sar` | "the network is fine" |
+| Signal                      | Tool     | What it rules out         |
+| --------------------------- | -------- | ------------------------- |
+| `load avg` >> CPU count     | `uptime` | "the box is idle"         |
+| `wa` column high in vmstat  | `vmstat` | CPU bottleneck (it's I/O) |
+| One CPU at 100% in `mpstat` | `mpstat` | "we need more cores"      |
+| `await` >> 10ms in `iostat` | `iostat` | "the disk is fine"        |
+| TCP retransmits > 0.1%      | `sar`    | "the network is fine"     |
 
 ## The USE method — every resource, three questions
 
@@ -89,7 +89,7 @@ The pattern: one tool per box. Build a dashboard with all three columns per reso
 
 ## CPU performance — beyond `top`
 
-`top` shows you *who* is running. It doesn't show you *what they're doing inside the kernel*. `perf` does.
+`top` shows you _who_ is running. It doesn't show you _what they're doing inside the kernel_. `perf` does.
 
 ### perf stat — the cheap counter dump
 
@@ -138,7 +138,7 @@ For Java/JVM, use `async-profiler` — it samples without safepoint bias.
 
 <Callout type="tip">
 
-**Flame graphs always read top-down for the answer.** The widest box at the *top* is the leaf function eating CPU. The bottom of its column is the call chain. Don't read bottom-up; you'll waste 10 minutes on framework code.
+**Flame graphs always read top-down for the answer.** The widest box at the _top_ is the leaf function eating CPU. The bottom of its column is the call chain. Don't read bottom-up; you'll waste 10 minutes on framework code.
 
 </Callout>
 
@@ -198,7 +198,7 @@ offcputime-bpfcc -p $(pgrep my-svc) -f 30 > out.stacks
 flamegraph.pl --color=io < out.stacks > offcpu.svg
 ```
 
-The last one — **off-CPU flame graphs** — is how you find lock contention, sleep storms, and "my service is slow but CPU is idle" mysteries. On-CPU flames show you what's running; off-CPU flames show you what's *blocked*. Together they cover the whole story.
+The last one — **off-CPU flame graphs** — is how you find lock contention, sleep storms, and "my service is slow but CPU is idle" mysteries. On-CPU flames show you what's running; off-CPU flames show you what's _blocked_. Together they cover the whole story.
 
 ## Memory — finding the real consumer
 
@@ -454,6 +454,5 @@ Tier F (avoid)
 2. **USE method per resource is the senior baseline** — utilization alone is a lie.
 3. **Flame graphs (on-CPU + off-CPU) replace hours of guessing** with one SVG.
 4. **eBPF / bpftrace removes the "I'd need a restart to debug this" excuse** — observe live.
-5. **Tail latency lives at the kernel layer** — application traces show *what* is slow; kernel tools show *why*.
+5. **Tail latency lives at the kernel layer** — application traces show _what_ is slow; kernel tools show _why_.
 6. **Tune nothing without a measurement before and after.** The internet is full of anti-tuning advice.
-

@@ -1,10 +1,10 @@
 ---
-title: "Linux & VPS Basics — Roadmap"
-subtitle: "Twelve chapters that take you from a brand-new VPS to a hardened, monitored, ready-to-run-real-software box. No managed cloud."
+title: 'Linux & VPS Basics — Roadmap'
+subtitle: 'Twelve chapters that take you from a brand-new VPS to a hardened, monitored, ready-to-run-real-software box. No managed cloud.'
 chapter: 0
-level: "beginner"
-readingTime: "6 min"
-topics: ["roadmap", "linux", "vps", "self-hosted"]
+level: 'beginner'
+readingTime: '6 min'
+topics: ['roadmap', 'linux', 'vps', 'self-hosted']
 ---
 
 <script>
@@ -34,7 +34,7 @@ This track is **vendor-neutral**. Any VPS provider works — Hetzner, OVH, Digit
 1. **Picking a VPS** — what a VPS actually is, how to choose, how to provision
 2. **First login & SSH hardening** — keys, `sshd_config`, fail2ban, the front door
 3. **The Linux filesystem** — paths, permissions, ownership, the FHS
-4. **Processes & signals** — what your app actually *is* on Linux
+4. **Processes & signals** — what your app actually _is_ on Linux
 5. **systemd** — services that survive reboot
 
 **Core**
@@ -55,4 +55,3 @@ This track is **vendor-neutral**. Any VPS provider works — Hetzner, OVH, Digit
 Read in order. Do every chapter on a real VPS, not in your head. Break things on purpose. Re-provision and do it again — muscle memory matters more than notes.
 
 Total reading time: ~2.5 hours. Total hands-on time, the first time: 8–12 hours over a weekend.
-

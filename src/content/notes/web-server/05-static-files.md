@@ -1,10 +1,10 @@
 ---
-title: "Static Files & MIME"
-subtitle: "How a server turns a file path into bytes on the wire — content types, ETags, conditional requests, and the cache headers that keep every browser fast."
+title: 'Static Files & MIME'
+subtitle: 'How a server turns a file path into bytes on the wire — content types, ETags, conditional requests, and the cache headers that keep every browser fast.'
 chapter: 5
-level: "beginner"
-readingTime: "12 min"
-topics: ["static files", "mime", "etag", "cache control", "http"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['static files', 'mime', 'etag', 'cache control', 'http']
 ---
 
 <script>
@@ -69,20 +69,20 @@ Get the type wrong, and the browser refuses to interpret the file or, worse, int
 
 The list of types is long but predictable:
 
-| Extension | MIME type |
-|---|---|
-| `.html`, `.htm` | `text/html; charset=utf-8` |
-| `.css` | `text/css; charset=utf-8` |
-| `.js`, `.mjs` | `application/javascript; charset=utf-8` |
-| `.json` | `application/json; charset=utf-8` |
-| `.png` | `image/png` |
-| `.jpg`, `.jpeg` | `image/jpeg` |
-| `.svg` | `image/svg+xml` |
-| `.webp` | `image/webp` |
-| `.woff2` | `font/woff2` |
-| `.pdf` | `application/pdf` |
-| `.txt` | `text/plain; charset=utf-8` |
-| `.wasm` | `application/wasm` |
+| Extension       | MIME type                               |
+| --------------- | --------------------------------------- |
+| `.html`, `.htm` | `text/html; charset=utf-8`              |
+| `.css`          | `text/css; charset=utf-8`               |
+| `.js`, `.mjs`   | `application/javascript; charset=utf-8` |
+| `.json`         | `application/json; charset=utf-8`       |
+| `.png`          | `image/png`                             |
+| `.jpg`, `.jpeg` | `image/jpeg`                            |
+| `.svg`          | `image/svg+xml`                         |
+| `.webp`         | `image/webp`                            |
+| `.woff2`        | `font/woff2`                            |
+| `.pdf`          | `application/pdf`                       |
+| `.txt`          | `text/plain; charset=utf-8`             |
+| `.wasm`         | `application/wasm`                      |
 
 For text formats, always include `charset=utf-8`. Without it, the browser falls back to its locale guess, which used to break for non-ASCII content.
 
@@ -164,16 +164,16 @@ When you deploy a new version of `app.js`, it gets a new hash (`/assets/app.9c1e
 
 **Cache-Control directives worth knowing:**
 
-| Directive | Meaning |
-|---|---|
-| `public` | Any cache (browser, CDN, proxy) may cache. |
-| `private` | Only the user's browser may cache (no shared caches). |
-| `no-cache` | Cache, but revalidate every request before using. |
-| `no-store` | Do not cache anywhere. |
-| `max-age=N` | Cached copy is fresh for N seconds. |
-| `immutable` | Will not change for the lifetime of `max-age`. Browser skips conditional requests. |
-| `s-maxage=N` | Like `max-age` but only applies to *shared* caches (CDNs). |
-| `stale-while-revalidate=N` | Serve stale up to N seconds while fetching a fresh copy. |
+| Directive                  | Meaning                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `public`                   | Any cache (browser, CDN, proxy) may cache.                                         |
+| `private`                  | Only the user's browser may cache (no shared caches).                              |
+| `no-cache`                 | Cache, but revalidate every request before using.                                  |
+| `no-store`                 | Do not cache anywhere.                                                             |
+| `max-age=N`                | Cached copy is fresh for N seconds.                                                |
+| `immutable`                | Will not change for the lifetime of `max-age`. Browser skips conditional requests. |
+| `s-maxage=N`               | Like `max-age` but only applies to _shared_ caches (CDNs).                         |
+| `stale-while-revalidate=N` | Serve stale up to N seconds while fetching a fresh copy.                           |
 
 ## Compression — gzip and brotli
 
@@ -286,4 +286,3 @@ The browser ends up making one HTML request per navigation (which often returns 
 - nginx with `sendfile` is the gold standard for static workloads.
 
 Next chapter: nginx fundamentals — the config file that ties all of this together.
-

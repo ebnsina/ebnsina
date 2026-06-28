@@ -1,10 +1,10 @@
 ---
-title: "Production Checklist"
-subtitle: "Every step from this track, in one runbook. Provision a fresh VPS and end the day with a hardened, monitored, ready-to-deploy box."
+title: 'Production Checklist'
+subtitle: 'Every step from this track, in one runbook. Provision a fresh VPS and end the day with a hardened, monitored, ready-to-deploy box.'
 chapter: 12
-level: "advanced"
-readingTime: "15 min"
-topics: ["checklist", "hardening", "production", "linux", "vps"]
+level: 'advanced'
+readingTime: '15 min'
+topics: ['checklist', 'hardening', 'production', 'linux', 'vps']
 ---
 
 <script>
@@ -480,4 +480,3 @@ Every other chapter in this site assumes you are starting from a box like this. 
 - Save your configs in version control.
 
 This is the end of the Linux & VPS basics track. You are now ready for chapter 1 of any other topic on this site.
-

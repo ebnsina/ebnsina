@@ -1,10 +1,10 @@
 ---
-title: "Golden Signals, RED, and USE"
-subtitle: "The three monitoring frameworks that actually matter, when to use each, and the Prometheus + Grafana stack that exposes them all."
+title: 'Golden Signals, RED, and USE'
+subtitle: 'The three monitoring frameworks that actually matter, when to use each, and the Prometheus + Grafana stack that exposes them all.'
 chapter: 3
-level: "beginner"
-readingTime: "16 min"
-topics: ["monitoring", "golden signals", "RED", "USE", "Prometheus", "Grafana"]
+level: 'beginner'
+readingTime: '16 min'
+topics: ['monitoring', 'golden signals', 'RED', 'USE', 'Prometheus', 'Grafana']
 ---
 
 <script>
@@ -37,7 +37,7 @@ Most production setups use all three layered: USE for the underlying infra, RED 
 4. Saturation   — how full is the system?    (queue depth, CPU, file descriptors)
 ```
 
-Saturation is the one teams forget. A service running at 95% CPU is healthy *until* it isn't, and the inflection point is usually a cliff. Saturation tells you how close to the cliff you are.
+Saturation is the one teams forget. A service running at 95% CPU is healthy _until_ it isn't, and the inflection point is usually a cliff. Saturation tells you how close to the cliff you are.
 
 <Callout type="info">
 
@@ -267,4 +267,3 @@ USE metrics belong on dashboards (for diagnosis during incidents) but rarely on 
 3. **Saturation is the cliff indicator** — utilization without saturation is misleading
 4. **Bucket your histograms around the SLO threshold** for accurate quantiles
 5. **Page on symptoms, dashboard on causes** — it's the only sustainable alerting
-

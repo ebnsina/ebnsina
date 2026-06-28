@@ -1,17 +1,17 @@
 ---
-title: "What GraphQL is and when to use it"
-subtitle: "GraphQL is not a database, not a transport, and not a replacement for HTTP. It is a query language and a typed contract — and that distinction shapes every decision you make from here on."
+title: 'What GraphQL is and when to use it'
+subtitle: 'GraphQL is not a database, not a transport, and not a replacement for HTTP. It is a query language and a typed contract — and that distinction shapes every decision you make from here on.'
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["graphql", "rest", "api design", "schema"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['graphql', 'rest', 'api design', 'schema']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-You have used REST. You know what `GET /api/users/42` returns: whatever the server decides to return. If you wanted only the user's name, you got the whole object anyway. If you wanted the user *and* their last five posts, you made two requests. If a mobile screen needed seven things, you made seven requests or built a custom `/api/mobile/dashboard` endpoint that nobody else used.
+You have used REST. You know what `GET /api/users/42` returns: whatever the server decides to return. If you wanted only the user's name, you got the whole object anyway. If you wanted the user _and_ their last five posts, you made two requests. If a mobile screen needed seven things, you made seven requests or built a custom `/api/mobile/dashboard` endpoint that nobody else used.
 
 GraphQL is the answer to "what if the client could just ask for what it needs, in one round trip, over a typed contract." That is the entire pitch. Everything else — schemas, resolvers, federation — is plumbing in service of that idea.
 
@@ -39,15 +39,15 @@ The response:
 
 ```json
 {
-  "data": {
-    "user": {
-      "name": "Sumayya",
-      "posts": [
-        { "title": "Why I left Kubernetes", "createdAt": "2026-04-12" },
-        { "title": "Self-hosting is a skill", "createdAt": "2026-04-08" }
-      ]
-    }
-  }
+	"data": {
+		"user": {
+			"name": "Sumayya",
+			"posts": [
+				{ "title": "Why I left Kubernetes", "createdAt": "2026-04-12" },
+				{ "title": "Self-hosting is a skill", "createdAt": "2026-04-08" }
+			]
+		}
+	}
 }
 ```
 
@@ -64,19 +64,19 @@ GraphQL does **not** replace:
 - **Authentication** — there is no `auth` keyword. You wire it in via context, same as REST middleware.
 - **Caching** — no built-in HTTP caching layer. You add it (persisted queries, CDN, client cache).
 
-It is a contract layer. Knowing what it is *not* will save you a lot of arguments later.
+It is a contract layer. Knowing what it is _not_ will save you a lot of arguments later.
 
 ## REST vs GraphQL — the honest comparison
 
-| | REST | GraphQL |
-|---|---|---|
-| Endpoints | many, one per resource | one (`/graphql`) |
-| Over-fetching | common | impossible by design |
-| Versioning | `/v1` `/v2` | additive schema evolution |
-| Caching | HTTP, free | manual, harder |
-| Tooling | curl, browser dev tools | Apollo Studio, GraphiQL |
-| Ramp-up | one afternoon | one weekend |
-| Failure modes | 500s, 4xx | always 200, errors in body |
+|               | REST                    | GraphQL                    |
+| ------------- | ----------------------- | -------------------------- |
+| Endpoints     | many, one per resource  | one (`/graphql`)           |
+| Over-fetching | common                  | impossible by design       |
+| Versioning    | `/v1` `/v2`             | additive schema evolution  |
+| Caching       | HTTP, free              | manual, harder             |
+| Tooling       | curl, browser dev tools | Apollo Studio, GraphiQL    |
+| Ramp-up       | one afternoon           | one weekend                |
+| Failure modes | 500s, 4xx               | always 200, errors in body |
 
 That last row trips people. GraphQL almost always returns HTTP 200 even when the resolver threw — the actual error is inside `errors[]` in the JSON body. Your monitoring needs to know this.
 
@@ -96,7 +96,7 @@ That last row trips people. GraphQL almost always returns HTTP 200 even when the
 
 <Callout type="warn">
 
-"GraphQL is faster than REST" is wrong. GraphQL trades round trips for resolver complexity. A naive GraphQL server will be slower than a tuned REST server on the same data. The win is *flexibility*, not raw speed. Performance comes from DataLoader, persisted queries, and smart resolvers — chapters 5, 6, and 10.
+"GraphQL is faster than REST" is wrong. GraphQL trades round trips for resolver complexity. A naive GraphQL server will be slower than a tuned REST server on the same data. The win is _flexibility_, not raw speed. Performance comes from DataLoader, persisted queries, and smart resolvers — chapters 5, 6, and 10.
 
 </Callout>
 
@@ -132,4 +132,3 @@ The whole track stays vendor-neutral. No "use AWS AppSync" or "deploy to Apollo'
 - Returns HTTP 200 even on errors — your monitoring must read the body.
 
 Next: [Schema-first design](/notes/graphql/02-schema-first-design) — types, queries, mutations, and the nullability decisions that haunt you for years if you get them wrong.
-

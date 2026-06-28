@@ -1,10 +1,10 @@
 ---
-title: "Scaling the Database Layer"
-subtitle: "Read replicas, connection pooling, and why the database is almost always the horizontal scaling bottleneck."
+title: 'Scaling the Database Layer'
+subtitle: 'Read replicas, connection pooling, and why the database is almost always the horizontal scaling bottleneck.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["read replicas", "connection pooling", "PgBouncer", "database bottleneck", "sharding"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['read replicas', 'connection pooling', 'PgBouncer', 'database bottleneck', 'sharding']
 ---
 
 <script>
@@ -59,11 +59,11 @@ query_timeout = 0                 # no query timeout (set per-query in app)
 
 **Pool modes:**
 
-| Mode | Connection released | Best for |
-|------|--------------------| ---------|
-| `session` | On client disconnect | Stateful sessions (SET, prepared statements) |
-| `transaction` | After each transaction | Most web apps — recommended |
-| `statement` | After each statement | Not recommended — can break multi-statement flows |
+| Mode          | Connection released    | Best for                                          |
+| ------------- | ---------------------- | ------------------------------------------------- |
+| `session`     | On client disconnect   | Stateful sessions (SET, prepared statements)      |
+| `transaction` | After each transaction | Most web apps — recommended                       |
+| `statement`   | After each statement   | Not recommended — can break multi-statement flows |
 
 **Transaction mode limitations:** Session-level state (SET, advisory locks, LISTEN/NOTIFY, prepared statements) doesn't survive across PgBouncer transactions. If your app uses `SET LOCAL` or prepared statements, either use session mode or disable statement-level features:
 
@@ -85,27 +85,27 @@ import { Pool } from 'pg';
 
 // Primary: handles writes
 const primaryPool = new Pool({
-  host: process.env.DB_PRIMARY_HOST,
-  max: 5,
+	host: process.env.DB_PRIMARY_HOST,
+	max: 5
 });
 
 // Replica pool: handles reads
 const replicaPool = new Pool({
-  host: process.env.DB_REPLICA_HOST, // or a load balancer across multiple replicas
-  max: 20, // replicas can handle more connections safely
+	host: process.env.DB_REPLICA_HOST, // or a load balancer across multiple replicas
+	max: 20 // replicas can handle more connections safely
 });
 
 // Route queries by operation type
 export async function query(sql: string, params?: unknown[]): Promise<unknown> {
-  const isWrite = /^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)/i.test(sql);
-  const pool = isWrite ? primaryPool : replicaPool;
-  return pool.query(sql, params);
+	const isWrite = /^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)/i.test(sql);
+	const pool = isWrite ? primaryPool : replicaPool;
+	return pool.query(sql, params);
 }
 
 // Or explicit per call
 export const db = {
-  primary: (sql: string, params?: unknown[]) => primaryPool.query(sql, params),
-  replica: (sql: string, params?: unknown[]) => replicaPool.query(sql, params),
+	primary: (sql: string, params?: unknown[]) => primaryPool.query(sql, params),
+	replica: (sql: string, params?: unknown[]) => replicaPool.query(sql, params)
 };
 
 // Usage
@@ -117,16 +117,16 @@ await db.primary('INSERT INTO orders (...) VALUES (...)', [...values]);
 
 ```typescript
 async function createOrderAndFetch(data: OrderData): Promise<Order> {
-  // Write to primary
-  const { rows: [order] } = await db.primary(
-    'INSERT INTO orders (...) RETURNING *', [...values]
-  );
+	// Write to primary
+	const {
+		rows: [order]
+	} = await db.primary('INSERT INTO orders (...) RETURNING *', [...values]);
 
-  // Read from PRIMARY — replica might not have it yet
-  const { rows: [full] } = await db.primary(
-    'SELECT * FROM orders WHERE id = $1', [order.id]
-  );
-  return full;
+	// Read from PRIMARY — replica might not have it yet
+	const {
+		rows: [full]
+	} = await db.primary('SELECT * FROM orders WHERE id = $1', [order.id]);
+	return full;
 }
 ```
 
@@ -139,19 +139,19 @@ import Redis from 'ioredis';
 const redis = new Redis(process.env.REDIS_URL);
 
 async function getProduct(productId: string): Promise<Product> {
-  // Check cache first
-  const cached = await redis.get(`product:${productId}`);
-  if (cached) return JSON.parse(cached);
+	// Check cache first
+	const cached = await redis.get(`product:${productId}`);
+	if (cached) return JSON.parse(cached);
 
-  // Cache miss: hit database
-  const { rows: [product] } = await db.replica(
-    'SELECT * FROM products WHERE id = $1', [productId]
-  );
+	// Cache miss: hit database
+	const {
+		rows: [product]
+	} = await db.replica('SELECT * FROM products WHERE id = $1', [productId]);
 
-  // Cache with TTL
-  await redis.setex(`product:${productId}`, 300, JSON.stringify(product)); // 5 min TTL
+	// Cache with TTL
+	await redis.setex(`product:${productId}`, 300, JSON.stringify(product)); // 5 min TTL
 
-  return product;
+	return product;
 }
 ```
 
@@ -194,13 +194,13 @@ A single missing index can cause 100x database load. Fix indexes before adding h
 
 Postgres max connections by instance (approximate):
 
-| AWS RDS Instance | vCPU | RAM | Max connections |
-|-----------------|------|-----|----------------|
-| db.t3.micro | 2 | 1GB | ~15 |
-| db.t3.medium | 2 | 4GB | ~66 |
-| db.m5.large | 2 | 8GB | ~125 |
-| db.m5.xlarge | 4 | 16GB | ~250 |
-| db.m5.4xlarge | 16 | 64GB | ~1000 |
+| AWS RDS Instance | vCPU | RAM  | Max connections |
+| ---------------- | ---- | ---- | --------------- |
+| db.t3.micro      | 2    | 1GB  | ~15             |
+| db.t3.medium     | 2    | 4GB  | ~66             |
+| db.m5.large      | 2    | 8GB  | ~125            |
+| db.m5.xlarge     | 4    | 16GB | ~250            |
+| db.m5.4xlarge    | 16   | 64GB | ~1000           |
 
 Without PgBouncer, you hit the connection limit before you hit CPU or memory limits. Always run PgBouncer in front of managed Postgres.
 
@@ -213,6 +213,7 @@ Sharding (partitioning data across multiple primary databases) is a last resort.
 - Dataset is too large for one machine's storage
 
 Most applications never need sharding. Before sharding:
+
 1. Optimize queries and indexes
 2. Add read replicas for read-heavy workloads
 3. Cache aggressively
@@ -246,4 +247,3 @@ Level 5: Sharding / CQRS
 ```
 
 Work through the levels in order. Most applications max out at Level 3.
-

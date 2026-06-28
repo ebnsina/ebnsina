@@ -1,10 +1,10 @@
 ---
-title: "Auto-Scaling"
-subtitle: "Scaling out on demand — target tracking, scheduled scaling, scale-in protection, and the metrics that actually drive good decisions."
+title: 'Auto-Scaling'
+subtitle: 'Scaling out on demand — target tracking, scheduled scaling, scale-in protection, and the metrics that actually drive good decisions.'
 chapter: 3
-level: "intermediate"
-readingTime: "9 min"
-topics: ["auto-scaling", "ASG", "HPA", "target tracking", "scale-in", "KEDA"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['auto-scaling', 'ASG', 'HPA', 'target tracking', 'scale-in', 'KEDA']
 ---
 
 <script>
@@ -34,6 +34,7 @@ The result: you pay for what you use, and you always have enough capacity (withi
 An ASG manages a fleet of EC2 instances. Scaling policies define when and how the fleet grows or shrinks.
 
 **Target Tracking — the recommended default:**
+
 ```bash
 # Scale to maintain CPU at 70%
 aws autoscaling put-scaling-policy \
@@ -52,6 +53,7 @@ aws autoscaling put-scaling-policy \
 AWS does the PID control for you: if CPU is above 70%, add instances; if below, remove them. You only set the target.
 
 **Step Scaling — for fine-grained control:**
+
 ```bash
 aws autoscaling put-scaling-policy \
   --policy-name scale-out-on-high-cpu \
@@ -68,6 +70,7 @@ aws autoscaling put-scaling-policy \
 ```
 
 **Scheduled Scaling — for predictable traffic patterns:**
+
 ```bash
 # Scale up before peak hours (weekdays 9am)
 aws autoscaling put-scheduled-update-group-action \
@@ -106,6 +109,7 @@ Better metrics for I/O-bound workloads:
 ```
 
 **Custom metric scaling (request count via ALB):**
+
 ```bash
 # Scale on ALB RequestCountPerTarget
 aws autoscaling put-scaling-policy \
@@ -159,6 +163,7 @@ spec:
 ```
 
 **Custom metrics HPA (scale on RPS from Prometheus):**
+
 ```yaml
 metrics:
   - type: Pods
@@ -167,7 +172,7 @@ metrics:
         name: http_requests_per_second
       target:
         type: AverageValue
-        averageValue: "100"  # 100 RPS per pod
+        averageValue: '100' # 100 RPS per pod
 ```
 
 Requires `prometheus-adapter` or KEDA to bridge Prometheus metrics to the Kubernetes metrics API.
@@ -184,21 +189,21 @@ metadata:
 spec:
   scaleTargetRef:
     name: worker-deployment
-  minReplicaCount: 0     # scale to zero when queue is empty
+  minReplicaCount: 0 # scale to zero when queue is empty
   maxReplicaCount: 50
   triggers:
     - type: redis
       metadata:
         address: redis:6379
         listName: jobs:default
-        listLength: "10"   # 1 replica per 10 jobs in queue
+        listLength: '10' # 1 replica per 10 jobs in queue
 
     - type: kafka
       metadata:
         bootstrapServers: kafka:9092
         consumerGroup: my-workers
         topic: work-items
-        lagThreshold: "100"  # scale when lag > 100 per partition
+        lagThreshold: '100' # scale when lag > 100 per partition
 ```
 
 Workers scale to zero when the queue is empty — zero cost at idle. They scale out linearly with queue depth. This is the cleanest model for batch workloads.
@@ -208,6 +213,7 @@ Workers scale to zero when the queue is empty — zero cost at idle. They scale 
 Scaling in (removing instances) is dangerous if done mid-request. Protection mechanisms:
 
 **Instance scale-in protection (AWS ASG):**
+
 ```bash
 # Protect specific instances from scale-in while processing critical work
 aws autoscaling set-instance-protection \
@@ -223,18 +229,19 @@ aws autoscaling set-instance-protection \
 ```
 
 **For worker processes:** check scale-in notice and finish current job:
+
 ```typescript
 // AWS: poll for termination notice
 setInterval(async () => {
-  const res = await fetch(
-    'http://169.254.169.254/latest/meta-data/autoscaling/target-lifecycle-state',
-    { signal: AbortSignal.timeout(100) }
-  );
-  if (res.ok && (await res.text()) === 'Terminating') {
-    logger.info('Scale-in detected, draining worker');
-    await worker.pause(); // stop taking new jobs
-    // Complete current job, then exit
-  }
+	const res = await fetch(
+		'http://169.254.169.254/latest/meta-data/autoscaling/target-lifecycle-state',
+		{ signal: AbortSignal.timeout(100) }
+	);
+	if (res.ok && (await res.text()) === 'Terminating') {
+		logger.info('Scale-in detected, draining worker');
+		await worker.pause(); // stop taking new jobs
+		// Complete current job, then exit
+	}
 }, 5_000);
 ```
 
@@ -274,4 +281,3 @@ aws autoscaling update-auto-scaling-group \
 □ Load tested at 2x expected peak — know max RPS before it happens in prod
 □ Spot/preemptible for non-critical workloads (workers, batch) — 60-80% cheaper
 ```
-

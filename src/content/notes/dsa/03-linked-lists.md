@@ -1,10 +1,10 @@
 ---
-title: "Linked Lists"
-subtitle: "Understand pointer-based data structures — nodes, traversal, and why they matter for queues, LRU caches, and more."
+title: 'Linked Lists'
+subtitle: 'Understand pointer-based data structures — nodes, traversal, and why they matter for queues, LRU caches, and more.'
 chapter: 3
-level: "beginner"
-readingTime: "13 min"
-topics: ["linked list", "singly linked", "doubly linked", "fast slow pointers"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['linked list', 'singly linked', 'doubly linked', 'fast slow pointers']
 ---
 
 <script>
@@ -29,60 +29,60 @@ Each node holds a value and a pointer to the next node.
 
 ```typescript
 class ListNode<T> {
-  value: T;
-  next: ListNode<T> | null = null;
+	value: T;
+	next: ListNode<T> | null = null;
 
-  constructor(value: T) {
-    this.value = value;
-  }
+	constructor(value: T) {
+		this.value = value;
+	}
 }
 
 class LinkedList<T> {
-  head: ListNode<T> | null = null;
-  size = 0;
+	head: ListNode<T> | null = null;
+	size = 0;
 
-  // O(1) — prepend to front
-  prepend(value: T): void {
-    const node = new ListNode(value);
-    node.next = this.head;
-    this.head = node;
-    this.size++;
-  }
+	// O(1) — prepend to front
+	prepend(value: T): void {
+		const node = new ListNode(value);
+		node.next = this.head;
+		this.head = node;
+		this.size++;
+	}
 
-  // O(n) — append to end
-  append(value: T): void {
-    const node = new ListNode(value);
-    if (!this.head) {
-      this.head = node;
-    } else {
-      let current = this.head;
-      while (current.next) current = current.next;
-      current.next = node;
-    }
-    this.size++;
-  }
+	// O(n) — append to end
+	append(value: T): void {
+		const node = new ListNode(value);
+		if (!this.head) {
+			this.head = node;
+		} else {
+			let current = this.head;
+			while (current.next) current = current.next;
+			current.next = node;
+		}
+		this.size++;
+	}
 
-  // O(n) — delete first occurrence
-  delete(value: T): boolean {
-    if (!this.head) return false;
+	// O(n) — delete first occurrence
+	delete(value: T): boolean {
+		if (!this.head) return false;
 
-    if (this.head.value === value) {
-      this.head = this.head.next;
-      this.size--;
-      return true;
-    }
+		if (this.head.value === value) {
+			this.head = this.head.next;
+			this.size--;
+			return true;
+		}
 
-    let current = this.head;
-    while (current.next) {
-      if (current.next.value === value) {
-        current.next = current.next.next;
-        this.size--;
-        return true;
-      }
-      current = current.next;
-    }
-    return false;
-  }
+		let current = this.head;
+		while (current.next) {
+			if (current.next.value === value) {
+				current.next = current.next.next;
+				this.size--;
+				return true;
+			}
+			current = current.next;
+		}
+		return false;
+	}
 }
 ```
 
@@ -93,41 +93,41 @@ The most important linked list technique. Use two pointers moving at different s
 ```typescript
 // Detect cycle in a linked list
 function hasCycle<T>(head: ListNode<T> | null): boolean {
-  let slow = head;
-  let fast = head;
+	let slow = head;
+	let fast = head;
 
-  while (fast?.next) {
-    slow = slow!.next;
-    fast = fast.next.next;
-    if (slow === fast) return true;
-  }
-  return false;
+	while (fast?.next) {
+		slow = slow!.next;
+		fast = fast.next.next;
+		if (slow === fast) return true;
+	}
+	return false;
 }
 
 // Find the middle node
 function findMiddle<T>(head: ListNode<T> | null): ListNode<T> | null {
-  let slow = head;
-  let fast = head;
+	let slow = head;
+	let fast = head;
 
-  while (fast?.next) {
-    slow = slow!.next;
-    fast = fast.next.next;
-  }
-  return slow;
+	while (fast?.next) {
+		slow = slow!.next;
+		fast = fast.next.next;
+	}
+	return slow;
 }
 
 // Reverse a linked list (iterative)
 function reverse<T>(head: ListNode<T> | null): ListNode<T> | null {
-  let prev: ListNode<T> | null = null;
-  let current = head;
+	let prev: ListNode<T> | null = null;
+	let current = head;
 
-  while (current) {
-    const next = current.next;
-    current.next = prev;
-    prev = current;
-    current = next;
-  }
-  return prev;
+	while (current) {
+		const next = current.next;
+		current.next = prev;
+		prev = current;
+		current = next;
+	}
+	return prev;
 }
 ```
 
@@ -139,17 +139,17 @@ function reverse<T>(head: ListNode<T> | null): ListNode<T> | null {
 
 ## Arrays vs. Linked Lists
 
-| Operation | Array | Linked List |
-|-----------|-------|-------------|
-| Access by index | O(1) | O(n) |
-| Insert at front | O(n) | O(1) |
-| Insert at end | O(1)* | O(n) or O(1)** |
-| Delete from front | O(n) | O(1) |
-| Search | O(n) | O(n) |
-| Memory | Contiguous | Scattered |
+| Operation         | Array      | Linked List      |
+| ----------------- | ---------- | ---------------- |
+| Access by index   | O(1)       | O(n)             |
+| Insert at front   | O(n)       | O(1)             |
+| Insert at end     | O(1)\*     | O(n) or O(1)\*\* |
+| Delete from front | O(n)       | O(1)             |
+| Search            | O(n)       | O(n)             |
+| Memory            | Contiguous | Scattered        |
 
 \* Amortized for dynamic arrays.
-\** O(1) if you maintain a tail pointer.
+\*\* O(1) if you maintain a tail pointer.
 
 ## Key Takeaways
 
@@ -157,4 +157,3 @@ function reverse<T>(head: ListNode<T> | null): ListNode<T> | null {
 2. **Fast & slow pointers** solve cycle detection and midpoint finding elegantly
 3. **Reversing a linked list** is the most common linked list operation — know it cold
 4. **Use arrays by default** — linked lists are building blocks for more complex structures, rarely used alone
-

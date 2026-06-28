@@ -19,15 +19,12 @@
 	</header>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{#each data.posts as post, i (post.slug)}
+		{#each data.posts as post (post.slug)}
 			<div class="h-full">
 				<PostCard
 					href={`/blog/${post.slug}`}
 					title={post.meta.title}
 					description={post.meta.description}
-					date={post.meta.date}
-					tags={post.meta.tags}
-					index={i}
 				/>
 			</div>
 		{/each}

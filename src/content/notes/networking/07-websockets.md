@@ -1,10 +1,10 @@
 ---
-title: "WebSockets & Real-Time"
-subtitle: "Full-duplex communication over a single connection — chat, live updates, collaborative editing, and when not to use them."
+title: 'WebSockets & Real-Time'
+subtitle: 'Full-duplex communication over a single connection — chat, live updates, collaborative editing, and when not to use them.'
 chapter: 7
-level: "intermediate"
-readingTime: "14 min"
-topics: ["WebSocket", "real-time", "SSE", "long polling"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['WebSocket', 'real-time', 'SSE', 'long polling']
 ---
 
 <script>
@@ -50,50 +50,50 @@ A WebSocket starts as an HTTP request, then **upgrades** to a persistent TCP con
 ### WebSocket Server (Node.js)
 
 ```typescript
-import { WebSocketServer } from "ws";
+import { WebSocketServer } from 'ws';
 
 const wss = new WebSocketServer({ port: 8080 });
 const clients = new Set<WebSocket>();
 
-wss.on("connection", (ws) => {
-  clients.add(ws);
-  console.log(`Client connected (${clients.size} total)`);
+wss.on('connection', (ws) => {
+	clients.add(ws);
+	console.log(`Client connected (${clients.size} total)`);
 
-  ws.on("message", (data) => {
-    const message = JSON.parse(data.toString());
+	ws.on('message', (data) => {
+		const message = JSON.parse(data.toString());
 
-    // Broadcast to all other clients
-    for (const client of clients) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
-      }
-    }
-  });
+		// Broadcast to all other clients
+		for (const client of clients) {
+			if (client !== ws && client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		}
+	});
 
-  ws.on("close", () => {
-    clients.delete(ws);
-  });
+	ws.on('close', () => {
+		clients.delete(ws);
+	});
 });
 ```
 
 ### WebSocket Client (Browser)
 
 ```typescript
-const ws = new WebSocket("wss://server.example.com/chat");
+const ws = new WebSocket('wss://server.example.com/chat');
 
 ws.onopen = () => {
-  ws.send(JSON.stringify({ type: "join", room: "general" }));
+	ws.send(JSON.stringify({ type: 'join', room: 'general' }));
 };
 
 ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  renderMessage(message);
+	const message = JSON.parse(event.data);
+	renderMessage(message);
 };
 
 ws.onclose = (event) => {
-  console.log(`Disconnected: ${event.code} ${event.reason}`);
-  // Reconnect with exponential backoff
-  setTimeout(connect, Math.min(1000 * 2 ** retries, 30000));
+	console.log(`Disconnected: ${event.code} ${event.reason}`);
+	// Reconnect with exponential backoff
+	setTimeout(connect, Math.min(1000 * 2 ** retries, 30000));
 };
 ```
 
@@ -103,28 +103,28 @@ If you only need **server → client** push (no bidirectional), SSE is simpler:
 
 ```typescript
 // Server (Node.js / Express)
-app.get("/events", (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
+app.get('/events', (req, res) => {
+	res.setHeader('Content-Type', 'text/event-stream');
+	res.setHeader('Cache-Control', 'no-cache');
+	res.setHeader('Connection', 'keep-alive');
 
-  const send = (data: unknown) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+	const send = (data: unknown) => {
+		res.write(`data: ${JSON.stringify(data)}\n\n`);
+	};
 
-  // Send updates
-  const interval = setInterval(() => {
-    send({ price: Math.random() * 100, timestamp: Date.now() });
-  }, 1000);
+	// Send updates
+	const interval = setInterval(() => {
+		send({ price: Math.random() * 100, timestamp: Date.now() });
+	}, 1000);
 
-  req.on("close", () => clearInterval(interval));
+	req.on('close', () => clearInterval(interval));
 });
 
 // Client (Browser) — built-in API, auto-reconnects!
-const events = new EventSource("/events");
+const events = new EventSource('/events');
 events.onmessage = (e) => {
-  const data = JSON.parse(e.data);
-  updatePrice(data.price);
+	const data = JSON.parse(e.data);
+	updatePrice(data.price);
 };
 ```
 
@@ -136,14 +136,14 @@ events.onmessage = (e) => {
 
 ## Comparison
 
-| | Polling | Long Polling | SSE | WebSocket |
-|--|---------|-------------|-----|-----------|
-| Direction | Client→Server | Client→Server | Server→Client | Bidirectional |
-| Latency | High (interval) | Medium | Low | Low |
-| Overhead | High | Medium | Low | Low |
-| Complexity | Simple | Medium | Simple | Complex |
-| Auto-reconnect | Manual | Manual | Built-in | Manual |
-| HTTP/2 compatible | Yes | Yes | Yes | No (uses TCP) |
+|                   | Polling         | Long Polling  | SSE           | WebSocket     |
+| ----------------- | --------------- | ------------- | ------------- | ------------- |
+| Direction         | Client→Server   | Client→Server | Server→Client | Bidirectional |
+| Latency           | High (interval) | Medium        | Low           | Low           |
+| Overhead          | High            | Medium        | Low           | Low           |
+| Complexity        | Simple          | Medium        | Simple        | Complex       |
+| Auto-reconnect    | Manual          | Manual        | Built-in      | Manual        |
+| HTTP/2 compatible | Yes             | Yes           | Yes           | No (uses TCP) |
 
 ## Key Takeaways
 
@@ -151,4 +151,3 @@ events.onmessage = (e) => {
 2. **SSE is simpler for server-to-client push** — auto-reconnects and works with HTTP/2
 3. **Always implement reconnection with backoff** — connections will drop
 4. **Don't default to WebSockets** — most "real-time" features only need server→client (SSE)
-

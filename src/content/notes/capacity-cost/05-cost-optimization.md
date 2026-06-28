@@ -1,10 +1,10 @@
 ---
-title: "Cost Optimization in Practice"
-subtitle: "Finding waste, rightsizing, reserved commitments, and building a culture that treats cloud spend as engineering work."
+title: 'Cost Optimization in Practice'
+subtitle: 'Finding waste, rightsizing, reserved commitments, and building a culture that treats cloud spend as engineering work.'
 chapter: 5
-level: "advanced"
-readingTime: "10 min"
-topics: ["cost optimization", "rightsizing", "reserved instances", "FinOps", "cloud cost"]
+level: 'advanced'
+readingTime: '10 min'
+topics: ['cost optimization', 'rightsizing', 'reserved instances', 'FinOps', 'cloud cost']
 ---
 
 <script>
@@ -45,6 +45,7 @@ Optimize largest categories first. Shaving 30% off RDS has more impact than elim
 ## Quick Wins (Days of Effort)
 
 **Identify and delete idle resources:**
+
 ```bash
 # EC2 instances with <5% CPU over 14 days
 aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,InstanceType]'
@@ -68,17 +69,20 @@ aws ec2 describe-snapshots --owner-ids self \
 ```
 
 **S3 lifecycle policies:**
+
 ```json
 {
-  "Rules": [{
-    "Status": "Enabled",
-    "Filter": { "Prefix": "logs/" },
-    "Transitions": [
-      { "Days": 30, "StorageClass": "STANDARD_IA" },
-      { "Days": 90, "StorageClass": "GLACIER" }
-    ],
-    "Expiration": { "Days": 365 }
-  }]
+	"Rules": [
+		{
+			"Status": "Enabled",
+			"Filter": { "Prefix": "logs/" },
+			"Transitions": [
+				{ "Days": 30, "StorageClass": "STANDARD_IA" },
+				{ "Days": 90, "StorageClass": "GLACIER" }
+			],
+			"Expiration": { "Days": 365 }
+		}
+	]
 }
 ```
 
@@ -103,12 +107,12 @@ aws cloudwatch get-metric-statistics \
 
 **Decision matrix:**
 
-| CPU avg | Mem avg | Action |
-|---------|---------|--------|
-| &lt;20% | &lt;40% | Downsize — likely 2x overprovisioned |
-| &lt;40% | &lt;60% | Acceptable — leave headroom for spikes |
-| >60% | >70% | Size up or add instances |
-| &lt;20% | >80% | Memory-constrained — rightsize to memory-optimized |
+| CPU avg | Mem avg | Action                                             |
+| ------- | ------- | -------------------------------------------------- |
+| &lt;20% | &lt;40% | Downsize — likely 2x overprovisioned               |
+| &lt;40% | &lt;60% | Acceptable — leave headroom for spikes             |
+| >60%    | >70%    | Size up or add instances                           |
+| &lt;20% | >80%    | Memory-constrained — rightsize to memory-optimized |
 
 ```bash
 # AWS Compute Optimizer: automated rightsizing recommendations
@@ -155,27 +159,26 @@ Background job workers are the ideal spot workload:
 
 // In your queue worker startup:
 process.on('SIGTERM', async () => {
-  // Spot instance getting terminated — graceful shutdown
-  logger.info('Spot instance termination notice');
-  await worker.pause();
-  await worker.close(); // waits for current job to finish
-  process.exit(0);
+	// Spot instance getting terminated — graceful shutdown
+	logger.info('Spot instance termination notice');
+	await worker.pause();
+	await worker.close(); // waits for current job to finish
+	process.exit(0);
 });
 
 // Check for termination notice (2-minute warning from AWS)
 setInterval(async () => {
-  try {
-    const res = await fetch(
-      'http://169.254.169.254/latest/meta-data/spot/instance-action',
-      { signal: AbortSignal.timeout(100) },
-    );
-    if (res.ok) {
-      logger.warn('Spot termination imminent — initiating shutdown');
-      await gracefulShutdown();
-    }
-  } catch {
-    // No termination notice — continue
-  }
+	try {
+		const res = await fetch('http://169.254.169.254/latest/meta-data/spot/instance-action', {
+			signal: AbortSignal.timeout(100)
+		});
+		if (res.ok) {
+			logger.warn('Spot termination imminent — initiating shutdown');
+			await gracefulShutdown();
+		}
+	} catch {
+		// No termination notice — continue
+	}
 }, 5_000);
 ```
 
@@ -184,6 +187,7 @@ setInterval(async () => {
 Data transfer is often invisible until the bill arrives:
 
 **CDN for static assets:**
+
 ```
 Without CDN: every asset request hits your origin server
   Cost: $0.09/GB egress from AWS
@@ -195,13 +199,16 @@ With CloudFront:
 ```
 
 **Compression:**
+
 ```typescript
 import compression from 'compression';
 
-app.use(compression({
-  threshold: 1024, // only compress responses > 1KB
-  level: 6,        // 1 (fast) to 9 (best compression)
-}));
+app.use(
+	compression({
+		threshold: 1024, // only compress responses > 1KB
+		level: 6 // 1 (fast) to 9 (best compression)
+	})
+);
 
 // Effect: JSON responses typically compress 70-80%
 // 10KB response → ~2KB on wire
@@ -211,6 +218,7 @@ app.use(compression({
 ```
 
 **Keep inter-service traffic in the same AZ:**
+
 ```
 Same AZ data transfer: free
 Cross-AZ data transfer: $0.01/GB (each direction)
@@ -227,6 +235,7 @@ Fix: deploy services that talk frequently in the same AZ,
 Technical optimization only works if the team actually does it. Process matters:
 
 **Weekly cost review:**
+
 ```
 15 minutes/week:
   - Did cost grow? By how much vs traffic?
@@ -237,6 +246,7 @@ Technical optimization only works if the team actually does it. Process matters:
 
 **Cost per feature / per team:**
 Tag resources by team and feature. Then each team sees their own spend:
+
 ```bash
 # Tag everything at creation
 aws ec2 run-instances ... \
@@ -248,6 +258,7 @@ aws ce get-cost-and-usage \
 ```
 
 **Alerts before bills:**
+
 ```bash
 # Alert when spend exceeds threshold
 aws budgets create-budget \
@@ -286,4 +297,3 @@ Alert at 80% of budget — time to investigate before going over, not after.
 ```
 
 Don't jump to architecture changes before doing 1-7. Most teams have significant waste in the easy categories.
-

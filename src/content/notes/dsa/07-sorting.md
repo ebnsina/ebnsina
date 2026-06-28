@@ -1,10 +1,10 @@
 ---
-title: "Sorting Algorithms"
-subtitle: "Merge sort, quicksort, and when to use which — plus the patterns that emerge from sorted data."
+title: 'Sorting Algorithms'
+subtitle: 'Merge sort, quicksort, and when to use which — plus the patterns that emerge from sorted data.'
 chapter: 7
-level: "intermediate"
-readingTime: "15 min"
-topics: ["merge sort", "quicksort", "binary search", "sorting"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['merge sort', 'quicksort', 'binary search', 'sorting']
 ---
 
 <script>
@@ -29,25 +29,26 @@ Split the array in half, sort each half, merge them back. Always O(n log n), sta
 
 ```typescript
 function mergeSort(arr: number[]): number[] {
-  if (arr.length <= 1) return arr;
+	if (arr.length <= 1) return arr;
 
-  const mid = Math.floor(arr.length / 2);
-  const left = mergeSort(arr.slice(0, mid));
-  const right = mergeSort(arr.slice(mid));
+	const mid = Math.floor(arr.length / 2);
+	const left = mergeSort(arr.slice(0, mid));
+	const right = mergeSort(arr.slice(mid));
 
-  return merge(left, right);
+	return merge(left, right);
 }
 
 function merge(left: number[], right: number[]): number[] {
-  const result: number[] = [];
-  let i = 0, j = 0;
+	const result: number[] = [];
+	let i = 0,
+		j = 0;
 
-  while (i < left.length && j < right.length) {
-    if (left[i] <= right[j]) result.push(left[i++]);
-    else result.push(right[j++]);
-  }
+	while (i < left.length && j < right.length) {
+		if (left[i] <= right[j]) result.push(left[i++]);
+		else result.push(right[j++]);
+	}
 
-  return [...result, ...left.slice(i), ...right.slice(j)];
+	return [...result, ...left.slice(i), ...right.slice(j)];
 }
 ```
 
@@ -57,26 +58,26 @@ Pick a pivot, partition elements around it, recurse. O(n log n) average, O(n²) 
 
 ```typescript
 function quickSort(arr: number[], lo = 0, hi = arr.length - 1): number[] {
-  if (lo >= hi) return arr;
+	if (lo >= hi) return arr;
 
-  const pivotIdx = partition(arr, lo, hi);
-  quickSort(arr, lo, pivotIdx - 1);
-  quickSort(arr, pivotIdx + 1, hi);
-  return arr;
+	const pivotIdx = partition(arr, lo, hi);
+	quickSort(arr, lo, pivotIdx - 1);
+	quickSort(arr, pivotIdx + 1, hi);
+	return arr;
 }
 
 function partition(arr: number[], lo: number, hi: number): number {
-  const pivot = arr[hi];
-  let i = lo;
+	const pivot = arr[hi];
+	let i = lo;
 
-  for (let j = lo; j < hi; j++) {
-    if (arr[j] < pivot) {
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-      i++;
-    }
-  }
-  [arr[i], arr[hi]] = [arr[hi], arr[i]];
-  return i;
+	for (let j = lo; j < hi; j++) {
+		if (arr[j] < pivot) {
+			[arr[i], arr[j]] = [arr[j], arr[i]];
+			i++;
+		}
+	}
+	[arr[i], arr[hi]] = [arr[hi], arr[i]];
+	return i;
 }
 ```
 
@@ -86,16 +87,16 @@ Once data is sorted, binary search finds any element in O(log n).
 
 ```typescript
 function binarySearch(arr: number[], target: number): number {
-  let lo = 0;
-  let hi = arr.length - 1;
+	let lo = 0;
+	let hi = arr.length - 1;
 
-  while (lo <= hi) {
-    const mid = lo + Math.floor((hi - lo) / 2);
-    if (arr[mid] === target) return mid;
-    if (arr[mid] < target) lo = mid + 1;
-    else hi = mid - 1;
-  }
-  return -1;
+	while (lo <= hi) {
+		const mid = lo + Math.floor((hi - lo) / 2);
+		if (arr[mid] === target) return mid;
+		if (arr[mid] < target) lo = mid + 1;
+		else hi = mid - 1;
+	}
+	return -1;
 }
 ```
 
@@ -107,11 +108,11 @@ function binarySearch(arr: number[], target: number): number {
 
 ## Comparison
 
-| Algorithm | Best | Average | Worst | Space | Stable? |
-|-----------|------|---------|-------|-------|---------|
-| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes |
-| Quicksort | O(n log n) | O(n log n) | O(n²) | O(log n) | No |
-| Timsort (built-in) | O(n) | O(n log n) | O(n log n) | O(n) | Yes |
+| Algorithm          | Best       | Average    | Worst      | Space    | Stable? |
+| ------------------ | ---------- | ---------- | ---------- | -------- | ------- |
+| Merge Sort         | O(n log n) | O(n log n) | O(n log n) | O(n)     | Yes     |
+| Quicksort          | O(n log n) | O(n log n) | O(n²)      | O(log n) | No      |
+| Timsort (built-in) | O(n)       | O(n log n) | O(n log n) | O(n)     | Yes     |
 
 ## Key Takeaways
 
@@ -119,4 +120,3 @@ function binarySearch(arr: number[], target: number): number {
 2. **Merge sort** when you need stability and guaranteed O(n log n)
 3. **Quicksort** when you need in-place sorting and can accept rare O(n²)
 4. **Binary search** is the reward for sorted data — master it
-

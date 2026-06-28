@@ -1,8 +1,8 @@
 ---
-title: "Welcome — and what this place is for"
+title: 'Welcome — and what this place is for'
 description: "An intro to this site: why it exists, what I'll write here, and what I won't."
 date: 2026-02-01
-tags: ["meta", "writing"]
+tags: ['meta', 'writing']
 minutesRead: 1
 ---
 
@@ -36,4 +36,3 @@ PostgreSQL locking. That's the bar.
 > its hosting bill many times over.
 
 See you in the next one.
-

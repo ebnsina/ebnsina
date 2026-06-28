@@ -1,10 +1,10 @@
 ---
-title: "NoSQL — Roadmap"
-subtitle: "Four families, one question: what are your access patterns? Key-value, document, wide-column, and graph stores explained."
+title: 'NoSQL — Roadmap'
+subtitle: 'Four families, one question: what are your access patterns? Key-value, document, wide-column, and graph stores explained.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "nosql"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'nosql']
 ---
 
 <script>

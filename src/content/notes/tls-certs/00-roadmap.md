@@ -1,10 +1,10 @@
 ---
-title: "TLS & Certificates — Roadmap"
-subtitle: "Eight chapters that take TLS from mystery to muscle memory — what it actually does, why every part exists, and how to issue, renew, and serve real certificates without a managed service."
+title: 'TLS & Certificates — Roadmap'
+subtitle: 'Eight chapters that take TLS from mystery to muscle memory — what it actually does, why every part exists, and how to issue, renew, and serve real certificates without a managed service.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "tls", "ssl", "certificates", "letsencrypt"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'tls', 'ssl', 'certificates', 'letsencrypt']
 ---
 
 <script>
@@ -45,4 +45,3 @@ You will understand exactly what happens during a TLS handshake, what each file 
 Read in order. The first three chapters explain what TLS is doing; the next three issue real certificates step by step; the last two are production hygiene. Total: ~90 minutes reading, half a day hands-on with a real domain and VPS.
 
 You need a domain you control (any registrar — buying a `.com` for $10 is fine for learning) pointed at your VPS's IP via an A record. Without that, Let's Encrypt's validation will not pass.
-

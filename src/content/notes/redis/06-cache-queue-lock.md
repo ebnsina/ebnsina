@@ -1,10 +1,10 @@
 ---
-title: "Redis as Cache, Queue & Distributed Lock"
-subtitle: "Three workhorse patterns — and the sharp edges hiding in each."
+title: 'Redis as Cache, Queue & Distributed Lock'
+subtitle: 'Three workhorse patterns — and the sharp edges hiding in each.'
 chapter: 6
-level: "advanced"
-readingTime: "14 min"
-topics: ["cache", "queue", "distributed lock"]
+level: 'advanced'
+readingTime: '14 min'
+topics: ['cache', 'queue', 'distributed lock']
 ---
 
 <script>
@@ -60,13 +60,13 @@ A Redis list is a ready-made queue: push on one end, pop from the other. The blo
 2) "{\"to\":\"a@x.com\",\"tpl\":\"welcome\"}"
 ```
 
-`LPUSH` + `BRPOP` gives a FIFO queue: producers add at the left, workers take from the right. `BRPOP` blocks the *client* (not the server) until an item arrives or the timeout elapses, so workers consume no CPU while idle and pick up work the instant it lands.
+`LPUSH` + `BRPOP` gives a FIFO queue: producers add at the left, workers take from the right. `BRPOP` blocks the _client_ (not the server) until an item arrives or the timeout elapses, so workers consume no CPU while idle and pick up work the instant it lands.
 
-This is enough for fire-and-forget jobs where occasional loss is tolerable. But notice the gap: the moment `BRPOP` returns, the job is *gone* from Redis. If the worker crashes before finishing, that job is lost — no one knows it existed.
+This is enough for fire-and-forget jobs where occasional loss is tolerable. But notice the gap: the moment `BRPOP` returns, the job is _gone_ from Redis. If the worker crashes before finishing, that job is lost — no one knows it existed.
 
 ## Reliable queues
 
-To survive a crashing worker you must not remove the job until it is done. `BRPOPLPUSH` (or the newer `BLMOVE`) atomically moves a job from the main queue to a per-worker *processing* list in one step:
+To survive a crashing worker you must not remove the job until it is done. `BRPOPLPUSH` (or the newer `BLMOVE`) atomically moves a job from the main queue to a per-worker _processing_ list in one step:
 
 ```text
 # Atomically take a job AND record it as in-flight
@@ -86,7 +86,7 @@ Honestly, for anything beyond the basics, prefer **Streams with consumer groups*
 
 <Callout type="tip">
 
-**Note:** The dividing question for queues is "what happens if a worker dies mid-job?" A plain `BRPOP` answers "the job is lost." `BRPOPLPUSH` plus a recovery sweep, or a Stream consumer group, answers "the job is retried." Choose based on whether losing a job is acceptable — and make jobs idempotent either way, because at-least-once means *sometimes twice*.
+**Note:** The dividing question for queues is "what happens if a worker dies mid-job?" A plain `BRPOP` answers "the job is lost." `BRPOPLPUSH` plus a recovery sweep, or a Stream consumer group, answers "the job is retried." Choose based on whether losing a job is acceptable — and make jobs idempotent either way, because at-least-once means _sometimes twice_.
 
 </Callout>
 
@@ -121,7 +121,7 @@ end
 
 The single-instance lock has a real weakness: if that one Redis fails over to a replica that had not yet received the lock write, two clients can hold the "same" lock. **Redlock** is an algorithm to harden against this by acquiring the lock on a majority of several independent Redis masters, so one node's failure does not lose the lock.
 
-Redlock is genuinely contested. The critique (notably by Martin Kleppmann) is that no lock based on timeouts is safe against the things that actually break locks: clock drift, long GC or stop-the-world pauses, and network delays can make a client *believe* it still holds a lock whose TTL has already expired, while another client has taken over. The counter-argument (from Redis's author, antirez) is that Redlock is fine for the common case and that the critique demands guarantees few systems truly need.
+Redlock is genuinely contested. The critique (notably by Martin Kleppmann) is that no lock based on timeouts is safe against the things that actually break locks: clock drift, long GC or stop-the-world pauses, and network delays can make a client _believe_ it still holds a lock whose TTL has already expired, while another client has taken over. The counter-argument (from Redis's author, antirez) is that Redlock is fine for the common case and that the critique demands guarantees few systems truly need.
 
 The pragmatic position:
 

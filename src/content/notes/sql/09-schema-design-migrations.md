@@ -1,10 +1,10 @@
 ---
-title: "Schema Design & Migrations"
-subtitle: "Constraints, normalization, generated columns, and the expand/contract pattern for zero-downtime change."
+title: 'Schema Design & Migrations'
+subtitle: 'Constraints, normalization, generated columns, and the expand/contract pattern for zero-downtime change.'
 chapter: 9
-level: "mastery"
-readingTime: "18 min"
-topics: ["schema", "constraints", "migrations"]
+level: 'mastery'
+readingTime: '18 min'
+topics: ['schema', 'constraints', 'migrations']
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["schema", "constraints", "migrations"]
 
 ## The Schema Is Your Contract
 
-The schema is the most expensive thing to get wrong, because everything downstream — queries, application code, integrations — depends on it, and data accumulates inside it. A well-designed schema makes invalid states *impossible to represent*; a poor one lets bad data creep in and forces every reader to defend against it. This chapter is about designing schemas that enforce their own invariants, and changing them without breaking production.
+The schema is the most expensive thing to get wrong, because everything downstream — queries, application code, integrations — depends on it, and data accumulates inside it. A well-designed schema makes invalid states _impossible to represent_; a poor one lets bad data creep in and forces every reader to defend against it. This chapter is about designing schemas that enforce their own invariants, and changing them without breaking production.
 
 ## Constraints: Push Rules into the Database
 
@@ -40,7 +40,7 @@ The constraint types:
 
 <Callout type="tip">
 
-**A constraint is documentation that can't lie.** `CHECK (status IN ('pending','shipped','cancelled'))` tells every future developer the exact set of valid statuses *and* enforces it. Comments drift out of date; constraints can't. Encode every invariant you can express.
+**A constraint is documentation that can't lie.** `CHECK (status IN ('pending','shipped','cancelled'))` tells every future developer the exact set of valid statuses _and_ enforces it. Comments drift out of date; constraints can't. Encode every invariant you can express.
 
 </Callout>
 
@@ -49,7 +49,7 @@ The constraint types:
 Normalization organizes data to eliminate redundancy, so each fact lives in exactly one place. You don't need to memorize the formal normal forms to apply the practical core:
 
 - **1NF** — each column holds a single atomic value; no comma-separated lists or repeating groups stuffed into one field.
-- **2NF / 3NF** — every non-key column depends on *the whole key, and nothing but the key*. In plain terms: don't store a customer's name and address on every order row — store `customer_id` and keep the name in `customers`. Otherwise updating an address means updating thousands of order rows, and they'll inevitably disagree (an *update anomaly*).
+- **2NF / 3NF** — every non-key column depends on _the whole key, and nothing but the key_. In plain terms: don't store a customer's name and address on every order row — store `customer_id` and keep the name in `customers`. Otherwise updating an address means updating thousands of order rows, and they'll inevitably disagree (an _update anomaly_).
 
 The payoff is consistency: one source of truth per fact. The cost is more joins at read time. As chapter 8 covered, you **denormalize back** only where a measured read bottleneck justifies it — normalize first, denormalize as a deliberate, measured exception.
 
@@ -77,22 +77,22 @@ Schemas must change as requirements do — but a live system means data exists a
 
 Principles for safe migrations:
 
-- **Each migration is small, ordered, and forward-only in spirit.** Many tools support a `down`/rollback, but rolling *forward* with a fix is usually safer than rolling back once data has changed under the new schema.
+- **Each migration is small, ordered, and forward-only in spirit.** Many tools support a `down`/rollback, but rolling _forward_ with a fix is usually safer than rolling back once data has changed under the new schema.
 - **Migrations are code review artifacts.** Review the SQL, not just the application diff. A careless `ALTER` can lock a table for minutes.
-- **Separate schema changes from data backfills.** A migration that both alters structure *and* rewrites millions of rows holds locks far too long.
+- **Separate schema changes from data backfills.** A migration that both alters structure _and_ rewrites millions of rows holds locks far too long.
 
 <Callout type="warning">
 
-**Some DDL takes table-level locks.** In PostgreSQL, operations like adding a `NOT NULL` column with a non-constant default (on older versions), changing a column type, or adding a foreign key can take an `ACCESS EXCLUSIVE` lock that blocks *all* reads and writes while it runs. On a large, busy table that's an outage. Always check whether a migration locks, and for how long — and use `CREATE INDEX CONCURRENTLY` to build indexes without blocking writes.
+**Some DDL takes table-level locks.** In PostgreSQL, operations like adding a `NOT NULL` column with a non-constant default (on older versions), changing a column type, or adding a foreign key can take an `ACCESS EXCLUSIVE` lock that blocks _all_ reads and writes while it runs. On a large, busy table that's an outage. Always check whether a migration locks, and for how long — and use `CREATE INDEX CONCURRENTLY` to build indexes without blocking writes.
 
 </Callout>
 
 ## Zero-Downtime Migrations: Expand / Contract
 
-The safe way to make a *breaking* change while old and new application code run simultaneously (as they do during a rolling deploy) is the **expand/contract** pattern — also called parallel change. It has three phases:
+The safe way to make a _breaking_ change while old and new application code run simultaneously (as they do during a rolling deploy) is the **expand/contract** pattern — also called parallel change. It has three phases:
 
-1. **Expand.** Add the new structure *additively and backward-compatibly*. Old code keeps working because nothing it relies on was removed. Add a new nullable column, a new table, a new index (concurrently).
-2. **Migrate & dual-write.** Backfill existing rows in batches, and update application code to write *both* the old and new shapes. Deploy this code; now every write keeps both in sync. Switch reads over to the new shape once the backfill is verified complete.
+1. **Expand.** Add the new structure _additively and backward-compatibly_. Old code keeps working because nothing it relies on was removed. Add a new nullable column, a new table, a new index (concurrently).
+2. **Migrate & dual-write.** Backfill existing rows in batches, and update application code to write _both_ the old and new shapes. Deploy this code; now every write keeps both in sync. Switch reads over to the new shape once the backfill is verified complete.
 3. **Contract.** Once no running code reads or writes the old structure, remove it — drop the old column, the old table, the compatibility shims.
 
 Concretely, renaming a column `email` to `email_address` without downtime:

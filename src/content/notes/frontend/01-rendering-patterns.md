@@ -1,10 +1,10 @@
 ---
-title: "Rendering Patterns"
-subtitle: "CSR, SSR, SSG, and ISR — understand when and why to use each rendering strategy for your web application."
+title: 'Rendering Patterns'
+subtitle: 'CSR, SSR, SSG, and ISR — understand when and why to use each rendering strategy for your web application.'
 chapter: 1
-level: "beginner"
-readingTime: "15 min"
-topics: ["CSR", "SSR", "SSG", "ISR", "hydration", "rendering"]
+level: 'beginner'
+readingTime: '15 min'
+topics: ['CSR', 'SSR', 'SSG', 'ISR', 'hydration', 'rendering']
 ---
 
 <script>
@@ -31,10 +31,10 @@ With CSR, the server sends a minimal HTML shell and a JavaScript bundle. The bro
 <!-- What the server sends -->
 <!DOCTYPE html>
 <html>
-  <body>
-    <div id="root"></div>
-    <script src="/bundle.js"></script>
-  </body>
+	<body>
+		<div id="root"></div>
+		<script src="/bundle.js"></script>
+	</body>
 </html>
 ```
 
@@ -48,11 +48,13 @@ root.render(<App />);
 ```
 
 **When to use CSR:**
+
 - Dashboards and admin panels (no SEO needed)
 - Highly interactive applications (Figma, Google Docs)
 - Apps behind authentication walls
 
 **Trade-offs:**
+
 - Blank page until JS loads and executes (poor FCP)
 - Search engines may not index content
 - Full bundle must download before anything renders
@@ -95,11 +97,13 @@ export default function ProductPage({ product }: { product: Product }) {
 ```
 
 **When to use SSR:**
+
 - Pages with frequently changing data (stock prices, inventory)
 - Personalized content (user-specific dashboards)
 - SEO-critical pages with dynamic data
 
 **Trade-offs:**
+
 - Every request hits the server (higher server costs)
 - Time to First Byte (TTFB) depends on server speed
 - Requires a running server (not just a CDN)
@@ -146,11 +150,13 @@ export default function BlogPost({ post }: { post: BlogPost }) {
 ```
 
 **When to use SSG:**
+
 - Marketing pages, blogs, documentation
 - Content that changes infrequently
 - Maximum performance is critical
 
 **Trade-offs:**
+
 - Build times grow with page count
 - Content is stale until next build
 - Not suitable for frequently changing data
@@ -162,16 +168,17 @@ ISR combines the speed of SSG with the freshness of SSR. Pages are statically ge
 ```typescript
 // Next.js ISR — revalidate every 60 seconds
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const product = await fetchProduct(params!.id as string);
+	const product = await fetchProduct(params!.id as string);
 
-  return {
-    props: { product },
-    revalidate: 60, // Re-generate page every 60 seconds
-  };
+	return {
+		props: { product },
+		revalidate: 60 // Re-generate page every 60 seconds
+	};
 };
 ```
 
 **The ISR flow:**
+
 1. First visitor gets the statically generated page (fast)
 2. After `revalidate` seconds, the next request triggers a background regeneration
 3. The stale page is served while the new one generates
@@ -180,6 +187,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 <Callout type="tip">
 
 **Choosing the right pattern:**
+
 - **Need SEO + static content?** Use SSG
 - **Need SEO + dynamic data?** Use SSR or ISR
 - **No SEO needed + highly interactive?** Use CSR
@@ -218,12 +226,12 @@ If the server-rendered HTML doesn't match what the client renders, React will th
 
 ## Comparison Table
 
-| Pattern | Build Time | TTFB | SEO | Data Freshness | Server Cost |
-|---------|-----------|------|-----|----------------|-------------|
-| CSR | Fast | Fast (empty HTML) | Poor | Real-time | Low (CDN) |
-| SSR | N/A | Slow (server work) | Great | Real-time | High |
-| SSG | Slow (scales with pages) | Fast (CDN) | Great | Build-time only | Low (CDN) |
-| ISR | Moderate | Fast (CDN) | Great | Periodic | Moderate |
+| Pattern | Build Time               | TTFB               | SEO   | Data Freshness  | Server Cost |
+| ------- | ------------------------ | ------------------ | ----- | --------------- | ----------- |
+| CSR     | Fast                     | Fast (empty HTML)  | Poor  | Real-time       | Low (CDN)   |
+| SSR     | N/A                      | Slow (server work) | Great | Real-time       | High        |
+| SSG     | Slow (scales with pages) | Fast (CDN)         | Great | Build-time only | Low (CDN)   |
+| ISR     | Moderate                 | Fast (CDN)         | Great | Periodic        | Moderate    |
 
 ## Key Takeaways
 
@@ -232,4 +240,3 @@ If the server-rendered HTML doesn't match what the client renders, React will th
 3. **SSG** pre-builds everything at deploy time — fastest possible delivery from CDN
 4. **ISR** is the hybrid — static speed with periodic freshness, best for content that changes on a schedule
 5. **Hydration** bridges the gap between server HTML and client interactivity — minimize what needs hydrating for best performance
-

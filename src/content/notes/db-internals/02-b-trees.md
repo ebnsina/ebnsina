@@ -1,10 +1,10 @@
 ---
-title: "B-Trees & Indexes"
-subtitle: "The data structure behind every relational database index — how B-trees keep data sorted and queries fast."
+title: 'B-Trees & Indexes'
+subtitle: 'The data structure behind every relational database index — how B-trees keep data sorted and queries fast.'
 chapter: 2
-level: "beginner"
-readingTime: "16 min"
-topics: ["B-tree", "index", "balanced tree", "query performance"]
+level: 'beginner'
+readingTime: '16 min'
+topics: ['B-tree', 'index', 'balanced tree', 'query performance']
 ---
 
 <script>
@@ -29,43 +29,44 @@ Like the index at the back of a textbook — instead of reading every page to fi
 
 ```typescript
 interface BTreeNode {
-  keys: number[];           // sorted keys
-  values: (Row | number)[]; // row data (leaf) or child page IDs (internal)
-  isLeaf: boolean;
-  // In a node with N keys, there are N+1 children
-  // keys:     [10,    20,    30]
-  // children: [<10] [10-20] [20-30] [>30]
+	keys: number[]; // sorted keys
+	values: (Row | number)[]; // row data (leaf) or child page IDs (internal)
+	isLeaf: boolean;
+	// In a node with N keys, there are N+1 children
+	// keys:     [10,    20,    30]
+	// children: [<10] [10-20] [20-30] [>30]
 }
 
 class BTree {
-  private root: BTreeNode;
-  private order: number; // max keys per node (typically 100-500)
+	private root: BTreeNode;
+	private order: number; // max keys per node (typically 100-500)
 
-  search(key: number): Row | null {
-    let node = this.root;
+	search(key: number): Row | null {
+		let node = this.root;
 
-    while (!node.isLeaf) {
-      // Binary search within the node (in-memory, fast)
-      const idx = this.findChildIndex(node, key);
-      node = this.readPage(node.values[idx] as number);
-      // Each iteration = 1 disk read
-    }
+		while (!node.isLeaf) {
+			// Binary search within the node (in-memory, fast)
+			const idx = this.findChildIndex(node, key);
+			node = this.readPage(node.values[idx] as number);
+			// Each iteration = 1 disk read
+		}
 
-    // At leaf — find the key
-    const idx = node.keys.indexOf(key);
-    return idx >= 0 ? (node.values[idx] as Row) : null;
-  }
+		// At leaf — find the key
+		const idx = node.keys.indexOf(key);
+		return idx >= 0 ? (node.values[idx] as Row) : null;
+	}
 
-  private findChildIndex(node: BTreeNode, key: number): number {
-    // Binary search: O(log N) within node, but N is small (~200)
-    let lo = 0, hi = node.keys.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (node.keys[mid] <= key) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
+	private findChildIndex(node: BTreeNode, key: number): number {
+		// Binary search: O(log N) within node, but N is small (~200)
+		let lo = 0,
+			hi = node.keys.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >> 1;
+			if (node.keys[mid] <= key) lo = mid + 1;
+			else hi = mid;
+		}
+		return lo;
+	}
 }
 ```
 
@@ -129,13 +130,13 @@ This is why B-trees stay balanced — splits propagate upward, and the tree only
 
 ## Index Types
 
-| Type | How it works | Best for |
-|------|-------------|----------|
+| Type   | How it works               | Best for                             |
+| ------ | -------------------------- | ------------------------------------ |
 | B-tree | Sorted tree, range queries | `=`, `<`, `>`, `BETWEEN`, `ORDER BY` |
-| Hash | Hash table lookup | `=` only (no ranges) |
-| GIN | Inverted index | Full-text search, arrays, JSONB |
-| GiST | Generalized search tree | Geometry, nearest-neighbor |
-| BRIN | Block range index | Large, naturally ordered tables |
+| Hash   | Hash table lookup          | `=` only (no ranges)                 |
+| GIN    | Inverted index             | Full-text search, arrays, JSONB      |
+| GiST   | Generalized search tree    | Geometry, nearest-neighbor           |
+| BRIN   | Block range index          | Large, naturally ordered tables      |
 
 ## The Cost of Indexes
 
@@ -164,4 +165,3 @@ Indexes speed up reads but slow down writes:
 2. **Composite index order matters** — queries must match the leftmost prefix
 3. **Indexes trade write speed for read speed** — each additional index slows down writes
 4. **Choose the right index type** — B-tree for ranges, hash for equality, GIN for full-text
-

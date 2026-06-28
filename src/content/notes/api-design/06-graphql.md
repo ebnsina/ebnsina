@@ -1,10 +1,10 @@
 ---
-title: "GraphQL"
-subtitle: "Query exactly the data you need with GraphQL — schemas, queries, mutations, subscriptions, and solving the N+1 problem."
+title: 'GraphQL'
+subtitle: 'Query exactly the data you need with GraphQL — schemas, queries, mutations, subscriptions, and solving the N+1 problem.'
 chapter: 6
-level: "intermediate"
-readingTime: "15 min"
-topics: ["GraphQL", "schema design", "queries", "mutations", "subscriptions", "N+1 problem"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['GraphQL', 'schema design', 'queries', 'mutations', 'subscriptions', 'N+1 problem']
 ---
 
 <script>
@@ -182,53 +182,53 @@ query GetUser($userId: ID!) {
 ### Server-Side Resolver
 
 ```typescript
-import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
 
 const resolvers = {
-  Query: {
-    user: async (_parent: unknown, args: { id: string }, context: Context) => {
-      return context.db.users.findById(args.id);
-    },
+	Query: {
+		user: async (_parent: unknown, args: { id: string }, context: Context) => {
+			return context.db.users.findById(args.id);
+		},
 
-    users: async (_parent: unknown, args: { limit: number; offset: number; role?: string }) => {
-      const filter: Record<string, unknown> = {};
-      if (args.role) filter.role = args.role;
+		users: async (_parent: unknown, args: { limit: number; offset: number; role?: string }) => {
+			const filter: Record<string, unknown> = {};
+			if (args.role) filter.role = args.role;
 
-      const [users, totalCount] = await Promise.all([
-        db.users.find(filter).skip(args.offset).limit(args.limit),
-        db.users.count(filter),
-      ]);
+			const [users, totalCount] = await Promise.all([
+				db.users.find(filter).skip(args.offset).limit(args.limit),
+				db.users.count(filter)
+			]);
 
-      return {
-        edges: users.map((user) => ({
-          node: user,
-          cursor: encodeCursor(user.id),
-        })),
-        pageInfo: {
-          hasNextPage: args.offset + args.limit < totalCount,
-          hasPreviousPage: args.offset > 0,
-        },
-        totalCount,
-      };
-    },
-  },
+			return {
+				edges: users.map((user) => ({
+					node: user,
+					cursor: encodeCursor(user.id)
+				})),
+				pageInfo: {
+					hasNextPage: args.offset + args.limit < totalCount,
+					hasPreviousPage: args.offset > 0
+				},
+				totalCount
+			};
+		}
+	},
 
-  User: {
-    // Field-level resolver — only runs if posts are requested
-    posts: async (parent: User, _args: unknown, context: Context) => {
-      return context.db.posts.find({ authorId: parent.id });
-    },
-  },
+	User: {
+		// Field-level resolver — only runs if posts are requested
+		posts: async (parent: User, _args: unknown, context: Context) => {
+			return context.db.posts.find({ authorId: parent.id });
+		}
+	},
 
-  Post: {
-    author: async (parent: Post, _args: unknown, context: Context) => {
-      return context.db.users.findById(parent.authorId);
-    },
-    comments: async (parent: Post, _args: unknown, context: Context) => {
-      return context.db.comments.find({ postId: parent.id });
-    },
-  },
+	Post: {
+		author: async (parent: Post, _args: unknown, context: Context) => {
+			return context.db.users.findById(parent.authorId);
+		},
+		comments: async (parent: Post, _args: unknown, context: Context) => {
+			return context.db.comments.find({ postId: parent.id });
+		}
+	}
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
@@ -267,45 +267,45 @@ mutation CreatePost($input: CreatePostInput!) {
 ```typescript
 // Server resolver
 const resolvers = {
-  Mutation: {
-    createPost: async (_parent: unknown, args: { input: CreatePostInput }, context: Context) => {
-      if (!context.user) {
-        throw new GraphQLError("Not authenticated", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
-      }
+	Mutation: {
+		createPost: async (_parent: unknown, args: { input: CreatePostInput }, context: Context) => {
+			if (!context.user) {
+				throw new GraphQLError('Not authenticated', {
+					extensions: { code: 'UNAUTHENTICATED' }
+				});
+			}
 
-      const post = await context.db.posts.create({
-        ...args.input,
-        authorId: context.user.id,
-        createdAt: new Date(),
-      });
+			const post = await context.db.posts.create({
+				...args.input,
+				authorId: context.user.id,
+				createdAt: new Date()
+			});
 
-      return post;
-    },
+			return post;
+		},
 
-    publishPost: async (_parent: unknown, args: { id: string }, context: Context) => {
-      const post = await context.db.posts.findById(args.id);
-      if (!post) {
-        throw new GraphQLError("Post not found", {
-          extensions: { code: "NOT_FOUND" },
-        });
-      }
+		publishPost: async (_parent: unknown, args: { id: string }, context: Context) => {
+			const post = await context.db.posts.findById(args.id);
+			if (!post) {
+				throw new GraphQLError('Post not found', {
+					extensions: { code: 'NOT_FOUND' }
+				});
+			}
 
-      if (post.authorId !== context.user.id && context.user.role !== "ADMIN") {
-        throw new GraphQLError("Not authorized", {
-          extensions: { code: "FORBIDDEN" },
-        });
-      }
+			if (post.authorId !== context.user.id && context.user.role !== 'ADMIN') {
+				throw new GraphQLError('Not authorized', {
+					extensions: { code: 'FORBIDDEN' }
+				});
+			}
 
-      post.publishedAt = new Date();
-      await post.save();
+			post.publishedAt = new Date();
+			await post.save();
 
-      // Notify subscribers
-      pubsub.publish("POST_PUBLISHED", { postPublished: post });
-      return post;
-    },
-  },
+			// Notify subscribers
+			pubsub.publish('POST_PUBLISHED', { postPublished: post });
+			return post;
+		}
+	}
 };
 ```
 
@@ -314,20 +314,20 @@ const resolvers = {
 Real-time updates over WebSocket:
 
 ```typescript
-import { PubSub } from "graphql-subscriptions";
+import { PubSub } from 'graphql-subscriptions';
 const pubsub = new PubSub();
 
 const resolvers = {
-  Subscription: {
-    postPublished: {
-      subscribe: () => pubsub.asyncIterableIterator(["POST_PUBLISHED"]),
-    },
-    commentAdded: {
-      subscribe: (_parent: unknown, args: { postId: string }) => {
-        return pubsub.asyncIterableIterator([`COMMENT_ADDED_${args.postId}`]);
-      },
-    },
-  },
+	Subscription: {
+		postPublished: {
+			subscribe: () => pubsub.asyncIterableIterator(['POST_PUBLISHED'])
+		},
+		commentAdded: {
+			subscribe: (_parent: unknown, args: { postId: string }) => {
+				return pubsub.asyncIterableIterator([`COMMENT_ADDED_${args.postId}`]);
+			}
+		}
+	}
 };
 
 // Client subscription
@@ -369,40 +369,40 @@ query {
 DataLoader batches multiple individual loads into a single query:
 
 ```typescript
-import DataLoader from "dataloader";
+import DataLoader from 'dataloader';
 
 // Create a loader that batches user lookups
 function createLoaders() {
-  return {
-    userLoader: new DataLoader<string, User>(async (userIds) => {
-      // Single query for all user IDs
-      const users = await db.users.find({ _id: { $in: userIds } });
-      const userMap = new Map(users.map((u) => [u.id, u]));
+	return {
+		userLoader: new DataLoader<string, User>(async (userIds) => {
+			// Single query for all user IDs
+			const users = await db.users.find({ _id: { $in: userIds } });
+			const userMap = new Map(users.map((u) => [u.id, u]));
 
-      // Return in same order as input IDs
-      return userIds.map((id) => userMap.get(id) || null);
-    }),
-  };
+			// Return in same order as input IDs
+			return userIds.map((id) => userMap.get(id) || null);
+		})
+	};
 }
 
 // Attach loaders to context (new instance per request)
 const server = new ApolloServer({ typeDefs, resolvers });
 await startStandaloneServer(server, {
-  context: async ({ req }) => ({
-    user: await getUser(req),
-    db,
-    loaders: createLoaders(), // Fresh per request
-  }),
+	context: async ({ req }) => ({
+		user: await getUser(req),
+		db,
+		loaders: createLoaders() // Fresh per request
+	})
 });
 
 // Use loader in resolver
 const resolvers = {
-  Post: {
-    author: (parent: Post, _args: unknown, context: Context) => {
-      // This batches! 20 posts = 1 query instead of 20
-      return context.loaders.userLoader.load(parent.authorId);
-    },
-  },
+	Post: {
+		author: (parent: Post, _args: unknown, context: Context) => {
+			// This batches! 20 posts = 1 query instead of 20
+			return context.loaders.userLoader.load(parent.authorId);
+		}
+	}
 };
 ```
 
@@ -419,16 +419,16 @@ const resolvers = {
 
 ## GraphQL vs REST
 
-| Feature | REST | GraphQL |
-|---------|------|---------|
-| Data fetching | Fixed per endpoint | Client specifies |
-| Over-fetching | Common | Eliminated |
-| Under-fetching | Multiple requests needed | Single request |
-| Caching | HTTP caching built-in | Requires custom caching |
-| File uploads | Native | Needs workarounds |
-| Error handling | HTTP status codes | Always 200, errors in body |
-| Learning curve | Low | Moderate |
-| Tooling | Mature | Growing |
+| Feature        | REST                     | GraphQL                    |
+| -------------- | ------------------------ | -------------------------- |
+| Data fetching  | Fixed per endpoint       | Client specifies           |
+| Over-fetching  | Common                   | Eliminated                 |
+| Under-fetching | Multiple requests needed | Single request             |
+| Caching        | HTTP caching built-in    | Requires custom caching    |
+| File uploads   | Native                   | Needs workarounds          |
+| Error handling | HTTP status codes        | Always 200, errors in body |
+| Learning curve | Low                      | Moderate                   |
+| Tooling        | Mature                   | Growing                    |
 
 <Callout type="tip">
 
@@ -455,4 +455,3 @@ const resolvers = {
 4. **The N+1 problem is real** — always use DataLoader for related entities
 5. **Subscriptions** provide real-time updates over WebSocket
 6. **GraphQL is not a REST replacement** — choose based on your use case
-

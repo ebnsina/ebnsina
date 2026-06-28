@@ -1,10 +1,10 @@
 ---
-title: "Microservices — Roadmap"
-subtitle: "When to split a monolith, gRPC between services, service discovery with Consul."
+title: 'Microservices — Roadmap'
+subtitle: 'When to split a monolith, gRPC between services, service discovery with Consul.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Microservices are not a default — they're a trade-off. This track covers the r
 3. **Service Discovery** — DNS-based discovery, Consul, client-side vs server-side LB, service mesh
 4. **API Gateway** — routing, auth, rate limiting, request transformation, what not to put in the gateway
 5. **Inter-Service Reliability** — timeouts, retries, circuit breakers, bulkheads, hedged requests
-

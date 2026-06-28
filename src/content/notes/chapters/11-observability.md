@@ -1,10 +1,10 @@
 ---
-title: "Observability & Service Mesh"
-subtitle: "Implement distributed tracing with OpenTelemetry, Prometheus metrics, and structured logging with correlation IDs."
+title: 'Observability & Service Mesh'
+subtitle: 'Implement distributed tracing with OpenTelemetry, Prometheus metrics, and structured logging with correlation IDs.'
 chapter: 11
-level: "advanced"
-readingTime: "20 min"
-topics: ["OpenTelemetry", "Prometheus", "tracing", "metrics", "structured logging"]
+level: 'advanced'
+readingTime: '20 min'
+topics: ['OpenTelemetry', 'Prometheus', 'tracing', 'metrics', 'structured logging']
 ---
 
 <script>
@@ -30,14 +30,12 @@ Like a hospital monitoring system — heart rate monitors track vitals (metrics)
 </Callout>
 
 <Mermaid
-	title="Observability Stack"
-	code={`
-graph TD
+title="Observability Stack"
+code={`graph TD
   A["Service A"] --> B["Service B"] --> DB["Database"]
   B --> L["Logs<br/>ELK / Loki"]
   B --> M["Metrics<br/>Prometheus"]
-  B --> T["Traces<br/>Jaeger / Tempo"]
-`}
+  B --> T["Traces<br/>Jaeger / Tempo"]`}
 />
 
 ## Production Observability Setup
@@ -46,284 +44,307 @@ graph TD
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
+import http from 'node:http';
 
 // --- Structured Logger ---
-type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
-  level: LogLevel;
-  msg: string;
-  timestamp: string;
-  service: string;
-  traceId?: string;
-  spanId?: string;
-  requestId?: string;
-  [key: string]: unknown;
+	level: LogLevel;
+	msg: string;
+	timestamp: string;
+	service: string;
+	traceId?: string;
+	spanId?: string;
+	requestId?: string;
+	[key: string]: unknown;
 }
 
 class Logger {
-  constructor(private service: string) {}
+	constructor(private service: string) {}
 
-  private log(level: LogLevel, msg: string, fields: Record<string, unknown> = {}): void {
-    const entry: LogEntry = {
-      level,
-      msg,
-      timestamp: new Date().toISOString(),
-      service: this.service,
-      ...fields,
-    };
-    // In production: write to stdout, collected by Fluentd/Vector
-    console.log(JSON.stringify(entry));
-  }
+	private log(level: LogLevel, msg: string, fields: Record<string, unknown> = {}): void {
+		const entry: LogEntry = {
+			level,
+			msg,
+			timestamp: new Date().toISOString(),
+			service: this.service,
+			...fields
+		};
+		// In production: write to stdout, collected by Fluentd/Vector
+		console.log(JSON.stringify(entry));
+	}
 
-  debug(msg: string, fields?: Record<string, unknown>) { this.log("debug", msg, fields); }
-  info(msg: string, fields?: Record<string, unknown>) { this.log("info", msg, fields); }
-  warn(msg: string, fields?: Record<string, unknown>) { this.log("warn", msg, fields); }
-  error(msg: string, fields?: Record<string, unknown>) { this.log("error", msg, fields); }
+	debug(msg: string, fields?: Record<string, unknown>) {
+		this.log('debug', msg, fields);
+	}
+	info(msg: string, fields?: Record<string, unknown>) {
+		this.log('info', msg, fields);
+	}
+	warn(msg: string, fields?: Record<string, unknown>) {
+		this.log('warn', msg, fields);
+	}
+	error(msg: string, fields?: Record<string, unknown>) {
+		this.log('error', msg, fields);
+	}
 
-  // Create child logger with additional context
-  child(fields: Record<string, unknown>): ChildLogger {
-    return new ChildLogger(this, fields);
-  }
+	// Create child logger with additional context
+	child(fields: Record<string, unknown>): ChildLogger {
+		return new ChildLogger(this, fields);
+	}
 }
 
 class ChildLogger {
-  constructor(private parent: Logger, private fields: Record<string, unknown>) {}
-  info(msg: string, extra?: Record<string, unknown>) {
-    this.parent.info(msg, { ...this.fields, ...extra });
-  }
-  error(msg: string, extra?: Record<string, unknown>) {
-    this.parent.error(msg, { ...this.fields, ...extra });
-  }
-  warn(msg: string, extra?: Record<string, unknown>) {
-    this.parent.warn(msg, { ...this.fields, ...extra });
-  }
+	constructor(
+		private parent: Logger,
+		private fields: Record<string, unknown>
+	) {}
+	info(msg: string, extra?: Record<string, unknown>) {
+		this.parent.info(msg, { ...this.fields, ...extra });
+	}
+	error(msg: string, extra?: Record<string, unknown>) {
+		this.parent.error(msg, { ...this.fields, ...extra });
+	}
+	warn(msg: string, extra?: Record<string, unknown>) {
+		this.parent.warn(msg, { ...this.fields, ...extra });
+	}
 }
 
 // --- Metrics (Prometheus-compatible) ---
 class Counter {
-  private values = new Map<string, number>();
+	private values = new Map<string, number>();
 
-  constructor(private name: string, private help: string) {}
+	constructor(
+		private name: string,
+		private help: string
+	) {}
 
-  inc(labels: Record<string, string> = {}, value = 1): void {
-    const key = this.labelKey(labels);
-    this.values.set(key, (this.values.get(key) || 0) + value);
-  }
+	inc(labels: Record<string, string> = {}, value = 1): void {
+		const key = this.labelKey(labels);
+		this.values.set(key, (this.values.get(key) || 0) + value);
+	}
 
-  private labelKey(labels: Record<string, string>): string {
-    return Object.entries(labels).sort().map(([k, v]) => `${k}="${v}"`).join(",");
-  }
+	private labelKey(labels: Record<string, string>): string {
+		return Object.entries(labels)
+			.sort()
+			.map(([k, v]) => `${k}="${v}"`)
+			.join(',');
+	}
 
-  serialize(): string {
-    let out = `# HELP ${this.name} ${this.help}\n# TYPE ${this.name} counter\n`;
-    for (const [labels, value] of this.values) {
-      const labelStr = labels ? `{${labels}}` : "";
-      out += `${this.name}${labelStr} ${value}\n`;
-    }
-    return out;
-  }
+	serialize(): string {
+		let out = `# HELP ${this.name} ${this.help}\n# TYPE ${this.name} counter\n`;
+		for (const [labels, value] of this.values) {
+			const labelStr = labels ? `{${labels}}` : '';
+			out += `${this.name}${labelStr} ${value}\n`;
+		}
+		return out;
+	}
 }
 
 class Histogram {
-  private observations = new Map<string, number[]>();
-  private buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
+	private observations = new Map<string, number[]>();
+	private buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
-  constructor(private name: string, private help: string) {}
+	constructor(
+		private name: string,
+		private help: string
+	) {}
 
-  observe(labels: Record<string, string>, value: number): void {
-    const key = this.labelKey(labels);
-    const obs = this.observations.get(key) || [];
-    obs.push(value);
-    this.observations.set(key, obs);
-  }
+	observe(labels: Record<string, string>, value: number): void {
+		const key = this.labelKey(labels);
+		const obs = this.observations.get(key) || [];
+		obs.push(value);
+		this.observations.set(key, obs);
+	}
 
-  private labelKey(labels: Record<string, string>): string {
-    return Object.entries(labels).sort().map(([k, v]) => `${k}="${v}"`).join(",");
-  }
+	private labelKey(labels: Record<string, string>): string {
+		return Object.entries(labels)
+			.sort()
+			.map(([k, v]) => `${k}="${v}"`)
+			.join(',');
+	}
 
-  serialize(): string {
-    let out = `# HELP ${this.name} ${this.help}\n# TYPE ${this.name} histogram\n`;
-    for (const [labels, values] of this.observations) {
-      const sorted = [...values].sort((a, b) => a - b);
-      const sum = values.reduce((a, b) => a + b, 0);
+	serialize(): string {
+		let out = `# HELP ${this.name} ${this.help}\n# TYPE ${this.name} histogram\n`;
+		for (const [labels, values] of this.observations) {
+			const sorted = [...values].sort((a, b) => a - b);
+			const sum = values.reduce((a, b) => a + b, 0);
 
-      for (const bucket of this.buckets) {
-        const count = sorted.filter((v) => v <= bucket).length;
-        const labelStr = labels ? `${labels},` : "";
-        out += `${this.name}_bucket{${labelStr}le="${bucket}"} ${count}\n`;
-      }
-      const labelStr = labels ? `${labels},` : "";
-      out += `${this.name}_bucket{${labelStr}le="+Inf"} ${values.length}\n`;
-      out += `${this.name}_sum{${labels}} ${sum}\n`;
-      out += `${this.name}_count{${labels}} ${values.length}\n`;
-    }
-    return out;
-  }
+			for (const bucket of this.buckets) {
+				const count = sorted.filter((v) => v <= bucket).length;
+				const labelStr = labels ? `${labels},` : '';
+				out += `${this.name}_bucket{${labelStr}le="${bucket}"} ${count}\n`;
+			}
+			const labelStr = labels ? `${labels},` : '';
+			out += `${this.name}_bucket{${labelStr}le="+Inf"} ${values.length}\n`;
+			out += `${this.name}_sum{${labels}} ${sum}\n`;
+			out += `${this.name}_count{${labels}} ${values.length}\n`;
+		}
+		return out;
+	}
 }
 
 // --- Distributed Tracing ---
 interface Span {
-  traceId: string;
-  spanId: string;
-  parentSpanId?: string;
-  operationName: string;
-  serviceName: string;
-  startTime: number;
-  duration?: number;
-  status: "ok" | "error";
-  attributes: Record<string, string | number>;
-  events: { name: string; timestamp: number; attributes?: Record<string, string> }[];
+	traceId: string;
+	spanId: string;
+	parentSpanId?: string;
+	operationName: string;
+	serviceName: string;
+	startTime: number;
+	duration?: number;
+	status: 'ok' | 'error';
+	attributes: Record<string, string | number>;
+	events: { name: string; timestamp: number; attributes?: Record<string, string> }[];
 }
 
 function generateId(): string {
-  return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+	return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 }
 
 class Tracer {
-  private spans: Span[] = [];
+	private spans: Span[] = [];
 
-  constructor(private serviceName: string) {}
+	constructor(private serviceName: string) {}
 
-  startSpan(name: string, parentSpan?: Span): Span {
-    const span: Span = {
-      traceId: parentSpan?.traceId || generateId() + generateId(),
-      spanId: generateId(),
-      parentSpanId: parentSpan?.spanId,
-      operationName: name,
-      serviceName: this.serviceName,
-      startTime: performance.now(),
-      status: "ok",
-      attributes: {},
-      events: [],
-    };
-    return span;
-  }
+	startSpan(name: string, parentSpan?: Span): Span {
+		const span: Span = {
+			traceId: parentSpan?.traceId || generateId() + generateId(),
+			spanId: generateId(),
+			parentSpanId: parentSpan?.spanId,
+			operationName: name,
+			serviceName: this.serviceName,
+			startTime: performance.now(),
+			status: 'ok',
+			attributes: {},
+			events: []
+		};
+		return span;
+	}
 
-  endSpan(span: Span): void {
-    span.duration = performance.now() - span.startTime;
-    this.spans.push(span);
+	endSpan(span: Span): void {
+		span.duration = performance.now() - span.startTime;
+		this.spans.push(span);
 
-    // In production: export to Jaeger/Tempo via OTLP
-    console.log(JSON.stringify({
-      type: "span",
-      traceId: span.traceId,
-      spanId: span.spanId,
-      parent: span.parentSpanId,
-      operation: span.operationName,
-      duration_ms: span.duration.toFixed(2),
-      status: span.status,
-      attributes: span.attributes,
-    }));
-  }
+		// In production: export to Jaeger/Tempo via OTLP
+		console.log(
+			JSON.stringify({
+				type: 'span',
+				traceId: span.traceId,
+				spanId: span.spanId,
+				parent: span.parentSpanId,
+				operation: span.operationName,
+				duration_ms: span.duration.toFixed(2),
+				status: span.status,
+				attributes: span.attributes
+			})
+		);
+	}
 }
 
 // --- Metrics Registry ---
-const httpRequestsTotal = new Counter(
-  "http_requests_total",
-  "Total number of HTTP requests"
-);
+const httpRequestsTotal = new Counter('http_requests_total', 'Total number of HTTP requests');
 
 const httpRequestDuration = new Histogram(
-  "http_request_duration_seconds",
-  "HTTP request duration in seconds"
+	'http_request_duration_seconds',
+	'HTTP request duration in seconds'
 );
 
 const httpRequestsInFlight = { value: 0 };
 
 // --- Middleware ---
-const logger = new Logger("api-gateway");
-const tracer = new Tracer("api-gateway");
+const logger = new Logger('api-gateway');
+const tracer = new Tracer('api-gateway');
 
 function metricsEndpoint(_req: http.IncomingMessage, res: http.ServerResponse): void {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end(httpRequestsTotal.serialize() + httpRequestDuration.serialize());
+	res.writeHead(200, { 'Content-Type': 'text/plain' });
+	res.end(httpRequestsTotal.serialize() + httpRequestDuration.serialize());
 }
 
-async function handleRequest(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
-  // Extract or create trace context
-  const incomingTraceId = req.headers["x-trace-id"] as string | undefined;
-  const requestId = req.headers["x-request-id"] as string || crypto.randomUUID();
+async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+	// Extract or create trace context
+	const incomingTraceId = req.headers['x-trace-id'] as string | undefined;
+	const requestId = (req.headers['x-request-id'] as string) || crypto.randomUUID();
 
-  const span = tracer.startSpan(`${req.method} ${req.url}`);
-  if (incomingTraceId) {
-    (span as any).traceId = incomingTraceId;
-  }
+	const span = tracer.startSpan(`${req.method} ${req.url}`);
+	if (incomingTraceId) {
+		(span as any).traceId = incomingTraceId;
+	}
 
-  span.attributes["http.method"] = req.method || "GET";
-  span.attributes["http.url"] = req.url || "/";
-  span.attributes["http.request_id"] = requestId;
+	span.attributes['http.method'] = req.method || 'GET';
+	span.attributes['http.url'] = req.url || '/';
+	span.attributes['http.request_id'] = requestId;
 
-  const reqLogger = logger.child({
-    traceId: span.traceId,
-    spanId: span.spanId,
-    requestId,
-    method: req.method,
-    path: req.url,
-  });
+	const reqLogger = logger.child({
+		traceId: span.traceId,
+		spanId: span.spanId,
+		requestId,
+		method: req.method,
+		path: req.url
+	});
 
-  const startTime = performance.now();
-  httpRequestsInFlight.value++;
+	const startTime = performance.now();
+	httpRequestsInFlight.value++;
 
-  reqLogger.info("request_started");
+	reqLogger.info('request_started');
 
-  try {
-    // Simulate downstream service call
-    const dbSpan = tracer.startSpan("db.query", span);
-    dbSpan.attributes["db.system"] = "postgresql";
-    dbSpan.attributes["db.statement"] = "SELECT * FROM users WHERE id = $1";
-    await new Promise((r) => setTimeout(r, Math.random() * 50));
-    tracer.endSpan(dbSpan);
+	try {
+		// Simulate downstream service call
+		const dbSpan = tracer.startSpan('db.query', span);
+		dbSpan.attributes['db.system'] = 'postgresql';
+		dbSpan.attributes['db.statement'] = 'SELECT * FROM users WHERE id = $1';
+		await new Promise((r) => setTimeout(r, Math.random() * 50));
+		tracer.endSpan(dbSpan);
 
-    // Response
-    const statusCode = 200;
-    res.writeHead(statusCode, {
-      "Content-Type": "application/json",
-      "X-Trace-Id": span.traceId,
-      "X-Request-Id": requestId,
-    });
-    res.end(JSON.stringify({ status: "ok", traceId: span.traceId }));
+		// Response
+		const statusCode = 200;
+		res.writeHead(statusCode, {
+			'Content-Type': 'application/json',
+			'X-Trace-Id': span.traceId,
+			'X-Request-Id': requestId
+		});
+		res.end(JSON.stringify({ status: 'ok', traceId: span.traceId }));
 
-    span.attributes["http.status_code"] = statusCode;
-    span.status = "ok";
+		span.attributes['http.status_code'] = statusCode;
+		span.status = 'ok';
 
-    const duration = (performance.now() - startTime) / 1000;
-    httpRequestsTotal.inc({ method: req.method || "GET", status: String(statusCode), path: req.url || "/" });
-    httpRequestDuration.observe({ method: req.method || "GET", path: req.url || "/" }, duration);
+		const duration = (performance.now() - startTime) / 1000;
+		httpRequestsTotal.inc({
+			method: req.method || 'GET',
+			status: String(statusCode),
+			path: req.url || '/'
+		});
+		httpRequestDuration.observe({ method: req.method || 'GET', path: req.url || '/' }, duration);
 
-    reqLogger.info("request_completed", { statusCode, duration_ms: (duration * 1000).toFixed(2) });
-  } catch (err) {
-    span.status = "error";
-    span.events.push({ name: "exception", timestamp: performance.now() });
+		reqLogger.info('request_completed', { statusCode, duration_ms: (duration * 1000).toFixed(2) });
+	} catch (err) {
+		span.status = 'error';
+		span.events.push({ name: 'exception', timestamp: performance.now() });
 
-    const statusCode = 500;
-    res.writeHead(statusCode, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Internal error" }));
+		const statusCode = 500;
+		res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ error: 'Internal error' }));
 
-    httpRequestsTotal.inc({ method: req.method || "GET", status: "500", path: req.url || "/" });
-    reqLogger.error("request_failed", { error: String(err) });
-  } finally {
-    httpRequestsInFlight.value--;
-    tracer.endSpan(span);
-  }
+		httpRequestsTotal.inc({ method: req.method || 'GET', status: '500', path: req.url || '/' });
+		reqLogger.error('request_failed', { error: String(err) });
+	} finally {
+		httpRequestsInFlight.value--;
+		tracer.endSpan(span);
+	}
 }
 
 // --- Server ---
 const server = http.createServer((req, res) => {
-  if (req.url === "/metrics") return metricsEndpoint(req, res);
-  if (req.url === "/health") {
-    res.writeHead(200);
-    res.end("ok");
-    return;
-  }
-  handleRequest(req, res);
+	if (req.url === '/metrics') return metricsEndpoint(req, res);
+	if (req.url === '/health') {
+		res.writeHead(200);
+		res.end('ok');
+		return;
+	}
+	handleRequest(req, res);
 });
 
-server.listen(3000, () => logger.info("server_started", { port: 3000 }));
+server.listen(3000, () => logger.info('server_started', { port: 3000 }));
 ```
 
 </div>
@@ -693,4 +714,3 @@ func main() {
 - Add observability from day one. Retrofitting tracing into an existing system is 10x harder.
 
 </div>
-

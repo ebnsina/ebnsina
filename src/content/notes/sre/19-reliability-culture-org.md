@@ -1,10 +1,10 @@
 ---
-title: "Reliability Culture & SRE Org Design"
-subtitle: "Staff+ SRE work, embedding, charters, blame-aware orgs, mentoring, sustainable on-call. The non-technical lever that makes or breaks every reliability program."
+title: 'Reliability Culture & SRE Org Design'
+subtitle: 'Staff+ SRE work, embedding, charters, blame-aware orgs, mentoring, sustainable on-call. The non-technical lever that makes or breaks every reliability program.'
 chapter: 19
-level: "mastery"
-readingTime: "26 min"
-topics: ["org design", "staff SRE", "culture", "embedding", "charters", "on-call", "mentoring"]
+level: 'mastery'
+readingTime: '26 min'
+topics: ['org design', 'staff SRE', 'culture', 'embedding', 'charters', 'on-call', 'mentoring']
 ---
 
 <script>
@@ -102,10 +102,12 @@ Every SRE team needs a one-page charter. Without it, you become whatever broken 
 # Payments SRE Charter (v2)
 
 ## Mission
+
 Ensure payments services hit 99.99% SLO with on-call burden < X pages/week,
 while enabling product to ship at current pace.
 
 ## What we own
+
 - SLO definition + monitoring for all payment services.
 - Production readiness reviews for new payment services.
 - Pager for: payment-api, payment-worker, ledger-db.
@@ -113,24 +115,29 @@ while enabling product to ship at current pace.
 - Toil tracking + automation projects on the above services.
 
 ## What we do NOT own
+
 - Feature development.
 - Database query optimization for product features (we consult, not implement).
 - 1st-line on-call for non-payment services (escalate to product team).
 
 ## How we engage
+
 - 6-month embedding rotations into payment teams.
 - Production readiness gate for any new service moving to prod.
 - "Return the pager" if SLO is missed 2 quarters in a row.
 
 ## Toil cap
+
 50% of team time on toil. If exceeded for 2 quarters, scope or headcount.
 
 ## Authority
+
 - Block production launches missing PRR criteria.
 - Page product team if their service violates SLO during their on-call shift.
 - Veto deploys during error-budget exhaustion.
 
 ## Disputes
+
 Escalation path: SRE Lead → Engineering Director → CTO.
 ```
 
@@ -246,7 +253,7 @@ Good postmortem language:
    ran it during the incident; the tool's design made this possible."
 ```
 
-The action items target the system, not the person. The engineer is named only for *what they did to mitigate*, not for what they "got wrong."
+The action items target the system, not the person. The engineer is named only for _what they did to mitigate_, not for what they "got wrong."
 
 ### Postmortem rituals that actually work
 
@@ -258,7 +265,7 @@ The action items target the system, not the person. The engineer is named only f
 - "Postmortem of the postmortem" once a year — what's not getting done?
 ```
 
-Action item completion rates below 70% mean the postmortem ritual is theater. Fix the *process*, not the postmortems.
+Action item completion rates below 70% mean the postmortem ritual is theater. Fix the _process_, not the postmortems.
 
 ## Career ladders for SRE
 
@@ -334,7 +341,7 @@ Change failure rate                   — % of deploys triggering rollback.
 Cost per request (or chosen unit)     — per service. Trend.
 ```
 
-Notice what's missing: no "uptime %." That's a vanity metric. SLO attainment is the better one — it captures the *user-relevant* reliability the team committed to.
+Notice what's missing: no "uptime %." That's a vanity metric. SLO attainment is the better one — it captures the _user-relevant_ reliability the team committed to.
 
 ## Hiring and team composition
 
@@ -410,4 +417,3 @@ Three years to "good." Not because the technology was hard — because culture a
 5. **Postmortems are blame-aware, not blameless** — name the system, not the person; track action items.
 6. **Staff+ SRE work is org-wide programs**, not heroic incident response.
 7. **Career ladders for SRE matter** — without them, your seniors leave for SWE.
-

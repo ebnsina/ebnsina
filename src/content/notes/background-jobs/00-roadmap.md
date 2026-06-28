@@ -1,10 +1,10 @@
 ---
-title: "Background Jobs — Roadmap"
-subtitle: "Worker loops, Redis and Postgres-backed queues, retries, DLQs, idempotency, cron, and production patterns."
+title: 'Background Jobs — Roadmap'
+subtitle: 'Worker loops, Redis and Postgres-backed queues, retries, DLQs, idempotency, cron, and production patterns.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -31,4 +31,3 @@ Most web apps eventually need work that doesn't belong in an HTTP request — se
 4. **Idempotency** — at-least-once delivery, making jobs safe to run multiple times, fencing tokens
 5. **Cron & Scheduled Jobs** — queue-backed cron, leader election, timezone handling, missed runs
 6. **Worker Patterns & Production** — graceful shutdown, priority queues, fan-out, rate limiting, metrics
-

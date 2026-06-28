@@ -1,10 +1,10 @@
 ---
-title: "What webhooks are and when to use them"
+title: 'What webhooks are and when to use them'
 subtitle: "A webhook is an HTTP POST you make to somebody else's server when something happens. The protocol is trivial; the failure modes are not."
 chapter: 1
-level: "beginner"
-readingTime: "10 min"
-topics: ["webhooks", "events", "rest", "queues"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['webhooks', 'events', 'rest', 'queues']
 ---
 
 <script>
@@ -57,14 +57,14 @@ Most production integrations end up using both: webhooks for low-latency notific
 
 ## Webhooks vs message queues vs WebSockets
 
-| | Webhooks | Message queues | WebSockets |
-|---|---|---|---|
-| Direction | producer → receiver, push | producer → broker → consumer | bidirectional |
-| Transport | HTTP POST | AMQP / Kafka / SQS / NATS | WebSocket frames |
-| Coupling | producer knows receiver URL | both know broker | persistent connection |
-| Reach | any HTTPS endpoint on internet | usually inside one trust zone | usually browser ↔ your server |
-| Operational | mostly the producer | mostly the broker | both ends |
-| Replay | producer replays | broker replays | reconnect + resume |
+|             | Webhooks                       | Message queues                | WebSockets                    |
+| ----------- | ------------------------------ | ----------------------------- | ----------------------------- |
+| Direction   | producer → receiver, push      | producer → broker → consumer  | bidirectional                 |
+| Transport   | HTTP POST                      | AMQP / Kafka / SQS / NATS     | WebSocket frames              |
+| Coupling    | producer knows receiver URL    | both know broker              | persistent connection         |
+| Reach       | any HTTPS endpoint on internet | usually inside one trust zone | usually browser ↔ your server |
+| Operational | mostly the producer            | mostly the broker             | both ends                     |
+| Replay      | producer replays               | broker replays                | reconnect + resume            |
 
 Webhooks are the right answer when:
 
@@ -82,7 +82,7 @@ They are wrong when:
 
 ## The four hard parts
 
-A POST request is one HTTP call. A *production* webhook system has to solve:
+A POST request is one HTTP call. A _production_ webhook system has to solve:
 
 **1. Authenticity.** The receiver must know the POST really came from you and not from an attacker who guessed the URL. → HMAC signing (chapter 4).
 
@@ -105,7 +105,7 @@ Stripe's webhook infrastructure is the canonical reference. The shape:
 - Customer's receiver verifies signature, dedupes by event ID, processes, returns 200.
 - Stripe exposes a dashboard with delivery history, the request/response of each attempt, manual retry buttons.
 
-That dashboard is the giveaway. Webhooks are not a fire-and-forget feature; they are an *operated* feature. You build the system *and* the tooling to debug it.
+That dashboard is the giveaway. Webhooks are not a fire-and-forget feature; they are an _operated_ feature. You build the system _and_ the tooling to debug it.
 
 ## The receiver perspective
 
@@ -129,7 +129,7 @@ Most of the bugs come from receivers doing slow synchronous work on the webhook 
 
 Three silent failure modes worth memorizing:
 
-**1. Receiver returns 200 but throws after.** Producer thinks the event landed. Receiver dropped it on the floor. Fix: receivers acknowledge *after* persisting the event, not before.
+**1. Receiver returns 200 but throws after.** Producer thinks the event landed. Receiver dropped it on the floor. Fix: receivers acknowledge _after_ persisting the event, not before.
 
 **2. Producer crashes after the side-effect, before sending.** A payment is recorded in your DB but no webhook is sent. Customers' systems never learn. Fix: outbox pattern (chapter 10).
 
@@ -154,4 +154,3 @@ You also get to feel the operator's pain. Running webhooks teaches you why manag
 - We build it self-hosted in Go + Postgres on a VPS — same shape as Stripe, your scale.
 
 Next: [Event contract design](/notes/webhooks/02-event-contract) — types, fields, idempotency keys, and the schema-evolution rules that keep your customers' code working.
-

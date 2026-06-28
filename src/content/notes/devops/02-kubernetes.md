@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes Essentials"
-subtitle: "Pods, Deployments, Services — the core building blocks of container orchestration at scale."
+title: 'Kubernetes Essentials'
+subtitle: 'Pods, Deployments, Services — the core building blocks of container orchestration at scale.'
 chapter: 2
-level: "beginner"
-readingTime: "16 min"
-topics: ["Kubernetes", "pods", "deployments", "services"]
+level: 'beginner'
+readingTime: '16 min'
+topics: ['Kubernetes', 'pods', 'deployments', 'services']
 ---
 
 <script>
@@ -14,6 +14,7 @@ topics: ["Kubernetes", "pods", "deployments", "services"]
 ## Why Kubernetes?
 
 Docker runs containers on one machine. Kubernetes runs containers across a cluster of machines, handling:
+
 - **Scheduling**: which node should this container run on?
 - **Scaling**: run 10 copies when traffic spikes, scale down when it drops
 - **Self-healing**: if a container dies, restart it automatically
@@ -33,27 +34,27 @@ Like a warehouse floor manager — they decide which worker (pod) handles which 
 ```typescript
 // Mental model of Kubernetes objects
 interface Pod {
-  // Smallest deployable unit — one or more containers
-  // that share network and storage
-  name: string;
-  containers: Container[];
-  // Pods are ephemeral — they can be killed and recreated
+	// Smallest deployable unit — one or more containers
+	// that share network and storage
+	name: string;
+	containers: Container[];
+	// Pods are ephemeral — they can be killed and recreated
 }
 
 interface Deployment {
-  // Manages a set of identical Pods
-  name: string;
-  replicas: number;        // desired pod count
-  template: Pod;           // pod spec to replicate
-  strategy: "RollingUpdate" | "Recreate";
+	// Manages a set of identical Pods
+	name: string;
+	replicas: number; // desired pod count
+	template: Pod; // pod spec to replicate
+	strategy: 'RollingUpdate' | 'Recreate';
 }
 
 interface Service {
-  // Stable network endpoint for a set of Pods
-  name: string;            // "api-service"
-  type: "ClusterIP" | "NodePort" | "LoadBalancer";
-  selector: Record<string, string>; // which pods to route to
-  port: number;
+	// Stable network endpoint for a set of Pods
+	name: string; // "api-service"
+	type: 'ClusterIP' | 'NodePort' | 'LoadBalancer';
+	selector: Record<string, string>; // which pods to route to
+	port: number;
 }
 ```
 
@@ -82,11 +83,11 @@ spec:
             - containerPort: 3000
           resources:
             requests:
-              cpu: "100m"      # 0.1 cores minimum
-              memory: "128Mi"
+              cpu: '100m' # 0.1 cores minimum
+              memory: '128Mi'
             limits:
-              cpu: "500m"      # 0.5 cores maximum
-              memory: "256Mi"
+              cpu: '500m' # 0.5 cores maximum
+              memory: '256Mi'
           readinessProbe:
             httpGet:
               path: /health
@@ -141,8 +142,9 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1        # create 1 extra pod during update
-      maxUnavailable: 0  # never reduce below desired replicas
+      maxSurge: 1 # create 1 extra pod during update
+      maxUnavailable: 0 # never reduce below desired replicas
+
 
 # What happens when you update the image:
 # 1. New pod created with v1.2.4
@@ -164,4 +166,3 @@ spec:
 2. **Deployments manage replicas** and handle rolling updates with zero downtime
 3. **Services provide stable endpoints** — pods come and go, the service name stays the same
 4. **Set resource requests/limits** on every container to prevent resource starvation
-

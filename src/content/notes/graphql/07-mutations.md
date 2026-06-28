@@ -1,10 +1,10 @@
 ---
-title: "Mutations, input types, validation"
-subtitle: "Writes are not just queries with side effects. They need input types, validation, transactions, idempotency, and a return shape that lets clients update their cache without a second fetch."
+title: 'Mutations, input types, validation'
+subtitle: 'Writes are not just queries with side effects. They need input types, validation, transactions, idempotency, and a return shape that lets clients update their cache without a second fetch.'
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["graphql", "mutations", "input types", "validation", "transactions"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['graphql', 'mutations', 'input types', 'validation', 'transactions']
 ---
 
 <script>
@@ -27,9 +27,15 @@ The GraphQL spec guarantees one thing: when a single request contains multiple t
 
 ```graphql
 mutation {
-  createPost(input: { title: "A" }) { id }
-  createPost(input: { title: "B" }) { id }
-  createPost(input: { title: "C" }) { id }
+	createPost(input: { title: "A" }) {
+		id
+	}
+	createPost(input: { title: "B" }) {
+		id
+	}
+	createPost(input: { title: "C" }) {
+		id
+	}
 }
 ```
 
@@ -44,19 +50,19 @@ Mutations should take a single `input: <Verb><Noun>Input!` argument, not a flat 
 ```graphql
 # Don't do this
 type Mutation {
-  createPost(title: String!, body: String!, tags: [String!], publish: Boolean): Post!
+	createPost(title: String!, body: String!, tags: [String!], publish: Boolean): Post!
 }
 
 # Do this
 input CreatePostInput {
-  title: String!
-  body: String!
-  tags: [String!]
-  publish: Boolean = false
+	title: String!
+	body: String!
+	tags: [String!]
+	publish: Boolean = false
 }
 
 type Mutation {
-  createPost(input: CreatePostInput!): Post!
+	createPost(input: CreatePostInput!): Post!
 }
 ```
 
@@ -75,73 +81,76 @@ Schema:
 
 ```graphql
 input CreatePostInput {
-  title: String!
-  body: String!
-  tags: [String!]
-  publish: Boolean = false
+	title: String!
+	body: String!
+	tags: [String!]
+	publish: Boolean = false
 }
 
 type Mutation {
-  createPost(input: CreatePostInput!): Post!
-  updatePost(id: ID!, input: UpdatePostInput!): Post!
-  deletePost(id: ID!): Boolean!
+	createPost(input: CreatePostInput!): Post!
+	updatePost(id: ID!, input: UpdatePostInput!): Post!
+	deletePost(id: ID!): Boolean!
 }
 
 input UpdatePostInput {
-  title: String
-  body: String
-  tags: [String!]
+	title: String
+	body: String
+	tags: [String!]
 }
 ```
 
 Resolver, with transaction and validation:
 
 ```js
-import { z } from "zod";
+import { z } from 'zod';
 
 const CreatePostSchema = z.object({
-  title: z.string().min(1).max(200),
-  body: z.string().min(1),
-  tags: z.array(z.string().regex(/^[a-z][a-z0-9-]{0,30}$/)).max(10).optional(),
-  publish: z.boolean().optional(),
+	title: z.string().min(1).max(200),
+	body: z.string().min(1),
+	tags: z
+		.array(z.string().regex(/^[a-z][a-z0-9-]{0,30}$/))
+		.max(10)
+		.optional(),
+	publish: z.boolean().optional()
 });
 
 const Mutation = {
-  createPost: async (_, { input }, ctx) => {
-    if (!ctx.userId) throw new Error("Not authenticated");
+	createPost: async (_, { input }, ctx) => {
+		if (!ctx.userId) throw new Error('Not authenticated');
 
-    const data = CreatePostSchema.parse(input);
+		const data = CreatePostSchema.parse(input);
 
-    const client = await ctx.db.connect();
-    try {
-      await client.query("BEGIN");
+		const client = await ctx.db.connect();
+		try {
+			await client.query('BEGIN');
 
-      const { rows } = await client.query(
-        `INSERT INTO posts (author_id, title, body, published)
+			const { rows } = await client.query(
+				`INSERT INTO posts (author_id, title, body, published)
          VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [ctx.userId, data.title, data.body, !!data.publish],
-      );
-      const post = rows[0];
+				[ctx.userId, data.title, data.body, !!data.publish]
+			);
+			const post = rows[0];
 
-      if (data.tags?.length) {
-        await client.query(
-          `INSERT INTO post_tags (post_id, tag)
+			if (data.tags?.length) {
+				await client.query(
+					`INSERT INTO post_tags (post_id, tag)
            SELECT $1, unnest($2::text[])
            ON CONFLICT DO NOTHING`,
-          [post.id, data.tags],
-        );
-      }
+					[post.id, data.tags]
+				);
+			}
 
-      await client.query("COMMIT");
-      return post;
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    } finally {
-      client.release();
-    }
-  },
+			await client.query('COMMIT');
+			return post;
+		} catch (e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
+	}
 };
 ```
 
@@ -151,7 +160,7 @@ A few patterns worth flagging.
 
 **Transactions are not optional for multi-statement writes.** Pull a client off the pool, `BEGIN`, do everything, `COMMIT` or `ROLLBACK`. Without this, an error after step 2 leaves step 1 committed. Inconsistent state forever.
 
-**Acquire the client, do not use `pool.query` for the rollback path.** `pool.query` checks out a connection per call. For atomicity you need *one* connection across the whole transaction.
+**Acquire the client, do not use `pool.query` for the rollback path.** `pool.query` checks out a connection per call. For atomicity you need _one_ connection across the whole transaction.
 
 ## Validation strategies
 
@@ -172,10 +181,10 @@ Two options.
 **1. Typed errors via codes.** graphql-yoga supports `GraphQLError` with extensions:
 
 ```js
-import { GraphQLError } from "graphql";
+import { GraphQLError } from 'graphql';
 
-throw new GraphQLError("Invalid title", {
-  extensions: { code: "VALIDATION_FAILED", field: "title" },
+throw new GraphQLError('Invalid title', {
+	extensions: { code: 'VALIDATION_FAILED', field: 'title' }
 });
 ```
 
@@ -186,7 +195,7 @@ Clients read `err.extensions.code` and branch on it.
 ```graphql
 union CreatePostResult = Post | ValidationError | NotAuthorizedError
 type Mutation {
-  createPost(input: CreatePostInput!): CreatePostResult!
+	createPost(input: CreatePostInput!): CreatePostResult!
 }
 ```
 
@@ -208,9 +217,9 @@ The cleanest fix: clients send a `clientMutationId` (UUID) and the server stores
 
 ```graphql
 input CreatePostInput {
-  clientMutationId: ID!
-  title: String!
-  body: String!
+	clientMutationId: ID!
+	title: String!
+	body: String!
 }
 ```
 
@@ -234,7 +243,7 @@ Return the new entity, with enough fields for the client to splice into its cach
 
 ```graphql
 type Mutation {
-  createPost(input: CreatePostInput!): Post!
+	createPost(input: CreatePostInput!): Post!
 }
 ```
 
@@ -244,8 +253,8 @@ For mutations that affect lists, return the parent too:
 
 ```graphql
 type CreatePostPayload {
-  post: Post!
-  author: User!  # has updated post count, latest activity, etc.
+	post: Post!
+	author: User! # has updated post count, latest activity, etc.
 }
 ```
 
@@ -259,17 +268,17 @@ Better: a single mutation that takes the array, runs in one transaction:
 
 ```graphql
 type Mutation {
-  importPosts(inputs: [CreatePostInput!]!): ImportPostsPayload!
+	importPosts(inputs: [CreatePostInput!]!): ImportPostsPayload!
 }
 
 type ImportPostsPayload {
-  created: [Post!]!
-  failures: [ImportFailure!]!
+	created: [Post!]!
+	failures: [ImportFailure!]!
 }
 
 type ImportFailure {
-  index: Int!
-  reason: String!
+	index: Int!
+	reason: String!
 }
 ```
 
@@ -277,7 +286,7 @@ One round trip, one transaction, partial-failure reporting. This is also where t
 
 ## Mutations and DataLoader caches
 
-A mutation that writes to user `42` invalidates the loader cache of any concurrent or following request that loaded user `42`. Since loaders are per-request and short-lived, this is rarely a problem within a single request — but if your resolver mutates and then reads in the *same* mutation, prime or clear the loader after the write:
+A mutation that writes to user `42` invalidates the loader cache of any concurrent or following request that loaded user `42`. Since loaders are per-request and short-lived, this is rarely a problem within a single request — but if your resolver mutates and then reads in the _same_ mutation, prime or clear the loader after the write:
 
 ```js
 ctx.loaders.user.clear(post.author_id);
@@ -299,4 +308,3 @@ Otherwise the post-mutation read returns the stale, pre-mutation row.
 - Return the changed entity, with enough scope for the client to update its cache.
 
 Next: [Authentication and authorization](/notes/graphql/08-auth) — context, field-level checks, and the directives pattern.
-

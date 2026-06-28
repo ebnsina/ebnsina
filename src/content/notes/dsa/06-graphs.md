@@ -1,10 +1,10 @@
 ---
-title: "Graphs"
-subtitle: "Represent relationships between entities — social networks, maps, dependencies — with BFS, DFS, and adjacency lists."
+title: 'Graphs'
+subtitle: 'Represent relationships between entities — social networks, maps, dependencies — with BFS, DFS, and adjacency lists.'
 chapter: 6
-level: "intermediate"
-readingTime: "18 min"
-topics: ["graph", "adjacency list", "BFS", "DFS", "topological sort"]
+level: 'intermediate'
+readingTime: '18 min'
+topics: ['graph', 'adjacency list', 'BFS', 'DFS', 'topological sort']
 ---
 
 <script>
@@ -30,15 +30,15 @@ Like an airline route map — cities are nodes, flight routes are edges. Some ro
 type Graph = Map<string, string[]>;
 
 function buildGraph(edges: [string, string][]): Graph {
-  const graph: Graph = new Map();
+	const graph: Graph = new Map();
 
-  for (const [from, to] of edges) {
-    if (!graph.has(from)) graph.set(from, []);
-    if (!graph.has(to)) graph.set(to, []);
-    graph.get(from)!.push(to);
-    graph.get(to)!.push(from); // omit for directed graph
-  }
-  return graph;
+	for (const [from, to] of edges) {
+		if (!graph.has(from)) graph.set(from, []);
+		if (!graph.has(to)) graph.set(to, []);
+		graph.get(from)!.push(to);
+		graph.get(to)!.push(from); // omit for directed graph
+	}
+	return graph;
 }
 ```
 
@@ -47,40 +47,40 @@ function buildGraph(edges: [string, string][]): Graph {
 ```typescript
 // DFS — go deep, then backtrack
 function dfs(graph: Graph, start: string): string[] {
-  const visited = new Set<string>();
-  const result: string[] = [];
+	const visited = new Set<string>();
+	const result: string[] = [];
 
-  function visit(node: string) {
-    if (visited.has(node)) return;
-    visited.add(node);
-    result.push(node);
-    for (const neighbor of graph.get(node) || []) {
-      visit(neighbor);
-    }
-  }
+	function visit(node: string) {
+		if (visited.has(node)) return;
+		visited.add(node);
+		result.push(node);
+		for (const neighbor of graph.get(node) || []) {
+			visit(neighbor);
+		}
+	}
 
-  visit(start);
-  return result;
+	visit(start);
+	return result;
 }
 
 // BFS — explore level by level
 function bfs(graph: Graph, start: string): string[] {
-  const visited = new Set<string>([start]);
-  const queue: string[] = [start];
-  const result: string[] = [];
+	const visited = new Set<string>([start]);
+	const queue: string[] = [start];
+	const result: string[] = [];
 
-  while (queue.length) {
-    const node = queue.shift()!;
-    result.push(node);
+	while (queue.length) {
+		const node = queue.shift()!;
+		result.push(node);
 
-    for (const neighbor of graph.get(node) || []) {
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        queue.push(neighbor);
-      }
-    }
-  }
-  return result;
+		for (const neighbor of graph.get(node) || []) {
+			if (!visited.has(neighbor)) {
+				visited.add(neighbor);
+				queue.push(neighbor);
+			}
+		}
+	}
+	return result;
 }
 ```
 
@@ -90,23 +90,23 @@ Order nodes so that every directed edge goes from earlier to later. Used for bui
 
 ```typescript
 function topologicalSort(graph: Map<string, string[]>): string[] {
-  const visited = new Set<string>();
-  const result: string[] = [];
+	const visited = new Set<string>();
+	const result: string[] = [];
 
-  function dfs(node: string) {
-    if (visited.has(node)) return;
-    visited.add(node);
-    for (const neighbor of graph.get(node) || []) {
-      dfs(neighbor);
-    }
-    result.push(node); // add after all dependencies
-  }
+	function dfs(node: string) {
+		if (visited.has(node)) return;
+		visited.add(node);
+		for (const neighbor of graph.get(node) || []) {
+			dfs(neighbor);
+		}
+		result.push(node); // add after all dependencies
+	}
 
-  for (const node of graph.keys()) {
-    dfs(node);
-  }
+	for (const node of graph.keys()) {
+		dfs(node);
+	}
 
-  return result.reverse();
+	return result.reverse();
 }
 ```
 
@@ -122,4 +122,3 @@ function topologicalSort(graph: Map<string, string[]>): string[] {
 2. **Always track visited nodes** to avoid infinite loops in graphs with cycles
 3. **BFS finds shortest paths** in unweighted graphs; **DFS explores all paths**
 4. **Topological sort** is essential for dependency resolution
-

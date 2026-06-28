@@ -1,10 +1,10 @@
 ---
-title: "Performance Engineering — Roadmap"
-subtitle: "Profiling with pprof and perf, flamegraphs, latency budgets, p99 thinking."
+title: 'Performance Engineering — Roadmap'
+subtitle: 'Profiling with pprof and perf, flamegraphs, latency budgets, p99 thinking.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Most performance problems are in the database. Most developers guess it's the ap
 3. **Database Performance** — EXPLAIN ANALYZE, index strategy, N+1 queries, connection pooling
 4. **Caching** — cache levels, Redis patterns, stampede prevention, invalidation, CDN
 5. **Load Testing** — k6, autocannon, finding the breaking point, realistic test data
-

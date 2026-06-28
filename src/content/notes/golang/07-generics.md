@@ -1,10 +1,10 @@
 ---
-title: "Generics"
+title: 'Generics'
 subtitle: "Write code that works with any type — Go 1.18's biggest feature eliminates boilerplate without sacrificing type safety."
 chapter: 7
-level: "intermediate"
-readingTime: "18 min"
-topics: ["generics", "type parameters", "constraints", "type inference"]
+level: 'intermediate'
+readingTime: '18 min'
+topics: ['generics', 'type parameters', 'constraints', 'type inference']
 ---
 
 <script>
@@ -402,4 +402,3 @@ maps.DeleteFunc(m, func(k string, v int) bool {
 4. **Generic structs** are powerful for data structures — `Stack[T]`, `Cache[K, V]`, `Result[T]`
 5. **Use `slices` and `maps` packages** — standard library already has common generic utilities
 6. **Don't overuse generics** — if a concrete type or interface works, prefer that. Generics are for data structures and utilities, not business logic
-

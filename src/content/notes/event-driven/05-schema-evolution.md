@@ -1,10 +1,11 @@
 ---
-title: "Schema Evolution & Event Versioning"
-subtitle: "Events are forever — how to evolve schemas without breaking consumers, and the registry that keeps everyone coordinated."
+title: 'Schema Evolution & Event Versioning'
+subtitle: 'Events are forever — how to evolve schemas without breaking consumers, and the registry that keeps everyone coordinated.'
 chapter: 5
-level: "advanced"
-readingTime: "9 min"
-topics: ["schema evolution", "Avro", "Schema Registry", "backward compatibility", "event versioning"]
+level: 'advanced'
+readingTime: '9 min'
+topics:
+  ['schema evolution', 'Avro', 'Schema Registry', 'backward compatibility', 'event versioning']
 ---
 
 <script>
@@ -24,6 +25,7 @@ Amending a legal contract: you can't go back and change what the original contra
 Events are durable. Once published to Kafka or S3, they may be retained for years. Once a consumer is deployed that reads version 1 of an event, you can't safely change version 1's schema — the deployed consumer will break.
 
 You have three options when a schema needs to change:
+
 1. Make a backward-compatible change (add optional fields — safe)
 2. Make a forward-compatible change (remove fields — risky)
 3. Create a new version and run both in parallel (safe, but complex)
@@ -31,6 +33,7 @@ You have three options when a schema needs to change:
 ## Compatibility Rules
 
 **Backward compatible** (new consumers can read old events):
+
 ```typescript
 // V1 event — already deployed and in Kafka
 { type: 'OrderPlaced', orderId: '123', userId: 'u_1', amount: 9999 }
@@ -41,6 +44,7 @@ You have three options when a schema needs to change:
 ```
 
 **Not backward compatible** (breaks deployed consumers):
+
 ```typescript
 // BREAKING: removing a field
 { type: 'OrderPlaced', orderId: '123', amount: 9999 }
@@ -58,35 +62,38 @@ You have three options when a schema needs to change:
 ## Safe Evolution Strategies
 
 **Add optional fields with defaults:**
+
 ```typescript
 // V1 — deployed
 interface OrderPlacedV1 {
-  type: 'OrderPlaced';
-  orderId: string;
-  userId: string;
-  amount: number;
+	type: 'OrderPlaced';
+	orderId: string;
+	userId: string;
+	amount: number;
 }
 
 // V1.1 — safe to deploy
 interface OrderPlacedV1_1 {
-  type: 'OrderPlaced';
-  orderId: string;
-  userId: string;
-  amount: number;
-  currency?: string;      // optional, consumers default to 'USD' if absent
-  discountCode?: string;  // optional
+	type: 'OrderPlaced';
+	orderId: string;
+	userId: string;
+	amount: number;
+	currency?: string; // optional, consumers default to 'USD' if absent
+	discountCode?: string; // optional
 }
 ```
 
 Consumer handles both old and new:
+
 ```typescript
 function handleOrderPlaced(event: OrderPlacedV1_1): void {
-  const currency = event.currency ?? 'USD'; // default for old events
-  processOrder({ ...event, currency });
+	const currency = event.currency ?? 'USD'; // default for old events
+	processOrder({ ...event, currency });
 }
 ```
 
 **Explicit versioning — parallel events:**
+
 ```typescript
 // Keep publishing V1 for old consumers
 await publish({ type: 'OrderPlaced', version: 1, ...v1Data });
@@ -103,6 +110,7 @@ await publish({ type: 'OrderPlacedV2', ...newData });
 ```
 
 **Rename with transitional period:**
+
 ```typescript
 // Step 1: Publish both old and new field name
 {
@@ -126,32 +134,35 @@ import { SchemaRegistry } from '@kafkajs/confluent-schema-registry';
 const registry = new SchemaRegistry({ host: 'http://schema-registry:8081' });
 
 // Register schema (fails if not compatible with previous version)
-const { id: schemaId } = await registry.register({
-  type: SchemaType.AVRO,
-  schema: JSON.stringify({
-    type: 'record',
-    name: 'OrderPlaced',
-    namespace: 'com.myapp.orders',
-    fields: [
-      { name: 'orderId', type: 'string' },
-      { name: 'userId', type: 'string' },
-      { name: 'amount', type: 'long' },
-      { name: 'currency', type: ['null', 'string'], default: null }, // optional
-    ],
-  }),
-}, { subject: 'order-events-value' });
+const { id: schemaId } = await registry.register(
+	{
+		type: SchemaType.AVRO,
+		schema: JSON.stringify({
+			type: 'record',
+			name: 'OrderPlaced',
+			namespace: 'com.myapp.orders',
+			fields: [
+				{ name: 'orderId', type: 'string' },
+				{ name: 'userId', type: 'string' },
+				{ name: 'amount', type: 'long' },
+				{ name: 'currency', type: ['null', 'string'], default: null } // optional
+			]
+		})
+	},
+	{ subject: 'order-events-value' }
+);
 
 // Producer: encode with schema
 const encodedEvent = await registry.encode(schemaId, {
-  orderId: order.id,
-  userId: order.userId,
-  amount: order.totalAmount,
-  currency: order.currency,
+	orderId: order.id,
+	userId: order.userId,
+	amount: order.totalAmount,
+	currency: order.currency
 });
 
 await producer.send({
-  topic: 'order-events',
-  messages: [{ value: encodedEvent }],
+	topic: 'order-events',
+	messages: [{ value: encodedEvent }]
 });
 
 // Consumer: decode (schema fetched from registry by ID embedded in message)
@@ -159,6 +170,7 @@ const decoded = await registry.decode(message.value);
 ```
 
 The registry enforces one of three compatibility modes:
+
 - **BACKWARD:** New schema can read old data (new consumers handle old events)
 - **FORWARD:** Old schema can read new data (old consumers handle new events)
 - **FULL:** Both — the safest, most restrictive
@@ -170,28 +182,30 @@ JSON events are flexible but untyped — a field rename silently breaks consumer
 ```json
 // Avro schema
 {
-  "type": "record",
-  "name": "OrderPlaced",
-  "fields": [
-    { "name": "orderId",  "type": "string" },
-    { "name": "userId",   "type": "string" },
-    { "name": "amount",   "type": "long" },
-    {
-      "name": "currency",
-      "type": ["null", "string"],
-      "default": null
-    }
-  ]
+	"type": "record",
+	"name": "OrderPlaced",
+	"fields": [
+		{ "name": "orderId", "type": "string" },
+		{ "name": "userId", "type": "string" },
+		{ "name": "amount", "type": "long" },
+		{
+			"name": "currency",
+			"type": ["null", "string"],
+			"default": null
+		}
+	]
 }
 ```
 
 **Avro advantages:**
+
 - Schema encoded with message — consumer always knows the schema
 - Registry enforces compatibility before publish
 - Compact binary format (smaller than JSON)
 - Strongly typed — rename detected at schema registration, not at runtime
 
 **JSON advantages:**
+
 - Human readable — easier to debug
 - No toolchain required
 - Flexible — good for early-stage where schemas change rapidly
@@ -206,21 +220,21 @@ Producers should test against what consumers actually need — not guess. Consum
 // Consumer defines its contract (what it needs from the event)
 // consumer.contract.ts
 export const orderPlacedContract = {
-  type: 'OrderPlaced',
-  required: ['orderId', 'userId', 'amount'],
-  optional: ['currency', 'discountCode'],
+	type: 'OrderPlaced',
+	required: ['orderId', 'userId', 'amount'],
+	optional: ['currency', 'discountCode']
 };
 
 // Producer runs contract tests in CI
 describe('OrderPlaced event contract', () => {
-  it('includes all required fields from notification-service contract', () => {
-    const event = buildOrderPlacedEvent(mockOrder);
+	it('includes all required fields from notification-service contract', () => {
+		const event = buildOrderPlacedEvent(mockOrder);
 
-    for (const field of orderPlacedContract.required) {
-      expect(event).toHaveProperty(field);
-      expect(event[field]).not.toBeUndefined();
-    }
-  });
+		for (const field of orderPlacedContract.required) {
+			expect(event).toHaveProperty(field);
+			expect(event[field]).not.toBeUndefined();
+		}
+	});
 });
 ```
 
@@ -241,25 +255,25 @@ Tools like Pact automate this — consumers publish their contracts to a broker,
 ```
 
 **Handling unknown fields defensively:**
+
 ```typescript
 // WRONG — crashes on new fields
 function parseEvent(raw: unknown): OrderPlaced {
-  const { orderId, userId, amount } = raw as Record<string, unknown>;
-  return { orderId: orderId as string, userId: userId as string, amount: amount as number };
+	const { orderId, userId, amount } = raw as Record<string, unknown>;
+	return { orderId: orderId as string, userId: userId as string, amount: amount as number };
 }
 
 // RIGHT — extract what you need, ignore the rest
 function parseEvent(raw: unknown): OrderPlaced {
-  const data = raw as Record<string, unknown>;
-  return {
-    orderId: String(data.orderId),
-    userId: String(data.userId),
-    amount: Number(data.amount),
-    currency: typeof data.currency === 'string' ? data.currency : 'USD',
-    // unknown future fields are silently ignored
-  };
+	const data = raw as Record<string, unknown>;
+	return {
+		orderId: String(data.orderId),
+		userId: String(data.userId),
+		amount: Number(data.amount),
+		currency: typeof data.currency === 'string' ? data.currency : 'USD'
+		// unknown future fields are silently ignored
+	};
 }
 ```
 
 The consumer only extracts what it needs. New fields added by the producer are ignored. Old required fields removed by the producer cause an error only if the consumer was relying on them — which is caught by contract tests before deployment.
-

@@ -1,10 +1,10 @@
 ---
-title: "Users, Groups, and Sudo"
-subtitle: "How Linux identifies who is doing what, why services run as their own users, and how sudo gives you root without making you root."
+title: 'Users, Groups, and Sudo'
+subtitle: 'How Linux identifies who is doing what, why services run as their own users, and how sudo gives you root without making you root.'
 chapter: 8
-level: "intermediate"
-readingTime: "11 min"
-topics: ["users", "groups", "sudo", "permissions", "linux"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['users', 'groups', 'sudo', 'permissions', 'linux']
 ---
 
 <script>
@@ -69,7 +69,7 @@ Group 27 is `sudo`, with two members.
 
 ## Primary group vs supplementary groups
 
-Every user has *one* primary group (field 4 of `/etc/passwd`) and *zero or more* supplementary groups (the comma-separated list in `/etc/group`).
+Every user has _one_ primary group (field 4 of `/etc/passwd`) and _zero or more_ supplementary groups (the comma-separated list in `/etc/group`).
 
 When you create a file, it gets owned by your primary group by default. `id` shows both:
 
@@ -84,7 +84,7 @@ Add yourself to a group:
 sudo usermod -aG docker deploy
 ```
 
-`-a` means *append* (without it, `usermod -G` *replaces* all your groups — a classic foot-gun). The change does not take effect until you log out and back in, because supplementary groups are loaded at login.
+`-a` means _append_ (without it, `usermod -G` _replaces_ all your groups — a classic foot-gun). The change does not take effect until you log out and back in, because supplementary groups are loaded at login.
 
 ## System users vs login users
 
@@ -99,7 +99,7 @@ There is a soft convention:
 sudo useradd --system --no-create-home --shell /usr/sbin/nologin myapp
 ```
 
-That creates a UID in the system range (e.g., 998), no home, no shell. This is the user your systemd unit's `User=myapp` directive refers to. The account *exists* in the kernel's eyes for permission checks, but no one can log in as it.
+That creates a UID in the system range (e.g., 998), no home, no shell. This is the user your systemd unit's `User=myapp` directive refers to. The account _exists_ in the kernel's eyes for permission checks, but no one can log in as it.
 
 ## File ownership in practice
 
@@ -112,7 +112,7 @@ drwx------ 2 myapp myapp 4096 May  4 10:42 data
 ```
 
 - The binary is executable by everyone (`r-x` for other), but only `myapp` can write it.
-- `data/` is owned by `myapp` and *only* `myapp` can enter it (`drwx------`).
+- `data/` is owned by `myapp` and _only_ `myapp` can enter it (`drwx------`).
 - `config.yaml` is `r--` for the group only — the `myapp` user reads it, the `myapp` group reads it, no one else can.
 
 When your systemd unit declares `User=myapp Group=myapp`, the running process becomes UID/GID of `myapp` — and these permissions all line up. Other users on the box cannot read the config or the data directory, even if they SSH in.
@@ -121,11 +121,11 @@ When your systemd unit declares `User=myapp Group=myapp`, the running process be
 
 UID 0 is special. The kernel grants UID 0 every privilege regardless of file permissions. Root can read `/etc/shadow`, kill any process, mount any filesystem, write to any disk.
 
-That is exactly why you do not run as root day-to-day. One typo (`rm -rf $UNDEFINED/`) erases the entire box. One compromised process running as root owns everything. Working as a non-root user with `sudo` for elevation gives you a *deliberate* moment to think before each privileged action.
+That is exactly why you do not run as root day-to-day. One typo (`rm -rf $UNDEFINED/`) erases the entire box. One compromised process running as root owns everything. Working as a non-root user with `sudo` for elevation gives you a _deliberate_ moment to think before each privileged action.
 
 ## sudo — root with paperwork
 
-`sudo` lets a normal user run a single command as root, after authenticating with their *own* password (not root's), and logs every invocation.
+`sudo` lets a normal user run a single command as root, after authenticating with their _own_ password (not root's), and logs every invocation.
 
 ```bash
 $ sudo systemctl restart nginx
@@ -188,7 +188,7 @@ deploy ALL=(root) NOPASSWD: /bin/systemctl reload nginx
 
 **`NOPASSWD` is a sharp tool.**
 
-Anyone who lands a shell as `deploy` can run those commands without authentication. If the command takes a path argument, they could potentially do more than you intended — `systemctl edit` and similar will open an editor with full root powers. Lock down to *exact* command lines, never patterns.
+Anyone who lands a shell as `deploy` can run those commands without authentication. If the command takes a path argument, they could potentially do more than you intended — `systemctl edit` and similar will open an editor with full root powers. Lock down to _exact_ command lines, never patterns.
 
 </Callout>
 
@@ -220,7 +220,7 @@ You can grant a capability to a specific binary:
 sudo setcap 'cap_net_bind_service=+ep' /opt/myapp/bin/server
 ```
 
-Now `/opt/myapp/bin/server` can listen on port 80 *without being root*. This is a much safer pattern than running the whole process as root just to bind a privileged port. systemd's `AmbientCapabilities=CAP_NET_BIND_SERVICE` does the same thing for you.
+Now `/opt/myapp/bin/server` can listen on port 80 _without being root_. This is a much safer pattern than running the whole process as root just to bind a privileged port. systemd's `AmbientCapabilities=CAP_NET_BIND_SERVICE` does the same thing for you.
 
 ## Common mistakes
 
@@ -238,4 +238,3 @@ Now `/opt/myapp/bin/server` can listen on port 80 *without being root*. This is 
 - Use `visudo` to edit policy. Use `sudoers.d` for per-task overrides. Use `setcap` instead of root for privileged ports.
 
 Next chapter: where all those service logs go, and how to make sense of them.
-

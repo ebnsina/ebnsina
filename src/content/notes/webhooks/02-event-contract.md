@@ -1,10 +1,10 @@
 ---
-title: "Event contract design"
-subtitle: "The shape of your event payload becomes a contract with everyone who integrates. The decisions you make in the first afternoon are the ones you live with for years."
+title: 'Event contract design'
+subtitle: 'The shape of your event payload becomes a contract with everyone who integrates. The decisions you make in the first afternoon are the ones you live with for years.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["webhooks", "events", "schema", "versioning"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['webhooks', 'events', 'schema', 'versioning']
 ---
 
 <script>
@@ -29,18 +29,18 @@ Every event you send carries the same envelope. Consumers can write generic hand
 
 ```json
 {
-  "id": "evt_01HF5J7XK4TG6N2VRT9P0M3DZ4",
-  "type": "payment.succeeded",
-  "created": "2026-05-04T12:00:00.123Z",
-  "api_version": "2026-04-01",
-  "data": {
-    "object": {
-      "id": "py_01HF5J7Y2C8K9PT8AYB4M3DPVF",
-      "amount": 4200,
-      "currency": "usd",
-      "customer": "cus_42"
-    }
-  }
+	"id": "evt_01HF5J7XK4TG6N2VRT9P0M3DZ4",
+	"type": "payment.succeeded",
+	"created": "2026-05-04T12:00:00.123Z",
+	"api_version": "2026-04-01",
+	"data": {
+		"object": {
+			"id": "py_01HF5J7Y2C8K9PT8AYB4M3DPVF",
+			"amount": 4200,
+			"currency": "usd",
+			"customer": "cus_42"
+		}
+	}
 }
 ```
 
@@ -114,7 +114,7 @@ Avoid:
 
 ## Pick a `data` shape and never break it
 
-The `data.object` is the payload for one event. The decision: should it be the *full state* of the resource, or just the *delta* (what changed)?
+The `data.object` is the payload for one event. The decision: should it be the _full state_ of the resource, or just the _delta_ (what changed)?
 
 **Full state (recommended).** The whole resource, every time. Receivers always have a complete view; they don't need to query your API to fill in fields.
 
@@ -279,4 +279,3 @@ For schema, ship a JSON Schema or OpenAPI spec describing the envelope and per-t
 - Document the contract — receivers code against your docs.
 
 Next: [Sending webhooks](/notes/webhooks/03-sending) — the producer side in Go, in 60 lines, talking to a real receiver.
-

@@ -1,10 +1,10 @@
 ---
 title: "Let's Encrypt & ACME"
-subtitle: "The protocol that lets a free CA issue 350 million certificates a year. Account, order, challenge, finalize, download — what every certbot run does behind the scenes."
+subtitle: 'The protocol that lets a free CA issue 350 million certificates a year. Account, order, challenge, finalize, download — what every certbot run does behind the scenes.'
 chapter: 4
-level: "beginner"
-readingTime: "11 min"
-topics: ["letsencrypt", "acme", "certificates", "automation"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['letsencrypt', 'acme', 'certificates', 'automation']
 ---
 
 <script>
@@ -48,7 +48,7 @@ That is the entire issuance flow. certbot does:
 6. Configures nginx to use the new cert.
 7. Sets up a systemd timer that renews the cert before expiration.
 
-Chapter 5 walks through this command in detail. This chapter explains *what is happening underneath* so when something fails, you know what to look at.
+Chapter 5 walks through this command in detail. This chapter explains _what is happening underneath_ so when something fails, you know what to look at.
 
 ## The ACME protocol — five steps
 
@@ -177,7 +177,7 @@ The whole flow takes 5–30 seconds.
 Walking through HTTP-01 because it is what 90% of users hit:
 
 1. certbot generates a random token (provided by the CA in the challenge object).
-2. certbot computes a *key authorization* — the SHA256 hash of `<token>.<account-key-thumbprint>`. This is what the CA expects to find at the well-known URL.
+2. certbot computes a _key authorization_ — the SHA256 hash of `<token>.<account-key-thumbprint>`. This is what the CA expects to find at the well-known URL.
 3. certbot writes the key authorization to a file at `/var/www/letsencrypt/.well-known/acme-challenge/<token>`.
 4. nginx must be configured to serve `/.well-known/acme-challenge/` from that directory:
 
@@ -302,4 +302,3 @@ Pick the one that fits your environment. For a Debian + nginx VPS, certbot is th
 - certbot is the default tool. Other clients exist for niche environments.
 
 Next chapter: walking through `certbot --nginx` step by step on a real VPS.
-

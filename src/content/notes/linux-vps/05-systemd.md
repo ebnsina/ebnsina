@@ -1,10 +1,10 @@
 ---
-title: "systemd"
-subtitle: "Write a unit file. Restart on crash. Survive reboot. Read the journal. The supervisor that runs everything on a modern Linux box."
+title: 'systemd'
+subtitle: 'Write a unit file. Restart on crash. Survive reboot. Read the journal. The supervisor that runs everything on a modern Linux box.'
 chapter: 5
-level: "beginner"
-readingTime: "14 min"
-topics: ["systemd", "services", "journald", "init", "linux"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['systemd', 'services', 'journald', 'init', 'linux']
 ---
 
 <script>
@@ -47,15 +47,15 @@ Everything else (timers, sockets, mounts, scopes, slices) is an extension of the
 
 A **unit** is anything systemd manages. Each has a name and a type, separated by a dot:
 
-| Type | What it represents |
-|---|---|
-| `.service` | A long-running process. The most common kind. |
-| `.timer` | A scheduled trigger (cron replacement). |
-| `.socket` | A listening port managed by systemd, hands off to a service when a connection arrives. |
-| `.target` | A grouping of units. `multi-user.target` is "the system is up and ready." |
-| `.mount` | A filesystem mount point. |
-| `.path` | A trigger that fires when a file changes. |
-| `.timer` | A schedule. |
+| Type       | What it represents                                                                     |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `.service` | A long-running process. The most common kind.                                          |
+| `.timer`   | A scheduled trigger (cron replacement).                                                |
+| `.socket`  | A listening port managed by systemd, hands off to a service when a connection arrives. |
+| `.target`  | A grouping of units. `multi-user.target` is "the system is up and ready."              |
+| `.mount`   | A filesystem mount point.                                                              |
+| `.path`    | A trigger that fires when a file changes.                                              |
+| `.timer`   | A schedule.                                                                            |
 
 Units live in three directories, in order of precedence:
 
@@ -135,7 +135,7 @@ Reboot the box. Your app comes back up automatically. Crash it. systemd waits fi
 - `NoNewPrivileges=true` — process cannot gain privileges via setuid binaries.
 - `ProtectSystem=strict` — `/usr`, `/boot`, `/efi` are read-only. `/etc` is read-only with `=full`.
 - `ProtectHome=true` — `/home`, `/root`, `/run/user` are inaccessible.
-- `ReadWritePaths=` — directories the service is *allowed* to write, despite the above.
+- `ReadWritePaths=` — directories the service is _allowed_ to write, despite the above.
 - `PrivateTmp=true` — your `/tmp` is a sandbox, not the shared `/tmp`.
 
 **Resource limits**:
@@ -260,7 +260,7 @@ RandomizedDelaySec=15min
 WantedBy=timers.target
 ```
 
-Enable the *timer*, not the service:
+Enable the _timer_, not the service:
 
 ```bash
 sudo systemctl enable --now backup.timer
@@ -274,7 +274,7 @@ systemctl list-timers
 - **Forgetting `daemon-reload`.** After editing a unit file, `systemctl` still has the old version cached. `sudo systemctl daemon-reload` fixes it.
 - **Running as root by default.** Without `User=`, the service runs as root. Fix it.
 - **Using relative paths in `ExecStart`.** systemd does not have a shell PATH. Always use absolute paths.
-- **Not setting `Restart=`.** Default is `no` — your service will *not* restart on crash unless you ask.
+- **Not setting `Restart=`.** Default is `no` — your service will _not_ restart on crash unless you ask.
 - **Logs going to a file the unit cannot write.** Just write to stdout. journald handles the rest.
 
 ## Recap
@@ -286,4 +286,3 @@ systemctl list-timers
 - Reload picks up new unit files; restart kills and respawns the service.
 
 Next chapter: who is listening on what port, and the tools to find out.
-

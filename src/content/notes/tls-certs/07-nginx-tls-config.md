@@ -1,10 +1,10 @@
 ---
-title: "Configuring nginx for TLS"
-subtitle: "A complete TLS server block — protocols, ciphers, OCSP stapling, HSTS, modern key types, perfect forward secrecy. The config that scores A+ without copy-paste cargo."
+title: 'Configuring nginx for TLS'
+subtitle: 'A complete TLS server block — protocols, ciphers, OCSP stapling, HSTS, modern key types, perfect forward secrecy. The config that scores A+ without copy-paste cargo.'
 chapter: 7
-level: "intermediate"
-readingTime: "13 min"
-topics: ["nginx", "tls", "ssl", "hsts", "ocsp"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['nginx', 'tls', 'ssl', 'hsts', 'ocsp']
 ---
 
 <script>
@@ -183,7 +183,7 @@ resolver_timeout 5s;
 
 OCSP (Online Certificate Status Protocol) lets a browser ask the CA "is this cert revoked?" Without stapling, the browser makes that request every time it sees the cert — slow, leaky (the CA learns who is visiting your site), and a single point of failure.
 
-With **stapling**, *your nginx* makes the OCSP request periodically, caches the response, and includes it in the TLS handshake. The browser sees a fresh CA-signed "still valid" response without doing a separate request.
+With **stapling**, _your nginx_ makes the OCSP request periodically, caches the response, and includes it in the TLS handshake. The browser sees a fresh CA-signed "still valid" response without doing a separate request.
 
 - `ssl_stapling on` — fetch and cache OCSP responses.
 - `ssl_stapling_verify on` — verify the OCSP response with `ssl_trusted_certificate` before serving it.
@@ -355,4 +355,3 @@ curl --tlsv1.0 --tls-max 1.0 https://example.com
 - Verify with SSL Labs and `testssl.sh`. Confirm TLS 1.0/1.1 are rejected.
 
 Next and final chapter: keeping certs alive — renewal monitoring, hooks, rotation, and what to do when something fails.
-

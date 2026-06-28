@@ -96,7 +96,9 @@ export function buildShape(name: ShapeName): Pts {
 		for (let i = 0; i < N; i++) {
 			const a = (i / N) * Math.PI * 2;
 			const r = 1.25 + (i % 3) * 0.32;
-			nodes.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(i * 1.9) * 0.85, Math.sin(a) * r * 0.65));
+			nodes.push(
+				new THREE.Vector3(Math.cos(a) * r, Math.sin(i * 1.9) * 0.85, Math.sin(a) * r * 0.65)
+			);
 		}
 		const sg = new THREE.SphereGeometry(0.2, 16, 16);
 		for (const n of nodes) {

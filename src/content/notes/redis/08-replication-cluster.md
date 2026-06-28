@@ -1,10 +1,10 @@
 ---
-title: "Replication, Sentinel & Cluster"
-subtitle: "From one node to many: copies, automatic failover, and sharding across hash slots."
+title: 'Replication, Sentinel & Cluster'
+subtitle: 'From one node to many: copies, automatic failover, and sharding across hash slots.'
 chapter: 8
-level: "advanced"
-readingTime: "13 min"
-topics: ["replication", "sentinel", "cluster"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['replication', 'sentinel', 'cluster']
 ---
 
 <script>
@@ -29,9 +29,9 @@ master_link_status:up
 slave_read_only:1
 ```
 
-How it works: on connect the replica does a full sync — the primary forks an RDB snapshot, ships it, and the replica loads it. From then on the primary streams a continuous replication log of commands. A brief disconnect triggers a *partial* resync from a backlog buffer rather than a full one.
+How it works: on connect the replica does a full sync — the primary forks an RDB snapshot, ships it, and the replica loads it. From then on the primary streams a continuous replication log of commands. A brief disconnect triggers a _partial_ resync from a backlog buffer rather than a full one.
 
-The crucial property is that **replication is asynchronous**. The primary acknowledges a write to the client *before* confirming the replica received it. This keeps writes fast but means a replica can lag slightly behind, and a primary that crashes may take its last few writes with it.
+The crucial property is that **replication is asynchronous**. The primary acknowledges a write to the client _before_ confirming the replica received it. This keeps writes fast but means a replica can lag slightly behind, and a primary that crashes may take its last few writes with it.
 
 What replication buys you:
 
@@ -39,7 +39,7 @@ What replication buys you:
 - **Data redundancy** — a full live copy on another machine.
 - **A failover target** — a replica can be promoted to primary.
 
-What it does *not* buy you: automatic recovery. If the primary dies, promoting a replica and repointing clients is manual. That is Sentinel's job.
+What it does _not_ buy you: automatic recovery. If the primary dies, promoting a replica and repointing clients is manual. That is Sentinel's job.
 
 <Callout type="info">
 
@@ -60,8 +60,8 @@ sentinel failover-timeout mymaster 60000
 
 The failover sequence:
 
-1. **Detection.** A Sentinel stops getting `PING` replies and marks the primary *subjectively down*.
-2. **Agreement.** Once a *quorum* of Sentinels agree, the primary is *objectively down* — the quorum prevents one Sentinel's bad network from triggering a needless failover.
+1. **Detection.** A Sentinel stops getting `PING` replies and marks the primary _subjectively down_.
+2. **Agreement.** Once a _quorum_ of Sentinels agree, the primary is _objectively down_ — the quorum prevents one Sentinel's bad network from triggering a needless failover.
 3. **Election.** The Sentinels elect a leader to run the failover.
 4. **Promotion.** A suitable replica is promoted; the others are reconfigured to replicate from it.
 5. **Notification.** Clients, using a Sentinel-aware library, ask Sentinel for the current primary address and reconnect.
@@ -101,7 +101,7 @@ OK
 (integer) 5439
 ```
 
-Design your keys with hash tags *up front* for any group you will need to read or modify together — retrofitting them later means moving data.
+Design your keys with hash tags _up front_ for any group you will need to read or modify together — retrofitting them later means moving data.
 
 <Callout type="warning">
 
@@ -117,7 +117,7 @@ Every layer here is built on asynchronous replication, so none offers strong con
 - **Split-brain is possible.** During a partition an old primary may keep accepting writes from clients on its side until it notices it has been replaced; those writes are discarded when it rejoins. `min-replicas-to-write` reduces this by refusing writes unless enough replicas are connected.
 - **Reads from replicas are stale** by some small, variable amount.
 
-This is the standard CAP trade-off: under a partition Redis favors availability over strict consistency. For caches, sessions, and most of what Redis is good at, that is the right trade — losing a few of the last writes during a rare failover is acceptable. If it is *not* acceptable for a particular piece of data, that data probably belongs in a system designed for strong consistency, with Redis caching in front of it.
+This is the standard CAP trade-off: under a partition Redis favors availability over strict consistency. For caches, sessions, and most of what Redis is good at, that is the right trade — losing a few of the last writes during a rare failover is acceptable. If it is _not_ acceptable for a particular piece of data, that data probably belongs in a system designed for strong consistency, with Redis caching in front of it.
 
 ## When you actually need clustering
 

@@ -1,10 +1,21 @@
 ---
-title: "Mobile Security"
-subtitle: "Android APK analysis, iOS app testing, dynamic instrumentation with Frida, SSL pinning bypass, and mobile OWASP Top 10."
+title: 'Mobile Security'
+subtitle: 'Android APK analysis, iOS app testing, dynamic instrumentation with Frida, SSL pinning bypass, and mobile OWASP Top 10.'
 chapter: 24
-level: "intermediate"
-readingTime: "14 min"
-topics: ["mobile security", "Android", "iOS", "APK analysis", "Frida", "SSL pinning bypass", "MobSF", "OWASP mobile", "dynamic analysis"]
+level: 'intermediate'
+readingTime: '14 min'
+topics:
+  [
+    'mobile security',
+    'Android',
+    'iOS',
+    'APK analysis',
+    'Frida',
+    'SSL pinning bypass',
+    'MobSF',
+    'OWASP mobile',
+    'dynamic analysis'
+  ]
 ---
 
 <script>
@@ -139,20 +150,20 @@ frida -U -n "com.target.app" --no-pause -l script.js
 
 ```javascript
 // Frida script — hook a function
-Java.perform(function() {
-    // Hook a class method
-    var Activity = Java.use('com.target.app.LoginActivity');
-    
-    Activity.checkPassword.implementation = function(password) {
-        console.log('[*] checkPassword called with: ' + password);
-        
-        // Call original and see result
-        var result = this.checkPassword(password);
-        console.log('[*] Original result: ' + result);
-        
-        // Override: always return true
-        return true;
-    };
+Java.perform(function () {
+	// Hook a class method
+	var Activity = Java.use('com.target.app.LoginActivity');
+
+	Activity.checkPassword.implementation = function (password) {
+		console.log('[*] checkPassword called with: ' + password);
+
+		// Call original and see result
+		var result = this.checkPassword(password);
+		console.log('[*] Original result: ' + result);
+
+		// Override: always return true
+		return true;
+	};
 });
 ```
 
@@ -163,30 +174,39 @@ SSL pinning prevents traffic interception — the app only trusts its own certif
 ```javascript
 // Universal SSL Pinning Bypass — covers most frameworks
 // Source: fridaninja / objection
-Java.perform(function() {
-    // OkHttp3
-    try {
-        var OkHostnameVerifier = Java.use('okhttp3.internal.tls.OkHostnameVerifier');
-        OkHostnameVerifier.verify.overload('java.lang.String', 'javax.net.ssl.SSLSession').implementation = function(s, session) {
-            return true;
-        };
-    } catch(e) {}
-    
-    // TrustManager — custom cert validation
-    var TrustManager = Java.registerClass({
-        name: 'com.custom.TrustManager',
-        implements: [Java.use('javax.net.ssl.X509TrustManager')],
-        methods: {
-            checkClientTrusted: function(chain, authType) {},
-            checkServerTrusted: function(chain, authType) {},
-            getAcceptedIssuers: function() { return []; }
-        }
-    });
-    
-    var SSLContext = Java.use('javax.net.ssl.SSLContext');
-    SSLContext.init.overload('[Ljavax.net.ssl.KeyManager;', '[Ljavax.net.ssl.TrustManager;', 'java.security.SecureRandom').implementation = function(km, tm, sr) {
-        this.init(km, [TrustManager.$new()], sr);
-    };
+Java.perform(function () {
+	// OkHttp3
+	try {
+		var OkHostnameVerifier = Java.use('okhttp3.internal.tls.OkHostnameVerifier');
+		OkHostnameVerifier.verify.overload(
+			'java.lang.String',
+			'javax.net.ssl.SSLSession'
+		).implementation = function (s, session) {
+			return true;
+		};
+	} catch (e) {}
+
+	// TrustManager — custom cert validation
+	var TrustManager = Java.registerClass({
+		name: 'com.custom.TrustManager',
+		implements: [Java.use('javax.net.ssl.X509TrustManager')],
+		methods: {
+			checkClientTrusted: function (chain, authType) {},
+			checkServerTrusted: function (chain, authType) {},
+			getAcceptedIssuers: function () {
+				return [];
+			}
+		}
+	});
+
+	var SSLContext = Java.use('javax.net.ssl.SSLContext');
+	SSLContext.init.overload(
+		'[Ljavax.net.ssl.KeyManager;',
+		'[Ljavax.net.ssl.TrustManager;',
+		'java.security.SecureRandom'
+	).implementation = function (km, tm, sr) {
+		this.init(km, [TrustManager.$new()], sr);
+	};
 });
 ```
 
@@ -307,4 +327,3 @@ sqlite3 ids2 "SELECT * FROM sqliuser;"
 # SQL injection in app fields
 # XSS in WebView
 ```
-

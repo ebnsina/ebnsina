@@ -1,10 +1,10 @@
 ---
-title: "Queue Backends"
-subtitle: "Redis-backed queues with BullMQ, Postgres-backed with pg-boss — internals, trade-offs, and when each fits."
+title: 'Queue Backends'
+subtitle: 'Redis-backed queues with BullMQ, Postgres-backed with pg-boss — internals, trade-offs, and when each fits.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["BullMQ", "pg-boss", "Redis", "PostgreSQL", "queue internals"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['BullMQ', 'pg-boss', 'Redis', 'PostgreSQL', 'queue internals']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A ticketing system: Redis queues are the fast-moving line at a concert venue whe
 BullMQ is the most popular Node.js queue library. It uses Redis sorted sets and lists to track job state transitions.
 
 **Job states in BullMQ:**
+
 ```
 waiting → active → completed
                  → failed → (retry) → waiting
@@ -31,6 +32,7 @@ waiting → active → completed
 ```
 
 **Setup:**
+
 ```typescript
 import { Queue, Worker, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
@@ -41,40 +43,41 @@ const connection = new Redis({ host: 'localhost', port: 6379, maxRetriesPerReque
 const emailQueue = new Queue('emails', { connection });
 
 await emailQueue.add(
-  'send-welcome',
-  { userId: 'u_123', email: 'user@example.com' },
-  {
-    attempts: 3,                          // retry up to 3 times
-    backoff: { type: 'exponential', delay: 2000 }, // 2s, 4s, 8s
-    removeOnComplete: { count: 1000 },    // keep last 1000 completed
-    removeOnFail: { count: 5000 },        // keep last 5000 failed
-  },
+	'send-welcome',
+	{ userId: 'u_123', email: 'user@example.com' },
+	{
+		attempts: 3, // retry up to 3 times
+		backoff: { type: 'exponential', delay: 2000 }, // 2s, 4s, 8s
+		removeOnComplete: { count: 1000 }, // keep last 1000 completed
+		removeOnFail: { count: 5000 } // keep last 5000 failed
+	}
 );
 
 // Consumer (your worker process)
 const worker = new Worker(
-  'emails',
-  async (job) => {
-    const { userId, email } = job.data;
-    await sendEmail(email, 'Welcome!');
-    return { sent: true };
-  },
-  {
-    connection,
-    concurrency: 10, // 10 simultaneous jobs
-  },
+	'emails',
+	async (job) => {
+		const { userId, email } = job.data;
+		await sendEmail(email, 'Welcome!');
+		return { sent: true };
+	},
+	{
+		connection,
+		concurrency: 10 // 10 simultaneous jobs
+	}
 );
 
 worker.on('completed', (job, result) => {
-  console.log(`Job ${job.id} done:`, result);
+	console.log(`Job ${job.id} done:`, result);
 });
 
 worker.on('failed', (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err.message);
+	console.error(`Job ${job?.id} failed:`, err.message);
 });
 ```
 
 **Redis data structures BullMQ uses:**
+
 - `bull:emails:wait` — sorted set of waiting jobs (score = priority)
 - `bull:emails:active` — set of jobs currently being processed
 - `bull:emails:completed` — sorted set of completed jobs
@@ -93,24 +96,25 @@ await boss.start();
 
 // Producer — can be inside a transaction
 await db.transaction(async (trx) => {
-  const user = await trx.users.create(userData);
+	const user = await trx.users.create(userData);
 
-  // Job is created atomically with the user — no chance of user-without-job
-  await boss.sendOnce(
-    'send-welcome-email',
-    { userId: user.id },
-    { retryLimit: 3, retryDelay: 30, expireInHours: 24 },
-    user.id, // deduplication key
-  );
+	// Job is created atomically with the user — no chance of user-without-job
+	await boss.sendOnce(
+		'send-welcome-email',
+		{ userId: user.id },
+		{ retryLimit: 3, retryDelay: 30, expireInHours: 24 },
+		user.id // deduplication key
+	);
 });
 
 // Consumer
 await boss.work('send-welcome-email', { teamSize: 5 }, async (job) => {
-  await sendEmail(job.data.userId);
+	await sendEmail(job.data.userId);
 });
 ```
 
 **The schema pg-boss creates:**
+
 ```sql
 CREATE TABLE pgboss.job (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -152,12 +156,14 @@ RETURNING *;
 ## Choosing Between Them
 
 **Use BullMQ (Redis) when:**
+
 - You need real-time job pickup (sub-second)
 - High throughput (thousands of jobs/second)
 - You need built-in job progress tracking, rate limiting per queue, or priority queues
 - You already run Redis
 
 **Use pg-boss (Postgres) when:**
+
 - You want to enqueue atomically with a DB write (no chance of job lost if enqueue fails)
 - You don't want to run Redis
 - You need full auditability of job history
@@ -174,9 +180,9 @@ await emailQueue.add('send-welcome', { userId: user.id });
 
 // pg-boss — transactional
 await db.transaction(async (trx) => {
-  await trx.users.create(user);
-  await boss.send('send-welcome', { userId: user.id }); // same transaction
-  // If either fails, both are rolled back — consistent state
+	await trx.users.create(user);
+	await boss.send('send-welcome', { userId: user.id }); // same transaction
+	// If either fails, both are rolled back — consistent state
 });
 ```
 
@@ -185,29 +191,43 @@ This is a significant advantage for operations where "write record + enqueue job
 ## Delayed and Scheduled Jobs
 
 **Delayed (run once, in the future):**
+
 ```typescript
 // BullMQ
-await queue.add('send-trial-expiry-email', { userId }, {
-  delay: 14 * 24 * 60 * 60 * 1000, // 14 days from now
-});
+await queue.add(
+	'send-trial-expiry-email',
+	{ userId },
+	{
+		delay: 14 * 24 * 60 * 60 * 1000 // 14 days from now
+	}
+);
 
 // pg-boss
-await boss.send('send-trial-expiry-email', { userId }, {
-  startAfter: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-});
+await boss.send(
+	'send-trial-expiry-email',
+	{ userId },
+	{
+		startAfter: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+	}
+);
 ```
 
 **Recurring (cron-like):**
+
 ```typescript
 // BullMQ — repeatable jobs
-await queue.add('cleanup-expired-sessions', {}, {
-  repeat: { cron: '0 3 * * *' }, // 3am every day
-});
+await queue.add(
+	'cleanup-expired-sessions',
+	{},
+	{
+		repeat: { cron: '0 3 * * *' } // 3am every day
+	}
+);
 
 // pg-boss — schedules
 await boss.schedule('cleanup-expired-sessions', '0 3 * * *', {});
 await boss.work('cleanup-expired-sessions', async () => {
-  await db.sessions.deleteExpired();
+	await db.sessions.deleteExpired();
 });
 ```
 
@@ -218,22 +238,24 @@ Key metrics to track:
 ```typescript
 // BullMQ counts
 const [waiting, active, completed, failed] = await Promise.all([
-  queue.getWaitingCount(),
-  queue.getActiveCount(),
-  queue.getCompletedCount(),
-  queue.getFailedCount(),
+	queue.getWaitingCount(),
+	queue.getActiveCount(),
+	queue.getCompletedCount(),
+	queue.getFailedCount()
 ]);
 
 console.log({ waiting, active, completed, failed });
 ```
 
 **Alert thresholds:**
+
 - `waiting > 1000`: queue is backing up, add workers
 - `failed > 0 and growing`: job type has a bug or dependency is down
 - `active == workerCount and waiting > 0`: at worker capacity, scale out
 - `oldest waiting job > 5 minutes`: job pickup SLA is broken
 
 **Bull Board** — visual UI for BullMQ:
+
 ```typescript
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -243,12 +265,11 @@ const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 createBullBoard({
-  queues: [new BullMQAdapter(emailQueue), new BullMQAdapter(pdfQueue)],
-  serverAdapter,
+	queues: [new BullMQAdapter(emailQueue), new BullMQAdapter(pdfQueue)],
+	serverAdapter
 });
 
 app.use('/admin/queues', serverAdapter.getRouter());
 ```
 
 Mount behind auth — this shows job payloads which may contain sensitive data.
-

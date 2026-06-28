@@ -1,10 +1,10 @@
 ---
-title: "Disaster Recovery & Backups"
-subtitle: "RTO, RPO, multi-region failover, and the restore drill that proves your backups exist."
+title: 'Disaster Recovery & Backups'
+subtitle: 'RTO, RPO, multi-region failover, and the restore drill that proves your backups exist.'
 chapter: 9
-level: "advanced"
-readingTime: "16 min"
-topics: ["disaster recovery", "DR", "RTO", "RPO", "backups", "failover"]
+level: 'advanced'
+readingTime: '16 min'
+topics: ['disaster recovery', 'DR', 'RTO', 'RPO', 'backups', 'failover']
 ---
 
 <script>
@@ -252,10 +252,11 @@ Active-passive is the most common production multi-region pattern. The key compo
 
 The failover playbook (real, ordered, tested):
 
-```markdown
+````markdown
 # DR Failover Runbook: us-east-1 → us-west-2
 
 ## Pre-flight checks (must all be GREEN)
+
 1. us-west-2 DB replica lag < 5 seconds
 2. us-west-2 app tier health check passing
 3. us-west-2 cache warm (hit rate > 60%)
@@ -264,14 +265,17 @@ The failover playbook (real, ordered, tested):
 ## Failover (target: 5 minutes total)
 
 ### Step 1: Promote DR DB (90s)
+
 ```bash
 aws rds promote-read-replica \
   --db-instance-identifier checkout-dr \
   --backup-retention-period 7 \
   --region us-west-2
 ```
+````
 
 ### Step 2: Update app tier config (30s)
+
 ```bash
 kubectl --context us-west-2 set env deployment/checkout \
   DB_HOST=checkout-dr.us-west-2.rds.amazonaws.com \
@@ -279,6 +283,7 @@ kubectl --context us-west-2 set env deployment/checkout \
 ```
 
 ### Step 3: Shift DNS (30s + propagation)
+
 ```bash
 aws route53 change-resource-record-sets \
   --hosted-zone-id Z1234 \
@@ -286,18 +291,22 @@ aws route53 change-resource-record-sets \
 ```
 
 ### Step 4: Verify (60s)
+
 - Hit /healthz from external probe
 - Check error rate dashboard
 - Confirm new orders flowing in us-west-2
 
 ### Step 5: Update status page
+
 "Operating from us-west-2 (DR region). All systems nominal."
 
 ## Rollback
+
 DR back to primary requires a new replica setup (us-east-1 ←─ us-west-2)
 and a planned switchover window. Do NOT rush back to us-east-1 — verify
 us-east-1 is genuinely healthy first.
-```
+
+````
 
 Every command in this runbook has been run during a drill. The team knows it works. They are not improvising during a real disaster.
 
@@ -331,7 +340,7 @@ const realIncidents = {
     fix: "Force-stop primary BEFORE promoting DR. Use STONITH / fencing.",
   },
 };
-```
+````
 
 Every one of these is preventable with a thorough drill. They are not preventable with planning alone.
 
@@ -374,4 +383,3 @@ The "separate credentials" rule alone defeats most ransomware playbooks.
 3. **Untested backups are not backups** — quarterly restore drills are mandatory
 4. **DR region must handle 100% of primary load** — not 30%
 5. **Every step in the failover runbook has been executed in a drill** — improvisation is the failure mode
-

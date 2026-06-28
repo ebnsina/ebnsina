@@ -1,10 +1,10 @@
 ---
-title: "The handshake and frame protocol"
-subtitle: "RFC 6455 in the parts that matter for shipping a server. Upgrade headers, frame layout, masking, opcodes, close codes, and the rules a library follows so you do not have to."
+title: 'The handshake and frame protocol'
+subtitle: 'RFC 6455 in the parts that matter for shipping a server. Upgrade headers, frame layout, masking, opcodes, close codes, and the rules a library follows so you do not have to.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["websockets", "rfc6455", "frames", "handshake"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['websockets', 'rfc6455', 'frames', 'handshake']
 ---
 
 <script>
@@ -43,7 +43,7 @@ Three things to notice.
 
 **2. `Sec-WebSocket-Key` is a 16-byte random base64 value.** The server proves it understood the protocol by computing `Sec-WebSocket-Accept = base64(sha1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))`. The magic GUID is fixed by the spec.
 
-**3. `Origin` matters.** Browsers send their origin automatically. Servers should check it. Without an origin check, *any* website a logged-in user visits can open a WebSocket to your server using their cookies. Chapter 8 has the full pattern; for now, know the header is there for a reason.
+**3. `Origin` matters.** Browsers send their origin automatically. Servers should check it. Without an origin check, _any_ website a logged-in user visits can open a WebSocket to your server using their cookies. Chapter 8 has the full pattern; for now, know the header is there for a reason.
 
 The server response if it accepts:
 
@@ -164,7 +164,7 @@ The receiver buffers all three and presents one logical message: `"Hello, WebSoc
 
 In practice, libraries hide fragmentation. Most apps send and receive whole messages in single frames. You need to know fragmentation exists when:
 
-- A client mixes a control frame *between* fragments — that is fine, control frames can interleave.
+- A client mixes a control frame _between_ fragments — that is fine, control frames can interleave.
 - You see partial UTF-8 in a debug log — the library may have shown one fragment.
 
 ## Close frames
@@ -179,17 +179,17 @@ Both close TCP.
 
 The close frame's payload is a 2-byte status code plus optional UTF-8 reason. Common codes:
 
-| Code | Meaning |
-|---|---|
-| 1000 | Normal closure |
-| 1001 | Going away (server shutdown, client navigation) |
-| 1002 | Protocol error |
-| 1003 | Cannot accept the data type (e.g. binary not supported) |
-| 1006 | Abnormal closure (no close frame seen — TCP died) |
-| 1008 | Policy violation (auth failed, bad input) |
-| 1009 | Message too big |
-| 1011 | Internal server error |
-| 4000–4999 | Application-defined |
+| Code      | Meaning                                                 |
+| --------- | ------------------------------------------------------- |
+| 1000      | Normal closure                                          |
+| 1001      | Going away (server shutdown, client navigation)         |
+| 1002      | Protocol error                                          |
+| 1003      | Cannot accept the data type (e.g. binary not supported) |
+| 1006      | Abnormal closure (no close frame seen — TCP died)       |
+| 1008      | Policy violation (auth failed, bad input)               |
+| 1009      | Message too big                                         |
+| 1011      | Internal server error                                   |
+| 4000–4999 | Application-defined                                     |
 
 `1006` is the one you see most often in production: the connection dropped without a close handshake, library reports it. Network glitch, NAT timeout, force-quit client — all become 1006.
 
@@ -253,4 +253,3 @@ The library does all of this. Your job is to implement the **application protoco
 - TLS via `wss://` on port 443. HTTP/1.1 only in practice.
 
 Next: [Your first server](/notes/websockets/03-first-server) — Go, end-to-end, in 80 lines. Browser client included.
-

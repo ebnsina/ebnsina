@@ -1,17 +1,17 @@
 ---
-title: "Distributed Transactions"
-subtitle: "Coordinating changes across services: two-phase commit and its blocking problem, sagas, the outbox pattern, and exactly-once myths."
+title: 'Distributed Transactions'
+subtitle: 'Coordinating changes across services: two-phase commit and its blocking problem, sagas, the outbox pattern, and exactly-once myths.'
 chapter: 8
-level: "mastery"
-readingTime: "12 min"
-topics: ["2pc", "saga", "outbox"]
+level: 'mastery'
+readingTime: '12 min'
+topics: ['2pc', 'saga', 'outbox']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A single-database transaction gives you ACID: a set of changes either all commit or all roll back, atomically. The moment your operation spans two databases, two services, or a database *and* a message broker, that guarantee evaporates — there is no shared transaction to roll back. A **distributed transaction** is any unit of work that must take effect across multiple independent systems. This chapter surveys the techniques for making such work reliable, from the classic-but-flawed two-phase commit to the patterns most production systems actually use.
+A single-database transaction gives you ACID: a set of changes either all commit or all roll back, atomically. The moment your operation spans two databases, two services, or a database _and_ a message broker, that guarantee evaporates — there is no shared transaction to roll back. A **distributed transaction** is any unit of work that must take effect across multiple independent systems. This chapter surveys the techniques for making such work reliable, from the classic-but-flawed two-phase commit to the patterns most production systems actually use.
 
 ## Two-phase commit (2PC)
 
@@ -29,7 +29,7 @@ Phase 2 — COMMIT / ABORT (decision):
   Participants act, release locks, and acknowledge.
 ```
 
-Once a participant votes YES in phase 1, it has *promised* to commit if asked — it must hold its locks and wait, unable to decide on its own. That promise is the source of 2PC's fatal weakness.
+Once a participant votes YES in phase 1, it has _promised_ to commit if asked — it must hold its locks and wait, unable to decide on its own. That promise is the source of 2PC's fatal weakness.
 
 ### The blocking problem
 
@@ -45,7 +45,7 @@ This makes the coordinator a single point of failure that can freeze the system.
 
 <Callout type="warning">
 
-**Avoid 2PC across services.** Its synchronous locking couples the availability of every participant — the whole transaction is only as available as the *least* available service, and a coordinator crash blocks everyone holding locks. It is acceptable inside a single tightly-coupled system (e.g. a distributed database's internal commit) but a poor fit for coordinating independent microservices.
+**Avoid 2PC across services.** Its synchronous locking couples the availability of every participant — the whole transaction is only as available as the _least_ available service, and a coordinator crash blocks everyone holding locks. It is acceptable inside a single tightly-coupled system (e.g. a distributed database's internal commit) but a poor fit for coordinating independent microservices.
 
 </Callout>
 
@@ -69,25 +69,25 @@ The crucial mental shift: a saga is **not atomic and not isolated**. There are i
 
 Sagas come in two coordination flavors:
 
-| | Orchestration | Choreography |
-| --- | --- | --- |
-| Control | A central **orchestrator** tells each service what to do next | Each service reacts to events and emits the next event; no central brain |
-| Visibility | Flow is explicit in one place, easy to follow and monitor | Flow is emergent, spread across services, harder to trace |
-| Coupling | Services coupled to the orchestrator | Services coupled to event schemas |
-| Best for | Complex flows, many branches, clear ownership | Simple flows, loose coupling, few steps |
+|            | Orchestration                                                 | Choreography                                                             |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Control    | A central **orchestrator** tells each service what to do next | Each service reacts to events and emits the next event; no central brain |
+| Visibility | Flow is explicit in one place, easy to follow and monitor     | Flow is emergent, spread across services, harder to trace                |
+| Coupling   | Services coupled to the orchestrator                          | Services coupled to event schemas                                        |
+| Best for   | Complex flows, many branches, clear ownership                 | Simple flows, loose coupling, few steps                                  |
 
 Neither is universally better. Orchestration shines when the workflow is complex and you need a single place to reason about it; choreography shines when steps are simple and you want minimal central coordination.
 
 ## The outbox pattern
 
-Sagas advance by emitting events, which surfaces a subtle but vicious bug. Consider a service that must do two things: commit a row to its database *and* publish an event to a message broker. These are two different systems, so they cannot share a transaction. Whichever order you choose, a crash in between leaves them inconsistent:
+Sagas advance by emitting events, which surfaces a subtle but vicious bug. Consider a service that must do two things: commit a row to its database _and_ publish an event to a message broker. These are two different systems, so they cannot share a transaction. Whichever order you choose, a crash in between leaves them inconsistent:
 
 ```text
   commit DB row, then crash, then... event never published   -> lost event
   publish event, then crash, then... DB commit fails          -> phantom event
 ```
 
-This is the **dual-write problem**, and it has no solution as long as you write to two systems separately. The **outbox pattern** dissolves it by writing to *only one* system in the critical path. Within the same local database transaction that changes your business data, you also insert the event into an **outbox table**:
+This is the **dual-write problem**, and it has no solution as long as you write to two systems separately. The **outbox pattern** dissolves it by writing to _only one_ system in the critical path. Within the same local database transaction that changes your business data, you also insert the event into an **outbox table**:
 
 ```sql
 BEGIN;
@@ -101,7 +101,7 @@ Because both writes are in one ACID transaction, they succeed or fail together �
 
 <Callout type="info">
 
-**Note:** The outbox relay guarantees **at-least-once** delivery, not exactly-once. The relay can publish an event and crash before recording that it did, then publish the same event again after restart. This is unavoidable and *fine* — it pushes the duplicate problem to the consumer, where idempotency (below) handles it cleanly. The relay can read the outbox by polling or, more efficiently, by tailing the database's change log (change data capture).
+**Note:** The outbox relay guarantees **at-least-once** delivery, not exactly-once. The relay can publish an event and crash before recording that it did, then publish the same event again after restart. This is unavoidable and _fine_ — it pushes the duplicate problem to the consumer, where idempotency (below) handles it cleanly. The relay can read the outbox by polling or, more efficiently, by tailing the database's change log (change data capture).
 
 </Callout>
 
@@ -120,13 +120,13 @@ Server:
       return the result
 ```
 
-The key and the result must be stored in the *same transaction* as the work itself; otherwise a crash between doing the work and recording the key reopens the duplicate window. Done correctly, a retried request is recognized and the original outcome is returned — the card is charged exactly once no matter how many times the request arrives.
+The key and the result must be stored in the _same transaction_ as the work itself; otherwise a crash between doing the work and recording the key reopens the duplicate window. Done correctly, a retried request is recognized and the original outcome is returned — the card is charged exactly once no matter how many times the request arrives.
 
 ## Exactly-once: the myth and the reality
 
-You will hear systems advertise **exactly-once delivery**. Taken literally, across an unreliable network, it is **impossible**: the sender can never know whether a lost acknowledgment means the message wasn't delivered or the *ack* was lost, so it must either risk losing the message (at-most-once) or risk duplicating it (at-least-once). There is no third option on the wire.
+You will hear systems advertise **exactly-once delivery**. Taken literally, across an unreliable network, it is **impossible**: the sender can never know whether a lost acknowledgment means the message wasn't delivered or the _ack_ was lost, so it must either risk losing the message (at-most-once) or risk duplicating it (at-least-once). There is no third option on the wire.
 
-What is achievable — and what "exactly-once" really means in practice — is **exactly-once *processing*** (also called *effectively-once*): messages may be *delivered* more than once, but their *effect* on state happens exactly once. The recipe is always the same:
+What is achievable — and what "exactly-once" really means in practice — is **exactly-once _processing_** (also called _effectively-once_): messages may be _delivered_ more than once, but their _effect_ on state happens exactly once. The recipe is always the same:
 
 > **at-least-once delivery** (retries until acknowledged) **+ idempotent processing** (deduplication via idempotency keys) **= exactly-once effect.**
 

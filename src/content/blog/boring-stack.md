@@ -1,8 +1,8 @@
 ---
-title: "The boring stack ships"
+title: 'The boring stack ships'
 description: "An argument for picking the dullest technology that solves your problem — and a working definition of 'dull'."
 date: 2026-03-14
-tags: ["engineering", "opinions"]
+tags: ['engineering', 'opinions']
 minutesRead: 1
 ---
 
@@ -35,13 +35,12 @@ Every novel piece of infrastructure imposes a tax:
 3. The on-call tax (when it breaks at 3am, who knows the runbook?).
 
 You pay that tax forever. It's only worth paying when the novel piece
-delivers something the boring alternative *fundamentally cannot*.
+delivers something the boring alternative _fundamentally cannot_.
 
 ## A test I use
 
-Before adopting any new piece of infrastructure, I ask: *what's the
-worst weekend I'll have because of this in the next two years?*
+Before adopting any new piece of infrastructure, I ask: _what's the
+worst weekend I'll have because of this in the next two years?_
 
 If I can't answer with specifics, I don't know the technology well
 enough to choose it.
-

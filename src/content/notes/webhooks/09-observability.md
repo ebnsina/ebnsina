@@ -1,10 +1,10 @@
 ---
-title: "Observability and replay"
-subtitle: "Webhooks are not a fire-and-forget feature. They are an operated feature. The dashboards, metrics, and traces you build for debugging are the difference between a feature you maintain and one that maintains you."
+title: 'Observability and replay'
+subtitle: 'Webhooks are not a fire-and-forget feature. They are an operated feature. The dashboards, metrics, and traces you build for debugging are the difference between a feature you maintain and one that maintains you.'
 chapter: 9
-level: "advanced"
-readingTime: "12 min"
-topics: ["webhooks", "observability", "metrics", "tracing", "dashboards"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['webhooks', 'observability', 'metrics', 'tracing', 'dashboards']
 ---
 
 <script>
@@ -206,18 +206,22 @@ For receivers, propagate the trace context via `traceparent` header on the outbo
 Same data, different audience. Customers see only their own subscriptions. The pages:
 
 **Subscription list.**
+
 - URL, event types subscribed, success rate (24h), last successful delivery, current state.
 
 **Recent events.**
+
 - Per-event row: ID, type, status, attempts, last attempt time. Filterable by state and type.
 
 **Event detail.**
+
 - The signed body and headers we sent.
 - All attempts: timestamps, response status, response body snippet, durations.
 - Resend button.
 - "Why did this fail?" hints (e.g., "Your endpoint returned 502 Bad Gateway").
 
 **Endpoint health.**
+
 - Success rate over time.
 - Latency chart.
 - Recent failures.
@@ -229,10 +233,10 @@ Stripe's dashboard is the reference. You can ship a much simpler version in a we
 A "live tail" page shows events as they happen — useful for customers integrating for the first time. Implementation: a SSE stream (chapter 5 of WebSockets track) of new events for the customer's subscriptions, with the full request/response inline.
 
 ```javascript
-const es = new EventSource("/dashboard/subscriptions/42/events/live");
-es.addEventListener("event", (e) => {
-  const ev = JSON.parse(e.data);
-  appendToTable(ev);
+const es = new EventSource('/dashboard/subscriptions/42/events/live');
+es.addEventListener('event', (e) => {
+	const ev = JSON.parse(e.data);
+	appendToTable(ev);
 });
 ```
 
@@ -264,13 +268,13 @@ A `bulk_replay` audit row carries the criteria:
 
 ```json
 {
-  "actor": "operator:alice",
-  "action": "bulk_replay",
-  "metadata": {
-    "criteria": {"created_at": ">=2026-05-04T12:00:00Z"},
-    "count": 4823,
-    "reason": "deploy bug, ticket #1234"
-  }
+	"actor": "operator:alice",
+	"action": "bulk_replay",
+	"metadata": {
+		"criteria": { "created_at": ">=2026-05-04T12:00:00Z" },
+		"count": 4823,
+		"reason": "deploy bug, ticket #1234"
+	}
 }
 ```
 
@@ -309,7 +313,7 @@ For multi-tenant producers, observability includes per-customer counters:
 deliveriesPerCustomer.WithLabelValues(customerID).Inc()
 ```
 
-Combined with their plan limits, you alert *them* (not just yourself):
+Combined with their plan limits, you alert _them_ (not just yourself):
 
 ```
 Your webhook usage this month: 4.2M of 5M plan limit.
@@ -330,4 +334,3 @@ This is product, not just ops. But the same metric supports both — it just tak
 - Per-customer counters support both ops alerts and product UX.
 
 Next: [Self-host](/notes/webhooks/10-production) — the outbox pattern, worker pool, and full deploy on a VPS.
-

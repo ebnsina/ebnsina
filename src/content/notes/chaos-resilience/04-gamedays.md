@@ -1,10 +1,10 @@
 ---
-title: "GameDays"
-subtitle: "How to run a structured chaos experiment with a team — planning, execution, post-mortem, and building a resilience culture."
+title: 'GameDays'
+subtitle: 'How to run a structured chaos experiment with a team — planning, execution, post-mortem, and building a resilience culture.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["GameDay", "incident simulation", "post-mortem", "runbooks", "team exercises"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['GameDay', 'incident simulation', 'post-mortem', 'runbooks', 'team exercises']
 ---
 
 <script>
@@ -33,6 +33,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ## Planning a GameDay
 
 **4-6 weeks before:**
+
 ```
 □ Choose the scenario (what failure are you simulating?)
 □ Define steady state and success/failure criteria
@@ -43,6 +44,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ```
 
 **1 week before:**
+
 ```
 □ Review runbooks for the scenario
 □ Confirm monitoring dashboards are ready
@@ -52,6 +54,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ```
 
 **Choosing a scenario:** Pick failure modes that are realistic but that you haven't fully validated your resilience for:
+
 - "What happens when our primary database is unavailable?"
 - "What happens when our payment provider returns 500 for 5 minutes?"
 - "What happens when one of three app servers goes down during peak traffic?"
@@ -70,6 +73,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ## Running the Experiment
 
 **30 minutes before:**
+
 ```bash
 # Verify baseline
 # All instances healthy? ✓
@@ -80,6 +84,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ```
 
 **Start the experiment:**
+
 ```
 [10:00] Chaos Engineer: "Starting experiment. Injecting 500ms latency on payment-service."
 [10:00] Observer 1: "Watching payment latency dashboard"
@@ -88,6 +93,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 ```
 
 **During the experiment — real-time logging:**
+
 ```
 [10:01] Observer 1: "Payment p99 climbing: 120ms → 680ms"
 [10:01] Observer 2: "Checkout error rate: 0.2% (below abort threshold)"
@@ -129,31 +135,38 @@ No shame in aborting. You've learned something: your safety margins were tighter
 Run within 48 hours while memory is fresh. Blameless — the goal is system improvement, not assigning fault.
 
 **Structure:**
+
 ```markdown
 ## GameDay Post-Mortem: Payment Latency — 2024-01-15
 
 ### What we tested
+
 Injected 500ms latency on payment-service for 7 minutes
 
 ### Hypothesis
+
 Error rate would remain < 0.5% due to circuit breaker protection
 
 ### What happened
+
 - Circuit breaker opened at T+4m (as designed)
 - But checkout errors peaked at 4.2% at T+4m before breaker opened
 - Recovery was clean once fault injection stopped (< 2 minutes)
 
 ### What worked
+
 ✓ Circuit breaker opened automatically
 ✓ Monitoring dashboards showed the issue clearly
 ✓ System recovered without manual intervention
 
 ### What didn't work
+
 ✗ Circuit breaker threshold (50% errors) too high — too many users hit errors before it opened
 ✗ Runbook for "payment degraded" was hard to find (buried in Notion)
 ✗ Communicator didn't know how to update status page
 
 ### Action items
+
 1. Lower circuit breaker error threshold to 30% [Owner: @alice, Due: Jan 22]
 2. Move payment runbook to top-level docs [Owner: @bob, Due: Jan 19]
 3. Status page update training for all team members [Owner: @carol, Due: Jan 31]
@@ -180,6 +193,7 @@ Rotate who plays each role — everyone should experience being the chaos engine
 ## Chaos as a Hiring Signal
 
 Teams that run regular GameDays attract engineers who want to work on robust systems. It signals:
+
 - The team takes reliability seriously
 - Learning from failure is safe and expected
 - There's space to be curious about how the system actually works
@@ -216,4 +230,3 @@ For mature teams, run chaos experiments automatically against staging on every d
 ```
 
 This ensures every release is validated against your known failure modes before reaching users.
-

@@ -1,10 +1,10 @@
 ---
-title: "Streaming RPCs"
-subtitle: "Streams are the part of gRPC where it stops resembling REST. Server-streaming, client-streaming, and bidirectional — three shapes that change what kind of services you can build."
+title: 'Streaming RPCs'
+subtitle: 'Streams are the part of gRPC where it stops resembling REST. Server-streaming, client-streaming, and bidirectional — three shapes that change what kind of services you can build.'
 chapter: 6
-level: "intermediate"
-readingTime: "13 min"
-topics: ["grpc", "streaming", "server stream", "bidi"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['grpc', 'streaming', 'server stream', 'bidi']
 ---
 
 <script>
@@ -343,4 +343,3 @@ Most services have one or two genuinely streaming endpoints (logs, notifications
 - Multiplexing makes many concurrent streams cheap. Use them where the data is genuinely incremental.
 
 Next: [Errors, deadlines, metadata](/notes/grpc/07-errors-deadlines) — status codes, deadline propagation, and the headers gRPC carries on every call.
-

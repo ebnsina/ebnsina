@@ -1,10 +1,10 @@
 ---
-title: "Verifying signatures"
+title: 'Verifying signatures'
 subtitle: "The receiver's job is to read the raw body, recompute the HMAC, compare in constant time, and reject events older than the replay window. Tiny code, easy to get wrong."
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["webhooks", "hmac", "verification", "receiver", "security"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['webhooks', 'hmac', 'verification', 'receiver', 'security']
 ---
 
 <script>
@@ -374,4 +374,3 @@ A is cleaner: routing happens before any crypto. B forces you to parse some of t
 - Test happy path, tampered body, stale timestamp.
 
 Next: [Retries and backoff](/notes/webhooks/06-retries) — when to try again, when to give up, and the exponential-with-jitter pattern.
-

@@ -1,10 +1,11 @@
 ---
-title: "Case Study: Notification System at Scale"
-subtitle: "Design and build a production notification system with multi-channel delivery, fan-out, priority queues, rate limiting, and user preferences."
+title: 'Case Study: Notification System at Scale'
+subtitle: 'Design and build a production notification system with multi-channel delivery, fan-out, priority queues, rate limiting, and user preferences.'
 chapter: 19
-level: "advanced"
-readingTime: "30 min"
-topics: ["notification system", "fan-out", "priority queue", "multi-channel delivery", "user preferences"]
+level: 'advanced'
+readingTime: '30 min'
+topics:
+  ['notification system', 'fan-out', 'priority queue', 'multi-channel delivery', 'user preferences']
 ---
 
 <script>
@@ -20,12 +21,10 @@ A notification system is the backbone of user engagement in every modern applica
 Think of it like a post office that handles express mail, standard mail, and bulk marketing simultaneously. Express packages (critical alerts like security warnings) skip the line and get delivered immediately. Standard mail (transactional notifications like order confirmations) follows normal processing. Bulk marketing (weekly digests, promotional offers) gets batched and delivered during low-traffic hours. Every package has a tracking number, and if delivery fails, the system retries with escalating delays.
 
 <Mermaid
-	title="Notification System Architecture"
-	code={`
-graph TD
+title="Notification System Architecture"
+code={`graph TD
   E["Event Source<br/>Triggers"] --> N["Notification Service<br/>Routing & Priority"] --> W["Delivery Workers<br/>Multi-channel"]
-  W --> S["Notification Store<br/>History"] --> Q["Priority Queue<br/>Rate Limited"] --> P["User Preferences<br/>Channels & Rules"]
-`}
+  W --> S["Notification Store<br/>History"] --> Q["Priority Queue<br/>Rate Limited"] --> P["User Preferences<br/>Channels & Rules"]`}
 />
 
 ## Real-World Analogy
@@ -63,296 +62,329 @@ Facebook sends over 10 billion push notifications daily. When someone likes your
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES & ENUMS
 // ===========================================
-type NotificationChannel = "push" | "email" | "sms" | "in_app";
-type NotificationPriority = "critical" | "high" | "normal" | "low";
-type DeliveryStatus = "pending" | "sent" | "delivered" | "failed";
+type NotificationChannel = 'push' | 'email' | 'sms' | 'in_app';
+type NotificationPriority = 'critical' | 'high' | 'normal' | 'low';
+type DeliveryStatus = 'pending' | 'sent' | 'delivered' | 'failed';
 
 interface Notification {
-  id: string;
-  userId: string;
-  type: string;
-  title: string;
-  body: string;
-  channel: NotificationChannel;
-  priority: NotificationPriority;
-  status: DeliveryStatus;
-  metadata: Record<string, string>;
-  createdAt: string;
-  sentAt: string | null;
-  retryCount: number;
+	id: string;
+	userId: string;
+	type: string;
+	title: string;
+	body: string;
+	channel: NotificationChannel;
+	priority: NotificationPriority;
+	status: DeliveryStatus;
+	metadata: Record<string, string>;
+	createdAt: string;
+	sentAt: string | null;
+	retryCount: number;
 }
 
 interface UserPreferences {
-  userId: string;
-  channels: Record<string, NotificationChannel[]>;
-  quietHoursStart: number | null;
-  quietHoursEnd: number | null;
-  maxPerHour: number;
+	userId: string;
+	channels: Record<string, NotificationChannel[]>;
+	quietHoursStart: number | null;
+	quietHoursEnd: number | null;
+	maxPerHour: number;
 }
 
 // ===========================================
 // 2. PRIORITY QUEUE (Min-Heap)
 // ===========================================
 const PRIORITY_MAP: Record<NotificationPriority, number> = {
-  critical: 0, high: 1, normal: 2, low: 3,
+	critical: 0,
+	high: 1,
+	normal: 2,
+	low: 3
 };
 
 class PriorityQueue {
-  private heap: Notification[] = [];
+	private heap: Notification[] = [];
 
-  enqueue(n: Notification): void {
-    this.heap.push(n);
-    this.bubbleUp(this.heap.length - 1);
-  }
+	enqueue(n: Notification): void {
+		this.heap.push(n);
+		this.bubbleUp(this.heap.length - 1);
+	}
 
-  dequeue(): Notification | undefined {
-    if (this.heap.length === 0) return undefined;
-    const top = this.heap[0];
-    const last = this.heap.pop()!;
-    if (this.heap.length > 0) {
-      this.heap[0] = last;
-      this.sinkDown(0);
-    }
-    return top;
-  }
+	dequeue(): Notification | undefined {
+		if (this.heap.length === 0) return undefined;
+		const top = this.heap[0];
+		const last = this.heap.pop()!;
+		if (this.heap.length > 0) {
+			this.heap[0] = last;
+			this.sinkDown(0);
+		}
+		return top;
+	}
 
-  get size(): number { return this.heap.length; }
+	get size(): number {
+		return this.heap.length;
+	}
 
-  private bubbleUp(i: number): void {
-    while (i > 0) {
-      const parent = Math.floor((i - 1) / 2);
-      if (PRIORITY_MAP[this.heap[i].priority] < PRIORITY_MAP[this.heap[parent].priority]) {
-        [this.heap[i], this.heap[parent]] = [this.heap[parent], this.heap[i]];
-        i = parent;
-      } else break;
-    }
-  }
+	private bubbleUp(i: number): void {
+		while (i > 0) {
+			const parent = Math.floor((i - 1) / 2);
+			if (PRIORITY_MAP[this.heap[i].priority] < PRIORITY_MAP[this.heap[parent].priority]) {
+				[this.heap[i], this.heap[parent]] = [this.heap[parent], this.heap[i]];
+				i = parent;
+			} else break;
+		}
+	}
 
-  private sinkDown(i: number): void {
-    while (true) {
-      let smallest = i;
-      const left = 2 * i + 1, right = 2 * i + 2;
-      if (left < this.heap.length && PRIORITY_MAP[this.heap[left].priority] < PRIORITY_MAP[this.heap[smallest].priority]) smallest = left;
-      if (right < this.heap.length && PRIORITY_MAP[this.heap[right].priority] < PRIORITY_MAP[this.heap[smallest].priority]) smallest = right;
-      if (smallest !== i) {
-        [this.heap[i], this.heap[smallest]] = [this.heap[smallest], this.heap[i]];
-        i = smallest;
-      } else break;
-    }
-  }
+	private sinkDown(i: number): void {
+		while (true) {
+			let smallest = i;
+			const left = 2 * i + 1,
+				right = 2 * i + 2;
+			if (
+				left < this.heap.length &&
+				PRIORITY_MAP[this.heap[left].priority] < PRIORITY_MAP[this.heap[smallest].priority]
+			)
+				smallest = left;
+			if (
+				right < this.heap.length &&
+				PRIORITY_MAP[this.heap[right].priority] < PRIORITY_MAP[this.heap[smallest].priority]
+			)
+				smallest = right;
+			if (smallest !== i) {
+				[this.heap[i], this.heap[smallest]] = [this.heap[smallest], this.heap[i]];
+				i = smallest;
+			} else break;
+		}
+	}
 }
 
 // ===========================================
 // 3. RATE LIMITER (Sliding Window)
 // ===========================================
 class RateLimiter {
-  private windows = new Map<string, number[]>();
+	private windows = new Map<string, number[]>();
 
-  isAllowed(key: string, max: number, windowMs: number): boolean {
-    const now = Date.now();
-    const timestamps = (this.windows.get(key) || []).filter(t => t > now - windowMs);
-    timestamps.push(now);
-    this.windows.set(key, timestamps);
-    return timestamps.length <= max;
-  }
+	isAllowed(key: string, max: number, windowMs: number): boolean {
+		const now = Date.now();
+		const timestamps = (this.windows.get(key) || []).filter((t) => t > now - windowMs);
+		timestamps.push(now);
+		this.windows.set(key, timestamps);
+		return timestamps.length <= max;
+	}
 }
 
 // ===========================================
 // 4. CHANNEL HANDLERS
 // ===========================================
 interface ChannelHandler {
-  send(n: Notification): Promise<boolean>;
+	send(n: Notification): Promise<boolean>;
 }
 
 class PushHandler implements ChannelHandler {
-  async send(n: Notification): Promise<boolean> {
-    console.log(`[PUSH] → ${n.userId}: ${n.title}`);
-    return true; // In production: call Firebase Cloud Messaging or APNs
-  }
+	async send(n: Notification): Promise<boolean> {
+		console.log(`[PUSH] → ${n.userId}: ${n.title}`);
+		return true; // In production: call Firebase Cloud Messaging or APNs
+	}
 }
 
 class EmailHandler implements ChannelHandler {
-  async send(n: Notification): Promise<boolean> {
-    console.log(`[EMAIL] → ${n.userId}: ${n.title} - ${n.body}`);
-    return true; // In production: call SendGrid, SES, or Postmark
-  }
+	async send(n: Notification): Promise<boolean> {
+		console.log(`[EMAIL] → ${n.userId}: ${n.title} - ${n.body}`);
+		return true; // In production: call SendGrid, SES, or Postmark
+	}
 }
 
 class SmsHandler implements ChannelHandler {
-  async send(n: Notification): Promise<boolean> {
-    console.log(`[SMS] → ${n.userId}: ${n.body}`);
-    return true; // In production: call Twilio or Vonage
-  }
+	async send(n: Notification): Promise<boolean> {
+		console.log(`[SMS] → ${n.userId}: ${n.body}`);
+		return true; // In production: call Twilio or Vonage
+	}
 }
 
 class InAppHandler implements ChannelHandler {
-  constructor(private store: Map<string, Notification[]>) {}
+	constructor(private store: Map<string, Notification[]>) {}
 
-  async send(n: Notification): Promise<boolean> {
-    const list = this.store.get(n.userId) || [];
-    list.push(n);
-    this.store.set(n.userId, list);
-    console.log(`[IN-APP] → ${n.userId}: ${n.title}`);
-    return true;
-  }
+	async send(n: Notification): Promise<boolean> {
+		const list = this.store.get(n.userId) || [];
+		list.push(n);
+		this.store.set(n.userId, list);
+		console.log(`[IN-APP] → ${n.userId}: ${n.title}`);
+		return true;
+	}
 }
 
 // ===========================================
 // 5. USER PREFERENCES
 // ===========================================
 class PreferencesManager {
-  private prefs = new Map<string, UserPreferences>();
+	private prefs = new Map<string, UserPreferences>();
 
-  get(userId: string): UserPreferences {
-    return this.prefs.get(userId) || {
-      userId,
-      channels: { default: ["push", "email", "in_app"] },
-      quietHoursStart: null,
-      quietHoursEnd: null,
-      maxPerHour: 50,
-    };
-  }
+	get(userId: string): UserPreferences {
+		return (
+			this.prefs.get(userId) || {
+				userId,
+				channels: { default: ['push', 'email', 'in_app'] },
+				quietHoursStart: null,
+				quietHoursEnd: null,
+				maxPerHour: 50
+			}
+		);
+	}
 
-  set(userId: string, prefs: UserPreferences): void {
-    this.prefs.set(userId, prefs);
-  }
+	set(userId: string, prefs: UserPreferences): void {
+		this.prefs.set(userId, prefs);
+	}
 
-  getChannelsForType(userId: string, type: string): NotificationChannel[] {
-    const p = this.get(userId);
-    return p.channels[type] || p.channels["default"] || ["in_app"];
-  }
+	getChannelsForType(userId: string, type: string): NotificationChannel[] {
+		const p = this.get(userId);
+		return p.channels[type] || p.channels['default'] || ['in_app'];
+	}
 
-  isQuietHours(userId: string): boolean {
-    const p = this.get(userId);
-    if (p.quietHoursStart === null || p.quietHoursEnd === null) return false;
-    const hour = new Date().getHours();
-    if (p.quietHoursStart < p.quietHoursEnd) {
-      return hour >= p.quietHoursStart && hour < p.quietHoursEnd;
-    }
-    return hour >= p.quietHoursStart || hour < p.quietHoursEnd;
-  }
+	isQuietHours(userId: string): boolean {
+		const p = this.get(userId);
+		if (p.quietHoursStart === null || p.quietHoursEnd === null) return false;
+		const hour = new Date().getHours();
+		if (p.quietHoursStart < p.quietHoursEnd) {
+			return hour >= p.quietHoursStart && hour < p.quietHoursEnd;
+		}
+		return hour >= p.quietHoursStart || hour < p.quietHoursEnd;
+	}
 }
 
 // ===========================================
 // 6. NOTIFICATION SERVICE
 // ===========================================
 class NotificationService {
-  private queue = new PriorityQueue();
-  private rateLimiter = new RateLimiter();
-  private preferences = new PreferencesManager();
-  private inAppStore = new Map<string, Notification[]>();
-  private notificationLog = new Map<string, Notification>();
-  private handlers: Record<NotificationChannel, ChannelHandler>;
-  private processing = false;
-  private processInterval: ReturnType<typeof setInterval>;
+	private queue = new PriorityQueue();
+	private rateLimiter = new RateLimiter();
+	private preferences = new PreferencesManager();
+	private inAppStore = new Map<string, Notification[]>();
+	private notificationLog = new Map<string, Notification>();
+	private handlers: Record<NotificationChannel, ChannelHandler>;
+	private processing = false;
+	private processInterval: ReturnType<typeof setInterval>;
 
-  constructor() {
-    this.handlers = {
-      push: new PushHandler(),
-      email: new EmailHandler(),
-      sms: new SmsHandler(),
-      in_app: new InAppHandler(this.inAppStore),
-    };
-    this.processInterval = setInterval(() => this.processQueue(), 100);
-  }
+	constructor() {
+		this.handlers = {
+			push: new PushHandler(),
+			email: new EmailHandler(),
+			sms: new SmsHandler(),
+			in_app: new InAppHandler(this.inAppStore)
+		};
+		this.processInterval = setInterval(() => this.processQueue(), 100);
+	}
 
-  async send(
-    userId: string, type: string, title: string, body: string,
-    priority: NotificationPriority = "normal",
-    metadata: Record<string, string> = {}
-  ): Promise<string[]> {
-    const channels = this.preferences.getChannelsForType(userId, type);
-    const ids: string[] = [];
+	async send(
+		userId: string,
+		type: string,
+		title: string,
+		body: string,
+		priority: NotificationPriority = 'normal',
+		metadata: Record<string, string> = {}
+	): Promise<string[]> {
+		const channels = this.preferences.getChannelsForType(userId, type);
+		const ids: string[] = [];
 
-    for (const channel of channels) {
-      if (priority !== "critical" && this.preferences.isQuietHours(userId)) continue;
+		for (const channel of channels) {
+			if (priority !== 'critical' && this.preferences.isQuietHours(userId)) continue;
 
-      const notification: Notification = {
-        id: crypto.randomUUID(), userId, type, title, body, channel, priority,
-        status: "pending", metadata, createdAt: new Date().toISOString(),
-        sentAt: null, retryCount: 0,
-      };
+			const notification: Notification = {
+				id: crypto.randomUUID(),
+				userId,
+				type,
+				title,
+				body,
+				channel,
+				priority,
+				status: 'pending',
+				metadata,
+				createdAt: new Date().toISOString(),
+				sentAt: null,
+				retryCount: 0
+			};
 
-      this.notificationLog.set(notification.id, notification);
-      this.queue.enqueue(notification);
-      ids.push(notification.id);
-    }
-    return ids;
-  }
+			this.notificationLog.set(notification.id, notification);
+			this.queue.enqueue(notification);
+			ids.push(notification.id);
+		}
+		return ids;
+	}
 
-  async fanOut(
-    userIds: string[], type: string, title: string, body: string,
-    priority: NotificationPriority = "normal"
-  ): Promise<number> {
-    let count = 0;
-    for (const userId of userIds) {
-      const ids = await this.send(userId, type, title, body, priority);
-      count += ids.length;
-    }
-    return count;
-  }
+	async fanOut(
+		userIds: string[],
+		type: string,
+		title: string,
+		body: string,
+		priority: NotificationPriority = 'normal'
+	): Promise<number> {
+		let count = 0;
+		for (const userId of userIds) {
+			const ids = await this.send(userId, type, title, body, priority);
+			count += ids.length;
+		}
+		return count;
+	}
 
-  private async processQueue(): Promise<void> {
-    if (this.processing) return;
-    this.processing = true;
+	private async processQueue(): Promise<void> {
+		if (this.processing) return;
+		this.processing = true;
 
-    const batch = Math.min(this.queue.size, 50);
-    for (let i = 0; i < batch; i++) {
-      const n = this.queue.dequeue();
-      if (!n) break;
+		const batch = Math.min(this.queue.size, 50);
+		for (let i = 0; i < batch; i++) {
+			const n = this.queue.dequeue();
+			if (!n) break;
 
-      const key = `${n.userId}:${n.channel}`;
-      const prefs = this.preferences.get(n.userId);
+			const key = `${n.userId}:${n.channel}`;
+			const prefs = this.preferences.get(n.userId);
 
-      if (!this.rateLimiter.isAllowed(key, prefs.maxPerHour, 3600000)) {
-        n.status = "failed";
-        console.log(`[RATE-LIMITED] ${n.userId} on ${n.channel}`);
-        continue;
-      }
+			if (!this.rateLimiter.isAllowed(key, prefs.maxPerHour, 3600000)) {
+				n.status = 'failed';
+				console.log(`[RATE-LIMITED] ${n.userId} on ${n.channel}`);
+				continue;
+			}
 
-      try {
-        const success = await this.handlers[n.channel].send(n);
-        if (success) {
-          n.status = "delivered";
-          n.sentAt = new Date().toISOString();
-        } else {
-          throw new Error("Delivery failed");
-        }
-      } catch {
-        n.retryCount++;
-        if (n.retryCount < 3) {
-          setTimeout(() => this.queue.enqueue(n), Math.pow(2, n.retryCount) * 1000);
-        } else {
-          n.status = "failed";
-        }
-      }
-    }
-    this.processing = false;
-  }
+			try {
+				const success = await this.handlers[n.channel].send(n);
+				if (success) {
+					n.status = 'delivered';
+					n.sentAt = new Date().toISOString();
+				} else {
+					throw new Error('Delivery failed');
+				}
+			} catch {
+				n.retryCount++;
+				if (n.retryCount < 3) {
+					setTimeout(() => this.queue.enqueue(n), Math.pow(2, n.retryCount) * 1000);
+				} else {
+					n.status = 'failed';
+				}
+			}
+		}
+		this.processing = false;
+	}
 
-  getNotifications(userId: string): Notification[] {
-    return this.inAppStore.get(userId) || [];
-  }
+	getNotifications(userId: string): Notification[] {
+		return this.inAppStore.get(userId) || [];
+	}
 
-  getStatus(id: string): Notification | null {
-    return this.notificationLog.get(id) || null;
-  }
+	getStatus(id: string): Notification | null {
+		return this.notificationLog.get(id) || null;
+	}
 
-  updatePreferences(userId: string, prefs: UserPreferences): void {
-    this.preferences.set(userId, prefs);
-  }
+	updatePreferences(userId: string, prefs: UserPreferences): void {
+		this.preferences.set(userId, prefs);
+	}
 
-  getPreferences(userId: string): UserPreferences {
-    return this.preferences.get(userId);
-  }
+	getPreferences(userId: string): UserPreferences {
+		return this.preferences.get(userId);
+	}
 
-  shutdown(): void { clearInterval(this.processInterval); }
+	shutdown(): void {
+		clearInterval(this.processInterval);
+	}
 }
 
 // ===========================================
@@ -361,84 +393,107 @@ class NotificationService {
 const service = new NotificationService();
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-      catch { reject(new Error("Invalid JSON")); }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/notify
-    if (url.pathname === "/api/notify" && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!body.userId || !body.title || !body.body) {
-        json(res, 400, { error: "userId, title, and body are required" }); return;
-      }
-      const ids = await service.send(
-        body.userId, body.type || "default", body.title, body.body,
-        body.priority || "normal", body.metadata || {}
-      );
-      json(res, 201, { notificationIds: ids }); return;
-    }
+	try {
+		// POST /api/notify
+		if (url.pathname === '/api/notify' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!body.userId || !body.title || !body.body) {
+				json(res, 400, { error: 'userId, title, and body are required' });
+				return;
+			}
+			const ids = await service.send(
+				body.userId,
+				body.type || 'default',
+				body.title,
+				body.body,
+				body.priority || 'normal',
+				body.metadata || {}
+			);
+			json(res, 201, { notificationIds: ids });
+			return;
+		}
 
-    // POST /api/notify/batch
-    if (url.pathname === "/api/notify/batch" && method === "POST") {
-      const body = await parseBody(req) as any;
-      if (!body.userIds?.length || !body.title || !body.body) {
-        json(res, 400, { error: "userIds, title, and body are required" }); return;
-      }
-      const count = await service.fanOut(
-        body.userIds, body.type || "default", body.title, body.body,
-        body.priority || "normal"
-      );
-      json(res, 201, { totalQueued: count }); return;
-    }
+		// POST /api/notify/batch
+		if (url.pathname === '/api/notify/batch' && method === 'POST') {
+			const body = (await parseBody(req)) as any;
+			if (!body.userIds?.length || !body.title || !body.body) {
+				json(res, 400, { error: 'userIds, title, and body are required' });
+				return;
+			}
+			const count = await service.fanOut(
+				body.userIds,
+				body.type || 'default',
+				body.title,
+				body.body,
+				body.priority || 'normal'
+			);
+			json(res, 201, { totalQueued: count });
+			return;
+		}
 
-    // GET /api/notifications/:userId
-    const notifMatch = url.pathname.match(/^\/api\/notifications\/([^/]+)$/);
-    if (notifMatch && method === "GET") {
-      const notifs = service.getNotifications(notifMatch[1]);
-      json(res, 200, { notifications: notifs, count: notifs.length }); return;
-    }
+		// GET /api/notifications/:userId
+		const notifMatch = url.pathname.match(/^\/api\/notifications\/([^/]+)$/);
+		if (notifMatch && method === 'GET') {
+			const notifs = service.getNotifications(notifMatch[1]);
+			json(res, 200, { notifications: notifs, count: notifs.length });
+			return;
+		}
 
-    // PUT /api/preferences/:userId
-    const prefMatch = url.pathname.match(/^\/api\/preferences\/([^/]+)$/);
-    if (prefMatch && method === "PUT") {
-      const body = await parseBody(req) as any;
-      const current = service.getPreferences(prefMatch[1]);
-      service.updatePreferences(prefMatch[1], { ...current, ...body, userId: prefMatch[1] });
-      json(res, 200, service.getPreferences(prefMatch[1])); return;
-    }
+		// PUT /api/preferences/:userId
+		const prefMatch = url.pathname.match(/^\/api\/preferences\/([^/]+)$/);
+		if (prefMatch && method === 'PUT') {
+			const body = (await parseBody(req)) as any;
+			const current = service.getPreferences(prefMatch[1]);
+			service.updatePreferences(prefMatch[1], { ...current, ...body, userId: prefMatch[1] });
+			json(res, 200, service.getPreferences(prefMatch[1]));
+			return;
+		}
 
-    // GET /api/preferences/:userId
-    if (prefMatch && method === "GET") {
-      json(res, 200, service.getPreferences(prefMatch[1])); return;
-    }
+		// GET /api/preferences/:userId
+		if (prefMatch && method === 'GET') {
+			json(res, 200, service.getPreferences(prefMatch[1]));
+			return;
+		}
 
-    if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-    json(res, 404, { error: "Not found" });
-  } catch (err) {
-    console.error("Error:", err);
-    json(res, 500, { error: "Internal server error" });
-  }
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
+		json(res, 404, { error: 'Not found' });
+	} catch (err) {
+		console.error('Error:', err);
+		json(res, 500, { error: 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`Notification Service on http://localhost:${PORT}`));
-process.on("SIGTERM", () => { service.shutdown(); server.close(); });
+process.on('SIGTERM', () => {
+	service.shutdown();
+	server.close();
+});
 ```
 
 </div>
@@ -918,4 +973,3 @@ When a channel provider (FCM, SendGrid, Twilio) returns an error, it might be tr
 - This architecture handles 1M+ notifications/minute with sub-second critical delivery
 
 </div>
-

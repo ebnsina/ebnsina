@@ -1,10 +1,10 @@
 ---
-title: "Schema evolution"
-subtitle: "Every schema change against live data is a deploy. The expand/contract pattern is how you change tables that have a million rows and a thousand concurrent writers without downtime."
+title: 'Schema evolution'
+subtitle: 'Every schema change against live data is a deploy. The expand/contract pattern is how you change tables that have a million rows and a thousand concurrent writers without downtime.'
 chapter: 10
-level: "advanced"
-readingTime: "13 min"
-topics: ["data-modeling", "migrations", "expand-contract", "zero-downtime"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['data-modeling', 'migrations', 'expand-contract', 'zero-downtime']
 ---
 
 <script>
@@ -43,7 +43,7 @@ The fix: every change is a sequence of small, individually safe steps. **Expand 
 
 For any structural change, three phases:
 
-**1. Expand.** Add the new shape *alongside* the old. Both work. Old code continues using the old; new code starts using the new.
+**1. Expand.** Add the new shape _alongside_ the old. Both work. Old code continues using the old; new code starts using the new.
 
 **2. Migrate.** Backfill, dual-write, switch reads. The new shape is now the source of truth.
 
@@ -73,6 +73,7 @@ ALTER TABLE users ALTER COLUMN display_name SET NOT NULL;
 ```
 
 App code is updated to write to both columns:
+
 ```go
 INSERT INTO users(full_name, display_name) VALUES($1, $1)
 UPDATE users SET full_name = $1, display_name = $1 WHERE id = $2
@@ -105,18 +106,18 @@ For lower-stakes systems, you can compress this to two deploys (expand + dual-wr
 
 Every `ALTER TABLE` takes some kind of lock. Knowing which is critical:
 
-| Operation | Lock level | Blocks |
-|---|---|---|
-| `ADD COLUMN` (no default) | ACCESS EXCLUSIVE | reads + writes |
-| `ADD COLUMN ... DEFAULT` (constant) | ACCESS EXCLUSIVE | reads + writes — but Postgres 11+ does this as metadata only |
-| `ADD COLUMN ... DEFAULT` (volatile) | ACCESS EXCLUSIVE + table rewrite | full lock for hours |
-| `DROP COLUMN` | ACCESS EXCLUSIVE | brief — metadata only |
-| `ALTER COLUMN ... SET NOT NULL` | ACCESS EXCLUSIVE | full table scan |
-| `ALTER COLUMN ... TYPE` | ACCESS EXCLUSIVE + rewrite | hours on big tables |
-| `CREATE INDEX` | SHARE | writes (reads work) |
-| `CREATE INDEX CONCURRENTLY` | SHARE UPDATE EXCLUSIVE | nothing |
-| `ADD CONSTRAINT FOREIGN KEY` | SHARE ROW EXCLUSIVE | writes briefly |
-| `ADD CONSTRAINT ... NOT VALID` | ACCESS EXCLUSIVE briefly | writes briefly |
+| Operation                           | Lock level                       | Blocks                                                       |
+| ----------------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| `ADD COLUMN` (no default)           | ACCESS EXCLUSIVE                 | reads + writes                                               |
+| `ADD COLUMN ... DEFAULT` (constant) | ACCESS EXCLUSIVE                 | reads + writes — but Postgres 11+ does this as metadata only |
+| `ADD COLUMN ... DEFAULT` (volatile) | ACCESS EXCLUSIVE + table rewrite | full lock for hours                                          |
+| `DROP COLUMN`                       | ACCESS EXCLUSIVE                 | brief — metadata only                                        |
+| `ALTER COLUMN ... SET NOT NULL`     | ACCESS EXCLUSIVE                 | full table scan                                              |
+| `ALTER COLUMN ... TYPE`             | ACCESS EXCLUSIVE + rewrite       | hours on big tables                                          |
+| `CREATE INDEX`                      | SHARE                            | writes (reads work)                                          |
+| `CREATE INDEX CONCURRENTLY`         | SHARE UPDATE EXCLUSIVE           | nothing                                                      |
+| `ADD CONSTRAINT FOREIGN KEY`        | SHARE ROW EXCLUSIVE              | writes briefly                                               |
+| `ADD CONSTRAINT ... NOT VALID`      | ACCESS EXCLUSIVE briefly         | writes briefly                                               |
 
 The two everyone needs to internalize:
 
@@ -281,6 +282,7 @@ The most painful operation. `ALTER COLUMN ... TYPE` rewrites the table for most 
 Two strategies:
 
 **A. Compatible cast (no rewrite).** Some changes are metadata-only:
+
 - Increasing `VARCHAR(50)` to `VARCHAR(100)` — no rewrite.
 - `INTEGER` to `BIGINT` — rewrite (different size).
 - Changing `TEXT` ↔ `VARCHAR` — no rewrite (both stored the same way).
@@ -338,7 +340,7 @@ For a self-hosted backend, **`golang-migrate` or `dbmate` with hand-written SQL*
 
 Three patterns for sequencing migrations and deploys.
 
-**Migration before deploy.** New schema is in place when the new app comes up. Required when the new schema is *required* by the new code (e.g., the new code reads a column that didn't exist).
+**Migration before deploy.** New schema is in place when the new app comes up. Required when the new schema is _required_ by the new code (e.g., the new code reads a column that didn't exist).
 
 **Deploy before migration.** New app code can handle both old and new schemas. Migration runs after, the code adapts. Required for some expand/contract phases.
 
@@ -378,4 +380,3 @@ Reserve down migrations for the case "I haven't deployed yet; I want to undo on 
 - Roll forward, not back.
 
 That is the full Backend Engineering Path's data modeling track. Next topic in the path: [Auth & security](/notes/auth-security) — sessions, password hashing, OAuth flows, and rate-limiting patterns done by hand.
-

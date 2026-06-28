@@ -1,10 +1,10 @@
 ---
-title: "Consistency & Replication in NoSQL"
-subtitle: "Tunable and eventual consistency, quorum math, conflict resolution with LWW, vector clocks, and CRDTs, plus read repair and anti-entropy."
+title: 'Consistency & Replication in NoSQL'
+subtitle: 'Tunable and eventual consistency, quorum math, conflict resolution with LWW, vector clocks, and CRDTs, plus read repair and anti-entropy.'
 chapter: 7
-level: "advanced"
-readingTime: "13 min"
-topics: ["consistency", "replication", "conflicts"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['consistency', 'replication', 'conflicts']
 ---
 
 <script>
@@ -15,7 +15,7 @@ topics: ["consistency", "replication", "conflicts"]
 
 **Real-World Analogy**
 
-Three friends share a group chat to plan dinner. If everyone must reply before any decision is final, you're always in sync but slow — one friend offline stalls the whole group (strong consistency). If anyone can announce a plan and the others catch up later, decisions happen instantly but two people might book different restaurants for a moment (eventual consistency). Distributed databases run this exact negotiation millions of times a second, and the interesting question is what happens when two friends *did* book different restaurants — how the system reconciles the conflict.
+Three friends share a group chat to plan dinner. If everyone must reply before any decision is final, you're always in sync but slow — one friend offline stalls the whole group (strong consistency). If anyone can announce a plan and the others catch up later, decisions happen instantly but two people might book different restaurants for a moment (eventual consistency). Distributed databases run this exact negotiation millions of times a second, and the interesting question is what happens when two friends _did_ book different restaurants — how the system reconciles the conflict.
 
 </Callout>
 
@@ -58,13 +58,13 @@ You tune these per workload. A write-heavy telemetry pipeline might pick `W=1` (
 
 <Callout type="tip">
 
-**Note:** Quorums tune *consistency vs latency/availability*, not *durability against total loss*. Even `W=1` writes the data and replicates it asynchronously afterward — you're choosing how long to *wait* for replicas, not whether copies eventually exist. Pair quorum tuning with an appropriate replication factor and cross-datacenter placement for real durability.
+**Note:** Quorums tune _consistency vs latency/availability_, not _durability against total loss_. Even `W=1` writes the data and replicates it asynchronously afterward — you're choosing how long to _wait_ for replicas, not whether copies eventually exist. Pair quorum tuning with an appropriate replication factor and cross-datacenter placement for real durability.
 
 </Callout>
 
 ## Eventual Consistency
 
-Under eventual consistency the system promises only this: *if writes stop, all replicas will eventually converge to the same value.* In the meantime, different replicas may briefly return different answers. For many workloads — a like count, a feed, a product page — a few seconds of staleness is invisible and well worth the latency and availability win.
+Under eventual consistency the system promises only this: _if writes stop, all replicas will eventually converge to the same value._ In the meantime, different replicas may briefly return different answers. For many workloads — a like count, a feed, a product page — a few seconds of staleness is invisible and well worth the latency and availability win.
 
 The hard part is what happens when two clients write to **different replicas at the same time** during a partition. Both succeed locally. Now two replicas hold different values for the same key, and the system must decide which one wins — or how to combine them. That is **conflict resolution.**
 
@@ -78,9 +78,9 @@ Replica B: key = "green" @ t=1004
 Resolved → "blue"   (latest timestamp wins; "green" is silently dropped)
 ```
 
-The danger: LWW *silently discards* the losing write, and clock skew between machines can make the "wrong" write win. Fine for last-seen status; dangerous for a shopping cart, where dropping an "add item" loses a customer's choice.
+The danger: LWW _silently discards_ the losing write, and clock skew between machines can make the "wrong" write win. Fine for last-seen status; dangerous for a shopping cart, where dropping an "add item" loses a customer's choice.
 
-**Vector clocks.** Instead of a wall-clock time, each replica tracks a per-node counter, producing a version vector that captures *causality* — whether one write happened-before another or whether they're genuinely concurrent.
+**Vector clocks.** Instead of a wall-clock time, each replica tracks a per-node counter, producing a version vector that captures _causality_ — whether one write happened-before another or whether they're genuinely concurrent.
 
 ```text
 Write at A: cart = {milk}        version [A:1]
@@ -90,7 +90,7 @@ Write at B: cart = {eggs}        version [B:1]
 
 Vector clocks don't resolve the conflict; they **detect** it precisely, distinguishing a stale write (safe to drop) from concurrent writes (must be reconciled). The system then returns both **siblings** to the application — or to the user — to merge. Dynamo-style stores (Riak) use this so a cart can union the two versions instead of losing one.
 
-**CRDTs (Conflict-free Replicated Data Types).** Data structures defined so that concurrent updates *always* merge deterministically, with no coordination and no lost writes. A grow-only counter sums all increments; an OR-Set tracks adds and removes so element membership converges. Replicas can accept writes independently and always reconcile to the same state.
+**CRDTs (Conflict-free Replicated Data Types).** Data structures defined so that concurrent updates _always_ merge deterministically, with no coordination and no lost writes. A grow-only counter sums all increments; an OR-Set tracks adds and removes so element membership converges. Replicas can accept writes independently and always reconcile to the same state.
 
 ```text
 Counter CRDT under concurrent +1 at three replicas:
@@ -103,17 +103,17 @@ Set CRDT, concurrent operations:
 
 CRDTs are the gold standard for automatic, lossless convergence (used in collaborative editors and Redis's active-active replication), at the cost of more complex data structures and some metadata overhead.
 
-| Strategy | Lost writes? | Detects concurrency? | Complexity |
-|---|---|---|---|
-| Last-Write-Wins | Yes (silently) | No | Low |
-| Vector clocks | No (surfaces siblings) | Yes | Medium |
-| CRDTs | No (auto-merges) | N/A (merges by design) | High |
+| Strategy        | Lost writes?           | Detects concurrency?   | Complexity |
+| --------------- | ---------------------- | ---------------------- | ---------- |
+| Last-Write-Wins | Yes (silently)         | No                     | Low        |
+| Vector clocks   | No (surfaces siblings) | Yes                    | Medium     |
+| CRDTs           | No (auto-merges)       | N/A (merges by design) | High       |
 
 ## Read Repair and Anti-Entropy
 
 Replicas drift, so the database actively heals divergence by two mechanisms.
 
-**Read repair** happens on the read path. When a quorum read finds replicas disagree, the coordinator picks the winning value (by the conflict-resolution rule), returns it to the client, and *writes the correct value back* to the stale replicas in the background. Frequently-read data stays consistent almost for free.
+**Read repair** happens on the read path. When a quorum read finds replicas disagree, the coordinator picks the winning value (by the conflict-resolution rule), returns it to the client, and _writes the correct value back_ to the stale replicas in the background. Frequently-read data stays consistent almost for free.
 
 ```text
 Read at R=3 finds:

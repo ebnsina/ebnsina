@@ -1,10 +1,10 @@
 ---
-title: "Writing Dockerfiles"
-subtitle: "Layer caching, multi-stage builds, non-root users, and the instructions that actually matter for production images."
+title: 'Writing Dockerfiles'
+subtitle: 'Layer caching, multi-stage builds, non-root users, and the instructions that actually matter for production images.'
 chapter: 2
-level: "beginner"
-readingTime: "11 min"
-topics: ["Dockerfile", "multi-stage builds", "layer cache", "non-root", "image size"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['Dockerfile', 'multi-stage builds', 'layer cache', 'non-root', 'image size']
 ---
 
 <script>
@@ -70,6 +70,7 @@ CMD ["server.js"]
 ```
 
 **CMD vs ENTRYPOINT:**
+
 ```bash
 # CMD: fully overridable
 docker run myapp node other-script.js  # replaces CMD entirely
@@ -109,6 +110,7 @@ CMD ["node", "dist/server.js"]
 ```
 
 **Go multi-stage (produces a ~10MB image):**
+
 ```dockerfile
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
@@ -261,4 +263,3 @@ CMD ["node", "dist/server.js"]
 ```
 
 This pattern: `base` → `deps` (prod deps) + `builder` (full build) → `production` (clean final image). Common in modern Node.js projects.
-

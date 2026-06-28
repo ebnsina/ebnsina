@@ -1,10 +1,10 @@
 ---
-title: "Horizontal Scaling — Roadmap"
-subtitle: "Stateless services, load balancers, auto-scaling, database bottlenecks, and WebSocket fan-out across instances."
+title: 'Horizontal Scaling — Roadmap'
+subtitle: 'Stateless services, load balancers, auto-scaling, database bottlenecks, and WebSocket fan-out across instances.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Vertical scaling (bigger server) has a ceiling. Horizontal scaling (more servers
 3. **Auto-Scaling** — target tracking, scheduled scaling, HPA, KEDA for queue-driven workers
 4. **Scaling the Database Layer** — PgBouncer, read replicas, caching, when to shard
 5. **WebSockets & Shared State** — Redis adapter, presence tracking, sticky sessions, SSE as an alternative
-

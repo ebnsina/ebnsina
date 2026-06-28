@@ -1,10 +1,20 @@
 ---
-title: "AV Evasion & Red Team Operations"
-subtitle: "Bypassing antivirus and EDR, LOLBins, C2 frameworks, payload obfuscation, and advanced red team tradecraft."
+title: 'AV Evasion & Red Team Operations'
+subtitle: 'Bypassing antivirus and EDR, LOLBins, C2 frameworks, payload obfuscation, and advanced red team tradecraft.'
 chapter: 22
-level: "advanced"
-readingTime: "14 min"
-topics: ["AV evasion", "EDR bypass", "C2 framework", "LOLBins", "red team", "payload obfuscation", "Cobalt Strike", "Sliver"]
+level: 'advanced'
+readingTime: '14 min'
+topics:
+  [
+    'AV evasion',
+    'EDR bypass',
+    'C2 framework',
+    'LOLBins',
+    'red team',
+    'payload obfuscation',
+    'Cobalt Strike',
+    'Sliver'
+  ]
 ---
 
 <script>
@@ -192,7 +202,7 @@ HANDLE hThread = CreateRemoteThread(hProc, NULL, 0, (LPTHREAD_START_ROUTINE)mem,
 // Early Bird injection (inject into newly created process before it runs)
 STARTUPINFO si = {0};
 PROCESS_INFORMATION pi = {0};
-CreateProcess("C:\\Windows\\System32\\svchost.exe", NULL, NULL, NULL, FALSE, 
+CreateProcess("C:\\Windows\\System32\\svchost.exe", NULL, NULL, NULL, FALSE,
               CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 // Inject while process is suspended → before any security hooks load
 ```
@@ -235,7 +245,7 @@ Logging:
   - Clear event logs after use (in scope only)
   - Use legitimate signed binaries for execution (LOLBins)
   - Avoid flagged tools (Mimikatz, PsExec by name — use variants or custom versions)
-  
+
 Infrastructure:
   - Redirectors — Apache/nginx proxy in front of C2, logs attacker's real IP
   - Domain aged >1 year — new domains are suspicious
@@ -278,4 +288,3 @@ TA0011 Command and Control
 ```
 
 Tag every finding in your red team report with ATT&CK IDs for structured remediation.
-

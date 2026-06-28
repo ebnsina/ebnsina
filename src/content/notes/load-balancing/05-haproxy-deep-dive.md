@@ -1,10 +1,10 @@
 ---
-title: "HAProxy in Depth"
-subtitle: "Frontend/backend config, ACLs, the stats page, runtime API, and the patterns that make HAProxy the go-to proxy for demanding deployments."
+title: 'HAProxy in Depth'
+subtitle: 'Frontend/backend config, ACLs, the stats page, runtime API, and the patterns that make HAProxy the go-to proxy for demanding deployments.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["HAProxy", "ACLs", "stats", "runtime API", "rate limiting", "canary"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['HAProxy', 'ACLs', 'stats', 'runtime API', 'rate limiting', 'canary']
 ---
 
 <script>
@@ -81,6 +81,7 @@ acl <name> <criterion> <value>
 ```
 
 Common criteria:
+
 ```
 path_beg /api/          — URL begins with
 path_end .jpg           — URL ends with
@@ -91,6 +92,7 @@ status 503             — response status (for backend conditions)
 ```
 
 **Routing by host:**
+
 ```
 frontend https_in
     bind *:443 ssl crt /etc/haproxy/ssl/
@@ -104,6 +106,7 @@ frontend https_in
 ```
 
 **Routing by path:**
+
 ```
 frontend https_in
     acl is_api    path_beg /api/
@@ -117,6 +120,7 @@ frontend https_in
 ```
 
 **Block by IP (maintenance/security):**
+
 ```
 frontend https_in
     acl blocked_ip src 1.2.3.4 5.6.7.8
@@ -198,6 +202,7 @@ listen stats
 Visit `http://haproxy:8404/stats` — shows per-server request rates, error rates, queue depth, session counts, health check status.
 
 **CSV export for monitoring:**
+
 ```bash
 curl -s http://admin:supersecret@haproxy:8404/stats;csv | \
   awk -F, 'NR>1 {print $1, $2, $18, $19}' | \
@@ -259,6 +264,7 @@ defaults
 ```
 
 Key fields:
+
 - `%ci` — client IP
 - `%Tq/%Tw/%Tc/%Tr/%Tt` — time: queue/wait/connect/response/total (ms)
 - `%ST` — HTTP status code
@@ -266,6 +272,7 @@ Key fields:
 - `%{+Q}r` — full HTTP request line
 
 Send to stdout in containers (for log aggregators):
+
 ```
 global
     log stdout format raw local0
@@ -282,16 +289,17 @@ timeout server  30s   # How long HAProxy waits for a backend response
 ```
 
 For long-running requests (file uploads, streaming):
+
 ```
 backend api_servers
     timeout server 5m    # override default for this backend
 ```
 
 For WebSockets:
+
 ```
 backend ws_servers
     timeout tunnel 1h    # keeps tunnel alive for websocket connections
 ```
 
 WebSocket connections don't follow the `client`/`server` timeout after upgrade — they use `tunnel`.
-

@@ -1,10 +1,10 @@
 ---
-title: "Why Messaging Systems"
-subtitle: "The problems direct HTTP calls create at scale — and how async messaging solves coupling, backpressure, and reliability."
+title: 'Why Messaging Systems'
+subtitle: 'The problems direct HTTP calls create at scale — and how async messaging solves coupling, backpressure, and reliability.'
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["messaging", "queues", "async", "decoupling", "backpressure", "pub/sub"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['messaging', 'queues', 'async', 'decoupling', 'backpressure', 'pub/sub']
 ---
 
 <script>
@@ -28,6 +28,7 @@ OrderService → HTTP POST /process → PaymentService
 ```
 
 Three things must be true simultaneously:
+
 1. PaymentService must be up
 2. PaymentService must respond within A's timeout
 3. The network must be reliable
@@ -95,20 +96,18 @@ Producer → [Stream: offset 0, 1, 2, 3...]
 ```typescript
 // At-least-once consumer — must handle duplicates
 async function processOrder(message: Message) {
-  const { orderId } = message.body;
-  
-  // Idempotency: if already processed, skip without error
-  const existing = await db.query(
-    'SELECT id FROM processed_orders WHERE order_id = $1', [orderId]
-  );
-  if (existing.rows.length > 0) {
-    await message.ack();  // acknowledge without reprocessing
-    return;
-  }
-  
-  await processPayment(orderId);
-  await db.query('INSERT INTO processed_orders (order_id) VALUES ($1)', [orderId]);
-  await message.ack();
+	const { orderId } = message.body;
+
+	// Idempotency: if already processed, skip without error
+	const existing = await db.query('SELECT id FROM processed_orders WHERE order_id = $1', [orderId]);
+	if (existing.rows.length > 0) {
+		await message.ack(); // acknowledge without reprocessing
+		return;
+	}
+
+	await processPayment(orderId);
+	await db.query('INSERT INTO processed_orders (order_id) VALUES ($1)', [orderId]);
+	await message.ack();
 }
 ```
 
@@ -117,12 +116,14 @@ async function processOrder(message: Message) {
 The consumer signals the producer to slow down when it can't keep up.
 
 Without backpressure:
+
 - Producer sends 1000 msg/sec
 - Consumer handles 100 msg/sec
 - Queue grows 900 msg/sec indefinitely
 - Eventually: OOM, disk full, or message expiry
 
 With backpressure:
+
 - RabbitMQ: `prefetch` limits how many unacked messages a consumer holds
 - Kafka: consumer controls its own read rate (pull model)
 - NATS JetStream: max-pending limits
@@ -133,8 +134,8 @@ channel.prefetch(10);
 
 // Process each before pulling more
 channel.consume('orders', async (msg) => {
-  await processOrder(msg);
-  channel.ack(msg);
+	await processOrder(msg);
+	channel.ack(msg);
 });
 ```
 
@@ -142,15 +143,14 @@ With `prefetch(10)`, the broker won't deliver message 11 until at least one of t
 
 ## Choosing a System
 
-| | RabbitMQ | NATS | Kafka |
-|---|---|---|---|
-| **Model** | Queue + pub/sub | Pub/sub + streams | Distributed log |
-| **Retention** | Until consumed | Until consumed (JetStream: configurable) | Configurable (days/weeks) |
-| **Throughput** | ~50k msg/sec | ~1M msg/sec | ~1M+ msg/sec |
-| **Replay** | No (queues) | JetStream: yes | Yes (primary feature) |
-| **Ordering** | Per-queue | Per-subject | Per-partition |
-| **Complexity** | Low-medium | Low | High |
-| **Best for** | Task queues, RPC | High-throughput events, IoT | Event sourcing, audit log, stream processing |
+|                | RabbitMQ         | NATS                                     | Kafka                                        |
+| -------------- | ---------------- | ---------------------------------------- | -------------------------------------------- |
+| **Model**      | Queue + pub/sub  | Pub/sub + streams                        | Distributed log                              |
+| **Retention**  | Until consumed   | Until consumed (JetStream: configurable) | Configurable (days/weeks)                    |
+| **Throughput** | ~50k msg/sec     | ~1M msg/sec                              | ~1M+ msg/sec                                 |
+| **Replay**     | No (queues)      | JetStream: yes                           | Yes (primary feature)                        |
+| **Ordering**   | Per-queue        | Per-subject                              | Per-partition                                |
+| **Complexity** | Low-medium       | Low                                      | High                                         |
+| **Best for**   | Task queues, RPC | High-throughput events, IoT              | Event sourcing, audit log, stream processing |
 
 **Start with RabbitMQ** if you need reliable task queues and your team knows HTTP/REST. **Move to Kafka** when you need replay, long retention, or high-throughput event streams. **NATS** for high-throughput with simple ops.
-

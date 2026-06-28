@@ -1,10 +1,10 @@
 ---
-title: "Docker Compose"
-subtitle: "Multi-service local environments, dependency ordering, networking, and the patterns that make compose actually useful."
+title: 'Docker Compose'
+subtitle: 'Multi-service local environments, dependency ordering, networking, and the patterns that make compose actually useful.'
 chapter: 3
-level: "beginner"
-readingTime: "10 min"
-topics: ["docker compose", "networking", "volumes", "depends_on", "environment"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['docker compose', 'networking', 'volumes', 'depends_on', 'environment']
 ---
 
 <script>
@@ -31,24 +31,24 @@ Compose defines all of this in one declarative file — `docker-compose.yml` —
 # docker-compose.yml
 services:
   api:
-    build: .                        # build from local Dockerfile
+    build: . # build from local Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       DATABASE_URL: postgres://app:secret@db:5432/mydb
       REDIS_URL: redis://redis:6379
       NODE_ENV: development
     volumes:
-      - ./src:/app/src              # mount source for hot reload
+      - ./src:/app/src # mount source for hot reload
     depends_on:
       db:
-        condition: service_healthy  # wait for DB to be healthy, not just started
+        condition: service_healthy # wait for DB to be healthy, not just started
       redis:
         condition: service_started
 
   worker:
     build: .
-    command: node dist/worker.js    # override CMD from Dockerfile
+    command: node dist/worker.js # override CMD from Dockerfile
     environment:
       DATABASE_URL: postgres://app:secret@db:5432/mydb
       REDIS_URL: redis://redis:6379
@@ -63,10 +63,10 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: mydb
     volumes:
-      - pgdata:/var/lib/postgresql/data     # persist across restarts
-      - ./migrations:/docker-entrypoint-initdb.d  # run on first start
+      - pgdata:/var/lib/postgresql/data # persist across restarts
+      - ./migrations:/docker-entrypoint-initdb.d # run on first start
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d mydb"]
+      test: ['CMD-SHELL', 'pg_isready -U app -d mydb']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -127,6 +127,7 @@ docker compose exec api ping db
 ```
 
 **Custom networks for isolation:**
+
 ```yaml
 services:
   api:
@@ -136,11 +137,11 @@ services:
 
   db:
     networks:
-      - backend      # not exposed to frontend services
+      - backend # not exposed to frontend services
 
   nginx:
     networks:
-      - frontend     # not connected to backend
+      - frontend # not connected to backend
 
 networks:
   frontend:
@@ -156,17 +157,17 @@ services:
   api:
     depends_on:
       db:
-        condition: service_healthy    # wait until healthcheck passes
+        condition: service_healthy # wait until healthcheck passes
       redis:
-        condition: service_started    # just wait for container to start
+        condition: service_started # just wait for container to start
 
   db:
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 3s
       retries: 10
-      start_period: 10s    # grace period before failures count
+      start_period: 10s # grace period before failures count
 ```
 
 **Without health checks:** your app starts, tries to connect to postgres, fails because postgres is still initializing, and crashes. With health checks: api waits until postgres reports healthy.
@@ -241,6 +242,7 @@ docker compose -f docker-compose.yml -f docker-compose.ci.yml up --abort-on-cont
 ## Useful Patterns
 
 **Run database migrations before starting the app:**
+
 ```yaml
 services:
   migrate:
@@ -249,7 +251,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: "no"    # run once, don't restart
+    restart: 'no' # run once, don't restart
 
   api:
     build: .
@@ -261,12 +263,14 @@ services:
 ```
 
 **Scale a service:**
+
 ```bash
 docker compose up --scale worker=3
 # Starts 3 worker containers, all pulling from the same queue
 ```
 
 **Watch for file changes and rebuild:**
+
 ```bash
 # Docker Compose Watch (v2.22+)
 docker compose watch
@@ -278,10 +282,10 @@ services:
     build: .
     develop:
       watch:
-        - action: sync              # sync files without rebuild
+        - action: sync # sync files without rebuild
           path: ./src
           target: /app/src
-        - action: rebuild           # rebuild on dependency changes
+        - action: rebuild # rebuild on dependency changes
           path: package.json
 ```
 
@@ -297,15 +301,15 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    profiles: [dev]      # only started when --profile dev is passed
+    profiles: [dev] # only started when --profile dev is passed
     ports:
-      - "8025:8025"
+      - '8025:8025'
 
   adminer:
     image: adminer
     profiles: [dev, tools]
     ports:
-      - "8080:8080"
+      - '8080:8080'
 ```
 
 ```bash
@@ -317,4 +321,3 @@ docker compose --profile dev up
 ```
 
 This keeps the default compose startup minimal while making optional services easy to activate.
-

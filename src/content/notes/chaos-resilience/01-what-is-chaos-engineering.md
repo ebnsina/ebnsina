@@ -1,10 +1,10 @@
 ---
-title: "What Is Chaos Engineering"
-subtitle: "Deliberately injecting failure to discover weaknesses before your users do — and why controlled experiments beat hoping for the best."
+title: 'What Is Chaos Engineering'
+subtitle: 'Deliberately injecting failure to discover weaknesses before your users do — and why controlled experiments beat hoping for the best.'
 chapter: 1
-level: "beginner"
-readingTime: "8 min"
-topics: ["chaos engineering", "resilience", "fault injection", "steady state", "GameDays"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['chaos engineering', 'resilience', 'fault injection', 'steady state', 'GameDays']
 ---
 
 <script>
@@ -77,6 +77,7 @@ It's not **a one-time event** — it's a continuous practice. Systems change; ex
 Organize experiments around the actual failure modes in your system:
 
 **Infrastructure failures:**
+
 - Server crash / OOM kill
 - Disk full
 - Network partition (split brain)
@@ -84,6 +85,7 @@ Organize experiments around the actual failure modes in your system:
 - DNS resolution failures
 
 **Dependency failures:**
+
 - Downstream service timeout
 - Downstream service returning 500
 - Downstream service returning corrupted data
@@ -91,12 +93,14 @@ Organize experiments around the actual failure modes in your system:
 - Database connection exhaustion
 
 **Resource exhaustion:**
+
 - CPU saturation
 - Memory pressure
 - Thread pool / connection pool exhaustion
 - File descriptor limits
 
 **Latency injection:**
+
 - Slow response (but not timeout) from dependency
 - High variance latency (some requests slow, most fast)
 - Packet loss causing TCP retransmits
@@ -127,6 +131,7 @@ Full production experiments (with mature practices):
 Chaos engineering amplifies whatever is already true about your system. If you don't have monitoring, you won't know what broke. If you don't have runbooks, you won't know how to fix it.
 
 **Minimum viable foundation:**
+
 ```
 □ Metrics and dashboards for your steady state indicators
 □ Alerting that fires before users notice
@@ -178,4 +183,3 @@ kill -9 $(pgrep -f "node server.js" | head -1)
 ```
 
 This tells you: does your health check work, how long does traffic failover take, does your alerting detect instance loss. You'll likely find something you didn't expect.
-

@@ -1,10 +1,10 @@
 ---
-title: "nginx Fundamentals"
-subtitle: "Install, structure the config, write server blocks, understand locations and includes. The nginx mental model that holds for every advanced feature."
+title: 'nginx Fundamentals'
+subtitle: 'Install, structure the config, write server blocks, understand locations and includes. The nginx mental model that holds for every advanced feature.'
 chapter: 6
-level: "intermediate"
-readingTime: "13 min"
-topics: ["nginx", "configuration", "server blocks", "locations"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['nginx', 'configuration', 'server blocks', 'locations']
 ---
 
 <script>
@@ -74,7 +74,7 @@ sudo systemctl reload nginx
 
 ## The config grammar
 
-nginx's config is a tree of *directives* and *blocks*. Three rules:
+nginx's config is a tree of _directives_ and _blocks_. Three rules:
 
 1. **Directives end with `;`.**
 2. **Blocks open with `{` and close with `}`.**
@@ -165,7 +165,7 @@ Listen on TCP port 80 over IPv4 and IPv6. The `[::]` is IPv6's `0.0.0.0`. Withou
 server_name example.com www.example.com;
 ```
 
-Match these exact hostnames in the `Host` header. nginx's virtual hosting works entirely off `Host`. A request to `other.com` will not be served by this block; it falls back to the *default* server (or returns 404 if none matches).
+Match these exact hostnames in the `Host` header. nginx's virtual hosting works entirely off `Host`. A request to `other.com` will not be served by this block; it falls back to the _default_ server (or returns 404 if none matches).
 
 ```nginx
 root /var/www/example.com;
@@ -196,18 +196,21 @@ location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2)$ {
 `location` blocks compete for each request. nginx picks one and only one to serve. The rules:
 
 1. **Exact match (`=`)** — wins immediately if it matches.
+
    ```nginx
    location = / { ... }       # only the literal `/`
    location = /favicon.ico { ... }
    ```
 
 2. **Prefix match (no modifier)** — longest-prefix match wins.
+
    ```nginx
    location /api/ { ... }     # everything starting with /api/
    location / { ... }         # catch-all
    ```
 
 3. **Preferential prefix (`^~`)** — like prefix, but wins over regex.
+
    ```nginx
    location ^~ /static/ { ... }  # do not even try regexes
    ```
@@ -226,25 +229,25 @@ The actual matching algorithm:
 4. Otherwise, walk regex blocks in order. First match wins.
 5. If no regex matched, use the prefix from step 2.
 
-This is one of the few quirks of nginx — once you know the algorithm, it is predictable; without it, "why is *this* block matching?" is mysterious.
+This is one of the few quirks of nginx — once you know the algorithm, it is predictable; without it, "why is _this_ block matching?" is mysterious.
 
 ## Variables — the language under the language
 
 nginx has a small built-in DSL with variables. Some of the common ones:
 
-| Variable | Meaning |
-|---|---|
-| `$uri` | The current URI (rewritten if you used `rewrite`). |
-| `$request_uri` | The original URI as the client sent it. |
-| `$args` | The query string. |
-| `$host` | The Host header (lowercased). |
-| `$server_name` | The matched server_name. |
-| `$remote_addr` | The client's IP (or proxy's, see `set_real_ip_from`). |
-| `$scheme` | `http` or `https`. |
-| `$request_method` | `GET`, `POST`, etc. |
-| `$http_<header>` | Any request header — `$http_user_agent`, `$http_x_forwarded_for`. |
-| `$cookie_<name>` | A specific cookie value. |
-| `$arg_<name>` | A specific query-string argument. |
+| Variable          | Meaning                                                           |
+| ----------------- | ----------------------------------------------------------------- |
+| `$uri`            | The current URI (rewritten if you used `rewrite`).                |
+| `$request_uri`    | The original URI as the client sent it.                           |
+| `$args`           | The query string.                                                 |
+| `$host`           | The Host header (lowercased).                                     |
+| `$server_name`    | The matched server_name.                                          |
+| `$remote_addr`    | The client's IP (or proxy's, see `set_real_ip_from`).             |
+| `$scheme`         | `http` or `https`.                                                |
+| `$request_method` | `GET`, `POST`, etc.                                               |
+| `$http_<header>`  | Any request header — `$http_user_agent`, `$http_x_forwarded_for`. |
+| `$cookie_<name>`  | A specific cookie value.                                          |
+| `$arg_<name>`     | A specific query-string argument.                                 |
 
 Use them in directives:
 
@@ -283,7 +286,7 @@ Now the same headers ship from every site you serve, without copy/paste.
 
 ## The default server — what catches unmatched requests
 
-If a request's `Host` does not match any `server_name`, nginx uses the **default** server. By default, that is the *first* server block defined. To make it explicit:
+If a request's `Host` does not match any `server_name`, nginx uses the **default** server. By default, that is the _first_ server block defined. To make it explicit:
 
 ```nginx
 server {
@@ -370,4 +373,3 @@ One file per site. Shared config in `conf.d/` (loaded automatically) and `snippe
 - Use `sites-available`/`sites-enabled` and `snippets/` to keep config readable.
 
 Next chapter: putting nginx in front of an application server — the reverse proxy pattern that ties everything together.
-

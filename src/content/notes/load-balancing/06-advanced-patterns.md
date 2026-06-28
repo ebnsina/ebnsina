@@ -1,10 +1,10 @@
 ---
-title: "Advanced Load Balancing Patterns"
+title: 'Advanced Load Balancing Patterns'
 subtitle: "Blue-green deployments, circuit breakers, global load balancing, and anycast — patterns for deployments that can't go wrong."
 chapter: 6
-level: "intermediate"
-readingTime: "10 min"
-topics: ["blue-green", "canary", "circuit breaker", "global load balancing", "anycast", "GeoDNS"]
+level: 'intermediate'
+readingTime: '10 min'
+topics: ['blue-green', 'canary', 'circuit breaker', 'global load balancing', 'anycast', 'GeoDNS']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A railway track switchover: you don't stop the train to switch tracks — you bu
 Blue is live. Green is the new version. Traffic switches atomically.
 
 **HAProxy blue-green with runtime API:**
+
 ```bash
 #!/bin/bash
 # deploy-green.sh
@@ -49,6 +50,7 @@ echo "Traffic shifted to green"
 ```
 
 Config with both backends:
+
 ```
 backend api_blue
     server s1 10.0.0.10:3000 check
@@ -73,11 +75,11 @@ HAProxy can detect repeated failures and temporarily remove a backend:
 ```
 backend api_servers
     option httpchk GET /health
-    
+
     # After 3 failed checks, server marked down
     server s1 10.0.0.10:3000 check fall 3 rise 2 inter 5s
     server s2 10.0.0.11:3000 check fall 3 rise 2 inter 5s
-    
+
     # If all servers are down, return a custom error instead of 502
     errorfile 503 /etc/haproxy/errors/maintenance.http
 ```
@@ -104,7 +106,7 @@ check_response_time() {
 for server in s1 s2; do
     host=$(echo "show servers state api_servers" | socat stdio $SOCK | grep $server | awk '{print $4}')
     time_ms=$(check_response_time $server $host)
-    
+
     if (( $(echo "$time_ms > 500" | bc -l) )); then
         echo "set server api_servers/$server weight 10" | socat stdio $SOCK
         echo "$server slow ($time_ms ms) — weight lowered"
@@ -117,6 +119,7 @@ done
 Routing users to the nearest or healthiest datacenter:
 
 **GeoDNS:** DNS responds with different IPs based on client geography.
+
 - AWS Route 53 Geolocation routing
 - Cloudflare Load Balancing
 - Return EU IP for EU clients, US IP for US clients
@@ -147,6 +150,7 @@ aws route53 change-resource-record-sets --hosted-zone-id Z123 --change-batch '{
 ```
 
 **Latency-based routing:** Route to whichever datacenter responds fastest:
+
 ```bash
 aws route53 change-resource-record-sets --hosted-zone-id Z123 --change-batch '{
   "Changes": [{
@@ -170,6 +174,7 @@ One IP address advertised from multiple locations simultaneously. BGP routing se
 You need BGP peering capability (colocation or BGP-capable cloud) to implement anycast yourself. For most teams: use Cloudflare or AWS Global Accelerator instead.
 
 **AWS Global Accelerator** is effectively anycast-as-a-service:
+
 ```bash
 aws globalaccelerator create-accelerator \
   --name my-api \
@@ -258,18 +263,19 @@ for row in reader:
 ```
 
 Push to Prometheus via `haproxy_exporter`:
+
 ```yaml
 # docker-compose.yml
 haproxy-exporter:
   image: prom/haproxy-exporter
   command: '--haproxy.scrape-uri=http://admin:pass@haproxy:8404/stats;csv'
   ports:
-    - "9101:9101"
+    - '9101:9101'
 ```
 
 Key metrics:
+
 - `haproxy_backend_requests_total` — request rate per backend
 - `haproxy_backend_response_errors_total` — 5xx rate
 - `haproxy_backend_queue_average_time_seconds` — queuing latency
 - `haproxy_server_status` — 1=UP, 0=DOWN
-

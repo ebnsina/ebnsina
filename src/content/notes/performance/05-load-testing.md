@@ -1,10 +1,10 @@
 ---
-title: "Load Testing"
-subtitle: "k6, autocannon, realistic traffic models, finding the breaking point — and why load testing in staging is different from production."
+title: 'Load Testing'
+subtitle: 'k6, autocannon, realistic traffic models, finding the breaking point — and why load testing in staging is different from production.'
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["load testing", "k6", "autocannon", "throughput", "breaking point", "performance baseline"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['load testing', 'k6', 'autocannon', 'throughput', 'breaking point', 'performance baseline']
 ---
 
 <script>
@@ -53,6 +53,7 @@ npx autocannon -c 100 -d 10 http://localhost:3000/api/orders
 ```
 
 Output:
+
 ```
 Stat         | 2.5% | 50%  | 97.5% | 99%  | Avg   | Stdev | Max
 Latency      | 14ms | 22ms | 89ms  | 145ms| 23.4ms| 19.1ms| 2341ms
@@ -78,67 +79,75 @@ import { Rate } from 'k6/metrics';
 const errorRate = new Rate('errors');
 
 export const options = {
-  stages: [
-    { duration: '2m', target: 10 },   // ramp up to 10 users
-    { duration: '5m', target: 10 },   // stay at 10
-    { duration: '2m', target: 50 },   // ramp to 50
-    { duration: '5m', target: 50 },   // stay at 50
-    { duration: '2m', target: 100 },  // ramp to 100
-    { duration: '5m', target: 100 },  // stay at 100
-    { duration: '2m', target: 0 },    // ramp down
-  ],
-  thresholds: {
-    http_req_duration: ['p(99)<500'],  // 99% of requests < 500ms
-    errors: ['rate<0.01'],             // error rate < 1%
-  },
+	stages: [
+		{ duration: '2m', target: 10 }, // ramp up to 10 users
+		{ duration: '5m', target: 10 }, // stay at 10
+		{ duration: '2m', target: 50 }, // ramp to 50
+		{ duration: '5m', target: 50 }, // stay at 50
+		{ duration: '2m', target: 100 }, // ramp to 100
+		{ duration: '5m', target: 100 }, // stay at 100
+		{ duration: '2m', target: 0 } // ramp down
+	],
+	thresholds: {
+		http_req_duration: ['p(99)<500'], // 99% of requests < 500ms
+		errors: ['rate<0.01'] // error rate < 1%
+	}
 };
 
 const BASE_URL = 'http://staging.api.example.com';
 
 export default function () {
-  // Realistic user journey
-  // 1. Login
-  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify({
-    email: 'test@example.com',
-    password: 'testpass',
-  }), { headers: { 'Content-Type': 'application/json' } });
+	// Realistic user journey
+	// 1. Login
+	const loginRes = http.post(
+		`${BASE_URL}/auth/login`,
+		JSON.stringify({
+			email: 'test@example.com',
+			password: 'testpass'
+		}),
+		{ headers: { 'Content-Type': 'application/json' } }
+	);
 
-  check(loginRes, {
-    'login succeeded': (r) => r.status === 200,
-  });
+	check(loginRes, {
+		'login succeeded': (r) => r.status === 200
+	});
 
-  const token = loginRes.json('token');
+	const token = loginRes.json('token');
 
-  // 2. Browse products
-  const productsRes = http.get(`${BASE_URL}/api/products`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+	// 2. Browse products
+	const productsRes = http.get(`${BASE_URL}/api/products`, {
+		headers: { Authorization: `Bearer ${token}` }
+	});
 
-  check(productsRes, {
-    'products loaded': (r) => r.status === 200,
-    'has products': (r) => r.json('items').length > 0,
-  });
+	check(productsRes, {
+		'products loaded': (r) => r.status === 200,
+		'has products': (r) => r.json('items').length > 0
+	});
 
-  errorRate.add(productsRes.status >= 400);
-  sleep(1);  // user "thinks"
+	errorRate.add(productsRes.status >= 400);
+	sleep(1); // user "thinks"
 
-  // 3. Create order
-  const product = productsRes.json('items')[0];
-  const orderRes = http.post(`${BASE_URL}/api/orders`, JSON.stringify({
-    items: [{ productId: product.id, quantity: 1 }],
-  }), {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+	// 3. Create order
+	const product = productsRes.json('items')[0];
+	const orderRes = http.post(
+		`${BASE_URL}/api/orders`,
+		JSON.stringify({
+			items: [{ productId: product.id, quantity: 1 }]
+		}),
+		{
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json'
+			}
+		}
+	);
 
-  check(orderRes, {
-    'order created': (r) => r.status === 201,
-  });
+	check(orderRes, {
+		'order created': (r) => r.status === 201
+	});
 
-  errorRate.add(orderRes.status >= 400);
-  sleep(2);
+	errorRate.add(orderRes.status >= 400);
+	sleep(2);
 }
 ```
 
@@ -164,19 +173,19 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export const options = {
-  executor: 'ramping-arrival-rate',  // RPS-based (not VU-based)
-  stages: [
-    { target: 100, duration: '1m' },   // 100 RPS for 1 minute
-    { target: 200, duration: '1m' },   // 200 RPS
-    { target: 400, duration: '1m' },   // 400 RPS
-    { target: 800, duration: '1m' },   // 800 RPS
-    { target: 1600, duration: '1m' },  // 1600 RPS — will this break it?
-  ],
-  preAllocatedVUs: 200,
-  maxVUs: 500,
-  thresholds: {
-    http_req_duration: ['p(99)<500'],
-  },
+	executor: 'ramping-arrival-rate', // RPS-based (not VU-based)
+	stages: [
+		{ target: 100, duration: '1m' }, // 100 RPS for 1 minute
+		{ target: 200, duration: '1m' }, // 200 RPS
+		{ target: 400, duration: '1m' }, // 400 RPS
+		{ target: 800, duration: '1m' }, // 800 RPS
+		{ target: 1600, duration: '1m' } // 1600 RPS — will this break it?
+	],
+	preAllocatedVUs: 200,
+	maxVUs: 500,
+	thresholds: {
+		http_req_duration: ['p(99)<500']
+	}
 };
 ```
 
@@ -191,19 +200,19 @@ Load testing with `cust-123` hardcoded produces unrealistic cache hit rates and 
 import { SharedArray } from 'k6/data';
 
 const users = new SharedArray('users', function () {
-  return JSON.parse(open('./test-users.json'));  // 10,000 test users
+	return JSON.parse(open('./test-users.json')); // 10,000 test users
 });
 
 const products = new SharedArray('products', function () {
-  return JSON.parse(open('./test-products.json'));
+	return JSON.parse(open('./test-products.json'));
 });
 
 export default function () {
-  const user = users[Math.floor(Math.random() * users.length)];
-  const product = products[Math.floor(Math.random() * products.length)];
+	const user = users[Math.floor(Math.random() * users.length)];
+	const product = products[Math.floor(Math.random() * products.length)];
 
-  // Now the test exercises different code paths, database queries,
-  // and cache keys — closer to production behavior
+	// Now the test exercises different code paths, database queries,
+	// and cache keys — closer to production behavior
 }
 ```
 
@@ -233,19 +242,19 @@ When latency spikes: check which resource saturated first. CPU? Disk I/O? Connec
 
 Load test in staging, but be aware of the gaps:
 
-| | Staging | Production |
-|---|---|---|
-| Database size | Small (100k rows) | Large (10M+ rows) |
-| Cache state | Cold | Warm |
-| Index effectiveness | Artificially good | Real-world performance |
-| External API latency | Mocked | Variable |
-| Background jobs | Off | Running and consuming resources |
+|                      | Staging           | Production                      |
+| -------------------- | ----------------- | ------------------------------- |
+| Database size        | Small (100k rows) | Large (10M+ rows)               |
+| Cache state          | Cold              | Warm                            |
+| Index effectiveness  | Artificially good | Real-world performance          |
+| External API latency | Mocked            | Variable                        |
+| Background jobs      | Off               | Running and consuming resources |
 
 Mitigation:
+
 - Seed staging with production-scale data (anonymized)
 - Run load test with cache cold AND warm — measure both
 - Enable background jobs during load test
 - Mock external APIs with realistic latency (p50=100ms, p99=500ms)
 
 A load test on empty-table staging will not reveal the index you forgot. Test with real data scale.
-

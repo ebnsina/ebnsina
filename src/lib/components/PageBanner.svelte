@@ -37,7 +37,9 @@
 		{#if eyebrow}
 			<p class="mb-4 font-mono text-[0.7rem] uppercase tracking-[0.22em] text-muted">{eyebrow}</p>
 		{/if}
-		<h1 class="font-display text-[2.75rem] font-bold leading-[1.05] tracking-[-0.025em] sm:text-5xl">
+		<h1
+			class="font-display text-[2.75rem] font-bold leading-[1.05] tracking-[-0.025em] sm:text-5xl"
+		>
 			{title}
 		</h1>
 		{#if description}

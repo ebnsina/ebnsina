@@ -1,10 +1,10 @@
 ---
-title: "REST API Design"
-subtitle: "Design and build a complete REST API with proper HTTP semantics, validation, pagination, and filtering."
+title: 'REST API Design'
+subtitle: 'Design and build a complete REST API with proper HTTP semantics, validation, pagination, and filtering.'
 chapter: 2
-level: "beginner"
-readingTime: "20 min"
-topics: ["REST", "HTTP methods", "pagination", "validation", "status codes"]
+level: 'beginner'
+readingTime: '20 min'
+topics: ['REST', 'HTTP methods', 'pagination', 'validation', 'status codes']
 ---
 
 <script>
@@ -30,32 +30,30 @@ Like a library catalog — each book (resource) has a unique call number (URL). 
 Each book (resource) has a unique call number (URL). You can check books out (GET), add new ones (POST), update information (PUT), or remove them (DELETE). The catalog doesn't remember who you are between visits — you bring your library card (auth token) each time.
 
 <Mermaid
-	title="REST Resource Mapping"
-	code={`
-graph LR
+title="REST Resource Mapping"
+code={`graph LR
   A["GET /users"] --> A2["List users"]
   B["POST /users"] --> B2["Create user"]
   C["GET /users/42"] --> C2["Get user 42"]
   D["PUT /users/42"] --> D2["Update user 42"]
-  E["DELETE /users/42"] --> E2["Delete user 42"]
-`}
+  E["DELETE /users/42"] --> E2["Delete user 42"]`}
 />
 
 ## HTTP Status Codes That Matter
 
-| Code | Meaning | When to Use |
-|------|---------|-------------|
-| 200 | OK | Successful GET, PUT |
-| 201 | Created | Successful POST that creates a resource |
-| 204 | No Content | Successful DELETE |
-| 400 | Bad Request | Invalid input, missing required fields |
-| 401 | Unauthorized | Missing or invalid auth |
-| 403 | Forbidden | Valid auth but insufficient permissions |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Duplicate resource, version conflict |
-| 422 | Unprocessable | Valid JSON but fails business rules |
-| 429 | Too Many Requests | Rate limited |
-| 500 | Internal Error | Unhandled server error |
+| Code | Meaning           | When to Use                             |
+| ---- | ----------------- | --------------------------------------- |
+| 200  | OK                | Successful GET, PUT                     |
+| 201  | Created           | Successful POST that creates a resource |
+| 204  | No Content        | Successful DELETE                       |
+| 400  | Bad Request       | Invalid input, missing required fields  |
+| 401  | Unauthorized      | Missing or invalid auth                 |
+| 403  | Forbidden         | Valid auth but insufficient permissions |
+| 404  | Not Found         | Resource doesn't exist                  |
+| 409  | Conflict          | Duplicate resource, version conflict    |
+| 422  | Unprocessable     | Valid JSON but fails business rules     |
+| 429  | Too Many Requests | Rate limited                            |
+| 500  | Internal Error    | Unhandled server error                  |
 
 ## Complete REST API with Pagination and Filtering
 
@@ -65,34 +63,34 @@ This is a production-grade REST API for a blog platform. It includes cursor-base
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // --- Domain Types ---
 interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  body: string;
-  authorId: string;
-  tags: string[];
-  published: boolean;
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	slug: string;
+	title: string;
+	body: string;
+	authorId: string;
+	tags: string[];
+	published: boolean;
+	createdAt: string;
+	updatedAt: string;
 }
 
 interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    cursor: string | null;
-    hasMore: boolean;
-    total: number;
-  };
+	data: T[];
+	pagination: {
+		cursor: string | null;
+		hasMore: boolean;
+		total: number;
+	};
 }
 
 interface ValidationError {
-  field: string;
-  message: string;
+	field: string;
+	message: string;
 }
 
 // --- Store ---
@@ -100,246 +98,242 @@ const posts = new Map<string, Post>();
 
 // Seed some data
 for (let i = 1; i <= 50; i++) {
-  const id = crypto.randomUUID();
-  posts.set(id, {
-    id,
-    slug: `post-${i}`,
-    title: `Blog Post ${i}`,
-    body: `Content of post ${i}. This covers various system design topics.`,
-    authorId: `user-${(i % 5) + 1}`,
-    tags: i % 2 === 0 ? ["system-design", "backend"] : ["frontend", "react"],
-    published: i % 3 !== 0,
-    createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - i * 43200000).toISOString(),
-  });
+	const id = crypto.randomUUID();
+	posts.set(id, {
+		id,
+		slug: `post-${i}`,
+		title: `Blog Post ${i}`,
+		body: `Content of post ${i}. This covers various system design topics.`,
+		authorId: `user-${(i % 5) + 1}`,
+		tags: i % 2 === 0 ? ['system-design', 'backend'] : ['frontend', 'react'],
+		published: i % 3 !== 0,
+		createdAt: new Date(Date.now() - i * 86400000).toISOString(),
+		updatedAt: new Date(Date.now() - i * 43200000).toISOString()
+	});
 }
 
 // --- Validation ---
 function validateCreatePost(body: unknown): ValidationError[] {
-  const errors: ValidationError[] = [];
-  const data = body as Record<string, unknown>;
+	const errors: ValidationError[] = [];
+	const data = body as Record<string, unknown>;
 
-  if (!data || typeof data !== "object") {
-    return [{ field: "body", message: "Request body must be a JSON object" }];
-  }
+	if (!data || typeof data !== 'object') {
+		return [{ field: 'body', message: 'Request body must be a JSON object' }];
+	}
 
-  if (!data.title || typeof data.title !== "string" || data.title.trim().length < 3) {
-    errors.push({ field: "title", message: "Must be at least 3 characters" });
-  }
-  if (typeof data.title === "string" && data.title.length > 200) {
-    errors.push({ field: "title", message: "Must be at most 200 characters" });
-  }
-  if (!data.body || typeof data.body !== "string" || data.body.trim().length < 10) {
-    errors.push({ field: "body", message: "Must be at least 10 characters" });
-  }
-  if (!data.authorId || typeof data.authorId !== "string") {
-    errors.push({ field: "authorId", message: "Required" });
-  }
-  if (data.tags && !Array.isArray(data.tags)) {
-    errors.push({ field: "tags", message: "Must be an array of strings" });
-  }
+	if (!data.title || typeof data.title !== 'string' || data.title.trim().length < 3) {
+		errors.push({ field: 'title', message: 'Must be at least 3 characters' });
+	}
+	if (typeof data.title === 'string' && data.title.length > 200) {
+		errors.push({ field: 'title', message: 'Must be at most 200 characters' });
+	}
+	if (!data.body || typeof data.body !== 'string' || data.body.trim().length < 10) {
+		errors.push({ field: 'body', message: 'Must be at least 10 characters' });
+	}
+	if (!data.authorId || typeof data.authorId !== 'string') {
+		errors.push({ field: 'authorId', message: 'Required' });
+	}
+	if (data.tags && !Array.isArray(data.tags)) {
+		errors.push({ field: 'tags', message: 'Must be an array of strings' });
+	}
 
-  // Check slug uniqueness
-  if (data.title && typeof data.title === "string") {
-    const slug = slugify(data.title);
-    const existing = Array.from(posts.values()).find((p) => p.slug === slug);
-    if (existing) {
-      errors.push({ field: "title", message: "A post with this title already exists" });
-    }
-  }
+	// Check slug uniqueness
+	if (data.title && typeof data.title === 'string') {
+		const slug = slugify(data.title);
+		const existing = Array.from(posts.values()).find((p) => p.slug === slug);
+		if (existing) {
+			errors.push({ field: 'title', message: 'A post with this title already exists' });
+		}
+	}
 
-  return errors;
+	return errors;
 }
 
 function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/(^-|-$)/g, '');
 }
 
 // --- Helpers ---
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c: Buffer) => chunks.push(c));
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString()));
-      } catch {
-        reject(new Error("Invalid JSON"));
-      }
-    });
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c: Buffer) => chunks.push(c));
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString()));
+			} catch {
+				reject(new Error('Invalid JSON'));
+			}
+		});
+	});
 }
 
 // --- Handlers ---
 function listPosts(req: http.IncomingMessage, res: http.ServerResponse): void {
-  const url = new URL(req.url!, `http://${req.headers.host}`);
+	const url = new URL(req.url!, `http://${req.headers.host}`);
 
-  // Parse query params
-  const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
-  const cursor = url.searchParams.get("cursor");
-  const tag = url.searchParams.get("tag");
-  const authorId = url.searchParams.get("author_id");
-  const published = url.searchParams.get("published");
-  const fields = url.searchParams.get("fields")?.split(",");
+	// Parse query params
+	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+	const cursor = url.searchParams.get('cursor');
+	const tag = url.searchParams.get('tag');
+	const authorId = url.searchParams.get('author_id');
+	const published = url.searchParams.get('published');
+	const fields = url.searchParams.get('fields')?.split(',');
 
-  // Filter
-  let items = Array.from(posts.values());
+	// Filter
+	let items = Array.from(posts.values());
 
-  if (tag) items = items.filter((p) => p.tags.includes(tag));
-  if (authorId) items = items.filter((p) => p.authorId === authorId);
-  if (published !== null && published !== undefined) {
-    items = items.filter((p) => p.published === (published === "true"));
-  }
+	if (tag) items = items.filter((p) => p.tags.includes(tag));
+	if (authorId) items = items.filter((p) => p.authorId === authorId);
+	if (published !== null && published !== undefined) {
+		items = items.filter((p) => p.published === (published === 'true'));
+	}
 
-  // Sort by createdAt descending
-  items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+	// Sort by createdAt descending
+	items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const total = items.length;
+	const total = items.length;
 
-  // Cursor-based pagination
-  if (cursor) {
-    const cursorIndex = items.findIndex((p) => p.id === cursor);
-    if (cursorIndex >= 0) {
-      items = items.slice(cursorIndex + 1);
-    }
-  }
+	// Cursor-based pagination
+	if (cursor) {
+		const cursorIndex = items.findIndex((p) => p.id === cursor);
+		if (cursorIndex >= 0) {
+			items = items.slice(cursorIndex + 1);
+		}
+	}
 
-  const page = items.slice(0, limit);
-  const hasMore = items.length > limit;
-  const nextCursor = hasMore ? page[page.length - 1]?.id || null : null;
+	const page = items.slice(0, limit);
+	const hasMore = items.length > limit;
+	const nextCursor = hasMore ? page[page.length - 1]?.id || null : null;
 
-  // Field selection
-  let responseData: unknown[] = page;
-  if (fields && fields.length > 0) {
-    responseData = page.map((p) => {
-      const selected: Record<string, unknown> = {};
-      for (const f of fields) {
-        if (f in p) selected[f] = (p as Record<string, unknown>)[f];
-      }
-      return selected;
-    });
-  }
+	// Field selection
+	let responseData: unknown[] = page;
+	if (fields && fields.length > 0) {
+		responseData = page.map((p) => {
+			const selected: Record<string, unknown> = {};
+			for (const f of fields) {
+				if (f in p) selected[f] = (p as Record<string, unknown>)[f];
+			}
+			return selected;
+		});
+	}
 
-  const response: PaginatedResponse<unknown> = {
-    data: responseData,
-    pagination: { cursor: nextCursor, hasMore, total },
-  };
+	const response: PaginatedResponse<unknown> = {
+		data: responseData,
+		pagination: { cursor: nextCursor, hasMore, total }
+	};
 
-  json(res, 200, response);
+	json(res, 200, response);
 }
 
-async function createPost(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
-  const body = await parseBody(req);
-  const errors = validateCreatePost(body);
+async function createPost(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+	const body = await parseBody(req);
+	const errors = validateCreatePost(body);
 
-  if (errors.length > 0) {
-    json(res, 422, { errors, status: 422 });
-    return;
-  }
+	if (errors.length > 0) {
+		json(res, 422, { errors, status: 422 });
+		return;
+	}
 
-  const data = body as { title: string; body: string; authorId: string; tags?: string[] };
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
+	const data = body as { title: string; body: string; authorId: string; tags?: string[] };
+	const id = crypto.randomUUID();
+	const now = new Date().toISOString();
 
-  const post: Post = {
-    id,
-    slug: slugify(data.title),
-    title: data.title.trim(),
-    body: data.body.trim(),
-    authorId: data.authorId,
-    tags: data.tags || [],
-    published: false,
-    createdAt: now,
-    updatedAt: now,
-  };
+	const post: Post = {
+		id,
+		slug: slugify(data.title),
+		title: data.title.trim(),
+		body: data.body.trim(),
+		authorId: data.authorId,
+		tags: data.tags || [],
+		published: false,
+		createdAt: now,
+		updatedAt: now
+	};
 
-  posts.set(id, post);
+	posts.set(id, post);
 
-  // Return 201 with Location header
-  res.writeHead(201, {
-    "Content-Type": "application/json",
-    Location: `/api/posts/${post.slug}`,
-  });
-  res.end(JSON.stringify({ data: post, status: 201 }));
+	// Return 201 with Location header
+	res.writeHead(201, {
+		'Content-Type': 'application/json',
+		Location: `/api/posts/${post.slug}`
+	});
+	res.end(JSON.stringify({ data: post, status: 201 }));
 }
 
 function getPost(res: http.ServerResponse, identifier: string): void {
-  // Support lookup by ID or slug
-  const post =
-    posts.get(identifier) ||
-    Array.from(posts.values()).find((p) => p.slug === identifier);
+	// Support lookup by ID or slug
+	const post =
+		posts.get(identifier) || Array.from(posts.values()).find((p) => p.slug === identifier);
 
-  if (!post) {
-    json(res, 404, { error: "Post not found", status: 404 });
-    return;
-  }
-  json(res, 200, { data: post, status: 200 });
+	if (!post) {
+		json(res, 404, { error: 'Post not found', status: 404 });
+		return;
+	}
+	json(res, 200, { data: post, status: 200 });
 }
 
 async function updatePost(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-  id: string
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	id: string
 ): Promise<void> {
-  const post = posts.get(id);
-  if (!post) {
-    json(res, 404, { error: "Post not found", status: 404 });
-    return;
-  }
+	const post = posts.get(id);
+	if (!post) {
+		json(res, 404, { error: 'Post not found', status: 404 });
+		return;
+	}
 
-  const body = (await parseBody(req)) as Partial<Post>;
-  if (body.title) post.title = body.title.trim();
-  if (body.body) post.body = body.body.trim();
-  if (body.tags) post.tags = body.tags;
-  if (body.published !== undefined) post.published = body.published;
-  post.updatedAt = new Date().toISOString();
+	const body = (await parseBody(req)) as Partial<Post>;
+	if (body.title) post.title = body.title.trim();
+	if (body.body) post.body = body.body.trim();
+	if (body.tags) post.tags = body.tags;
+	if (body.published !== undefined) post.published = body.published;
+	post.updatedAt = new Date().toISOString();
 
-  json(res, 200, { data: post, status: 200 });
+	json(res, 200, { data: post, status: 200 });
 }
 
 function deletePost(res: http.ServerResponse, id: string): void {
-  if (!posts.delete(id)) {
-    json(res, 404, { error: "Post not found", status: 404 });
-    return;
-  }
-  res.writeHead(204);
-  res.end();
+	if (!posts.delete(id)) {
+		json(res, 404, { error: 'Post not found', status: 404 });
+		return;
+	}
+	res.writeHead(204);
+	res.end();
 }
 
 // --- Router ---
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const path = url.pathname;
-  const method = req.method!;
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const path = url.pathname;
+	const method = req.method!;
 
-  try {
-    const match = path.match(/^\/api\/posts\/(.+)$/);
+	try {
+		const match = path.match(/^\/api\/posts\/(.+)$/);
 
-    if (path === "/api/posts" && method === "GET") return listPosts(req, res);
-    if (path === "/api/posts" && method === "POST") return await createPost(req, res);
-    if (match && method === "GET") return getPost(res, match[1]);
-    if (match && method === "PUT") return await updatePost(req, res, match[1]);
-    if (match && method === "DELETE") return deletePost(res, match[1]);
+		if (path === '/api/posts' && method === 'GET') return listPosts(req, res);
+		if (path === '/api/posts' && method === 'POST') return await createPost(req, res);
+		if (match && method === 'GET') return getPost(res, match[1]);
+		if (match && method === 'PUT') return await updatePost(req, res, match[1]);
+		if (match && method === 'DELETE') return deletePost(res, match[1]);
 
-    json(res, 404, { error: "Not found", status: 404 });
-  } catch (err) {
-    console.error(err);
-    json(res, 500, { error: "Internal server error", status: 500 });
-  }
+		json(res, 404, { error: 'Not found', status: 404 });
+	} catch (err) {
+		console.error(err);
+		json(res, 500, { error: 'Internal server error', status: 500 });
+	}
 });
 
-server.listen(3000, () => console.log("API running on http://localhost:3000"));
+server.listen(3000, () => console.log('API running on http://localhost:3000'));
 ```
 
 </div>
@@ -676,7 +670,7 @@ func main() {
 
 <Callout type="tip" title="Cursor vs Offset Pagination">
 
-  Offset pagination (`?page=5&limit=20`) breaks when items are inserted or deleted between requests — users see duplicates or miss items. Cursor-based pagination (`?cursor=abc123&limit=20`) uses the last item's ID as a bookmark, making it stable even with concurrent writes. This is why Twitter, Slack, and Facebook all use cursor-based pagination.
+Offset pagination (`?page=5&limit=20`) breaks when items are inserted or deleted between requests — users see duplicates or miss items. Cursor-based pagination (`?cursor=abc123&limit=20`) uses the last item's ID as a bookmark, making it stable even with concurrent writes. This is why Twitter, Slack, and Facebook all use cursor-based pagination.
 
 </Callout>
 
@@ -702,4 +696,3 @@ func main() {
 - REST works best for CRUD-heavy apps. For real-time or graph-shaped data, consider GraphQL or WebSockets
 
 </div>
-

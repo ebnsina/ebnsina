@@ -1,10 +1,10 @@
 ---
-title: "Container Security"
-subtitle: "Attack surface, capabilities, seccomp, read-only filesystems, and what actually matters for production hardening."
+title: 'Container Security'
+subtitle: 'Attack surface, capabilities, seccomp, read-only filesystems, and what actually matters for production hardening.'
 chapter: 5
-level: "advanced"
-readingTime: "10 min"
-topics: ["container security", "capabilities", "seccomp", "read-only", "rootless", "supply chain"]
+level: 'advanced'
+readingTime: '10 min'
+topics: ['container security', 'capabilities', 'seccomp', 'read-only', 'rootless', 'supply chain']
 ---
 
 <script>
@@ -60,6 +60,7 @@ USER appuser
 ```
 
 **Enforce non-root in Kubernetes:**
+
 ```yaml
 spec:
   securityContext:
@@ -87,6 +88,7 @@ docker run --read-only \
 ```
 
 **In Kubernetes:**
+
 ```yaml
 containers:
   - name: api
@@ -98,7 +100,7 @@ containers:
 volumes:
   - name: tmp
     emptyDir:
-      medium: Memory   # RAM-backed
+      medium: Memory # RAM-backed
       sizeLimit: 100Mi
 ```
 
@@ -125,11 +127,12 @@ docker run \
 **The right default:** `--cap-drop=ALL` and add back only what testing proves is needed. Use port 3000+ to avoid needing `NET_BIND_SERVICE`.
 
 **In Kubernetes:**
+
 ```yaml
 securityContext:
   capabilities:
     drop: [ALL]
-    add: []    # empty — your app should run without any special capabilities
+    add: [] # empty — your app should run without any special capabilities
 ```
 
 ## seccomp Profiles
@@ -153,6 +156,7 @@ For most applications, the default Docker seccomp profile is sufficient. Creatin
 ## Image Supply Chain Security
 
 **Use specific digests, not tags:**
+
 ```dockerfile
 # WRONG — 'latest' can change to anything
 FROM node:20-alpine
@@ -165,6 +169,7 @@ FROM node:20.11.1-alpine3.19@sha256:bf77dc26e48ea95fca9d1aceb5acfa69d2e546b765ec
 ```
 
 **Scan dependencies before build:**
+
 ```bash
 # Scan npm dependencies
 npm audit --audit-level=high
@@ -180,6 +185,7 @@ npm audit --audit-level=high --exit-code 1
 ```
 
 **SBOM (Software Bill of Materials):**
+
 ```bash
 # Generate SBOM for your image
 syft myapp:latest -o spdx-json > sbom.json
@@ -189,6 +195,7 @@ cosign verify ghcr.io/org/myapp:v1.0.0 --certificate-identity=...
 ```
 
 **Sign your images:**
+
 ```bash
 # Sign with cosign (keyless, using OIDC)
 cosign sign ghcr.io/org/myapp:v1.0.0
@@ -246,4 +253,3 @@ env:
 □ Secrets injected at runtime from a secrets manager
 □ Network policies limit container-to-container traffic
 ```
-

@@ -1,10 +1,10 @@
 ---
-title: "Packages, Modules & Testing"
-subtitle: "How to organize Go code for real projects — dependency management, package design, and writing tests that catch real bugs."
+title: 'Packages, Modules & Testing'
+subtitle: 'How to organize Go code for real projects — dependency management, package design, and writing tests that catch real bugs.'
 chapter: 8
-level: "intermediate"
-readingTime: "20 min"
-topics: ["packages", "modules", "testing", "benchmarks", "table-driven tests"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['packages', 'modules', 'testing', 'benchmarks', 'table-driven tests']
 ---
 
 <script>
@@ -393,4 +393,3 @@ func TestMain(m *testing.M) {
 5. **`t.Helper()`** in test utilities — shows the caller's line number on failure
 6. **Benchmarks are built in** — `go test -bench=. -benchmem` for performance analysis
 7. **`go test -race`** — always run the race detector in CI
-

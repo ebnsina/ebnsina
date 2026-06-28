@@ -1,10 +1,10 @@
 ---
-title: "Restore Drills"
-subtitle: "How to actually test your backups — the runbook structure, what to verify, and how to make drills a regular practice."
+title: 'Restore Drills'
+subtitle: 'How to actually test your backups — the runbook structure, what to verify, and how to make drills a regular practice.'
 chapter: 3
-level: "intermediate"
-readingTime: "9 min"
-topics: ["restore drills", "runbooks", "backup verification", "PITR", "disaster simulation"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['restore drills', 'runbooks', 'backup verification', 'PITR', 'disaster simulation']
 ---
 
 <script>
@@ -141,7 +141,7 @@ Run this in CI weekly. If it fails, alert on-call. If it's never failed, check t
 
 Write it so that someone who has never done a restore before can execute it under pressure at 3am. Every step must be explicit.
 
-```markdown
+````markdown
 # Database Disaster Recovery Runbook
 
 **Last tested:** 2024-01-15 by @alice — actual RTO: 47 minutes
@@ -185,6 +185,7 @@ aws ssm put-parameter \
 
 # Restart application servers to pick up new connection string
 ```
+````
 
 - [ ] Verify application can connect: `curl https://api.myapp.com/health`
 - [ ] Monitor error rate for 5 minutes
@@ -231,6 +232,7 @@ sudo journalctl -u postgresql -f
 - [ ] Identify and communicate data loss window (RPO achieved vs target)
 - [ ] Open post-mortem issue
 - [ ] Schedule runbook review if steps were wrong or missing
+
 ```
 
 ## What Good Looks Like
@@ -253,3 +255,4 @@ If your drill takes 3 hours and your RTO is 1 hour, that's a gap — not just do
 
 **Not timing it:** "The restore succeeded" is incomplete. "The restore succeeded in 52 minutes" tells you whether you're meeting your RTO.
 
+```

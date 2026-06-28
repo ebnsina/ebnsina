@@ -1,10 +1,10 @@
 ---
-title: "WebSockets & Shared State at Scale"
-subtitle: "How to handle persistent connections, pub/sub fan-out, and the Redis adapter that makes Socket.io work across instances."
+title: 'WebSockets & Shared State at Scale'
+subtitle: 'How to handle persistent connections, pub/sub fan-out, and the Redis adapter that makes Socket.io work across instances.'
 chapter: 5
-level: "intermediate"
-readingTime: "8 min"
-topics: ["WebSockets", "Socket.io", "Redis adapter", "pub/sub", "sticky sessions"]
+level: 'intermediate'
+readingTime: '8 min'
+topics: ['WebSockets', 'Socket.io', 'Redis adapter', 'pub/sub', 'sticky sessions']
 ---
 
 <script>
@@ -48,7 +48,7 @@ import { createClient } from 'redis';
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: 'https://myapp.com' },
+	cors: { origin: 'https://myapp.com' }
 });
 
 // Two Redis clients: one for publishing, one for subscribing
@@ -65,6 +65,7 @@ io.to('room-123').emit('message', { text: 'Hello everyone' });
 ```
 
 **What the Redis adapter does:**
+
 ```
 Instance A emits to room-123
   → publishes to Redis channel "socket.io#room-123#"
@@ -99,6 +100,7 @@ upstream socketio {
 Sticky sessions are acceptable here — unlike application state, WebSocket connections naturally "belong" to one instance. The problem is failure: if an instance dies, its clients disconnect and reconnect (to another instance). This is expected behavior for WebSockets, not a data integrity issue.
 
 **AWS ALB sticky sessions:**
+
 ```bash
 aws elbv2 modify-target-group-attributes \
   --target-group-arn arn:... \
@@ -116,34 +118,34 @@ Track which users are currently connected across all instances:
 ```typescript
 // On connection: register in Redis
 io.on('connection', async (socket) => {
-  const userId = socket.handshake.auth.userId;
+	const userId = socket.handshake.auth.userId;
 
-  // Mark user as online with TTL (auto-expires if instance crashes)
-  await redis.setex(`presence:${userId}`, 30, socket.id);
+	// Mark user as online with TTL (auto-expires if instance crashes)
+	await redis.setex(`presence:${userId}`, 30, socket.id);
 
-  // Refresh TTL periodically to handle long connections
-  const refreshInterval = setInterval(async () => {
-    await redis.expire(`presence:${userId}`, 30);
-  }, 10_000);
+	// Refresh TTL periodically to handle long connections
+	const refreshInterval = setInterval(async () => {
+		await redis.expire(`presence:${userId}`, 30);
+	}, 10_000);
 
-  socket.on('disconnect', async () => {
-    clearInterval(refreshInterval);
-    await redis.del(`presence:${userId}`);
-    // Notify others this user went offline
-    io.to(`friends-of-${userId}`).emit('user-offline', { userId });
-  });
+	socket.on('disconnect', async () => {
+		clearInterval(refreshInterval);
+		await redis.del(`presence:${userId}`);
+		// Notify others this user went offline
+		io.to(`friends-of-${userId}`).emit('user-offline', { userId });
+	});
 });
 
 // Check if a user is online (from any instance)
 async function isUserOnline(userId: string): Promise<boolean> {
-  return (await redis.exists(`presence:${userId}`)) === 1;
+	return (await redis.exists(`presence:${userId}`)) === 1;
 }
 
 // Get all online users
 async function getOnlineUsers(userIds: string[]): Promise<string[]> {
-  const keys = userIds.map(id => `presence:${id}`);
-  const results = await redis.mget(...keys);
-  return userIds.filter((_, i) => results[i] !== null);
+	const keys = userIds.map((id) => `presence:${id}`);
+	const results = await redis.mget(...keys);
+	return userIds.filter((_, i) => results[i] !== null);
 }
 ```
 
@@ -168,6 +170,7 @@ sysctl -w net.ipv4.tcp_max_syn_backlog=65535
 ```
 
 Practical limits per instance with Node.js:
+
 - ~10,000 concurrent WebSocket connections (comfortable)
 - ~50,000 with tuning
 - Beyond that: scale out (add more instances + Redis adapter handles fan-out)
@@ -180,20 +183,20 @@ WebSockets have real overhead. Consider cheaper alternatives:
 
 ```typescript
 app.get('/events', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
+	res.setHeader('Content-Type', 'text/event-stream');
+	res.setHeader('Cache-Control', 'no-cache');
+	res.setHeader('Connection', 'keep-alive');
 
-  const send = (data: unknown) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+	const send = (data: unknown) => {
+		res.write(`data: ${JSON.stringify(data)}\n\n`);
+	};
 
-  const sub = redis.subscribe('notifications', (message) => {
-    const event = JSON.parse(message);
-    if (event.userId === req.user.id) send(event);
-  });
+	const sub = redis.subscribe('notifications', (message) => {
+		const event = JSON.parse(message);
+		if (event.userId === req.user.id) send(event);
+	});
 
-  req.on('close', () => sub.unsubscribe());
+	req.on('close', () => sub.unsubscribe());
 });
 ```
 
@@ -202,4 +205,3 @@ app.get('/events', (req, res) => {
 **Webhook push:** Server pushes to a client-provided URL when events occur. Right for integrations, not user-facing realtime.
 
 Use WebSockets when you need bidirectional communication (chat, collaborative editing, multiplayer games). For one-way server push, SSE is usually simpler and sufficient.
-

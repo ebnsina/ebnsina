@@ -4,9 +4,9 @@ const SRC = '/Users/ebnsina/Sites/es/src/content/blog/cdn-openresty-gcore.md';
 const lines = readFileSync(SRC, 'utf8').split('\n');
 
 // 1-indexed source boundaries
-const styleInner = lines.slice(1215, 1342).join('\n');   // between <style> and </style>
+const styleInner = lines.slice(1215, 1342).join('\n'); // between <style> and </style>
 const rawMarkup = lines.slice(1343, 1616).join('\n').trim(); // after </style>, before <script>
-const scriptInner = lines.slice(1617, 2178).join('\n');   // between <script> and </script>
+const scriptInner = lines.slice(1617, 2178).join('\n'); // between <script> and </script>
 
 // The widget markup has a few markdown section labels/paragraphs interleaved
 // between the cards. Convert those bare-text lines to HTML (everything else is
@@ -16,8 +16,10 @@ const markup = rawMarkup
 	.split('\n')
 	.map((line) => {
 		const t = line.trim();
-		if (/^###\s+/.test(t)) return `<h3 class="pg-section-heading">${bold(t.replace(/^###\s+/, ''))}</h3>`;
-		if (t && !t.includes('<') && /[A-Za-z]/.test(t)) return `<p class="pg-section-text">${bold(t)}</p>`;
+		if (/^###\s+/.test(t))
+			return `<h3 class="pg-section-heading">${bold(t.replace(/^###\s+/, ''))}</h3>`;
+		if (t && !t.includes('<') && /[A-Za-z]/.test(t))
+			return `<p class="pg-section-text">${bold(t)}</p>`;
 		return line;
 	})
 	.join('\n');
@@ -59,10 +61,7 @@ ${scriptInner
 
 ${markup}
 `;
-writeFileSync(
-	'/Users/ebnsina/Sites/ebnsina/src/lib/components/content/CdnPlayground.svelte',
-	comp
-);
+writeFileSync('/Users/ebnsina/Sites/ebnsina/src/lib/components/content/CdnPlayground.svelte', comp);
 
 // patch the migrated post: replace everything from first body <style> to EOF.
 // Idempotent: only patches a freshly-migrated post (one that still has <style>).
@@ -90,5 +89,12 @@ if (post.includes('<CdnPlayground')) {
 	}
 }
 writeFileSync(OUT, post);
-console.log('markup lines:', markup.split('\n').length, '| script lines:', scriptInner.split('\n').length, '| style lines:', styleInner.split('\n').length);
+console.log(
+	'markup lines:',
+	markup.split('\n').length,
+	'| script lines:',
+	scriptInner.split('\n').length,
+	'| style lines:',
+	styleInner.split('\n').length
+);
 console.log('post now ends with CdnPlayground:', post.trimEnd().endsWith('<CdnPlayground />'));

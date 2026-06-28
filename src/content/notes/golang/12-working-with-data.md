@@ -1,10 +1,10 @@
 ---
-title: "Working with Data"
-subtitle: "JSON, HTTP clients, databases, and file I/O — the bread and butter of every Go backend service."
+title: 'Working with Data'
+subtitle: 'JSON, HTTP clients, databases, and file I/O — the bread and butter of every Go backend service.'
 chapter: 12
-level: "intermediate"
-readingTime: "22 min"
-topics: ["JSON", "HTTP", "database", "SQL", "file I/O", "REST API"]
+level: 'intermediate'
+readingTime: '22 min'
+topics: ['JSON', 'HTTP', 'database', 'SQL', 'file I/O', 'REST API']
 ---
 
 <script>
@@ -459,4 +459,3 @@ if err := scanner.Err(); err != nil {
 5. **`database/sql` manages connection pools** — configure `MaxOpenConns` and `MaxIdleConns`
 6. **Check `rows.Err()` after iteration** — silent errors are the worst kind
 7. **Use `defer tx.Rollback()`** for transactions — it's a no-op after `Commit()`
-

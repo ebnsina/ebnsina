@@ -1,10 +1,10 @@
 ---
-title: "Processes & Signals"
-subtitle: "What a Linux process actually is, how fork and exec build the entire universe, and the signals that decide whether your app shuts down cleanly or dies screaming."
+title: 'Processes & Signals'
+subtitle: 'What a Linux process actually is, how fork and exec build the entire universe, and the signals that decide whether your app shuts down cleanly or dies screaming.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["processes", "signals", "fork", "exec", "linux"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['processes', 'signals', 'fork', 'exec', 'linux']
 ---
 
 <script>
@@ -44,9 +44,9 @@ Five columns matter:
 
 ## How processes are born — fork and exec
 
-Linux has only one way to create a process: `fork()`. The kernel takes an existing process, makes an *exact copy* of it (same memory, same file descriptors, same everything), and gives the copy a new PID. Both copies return from the `fork()` call — the parent gets the child's PID, the child gets `0`. From there they diverge.
+Linux has only one way to create a process: `fork()`. The kernel takes an existing process, makes an _exact copy_ of it (same memory, same file descriptors, same everything), and gives the copy a new PID. Both copies return from the `fork()` call — the parent gets the child's PID, the child gets `0`. From there they diverge.
 
-To run a *different* program, the child immediately calls `exec()`, which replaces its own program text and memory with the new binary. So when you type:
+To run a _different_ program, the child immediately calls `exec()`, which replaces its own program text and memory with the new binary. So when you type:
 
 ```bash
 ls /etc
@@ -95,14 +95,14 @@ $ ps -axo pid,state,comm | head
 
 The single-letter state:
 
-| State | Meaning |
-|---|---|
-| `R` | Running or runnable — actively using a CPU or waiting for one. |
-| `S` | Sleeping interruptibly — waiting for I/O, a signal, or a network event. |
-| `D` | Sleeping uninterruptibly — usually waiting on disk. **Cannot be killed.** |
-| `Z` | Zombie — exited, but parent has not collected its exit code yet. |
-| `T` | Stopped — paused with `Ctrl+Z` or by a signal. |
-| `I` | Idle kernel thread. |
+| State | Meaning                                                                   |
+| ----- | ------------------------------------------------------------------------- |
+| `R`   | Running or runnable — actively using a CPU or waiting for one.            |
+| `S`   | Sleeping interruptibly — waiting for I/O, a signal, or a network event.   |
+| `D`   | Sleeping uninterruptibly — usually waiting on disk. **Cannot be killed.** |
+| `Z`   | Zombie — exited, but parent has not collected its exit code yet.          |
+| `T`   | Stopped — paused with `Ctrl+Z` or by a signal.                            |
+| `I`   | Idle kernel thread.                                                       |
 
 A `D`-state process stuck for minutes usually means the disk is dying or the network filesystem is unreachable. You cannot `kill -9` it; the kernel has it. The only fix is fixing the underlying I/O or rebooting.
 
@@ -144,16 +144,16 @@ $ kill -l | head -3
 
 The ones you actually use:
 
-| Signal | Number | What it asks |
-|---|---|---|
-| `SIGTERM` | 15 | "Please shut down cleanly." Default for `kill`. |
-| `SIGINT` | 2 | "User pressed Ctrl+C." |
-| `SIGHUP` | 1 | "Reload your config." (Originally: terminal hung up.) |
-| `SIGUSR1` / `SIGUSR2` | 10 / 12 | Application-defined. |
-| `SIGKILL` | 9 | "Die now." Cannot be caught or ignored. |
-| `SIGSTOP` | 19 | "Pause." Cannot be caught. |
-| `SIGCONT` | 18 | "Resume after a stop." |
-| `SIGCHLD` | 17 | Sent to a parent when a child exits. |
+| Signal                | Number  | What it asks                                          |
+| --------------------- | ------- | ----------------------------------------------------- |
+| `SIGTERM`             | 15      | "Please shut down cleanly." Default for `kill`.       |
+| `SIGINT`              | 2       | "User pressed Ctrl+C."                                |
+| `SIGHUP`              | 1       | "Reload your config." (Originally: terminal hung up.) |
+| `SIGUSR1` / `SIGUSR2` | 10 / 12 | Application-defined.                                  |
+| `SIGKILL`             | 9       | "Die now." Cannot be caught or ignored.               |
+| `SIGSTOP`             | 19      | "Pause." Cannot be caught.                            |
+| `SIGCONT`             | 18      | "Resume after a stop."                                |
+| `SIGCHLD`             | 17      | Sent to a parent when a child exits.                  |
 
 Send a signal:
 
@@ -175,7 +175,7 @@ pkill -f 'node server' # by command-line pattern
 3. Closes database connections, flushes buffers, unlinks PID files.
 4. Exits with code 0.
 
-`SIGKILL` is **not catchable**. The kernel kills the process *immediately*, with no chance to clean up. In-flight transactions die. Open files may end up corrupt. Locks held in memory are gone but locks held in databases or files persist.
+`SIGKILL` is **not catchable**. The kernel kills the process _immediately_, with no chance to clean up. In-flight transactions die. Open files may end up corrupt. Locks held in memory are gone but locks held in databases or files persist.
 
 Always send `SIGTERM` first. Wait a few seconds. Only escalate to `SIGKILL` if the process is truly stuck.
 
@@ -254,4 +254,3 @@ For real long-running daemons, do not rely on `nohup` and `disown`. Use systemd 
 - Catch signals in your app to drain cleanly. Untrapped signals = unclean shutdown.
 
 Next: systemd — the supervisor that turns "I have a binary" into "this thing is up forever."
-

@@ -1,10 +1,10 @@
 ---
-title: "gRPC Building — Roadmap"
+title: 'gRPC Building — Roadmap'
 subtitle: "Ten chapters that go from 'protobuf is a config language' to a polyglot, mTLS-secured, observable gRPC service running behind nginx, with streaming RPCs and tight deadlines."
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "grpc", "protobuf", "http2", "rpc"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'grpc', 'protobuf', 'http2', 'rpc']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will be able to design `.proto` files, generate code in Go, Node, and Python
 Read in order. The first three chapters explain the moving parts; chapter 4 ships running code. From there each chapter adds a real production capability. Total reading: ~3 hours. Hands-on, the first time you build it all: a long weekend.
 
 You need Go 1.22+, the `protoc` compiler, Node 20+ and Python 3.11+ for chapter 5, and a VPS with a domain pointed at it for chapter 10. Everything else runs on `localhost`.
-

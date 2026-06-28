@@ -1,10 +1,10 @@
 ---
-title: "Testing Strategies"
-subtitle: "Unit tests, integration tests, E2E tests, Testing Library patterns, and mocking — building confidence in your code."
+title: 'Testing Strategies'
+subtitle: 'Unit tests, integration tests, E2E tests, Testing Library patterns, and mocking — building confidence in your code.'
 chapter: 7
-level: "advanced"
-readingTime: "12 min"
-topics: ["testing", "unit tests", "integration tests", "E2E", "testing library", "mocking"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['testing', 'unit tests', 'integration tests', 'E2E', 'testing library', 'mocking']
 ---
 
 <script>
@@ -47,68 +47,65 @@ Unit tests are for pure functions and utilities — things with clear inputs and
 
 ```typescript
 // utils/price.ts
-export function formatPrice(amount: number, currency: string = "BDT"): string {
-  if (amount < 0) throw new Error("Price cannot be negative");
-  return `৳${amount.toLocaleString("en-BD")}`;
+export function formatPrice(amount: number, currency: string = 'BDT'): string {
+	if (amount < 0) throw new Error('Price cannot be negative');
+	return `৳${amount.toLocaleString('en-BD')}`;
 }
 
-export function calculateDiscount(
-  price: number,
-  discountPercent: number
-): number {
-  return Math.round(price * (1 - discountPercent / 100));
+export function calculateDiscount(price: number, discountPercent: number): number {
+	return Math.round(price * (1 - discountPercent / 100));
 }
 
 export function isInStock(quantity: number): boolean {
-  return quantity > 0;
+	return quantity > 0;
 }
 ```
 
 ```typescript
 // utils/price.test.ts
-import { describe, it, expect } from "vitest";
-import { formatPrice, calculateDiscount, isInStock } from "./price";
+import { describe, it, expect } from 'vitest';
+import { formatPrice, calculateDiscount, isInStock } from './price';
 
-describe("formatPrice", () => {
-  it("formats a standard price", () => {
-    expect(formatPrice(1500)).toBe("৳1,500");
-  });
+describe('formatPrice', () => {
+	it('formats a standard price', () => {
+		expect(formatPrice(1500)).toBe('৳1,500');
+	});
 
-  it("handles zero", () => {
-    expect(formatPrice(0)).toBe("৳0");
-  });
+	it('handles zero', () => {
+		expect(formatPrice(0)).toBe('৳0');
+	});
 
-  it("throws on negative price", () => {
-    expect(() => formatPrice(-100)).toThrow("Price cannot be negative");
-  });
+	it('throws on negative price', () => {
+		expect(() => formatPrice(-100)).toThrow('Price cannot be negative');
+	});
 });
 
-describe("calculateDiscount", () => {
-  it("applies 20% discount", () => {
-    expect(calculateDiscount(1000, 20)).toBe(800);
-  });
+describe('calculateDiscount', () => {
+	it('applies 20% discount', () => {
+		expect(calculateDiscount(1000, 20)).toBe(800);
+	});
 
-  it("rounds to nearest integer", () => {
-    expect(calculateDiscount(999, 15)).toBe(849);
-  });
+	it('rounds to nearest integer', () => {
+		expect(calculateDiscount(999, 15)).toBe(849);
+	});
 
-  it("handles 0% discount", () => {
-    expect(calculateDiscount(500, 0)).toBe(500);
-  });
+	it('handles 0% discount', () => {
+		expect(calculateDiscount(500, 0)).toBe(500);
+	});
 
-  it("handles 100% discount", () => {
-    expect(calculateDiscount(500, 100)).toBe(0);
-  });
+	it('handles 100% discount', () => {
+		expect(calculateDiscount(500, 100)).toBe(0);
+	});
 });
 
-describe("isInStock", () => {
-  it("returns true for positive quantity", () => {
-    expect(isInStock(5)).toBe(true);
-  });
+describe('isInStock', () => {
+	it('returns true for positive quantity', () => {
+		expect(isInStock(5)).toBe(true);
+	});
 
-  it("returns false for zero", () => {
-    expect(isInStock(0)).toBe(false);
-  });
+	it('returns false for zero', () => {
+		expect(isInStock(0)).toBe(false);
+	});
 });
 ```
 
@@ -214,6 +211,7 @@ describe("LoginForm", () => {
 <Callout type="tip">
 
 **Testing Library best practices:**
+
 - Query by role, label, or text — never by class name or test ID (unless necessary)
 - Use `userEvent` over `fireEvent` — it simulates real user behavior including focus, keyboard events, and pointer events
 - Test behavior, not implementation — do not assert on state variables or component internals
@@ -270,45 +268,46 @@ E2E tests run in a real browser and test complete user flows across multiple pag
 
 ```typescript
 // tests/checkout.spec.ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test.describe("Checkout Flow", () => {
-  test("user can add item to cart and checkout", async ({ page }) => {
-    // Navigate to products
-    await page.goto("/products");
+test.describe('Checkout Flow', () => {
+	test('user can add item to cart and checkout', async ({ page }) => {
+		// Navigate to products
+		await page.goto('/products');
 
-    // Add a product to cart
-    await page.getByRole("button", { name: "Add to Cart" }).first().click();
+		// Add a product to cart
+		await page.getByRole('button', { name: 'Add to Cart' }).first().click();
 
-    // Verify cart count updated
-    await expect(page.getByTestId("cart-count")).toHaveText("1");
+		// Verify cart count updated
+		await expect(page.getByTestId('cart-count')).toHaveText('1');
 
-    // Go to cart
-    await page.getByRole("link", { name: "Cart" }).click();
+		// Go to cart
+		await page.getByRole('link', { name: 'Cart' }).click();
 
-    // Verify product is in cart
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible();
+		// Verify product is in cart
+		await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
 
-    // Proceed to checkout
-    await page.getByRole("button", { name: "Checkout" }).click();
+		// Proceed to checkout
+		await page.getByRole('button', { name: 'Checkout' }).click();
 
-    // Fill shipping info
-    await page.getByLabel("Full Name").fill("Layla al-Khwarizmi");
-    await page.getByLabel("Phone").fill("+1-555-0123");
-    await page.getByLabel("Address").fill("123 Main St, Springfield");
+		// Fill shipping info
+		await page.getByLabel('Full Name').fill('Layla al-Khwarizmi');
+		await page.getByLabel('Phone').fill('+1-555-0123');
+		await page.getByLabel('Address').fill('123 Main St, Springfield');
 
-    // Place order
-    await page.getByRole("button", { name: "Place Order" }).click();
+		// Place order
+		await page.getByRole('button', { name: 'Place Order' }).click();
 
-    // Verify success
-    await expect(page.getByText("Order placed successfully")).toBeVisible();
-  });
+		// Verify success
+		await expect(page.getByText('Order placed successfully')).toBeVisible();
+	});
 });
 ```
 
 <Callout type="warning">
 
 **Common testing mistakes:**
+
 - **Testing implementation details** — asserting on state variables, CSS classes, or internal method calls. These tests break on refactors even when behavior is unchanged.
 - **Not testing error states** — happy path tests are easy. The bugs hide in loading, error, empty, and edge case states.
 - **Flaky E2E tests** — always use `await expect(...).toBeVisible()` instead of arbitrary `waitForTimeout` calls.
@@ -344,4 +343,3 @@ tests/
 4. **Query by role and label** — never by class name or DOM structure
 5. **Mock at the boundary** — mock API calls and external services, not internal modules
 6. **Test error states** — the bugs live in loading, error, empty, and edge cases
-

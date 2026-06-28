@@ -1,10 +1,10 @@
 ---
 title: "DNS — The Internet's Phone Book"
-subtitle: "How domain names become IP addresses — recursive resolvers, authoritative servers, caching, and DNS record types."
+subtitle: 'How domain names become IP addresses — recursive resolvers, authoritative servers, caching, and DNS record types.'
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["DNS", "domain names", "resolvers", "records"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['DNS', 'domain names', 'resolvers', 'records']
 ---
 
 <script>
@@ -37,43 +37,43 @@ When you type `api.example.com` in your browser:
 ```typescript
 // Simplified DNS resolution
 interface DNSRecord {
-  name: string;
-  type: "A" | "AAAA" | "CNAME" | "MX" | "TXT" | "NS";
-  value: string;
-  ttl: number; // seconds until this record expires
+	name: string;
+	type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'NS';
+	value: string;
+	ttl: number; // seconds until this record expires
 }
 
 async function resolve(domain: string): Promise<string> {
-  // Step 1: Check local cache
-  const cached = cache.get(domain);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.value;
-  }
+	// Step 1: Check local cache
+	const cached = cache.get(domain);
+	if (cached && cached.expiresAt > Date.now()) {
+		return cached.value;
+	}
 
-  // Step 2: Ask recursive resolver
-  // The resolver handles the root → TLD → authoritative chain
-  const record = await queryResolver(domain, "A");
+	// Step 2: Ask recursive resolver
+	// The resolver handles the root → TLD → authoritative chain
+	const record = await queryResolver(domain, 'A');
 
-  // Step 3: Cache the result
-  cache.set(domain, {
-    value: record.value,
-    expiresAt: Date.now() + record.ttl * 1000,
-  });
+	// Step 3: Cache the result
+	cache.set(domain, {
+		value: record.value,
+		expiresAt: Date.now() + record.ttl * 1000
+	});
 
-  return record.value;
+	return record.value;
 }
 ```
 
 ## DNS Record Types
 
-| Type | Purpose | Example Value |
-|------|---------|--------------|
-| A | Domain → IPv4 address | `93.184.216.34` |
-| AAAA | Domain → IPv6 address | `2606:2800:220:1::` |
-| CNAME | Alias to another domain | `www.example.com → example.com` |
-| MX | Mail server for domain | `mail.example.com` (priority: 10) |
-| TXT | Arbitrary text | SPF records, domain verification |
-| NS | Nameserver for zone | `ns1.example.com` |
+| Type  | Purpose                 | Example Value                     |
+| ----- | ----------------------- | --------------------------------- |
+| A     | Domain → IPv4 address   | `93.184.216.34`                   |
+| AAAA  | Domain → IPv6 address   | `2606:2800:220:1::`               |
+| CNAME | Alias to another domain | `www.example.com → example.com`   |
+| MX    | Mail server for domain  | `mail.example.com` (priority: 10) |
+| TXT   | Arbitrary text          | SPF records, domain verification  |
+| NS    | Nameserver for zone     | `ns1.example.com`                 |
 
 ## TTL and Caching
 
@@ -85,20 +85,20 @@ Every DNS record has a **TTL (Time to Live)** — how many seconds resolvers sho
 ```typescript
 // Real-world TTL strategy
 const records = {
-  // Static infrastructure — cache aggressively
-  "cdn.example.com": { type: "CNAME", value: "d123.cloudfront.net", ttl: 86400 },
+	// Static infrastructure — cache aggressively
+	'cdn.example.com': { type: 'CNAME', value: 'd123.cloudfront.net', ttl: 86400 },
 
-  // API endpoint — moderate cache for flexibility
-  "api.example.com": { type: "A", value: "10.0.1.50", ttl: 300 },
+	// API endpoint — moderate cache for flexibility
+	'api.example.com': { type: 'A', value: '10.0.1.50', ttl: 300 },
 
-  // Failover record — short TTL for quick switching
-  "primary.example.com": { type: "A", value: "10.0.1.10", ttl: 60 },
+	// Failover record — short TTL for quick switching
+	'primary.example.com': { type: 'A', value: '10.0.1.10', ttl: 60 }
 };
 ```
 
 <Callout type="tip">
 
-**DNS propagation** isn't really "propagation" — it's cache expiration. When you change a DNS record, the old record stays cached everywhere until its TTL expires. That's why lowering TTL *before* a migration is a common practice.
+**DNS propagation** isn't really "propagation" — it's cache expiration. When you change a DNS record, the old record stays cached everywhere until its TTL expires. That's why lowering TTL _before_ a migration is a common practice.
 
 </Callout>
 
@@ -109,20 +109,20 @@ DNS can return multiple IP addresses for one domain. The resolver rotates throug
 ```typescript
 // Round-robin DNS
 const responses = [
-  { type: "A", value: "10.0.1.1", ttl: 60 },
-  { type: "A", value: "10.0.1.2", ttl: 60 },
-  { type: "A", value: "10.0.1.3", ttl: 60 },
+	{ type: 'A', value: '10.0.1.1', ttl: 60 },
+	{ type: 'A', value: '10.0.1.2', ttl: 60 },
+	{ type: 'A', value: '10.0.1.3', ttl: 60 }
 ];
 
 // GeoDNS — return different IPs based on client location
 function geoDNS(clientIP: string): string {
-  const region = geolocate(clientIP);
-  const servers: Record<string, string> = {
-    "us-east": "10.0.1.1",
-    "eu-west": "10.0.2.1",
-    "ap-south": "10.0.3.1",
-  };
-  return servers[region] || servers["us-east"];
+	const region = geolocate(clientIP);
+	const servers: Record<string, string> = {
+		'us-east': '10.0.1.1',
+		'eu-west': '10.0.2.1',
+		'ap-south': '10.0.3.1'
+	};
+	return servers[region] || servers['us-east'];
 }
 ```
 
@@ -140,4 +140,3 @@ DNS was designed without security. Common attacks:
 2. **TTL controls caching** — lower it before migrations, raise it for stable records
 3. **DNS is more than name→IP** — it handles mail routing, verification, aliasing, and load balancing
 4. **DNS is a single point of failure** — if your DNS goes down, nothing works (use multiple providers)
-

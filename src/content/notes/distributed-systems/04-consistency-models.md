@@ -1,10 +1,10 @@
 ---
-title: "Consistency Models"
+title: 'Consistency Models'
 subtitle: "What 'consistent' actually means: linearizable, sequential, causal, and eventual consistency, and the trade-offs along the spectrum."
 chapter: 4
-level: "advanced"
-readingTime: "12 min"
-topics: ["consistency", "linearizability", "causal"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['consistency', 'linearizability', 'causal']
 ---
 
 <script>
@@ -34,15 +34,15 @@ This is what lets you treat the distributed store like a single variable. The pr
 
 ## Sequential consistency
 
-Slightly weaker. **Sequential consistency** requires that all operations appear in *some* single total order, and that this order respects the order each individual client issued its own operations. The crucial difference from linearizability: this order need not match **real time**. If A writes at 10:00 and B reads at 10:01, sequential consistency permits B's read to be ordered *before* A's write, as long as every client agrees on one consistent ordering.
+Slightly weaker. **Sequential consistency** requires that all operations appear in _some_ single total order, and that this order respects the order each individual client issued its own operations. The crucial difference from linearizability: this order need not match **real time**. If A writes at 10:00 and B reads at 10:01, sequential consistency permits B's read to be ordered _before_ A's write, as long as every client agrees on one consistent ordering.
 
 In practice this means all clients see the same movie, but the movie may run slightly behind real time. It is rarely offered as a standalone database guarantee but is an important rung on the conceptual ladder.
 
 ## Causal consistency
 
-A very useful middle point. **Causal consistency** guarantees that operations which are *causally related* are seen by everyone in the same order, while operations that are merely **concurrent** (neither caused the other) may be seen in different orders by different clients.
+A very useful middle point. **Causal consistency** guarantees that operations which are _causally related_ are seen by everyone in the same order, while operations that are merely **concurrent** (neither caused the other) may be seen in different orders by different clients.
 
-Causality is the "happens-before" relationship of chapter 7: if you read a value and then write something based on it, your write is causally *after* that read. The classic example:
+Causality is the "happens-before" relationship of chapter 7: if you read a value and then write something based on it, your write is causally _after_ that read. The classic example:
 
 ```text
 Fatima posts: "I lost my keys."
@@ -56,13 +56,13 @@ Causal consistency is attractive because it forbids the genuinely confusing reor
 
 ## Eventual consistency
 
-The weakest commonly used model. **Eventual consistency** promises only that *if writes stop, all replicas will eventually converge to the same value*. It says nothing about what reads return in the meantime: you might read your own write and get the old value, see values jump around, or observe updates out of order. "Eventually" is unbounded — it could be milliseconds or, under sustained problems, much longer.
+The weakest commonly used model. **Eventual consistency** promises only that _if writes stop, all replicas will eventually converge to the same value_. It says nothing about what reads return in the meantime: you might read your own write and get the old value, see values jump around, or observe updates out of order. "Eventually" is unbounded — it could be milliseconds or, under sustained problems, much longer.
 
 This sounds alarmingly weak, and used carelessly it is. But for many workloads — a like counter, a cache, a shopping cart that merges, DNS — eventual consistency is exactly right, because it buys maximum availability and the lowest latency. The application absorbs the temporary disagreement.
 
 <Callout type="warning">
 
-**"Eventual" hides a multitude of sins.** Eventual consistency permits a read to return a value *older* than one the same client already saw, and provides no bound on how long convergence takes. If your code assumes monotonic progress or read-your-writes, plain eventual consistency will violate that assumption. Layer client-centric guarantees on top when you need them.
+**"Eventual" hides a multitude of sins.** Eventual consistency permits a read to return a value _older_ than one the same client already saw, and provides no bound on how long convergence takes. If your code assumes monotonic progress or read-your-writes, plain eventual consistency will violate that assumption. Layer client-centric guarantees on top when you need them.
 
 </Callout>
 
@@ -70,12 +70,12 @@ This sounds alarmingly weak, and used carelessly it is. But for many workloads �
 
 Arranged from strongest to weakest:
 
-| Model | Guarantee | Coordination cost | Available under partition? |
-| --- | --- | --- | --- |
-| Linearizable | Single copy, respects real time | Highest | No |
-| Sequential | One total order, respects per-client order | High | No |
-| Causal | Causally related ops ordered for all | Moderate | Yes |
-| Eventual | Replicas converge if writes stop | Lowest | Yes |
+| Model        | Guarantee                                  | Coordination cost | Available under partition? |
+| ------------ | ------------------------------------------ | ----------------- | -------------------------- |
+| Linearizable | Single copy, respects real time            | Highest           | No                         |
+| Sequential   | One total order, respects per-client order | High              | No                         |
+| Causal       | Causally related ops ordered for all       | Moderate          | Yes                        |
+| Eventual     | Replicas converge if writes stop           | Lowest            | Yes                        |
 
 The pattern is monotonic: **the stronger the guarantee, the more coordination it requires, and the less available the system is during failures.** There is a hard line in this table — between sequential and causal — across which you trade strong, real-time-respecting ordering for the ability to keep serving during a partition. Chapter 5 (CAP) is precisely the formalization of that line.
 
@@ -92,6 +92,6 @@ These are cheap to implement (session stickiness, version tracking) and often th
 
 <Callout type="tip">
 
-**Choosing a model:** pick the *weakest* model your correctness requires, not the strongest you can imagine. Money movement and unique-username allocation need linearizability. Social feeds and comment threads are well served by causal. Counters, caches, and presence indicators are fine with eventual plus a client-centric guarantee or two. Each step weaker buys real availability and latency.
+**Choosing a model:** pick the _weakest_ model your correctness requires, not the strongest you can imagine. Money movement and unique-username allocation need linearizability. Social feeds and comment threads are well served by causal. Counters, caches, and presence indicators are fine with eventual plus a client-centric guarantee or two. Each step weaker buys real availability and latency.
 
 </Callout>

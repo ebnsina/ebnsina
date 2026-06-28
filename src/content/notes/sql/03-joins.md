@@ -1,10 +1,10 @@
 ---
-title: "Joins"
-subtitle: "Combining rows from multiple tables — the operation that makes relational databases relational."
+title: 'Joins'
+subtitle: 'Combining rows from multiple tables — the operation that makes relational databases relational.'
 chapter: 3
-level: "intermediate"
-readingTime: "16 min"
-topics: ["join", "inner join", "outer join"]
+level: 'intermediate'
+readingTime: '16 min'
+topics: ['join', 'inner join', 'outer join']
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["join", "inner join", "outer join"]
 
 ## Why Joins Exist
 
-Good schema design spreads data across tables to avoid duplication: customers live in `customers`, their orders in `orders`, and each order points back to a customer by `customer_id`. That pointer is a **foreign key**. A **join** stitches those tables back together so you can ask "show each order *with* its customer's name".
+Good schema design spreads data across tables to avoid duplication: customers live in `customers`, their orders in `orders`, and each order points back to a customer by `customer_id`. That pointer is a **foreign key**. A **join** stitches those tables back together so you can ask "show each order _with_ its customer's name".
 
 Our two tables:
 
@@ -29,7 +29,7 @@ customers                  orders
                            +----+-------------+--------+
 ```
 
-Note customer 30 (Harun) has no orders, and order 4 references a non-existent customer 99. These edge cases are exactly where join *types* differ.
+Note customer 30 (Harun) has no orders, and order 4 references a non-existent customer 99. These edge cases are exactly where join _types_ differ.
 
 ## INNER JOIN
 
@@ -41,10 +41,10 @@ FROM orders o
 INNER JOIN customers c ON c.id = o.customer_id;
 ```
 
-| o.id | name  | amount |
-|------|-------|--------|
-| 1    | Lubna | 49.00  |
-| 2    | Lubna | 12.50  |
+| o.id | name    | amount |
+| ---- | ------- | ------ |
+| 1    | Lubna   | 49.00  |
+| 2    | Lubna   | 12.50  |
 | 3    | Nusayba | 80.00  |
 
 Harun disappears (no orders) and order 4 disappears (no matching customer). `INNER` is the default — you can write just `JOIN`. The `o` and `c` are **table aliases**, which keep multi-table queries readable.
@@ -59,14 +59,14 @@ FROM customers c
 LEFT JOIN orders o ON o.customer_id = c.id;
 ```
 
-| name  | order_id | amount |
-|-------|----------|--------|
+| name    | order_id | amount |
+| ------- | -------- | ------ |
 | Lubna   | 1        | 49.00  |
 | Lubna   | 2        | 12.50  |
 | Nusayba | 3        | 80.00  |
-| Harun   | *NULL*   | *NULL* |
+| Harun   | _NULL_   | _NULL_ |
 
-Now Harun appears with null order columns — that's the whole point. `LEFT JOIN` answers "all customers, *and their orders if any*". A `RIGHT JOIN` is the mirror image, keeping every row from the right table; in practice people just reorder the tables and use `LEFT`, so `RIGHT` is rare.
+Now Harun appears with null order columns — that's the whole point. `LEFT JOIN` answers "all customers, _and their orders if any_". A `RIGHT JOIN` is the mirror image, keeping every row from the right table; in practice people just reorder the tables and use `LEFT`, so `RIGHT` is rare.
 
 <Callout type="tip">
 
@@ -91,7 +91,7 @@ FROM customers c
 FULL OUTER JOIN orders o ON o.customer_id = c.id;
 ```
 
-You get Lubna and Nusayba's matched rows, Harun with a null order, *and* order 4 with a null name. It's the union of left and full join behavior — useful for reconciliation reports where you want to surface mismatches on either side.
+You get Lubna and Nusayba's matched rows, Harun with a null order, _and_ order 4 with a null name. It's the union of left and full join behavior — useful for reconciliation reports where you want to surface mismatches on either side.
 
 ## CROSS JOIN
 
@@ -107,13 +107,13 @@ With 3 sizes and 4 colors you get 12 rows. It's occasionally intentional (genera
 
 ## Join Types at a Glance
 
-| Join type   | Keeps unmatched left? | Keeps unmatched right? |
-|-------------|-----------------------|------------------------|
-| `INNER`     | No                    | No                     |
-| `LEFT`      | Yes                   | No                     |
-| `RIGHT`     | No                    | Yes                    |
-| `FULL OUTER`| Yes                   | Yes                    |
-| `CROSS`     | n/a — every combination |                      |
+| Join type    | Keeps unmatched left?   | Keeps unmatched right? |
+| ------------ | ----------------------- | ---------------------- |
+| `INNER`      | No                      | No                     |
+| `LEFT`       | Yes                     | No                     |
+| `RIGHT`      | No                      | Yes                    |
+| `FULL OUTER` | Yes                     | Yes                    |
+| `CROSS`      | n/a — every combination |                        |
 
 ## Self-Joins
 
@@ -145,7 +145,7 @@ The engine resolves them pairwise, building up the combined result. Always join 
 
 ### Fan-out (row multiplication)
 
-When you join a table to another that has *many* matching rows, the result multiplies. Joining `orders` to `order_items` gives one row *per item*, not per order. If you then `SUM(o.amount)`, each order's amount is counted once per line item — wildly inflating the total.
+When you join a table to another that has _many_ matching rows, the result multiplies. Joining `orders` to `order_items` gives one row _per item_, not per order. If you then `SUM(o.amount)`, each order's amount is counted once per line item — wildly inflating the total.
 
 ```sql
 -- WRONG: order amount double-counted by line items
@@ -154,7 +154,7 @@ FROM orders o
 JOIN order_items oi ON oi.order_id = o.id;
 ```
 
-The fix is to aggregate the many-side *before* joining, often with a subquery or CTE (chapter 4), or to sum the granular column (`oi.quantity * oi.price`) instead.
+The fix is to aggregate the many-side _before_ joining, often with a subquery or CTE (chapter 4), or to sum the granular column (`oi.quantity * oi.price`) instead.
 
 <Callout type="warning">
 
@@ -164,7 +164,7 @@ The fix is to aggregate the many-side *before* joining, often with a subquery or
 
 ### NULLs in join keys
 
-`NULL` never equals `NULL`, so rows with a null join key never match in *any* join type — they simply drop out of inner joins and produce null-padded rows in outer joins. If `customer_id` is nullable and you rely on the join to enforce a relationship, you may quietly lose rows. Foreign keys plus `NOT NULL` constraints (chapter 9) prevent this at the source.
+`NULL` never equals `NULL`, so rows with a null join key never match in _any_ join type — they simply drop out of inner joins and produce null-padded rows in outer joins. If `customer_id` is nullable and you rely on the join to enforce a relationship, you may quietly lose rows. Foreign keys plus `NOT NULL` constraints (chapter 9) prevent this at the source.
 
 ### Forgetting the ON condition
 

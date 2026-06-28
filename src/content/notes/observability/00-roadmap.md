@@ -1,10 +1,10 @@
 ---
-title: "Observability — Roadmap"
-subtitle: "Logs with journald, metrics with Prometheus and Grafana, traces with Jaeger and OpenTelemetry."
+title: 'Observability — Roadmap'
+subtitle: 'Logs with journald, metrics with Prometheus and Grafana, traces with Jaeger and OpenTelemetry.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ You can't fix what you can't see. This track covers the three pillars of observa
 3. **Prometheus & Grafana** — instrumentation, PromQL, dashboards, alerting rules, recording rules
 4. **Distributed Tracing** — OpenTelemetry SDK, span propagation, Jaeger, tail-based sampling
 5. **Alerting & On-Call** — SLO-based alerting, burn rates, runbooks, incident response, post-mortems
-

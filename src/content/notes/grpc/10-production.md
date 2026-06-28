@@ -1,10 +1,10 @@
 ---
-title: "Production self-host"
-subtitle: "Load balancing that respects HTTP/2, observability you actually use, health checks the framework supports, and the full systemd + nginx deploy on a VPS."
+title: 'Production self-host'
+subtitle: 'Load balancing that respects HTTP/2, observability you actually use, health checks the framework supports, and the full systemd + nginx deploy on a VPS.'
 chapter: 10
-level: "advanced"
-readingTime: "15 min"
-topics: ["grpc", "load balancing", "observability", "nginx", "deployment"]
+level: 'advanced'
+readingTime: '15 min'
+topics: ['grpc', 'load balancing', 'observability', 'nginx', 'deployment']
 ---
 
 <script>
@@ -386,4 +386,3 @@ A mesh is a useful tool that you only need when you actually need it. Linkerd is
 - Pre-launch checklist or it bites. Service mesh only when you have the scale to need it.
 
 That is the full Backend Engineering Path's gRPC track. Next topic in the path: [WebSockets and realtime](/notes/websockets) — when neither REST nor RPC is the right shape and bidirectional streaming over plain HTTP is what you need.
-

@@ -1,10 +1,10 @@
 ---
-title: "Event-Driven & Streaming — Roadmap"
+title: 'Event-Driven & Streaming — Roadmap'
 subtitle: "Pub/sub patterns, CDC with Debezium, event sourcing, and schema evolution that doesn't break your consumers."
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Events are how loosely coupled systems communicate. This track covers the vocabu
 3. **Change Data Capture** — Debezium, logical replication, the outbox pattern, monitoring slot lag
 4. **Event Sourcing** — append-only event store, aggregates, projections, snapshots, when to use it
 5. **Schema Evolution** — backward compatibility, Schema Registry, Avro, consumer-driven contracts
-

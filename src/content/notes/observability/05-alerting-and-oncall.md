@@ -1,10 +1,10 @@
 ---
-title: "Alerting & On-Call"
+title: 'Alerting & On-Call'
 subtitle: "Alerts that fire when users are impacted, not when metrics twitch — SLO-based alerting, runbooks, and on-call practices that don't burn people out."
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["alerting", "on-call", "SLO", "error budget", "PagerDuty", "runbooks", "alert fatigue"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['alerting', 'on-call', 'SLO', 'error budget', 'PagerDuty', 'runbooks', 'alert fatigue']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A smoke detector vs a fire department dispatch: a smoke detector alerts on smoke
 A system that pages engineers 20 times per day trains them to ignore pages. When the real incident fires, the response is slow. Alert fatigue kills SLAs.
 
 The root cause is alerting on the wrong things:
+
 - Threshold-based alerts that fire when metrics exceed a static number
 - Alerts for things that self-heal without intervention
 - Alerts with no clear action
@@ -35,12 +36,14 @@ The root cause is alerting on the wrong things:
 Alert on user impact, not metric thresholds.
 
 **Step 1: Define SLOs**
+
 ```
 Success rate SLO: 99.9% of requests succeed over 30 days
 Latency SLO: P99 < 500ms for 99.5% of requests over 30 days
 ```
 
 **Step 2: Calculate error budget**
+
 ```
 99.9% success → 0.1% errors allowed
 30 days = 43,200 minutes
@@ -63,8 +66,8 @@ Burn rate = how fast you're consuming error budget. At 1x you exhaust exactly at
   labels:
     severity: critical
   annotations:
-    summary: "Error budget burning fast — SLO at risk"
-    description: "Current burn rate: {{ $value | humanizePercentage }}"
+    summary: 'Error budget burning fast — SLO at risk'
+    description: 'Current burn rate: {{ $value | humanizePercentage }}'
 
 # Alert on slower burn (week-level exhaustion)
 - alert: MediumErrorBudgetBurnRate
@@ -106,10 +109,11 @@ No notification:
 
 Every alert that pages must have a runbook. The runbook is written before the incident, not during.
 
-```markdown
+````markdown
 # Runbook: HighErrorBudgetBurnRate
 
 ## What this means
+
 The order-service error rate is high enough to exhaust our 30-day error
 budget in less than 2 days. Users are seeing failures on order creation.
 
@@ -123,7 +127,9 @@ budget in less than 2 days. Users are seeing failures on order creation.
    ```bash
    kubectl rollout history deployment/order-service -n production
    ```
-   If deployed in last 30 minutes: consider rollback.
+````
+
+If deployed in last 30 minutes: consider rollback.
 
 3. Check downstream services:
    - Payment service: https://grafana.internal/d/payments
@@ -132,26 +138,33 @@ budget in less than 2 days. Users are seeing failures on order creation.
 ## Diagnosis paths
 
 **If errors started at a deploy time:**
+
 ```bash
 kubectl rollout undo deployment/order-service -n production
 ```
+
 Monitor for 5 minutes. If error rate drops: deploy was the cause.
 
 **If payment service is erroring:**
+
 - Check payment service runbook: https://runbooks.internal/payment-service
 - Activate payment fallback mode: `kubectl set env deployment/order-service PAYMENT_FALLBACK=true -n production`
 
 **If database errors:**
+
 - Check connection pool: `psql -h db.internal -c "SELECT count(*), state FROM pg_stat_activity GROUP BY state;"`
 - If connections exhausted: restart PgBouncer: `systemctl restart pgbouncer`
 
 ## Escalation
+
 - 15 minutes: escalate to service owner (@layla in #incidents)
 - 30 minutes: escalate to engineering lead (@ahmad)
 
 ## Related alerts
+
 - OrderQueueHigh — queue backing up may indicate processing failures
 - PaymentServiceDown — downstream dependency
+
 ```
 
 A runbook without steps to take is useless. A runbook with steps to take is a tool. Update it after every incident with what you learned.
@@ -159,20 +172,25 @@ A runbook without steps to take is useless. A runbook with steps to take is a to
 ## On-Call Rotation
 
 ```
+
 Rotation structure:
-  - Primary: first to receive page
-  - Secondary: escalation if primary doesn't ack in 15min
-  - Rotation: weekly, Monday to Monday
+
+- Primary: first to receive page
+- Secondary: escalation if primary doesn't ack in 15min
+- Rotation: weekly, Monday to Monday
 
 Handoff:
-  - Written summary of current incidents, known issues, upcoming deploys
-  - 30-minute sync with incoming on-call
-  - Confirm all alerts are resolved or documented
+
+- Written summary of current incidents, known issues, upcoming deploys
+- 30-minute sync with incoming on-call
+- Confirm all alerts are resolved or documented
 
 Compensation:
-  - Disrupted sleep = comp time next day (explicit policy)
-  - Weekend pages = extra day off
+
+- Disrupted sleep = comp time next day (explicit policy)
+- Weekend pages = extra day off
   Clear policy prevents resentment
+
 ```
 
 ## Incident Response
@@ -180,20 +198,22 @@ Compensation:
 When a critical alert fires:
 
 ```
-0m  — Alert fires, primary on-call acknowledges
-2m  — Assess severity. Create incident channel: #incident-YYYY-MM-DD-service
-5m  — Identify impact: how many users, which features
+
+0m — Alert fires, primary on-call acknowledges
+2m — Assess severity. Create incident channel: #incident-YYYY-MM-DD-service
+5m — Identify impact: how many users, which features
 10m — Mitigation attempt (rollback, traffic shift, restart)
 15m — Update stakeholders: "Order service degraded, team investigating"
 30m — If not mitigated: escalate, call for help
 60m — If not mitigated: incident commander takes over coordination
 
 Resolution:
-  — Verify metrics returned to baseline
-  — "All-clear" message in incident channel
-  — Write preliminary post-mortem within 24h
-  — Full post-mortem within 5 business days
-```
+— Verify metrics returned to baseline
+— "All-clear" message in incident channel
+— Write preliminary post-mortem within 24h
+— Full post-mortem within 5 business days
+
+````
 
 ## Post-Mortems
 
@@ -237,7 +257,7 @@ pool (50 connections) was exhausted within 45 minutes of the deploy.
 | Add slow query detection to CI benchmarks | Omar | 2024-01-29 |
 | Increase PgBouncer pool size: 50 → 100 | Layla | 2024-01-17 |
 | Add payment-service circuit breaker in order-service | Fatima | 2024-01-24 |
-```
+````
 
 The post-mortem's value is the action items. An incident without action items is a missed opportunity — you'll see the same failure again.
 
@@ -255,4 +275,3 @@ Action items resolved: review at each quarterly infra review
 ```
 
 If pages per week exceeds 5, prioritize alert pruning over new features. An on-call rotation that burns people out will cost more in attrition than the features you're shipping.
-

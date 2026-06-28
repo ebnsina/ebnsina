@@ -1,10 +1,10 @@
 ---
-title: "SSL Termination"
-subtitle: "TLS at the load balancer, certificate management, HTTPS between LB and backends, and the trade-offs of offloading vs end-to-end encryption."
+title: 'SSL Termination'
+subtitle: 'TLS at the load balancer, certificate management, HTTPS between LB and backends, and the trade-offs of offloading vs end-to-end encryption.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["SSL", "TLS", "HTTPS", "certificates", "nginx", "HAProxy", "termination"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['SSL', 'TLS', 'HTTPS', 'certificates', 'nginx', 'HAProxy', 'termination']
 ---
 
 <script>
@@ -103,6 +103,7 @@ backend api_servers
 ```
 
 HAProxy expects the cert and key concatenated into a single `.pem` file:
+
 ```bash
 cat api.example.com.crt api.example.com.key > /etc/ssl/api.example.com.pem
 ```
@@ -126,6 +127,7 @@ certbot renew --dry-run
 ```
 
 For HAProxy, post-renewal hook to concatenate and reload:
+
 ```bash
 # /etc/letsencrypt/renewal-hooks/post/haproxy.sh
 #!/bin/bash
@@ -141,6 +143,7 @@ systemctl reload haproxy
 Server Name Indication (SNI) lets one IP handle multiple domains — the client sends the hostname in the TLS handshake, and the LB picks the right cert.
 
 **nginx — multiple certs:**
+
 ```nginx
 server {
     listen 443 ssl;
@@ -160,6 +163,7 @@ server {
 ```
 
 **HAProxy — wildcard cert directory:**
+
 ```
 bind *:443 ssl crt /etc/haproxy/ssl/
 ```
@@ -171,6 +175,7 @@ HAProxy scans the directory for `.pem` files and serves the right one based on S
 If you need end-to-end TLS (LB → backend is also encrypted):
 
 **nginx:**
+
 ```nginx
 location / {
     proxy_pass https://notes;   # HTTPS to backend
@@ -182,6 +187,7 @@ location / {
 ```
 
 **HAProxy:**
+
 ```
 backend api_servers
     mode http
@@ -189,6 +195,7 @@ backend api_servers
 ```
 
 For mutual TLS (mTLS) — backend verifies the LB's client cert:
+
 ```
 backend api_servers
     server s1 10.0.0.10:3443 check ssl \
@@ -205,6 +212,7 @@ ssl_protocols TLSv1.3;    # TLS 1.3 only
 ```
 
 0-RTT in nginx (experimental — has replay attack risk for non-idempotent requests):
+
 ```nginx
 ssl_early_data on;
 proxy_set_header Early-Data $ssl_early_data;
@@ -225,15 +233,15 @@ proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
 Application reads it:
+
 ```typescript
 // Express
-app.set('trust proxy', 1);   // trust X-Forwarded-* headers from first proxy
+app.set('trust proxy', 1); // trust X-Forwarded-* headers from first proxy
 
 app.get('/redirect', (req, res) => {
-  // req.protocol is 'https' even though connection to Express is plain HTTP
-  res.redirect(`${req.protocol}://${req.hostname}/dashboard`);
+	// req.protocol is 'https' even though connection to Express is plain HTTP
+	res.redirect(`${req.protocol}://${req.hostname}/dashboard`);
 });
 ```
 
 Without this, your app generates `http://` redirect URLs to HTTPS clients, causing redirect loops.
-

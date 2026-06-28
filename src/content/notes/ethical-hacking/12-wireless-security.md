@@ -1,10 +1,20 @@
 ---
-title: "Wireless Security"
-subtitle: "WPA2 handshake capture, WPS attacks, evil twin APs, deauthentication, and wireless network defense."
+title: 'Wireless Security'
+subtitle: 'WPA2 handshake capture, WPS attacks, evil twin APs, deauthentication, and wireless network defense.'
 chapter: 12
-level: "intermediate"
-readingTime: "10 min"
-topics: ["wireless", "WPA2", "WPS", "evil twin", "aircrack", "handshake capture", "deauthentication", "WiFi hacking"]
+level: 'intermediate'
+readingTime: '10 min'
+topics:
+  [
+    'wireless',
+    'WPA2',
+    'WPS',
+    'evil twin',
+    'aircrack',
+    'handshake capture',
+    'deauthentication',
+    'WiFi hacking'
+  ]
 ---
 
 <script>
@@ -223,4 +233,3 @@ Client side:
 - Use a VPN on all WiFi (assume network is untrusted)
 - HTTPS-only: TLS ensures confidentiality even on evil twin
 ```
-

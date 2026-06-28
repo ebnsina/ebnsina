@@ -1,10 +1,10 @@
 ---
-title: "Pub/Sub Patterns"
-subtitle: "Topics, consumer groups, fan-out, filtering, and the delivery guarantees that determine what your subscribers can depend on."
+title: 'Pub/Sub Patterns'
+subtitle: 'Topics, consumer groups, fan-out, filtering, and the delivery guarantees that determine what your subscribers can depend on.'
 chapter: 2
-level: "intermediate"
-readingTime: "11 min"
-topics: ["pub/sub", "consumer groups", "fan-out", "Kafka", "SNS", "delivery guarantees"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['pub/sub', 'consumer groups', 'fan-out', 'Kafka', 'SNS', 'delivery guarantees']
 ---
 
 <script>
@@ -60,20 +60,20 @@ Most systems offer at-least-once and require consumers to handle deduplication:
 
 ```typescript
 async function handleOrderPlaced(event: EventEnvelope<OrderPlaced>): Promise<void> {
-  // Idempotent: check if we already processed this event
-  const alreadyProcessed = await db.processedEvents.exists(event.id);
-  if (alreadyProcessed) {
-    logger.info({ eventId: event.id }, 'Duplicate event, skipping');
-    return;
-  }
+	// Idempotent: check if we already processed this event
+	const alreadyProcessed = await db.processedEvents.exists(event.id);
+	if (alreadyProcessed) {
+		logger.info({ eventId: event.id }, 'Duplicate event, skipping');
+		return;
+	}
 
-  await db.transaction(async (tx) => {
-    // Process the event
-    await tx.notifications.create({ userId: event.data.userId, type: 'order-placed' });
+	await db.transaction(async (tx) => {
+		// Process the event
+		await tx.notifications.create({ userId: event.data.userId, type: 'order-placed' });
 
-    // Mark as processed — atomic with the processing
-    await tx.processedEvents.insert({ id: event.id, processedAt: new Date() });
-  });
+		// Mark as processed — atomic with the processing
+		await tx.processedEvents.insert({ id: event.id, processedAt: new Date() });
+	});
 }
 ```
 
@@ -93,6 +93,7 @@ OrderPlaced
 Each subscriber handles independently, fails independently, scales independently. Adding a new subscriber (e.g., a new loyalty program) requires zero changes to the order service.
 
 **Implementing fan-out with SNS + SQS (AWS):**
+
 ```typescript
 import { SNS, SQS } from 'aws-sdk';
 
@@ -101,49 +102,55 @@ const sqs = new SQS();
 
 // Publisher: sends to SNS topic
 async function publishOrderPlaced(order: Order): Promise<void> {
-  await sns.publish({
-    TopicArn: process.env.ORDER_EVENTS_TOPIC_ARN!,
-    Message: JSON.stringify({
-      id: crypto.randomUUID(),
-      type: 'OrderPlaced',
-      version: 1,
-      timestamp: new Date().toISOString(),
-      data: {
-        orderId: order.id,
-        userId: order.userId,
-        totalAmount: order.totalAmount,
-      },
-    }),
-    MessageAttributes: {
-      eventType: {
-        DataType: 'String',
-        StringValue: 'OrderPlaced',
-      },
-    },
-  }).promise();
+	await sns
+		.publish({
+			TopicArn: process.env.ORDER_EVENTS_TOPIC_ARN!,
+			Message: JSON.stringify({
+				id: crypto.randomUUID(),
+				type: 'OrderPlaced',
+				version: 1,
+				timestamp: new Date().toISOString(),
+				data: {
+					orderId: order.id,
+					userId: order.userId,
+					totalAmount: order.totalAmount
+				}
+			}),
+			MessageAttributes: {
+				eventType: {
+					DataType: 'String',
+					StringValue: 'OrderPlaced'
+				}
+			}
+		})
+		.promise();
 }
 
 // Each subscriber has its own SQS queue subscribed to the SNS topic
 // SNS automatically delivers to all subscribed queues
 // Subscribers poll their own queue independently
 async function processNotificationQueue(): Promise<void> {
-  while (true) {
-    const { Messages } = await sqs.receiveMessage({
-      QueueUrl: process.env.NOTIFICATIONS_QUEUE_URL!,
-      MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 20, // long polling
-    }).promise();
+	while (true) {
+		const { Messages } = await sqs
+			.receiveMessage({
+				QueueUrl: process.env.NOTIFICATIONS_QUEUE_URL!,
+				MaxNumberOfMessages: 10,
+				WaitTimeSeconds: 20 // long polling
+			})
+			.promise();
 
-    for (const message of Messages ?? []) {
-      const event = JSON.parse(JSON.parse(message.Body!).Message);
-      await handleOrderPlaced(event);
+		for (const message of Messages ?? []) {
+			const event = JSON.parse(JSON.parse(message.Body!).Message);
+			await handleOrderPlaced(event);
 
-      await sqs.deleteMessage({
-        QueueUrl: process.env.NOTIFICATIONS_QUEUE_URL!,
-        ReceiptHandle: message.ReceiptHandle!,
-      }).promise();
-    }
-  }
+			await sqs
+				.deleteMessage({
+					QueueUrl: process.env.NOTIFICATIONS_QUEUE_URL!,
+					ReceiptHandle: message.ReceiptHandle!
+				})
+				.promise();
+		}
+	}
 }
 ```
 
@@ -154,21 +161,23 @@ Subscribers can filter to only receive events they care about — no need to rec
 ```typescript
 // SNS filter policy: only receive OrderPlaced with amount > $100
 const filterPolicy = {
-  eventType: ['OrderPlaced'],
-  // Can't filter on nested fields with SNS filter policies directly
-  // Use message attributes for filterable fields
+	eventType: ['OrderPlaced']
+	// Can't filter on nested fields with SNS filter policies directly
+	// Use message attributes for filterable fields
 };
 
 // Publish with filterable attributes
-await sns.publish({
-  TopicArn: TOPIC_ARN,
-  Message: JSON.stringify(event),
-  MessageAttributes: {
-    eventType: { DataType: 'String', StringValue: 'OrderPlaced' },
-    orderAmount: { DataType: 'Number', StringValue: String(order.totalAmount) },
-    plan: { DataType: 'String', StringValue: user.plan },
-  },
-}).promise();
+await sns
+	.publish({
+		TopicArn: TOPIC_ARN,
+		Message: JSON.stringify(event),
+		MessageAttributes: {
+			eventType: { DataType: 'String', StringValue: 'OrderPlaced' },
+			orderAmount: { DataType: 'Number', StringValue: String(order.totalAmount) },
+			plan: { DataType: 'String', StringValue: user.plan }
+		}
+	})
+	.promise();
 
 // Subscription filter: VIP orders to a dedicated queue
 // {
@@ -185,8 +194,8 @@ Kafka is not just a message queue — it's a persistent log. Messages are retain
 import { Kafka, Consumer, Producer } from 'kafkajs';
 
 const kafka = new Kafka({
-  clientId: 'order-service',
-  brokers: ['kafka:9092'],
+	clientId: 'order-service',
+	brokers: ['kafka:9092']
 });
 
 // Producer
@@ -194,12 +203,14 @@ const producer: Producer = kafka.producer();
 await producer.connect();
 
 await producer.send({
-  topic: 'order-events',
-  messages: [{
-    key: order.userId,         // partition by user — ordering per user guaranteed
-    value: JSON.stringify(event),
-    headers: { eventType: 'OrderPlaced' },
-  }],
+	topic: 'order-events',
+	messages: [
+		{
+			key: order.userId, // partition by user — ordering per user guaranteed
+			value: JSON.stringify(event),
+			headers: { eventType: 'OrderPlaced' }
+		}
+	]
 });
 
 // Consumer
@@ -208,29 +219,31 @@ await consumer.connect();
 await consumer.subscribe({ topic: 'order-events', fromBeginning: false });
 
 await consumer.run({
-  eachMessage: async ({ topic, partition, message }) => {
-    const event = JSON.parse(message.value!.toString());
+	eachMessage: async ({ topic, partition, message }) => {
+		const event = JSON.parse(message.value!.toString());
 
-    try {
-      await handleEvent(event);
-      // Kafka commits offset after successful processing
-      // On restart, consumer picks up from committed offset
-    } catch (err) {
-      // Don't commit — message will be redelivered
-      logger.error({ event, err }, 'Failed to process event');
-      throw err;
-    }
-  },
+		try {
+			await handleEvent(event);
+			// Kafka commits offset after successful processing
+			// On restart, consumer picks up from committed offset
+		} catch (err) {
+			// Don't commit — message will be redelivered
+			logger.error({ event, err }, 'Failed to process event');
+			throw err;
+		}
+	}
 });
 ```
 
 **Kafka's key properties:**
+
 - **Ordering:** Messages with the same partition key are strictly ordered
 - **Durability:** Messages persisted to disk, replicated across brokers
 - **Replay:** Consumers can seek to any offset and reprocess history
 - **Throughput:** Millions of messages/second on modest hardware
 
 **When Kafka over SNS/SQS:**
+
 - Need message ordering within a partition
 - Need to replay events (fix a bug in a consumer, reprocess historical data)
 - Need to share events across teams/systems with different retention needs
@@ -243,11 +256,13 @@ Ordering is only guaranteed within a partition (Kafka) or within a single FIFO q
 ```typescript
 // Kafka: partition by user ID for per-user ordering
 await producer.send({
-  topic: 'user-events',
-  messages: [{
-    key: userId,   // all events for this user go to the same partition → ordered
-    value: JSON.stringify(event),
-  }],
+	topic: 'user-events',
+	messages: [
+		{
+			key: userId, // all events for this user go to the same partition → ordered
+			value: JSON.stringify(event)
+		}
+	]
 });
 
 // If you need global ordering: use a single partition
@@ -263,37 +278,38 @@ Messages that fail processing after retries go to a dead-letter topic for invest
 ```typescript
 // Consumer with DLQ
 await consumer.run({
-  eachMessage: async ({ topic, partition, message }) => {
-    const event = JSON.parse(message.value!.toString());
+	eachMessage: async ({ topic, partition, message }) => {
+		const event = JSON.parse(message.value!.toString());
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        await handleEvent(event);
-        return;
-      } catch (err) {
-        if (attempt === 3) {
-          // Send to DLQ after 3 failures
-          await dlqProducer.send({
-            topic: `${topic}.dlq`,
-            messages: [{
-              key: message.key,
-              value: message.value,
-              headers: {
-                ...message.headers,
-                'x-original-topic': topic,
-                'x-failure-reason': String(err),
-                'x-failed-at': new Date().toISOString(),
-              },
-            }],
-          });
-          return; // don't rethrow — let consumer continue
-        }
-        await sleep(1000 * Math.pow(2, attempt));
-      }
-    }
-  },
+		for (let attempt = 1; attempt <= 3; attempt++) {
+			try {
+				await handleEvent(event);
+				return;
+			} catch (err) {
+				if (attempt === 3) {
+					// Send to DLQ after 3 failures
+					await dlqProducer.send({
+						topic: `${topic}.dlq`,
+						messages: [
+							{
+								key: message.key,
+								value: message.value,
+								headers: {
+									...message.headers,
+									'x-original-topic': topic,
+									'x-failure-reason': String(err),
+									'x-failed-at': new Date().toISOString()
+								}
+							}
+						]
+					});
+					return; // don't rethrow — let consumer continue
+				}
+				await sleep(1000 * Math.pow(2, attempt));
+			}
+		}
+	}
 });
 ```
 
 Monitor DLQ depth — a growing DLQ signals a consumer bug or a schema mismatch between producer and consumer.
-

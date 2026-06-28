@@ -1,10 +1,10 @@
 ---
-title: "gRPC & Protocol Buffers"
-subtitle: "High-performance service-to-service communication — gRPC is what REST wants to be when services talk to each other."
+title: 'gRPC & Protocol Buffers'
+subtitle: 'High-performance service-to-service communication — gRPC is what REST wants to be when services talk to each other.'
 chapter: 16
-level: "intermediate"
-readingTime: "20 min"
-topics: ["gRPC", "protobuf", "RPC", "microservices", "streaming", "service communication"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['gRPC', 'protobuf', 'RPC', 'microservices', 'streaming', 'service communication']
 ---
 
 <script>
@@ -15,14 +15,14 @@ topics: ["gRPC", "protobuf", "RPC", "microservices", "streaming", "service commu
 
 REST is great for browser-to-server communication. But for service-to-service communication inside your backend, gRPC is often the better choice:
 
-| Feature | REST/JSON | gRPC/Protobuf |
-|---------|-----------|---------------|
-| Serialization | JSON (text, ~10x larger) | Protobuf (binary, compact) |
-| Schema | OpenAPI (optional, often outdated) | `.proto` files (required, always current) |
-| Code generation | Optional | Built-in (Go, Java, Python, etc.) |
-| Streaming | WebSockets (separate protocol) | Built-in bidirectional streaming |
-| Performance | Good | Great (2-10x faster serialization) |
-| Browser support | Native | Needs gRPC-Web proxy |
+| Feature         | REST/JSON                          | gRPC/Protobuf                             |
+| --------------- | ---------------------------------- | ----------------------------------------- |
+| Serialization   | JSON (text, ~10x larger)           | Protobuf (binary, compact)                |
+| Schema          | OpenAPI (optional, often outdated) | `.proto` files (required, always current) |
+| Code generation | Optional                           | Built-in (Go, Java, Python, etc.)         |
+| Streaming       | WebSockets (separate protocol)     | Built-in bidirectional streaming          |
+| Performance     | Good                               | Great (2-10x faster serialization)        |
+| Browser support | Native                             | Needs gRPC-Web proxy                      |
 
 <Callout type="info">
 
@@ -312,4 +312,3 @@ grpcServer := grpc.NewServer(
 4. **Streaming is built-in** — server, client, and bidirectional streaming without WebSockets
 5. **Interceptors are gRPC middleware** — logging, auth, metrics work the same as HTTP middleware
 6. **Use for internal services**, REST for external APIs — combine with `grpc-gateway` for both
-

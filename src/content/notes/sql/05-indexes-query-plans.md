@@ -1,10 +1,10 @@
 ---
-title: "Indexes & Query Plans"
-subtitle: "How the database finds rows fast — B-tree indexes, EXPLAIN, and when an index is useless."
+title: 'Indexes & Query Plans'
+subtitle: 'How the database finds rows fast — B-tree indexes, EXPLAIN, and when an index is useless.'
 chapter: 5
-level: "intermediate"
-readingTime: "17 min"
-topics: ["index", "explain", "b-tree"]
+level: 'intermediate'
+readingTime: '17 min'
+topics: ['index', 'explain', 'b-tree']
 ---
 
 <script>
@@ -13,18 +13,18 @@ topics: ["index", "explain", "b-tree"]
 
 ## The Problem Indexes Solve
 
-Without an index, finding rows that match `WHERE email = 'lubna@example.com'` means reading **every row** in the table — a *sequential scan*. On a million-row table that's a million reads to find one row. An index is a separate, sorted data structure that lets the database jump straight to matching rows, the same way a book's index sends you to a page instead of reading cover to cover.
+Without an index, finding rows that match `WHERE email = 'lubna@example.com'` means reading **every row** in the table — a _sequential scan_. On a million-row table that's a million reads to find one row. An index is a separate, sorted data structure that lets the database jump straight to matching rows, the same way a book's index sends you to a page instead of reading cover to cover.
 
 The trade-off: indexes speed up reads but slow down writes (every `INSERT` / `UPDATE` / `DELETE` must also update the index) and consume disk space. Index deliberately, not reflexively.
 
 ## B-Tree Indexes
 
-Postgres's default index type is a **B-tree** (balanced tree). It keeps keys sorted and stays only a few levels deep even for huge tables, so any lookup takes a handful of page reads. Because it stores keys *in order*, a B-tree accelerates:
+Postgres's default index type is a **B-tree** (balanced tree). It keeps keys sorted and stays only a few levels deep even for huge tables, so any lookup takes a handful of page reads. Because it stores keys _in order_, a B-tree accelerates:
 
 - Equality: `WHERE id = 42`
 - Ranges: `WHERE created_at >= '2026-01-01'`
 - Sorting: `ORDER BY created_at` (the index is already sorted)
-- Prefix matching: `WHERE email LIKE 'lubna%'` (but *not* `LIKE '%lubna'`)
+- Prefix matching: `WHERE email LIKE 'lubna%'` (but _not_ `LIKE '%lubna'`)
 
 ```sql
 CREATE INDEX idx_users_email ON users (email);
@@ -56,7 +56,7 @@ This is the **leftmost-prefix rule**: a composite index helps only when your fil
 
 ## Covering Indexes
 
-If an index contains *every* column a query needs, Postgres can answer entirely from the index without touching the table — an **index-only scan**. The `INCLUDE` clause adds payload columns that aren't part of the search key:
+If an index contains _every_ column a query needs, Postgres can answer entirely from the index without touching the table — an **index-only scan**. The `INCLUDE` clause adds payload columns that aren't part of the search key:
 
 ```sql
 CREATE INDEX idx_orders_cust_amount
@@ -70,7 +70,7 @@ Covering indexes can dramatically speed up hot queries, at the cost of a larger 
 
 ## Reading Query Plans with EXPLAIN
 
-`EXPLAIN` shows the *plan* the optimizer chose — without running the query. `EXPLAIN ANALYZE` actually executes it and reports real timings and row counts, which is what you want when diagnosing slowness.
+`EXPLAIN` shows the _plan_ the optimizer chose — without running the query. `EXPLAIN ANALYZE` actually executes it and reports real timings and row counts, which is what you want when diagnosing slowness.
 
 ```sql
 EXPLAIN ANALYZE
@@ -112,15 +112,15 @@ Key things to read off a plan:
 A sequential scan isn't always bad. The planner weighs **selectivity** — what fraction of rows a condition matches:
 
 - **High selectivity** (matches few rows, e.g. a unique email) → index scan wins. Jump to the few matches.
-- **Low selectivity** (matches many rows, e.g. `status = 'active'` where 90% are active) → a seq scan is often *faster*, because following index pointers to most of the table, in random order, costs more than streaming the whole table sequentially.
+- **Low selectivity** (matches many rows, e.g. `status = 'active'` where 90% are active) → a seq scan is often _faster_, because following index pointers to most of the table, in random order, costs more than streaming the whole table sequentially.
 
-This is why an index on a boolean or low-cardinality column frequently goes unused — and why the planner is right to ignore it. Indexes pay off when they let you skip the *majority* of rows.
+This is why an index on a boolean or low-cardinality column frequently goes unused — and why the planner is right to ignore it. Indexes pay off when they let you skip the _majority_ of rows.
 
 ## When Indexes Don't Help
 
 An index on a column is wasted if the query can't use it. Common cases:
 
-- **Function or expression on the column.** `WHERE lower(email) = 'lubna@x.com'` can't use a plain index on `email`. Create an *expression index*: `CREATE INDEX ON users (lower(email))`.
+- **Function or expression on the column.** `WHERE lower(email) = 'lubna@x.com'` can't use a plain index on `email`. Create an _expression index_: `CREATE INDEX ON users (lower(email))`.
 - **Leading wildcard.** `LIKE '%lubna'` can't use a B-tree (it's sorted by prefix). Trigram (`GIN` + `pg_trgm`) indexes handle this.
 - **Type mismatch.** Comparing an indexed `text` column to an integer literal may force a cast that bypasses the index.
 - **Low selectivity**, as above — the planner correctly skips it.

@@ -68,7 +68,11 @@
 		color: #fff;
 		background:
 			linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 45%),
-			linear-gradient(160deg, color-mix(in oklch, var(--bc) 90%, #fff), color-mix(in oklch, var(--bc) 74%, #000));
+			linear-gradient(
+				160deg,
+				color-mix(in oklch, var(--bc) 90%, #fff),
+				color-mix(in oklch, var(--bc) 74%, #000)
+			);
 		box-shadow: 0 8px 18px -10px color-mix(in oklch, var(--bc) 70%, #000);
 	}
 	.label {

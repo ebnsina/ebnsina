@@ -1,10 +1,10 @@
 ---
-title: "Tutorial: Build a File Upload Service"
-subtitle: "Step-by-step guide to building a production file upload service with chunked uploads, resumable transfers, virus scanning, and CDN integration."
+title: 'Tutorial: Build a File Upload Service'
+subtitle: 'Step-by-step guide to building a production file upload service with chunked uploads, resumable transfers, virus scanning, and CDN integration.'
 chapter: 23
-level: "intermediate"
-readingTime: "26 min"
-topics: ["tutorial", "file upload", "chunked upload", "resumable transfer", "content delivery"]
+level: 'intermediate'
+readingTime: '26 min'
+topics: ['tutorial', 'file upload', 'chunked upload', 'resumable transfer', 'content delivery']
 ---
 
 <script>
@@ -28,12 +28,10 @@ Like submitting documents at a government office — you fill out a form, attach
 The key insight: you can't just POST a 5GB file in one request. Networks fail, timeouts expire, and servers run out of memory. Instead, we split files into chunks, upload each chunk independently, and assemble them server-side. If the network drops, only the current chunk is lost — resume from where you left off.
 
 <Mermaid
-	title="File Upload Service Architecture"
-	code={`
-graph TD
+title="File Upload Service Architecture"
+code={`graph TD
   C["Client<br/>Chunked Upload"] --> U["Upload API<br/>Validate & Route"] --> A["Chunk Assembler<br/>Merge & Verify"]
-  A --> O["Object Store<br/>File Storage"] --> Q["Processing Queue<br/>Scan & Transform"] --> CDN["CDN<br/>Edge Delivery"]
-`}
+  A --> O["Object Store<br/>File Storage"] --> Q["Processing Queue<br/>Scan & Transform"] --> CDN["CDN<br/>Edge Delivery"]`}
 />
 
 ## Step 1: The Upload Protocol
@@ -72,197 +70,214 @@ Files are served through signed URLs — time-limited, HMAC-signed tokens that g
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import crypto from "node:crypto";
+import http from 'node:http';
+import crypto from 'node:crypto';
 
 // ===========================================
 // 1. TYPES & CONFIG
 // ===========================================
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB per chunk
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB max
-const SIGNING_SECRET = process.env.SIGNING_SECRET || "super-secret-key";
+const SIGNING_SECRET = process.env.SIGNING_SECRET || 'super-secret-key';
 const ALLOWED_TYPES = new Set([
-  "image/jpeg", "image/png", "image/gif", "image/webp",
-  "video/mp4", "video/webm", "application/pdf",
-  "text/plain", "application/zip",
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'video/mp4',
+	'video/webm',
+	'application/pdf',
+	'text/plain',
+	'application/zip'
 ]);
 
-type UploadStatus = "uploading" | "assembling" | "processing" | "ready" | "failed";
+type UploadStatus = 'uploading' | 'assembling' | 'processing' | 'ready' | 'failed';
 
 interface UploadSession {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  contentType: string;
-  totalChunks: number;
-  uploadedChunks: Set<number>;
-  checksum: string; // expected SHA-256 of complete file
-  status: UploadStatus;
-  createdAt: string;
-  completedAt: string | null;
-  ownerId: string;
+	id: string;
+	fileName: string;
+	fileSize: number;
+	contentType: string;
+	totalChunks: number;
+	uploadedChunks: Set<number>;
+	checksum: string; // expected SHA-256 of complete file
+	status: UploadStatus;
+	createdAt: string;
+	completedAt: string | null;
+	ownerId: string;
 }
 
 interface FileRecord {
-  id: string;
-  uploadId: string;
-  fileName: string;
-  fileSize: number;
-  contentType: string;
-  checksum: string;
-  status: "processing" | "ready" | "quarantined";
-  scanResult: string | null;
-  createdAt: string;
+	id: string;
+	uploadId: string;
+	fileName: string;
+	fileSize: number;
+	contentType: string;
+	checksum: string;
+	status: 'processing' | 'ready' | 'quarantined';
+	scanResult: string | null;
+	createdAt: string;
 }
 
 // ===========================================
 // 2. UPLOAD SESSION MANAGER
 // ===========================================
 class UploadManager {
-  private sessions = new Map<string, UploadSession>();
-  private chunks = new Map<string, Map<number, Buffer>>(); // uploadId -> chunkNum -> data
-  private files = new Map<string, FileRecord>();
+	private sessions = new Map<string, UploadSession>();
+	private chunks = new Map<string, Map<number, Buffer>>(); // uploadId -> chunkNum -> data
+	private files = new Map<string, FileRecord>();
 
-  initiate(fileName: string, fileSize: number, contentType: string, checksum: string, ownerId: string): UploadSession {
-    if (!ALLOWED_TYPES.has(contentType)) {
-      throw new Error(`File type ${contentType} not allowed`);
-    }
-    if (fileSize > MAX_FILE_SIZE) {
-      throw new Error(`File size ${fileSize} exceeds maximum ${MAX_FILE_SIZE}`);
-    }
+	initiate(
+		fileName: string,
+		fileSize: number,
+		contentType: string,
+		checksum: string,
+		ownerId: string
+	): UploadSession {
+		if (!ALLOWED_TYPES.has(contentType)) {
+			throw new Error(`File type ${contentType} not allowed`);
+		}
+		if (fileSize > MAX_FILE_SIZE) {
+			throw new Error(`File size ${fileSize} exceeds maximum ${MAX_FILE_SIZE}`);
+		}
 
-    const totalChunks = Math.ceil(fileSize / CHUNK_SIZE);
-    const session: UploadSession = {
-      id: crypto.randomUUID(),
-      fileName, fileSize, contentType, totalChunks,
-      uploadedChunks: new Set(), checksum,
-      status: "uploading",
-      createdAt: new Date().toISOString(),
-      completedAt: null, ownerId,
-    };
+		const totalChunks = Math.ceil(fileSize / CHUNK_SIZE);
+		const session: UploadSession = {
+			id: crypto.randomUUID(),
+			fileName,
+			fileSize,
+			contentType,
+			totalChunks,
+			uploadedChunks: new Set(),
+			checksum,
+			status: 'uploading',
+			createdAt: new Date().toISOString(),
+			completedAt: null,
+			ownerId
+		};
 
-    this.sessions.set(session.id, session);
-    this.chunks.set(session.id, new Map());
-    return session;
-  }
+		this.sessions.set(session.id, session);
+		this.chunks.set(session.id, new Map());
+		return session;
+	}
 
-  uploadChunk(uploadId: string, chunkNum: number, data: Buffer, chunkChecksum: string): void {
-    const session = this.sessions.get(uploadId);
-    if (!session) throw new Error("Upload session not found");
-    if (session.status !== "uploading") throw new Error("Upload not in uploading state");
-    if (chunkNum < 0 || chunkNum >= session.totalChunks) throw new Error("Invalid chunk number");
+	uploadChunk(uploadId: string, chunkNum: number, data: Buffer, chunkChecksum: string): void {
+		const session = this.sessions.get(uploadId);
+		if (!session) throw new Error('Upload session not found');
+		if (session.status !== 'uploading') throw new Error('Upload not in uploading state');
+		if (chunkNum < 0 || chunkNum >= session.totalChunks) throw new Error('Invalid chunk number');
 
-    // Verify chunk checksum
-    const actualChecksum = crypto.createHash("sha256").update(data).digest("hex");
-    if (actualChecksum !== chunkChecksum) {
-      throw new Error("Chunk checksum mismatch");
-    }
+		// Verify chunk checksum
+		const actualChecksum = crypto.createHash('sha256').update(data).digest('hex');
+		if (actualChecksum !== chunkChecksum) {
+			throw new Error('Chunk checksum mismatch');
+		}
 
-    this.chunks.get(uploadId)!.set(chunkNum, data);
-    session.uploadedChunks.add(chunkNum);
-  }
+		this.chunks.get(uploadId)!.set(chunkNum, data);
+		session.uploadedChunks.add(chunkNum);
+	}
 
-  getMissingChunks(uploadId: string): number[] {
-    const session = this.sessions.get(uploadId);
-    if (!session) throw new Error("Upload session not found");
-    const missing: number[] = [];
-    for (let i = 0; i < session.totalChunks; i++) {
-      if (!session.uploadedChunks.has(i)) missing.push(i);
-    }
-    return missing;
-  }
+	getMissingChunks(uploadId: string): number[] {
+		const session = this.sessions.get(uploadId);
+		if (!session) throw new Error('Upload session not found');
+		const missing: number[] = [];
+		for (let i = 0; i < session.totalChunks; i++) {
+			if (!session.uploadedChunks.has(i)) missing.push(i);
+		}
+		return missing;
+	}
 
-  complete(uploadId: string): FileRecord {
-    const session = this.sessions.get(uploadId);
-    if (!session) throw new Error("Upload session not found");
+	complete(uploadId: string): FileRecord {
+		const session = this.sessions.get(uploadId);
+		if (!session) throw new Error('Upload session not found');
 
-    const missing = this.getMissingChunks(uploadId);
-    if (missing.length > 0) {
-      throw new Error(`Missing chunks: ${missing.join(", ")}`);
-    }
+		const missing = this.getMissingChunks(uploadId);
+		if (missing.length > 0) {
+			throw new Error(`Missing chunks: ${missing.join(', ')}`);
+		}
 
-    session.status = "assembling";
+		session.status = 'assembling';
 
-    // Assemble chunks in order
-    const chunkMap = this.chunks.get(uploadId)!;
-    const buffers: Buffer[] = [];
-    for (let i = 0; i < session.totalChunks; i++) {
-      buffers.push(chunkMap.get(i)!);
-    }
-    const assembled = Buffer.concat(buffers);
+		// Assemble chunks in order
+		const chunkMap = this.chunks.get(uploadId)!;
+		const buffers: Buffer[] = [];
+		for (let i = 0; i < session.totalChunks; i++) {
+			buffers.push(chunkMap.get(i)!);
+		}
+		const assembled = Buffer.concat(buffers);
 
-    // Verify total checksum
-    const actualChecksum = crypto.createHash("sha256").update(assembled).digest("hex");
-    if (actualChecksum !== session.checksum) {
-      session.status = "failed";
-      throw new Error("File checksum mismatch after assembly");
-    }
+		// Verify total checksum
+		const actualChecksum = crypto.createHash('sha256').update(assembled).digest('hex');
+		if (actualChecksum !== session.checksum) {
+			session.status = 'failed';
+			throw new Error('File checksum mismatch after assembly');
+		}
 
-    // Create file record
-    const file: FileRecord = {
-      id: crypto.randomUUID(),
-      uploadId: session.id,
-      fileName: session.fileName,
-      fileSize: assembled.length,
-      contentType: session.contentType,
-      checksum: actualChecksum,
-      status: "processing",
-      scanResult: null,
-      createdAt: new Date().toISOString(),
-    };
+		// Create file record
+		const file: FileRecord = {
+			id: crypto.randomUUID(),
+			uploadId: session.id,
+			fileName: session.fileName,
+			fileSize: assembled.length,
+			contentType: session.contentType,
+			checksum: actualChecksum,
+			status: 'processing',
+			scanResult: null,
+			createdAt: new Date().toISOString()
+		};
 
-    this.files.set(file.id, file);
-    session.status = "processing";
-    session.completedAt = new Date().toISOString();
+		this.files.set(file.id, file);
+		session.status = 'processing';
+		session.completedAt = new Date().toISOString();
 
-    // Clean up chunks from memory
-    this.chunks.delete(uploadId);
+		// Clean up chunks from memory
+		this.chunks.delete(uploadId);
 
-    // Async post-processing
-    this.postProcess(file);
+		// Async post-processing
+		this.postProcess(file);
 
-    return file;
-  }
+		return file;
+	}
 
-  private async postProcess(file: FileRecord): Promise<void> {
-    // Simulate virus scan
-    console.log(`[SCAN] Scanning ${file.fileName}...`);
-    setTimeout(() => {
-      file.scanResult = "clean";
-      file.status = "ready";
-      console.log(`[SCAN] ${file.fileName} is clean — file ready`);
-    }, 2000);
-  }
+	private async postProcess(file: FileRecord): Promise<void> {
+		// Simulate virus scan
+		console.log(`[SCAN] Scanning ${file.fileName}...`);
+		setTimeout(() => {
+			file.scanResult = 'clean';
+			file.status = 'ready';
+			console.log(`[SCAN] ${file.fileName} is clean — file ready`);
+		}, 2000);
+	}
 
-  getFile(fileId: string): FileRecord | null {
-    return this.files.get(fileId) || null;
-  }
+	getFile(fileId: string): FileRecord | null {
+		return this.files.get(fileId) || null;
+	}
 
-  getSession(uploadId: string): UploadSession | null {
-    return this.sessions.get(uploadId) || null;
-  }
+	getSession(uploadId: string): UploadSession | null {
+		return this.sessions.get(uploadId) || null;
+	}
 
-  // Generate a signed URL for file download
-  generateSignedUrl(fileId: string, expiresIn = 3600): string {
-    const file = this.files.get(fileId);
-    if (!file) throw new Error("File not found");
-    if (file.status !== "ready") throw new Error("File not ready for download");
+	// Generate a signed URL for file download
+	generateSignedUrl(fileId: string, expiresIn = 3600): string {
+		const file = this.files.get(fileId);
+		if (!file) throw new Error('File not found');
+		if (file.status !== 'ready') throw new Error('File not ready for download');
 
-    const expires = Math.floor(Date.now() / 1000) + expiresIn;
-    const payload = `${fileId}:${expires}`;
-    const signature = crypto.createHmac("sha256", SIGNING_SECRET).update(payload).digest("hex");
+		const expires = Math.floor(Date.now() / 1000) + expiresIn;
+		const payload = `${fileId}:${expires}`;
+		const signature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
 
-    return `/files/${fileId}?expires=${expires}&sig=${signature}`;
-  }
+		return `/files/${fileId}?expires=${expires}&sig=${signature}`;
+	}
 
-  verifySignedUrl(fileId: string, expires: string, signature: string): boolean {
-    const expiresNum = parseInt(expires);
-    if (Date.now() / 1000 > expiresNum) return false; // Expired
+	verifySignedUrl(fileId: string, expires: string, signature: string): boolean {
+		const expiresNum = parseInt(expires);
+		if (Date.now() / 1000 > expiresNum) return false; // Expired
 
-    const payload = `${fileId}:${expires}`;
-    const expected = crypto.createHmac("sha256", SIGNING_SECRET).update(payload).digest("hex");
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  }
+		const payload = `${fileId}:${expires}`;
+		const expected = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
+		return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+	}
 }
 
 // ===========================================
@@ -271,104 +286,130 @@ class UploadManager {
 const manager = new UploadManager();
 
 function parseBody(req: http.IncomingMessage): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => resolve(Buffer.concat(chunks)));
-    req.on("error", reject);
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		req.on('data', (c) => chunks.push(c));
+		req.on('end', () => resolve(Buffer.concat(chunks)));
+		req.on('error', reject);
+	});
 }
 
 function parseJSON(buf: Buffer): unknown {
-  return JSON.parse(buf.toString());
+	return JSON.parse(buf.toString());
 }
 
 function json(res: http.ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(data));
+	res.writeHead(status, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const method = req.method || "GET";
+	const url = new URL(req.url || '/', `http://${req.headers.host}`);
+	const method = req.method || 'GET';
 
-  try {
-    // POST /api/uploads/initiate
-    if (url.pathname === "/api/uploads/initiate" && method === "POST") {
-      const body = parseJSON(await parseBody(req)) as any;
-      if (!body.fileName || !body.fileSize || !body.contentType || !body.checksum) {
-        json(res, 400, { error: "fileName, fileSize, contentType, and checksum required" }); return;
-      }
-      const session = manager.initiate(
-        body.fileName, body.fileSize, body.contentType,
-        body.checksum, body.ownerId || "anonymous"
-      );
-      json(res, 201, {
-        uploadId: session.id, totalChunks: session.totalChunks,
-        chunkSize: CHUNK_SIZE, status: session.status,
-      }); return;
-    }
+	try {
+		// POST /api/uploads/initiate
+		if (url.pathname === '/api/uploads/initiate' && method === 'POST') {
+			const body = parseJSON(await parseBody(req)) as any;
+			if (!body.fileName || !body.fileSize || !body.contentType || !body.checksum) {
+				json(res, 400, { error: 'fileName, fileSize, contentType, and checksum required' });
+				return;
+			}
+			const session = manager.initiate(
+				body.fileName,
+				body.fileSize,
+				body.contentType,
+				body.checksum,
+				body.ownerId || 'anonymous'
+			);
+			json(res, 201, {
+				uploadId: session.id,
+				totalChunks: session.totalChunks,
+				chunkSize: CHUNK_SIZE,
+				status: session.status
+			});
+			return;
+		}
 
-    // PUT /api/uploads/:id/chunks/:chunkNum
-    const chunkMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/chunks\/(\d+)$/);
-    if (chunkMatch && method === "PUT") {
-      const data = await parseBody(req);
-      const chunkChecksum = req.headers["x-chunk-checksum"] as string;
-      if (!chunkChecksum) {
-        json(res, 400, { error: "X-Chunk-Checksum header required" }); return;
-      }
-      manager.uploadChunk(chunkMatch[1], parseInt(chunkMatch[2]), data, chunkChecksum);
-      json(res, 200, { status: "chunk_received", chunkNum: parseInt(chunkMatch[2]) }); return;
-    }
+		// PUT /api/uploads/:id/chunks/:chunkNum
+		const chunkMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/chunks\/(\d+)$/);
+		if (chunkMatch && method === 'PUT') {
+			const data = await parseBody(req);
+			const chunkChecksum = req.headers['x-chunk-checksum'] as string;
+			if (!chunkChecksum) {
+				json(res, 400, { error: 'X-Chunk-Checksum header required' });
+				return;
+			}
+			manager.uploadChunk(chunkMatch[1], parseInt(chunkMatch[2]), data, chunkChecksum);
+			json(res, 200, { status: 'chunk_received', chunkNum: parseInt(chunkMatch[2]) });
+			return;
+		}
 
-    // POST /api/uploads/:id/complete
-    const completeMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/complete$/);
-    if (completeMatch && method === "POST") {
-      const file = manager.complete(completeMatch[1]);
-      json(res, 200, {
-        fileId: file.id, status: file.status, fileName: file.fileName,
-        fileSize: file.fileSize, checksum: file.checksum,
-      }); return;
-    }
+		// POST /api/uploads/:id/complete
+		const completeMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/complete$/);
+		if (completeMatch && method === 'POST') {
+			const file = manager.complete(completeMatch[1]);
+			json(res, 200, {
+				fileId: file.id,
+				status: file.status,
+				fileName: file.fileName,
+				fileSize: file.fileSize,
+				checksum: file.checksum
+			});
+			return;
+		}
 
-    // GET /api/uploads/:id/status
-    const statusMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/status$/);
-    if (statusMatch && method === "GET") {
-      const session = manager.getSession(statusMatch[1]);
-      if (!session) { json(res, 404, { error: "Upload not found" }); return; }
-      json(res, 200, {
-        uploadId: session.id, status: session.status,
-        uploadedChunks: [...session.uploadedChunks],
-        missingChunks: manager.getMissingChunks(session.id),
-        totalChunks: session.totalChunks,
-      }); return;
-    }
+		// GET /api/uploads/:id/status
+		const statusMatch = url.pathname.match(/^\/api\/uploads\/([^/]+)\/status$/);
+		if (statusMatch && method === 'GET') {
+			const session = manager.getSession(statusMatch[1]);
+			if (!session) {
+				json(res, 404, { error: 'Upload not found' });
+				return;
+			}
+			json(res, 200, {
+				uploadId: session.id,
+				status: session.status,
+				uploadedChunks: [...session.uploadedChunks],
+				missingChunks: manager.getMissingChunks(session.id),
+				totalChunks: session.totalChunks
+			});
+			return;
+		}
 
-    // GET /api/files/:id
-    const fileMatch = url.pathname.match(/^\/api\/files\/([^/]+)$/);
-    if (fileMatch && method === "GET") {
-      const file = manager.getFile(fileMatch[1]);
-      if (!file) { json(res, 404, { error: "File not found" }); return; }
-      json(res, 200, file); return;
-    }
+		// GET /api/files/:id
+		const fileMatch = url.pathname.match(/^\/api\/files\/([^/]+)$/);
+		if (fileMatch && method === 'GET') {
+			const file = manager.getFile(fileMatch[1]);
+			if (!file) {
+				json(res, 404, { error: 'File not found' });
+				return;
+			}
+			json(res, 200, file);
+			return;
+		}
 
-    // GET /api/files/:id/download — Generate signed URL
-    const downloadMatch = url.pathname.match(/^\/api\/files\/([^/]+)\/download$/);
-    if (downloadMatch && method === "GET") {
-      const signedUrl = manager.generateSignedUrl(downloadMatch[1]);
-      json(res, 200, { downloadUrl: signedUrl }); return;
-    }
+		// GET /api/files/:id/download — Generate signed URL
+		const downloadMatch = url.pathname.match(/^\/api\/files\/([^/]+)\/download$/);
+		if (downloadMatch && method === 'GET') {
+			const signedUrl = manager.generateSignedUrl(downloadMatch[1]);
+			json(res, 200, { downloadUrl: signedUrl });
+			return;
+		}
 
-    if (url.pathname === "/health") { json(res, 200, { status: "ok" }); return; }
-    json(res, 404, { error: "Not found" });
-  } catch (err: any) {
-    json(res, 400, { error: err.message || "Internal server error" });
-  }
+		if (url.pathname === '/health') {
+			json(res, 200, { status: 'ok' });
+			return;
+		}
+		json(res, 404, { error: 'Not found' });
+	} catch (err: any) {
+		json(res, 400, { error: err.message || 'Internal server error' });
+	}
 });
 
-const PORT = parseInt(process.env.PORT || "3000");
+const PORT = parseInt(process.env.PORT || '3000');
 server.listen(PORT, () => console.log(`File Upload Service on http://localhost:${PORT}`));
-process.on("SIGTERM", () => server.close());
+process.on('SIGTERM', () => server.close());
 ```
 
 </div>
@@ -734,4 +775,3 @@ Virus scanning a 2GB video takes seconds to minutes. Making the upload API wait 
 - This architecture handles files up to 5GB with resumable chunked uploads and sub-100ms signed URL generation
 
 </div>
-

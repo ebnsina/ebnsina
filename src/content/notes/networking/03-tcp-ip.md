@@ -1,10 +1,10 @@
 ---
-title: "TCP/IP — Reliable Delivery"
-subtitle: "The three-way handshake, flow control, congestion avoidance — how TCP guarantees every byte arrives in order."
+title: 'TCP/IP — Reliable Delivery'
+subtitle: 'The three-way handshake, flow control, congestion avoidance — how TCP guarantees every byte arrives in order.'
 chapter: 3
-level: "beginner"
-readingTime: "16 min"
-topics: ["TCP", "IP", "handshake", "flow control", "congestion"]
+level: 'beginner'
+readingTime: '16 min'
+topics: ['TCP', 'IP', 'handshake', 'flow control', 'congestion']
 ---
 
 <script>
@@ -15,12 +15,12 @@ topics: ["TCP", "IP", "handshake", "flow control", "congestion"]
 
 The transport layer has two main protocols:
 
-| | TCP | UDP |
-|--|-----|-----|
-| Reliability | Guaranteed delivery, in order | Best effort, may lose packets |
-| Connection | Connection-oriented (handshake) | Connectionless |
-| Speed | Slower (overhead) | Faster (minimal overhead) |
-| Use cases | HTTP, email, file transfer | Video streaming, gaming, DNS |
+|             | TCP                             | UDP                           |
+| ----------- | ------------------------------- | ----------------------------- |
+| Reliability | Guaranteed delivery, in order   | Best effort, may lose packets |
+| Connection  | Connection-oriented (handshake) | Connectionless                |
+| Speed       | Slower (overhead)               | Faster (minimal overhead)     |
+| Use cases   | HTTP, email, file transfer      | Video streaming, gaming, DNS  |
 
 TCP sacrifices speed for reliability. UDP sacrifices reliability for speed. Choose based on what matters more for your application.
 
@@ -48,29 +48,29 @@ Before sending any data, TCP establishes a connection with three packets:
 //    "Got it, connection established"
 
 interface TCPSegment {
-  sourcePort: number;
-  destPort: number;
-  sequenceNumber: number;
-  ackNumber: number;
-  flags: {
-    SYN: boolean;
-    ACK: boolean;
-    FIN: boolean;
-    RST: boolean;
-  };
-  windowSize: number; // flow control
-  payload: Uint8Array;
+	sourcePort: number;
+	destPort: number;
+	sequenceNumber: number;
+	ackNumber: number;
+	flags: {
+		SYN: boolean;
+		ACK: boolean;
+		FIN: boolean;
+		RST: boolean;
+	};
+	windowSize: number; // flow control
+	payload: Uint8Array;
 }
 
 // Simplified TCP connection state machine
 type TCPState =
-  | "CLOSED"
-  | "SYN_SENT"
-  | "SYN_RECEIVED"
-  | "ESTABLISHED"
-  | "FIN_WAIT"
-  | "CLOSE_WAIT"
-  | "TIME_WAIT";
+	| 'CLOSED'
+	| 'SYN_SENT'
+	| 'SYN_RECEIVED'
+	| 'ESTABLISHED'
+	| 'FIN_WAIT'
+	| 'CLOSE_WAIT'
+	| 'TIME_WAIT';
 ```
 
 This handshake adds one round-trip of latency before any data flows. For short-lived connections (like HTTP/1.1 requests), this overhead is significant — which is why connection reuse (keep-alive) and HTTP/2 exist.
@@ -107,42 +107,42 @@ The receiver tells the sender how much data it can handle using the **window siz
 ```typescript
 // Sliding window flow control
 class TCPReceiver {
-  private buffer: Uint8Array;
-  private bufferSize: number;
-  private bytesUsed = 0;
+	private buffer: Uint8Array;
+	private bufferSize: number;
+	private bytesUsed = 0;
 
-  constructor(bufferSize: number) {
-    this.bufferSize = bufferSize;
-    this.buffer = new Uint8Array(bufferSize);
-  }
+	constructor(bufferSize: number) {
+		this.bufferSize = bufferSize;
+		this.buffer = new Uint8Array(bufferSize);
+	}
 
-  // Available space = what we advertise as window size
-  get windowSize(): number {
-    return this.bufferSize - this.bytesUsed;
-  }
+	// Available space = what we advertise as window size
+	get windowSize(): number {
+		return this.bufferSize - this.bytesUsed;
+	}
 
-  receive(data: Uint8Array): void {
-    if (data.length > this.windowSize) {
-      throw new Error("Sender exceeded window size");
-    }
-    // Copy data to buffer
-    this.buffer.set(data, this.bytesUsed);
-    this.bytesUsed += data.length;
-  }
+	receive(data: Uint8Array): void {
+		if (data.length > this.windowSize) {
+			throw new Error('Sender exceeded window size');
+		}
+		// Copy data to buffer
+		this.buffer.set(data, this.bytesUsed);
+		this.bytesUsed += data.length;
+	}
 
-  // Application reads data, freeing buffer space
-  read(n: number): Uint8Array {
-    const data = this.buffer.slice(0, n);
-    this.buffer.copyWithin(0, n);
-    this.bytesUsed -= n;
-    return data;
-  }
+	// Application reads data, freeing buffer space
+	read(n: number): Uint8Array {
+		const data = this.buffer.slice(0, n);
+		this.buffer.copyWithin(0, n);
+		this.bytesUsed -= n;
+		return data;
+	}
 }
 ```
 
 ## Congestion Control
 
-Flow control prevents overwhelming the *receiver*. Congestion control prevents overwhelming the *network*. TCP starts slow and ramps up:
+Flow control prevents overwhelming the _receiver_. Congestion control prevents overwhelming the _network_. TCP starts slow and ramps up:
 
 1. **Slow start** — begin with a small window (typically 10 segments), double each round-trip
 2. **Congestion avoidance** — once past a threshold, increase linearly (1 segment per RTT)
@@ -150,26 +150,26 @@ Flow control prevents overwhelming the *receiver*. Congestion control prevents o
 
 ```typescript
 class CongestionControl {
-  cwnd = 10;          // congestion window (segments)
-  ssthresh = 64;      // slow start threshold
-  state: "slow_start" | "congestion_avoidance" = "slow_start";
+	cwnd = 10; // congestion window (segments)
+	ssthresh = 64; // slow start threshold
+	state: 'slow_start' | 'congestion_avoidance' = 'slow_start';
 
-  onAck(): void {
-    if (this.state === "slow_start") {
-      this.cwnd *= 2; // exponential growth
-      if (this.cwnd >= this.ssthresh) {
-        this.state = "congestion_avoidance";
-      }
-    } else {
-      this.cwnd += 1; // linear growth
-    }
-  }
+	onAck(): void {
+		if (this.state === 'slow_start') {
+			this.cwnd *= 2; // exponential growth
+			if (this.cwnd >= this.ssthresh) {
+				this.state = 'congestion_avoidance';
+			}
+		} else {
+			this.cwnd += 1; // linear growth
+		}
+	}
 
-  onLoss(): void {
-    this.ssthresh = Math.floor(this.cwnd / 2);
-    this.cwnd = this.ssthresh;
-    this.state = "congestion_avoidance";
-  }
+	onLoss(): void {
+		this.ssthresh = Math.floor(this.cwnd / 2);
+		this.cwnd = this.ssthresh;
+		this.state = 'congestion_avoidance';
+	}
 }
 ```
 
@@ -190,4 +190,3 @@ Closing a TCP connection requires a four-way handshake (FIN → ACK → FIN → 
 3. **Flow control** (window size) prevents overwhelming the receiver
 4. **Congestion control** (slow start → congestion avoidance) prevents overwhelming the network
 5. **Connection setup adds latency** — reuse connections when possible
-

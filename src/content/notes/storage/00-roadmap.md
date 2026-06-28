@@ -1,10 +1,10 @@
 ---
-title: "File & Object Storage — Roadmap"
-subtitle: "Local disk, NFS, then self-host MinIO. Build a CDN with nginx and Varnish."
+title: 'File & Object Storage — Roadmap'
+subtitle: 'Local disk, NFS, then self-host MinIO. Build a CDN with nginx and Varnish.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Storage is deceptively simple until you scale. A local disk works fine on one se
 3. **File Uploads** — multipart parsing; content-type validation; direct-to-storage upload; image processing; virus scanning; multipart upload for large files
 4. **CDN with nginx and Varnish** — HTTP caching headers; nginx proxy_cache; VCL configuration; cache invalidation by URL and tag; monitoring hit rate
 5. **Storage in Practice** — access control; presigned download URLs; bucket organization; cost optimization; backup strategy; orphan file cleanup
-

@@ -1,10 +1,10 @@
 ---
-title: "Testing Strategy"
-subtitle: "The testing pyramid, what each layer tests, and how to avoid the traps that make test suites slow and fragile."
+title: 'Testing Strategy'
+subtitle: 'The testing pyramid, what each layer tests, and how to avoid the traps that make test suites slow and fragile.'
 chapter: 1
-level: "beginner"
-readingTime: "7 min"
-topics: ["testing pyramid", "unit tests", "integration tests", "e2e tests", "test strategy", "TDD"]
+level: 'beginner'
+readingTime: '7 min'
+topics: ['testing pyramid', 'unit tests', 'integration tests', 'e2e tests', 'test strategy', 'TDD']
 ---
 
 <script>
@@ -42,15 +42,15 @@ Most projects have this inverted — many slow e2e tests, few unit tests. This i
 import { calculateDiscount } from './pricing';
 
 test('applies 20% discount for premium members', () => {
-  expect(calculateDiscount(100_00, 'premium')).toBe(80_00);
+	expect(calculateDiscount(100_00, 'premium')).toBe(80_00);
 });
 
 test('no discount for standard members', () => {
-  expect(calculateDiscount(100_00, 'standard')).toBe(100_00);
+	expect(calculateDiscount(100_00, 'standard')).toBe(100_00);
 });
 
 test('never discounts below zero', () => {
-  expect(calculateDiscount(0, 'premium')).toBe(0);
+	expect(calculateDiscount(0, 'premium')).toBe(0);
 });
 ```
 
@@ -62,23 +62,23 @@ import { createOrder } from './orders';
 import { db } from './db';
 
 beforeAll(async () => {
-  await db.query('BEGIN');
+	await db.query('BEGIN');
 });
 
 afterAll(async () => {
-  await db.query('ROLLBACK');
+	await db.query('ROLLBACK');
 });
 
 test('creates order with correct total', async () => {
-  const order = await createOrder({
-    userId: 'user-1',
-    items: [{ productId: 'prod-1', quantity: 2, priceEach: 50_00 }],
-  });
+	const order = await createOrder({
+		userId: 'user-1',
+		items: [{ productId: 'prod-1', quantity: 2, priceEach: 50_00 }]
+	});
 
-  expect(order.totalCents).toBe(100_00);
+	expect(order.totalCents).toBe(100_00);
 
-  const row = await db.query('SELECT * FROM orders WHERE id = $1', [order.id]);
-  expect(row.rows[0].total_cents).toBe(100_00);
+	const row = await db.query('SELECT * FROM orders WHERE id = $1', [order.id]);
+	expect(row.rows[0].total_cents).toBe(100_00);
 });
 ```
 
@@ -89,16 +89,16 @@ test('creates order with correct total', async () => {
 import { test, expect } from '@playwright/test';
 
 test('user can sign up and place an order', async ({ page }) => {
-  await page.goto('/signup');
-  await page.fill('[name=email]', 'test@example.com');
-  await page.fill('[name=password]', 'password123');
-  await page.click('[type=submit]');
+	await page.goto('/signup');
+	await page.fill('[name=email]', 'test@example.com');
+	await page.fill('[name=password]', 'password123');
+	await page.click('[type=submit]');
 
-  await expect(page).toHaveURL('/dashboard');
-  await page.click('text=Shop');
-  await page.click('text=Add to cart');
-  await page.click('text=Checkout');
-  await expect(page.locator('.order-confirmation')).toBeVisible();
+	await expect(page).toHaveURL('/dashboard');
+	await page.click('text=Shop');
+	await page.click('text=Add to cart');
+	await page.click('text=Checkout');
+	await expect(page.locator('.order-confirmation')).toBeVisible();
 });
 ```
 
@@ -117,12 +117,14 @@ const result = await createUser(mockDb, { email: 'test@example.com' });
 ```
 
 Mocks are appropriate for:
+
 - External third-party APIs (Stripe, SendGrid) — you don't control them
 - Time (`Date.now()`, `new Date()`) — for deterministic tests
 - Random values — for reproducibility
 - System calls you can't run in CI (GPU, hardware interfaces)
 
 Not appropriate for:
+
 - Your own database (use a test DB with real migrations)
 - Your own internal services (use a test instance or contract tests)
 - External HTTP APIs you control (use a test environment)
@@ -132,13 +134,13 @@ Not appropriate for:
 ```typescript
 // Builder pattern — construct minimal valid objects, override what matters
 function buildUser(overrides: Partial<User> = {}): User {
-  return {
-    id: randomUUID(),
-    email: `test-${randomUUID()}@example.com`,
-    role: 'standard',
-    createdAt: new Date(),
-    ...overrides,
-  };
+	return {
+		id: randomUUID(),
+		email: `test-${randomUUID()}@example.com`,
+		role: 'standard',
+		createdAt: new Date(),
+		...overrides
+	};
 }
 
 // Use in tests
@@ -161,6 +163,7 @@ For database tests: seed only what the test needs, clean up after:
 100% coverage doesn't mean the code works. Coverage tells you which lines ran, not whether the behavior is correct.
 
 Useful coverage signals:
+
 - **Low coverage on a module** → probably missing tests for a complex area
 - **100% coverage everywhere** → probably testing implementation instead of behavior
 
@@ -194,7 +197,7 @@ jobs:
           POSTGRES_DB: testdb
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -217,8 +220,7 @@ jobs:
           NODE_ENV: test
 
       - run: npm run test:e2e
-        if: github.ref == 'refs/heads/main'  # e2e only on main
+        if: github.ref == 'refs/heads/main' # e2e only on main
 ```
 
 Run unit + integration tests on every push. Run e2e only before deploy or on main — they're too slow for every PR branch.
-

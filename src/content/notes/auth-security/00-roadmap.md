@@ -1,10 +1,10 @@
 ---
-title: "Auth & Security — Roadmap"
-subtitle: "Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, and production hardening."
+title: 'Auth & Security — Roadmap'
+subtitle: 'Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, and production hardening.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -34,4 +34,3 @@ You'll implement real code: password hashing with argon2, JWT verification with 
 5. **API Key Management** — generation, storage, scoping, rotation, revocation, abuse detection
 6. **Common Vulnerabilities** — CSRF, session fixation, timing attacks, IDOR, mass assignment, security headers
 7. **Auth in Production** — rate limiting auth endpoints, what to log, password reset flow, incident response
-

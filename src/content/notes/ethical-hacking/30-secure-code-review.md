@@ -1,10 +1,21 @@
 ---
-title: "Secure Code Review"
-subtitle: "SAST tools, manual code auditing, threat modeling, finding vulnerabilities in real codebases, and building security into the SDLC."
+title: 'Secure Code Review'
+subtitle: 'SAST tools, manual code auditing, threat modeling, finding vulnerabilities in real codebases, and building security into the SDLC.'
 chapter: 30
-level: "intermediate"
-readingTime: "12 min"
-topics: ["secure code review", "SAST", "code audit", "SDLC", "threat modeling", "Semgrep", "CodeQL", "security review", "AppSec"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  [
+    'secure code review',
+    'SAST',
+    'code audit',
+    'SDLC',
+    'threat modeling',
+    'Semgrep',
+    'CodeQL',
+    'security review',
+    'AppSec'
+  ]
 ---
 
 <script>
@@ -150,41 +161,41 @@ bandit -r project/ --severity-level high
 ```javascript
 // INSECURE: Template literal in query
 app.get('/users', async (req, res) => {
-  const name = req.query.name;
-  const users = await db.query(`SELECT * FROM users WHERE name = '${name}'`); // SQLi!
+	const name = req.query.name;
+	const users = await db.query(`SELECT * FROM users WHERE name = '${name}'`); // SQLi!
 });
 
 // SECURE: Parameterized query
 app.get('/users', async (req, res) => {
-  const name = req.query.name;
-  const users = await db.query('SELECT * FROM users WHERE name = ?', [name]);
+	const name = req.query.name;
+	const users = await db.query('SELECT * FROM users WHERE name = ?', [name]);
 });
 
 // INSECURE: eval with user input
 app.post('/calc', (req, res) => {
-  const result = eval(req.body.expression); // RCE!
+	const result = eval(req.body.expression); // RCE!
 });
 
 // INSECURE: path traversal
 app.get('/file', (req, res) => {
-  const file = req.query.name;
-  res.sendFile('/var/files/' + file); // traversal: ../../etc/passwd
+	const file = req.query.name;
+	res.sendFile('/var/files/' + file); // traversal: ../../etc/passwd
 });
 // SECURE:
 const path = require('path');
 app.get('/file', (req, res) => {
-  const file = req.query.name;
-  const safePath = path.resolve('/var/files/', file);
-  if (!safePath.startsWith('/var/files/')) {
-    return res.status(403).send('Access denied');
-  }
-  res.sendFile(safePath);
+	const file = req.query.name;
+	const safePath = path.resolve('/var/files/', file);
+	if (!safePath.startsWith('/var/files/')) {
+		return res.status(403).send('Access denied');
+	}
+	res.sendFile(safePath);
 });
 
 // INSECURE: SSRF in webhook handler
 app.post('/webhook-test', async (req, res) => {
-  const { url } = req.body;
-  const result = await fetch(url); // SSRF!
+	const { url } = req.body;
+	const result = await fetch(url); // SSRF!
 });
 ```
 
@@ -274,6 +285,7 @@ eval(base64_decode($_POST['cmd']));  // webshell pattern — RCE
 
 ```markdown
 ## Authentication
+
 - [ ] Passwords hashed with bcrypt/scrypt/Argon2 (not MD5/SHA1)
 - [ ] Rate limiting on login, password reset, signup
 - [ ] Account lockout after N failed attempts
@@ -282,12 +294,14 @@ eval(base64_decode($_POST['cmd']));  // webshell pattern — RCE
 - [ ] MFA implementation (if applicable)
 
 ## Authorization
+
 - [ ] Every endpoint checks authentication before processing
 - [ ] Object access checks ownership (not just auth state)
 - [ ] Admin functions verify admin role, not just user role
 - [ ] Mass assignment protection (whitelist writable fields)
 
 ## Input Validation
+
 - [ ] All user input treated as untrusted
 - [ ] SQL queries parameterized (no string formatting)
 - [ ] Shell commands use arrays, not strings (no shell=True)
@@ -295,11 +309,13 @@ eval(base64_decode($_POST['cmd']));  // webshell pattern — RCE
 - [ ] File uploads validated (type, size, content)
 
 ## Output Encoding
+
 - [ ] HTML output escaped (no raw innerHTML with user data)
 - [ ] JSON serialization doesn't include sensitive fields
 - [ ] Error messages don't expose stack traces or internals
 
 ## Cryptography
+
 - [ ] Secrets stored in environment variables, not code
 - [ ] No hardcoded API keys, tokens, passwords
 - [ ] TLS used for all communications
@@ -307,6 +323,7 @@ eval(base64_decode($_POST['cmd']));  // webshell pattern — RCE
 - [ ] Random values from crypto-safe RNG
 
 ## Dependencies
+
 - [ ] No CVEs in current dependency versions
 - [ ] Dependencies pinned with checksums (lock file)
 - [ ] Supply chain integrity verified (SRI hashes for CDN)
@@ -325,7 +342,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
@@ -345,7 +362,7 @@ jobs:
           project: 'MyProject'
           path: '.'
           format: 'HTML'
-          
+
       - name: Upload SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v2
         if: always()
@@ -385,4 +402,3 @@ git show <commit> --stat
 # - Or their security@ email
 # - CVE request if no coordinated disclosure process
 ```
-

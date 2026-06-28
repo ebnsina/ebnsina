@@ -1,8 +1,9 @@
 ---
-title: "CDN with OpenResty & Gcore"
-description: "Every layer explained — from BGP routing to Lua hooks, cache headers to origin auth — and how to extend each one."
+title: 'CDN with OpenResty & Gcore'
+description: 'Every layer explained — from BGP routing to Lua hooks, cache headers to origin auth — and how to extend each one.'
 date: 2026-05-13
-tags: ["cdn", "openresty", "nginx", "lua", "gcore", "caching", "security", "rust", "pingora", "devops"]
+tags:
+  ['cdn', 'openresty', 'nginx', 'lua', 'gcore', 'caching', 'security', 'rust', 'pingora', 'devops']
 minutesRead: 69
 ---
 
@@ -17,7 +18,7 @@ Every layer explained — from BGP routing to Lua hooks, cache headers to origin
 
 ## Prerequisites — What You Need to Know First
 
-Each concept below is framed as: *what problem forced us to build this thing?* If you've shipped a fullstack app, you've already bumped into most of these problems. You just might not have known the name for the solution.
+Each concept below is framed as: _what problem forced us to build this thing?_ If you've shipped a fullstack app, you've already bumped into most of these problems. You just might not have known the name for the solution.
 
 ### How a browser fetches a page — and why each step costs time
 
@@ -67,7 +68,7 @@ With:     Browser  ──►  nginx :443  ──►  Node.js :3000
                         └─ load-balances across 4 Node workers
 ```
 
-*nginx does the infrastructure work. Node does the business logic. Each does what it's best at.*
+_nginx does the infrastructure work. Node does the business logic. Each does what it's best at._
 
 A CDN edge node is this same pattern, globalised: instead of one nginx in front of one app server, you have hundreds of nginx instances in cities around the world, all caching your app's responses and serving them locally.
 
@@ -155,23 +156,21 @@ Anycast works differently. Multiple physical servers in different cities all adv
 
 ## What a CDN Is and Why
 
-Think of a CDN like a chain of local convenience stores. Your main warehouse (the *origin server*) is in New York. Without a CDN, every customer — whether they're in Tokyo, Lagos, or Berlin — has to order directly from that New York warehouse. It takes days (or in internet terms, hundreds of milliseconds). A CDN opens mini-stores in Tokyo, Lagos, and Berlin that each stock copies of your most popular items. Most customers get served immediately from the store down the street.
+Think of a CDN like a chain of local convenience stores. Your main warehouse (the _origin server_) is in New York. Without a CDN, every customer — whether they're in Tokyo, Lagos, or Berlin — has to order directly from that New York warehouse. It takes days (or in internet terms, hundreds of milliseconds). A CDN opens mini-stores in Tokyo, Lagos, and Berlin that each stock copies of your most popular items. Most customers get served immediately from the store down the street.
 
 <Mermaid
-	title="CDN edge: hit fast, miss to origin"
-	code={`
-graph LR
+title="CDN edge: hit fast, miss to origin"
+code={`graph LR
   C["Client"] --> E["CDN Edge<br/>PoP"]
   E -->|"cache hit"| C
   E -->|"cache miss"| O["Origin Server"]
-  O --> E
-`}
+  O --> E`}
 />
 
 There are two moving parts:
 
 - **A distributed cache.** Many servers ("edges" or "points of presence" — PoPs) scattered across cities. Each holds copies of files pulled from your origin on first request.
-- **A routing mechanism.** A way to send each user to the nearest edge. Production CDNs use *anycast BGP* — many machines share one IP, and internet routers deliver each packet to the topologically closest one. Simpler CDNs use GeoDNS — return a different IP based on the resolver's geography.
+- **A routing mechanism.** A way to send each user to the nearest edge. Production CDNs use _anycast BGP_ — many machines share one IP, and internet routers deliver each packet to the topologically closest one. Simpler CDNs use GeoDNS — return a different IP based on the resolver's geography.
 
 ```
 user (Dhaka)  ──►  edge PoP (Singapore) ──miss──►  origin (Virginia)
@@ -181,17 +180,17 @@ user (Dhaka)  ──►  edge PoP (Singapore) ──hit──►  ✓  served fr
 user (Berlin) ──►  edge PoP (Frankfurt) ──hit──►  ✓  own independent cache
 ```
 
-*Each PoP caches independently. Frankfurt doesn't share Singapore's copy — it fetches its own on first European request.*
+_Each PoP caches independently. Frankfurt doesn't share Singapore's copy — it fetches its own on first European request._
 
 ### Why it matters
 
-| Benefit | Why it happens |
-|---------|---------------|
-| **Latency drops 5–15×** | Most web latency is physics — bytes crossing oceans. Edges cut the distance. |
-| **Origin offload 95–99%** | Only cache misses reach your server. 1% of traffic, 1% of the load. |
-| **Survives origin outages** | Edges serve stale copies while origin is down (`stale-if-error`). |
-| **Absorbs DDoS** | Anycast spreads attack traffic across all PoPs. 100 Gbps ÷ 150 PoPs = ~0.67 Gbps each. |
-| **Cheaper bandwidth** | CDN egress is pre-bought at bulk. Origin egress (AWS, colo) is expensive per-GB. |
+| Benefit                     | Why it happens                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| **Latency drops 5–15×**     | Most web latency is physics — bytes crossing oceans. Edges cut the distance.           |
+| **Origin offload 95–99%**   | Only cache misses reach your server. 1% of traffic, 1% of the load.                    |
+| **Survives origin outages** | Edges serve stale copies while origin is down (`stale-if-error`).                      |
+| **Absorbs DDoS**            | Anycast spreads attack traffic across all PoPs. 100 Gbps ÷ 150 PoPs = ~0.67 Gbps each. |
+| **Cheaper bandwidth**       | CDN egress is pre-bought at bulk. Origin egress (AWS, colo) is expensive per-GB.       |
 
 ---
 
@@ -205,16 +204,16 @@ OpenResty is **nginx recompiled with LuaJIT built in**. Think of nginx as a very
 
 Every HTTP request moves through these phases in order. OpenResty lets you attach Lua code to any of them. Think of phases like stages on an assembly line — each stage has a specific job, and you can add custom workers at any stage:
 
-| Phase | What it does |
-|-------|-------------|
-| `set_by_lua` | Compute nginx variables. First to run. Use to derive config values from request data. |
-| `rewrite_by_lua` | URL rewriting, redirects, early auth. First place you can make outbound calls (Redis, etc.). |
-| `access_by_lua` | Auth, rate limiting, WAF. Request is blocked here until Lua returns. Block bad traffic before it touches origin. |
-| `content_by_lua` | Generate a response directly from Lua. Bypasses proxy_pass. Use for health checks, API gateways, dynamic responses. |
-| `proxy_pass` | nginx's built-in upstream proxying. This is where proxy_cache operates — serve from disk or fetch from origin. |
-| `header_filter_by_lua` | Modify response headers before they leave. Add X-Cache, strip sensitive headers, inject Cache-Control overrides. |
-| `body_filter_by_lua` | Modify the response body in streaming chunks. Use for HTML injection, minification, or partial assembly. |
-| `log_by_lua` | Post-response logging. Runs after client gets reply — never blocks. Push metrics to Redis, emit structured logs. |
+| Phase                  | What it does                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `set_by_lua`           | Compute nginx variables. First to run. Use to derive config values from request data.                               |
+| `rewrite_by_lua`       | URL rewriting, redirects, early auth. First place you can make outbound calls (Redis, etc.).                        |
+| `access_by_lua`        | Auth, rate limiting, WAF. Request is blocked here until Lua returns. Block bad traffic before it touches origin.    |
+| `content_by_lua`       | Generate a response directly from Lua. Bypasses proxy_pass. Use for health checks, API gateways, dynamic responses. |
+| `proxy_pass`           | nginx's built-in upstream proxying. This is where proxy_cache operates — serve from disk or fetch from origin.      |
+| `header_filter_by_lua` | Modify response headers before they leave. Add X-Cache, strip sensitive headers, inject Cache-Control overrides.    |
+| `body_filter_by_lua`   | Modify the response body in streaming chunks. Use for HTML injection, minification, or partial assembly.            |
+| `log_by_lua`           | Post-response logging. Runs after client gets reply — never blocks. Push metrics to Redis, emit structured logs.    |
 
 > **Concurrency model:** All Lua code runs in one OS thread per nginx worker — but many requests are in flight at once. While your Lua code waits for a Redis reply, nginx's event loop serves other connections. This only works if you use `lua-resty-*` APIs (which use nginx's non-blocking cosocket). A regular blocking call (like `os.execute`) freezes the entire worker.
 
@@ -324,14 +323,14 @@ return ngx.exec("@proxy")
 
 ### Key resty modules
 
-| Module | What it does | Why you need it |
-|--------|-------------|-----------------|
-| `resty.redis` | Non-blocking Redis client | Shared state across workers: rate limits, session tokens, distributed locks, cache invalidation. |
-| `resty.lock` | Shared-dict mutex | Single-flight protection within a process — prevent thundering herd on cold keys. |
-| `resty.limit.traffic` | Token bucket rate limiter | Per-IP or per-key rate limits using shared dict. Atomically safe under worker concurrency. |
-| `resty.http` | Non-blocking HTTP client | Make outbound HTTP calls from Lua (to auth servers, APIs) without blocking the event loop. |
-| `resty.jwt` | JWT sign/verify | Validate signed tokens at the edge — no round-trip to your auth service per request. |
-| `resty.lrucache` | Per-worker LRU dict | Faster than shared dict (no IPC). Use for tiny frequently-read config (JWK sets, feature flags). |
+| Module                | What it does              | Why you need it                                                                                  |
+| --------------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `resty.redis`         | Non-blocking Redis client | Shared state across workers: rate limits, session tokens, distributed locks, cache invalidation. |
+| `resty.lock`          | Shared-dict mutex         | Single-flight protection within a process — prevent thundering herd on cold keys.                |
+| `resty.limit.traffic` | Token bucket rate limiter | Per-IP or per-key rate limits using shared dict. Atomically safe under worker concurrency.       |
+| `resty.http`          | Non-blocking HTTP client  | Make outbound HTTP calls from Lua (to auth servers, APIs) without blocking the event loop.       |
+| `resty.jwt`           | JWT sign/verify           | Validate signed tokens at the edge — no round-trip to your auth service per request.             |
+| `resty.lrucache`      | Per-worker LRU dict       | Faster than shared dict (no IPC). Use for tiny frequently-read config (JWK sets, feature flags). |
 
 ```lua
 -- /etc/openresty/lua/access.lua — rate limit + JWT
@@ -374,7 +373,7 @@ end
 
 ## Gcore CDN — Network & API
 
-Gcore operates 130+ PoPs across six continents on a private backbone. It's a *pull* CDN by default — it fetches from your origin on cache miss, never requires you to push files manually. Think of Gcore as a franchise owner who builds convenience stores (PoPs) all over the world and restocks them automatically whenever a store runs out of something a customer asks for.
+Gcore operates 130+ PoPs across six continents on a private backbone. It's a _pull_ CDN by default — it fetches from your origin on cache miss, never requires you to push files manually. Think of Gcore as a franchise owner who builds convenience stores (PoPs) all over the world and restocks them automatically whenever a store runs out of something a customer asks for.
 
 ### PoP topology & anycast routing
 
@@ -389,7 +388,7 @@ São Paulo  ──►  45.xxx.xxx.xxx (same IP)  ──►  São Paulo
 Nairobi    ──►  45.xxx.xxx.xxx (same IP)  ──►  Johannesburg
 ```
 
-*One IP, many physical destinations. BGP delivers each packet to the nearest PoP automatically.*
+_One IP, many physical destinations. BGP delivers each packet to the nearest PoP automatically._
 
 > **Origin shielding:** You can designate one PoP as a **shield**. All other PoPs that miss their local cache fetch from the shield PoP, not directly from your origin. The shield aggregates misses from all regions, achieving a much higher hit rate. Your origin only sees one IP (the shield) — dramatically less traffic, and one point to secure. Like a regional distribution centre that all the mini-stores restock from, rather than each store calling the factory.
 
@@ -397,14 +396,14 @@ Nairobi    ──►  45.xxx.xxx.xxx (same IP)  ──►  Johannesburg
 
 Gcore's rules engine evaluates conditions on every request before deciding how to cache or route it. First match wins. Configure in the dashboard or API:
 
-| Condition | Example use |
-|-----------|-------------|
-| Path pattern | `/assets/*` → cache 1 year, immutable |
+| Condition       | Example use                                |
+| --------------- | ------------------------------------------ |
+| Path pattern    | `/assets/*` → cache 1 year, immutable      |
 | Cookie presence | `session=*` → bypass cache, pass to origin |
-| Request header | `Accept: image/webp` → serve WebP variant |
-| Country code | Country = CN → route to Asia origin pool |
-| File extension | `.mp4`, `.wasm` → long TTL, large slab |
-| Query param | `?nocache=1` → bypass cache for testing |
+| Request header  | `Accept: image/webp` → serve WebP variant  |
+| Country code    | Country = CN → route to Asia origin pool   |
+| File extension  | `.mp4`, `.wasm` → long TTL, large slab     |
+| Query param     | `?nocache=1` → bypass cache for testing    |
 
 ```json
 // Gcore API — Set rules via REST
@@ -517,7 +516,7 @@ Origin  (app server / S3 / database)
 Never receives direct public traffic.
 ```
 
-*Gcore absorbs ~97% of requests. OpenResty converts most of the remaining 3% to cache hits. Origin sees under 0.1% of public traffic.*
+_Gcore absorbs ~97% of requests. OpenResty converts most of the remaining 3% to cache hits. Origin sees under 0.1% of public traffic._
 
 ### Gcore resource config
 
@@ -882,7 +881,7 @@ end
 
 ### Distributed rate limiting via Redis
 
-Local shared-dict rate limits only count requests hitting *one worker*. Across 8 workers and multiple machines, an attacker gets 8× the limit. Redis gives you one global counter. Like a single bouncer tracking the whole guest list, not each bouncer having their own separate count.
+Local shared-dict rate limits only count requests hitting _one worker_. Across 8 workers and multiple machines, an attacker gets 8× the limit. Redis gives you one global counter. Like a single bouncer tracking the whole guest list, not each bouncer having their own separate count.
 
 ```lua
 -- Global rate limit — Redis sliding window
@@ -929,18 +928,18 @@ Application-layer rules (rate limiting, WAF) stop HTTP floods and scraping bots.
 
 Cache headers are the contract between your origin and every cache in the chain — browser, CDN edge, origin shield. Think of them as food labels: they tell the cache how long the content is safe to serve and under what conditions.
 
-| Header | Controls | Notes |
-|--------|----------|-------|
-| `Cache-Control: public, max-age=N` | Cache anywhere for N seconds | Use for anonymous content. N=31536000 + `immutable` for hashed assets. |
-| `Cache-Control: s-maxage=N` | CDN TTL, overrides max-age | Different TTL for browser vs CDN. Browser caches 60s, CDN caches 3600s. |
-| `Cache-Control: private` | Browser only — no CDN caching | For authenticated pages. CDN passes through; browser may cache. |
-| `Cache-Control: no-store` | Cache nothing, anywhere | Sensitive data (tokens, PII). Browser doesn't even store it. |
-| `Cache-Control: stale-while-revalidate=N` | Serve stale, refresh in background | Keeps hit rate high. Users never wait for revalidation. |
-| `Cache-Control: stale-if-error=N` | Serve stale N seconds on origin error | Keeps CDN serving if origin goes down. Essential for availability. |
-| `ETag: "fingerprint"` | Object version identifier | Edge sends `If-None-Match` on revalidation; origin returns 304 (no body) if unchanged. Saves bandwidth. |
-| `Vary: Accept-Encoding` | Separate cached copy per encoding | Always set when serving gzip/brotli. Without it, compressed bytes served to non-compressed clients. |
-| `Vary: Accept` | Separate copy per Accept header | For WebP/AVIF image variants. Fragments cache — normalize Accept before using it as key. |
-| `Surrogate-Key` / `Cache-Tag` | Tag objects for batch purge | Tag all product pages as `product:123`; purge them all in one API call. |
+| Header                                    | Controls                              | Notes                                                                                                   |
+| ----------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Cache-Control: public, max-age=N`        | Cache anywhere for N seconds          | Use for anonymous content. N=31536000 + `immutable` for hashed assets.                                  |
+| `Cache-Control: s-maxage=N`               | CDN TTL, overrides max-age            | Different TTL for browser vs CDN. Browser caches 60s, CDN caches 3600s.                                 |
+| `Cache-Control: private`                  | Browser only — no CDN caching         | For authenticated pages. CDN passes through; browser may cache.                                         |
+| `Cache-Control: no-store`                 | Cache nothing, anywhere               | Sensitive data (tokens, PII). Browser doesn't even store it.                                            |
+| `Cache-Control: stale-while-revalidate=N` | Serve stale, refresh in background    | Keeps hit rate high. Users never wait for revalidation.                                                 |
+| `Cache-Control: stale-if-error=N`         | Serve stale N seconds on origin error | Keeps CDN serving if origin goes down. Essential for availability.                                      |
+| `ETag: "fingerprint"`                     | Object version identifier             | Edge sends `If-None-Match` on revalidation; origin returns 304 (no body) if unchanged. Saves bandwidth. |
+| `Vary: Accept-Encoding`                   | Separate cached copy per encoding     | Always set when serving gzip/brotli. Without it, compressed bytes served to non-compressed clients.     |
+| `Vary: Accept`                            | Separate copy per Accept header       | For WebP/AVIF image variants. Fragments cache — normalize Accept before using it as key.                |
+| `Surrogate-Key` / `Cache-Tag`             | Tag objects for batch purge           | Tag all product pages as `product:123`; purge them all in one API call.                                 |
 
 ### Decision tree — which Cache-Control to send
 
@@ -967,7 +966,7 @@ Is the response different per user? (has session cookie, auth header)
 
 **Why would you use this instead of OpenResty?** OpenResty is nginx + Lua — battle-tested, widely deployed, but you're working within nginx's constraints. The config language is declarative and clunky for complex logic. Lua is dynamically typed — a typo in a variable name creates a silent global variable bug. Debugging is hard. There's no type checker, no compiler errors.
 
-Pingora is Cloudflare's open-source Rust framework for building proxy servers. Instead of configuring a server, you write a Rust program that *is* the server. You get: the Rust type system (if it compiles, a whole class of bugs is gone), async/await for concurrency (same performance as nginx's event loop), full access to any Rust crate (the ecosystem is enormous), and the ability to express complex routing logic as normal code — not config file gymnastics.
+Pingora is Cloudflare's open-source Rust framework for building proxy servers. Instead of configuring a server, you write a Rust program that _is_ the server. You get: the Rust type system (if it compiles, a whole class of bugs is gone), async/await for concurrency (same performance as nginx's event loop), full access to any Rust crate (the ecosystem is enormous), and the ability to express complex routing logic as normal code — not config file gymnastics.
 
 Cloudflare replaced their nginx-based infrastructure with Pingora and reported significantly better connection reuse and memory usage at scale.
 
@@ -1205,23 +1204,23 @@ impl RateLimiter {
 
 ### OpenResty vs Pingora — side by side
 
-| Concern | OpenResty (Lua) | Pingora (Rust) |
-|---------|----------------|----------------|
-| Request phase hook | `access_by_lua_file path.lua` in nginx.conf | `async fn request_filter()` method on your struct |
+| Concern                      | OpenResty (Lua)                                   | Pingora (Rust)                                               |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
+| Request phase hook           | `access_by_lua_file path.lua` in nginx.conf       | `async fn request_filter()` method on your struct            |
 | Shared state across requests | `lua_shared_dict` (shared memory between workers) | `Arc<Mutex<...>>` or `Arc<RwLock<...>>` on the server struct |
-| HTTP client (calling origin) | `resty.http` (non-blocking cosocket) | Built into Pingora's upstream connection pool |
-| Error handling | Check `if err then ... end` — easy to forget | `Result<T>` — compiler forces you to handle errors |
-| Type safety | None — a typo creates a silent nil | Full — wrong type is a compile error |
-| Disk cache | `proxy_cache` built into nginx | Implement yourself with `pingora-cache` or write to disk |
-| Config vs code | Mix of nginx config + Lua files | Pure Rust — one language, one toolchain |
-| Ecosystem maturity | 10+ years, huge deployment base, many tutorials | Newer (open-sourced 2024), growing fast |
-| Learning curve | nginx config + basic Lua | Rust ownership, async/await, trait system |
+| HTTP client (calling origin) | `resty.http` (non-blocking cosocket)              | Built into Pingora's upstream connection pool                |
+| Error handling               | Check `if err then ... end` — easy to forget      | `Result<T>` — compiler forces you to handle errors           |
+| Type safety                  | None — a typo creates a silent nil                | Full — wrong type is a compile error                         |
+| Disk cache                   | `proxy_cache` built into nginx                    | Implement yourself with `pingora-cache` or write to disk     |
+| Config vs code               | Mix of nginx config + Lua files                   | Pure Rust — one language, one toolchain                      |
+| Ecosystem maturity           | 10+ years, huge deployment base, many tutorials   | Newer (open-sourced 2024), growing fast                      |
+| Learning curve               | nginx config + basic Lua                          | Rust ownership, async/await, trait system                    |
 
 > **Which should you learn first?** Start with OpenResty. The concepts are identical — phases, caching, rate limiting, origin auth — and you'll be productive faster. Once those mental models are solid, Pingora lets you express the same ideas with stronger guarantees. The Rust learning curve is steep but pays off for complex edge logic or any system where correctness is critical.
 
 ---
 
-*Further experiments: add WebSocket proxying through OpenResty, try Gcore edge compute (JS at the PoP), add OpenTelemetry tracing from edge to origin, implement cache warming scripts for regional PoPs, benchmark Brotli level 11 vs level 6 for your specific content mix. For Pingora: add TLS termination with `pingora-rustls`, implement a proper LRU disk cache, build a load balancer with health checks.*
+_Further experiments: add WebSocket proxying through OpenResty, try Gcore edge compute (JS at the PoP), add OpenTelemetry tracing from edge to origin, implement cache warming scripts for regional PoPs, benchmark Brotli level 11 vs level 6 for your specific content mix. For Pingora: add TLS termination with `pingora-rustls`, implement a proper LRU disk cache, build a load balancer with health checks._
 
 ---
 

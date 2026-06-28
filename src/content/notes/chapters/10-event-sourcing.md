@@ -1,10 +1,10 @@
 ---
-title: "Event Sourcing & CQRS"
-subtitle: "Build an event store with projections, command handlers, and event replay for an e-commerce order system."
+title: 'Event Sourcing & CQRS'
+subtitle: 'Build an event store with projections, command handlers, and event replay for an e-commerce order system.'
 chapter: 10
-level: "advanced"
-readingTime: "25 min"
-topics: ["event sourcing", "CQRS", "projections", "event store", "domain events"]
+level: 'advanced'
+readingTime: '25 min'
+topics: ['event sourcing', 'CQRS', 'projections', 'event store', 'domain events']
 ---
 
 <script>
@@ -32,16 +32,14 @@ Like the announcement system at a train station — when a train arrives (event)
 **Command Query Responsibility Segregation** separates reads from writes. Commands (writes) go through the event store. Queries (reads) go through materialized **projections** — pre-computed views optimized for specific read patterns.
 
 <Mermaid
-	title="Event Sourcing + CQRS Architecture"
-	code={`
-graph TD
+title="Event Sourcing + CQRS Architecture"
+code={`graph TD
   C["Client"] --> CH["Command Handler<br/>Validate & Emit Events"] --> ES["Event Store<br/>Append-only log"]
   ES --> EB["Event Bus"]
   EB --> P1["Orders Projection"]
   EB --> P2["Analytics Projection"]
   P1 --> Q["Query API<br/>Read Model"]
-  P2 --> Q
-`}
+  P2 --> Q`}
 />
 
 ## Complete Event Sourcing System
@@ -52,412 +50,407 @@ graph TD
 ```typescript
 // --- Domain Events ---
 interface BaseEvent {
-  id: string;
-  aggregateId: string;
-  type: string;
-  data: unknown;
-  metadata: {
-    userId: string;
-    timestamp: string;
-    version: number;
-    correlationId: string;
-  };
+	id: string;
+	aggregateId: string;
+	type: string;
+	data: unknown;
+	metadata: {
+		userId: string;
+		timestamp: string;
+		version: number;
+		correlationId: string;
+	};
 }
 
 interface OrderPlaced extends BaseEvent {
-  type: "OrderPlaced";
-  data: { customerId: string; items: OrderItem[]; totalAmount: number };
+	type: 'OrderPlaced';
+	data: { customerId: string; items: OrderItem[]; totalAmount: number };
 }
 
 interface PaymentReceived extends BaseEvent {
-  type: "PaymentReceived";
-  data: { paymentId: string; amount: number; method: string };
+	type: 'PaymentReceived';
+	data: { paymentId: string; amount: number; method: string };
 }
 
 interface OrderShipped extends BaseEvent {
-  type: "OrderShipped";
-  data: { trackingNumber: string; carrier: string; estimatedDelivery: string };
+	type: 'OrderShipped';
+	data: { trackingNumber: string; carrier: string; estimatedDelivery: string };
 }
 
 interface OrderCancelled extends BaseEvent {
-  type: "OrderCancelled";
-  data: { reason: string; refundAmount: number };
+	type: 'OrderCancelled';
+	data: { reason: string; refundAmount: number };
 }
 
 type OrderEvent = OrderPlaced | PaymentReceived | OrderShipped | OrderCancelled;
 
 interface OrderItem {
-  productId: string;
-  name: string;
-  quantity: number;
-  price: number;
+	productId: string;
+	name: string;
+	quantity: number;
+	price: number;
 }
 
 // --- Event Store (append-only) ---
 class EventStore {
-  private events: BaseEvent[] = [];
-  private subscribers: ((event: BaseEvent) => void)[] = [];
+	private events: BaseEvent[] = [];
+	private subscribers: ((event: BaseEvent) => void)[] = [];
 
-  async append(event: BaseEvent): Promise<void> {
-    // In production: INSERT INTO events with optimistic concurrency control
-    // Check that the expected version matches
-    const existing = this.events.filter(
-      (e) => e.aggregateId === event.aggregateId
-    );
+	async append(event: BaseEvent): Promise<void> {
+		// In production: INSERT INTO events with optimistic concurrency control
+		// Check that the expected version matches
+		const existing = this.events.filter((e) => e.aggregateId === event.aggregateId);
 
-    if (event.metadata.version !== existing.length + 1) {
-      throw new Error(
-        `Concurrency conflict: expected version ${existing.length + 1}, got ${event.metadata.version}`
-      );
-    }
+		if (event.metadata.version !== existing.length + 1) {
+			throw new Error(
+				`Concurrency conflict: expected version ${existing.length + 1}, got ${event.metadata.version}`
+			);
+		}
 
-    this.events.push(event);
+		this.events.push(event);
 
-    // Notify subscribers (projections)
-    for (const sub of this.subscribers) {
-      sub(event);
-    }
-  }
+		// Notify subscribers (projections)
+		for (const sub of this.subscribers) {
+			sub(event);
+		}
+	}
 
-  async getEvents(aggregateId: string): Promise<BaseEvent[]> {
-    return this.events
-      .filter((e) => e.aggregateId === aggregateId)
-      .sort((a, b) => a.metadata.version - b.metadata.version);
-  }
+	async getEvents(aggregateId: string): Promise<BaseEvent[]> {
+		return this.events
+			.filter((e) => e.aggregateId === aggregateId)
+			.sort((a, b) => a.metadata.version - b.metadata.version);
+	}
 
-  async getAllEvents(fromVersion?: number): Promise<BaseEvent[]> {
-    if (fromVersion) {
-      return this.events.slice(fromVersion);
-    }
-    return [...this.events];
-  }
+	async getAllEvents(fromVersion?: number): Promise<BaseEvent[]> {
+		if (fromVersion) {
+			return this.events.slice(fromVersion);
+		}
+		return [...this.events];
+	}
 
-  subscribe(handler: (event: BaseEvent) => void): void {
-    this.subscribers.push(handler);
-  }
+	subscribe(handler: (event: BaseEvent) => void): void {
+		this.subscribers.push(handler);
+	}
 }
 
 // --- Order Aggregate ---
 interface OrderState {
-  id: string;
-  status: "pending" | "paid" | "shipped" | "cancelled";
-  customerId: string;
-  items: OrderItem[];
-  totalAmount: number;
-  paymentId?: string;
-  trackingNumber?: string;
-  version: number;
+	id: string;
+	status: 'pending' | 'paid' | 'shipped' | 'cancelled';
+	customerId: string;
+	items: OrderItem[];
+	totalAmount: number;
+	paymentId?: string;
+	trackingNumber?: string;
+	version: number;
 }
 
 class OrderAggregate {
-  private state: OrderState;
+	private state: OrderState;
 
-  constructor(id: string) {
-    this.state = {
-      id,
-      status: "pending",
-      customerId: "",
-      items: [],
-      totalAmount: 0,
-      version: 0,
-    };
-  }
+	constructor(id: string) {
+		this.state = {
+			id,
+			status: 'pending',
+			customerId: '',
+			items: [],
+			totalAmount: 0,
+			version: 0
+		};
+	}
 
-  // Rebuild state from events
-  static fromEvents(events: BaseEvent[]): OrderAggregate {
-    if (events.length === 0) throw new Error("No events found");
-    const order = new OrderAggregate(events[0].aggregateId);
-    for (const event of events) {
-      order.apply(event as OrderEvent);
-    }
-    return order;
-  }
+	// Rebuild state from events
+	static fromEvents(events: BaseEvent[]): OrderAggregate {
+		if (events.length === 0) throw new Error('No events found');
+		const order = new OrderAggregate(events[0].aggregateId);
+		for (const event of events) {
+			order.apply(event as OrderEvent);
+		}
+		return order;
+	}
 
-  // Apply an event to update state (no side effects)
-  private apply(event: OrderEvent): void {
-    switch (event.type) {
-      case "OrderPlaced":
-        this.state.customerId = event.data.customerId;
-        this.state.items = event.data.items;
-        this.state.totalAmount = event.data.totalAmount;
-        this.state.status = "pending";
-        break;
-      case "PaymentReceived":
-        this.state.paymentId = event.data.paymentId;
-        this.state.status = "paid";
-        break;
-      case "OrderShipped":
-        this.state.trackingNumber = event.data.trackingNumber;
-        this.state.status = "shipped";
-        break;
-      case "OrderCancelled":
-        this.state.status = "cancelled";
-        break;
-    }
-    this.state.version = event.metadata.version;
-  }
+	// Apply an event to update state (no side effects)
+	private apply(event: OrderEvent): void {
+		switch (event.type) {
+			case 'OrderPlaced':
+				this.state.customerId = event.data.customerId;
+				this.state.items = event.data.items;
+				this.state.totalAmount = event.data.totalAmount;
+				this.state.status = 'pending';
+				break;
+			case 'PaymentReceived':
+				this.state.paymentId = event.data.paymentId;
+				this.state.status = 'paid';
+				break;
+			case 'OrderShipped':
+				this.state.trackingNumber = event.data.trackingNumber;
+				this.state.status = 'shipped';
+				break;
+			case 'OrderCancelled':
+				this.state.status = 'cancelled';
+				break;
+		}
+		this.state.version = event.metadata.version;
+	}
 
-  getState(): OrderState {
-    return { ...this.state };
-  }
+	getState(): OrderState {
+		return { ...this.state };
+	}
 }
 
 // --- Command Handlers ---
 class OrderCommandHandler {
-  constructor(private eventStore: EventStore) {}
+	constructor(private eventStore: EventStore) {}
 
-  async placeOrder(command: {
-    orderId: string;
-    customerId: string;
-    items: OrderItem[];
-    userId: string;
-    correlationId: string;
-  }): Promise<void> {
-    const totalAmount = command.items.reduce(
-      (sum, item) => sum + item.price * item.quantity, 0
-    );
+	async placeOrder(command: {
+		orderId: string;
+		customerId: string;
+		items: OrderItem[];
+		userId: string;
+		correlationId: string;
+	}): Promise<void> {
+		const totalAmount = command.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Validate
-    if (command.items.length === 0) {
-      throw new Error("Order must have at least one item");
-    }
-    if (totalAmount <= 0) {
-      throw new Error("Order total must be positive");
-    }
+		// Validate
+		if (command.items.length === 0) {
+			throw new Error('Order must have at least one item');
+		}
+		if (totalAmount <= 0) {
+			throw new Error('Order total must be positive');
+		}
 
-    const event: OrderPlaced = {
-      id: crypto.randomUUID(),
-      aggregateId: command.orderId,
-      type: "OrderPlaced",
-      data: {
-        customerId: command.customerId,
-        items: command.items,
-        totalAmount,
-      },
-      metadata: {
-        userId: command.userId,
-        timestamp: new Date().toISOString(),
-        version: 1,
-        correlationId: command.correlationId,
-      },
-    };
+		const event: OrderPlaced = {
+			id: crypto.randomUUID(),
+			aggregateId: command.orderId,
+			type: 'OrderPlaced',
+			data: {
+				customerId: command.customerId,
+				items: command.items,
+				totalAmount
+			},
+			metadata: {
+				userId: command.userId,
+				timestamp: new Date().toISOString(),
+				version: 1,
+				correlationId: command.correlationId
+			}
+		};
 
-    await this.eventStore.append(event);
-  }
+		await this.eventStore.append(event);
+	}
 
-  async receivePayment(command: {
-    orderId: string;
-    paymentId: string;
-    amount: number;
-    method: string;
-    userId: string;
-    correlationId: string;
-  }): Promise<void> {
-    // Load current state from events
-    const events = await this.eventStore.getEvents(command.orderId);
-    const order = OrderAggregate.fromEvents(events);
-    const state = order.getState();
+	async receivePayment(command: {
+		orderId: string;
+		paymentId: string;
+		amount: number;
+		method: string;
+		userId: string;
+		correlationId: string;
+	}): Promise<void> {
+		// Load current state from events
+		const events = await this.eventStore.getEvents(command.orderId);
+		const order = OrderAggregate.fromEvents(events);
+		const state = order.getState();
 
-    // Business rules
-    if (state.status !== "pending") {
-      throw new Error(`Cannot pay for order in status: ${state.status}`);
-    }
-    if (command.amount !== state.totalAmount) {
-      throw new Error(
-        `Payment amount ${command.amount} doesn't match order total ${state.totalAmount}`
-      );
-    }
+		// Business rules
+		if (state.status !== 'pending') {
+			throw new Error(`Cannot pay for order in status: ${state.status}`);
+		}
+		if (command.amount !== state.totalAmount) {
+			throw new Error(
+				`Payment amount ${command.amount} doesn't match order total ${state.totalAmount}`
+			);
+		}
 
-    const event: PaymentReceived = {
-      id: crypto.randomUUID(),
-      aggregateId: command.orderId,
-      type: "PaymentReceived",
-      data: {
-        paymentId: command.paymentId,
-        amount: command.amount,
-        method: command.method,
-      },
-      metadata: {
-        userId: command.userId,
-        timestamp: new Date().toISOString(),
-        version: state.version + 1,
-        correlationId: command.correlationId,
-      },
-    };
+		const event: PaymentReceived = {
+			id: crypto.randomUUID(),
+			aggregateId: command.orderId,
+			type: 'PaymentReceived',
+			data: {
+				paymentId: command.paymentId,
+				amount: command.amount,
+				method: command.method
+			},
+			metadata: {
+				userId: command.userId,
+				timestamp: new Date().toISOString(),
+				version: state.version + 1,
+				correlationId: command.correlationId
+			}
+		};
 
-    await this.eventStore.append(event);
-  }
+		await this.eventStore.append(event);
+	}
 
-  async shipOrder(command: {
-    orderId: string;
-    trackingNumber: string;
-    carrier: string;
-    estimatedDelivery: string;
-    userId: string;
-    correlationId: string;
-  }): Promise<void> {
-    const events = await this.eventStore.getEvents(command.orderId);
-    const order = OrderAggregate.fromEvents(events);
-    const state = order.getState();
+	async shipOrder(command: {
+		orderId: string;
+		trackingNumber: string;
+		carrier: string;
+		estimatedDelivery: string;
+		userId: string;
+		correlationId: string;
+	}): Promise<void> {
+		const events = await this.eventStore.getEvents(command.orderId);
+		const order = OrderAggregate.fromEvents(events);
+		const state = order.getState();
 
-    if (state.status !== "paid") {
-      throw new Error(`Cannot ship order in status: ${state.status}`);
-    }
+		if (state.status !== 'paid') {
+			throw new Error(`Cannot ship order in status: ${state.status}`);
+		}
 
-    const event: OrderShipped = {
-      id: crypto.randomUUID(),
-      aggregateId: command.orderId,
-      type: "OrderShipped",
-      data: {
-        trackingNumber: command.trackingNumber,
-        carrier: command.carrier,
-        estimatedDelivery: command.estimatedDelivery,
-      },
-      metadata: {
-        userId: command.userId,
-        timestamp: new Date().toISOString(),
-        version: state.version + 1,
-        correlationId: command.correlationId,
-      },
-    };
+		const event: OrderShipped = {
+			id: crypto.randomUUID(),
+			aggregateId: command.orderId,
+			type: 'OrderShipped',
+			data: {
+				trackingNumber: command.trackingNumber,
+				carrier: command.carrier,
+				estimatedDelivery: command.estimatedDelivery
+			},
+			metadata: {
+				userId: command.userId,
+				timestamp: new Date().toISOString(),
+				version: state.version + 1,
+				correlationId: command.correlationId
+			}
+		};
 
-    await this.eventStore.append(event);
-  }
+		await this.eventStore.append(event);
+	}
 }
 
 // --- Read Model Projection ---
 interface OrderView {
-  id: string;
-  customerId: string;
-  status: string;
-  totalAmount: number;
-  itemCount: number;
-  trackingNumber?: string;
-  lastUpdated: string;
+	id: string;
+	customerId: string;
+	status: string;
+	totalAmount: number;
+	itemCount: number;
+	trackingNumber?: string;
+	lastUpdated: string;
 }
 
 class OrderProjection {
-  private orders = new Map<string, OrderView>();
+	private orders = new Map<string, OrderView>();
 
-  constructor(eventStore: EventStore) {
-    // Subscribe to real-time events
-    eventStore.subscribe((event) => this.handleEvent(event as OrderEvent));
-  }
+	constructor(eventStore: EventStore) {
+		// Subscribe to real-time events
+		eventStore.subscribe((event) => this.handleEvent(event as OrderEvent));
+	}
 
-  private handleEvent(event: OrderEvent): void {
-    switch (event.type) {
-      case "OrderPlaced":
-        this.orders.set(event.aggregateId, {
-          id: event.aggregateId,
-          customerId: event.data.customerId,
-          status: "pending",
-          totalAmount: event.data.totalAmount,
-          itemCount: event.data.items.length,
-          lastUpdated: event.metadata.timestamp,
-        });
-        break;
-      case "PaymentReceived": {
-        const order = this.orders.get(event.aggregateId);
-        if (order) {
-          order.status = "paid";
-          order.lastUpdated = event.metadata.timestamp;
-        }
-        break;
-      }
-      case "OrderShipped": {
-        const order = this.orders.get(event.aggregateId);
-        if (order) {
-          order.status = "shipped";
-          order.trackingNumber = event.data.trackingNumber;
-          order.lastUpdated = event.metadata.timestamp;
-        }
-        break;
-      }
-      case "OrderCancelled": {
-        const order = this.orders.get(event.aggregateId);
-        if (order) {
-          order.status = "cancelled";
-          order.lastUpdated = event.metadata.timestamp;
-        }
-        break;
-      }
-    }
-  }
+	private handleEvent(event: OrderEvent): void {
+		switch (event.type) {
+			case 'OrderPlaced':
+				this.orders.set(event.aggregateId, {
+					id: event.aggregateId,
+					customerId: event.data.customerId,
+					status: 'pending',
+					totalAmount: event.data.totalAmount,
+					itemCount: event.data.items.length,
+					lastUpdated: event.metadata.timestamp
+				});
+				break;
+			case 'PaymentReceived': {
+				const order = this.orders.get(event.aggregateId);
+				if (order) {
+					order.status = 'paid';
+					order.lastUpdated = event.metadata.timestamp;
+				}
+				break;
+			}
+			case 'OrderShipped': {
+				const order = this.orders.get(event.aggregateId);
+				if (order) {
+					order.status = 'shipped';
+					order.trackingNumber = event.data.trackingNumber;
+					order.lastUpdated = event.metadata.timestamp;
+				}
+				break;
+			}
+			case 'OrderCancelled': {
+				const order = this.orders.get(event.aggregateId);
+				if (order) {
+					order.status = 'cancelled';
+					order.lastUpdated = event.metadata.timestamp;
+				}
+				break;
+			}
+		}
+	}
 
-  // Rebuild projection from all events (for recovery or new projections)
-  async rebuild(eventStore: EventStore): Promise<void> {
-    this.orders.clear();
-    const allEvents = await eventStore.getAllEvents();
-    for (const event of allEvents) {
-      this.handleEvent(event as OrderEvent);
-    }
-  }
+	// Rebuild projection from all events (for recovery or new projections)
+	async rebuild(eventStore: EventStore): Promise<void> {
+		this.orders.clear();
+		const allEvents = await eventStore.getAllEvents();
+		for (const event of allEvents) {
+			this.handleEvent(event as OrderEvent);
+		}
+	}
 
-  // Query methods
-  getOrder(id: string): OrderView | undefined {
-    return this.orders.get(id);
-  }
+	// Query methods
+	getOrder(id: string): OrderView | undefined {
+		return this.orders.get(id);
+	}
 
-  getOrdersByCustomer(customerId: string): OrderView[] {
-    return Array.from(this.orders.values()).filter(
-      (o) => o.customerId === customerId
-    );
-  }
+	getOrdersByCustomer(customerId: string): OrderView[] {
+		return Array.from(this.orders.values()).filter((o) => o.customerId === customerId);
+	}
 
-  getOrdersByStatus(status: string): OrderView[] {
-    return Array.from(this.orders.values()).filter(
-      (o) => o.status === status
-    );
-  }
+	getOrdersByStatus(status: string): OrderView[] {
+		return Array.from(this.orders.values()).filter((o) => o.status === status);
+	}
 }
 
 // --- Demo ---
 async function main() {
-  const store = new EventStore();
-  const commands = new OrderCommandHandler(store);
-  const projection = new OrderProjection(store);
+	const store = new EventStore();
+	const commands = new OrderCommandHandler(store);
+	const projection = new OrderProjection(store);
 
-  const orderId = "order-001";
-  const corrId = crypto.randomUUID();
+	const orderId = 'order-001';
+	const corrId = crypto.randomUUID();
 
-  // Place order
-  await commands.placeOrder({
-    orderId,
-    customerId: "cust-1",
-    items: [
-      { productId: "p1", name: "Widget", quantity: 2, price: 29.99 },
-      { productId: "p2", name: "Gadget", quantity: 1, price: 49.99 },
-    ],
-    userId: "admin",
-    correlationId: corrId,
-  });
+	// Place order
+	await commands.placeOrder({
+		orderId,
+		customerId: 'cust-1',
+		items: [
+			{ productId: 'p1', name: 'Widget', quantity: 2, price: 29.99 },
+			{ productId: 'p2', name: 'Gadget', quantity: 1, price: 49.99 }
+		],
+		userId: 'admin',
+		correlationId: corrId
+	});
 
-  // Receive payment
-  await commands.receivePayment({
-    orderId,
-    paymentId: "pay-001",
-    amount: 109.97,
-    method: "credit_card",
-    userId: "admin",
-    correlationId: corrId,
-  });
+	// Receive payment
+	await commands.receivePayment({
+		orderId,
+		paymentId: 'pay-001',
+		amount: 109.97,
+		method: 'credit_card',
+		userId: 'admin',
+		correlationId: corrId
+	});
 
-  // Ship order
-  await commands.shipOrder({
-    orderId,
-    trackingNumber: "1Z999AA10123456784",
-    carrier: "UPS",
-    estimatedDelivery: "2025-01-15",
-    userId: "admin",
-    correlationId: corrId,
-  });
+	// Ship order
+	await commands.shipOrder({
+		orderId,
+		trackingNumber: '1Z999AA10123456784',
+		carrier: 'UPS',
+		estimatedDelivery: '2025-01-15',
+		userId: 'admin',
+		correlationId: corrId
+	});
 
-  // Query projection
-  console.log("Order view:", projection.getOrder(orderId));
+	// Query projection
+	console.log('Order view:', projection.getOrder(orderId));
 
-  // View full event history
-  const events = await store.getEvents(orderId);
-  console.log("Event history:", events.map((e) => e.type));
+	// View full event history
+	const events = await store.getEvents(orderId);
+	console.log(
+		'Event history:',
+		events.map((e) => e.type)
+	);
 }
 
 main().catch(console.error);
@@ -783,4 +776,3 @@ func main() {
 - Use event sourcing when you need audit trails, temporal queries ("what was the state at 3pm?"), or the ability to add new read models to existing data
 
 </div>
-

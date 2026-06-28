@@ -1,10 +1,18 @@
 ---
-title: "Postgres Table Partitioning"
-subtitle: "Range, list, and hash partitioning — the single-server answer to large tables that buys you most of what sharding promises without the operational cost."
+title: 'Postgres Table Partitioning'
+subtitle: 'Range, list, and hash partitioning — the single-server answer to large tables that buys you most of what sharding promises without the operational cost.'
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["PostgreSQL", "partitioning", "range partition", "hash partition", "partition pruning", "pg_partman"]
+level: 'intermediate'
+readingTime: '9 min'
+topics:
+  [
+    'PostgreSQL',
+    'partitioning',
+    'range partition',
+    'hash partition',
+    'partition pruning',
+    'pg_partman'
+  ]
 ---
 
 <script>
@@ -22,6 +30,7 @@ A filing cabinet with labeled drawers: all files are in the same cabinet (one da
 ## Why Partition Before Sharding
 
 Postgres table partitioning gives you:
+
 - **Partition pruning** — queries only scan relevant partitions, not the whole table
 - **Faster bulk deletes** — `DROP TABLE partition_name` is instant vs deleting millions of rows
 - **Index size** — indexes on each partition are smaller and fit in memory better
@@ -104,6 +113,7 @@ SELECT partman.run_maintenance();
 ```
 
 pg_partman handles:
+
 - Creating the next N months of partitions before they're needed
 - Dropping old partitions based on retention policy
 - Managing the `partman.part_config` table
@@ -172,6 +182,7 @@ WHERE created_at >= '2024-03-01' AND created_at < '2024-04-01';
 ```
 
 Pruning doesn't work when:
+
 - Using a function on the partition column: `WHERE DATE(created_at) = '2024-03-01'`
 - Partition column used in a cast: `WHERE created_at::date = '2024-03-01'`
 - `enable_partition_pruning = off` (check with `SHOW enable_partition_pruning`)
@@ -228,4 +239,3 @@ ALTER TABLE orders ADD PRIMARY KEY (id, created_at);
 ```
 
 For most applications that think they need sharding, Postgres partitioning on the right column — plus a larger server and read replicas — will handle the load with a fraction of the operational complexity.
-

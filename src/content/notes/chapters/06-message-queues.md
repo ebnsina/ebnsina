@@ -1,10 +1,10 @@
 ---
-title: "Message Queues"
-subtitle: "Build producers and consumers with RabbitMQ/NATS including acknowledgments, retries, and dead letter queues."
+title: 'Message Queues'
+subtitle: 'Build producers and consumers with RabbitMQ/NATS including acknowledgments, retries, and dead letter queues.'
 chapter: 6
-level: "intermediate"
-readingTime: "20 min"
-topics: ["message queue", "RabbitMQ", "NATS", "async processing", "dead letter queue"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['message queue', 'RabbitMQ', 'NATS', 'async processing', 'dead letter queue']
 ---
 
 <script>
@@ -26,14 +26,12 @@ Like a busy restaurant kitchen — orders come in faster than chefs can cook, so
 </Callout>
 
 <Mermaid
-	title="Message Queue Architecture"
-	code={`
-graph LR
+title="Message Queue Architecture"
+code={`graph LR
   P["API Server<br/>Producer"] --> Q["Message Queue<br/>RabbitMQ / NATS"]
   Q --> W1["Worker 1"]
   Q --> W2["Worker 2"]
-  Q -- failed messages --> DLQ["Dead Letter Queue"]
-`}
+  Q -- failed messages --> DLQ["Dead Letter Queue"]`}
 />
 
 ## Key Concepts
@@ -48,229 +46,227 @@ graph LR
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import amqp from "amqplib";
+import amqp from 'amqplib';
 
 // --- Configuration ---
-const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost:5672";
-const EXCHANGE = "app.events";
-const QUEUE = "email.notifications";
-const DLQ = "email.notifications.dlq";
+const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+const EXCHANGE = 'app.events';
+const QUEUE = 'email.notifications';
+const DLQ = 'email.notifications.dlq';
 const MAX_RETRIES = 3;
 
 // --- Types ---
 interface EmailMessage {
-  to: string;
-  subject: string;
-  template: string;
-  data: Record<string, unknown>;
-  userId: string;
-  timestamp: string;
+	to: string;
+	subject: string;
+	template: string;
+	data: Record<string, unknown>;
+	userId: string;
+	timestamp: string;
 }
 
 // --- Producer ---
 class MessageProducer {
-  private connection: amqp.Connection | null = null;
-  private channel: amqp.Channel | null = null;
+	private connection: amqp.Connection | null = null;
+	private channel: amqp.Channel | null = null;
 
-  async connect(): Promise<void> {
-    this.connection = await amqp.connect(RABBITMQ_URL);
-    this.channel = await this.connection.createConfirmChannel();
+	async connect(): Promise<void> {
+		this.connection = await amqp.connect(RABBITMQ_URL);
+		this.channel = await this.connection.createConfirmChannel();
 
-    // Declare exchange (topic type for routing key matching)
-    await this.channel.assertExchange(EXCHANGE, "topic", { durable: true });
+		// Declare exchange (topic type for routing key matching)
+		await this.channel.assertExchange(EXCHANGE, 'topic', { durable: true });
 
-    // Declare dead letter queue
-    await this.channel.assertQueue(DLQ, {
-      durable: true,
-      arguments: { "x-message-ttl": 7 * 24 * 60 * 60 * 1000 }, // 7 day retention
-    });
+		// Declare dead letter queue
+		await this.channel.assertQueue(DLQ, {
+			durable: true,
+			arguments: { 'x-message-ttl': 7 * 24 * 60 * 60 * 1000 } // 7 day retention
+		});
 
-    // Declare main queue with DLQ binding
-    await this.channel.assertQueue(QUEUE, {
-      durable: true,
-      arguments: {
-        "x-dead-letter-exchange": "",
-        "x-dead-letter-routing-key": DLQ,
-      },
-    });
+		// Declare main queue with DLQ binding
+		await this.channel.assertQueue(QUEUE, {
+			durable: true,
+			arguments: {
+				'x-dead-letter-exchange': '',
+				'x-dead-letter-routing-key': DLQ
+			}
+		});
 
-    // Bind queue to exchange with routing key
-    await this.channel.bindQueue(QUEUE, EXCHANGE, "user.#");
+		// Bind queue to exchange with routing key
+		await this.channel.bindQueue(QUEUE, EXCHANGE, 'user.#');
 
-    console.log("Producer connected to RabbitMQ");
-  }
+		console.log('Producer connected to RabbitMQ');
+	}
 
-  async publish(routingKey: string, message: EmailMessage): Promise<boolean> {
-    if (!this.channel) throw new Error("Not connected");
+	async publish(routingKey: string, message: EmailMessage): Promise<boolean> {
+		if (!this.channel) throw new Error('Not connected');
 
-    const payload = Buffer.from(JSON.stringify(message));
+		const payload = Buffer.from(JSON.stringify(message));
 
-    return new Promise((resolve, reject) => {
-      this.channel!.publish(
-        EXCHANGE,
-        routingKey,
-        payload,
-        {
-          persistent: true,               // survive broker restart
-          contentType: "application/json",
-          messageId: crypto.randomUUID(),
-          timestamp: Date.now(),
-          headers: { "x-retry-count": 0 },
-        },
-        (err) => {
-          if (err) {
-            console.error("Publish failed:", err);
-            reject(err);
-          } else {
-            resolve(true);
-          }
-        }
-      );
-    });
-  }
+		return new Promise((resolve, reject) => {
+			this.channel!.publish(
+				EXCHANGE,
+				routingKey,
+				payload,
+				{
+					persistent: true, // survive broker restart
+					contentType: 'application/json',
+					messageId: crypto.randomUUID(),
+					timestamp: Date.now(),
+					headers: { 'x-retry-count': 0 }
+				},
+				(err) => {
+					if (err) {
+						console.error('Publish failed:', err);
+						reject(err);
+					} else {
+						resolve(true);
+					}
+				}
+			);
+		});
+	}
 
-  async close(): Promise<void> {
-    await this.channel?.close();
-    await this.connection?.close();
-  }
+	async close(): Promise<void> {
+		await this.channel?.close();
+		await this.connection?.close();
+	}
 }
 
 // --- Consumer ---
 class MessageConsumer {
-  private connection: amqp.Connection | null = null;
-  private channel: amqp.Channel | null = null;
+	private connection: amqp.Connection | null = null;
+	private channel: amqp.Channel | null = null;
 
-  async connect(): Promise<void> {
-    this.connection = await amqp.connect(RABBITMQ_URL);
-    this.channel = await this.connection.createChannel();
+	async connect(): Promise<void> {
+		this.connection = await amqp.connect(RABBITMQ_URL);
+		this.channel = await this.connection.createChannel();
 
-    // Process 5 messages at a time (prevents one slow consumer from getting all messages)
-    await this.channel.prefetch(5);
+		// Process 5 messages at a time (prevents one slow consumer from getting all messages)
+		await this.channel.prefetch(5);
 
-    console.log("Consumer connected to RabbitMQ");
-  }
+		console.log('Consumer connected to RabbitMQ');
+	}
 
-  async consume(
-    handler: (msg: EmailMessage) => Promise<void>
-  ): Promise<void> {
-    if (!this.channel) throw new Error("Not connected");
+	async consume(handler: (msg: EmailMessage) => Promise<void>): Promise<void> {
+		if (!this.channel) throw new Error('Not connected');
 
-    await this.channel.consume(
-      QUEUE,
-      async (msg) => {
-        if (!msg) return;
+		await this.channel.consume(
+			QUEUE,
+			async (msg) => {
+				if (!msg) return;
 
-        const retryCount = (msg.properties.headers?.["x-retry-count"] as number) || 0;
+				const retryCount = (msg.properties.headers?.['x-retry-count'] as number) || 0;
 
-        try {
-          const payload: EmailMessage = JSON.parse(msg.content.toString());
+				try {
+					const payload: EmailMessage = JSON.parse(msg.content.toString());
 
-          console.log(`Processing: ${payload.subject} (attempt ${retryCount + 1})`);
+					console.log(`Processing: ${payload.subject} (attempt ${retryCount + 1})`);
 
-          // Process the message
-          await handler(payload);
+					// Process the message
+					await handler(payload);
 
-          // Acknowledge success
-          this.channel!.ack(msg);
-          console.log(`Processed: ${payload.subject}`);
-        } catch (err) {
-          console.error(`Failed to process message:`, err);
+					// Acknowledge success
+					this.channel!.ack(msg);
+					console.log(`Processed: ${payload.subject}`);
+				} catch (err) {
+					console.error(`Failed to process message:`, err);
 
-          if (retryCount < MAX_RETRIES) {
-            // Retry: reject and requeue with incremented retry count
-            this.channel!.nack(msg, false, false); // don't requeue
+					if (retryCount < MAX_RETRIES) {
+						// Retry: reject and requeue with incremented retry count
+						this.channel!.nack(msg, false, false); // don't requeue
 
-            // Re-publish with incremented retry count and delay
-            const delay = Math.pow(2, retryCount) * 1000; // exponential backoff
-            setTimeout(() => {
-              this.channel!.publish("", QUEUE, msg.content, {
-                ...msg.properties,
-                headers: {
-                  ...msg.properties.headers,
-                  "x-retry-count": retryCount + 1,
-                },
-              });
-            }, delay);
-          } else {
-            // Max retries exceeded — send to DLQ
-            console.error(
-              `Message ${msg.properties.messageId} sent to DLQ after ${MAX_RETRIES} retries`
-            );
-            this.channel!.nack(msg, false, false); // goes to DLQ via exchange config
-          }
-        }
-      },
-      { noAck: false }
-    );
-  }
+						// Re-publish with incremented retry count and delay
+						const delay = Math.pow(2, retryCount) * 1000; // exponential backoff
+						setTimeout(() => {
+							this.channel!.publish('', QUEUE, msg.content, {
+								...msg.properties,
+								headers: {
+									...msg.properties.headers,
+									'x-retry-count': retryCount + 1
+								}
+							});
+						}, delay);
+					} else {
+						// Max retries exceeded — send to DLQ
+						console.error(
+							`Message ${msg.properties.messageId} sent to DLQ after ${MAX_RETRIES} retries`
+						);
+						this.channel!.nack(msg, false, false); // goes to DLQ via exchange config
+					}
+				}
+			},
+			{ noAck: false }
+		);
+	}
 
-  async close(): Promise<void> {
-    await this.channel?.close();
-    await this.connection?.close();
-  }
+	async close(): Promise<void> {
+		await this.channel?.close();
+		await this.connection?.close();
+	}
 }
 
 // --- Email processing logic ---
 async function sendEmail(msg: EmailMessage): Promise<void> {
-  // Real implementation would use SendGrid, SES, etc.
-  console.log(`Sending email to ${msg.to}: ${msg.subject}`);
+	// Real implementation would use SendGrid, SES, etc.
+	console.log(`Sending email to ${msg.to}: ${msg.subject}`);
 
-  // Simulate occasional failures for demonstration
-  if (Math.random() < 0.1) {
-    throw new Error("SMTP connection failed");
-  }
+	// Simulate occasional failures for demonstration
+	if (Math.random() < 0.1) {
+		throw new Error('SMTP connection failed');
+	}
 
-  // Simulate processing time
-  await new Promise((resolve) => setTimeout(resolve, 100));
+	// Simulate processing time
+	await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 // --- Main ---
 async function runProducer(): Promise<void> {
-  const producer = new MessageProducer();
-  await producer.connect();
+	const producer = new MessageProducer();
+	await producer.connect();
 
-  // Publish some messages
-  await producer.publish("user.welcome", {
-    to: "user@example.com",
-    subject: "Welcome to the platform",
-    template: "welcome",
-    data: { name: "Ahmad" },
-    userId: "user-123",
-    timestamp: new Date().toISOString(),
-  });
+	// Publish some messages
+	await producer.publish('user.welcome', {
+		to: 'user@example.com',
+		subject: 'Welcome to the platform',
+		template: 'welcome',
+		data: { name: 'Ahmad' },
+		userId: 'user-123',
+		timestamp: new Date().toISOString()
+	});
 
-  await producer.publish("user.password-reset", {
-    to: "user@example.com",
-    subject: "Password Reset",
-    template: "password-reset",
-    data: { resetLink: "https://app.com/reset?token=abc" },
-    userId: "user-123",
-    timestamp: new Date().toISOString(),
-  });
+	await producer.publish('user.password-reset', {
+		to: 'user@example.com',
+		subject: 'Password Reset',
+		template: 'password-reset',
+		data: { resetLink: 'https://app.com/reset?token=abc' },
+		userId: 'user-123',
+		timestamp: new Date().toISOString()
+	});
 
-  console.log("Messages published");
-  await producer.close();
+	console.log('Messages published');
+	await producer.close();
 }
 
 async function runConsumer(): Promise<void> {
-  const consumer = new MessageConsumer();
-  await consumer.connect();
-  await consumer.consume(sendEmail);
-  console.log("Consumer waiting for messages...");
+	const consumer = new MessageConsumer();
+	await consumer.connect();
+	await consumer.consume(sendEmail);
+	console.log('Consumer waiting for messages...');
 
-  process.on("SIGTERM", async () => {
-    console.log("Shutting down consumer...");
-    await consumer.close();
-    process.exit(0);
-  });
+	process.on('SIGTERM', async () => {
+		console.log('Shutting down consumer...');
+		await consumer.close();
+		process.exit(0);
+	});
 }
 
 // Run based on CLI arg
 const mode = process.argv[2];
-if (mode === "producer") {
-  runProducer().catch(console.error);
+if (mode === 'producer') {
+	runProducer().catch(console.error);
 } else {
-  runConsumer().catch(console.error);
+	runConsumer().catch(console.error);
 }
 ```
 
@@ -561,4 +557,3 @@ func main() {
 - Use queues when the work can happen asynchronously and the user doesn't need the result immediately
 
 </div>
-

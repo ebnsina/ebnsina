@@ -1,10 +1,10 @@
 ---
-title: "Testing Strategy — Roadmap"
-subtitle: "Unit, integration, contract, e2e. Load test with k6 and wrk. Property-based testing."
+title: 'Testing Strategy — Roadmap'
+subtitle: 'Unit, integration, contract, e2e. Load test with k6 and wrk. Property-based testing.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -31,4 +31,3 @@ Testing is the discipline that lets you change code without fear. This track sta
 4. **Contract Testing** — consumer-driven contracts with Pact, provider verification, Pact Broker, can-i-deploy
 5. **End-to-End Testing** — Playwright setup, selectors, auth state reuse, Page Object Model, flakiness prevention, CI
 6. **Property-Based Testing** — fast-check arbitraries, invariant properties, round-trip testing, stateful model testing
-

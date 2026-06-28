@@ -1,10 +1,10 @@
 ---
-title: "Network Engineering for SREs"
+title: 'Network Engineering for SREs'
 subtitle: "BGP, anycast, ECMP, CDN internals, packet capture, and TCP at scale. The networking layer where 'random' production weirdness actually lives."
 chapter: 13
-level: "mastery"
-readingTime: "30 min"
-topics: ["networking", "BGP", "anycast", "CDN", "TCP", "tcpdump", "XDP", "load balancing"]
+level: 'mastery'
+readingTime: '30 min'
+topics: ['networking', 'BGP', 'anycast', 'CDN', 'TCP', 'tcpdump', 'XDP', 'load balancing']
 ---
 
 <script>
@@ -80,7 +80,7 @@ If you are at a company with its own IP space, learning BGP enough to read MRT d
 
 ## Anycast — one IP, many cities
 
-Anycast means multiple locations announce the same IP prefix. Routers naturally send each user to the *topologically nearest* announcement (in BGP terms, fewest AS hops). This is how CDNs and DNS roots scale globally without DNS-level geo routing.
+Anycast means multiple locations announce the same IP prefix. Routers naturally send each user to the _topologically nearest_ announcement (in BGP terms, fewest AS hops). This is how CDNs and DNS roots scale globally without DNS-level geo routing.
 
 ```
 Cloudflare 1.1.1.1 — anycast across ~300 cities.
@@ -114,15 +114,15 @@ Practical fix: use HTTP/2 with many streams, or open N parallel connections so E
 
 The single most common architecture decision. Both have failure modes you need to know.
 
-| | L4 (e.g. NLB, IPVS, Maglev) | L7 (e.g. Envoy, ALB, Nginx) |
-|---|---|---|
-| Sees | TCP/IP packets | Full HTTP requests |
-| Routing keys | 5-tuple hash | URL, header, cookie, gRPC method |
-| Latency overhead | µs (kernel-bypass possible) | 1–5 ms |
-| TLS termination | No (passthrough) | Yes |
-| Per-request retries | No (per-connection) | Yes |
-| Failure visibility | "TCP connect failed" | "503 with response headers" |
-| Cost | Cheap to scale | More CPU per RPS |
+|                     | L4 (e.g. NLB, IPVS, Maglev) | L7 (e.g. Envoy, ALB, Nginx)      |
+| ------------------- | --------------------------- | -------------------------------- |
+| Sees                | TCP/IP packets              | Full HTTP requests               |
+| Routing keys        | 5-tuple hash                | URL, header, cookie, gRPC method |
+| Latency overhead    | µs (kernel-bypass possible) | 1–5 ms                           |
+| TLS termination     | No (passthrough)            | Yes                              |
+| Per-request retries | No (per-connection)         | Yes                              |
+| Failure visibility  | "TCP connect failed"        | "503 with response headers"      |
+| Cost                | Cheap to scale              | More CPU per RPS                 |
 
 The pattern at scale: **L4 in front, L7 behind.** L4 spreads connections across L7 proxies; L7 does the smart routing. Google's GFE, Facebook's Katran (XDP-based L4), and Cloudflare's Unimog all follow this shape.
 
@@ -153,7 +153,7 @@ When evaluating an L4 LB, "what hashing algorithm" is the question. "Round-robin
 
 ## XDP and kernel-bypass — when iptables isn't enough
 
-XDP (eXpress Data Path) runs an eBPF program on the NIC's receive path *before* the packet enters the kernel networking stack. It can drop, redirect, or modify packets at line rate.
+XDP (eXpress Data Path) runs an eBPF program on the NIC's receive path _before_ the packet enters the kernel networking stack. It can drop, redirect, or modify packets at line rate.
 
 ```
 Traditional path:  NIC → driver → kernel netfilter → conntrack → app
@@ -222,7 +222,7 @@ Surrogate-Key: product-123        # purge granularly (Fastly, others)
 Half of "internet outages" are DNS. The patterns:
 
 - **TTL too high.** You can't fail over within the TTL. Use 60 s for prod DNS records pointing at LBs that might move.
-- **TTL too low.** You hammer the recursor; if your authoritative goes down, *all* queries break instantly.
+- **TTL too low.** You hammer the recursor; if your authoritative goes down, _all_ queries break instantly.
 - **Authoritative outage.** If your DNS provider is the single source for `your.com`, a provider outage takes you off the internet (Dyn 2016).
 
 The architecture senior teams use:
@@ -390,4 +390,3 @@ Tier F
 4. **DNS, BGP, and TLS are the three "internet-level" failure modes** — every senior SRE has seen each at least once.
 5. **Capture packets on both ends** when behavior diverges from expectation.
 6. **TCP tuning matters mostly on long-distance links** — BBR + bigger buffers; otherwise let the kernel tune itself.
-

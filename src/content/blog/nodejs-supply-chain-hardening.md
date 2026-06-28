@@ -1,8 +1,8 @@
 ---
-title: "Hardening Your Node.js Supply Chain: A Practical Playbook"
-description: "Migrating package managers, enabling supply-chain guards, and building a security baseline that survives real-world threats."
+title: 'Hardening Your Node.js Supply Chain: A Practical Playbook'
+description: 'Migrating package managers, enabling supply-chain guards, and building a security baseline that survives real-world threats.'
 date: 2026-05-12
-tags: ["security", "nodejs", "supply-chain", "pnpm"]
+tags: ['security', 'nodejs', 'supply-chain', 'pnpm']
 minutesRead: 13
 ---
 
@@ -22,15 +22,13 @@ This guide walks through two complementary upgrades every serious project should
 The advice is framework-agnostic and applies equally to libraries, applications, and monorepos.
 
 <Mermaid
-	title="Supply-chain checkpoints"
-	code={`
-graph LR
+title="Supply-chain checkpoints"
+code={`graph LR
   D["Developer"] --> LF["pnpm install<br/>lockfile + release-age guard"]
   LF --> A["Audit<br/>provenance · advisories"]
   A --> CI["CI<br/>pinned · no postinstall"]
   CI --> REG["Registry<br/>signed publish"]
-  REG --> P["Production"]
-`}
+  REG --> P["Production"]`}
 />
 
 ---
@@ -95,11 +93,11 @@ In `package.json`:
 
 ```json
 {
-  "packageManager": "pnpm@10.0.0",
-  "engines": {
-    "node": ">=18",
-    "pnpm": ">=10"
-  }
+	"packageManager": "pnpm@10.0.0",
+	"engines": {
+		"node": ">=18",
+		"pnpm": ">=10"
+	}
 }
 ```
 
@@ -107,7 +105,7 @@ The `packageManager` field is honored by Corepack, ensuring every contributor an
 
 ### 1.6 Configure `minimum-release-age`
 
-This is the single most impactful supply-chain setting available today. It blocks installation of any package version published within the last *N* minutes — long enough for security researchers and the npm registry's own scanners to flag malicious releases before they land in your build.
+This is the single most impactful supply-chain setting available today. It blocks installation of any package version published within the last _N_ minutes — long enough for security researchers and the npm registry's own scanners to flag malicious releases before they land in your build.
 
 Create a `.npmrc` at the repo root:
 
@@ -187,8 +185,8 @@ A few rough edges to watch for:
 
   ```yaml
   packages:
-    - "packages/*"
-    - "apps/*"
+    - 'packages/*'
+    - 'apps/*'
   ```
 
 - **CI cache keys.** Any cache keyed on `package-lock.json` must be re-keyed to hash `pnpm-lock.yaml`.
@@ -219,13 +217,10 @@ There is **no `pnpm-workspace.yaml`**. Put the allowlist in `package.json`:
 
 ```json
 {
-  "name": "my-app",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
-  }
+	"name": "my-app",
+	"pnpm": {
+		"onlyBuiltDependencies": ["esbuild", "sharp"]
+	}
 }
 ```
 
@@ -233,9 +228,9 @@ An empty array opts in to the strict default — no scripts run at all:
 
 ```json
 {
-  "pnpm": {
-    "onlyBuiltDependencies": []
-  }
+	"pnpm": {
+		"onlyBuiltDependencies": []
+	}
 }
 ```
 
@@ -249,8 +244,8 @@ Here `pnpm-workspace.yaml` is mandatory — it declares the workspace itself. Th
 
 ```yaml
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 
 onlyBuiltDependencies:
   - esbuild
@@ -261,7 +256,7 @@ onlyBuiltDependencies:
 
 ```yaml
 packages:
-  - "."
+  - '.'
 ```
 
 In a monorepo, do **not** also set `pnpm.onlyBuiltDependencies` in any individual `package.json`. The workspace file wins; the package.json copy is dead config.
@@ -279,11 +274,11 @@ The approval writes back into the correct file for your mode (`package.json` for
 
 #### Companion settings
 
-- **`neverBuiltDependencies`** — packages whose scripts must *never* run, even if they'd otherwise be allowed.
+- **`neverBuiltDependencies`** — packages whose scripts must _never_ run, even if they'd otherwise be allowed.
 - **`ignoredBuiltDependencies`** — silently skip without prompting (use when a package's `postinstall` is purely cosmetic, e.g. funding messages).
 - **`dangerouslyAllowAllBuilds`** — escape hatch to disable the gate entirely. Don't use it.
 
-Pair `onlyBuiltDependencies` with `minimum-release-age` and you've closed the two largest install-time supply-chain holes: malicious *code* (release-age gate) and malicious *side effects* (lifecycle scripts).
+Pair `onlyBuiltDependencies` with `minimum-release-age` and you've closed the two largest install-time supply-chain holes: malicious _code_ (release-age gate) and malicious _side effects_ (lifecycle scripts).
 
 ---
 
@@ -349,7 +344,7 @@ Switching package managers is necessary but nowhere near sufficient. Below is a 
     publish:
       permissions:
         contents: read
-        id-token: write   # only where needed
+        id-token: write # only where needed
   ```
 
 - **Avoid `pull_request_target`.** It runs with secrets but can check out untrusted PR code — only use it when you fully understand the risk.
@@ -378,9 +373,11 @@ Switching package managers is necessary but nowhere near sufficient. Below is a 
 - **Subresource Integrity** on any CDN-served `<script>` or `<link>`:
 
   ```html
-  <script src="https://cdn.example.com/lib.js"
-          integrity="sha384-..."
-          crossorigin="anonymous"></script>
+  <script
+  	src="https://cdn.example.com/lib.js"
+  	integrity="sha384-..."
+  	crossorigin="anonymous"
+  ></script>
   ```
 
 - **postMessage handlers.** Always verify `event.origin` against an allowlist. Cross-origin iframe attacks bypass everything if you don't.
@@ -427,13 +424,13 @@ Switching package managers is necessary but nowhere near sufficient. Below is a 
 
 ### 2.8 Audit Cadence
 
-| Cadence    | Action                                                       |
-| ---------- | ------------------------------------------------------------ |
-| Per PR     | `pnpm audit` (fail CI on high/critical), lockfile diff review |
-| Weekly     | Dependabot/Renovate review and merge                         |
-| Monthly    | `pnpm outdated`, prune unused deps with `knip` or `depcheck` |
-| Quarterly  | Rotate npm tokens and deploy keys, review CI permissions     |
-| Annually   | Workflow permission audit, third-party app audit, full threat model review |
+| Cadence   | Action                                                                     |
+| --------- | -------------------------------------------------------------------------- |
+| Per PR    | `pnpm audit` (fail CI on high/critical), lockfile diff review              |
+| Weekly    | Dependabot/Renovate review and merge                                       |
+| Monthly   | `pnpm outdated`, prune unused deps with `knip` or `depcheck`               |
+| Quarterly | Rotate npm tokens and deploy keys, review CI permissions                   |
+| Annually  | Workflow permission audit, third-party app audit, full threat model review |
 
 ### 2.9 Threat Modeling Quick Reference
 
@@ -479,4 +476,3 @@ Migrating to pnpm and enabling `minimum-release-age` is the highest-leverage sta
 - [GitHub Actions hardening](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 - [SLSA supply-chain framework](https://slsa.dev/)
 - [pnpm settings reference](https://pnpm.io/settings)
-

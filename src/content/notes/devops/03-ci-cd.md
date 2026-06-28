@@ -1,10 +1,10 @@
 ---
-title: "CI/CD Pipelines"
-subtitle: "Automate building, testing, and deploying your code — GitHub Actions, pipeline design, and deployment strategies."
+title: 'CI/CD Pipelines'
+subtitle: 'Automate building, testing, and deploying your code — GitHub Actions, pipeline design, and deployment strategies.'
 chapter: 3
-level: "beginner"
-readingTime: "15 min"
-topics: ["CI/CD", "GitHub Actions", "pipelines", "deployment"]
+level: 'beginner'
+readingTime: '15 min'
+topics: ['CI/CD', 'GitHub Actions', 'pipelines', 'deployment']
 ---
 
 <script>
@@ -112,13 +112,13 @@ jobs:
 ```typescript
 // 1. Fail fast — run cheap checks first
 const pipeline = [
-  "lint",         // 10 seconds
-  "typecheck",    // 20 seconds
-  "unit-tests",   // 1 minute
-  "integration",  // 3 minutes
-  "e2e",          // 5 minutes
-  "build-image",  // 2 minutes
-  "deploy",       // 1 minute
+	'lint', // 10 seconds
+	'typecheck', // 20 seconds
+	'unit-tests', // 1 minute
+	'integration', // 3 minutes
+	'e2e', // 5 minutes
+	'build-image', // 2 minutes
+	'deploy' // 1 minute
 ];
 // If lint fails, don't wait for e2e tests
 
@@ -159,12 +159,12 @@ const pipeline = [
 // - More complex routing setup
 
 interface DeploymentStrategy {
-  type: "rolling" | "blue-green" | "canary";
-  config: {
-    canaryPercent?: number;     // 5% initially
-    monitorDuration?: string;   // "10m" before increasing
-    rollbackThreshold?: number; // error rate > 1% → rollback
-  };
+	type: 'rolling' | 'blue-green' | 'canary';
+	config: {
+		canaryPercent?: number; // 5% initially
+		monitorDuration?: string; // "10m" before increasing
+		rollbackThreshold?: number; // error rate > 1% → rollback
+	};
 }
 ```
 
@@ -180,4 +180,3 @@ interface DeploymentStrategy {
 2. **Fail fast** — run cheap checks first, parallelize independent steps, cache aggressively
 3. **One artifact, many environments** — build once, deploy the same image everywhere
 4. **Automate rollbacks** — monitor error rates and revert automatically on failure
-

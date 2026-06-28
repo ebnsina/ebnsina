@@ -1,10 +1,10 @@
 ---
-title: "Document Databases"
-subtitle: "Store whole entities as JSON documents. MongoDB, the embedding vs referencing decision, indexing, and designing schemas around how you read."
+title: 'Document Databases'
+subtitle: 'Store whole entities as JSON documents. MongoDB, the embedding vs referencing decision, indexing, and designing schemas around how you read.'
 chapter: 3
-level: "intermediate"
-readingTime: "12 min"
-topics: ["document", "mongodb", "embedding"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['document', 'mongodb', 'embedding']
 ---
 
 <script>
@@ -21,19 +21,19 @@ A relational database is a stack of forms in separate drawers: the customer form
 
 ## The Document Model
 
-A document database stores data as **documents** — self-describing, nested records, usually JSON (MongoDB stores a binary form called BSON). Unlike a key-value store, the database *understands* the document's structure and can index and query fields inside it.
+A document database stores data as **documents** — self-describing, nested records, usually JSON (MongoDB stores a binary form called BSON). Unlike a key-value store, the database _understands_ the document's structure and can index and query fields inside it.
 
 ```json
 {
-  "_id": "order_8841",
-  "customer": { "id": "cust_42", "name": "Zubaida", "tier": "gold" },
-  "items": [
-    { "sku": "BK-101", "title": "NoSQL Notes", "qty": 1, "price": 29 },
-    { "sku": "PN-007", "title": "Gel Pen", "qty": 3, "price": 2 }
-  ],
-  "total": 35,
-  "status": "shipped",
-  "createdAt": "2026-06-15T10:00:00Z"
+	"_id": "order_8841",
+	"customer": { "id": "cust_42", "name": "Zubaida", "tier": "gold" },
+	"items": [
+		{ "sku": "BK-101", "title": "NoSQL Notes", "qty": 1, "price": 29 },
+		{ "sku": "PN-007", "title": "Gel Pen", "qty": 3, "price": 2 }
+	],
+	"total": 35,
+	"status": "shipped",
+	"createdAt": "2026-06-15T10:00:00Z"
 }
 ```
 
@@ -45,40 +45,34 @@ MongoDB is the dominant document database. Documents live in **collections** (lo
 
 ```javascript
 // Insert a document
-db.orders.insertOne({ customer: { id: "cust_42" }, total: 35, status: "shipped" });
+db.orders.insertOne({ customer: { id: 'cust_42' }, total: 35, status: 'shipped' });
 
 // Find with a filter — note querying into nested fields with dot notation
-db.orders.find({ "customer.id": "cust_42", status: "shipped" });
+db.orders.find({ 'customer.id': 'cust_42', status: 'shipped' });
 
 // Query an array element and project specific fields
-db.orders.find(
-  { "items.sku": "BK-101" },
-  { total: 1, status: 1 }
-);
+db.orders.find({ 'items.sku': 'BK-101' }, { total: 1, status: 1 });
 
 // Update one field without touching the rest of the document
-db.orders.updateOne(
-  { _id: "order_8841" },
-  { $set: { status: "delivered" } }
-);
+db.orders.updateOne({ _id: 'order_8841' }, { $set: { status: 'delivered' } });
 ```
 
 MongoDB also has an **aggregation pipeline** for grouping, joining (`$lookup`), and transforming documents — powerful, but if you lean on it constantly your data may be modeled wrong for your access pattern.
 
 ## Embedding vs Referencing
 
-This is *the* central decision in document modeling. You either **embed** related data inside the parent document, or **reference** it by storing an id and fetching it separately.
+This is _the_ central decision in document modeling. You either **embed** related data inside the parent document, or **reference** it by storing an id and fetching it separately.
 
 **Embedding** — nest the child inside the parent:
 
 ```json
 {
-  "_id": "post_9",
-  "title": "Why NoSQL",
-  "comments": [
-    { "author": "alex", "text": "great post" },
-    { "author": "sam", "text": "thanks!" }
-  ]
+	"_id": "post_9",
+	"title": "Why NoSQL",
+	"comments": [
+		{ "author": "alex", "text": "great post" },
+		{ "author": "sam", "text": "thanks!" }
+	]
 }
 ```
 
@@ -93,9 +87,9 @@ One read returns the post and its comments. Embedding wins when the child data i
 
 Referencing wins when the related data is **shared, large, or unbounded**.
 
-| Choose | When |
-|---|---|
-| Embed | One-to-few, read together, child has no life of its own, bounded size |
+| Choose    | When                                                                         |
+| --------- | ---------------------------------------------------------------------------- |
+| Embed     | One-to-few, read together, child has no life of its own, bounded size        |
 | Reference | One-to-many/unbounded, shared across documents, large, queried independently |
 
 <Callout type="tip">
@@ -116,16 +110,16 @@ Without indexes, a query scans every document in the collection — fine for hun
 
 ```javascript
 // Single-field index
-db.orders.createIndex({ "customer.id": 1 });
+db.orders.createIndex({ 'customer.id': 1 });
 
 // Compound index — supports queries filtering on status then sorting by date
 db.orders.createIndex({ status: 1, createdAt: -1 });
 
 // See whether a query used an index or scanned the collection
-db.orders.find({ status: "shipped" }).explain("executionStats");
+db.orders.find({ status: 'shipped' }).explain('executionStats');
 ```
 
-Two rules carry most of the weight. First, **every field you filter or sort on in a frequent query needs an index** — check with `explain` and watch for a full `COLLSCAN`. Second, compound index order matters: a `{ status, createdAt }` index helps queries that filter by `status` (optionally then sorting by `createdAt`), but does *not* efficiently serve a query that filters only by `createdAt`. Indexes cost write throughput and storage, so index for your real queries, not hypothetical ones.
+Two rules carry most of the weight. First, **every field you filter or sort on in a frequent query needs an index** — check with `explain` and watch for a full `COLLSCAN`. Second, compound index order matters: a `{ status, createdAt }` index helps queries that filter by `status` (optionally then sorting by `createdAt`), but does _not_ efficiently serve a query that filters only by `createdAt`. Indexes cost write throughput and storage, so index for your real queries, not hypothetical ones.
 
 ## Schema Design by Access Pattern
 

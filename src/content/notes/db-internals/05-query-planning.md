@@ -1,10 +1,10 @@
 ---
-title: "Query Planning & Execution"
-subtitle: "How the database turns your SQL into an execution plan — parsing, optimization, and why EXPLAIN is your best friend."
+title: 'Query Planning & Execution'
+subtitle: 'How the database turns your SQL into an execution plan — parsing, optimization, and why EXPLAIN is your best friend.'
 chapter: 5
-level: "intermediate"
-readingTime: "15 min"
-topics: ["query planner", "EXPLAIN", "optimization", "execution plan"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['query planner', 'EXPLAIN', 'optimization', 'execution plan']
 ---
 
 <script>
@@ -42,10 +42,10 @@ The planner evaluates different strategies and picks the cheapest one based on *
 
 ```typescript
 interface PlanNode {
-  type: "SeqScan" | "IndexScan" | "NestedLoop" | "HashJoin" | "MergeJoin" | "Sort" | "Aggregate";
-  estimatedCost: number;    // arbitrary units (roughly: page reads)
-  estimatedRows: number;    // expected output rows
-  children: PlanNode[];
+	type: 'SeqScan' | 'IndexScan' | 'NestedLoop' | 'HashJoin' | 'MergeJoin' | 'Sort' | 'Aggregate';
+	estimatedCost: number; // arbitrary units (roughly: page reads)
+	estimatedRows: number; // expected output rows
+	children: PlanNode[];
 }
 
 // For: SELECT * FROM users WHERE email = 'fatima@example.com'
@@ -166,4 +166,3 @@ SELECT name, email FROM users WHERE ...  -- reads less data
 2. **EXPLAIN ANALYZE shows actual execution** — always use it for performance debugging
 3. **Stale statistics cause bad plans** — run ANALYZE after bulk changes
 4. **Join strategy matters** — nested loop for small/indexed, hash join for large unindexed, merge join for pre-sorted
-

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Project } from '$lib/data/projects';
 	import { catFor } from '$lib/colors';
-	let { project, index = 0 }: { project: Project; index?: number } = $props();
+	let { project }: { project: Project } = $props();
 	const primary = $derived(project.url ?? project.repo);
 </script>
 
@@ -13,7 +13,9 @@
 	class="glass-card group flex h-full min-h-[7rem] flex-col justify-center p-5"
 	style="--cc: {catFor(project.title)}"
 >
-	<h3 class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent">
+	<h3
+		class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"
+	>
 		{project.title}
 	</h3>
 	<p class="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">{project.description}</p>

@@ -1,10 +1,10 @@
 ---
-title: "Building a Real HTTP/1.1 Parser"
-subtitle: "Request bodies, Content-Length, chunked transfer encoding, and the dozen edge cases that turn a toy parser into one you would trust in production."
+title: 'Building a Real HTTP/1.1 Parser'
+subtitle: 'Request bodies, Content-Length, chunked transfer encoding, and the dozen edge cases that turn a toy parser into one you would trust in production.'
 chapter: 3
-level: "beginner"
-readingTime: "13 min"
-topics: ["http", "parser", "chunked encoding", "go", "request body"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['http', 'parser', 'chunked encoding', 'go', 'request body']
 ---
 
 <script>
@@ -25,7 +25,7 @@ The chapter-2 server only handles `GET`. If a client sends `POST /api HTTP/1.1` 
 
 To handle bodies correctly, the parser must:
 
-1. Recognize that there *is* a body — by `Content-Length` or `Transfer-Encoding: chunked`.
+1. Recognize that there _is_ a body — by `Content-Length` or `Transfer-Encoding: chunked`.
 2. Read exactly the right number of bytes (no more, no less).
 3. Stop at the boundary so the next request on a keep-alive connection starts cleanly.
 
@@ -146,7 +146,7 @@ func readChunked(reader *bufio.Reader) ([]byte, error) {
 Notes:
 
 - Chunk sizes are **hexadecimal** in the wire format (`7` is 7 bytes, `1F` is 31 bytes). Easy to forget — many homemade parsers fail silently on chunks of size 10–15.
-- Each chunk has a *trailing* `\r\n` that you must consume.
+- Each chunk has a _trailing_ `\r\n` that you must consume.
 - The terminator is a chunk of size 0, optionally followed by trailers (more headers), then a final `\r\n`. Most clients omit trailers; your parser still has to swallow the extra `\r\n`.
 - Chunk extensions (after a `;`) exist in the spec but are essentially never used. Skip them.
 
@@ -172,7 +172,7 @@ A homemade parser usually passes "happy path" tests immediately, then dies on ad
 
 **9. Slow clients (Slowloris).** A client sends one byte every 30 seconds. The connection is open but unproductive. Always set a `ReadHeaderTimeout` (e.g., 5–10 seconds) so the parser does not hang forever.
 
-**10. Pipelined requests.** A client may have already sent the next request after this one's body. After the response, the parser must be ready for *another* request without losing buffered bytes. `bufio.Reader` does this naturally — your `for` loop just continues.
+**10. Pipelined requests.** A client may have already sent the next request after this one's body. After the response, the parser must be ready for _another_ request without losing buffered bytes. `bufio.Reader` does this naturally — your `for` loop just continues.
 
 **11. CRLF vs LF.** Spec says CRLF; many clients send LF. Be lenient on input, strict on output (RFC 9110 actually still requires CRLF on input, but real parsers are forgiving).
 
@@ -299,7 +299,7 @@ The mental model you have built is what carries forward:
 - The body length is signaled by `Content-Length` or chunked encoding.
 - Limits are not optional; they are the difference between a server and a denial-of-service vulnerability.
 
-In chapter 4, we look at the *concurrency* model — how a server with this parser scales to thousands of concurrent connections without spawning thousands of threads.
+In chapter 4, we look at the _concurrency_ model — how a server with this parser scales to thousands of concurrent connections without spawning thousands of threads.
 
 ## Recap
 
@@ -310,4 +310,3 @@ In chapter 4, we look at the *concurrency* model — how a server with this pars
 - Once you have written the parser by hand, switch to `net/http` (or your language's equivalent) for real work.
 
 Next chapter: how the same parser scales to many connections — the threading and event-loop choices behind every web server.
-

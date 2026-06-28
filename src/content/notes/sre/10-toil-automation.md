@@ -1,10 +1,10 @@
 ---
-title: "Toil & Automation"
-subtitle: "Measuring toil, the 50% cap, and the automation taxonomy from one-off scripts to self-healing operators."
+title: 'Toil & Automation'
+subtitle: 'Measuring toil, the 50% cap, and the automation taxonomy from one-off scripts to self-healing operators.'
 chapter: 10
-level: "advanced"
-readingTime: "15 min"
-topics: ["toil", "automation", "operators", "self-healing", "Kubernetes"]
+level: 'advanced'
+readingTime: '15 min'
+topics: ['toil', 'automation', 'operators', 'self-healing', 'Kubernetes']
 ---
 
 <script>
@@ -36,27 +36,27 @@ Plus one more practical test: **scales linearly with service size**. If your tea
 ```typescript
 // Examples of toil (kill these)
 const toil = [
-  "Manually rotating a TLS cert every 90 days",
-  "Restarting a pod every Tuesday because it leaks memory",
-  "Running 'kubectl scale' before every Black Friday",
-  "Creating a Jira ticket after every release",
-  "Approving the same routine PR template every day",
+	'Manually rotating a TLS cert every 90 days',
+	'Restarting a pod every Tuesday because it leaks memory',
+	"Running 'kubectl scale' before every Black Friday",
+	'Creating a Jira ticket after every release',
+	'Approving the same routine PR template every day'
 ];
 
 // Not toil (these are real engineering)
 const notToil = [
-  "Designing a new caching layer",
-  "Investigating a novel production issue",
-  "Reviewing capacity for the next quarter",
-  "Building a new dashboard for a new feature",
+	'Designing a new caching layer',
+	'Investigating a novel production issue',
+	'Reviewing capacity for the next quarter',
+	'Building a new dashboard for a new feature'
 ];
 
 // Tricky cases (often misclassified)
 const tricky = [
-  "Writing a postmortem",      // NOT toil — durable learning artifact
-  "On-call paging",            // NOT toil — interrupt-driven but unavoidable
-  "Code reviews",              // NOT toil — durable code quality value
-  "Standup meetings",          // Toil if useless, not if they unblock work
+	'Writing a postmortem', // NOT toil — durable learning artifact
+	'On-call paging', // NOT toil — interrupt-driven but unavoidable
+	'Code reviews', // NOT toil — durable code quality value
+	'Standup meetings' // Toil if useless, not if they unblock work
 ];
 ```
 
@@ -280,16 +280,16 @@ The biggest toil reductions don't come from automating individual tasks. They co
 ```typescript
 // A real internal developer platform (IDP) capability list
 const idpCapabilities = {
-  serviceCreation:    "create-service my-new-svc → repo + CI + LB + dashboard",
-  envProvisioning:    "spin up isolated env per PR, auto-tear-down",
-  secretRotation:     "self-service via vault UI, audit logged",
-  dnsManagement:      "self-service in hosted zone, with policy guardrails",
-  databaseProvisioning: "request via PR with review-bot SRE LGTM",
-  capacityBumps:      "/scale checkout 50→100 in Slack, auto-applied",
-  deploys:            "GitHub Actions, no manual approvals for non-critical",
-  dashboardCreation:  "templated, generated from service.yaml",
-  alertCreation:      "templated, generated from SLO definition",
-  certificates:       "fully automated, cert-manager + Let's Encrypt",
+	serviceCreation: 'create-service my-new-svc → repo + CI + LB + dashboard',
+	envProvisioning: 'spin up isolated env per PR, auto-tear-down',
+	secretRotation: 'self-service via vault UI, audit logged',
+	dnsManagement: 'self-service in hosted zone, with policy guardrails',
+	databaseProvisioning: 'request via PR with review-bot SRE LGTM',
+	capacityBumps: '/scale checkout 50→100 in Slack, auto-applied',
+	deploys: 'GitHub Actions, no manual approvals for non-critical',
+	dashboardCreation: 'templated, generated from service.yaml',
+	alertCreation: 'templated, generated from SLO definition',
+	certificates: "fully automated, cert-manager + Let's Encrypt"
 };
 ```
 
@@ -349,4 +349,3 @@ Without the cultural backing, the metrics become decorative.
 4. **Operators are the Level 5 endpoint** for many recurring K8s tasks
 5. **Self-service IDPs eliminate whole categories of toil** by removing SRE from the loop
 6. **Some toil should stay manual** — automation cost > toil cost is a real boundary
-

@@ -1,10 +1,10 @@
 ---
-title: "Self-Hosted Object Storage with MinIO"
-subtitle: "Running MinIO on your own hardware, S3-compatible API, distributed mode, lifecycle policies, and using it from application code."
+title: 'Self-Hosted Object Storage with MinIO'
+subtitle: 'Running MinIO on your own hardware, S3-compatible API, distributed mode, lifecycle policies, and using it from application code.'
 chapter: 2
-level: "beginner"
-readingTime: "10 min"
-topics: ["MinIO", "S3", "object storage", "self-hosted", "distributed", "buckets"]
+level: 'beginner'
+readingTime: '10 min'
+topics: ['MinIO', 'S3', 'object storage', 'self-hosted', 'distributed', 'buckets']
 ---
 
 <script>
@@ -22,6 +22,7 @@ Building a post office branch instead of routing everything through Amazon: same
 ## Why MinIO
 
 MinIO is an S3-compatible object storage server written in Go. The entire thing is a single binary. Use it when:
+
 - You can't send data to AWS (air-gapped, regulation, cost)
 - You want S3-compatible storage on Hetzner or your own hardware
 - Local S3-compatible development environment
@@ -50,15 +51,15 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: supersecretpassword
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 30s
 ```
 
@@ -87,6 +88,7 @@ docker run -d \
 MinIO uses Reed-Solomon erasure coding — with 16 drives, it can tolerate losing any 8 and still serve data. With 4 drives (minimum), tolerates 2 failures.
 
 Place a load balancer (nginx or HAProxy) in front of all nodes:
+
 ```nginx
 upstream minio {
     server minio-1:9000;
@@ -110,61 +112,73 @@ server {
 MinIO speaks S3 — use the official AWS SDK, just point the endpoint at MinIO:
 
 ```typescript
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import {
+	S3Client,
+	PutObjectCommand,
+	GetObjectCommand,
+	DeleteObjectCommand,
+	ListObjectsV2Command
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const s3 = new S3Client({
-  endpoint: process.env.MINIO_ENDPOINT ?? 'http://localhost:9000',
-  region: 'us-east-1',     // required by SDK but ignored by MinIO
-  credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY!,
-    secretAccessKey: process.env.MINIO_SECRET_KEY!,
-  },
-  forcePathStyle: true,    // required for MinIO (vs virtual-hosted style)
+	endpoint: process.env.MINIO_ENDPOINT ?? 'http://localhost:9000',
+	region: 'us-east-1', // required by SDK but ignored by MinIO
+	credentials: {
+		accessKeyId: process.env.MINIO_ACCESS_KEY!,
+		secretAccessKey: process.env.MINIO_SECRET_KEY!
+	},
+	forcePathStyle: true // required for MinIO (vs virtual-hosted style)
 });
 
 const BUCKET = 'user-uploads';
 
 // Upload
 async function uploadFile(key: string, body: Buffer, contentType: string) {
-  await s3.send(new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    Body: body,
-    ContentType: contentType,
-    Metadata: {
-      'uploaded-by': 'order-service',
-    },
-  }));
-  return `${process.env.MINIO_PUBLIC_URL}/${BUCKET}/${key}`;
+	await s3.send(
+		new PutObjectCommand({
+			Bucket: BUCKET,
+			Key: key,
+			Body: body,
+			ContentType: contentType,
+			Metadata: {
+				'uploaded-by': 'order-service'
+			}
+		})
+	);
+	return `${process.env.MINIO_PUBLIC_URL}/${BUCKET}/${key}`;
 }
 
 // Download
 async function downloadFile(key: string): Promise<Buffer> {
-  const response = await s3.send(new GetObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-  }));
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks);
+	const response = await s3.send(
+		new GetObjectCommand({
+			Bucket: BUCKET,
+			Key: key
+		})
+	);
+	const chunks: Uint8Array[] = [];
+	for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+		chunks.push(chunk);
+	}
+	return Buffer.concat(chunks);
 }
 
 // Delete
 async function deleteFile(key: string) {
-  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+	await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
 // List objects with prefix
 async function listFiles(prefix: string) {
-  const response = await s3.send(new ListObjectsV2Command({
-    Bucket: BUCKET,
-    Prefix: prefix,
-    MaxKeys: 1000,
-  }));
-  return response.Contents ?? [];
+	const response = await s3.send(
+		new ListObjectsV2Command({
+			Bucket: BUCKET,
+			Prefix: prefix,
+			MaxKeys: 1000
+		})
+	);
+	return response.Contents ?? [];
 }
 ```
 
@@ -175,40 +189,40 @@ Let clients upload directly to MinIO — no proxying through your server:
 ```typescript
 // Generate upload URL (client uploads directly to MinIO)
 async function getUploadUrl(key: string, contentType: string): Promise<string> {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    ContentType: contentType,
-  });
-  return getSignedUrl(s3, command, { expiresIn: 300 });  // 5 minutes
+	const command = new PutObjectCommand({
+		Bucket: BUCKET,
+		Key: key,
+		ContentType: contentType
+	});
+	return getSignedUrl(s3, command, { expiresIn: 300 }); // 5 minutes
 }
 
 // Generate download URL (time-limited access to private files)
 async function getDownloadUrl(key: string): Promise<string> {
-  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-  return getSignedUrl(s3, command, { expiresIn: 3600 });  // 1 hour
+	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+	return getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
 }
 ```
 
 ```typescript
 // API endpoint: client requests upload URL, then uploads directly
 app.post('/files/upload-url', async (req, res) => {
-  const { filename, contentType } = req.body;
-  const key = `uploads/${req.userId}/${Date.now()}-${filename}`;
-  const uploadUrl = await getUploadUrl(key, contentType);
-  res.json({ uploadUrl, key });
+	const { filename, contentType } = req.body;
+	const key = `uploads/${req.userId}/${Date.now()}-${filename}`;
+	const uploadUrl = await getUploadUrl(key, contentType);
+	res.json({ uploadUrl, key });
 });
 
 // Client code (browser)
 const { uploadUrl, key } = await fetch('/files/upload-url', {
-  method: 'POST',
-  body: JSON.stringify({ filename: file.name, contentType: file.type }),
-}).then(r => r.json());
+	method: 'POST',
+	body: JSON.stringify({ filename: file.name, contentType: file.type })
+}).then((r) => r.json());
 
 await fetch(uploadUrl, {
-  method: 'PUT',
-  body: file,
-  headers: { 'Content-Type': file.type },
+	method: 'PUT',
+	body: file,
+	headers: { 'Content-Type': file.type }
 });
 ```
 
@@ -223,19 +237,23 @@ import { PutBucketPolicyCommand } from '@aws-sdk/client-s3';
 
 // Make a bucket publicly readable (for serving static assets)
 const publicReadPolicy = {
-  Version: '2012-10-17',
-  Statement: [{
-    Effect: 'Allow',
-    Principal: { AWS: ['*'] },
-    Action: ['s3:GetObject'],
-    Resource: ['arn:aws:s3:::public-assets/*'],
-  }],
+	Version: '2012-10-17',
+	Statement: [
+		{
+			Effect: 'Allow',
+			Principal: { AWS: ['*'] },
+			Action: ['s3:GetObject'],
+			Resource: ['arn:aws:s3:::public-assets/*']
+		}
+	]
 };
 
-await s3.send(new PutBucketPolicyCommand({
-  Bucket: 'public-assets',
-  Policy: JSON.stringify(publicReadPolicy),
-}));
+await s3.send(
+	new PutBucketPolicyCommand({
+		Bucket: 'public-assets',
+		Policy: JSON.stringify(publicReadPolicy)
+	})
+);
 ```
 
 ```bash
@@ -252,25 +270,27 @@ Auto-delete or transition objects:
 ```typescript
 import { PutBucketLifecycleConfigurationCommand } from '@aws-sdk/client-s3';
 
-await s3.send(new PutBucketLifecycleConfigurationCommand({
-  Bucket: 'user-uploads',
-  LifecycleConfiguration: {
-    Rules: [
-      {
-        ID: 'delete-temp-files',
-        Status: 'Enabled',
-        Filter: { Prefix: 'temp/' },
-        Expiration: { Days: 1 },          // delete temp files after 1 day
-      },
-      {
-        ID: 'delete-old-logs',
-        Status: 'Enabled',
-        Filter: { Prefix: 'logs/' },
-        Expiration: { Days: 90 },          // delete logs after 90 days
-      },
-    ],
-  },
-}));
+await s3.send(
+	new PutBucketLifecycleConfigurationCommand({
+		Bucket: 'user-uploads',
+		LifecycleConfiguration: {
+			Rules: [
+				{
+					ID: 'delete-temp-files',
+					Status: 'Enabled',
+					Filter: { Prefix: 'temp/' },
+					Expiration: { Days: 1 } // delete temp files after 1 day
+				},
+				{
+					ID: 'delete-old-logs',
+					Status: 'Enabled',
+					Filter: { Prefix: 'logs/' },
+					Expiration: { Days: 90 } // delete logs after 90 days
+				}
+			]
+		}
+	})
+);
 ```
 
 ## MinIO as Local S3 in Development
@@ -282,8 +302,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -341,8 +361,8 @@ scrape_configs:
 ```
 
 Generate the Prometheus token:
+
 ```bash
 mc admin prometheus generate myminio cluster
 # Returns a bearer token to use in the scrape config
 ```
-

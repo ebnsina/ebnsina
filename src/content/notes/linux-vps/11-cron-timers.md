@@ -1,10 +1,10 @@
 ---
-title: "Cron & systemd Timers"
-subtitle: "Two ways to run code on a schedule. Which to pick, how to write each, and how to keep scheduled jobs from silently failing for months."
+title: 'Cron & systemd Timers'
+subtitle: 'Two ways to run code on a schedule. Which to pick, how to write each, and how to keep scheduled jobs from silently failing for months.'
 chapter: 11
-level: "advanced"
-readingTime: "10 min"
-topics: ["cron", "systemd", "timers", "scheduling", "linux"]
+level: 'advanced'
+readingTime: '10 min'
+topics: ['cron', 'systemd', 'timers', 'scheduling', 'linux']
 ---
 
 <script>
@@ -59,7 +59,7 @@ System-wide cron files live in `/etc/crontab`, `/etc/cron.daily/`, `/etc/cron.ho
 
 ## The cron environment trap
 
-Cron jobs run with a *minimal* environment. `$PATH` is short, `$HOME` may not be set, your shell aliases are not loaded. Scripts that work in your terminal often fail in cron because they expect environment they no longer have.
+Cron jobs run with a _minimal_ environment. `$PATH` is short, `$HOME` may not be set, your shell aliases are not loaded. Scripts that work in your terminal often fail in cron because they expect environment they no longer have.
 
 The fix:
 
@@ -212,7 +212,7 @@ OnBootSec=5min
 OnUnitActiveSec=10min
 ```
 
-5 minutes after boot, run once. Then run every 10 minutes after the *last successful run*. If a run takes 8 minutes, the next one is 10 minutes after that — never overlapping.
+5 minutes after boot, run once. Then run every 10 minutes after the _last successful run_. If a run takes 8 minutes, the next one is 10 minutes after that — never overlapping.
 
 ## Timer logs
 
@@ -295,4 +295,3 @@ The most common reason a "scheduled job isn't running":
 - `systemctl list-timers` is the dashboard for every scheduled job on the box.
 
 Next chapter: the production checklist. Everything from this track, in one runbook for every fresh VPS.
-

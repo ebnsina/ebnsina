@@ -1,10 +1,10 @@
 ---
-title: "Operating Systems — Roadmap"
-subtitle: "How the kernel turns raw hardware into the processes, memory, and files your programs depend on."
+title: 'Operating Systems — Roadmap'
+subtitle: 'How the kernel turns raw hardware into the processes, memory, and files your programs depend on.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "operating systems"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'operating systems']
 ---
 
 <script>

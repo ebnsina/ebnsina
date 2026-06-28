@@ -1,10 +1,10 @@
 ---
-title: "The TLS Handshake"
-subtitle: "ClientHello, ServerHello, key exchange, finished. The five-message conversation that turns a TCP connection into a secure session — and how TLS 1.3 cut it in half."
+title: 'The TLS Handshake'
+subtitle: 'ClientHello, ServerHello, key exchange, finished. The five-message conversation that turns a TCP connection into a secure session — and how TLS 1.3 cut it in half.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["tls", "handshake", "tls 1.3", "ecdhe", "alpn"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['tls', 'handshake', 'tls 1.3', 'ecdhe', 'alpn']
 ---
 
 <script>
@@ -52,7 +52,7 @@ ClientHello
                                                          {CertificateVerify}
                                                          {Finished}
                                                          [Application Data*]
-                      ◄──────────────────────────────── 
+                      ◄────────────────────────────────
 
 {Finished}
 [Application Data]    ────────────────────────────────►  [Application Data]
@@ -70,7 +70,7 @@ One round trip. After the client's `Finished`, both sides have keys derived from
 **ClientHello.** The client says hello and offers everything it can do. Critical fields:
 
 - **`supported_versions`** — TLS 1.3 (and 1.2 as a fallback indicator).
-- **`key_share`** — the client's *ephemeral* public key for one of the supported elliptic curves (typically X25519). The matching private key never leaves the client.
+- **`key_share`** — the client's _ephemeral_ public key for one of the supported elliptic curves (typically X25519). The matching private key never leaves the client.
 - **`supported_groups`** — what curves the client supports for key exchange (X25519, P-256, P-384).
 - **`signature_algorithms`** — what algorithms the server can use to sign things (Ed25519, ECDSA-P-256, RSA-PSS, etc.).
 - **`server_name`** — the SNI (Server Name Indication). Tells the server which hostname the client is asking about, so a server hosting many sites can pick the right certificate.
@@ -82,7 +82,7 @@ One round trip. After the client's `Finished`, both sides have keys derived from
 - **`supported_versions`** — confirms TLS 1.3.
 - **Cipher suite picked** — typically `TLS_AES_128_GCM_SHA256` or `TLS_CHACHA20_POLY1305_SHA256`.
 
-At this point, both sides have done the elliptic-curve Diffie-Hellman: each combined their own private key with the other's public key to derive the same secret. From that secret, both derive the *handshake key* — used to encrypt the rest of the handshake.
+At this point, both sides have done the elliptic-curve Diffie-Hellman: each combined their own private key with the other's public key to derive the same secret. From that secret, both derive the _handshake key_ — used to encrypt the rest of the handshake.
 
 Everything after the ServerHello is encrypted under this handshake key.
 
@@ -94,11 +94,11 @@ Everything after the ServerHello is encrypted under this handshake key.
 
 **Finished.** A MAC of the handshake-so-far, computed using a key derived from the exchange. Both sides do this. If the MACs match, the handshake was not tampered with.
 
-After the `Finished`, both sides derive the *application key* (different from the handshake key) and use it for encrypted application data. From this point on, every byte of HTTP is encrypted under that key.
+After the `Finished`, both sides derive the _application key_ (different from the handshake key) and use it for encrypted application data. From this point on, every byte of HTTP is encrypted under that key.
 
 ## Why ephemeral keys — forward secrecy
 
-The `key_share` in ClientHello and ServerHello use **ephemeral** keys — generated for this single connection and discarded after. The certificate's long-term private key is only used to *sign* the handshake (in CertificateVerify), never to encrypt the session key.
+The `key_share` in ClientHello and ServerHello use **ephemeral** keys — generated for this single connection and discarded after. The certificate's long-term private key is only used to _sign_ the handshake (in CertificateVerify), never to encrypt the session key.
 
 This gives **forward secrecy**: even if an attacker records the entire handshake and later steals the server's private key, they cannot decrypt the recorded traffic. The session key was derived from ephemeral material that no longer exists.
 
@@ -141,7 +141,7 @@ You should still support TLS 1.2 for clients on older systems, but TLS 1.3 shoul
 
 ## SNI — virtual hosting over TLS
 
-A single IP address can serve hundreds of websites. Without SNI, TLS would not know *which* certificate to present — it would have to pick one before reading any HTTP headers (which would tell it the hostname).
+A single IP address can serve hundreds of websites. Without SNI, TLS would not know _which_ certificate to present — it would have to pick one before reading any HTTP headers (which would tell it the hostname).
 
 SNI fixes this by including the hostname in the ClientHello, in plaintext:
 
@@ -180,7 +180,7 @@ http2 on;
 
 ## 0-RTT — the dangerous shortcut
 
-TLS 1.3 introduced **0-RTT** (zero round-trip time) resumption: if a client has connected to this server before and has a *resumption ticket*, it can send application data **in the very first packet**, alongside the ClientHello.
+TLS 1.3 introduced **0-RTT** (zero round-trip time) resumption: if a client has connected to this server before and has a _resumption ticket_, it can send application data **in the very first packet**, alongside the ClientHello.
 
 ```text
 client                                              server
@@ -247,4 +247,3 @@ When debugging, the server's error log usually has the answer. nginx logs TLS er
 - `openssl s_client` and Wireshark are the diagnostic tools when something is off.
 
 Next chapter: certificates — what they actually contain, the chain of trust, and how validation works.
-

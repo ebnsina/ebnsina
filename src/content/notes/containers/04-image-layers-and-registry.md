@@ -1,10 +1,10 @@
 ---
-title: "Image Layers & Registries"
-subtitle: "How layer sharing works in practice, pushing and pulling efficiently, and running your own registry."
+title: 'Image Layers & Registries'
+subtitle: 'How layer sharing works in practice, pushing and pulling efficiently, and running your own registry.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["image layers", "registry", "Docker Hub", "GHCR", "self-hosted registry", "image tagging"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['image layers', 'registry', 'Docker Hub', 'GHCR', 'self-hosted registry', 'image tagging']
 ---
 
 <script>
@@ -60,6 +60,7 @@ docker push myregistry.io/myapp:latest
 ```
 
 **Reference images by digest in production — not tags:**
+
 ```yaml
 # docker-compose.prod.yml
 services:
@@ -73,6 +74,7 @@ Referencing by digest guarantees you're running exactly what you tested, not wha
 ## Public Registries
 
 **Docker Hub:**
+
 ```bash
 docker login
 docker push username/myapp:v1.0.0
@@ -85,6 +87,7 @@ docker pull username/myapp:v1.0.0
 ```
 
 **GitHub Container Registry (GHCR):**
+
 ```bash
 # Authenticate with GitHub token
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
@@ -101,6 +104,7 @@ docker push ghcr.io/username/myapp:v1.0.0
 ```
 
 **AWS ECR:**
+
 ```bash
 # Login (credentials from AWS CLI)
 aws ecr get-login-password --region us-east-1 \
@@ -120,13 +124,14 @@ docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
 For air-gapped environments, caching, or cost control:
 
 **Docker Registry (official, minimal):**
+
 ```yaml
 # docker-compose.yml for a private registry
 services:
   registry:
     image: registry:2
     ports:
-      - "5000:5000"
+      - '5000:5000'
     environment:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
     volumes:
@@ -136,9 +141,9 @@ services:
   registry-ui:
     image: joxit/docker-registry-ui:latest
     ports:
-      - "8080:80"
+      - '8080:80'
     environment:
-      REGISTRY_TITLE: "My Registry"
+      REGISTRY_TITLE: 'My Registry'
       REGISTRY_URL: http://registry:5000
     depends_on:
       - registry
@@ -153,6 +158,7 @@ docker pull localhost:5000/myapp:v1.0.0
 **For production self-hosted: use Harbor or Gitea Container Registry** — they add authentication, RBAC, vulnerability scanning, and a proper web UI.
 
 **Harbor (enterprise-grade):**
+
 ```bash
 # Install via Helm
 helm repo add harbor https://helm.goharbor.io
@@ -182,6 +188,7 @@ grype myapp:latest
 ```
 
 **In GitHub Actions:**
+
 ```yaml
 - name: Scan image
   uses: aquasecurity/trivy-action@master
@@ -227,6 +234,7 @@ Multi-platform images are stored as a manifest list — one tag points to multip
 CI build time is mostly layer cache misses. Strategies:
 
 **Export and import the cache:**
+
 ```yaml
 # GitHub Actions: cache Docker layers between runs
 - name: Set up Docker Buildx
@@ -238,11 +246,12 @@ CI build time is mostly layer cache misses. Strategies:
     context: .
     push: true
     tags: myapp:latest
-    cache-from: type=gha          # read from GitHub Actions cache
-    cache-to: type=gha,mode=max   # write back (max = all layers, not just final)
+    cache-from: type=gha # read from GitHub Actions cache
+    cache-to: type=gha,mode=max # write back (max = all layers, not just final)
 ```
 
 **Use a registry cache:**
+
 ```bash
 # Use the registry itself as a cache store
 docker buildx build \
@@ -254,4 +263,3 @@ docker buildx build \
 ```
 
 This pulls the previous build's layers from the registry and uses them as cache for the current build — even on a fresh CI runner with no local cache.
-

@@ -1,10 +1,10 @@
 ---
-title: "Advanced Concurrency Patterns"
-subtitle: "Context, sync primitives, worker pools, and the patterns that power Go at scale — from Uber to Cloudflare."
+title: 'Advanced Concurrency Patterns'
+subtitle: 'Context, sync primitives, worker pools, and the patterns that power Go at scale — from Uber to Cloudflare.'
 chapter: 11
-level: "intermediate"
-readingTime: "22 min"
-topics: ["context", "sync", "mutex", "semaphore", "pipeline", "errgroup"]
+level: 'intermediate'
+readingTime: '22 min'
+topics: ['context', 'sync', 'mutex', 'semaphore', 'pipeline', 'errgroup']
 ---
 
 <script>
@@ -404,4 +404,3 @@ func fetchAll(ctx context.Context, urls []string) []Result {
 5. **Pipelines** compose stages as goroutine-driven channels — each stage runs concurrently
 6. **Rate limiting + concurrency limiting** are separate concerns — use both in production API clients
 7. **Check `ctx.Done()`** in long-running loops to support cancellation
-

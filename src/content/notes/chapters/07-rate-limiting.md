@@ -1,10 +1,10 @@
 ---
-title: "Rate Limiting"
-subtitle: "Implement token bucket and sliding window rate limiters with Redis for production API protection."
+title: 'Rate Limiting'
+subtitle: 'Implement token bucket and sliding window rate limiters with Redis for production API protection.'
 chapter: 7
-level: "intermediate"
-readingTime: "15 min"
-topics: ["rate limiting", "token bucket", "sliding window", "Redis", "middleware"]
+level: 'intermediate'
+readingTime: '15 min'
+topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'middleware']
 ---
 
 <script>
@@ -26,21 +26,19 @@ Like an ATM daily withdrawal limit — you can only withdraw a fixed amount per 
 </Callout>
 
 <Mermaid
-	title="Rate Limiter as Middleware"
-	code={`
-graph LR
-  C["Client"] --> RL["Rate Limiter<br/>Allow / Deny"] --> S["API Server"]
-`}
+title="Rate Limiter as Middleware"
+code={`graph LR
+  C["Client"] --> RL["Rate Limiter<br/>Allow / Deny"] --> S["API Server"]`}
 />
 
 ## Algorithms Compared
 
-| Algorithm | Pros | Cons |
-|-----------|------|------|
-| Token Bucket | Smooth, allows bursts | Complex to implement right |
-| Sliding Window | Precise, no boundary issues | Higher memory usage |
-| Fixed Window | Simple | Allows 2x burst at window edges |
-| Leaky Bucket | Smooth output rate | Can't handle legitimate bursts |
+| Algorithm      | Pros                        | Cons                            |
+| -------------- | --------------------------- | ------------------------------- |
+| Token Bucket   | Smooth, allows bursts       | Complex to implement right      |
+| Sliding Window | Precise, no boundary issues | Higher memory usage             |
+| Fixed Window   | Simple                      | Allows 2x burst at window edges |
+| Leaky Bucket   | Smooth output rate          | Can't handle legitimate bursts  |
 
 ## Production Rate Limiter with Redis
 
@@ -48,89 +46,89 @@ graph LR
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
-import Redis from "ioredis";
+import http from 'node:http';
+import Redis from 'ioredis';
 
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 // --- Sliding Window Rate Limiter ---
 class SlidingWindowRateLimiter {
-  constructor(
-    private maxRequests: number,
-    private windowMs: number
-  ) {}
+	constructor(
+		private maxRequests: number,
+		private windowMs: number
+	) {}
 
-  async isAllowed(key: string): Promise<{
-    allowed: boolean;
-    remaining: number;
-    resetAt: number;
-    retryAfter: number;
-  }> {
-    const now = Date.now();
-    const windowStart = now - this.windowMs;
-    const redisKey = `rl:${key}`;
+	async isAllowed(key: string): Promise<{
+		allowed: boolean;
+		remaining: number;
+		resetAt: number;
+		retryAfter: number;
+	}> {
+		const now = Date.now();
+		const windowStart = now - this.windowMs;
+		const redisKey = `rl:${key}`;
 
-    // Use a Redis pipeline for atomicity
-    const pipeline = redis.pipeline();
+		// Use a Redis pipeline for atomicity
+		const pipeline = redis.pipeline();
 
-    // Remove expired entries
-    pipeline.zremrangebyscore(redisKey, 0, windowStart);
+		// Remove expired entries
+		pipeline.zremrangebyscore(redisKey, 0, windowStart);
 
-    // Count current entries
-    pipeline.zcard(redisKey);
+		// Count current entries
+		pipeline.zcard(redisKey);
 
-    // Add current request (we'll remove it if denied)
-    pipeline.zadd(redisKey, now, `${now}:${Math.random()}`);
+		// Add current request (we'll remove it if denied)
+		pipeline.zadd(redisKey, now, `${now}:${Math.random()}`);
 
-    // Set TTL on the key
-    pipeline.pexpire(redisKey, this.windowMs);
+		// Set TTL on the key
+		pipeline.pexpire(redisKey, this.windowMs);
 
-    const results = await pipeline.exec();
-    const currentCount = (results?.[1]?.[1] as number) || 0;
+		const results = await pipeline.exec();
+		const currentCount = (results?.[1]?.[1] as number) || 0;
 
-    if (currentCount >= this.maxRequests) {
-      // Over limit — remove the entry we just added
-      await redis.zremrangebyscore(redisKey, now, now);
+		if (currentCount >= this.maxRequests) {
+			// Over limit — remove the entry we just added
+			await redis.zremrangebyscore(redisKey, now, now);
 
-      // Find when the oldest entry expires
-      const oldest = await redis.zrange(redisKey, 0, 0, "WITHSCORES");
-      const oldestTime = oldest.length >= 2 ? parseInt(oldest[1]) : now;
-      const retryAfter = Math.ceil((oldestTime + this.windowMs - now) / 1000);
+			// Find when the oldest entry expires
+			const oldest = await redis.zrange(redisKey, 0, 0, 'WITHSCORES');
+			const oldestTime = oldest.length >= 2 ? parseInt(oldest[1]) : now;
+			const retryAfter = Math.ceil((oldestTime + this.windowMs - now) / 1000);
 
-      return {
-        allowed: false,
-        remaining: 0,
-        resetAt: oldestTime + this.windowMs,
-        retryAfter: Math.max(retryAfter, 1),
-      };
-    }
+			return {
+				allowed: false,
+				remaining: 0,
+				resetAt: oldestTime + this.windowMs,
+				retryAfter: Math.max(retryAfter, 1)
+			};
+		}
 
-    return {
-      allowed: true,
-      remaining: this.maxRequests - currentCount - 1,
-      resetAt: now + this.windowMs,
-      retryAfter: 0,
-    };
-  }
+		return {
+			allowed: true,
+			remaining: this.maxRequests - currentCount - 1,
+			resetAt: now + this.windowMs,
+			retryAfter: 0
+		};
+	}
 }
 
 // --- Token Bucket Rate Limiter ---
 class TokenBucketRateLimiter {
-  constructor(
-    private capacity: number,       // max tokens
-    private refillRate: number,      // tokens added per second
-  ) {}
+	constructor(
+		private capacity: number, // max tokens
+		private refillRate: number // tokens added per second
+	) {}
 
-  async isAllowed(key: string): Promise<{
-    allowed: boolean;
-    remaining: number;
-    retryAfter: number;
-  }> {
-    const redisKey = `rl:tb:${key}`;
-    const now = Date.now();
+	async isAllowed(key: string): Promise<{
+		allowed: boolean;
+		remaining: number;
+		retryAfter: number;
+	}> {
+		const redisKey = `rl:tb:${key}`;
+		const now = Date.now();
 
-    // Lua script for atomic token bucket
-    const script = `
+		// Lua script for atomic token bucket
+		const script = `
       local key = KEYS[1]
       local capacity = tonumber(ARGV[1])
       local refill_rate = tonumber(ARGV[2])
@@ -162,84 +160,90 @@ class TokenBucketRateLimiter {
       return {allowed, math.floor(tokens)}
     `;
 
-    const result = (await redis.eval(
-      script, 1, redisKey,
-      this.capacity, this.refillRate, now
-    )) as number[];
+		const result = (await redis.eval(
+			script,
+			1,
+			redisKey,
+			this.capacity,
+			this.refillRate,
+			now
+		)) as number[];
 
-    const allowed = result[0] === 1;
-    const remaining = result[1];
+		const allowed = result[0] === 1;
+		const remaining = result[1];
 
-    return {
-      allowed,
-      remaining,
-      retryAfter: allowed ? 0 : Math.ceil(1 / this.refillRate),
-    };
-  }
+		return {
+			allowed,
+			remaining,
+			retryAfter: allowed ? 0 : Math.ceil(1 / this.refillRate)
+		};
+	}
 }
 
 // --- Rate Limit Middleware ---
 type RateLimitTier = {
-  maxRequests: number;
-  windowMs: number;
+	maxRequests: number;
+	windowMs: number;
 };
 
 const tiers: Record<string, RateLimitTier> = {
-  free:       { maxRequests: 100, windowMs: 60 * 60 * 1000 },   // 100/hour
-  pro:        { maxRequests: 1000, windowMs: 60 * 60 * 1000 },  // 1000/hour
-  enterprise: { maxRequests: 10000, windowMs: 60 * 60 * 1000 }, // 10000/hour
+	free: { maxRequests: 100, windowMs: 60 * 60 * 1000 }, // 100/hour
+	pro: { maxRequests: 1000, windowMs: 60 * 60 * 1000 }, // 1000/hour
+	enterprise: { maxRequests: 10000, windowMs: 60 * 60 * 1000 } // 10000/hour
 };
 
 function getUserTier(_req: http.IncomingMessage): string {
-  // In production: look up user's plan from auth token
-  return "free";
+	// In production: look up user's plan from auth token
+	return 'free';
 }
 
 function getClientKey(req: http.IncomingMessage): string {
-  // Use API key or IP address
-  const apiKey = req.headers["x-api-key"];
-  if (apiKey) return `api:${apiKey}`;
-  return `ip:${req.socket.remoteAddress}`;
+	// Use API key or IP address
+	const apiKey = req.headers['x-api-key'];
+	if (apiKey) return `api:${apiKey}`;
+	return `ip:${req.socket.remoteAddress}`;
 }
 
 async function rateLimitMiddleware(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
+	req: http.IncomingMessage,
+	res: http.ServerResponse
 ): Promise<boolean> {
-  const tier = tiers[getUserTier(req)];
-  const limiter = new SlidingWindowRateLimiter(tier.maxRequests, tier.windowMs);
-  const key = getClientKey(req);
+	const tier = tiers[getUserTier(req)];
+	const limiter = new SlidingWindowRateLimiter(tier.maxRequests, tier.windowMs);
+	const key = getClientKey(req);
 
-  const result = await limiter.isAllowed(key);
+	const result = await limiter.isAllowed(key);
 
-  // Always set rate limit headers
-  res.setHeader("X-RateLimit-Limit", tier.maxRequests);
-  res.setHeader("X-RateLimit-Remaining", result.remaining);
-  res.setHeader("X-RateLimit-Reset", Math.ceil(result.resetAt / 1000));
+	// Always set rate limit headers
+	res.setHeader('X-RateLimit-Limit', tier.maxRequests);
+	res.setHeader('X-RateLimit-Remaining', result.remaining);
+	res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetAt / 1000));
 
-  if (!result.allowed) {
-    res.setHeader("Retry-After", result.retryAfter);
-    res.writeHead(429, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      error: "Too many requests",
-      retryAfter: result.retryAfter,
-    }));
-    return false;
-  }
+	if (!result.allowed) {
+		res.setHeader('Retry-After', result.retryAfter);
+		res.writeHead(429, { 'Content-Type': 'application/json' });
+		res.end(
+			JSON.stringify({
+				error: 'Too many requests',
+				retryAfter: result.retryAfter
+			})
+		);
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 // --- Server ---
 const server = http.createServer(async (req, res) => {
-  const allowed = await rateLimitMiddleware(req, res);
-  if (!allowed) return;
+	const allowed = await rateLimitMiddleware(req, res);
+	if (!allowed) return;
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ message: "OK", timestamp: new Date().toISOString() }));
+	res.writeHead(200, { 'Content-Type': 'application/json' });
+	res.end(JSON.stringify({ message: 'OK', timestamp: new Date().toISOString() }));
 });
 
-server.listen(3000, () => console.log("Server with rate limiting on :3000"));
+server.listen(3000, () => console.log('Server with rate limiting on :3000'));
 ```
 
 </div>
@@ -453,4 +457,3 @@ func main() {
 - Every public API needs rate limiting — it's not optional in production
 
 </div>
-

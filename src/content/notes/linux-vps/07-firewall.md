@@ -1,10 +1,10 @@
 ---
-title: "Firewall Fundamentals"
-subtitle: "How packets actually flow through the kernel, and how to write nftables rules that allow exactly what you want and reject everything else."
+title: 'Firewall Fundamentals'
+subtitle: 'How packets actually flow through the kernel, and how to write nftables rules that allow exactly what you want and reject everything else.'
 chapter: 7
-level: "intermediate"
-readingTime: "13 min"
-topics: ["firewall", "nftables", "iptables", "ufw", "netfilter", "linux"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['firewall', 'nftables', 'iptables', 'ufw', 'netfilter', 'linux']
 ---
 
 <script>
@@ -21,7 +21,7 @@ A firewall is like a security guard at the building entrance who checks a list o
 
 ## What a firewall on Linux actually is
 
-There is no separate "firewall" daemon on Linux. The kernel itself, via the **netfilter** framework, runs every packet through a series of decision points called *hooks* — `prerouting`, `input`, `forward`, `output`, `postrouting`. At each hook, the kernel consults a set of rules: accept, drop, mangle, redirect. Whatever the rules say, the packet does.
+There is no separate "firewall" daemon on Linux. The kernel itself, via the **netfilter** framework, runs every packet through a series of decision points called _hooks_ — `prerouting`, `input`, `forward`, `output`, `postrouting`. At each hook, the kernel consults a set of rules: accept, drop, mangle, redirect. Whatever the rules say, the packet does.
 
 You configure those rules with one of three tools:
 
@@ -164,7 +164,7 @@ chain forward {
 }
 ```
 
-`forward` is for packets routed *through* this host (relevant if you turn this box into a router or run containers without bridge mode). Default-deny.
+`forward` is for packets routed _through_ this host (relevant if you turn this box into a router or run containers without bridge mode). Default-deny.
 
 ```nft
 chain output {
@@ -261,7 +261,7 @@ For containers without Docker (bare systemd-nspawn, podman in rootless mode), yo
 
 ## Reading and understanding cloud provider firewalls
 
-Many providers (Hetzner, AWS, DigitalOcean) offer a *cloud firewall* — packet filtering done outside your VM, before the packet even reaches your kernel. They are useful belt-and-suspenders, but they do not replace local rules:
+Many providers (Hetzner, AWS, DigitalOcean) offer a _cloud firewall_ — packet filtering done outside your VM, before the packet even reaches your kernel. They are useful belt-and-suspenders, but they do not replace local rules:
 
 - The cloud firewall protects against scanners hitting your IP.
 - The local firewall protects against lateral movement if another VPS in your account is compromised.
@@ -285,7 +285,7 @@ If you are going to read raw rules anyway, just write nftables.
 
 ## Common mistakes
 
-- **Forgetting the SSH port.** Adding `policy drop` to `input` without an `accept` for SSH locks you out. Always test from a *new* terminal before closing your existing session.
+- **Forgetting the SSH port.** Adding `policy drop` to `input` without an `accept` for SSH locks you out. Always test from a _new_ terminal before closing your existing session.
 - **Forgetting `iif lo accept`.** Half your services break because they cannot talk to localhost.
 - **Forgetting `ct state established accept`.** Outbound stops working — your `apt update` hangs.
 - **Mixing iptables and nftables.** Pick one. If you have iptables-persistent installed, remove it.
@@ -299,4 +299,3 @@ If you are going to read raw rules anyway, just write nftables.
 - Cloud firewalls and local firewalls complement each other; run both.
 
 Next chapter: users, groups, and the sudo problem.
-

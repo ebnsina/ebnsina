@@ -1,10 +1,10 @@
 ---
-title: "Running your first server"
-subtitle: "graphql-yoga, end-to-end, in sixty lines. By the end of this chapter you will have a real GraphQL server on your laptop, queried with curl, talking to Postgres."
+title: 'Running your first server'
+subtitle: 'graphql-yoga, end-to-end, in sixty lines. By the end of this chapter you will have a real GraphQL server on your laptop, queried with curl, talking to Postgres.'
 chapter: 3
-level: "beginner"
-readingTime: "12 min"
-topics: ["graphql", "graphql-yoga", "node", "postgres"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['graphql', 'graphql-yoga', 'node', 'postgres']
 ---
 
 <script>
@@ -83,25 +83,25 @@ psql my_graphql < schema.sql
 scalar DateTime
 
 type User {
-  id: ID!
-  name: String!
-  email: String!
-  createdAt: DateTime!
-  posts: [Post!]!
+	id: ID!
+	name: String!
+	email: String!
+	createdAt: DateTime!
+	posts: [Post!]!
 }
 
 type Post {
-  id: ID!
-  title: String!
-  body: String!
-  createdAt: DateTime!
-  author: User!
+	id: ID!
+	title: String!
+	body: String!
+	createdAt: DateTime!
+	author: User!
 }
 
 type Query {
-  user(id: ID!): User
-  users: [User!]!
-  posts: [Post!]!
+	user(id: ID!): User
+	users: [User!]!
+	posts: [Post!]!
 }
 ```
 
@@ -109,75 +109,67 @@ type Query {
 
 ```js
 // server.js
-import { createServer } from "node:http";
-import { readFileSync } from "node:fs";
-import { createYoga, createSchema } from "graphql-yoga";
-import pg from "pg";
+import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { createYoga, createSchema } from 'graphql-yoga';
+import pg from 'pg';
 
 const { Pool } = pg;
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgres:///my_graphql",
+	connectionString: process.env.DATABASE_URL || 'postgres:///my_graphql'
 });
 
-const typeDefs = readFileSync("./schema.graphql", "utf8");
+const typeDefs = readFileSync('./schema.graphql', 'utf8');
 
 const resolvers = {
-  DateTime: {
-    serialize: (v) => (v instanceof Date ? v.toISOString() : v),
-    parseValue: (v) => new Date(v),
-  },
+	DateTime: {
+		serialize: (v) => (v instanceof Date ? v.toISOString() : v),
+		parseValue: (v) => new Date(v)
+	},
 
-  Query: {
-    user: async (_, { id }) => {
-      const { rows } = await pool.query(
-        "SELECT * FROM users WHERE id = $1",
-        [id],
-      );
-      return rows[0] || null;
-    },
-    users: async () => {
-      const { rows } = await pool.query("SELECT * FROM users ORDER BY id");
-      return rows;
-    },
-    posts: async () => {
-      const { rows } = await pool.query(
-        "SELECT * FROM posts ORDER BY created_at DESC",
-      );
-      return rows;
-    },
-  },
+	Query: {
+		user: async (_, { id }) => {
+			const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+			return rows[0] || null;
+		},
+		users: async () => {
+			const { rows } = await pool.query('SELECT * FROM users ORDER BY id');
+			return rows;
+		},
+		posts: async () => {
+			const { rows } = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
+			return rows;
+		}
+	},
 
-  User: {
-    createdAt: (u) => u.created_at,
-    posts: async (u) => {
-      const { rows } = await pool.query(
-        "SELECT * FROM posts WHERE author_id = $1 ORDER BY created_at DESC",
-        [u.id],
-      );
-      return rows;
-    },
-  },
+	User: {
+		createdAt: (u) => u.created_at,
+		posts: async (u) => {
+			const { rows } = await pool.query(
+				'SELECT * FROM posts WHERE author_id = $1 ORDER BY created_at DESC',
+				[u.id]
+			);
+			return rows;
+		}
+	},
 
-  Post: {
-    createdAt: (p) => p.created_at,
-    author: async (p) => {
-      const { rows } = await pool.query(
-        "SELECT * FROM users WHERE id = $1",
-        [p.author_id],
-      );
-      return rows[0];
-    },
-  },
+	Post: {
+		createdAt: (p) => p.created_at,
+		author: async (p) => {
+			const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [p.author_id]);
+			return rows[0];
+		}
+	}
 };
 
 const yoga = createYoga({
-  schema: createSchema({ typeDefs, resolvers }),
-  graphiql: true,
+	schema: createSchema({ typeDefs, resolvers }),
+	graphiql: true
 });
 
 const server = createServer(yoga);
 server.listen(4000, () => {
-  console.log("graphql ready on http://localhost:4000/graphql");
+	console.log('graphql ready on http://localhost:4000/graphql');
 });
 ```
 
@@ -195,14 +187,14 @@ Paste this into GraphiQL:
 
 ```graphql
 {
-  user(id: 1) {
-    name
-    email
-    posts {
-      title
-      createdAt
-    }
-  }
+	user(id: 1) {
+		name
+		email
+		posts {
+			title
+			createdAt
+		}
+	}
 }
 ```
 
@@ -217,7 +209,7 @@ A GraphQL request goes through this pipeline:
 3. **Execute** — walk the AST, calling a resolver for each field.
 4. **Format** — collect resolver return values into the response shape.
 
-You did not write the parser, validator, or executor — `graphql` (the JS reference impl) did. You wrote *resolvers*. That is the only code you actually own.
+You did not write the parser, validator, or executor — `graphql` (the JS reference impl) did. You wrote _resolvers_. That is the only code you actually own.
 
 ## Curl it
 
@@ -253,7 +245,14 @@ Notice two things in the resolvers:
 It is slow. Specifically: query for ten users with their posts, you fire **eleven SQL queries** — one for users, then one per user for posts.
 
 ```graphql
-{ users { name posts { title } } }
+{
+	users {
+		name
+		posts {
+			title
+		}
+	}
+}
 ```
 
 That is the **N+1 problem** and it is the most important lesson in GraphQL. We dedicate two whole chapters to it (5 and 6). For now: notice the problem exists, finish reading this chapter.
@@ -313,4 +312,3 @@ The mental model — schema, resolvers, execution tree — is identical. Pick th
 - This server is correct but slow. Chapter 5 is why.
 
 Next: [Resolvers and the execution tree](/notes/graphql/04-resolvers) — what the engine is actually doing while it walks your query.
-

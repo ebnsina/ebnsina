@@ -1,10 +1,20 @@
 ---
-title: "IoT & Embedded Security"
-subtitle: "Firmware extraction and analysis, UART/JTAG debugging, default credentials, protocol attacks, and hardware hacking fundamentals."
+title: 'IoT & Embedded Security'
+subtitle: 'Firmware extraction and analysis, UART/JTAG debugging, default credentials, protocol attacks, and hardware hacking fundamentals.'
 chapter: 25
-level: "advanced"
-readingTime: "12 min"
-topics: ["IoT security", "firmware analysis", "hardware hacking", "UART", "JTAG", "binwalk", "default credentials", "embedded systems"]
+level: 'advanced'
+readingTime: '12 min'
+topics:
+  [
+    'IoT security',
+    'firmware analysis',
+    'hardware hacking',
+    'UART',
+    'JTAG',
+    'binwalk',
+    'default credentials',
+    'embedded systems'
+  ]
 ---
 
 <script>
@@ -282,4 +292,3 @@ grep -r "password" _firmware.bin.extracted/etc/ 2>/dev/null
 grep -rn "admin\|root\|guest\|service" _firmware.bin.extracted/etc/passwd 2>/dev/null
 # Look for: root::0:0 (root with empty password)
 ```
-

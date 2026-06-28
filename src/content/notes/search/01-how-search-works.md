@@ -1,10 +1,10 @@
 ---
-title: "How Search Works"
-subtitle: "Inverted indexes, tokenization, TF-IDF, BM25 — the mechanics behind every search engine from Postgres full-text to Elasticsearch."
+title: 'How Search Works'
+subtitle: 'Inverted indexes, tokenization, TF-IDF, BM25 — the mechanics behind every search engine from Postgres full-text to Elasticsearch.'
 chapter: 1
-level: "beginner"
-readingTime: "9 min"
-topics: ["inverted index", "tokenization", "TF-IDF", "BM25", "full-text search", "relevance"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['inverted index', 'tokenization', 'TF-IDF', 'BM25', 'full-text search', 'relevance']
 ---
 
 <script>
@@ -66,54 +66,53 @@ The same pipeline runs at query time: the search term goes through the same norm
 
 ```typescript
 class InvertedIndex {
-  private index = new Map<string, Set<number>>();
-  private documents = new Map<number, string>();
-  private nextId = 0;
+	private index = new Map<string, Set<number>>();
+	private documents = new Map<number, string>();
+	private nextId = 0;
 
-  private tokenize(text: string): string[] {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .split(/\s+/)
-      .filter(t => t.length > 2);   // naive stopword removal
-  }
+	private tokenize(text: string): string[] {
+		return text
+			.toLowerCase()
+			.replace(/[^a-z0-9\s]/g, '')
+			.split(/\s+/)
+			.filter((t) => t.length > 2); // naive stopword removal
+	}
 
-  add(document: string): number {
-    const id = this.nextId++;
-    this.documents.set(id, document);
+	add(document: string): number {
+		const id = this.nextId++;
+		this.documents.set(id, document);
 
-    for (const token of this.tokenize(document)) {
-      if (!this.index.has(token)) this.index.set(token, new Set());
-      this.index.get(token)!.add(id);
-    }
-    return id;
-  }
+		for (const token of this.tokenize(document)) {
+			if (!this.index.has(token)) this.index.set(token, new Set());
+			this.index.get(token)!.add(id);
+		}
+		return id;
+	}
 
-  search(query: string): string[] {
-    const tokens = this.tokenize(query);
-    if (tokens.length === 0) return [];
+	search(query: string): string[] {
+		const tokens = this.tokenize(query);
+		if (tokens.length === 0) return [];
 
-    // Intersection of posting lists for AND semantics
-    let results: Set<number> | null = null;
+		// Intersection of posting lists for AND semantics
+		let results: Set<number> | null = null;
 
-    for (const token of tokens) {
-      const posting = this.index.get(token) ?? new Set<number>();
-      results = results === null
-        ? new Set(posting)
-        : new Set([...results].filter(id => posting.has(id)));
-    }
+		for (const token of tokens) {
+			const posting = this.index.get(token) ?? new Set<number>();
+			results =
+				results === null ? new Set(posting) : new Set([...results].filter((id) => posting.has(id)));
+		}
 
-    return [...(results ?? [])].map(id => this.documents.get(id)!);
-  }
+		return [...(results ?? [])].map((id) => this.documents.get(id)!);
+	}
 }
 
 const idx = new InvertedIndex();
-idx.add("fast database queries");
-idx.add("optimizing database performance");
-idx.add("fast query optimization");
+idx.add('fast database queries');
+idx.add('optimizing database performance');
+idx.add('fast query optimization');
 
-idx.search("database fast");   // → ["fast database queries"]
-idx.search("database");        // → ["fast database queries", "optimizing database performance"]
+idx.search('database fast'); // → ["fast database queries"]
+idx.search('database'); // → ["fast database queries", "optimizing database performance"]
 ```
 
 This is the core of every search engine — the rest is relevance ranking, scalability, and features.
@@ -123,12 +122,14 @@ This is the core of every search engine — the rest is relevance ranking, scala
 All matching documents are not equally relevant. A document mentioning "database" 10 times is more relevant than one mentioning it once. But "the" appears in every document — its presence doesn't signal relevance.
 
 **TF (Term Frequency):** how often does the term appear in this document?
+
 ```
 TF("database", doc1) = 1/3 = 0.33   (1 occurrence, 3 words)
 TF("database", doc2) = 1/4 = 0.25
 ```
 
 **IDF (Inverse Document Frequency):** how rare is this term across all documents?
+
 ```
 IDF("database") = log(3 / 2) = 0.18   (3 docs total, 2 contain "database")
 IDF("fast")     = log(3 / 2) = 0.18
@@ -136,6 +137,7 @@ IDF("the")      = log(3 / 3) = 0       (in every doc → zero signal)
 ```
 
 **TF-IDF score:**
+
 ```
 score(doc1, "database") = TF × IDF = 0.33 × 0.18 = 0.059
 ```
@@ -155,6 +157,7 @@ avgdl = average document length
 ```
 
 In plain terms: BM25 gives higher scores to documents where:
+
 - The term appears frequently (but with diminishing returns)
 - The document is shorter relative to average (a short doc mentioning "database" twice is more focused than a long doc mentioning it twice)
 
@@ -264,4 +267,3 @@ Paginate and return
 ```
 
 Understanding this pipeline explains why dedicated search engines exist: each step can be configured, tuned, and extended — language-specific analyzers, custom token filters, synonym expansion, boosting by field, document-level scoring signals (popularity, recency). Postgres covers the basics; Elasticsearch and Meilisearch expose the full pipeline.
-

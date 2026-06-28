@@ -1,10 +1,10 @@
 ---
-title: "Polyglot — Node and Python clients"
-subtitle: "The same `.proto`, three languages. The whole pitch of gRPC is that the wire is shared and the codegen is free. Once you have done it once it stops feeling like magic."
+title: 'Polyglot — Node and Python clients'
+subtitle: 'The same `.proto`, three languages. The whole pitch of gRPC is that the wire is shared and the codegen is free. Once you have done it once it stops feeling like magic.'
 chapter: 5
-level: "intermediate"
-readingTime: "11 min"
-topics: ["grpc", "node", "python", "codegen", "polyglot"]
+level: 'intermediate'
+readingTime: '11 min'
+topics: ['grpc', 'node', 'python', 'codegen', 'polyglot']
 ---
 
 <script>
@@ -67,46 +67,40 @@ mkdir proto/user/v1
 
 ```js
 // client.js
-import * as grpc from "@grpc/grpc-js";
-import * as protoLoader from "@grpc/proto-loader";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const packageDef = protoLoader.loadSync(
-  resolve(__dirname, "proto/user/v1/user.proto"),
-  {
-    keepCase: false,        // converts snake_case → camelCase
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true,
-    includeDirs: [resolve(__dirname, "proto")],
-  },
-);
+const packageDef = protoLoader.loadSync(resolve(__dirname, 'proto/user/v1/user.proto'), {
+	keepCase: false, // converts snake_case → camelCase
+	longs: String,
+	enums: String,
+	defaults: true,
+	oneofs: true,
+	includeDirs: [resolve(__dirname, 'proto')]
+});
 
 const proto = grpc.loadPackageDefinition(packageDef).user.v1;
 
-const client = new proto.UserService(
-  "localhost:9000",
-  grpc.credentials.createInsecure(),
-);
+const client = new proto.UserService('localhost:9000', grpc.credentials.createInsecure());
 
 function rpc(method, req) {
-  return new Promise((res, rej) => {
-    client[method](req, (err, val) => err ? rej(err) : res(val));
-  });
+	return new Promise((res, rej) => {
+		client[method](req, (err, val) => (err ? rej(err) : res(val)));
+	});
 }
 
-const got = await rpc("GetUser", { id: 1 });
-console.log("got user:", got);
+const got = await rpc('GetUser', { id: 1 });
+console.log('got user:', got);
 
-const created = await rpc("CreateUser", { name: "Habiba", email: "habiba@example.com" });
-console.log("created:", created);
+const created = await rpc('CreateUser', { name: 'Habiba', email: 'habiba@example.com' });
+console.log('created:', created);
 
-const list = await rpc("ListUsers", {});
-console.log("count:", list.users.length);
+const list = await rpc('ListUsers', {});
+console.log('count:', list.users.length);
 ```
 
 ```bash
@@ -266,4 +260,3 @@ When you must break compatibility, use a new package (`user.v2`). Both are deplo
 - Versioning by tag — language packages consume specific proto-repo tags.
 
 Next: [Streaming RPCs](/notes/grpc/06-streaming) — server, client, and bidirectional streams, where gRPC stops looking like REST.
-

@@ -1,10 +1,10 @@
 ---
-title: "Entities, attributes, relationships"
-subtitle: "Before SQL, before ORMs, draw the boxes and lines. ER thinking is twenty minutes that saves a year of refactoring."
+title: 'Entities, attributes, relationships'
+subtitle: 'Before SQL, before ORMs, draw the boxes and lines. ER thinking is twenty minutes that saves a year of refactoring.'
 chapter: 2
-level: "beginner"
-readingTime: "11 min"
-topics: ["data-modeling", "er-diagrams", "relationships", "cardinality"]
+level: 'beginner'
+readingTime: '11 min'
+topics: ['data-modeling', 'er-diagrams', 'relationships', 'cardinality']
 ---
 
 <script>
@@ -25,20 +25,20 @@ A social network in real life — people (entities) connected by relationships l
 
 ## The vocabulary
 
-**Entity** — a thing the system knows about. *User*, *Order*, *Listing*, *Comment*. In SQL, usually a table.
+**Entity** — a thing the system knows about. _User_, _Order_, _Listing_, _Comment_. In SQL, usually a table.
 
-**Attribute** — a property of an entity. *email*, *name*, *created_at*. In SQL, a column.
+**Attribute** — a property of an entity. _email_, _name_, _created_at_. In SQL, a column.
 
-**Relationship** — how two entities relate. *A user has many orders.* *A listing belongs to one seller.* In SQL, foreign keys (or a join table).
+**Relationship** — how two entities relate. _A user has many orders._ _A listing belongs to one seller._ In SQL, foreign keys (or a join table).
 
 **Cardinality** — how many of one side relate to how many of the other. The four shapes:
 
-| Cardinality | Example |
-|---|---|
-| 1 : 1 | a `user` has exactly one `user_settings` row |
-| 1 : N | a `user` has many `orders`; each order has one `user` |
-| N : 1 | flip of 1 : N |
-| N : M | a `user` favorites many `listings`; each listing is favorited by many `users` |
+| Cardinality | Example                                                                       |
+| ----------- | ----------------------------------------------------------------------------- |
+| 1 : 1       | a `user` has exactly one `user_settings` row                                  |
+| 1 : N       | a `user` has many `orders`; each order has one `user`                         |
+| N : 1       | flip of 1 : N                                                                 |
+| N : M       | a `user` favorites many `listings`; each listing is favorited by many `users` |
 
 That's the whole vocabulary. Five terms.
 
@@ -62,15 +62,15 @@ Read: `||--o{` is one-to-many; `}o--o{` is many-to-many. The arrows aren't impor
 
 **Whiteboard sketch (fastest).** Just boxes, lines, and "1" or "N" labels. No tooling required. For 80% of design conversations, this is what you actually use.
 
-Pick one and use it consistently. The sketch is for *you* and the people you're designing with. It's not deliverable; it's a thinking aid.
+Pick one and use it consistently. The sketch is for _you_ and the people you're designing with. It's not deliverable; it's a thinking aid.
 
 ## Identifying entities — the test
 
 Two ways to know something is an entity vs an attribute.
 
-**Test 1: Does it have its own life?** A user logs in, gets emailed, has settings. Independent existence → entity. A user's *birthday* doesn't have settings or get emailed; it's just a date attached to the user → attribute.
+**Test 1: Does it have its own life?** A user logs in, gets emailed, has settings. Independent existence → entity. A user's _birthday_ doesn't have settings or get emailed; it's just a date attached to the user → attribute.
 
-**Test 2: Will it have its own children?** An *address* sounds like an attribute on a user. But what if a user has multiple addresses (shipping, billing)? Now `address` has its own children — it's an entity (`addresses` table) with `user_id` foreign key.
+**Test 2: Will it have its own children?** An _address_ sounds like an attribute on a user. But what if a user has multiple addresses (shipping, billing)? Now `address` has its own children — it's an entity (`addresses` table) with `user_id` foreign key.
 
 When in doubt, start as an attribute. Promoting to an entity later is a one-step migration; demoting an entity to an attribute is rarely the right move.
 
@@ -87,7 +87,7 @@ CREATE TABLE user_settings (
 );
 ```
 
-`user_settings.user_id` is both the primary key *and* the foreign key. Each user has exactly one row in `user_settings`. Why split:
+`user_settings.user_id` is both the primary key _and_ the foreign key. Each user has exactly one row in `user_settings`. Why split:
 
 - **Performance / row width.** A `users` table with 30 columns and one of them is a 50KB JSON blob queried rarely — split the blob into a separate table.
 - **Optionality.** Settings exist only after the user opens the settings page. The presence/absence of a row signals state.
@@ -171,7 +171,7 @@ CREATE TABLE org_memberships (
 );
 ```
 
-`role` doesn't belong on `users` (a user can have different roles in different orgs) or on `orgs` (an org has many roles, one per member). It belongs on the *membership* — the relationship itself.
+`role` doesn't belong on `users` (a user can have different roles in different orgs) or on `orgs` (an org has many roles, one per member). It belongs on the _membership_ — the relationship itself.
 
 When the join table starts to feel like a real entity, give it its own surrogate key (chapter 3) and let it grow:
 
@@ -284,4 +284,3 @@ This is a classic adjacency list. Fine for trees up to a few thousand nodes. Dee
 - Naming and explicit cardinality save you the most rework.
 
 Next: [Keys](/notes/data-modeling/03-keys) — picking the identifier that ages well.
-

@@ -1,10 +1,10 @@
 ---
-title: "Secrets & Configuration"
-subtitle: "Environment variables, secret managers, config as code — how to handle sensitive data without leaking it."
+title: 'Secrets & Configuration'
+subtitle: 'Environment variables, secret managers, config as code — how to handle sensitive data without leaking it.'
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["secrets", "env vars", "config", "security"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['secrets', 'env vars', 'config', 'security']
 ---
 
 <script>
@@ -42,22 +42,22 @@ Like keeping your bank PIN vs. your display name — your PIN (secret) is stored
 ```typescript
 // The twelve-factor app way: configure via environment
 const config = {
-  port: parseInt(process.env.PORT || "3000"),
-  databaseUrl: process.env.DATABASE_URL!,
-  redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
-  logLevel: process.env.LOG_LEVEL || "info",
-  nodeEnv: process.env.NODE_ENV || "development",
+	port: parseInt(process.env.PORT || '3000'),
+	databaseUrl: process.env.DATABASE_URL!,
+	redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+	logLevel: process.env.LOG_LEVEL || 'info',
+	nodeEnv: process.env.NODE_ENV || 'development'
 };
 
 // Validate at startup — fail fast if config is missing
 function validateConfig(config: Record<string, unknown>): void {
-  const required = ["databaseUrl"];
+	const required = ['databaseUrl'];
 
-  for (const key of required) {
-    if (!config[key]) {
-      throw new Error(`Missing required config: ${key}`);
-    }
-  }
+	for (const key of required) {
+		if (!config[key]) {
+			throw new Error(`Missing required config: ${key}`);
+		}
+	}
 }
 
 validateConfig(config);
@@ -75,18 +75,18 @@ validateConfig(config);
 // AWS Secrets Manager / GCP Secret Manager / HashiCorp Vault
 // Store secrets centrally, rotate them automatically, audit access
 
-import { SecretsManager } from "@aws-sdk/client-secrets-manager";
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 
-const client = new SecretsManager({ region: "us-east-1" });
+const client = new SecretsManager({ region: 'us-east-1' });
 
 async function getSecret(name: string): Promise<string> {
-  const response = await client.getSecretValue({ SecretId: name });
-  return response.SecretString!;
+	const response = await client.getSecretValue({ SecretId: name });
+	return response.SecretString!;
 }
 
 // Load secrets at startup
-const dbPassword = await getSecret("prod/database/password");
-const stripeKey = await getSecret("prod/stripe/api-key");
+const dbPassword = await getSecret('prod/database/password');
+const stripeKey = await getSecret('prod/stripe/api-key');
 
 // Benefits over env vars:
 // - Automatic rotation (e.g., rotate DB password every 30 days)
@@ -105,7 +105,7 @@ metadata:
   name: db-credentials
 type: Opaque
 data:
-  username: cG9zdGdyZXM=     # base64 encoded (NOT encrypted!)
+  username: cG9zdGdyZXM= # base64 encoded (NOT encrypted!)
   password: c3VwZXJzZWNyZXQ=
 
 ---
@@ -144,16 +144,16 @@ spec:
 
 // Database password rotation (dual-password approach):
 async function rotateDbPassword(): Promise<void> {
-  const newPassword = generateSecurePassword();
+	const newPassword = generateSecurePassword();
 
-  // 1. Set new password (old still works)
-  await db.execute(`ALTER USER app_user SET PASSWORD = '${newPassword}'`);
+	// 1. Set new password (old still works)
+	await db.execute(`ALTER USER app_user SET PASSWORD = '${newPassword}'`);
 
-  // 2. Update secret manager
-  await secretManager.updateSecret("prod/db/password", newPassword);
+	// 2. Update secret manager
+	await secretManager.updateSecret('prod/db/password', newPassword);
 
-  // 3. App picks up new password on next connection pool refresh
-  // (or trigger a rolling restart)
+	// 3. App picks up new password on next connection pool refresh
+	// (or trigger a rolling restart)
 }
 ```
 
@@ -163,4 +163,3 @@ async function rotateDbPassword(): Promise<void> {
 2. **Validate config at startup** — fail fast if required values are missing
 3. **Use a secret manager** for production — env vars don't provide rotation, auditing, or encryption
 4. **Rotate secrets regularly** — automate it so it's painless
-

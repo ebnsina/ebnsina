@@ -1,10 +1,10 @@
 ---
-title: "Service Mesh Internals"
-subtitle: "Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting. What a mesh actually does and when it earns its complexity."
+title: 'Service Mesh Internals'
+subtitle: 'Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting. What a mesh actually does and when it earns its complexity.'
 chapter: 17
-level: "mastery"
-readingTime: "28 min"
-topics: ["service mesh", "Envoy", "Istio", "Linkerd", "ambient", "mTLS", "xDS", "Cilium"]
+level: 'mastery'
+readingTime: '28 min'
+topics: ['service mesh', 'Envoy', 'Istio', 'Linkerd', 'ambient', 'mTLS', 'xDS', 'Cilium']
 ---
 
 <script>
@@ -29,13 +29,13 @@ You pay: an extra hop per call, a new control plane to operate, a learning curve
 
 ## When a mesh actually earns its keep
 
-| Situation | Mesh worth it? |
-|---|---|
-| 1 monolith + 3 services, single language | No. Use HTTP keepalive + a library. |
-| 50 services, 5 languages, mTLS required | Yes. The library cost dominates. |
-| Zero-trust mandate, policy-as-code | Yes. Mesh is the natural enforcement point. |
-| Pure event-driven (Kafka/SQS) services | No. The mesh sits on RPC paths, not queues. |
-| Heavy egress to third-party SaaS | Partial. Egress gateway is useful; full mesh isn't. |
+| Situation                                | Mesh worth it?                                      |
+| ---------------------------------------- | --------------------------------------------------- |
+| 1 monolith + 3 services, single language | No. Use HTTP keepalive + a library.                 |
+| 50 services, 5 languages, mTLS required  | Yes. The library cost dominates.                    |
+| Zero-trust mandate, policy-as-code       | Yes. Mesh is the natural enforcement point.         |
+| Pure event-driven (Kafka/SQS) services   | No. The mesh sits on RPC paths, not queues.         |
+| Heavy egress to third-party SaaS         | Partial. Egress gateway is useful; full mesh isn't. |
 
 The honest test: **list the cross-cutting concerns you'd otherwise build into N libraries.** If the list is short, skip the mesh.
 
@@ -67,7 +67,7 @@ EDS — Endpoint Discovery Service.    Endpoints inside each cluster.
 SDS — Secret Discovery Service.      Certificates for mTLS.
 ```
 
-Istiod, Cilium's mesh agent, Consul Connect — all speak xDS to Envoy. If you understand the xDS taxonomy, you can debug *any* Envoy-based mesh.
+Istiod, Cilium's mesh agent, Consul Connect — all speak xDS to Envoy. If you understand the xDS taxonomy, you can debug _any_ Envoy-based mesh.
 
 ```bash
 # Dump live Envoy config from an Istio sidecar
@@ -162,7 +162,7 @@ spec:
             paths: [/v1/charges/*]
 ```
 
-Compare to NetworkPolicy: NP says "this pod label can talk to this pod label." AuthorizationPolicy says "this *identity* can perform *this RPC*." That's the leap from network ACL to service-level RBAC.
+Compare to NetworkPolicy: NP says "this pod label can talk to this pod label." AuthorizationPolicy says "this _identity_ can perform _this RPC_." That's the leap from network ACL to service-level RBAC.
 
 ## Traffic management — the second feature you'll actually use
 
@@ -238,7 +238,7 @@ spec:
   host: payments-api
   trafficPolicy:
     connectionPool:
-      tcp:  { maxConnections: 100 }
+      tcp: { maxConnections: 100 }
       http: { http2MaxRequests: 1000, maxRequestsPerConnection: 10 }
     outlierDetection:
       consecutive5xxErrors: 5
@@ -285,15 +285,15 @@ Each of these has caused a Sev-1 in some team somewhere. The mesh gives capabili
 
 ## Mesh comparison — what to pick in 2026
 
-| | Istio (sidecar) | Istio Ambient | Linkerd | Cilium Service Mesh |
-|---|---|---|---|---|
-| Data plane | Envoy sidecar | Ztunnel + Envoy waypoint | linkerd2-proxy (Rust) | Envoy + eBPF |
-| Resource overhead | High | Low | Lowest of sidecar meshes | Lowest at scale |
-| Maturity | Very mature | GA 2024 | Mature | Mature (CNCF graduated) |
-| L7 features | Full Envoy | Via waypoint | Less than Envoy | Full Envoy (when needed) |
-| Best for | Existing Istio shops | Greenfield K8s | Simplicity-focused | Already Cilium for CNI |
-| mTLS | Yes (Istio CA) | Yes | Yes | Yes (SPIFFE) |
-| Multi-cluster | Yes (complex) | Yes | Yes | Yes |
+|                   | Istio (sidecar)      | Istio Ambient            | Linkerd                  | Cilium Service Mesh      |
+| ----------------- | -------------------- | ------------------------ | ------------------------ | ------------------------ |
+| Data plane        | Envoy sidecar        | Ztunnel + Envoy waypoint | linkerd2-proxy (Rust)    | Envoy + eBPF             |
+| Resource overhead | High                 | Low                      | Lowest of sidecar meshes | Lowest at scale          |
+| Maturity          | Very mature          | GA 2024                  | Mature                   | Mature (CNCF graduated)  |
+| L7 features       | Full Envoy           | Via waypoint             | Less than Envoy          | Full Envoy (when needed) |
+| Best for          | Existing Istio shops | Greenfield K8s           | Simplicity-focused       | Already Cilium for CNI   |
+| mTLS              | Yes (Istio CA)       | Yes                      | Yes                      | Yes (SPIFFE)             |
+| Multi-cluster     | Yes (complex)        | Yes                      | Yes                      | Yes                      |
 
 The real-world picks:
 
@@ -379,4 +379,3 @@ Tier F
 4. **mTLS + workload identity-based authz** is what makes a mesh strategically valuable.
 5. **Retry budgets, not multiplicative retries** — pick one layer to retry from.
 6. **The mesh adds failure modes** — control plane HA, cert TTLs, sidecar OOMs are now your problem.
-

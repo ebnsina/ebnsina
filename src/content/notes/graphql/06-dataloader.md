@@ -1,10 +1,10 @@
 ---
-title: "DataLoader"
-subtitle: "DataLoader is a tiny library that fixes the N+1 problem by batching loads inside an event loop tick, and caching by key for the duration of one request. Once you wire it in, your resolvers stay clean and the SQL graph collapses."
+title: 'DataLoader'
+subtitle: 'DataLoader is a tiny library that fixes the N+1 problem by batching loads inside an event loop tick, and caching by key for the duration of one request. Once you wire it in, your resolvers stay clean and the SQL graph collapses.'
 chapter: 6
-level: "intermediate"
-readingTime: "13 min"
-topics: ["graphql", "dataloader", "batching", "performance"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['graphql', 'dataloader', 'batching', 'performance']
 ---
 
 <script>
@@ -26,23 +26,20 @@ DataLoader is like a school bus that waits until it's full before leaving — ba
 A `DataLoader` is created with a **batch function**: a function that takes an array of keys and returns an array of values, in the same order.
 
 ```js
-import DataLoader from "dataloader";
+import DataLoader from 'dataloader';
 
 const userLoader = new DataLoader(async (ids) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM users WHERE id = ANY($1::bigint[])",
-    [ids],
-  );
-  const byId = new Map(rows.map(u => [String(u.id), u]));
-  return ids.map(id => byId.get(String(id)) || null);
+	const { rows } = await pool.query('SELECT * FROM users WHERE id = ANY($1::bigint[])', [ids]);
+	const byId = new Map(rows.map((u) => [String(u.id), u]));
+	return ids.map((id) => byId.get(String(id)) || null);
 });
 ```
 
 Then anywhere in your code:
 
 ```js
-const aoife = await userLoader.load("1");
-const niamh = await userLoader.load("2");
+const aoife = await userLoader.load('1');
+const niamh = await userLoader.load('2');
 ```
 
 DataLoader does three things in concert:
@@ -59,42 +56,39 @@ The critical rule from chapter 4: **DataLoaders are per-request**. Create them i
 
 ```js
 // loaders.js
-import DataLoader from "dataloader";
+import DataLoader from 'dataloader';
 
 export function buildLoaders(pool) {
-  return {
-    user: new DataLoader(async (ids) => {
-      const { rows } = await pool.query(
-        "SELECT * FROM users WHERE id = ANY($1::bigint[])",
-        [ids],
-      );
-      const byId = new Map(rows.map(u => [String(u.id), u]));
-      return ids.map(id => byId.get(String(id)) || null);
-    }),
+	return {
+		user: new DataLoader(async (ids) => {
+			const { rows } = await pool.query('SELECT * FROM users WHERE id = ANY($1::bigint[])', [ids]);
+			const byId = new Map(rows.map((u) => [String(u.id), u]));
+			return ids.map((id) => byId.get(String(id)) || null);
+		}),
 
-    postsByAuthor: new DataLoader(async (authorIds) => {
-      const { rows } = await pool.query(
-        `SELECT * FROM posts
+		postsByAuthor: new DataLoader(async (authorIds) => {
+			const { rows } = await pool.query(
+				`SELECT * FROM posts
          WHERE author_id = ANY($1::bigint[])
          ORDER BY created_at DESC`,
-        [authorIds],
-      );
-      const byAuthor = new Map(authorIds.map(id => [String(id), []]));
-      for (const p of rows) byAuthor.get(String(p.author_id)).push(p);
-      return authorIds.map(id => byAuthor.get(String(id)));
-    }),
-  };
+				[authorIds]
+			);
+			const byAuthor = new Map(authorIds.map((id) => [String(id), []]));
+			for (const p of rows) byAuthor.get(String(p.author_id)).push(p);
+			return authorIds.map((id) => byAuthor.get(String(id)));
+		})
+	};
 }
 ```
 
 ```js
 // server.js (changed bits)
-import { buildLoaders } from "./loaders.js";
+import { buildLoaders } from './loaders.js';
 
 const yoga = createYoga({
-  schema: createSchema({ typeDefs, resolvers }),
-  context: () => ({ loaders: buildLoaders(pool) }),
-  graphiql: true,
+	schema: createSchema({ typeDefs, resolvers }),
+	context: () => ({ loaders: buildLoaders(pool) }),
+	graphiql: true
 });
 ```
 
@@ -102,20 +96,20 @@ Then update resolvers:
 
 ```js
 const resolvers = {
-  Query: {
-    user: (_, { id }, ctx) => ctx.loaders.user.load(id),
-    users: async () => (await pool.query("SELECT * FROM users ORDER BY id")).rows,
-  },
+	Query: {
+		user: (_, { id }, ctx) => ctx.loaders.user.load(id),
+		users: async () => (await pool.query('SELECT * FROM users ORDER BY id')).rows
+	},
 
-  User: {
-    createdAt: (u) => u.created_at,
-    posts: (u, _, ctx) => ctx.loaders.postsByAuthor.load(u.id),
-  },
+	User: {
+		createdAt: (u) => u.created_at,
+		posts: (u, _, ctx) => ctx.loaders.postsByAuthor.load(u.id)
+	},
 
-  Post: {
-    createdAt: (p) => p.created_at,
-    author: (p, _, ctx) => ctx.loaders.user.load(p.author_id),
-  },
+	Post: {
+		createdAt: (p) => p.created_at,
+		author: (p, _, ctx) => ctx.loaders.user.load(p.author_id)
+	}
 };
 ```
 
@@ -123,13 +117,15 @@ Now run the same query:
 
 ```graphql
 {
-  users {
-    name
-    posts {
-      title
-      author { name }
-    }
-  }
+	users {
+		name
+		posts {
+			title
+			author {
+				name
+			}
+		}
+	}
 }
 ```
 
@@ -165,10 +161,12 @@ Now the post-author lookup is a cache hit on every key — zero extra SQL.
 There are two patterns and you will use both.
 
 **Pattern A: load one by key.** `userLoader.load(id)` returns one user.
+
 - Batch function: `(ids) => [user0, user1, user2]` — same length and order.
 - Use for: lookup-by-PK, lookup-by-unique-key.
 
 **Pattern B: load many by key.** `postsByAuthor.load(authorId)` returns an array of posts.
+
 - Batch function: `(authorIds) => [[posts0], [posts1], [posts2]]` — same length, each element is the matching array.
 - Use for: child arrays in a 1-to-many relationship.
 
@@ -192,7 +190,7 @@ For any external dependency you call inside resolvers, ask: "does this dependenc
 
 ## What about caching across requests
 
-DataLoader caches *per loader instance*. Per-request loaders means caches die at request end. That is intentional — cross-request caching is a different problem (Redis, in-process LRU, persisted query caches) and a different lifetime.
+DataLoader caches _per loader instance_. Per-request loaders means caches die at request end. That is intentional — cross-request caching is a different problem (Redis, in-process LRU, persisted query caches) and a different lifetime.
 
 Putting a DataLoader at module scope would share cache across requests. **Do not.** It leaks data between users (loader cache hit on a row another user does not have permission to see), grows unboundedly, and makes the loader cache poisoned for the lifetime of the process. Every GraphQL N+1 horror story has this in it.
 
@@ -222,7 +220,7 @@ The semantics are identical. The implementation is the same idea: collect calls 
 
 **2. Loaders that do too much.** A "user-with-posts" loader that fetches both is a re-implementation of JOIN. Keep loaders thin — one entity, one key.
 
-**3. Loaders that throw on missing keys.** Return `null` (or `[]`), let the resolver decide. Throwing inside the batch function fails *every* caller in that batch.
+**3. Loaders that throw on missing keys.** Return `null` (or `[]`), let the resolver decide. Throwing inside the batch function fails _every_ caller in that batch.
 
 **4. Loaders without `ANY($1::array)`.** If your batch function calls SQL N times in a loop, you have not actually batched. Always `WHERE col = ANY($1::type[])` or the `IN (...)` equivalent.
 
@@ -237,4 +235,3 @@ The semantics are identical. The implementation is the same idea: collect calls 
 - It is not magic. Some patterns (cursor children, conditional fetches) need other tools.
 
 Next: [Mutations, input types, validation](/notes/graphql/07-mutations) — writes done properly.
-

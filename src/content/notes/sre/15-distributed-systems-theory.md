@@ -1,10 +1,20 @@
 ---
-title: "Distributed Systems Theory for SREs"
-subtitle: "CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens. The theory that explains why your distributed system breaks the way it does."
+title: 'Distributed Systems Theory for SREs'
+subtitle: 'CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens. The theory that explains why your distributed system breaks the way it does.'
 chapter: 15
-level: "mastery"
-readingTime: "32 min"
-topics: ["distributed systems", "CAP", "Raft", "Paxos", "consensus", "CRDT", "vector clock", "fencing tokens"]
+level: 'mastery'
+readingTime: '32 min'
+topics:
+  [
+    'distributed systems',
+    'CAP',
+    'Raft',
+    'Paxos',
+    'consensus',
+    'CRDT',
+    'vector clock',
+    'fencing tokens'
+  ]
 ---
 
 <script>
@@ -44,9 +54,9 @@ Memorize them. The first three explain ~70% of distributed bugs. Every "we'll ju
 
 ## CAP — the most misquoted theorem in our industry
 
-Eric Brewer's CAP theorem says: in the presence of a *network Partition*, a system must choose between Consistency and Availability. That's it.
+Eric Brewer's CAP theorem says: in the presence of a _network Partition_, a system must choose between Consistency and Availability. That's it.
 
-The common misquote: "pick two of three." That's wrong. Networks partition. You don't get to pick "no partition." You get to pick C-or-A *during* a partition.
+The common misquote: "pick two of three." That's wrong. Networks partition. You don't get to pick "no partition." You get to pick C-or-A _during_ a partition.
 
 ```
 Partition occurs.
@@ -60,12 +70,12 @@ CP systems just resume.
 
 ### Real-world examples
 
-| System | Choice | Behavior under partition |
-|---|---|---|
-| etcd, Consul, ZooKeeper | CP | Minority side becomes read-only |
-| Cassandra, DynamoDB (default) | AP | Both sides accept writes; LWW or merge later |
-| Postgres (single primary) | CP | Standby may be promoted; split-brain risk if mishandled |
-| Spanner (TrueTime) | "CP-ish, with bounded availability" | Refuses writes that can't get a TrueTime quorum |
+| System                        | Choice                              | Behavior under partition                                |
+| ----------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| etcd, Consul, ZooKeeper       | CP                                  | Minority side becomes read-only                         |
+| Cassandra, DynamoDB (default) | AP                                  | Both sides accept writes; LWW or merge later            |
+| Postgres (single primary)     | CP                                  | Standby may be promoted; split-brain risk if mishandled |
+| Spanner (TrueTime)            | "CP-ish, with bounded availability" | Refuses writes that can't get a TrueTime quorum         |
 
 ## PACELC — the more useful framework
 
@@ -82,7 +92,7 @@ Example labels:
   Spanner    CP / EC — picks consistency always; pays latency cost.
 ```
 
-PACELC is the more useful framework because most of the time the system *isn't* partitioned. The latency-vs-consistency choice is the daily one. The CAP choice is the once-a-quarter one.
+PACELC is the more useful framework because most of the time the system _isn't_ partitioned. The latency-vs-consistency choice is the daily one. The CAP choice is the once-a-quarter one.
 
 ## FLP impossibility — why consensus algorithms have weird timeouts
 
@@ -261,14 +271,14 @@ The receiver is doing the work. That's why every queue/event-bus README hammers 
 ```typescript
 // Bad: not idempotent. Retried delivery double-charges.
 async function processOrder(msg) {
-  await charge(msg.userId, msg.amount);
+	await charge(msg.userId, msg.amount);
 }
 
 // Good: dedupe by message ID.
 async function processOrder(msg) {
-  const inserted = await db.insertOrIgnore("processed_messages", { id: msg.id });
-  if (!inserted) return; // already processed
-  await charge(msg.userId, msg.amount);
+	const inserted = await db.insertOrIgnore('processed_messages', { id: msg.id });
+	if (!inserted) return; // already processed
+	await charge(msg.userId, msg.amount);
 }
 ```
 
@@ -284,7 +294,7 @@ The storage layer rejects writes with a token < the highest seen.
 ```
 
 ```typescript
-const token = await lockManager.acquire("resource");  // returns 17
+const token = await lockManager.acquire('resource'); // returns 17
 // ... later, after GC pause ...
 await storage.write({ key, value, token });
 // storage layer: "I've already seen token 23 from process B. Reject 17."
@@ -390,4 +400,3 @@ The Jepsen reports are required reading — they're the field's empirical realit
 5. **Idempotency is the only real "exactly once"** — design receivers, not pipes.
 6. **Fencing tokens are the only safe distributed locks.**
 7. **Clocks lie; use logical, hybrid, or TrueTime when ordering matters.**
-

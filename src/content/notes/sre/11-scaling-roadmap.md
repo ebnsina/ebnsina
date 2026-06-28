@@ -1,10 +1,10 @@
 ---
-title: "Scaling & Distributed Systems — 8-Week Companion Roadmap"
-subtitle: "Zero to designing, building, and operating scalable systems. 1–2 hrs/day, 8 weeks, 8 real projects, 5 case studies, mini-YouTube capstone."
+title: 'Scaling & Distributed Systems — 8-Week Companion Roadmap'
+subtitle: 'Zero to designing, building, and operating scalable systems. 1–2 hrs/day, 8 weeks, 8 real projects, 5 case studies, mini-YouTube capstone.'
 chapter: 11
-level: "beginner"
-readingTime: "25 min"
-topics: ["scaling", "distributed systems", "roadmap", "capstone", "system design"]
+level: 'beginner'
+readingTime: '25 min'
+topics: ['scaling', 'distributed systems', 'roadmap', 'capstone', 'system design']
 ---
 
 <script>
@@ -76,10 +76,10 @@ Phase 3 — Real-World Scaling (Weeks 6–8)
 
 **Resources**
 
-- Hussein Nasser — *Fundamentals of Networking* (YouTube)
+- Hussein Nasser — _Fundamentals of Networking_ (YouTube)
 - roadmap.sh/devops
 - Linux Journey — linuxjourney.com (free)
-- *High Performance Browser Networking* — Ilya Grigorik (free online)
+- _High Performance Browser Networking_ — Ilya Grigorik (free online)
 
 **Case study — How Cloudflare handles 100M+ requests/sec**
 
@@ -181,7 +181,7 @@ dd if=/dev/zero of=/tmp/fill bs=1M                    # fill Node 01 disk to 100
 
 **Resources**
 
-- *DDIA* — Ch. 3, 5 (storage engines, replication)
+- _DDIA_ — Ch. 3, 5 (storage engines, replication)
 - Arpit Bhayani — How Instagram sharded their DB (YouTube)
 - Postgres docs — WAL and streaming replication
 - Use The Index, Luke — use-the-index-luke.com (free)
@@ -236,7 +236,7 @@ SELECT now() - pg_last_xact_replay_timestamp();
 
 **Resources**
 
-- *DDIA* — Ch. 11 (stream processing)
+- _DDIA_ — Ch. 11 (stream processing)
 - ByteByteGo — caching strategies (YouTube)
 - Redis University — RU101 (free)
 - Kafka quickstart — kafka.apache.org
@@ -291,7 +291,7 @@ sudo systemctl restart redis && wrk -t8 -c100 -d10s http://localhost/api
 
 **Resources**
 
-- *DDIA* — Ch. 8, 9 (read slowly — the hardest chapters)
+- _DDIA_ — Ch. 8, 9 (read slowly — the hardest chapters)
 - Martin Kleppmann — Cambridge lecture series (YouTube, free)
 - MIT 6.824 — Lectures 1–4 (YouTube, free)
 - raft.github.io — interactive Raft visualisation
@@ -394,7 +394,7 @@ kubectl rollout restart deployment/app              # observe zero-downtime roll
 
 - Grafana Labs — free tutorials (grafana.com/tutorials)
 - Prometheus docs — prometheus.io
-- *Site Reliability Engineering* — Google (free online)
+- _Site Reliability Engineering_ — Google (free online)
 - Netflix Tech Blog — chaos engineering articles
 
 **Case study — How Netflix invented Chaos Engineering**
@@ -443,10 +443,10 @@ iptables -A INPUT -p tcp --dport 5432 -j DROP       # simulate DB unreachable
 
 **Resources**
 
-- *System Design Interview* Vol.1 — Alex Xu (book)
+- _System Design Interview_ Vol.1 — Alex Xu (book)
 - system-design-primer — github.com/donnemartin (free)
 - High Scalability — highscalability.com (real case studies)
-- *DDIA* — Ch. 1–2 (re-read now — it all clicks)
+- _DDIA_ — Ch. 1–2 (re-read now — it all clicks)
 
 **Case study — How Twitch handles 8 million concurrent viewers**
 
@@ -459,24 +459,28 @@ Separate ingest (RTMP) from delivery (HLS). Transcode in parallel across worker 
 Combines every concept from weeks 1–7. A real video upload + streaming platform. Not a toy — design it to handle actual traffic.
 
 ### Component 1 — Upload service
+
 - Accept video via multipart upload
 - Store raw file to MinIO (S3-compatible)
 - Publish `video.uploaded` event to Kafka
 - Return job ID immediately (async response)
 
 ### Component 2 — Transcoding worker
+
 - Consume `video.uploaded` from Kafka
 - Transcode to 360p / 720p using FFmpeg
 - Upload segments back to MinIO
 - Update job status in Postgres
 
 ### Component 3 — API + serving layer
+
 - `GET /video/:id` — serve HLS playlist
 - Cache playlist + metadata in Redis
 - Postgres read replica for metadata queries
 - Nginx serves `.ts` segment files directly
 
 ### Component 4 — Infrastructure
+
 - All services in Docker Compose
 - HAProxy in front of API replicas
 - Prometheus + Grafana monitoring
@@ -494,22 +498,22 @@ Combines every concept from weeks 1–7. A real video upload + streaming platfor
 
 ## Books — when to read them
 
-| When | Book | How to read |
-|------|------|-------------|
-| Week 3–5 | *Designing Data-Intensive Applications* — Martin Kleppmann | The best book on distributed systems. Read Ch.3 (storage engines) alongside Week 3, Ch.8–9 (consensus, distributed systems) alongside Week 5. Don't read cover-to-cover cold — use it alongside the labs and it will make complete sense. |
-| Week 8 | *System Design Interview* Vol.1 — Alex Xu | Practical walkthroughs of designing URL shorteners, Twitter feeds, YouTube, WhatsApp at scale. Read after you've built similar things yourself — it's far more useful when you have context. |
-| After | *Site Reliability Engineering* — Google (free online) | How Google operates systems at planet scale. SLOs, error budgets, on-call, incident management. Best read once you have something running in production. |
-| Reference | *The Linux Command Line* — William Shotts (free online) | Essential for all the lab work. Don't read cover-to-cover — use it as a reference when you're stuck on a shell command. |
+| When      | Book                                                       | How to read                                                                                                                                                                                                                               |
+| --------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Week 3–5  | _Designing Data-Intensive Applications_ — Martin Kleppmann | The best book on distributed systems. Read Ch.3 (storage engines) alongside Week 3, Ch.8–9 (consensus, distributed systems) alongside Week 5. Don't read cover-to-cover cold — use it alongside the labs and it will make complete sense. |
+| Week 8    | _System Design Interview_ Vol.1 — Alex Xu                  | Practical walkthroughs of designing URL shorteners, Twitter feeds, YouTube, WhatsApp at scale. Read after you've built similar things yourself — it's far more useful when you have context.                                              |
+| After     | _Site Reliability Engineering_ — Google (free online)      | How Google operates systems at planet scale. SLOs, error budgets, on-call, incident management. Best read once you have something running in production.                                                                                  |
+| Reference | _The Linux Command Line_ — William Shotts (free online)    | Essential for all the lab work. Don't read cover-to-cover — use it as a reference when you're stuck on a shell command.                                                                                                                   |
 
 ---
 
 ## Daily rhythm — 1–2 hrs/day
 
-| Days | Mode | What to do |
-|------|------|------------|
-| Mon – Wed | Watch + Read | 1 topic/day. Take notes. Draw diagrams by hand. |
+| Days      | Mode              | What to do                                          |
+| --------- | ----------------- | --------------------------------------------------- |
+| Mon – Wed | Watch + Read      | 1 topic/day. Take notes. Draw diagrams by hand.     |
 | Thu – Fri | Build the project | Hands-on only. No videos. Just terminal and editor. |
-| Weekend | Break things | Chaos tests. Write a post-mortem. Review the week. |
+| Weekend   | Break things      | Chaos tests. Write a post-mortem. Review the week.  |
 
 <Callout type="tip">
 
@@ -532,4 +536,3 @@ Combines every concept from weeks 1–7. A real video upload + streaming platfor
 4. **Phase 3 puts it on Kubernetes**, observes it, breaks it, then ships the capstone
 5. **Mini-YouTube capstone** combines every prior week — it is the portfolio artifact
 6. **Read DDIA alongside the labs**, not cover-to-cover cold — context unlocks the book
-

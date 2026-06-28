@@ -1,10 +1,10 @@
 ---
-title: "Subscriptions over WebSockets"
-subtitle: "Subscriptions are realtime queries — clients open a long-lived connection and the server pushes events as they happen. Different transport, different lifecycle, different failure modes than queries and mutations."
+title: 'Subscriptions over WebSockets'
+subtitle: 'Subscriptions are realtime queries — clients open a long-lived connection and the server pushes events as they happen. Different transport, different lifecycle, different failure modes than queries and mutations.'
 chapter: 9
-level: "advanced"
-readingTime: "13 min"
-topics: ["graphql", "subscriptions", "websockets", "realtime", "pubsub"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['graphql', 'subscriptions', 'websockets', 'realtime', 'pubsub']
 ---
 
 <script>
@@ -27,7 +27,7 @@ A GraphQL subscription is like subscribing to a newspaper — it arrives when pr
 
 ```graphql
 type Subscription {
-  postPublished(orgId: ID!): Post!
+	postPublished(orgId: ID!): Post!
 }
 ```
 
@@ -37,11 +37,13 @@ A client subscribes with the same query syntax:
 
 ```graphql
 subscription WatchPosts($orgId: ID!) {
-  postPublished(orgId: $orgId) {
-    id
-    title
-    author { name }
-  }
+	postPublished(orgId: $orgId) {
+		id
+		title
+		author {
+			name
+		}
+	}
 }
 ```
 
@@ -71,20 +73,20 @@ Client → Server: { type: "complete", id: "1" }
 Subscription resolvers don't return a value — they return an **async iterator** that the executor consumes:
 
 ```js
-import { createPubSub } from "graphql-yoga";
+import { createPubSub } from 'graphql-yoga';
 
 const pubsub = createPubSub();
 
 const resolvers = {
-  Subscription: {
-    postPublished: {
-      subscribe: (_, { orgId }, ctx) => {
-        if (!ctx.currentUser) throw new Error("Not authenticated");
-        return pubsub.subscribe(`post-published:${orgId}`);
-      },
-      resolve: (payload) => payload, // payload is the post object
-    },
-  },
+	Subscription: {
+		postPublished: {
+			subscribe: (_, { orgId }, ctx) => {
+				if (!ctx.currentUser) throw new Error('Not authenticated');
+				return pubsub.subscribe(`post-published:${orgId}`);
+			},
+			resolve: (payload) => payload // payload is the post object
+		}
+	}
 };
 ```
 
@@ -107,52 +109,55 @@ That `pubsub.publish` fans out the post to every active subscriber on that chann
 graphql-yoga handles HTTP. WebSockets need the `graphql-ws` server bound to the same HTTP server:
 
 ```js
-import { createServer } from "node:http";
-import { createYoga } from "graphql-yoga";
-import { useServer } from "graphql-ws/use/ws";
-import { WebSocketServer } from "ws";
+import { createServer } from 'node:http';
+import { createYoga } from 'graphql-yoga';
+import { useServer } from 'graphql-ws/use/ws';
+import { WebSocketServer } from 'ws';
 
 const yoga = createYoga({
-  schema,
-  context: async ({ request, connectionParams }) => {
-    // HTTP path uses request; WS path uses connectionParams
-    const token = request?.headers.get("authorization")?.slice(7)
-      ?? connectionParams?.authToken;
-    const currentUser = token ? verifyJwt(token) : null;
-    return { db: pool, loaders: buildLoaders(pool), currentUser, pubsub };
-  },
+	schema,
+	context: async ({ request, connectionParams }) => {
+		// HTTP path uses request; WS path uses connectionParams
+		const token = request?.headers.get('authorization')?.slice(7) ?? connectionParams?.authToken;
+		const currentUser = token ? verifyJwt(token) : null;
+		return { db: pool, loaders: buildLoaders(pool), currentUser, pubsub };
+	}
 });
 
 const httpServer = createServer(yoga);
 
 const wsServer = new WebSocketServer({
-  server: httpServer,
-  path: yoga.graphqlEndpoint,
+	server: httpServer,
+	path: yoga.graphqlEndpoint
 });
 
 useServer(
-  {
-    execute: (args) => args.execute(args),
-    subscribe: (args) => args.subscribe(args),
-    onSubscribe: async (ctx, msg) => {
-      const { schema, execute, subscribe, contextFactory, parse, validate } =
-        yoga.getEnveloped({ ...ctx, req: ctx.extra.request, socket: ctx.extra.socket, params: msg.payload });
+	{
+		execute: (args) => args.execute(args),
+		subscribe: (args) => args.subscribe(args),
+		onSubscribe: async (ctx, msg) => {
+			const { schema, execute, subscribe, contextFactory, parse, validate } = yoga.getEnveloped({
+				...ctx,
+				req: ctx.extra.request,
+				socket: ctx.extra.socket,
+				params: msg.payload
+			});
 
-      const args = {
-        schema,
-        operationName: msg.payload.operationName,
-        document: parse(msg.payload.query),
-        variableValues: msg.payload.variables,
-        contextValue: await contextFactory(),
-        rootValue: { execute, subscribe },
-      };
+			const args = {
+				schema,
+				operationName: msg.payload.operationName,
+				document: parse(msg.payload.query),
+				variableValues: msg.payload.variables,
+				contextValue: await contextFactory(),
+				rootValue: { execute, subscribe }
+			};
 
-      const errors = validate(args.schema, args.document);
-      if (errors.length) return errors;
-      return args;
-    },
-  },
-  wsServer,
+			const errors = validate(args.schema, args.document);
+			if (errors.length) return errors;
+			return args;
+		}
+	},
+	wsServer
 );
 
 httpServer.listen(4000);
@@ -171,12 +176,12 @@ npm install graphql-redis-subscriptions ioredis
 ```
 
 ```js
-import { RedisPubSub } from "graphql-redis-subscriptions";
-import Redis from "ioredis";
+import { RedisPubSub } from 'graphql-redis-subscriptions';
+import Redis from 'ioredis';
 
 const pubsub = new RedisPubSub({
-  publisher: new Redis(),
-  subscriber: new Redis(),
+	publisher: new Redis(),
+	subscriber: new Redis()
 });
 ```
 
@@ -211,7 +216,7 @@ Or use the publish-time payload to address subscribers — `post-published:tag:j
 
 ## Auth, again, at the connection layer
 
-Sub-protocol auth: the `connectionParams` from `connection_init` is the *only* time clients hand you credentials. Check there:
+Sub-protocol auth: the `connectionParams` from `connection_init` is the _only_ time clients hand you credentials. Check there:
 
 ```js
 context: async ({ connectionParams }) => {
@@ -229,7 +234,7 @@ For long-lived connections you also need to handle **token expiry mid-session**.
 
 Each emitted event runs a fresh execution — fresh resolvers, fresh DataLoader instances. So per-event the loader cache is fine.
 
-What is *not* fine: opening a transaction or holding a DB client across the lifetime of a subscription. The connection is open for hours; do not hold a Postgres connection. Pull from the pool only inside resolvers, release immediately.
+What is _not_ fine: opening a transaction or holding a DB client across the lifetime of a subscription. The connection is open for hours; do not hold a Postgres connection. Pull from the pool only inside resolvers, release immediately.
 
 ## Heartbeats, reconnects, and dropped sockets
 
@@ -264,11 +269,13 @@ Default nginx timeouts (60s) close subscriptions after a minute. The two long ti
 ## When to use subscriptions — and when not to
 
 **Use them when:**
+
 - A small set of users (single-digit thousands) need realtime updates on a small set of channels.
 - Latency matters — sub-second push is the requirement.
 - The data is read-mostly: subscriptions deliver, no client-side commands flow back.
 
 **Don't use them for:**
+
 - Mass broadcast to millions. Use a CDN or push notifications.
 - Heavy bidirectional control flow. Use plain WebSockets or gRPC streaming.
 - Eventual consistency where polling every 5s is fine. Polling is simpler, debuggable, and cacheable.
@@ -286,4 +293,3 @@ A subscription is a feature, not a default. Many teams ship beautiful realtime U
 - Subscriptions are not a replacement for polling. Use them when realtime is a real requirement.
 
 Next: [Production hardening and self-host](/notes/graphql/10-production) — depth and complexity limits, persisted queries, federation overview, and the full deploy behind nginx.
-

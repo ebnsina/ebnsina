@@ -1,10 +1,10 @@
 ---
-title: "Filtering, Grouping & Aggregation"
-subtitle: "Collapse many rows into summary answers with COUNT, SUM, GROUP BY, and HAVING."
+title: 'Filtering, Grouping & Aggregation'
+subtitle: 'Collapse many rows into summary answers with COUNT, SUM, GROUP BY, and HAVING.'
 chapter: 2
-level: "beginner"
-readingTime: "13 min"
-topics: ["group by", "aggregate", "having"]
+level: 'beginner'
+readingTime: '13 min'
+topics: ['group by', 'aggregate', 'having']
 ---
 
 <script>
@@ -13,28 +13,28 @@ topics: ["group by", "aggregate", "having"]
 
 ## From Rows to Summaries
 
-So far every query returned individual rows. Often you want a *summary* instead: how many orders did we ship? What's the average order value per customer? Aggregation answers these by collapsing many rows into one.
+So far every query returned individual rows. Often you want a _summary_ instead: how many orders did we ship? What's the average order value per customer? Aggregation answers these by collapsing many rows into one.
 
 We'll use an `orders` table:
 
-| id | customer_id | status    | amount | created_at |
-|----|-------------|-----------|--------|------------|
-| 1  | 10          | shipped   | 49.00  | 2026-05-01 |
-| 2  | 10          | shipped   | 12.50  | 2026-05-03 |
-| 3  | 20          | cancelled | 80.00  | 2026-05-04 |
-| 4  | 20          | shipped   | 99.99  | 2026-05-06 |
+| id  | customer_id | status    | amount | created_at |
+| --- | ----------- | --------- | ------ | ---------- |
+| 1   | 10          | shipped   | 49.00  | 2026-05-01 |
+| 2   | 10          | shipped   | 12.50  | 2026-05-03 |
+| 3   | 20          | cancelled | 80.00  | 2026-05-04 |
+| 4   | 20          | shipped   | 99.99  | 2026-05-06 |
 
 ## Aggregate Functions
 
 An aggregate function takes a set of values and returns a single value:
 
-| Function       | Returns                                    |
-|----------------|--------------------------------------------|
-| `COUNT(*)`     | Number of rows                             |
-| `COUNT(col)`   | Number of rows where `col` is not null     |
-| `SUM(col)`     | Total of all values                        |
-| `AVG(col)`     | Mean                                       |
-| `MIN(col)` / `MAX(col)` | Smallest / largest value          |
+| Function                | Returns                                |
+| ----------------------- | -------------------------------------- |
+| `COUNT(*)`              | Number of rows                         |
+| `COUNT(col)`            | Number of rows where `col` is not null |
+| `SUM(col)`              | Total of all values                    |
+| `AVG(col)`              | Mean                                   |
+| `MIN(col)` / `MAX(col)` | Smallest / largest value               |
 
 ```sql
 SELECT
@@ -55,7 +55,7 @@ This returns exactly one row summarizing the whole table.
 
 ## GROUP BY: Aggregating Per Category
 
-A single grand total is rarely enough — you usually want one summary *per group*. `GROUP BY` splits rows into buckets and runs the aggregate within each:
+A single grand total is rarely enough — you usually want one summary _per group_. `GROUP BY` splits rows into buckets and runs the aggregate within each:
 
 ```sql
 SELECT
@@ -69,7 +69,7 @@ GROUP BY customer_id;
 Result:
 
 | customer_id | order_count | total_spent |
-|-------------|-------------|-------------|
+| ----------- | ----------- | ----------- |
 | 10          | 2           | 61.50       |
 | 20          | 2           | 179.99      |
 
@@ -91,7 +91,7 @@ GROUP BY customer_id, status;
 
 ## HAVING vs WHERE
 
-You can't filter on an aggregate with `WHERE`, because `WHERE` runs *before* grouping happens — at that point the aggregate doesn't exist yet. `HAVING` is the filter that applies *after* grouping:
+You can't filter on an aggregate with `WHERE`, because `WHERE` runs _before_ grouping happens — at that point the aggregate doesn't exist yet. `HAVING` is the filter that applies _after_ grouping:
 
 ```sql
 SELECT customer_id, SUM(amount) AS total
@@ -115,7 +115,7 @@ Read it as a pipeline:
 
 ## The Logical Order of Execution
 
-SQL clauses are *written* in one order but *evaluated* in another. Understanding the logical order explains nearly every "why can't I reference that alias here?" question. The engine conceptually processes a query like this:
+SQL clauses are _written_ in one order but _evaluated_ in another. Understanding the logical order explains nearly every "why can't I reference that alias here?" question. The engine conceptually processes a query like this:
 
 ```text
 1. FROM      — pick the source tables, resolve joins
@@ -130,14 +130,14 @@ SQL clauses are *written* in one order but *evaluated* in another. Understanding
 
 Two consequences fall out of this:
 
-- **You can't use a `SELECT` alias in `WHERE` or `GROUP BY`**, because `SELECT` runs *after* them. The alias doesn't exist yet.
+- **You can't use a `SELECT` alias in `WHERE` or `GROUP BY`**, because `SELECT` runs _after_ them. The alias doesn't exist yet.
 
   ```sql
   SELECT amount * 0.9 AS discounted FROM orders
   WHERE discounted > 40;   -- ERROR: "discounted" unknown here
   ```
 
-- **You *can* use a `SELECT` alias in `ORDER BY`**, since sorting happens last:
+- **You _can_ use a `SELECT` alias in `ORDER BY`**, since sorting happens last:
 
   ```sql
   SELECT amount * 0.9 AS discounted FROM orders

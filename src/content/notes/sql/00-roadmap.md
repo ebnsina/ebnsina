@@ -1,10 +1,10 @@
 ---
-title: "SQL — Roadmap"
-subtitle: "Your path from writing your first SELECT to designing schemas and shipping zero-downtime migrations."
+title: 'SQL — Roadmap'
+subtitle: 'Your path from writing your first SELECT to designing schemas and shipping zero-downtime migrations.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "sql", "postgres"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'sql', 'postgres']
 ---
 
 <script>
@@ -18,7 +18,7 @@ SQL is the lingua franca of data. Almost every backend you build will eventually
 By the end of this track you'll be able to:
 
 - Write correct, readable queries — from simple lookups to multi-table joins, subqueries, and window functions.
-- Reason about *why* a query is slow by reading its execution plan, and fix it with the right index.
+- Reason about _why_ a query is slow by reading its execution plan, and fix it with the right index.
 - Use transactions and isolation levels correctly so concurrent writes don't corrupt your data.
 - Design normalized schemas with the right constraints, and evolve them safely while the application keeps running.
 
@@ -30,7 +30,7 @@ You don't need prior database experience — chapter 1 starts from tables and ro
 
 <Callout type="tip">
 
-**Pairs well with two sibling tracks.** This track focuses on the *language and usage* of SQL. The **db-internals** track explains the machinery underneath (B-trees, the write-ahead log, MVCC) and **data-modeling** goes deeper on translating a domain into entities and relationships. Read them together for the full picture.
+**Pairs well with two sibling tracks.** This track focuses on the _language and usage_ of SQL. The **db-internals** track explains the machinery underneath (B-trees, the write-ahead log, MVCC) and **data-modeling** goes deeper on translating a domain into entities and relationships. Read them together for the full picture.
 
 </Callout>
 

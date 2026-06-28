@@ -1,10 +1,10 @@
 ---
-title: "Caching — Roadmap"
-subtitle: "In-process LRU first. Self-host Redis. Eviction policies, invalidation, stampedes."
+title: 'Caching — Roadmap'
+subtitle: 'In-process LRU first. Self-host Redis. Eviction policies, invalidation, stampedes.'
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -35,4 +35,3 @@ Caching is the single most effective performance optimization in most systems �
 8. **HTTP Caching & CDN** — Cache-Control, ETags, Vary, CDN edge caching, purging
 9. **Application Caching Patterns** — fragment caching, query result caching, session stores, memoization
 10. **Production Caching** — monitoring hit ratios, hot keys, graceful Redis failure, when to flush
-

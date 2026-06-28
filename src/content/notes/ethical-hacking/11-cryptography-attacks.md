@@ -1,10 +1,19 @@
 ---
-title: "Cryptography Attacks"
-subtitle: "Hash cracking, weak cipher exploitation, PKI weaknesses, JWT attacks, and password analysis."
+title: 'Cryptography Attacks'
+subtitle: 'Hash cracking, weak cipher exploitation, PKI weaknesses, JWT attacks, and password analysis.'
 chapter: 11
-level: "intermediate"
-readingTime: "12 min"
-topics: ["hash cracking", "hashcat", "john the ripper", "JWT", "TLS attacks", "cryptography", "password cracking"]
+level: 'intermediate'
+readingTime: '12 min'
+topics:
+  [
+    'hash cracking',
+    'hashcat',
+    'john the ripper',
+    'JWT',
+    'TLS attacks',
+    'cryptography',
+    'password cracking'
+  ]
 ---
 
 <script>
@@ -285,4 +294,3 @@ hashcat -m 1800 shadow.txt /usr/share/wordlists/rockyou.txt
 cupp -w maryam.txt   # add mangling rules
 hashcat -m 1800 maryam_hash.txt maryam.txt -r best64.rule
 ```
-

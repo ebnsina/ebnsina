@@ -1,10 +1,10 @@
 ---
-title: "Search — Roadmap"
-subtitle: "Build an inverted index from scratch. Then self-host Meilisearch or Elasticsearch."
+title: 'Search — Roadmap'
+subtitle: 'Build an inverted index from scratch. Then self-host Meilisearch or Elasticsearch.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Search is one of the most visible features in any product, and one of the most m
 3. **Meilisearch** — setup, indexing, typo tolerance, facets, keeping in sync with Postgres
 4. **Elasticsearch** — mappings, analyzers, Query DSL, aggregations, production cluster
 5. **Search in Practice** — relevance tuning, synonyms, A/B testing, analytics, zero-results handling
-

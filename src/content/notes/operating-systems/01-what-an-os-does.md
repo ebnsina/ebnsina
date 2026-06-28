@@ -1,10 +1,10 @@
 ---
-title: "What an Operating System Does"
-subtitle: "The kernel sits between your programs and the hardware — protecting, sharing, and arbitrating every resource."
+title: 'What an Operating System Does'
+subtitle: 'The kernel sits between your programs and the hardware — protecting, sharing, and arbitrating every resource.'
 chapter: 1
-level: "beginner"
-readingTime: "12 min"
-topics: ["kernel", "syscall", "user mode"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['kernel', 'syscall', 'user mode']
 ---
 
 <script>
@@ -27,7 +27,7 @@ Everything else the OS does is in service of those three goals.
 
 The **kernel** is the core of the OS — the part that is always resident in memory and runs with full privileges over the hardware. On Linux it is a single large program (a "monolithic" kernel) that includes the scheduler, memory manager, file systems, and device drivers.
 
-Most of what you think of as "the OS" is *not* the kernel. Your shell, the window manager, `systemd`, `ls`, and your web browser are ordinary programs. They live in **user space** and ask the kernel to do privileged work on their behalf.
+Most of what you think of as "the OS" is _not_ the kernel. Your shell, the window manager, `systemd`, `ls`, and your web browser are ordinary programs. They live in **user space** and ask the kernel to do privileged work on their behalf.
 
 ```text
 +-----------------------------------------------+
@@ -50,7 +50,7 @@ The protection that keeps programs apart is enforced by the CPU itself. Modern p
 - **Kernel mode** (also "supervisor" or ring 0): code can execute any instruction and touch any memory or device.
 - **User mode** (ring 3): code is restricted. Privileged instructions — talking to a device, changing the page tables, halting the CPU — are forbidden and trap into the kernel if attempted.
 
-Your program runs in user mode. When it needs something only the kernel can do, the CPU switches to kernel mode through a controlled doorway, runs trusted kernel code, then switches back. A user program can never *jump* into arbitrary kernel code; it can only request services at well-defined entry points.
+Your program runs in user mode. When it needs something only the kernel can do, the CPU switches to kernel mode through a controlled doorway, runs trusted kernel code, then switches back. A user program can never _jump_ into arbitrary kernel code; it can only request services at well-defined entry points.
 
 <Callout type="info">
 
@@ -64,13 +64,13 @@ A **system call** is the request a user program makes to cross into the kernel. 
 
 Common Linux system calls:
 
-| Syscall | What it does |
-|---------|--------------|
-| `read` / `write` | Move bytes to or from a file descriptor |
-| `open` / `close` | Get or release a file descriptor |
-| `fork` / `execve` | Create a process / replace its program |
-| `mmap` / `brk` | Map or grow memory |
-| `socket` / `connect` | Set up network communication |
+| Syscall              | What it does                            |
+| -------------------- | --------------------------------------- |
+| `read` / `write`     | Move bytes to or from a file descriptor |
+| `open` / `close`     | Get or release a file descriptor        |
+| `fork` / `execve`    | Create a process / replace its program  |
+| `mmap` / `brk`       | Map or grow memory                      |
+| `socket` / `connect` | Set up network communication            |
 
 You rarely invoke these directly. The C library (`glibc`) wraps each one in a function. When you call `printf`, it eventually calls the `write` syscall:
 
@@ -102,4 +102,4 @@ Step back and the kernel's job is resource management across four big resources:
 - **Storage** — file systems turn flat disk blocks into named, hierarchical files (Chapter 7).
 - **Devices** — drivers and the I/O subsystem multiplex the network card, disk, and terminals among many programs (Chapter 8).
 
-Every resource is finite and shared, and the kernel is the trusted referee. Keep that framing in mind: almost every OS concept in this track is an answer to *"how do we share this one piece of hardware among many programs safely and fairly?"*
+Every resource is finite and shared, and the kernel is the trusted referee. Keep that framing in mind: almost every OS concept in this track is an answer to _"how do we share this one piece of hardware among many programs safely and fairly?"_

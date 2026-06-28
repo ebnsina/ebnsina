@@ -1,10 +1,10 @@
 ---
-title: "Concurrency with Goroutines"
+title: 'Concurrency with Goroutines'
 subtitle: "Go's concurrency model is its killer feature — goroutines and channels make concurrent programming feel natural, not terrifying."
 chapter: 10
-level: "intermediate"
-readingTime: "22 min"
-topics: ["goroutines", "channels", "select", "WaitGroup", "concurrency patterns"]
+level: 'intermediate'
+readingTime: '22 min'
+topics: ['goroutines', 'channels', 'select', 'WaitGroup', 'concurrency patterns']
 ---
 
 <script>
@@ -390,4 +390,3 @@ for i := 0; i < 1000; i++ {
 5. **Worker pools** are the go-to pattern for bounded concurrency in production
 6. **Always check for goroutine leaks** — buffered channels and context cancellation prevent them
 7. **Run the race detector** — `go test -race` is non-negotiable in production code
-

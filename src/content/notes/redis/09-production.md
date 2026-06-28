@@ -1,10 +1,10 @@
 ---
-title: "Operating Redis in Production"
-subtitle: "Memory, latency, monitoring, security, and the pitfalls that take instances down."
+title: 'Operating Redis in Production'
+subtitle: 'Memory, latency, monitoring, security, and the pitfalls that take instances down.'
 chapter: 9
-level: "mastery"
-readingTime: "14 min"
-topics: ["production", "monitoring", "performance"]
+level: 'mastery'
+readingTime: '14 min'
+topics: ['production', 'monitoring', 'performance']
 ---
 
 <script>
@@ -58,18 +58,18 @@ Review the slow log regularly. The usual culprits are O(N) commands over large c
 
 Wire these into your monitoring from `INFO` and track trends, not just instantaneous values:
 
-| Metric | Source | Watch for |
-|---|---|---|
-| Memory used vs maxmemory | `used_memory`, `maxmemory` | approaching the cap |
-| Fragmentation ratio | `mem_fragmentation_ratio` | above 1.5, or below 1.0 |
-| Hit rate | `keyspace_hits`, `keyspace_misses` | a falling cache hit ratio |
-| Evicted keys | `evicted_keys` | rising — memory pressure |
-| Expired keys | `expired_keys` | sudden changes in pattern |
-| Connected clients | `connected_clients` | nearing `maxclients` |
-| Blocked clients | `blocked_clients` | stuck `BRPOP`/`BLPOP` workers |
-| Ops per second | `instantaneous_ops_per_sec` | unexpected spikes |
-| Replication lag | `master_repl_offset` vs replica | growing lag |
-| Rejected connections | `rejected_connections` | nonzero — at the limit |
+| Metric                   | Source                             | Watch for                     |
+| ------------------------ | ---------------------------------- | ----------------------------- |
+| Memory used vs maxmemory | `used_memory`, `maxmemory`         | approaching the cap           |
+| Fragmentation ratio      | `mem_fragmentation_ratio`          | above 1.5, or below 1.0       |
+| Hit rate                 | `keyspace_hits`, `keyspace_misses` | a falling cache hit ratio     |
+| Evicted keys             | `evicted_keys`                     | rising — memory pressure      |
+| Expired keys             | `expired_keys`                     | sudden changes in pattern     |
+| Connected clients        | `connected_clients`                | nearing `maxclients`          |
+| Blocked clients          | `blocked_clients`                  | stuck `BRPOP`/`BLPOP` workers |
+| Ops per second           | `instantaneous_ops_per_sec`        | unexpected spikes             |
+| Replication lag          | `master_repl_offset` vs replica    | growing lag                   |
+| Rejected connections     | `rejected_connections`             | nonzero — at the limit        |
 
 The cache hit ratio is `keyspace_hits / (keyspace_hits + keyspace_misses)`. A drop often means TTLs are too short, the working set outgrew memory, or eviction is throwing out hot keys.
 

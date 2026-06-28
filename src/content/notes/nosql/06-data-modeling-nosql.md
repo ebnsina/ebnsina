@@ -1,10 +1,10 @@
 ---
-title: "Data Modeling for NoSQL"
-subtitle: "Access-pattern-first design, deliberate denormalization, single-table design in DynamoDB, and relationships when there are no joins."
+title: 'Data Modeling for NoSQL'
+subtitle: 'Access-pattern-first design, deliberate denormalization, single-table design in DynamoDB, and relationships when there are no joins.'
 chapter: 6
-level: "advanced"
-readingTime: "13 min"
-topics: ["access patterns", "single-table", "denormalization"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['access patterns', 'single-table', 'denormalization']
 ---
 
 <script>
@@ -15,13 +15,13 @@ topics: ["access patterns", "single-table", "denormalization"]
 
 **Real-World Analogy**
 
-A library can shelve books by subject *or* by author *or* by publication year — but only one at a time on the physical shelf. To make every kind of search fast, librarians build card catalogs: pre-sorted index cards, one drawer per way you might search. NoSQL modeling is the same move. You can't reshuffle the shelf per query, so you decide up front every way you'll look things up and physically arrange (and duplicate) the data to make each lookup a single grab.
+A library can shelve books by subject _or_ by author _or_ by publication year — but only one at a time on the physical shelf. To make every kind of search fast, librarians build card catalogs: pre-sorted index cards, one drawer per way you might search. NoSQL modeling is the same move. You can't reshuffle the shelf per query, so you decide up front every way you'll look things up and physically arrange (and duplicate) the data to make each lookup a single grab.
 
 </Callout>
 
 ## Access-Pattern-First Design
 
-Relational modeling starts with the *data*: identify entities, normalize them, and trust the query planner to assemble any question later. NoSQL modeling inverts this. You start with the *questions* and arrange storage so each one is a direct lookup, because there is no general-purpose join engine to lean on.
+Relational modeling starts with the _data_: identify entities, normalize them, and trust the query planner to assemble any question later. NoSQL modeling inverts this. You start with the _questions_ and arrange storage so each one is a direct lookup, because there is no general-purpose join engine to lean on.
 
 The process:
 
@@ -40,16 +40,16 @@ Consider showing an order with the customer's name. Normalized, the order holds 
 
 ```json
 {
-  "orderId": "8841",
-  "customerId": "cust_42",
-  "customerName": "Zubaida",
-  "total": 35
+	"orderId": "8841",
+	"customerId": "cust_42",
+	"customerName": "Zubaida",
+	"total": 35
 }
 ```
 
 Now rendering the order is one read. The cost surfaces on writes: if Zubaida renames herself, every order carrying `customerName` is stale until you update it. You accept that trade because, for most workloads, reads vastly outnumber that kind of write, and a slightly stale display name is harmless.
 
-Denormalization is a deliberate exchange: **cheaper reads and write fan-out, in return for write amplification and the burden of keeping copies in sync.** The skill is choosing *which* fields to duplicate — copy the small, hot, display-only fields; reference the large, volatile, or rarely-shown ones.
+Denormalization is a deliberate exchange: **cheaper reads and write fan-out, in return for write amplification and the burden of keeping copies in sync.** The skill is choosing _which_ fields to duplicate — copy the small, hot, display-only fields; reference the large, volatile, or rarely-shown ones.
 
 <Callout type="tip">
 
@@ -59,7 +59,7 @@ Denormalization is a deliberate exchange: **cheaper reads and write fan-out, in 
 
 ## Single-Table Design (DynamoDB)
 
-DynamoDB's most powerful and counterintuitive pattern is putting *multiple entity types in one table*. Because a query can only hit one table and one partition efficiently, the way to fetch related entities together is to make them **share a partition**.
+DynamoDB's most powerful and counterintuitive pattern is putting _multiple entity types in one table_. Because a query can only hit one table and one partition efficiently, the way to fetch related entities together is to make them **share a partition**.
 
 The trick is overloaded, generic keys — `PK` (partition) and `SK` (sort) — whose meaning is encoded by a prefix:
 
@@ -85,7 +85,7 @@ GetItem: PK = "USER#42", SK = "PROFILE"
 
 For access patterns that don't start from the partition key — say "all `pending` orders across every user" — you add a **Global Secondary Index (GSI)** that re-partitions the same items by a different key (here, `status`). Each GSI is, in effect, another card-catalog drawer over the same data.
 
-Single-table design is dense and unintuitive, and it is justified only when single-digit-millisecond latency at massive scale matters. For smaller systems it is over-engineering — but understanding it reveals the core NoSQL lesson: **the key structure *is* the data model.**
+Single-table design is dense and unintuitive, and it is justified only when single-digit-millisecond latency at massive scale matters. For smaller systems it is over-engineering — but understanding it reveals the core NoSQL lesson: **the key structure _is_ the data model.**
 
 ## Relationships Without Joins
 
@@ -94,7 +94,13 @@ Without a `JOIN` keyword, you model relationships structurally. The right techni
 **One-to-few (bounded):** embed the children in the parent.
 
 ```json
-{ "orderId": "8841", "items": [ { "sku": "BK-101", "qty": 1 }, { "sku": "PN-007", "qty": 3 } ] }
+{
+	"orderId": "8841",
+	"items": [
+		{ "sku": "BK-101", "qty": 1 },
+		{ "sku": "PN-007", "qty": 3 }
+	]
+}
 ```
 
 **One-to-many (unbounded):** keep children as separate items sharing the parent's partition (single-table), or reference by id and query a secondary index.
@@ -104,7 +110,7 @@ Without a `JOIN` keyword, you model relationships structurally. The right techni
 { "PK": "USER#42", "SK": "ORDER#8842" }
 ```
 
-**Many-to-many:** store the link as its own item(s), often duplicated so the relationship is fast to read from *both* directions.
+**Many-to-many:** store the link as its own item(s), often duplicated so the relationship is fast to read from _both_ directions.
 
 ```json
 // "student 7 is enrolled in course 9" — written both ways for two-direction reads
@@ -127,7 +133,7 @@ The first three are a clean hierarchy — co-locate them by workspace and projec
 { "PK": "WS#cordoba#PROJ#web",   "SK": "TASK#102",        "title": "Add auth", "assignee": "u_19" }
 ```
 
-The fourth pattern cuts *across* the hierarchy — it doesn't start from a workspace or project, so no partition serves it. That is the textbook case for a secondary index keyed by assignee:
+The fourth pattern cuts _across_ the hierarchy — it doesn't start from a workspace or project, so no partition serves it. That is the textbook case for a secondary index keyed by assignee:
 
 ```text
 GSI:  PK = ASSIGNEE#u_42   →   returns every task assigned to u_42, any project

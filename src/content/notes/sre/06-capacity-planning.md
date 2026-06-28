@@ -1,10 +1,10 @@
 ---
-title: "Capacity Planning & Load Testing"
+title: 'Capacity Planning & Load Testing'
 subtitle: "Little's Law, Universal Scalability Law, headroom, and a real k6 + Locust load test you can run today."
 chapter: 6
-level: "intermediate"
-readingTime: "18 min"
-topics: ["capacity planning", "load testing", "k6", "queueing theory", "Little's Law"]
+level: 'intermediate'
+readingTime: '18 min'
+topics: ['capacity planning', 'load testing', 'k6', 'queueing theory', "Little's Law"]
 ---
 
 <script>
@@ -13,7 +13,7 @@ topics: ["capacity planning", "load testing", "k6", "queueing theory", "Little's
 
 ## Why capacity planning, not autoscaling
 
-Autoscaling is reactive. By the time it kicks in, your users have felt the latency spike. Capacity planning is proactive: you know your system will handle the launch *before* the traffic arrives.
+Autoscaling is reactive. By the time it kicks in, your users have felt the latency spike. Capacity planning is proactive: you know your system will handle the launch _before_ the traffic arrives.
 
 The core question: **at what point does my system stop meeting its SLO?** Find that number, then keep load comfortably below it.
 
@@ -33,10 +33,10 @@ That is it. From three measurable quantities, derive the fourth.
 // Worked example: how many app server replicas do I need?
 
 // Measurements from production:
-const arrivalRate     = 5_000;      // 5k req/s
-const avgLatencyMs    = 80;         // 80ms per request
-const concurrencyPerReplica = 50;   // each pod handles 50 concurrent reqs
-                                    // before its event loop chokes
+const arrivalRate = 5_000; // 5k req/s
+const avgLatencyMs = 80; // 80ms per request
+const concurrencyPerReplica = 50; // each pod handles 50 concurrent reqs
+// before its event loop chokes
 
 // Concurrent requests in flight (Little's Law)
 const concurrencyL = arrivalRate * (avgLatencyMs / 1000);
@@ -78,7 +78,7 @@ X(N) = throughput at concurrency N
 ```typescript
 // USL prediction
 function uslThroughput(n: number, alpha: number, beta: number): number {
-  return n / (1 + alpha * (n - 1) + beta * n * (n - 1));
+	return n / (1 + alpha * (n - 1) + beta * n * (n - 1));
 }
 
 // Real measurements: throughput at N=1, 2, 4, 8, 16 nodes
@@ -89,14 +89,14 @@ function uslThroughput(n: number, alpha: number, beta: number): number {
 // β ≈ 0.005 (0.5% coherence — cross-shard transactions)
 
 // Throughput at scale:
-console.log(uslThroughput(1, 0.05, 0.005));   //  1.00 (baseline)
-console.log(uslThroughput(8, 0.05, 0.005));   //  4.97 (~5x, not 8x)
-console.log(uslThroughput(32, 0.05, 0.005));  // 11.21 (~11x, not 32x)
-console.log(uslThroughput(64, 0.05, 0.005));  // 13.48 — peak!
+console.log(uslThroughput(1, 0.05, 0.005)); //  1.00 (baseline)
+console.log(uslThroughput(8, 0.05, 0.005)); //  4.97 (~5x, not 8x)
+console.log(uslThroughput(32, 0.05, 0.005)); // 11.21 (~11x, not 32x)
+console.log(uslThroughput(64, 0.05, 0.005)); // 13.48 — peak!
 console.log(uslThroughput(128, 0.05, 0.005)); // 12.21 — going DOWN
 ```
 
-The output is the punchline: there is a peak. Beyond it, adding servers makes the system *slower*. If you do not know your USL curve, you will scale past the peak in a panic and make the outage worse.
+The output is the punchline: there is a peak. Beyond it, adding servers makes the system _slower_. If you do not know your USL curve, you will scale past the peak in a panic and make the outage worse.
 
 ## A real k6 load test
 
@@ -104,54 +104,52 @@ k6 is the standard. Scriptable in JavaScript, runs anywhere, integrates with Pro
 
 ```javascript
 // load-test/checkout.js
-import http from "k6/http";
-import { check, sleep } from "k6";
-import { Trend, Rate } from "k6/metrics";
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { Trend, Rate } from 'k6/metrics';
 
-const checkoutLatency = new Trend("checkout_latency_ms");
-const checkoutErrors = new Rate("checkout_errors");
+const checkoutLatency = new Trend('checkout_latency_ms');
+const checkoutErrors = new Rate('checkout_errors');
 
 export const options = {
-  // Stages: simulate a realistic ramp pattern
-  stages: [
-    { duration: "2m", target: 100 },   // ramp to 100 VUs
-    { duration: "5m", target: 100 },   // hold steady
-    { duration: "2m", target: 500 },   // burst to 500
-    { duration: "5m", target: 500 },   // hold burst
-    { duration: "2m", target: 0 },     // ramp down
-  ],
-  // SLO assertions — the test FAILS if these are violated
-  thresholds: {
-    "checkout_latency_ms": ["p(99)<300"],   // p99 must stay under 300ms
-    "checkout_errors":     ["rate<0.001"],  // <0.1% errors
-    "http_req_failed":     ["rate<0.001"],
-  },
+	// Stages: simulate a realistic ramp pattern
+	stages: [
+		{ duration: '2m', target: 100 }, // ramp to 100 VUs
+		{ duration: '5m', target: 100 }, // hold steady
+		{ duration: '2m', target: 500 }, // burst to 500
+		{ duration: '5m', target: 500 }, // hold burst
+		{ duration: '2m', target: 0 } // ramp down
+	],
+	// SLO assertions — the test FAILS if these are violated
+	thresholds: {
+		checkout_latency_ms: ['p(99)<300'], // p99 must stay under 300ms
+		checkout_errors: ['rate<0.001'], // <0.1% errors
+		http_req_failed: ['rate<0.001']
+	}
 };
 
 export default function () {
-  const payload = JSON.stringify({
-    cart_id: `cart_${__VU}_${__ITER}`,
-    items: [
-      { sku: "ABC-123", qty: 1 },
-      { sku: "XYZ-789", qty: 2 },
-    ],
-  });
+	const payload = JSON.stringify({
+		cart_id: `cart_${__VU}_${__ITER}`,
+		items: [
+			{ sku: 'ABC-123', qty: 1 },
+			{ sku: 'XYZ-789', qty: 2 }
+		]
+	});
 
-  const res = http.post(
-    "https://api.example.com/v1/checkout",
-    payload,
-    { headers: { "Content-Type": "application/json" } }
-  );
+	const res = http.post('https://api.example.com/v1/checkout', payload, {
+		headers: { 'Content-Type': 'application/json' }
+	});
 
-  checkoutLatency.add(res.timings.duration);
-  checkoutErrors.add(res.status >= 500);
+	checkoutLatency.add(res.timings.duration);
+	checkoutErrors.add(res.status >= 500);
 
-  check(res, {
-    "status is 200": (r) => r.status === 200,
-    "has order_id":  (r) => r.json("order_id") !== undefined,
-  });
+	check(res, {
+		'status is 200': (r) => r.status === 200,
+		'has order_id': (r) => r.json('order_id') !== undefined
+	});
 
-  sleep(1);  // simulate think time
+	sleep(1); // simulate think time
 }
 ```
 
@@ -216,35 +214,35 @@ Different test shapes find different bugs:
 ```typescript
 // 1. Smoke test — does it work at all?
 //    Light, short, run in CI on every PR
-const smoke = { vus: 5, duration: "1m" };
+const smoke = { vus: 5, duration: '1m' };
 
 // 2. Load test — can it handle expected traffic?
 //    Production-sized, run pre-launch
-const load = { vus: 500, duration: "30m" };
+const load = { vus: 500, duration: '30m' };
 
 // 3. Stress test — where does it break?
 //    Push past expected, find the cliff
 const stress = {
-  stages: [
-    { duration: "5m",  target: 500 },
-    { duration: "5m",  target: 1000 },
-    { duration: "5m",  target: 2000 },
-    { duration: "5m",  target: 4000 },  // expect failure here
-  ],
+	stages: [
+		{ duration: '5m', target: 500 },
+		{ duration: '5m', target: 1000 },
+		{ duration: '5m', target: 2000 },
+		{ duration: '5m', target: 4000 } // expect failure here
+	]
 };
 
 // 4. Soak test — does it leak / degrade over time?
 //    Steady load for hours; finds memory leaks, connection leaks
-const soak = { vus: 200, duration: "12h" };
+const soak = { vus: 200, duration: '12h' };
 
 // 5. Spike test — does it recover from sudden bursts?
 //    Bursty pattern; tests autoscaler reactivity
 const spike = {
-  stages: [
-    { duration: "10m", target: 100 },
-    { duration: "30s", target: 2000 },  // hammer
-    { duration: "10m", target: 100 },   // recovery
-  ],
+	stages: [
+		{ duration: '10m', target: 100 },
+		{ duration: '30s', target: 2000 }, // hammer
+		{ duration: '10m', target: 100 } // recovery
+	]
 };
 ```
 
@@ -296,4 +294,3 @@ The bound matters more than the point estimate. You are sizing for the worst cas
 3. **k6 with thresholds** turns load tests into pass/fail SLO gates in CI
 4. **Headroom rules of thumb** vary by service type — DB needs 100%+, web 30-50%
 5. **Forecast with seasonality + use upper-bound** — capacity for the worst case in the window
-

@@ -1,10 +1,10 @@
 ---
-title: "Presence and rooms"
-subtitle: "Knowing who is online and which channel they are watching looks easy in a one-process demo and is genuinely hard at scale. The data model is half the work; the eviction story is the other half."
+title: 'Presence and rooms'
+subtitle: 'Knowing who is online and which channel they are watching looks easy in a one-process demo and is genuinely hard at scale. The data model is half the work; the eviction story is the other half.'
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["websockets", "presence", "rooms", "redis", "sets"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['websockets', 'presence', 'rooms', 'redis', 'sets']
 ---
 
 <script>
@@ -123,7 +123,7 @@ The **score** is the expiry timestamp. A periodic sweeper (or every reader) drop
 
 ## The heartbeat itself
 
-In the WebSocket world, you already have control-frame pings (chapter 2). Use *application-level* heartbeats for presence:
+In the WebSocket world, you already have control-frame pings (chapter 2). Use _application-level_ heartbeats for presence:
 
 ```go
 ticker := time.NewTicker(30 * time.Second)
@@ -266,4 +266,3 @@ A few sizing notes for Redis-based presence:
 - Same patterns work for SSE — separate the read channel (SSE) from the write channel (REST).
 
 Next: [Auth, origin, and rate limits](/notes/websockets/08-auth-origin) — production-safe handshakes that survive the open internet.
-

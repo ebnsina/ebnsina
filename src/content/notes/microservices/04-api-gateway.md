@@ -1,10 +1,11 @@
 ---
-title: "API Gateway"
-subtitle: "The entry point for all external traffic — routing, auth, rate limiting, request transformation, and what not to put in a gateway."
+title: 'API Gateway'
+subtitle: 'The entry point for all external traffic — routing, auth, rate limiting, request transformation, and what not to put in a gateway.'
 chapter: 4
-level: "intermediate"
-readingTime: "9 min"
-topics: ["API gateway", "nginx", "Kong", "routing", "rate limiting", "auth", "request transformation"]
+level: 'intermediate'
+readingTime: '9 min'
+topics:
+  ['API gateway', 'nginx', 'Kong', 'routing', 'rate limiting', 'auth', 'request transformation']
 ---
 
 <script>
@@ -98,7 +99,7 @@ docker run -d --name kong \
 
 ```yaml
 # kong.yml (declarative config)
-_format_version: "3.0"
+_format_version: '3.0'
 
 services:
   - name: order-service
@@ -123,10 +124,10 @@ services:
         config:
           add:
             headers:
-              - "X-Gateway-Version: 1.0"
+              - 'X-Gateway-Version: 1.0'
           remove:
             headers:
-              - "X-Internal-Debug"
+              - 'X-Internal-Debug'
 
   - name: product-service
     url: http://product-service:3000
@@ -143,6 +144,7 @@ Kong plugins run as a chain on every request. Auth first, then rate limiting, th
 Transform requests before they reach services, and responses before they reach clients:
 
 **Add headers downstream:**
+
 ```nginx
 # After JWT verification, pass parsed claims as headers
 proxy_set_header X-User-ID     $jwt_claim_sub;
@@ -153,14 +155,15 @@ proxy_set_header X-User-Roles  $jwt_claim_roles;
 Services receive pre-verified identity in headers — no JWT parsing in every service.
 
 **Strip sensitive data from responses (Kong plugin):**
+
 ```yaml
 plugins:
   - name: response-transformer
     config:
       remove:
         json:
-          - internal_id      # never expose internal IDs externally
-          - created_by_ip    # strip internal tracking fields
+          - internal_id # never expose internal IDs externally
+          - created_by_ip # strip internal tracking fields
 ```
 
 **Protocol translation — REST to gRPC:**
@@ -207,6 +210,7 @@ Business logic in the gateway couples every service to its release cycle. A chan
 Two common patterns:
 
 **Path versioning:**
+
 ```
 /api/v1/orders → order-service v1
 /api/v2/orders → order-service v2
@@ -215,12 +219,14 @@ Two common patterns:
 Simple but exposes versions in URLs. Clients must update URLs on version change.
 
 **Header versioning:**
+
 ```
 GET /api/orders
 Accept-Version: 2.0
 ```
 
 Cleaner URLs. The gateway routes based on header:
+
 ```nginx
 location /api/orders {
     if ($http_accept_version = "2.0") {
@@ -247,7 +253,7 @@ upstream order_service {
 server {
     location /api/orders {
         proxy_pass http://order_service;
-        
+
         # Retry on failure
         proxy_next_upstream error timeout http_503;
         proxy_next_upstream_tries 2;
@@ -258,4 +264,3 @@ server {
 ```
 
 Run multiple gateway instances behind a cloud load balancer (AWS ALB or NLB). The gateway itself must be stateless — config from files, no in-memory state.
-

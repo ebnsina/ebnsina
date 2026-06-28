@@ -1,10 +1,23 @@
 ---
-title: "Blue Team & Defense"
+title: 'Blue Team & Defense'
 subtitle: "SIEM, IDS/IPS, SOC operations, detection engineering, threat hunting, hardening guides, and the defender's toolkit."
 chapter: 26
-level: "intermediate"
-readingTime: "14 min"
-topics: ["blue team", "SIEM", "IDS", "IPS", "SOC", "detection engineering", "hardening", "threat hunting", "Splunk", "Elastic", "Snort"]
+level: 'intermediate'
+readingTime: '14 min'
+topics:
+  [
+    'blue team',
+    'SIEM',
+    'IDS',
+    'IPS',
+    'SOC',
+    'detection engineering',
+    'hardening',
+    'threat hunting',
+    'Splunk',
+    'Elastic',
+    'Snort'
+  ]
 ---
 
 <script>
@@ -58,7 +71,7 @@ index=linux_logs sourcetype=syslog ("Failed password" OR "Accepted password")
 | rex field=_raw "(?:Failed|Accepted) password for (?<user>\w+) from (?<src_ip>\S+)"
 | eval status = if(searchmatch("Accepted"), "success", "failure")
 | sort _time
-| streamstats count(eval(status="failure")) as failures, 
+| streamstats count(eval(status="failure")) as failures,
               count(eval(status="success")) as successes by src_ip
 | where successes > 0 AND failures > 5
 
@@ -336,4 +349,3 @@ Process:
 
 Tools: OWASP Threat Dragon, Microsoft Threat Modeling Tool
 ```
-

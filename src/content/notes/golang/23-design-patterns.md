@@ -1,10 +1,18 @@
 ---
-title: "Design Patterns in Go"
+title: 'Design Patterns in Go'
 subtitle: "Go's simplicity changes how you apply classic patterns — no classes, no inheritance, just composition and interfaces."
 chapter: 23
-level: "advanced"
-readingTime: "20 min"
-topics: ["design patterns", "dependency injection", "options pattern", "strategy", "observer", "decorator"]
+level: 'advanced'
+readingTime: '20 min'
+topics:
+  [
+    'design patterns',
+    'dependency injection',
+    'options pattern',
+    'strategy',
+    'observer',
+    'decorator'
+  ]
 ---
 
 <script>
@@ -403,14 +411,14 @@ query, args := NewQuery("users").
 
 ## Patterns You Don't Need in Go
 
-| Java Pattern | Go Alternative |
-|---|---|
-| Singleton | Package-level variable + `sync.Once` |
-| Abstract Factory | Return interfaces from functions |
-| Template Method | Pass a function parameter |
-| Iterator | `range` keyword, channels |
-| Command | Functions are first-class — just pass them |
-| Visitor | Type switch or interface methods |
+| Java Pattern     | Go Alternative                             |
+| ---------------- | ------------------------------------------ |
+| Singleton        | Package-level variable + `sync.Once`       |
+| Abstract Factory | Return interfaces from functions           |
+| Template Method  | Pass a function parameter                  |
+| Iterator         | `range` keyword, channels                  |
+| Command          | Functions are first-class — just pass them |
+| Visitor          | Type switch or interface methods           |
 
 ## Key Takeaways
 
@@ -420,4 +428,3 @@ query, args := NewQuery("users").
 4. **Decorator = wrap the interface** — same pattern as middleware
 5. **Observer = event bus** with typed events and async handlers
 6. **Many Java patterns are unnecessary** — Go's functions, interfaces, and composition replace them
-

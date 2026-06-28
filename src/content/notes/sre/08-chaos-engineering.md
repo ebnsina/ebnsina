@@ -1,10 +1,10 @@
 ---
-title: "Chaos Engineering"
-subtitle: "Hypothesis-driven failure injection from Netflix Simian Army to Chaos Mesh, with real experiments and a safety harness."
+title: 'Chaos Engineering'
+subtitle: 'Hypothesis-driven failure injection from Netflix Simian Army to Chaos Mesh, with real experiments and a safety harness.'
 chapter: 8
-level: "advanced"
-readingTime: "16 min"
-topics: ["chaos engineering", "Chaos Mesh", "Gremlin", "fault injection", "gameday"]
+level: 'advanced'
+readingTime: '16 min'
+topics: ['chaos engineering', 'Chaos Mesh', 'Gremlin', 'fault injection', 'gameday']
 ---
 
 <script>
@@ -22,7 +22,7 @@ A vaccine trial — you deliberately introduce a controlled, weakened version of
 ## The principle
 
 > Chaos Engineering is the discipline of experimenting on a system in order to build confidence in the system's capability to withstand turbulent conditions in production.
-> — *Principles of Chaos Engineering*
+> — _Principles of Chaos Engineering_
 
 The keyword is **discipline**. Chaos engineering is not "let's randomly break things." It is the scientific method applied to production resilience: hypothesize, experiment, measure, learn.
 
@@ -99,16 +99,16 @@ metadata:
 spec:
   action: pod-kill
   mode: fixed
-  value: "1"
-  duration: "5m"
+  value: '1'
+  duration: '5m'
   selector:
     namespaces:
       - production
     labelSelectors:
-      "app": "checkout"
-      "chaos-eligible": "true"   # only pods opted-in
+      'app': 'checkout'
+      'chaos-eligible': 'true' # only pods opted-in
   scheduler:
-    cron: "@every 30s"
+    cron: '@every 30s'
 ```
 
 The `chaos-eligible: "true"` label is the critical guardrail — services must explicitly opt in to being targeted. No team gets surprised.
@@ -129,20 +129,20 @@ spec:
   action: delay
   mode: all
   selector:
-    namespaces: ["production"]
+    namespaces: ['production']
     labelSelectors:
-      "app": "checkout"
+      'app': 'checkout'
   delay:
-    latency: "500ms"
-    correlation: "0"
-    jitter: "100ms"
+    latency: '500ms'
+    correlation: '0'
+    jitter: '100ms'
   direction: to
   target:
     selector:
-      namespaces: ["production"]
+      namespaces: ['production']
       labelSelectors:
-        "app": "postgres-primary"
-  duration: "3m"
+        'app': 'postgres-primary'
+  duration: '3m'
 ```
 
 ### Kill switch (the most important file in chaos)
@@ -177,39 +177,47 @@ Every experiment is documented before it runs. This is the template real chaos t
 # Chaos Experiment: checkout pod kill (1 of 12, every 30s, 5 min)
 
 ## Hypothesis
+
 If we kill 1 of 12 checkout pods every 30s for 5 minutes, then
 checkout success rate will remain >= 99.5% (10x our normal SLO of 99.9%).
 
 ## Steady state
+
 - SLI: `sli:checkout_availability:ratio_rate1m`
 - Threshold: > 0.995
 - Dashboard: [Grafana link](https://...)
 
 ## Blast radius
+
 - 1 of 12 checkout pods at a time (~8% of capacity)
 - Production EU region only
 - During business hours (10:00-12:00 UTC)
 
 ## Abort criteria
+
 - SLI drops below 0.99 for >2 consecutive minutes → run kill switch
 - Customer support reports any user-visible issue → run kill switch
 - Any P0 incident declared in any service → run kill switch
 
 ## Rollback
+
 The experiment is self-terminating after 5 minutes. The kill switch
 above terminates immediately if needed. Killed pods are auto-replaced
 by the deployment controller (typical replacement time: 8-15s).
 
 ## Pre-run checks
+
 - [ ] Steady state confirmed for 30 min prior
 - [ ] No active incidents
 - [ ] On-call team aware (announced in #sre-chaos)
 - [ ] Kill switch tested (in staging) within last 7 days
 
 ## Run log
+
 [ filled in during execution ]
 
 ## Result
+
 [ filled in after; including hypothesis status, anomalies, action items ]
 ```
 
@@ -220,28 +228,28 @@ A gameday is a planned, multi-team exercise simulating a complex incident. Half 
 ```typescript
 // Gameday: simulated multi-region failover
 const gameday = {
-  scenario: `
+	scenario: `
     The us-east-1 region is unreachable from us-west-2.
     All traffic must failover to us-west-2 within 5 minutes
     while staying within SLO. Do not modify any code; use only
     operational tooling.
   `,
-  injection: "Block VPC peering between us-east-1 and us-west-2",
-  duration: "4 hours",
-  participants: [
-    "SRE team (run the chaos)",
-    "Product team for affected services",
-    "Customer support (simulated tickets)",
-    "Comms team (status page exercise)",
-  ],
-  observers: ["Director of Engineering", "VP Product"],
+	injection: 'Block VPC peering between us-east-1 and us-west-2',
+	duration: '4 hours',
+	participants: [
+		'SRE team (run the chaos)',
+		'Product team for affected services',
+		'Customer support (simulated tickets)',
+		'Comms team (status page exercise)'
+	],
+	observers: ['Director of Engineering', 'VP Product'],
 
-  successCriteria: [
-    "Failover initiated within 5 min of detection",
-    "SLO held within ±5% of baseline during failover",
-    "Status page updated within 15 min of incident declaration",
-    "Postmortem-grade timeline produced afterward",
-  ],
+	successCriteria: [
+		'Failover initiated within 5 min of detection',
+		'SLO held within ±5% of baseline during failover',
+		'Status page updated within 15 min of incident declaration',
+		'Postmortem-grade timeline produced afterward'
+	]
 };
 ```
 
@@ -316,4 +324,3 @@ Chaos answers "did the fix work?" Postmortems answer "what's broken?" Architectu
 3. **Climb the ladder** — pod kill before region kill
 4. **Document every experiment** with the template — they accumulate into a resilience knowledge base
 5. **Gamedays + chaos in CI** — exercise both humans and code on a regular cadence
-

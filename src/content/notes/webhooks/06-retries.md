@@ -1,10 +1,10 @@
 ---
-title: "Retries and backoff"
+title: 'Retries and backoff'
 subtitle: "A delivery that fails once is normal. A delivery that fails ten times in a hot loop takes down your service and your customer's. Exponential backoff with jitter and a hard deadline is the simple, correct fix."
 chapter: 6
-level: "intermediate"
-readingTime: "12 min"
-topics: ["webhooks", "retries", "backoff", "jitter", "deadlines"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['webhooks', 'retries', 'backoff', 'jitter', 'deadlines']
 ---
 
 <script>
@@ -274,7 +274,7 @@ Option B is the standard. The body and event ID stay the same; the timestamp and
 
 ## Don't retry into errors
 
-A subtle bug: a worker that fails to claim a job (DB error), or fails to deserialize, or panics before sending — these aren't *delivery* failures, they're *worker* failures. Don't increment `Attempts`; don't bump `next_attempt_at`. Just put the job back, let another worker try.
+A subtle bug: a worker that fails to claim a job (DB error), or fails to deserialize, or panics before sending — these aren't _delivery_ failures, they're _worker_ failures. Don't increment `Attempts`; don't bump `next_attempt_at`. Just put the job back, let another worker try.
 
 ```go
 defer func() {
@@ -289,7 +289,7 @@ Confusing worker errors with delivery errors leads to giving up too fast.
 
 ## Backoff for permanent transitions
 
-A receiver that returns `200` for two days then suddenly `410`s for a week is signaling "this endpoint is gone." After repeated permanent-class errors, mark the *subscription* as suspect — pause new deliveries, alert the customer. Don't keep firing retries at a known-dead URL.
+A receiver that returns `200` for two days then suddenly `410`s for a week is signaling "this endpoint is gone." After repeated permanent-class errors, mark the _subscription_ as suspect — pause new deliveries, alert the customer. Don't keep firing retries at a known-dead URL.
 
 ```go
 if subscription.PermanentFailureStreak > 100 {
@@ -351,4 +351,3 @@ That is the full lifecycle of one event. The retry layer is a few hundred lines 
 - Pause subscriptions after sustained permanent failures; notify the customer.
 
 Next: [Idempotency on the receiver](/notes/webhooks/07-idempotency) — the inbox pattern, dedup keys, and processing once even when delivery is at-least-once.
-

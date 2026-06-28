@@ -1,10 +1,10 @@
 ---
-title: "Building REST APIs"
-subtitle: "A complete, production-grade REST API from scratch — routing, validation, error responses, and the project structure used at real companies."
+title: 'Building REST APIs'
+subtitle: 'A complete, production-grade REST API from scratch — routing, validation, error responses, and the project structure used at real companies.'
 chapter: 13
-level: "intermediate"
-readingTime: "25 min"
-topics: ["REST API", "HTTP", "routing", "validation", "project structure", "CRUD"]
+level: 'intermediate'
+readingTime: '25 min'
+topics: ['REST API', 'HTTP', 'routing', 'validation', 'project structure', 'CRUD']
 ---
 
 <script>
@@ -494,4 +494,3 @@ func main() {
 4. **Services depend on interfaces** — enables testing and swapping implementations
 5. **Use Go 1.22+ routing** — `mux.HandleFunc("GET /api/books/{id}", handler)` needs no framework
 6. **Wire dependencies in `main()`** — explicit, no magic, easy to understand
-

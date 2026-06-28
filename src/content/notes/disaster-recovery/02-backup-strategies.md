@@ -1,10 +1,10 @@
 ---
-title: "Backup Strategies"
-subtitle: "pg_dump for logical backups, WAL-G for continuous archival, S3 lifecycle for retention — the mechanics of actually keeping your data."
+title: 'Backup Strategies'
+subtitle: 'pg_dump for logical backups, WAL-G for continuous archival, S3 lifecycle for retention — the mechanics of actually keeping your data.'
 chapter: 2
-level: "intermediate"
-readingTime: "12 min"
-topics: ["pg_dump", "WAL-G", "WAL archiving", "backups", "S3", "retention"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['pg_dump', 'WAL-G', 'WAL archiving', 'backups', 'S3', 'retention']
 ---
 
 <script>
@@ -44,6 +44,7 @@ pg_dumpall -U postgres > full_cluster.sql
 ```
 
 **Restore from pg_dump:**
+
 ```bash
 # SQL format
 psql -U postgres -d mydb < backup.sql
@@ -58,6 +59,7 @@ pg_restore -U postgres -d mydb_restored backup.dump
 ```
 
 **Limitations of pg_dump:**
+
 - Point-in-time: captures state at dump start, misses everything written after
 - Duration: large databases take hours to dump, during which data keeps changing
 - RPO = time since last dump (if you dump nightly at 2am, RPO is up to 24 hours)
@@ -69,6 +71,7 @@ For RPO below 1 hour, you need WAL archiving.
 PostgreSQL's Write-Ahead Log (WAL) records every change before it's applied. Archive the WAL continuously and you can restore to any point in time — not just the last snapshot.
 
 **WAL + base backup = PITR (Point-In-Time Recovery):**
+
 ```
 Base backup (snapshot at T=0)
   + WAL segments archived from T=0 to T=now
@@ -76,6 +79,7 @@ Base backup (snapshot at T=0)
 ```
 
 **Configure WAL archiving in postgresql.conf:**
+
 ```ini
 wal_level = replica          # enable WAL content needed for replication/archiving
 archive_mode = on            # enable archiving
@@ -87,6 +91,7 @@ archive_timeout = 60         # archive incomplete WAL segments every 60s
 ```
 
 For production, archive to S3 — not local disk:
+
 ```ini
 archive_command = 'aws s3 cp %p s3://my-wal-archive/%f'
 ```
@@ -96,6 +101,7 @@ archive_command = 'aws s3 cp %p s3://my-wal-archive/%f'
 [WAL-G](https://github.com/wal-g/wal-g) is the standard tool for PostgreSQL continuous backup. It handles base backups, WAL archiving, compression, encryption, and restore — all in one binary.
 
 **Setup:**
+
 ```bash
 # Install
 curl -L https://github.com/wal-g/wal-g/releases/latest/download/wal-g-pg-ubuntu-20.04 \
@@ -112,6 +118,7 @@ export PGHOST=localhost
 ```
 
 **Configure postgresql.conf to use WAL-G:**
+
 ```ini
 wal_level = replica
 archive_mode = on
@@ -121,6 +128,7 @@ archive_timeout = 60
 ```
 
 **Take a base backup:**
+
 ```bash
 # Full base backup — run initially and then periodically (weekly recommended)
 wal-g backup-push /var/lib/postgresql/data
@@ -135,6 +143,7 @@ wal-g backup-list
 ```
 
 **Automate with cron:**
+
 ```bash
 # /etc/cron.d/wal-g
 # Full base backup every Sunday at 1am
@@ -199,17 +208,21 @@ wal-g delete --confirm before FIND_FULL 2024-01-01T00:00:00Z  # --confirm to act
 ```
 
 **S3 lifecycle policy for WAL segments (belt and suspenders):**
+
 ```json
 {
-  "Rules": [{
-    "Status": "Enabled",
-    "Filter": { "Prefix": "postgres/wal_005/" },
-    "Expiration": { "Days": 35 }
-  }]
+	"Rules": [
+		{
+			"Status": "Enabled",
+			"Filter": { "Prefix": "postgres/wal_005/" },
+			"Expiration": { "Days": 35 }
+		}
+	]
 }
 ```
 
 **Standard retention tiers:**
+
 ```
 Daily backups: keep 7 days
 Weekly backups: keep 4 weeks
@@ -225,6 +238,7 @@ WAL segments: keep as long as your oldest base backup + buffer
 Beyond the database, back up:
 
 **Configuration and secrets:**
+
 ```bash
 # Export application config (not secrets — those live in secrets manager)
 kubectl get configmap -A -o yaml > configmaps-backup.yaml
@@ -235,6 +249,7 @@ aws s3 cp configmaps-backup.yaml s3://my-config-backup/$(date +%Y%m%d)/
 ```
 
 **Object storage (S3):**
+
 ```bash
 # Enable S3 versioning — accidental deletes are recoverable
 aws s3api put-bucket-versioning \
@@ -248,6 +263,7 @@ aws s3api put-bucket-replication \
 ```
 
 **Infrastructure as Code:**
+
 ```bash
 # If you use Terraform: your IaC repo IS your infra backup
 # Ensure state backend is backed up
@@ -268,4 +284,3 @@ Meets 3-2-1: ✓
 ```
 
 For critical data, add a fourth copy in a different cloud provider or physically air-gapped storage.
-

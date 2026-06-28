@@ -1,10 +1,10 @@
 ---
-title: "Messaging & Queues — Roadmap"
-subtitle: "Self-host RabbitMQ or NATS. Then run a Kafka cluster across 3 VPS."
+title: 'Messaging & Queues — Roadmap'
+subtitle: 'Self-host RabbitMQ or NATS. Then run a Kafka cluster across 3 VPS.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Direct HTTP calls couple services in time — if the downstream is down, the ups
 3. **Kafka** — topics, partitions, consumer groups, retention, transactional producers
 4. **NATS** — core pub/sub, JetStream streams, KV store, request-reply, clustering
 5. **Messaging Patterns** — outbox, inbox, choreography vs orchestration, saga, poison pills
-

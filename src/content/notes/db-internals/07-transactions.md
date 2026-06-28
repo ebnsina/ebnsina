@@ -1,10 +1,10 @@
 ---
-title: "Transactions & ACID"
+title: 'Transactions & ACID'
 subtitle: "Atomicity, Consistency, Isolation, Durability — the guarantees that make databases reliable and how they're implemented."
 chapter: 7
-level: "intermediate"
-readingTime: "14 min"
-topics: ["ACID", "transactions", "atomicity", "isolation"]
+level: 'intermediate'
+readingTime: '14 min'
+topics: ['ACID', 'transactions', 'atomicity', 'isolation']
 ---
 
 <script>
@@ -44,38 +44,38 @@ Like a bank wire transfer — when you send $500, either your balance decreases 
 
 ```typescript
 class Transaction {
-  private undoLog: UndoRecord[] = [];
-  private state: "active" | "committed" | "aborted" = "active";
+	private undoLog: UndoRecord[] = [];
+	private state: 'active' | 'committed' | 'aborted' = 'active';
 
-  async execute(operation: Operation): Promise<void> {
-    // Save undo information before making changes
-    const undoRecord = {
-      operation: operation.inverse(),
-      pageId: operation.pageId,
-      beforeImage: await readPage(operation.pageId),
-    };
-    this.undoLog.push(undoRecord);
+	async execute(operation: Operation): Promise<void> {
+		// Save undo information before making changes
+		const undoRecord = {
+			operation: operation.inverse(),
+			pageId: operation.pageId,
+			beforeImage: await readPage(operation.pageId)
+		};
+		this.undoLog.push(undoRecord);
 
-    // Apply the change
-    await operation.apply();
-  }
+		// Apply the change
+		await operation.apply();
+	}
 
-  async commit(): Promise<void> {
-    // Write COMMIT record to WAL
-    await wal.append({ type: "COMMIT", txId: this.id });
-    await wal.flush(); // fsync — now it's durable
-    this.state = "committed";
-    // Undo log can be discarded
-  }
+	async commit(): Promise<void> {
+		// Write COMMIT record to WAL
+		await wal.append({ type: 'COMMIT', txId: this.id });
+		await wal.flush(); // fsync — now it's durable
+		this.state = 'committed';
+		// Undo log can be discarded
+	}
 
-  async rollback(): Promise<void> {
-    // Apply undo records in reverse order
-    for (const record of this.undoLog.reverse()) {
-      await record.operation.apply();
-    }
-    await wal.append({ type: "ABORT", txId: this.id });
-    this.state = "aborted";
-  }
+	async rollback(): Promise<void> {
+		// Apply undo records in reverse order
+		for (const record of this.undoLog.reverse()) {
+			await record.operation.apply();
+		}
+		await wal.append({ type: 'ABORT', txId: this.id });
+		this.state = 'aborted';
+	}
 }
 ```
 
@@ -100,20 +100,20 @@ COMMIT;
 ```typescript
 // Implementation: savepoints mark a position in the undo log
 class Transaction {
-  private savepoints = new Map<string, number>();
+	private savepoints = new Map<string, number>();
 
-  savepoint(name: string): void {
-    this.savepoints.set(name, this.undoLog.length);
-  }
+	savepoint(name: string): void {
+		this.savepoints.set(name, this.undoLog.length);
+	}
 
-  rollbackTo(name: string): void {
-    const position = this.savepoints.get(name)!;
-    // Undo everything after the savepoint
-    while (this.undoLog.length > position) {
-      const record = this.undoLog.pop()!;
-      record.operation.apply();
-    }
-  }
+	rollbackTo(name: string): void {
+		const position = this.savepoints.get(name)!;
+		// Undo everything after the savepoint
+		while (this.undoLog.length > position) {
+			const record = this.undoLog.pop()!;
+			record.operation.apply();
+		}
+	}
 }
 ```
 
@@ -124,21 +124,19 @@ When a transaction spans multiple databases or services:
 ```typescript
 // Phase 1: PREPARE — ask all participants if they can commit
 async function prepare(participants: Database[]): Promise<boolean> {
-  const votes = await Promise.all(
-    participants.map(p => p.prepare(transactionId))
-  );
-  return votes.every(v => v === "YES");
+	const votes = await Promise.all(participants.map((p) => p.prepare(transactionId)));
+	return votes.every((v) => v === 'YES');
 }
 
 // Phase 2: COMMIT or ABORT
 async function complete(participants: Database[], allReady: boolean): Promise<void> {
-  if (allReady) {
-    // Everyone said YES → commit everywhere
-    await Promise.all(participants.map(p => p.commit(transactionId)));
-  } else {
-    // Someone said NO → abort everywhere
-    await Promise.all(participants.map(p => p.abort(transactionId)));
-  }
+	if (allReady) {
+		// Everyone said YES → commit everywhere
+		await Promise.all(participants.map((p) => p.commit(transactionId)));
+	} else {
+		// Someone said NO → abort everywhere
+		await Promise.all(participants.map((p) => p.abort(transactionId)));
+	}
 }
 ```
 
@@ -179,4 +177,3 @@ UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 3. **Savepoints enable partial rollbacks** within a transaction
 4. **Distributed transactions (2PC) are blocking** — prefer sagas for cross-service operations
 5. **Keep transactions short** to minimize lock contention and VACUUM impact
-

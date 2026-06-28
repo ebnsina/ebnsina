@@ -1,10 +1,10 @@
 ---
-title: "Message protocols on top"
-subtitle: "Raw frames carry bytes. Real apps need types, versions, and request/response correlation. Designing the message envelope before you have ten clients in the wild saves you years of pain."
+title: 'Message protocols on top'
+subtitle: 'Raw frames carry bytes. Real apps need types, versions, and request/response correlation. Designing the message envelope before you have ten clients in the wild saves you years of pain.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["websockets", "json", "protocol", "versioning", "envelope"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['websockets', 'json', 'protocol', 'versioning', 'envelope']
 ---
 
 <script>
@@ -29,12 +29,12 @@ The first decision: every message is wrapped in an envelope that carries `type`,
 
 ```json
 {
-  "type": "chat.message",
-  "id": "abc123",
-  "data": {
-    "room": "general",
-    "text": "hello"
-  }
+	"type": "chat.message",
+	"id": "abc123",
+	"data": {
+		"room": "general",
+		"text": "hello"
+	}
 }
 ```
 
@@ -63,9 +63,12 @@ With an envelope:
 
 ```js
 switch (msg.type) {
-  case "chat.message": return handleChat(msg.data);
-  case "presence.cursor": return handlePresence(msg.data);
-  case "error":  return handleError(msg.data);
+	case 'chat.message':
+		return handleChat(msg.data);
+	case 'presence.cursor':
+		return handlePresence(msg.data);
+	case 'error':
+		return handleError(msg.data);
 }
 ```
 
@@ -103,32 +106,35 @@ Client side, keep a map of pending request IDs to promise resolvers:
 
 ```js
 class WSClient {
-  constructor(url) {
-    this.ws = new WebSocket(url);
-    this.pending = new Map();
-    this.ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      const resolver = this.pending.get(msg.id);
-      if (resolver) {
-        this.pending.delete(msg.id);
-        resolver(msg.data);
-      } else {
-        this.dispatch(msg); // server-pushed event, no reply expected
-      }
-    };
-  }
+	constructor(url) {
+		this.ws = new WebSocket(url);
+		this.pending = new Map();
+		this.ws.onmessage = (e) => {
+			const msg = JSON.parse(e.data);
+			const resolver = this.pending.get(msg.id);
+			if (resolver) {
+				this.pending.delete(msg.id);
+				resolver(msg.data);
+			} else {
+				this.dispatch(msg); // server-pushed event, no reply expected
+			}
+		};
+	}
 
-  request(type, data, timeoutMs = 5000) {
-    const id = crypto.randomUUID();
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error("timeout"));
-      }, timeoutMs);
-      this.pending.set(id, (res) => { clearTimeout(t); resolve(res); });
-      this.ws.send(JSON.stringify({ type, id, data }));
-    });
-  }
+	request(type, data, timeoutMs = 5000) {
+		const id = crypto.randomUUID();
+		return new Promise((resolve, reject) => {
+			const t = setTimeout(() => {
+				this.pending.delete(id);
+				reject(new Error('timeout'));
+			}, timeoutMs);
+			this.pending.set(id, (res) => {
+				clearTimeout(t);
+				resolve(res);
+			});
+			this.ws.send(JSON.stringify({ type, id, data }));
+		});
+	}
 }
 ```
 
@@ -152,16 +158,20 @@ Every protocol needs a clear failure shape. Two reasonable conventions.
 **1. Error as a separate message:**
 
 ```json
-{ "type": "error", "id": "req-abc", "data": { "code": "NOT_FOUND", "message": "user 42 not found" } }
+{
+	"type": "error",
+	"id": "req-abc",
+	"data": { "code": "NOT_FOUND", "message": "user 42 not found" }
+}
 ```
 
 The `id` matches the failed request. Client code:
 
 ```js
-if (msg.type === "error") {
-  const reject = this.pendingRej.get(msg.id);
-  reject(new Error(msg.data.message));
-  return;
+if (msg.type === 'error') {
+	const reject = this.pendingRej.get(msg.id);
+	reject(new Error(msg.data.message));
+	return;
 }
 ```
 
@@ -246,11 +256,15 @@ Sometimes a request triggers a stream of replies, not just one. The pattern: the
 Client side, expose a multi-callback API:
 
 ```js
-ws.stream("log.tail", { service: "api" }, {
-  onMessage: (line) => console.log(line),
-  onComplete: () => console.log("done"),
-  onError: (e) => console.error(e),
-});
+ws.stream(
+	'log.tail',
+	{ service: 'api' },
+	{
+		onMessage: (line) => console.log(line),
+		onComplete: () => console.log('done'),
+		onError: (e) => console.error(e)
+	}
+);
 ```
 
 This rebuilds gRPC's server-streaming on top of plain WebSockets. Useful when you do not want to run gRPC.
@@ -311,4 +325,3 @@ The cost: ~10–20% more CPU, plus a memory cost per connection (a deflate windo
 - `permessage-deflate` halves bandwidth for JSON; CPU/memory cost is manageable.
 
 Next: [Server-Sent Events](/notes/websockets/05-sse) — when one-way is enough, half the protocol with twice the simplicity.
-

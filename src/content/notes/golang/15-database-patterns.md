@@ -1,10 +1,11 @@
 ---
-title: "Database Patterns"
-subtitle: "Migrations, repository pattern, connection pooling, and query builders — the database layer that scales."
+title: 'Database Patterns'
+subtitle: 'Migrations, repository pattern, connection pooling, and query builders — the database layer that scales.'
 chapter: 15
-level: "intermediate"
-readingTime: "22 min"
-topics: ["database", "migrations", "repository pattern", "sqlc", "transactions", "connection pooling"]
+level: 'intermediate'
+readingTime: '22 min'
+topics:
+  ['database', 'migrations', 'repository pattern', 'sqlc', 'transactions', 'connection pooling']
 ---
 
 <script>
@@ -165,15 +166,15 @@ func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*model.
 
 ```yaml
 # sqlc.yaml
-version: "2"
+version: '2'
 sql:
-  - engine: "postgresql"
-    queries: "queries/"
-    schema: "migrations/"
+  - engine: 'postgresql'
+    queries: 'queries/'
+    schema: 'migrations/'
     gen:
       go:
-        package: "db"
-        out: "internal/db"
+        package: 'db'
+        out: 'internal/db'
 ```
 
 ```sql
@@ -245,6 +246,7 @@ func setupDB(dbURL string) (*sql.DB, error) {
 ```
 
 **Tuning guide:**
+
 - `MaxOpenConns`: Start with 25. Monitor `db.Stats()` — if `WaitCount` is high, increase
 - `MaxIdleConns`: 5-10 is typical. Too many wastes resources, too few causes reconnection overhead
 - `ConnMaxLifetime`: 5 minutes prevents stale connections after database failover
@@ -346,4 +348,3 @@ func (r *UserRepository) BulkCreate(ctx context.Context, users []*model.User) er
 4. **Configure connection pools** — `MaxOpenConns=25`, `MaxIdleConns=5`, `ConnMaxLifetime=5m`
 5. **`WithTx` helper** eliminates transaction boilerplate — commit on success, rollback on error
 6. **Use `*string` over `sql.NullString`** — cleaner API, works naturally with JSON
-

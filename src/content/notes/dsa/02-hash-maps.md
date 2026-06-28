@@ -1,10 +1,10 @@
 ---
-title: "Hash Maps & Sets"
-subtitle: "Turn O(n) lookups into O(1) with hash-based data structures — the most practically useful tool in your kit."
+title: 'Hash Maps & Sets'
+subtitle: 'Turn O(n) lookups into O(1) with hash-based data structures — the most practically useful tool in your kit.'
 chapter: 2
-level: "beginner"
-readingTime: "14 min"
-topics: ["hash map", "hash set", "collision handling", "frequency counting"]
+level: 'beginner'
+readingTime: '14 min'
+topics: ['hash map', 'hash set', 'collision handling', 'frequency counting']
 ---
 
 <script>
@@ -29,15 +29,16 @@ A hash function converts a key into an array index. The simplest version:
 
 ```typescript
 function simpleHash(key: string, size: number): number {
-  let hash = 0;
-  for (const char of key) {
-    hash = (hash * 31 + char.charCodeAt(0)) % size;
-  }
-  return hash;
+	let hash = 0;
+	for (const char of key) {
+		hash = (hash * 31 + char.charCodeAt(0)) % size;
+	}
+	return hash;
 }
 ```
 
 When two keys produce the same index (a **collision**), common strategies include:
+
 - **Chaining**: Each bucket holds a linked list of entries
 - **Open addressing**: Probe the next available slot
 
@@ -49,15 +50,15 @@ The most common hash map pattern — count occurrences of elements.
 
 ```typescript
 function topKFrequent(nums: number[], k: number): number[] {
-  const freq = new Map<number, number>();
-  for (const n of nums) {
-    freq.set(n, (freq.get(n) || 0) + 1);
-  }
+	const freq = new Map<number, number>();
+	for (const n of nums) {
+		freq.set(n, (freq.get(n) || 0) + 1);
+	}
 
-  return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, k)
-    .map(([num]) => num);
+	return [...freq.entries()]
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, k)
+		.map(([num]) => num);
 }
 ```
 
@@ -65,16 +66,16 @@ function topKFrequent(nums: number[], k: number): number[] {
 
 ```typescript
 function twoSum(nums: number[], target: number): [number, number] | null {
-  const seen = new Map<number, number>(); // value -> index
+	const seen = new Map<number, number>(); // value -> index
 
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (seen.has(complement)) {
-      return [seen.get(complement)!, i];
-    }
-    seen.set(nums[i], i);
-  }
-  return null;
+	for (let i = 0; i < nums.length; i++) {
+		const complement = target - nums[i];
+		if (seen.has(complement)) {
+			return [seen.get(complement)!, i];
+		}
+		seen.set(nums[i], i);
+	}
+	return null;
 }
 ```
 
@@ -82,15 +83,15 @@ function twoSum(nums: number[], target: number): [number, number] | null {
 
 ```typescript
 function groupAnagrams(strs: string[]): string[][] {
-  const groups = new Map<string, string[]>();
+	const groups = new Map<string, string[]>();
 
-  for (const s of strs) {
-    const key = s.split("").sort().join("");
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(s);
-  }
+	for (const s of strs) {
+		const key = s.split('').sort().join('');
+		if (!groups.has(key)) groups.set(key, []);
+		groups.get(key)!.push(s);
+	}
 
-  return [...groups.values()];
+	return [...groups.values()];
 }
 ```
 
@@ -99,22 +100,22 @@ function groupAnagrams(strs: string[]): string[][] {
 ```typescript
 // Find the length of longest consecutive sequence
 function longestConsecutive(nums: number[]): number {
-  const set = new Set(nums);
-  let best = 0;
+	const set = new Set(nums);
+	let best = 0;
 
-  for (const n of set) {
-    // Only start counting from sequence beginnings
-    if (set.has(n - 1)) continue;
+	for (const n of set) {
+		// Only start counting from sequence beginnings
+		if (set.has(n - 1)) continue;
 
-    let length = 1;
-    let current = n;
-    while (set.has(current + 1)) {
-      current++;
-      length++;
-    }
-    best = Math.max(best, length);
-  }
-  return best;
+		let length = 1;
+		let current = n;
+		while (set.has(current + 1)) {
+			current++;
+			length++;
+		}
+		best = Math.max(best, length);
+	}
+	return best;
 }
 ```
 
@@ -127,11 +128,11 @@ function longestConsecutive(nums: number[]): number {
 ## Complexity
 
 | Operation | Average | Worst Case |
-|-----------|---------|------------|
-| Get | O(1) | O(n) |
-| Set | O(1) | O(n) |
-| Delete | O(1) | O(n) |
-| Has | O(1) | O(n) |
+| --------- | ------- | ---------- |
+| Get       | O(1)    | O(n)       |
+| Set       | O(1)    | O(n)       |
+| Delete    | O(1)    | O(n)       |
+| Has       | O(1)    | O(n)       |
 
 Worst case happens with pathological hash collisions — extremely rare with good hash functions.
 
@@ -141,4 +142,3 @@ Worst case happens with pathological hash collisions — extremely rare with goo
 2. **Frequency counting** is the #1 hash map pattern — learn it cold
 3. **Sets** are hash maps without values — perfect for membership checks and deduplication
 4. **Trade space for time**: O(n) extra memory for O(1) lookups is almost always worth it
-

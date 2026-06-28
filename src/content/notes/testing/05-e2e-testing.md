@@ -1,10 +1,11 @@
 ---
-title: "End-to-End Testing"
-subtitle: "Testing user journeys in a real browser — Playwright setup, selectors, auth, CI, and keeping e2e tests fast and reliable."
+title: 'End-to-End Testing'
+subtitle: 'Testing user journeys in a real browser — Playwright setup, selectors, auth, CI, and keeping e2e tests fast and reliable.'
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["e2e testing", "Playwright", "browser automation", "Cypress", "test reliability", "flakiness"]
+level: 'intermediate'
+readingTime: '9 min'
+topics:
+  ['e2e testing', 'Playwright', 'browser automation', 'Cypress', 'test reliability', 'flakiness']
 ---
 
 <script>
@@ -28,6 +29,7 @@ E2E tests are expensive — slow to run, harder to debug, flakier than unit or i
 - **Regression protection**: flows that have broken in production before
 
 Don't use for:
+
 - Every feature (use integration tests instead)
 - Error states (better tested with integration tests — faster, more reliable)
 - Things that change frequently (high maintenance cost)
@@ -46,28 +48,28 @@ npx playwright install chromium  # or --with-deps for all browsers
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',
-  timeout: 30_000,           // per test
-  retries: process.env.CI ? 2 : 0,  // retry on CI, not locally
-  workers: process.env.CI ? 1 : undefined,  // parallel locally, serial in CI
+	testDir: './e2e',
+	timeout: 30_000, // per test
+	retries: process.env.CI ? 2 : 0, // retry on CI, not locally
+	workers: process.env.CI ? 1 : undefined, // parallel locally, serial in CI
 
-  use: {
-    baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
-    trace: 'on-first-retry',      // record trace when test fails
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-  },
+	use: {
+		baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
+		trace: 'on-first-retry', // record trace when test fails
+		screenshot: 'only-on-failure',
+		video: 'retain-on-failure'
+	},
 
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Add mobile/firefox/safari selectively — only where it matters
-  ],
+	projects: [
+		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+		// Add mobile/firefox/safari selectively — only where it matters
+	],
 
-  webServer: {
-    command: 'npm run start:test',  // starts app with test config
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
+	webServer: {
+		command: 'npm run start:test', // starts app with test config
+		url: 'http://localhost:3000',
+		reuseExistingServer: !process.env.CI
+	}
 });
 ```
 
@@ -78,41 +80,41 @@ export default defineConfig({
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication', () => {
-  test('user can sign up', async ({ page }) => {
-    await page.goto('/signup');
+	test('user can sign up', async ({ page }) => {
+		await page.goto('/signup');
 
-    await page.fill('[name=email]', 'newuser@example.com');
-    await page.fill('[name=password]', 'SecurePass123!');
-    await page.fill('[name=name]', 'New User');
-    await page.click('[type=submit]');
+		await page.fill('[name=email]', 'newuser@example.com');
+		await page.fill('[name=password]', 'SecurePass123!');
+		await page.fill('[name=name]', 'New User');
+		await page.click('[type=submit]');
 
-    // Wait for navigation, not arbitrary time
-    await expect(page).toHaveURL('/dashboard');
-    await expect(page.getByRole('heading', { name: 'Welcome, New User' })).toBeVisible();
-  });
+		// Wait for navigation, not arbitrary time
+		await expect(page).toHaveURL('/dashboard');
+		await expect(page.getByRole('heading', { name: 'Welcome, New User' })).toBeVisible();
+	});
 
-  test('shows error for duplicate email', async ({ page }) => {
-    await page.goto('/signup');
-    await page.fill('[name=email]', 'existing@example.com');
-    await page.fill('[name=password]', 'SecurePass123!');
-    await page.click('[type=submit]');
+	test('shows error for duplicate email', async ({ page }) => {
+		await page.goto('/signup');
+		await page.fill('[name=email]', 'existing@example.com');
+		await page.fill('[name=password]', 'SecurePass123!');
+		await page.click('[type=submit]');
 
-    await expect(page.getByText('Email already registered')).toBeVisible();
-    await expect(page).toHaveURL('/signup');  // didn't navigate
-  });
+		await expect(page.getByText('Email already registered')).toBeVisible();
+		await expect(page).toHaveURL('/signup'); // didn't navigate
+	});
 
-  test('can log out', async ({ page, context }) => {
-    // Use saved auth state (see Authentication section)
-    await page.goto('/dashboard');
-    await page.click('[data-testid=user-menu]');
-    await page.click('text=Sign out');
+	test('can log out', async ({ page, context }) => {
+		// Use saved auth state (see Authentication section)
+		await page.goto('/dashboard');
+		await page.click('[data-testid=user-menu]');
+		await page.click('text=Sign out');
 
-    await expect(page).toHaveURL('/login');
+		await expect(page).toHaveURL('/login');
 
-    // Verify session is cleared
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL('/login');  // redirected
-  });
+		// Verify session is cleared
+		await page.goto('/dashboard');
+		await expect(page).toHaveURL('/login'); // redirected
+	});
 });
 ```
 
@@ -125,7 +127,7 @@ await page.getByRole('link', { name: 'Sign in' });
 await page.getByRole('textbox', { name: 'Email' });
 
 // GOOD: test IDs (explicit, stable)
-await page.getByTestId('checkout-button');  // data-testid="checkout-button"
+await page.getByTestId('checkout-button'); // data-testid="checkout-button"
 
 // GOOD: label text (for form inputs)
 await page.getByLabel('Email address');
@@ -134,10 +136,10 @@ await page.getByLabel('Email address');
 await page.getByText('Your order was placed');
 
 // AVOID: CSS classes (implementation detail, breaks on refactor)
-await page.locator('.btn-primary.checkout');  // fragile
+await page.locator('.btn-primary.checkout'); // fragile
 
 // AVOID: XPath (brittle, hard to read)
-await page.locator('//div[@class="cart"]//button[1]');  // avoid
+await page.locator('//div[@class="cart"]//button[1]'); // avoid
 ```
 
 Add `data-testid` attributes to interactive elements in your app:
@@ -145,7 +147,7 @@ Add `data-testid` attributes to interactive elements in your app:
 ```tsx
 // In your component
 <button data-testid="checkout-button" onClick={checkout}>
-  Checkout
+	Checkout
 </button>
 ```
 
@@ -161,33 +163,33 @@ import path from 'path';
 const authFile = path.join(__dirname, '.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('[name=email]', process.env.TEST_USER_EMAIL!);
-  await page.fill('[name=password]', process.env.TEST_USER_PASSWORD!);
-  await page.click('[type=submit]');
-  await expect(page).toHaveURL('/dashboard');
+	await page.goto('/login');
+	await page.fill('[name=email]', process.env.TEST_USER_EMAIL!);
+	await page.fill('[name=password]', process.env.TEST_USER_PASSWORD!);
+	await page.click('[type=submit]');
+	await expect(page).toHaveURL('/dashboard');
 
-  // Save the auth state (cookies + localStorage)
-  await page.context().storageState({ path: authFile });
+	// Save the auth state (cookies + localStorage)
+	await page.context().storageState({ path: authFile });
 });
 ```
 
 ```typescript
 // playwright.config.ts
 export default defineConfig({
-  projects: [
-    {
-      name: 'setup',
-      testMatch: /auth\.setup\.ts/,
-    },
-    {
-      name: 'authenticated',
-      use: {
-        storageState: path.join(__dirname, 'e2e/.auth/user.json'),
-      },
-      dependencies: ['setup'],
-    },
-  ],
+	projects: [
+		{
+			name: 'setup',
+			testMatch: /auth\.setup\.ts/
+		},
+		{
+			name: 'authenticated',
+			use: {
+				storageState: path.join(__dirname, 'e2e/.auth/user.json')
+			},
+			dependencies: ['setup']
+		}
+	]
 });
 
 // Now all tests in 'authenticated' project start already logged in
@@ -205,47 +207,47 @@ For complex flows, extract selectors and actions into page objects:
 import { Page, expect } from '@playwright/test';
 
 export class CheckoutPage {
-  constructor(private page: Page) {}
+	constructor(private page: Page) {}
 
-  async goto() {
-    await this.page.goto('/checkout');
-  }
+	async goto() {
+		await this.page.goto('/checkout');
+	}
 
-  async fillShipping(address: { street: string; city: string; zip: string }) {
-    await this.page.fill('[name=street]', address.street);
-    await this.page.fill('[name=city]', address.city);
-    await this.page.fill('[name=zip]', address.zip);
-  }
+	async fillShipping(address: { street: string; city: string; zip: string }) {
+		await this.page.fill('[name=street]', address.street);
+		await this.page.fill('[name=city]', address.city);
+		await this.page.fill('[name=zip]', address.zip);
+	}
 
-  async fillPayment(card: { number: string; expiry: string; cvc: string }) {
-    // Stripe iframe — must switch frame context
-    const frame = this.page.frameLocator('[data-testid=card-iframe]');
-    await frame.getByLabel('Card number').fill(card.number);
-    await frame.getByLabel('Expiry').fill(card.expiry);
-    await frame.getByLabel('CVC').fill(card.cvc);
-  }
+	async fillPayment(card: { number: string; expiry: string; cvc: string }) {
+		// Stripe iframe — must switch frame context
+		const frame = this.page.frameLocator('[data-testid=card-iframe]');
+		await frame.getByLabel('Card number').fill(card.number);
+		await frame.getByLabel('Expiry').fill(card.expiry);
+		await frame.getByLabel('CVC').fill(card.cvc);
+	}
 
-  async submit() {
-    await this.page.click('[data-testid=place-order]');
-  }
+	async submit() {
+		await this.page.click('[data-testid=place-order]');
+	}
 
-  async expectConfirmation() {
-    await expect(this.page.getByRole('heading', { name: 'Order confirmed' })).toBeVisible();
-    return {
-      orderId: await this.page.getByTestId('order-id').textContent(),
-    };
-  }
+	async expectConfirmation() {
+		await expect(this.page.getByRole('heading', { name: 'Order confirmed' })).toBeVisible();
+		return {
+			orderId: await this.page.getByTestId('order-id').textContent()
+		};
+	}
 }
 
 // Use in tests
 test('completes checkout', async ({ page }) => {
-  const checkout = new CheckoutPage(page);
-  await checkout.goto();
-  await checkout.fillShipping({ street: '123 Main St', city: 'NYC', zip: '10001' });
-  await checkout.fillPayment({ number: '4242424242424242', expiry: '12/28', cvc: '123' });
-  await checkout.submit();
-  const { orderId } = await checkout.expectConfirmation();
-  expect(orderId).toBeTruthy();
+	const checkout = new CheckoutPage(page);
+	await checkout.goto();
+	await checkout.fillShipping({ street: '123 Main St', city: 'NYC', zip: '10001' });
+	await checkout.fillPayment({ number: '4242424242424242', expiry: '12/28', cvc: '123' });
+	await checkout.submit();
+	const { orderId } = await checkout.expectConfirmation();
+	expect(orderId).toBeTruthy();
 });
 ```
 
@@ -283,10 +285,10 @@ test('deletes a user', async ({ page }) => {
 const runId = Date.now();
 
 test('creates a product', async ({ page }) => {
-  const name = `Test Product ${runId}`;  // unique name
-  await page.fill('[name=product-name]', name);
-  // ...
-  await expect(page.getByText(name)).toBeVisible();  // safe to assert exact name
+	const name = `Test Product ${runId}`; // unique name
+	await page.fill('[name=product-name]', name);
+	// ...
+	await expect(page.getByText(name)).toBeVisible(); // safe to assert exact name
 });
 ```
 
@@ -358,4 +360,3 @@ npx playwright test --debug e2e/checkout.spec.ts
 ```
 
 Playwright's trace viewer shows every action, network request, and console log — essential for debugging CI failures without reproducing locally.
-

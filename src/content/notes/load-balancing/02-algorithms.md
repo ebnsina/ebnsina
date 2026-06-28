@@ -1,10 +1,10 @@
 ---
-title: "Load Balancing Algorithms"
+title: 'Load Balancing Algorithms'
 subtitle: "Round-robin, least connections, IP hash, weighted routing — when each algorithm fits and what happens when backends aren't equal."
 chapter: 2
-level: "beginner"
-readingTime: "9 min"
-topics: ["load balancing", "round-robin", "least connections", "consistent hashing", "weighted"]
+level: 'beginner'
+readingTime: '9 min'
+topics: ['load balancing', 'round-robin', 'least connections', 'consistent hashing', 'weighted']
 ---
 
 <script>
@@ -31,6 +31,7 @@ Request 4 → server1  (wraps)
 ```
 
 **nginx:**
+
 ```nginx
 upstream backend {
     server 10.0.0.10:3000;
@@ -42,6 +43,7 @@ upstream backend {
 Round robin is the nginx default — no directive needed.
 
 **HAProxy:**
+
 ```
 backend api_servers
     balance roundrobin
@@ -63,6 +65,7 @@ server3: 7 connections
 ```
 
 **nginx:**
+
 ```nginx
 upstream backend {
     least_conn;
@@ -73,6 +76,7 @@ upstream backend {
 ```
 
 **HAProxy:**
+
 ```
 backend api_servers
     balance leastconn
@@ -92,6 +96,7 @@ client 5.6.7.8 → hash → always server1
 ```
 
 **nginx:**
+
 ```nginx
 upstream backend {
     ip_hash;
@@ -101,6 +106,7 @@ upstream backend {
 ```
 
 **HAProxy:** use `balance source`:
+
 ```
 backend api_servers
     balance source
@@ -117,6 +123,7 @@ Also: clients behind NAT appear as one IP, overloading one server.
 Some servers are more powerful. Send them proportionally more traffic.
 
 **nginx:**
+
 ```nginx
 upstream backend {
     server 10.0.0.10:3000 weight=5;   # handles 5x the traffic
@@ -127,6 +134,7 @@ upstream backend {
 With these weights: 5 out of 6 requests go to `s1`, 1 out of 6 to `s2`.
 
 **HAProxy:**
+
 ```
 backend api_servers
     balance roundrobin
@@ -135,6 +143,7 @@ backend api_servers
 ```
 
 **Use cases:**
+
 - Mixed instance types (c5.4xlarge + c5.xlarge together)
 - Gradual traffic shifts (canary deployments — new server starts at weight=1, increases)
 - Warming up a new server after cold start
@@ -144,6 +153,7 @@ backend api_servers
 Pick 2 servers at random, send to the one with fewer connections. Better than pure random, nearly as good as global least-connections without the coordination overhead.
 
 HAProxy supports this in newer versions:
+
 ```
 backend api_servers
     balance random 2
@@ -156,6 +166,7 @@ For large, distributed load balancer fleets (like Nginx Plus or Envoy in service
 Hash the request on a stable key (URL, user ID) and route to the same backend consistently. Unlike IP hash, handles server additions/removals gracefully — only `1/n` requests reroute when a server is added.
 
 **nginx Plus** (commercial):
+
 ```nginx
 upstream backend {
     hash $request_uri consistent;
@@ -192,11 +203,13 @@ Is this a distributed LB fleet (many LB instances)?
 New servers or servers recovering from failure shouldn't immediately receive full traffic — they may still be warming up (cold JVM, cache warming, connection pool filling).
 
 **nginx Plus:**
+
 ```nginx
 server 10.0.0.10:3000 slow_start=30s;
 ```
 
 **HAProxy:** use `weight` manipulation:
+
 ```bash
 # Start the server at weight 10, gradually increase via runtime API
 echo "set server backend/s1 weight 10" | socat stdio /var/run/haproxy/admin.sock
@@ -205,4 +218,3 @@ echo "set server backend/s1 weight 100" | socat stdio /var/run/haproxy/admin.soc
 ```
 
 This prevents a "thundering herd" problem where a newly added server immediately gets 33% of traffic and falls over under the sudden load.
-

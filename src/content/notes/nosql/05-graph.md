@@ -1,10 +1,10 @@
 ---
-title: "Graph Databases"
-subtitle: "Nodes, edges, and properties as first-class citizens. Neo4j and Cypher, traversals, and the queries where graphs leave joins in the dust."
+title: 'Graph Databases'
+subtitle: 'Nodes, edges, and properties as first-class citizens. Neo4j and Cypher, traversals, and the queries where graphs leave joins in the dust.'
 chapter: 5
-level: "advanced"
-readingTime: "11 min"
-topics: ["graph", "neo4j", "traversal"]
+level: 'advanced'
+readingTime: '11 min'
+topics: ['graph', 'neo4j', 'traversal']
 ---
 
 <script>
@@ -93,7 +93,7 @@ The `*1..4` syntax says "follow this relationship between one and four times." E
 
 <Callout type="tip">
 
-**Note:** A graph database's advantage is *local* traversal, not *global* scanning. "Find the recommendation path from this user to that product" is a graph's sweet spot. "Sum revenue by region for last quarter" is an analytical aggregation — a columnar/SQL warehouse does that far better. Use the graph for connectedness questions, not for bulk number-crunching.
+**Note:** A graph database's advantage is _local_ traversal, not _global_ scanning. "Find the recommendation path from this user to that product" is a graph's sweet spot. "Sum revenue by region for last quarter" is an analytical aggregation — a columnar/SQL warehouse does that far better. Use the graph for connectedness questions, not for bulk number-crunching.
 
 </Callout>
 
@@ -101,15 +101,15 @@ The `*1..4` syntax says "follow this relationship between one and four times." E
 
 Three domains where graph databases are the natural fit:
 
-**Recommendations.** "People who bought what you bought also bought…" is a two-hop traversal: from you, to your purchases, to other buyers, to *their* purchases. Collaborative filtering is a graph walk.
+**Recommendations.** "People who bought what you bought also bought…" is a two-hop traversal: from you, to your purchases, to other buyers, to _their_ purchases. Collaborative filtering is a graph walk.
 
-**Fraud detection.** Fraud rings share devices, addresses, and cards. A single transaction looks clean; the *pattern of connections* — many accounts funneling through one device — is the signal. Graph queries surface those rings by following shared-attribute edges in real time.
+**Fraud detection.** Fraud rings share devices, addresses, and cards. A single transaction looks clean; the _pattern of connections_ — many accounts funneling through one device — is the signal. Graph queries surface those rings by following shared-attribute edges in real time.
 
 **Social networks and access control.** Friend graphs, "mutual connections," and "who can reach this document through a chain of permissions" are inherently relationship queries. Network and dependency graphs (microservice call maps, package dependencies) fit the same shape.
 
 <Callout type="warning">
 
-**Warning:** Graph databases are specialists. They are not built for high-volume key lookups, bulk analytics, or storing large opaque blobs, and they generally don't scale horizontally as effortlessly as wide-column stores — partitioning a graph across machines while keeping traversals fast is genuinely hard. Introduce a graph database for the part of your system that is *about* relationships, and keep the rest of your data in whatever store fits it best. That mix-and-match approach is polyglot persistence, the subject of chapter 8.
+**Warning:** Graph databases are specialists. They are not built for high-volume key lookups, bulk analytics, or storing large opaque blobs, and they generally don't scale horizontally as effortlessly as wide-column stores — partitioning a graph across machines while keeping traversals fast is genuinely hard. Introduce a graph database for the part of your system that is _about_ relationships, and keep the rest of your data in whatever store fits it best. That mix-and-match approach is polyglot persistence, the subject of chapter 8.
 
 </Callout>
 

@@ -1,10 +1,10 @@
 ---
-title: "Data Modeling — Roadmap"
+title: 'Data Modeling — Roadmap'
 subtitle: "Ten chapters that take you from 'what's a primary key' to deliberate schema design under load — keys, normalization, denormalization, constraints, multi-tenancy, JSONB, and zero-downtime evolution."
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "data-modeling", "schemas", "postgres"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'data-modeling', 'schemas', 'postgres']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will be able to design Postgres schemas that match real query patterns, pick
 Read in order. The first four chapters are conceptual; from chapter 5 you are weighing tradeoffs against real query patterns. The last two are operational. Total reading: ~3 hours. Hands-on, with a real Postgres database: a long weekend.
 
 You need Postgres 15+ and a SQL client (`psql`, DBeaver, TablePlus, or VS Code with the Postgres extension). Everything runs locally.
-

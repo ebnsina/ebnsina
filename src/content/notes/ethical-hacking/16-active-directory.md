@@ -1,10 +1,20 @@
 ---
-title: "Active Directory Attacks"
-subtitle: "BloodHound, Kerberoasting, AS-REP Roasting, Pass-the-Ticket, DCSync, Golden Tickets — dominating Windows domains."
+title: 'Active Directory Attacks'
+subtitle: 'BloodHound, Kerberoasting, AS-REP Roasting, Pass-the-Ticket, DCSync, Golden Tickets — dominating Windows domains.'
 chapter: 16
-level: "advanced"
-readingTime: "18 min"
-topics: ["Active Directory", "Kerberos", "BloodHound", "Kerberoasting", "DCSync", "Golden Ticket", "LDAP", "SMB relay"]
+level: 'advanced'
+readingTime: '18 min'
+topics:
+  [
+    'Active Directory',
+    'Kerberos',
+    'BloodHound',
+    'Kerberoasting',
+    'DCSync',
+    'Golden Ticket',
+    'LDAP',
+    'SMB relay'
+  ]
 ---
 
 <script>
@@ -296,8 +306,8 @@ python3 ntlmrelayx.py -tf relay-targets.txt -smb2support -i
 
 ```powershell
 # Find GPOs you can modify
-Get-DomainGPO | Get-ObjectACL -ResolveGUIDs | 
-  Where-Object { $_.ActiveDirectoryRights -match "WriteProperty|GenericWrite" -and 
+Get-DomainGPO | Get-ObjectACL -ResolveGUIDs |
+  Where-Object { $_.ActiveDirectoryRights -match "WriteProperty|GenericWrite" -and
                  $_.SecurityIdentifier -match "S-1-5-21-...(user SID)" }
 
 # If you can write a GPO:
@@ -350,4 +360,3 @@ vagrant up
 # 7. DCSync → krbtgt hash → Golden Ticket
 # 8. Own everything
 ```
-

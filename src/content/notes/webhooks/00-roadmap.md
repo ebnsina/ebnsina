@@ -1,10 +1,10 @@
 ---
-title: "Webhooks — Roadmap"
+title: 'Webhooks — Roadmap'
 subtitle: "Ten chapters that go from 'webhooks are just HTTP POST requests' to a self-hosted, signed, retried, idempotent webhook system that survives the receiver being down for hours."
 chapter: 0
-level: "beginner"
-readingTime: "5 min"
-topics: ["roadmap", "webhooks", "hmac", "retries", "idempotency"]
+level: 'beginner'
+readingTime: '5 min'
+topics: ['roadmap', 'webhooks', 'hmac', 'retries', 'idempotency']
 ---
 
 <script>
@@ -47,4 +47,3 @@ You will be able to design event contracts that don't break clients, sign and ve
 Read in order. The first four chapters ship a working sender; chapters 5–8 build the receiver story; the last two are operational. Total reading: ~3 hours. Hands-on, the first time you build the whole system: a long weekend.
 
 You need Go 1.22+, Postgres, and a public-internet-reachable VPS for chapter 10 (webhooks need an inbound URL). For testing, **ngrok** or **smee.io** work locally.
-

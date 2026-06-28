@@ -1,10 +1,10 @@
 ---
-title: "Component Architecture"
-subtitle: "Composition, props, slots, compound components, and atomic design — building reusable UI that scales."
+title: 'Component Architecture'
+subtitle: 'Composition, props, slots, compound components, and atomic design — building reusable UI that scales.'
 chapter: 2
-level: "beginner"
-readingTime: "12 min"
-topics: ["components", "composition", "atomic design", "props", "slots", "compound components"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['components', 'composition', 'atomic design', 'props', 'slots', 'compound components']
 ---
 
 <script>
@@ -118,6 +118,7 @@ interface CardImageProps {
 <Callout type="tip">
 
 **Props design rules:**
+
 - Fewer props = easier to use. Aim for 3-5 required props max.
 - Use `children` or slots for flexible content injection.
 - Prefer composition (`<Card><CardHeader />`) over configuration (`<Card headerTitle="..." headerSubtitle="...">`).
@@ -259,6 +260,7 @@ function Navbar() {
 <Callout type="warning">
 
 **Common mistakes in component architecture:**
+
 - **God components**: A single component that does everything. If a component is over 200 lines, it probably needs to be split.
 - **Premature abstraction**: Do not create a generic `<DataDisplay>` before you have three concrete use cases. Start specific, then generalize.
 - **Prop drilling 5+ levels deep**: If you are passing props through multiple intermediary components, use Context or a state manager instead.
@@ -306,4 +308,3 @@ function DashboardLayout({ header, sidebar, children, footer }: LayoutProps) {
 3. **Atomic Design** gives you a shared vocabulary — atoms, molecules, organisms, templates, pages
 4. **Props are your public API** — keep them minimal, typed, and stable
 5. **Slots/named content** enable flexible layouts without tight coupling between parent and child
-

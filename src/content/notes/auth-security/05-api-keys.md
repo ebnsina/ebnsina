@@ -1,10 +1,10 @@
 ---
-title: "API Key Management"
-subtitle: "Generating, storing, rotating, and revoking API keys — the plumbing behind machine-to-machine auth."
+title: 'API Key Management'
+subtitle: 'Generating, storing, rotating, and revoking API keys — the plumbing behind machine-to-machine auth.'
 chapter: 5
-level: "intermediate"
-readingTime: "9 min"
-topics: ["API keys", "HMAC", "key rotation", "scopes", "machine-to-machine"]
+level: 'intermediate'
+readingTime: '9 min'
+topics: ['API keys', 'HMAC', 'key rotation', 'scopes', 'machine-to-machine']
 ---
 
 <script>
@@ -33,6 +33,7 @@ For user-facing auth, use OAuth/OIDC or sessions. API keys don't carry user iden
 ## Key Generation
 
 Keys should be:
+
 - Long enough to be unguessable (32+ bytes of randomness)
 - Prefixed for identification (helps in logs, secret scanning)
 - Non-sequential (no timestamps, no incrementing IDs)
@@ -41,22 +42,22 @@ Keys should be:
 import crypto from 'crypto';
 
 interface GeneratedKey {
-  key: string;     // returned to user once — never stored plaintext
-  keyId: string;   // stored in DB, returned on listing
-  hash: string;    // stored in DB for verification
+	key: string; // returned to user once — never stored plaintext
+	keyId: string; // stored in DB, returned on listing
+	hash: string; // stored in DB for verification
 }
 
 function generateApiKey(prefix = 'sk'): GeneratedKey {
-  const random = crypto.randomBytes(32).toString('base64url'); // 43 chars
-  const key = `${prefix}_${random}`;  // e.g. sk_abc123...
+	const random = crypto.randomBytes(32).toString('base64url'); // 43 chars
+	const key = `${prefix}_${random}`; // e.g. sk_abc123...
 
-  // Generate a short ID from first 8 chars (for display, not secret)
-  const keyId = `key_${crypto.randomBytes(8).toString('hex')}`;
+	// Generate a short ID from first 8 chars (for display, not secret)
+	const keyId = `key_${crypto.randomBytes(8).toString('hex')}`;
 
-  // Hash for storage — never store the key itself
-  const hash = crypto.createHash('sha256').update(key).digest('hex');
+	// Hash for storage — never store the key itself
+	const hash = crypto.createHash('sha256').update(key).digest('hex');
 
-  return { key, keyId, hash };
+	return { key, keyId, hash };
 }
 ```
 
@@ -74,33 +75,33 @@ Store only the hash, never the plaintext key:
 
 ```typescript
 interface StoredApiKey {
-  id: string;
-  keyId: string;      // non-secret identifier for listing/revocation
-  keyHash: string;    // SHA-256 of the actual key
-  ownerId: string;    // user or service that owns this key
-  name: string;       // human-readable label
-  scopes: string[];   // what this key can do
-  lastUsedAt: Date | null;
-  expiresAt: Date | null;
-  createdAt: Date;
+	id: string;
+	keyId: string; // non-secret identifier for listing/revocation
+	keyHash: string; // SHA-256 of the actual key
+	ownerId: string; // user or service that owns this key
+	name: string; // human-readable label
+	scopes: string[]; // what this key can do
+	lastUsedAt: Date | null;
+	expiresAt: Date | null;
+	createdAt: Date;
 }
 
 async function createApiKey(ownerId: string, name: string, scopes: string[]): Promise<string> {
-  const { key, keyId, hash } = generateApiKey();
+	const { key, keyId, hash } = generateApiKey();
 
-  await db.apiKeys.insert({
-    keyId,
-    keyHash: hash,
-    ownerId,
-    name,
-    scopes,
-    lastUsedAt: null,
-    expiresAt: null, // or set based on your policy
-    createdAt: new Date(),
-  });
+	await db.apiKeys.insert({
+		keyId,
+		keyHash: hash,
+		ownerId,
+		name,
+		scopes,
+		lastUsedAt: null,
+		expiresAt: null, // or set based on your policy
+		createdAt: new Date()
+	});
 
-  // Return the key ONCE — it cannot be retrieved again
-  return key;
+	// Return the key ONCE — it cannot be retrieved again
+	return key;
 }
 ```
 
@@ -110,23 +111,23 @@ Show the key exactly once after creation. After that, only show the `keyId` and 
 
 ```typescript
 async function verifyApiKey(key: string): Promise<StoredApiKey | null> {
-  if (!key || !key.startsWith('sk_')) return null;
+	if (!key || !key.startsWith('sk_')) return null;
 
-  const hash = crypto.createHash('sha256').update(key).digest('hex');
+	const hash = crypto.createHash('sha256').update(key).digest('hex');
 
-  const apiKey = await db.apiKeys.findOne({
-    where: { keyHash: hash, revokedAt: null },
-  });
+	const apiKey = await db.apiKeys.findOne({
+		where: { keyHash: hash, revokedAt: null }
+	});
 
-  if (!apiKey) return null;
+	if (!apiKey) return null;
 
-  // Check expiry
-  if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null;
+	// Check expiry
+	if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null;
 
-  // Update last used (async, don't block the request)
-  db.apiKeys.update(apiKey.id, { lastUsedAt: new Date() }).catch(() => {});
+	// Update last used (async, don't block the request)
+	db.apiKeys.update(apiKey.id, { lastUsedAt: new Date() }).catch(() => {});
 
-  return apiKey;
+	return apiKey;
 }
 ```
 
@@ -136,18 +137,18 @@ async function verifyApiKey(key: string): Promise<StoredApiKey | null> {
 import LRU from 'lru-cache';
 
 const keyCache = new LRU<string, StoredApiKey | null>({
-  max: 1000,
-  ttl: 30_000, // 30 seconds
+	max: 1000,
+	ttl: 30_000 // 30 seconds
 });
 
 async function verifyApiKeyCached(key: string): Promise<StoredApiKey | null> {
-  const hash = crypto.createHash('sha256').update(key).digest('hex');
+	const hash = crypto.createHash('sha256').update(key).digest('hex');
 
-  if (keyCache.has(hash)) return keyCache.get(hash)!;
+	if (keyCache.has(hash)) return keyCache.get(hash)!;
 
-  const result = await verifyApiKey(key);
-  keyCache.set(hash, result);
-  return result;
+	const result = await verifyApiKey(key);
+	keyCache.set(hash, result);
+	return result;
 }
 ```
 
@@ -156,31 +157,26 @@ async function verifyApiKeyCached(key: string): Promise<StoredApiKey | null> {
 Scope keys to the minimum required permissions:
 
 ```typescript
-type Scope =
-  | 'read:users'
-  | 'write:users'
-  | 'read:orders'
-  | 'write:orders'
-  | 'admin';
+type Scope = 'read:users' | 'write:users' | 'read:orders' | 'write:orders' | 'admin';
 
 function hasScope(key: StoredApiKey, required: Scope): boolean {
-  return key.scopes.includes(required) || key.scopes.includes('admin');
+	return key.scopes.includes(required) || key.scopes.includes('admin');
 }
 
 // Middleware
 app.use('/api/orders', async (req, res, next) => {
-  const rawKey = req.headers['x-api-key'] as string;
-  const apiKey = await verifyApiKeyCached(rawKey);
+	const rawKey = req.headers['x-api-key'] as string;
+	const apiKey = await verifyApiKeyCached(rawKey);
 
-  if (!apiKey) return res.status(401).json({ error: 'Invalid API key' });
+	if (!apiKey) return res.status(401).json({ error: 'Invalid API key' });
 
-  const requiredScope: Scope = req.method === 'GET' ? 'read:orders' : 'write:orders';
-  if (!hasScope(apiKey, requiredScope)) {
-    return res.status(403).json({ error: `Scope required: ${requiredScope}` });
-  }
+	const requiredScope: Scope = req.method === 'GET' ? 'read:orders' : 'write:orders';
+	if (!hasScope(apiKey, requiredScope)) {
+		return res.status(403).json({ error: `Scope required: ${requiredScope}` });
+	}
 
-  req.apiKey = apiKey;
-  next();
+	req.apiKey = apiKey;
+	next();
 });
 ```
 
@@ -192,28 +188,28 @@ Rotation replaces an old key with a new one without downtime. The challenge: you
 
 ```typescript
 async function rotateApiKey(keyId: string): Promise<{ oldKey: string; newKey: string }> {
-  const existing = await db.apiKeys.findByKeyId(keyId);
-  if (!existing) throw new Error('Key not found');
+	const existing = await db.apiKeys.findByKeyId(keyId);
+	if (!existing) throw new Error('Key not found');
 
-  // Issue a new key
-  const { key: newKey, hash: newHash, keyId: newKeyId } = generateApiKey();
+	// Issue a new key
+	const { key: newKey, hash: newHash, keyId: newKeyId } = generateApiKey();
 
-  await db.apiKeys.insert({
-    keyId: newKeyId,
-    keyHash: newHash,
-    ownerId: existing.ownerId,
-    name: `${existing.name} (rotated)`,
-    scopes: existing.scopes,
-    // Old key expires in 7 days — transition window
-    expiresAt: null,
-  });
+	await db.apiKeys.insert({
+		keyId: newKeyId,
+		keyHash: newHash,
+		ownerId: existing.ownerId,
+		name: `${existing.name} (rotated)`,
+		scopes: existing.scopes,
+		// Old key expires in 7 days — transition window
+		expiresAt: null
+	});
 
-  // Mark old key for expiry
-  await db.apiKeys.update(existing.id, {
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-  });
+	// Mark old key for expiry
+	await db.apiKeys.update(existing.id, {
+		expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+	});
 
-  return { oldKey: 'see old key id', newKey };
+	return { oldKey: 'see old key id', newKey };
 }
 ```
 
@@ -225,13 +221,13 @@ Immediate — just mark the key revoked:
 
 ```typescript
 async function revokeApiKey(keyId: string, ownerId: string): Promise<void> {
-  const key = await db.apiKeys.findOne({ where: { keyId, ownerId } });
-  if (!key) throw new Error('Key not found or not owned by you');
+	const key = await db.apiKeys.findOne({ where: { keyId, ownerId } });
+	if (!key) throw new Error('Key not found or not owned by you');
 
-  await db.apiKeys.update(key.id, { revokedAt: new Date() });
+	await db.apiKeys.update(key.id, { revokedAt: new Date() });
 
-  // Purge from cache
-  keyCache.delete(key.keyHash);
+	// Purge from cache
+	keyCache.delete(key.keyHash);
 }
 ```
 
@@ -240,28 +236,28 @@ async function revokeApiKey(keyId: string, ownerId: string): Promise<void> {
 ```typescript
 // List keys (never return the key itself)
 app.get('/api/keys', requireAuth, async (req, res) => {
-  const keys = await db.apiKeys.findAll({
-    where: { ownerId: req.user.id, revokedAt: null },
-    select: ['keyId', 'name', 'scopes', 'lastUsedAt', 'expiresAt', 'createdAt'],
-  });
-  res.json(keys);
+	const keys = await db.apiKeys.findAll({
+		where: { ownerId: req.user.id, revokedAt: null },
+		select: ['keyId', 'name', 'scopes', 'lastUsedAt', 'expiresAt', 'createdAt']
+	});
+	res.json(keys);
 });
 
 // Create key
 app.post('/api/keys', requireAuth, async (req, res) => {
-  const { name, scopes } = req.body;
-  const key = await createApiKey(req.user.id, name, scopes);
+	const { name, scopes } = req.body;
+	const key = await createApiKey(req.user.id, name, scopes);
 
-  res.status(201).json({
-    key,  // only time this is returned
-    message: 'Store this key — it cannot be retrieved again',
-  });
+	res.status(201).json({
+		key, // only time this is returned
+		message: 'Store this key — it cannot be retrieved again'
+	});
 });
 
 // Revoke key
 app.delete('/api/keys/:keyId', requireAuth, async (req, res) => {
-  await revokeApiKey(req.params.keyId, req.user.id);
-  res.json({ ok: true });
+	await revokeApiKey(req.params.keyId, req.user.id);
+	res.json({ ok: true });
 });
 ```
 
@@ -275,13 +271,12 @@ Add your key format to GitHub's secret scanning partner program or build your ow
 
 ```typescript
 async function detectAbusePattern(keyId: string): Promise<void> {
-  const recentUsage = await db.keyUsage.countRecentRequests(keyId, '1m');
-  const uniqueIps = await db.keyUsage.countUniqueIps(keyId, '1m');
+	const recentUsage = await db.keyUsage.countRecentRequests(keyId, '1m');
+	const uniqueIps = await db.keyUsage.countUniqueIps(keyId, '1m');
 
-  if (recentUsage > 1000 || uniqueIps > 20) {
-    await notifyOwner(keyId, 'Unusual activity detected on your API key');
-    await auditLog.record({ event: 'api_key_abuse_suspected', keyId });
-  }
+	if (recentUsage > 1000 || uniqueIps > 20) {
+		await notifyOwner(keyId, 'Unusual activity detected on your API key');
+		await auditLog.record({ event: 'api_key_abuse_suspected', keyId });
+	}
 }
 ```
-

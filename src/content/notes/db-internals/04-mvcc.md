@@ -1,10 +1,10 @@
 ---
-title: "MVCC — Multi-Version Concurrency Control"
-subtitle: "How databases let readers and writers work simultaneously without blocking — snapshots, visibility rules, and isolation levels."
+title: 'MVCC — Multi-Version Concurrency Control'
+subtitle: 'How databases let readers and writers work simultaneously without blocking — snapshots, visibility rules, and isolation levels.'
 chapter: 4
-level: "intermediate"
-readingTime: "17 min"
-topics: ["MVCC", "transactions", "isolation levels", "snapshots"]
+level: 'intermediate'
+readingTime: '17 min'
+topics: ['MVCC', 'transactions', 'isolation levels', 'snapshots']
 ---
 
 <script>
@@ -31,13 +31,13 @@ Every row has hidden metadata tracking which transactions created and deleted it
 
 ```typescript
 interface MVCCRow {
-  // Visible data
-  data: Record<string, unknown>;
+	// Visible data
+	data: Record<string, unknown>;
 
-  // Hidden MVCC fields
-  xmin: number;  // transaction ID that created this version
-  xmax: number;  // transaction ID that deleted/updated this version (0 = alive)
-  ctid: string;  // physical location (page, offset)
+	// Hidden MVCC fields
+	xmin: number; // transaction ID that created this version
+	xmax: number; // transaction ID that deleted/updated this version (0 = alive)
+	ctid: string; // physical location (page, offset)
 }
 
 // UPDATE doesn't modify in place — it creates a NEW version
@@ -53,25 +53,21 @@ Each transaction gets a **snapshot** — a frozen view of which transactions wer
 
 ```typescript
 interface Snapshot {
-  xmin: number;        // oldest active transaction at snapshot time
-  xmax: number;        // next transaction ID to be assigned
-  activeXids: number[]; // transactions in progress at snapshot time
+	xmin: number; // oldest active transaction at snapshot time
+	xmax: number; // next transaction ID to be assigned
+	activeXids: number[]; // transactions in progress at snapshot time
 }
 
 function isVisible(row: MVCCRow, snapshot: Snapshot): boolean {
-  // Row was created by a committed transaction before our snapshot
-  const createdBeforeSnapshot =
-    row.xmin < snapshot.xmax &&
-    !snapshot.activeXids.includes(row.xmin);
+	// Row was created by a committed transaction before our snapshot
+	const createdBeforeSnapshot = row.xmin < snapshot.xmax && !snapshot.activeXids.includes(row.xmin);
 
-  // Row hasn't been deleted, OR was deleted by a transaction
-  // that started after our snapshot (so we can still see it)
-  const notDeleted =
-    row.xmax === 0 ||
-    row.xmax >= snapshot.xmax ||
-    snapshot.activeXids.includes(row.xmax);
+	// Row hasn't been deleted, OR was deleted by a transaction
+	// that started after our snapshot (so we can still see it)
+	const notDeleted =
+		row.xmax === 0 || row.xmax >= snapshot.xmax || snapshot.activeXids.includes(row.xmax);
 
-  return createdBeforeSnapshot && notDeleted;
+	return createdBeforeSnapshot && notDeleted;
 }
 ```
 
@@ -116,28 +112,28 @@ When two transactions try to update the same row:
 ```typescript
 // PostgreSQL approach (first-updater-wins):
 async function updateRow(txId: number, rowId: number, newData: Row): Promise<void> {
-  const row = await findRow(rowId);
+	const row = await findRow(rowId);
 
-  if (row.xmax !== 0) {
-    // Someone else already modified this row
-    const otherTx = row.xmax;
+	if (row.xmax !== 0) {
+		// Someone else already modified this row
+		const otherTx = row.xmax;
 
-    if (isCommitted(otherTx)) {
-      // Other transaction committed — we see conflict
-      if (isolationLevel === "SERIALIZABLE") {
-        throw new SerializationError("could not serialize access");
-      }
-      // Read Committed: re-read and retry
-    } else if (isActive(otherTx)) {
-      // Other transaction still running — wait for it
-      await waitForTransaction(otherTx);
-      // Then check again
-    }
-  }
+		if (isCommitted(otherTx)) {
+			// Other transaction committed — we see conflict
+			if (isolationLevel === 'SERIALIZABLE') {
+				throw new SerializationError('could not serialize access');
+			}
+			// Read Committed: re-read and retry
+		} else if (isActive(otherTx)) {
+			// Other transaction still running — wait for it
+			await waitForTransaction(otherTx);
+			// Then check again
+		}
+	}
 
-  // Create new version
-  row.xmax = txId; // mark old version as deleted by us
-  await insertNewVersion({ ...newData, xmin: txId, xmax: 0 });
+	// Create new version
+	row.xmax = txId; // mark old version as deleted by us
+	await insertNewVersion({ ...newData, xmin: txId, xmax: 0 });
 }
 ```
 
@@ -149,13 +145,13 @@ async function updateRow(txId: number, rowId: number, newData: Row): Promise<voi
 
 ## MVCC vs. Locking
 
-| | MVCC | Locking |
-|--|------|---------|
-| Readers block writers? | No | Yes (shared locks) |
-| Writers block readers? | No | Yes (exclusive locks) |
-| Writers block writers? | Same row only | Same row |
-| Dead row cleanup | Needed (VACUUM) | Not needed |
-| Complexity | Higher | Lower |
+|                        | MVCC            | Locking               |
+| ---------------------- | --------------- | --------------------- |
+| Readers block writers? | No              | Yes (shared locks)    |
+| Writers block readers? | No              | Yes (exclusive locks) |
+| Writers block writers? | Same row only   | Same row              |
+| Dead row cleanup       | Needed (VACUUM) | Not needed            |
+| Complexity             | Higher          | Lower                 |
 
 ## Key Takeaways
 
@@ -163,4 +159,3 @@ async function updateRow(txId: number, rowId: number, newData: Row): Promise<voi
 2. **Updates create new versions** — old versions are cleaned up by VACUUM (PostgreSQL) or purge thread (MySQL)
 3. **Isolation level determines what you see** — Read Committed sees latest committed data per statement; Repeatable Read sees a snapshot from transaction start
 4. **Serializable catches all anomalies** but requires retry logic for aborted transactions
-

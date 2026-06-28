@@ -1,10 +1,10 @@
 ---
-title: "Pub/Sub & Streams"
-subtitle: "Fire-and-forget messaging versus a durable, replayable log with consumer groups."
+title: 'Pub/Sub & Streams'
+subtitle: 'Fire-and-forget messaging versus a durable, replayable log with consumer groups.'
 chapter: 5
-level: "intermediate"
-readingTime: "13 min"
-topics: ["pubsub", "streams", "consumer groups"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['pubsub', 'streams', 'consumer groups']
 ---
 
 <script>
@@ -41,7 +41,7 @@ Pattern subscriptions let one subscriber match many channels:
 127.0.0.1:6379> PSUBSCRIBE news:*
 ```
 
-**Where it fits.** Real-time fan-out where losing a message is acceptable and you only care about the *now*: live notifications, presence updates, chat to currently-connected clients, cache-invalidation signals across app servers, and broadcasting config changes.
+**Where it fits.** Real-time fan-out where losing a message is acceptable and you only care about the _now_: live notifications, presence updates, chat to currently-connected clients, cache-invalidation signals across app servers, and broadcasting config changes.
 
 ### The limitations
 
@@ -127,7 +127,7 @@ The `>` means "entries never delivered to any consumer in this group." Each deli
 
 <Callout type="info">
 
-**Note:** Pub/Sub and Streams answer different questions. Pub/Sub asks "who is listening *right now*?" Streams ask "what happened, and has each event been handled?" Pub/Sub keeps no state; Streams keep a durable log plus per-group delivery state. If you need acknowledgement, replay, or load-balanced workers, it is Streams.
+**Note:** Pub/Sub and Streams answer different questions. Pub/Sub asks "who is listening _right now_?" Streams ask "what happened, and has each event been handled?" Pub/Sub keeps no state; Streams keep a durable log plus per-group delivery state. If you need acknowledgement, replay, or load-balanced workers, it is Streams.
 
 </Callout>
 

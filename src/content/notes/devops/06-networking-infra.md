@@ -1,10 +1,10 @@
 ---
-title: "Cloud Networking"
-subtitle: "VPCs, subnets, security groups, load balancers — how to design a secure cloud network architecture."
+title: 'Cloud Networking'
+subtitle: 'VPCs, subnets, security groups, load balancers — how to design a secure cloud network architecture.'
 chapter: 6
-level: "intermediate"
-readingTime: "13 min"
-topics: ["VPC", "subnets", "security groups", "load balancer"]
+level: 'intermediate'
+readingTime: '13 min'
+topics: ['VPC', 'subnets', 'security groups', 'load balancer']
 ---
 
 <script>
@@ -26,21 +26,21 @@ Like a city's road system — highways (backbone), intersections (routers), toll
 ```typescript
 // VPC design for a typical web application
 interface VPCDesign {
-  cidr: "10.0.0.0/16"; // 65,536 IP addresses
+	cidr: '10.0.0.0/16'; // 65,536 IP addresses
 
-  subnets: {
-    // Public subnets — internet-accessible (load balancers, bastion hosts)
-    publicA:  "10.0.1.0/24";  // 256 IPs in AZ-a
-    publicB:  "10.0.2.0/24";  // 256 IPs in AZ-b
+	subnets: {
+		// Public subnets — internet-accessible (load balancers, bastion hosts)
+		publicA: '10.0.1.0/24'; // 256 IPs in AZ-a
+		publicB: '10.0.2.0/24'; // 256 IPs in AZ-b
 
-    // Private subnets — no direct internet access (app servers)
-    privateA: "10.0.10.0/24"; // 256 IPs in AZ-a
-    privateB: "10.0.11.0/24"; // 256 IPs in AZ-b
+		// Private subnets — no direct internet access (app servers)
+		privateA: '10.0.10.0/24'; // 256 IPs in AZ-a
+		privateB: '10.0.11.0/24'; // 256 IPs in AZ-b
 
-    // Data subnets — most restricted (databases)
-    dataA:    "10.0.20.0/24"; // 256 IPs in AZ-a
-    dataB:    "10.0.21.0/24"; // 256 IPs in AZ-b
-  };
+		// Data subnets — most restricted (databases)
+		dataA: '10.0.20.0/24'; // 256 IPs in AZ-a
+		dataB: '10.0.21.0/24'; // 256 IPs in AZ-b
+	};
 }
 
 // Traffic flow:
@@ -57,25 +57,25 @@ interface VPCDesign {
 // Default: deny all inbound, allow all outbound
 
 const securityGroups = {
-  loadBalancer: {
-    inbound: [
-      { port: 443, source: "0.0.0.0/0" },   // HTTPS from anywhere
-      { port: 80, source: "0.0.0.0/0" },     // HTTP (redirect to HTTPS)
-    ],
-  },
+	loadBalancer: {
+		inbound: [
+			{ port: 443, source: '0.0.0.0/0' }, // HTTPS from anywhere
+			{ port: 80, source: '0.0.0.0/0' } // HTTP (redirect to HTTPS)
+		]
+	},
 
-  appServer: {
-    inbound: [
-      { port: 3000, source: "sg-loadbalancer" }, // only from LB
-    ],
-  },
+	appServer: {
+		inbound: [
+			{ port: 3000, source: 'sg-loadbalancer' } // only from LB
+		]
+	},
 
-  database: {
-    inbound: [
-      { port: 5432, source: "sg-appserver" },    // only from app
-    ],
-    // No internet access at all
-  },
+	database: {
+		inbound: [
+			{ port: 5432, source: 'sg-appserver' } // only from app
+		]
+		// No internet access at all
+	}
 };
 ```
 
@@ -95,24 +95,24 @@ const securityGroups = {
 // - WebSocket support
 
 interface ALBConfig {
-  listeners: [
-    {
-      port: 443,
-      protocol: "HTTPS",
-      certificate: "arn:aws:acm:...:cert/abc",
-      rules: [
-        { pathPattern: "/api/*", targetGroup: "api-servers" },
-        { pathPattern: "/*", targetGroup: "web-servers" },
-      ],
-    },
-  ];
-  targetGroups: {
-    "api-servers": {
-      port: 3000,
-      healthCheck: { path: "/health", interval: 30 },
-      targets: ["i-abc", "i-def", "i-ghi"],
-    },
-  };
+	listeners: [
+		{
+			port: 443;
+			protocol: 'HTTPS';
+			certificate: 'arn:aws:acm:...:cert/abc';
+			rules: [
+				{ pathPattern: '/api/*'; targetGroup: 'api-servers' },
+				{ pathPattern: '/*'; targetGroup: 'web-servers' }
+			];
+		}
+	];
+	targetGroups: {
+		'api-servers': {
+			port: 3000;
+			healthCheck: { path: '/health'; interval: 30 };
+			targets: ['i-abc', 'i-def', 'i-ghi'];
+		};
+	};
 }
 ```
 
@@ -146,4 +146,3 @@ Private subnets can't reach the internet (by design), but sometimes they need to
 2. **Security groups are your firewall** — default deny, explicitly allow by security group reference
 3. **Load balancers handle TLS and routing** — never expose app servers directly
 4. **Multi-AZ everything** — single-AZ is a single point of failure
-

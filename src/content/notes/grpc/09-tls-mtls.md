@@ -1,10 +1,10 @@
 ---
-title: "TLS and mTLS"
+title: 'TLS and mTLS'
 subtitle: "Server TLS encrypts the wire and proves the server's identity. Mutual TLS adds the same proof for clients. Both ride on the same handshake — and once you have a small CA, both are a few lines of Go."
 chapter: 9
-level: "advanced"
-readingTime: "12 min"
-topics: ["grpc", "tls", "mtls", "certificates", "security"]
+level: 'advanced'
+readingTime: '12 min'
+topics: ['grpc', 'tls', 'mtls', 'certificates', 'security']
 ---
 
 <script>
@@ -29,7 +29,7 @@ mTLS is two people showing ID to each other before shaking hands — not just th
 
 For service-to-service identity inside your own infrastructure, mTLS gives you:
 
-- **Identity baked into the connection.** No token to lose, no header to leak, no expiry to refresh. The cert *is* the identity.
+- **Identity baked into the connection.** No token to lose, no header to leak, no expiry to refresh. The cert _is_ the identity.
 - **Verified at handshake.** Every connection proves both sides; bearer tokens only get checked when handlers run.
 - **Fine-grained ACLs.** Each service has its own cert; ACLs match Common Names or SANs. Easy to audit.
 - **No shared secrets.** Each service has a private key it never sends; tokens get sent on every request.
@@ -297,4 +297,3 @@ A common production pattern: bind gRPC to a Unix socket or `127.0.0.1` only. ngi
 - Default to secure; an env-var escape hatch for local dev only.
 
 Next: [Production self-host](/notes/grpc/10-production) — load balancing, observability, and putting it all behind nginx on a VPS.
-

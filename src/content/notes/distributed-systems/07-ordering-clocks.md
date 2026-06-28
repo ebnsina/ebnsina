@@ -1,17 +1,17 @@
 ---
-title: "Ordering & Logical Clocks"
-subtitle: "Ordering events without a shared clock: happens-before, Lamport timestamps, vector clocks, and hybrid logical clocks."
+title: 'Ordering & Logical Clocks'
+subtitle: 'Ordering events without a shared clock: happens-before, Lamport timestamps, vector clocks, and hybrid logical clocks.'
 chapter: 7
-level: "advanced"
-readingTime: "11 min"
-topics: ["lamport", "vector clocks", "ordering"]
+level: 'advanced'
+readingTime: '11 min'
+topics: ['lamport', 'vector clocks', 'ordering']
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Chapter 2 established that physical clocks lie: skew and NTP jumps make wall-clock timestamps useless for ordering events across machines. Yet ordering is exactly what we need — to know which write came first, to enforce causal consistency, to reconcile conflicting replicas. The solution is to stop asking "*when* did this happen?" and start asking "*did this happen before that?*". **Logical clocks** answer the second question without any synchronized physical time at all.
+Chapter 2 established that physical clocks lie: skew and NTP jumps make wall-clock timestamps useless for ordering events across machines. Yet ordering is exactly what we need — to know which write came first, to enforce causal consistency, to reconcile conflicting replicas. The solution is to stop asking "_when_ did this happen?" and start asking "_did this happen before that?_". **Logical clocks** answer the second question without any synchronized physical time at all.
 
 ## Happens-before
 
@@ -54,9 +54,9 @@ P2: [1]b ----------- [3]recv(m) --- [4]c
               (max(1,2)+1 = 3)
 ```
 
-Lamport timestamps are wonderfully cheap — one integer — and they let you build a **total order** by breaking ties (equal timestamps) with the process ID. Many algorithms need *some* consistent total order, and Lamport timestamps provide one.
+Lamport timestamps are wonderfully cheap — one integer — and they let you build a **total order** by breaking ties (equal timestamps) with the process ID. Many algorithms need _some_ consistent total order, and Lamport timestamps provide one.
 
-But there is a critical limitation. The implication runs *only one way*: `a -> b` implies `ts(a) < ts(b)`, but `ts(a) < ts(b)` does **not** imply `a -> b`. A smaller timestamp might just be a concurrent event. So Lamport timestamps can *order* events but cannot tell you whether two events were **causally related or merely concurrent**. For detecting concurrency — which conflict resolution needs — you need more.
+But there is a critical limitation. The implication runs _only one way_: `a -> b` implies `ts(a) < ts(b)`, but `ts(a) < ts(b)` does **not** imply `a -> b`. A smaller timestamp might just be a concurrent event. So Lamport timestamps can _order_ events but cannot tell you whether two events were **causally related or merely concurrent**. For detecting concurrency — which conflict resolution needs — you need more.
 
 <Callout type="warning">
 
@@ -90,19 +90,19 @@ This is the property Lamport clocks lacked: vector clocks can **detect concurren
 
 The cost: each timestamp grows with the number of processes, which is a real problem in large or churning clusters. Variants (dotted version vectors, pruning) tame this in practice.
 
-| | Lamport | Vector |
-| --- | --- | --- |
-| Size | One integer | One integer per node |
-| `a -> b` implies order? | Yes | Yes |
-| Detect concurrency? | No | Yes |
-| Total order? | Yes (with tie-break) | Partial order |
+|                         | Lamport              | Vector               |
+| ----------------------- | -------------------- | -------------------- |
+| Size                    | One integer          | One integer per node |
+| `a -> b` implies order? | Yes                  | Yes                  |
+| Detect concurrency?     | No                   | Yes                  |
+| Total order?            | Yes (with tie-break) | Partial order        |
 
 ## Total vs partial order
 
 These two notions of order recur throughout the track:
 
-- A **partial order** orders only causally related events and leaves concurrent ones unordered. Vector clocks capture this. It is the *truth* of what happened.
-- A **total order** forces every pair of events into a single line, even concurrent ones, by some arbitrary but consistent tie-break. Lamport timestamps (or a consensus log, chapter 6) provide this. It is a *useful fiction* the system imposes when it must pick one sequence — for example, the order of entries in a Raft log.
+- A **partial order** orders only causally related events and leaves concurrent ones unordered. Vector clocks capture this. It is the _truth_ of what happened.
+- A **total order** forces every pair of events into a single line, even concurrent ones, by some arbitrary but consistent tie-break. Lamport timestamps (or a consensus log, chapter 6) provide this. It is a _useful fiction_ the system imposes when it must pick one sequence — for example, the order of entries in a Raft log.
 
 Consensus is, in a sense, the machinery for manufacturing an agreed **total order** out of an inherently **partial** one.
 
@@ -110,12 +110,12 @@ Consensus is, in a sense, the machinery for manufacturing an agreed **total orde
 
 Logical clocks order events correctly but their values are meaningless to humans — counter `4178` tells you nothing about wall-clock time. Pure physical clocks are human-readable but unsafe for ordering. **Hybrid Logical Clocks (HLC)** combine both: each timestamp carries a physical-time component plus a small logical counter.
 
-An HLC tracks physical time closely (so timestamps roughly match real clocks and are human-meaningful) while using the logical counter to break ties and to preserve the happens-before guarantee even when physical clocks momentarily disagree or jump backward. The result is a timestamp that is *both* close to wall-clock time *and* a correct logical clock — `ts(a) < ts(b)` whenever `a -> b`, with a value you can actually read.
+An HLC tracks physical time closely (so timestamps roughly match real clocks and are human-meaningful) while using the logical counter to break ties and to preserve the happens-before guarantee even when physical clocks momentarily disagree or jump backward. The result is a timestamp that is _both_ close to wall-clock time _and_ a correct logical clock — `ts(a) < ts(b)` whenever `a -> b`, with a value you can actually read.
 
 HLCs are used in modern distributed databases (CockroachDB, YugabyteDB, MongoDB) to order transactions: they give the causal-correctness of logical clocks with timestamps tied to real time, which is invaluable for debugging, time-bounded queries, and bounded staleness.
 
 <Callout type="tip">
 
-**Choosing a clock:** use **Lamport** timestamps when you only need *a* consistent total order and don't care about detecting concurrency. Use **vector** clocks when you must distinguish causal from concurrent (conflict detection in leaderless replication). Use **HLCs** when you want logical-clock correctness but also need timestamps that approximate real time for humans and queries.
+**Choosing a clock:** use **Lamport** timestamps when you only need _a_ consistent total order and don't care about detecting concurrency. Use **vector** clocks when you must distinguish causal from concurrent (conflict detection in leaderless replication). Use **HLCs** when you want logical-clock correctness but also need timestamps that approximate real time for humans and queries.
 
 </Callout>

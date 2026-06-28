@@ -1,10 +1,10 @@
 ---
-title: "Disaster Recovery — Roadmap"
-subtitle: "RTO and RPO, pg_dump and WAL-G backups, restore drills, multi-region replication, and runbooks that work at 3am."
+title: 'Disaster Recovery — Roadmap'
+subtitle: 'RTO and RPO, pg_dump and WAL-G backups, restore drills, multi-region replication, and runbooks that work at 3am.'
 chapter: 0
-level: "beginner"
-readingTime: "3 min"
-topics: ["roadmap"]
+level: 'beginner'
+readingTime: '3 min'
+topics: ['roadmap']
 ---
 
 <script>
@@ -30,4 +30,3 @@ Most engineers think about disaster recovery the wrong way: as something you set
 3. **Restore Drills** — automated weekly verification, full DR simulations, runbook structure, timing RTO
 4. **Multi-Region Replication** — streaming replication, sync vs async, Patroni for automated failover, cross-region architecture
 5. **Runbooks & Incident Response** — runbook structure, incident roles, communication cadence, blameless post-mortems
-

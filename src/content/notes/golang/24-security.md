@@ -1,10 +1,10 @@
 ---
-title: "Security Best Practices"
-subtitle: "SQL injection, XSS, CSRF, secrets management, and cryptography — secure your Go services against real-world attacks."
+title: 'Security Best Practices'
+subtitle: 'SQL injection, XSS, CSRF, secrets management, and cryptography — secure your Go services against real-world attacks.'
 chapter: 24
-level: "advanced"
-readingTime: "18 min"
-topics: ["security", "SQL injection", "XSS", "CSRF", "bcrypt", "secrets", "HTTPS"]
+level: 'advanced'
+readingTime: '18 min'
+topics: ['security', 'SQL injection', 'XSS', 'CSRF', 'bcrypt', 'secrets', 'HTTPS']
 ---
 
 <script>
@@ -308,18 +308,18 @@ func SecurityHeaders() Middleware {
 
 ## Security Checklist
 
-| Area | Action |
-|------|--------|
-| **SQL** | Always use parameterized queries (`$1`, `$2`) |
-| **Passwords** | bcrypt with cost >= 12, never store plaintext |
-| **Secrets** | Environment variables, never in code or git |
-| **Input** | Validate length, format, type. Sanitize HTML |
-| **Auth** | Rate limit login attempts, use constant-time comparison |
-| **HTTPS** | TLS 1.2+ minimum, HSTS header |
-| **Headers** | Set security headers (CSP, X-Frame-Options, etc.) |
-| **Errors** | Never expose internal errors to clients |
-| **Logging** | Never log passwords, tokens, or PII |
-| **Dependencies** | Run `govulncheck` regularly, keep modules updated |
+| Area             | Action                                                  |
+| ---------------- | ------------------------------------------------------- |
+| **SQL**          | Always use parameterized queries (`$1`, `$2`)           |
+| **Passwords**    | bcrypt with cost >= 12, never store plaintext           |
+| **Secrets**      | Environment variables, never in code or git             |
+| **Input**        | Validate length, format, type. Sanitize HTML            |
+| **Auth**         | Rate limit login attempts, use constant-time comparison |
+| **HTTPS**        | TLS 1.2+ minimum, HSTS header                           |
+| **Headers**      | Set security headers (CSP, X-Frame-Options, etc.)       |
+| **Errors**       | Never expose internal errors to clients                 |
+| **Logging**      | Never log passwords, tokens, or PII                     |
+| **Dependencies** | Run `govulncheck` regularly, keep modules updated       |
 
 ```bash
 # Check for known vulnerabilities in dependencies
@@ -336,4 +336,3 @@ govulncheck ./...
 5. **Rate limit authentication** — 5 attempts per 15 minutes per IP
 6. **Security headers on every response** — HSTS, CSP, X-Frame-Options
 7. **`govulncheck`** — scan dependencies for known vulnerabilities regularly
-

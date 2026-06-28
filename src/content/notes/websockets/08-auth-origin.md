@@ -1,10 +1,10 @@
 ---
-title: "Auth, origin, and rate limits"
-subtitle: "WebSocket handshakes look like normal HTTP, which makes them subject to normal HTTP attacks plus a few WebSocket-specific ones. Verify origin, authenticate at the handshake, and rate-limit at every level you can."
+title: 'Auth, origin, and rate limits'
+subtitle: 'WebSocket handshakes look like normal HTTP, which makes them subject to normal HTTP attacks plus a few WebSocket-specific ones. Verify origin, authenticate at the handshake, and rate-limit at every level you can.'
 chapter: 8
-level: "intermediate"
-readingTime: "12 min"
-topics: ["websockets", "auth", "origin", "csrf", "rate limiting"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['websockets', 'auth', 'origin', 'csrf', 'rate limiting']
 ---
 
 <script>
@@ -147,7 +147,7 @@ A nice synthesis: the client makes a normal HTTPS call to `/auth/ws-ticket`, get
 
 ```js
 // 1. fetch with normal credentials (cookie, OAuth bearer, etc.)
-const { token } = await (await fetch("/auth/ws-ticket")).json();
+const { token } = await (await fetch('/auth/ws-ticket')).json();
 
 // 2. open websocket with the short-lived token
 const ws = new WebSocket(`wss://api.example.com/ws?ticket=${token}`);
@@ -313,4 +313,3 @@ The TLS chapter from the path's **TLS & Certificates** track applies. nginx term
 - `wss://` only in production. TLS termination at nginx, mTLS internally.
 
 Next: [Backpressure, reconnects, heartbeats](/notes/websockets/09-backpressure) — surviving slow clients and bad networks.
-

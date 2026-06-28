@@ -1,10 +1,10 @@
 ---
-title: "Health Checks"
-subtitle: "Active vs passive detection, failure thresholds, graceful draining — keeping dead backends out of rotation."
+title: 'Health Checks'
+subtitle: 'Active vs passive detection, failure thresholds, graceful draining — keeping dead backends out of rotation.'
 chapter: 3
-level: "beginner"
-readingTime: "8 min"
-topics: ["health checks", "HAProxy", "nginx", "active", "passive", "connection draining"]
+level: 'beginner'
+readingTime: '8 min'
+topics: ['health checks', 'HAProxy', 'nginx', 'active', 'passive', 'connection draining']
 ---
 
 <script>
@@ -24,6 +24,7 @@ A hospital triage system: a nurse periodically checks each room to see if the pa
 Passive checks detect failure by watching live request outcomes. If a backend returns errors or times out, the LB marks it down.
 
 **nginx:**
+
 ```nginx
 upstream backend {
     server 10.0.0.10:3000 max_fails=3 fail_timeout=30s;
@@ -41,6 +42,7 @@ upstream backend {
 The LB sends synthetic requests to each backend on a schedule, independent of real traffic. Failed backends are removed before real requests reach them.
 
 **nginx Plus** (commercial) active health check:
+
 ```nginx
 upstream backend {
     zone backend 64k;
@@ -57,6 +59,7 @@ server {
 ```
 
 **HAProxy** (active checks built into open source):
+
 ```
 backend api_servers
     option httpchk GET /health HTTP/1.1\r\nHost:\ api.internal
@@ -66,6 +69,7 @@ backend api_servers
 ```
 
 Parameters:
+
 - `inter 10s` — check every 10 seconds
 - `fall 3` — mark down after 3 consecutive failures
 - `rise 2` — mark up after 2 consecutive successes (prevents flapping)
@@ -77,7 +81,7 @@ The backend must expose a `/health` endpoint the LB can call:
 ```typescript
 // Express
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+	res.status(200).json({ status: 'ok' });
 });
 ```
 
@@ -85,13 +89,13 @@ A basic `/health` that always returns 200 only catches process crashes. A useful
 
 ```typescript
 app.get('/health', async (req, res) => {
-  try {
-    await db.query('SELECT 1');
-    await redis.ping();
-    res.status(200).json({ status: 'ok', db: 'ok', cache: 'ok' });
-  } catch (err) {
-    res.status(503).json({ status: 'error', error: err.message });
-  }
+	try {
+		await db.query('SELECT 1');
+		await redis.ping();
+		res.status(200).json({ status: 'ok', db: 'ok', cache: 'ok' });
+	} catch (err) {
+		res.status(503).json({ status: 'error', error: err.message });
+	}
 });
 ```
 
@@ -105,12 +109,12 @@ app.get('/health/live', (req, res) => res.sendStatus(200));
 
 // /health/ready — checks dependencies
 app.get('/health/ready', async (req, res) => {
-  try {
-    await db.query('SELECT 1');
-    res.sendStatus(200);
-  } catch {
-    res.sendStatus(503);
-  }
+	try {
+		await db.query('SELECT 1');
+		res.sendStatus(200);
+	} catch {
+		res.sendStatus(503);
+	}
 });
 ```
 
@@ -121,6 +125,7 @@ Configure LB to use `/health/ready`.
 For non-HTTP backends (databases, Redis, custom TCP):
 
 **HAProxy TCP check:**
+
 ```
 backend postgres
     mode tcp
@@ -132,6 +137,7 @@ backend postgres
 HAProxy opens a TCP connection, checks it succeeds, and closes it. Doesn't send any data — just verifies the port is open.
 
 For Redis, use a more specific check:
+
 ```
 backend redis
     option tcp-check
@@ -150,6 +156,7 @@ When a backend needs to come down (deploy, scale-in), don't kill connections ins
 3. After a timeout, shut down
 
 **HAProxy runtime API:**
+
 ```bash
 # Mark server for drain (no new connections, finish existing)
 echo "set server api_servers/s1 state drain" | \
@@ -164,6 +171,7 @@ echo "set server api_servers/s1 state maint" | \
 ```
 
 **nginx graceful shutdown:**
+
 ```bash
 # Reload nginx config (zero-downtime, existing connections finish)
 nginx -s reload
@@ -173,15 +181,17 @@ nginx -s quit
 ```
 
 **Application-side draining with SIGTERM:**
+
 ```typescript
 process.on('SIGTERM', async () => {
-  server.close(async () => {    // stop accepting new connections
-    await db.end();             // close DB pool after in-flight requests complete
-    process.exit(0);
-  });
-  
-  // Force exit after 30s if connections don't drain
-  setTimeout(() => process.exit(1), 30_000);
+	server.close(async () => {
+		// stop accepting new connections
+		await db.end(); // close DB pool after in-flight requests complete
+		process.exit(0);
+	});
+
+	// Force exit after 30s if connections don't drain
+	setTimeout(() => process.exit(1), 30_000);
 });
 ```
 
@@ -191,7 +201,7 @@ Pair this with Kubernetes `terminationGracePeriodSeconds: 30` and a `preStop` sl
 lifecycle:
   preStop:
     exec:
-      command: ["sleep", "5"]   # give LB time to deregister
+      command: ['sleep', '5'] # give LB time to deregister
 terminationGracePeriodSeconds: 35
 ```
 
@@ -214,16 +224,17 @@ Each active health check is a real HTTP request. With 10 backends, every-5s chec
 
 ```typescript
 app.get('/health', async (req, res) => {
-  // Don't run expensive checks on every health probe
-  // Cache the result for a few seconds
-  const cached = healthCache.get('status');
-  if (cached) return res.status(cached.code).json(cached.body);
-  
-  // ... actual checks ...
+	// Don't run expensive checks on every health probe
+	// Cache the result for a few seconds
+	const cached = healthCache.get('status');
+	if (cached) return res.status(cached.code).json(cached.body);
+
+	// ... actual checks ...
 });
 ```
 
 Or use HAProxy's `fastinter` for the first failure and normal `inter` otherwise:
+
 ```
 server s1 10.0.0.10:3000 check inter 30s fastinter 5s downinter 10s
 ```
@@ -231,4 +242,3 @@ server s1 10.0.0.10:3000 check inter 30s fastinter 5s downinter 10s
 - `inter 30s` — healthy: check every 30s
 - `fastinter 5s` — recovery: check every 5s once server comes back up (confirm stability quickly)
 - `downinter 10s` — down: check every 10s (detect when it recovers)
-

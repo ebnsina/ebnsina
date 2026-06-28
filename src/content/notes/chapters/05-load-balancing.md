@@ -1,10 +1,10 @@
 ---
-title: "Load Balancing"
-subtitle: "Build a reverse proxy with round-robin distribution, health checks, and sticky sessions."
+title: 'Load Balancing'
+subtitle: 'Build a reverse proxy with round-robin distribution, health checks, and sticky sessions.'
 chapter: 5
-level: "intermediate"
-readingTime: "20 min"
-topics: ["load balancer", "reverse proxy", "health checks", "round-robin"]
+level: 'intermediate'
+readingTime: '20 min'
+topics: ['load balancer', 'reverse proxy', 'health checks', 'round-robin']
 ---
 
 <script>
@@ -26,24 +26,22 @@ Like a bank with multiple teller windows — instead of everyone lining up at on
 </Callout>
 
 <Mermaid
-	title="Load Balancer Architecture"
-	code={`
-graph LR
+title="Load Balancer Architecture"
+code={`graph LR
   C["Clients"] --> LB["Load Balancer<br/>Round Robin"]
   LB --> S1["Server 1"]
   LB --> S2["Server 2"]
-  LB --> S3["Server 3"]
-`}
+  LB --> S3["Server 3"]`}
 />
 
 ## Algorithms
 
-| Algorithm | How It Works | Best For |
-|-----------|-------------|----------|
-| Round Robin | Rotate through servers sequentially | Equal-capacity servers |
-| Weighted Round Robin | More traffic to stronger servers | Mixed-capacity servers |
-| Least Connections | Send to server with fewest active conns | Varying request durations |
-| IP Hash | Same client IP always hits same server | Session affinity without cookies |
+| Algorithm            | How It Works                            | Best For                         |
+| -------------------- | --------------------------------------- | -------------------------------- |
+| Round Robin          | Rotate through servers sequentially     | Equal-capacity servers           |
+| Weighted Round Robin | More traffic to stronger servers        | Mixed-capacity servers           |
+| Least Connections    | Send to server with fewest active conns | Varying request durations        |
+| IP Hash              | Same client IP always hits same server  | Session affinity without cookies |
 
 ## Building a Load Balancer
 
@@ -51,229 +49,216 @@ graph LR
 <div class="ct-panel ct-active" data-lang="ts">
 
 ```typescript
-import http from "node:http";
+import http from 'node:http';
 
 // --- Types ---
 interface Backend {
-  url: string;
-  healthy: boolean;
-  activeConnections: number;
-  totalRequests: number;
-  weight: number;
+	url: string;
+	healthy: boolean;
+	activeConnections: number;
+	totalRequests: number;
+	weight: number;
 }
 
 interface LBConfig {
-  backends: { url: string; weight?: number }[];
-  healthCheckInterval: number;  // ms
-  healthCheckPath: string;
-  healthCheckTimeout: number;   // ms
-  algorithm: "round-robin" | "least-connections" | "ip-hash";
+	backends: { url: string; weight?: number }[];
+	healthCheckInterval: number; // ms
+	healthCheckPath: string;
+	healthCheckTimeout: number; // ms
+	algorithm: 'round-robin' | 'least-connections' | 'ip-hash';
 }
 
 // --- Load Balancer ---
 class LoadBalancer {
-  private backends: Backend[];
-  private currentIndex = 0;
-  private healthCheckTimer: ReturnType<typeof setInterval> | null = null;
-  private config: LBConfig;
+	private backends: Backend[];
+	private currentIndex = 0;
+	private healthCheckTimer: ReturnType<typeof setInterval> | null = null;
+	private config: LBConfig;
 
-  constructor(config: LBConfig) {
-    this.config = config;
-    this.backends = config.backends.map((b) => ({
-      url: b.url,
-      healthy: true,
-      activeConnections: 0,
-      totalRequests: 0,
-      weight: b.weight || 1,
-    }));
-  }
+	constructor(config: LBConfig) {
+		this.config = config;
+		this.backends = config.backends.map((b) => ({
+			url: b.url,
+			healthy: true,
+			activeConnections: 0,
+			totalRequests: 0,
+			weight: b.weight || 1
+		}));
+	}
 
-  // Pick a backend based on the configured algorithm
-  private selectBackend(clientIP: string): Backend | null {
-    const healthy = this.backends.filter((b) => b.healthy);
-    if (healthy.length === 0) return null;
+	// Pick a backend based on the configured algorithm
+	private selectBackend(clientIP: string): Backend | null {
+		const healthy = this.backends.filter((b) => b.healthy);
+		if (healthy.length === 0) return null;
 
-    switch (this.config.algorithm) {
-      case "round-robin": {
-        const backend = healthy[this.currentIndex % healthy.length];
-        this.currentIndex++;
-        return backend;
-      }
-      case "least-connections": {
-        return healthy.reduce((min, b) =>
-          b.activeConnections < min.activeConnections ? b : min
-        );
-      }
-      case "ip-hash": {
-        let hash = 0;
-        for (let i = 0; i < clientIP.length; i++) {
-          hash = (hash * 31 + clientIP.charCodeAt(i)) >>> 0;
-        }
-        return healthy[hash % healthy.length];
-      }
-    }
-  }
+		switch (this.config.algorithm) {
+			case 'round-robin': {
+				const backend = healthy[this.currentIndex % healthy.length];
+				this.currentIndex++;
+				return backend;
+			}
+			case 'least-connections': {
+				return healthy.reduce((min, b) => (b.activeConnections < min.activeConnections ? b : min));
+			}
+			case 'ip-hash': {
+				let hash = 0;
+				for (let i = 0; i < clientIP.length; i++) {
+					hash = (hash * 31 + clientIP.charCodeAt(i)) >>> 0;
+				}
+				return healthy[hash % healthy.length];
+			}
+		}
+	}
 
-  // Proxy a request to a backend
-  async handleRequest(
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-  ): Promise<void> {
-    const clientIP = req.socket.remoteAddress || "unknown";
-    const backend = this.selectBackend(clientIP);
+	// Proxy a request to a backend
+	async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+		const clientIP = req.socket.remoteAddress || 'unknown';
+		const backend = this.selectBackend(clientIP);
 
-    if (!backend) {
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "No healthy backends available" }));
-      return;
-    }
+		if (!backend) {
+			res.writeHead(503, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ error: 'No healthy backends available' }));
+			return;
+		}
 
-    backend.activeConnections++;
-    backend.totalRequests++;
+		backend.activeConnections++;
+		backend.totalRequests++;
 
-    const targetUrl = new URL(req.url || "/", backend.url);
-    const startTime = Date.now();
+		const targetUrl = new URL(req.url || '/', backend.url);
+		const startTime = Date.now();
 
-    try {
-      const proxyRes = await fetch(targetUrl.toString(), {
-        method: req.method,
-        headers: {
-          ...Object.fromEntries(
-            Object.entries(req.headers).filter(([, v]) => v !== undefined) as [string, string][]
-          ),
-          "X-Forwarded-For": clientIP,
-          "X-Forwarded-Proto": "http",
-          "X-Real-IP": clientIP,
-        },
-        body: ["GET", "HEAD"].includes(req.method || "GET")
-          ? undefined
-          : await streamToBuffer(req),
-        redirect: "manual",
-      });
+		try {
+			const proxyRes = await fetch(targetUrl.toString(), {
+				method: req.method,
+				headers: {
+					...Object.fromEntries(
+						Object.entries(req.headers).filter(([, v]) => v !== undefined) as [string, string][]
+					),
+					'X-Forwarded-For': clientIP,
+					'X-Forwarded-Proto': 'http',
+					'X-Real-IP': clientIP
+				},
+				body: ['GET', 'HEAD'].includes(req.method || 'GET') ? undefined : await streamToBuffer(req),
+				redirect: 'manual'
+			});
 
-      // Forward response headers
-      res.writeHead(proxyRes.status, Object.fromEntries(proxyRes.headers));
+			// Forward response headers
+			res.writeHead(proxyRes.status, Object.fromEntries(proxyRes.headers));
 
-      // Stream response body
-      if (proxyRes.body) {
-        const reader = proxyRes.body.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          res.write(value);
-        }
-      }
-      res.end();
+			// Stream response body
+			if (proxyRes.body) {
+				const reader = proxyRes.body.getReader();
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					res.write(value);
+				}
+			}
+			res.end();
 
-      const duration = Date.now() - startTime;
-      console.log(
-        `${req.method} ${req.url} -> ${backend.url} [${proxyRes.status}] ${duration}ms`
-      );
-    } catch (err) {
-      console.error(`Backend ${backend.url} error:`, err);
-      backend.healthy = false;
-      res.writeHead(502, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Bad gateway" }));
-    } finally {
-      backend.activeConnections--;
-    }
-  }
+			const duration = Date.now() - startTime;
+			console.log(`${req.method} ${req.url} -> ${backend.url} [${proxyRes.status}] ${duration}ms`);
+		} catch (err) {
+			console.error(`Backend ${backend.url} error:`, err);
+			backend.healthy = false;
+			res.writeHead(502, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ error: 'Bad gateway' }));
+		} finally {
+			backend.activeConnections--;
+		}
+	}
 
-  // Health checking
-  startHealthChecks(): void {
-    this.healthCheckTimer = setInterval(async () => {
-      const checks = this.backends.map(async (backend) => {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(
-            () => controller.abort(),
-            this.config.healthCheckTimeout
-          );
+	// Health checking
+	startHealthChecks(): void {
+		this.healthCheckTimer = setInterval(async () => {
+			const checks = this.backends.map(async (backend) => {
+				try {
+					const controller = new AbortController();
+					const timeout = setTimeout(() => controller.abort(), this.config.healthCheckTimeout);
 
-          const res = await fetch(
-            `${backend.url}${this.config.healthCheckPath}`,
-            { signal: controller.signal }
-          );
-          clearTimeout(timeout);
+					const res = await fetch(`${backend.url}${this.config.healthCheckPath}`, {
+						signal: controller.signal
+					});
+					clearTimeout(timeout);
 
-          const wasHealthy = backend.healthy;
-          backend.healthy = res.ok;
+					const wasHealthy = backend.healthy;
+					backend.healthy = res.ok;
 
-          if (!wasHealthy && backend.healthy) {
-            console.log(`Backend ${backend.url} is now HEALTHY`);
-          } else if (wasHealthy && !backend.healthy) {
-            console.log(`Backend ${backend.url} is now UNHEALTHY`);
-          }
-        } catch {
-          if (backend.healthy) {
-            console.log(`Backend ${backend.url} is now UNHEALTHY`);
-          }
-          backend.healthy = false;
-        }
-      });
+					if (!wasHealthy && backend.healthy) {
+						console.log(`Backend ${backend.url} is now HEALTHY`);
+					} else if (wasHealthy && !backend.healthy) {
+						console.log(`Backend ${backend.url} is now UNHEALTHY`);
+					}
+				} catch {
+					if (backend.healthy) {
+						console.log(`Backend ${backend.url} is now UNHEALTHY`);
+					}
+					backend.healthy = false;
+				}
+			});
 
-      await Promise.all(checks);
-    }, this.config.healthCheckInterval);
-  }
+			await Promise.all(checks);
+		}, this.config.healthCheckInterval);
+	}
 
-  stopHealthChecks(): void {
-    if (this.healthCheckTimer) {
-      clearInterval(this.healthCheckTimer);
-    }
-  }
+	stopHealthChecks(): void {
+		if (this.healthCheckTimer) {
+			clearInterval(this.healthCheckTimer);
+		}
+	}
 
-  getStatus(): object {
-    return {
-      backends: this.backends.map((b) => ({
-        url: b.url,
-        healthy: b.healthy,
-        activeConnections: b.activeConnections,
-        totalRequests: b.totalRequests,
-      })),
-    };
-  }
+	getStatus(): object {
+		return {
+			backends: this.backends.map((b) => ({
+				url: b.url,
+				healthy: b.healthy,
+				activeConnections: b.activeConnections,
+				totalRequests: b.totalRequests
+			}))
+		};
+	}
 }
 
 function streamToBuffer(stream: http.IncomingMessage): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    stream.on("data", (c) => chunks.push(c));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", reject);
-  });
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		stream.on('data', (c) => chunks.push(c));
+		stream.on('end', () => resolve(Buffer.concat(chunks)));
+		stream.on('error', reject);
+	});
 }
 
 // --- Start ---
 const lb = new LoadBalancer({
-  backends: [
-    { url: "http://localhost:3001", weight: 2 },
-    { url: "http://localhost:3002", weight: 1 },
-    { url: "http://localhost:3003", weight: 1 },
-  ],
-  healthCheckInterval: 5000,
-  healthCheckPath: "/health",
-  healthCheckTimeout: 3000,
-  algorithm: "round-robin",
+	backends: [
+		{ url: 'http://localhost:3001', weight: 2 },
+		{ url: 'http://localhost:3002', weight: 1 },
+		{ url: 'http://localhost:3003', weight: 1 }
+	],
+	healthCheckInterval: 5000,
+	healthCheckPath: '/health',
+	healthCheckTimeout: 3000,
+	algorithm: 'round-robin'
 });
 
 lb.startHealthChecks();
 
 const server = http.createServer((req, res) => {
-  if (req.url === "/lb/status") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(lb.getStatus()));
-    return;
-  }
-  lb.handleRequest(req, res);
+	if (req.url === '/lb/status') {
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify(lb.getStatus()));
+		return;
+	}
+	lb.handleRequest(req, res);
 });
 
 server.listen(8080, () => {
-  console.log("Load balancer listening on http://localhost:8080");
+	console.log('Load balancer listening on http://localhost:8080');
 });
 
-process.on("SIGTERM", () => {
-  lb.stopHealthChecks();
-  server.close();
+process.on('SIGTERM', () => {
+	lb.stopHealthChecks();
+	server.close();
 });
 ```
 
@@ -561,4 +546,3 @@ func main() {
 - Start with your cloud provider's LB (ALB, Cloud Load Balancing). Build custom only if you need routing logic they don't support.
 
 </div>
-

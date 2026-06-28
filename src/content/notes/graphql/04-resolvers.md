@@ -1,10 +1,10 @@
 ---
-title: "Resolvers and the execution tree"
-subtitle: "A resolver is a function that returns a value. Stack them in a tree, and that tree is your API. Once you see the walk, every weird GraphQL bug becomes obvious."
+title: 'Resolvers and the execution tree'
+subtitle: 'A resolver is a function that returns a value. Stack them in a tree, and that tree is your API. Once you see the walk, every weird GraphQL bug becomes obvious.'
 chapter: 4
-level: "beginner"
-readingTime: "12 min"
-topics: ["graphql", "resolvers", "execution", "context"]
+level: 'beginner'
+readingTime: '12 min'
+topics: ['graphql', 'resolvers', 'execution', 'context']
 ---
 
 <script>
@@ -24,12 +24,12 @@ A GraphQL resolver is like a waiter who coordinates between your order and the k
 ## A resolver is a function with four arguments
 
 ```js
-fieldName: (parent, args, context, info) => returnValue
+fieldName: (parent, args, context, info) => returnValue;
 ```
 
 That is the signature for every resolver, in every GraphQL server, in every language.
 
-- **`parent`** — the value returned by the *parent* resolver. For root types (`Query`, `Mutation`), parent is `undefined` (or whatever you pass as `rootValue`). For `User.name`, parent is the user object.
+- **`parent`** — the value returned by the _parent_ resolver. For root types (`Query`, `Mutation`), parent is `undefined` (or whatever you pass as `rootValue`). For `User.name`, parent is the user object.
 - **`args`** — arguments declared on the field. `posts(last: 10)` arrives as `{ last: 10 }`.
 - **`context`** — request-scoped object. The DB pool, the current user, a DataLoader instance, the trace ID. Every resolver in one request shares it.
 - **`info`** — metadata about the execution. Field name, return type, the path you are at, the entire AST, all variables. Most resolvers ignore it; advanced ones use it for projection (selecting only requested DB columns).
@@ -42,15 +42,15 @@ Look at this query:
 
 ```graphql
 {
-  user(id: 1) {
-    name
-    posts {
-      title
-      author {
-        name
-      }
-    }
-  }
+	user(id: 1) {
+		name
+		posts {
+			title
+			author {
+				name
+			}
+		}
+	}
 }
 ```
 
@@ -77,7 +77,7 @@ For that one query, that is 1 + 1 + 1 + 4 + 4 = 11 resolver invocations. The aut
 You did not write `User.name` in chapter 3. You did not need to. The default resolver for a field is:
 
 ```js
-parent => parent[fieldName]
+(parent) => parent[fieldName];
 ```
 
 If `parent` is `{ name: "Sumayya", email: "..." }` and the field is `name`, the default resolver returns `parent.name`. So the only fields that need explicit resolvers are:
@@ -124,16 +124,16 @@ Children block on their parent. `Post.title` cannot run until `User.posts` has r
 
 ## Context — the lifeline
 
-Context is created once per request and passed to every resolver. It is the *only* legitimate way to share state across resolvers in one query.
+Context is created once per request and passed to every resolver. It is the _only_ legitimate way to share state across resolvers in one query.
 
 ```js
 const yoga = createYoga({
-  schema,
-  context: ({ request }) => ({
-    db: pool,
-    userId: getUserIdFromAuth(request),
-    requestId: crypto.randomUUID(),
-  }),
+	schema,
+	context: ({ request }) => ({
+		db: pool,
+		userId: getUserIdFromAuth(request),
+		requestId: crypto.randomUUID()
+	})
 });
 ```
 
@@ -141,9 +141,9 @@ Then any resolver can:
 
 ```js
 posts: async (_, args, ctx) => {
-  if (!ctx.userId) throw new Error("Not authenticated");
-  return ctx.db.query("SELECT * FROM posts WHERE author_id = $1", [ctx.userId]);
-}
+	if (!ctx.userId) throw new Error('Not authenticated');
+	return ctx.db.query('SELECT * FROM posts WHERE author_id = $1', [ctx.userId]);
+};
 ```
 
 Things that belong in context:
@@ -173,11 +173,11 @@ If the field is non-null, the `null` propagates up to the nearest nullable paren
 
 ```graphql
 type Query {
-  user(id: ID!): User      # nullable
+	user(id: ID!): User # nullable
 }
 type User {
-  id: ID!
-  name: String!            # non-null
+	id: ID!
+	name: String! # non-null
 }
 ```
 
@@ -190,14 +190,14 @@ If you ever see "the entire response collapsed to null because one nested field 
 The fourth resolver argument is the one you usually ignore. But for one specific optimization — fetching only the columns the client asked for — it is gold.
 
 ```js
-import { fieldsList } from "graphql-fields-list";
+import { fieldsList } from 'graphql-fields-list';
 
 users: async (_, __, ___, info) => {
-  const fields = fieldsList(info); // ["id", "name"] if client asked for those
-  const cols = ["id", ...fields].join(", ");
-  const { rows } = await pool.query(`SELECT ${cols} FROM users`);
-  return rows;
-}
+	const fields = fieldsList(info); // ["id", "name"] if client asked for those
+	const cols = ['id', ...fields].join(', ');
+	const { rows } = await pool.query(`SELECT ${cols} FROM users`);
+	return rows;
+};
 ```
 
 Skip until performance demands it. Premature in chapter 4.
@@ -223,4 +223,3 @@ Skip until performance demands it. Premature in chapter 4.
 - `info` is for selection-aware optimizations later.
 
 Next: [The N+1 problem](/notes/graphql/05-n-plus-one) — why your first GraphQL server is slow, and what is actually happening at the SQL layer.
-

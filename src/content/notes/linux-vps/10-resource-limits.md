@@ -1,10 +1,10 @@
 ---
-title: "Resource Limits"
-subtitle: "ulimit, cgroups, and the OOM killer — three layers of resource control that decide whether your services share the box politely or fight to the death."
+title: 'Resource Limits'
+subtitle: 'ulimit, cgroups, and the OOM killer — three layers of resource control that decide whether your services share the box politely or fight to the death.'
 chapter: 10
-level: "advanced"
-readingTime: "13 min"
-topics: ["cgroups", "ulimit", "oom", "limits", "linux"]
+level: 'advanced'
+readingTime: '13 min'
+topics: ['cgroups', 'ulimit', 'oom', 'limits', 'linux']
 ---
 
 <script>
@@ -57,19 +57,19 @@ file locks                      (-x) unlimited
 
 The most important ones in practice:
 
-| Limit | Flag | What happens at the cap |
-|---|---|---|
-| Open files (FDs) | `-n` | `accept()` and `open()` start returning `EMFILE`. Network services fail. |
-| Max user processes | `-u` | `fork()` returns `EAGAIN`. Cannot spawn workers. |
-| Stack size | `-s` | Deep recursion crashes the process. |
-| Max RAM (virtual) | `-v` | `malloc()` fails. App handles or crashes. |
-| CPU time | `-t` | Process is killed after this many seconds of CPU time. |
+| Limit              | Flag | What happens at the cap                                                  |
+| ------------------ | ---- | ------------------------------------------------------------------------ |
+| Open files (FDs)   | `-n` | `accept()` and `open()` start returning `EMFILE`. Network services fail. |
+| Max user processes | `-u` | `fork()` returns `EAGAIN`. Cannot spawn workers.                         |
+| Stack size         | `-s` | Deep recursion crashes the process.                                      |
+| Max RAM (virtual)  | `-v` | `malloc()` fails. App handles or crashes.                                |
+| CPU time           | `-t` | Process is killed after this many seconds of CPU time.                   |
 
 `ulimit` shows **soft** limits by default, the value the process is currently subject to. `ulimit -aH` shows **hard** limits, the cap a process can raise its soft limit to without being root.
 
 ## The 1024 file descriptor problem
 
-The default for `ulimit -n` on most distros is **1024**. That is the number of open files (including sockets) a single process can have. For any real network service, this is *too low*.
+The default for `ulimit -n` on most distros is **1024**. That is the number of open files (including sockets) a single process can have. For any real network service, this is _too low_.
 
 Run a quick test:
 
@@ -101,7 +101,7 @@ For systemd-managed services, `limits.conf` does not apply — the unit file's `
 
 ## cgroups — the modern resource cage
 
-**cgroups** (control groups) are a kernel feature that takes a set of processes and applies *collective* limits to them: total memory, total CPU share, total I/O bandwidth. systemd uses cgroups to manage every service it runs.
+**cgroups** (control groups) are a kernel feature that takes a set of processes and applies _collective_ limits to them: total memory, total CPU share, total I/O bandwidth. systemd uses cgroups to manage every service it runs.
 
 You can see this:
 
@@ -119,11 +119,11 @@ The `CGroup: /system.slice/nginx.service` line tells you nginx and all its child
 
 The three cgroup controllers you will use most:
 
-| Controller | What it limits |
-|---|---|
-| `memory` | RAM consumed by the cgroup as a whole. |
-| `cpu` | CPU share or hard quota. |
-| `io` | Block-device read/write bandwidth and IOPS. |
+| Controller | What it limits                              |
+| ---------- | ------------------------------------------- |
+| `memory`   | RAM consumed by the cgroup as a whole.      |
+| `cpu`      | CPU share or hard quota.                    |
+| `io`       | Block-device read/write bandwidth and IOPS. |
 
 ## Setting cgroup limits via systemd
 
@@ -190,7 +190,7 @@ Or via journalctl:
 journalctl -k --grep="killed process"
 ```
 
-The OOM killer is the kernel admitting defeat. It is a *symptom*, not a feature you should rely on. If your services are getting OOM-killed, you have either:
+The OOM killer is the kernel admitting defeat. It is a _symptom_, not a feature you should rely on. If your services are getting OOM-killed, you have either:
 
 - Underprovisioned RAM (buy more, or move things off this box).
 - A memory leak (fix it).
@@ -217,7 +217,7 @@ Make a service unkillable by the OOM killer (use sparingly — kernel and journa
 OOMScoreAdjust=-500
 ```
 
-For most services, set per-cgroup memory limits with `MemoryMax` instead. When a service hits its own cgroup limit, only *that service* is killed, not random other services on the box.
+For most services, set per-cgroup memory limits with `MemoryMax` instead. When a service hits its own cgroup limit, only _that service_ is killed, not random other services on the box.
 
 ## CPU pinning and weights
 
@@ -255,7 +255,7 @@ IOReadBandwidthMax=/dev/sda 50M
 IOWriteBandwidthMax=/dev/sda 50M
 ```
 
-These cap the *cgroup's* total throughput on a specific device. The service can still burst above when no one else is using the disk.
+These cap the _cgroup's_ total throughput on a specific device. The service can still burst above when no one else is using the disk.
 
 ## Practical: a hardened service template
 
@@ -326,4 +326,3 @@ cat /proc/meminfo                                 # the full picture
 - A solid service template combines rlimits, cgroup caps, OOM policy, and sandbox directives.
 
 Next chapter: scheduling — cron and systemd timers for the work that runs on a clock.
-

@@ -1,10 +1,10 @@
 ---
-title: "Time and soft delete"
+title: 'Time and soft delete'
 subtitle: "Timestamps that survive time zones, soft delete that doesn't poison every query, and history tables that answer 'what did this look like last Tuesday?'"
 chapter: 7
-level: "intermediate"
-readingTime: "12 min"
-topics: ["data-modeling", "timestamps", "soft-delete", "history", "time-zones"]
+level: 'intermediate'
+readingTime: '12 min'
+topics: ['data-modeling', 'timestamps', 'soft-delete', 'history', 'time-zones']
 ---
 
 <script>
@@ -27,7 +27,7 @@ An archive folder instead of permanent delete — the email is gone from your in
 
 Postgres has two timestamp types:
 
-- `TIMESTAMP` (without time zone): a wall-clock value with no zone. *Looks* like a moment in time but isn't.
+- `TIMESTAMP` (without time zone): a wall-clock value with no zone. _Looks_ like a moment in time but isn't.
 - `TIMESTAMPTZ` (with time zone): a UTC instant.
 
 **Always use `TIMESTAMPTZ`.** Even when you "know" the data is in a single time zone. Even when you don't display time zones in the UI.
@@ -298,4 +298,3 @@ If you currently have `start_at` and `end_at` columns and routinely write querie
 - Common bugs: mixing seconds/ms, equality on timestamps, trusting client clocks, allowing NULL on `created_at`.
 
 Next: [Multi-tenancy](/notes/data-modeling/08-multi-tenancy) — single-DB, schema-per-tenant, row-level security.
-
