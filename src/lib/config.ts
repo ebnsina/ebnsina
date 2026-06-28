@@ -17,6 +17,7 @@ export const SITE = {
 	nav: [
 		{ label: 'Writing', href: '/blog' },
 		{ label: 'Notes', href: '/notes' },
+		{ label: 'Directory', href: '/directory' },
 		{ label: 'Projects', href: '/projects' },
 		{ label: 'About', href: '/about' },
 		{ label: 'Uses', href: '/uses' },

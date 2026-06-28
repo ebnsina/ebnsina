@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Check, ListChecks, Clock, ArrowRight, Landmark } from '@lucide/svelte';
+	import { Check, ListChecks, Clock, ArrowRight, Landmark, Lock } from '@lucide/svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import { colorFor } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
@@ -198,29 +198,74 @@
 			</div>
 		{/each}
 
-		<!-- capstone: the finish line -->
+		<!-- capstone: the path goal -->
 		<div
-			class="flex items-center gap-4 rounded-2xl border p-5 sm:gap-5"
+			class="flex flex-col items-center rounded-2xl border px-6 py-12 text-center sm:py-14"
 			style={allDone
-				? 'border-color: color-mix(in oklch, var(--accent) 40%, transparent); background: color-mix(in oklch, var(--accent) 7%, var(--bg));'
-				: 'border-color: color-mix(in oklch, var(--fg) 8%, transparent);'}
+				? 'border-color: color-mix(in oklch, var(--accent) 30%, transparent); background: color-mix(in oklch, var(--accent) 6%, var(--bg));'
+				: 'border-color: color-mix(in oklch, var(--fg) 8%, transparent); background: color-mix(in oklch, var(--fg) 2%, transparent);'}
 		>
-			<span
-				class="grid size-11 shrink-0 place-items-center rounded-xl"
-				style={allDone
-					? 'background: var(--accent); color:#fff;'
-					: 'background: color-mix(in oklch, var(--fg) 7%, transparent); color: color-mix(in oklch, var(--fg) 40%, transparent);'}
-				aria-hidden="true"><Landmark size={20} /></span
-			>
-			<div class="min-w-0 flex-1">
-				<p class="font-display font-bold tracking-tight" class:text-accent={allDone}>Architect</p>
-				<p class="text-sm text-muted">
-					{allDone
-						? 'All four levels complete — you walked the whole path.'
-						: 'Finish all four levels to earn the Architect badge.'}
-				</p>
+			<!-- hexagonal badge -->
+			<div class="relative">
+				<div
+					class="grid size-24 place-items-center"
+					style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); color: {allDone
+						? '#fff'
+						: 'color-mix(in oklch, var(--fg) 40%, transparent)'}; {allDone
+						? 'background: linear-gradient(155deg, color-mix(in oklch, var(--accent) 92%, #000), var(--accent));'
+						: 'background: linear-gradient(160deg, color-mix(in oklch, var(--fg) 11%, transparent), color-mix(in oklch, var(--fg) 5%, transparent));'}"
+					aria-hidden="true"
+				>
+					<Landmark size={38} />
+				</div>
+				<span
+					class="corner-round absolute -right-1 -top-1 grid size-7 place-items-center rounded-full border-2"
+					style="border-color: var(--bg); color: {allDone
+						? '#fff'
+						: 'color-mix(in oklch, var(--fg) 55%, transparent)'}; background: {allDone
+						? 'var(--accent)'
+						: 'color-mix(in oklch, var(--fg) 16%, var(--bg))'};"
+					aria-hidden="true"
+				>
+					{#if allDone}
+						<Check size={13} strokeWidth={3} />
+					{:else}
+						<Lock size={12} />
+					{/if}
+				</span>
 			</div>
-			<span class="shrink-0 font-pixel text-xs text-muted">{doneTotal}/{totalCh}</span>
+
+			<h3 class="mt-6 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+				The Architect Path
+			</h3>
+			<p class="mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
+				{#if allDone}
+					Every level cleared — the <span class="font-semibold text-accent">Architect</span> badge is
+					yours. That's the full stack, top to bottom.
+				{:else if doneTotal === 0}
+					Work through all four levels to earn the <span class="font-semibold text-accent"
+						>Architect</span
+					> badge. It's a long road, but it starts with a single chapter.
+				{:else}
+					{totalCh - doneTotal} chapters stand between you and the
+					<span class="font-semibold text-accent">Architect</span> badge. Keep the momentum going.
+				{/if}
+			</p>
+
+			{#if !allDone && next}
+				<a
+					href={`/notes/${next.category}/${next.slug}`}
+					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg transition-colors hover:bg-fg"
+					>{doneTotal === 0 ? 'Begin Path' : 'Continue Path'} <ArrowRight size={16} /></a
+				>
+			{:else if allDone}
+				<span
+					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg"
+					>Path complete <Check size={16} strokeWidth={3} /></span
+				>
+			{/if}
+
+			<span class="mt-5 font-pixel text-xs text-muted">{doneTotal}/{totalCh} chapters</span>
 		</div>
 	</div>
 </section>

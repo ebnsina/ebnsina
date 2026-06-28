@@ -4,7 +4,6 @@
 	import { getCategoryGroups, GROUP_ORDER, CATEGORIES } from '$lib/data/categories';
 	import { ROADMAP } from '$lib/data/roadmap';
 	import { getTotalChapters, getTracks, getChapters } from '$lib/content';
-	import { FolderOpen, ArrowRight } from '@lucide/svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import JourneyHeader from '$lib/components/notes/JourneyHeader.svelte';
 	import Roadmap from '$lib/components/notes/Roadmap.svelte';
@@ -70,31 +69,6 @@
 	<JourneyHeader {total} />
 
 	<Roadmap {levels} />
-
-	<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-10">
-		<a
-			href="/directory"
-			class="group flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] p-5 transition-colors hover:border-[color-mix(in_oklch,var(--accent)_35%,transparent)] hover:bg-[color-mix(in_oklch,var(--fg)_2.5%,transparent)]"
-		>
-			<div class="flex items-center gap-4">
-				<span
-					class="grid size-11 shrink-0 place-items-center rounded-xl text-accent"
-					style="background: color-mix(in oklch, var(--accent) 12%, var(--bg)); border: 1px solid color-mix(in oklch, var(--accent) 25%, transparent);"
-					aria-hidden="true"><FolderOpen size={20} /></span
-				>
-				<div>
-					<p class="font-display font-bold tracking-tight transition-colors group-hover:text-accent">
-						Browse all tracks
-					</p>
-					<p class="text-sm text-muted">All {tracks.length} tracks, grouped by area.</p>
-				</div>
-			</div>
-			<ArrowRight
-				size={18}
-				class="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
-			/>
-		</a>
-	</section>
 
 	<!-- Trophy case: a badge per track, earned by completing every chapter in it -->
 	<section class="mt-14 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] pt-10">
