@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { colorFor } from '$lib/colors';
+	import { catFor } from '$lib/colors';
 
 	let {
 		href,
@@ -19,7 +19,7 @@
 <a
 	{href}
 	class="glass-card group flex h-full min-h-[7rem] flex-col justify-center p-5"
-	style="--cc: {colorFor(title)}"
+	style="--cc: {catFor(title)}"
 >
 	<h3 class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent">
 		{title}

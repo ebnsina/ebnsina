@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { Component } from 'svelte';
 	import type { ShapeName } from '$lib/three/shapes';
-	import { colorFor } from '$lib/colors';
+	import { catFor } from '$lib/colors';
 	import { threeEnabled } from '$lib/three/enabled';
 
 	let {
@@ -13,7 +13,7 @@
 	}: { eyebrow?: string; title: string; description?: string; shape: ShapeName } = $props();
 
 	// each page's object gets its own colour (fixed, not theme-reactive)
-	const accent = $derived(colorFor(shape + title));
+	const accent = $derived(catFor(shape + title));
 
 	let Canvas3D = $state<Component<{ accent?: string; shape?: ShapeName }> | null>(null);
 

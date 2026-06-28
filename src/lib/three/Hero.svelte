@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Component } from 'svelte';
-	import { colorFor } from '$lib/colors';
+	import { catFor } from '$lib/colors';
 	import { threeEnabled } from './enabled';
 
 	let HeroCanvas = $state<Component<{ accent?: string }> | null>(null);
-	const accent = colorFor('hero-laptop');
+	const accent = catFor('hero-laptop');
 
 	onMount(() => {
 		// Skip WebGL entirely on phones / reduced-motion (perf + battery).

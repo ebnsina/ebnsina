@@ -7,7 +7,7 @@
 	import { projects } from '$lib/data/projects';
 	import { SITE } from '$lib/config';
 	import { reveal } from '$lib/actions';
-	import { colorFor } from '$lib/colors';
+	import { catFor } from '$lib/colors';
 
 	let { data } = $props();
 
@@ -114,7 +114,7 @@
 		<p class="mb-8 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">What I do</p>
 		<div class="grid gap-4 lg:grid-cols-3">
 			{#each doing as d (d.k)}
-				<div class="glass-card flex h-full flex-col p-6" style="--cc: {colorFor(d.k)}">
+				<div class="glass-card flex h-full flex-col p-6" style="--cc: {catFor(d.k)}">
 					<h3 class="font-display text-lg font-bold tracking-tight">{d.k}</h3>
 					<p class="mt-2 text-sm leading-[1.6] text-muted">{d.v}</p>
 					<div class="mt-auto flex flex-wrap gap-1.5 pt-5">
