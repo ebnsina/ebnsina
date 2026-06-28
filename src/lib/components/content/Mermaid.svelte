@@ -49,7 +49,7 @@
 			startOnLoad: false,
 			securityLevel: 'strict',
 			theme: 'base',
-			fontFamily: 'Epilogue, ui-sans-serif, system-ui, sans-serif',
+			fontFamily: "'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace",
 			themeVariables: {
 				darkMode: isDark,
 				background: 'transparent',
@@ -109,48 +109,49 @@
 	});
 </script>
 
-<div class="diagram">
+<figure class="diagram-figure">
 	{#if title}
-		<div class="diagram-label">
+		<figcaption class="diagram-label">
 			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 				<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
 				<line x1="3" y1="9" x2="21" y2="9" />
 				<line x1="9" y1="21" x2="9" y2="9" />
 			</svg>
 			{title}
-		</div>
+		</figcaption>
 	{/if}
-	<div class="diagram-body">
-		{#if failed}
-			<pre class="mermaid-fallback">{code}</pre>
-		{:else if svg}
-			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-			{@html svg}
-		{:else}
-			<div class="mermaid-placeholder" aria-hidden="true"></div>
-		{/if}
+	<div class="diagram">
+		<div class="diagram-body">
+			{#if failed}
+				<pre class="mermaid-fallback">{code}</pre>
+			{:else if svg}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html svg}
+			{:else}
+				<div class="mermaid-placeholder" aria-hidden="true"></div>
+			{/if}
+		</div>
 	</div>
-</div>
+</figure>
 
 <style>
+	.diagram-figure {
+		margin: 1.5rem 0;
+	}
 	.diagram {
 		border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
-		border-radius: 0.75rem;
+		border-radius: 0.85rem;
 		padding: 1.25rem;
-		margin: 1.5rem 0;
 		overflow-x: auto;
 		background: color-mix(in oklch, var(--fg) 2.5%, transparent);
 	}
 	@media (max-width: 639px) {
 		.diagram {
 			padding: 0.85rem;
-			border-radius: 0.6rem;
-		}
-		.diagram-label {
-			margin-bottom: 0.85rem;
-			padding-bottom: 0.6rem;
+			border-radius: 0.7rem;
 		}
 	}
+	/* title now sits ABOVE the card, not inside it */
 	.diagram-label {
 		display: flex;
 		align-items: center;
@@ -160,9 +161,8 @@
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		color: var(--muted);
-		margin-bottom: 1.25rem;
-		padding-bottom: 0.75rem;
-		border-bottom: 1px solid var(--rule);
+		margin-bottom: 0.6rem;
+		padding-left: 0.15rem;
 	}
 	.diagram-body {
 		display: flex;
@@ -171,6 +171,13 @@
 	.diagram-body :global(svg) {
 		max-width: 100%;
 		height: auto;
+	}
+	/* round the flowchart node rectangles a touch */
+	.diagram-body :global(.node rect),
+	.diagram-body :global(.node polygon),
+	.diagram-body :global(.cluster rect) {
+		rx: 8px;
+		ry: 8px;
 	}
 	.mermaid-placeholder {
 		min-height: 120px;
