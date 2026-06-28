@@ -9,7 +9,7 @@
 	import Roadmap from '$lib/components/notes/Roadmap.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
 	import { progress } from '$lib/progress.svelte';
-	import { cardColor } from '$lib/colors';
+	import { catColor } from '$lib/colors';
 
 	const groups = getCategoryGroups();
 	const total = getTotalChapters();
@@ -46,7 +46,7 @@
 			return {
 				...t,
 				label: meta?.label ?? t.category,
-				color: cardColor(Math.max(0, GROUP_ORDER.indexOf(meta?.group ?? '')))
+				color: catColor(Math.max(0, GROUP_ORDER.indexOf(meta?.group ?? '')))
 			};
 		})
 		.sort((a, b) => GROUP_ORDER.indexOf(CATEGORIES[a.category]?.group) - GROUP_ORDER.indexOf(CATEGORIES[b.category]?.group));

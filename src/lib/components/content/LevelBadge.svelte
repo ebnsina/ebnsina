@@ -4,10 +4,10 @@
 	const color = $derived(
 		(
 			{
-				beginner: 'oklch(0.78 0.22 130)',
-				intermediate: 'oklch(0.78 0.18 85)',
-				advanced: 'oklch(0.65 0.2 30)',
-				mastery: 'oklch(0.55 0.15 280)'
+				beginner: 'oklch(0.6 0.11 145)',
+				intermediate: 'oklch(0.6 0.11 70)',
+				advanced: 'oklch(0.6 0.11 30)',
+				mastery: 'oklch(0.6 0.11 295)'
 			} as Record<string, string>
 		)[level] ?? 'var(--muted)'
 	);

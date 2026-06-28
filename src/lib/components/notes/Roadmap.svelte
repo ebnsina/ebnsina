@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Check, ListChecks, Clock, ArrowRight, Landmark, Lock } from '@lucide/svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import { colorFor } from '$lib/colors';
+	import { catFor } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
 
 	type Track = { category: string; label: string; slugs: string[]; minutes: number };
@@ -21,11 +21,12 @@
 
 	onMount(() => progress.hydrate());
 
+	// harmonised level hues — same constant L/C family as the categorical palette
 	const LEVEL_COLOR: Record<string, string> = {
-		beginner: 'oklch(0.7 0.2 130)',
-		intermediate: 'oklch(0.74 0.16 85)',
-		advanced: 'oklch(0.62 0.2 30)',
-		mastery: 'oklch(0.55 0.15 280)'
+		beginner: 'oklch(0.6 0.11 145)',
+		intermediate: 'oklch(0.6 0.11 70)',
+		advanced: 'oklch(0.6 0.11 30)',
+		mastery: 'oklch(0.6 0.11 295)'
 	};
 
 	const fmtH = (m: number) => (m >= 60 ? `${Math.round(m / 60)}h` : `${m}m`);
@@ -143,7 +144,7 @@
 						{@const td = progress.ready ? progress.doneIn(t.category, t.slugs) : 0}
 						{@const tdone = t.slugs.length > 0 && td === t.slugs.length}
 						{@const isNext = next ? t.category === next.category : false}
-						{@const c = colorFor(t.category)}
+						{@const c = catFor(t.category)}
 						<li class="relative flex items-center gap-4 sm:gap-5">
 							<!-- node + connecting line -->
 							<div class="relative flex w-3 shrink-0 items-center justify-center self-stretch">
