@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Check, ListChecks, Clock, ArrowRight, Landmark, Lock } from '@lucide/svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import { catFor } from '$lib/colors';
+	import { catVivid } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
 
 	type Track = { category: string; label: string; slugs: string[]; minutes: number };
@@ -58,6 +58,14 @@
 		progress.ready ? ordered.find((c) => !progress.isDone(c.category, c.slug)) : undefined
 	);
 	const allDone = $derived(progress.ready && doneTotal === totalCh && totalCh > 0);
+
+	// stable colour index per track, in path order — so vivid avatars cycle through
+	// the palette and adjacent tracks never share a hue.
+	const catIndex = $derived.by(() => {
+		const m = new Map<string, number>();
+		for (const l of levels) for (const t of l.tracks) if (!m.has(t.category)) m.set(t.category, m.size);
+		return m;
+	});
 </script>
 
 <section class="mb-14">
@@ -144,7 +152,7 @@
 						{@const td = progress.ready ? progress.doneIn(t.category, t.slugs) : 0}
 						{@const tdone = t.slugs.length > 0 && td === t.slugs.length}
 						{@const isNext = next ? t.category === next.category : false}
-						{@const c = catFor(t.category)}
+						{@const c = catVivid(catIndex.get(t.category) ?? 0)}
 						<li class="relative flex items-center gap-4 sm:gap-5">
 							<!-- node + connecting line -->
 							<div class="relative flex w-3 shrink-0 items-center justify-center self-stretch">
@@ -171,8 +179,8 @@
 								class="group flex flex-1 items-center gap-4 rounded-2xl border border-transparent px-2.5 py-2 transition-colors hover:border-[color-mix(in_oklch,var(--fg)_10%,transparent)] hover:bg-[color-mix(in_oklch,var(--fg)_3%,transparent)]"
 							>
 								<span
-									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold"
-									style="color: {c}; background: color-mix(in oklch, {c} 14%, var(--bg)); border: 1px solid color-mix(in oklch, {c} 30%, transparent);"
+									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
+									style="background: linear-gradient(155deg, color-mix(in oklch, {c} 88%, #fff), {c});"
 									aria-hidden="true">{initials(t.label)}</span
 								>
 								<span class="min-w-0 flex-1">

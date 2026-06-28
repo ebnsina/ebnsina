@@ -16,16 +16,38 @@ export const CAT_COLORS = [
 	'#00929f' // cyan   (oklch 0.6 0.11 205)
 ];
 
+// Vivid variant — same hue family at higher chroma (oklch 0.58 0.17 H). For
+// solid colour tiles (e.g. timeline avatars) that should pop with white text,
+// while soft-tint usage stays on CAT_COLORS.
+export const CAT_VIVID = [
+	'#007cd9', // blue
+	'#8460d2', // violet
+	'#b84999', // plum
+	'#cb4838', // clay
+	'#b76200', // amber
+	'#578c00', // green
+	'#009860', // teal
+	'#0093aa' // cyan
+];
+
 export const catColor = (i: number) =>
 	CAT_COLORS[((i % CAT_COLORS.length) + CAT_COLORS.length) % CAT_COLORS.length];
 
-/** Deterministic, well-spread colour from a string key (so colours look varied
- *  and don't repeat in lockstep across lists). */
-export function catFor(key: string) {
+export const catVivid = (i: number) =>
+	CAT_VIVID[((i % CAT_VIVID.length) + CAT_VIVID.length) % CAT_VIVID.length];
+
+function hashIndex(key: string, len: number) {
 	let h = 2166136261;
 	for (let i = 0; i < key.length; i++) {
 		h ^= key.charCodeAt(i);
 		h = Math.imul(h, 16777619);
 	}
-	return CAT_COLORS[(h >>> 0) % CAT_COLORS.length];
+	return (h >>> 0) % len;
 }
+
+/** Deterministic, well-spread colour from a string key (so colours look varied
+ *  and don't repeat in lockstep across lists). */
+export const catFor = (key: string) => CAT_COLORS[hashIndex(key, CAT_COLORS.length)];
+
+/** Same stable hash as {@link catFor}, but the vivid variant. */
+export const catVividFor = (key: string) => CAT_VIVID[hashIndex(key, CAT_VIVID.length)];

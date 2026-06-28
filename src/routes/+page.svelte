@@ -3,6 +3,7 @@
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import PostCard from '$lib/components/PostCard.svelte';
 	import ContactCta from '$lib/components/ContactCta.svelte';
+	import Typewriter from '$lib/components/Typewriter.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import { projects } from '$lib/data/projects';
 	import { SITE } from '$lib/config';
@@ -12,6 +13,16 @@
 	let { data } = $props();
 
 	const featured = projects.filter((p) => p.featured).sort((a, b) => a.order - b.order);
+
+	const TITLES = [
+		'Software Engineer',
+		'Solution Architect',
+		'Platform Engineer',
+		'Backend Engineer',
+		'Systems Designer',
+		'Reliability Engineer',
+		'Full-Stack Engineer'
+	];
 
 	const doing = [
 		{
@@ -57,10 +68,11 @@
 
 		<div class="relative z-10 px-5 sm:px-8">
 			<p class="mb-6 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-muted">
-				<span class="inline-block size-1.5 rounded-full bg-accent"></span> Software Engineer
+				<span class="corner-round inline-block size-1.5 rounded-full bg-accent"></span>
+				<Typewriter words={TITLES} />
 			</p>
 			<h1
-				class="mb-7 max-w-xl font-display text-[2.9rem] font-bold leading-[1.02] tracking-[-0.03em] sm:text-7xl"
+				class="mb-7 max-w-xl font-display text-[2.2rem] font-bold leading-[1.05] tracking-[-0.03em] sm:text-5xl lg:text-6xl"
 			>
 				Building <span class="text-accent">fast, durable</span> systems &mdash; and the craft
 				behind them.
