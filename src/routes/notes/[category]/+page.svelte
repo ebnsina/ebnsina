@@ -5,14 +5,14 @@
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
 	import { GROUP_ORDER } from '$lib/data/categories';
-	import { cardColor } from '$lib/colors';
+	import { catColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 
 	let { data } = $props();
 
 	onMount(() => progress.hydrate());
 
-	const trackColor = $derived(cardColor(Math.max(0, GROUP_ORDER.indexOf(data.meta.group))));
+	const trackColor = $derived(catColor(Math.max(0, GROUP_ORDER.indexOf(data.meta.group))));
 
 	const slugs = $derived(data.chapters.map((c) => c.slug));
 	const doneCount = $derived(progress.ready ? progress.doneIn(data.category, slugs) : 0);
