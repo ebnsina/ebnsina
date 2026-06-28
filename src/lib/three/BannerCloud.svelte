@@ -6,6 +6,10 @@
 
 	let { accent = '#9c2a45', shape = 'cubes' }: { accent?: string; shape?: ShapeName } = $props();
 
+	// The graph shape is the widest (nodes reach ~2.1 radius) and overran the frame
+	// on the sides — scale it down so it always sits inside the canvas while it sways.
+	const fit = $derived(shape === 'graph' ? 0.78 : 1);
+
 	let points = $state<THREE.Points>();
 	let geom: THREE.BufferGeometry | undefined;
 	let count = 0;
@@ -106,7 +110,7 @@
 <T.PerspectiveCamera makeDefault position={[0.5, 1.85, 4.7]} fov={42} oncreate={(r) => r.lookAt(0, 0, 0)} />
 
 {#if points}
-	<T.Group rotation.y={rotY} rotation.x={rotX}>
+	<T.Group rotation.y={rotY} rotation.x={rotX} scale={fit}>
 		<T is={points} />
 	</T.Group>
 {/if}
