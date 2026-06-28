@@ -3,7 +3,7 @@
 </script>
 
 <section
-	class="mb-4 mt-20 overflow-hidden rounded-3xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_8%,var(--bg))] px-7 py-12 sm:px-12 sm:py-16"
+	class="mb-4 mt-20 overflow-hidden rounded-3xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3.5%,var(--bg))] px-7 py-12 sm:px-12 sm:py-16"
 >
 	<p class="mb-4 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Get in touch</p>
 	<h2 class="max-w-2xl font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl">
