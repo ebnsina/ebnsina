@@ -99,7 +99,7 @@
 				<div class="lg:sticky lg:top-24">
 					<div
 						class="rounded-2xl border p-6"
-						style="border-color: color-mix(in oklch, {color} 30%, transparent); background: color-mix(in oklch, {color} 6%, var(--bg));"
+						style="border-color: color-mix(in oklch, var(--fg) 8%, transparent); background: color-mix(in oklch, var(--fg) 2.5%, var(--bg));"
 					>
 						<div class="flex items-center justify-between">
 							<span class="font-pixel text-[0.6rem] uppercase tracking-[0.18em] text-muted"
@@ -176,7 +176,7 @@
 							<!-- card -->
 							<a
 								href={`/notes/${t.category}`}
-								class="group flex flex-1 items-center gap-4 rounded-2xl border border-transparent px-2.5 py-2 transition-colors hover:border-[color-mix(in_oklch,var(--fg)_10%,transparent)] hover:bg-[color-mix(in_oklch,var(--fg)_3%,transparent)]"
+								class="group flex flex-1 items-center gap-4 rounded-2xl py-2 pr-2.5"
 							>
 								<span
 									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"

@@ -60,12 +60,12 @@
 <svelte:window onclick={onWindowClick} onkeydown={onWindowKey} />
 
 <section
-	class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,var(--bg))] p-5 sm:p-6"
+	class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] p-5 sm:p-6"
 >
 	<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
 		<div class="flex items-center gap-4">
 			<div
-				class="grid size-14 shrink-0 place-items-center rounded-full bg-[color-mix(in_oklch,var(--accent)_14%,var(--bg))] font-pixel text-sm text-accent"
+				class="grid size-14 shrink-0 place-items-center rounded-full bg-[color-mix(in_oklch,var(--fg)_6%,var(--bg))] font-pixel text-sm text-accent"
 				aria-hidden="true"
 			>
 				L{progress.ready ? progress.rank.level : 1}
