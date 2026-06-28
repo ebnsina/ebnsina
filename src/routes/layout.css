@@ -131,6 +131,10 @@ body {
 	*::after {
 		corner-shape: squircle;
 	}
+	/* escape hatch: keep genuine circles round (timeline dots, status dots) */
+	.corner-round {
+		corner-shape: round;
+	}
 }
 
 @layer base {
