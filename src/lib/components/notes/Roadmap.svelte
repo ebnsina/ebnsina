@@ -95,7 +95,7 @@
 						<h3 class="font-display text-lg font-bold tracking-tight">{lvl.title}</h3>
 						<LevelBadge level={lvl.level} />
 						{#if isCurrent}
-							<span class="rounded-full bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">You are here</span>
+							<span class="rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">You are here</span>
 						{/if}
 					</div>
 

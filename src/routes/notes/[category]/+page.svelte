@@ -128,7 +128,7 @@
 								>{ch.meta.title}</span
 							>
 							{#if isNext}
-								<span class="shrink-0 rounded-full bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">{doneCount === 0 ? 'Start' : 'Next'}</span>
+								<span class="shrink-0 rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg">{doneCount === 0 ? 'Start' : 'Next'}</span>
 							{/if}
 						</span>
 						<span class="mt-0.5 block truncate text-sm text-muted">{ch.meta.subtitle}</span>
