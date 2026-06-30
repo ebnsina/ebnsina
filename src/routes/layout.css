@@ -62,10 +62,12 @@
 
 :root.dark {
 	color-scheme: dark;
-	--bg: oklch(0.165 0.014 18);
-	--fg: oklch(0.93 0.006 40);
-	--muted: oklch(0.64 0.014 24);
-	--rule: oklch(0.29 0.016 18);
+	/* Neutral layered blacks — chroma kept near-zero so the UI reads as shades
+	   of black, not a red tint. Olive --accent stays the only saturated colour. */
+	--bg: oklch(0.165 0.002 250);
+	--fg: oklch(0.93 0.003 250);
+	--muted: oklch(0.64 0.004 250);
+	--rule: oklch(0.29 0.003 250);
 	--accent: #7e9443; /* olive — the dark-theme half of the single source */
 	--card-base: oklch(0.205 0 0);
 }
