@@ -7,11 +7,13 @@
 		<meta name="theme-color" content="#f6f7f2" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#1a1d24" media="(prefers-color-scheme: dark)" />
 		<script>
-			// FOUC guard: apply theme before first paint
+			// FOUC guard: apply theme + brand accent before first paint
 			(() => {
 				const s = localStorage.getItem('theme');
 				const d = matchMedia('(prefers-color-scheme: dark)').matches;
 				if (s === 'dark' || (!s && d)) document.documentElement.classList.add('dark');
+				const a = localStorage.getItem('brand-accent');
+				if (a) document.documentElement.style.setProperty('--accent', a);
 			})();
 		</script>
 		%sveltekit.head%

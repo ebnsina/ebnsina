@@ -481,6 +481,22 @@ body {
 	animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Theme toggle: spatial circular reveal via the View Transitions API.
+   Disable the default cross-fade so the JS-driven clip-path expansion (from the
+   toggle button) is the only animation; the new theme is painted on top and
+   wiped open over the old one. */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+	z-index: 1;
+}
+::view-transition-new(root) {
+	z-index: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.reveal {
 		opacity: 1;
@@ -488,5 +504,10 @@ body {
 	}
 	html {
 		scroll-behavior: auto;
+	}
+	::view-transition-group(*),
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none !important;
 	}
 }

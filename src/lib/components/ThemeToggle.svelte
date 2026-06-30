@@ -7,11 +7,42 @@
 		dark = document.documentElement.classList.contains('dark');
 	});
 
-	function toggle() {
+	function apply() {
 		dark = !dark;
 		document.documentElement.classList.toggle('dark', dark);
 		localStorage.setItem('theme', dark ? 'dark' : 'light');
 		window.dispatchEvent(new Event('themechange'));
+	}
+
+	function toggle(event: MouseEvent) {
+		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		// Fall back to an instant switch where View Transitions aren't supported
+		// or the user prefers reduced motion.
+		if (reduce || !document.startViewTransition) {
+			apply();
+			return;
+		}
+
+		// Reveal the new theme as a circle growing from the click point.
+		const x = event.clientX;
+		const y = event.clientY;
+		const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+		const transition = document.startViewTransition(apply);
+
+		transition.ready.then(() => {
+			document.documentElement.animate(
+				{
+					clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`]
+				},
+				{
+					duration: 480,
+					easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+					pseudoElement: '::view-transition-new(root)'
+				}
+			);
+		});
 	}
 </script>
 
