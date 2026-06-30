@@ -2,6 +2,7 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import FormattedDate from '$lib/components/FormattedDate.svelte';
+	import { vtName } from '$lib/actions';
 
 	let { data } = $props();
 	const Content = $derived(data.component);
@@ -31,6 +32,7 @@
 			</div>
 			<h1
 				class="mb-4 font-serif text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl sm:leading-[1.05] lg:text-5xl"
+				style={`view-transition-name: ${vtName('post-title', data.slug)}`}
 			>
 				{meta.title}
 			</h1>

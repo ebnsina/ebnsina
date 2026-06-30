@@ -517,6 +517,14 @@ html.nav-vt::view-transition-new(root) {
 	animation-name: nav-fade-in;
 }
 
+/* Shared-element morph: a post title flows from its list card into the article
+   heading (and back). The matching `view-transition-name` on both pages lets the
+   browser interpolate position/size; tune that morph to feel smooth and settled. */
+html.nav-vt::view-transition-group(*) {
+	animation-duration: 380ms;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @keyframes nav-fade-out {
 	to {
 		opacity: 0;

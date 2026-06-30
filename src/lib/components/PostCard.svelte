@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { catFor } from '$lib/colors';
+	import { vtName } from '$lib/actions';
 
 	let {
 		href,
 		title,
-		description
+		description,
+		slug
 	}: {
 		href: string;
 		title: string;
 		description: string;
+		slug?: string;
 	} = $props();
 </script>
 
@@ -19,6 +22,7 @@
 >
 	<h3
 		class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"
+		style={slug ? `view-transition-name: ${vtName('post-title', slug)}` : undefined}
 	>
 		{title}
 	</h3>

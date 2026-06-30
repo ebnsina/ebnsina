@@ -191,6 +191,7 @@
 							href={`/blog/${post.slug}`}
 							title={post.meta.title}
 							description={post.meta.description}
+							slug={post.slug}
 						/>
 					</div>
 				{/each}
