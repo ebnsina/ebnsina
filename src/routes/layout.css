@@ -484,17 +484,104 @@ body {
 /* Theme toggle: spatial circular reveal via the View Transitions API.
    Disable the default cross-fade so the JS-driven clip-path expansion (from the
    toggle button) is the only animation; the new theme is painted on top and
-   wiped open over the old one. */
-::view-transition-old(root),
-::view-transition-new(root) {
+   wiped open over the old one. Scoped to .theme-vt so route navigation (which
+   shares the same `root` snapshot) keeps its own transition below. */
+html.theme-vt::view-transition-old(root),
+html.theme-vt::view-transition-new(root) {
 	animation: none;
 	mix-blend-mode: normal;
 }
-::view-transition-old(root) {
+html.theme-vt::view-transition-old(root) {
 	z-index: 1;
 }
-::view-transition-new(root) {
+html.theme-vt::view-transition-new(root) {
 	z-index: 2;
+}
+
+/* Page navigation transitions, responsive by device:
+   - Desktop (≥768px): a soft fade + zoom, the way a desktop app cross-dissolves
+     between views — no directional slide.
+   - Mobile (<768px): an iOS-style horizontal parallax slide — incoming page
+     pushes in from the right while the outgoing page eases ~30% left and dims;
+     back navigation mirrors it.
+   `cubic-bezier(0.32, 0.72, 0, 1)` is the easing iOS uses for push/pop. */
+html.nav-vt::view-transition-old(root),
+html.nav-vt::view-transition-new(root) {
+	animation-duration: 420ms;
+	animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+	animation-fill-mode: both;
+	mix-blend-mode: normal;
+}
+
+/* Desktop: fade + subtle zoom (same in both directions). */
+@media (min-width: 768px) {
+	html.nav-vt::view-transition-old(root) {
+		z-index: 1;
+		animation-name: nav-fade-out;
+		animation-duration: 260ms;
+		animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	html.nav-vt::view-transition-new(root) {
+		z-index: 2;
+		animation-name: nav-fade-in;
+		animation-duration: 320ms;
+		animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	}
+}
+
+/* Mobile: iOS horizontal push/pop. */
+@media (max-width: 767px) {
+	html.nav-vt.nav-fwd::view-transition-old(root) {
+		z-index: 1;
+		animation-name: ios-push-out;
+	}
+	html.nav-vt.nav-fwd::view-transition-new(root) {
+		z-index: 2;
+		animation-name: ios-push-in;
+	}
+	html.nav-vt.nav-back::view-transition-old(root) {
+		z-index: 2;
+		animation-name: ios-pop-out;
+	}
+	html.nav-vt.nav-back::view-transition-new(root) {
+		z-index: 1;
+		animation-name: ios-pop-in;
+	}
+}
+
+@keyframes nav-fade-out {
+	to {
+		opacity: 0;
+		transform: scale(1.01);
+	}
+}
+@keyframes nav-fade-in {
+	from {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+}
+@keyframes ios-push-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+@keyframes ios-push-out {
+	to {
+		transform: translateX(-30%);
+		filter: brightness(0.82);
+	}
+}
+@keyframes ios-pop-out {
+	to {
+		transform: translateX(100%);
+	}
+}
+@keyframes ios-pop-in {
+	from {
+		transform: translateX(-30%);
+		filter: brightness(0.82);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
