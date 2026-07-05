@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { SITE } from '$lib/config';
-	import { CAT_VIVID } from '$lib/colors';
 	import { onMount } from 'svelte';
 	const year = new Date().getFullYear();
 
-	// Drawn from the site's own palette so the footer stays on-brand:
-	// olive (--accent, the brand colour) + the harmonised category family.
-	// `value` is what we write to --accent; `null` resets to the default olive.
+	// The brand re-tint palette: Honolulu blue (--accent, the primary) plus four
+	// accents — Svelte orange, pink, rose, lime. `value` is written to --accent;
+	// `null` resets to the default Honolulu blue. Lime is deepened from #84cc16 to
+	// #65a30d so it stays legible when applied as the accent (link/text) colour.
 	const swatches = [
-		{ name: 'Olive', hex: '#5a6c23', value: null },
-		{ name: 'Blue', hex: CAT_VIVID[0], value: CAT_VIVID[0] },
-		{ name: 'Plum', hex: CAT_VIVID[2], value: CAT_VIVID[2] },
-		{ name: 'Amber', hex: CAT_VIVID[4], value: CAT_VIVID[4] },
-		{ name: 'Teal', hex: CAT_VIVID[6], value: CAT_VIVID[6] }
+		{ name: 'Honolulu', hex: '#0076b6', value: null },
+		{ name: 'Svelte', hex: '#ff3e00', value: '#ff3e00' },
+		{ name: 'Pink', hex: '#ec4899', value: '#ec4899' },
+		{ name: 'Rose', hex: '#f43f5e', value: '#f43f5e' },
+		{ name: 'Lime', hex: '#65a30d', value: '#65a30d' }
 	];
 
 	let active = $state<string | null>(null);

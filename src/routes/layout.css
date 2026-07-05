@@ -41,7 +41,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
-   Light = deep cherry/burgundy accent on refined warm-neutral. */
+   Light = Honolulu-blue accent on a soft warm-neutral. */
 :root {
 	color-scheme: light;
 	--bg: oklch(0.986 0.003 40);
@@ -53,7 +53,7 @@
 	   these two hex values (this light one + the dark one below). Everything
 	   else — buttons, links, progress, selection, Mermaid diagrams — derives
 	   from --accent, so no other colour needs touching. ───────────────────── */
-	--accent: #5a6c23; /* olive */
+	--accent: #0076b6; /* Honolulu blue — primary; AA 4.75:1 on --bg */
 	--accent-soft: color-mix(in oklch, var(--accent) 18%, var(--bg));
 	--brand-accent: var(--accent);
 	/* neutral base for mixing card colours (keeps hues true) */
@@ -68,7 +68,7 @@
 	--fg: oklch(0.93 0.003 250);
 	--muted: oklch(0.64 0.004 250);
 	--rule: oklch(0.29 0.003 250);
-	--accent: #7e9443; /* olive — the dark-theme half of the single source */
+	--accent: #4da8da; /* Honolulu blue — brighter for the dark theme; AA 5.86:1 */
 	--card-base: oklch(0.205 0 0);
 }
 
