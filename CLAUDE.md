@@ -59,6 +59,12 @@ The notes section is a localStorage-backed learning game (no DB):
 
 Per-chapter `level` should progress monotonically (beginner→mastery) within a track.
 
+## Projects & case studies
+
+Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project with a `caseStudy` field renders a write-up at `/projects/[slug]` (`src/routes/projects/[slug]/+page.svelte`); its cards link there. A `CaseStudy` has `summary`, `problem`, `challenges[]`, `implementation[]`, `stackWhy[]`, `features[]`, and `status`.
+
+**Write case studies as engineering narrative, not code walkthroughs.** Each `challenges`/`implementation` entry should read problem → approach → tradeoff: open with *why it was hard*, then the conceptual approach. Do **not** name code-level identifiers — no function/method/API names, file names, or literal call signatures (e.g. `buildAdapter()`, `navigator.sendBeacon`, `loadOrBuild`, `on_publish`). Keep the genuinely meaningful architecture/tech terms (columnar OLAP store, HMAC-signed URLs, ICC→sRGB, fragmented MP4, adaptive-bitrate ladder). `stackWhy` explains *why this tech fits the problem*, not which API was called. This is what the reader — a hiring manager or peer, not someone reading the source — actually cares about.
+
 ## 3D (Threlte) — must be guarded
 
 3D is mounted conditionally via `src/lib/three/enabled.ts` (`threeEnabled()` = viewport ≥768px AND not `prefers-reduced-motion`). `Hero.svelte` and `PageBanner.svelte` lazy-import their canvases only when enabled, so phones/reduced-motion render zero canvases. Keep this gating when adding 3D. Canvases use `dpr={[1, 1.75]}` and point clouds sampled from geometry (`MeshSurfaceSampler`).
