@@ -56,46 +56,46 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'Identifying visitors without cookies or PII',
-					body: 'With no durable client id and raw IP/UA both counting as PII, the Go ingestor derives visitor_id = hash64(dailySalt | ip | ua | domain), consuming IP and UA transiently to compute geo/device then discarding them. The salt rotates every UTC day so a visitor cannot be linked across days, and folding the domain into the hash blocks cross-site correlation.'
+					body: 'Counting unique visitors normally means a cookie or a device fingerprint — both of which the privacy promise rules out, and both of which treat raw IP and user-agent as personal data. Instead, a visitor is identified by a one-way hash derived from their IP, user-agent, and the site domain, salted with a value that rotates every day. The IP and UA are used only long enough to compute location and device, then discarded. Because the salt changes daily the same person cannot be linked across days, and folding in the domain stops any visitor being tracked from one site to another.'
 				},
 				{
 					title: 'High-volume events with instant aggregate reads',
-					body: 'Every pageview and event lands in ClickHouse as a partitioned MergeTree using LowCardinality/FixedString encodings and a TTL retention ceiling. A daily AggregatingMergeTree rollup and materialized view pre-aggregate pageviews and uniqState(visitor_id), so unfiltered date ranges skip the raw table entirely.'
+					body: 'Analytics is write-heavy but read-latency-sensitive: millions of raw events must ingest cheaply, yet a dashboard has to answer "visitors this month" instantly. The event store is a columnar OLAP database that compresses repetitive fields aggressively and enforces a retention ceiling, and the counts that dashboards ask for most — pageviews and unique visitors per day — are continuously pre-aggregated into daily rollups so common date ranges never scan the raw table at all.'
 				},
 				{
 					title: 'A sub-1KB tracker that still handles SPAs',
-					body: 'The embeddable script is built by esbuild to an IIFE with a build-time size guard, importing only a zod-free config subpath. It uses navigator.sendBeacon with a fetch keepalive fallback, patches history.pushState/replaceState for SPA pageviews, honors DNT, and posts to a neutral /i path whose filename avoids ad-blocker trigger words.'
+					body: 'A tracking script that bloats a customer\'s page defeats the "fast" selling point, so the embeddable snippet is held under 1KB by a build-time size budget that fails the build if it regresses. It sends data with the browser\'s beacon API (falling back to a keep-alive request), hooks into client-side navigation so single-page apps still register each route change as a pageview, respects Do Not Track, and posts to a deliberately neutral endpoint path so ad-blockers don\'t flag it.'
 				},
 				{
 					title: 'Per-tenant quota enforcement at ingest speed',
-					body: 'Beacons must resolve to a tenant and count against a monthly quota without touching Postgres on the hot path. A TTL cache resolves domain→site/org/limit (with negative caching of unknown domains) and an in-memory month-to-date counter — seeded from Postgres, flushed as deltas — keeps limit checks O(1), with soft/block modes for over-limit traffic.'
+					body: 'Every incoming event has to be attributed to a paying tenant and checked against a monthly plan limit — without a database round-trip slowing the hot path. Domain-to-tenant lookups and month-to-date counters are held in memory, seeded once from the transactional database and reconciled back as periodic deltas, so the limit check is effectively free per request. Over-limit traffic can be handled softly (still recorded) or blocked, depending on plan.'
 				}
 			],
 			implementation: [
 				{
-					title: 'Decoupled Go ingest path',
-					body: 'POST /i always replies 202 (never leaking which UAs or domains are filtered), runs a two-layer bot filter, validates, resolves the site, records usage, and hands the row to a single-goroutine batcher. The buffer flushes by size or interval and drops-and-counts on saturation, so a slow ClickHouse never stalls request latency.'
+					title: 'Decoupled ingest path',
+					body: 'The collection endpoint accepts and acknowledges every beacon immediately — it never reveals which requests were filtered as bots — then validates, attributes the event, and hands it to a background writer. That writer batches rows and flushes them by size or time interval, and deliberately drops (and counts) events if the store falls behind, so a slow or stalled database can never add latency to the visitor-facing request.'
 				},
 				{
-					title: 'Parameterized read path with rollup fallback',
-					body: 'The dashboard maps a whitelist of filter keys to columns and binds every value as a ClickHouse query parameter — no user input is ever interpolated into SQL. Unfiltered daily ranges are served from the events_daily rollup via uniqMerge, falling back to raw events for hourly/filtered queries with WITH FILL gap-zeroing.'
+					title: 'Safe, fast query layer',
+					body: 'Dashboard filters are constrained to a known set of dimensions and every value is passed as a bound query parameter, so no user input is ever concatenated into SQL. Unfiltered day-level ranges are answered from the pre-aggregated rollups; hourly or filtered views fall back to the raw events, with gaps in the time series zero-filled so charts stay continuous.'
 				},
 				{
-					title: 'Auth and tenancy in SvelteKit',
-					body: 'Sessions store a high-entropy token client-side while the DB persists only its SHA-256 (the raw token is never stored), with sliding renewal and argon2 passwords. Signup atomically creates the user, first org, and owner membership; every query is org-scoped and cross-org access 404s.'
+					title: 'Auth and tenancy',
+					body: 'Login sessions keep a high-entropy token on the client but store only its hash on the server, so a database leak exposes no usable sessions; expiry slides on activity and passwords use a memory-hard hash. Signing up provisions the user, their first organization, and ownership in a single transaction, and every subsequent query is scoped to an organization — cross-tenant access simply returns "not found".'
 				},
 				{
-					title: 'Provider-agnostic billing with idempotent callbacks',
-					body: 'A PaymentProvider interface fronts an SSLCommerz adapter (cards + bKash/Nagad/Rocket) and a mock adapter for dev. Gateway redirects are handled session-independently and idempotently — a finalized payment short-circuits — before activating the subscription and optionally storing a tokenized card for auto-renew.'
+					title: 'Provider-agnostic billing',
+					body: 'Payments sit behind a single interface with a real gateway adapter (cards plus local mobile wallets) and a mock adapter for development. Return-from-gateway callbacks are handled idempotently, so a duplicated or replayed callback can\'t double-charge or double-activate, and a card can be tokenized for automatic renewal.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'Cheap goroutines and channels make the single-owner in-memory batcher and drop-on-saturation design natural for the write-hot beacon endpoint, shipping as a lean static binary.' },
-				{ tech: 'ClickHouse', why: 'A columnar OLAP store so high-volume events compress well and aggregate queries over millions of rows stay fast, with materialized-view rollups for time series.' },
-				{ tech: 'PostgreSQL', why: 'The transactional source of truth for users, orgs, sites, subscriptions, and usage counters — data that needs referential integrity.' },
-				{ tech: 'SvelteKit', why: 'One SSR app covering dashboard, marketing, auth, billing, and the read API, deployed via the Node adapter for self-hosting.' },
-				{ tech: 'esbuild', why: 'Minifies and bundles the tracker to an IIFE under 1KB with a build-time size guard.' },
-				{ tech: 'Turborepo', why: 'A pnpm monorepo so a schema change touches the ClickHouse DDL, the Go insert, and the TypeScript query in one commit.' }
+				{ tech: 'Go', why: 'Lightweight concurrency makes the write-heavy, drop-under-load ingest endpoint natural to build, and it ships as a single dependency-free binary that is trivial to self-host.' },
+				{ tech: 'ClickHouse', why: 'A columnar analytics database: high-volume events compress well and aggregate queries over millions of rows stay fast, with continuously-maintained rollups for time series.' },
+				{ tech: 'PostgreSQL', why: 'The transactional source of truth for users, organizations, sites, subscriptions, and usage — the data that needs referential integrity and correctness over raw speed.' },
+				{ tech: 'SvelteKit', why: 'One server-rendered app spans the dashboard, marketing site, auth, billing, and read API, deployable as a Node service for self-hosting.' },
+				{ tech: 'esbuild', why: 'Bundles and minifies the tracking script down to its sub-1KB budget, enforced automatically at build time.' },
+				{ tech: 'Turborepo', why: 'A monorepo so one schema change can update the analytics store, the ingest code, and the typed query layer in a single commit.' }
 			],
 			features: [
 				'Cookieless, no-PII tracking with daily-rotating visitor hashing and a sub-1KB SPA-aware script',
@@ -125,47 +125,47 @@ export const projects: Project[] = [
 				'Privacy-conscious Mac users and creators want fast capture, annotation, and short screen recordings without sending anything to the cloud. SnapKeep does it all on-device: no accounts, no telemetry, no cost — a menubar utility that captures, annotates, and keeps.',
 			challenges: [
 				{
-					title: 'Wrangling ScreenCaptureKit permissions',
-					body: "macOS Screen Recording (TCC) permission is notoriously finicky and usually forces a relaunch. SnapKeep touches SCShareableContent on launch to reliably surface the native prompt, then re-checks authorization every time the app is foregrounded, so returning from System Settings clears the prompt without a manual restart."
+					title: 'Making screen-recording permission painless',
+					body: "macOS Screen Recording permission is notoriously awkward — it typically forces users to quit and relaunch the app before capture works. SnapKeep triggers the system permission prompt at the right moment on launch and then re-checks authorization every time it comes back to the foreground, so returning from System Settings picks up the newly-granted permission automatically, with no manual restart."
 				},
 				{
 					title: 'Low-latency recording and real-time encoding',
-					body: 'ScreenCaptureKit delivers SCStream frames on a private queue that must feed an AVAssetWriter off the main thread, so the recording engine is marked @unchecked Sendable and synchronizes on its own queue. It handles real encoder constraints — even width/height for H.264, real-time expectation, a bounded queue depth, and establishing the writer timeline from the first video sample before appending audio.'
+					body: "Screen frames arrive continuously on a background thread and must be encoded to video without ever blocking the UI or dropping behind real time. The recording engine runs entirely off the main thread on its own synchronized queue and deals with the real constraints of hardware H.264 — dimensions rounded to even numbers, a real-time encoding budget, a bounded backlog, and starting the video timeline from the first captured frame before audio is mixed in."
 				},
 				{
 					title: 'One annotation model, identical on screen and export',
-					body: 'Every tool — pen, marker, arrow, shapes, text, numbered steps, pixelate — is modeled as a single value type with a shared render(in:) used by both the live canvas and the final export, so what you see is what you save. Pixelate redaction handles the point-space to base-pixel coordinate conversion to crop, downscale, and re-upscale a region into a mosaic.'
+					body: 'Every markup tool — pen, marker, arrow, shapes, text, numbered steps, pixelate — is described by a single data model with one shared drawing routine used both for the live editing canvas and the final exported image, guaranteeing what you see is exactly what you save. Pixelate redaction carefully maps between on-screen coordinates and the image\'s true pixel grid so a redacted region can be cropped, downscaled, and re-enlarged into a solid mosaic that can\'t be reversed.'
 				},
 				{
 					title: 'Fully offline OCR and a menubar-only lifecycle',
-					body: "Copy-Text OCR uses Vision's VNRecognizeTextRequest entirely on-device, sorting observations to restore reading order. The app runs as an LSUIElement MenuBarExtra with no dock presence, enforces a single running instance, and registers truly system-wide hotkeys via Carbon so capture fires regardless of focus."
+					body: "Copy-Text extracts text from any capture using Apple's on-device text recognition — no image ever leaves the machine — and reorders the results to match natural reading order. The app lives entirely in the menu bar with no Dock icon, allows only one running instance, and registers truly system-wide keyboard shortcuts so capture fires no matter which app currently has focus."
 				}
 			],
 			implementation: [
 				{
-					title: 'GPU capture pipeline as an actor',
-					body: 'The capture engine is a Swift actor built on SCScreenshotManager, supporting full-display (mouse-following), single-window (desktop-independent filter), and region capture that excludes SnapKeep’s own windows. Sendable primitives — display id and scale — are passed into the actor to avoid sending non-Sendable NSScreen.'
+					title: 'Concurrency-safe capture pipeline',
+					body: "Capture is isolated behind Swift's strict-concurrency model so it can run off the main thread safely. It supports full-display capture that follows the active screen, single-window capture that stays with a window regardless of what's in front of it, and region capture that automatically excludes SnapKeep's own overlay windows from the shot."
 				},
 				{
 					title: 'Video and GIF export',
-					body: 'Recordings write H.264 MP4 with optional 48kHz AAC audio; a GIF exporter converts a finished clip to a looping animation by sampling frames with AVAssetImageGenerator. A post-recording Studio adds preview, trim, silence detection, and Speech-framework caption transcription.'
+					body: 'Recordings are written as H.264 MP4 with optional AAC audio, and any finished clip can be re-exported as a looping animated GIF by sampling its frames. A post-recording studio adds preview, trim, automatic silence detection, and on-device speech-to-text captioning.'
 				},
 				{
 					title: 'Database-free local storage',
-					body: 'Captures are written as timestamped PNG/JPEG to ~/Pictures/SnapKeep and copied to the clipboard. The history model is an @Observable @MainActor store that simply reloads the newest files from that directory — no database, no network — backing the menubar history grid.'
+					body: 'Captures are saved as timestamped PNG/JPEG files in the user\'s Pictures folder and copied to the clipboard immediately. The history view is simply the newest files read back from that folder — there is no database and no network, which keeps the "everything stays on your Mac" promise honest and the storage format completely transparent.'
 				},
 				{
-					title: 'XcodeGen project and DMG distribution',
-					body: 'project.yml generates the single macOS app target (Swift 6, hardened runtime, arm64, macOS 14+); a bootstrap script runs xcodegen and builds the release .app. Pushing a v* tag triggers a GitHub Actions workflow that builds a DMG and publishes a Release. Not notarized yet, so the README documents the quarantine-removal step.'
+					title: 'Reproducible builds and one-click distribution',
+					body: 'The Xcode project is generated from a declarative spec so it can be recreated cleanly on any machine (Swift 6, hardened runtime, Apple silicon, macOS 14+). Pushing a version tag runs a CI workflow that builds a signed disk image and publishes a GitHub Release. The build isn\'t Apple-notarized yet, so the docs walk users through clearing the quarantine flag on first launch.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'Swift 6', why: 'Strict concurrency (actors, Sendable) is used directly to make the capture actor and off-main recording callbacks memory-safe.' },
-				{ tech: 'SwiftUI + AppKit', why: 'SwiftUI drives the MenuBarExtra UI and observable state; AppKit and Core Graphics handle the window-level and rendering work SwiftUI cannot.' },
-				{ tech: 'ScreenCaptureKit', why: 'The modern macOS 14+ capture API providing both SCScreenshotManager stills and SCStream video with per-window/app exclusion filters.' },
-				{ tech: 'Vision', why: 'On-device text recognition for Copy-Text OCR with no network dependency, matching the offline promise.' },
-				{ tech: 'AVFoundation / ImageIO', why: 'AVAssetWriter and AVAssetImageGenerator for MP4 encoding and GIF frame sampling.' },
-				{ tech: 'Carbon hotkeys', why: 'RegisterEventHotKey is the reliable way to register truly system-wide global shortcuts regardless of focus.' }
+				{ tech: 'Swift 6', why: 'Its compile-time concurrency checking makes the off-main-thread capture and recording pipeline provably data-race-free rather than hopefully so.' },
+				{ tech: 'SwiftUI + AppKit', why: 'SwiftUI drives the menu-bar UI and reactive state; AppKit and Core Graphics handle the low-level window and pixel work SwiftUI alone can\'t reach.' },
+				{ tech: 'ScreenCaptureKit', why: "Apple's modern capture framework, providing both high-quality stills and live video with the ability to exclude specific windows or apps from a capture." },
+				{ tech: 'Vision', why: "On-device text recognition powers Copy-Text with zero network dependency, matching the fully-offline promise." },
+				{ tech: 'AVFoundation', why: 'Handles the video encoding, audio, and frame sampling behind MP4 recording and GIF export.' },
+				{ tech: 'Global hotkeys', why: 'System-level shortcut registration is the only reliable way to trigger capture regardless of which application is focused.' }
 			],
 			features: [
 				'Region, window, full-screen, and recapture-last capture with freeze-frame overlay, live dimensions, and a magnifier loupe',
@@ -195,50 +195,50 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'AI that is provider-agnostic and fully optional',
-					body: 'AI is bring-your-own-key and must never be a hard dependency — the whole app has to work without it. A single buildAdapter() switch selects an OpenAI/Anthropic/Gemini/Ollama adapter purely from env, and an isAiConfigured() gate guards every call site, with Ollama special-cased as keyless.'
+					body: 'AI is bring-your-own-key and can never become a hard dependency — the entire product has to remain fully usable with no AI configured at all. A single abstraction picks whichever provider (OpenAI, Anthropic, Gemini, or a local model) is set purely from environment, every AI-powered feature is gated behind a "is AI configured?" check, and the local-model path is treated as keyless so users can run it for free.'
 				},
 				{
 					title: 'Keeping AI output structured and reliable',
-					body: 'Generated fixes and content drafts must render as UI, not free text. Both AI features pass a Zod outputSchema to TanStack AI’s chat(), which resolves to a parsed, typed object, and the system prompts explicitly forbid jargon and invented business facts.'
+					body: 'Generated fixes and content drafts have to render as real UI, not a wall of chat text. Each AI request is given a strict schema the model must fill, so responses come back as validated, typed data rather than prose, and the prompts explicitly forbid jargon and inventing facts about the user\'s business — because the audience is beginners who can\'t tell a hallucination from a real recommendation.'
 				},
 				{
 					title: 'Background crawling without a separate infra tier',
-					body: 'Crawls, daily rank sweeps, and weekly reports are long-running and periodic. BullMQ workers are started in-process from hooks.server.ts so a single node build VPS runs the server and jobs together — guarded against HMR double-start and degrading to in-process crawling when Redis is absent.'
+					body: 'Site crawls, daily rank checks, and weekly reports are long-running and scheduled — the kind of work that usually needs a dedicated job server. Here the job workers run inside the same process as the web app, so a single small VPS handles both, guarded against accidentally starting twice during development and degrading gracefully to in-process crawling when no queue backend is available.'
 				},
 				{
 					title: 'Teaching beginners, decoupled from AI',
-					body: 'Every audit issue carries structured plain-language guidance — what it is, why it matters, how to fix, difficulty, impact — stored as content keyed by issue code. This manual guidance always works; the AI fix assistant layers a tailored copy-paste version on top when configured, and falls back to the manual steps when not.'
+					body: 'Every issue the audit can find ships with hand-written, plain-language guidance — what it is, why it matters, how to fix it, how hard it is, and how much impact it has. This teaching content always works, with or without AI. When AI is configured it layers a tailored, copy-paste-ready fix on top; when it isn\'t, the manual steps stand on their own.'
 				}
 			],
 			implementation: [
 				{
-					title: 'TanStack AI adapter factory with structured chat()',
-					body: 'buildAdapter() returns the configured provider’s chat adapter; draft and fix generation call chat({ adapter, messages, outputSchema }) with Zod schemas so results come back typed and validated (no streaming — it resolves to the parsed object).'
+					title: 'Pluggable AI layer with structured output',
+					body: 'A small factory returns the configured provider\'s client, and the draft- and fix-generation features both request a schema-constrained response, so what comes back is already parsed and validated against the shape the UI expects — no fragile text-parsing of model output.'
 				},
 				{
-					title: 'BullMQ job pipeline',
-					body: 'Three queues — crawl, rank-refresh, reports — use lazily-instantiated Queue singletons over a shared ioredis connection. Recurring work is registered idempotently at boot via upsertJobScheduler cron patterns: a daily rank sweep and a weekly report.'
+					title: 'Scheduled background job pipeline',
+					body: 'Three job types — crawls, rank refreshes, and report generation — run on a shared queue backed by an in-memory store. Recurring work is registered once at startup on cron schedules (a daily rank sweep, a weekly report) in a way that\'s safe to run repeatedly without piling up duplicates.'
 				},
 				{
 					title: 'Crawl → audit → score pipeline',
-					body: 'A run flips the crawl row to running, fetches pages via a polite crawler (robots.txt, sitemap discovery, llms.txt and AI-crawler-block detection), runs rule-based findings, best-effort adds PageSpeed Core Web Vitals, computes a 0–100 health score, and persists pages and issue rows.'
+					body: 'A run marks itself in-progress, fetches pages with a well-behaved crawler (respecting robots rules, discovering the sitemap, and detecting answer-engine signals like AI-crawler policies), applies a battery of rule-based checks, best-effort layers in Core Web Vitals field data, computes a 0–100 health score, and stores the pages and issues it found.'
 				},
 				{
-					title: 'Svelte 5 remote functions as the server API',
-					body: 'Feature-co-located *.remote.ts files use $app/server query/command/form with Zod validators instead of +page.server.ts. Every tenant query scopes by organizationId and mutations gate on write access.'
+					title: 'Type-safe server API',
+					body: 'The server API is built from feature-co-located endpoints validated at the boundary, rather than scattered controllers. Every query is scoped to the caller\'s organization and every mutation checks write permission first, so multi-tenant isolation is enforced consistently by construction.'
 				},
 				{
-					title: 'Drizzle schema modeling the SEO domain',
-					body: 'The schema covers the multi-tenant core, site → crawl → page/issue, keyword → rank snapshots for trends, competitors, content briefs, cached analysis snapshots, and AES-256-GCM-encrypted Google OAuth tokens, with pgEnums and unique indexes enforcing per-org uniqueness.'
+					title: 'A schema modeling the whole SEO domain',
+					body: 'The database schema captures the full domain: the multi-tenant core, the site → crawl → page/issue hierarchy, keywords with historical rank snapshots for trend charts, competitors, content briefs, cached analysis, and Google account tokens stored encrypted at rest — with database-level constraints enforcing per-organization uniqueness.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'SvelteKit + Svelte 5', why: 'Fullstack with experimental remote functions as the type-safe server API, avoiding a separate backend.' },
-				{ tech: 'Drizzle + PostgreSQL', why: 'Type-safe schema whose inferred types are shared with Zod, a relational fit for the multi-tenant site/crawl/keyword model.' },
-				{ tech: 'TanStack AI', why: 'Provider-agnostic so AI stays BYOK and optional, unlocked to any vendor, with Zod-schema structured output.' },
-				{ tech: 'BullMQ + Redis', why: 'Durable background crawls, rank refreshes, and cron schedulers, run in-process for single-VPS simplicity but extractable to scale.' },
-				{ tech: 'Zod', why: 'One Standard-Schema validator passed directly to remote functions and to AI outputSchema, validating all external input at the boundary.' },
-				{ tech: 'Tailwind CSS 4', why: 'A token-driven flat design system, with the typography plugin for rendered content previews.' }
+				{ tech: 'SvelteKit + Svelte 5', why: 'A single full-stack app with a type-safe server API, so there\'s no separate backend service to build and deploy.' },
+				{ tech: 'Drizzle + PostgreSQL', why: 'A type-safe schema whose types flow straight into validation, and a relational model that fits the site/crawl/keyword hierarchy naturally.' },
+				{ tech: 'TanStack AI', why: 'A provider-agnostic AI layer, which is what lets AI stay bring-your-own-key, optional, and swappable between vendors with schema-validated output.' },
+				{ tech: 'BullMQ + Redis', why: 'Durable background crawls, rank refreshes, and schedulers — run in-process for single-VPS simplicity, but able to be split out to scale later.' },
+				{ tech: 'Zod', why: 'One validator guards every external input — API requests and AI responses alike — so bad data is rejected at the edge.' },
+				{ tech: 'Tailwind CSS 4', why: 'A token-driven design system for a consistent flat UI, with rich typography for the rendered content previews.' }
 			],
 			features: [
 				'Automated site audit: crawl, rule-based findings, and a 0–100 health score with Core Web Vitals',
@@ -268,46 +268,46 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'Scaling to 49 tools with a consistent UX',
-					body: 'Hand-building 49 bespoke pages would diverge in look and behavior. A single declarative Tool model lets calculators declare fields plus a pure compute(inputs) that returns typed result widgets (stat/table/series), which one generic shell renders uniformly — adding a tool is import-and-append to the registry.'
+					body: 'Hand-building 49 bespoke pages would inevitably drift apart in look and behavior and become a maintenance burden. Instead, every tool is described declaratively — its input fields plus a pure function that turns those inputs into typed result widgets (a stat, a table, a chart series) — and one generic shell renders them all uniformly. Adding a tool is a matter of describing it and dropping it into the catalog, not building another page.'
 				},
 				{
 					title: 'Fully client-side privacy',
-					body: 'The site promises no accounts, no servers, and no data leaving your machine. All logic lives in pure, framework-agnostic engine modules run in the browser; there is no backend, and adapter-static with prerender emits only static assets.'
+					body: 'The promise is no accounts, no servers, and nothing leaving your machine. Every calculation lives in pure, framework-independent logic modules that run in the browser; there is no backend to send data to, and the whole site is prerendered to static files, so there is nowhere for user input to go even in principle.'
 				},
 				{
 					title: 'SEO for a static tool site',
-					body: 'Each tool needs a crawlable, uniquely-titled page. The [slug] route’s load returns serializable metadata used for per-page title and description tags, while entries enumerates every slug so the static adapter prerenders a real HTML file per tool.'
+					body: 'For people to discover these tools on Google, each one needs its own crawlable page with a unique title and description. The build enumerates every tool and emits a real, individually-titled HTML file per tool ahead of time, so search engines index 49 distinct landing pages rather than one JavaScript shell.'
 				},
 				{
 					title: 'Heavy formatter libraries without bundle bloat',
-					body: 'Formatters depend on large parsers — js-beautify, terser, sql-formatter, marked. Each is loaded via dynamic import() inside the tool’s transform, so it is code-split per route and only downloaded when that tool is actually used.'
+					body: "The developer formatters lean on genuinely large parsing libraries. If they all shipped up front, the whole site would load slowly for someone who only wanted a tip calculator. Each heavy library is instead loaded on demand, the first time its tool is actually opened, so the base download stays tiny and users only pay for what they use."
 				}
 			],
 			implementation: [
 				{
-					title: 'Central tool registry and metadata',
-					body: 'registry.ts imports all tool definitions and exposes them as a TOOLS array plus a by-slug map and helpers for category grouping, featured tools, and client-side search over title/description/keywords. This single catalog drives routing, navigation, search, and prerender entries.'
+					title: 'Central tool registry',
+					body: 'A single catalog collects every tool definition and exposes helpers for grouping by category, surfacing featured tools, and instant client-side search across titles, descriptions, and keywords. That one catalog is the source of truth that drives routing, navigation, search, and which pages get prerendered.'
 				},
 				{
 					title: 'Declarative schema with escape hatches',
-					body: 'The Tool interface supports three modes: standard calculators (fields + compute), string→string text transforms with reversible inverses (e.g. minify ↔ beautify), and a custom-component escape hatch for tools that don’t fit the generic form, like the scientific calculator and unit/color converters.'
+					body: 'A tool can be described three ways: a standard calculator (input fields plus a compute function), a reversible text transform (e.g. minify ↔ beautify), or — for the handful that don\'t fit a form, like the scientific calculator and the unit and color converters — a fully custom component. The common cases stay effortless without boxing in the exceptions.'
 				},
 				{
-					title: 'Static prerendering via adapter-static',
-					body: 'The layout sets prerender = true site-wide; the tool and category routes each export an entries generator derived from the registry, telling the adapter exactly which dynamic routes to emit. A route param matcher constrains /[category] to known category ids.'
+					title: 'Static prerendering',
+					body: 'The entire site is prerendered ahead of time. The tool and category routes each derive their full list of pages from the central catalog, telling the build exactly what to generate, and category URLs are constrained to the known set of categories so invalid paths never render.'
 				},
 				{
 					title: 'Shared UI and pure-logic testing',
-					body: 'The shell seeds reactive $state inputs from field defaults and derives results with $derived, splitting them into stat cards and table/chart blocks via reusable result renderers. The pure engine math is isolated and covered by Vitest, with a separate Playwright browser project for component tests.'
+					body: 'The shared shell seeds each tool\'s inputs from its declared defaults and recomputes results reactively as the user types, splitting the output into stat cards and table/chart blocks with reusable renderers. Because the calculation logic is pure and separated from the UI, it\'s covered by fast unit tests, with a separate browser test suite for the components.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'SvelteKit + Svelte 5', why: 'File-based routing with per-route prerender control, and fine-grained runes ($state/$derived) that make live-recomputing calculators trivial.' },
-				{ tech: 'adapter-static', why: 'Emits pure static HTML/JS with no server — instant loads, cheap hosting anywhere, and the client-only privacy guarantee.' },
-				{ tech: 'Tailwind CSS 4', why: 'One theme system drives consistent per-category colors across all 49 tools without bespoke CSS.' },
-				{ tech: 'TypeScript', why: 'Typed Tool/Field/Result contracts make the declarative registry safe and self-documenting, so new tools conform at compile time.' },
-				{ tech: 'Lazy formatters', why: 'Real parsers (js-beautify, terser, sql-formatter, marked) give correct output, loaded on demand so they don’t tax the base bundle.' },
-				{ tech: 'Vitest + Playwright', why: 'Fast node unit tests for the pure engine math plus a browser project for real component tests.' }
+				{ tech: 'SvelteKit + Svelte 5', why: 'File-based routing with per-page prerender control, plus fine-grained reactivity that makes live-recomputing calculators trivial to build.' },
+				{ tech: 'adapter-static', why: 'Emits pure static HTML/JS with no server: instant loads, hosting that\'s cheap anywhere, and a client-only privacy guarantee that\'s structural rather than promised.' },
+				{ tech: 'Tailwind CSS 4', why: 'One theme system gives all 49 tools consistent per-category theming without hand-written CSS per page.' },
+				{ tech: 'TypeScript', why: 'Typed contracts for tools, fields, and results make the declarative catalog safe and self-documenting, so a new tool has to conform to compile.' },
+				{ tech: 'On-demand formatters', why: 'Real parsing libraries give correct output for the developer tools, loaded lazily so they never weigh down the base bundle.' },
+				{ tech: 'Vitest + Playwright', why: 'Fast unit tests for the pure calculation logic, plus a browser suite for the interactive components.' }
 			],
 			features: [
 				'Financial: mortgage, loan, compound interest, sales tax, ROI, savings goal — with amortization tables and charts',
@@ -337,49 +337,49 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'On-the-fly transforms without re-processing',
-					body: 'Rendering a variant per request would re-run libvips constantly. Each unique variant is built exactly once and reused across a three-tier cache (CDN → in-memory LRU → persistent tier-2); concurrent requests for the same variant are coalesced with singleflight, and arbitrary widths snap to a fixed ladder to keep the cache-key space small.'
+					body: 'Generating an image variant on every request would burn CPU re-encoding the same thing over and over. Each unique variant is built exactly once and then served from a three-tier cache (CDN in front, an in-memory cache, and a persistent store behind it). When many requests ask for the same not-yet-built variant at once, they\'re collapsed into a single build instead of a stampede, and requested widths snap to a fixed ladder so the number of distinct variants — and cache entries — stays bounded.'
 				},
 				{
 					title: 'Tamper-proof signed URLs',
-					body: 'An unsigned on-the-fly endpoint can be abused to mint unlimited unique variants and force an expensive encode each time. URLs are signed with HMAC-SHA256 over the path plus a canonical, sorted query (so parameter order never matters), with an optional expiry folded into the signed material and constant-time verification that fails closed.'
+					body: 'An open image-transform endpoint is an abuse magnet: anyone could request endless one-off variants and force an expensive encode each time. Every delivery URL is therefore cryptographically signed over its path and parameters, with parameter order normalized so equivalent URLs verify identically, an optional expiry baked into the signature, and constant-time verification that rejects anything unsigned or altered.'
 				},
 				{
-					title: 'Bounding libvips CPU and memory',
-					body: 'govips is cgo over native libvips, so unbounded concurrency risks resource exhaustion. libvips starts once with a small operation cache and per-op concurrency of 1, a buffered semaphore caps simultaneous encodes, and uploads are capped to bound per-request memory.'
+					title: 'Bounding image-engine CPU and memory',
+					body: 'The underlying image library is powerful but native and memory-hungry, so unbounded concurrency could exhaust the machine. Simultaneous encodes are capped by a semaphore, the engine is configured for predictable low-memory operation, and upload sizes are limited, keeping the service stable under load rather than letting a burst of large images take it down.'
 				},
 				{
 					title: 'Colour fidelity over naive pipelines',
-					body: 'Most pipelines assume sRGB and shift wide-gamut colours. The pipeline applies EXIF auto-orientation, then converts any embedded ICC profile (Adobe RGB, P3, CMYK) to sRGB before resize/encode; an inspect endpoint quantifies the difference by reporting mean ΔE between managed and profile-ignored renders.'
+					body: 'Most image pipelines assume every image is plain sRGB and silently shift the colours of anything wider-gamut. This one reads each image\'s embedded colour profile (Adobe RGB, Display P3, CMYK) and converts it correctly to sRGB before resizing or encoding, and it fixes orientation from photo metadata. An inspection endpoint even quantifies the difference, reporting how far a naive, profile-ignoring render drifts from the colour-managed one.'
 				}
 			],
 			implementation: [
 				{
-					title: 'Shared vips transform pipeline',
-					body: 'The core package runs decode → auto-rotate → ICC→sRGB → resize/fit → encode, mapping fit modes to libvips crop strategies (centre, content-aware attention, or no-upscale contain) and encoding AVIF/WebP/progressive JPEG/PNG with metadata stripped. It is free of HTTP/storage concerns, so both the server and the batch worker reuse it.'
+					title: 'Shared transform pipeline',
+					body: 'A single core routine runs the full sequence — decode, auto-rotate, colour-convert, resize and fit, encode — offering multiple fit strategies (centre crop, content-aware crop, or contain without upscaling) and modern output formats with metadata stripped. It knows nothing about HTTP or storage, so both the live server and the batch processor reuse exactly the same code.'
 				},
 				{
-					title: 'Visually-lossless AutoQuality',
-					body: 'AutoQuality binary-searches encoder quality for the smallest file whose SSIM versus the reference stays at or above a target (default 0.99). SSIM/PSNR/RMSE/ΔE are implemented in pure Go, so every result carries objective quality metrics.'
+					title: 'Visually-lossless auto-quality',
+					body: 'Rather than picking a fixed quality number, the encoder searches for the smallest file whose visual similarity to the original stays above a chosen threshold. The similarity and error metrics are computed directly, so every result carries objective, measured quality figures rather than a guess.'
 				},
 				{
 					title: 'Tiered cache and storage abstraction',
-					body: 'A byte-bounded, goroutine-safe LRU fronts a tier-2 Store interface with disk (sharded gob files, atomic writes) and S3 implementations, while masters sit behind a separate interface. loadOrBuild walks memory → tier-2 → build and reports the serving tier via an X-Cache header.'
+					body: 'A size-bounded in-memory cache sits in front of a pluggable persistent store, with local-disk and S3-compatible implementations behind one interface, and original images stored separately. A lookup walks memory, then the persistent tier, then builds on miss — and every response reports which tier served it, so cache behaviour is observable.'
 				},
 				{
 					title: 'Signed delivery and responsive generation',
-					body: 'The delivery endpoint negotiates format from Accept, sets immutable cache headers with ETag/304 support, and never serves a re-encode larger than the source. Companion endpoints publish a signed (optionally time-boxed) URL and emit signed srcset URLs across the width ladder for ready-to-paste picture markup.'
+					body: 'The delivery endpoint picks the best format the browser accepts, sets long-lived immutable caching with proper revalidation, and never returns a re-encode larger than the source. Companion endpoints hand back a signed (optionally time-limited) URL and a full set of signed URLs across the width ladder, ready to paste straight into responsive image markup.'
 				},
 				{
-					title: 'Developer API and Docker/CDN stack',
-					body: 'Routing uses Go 1.22+ ServeMux method+wildcard patterns; a file-backed, hashed API-key store and token-bucket rate limiting (per key or IP) protect the API. Docker Compose wires nginx (CDN cache) → app → MinIO, auto-creating the bucket as storage boots.'
+					title: 'Developer API and self-hosting stack',
+					body: 'A keyed developer API is protected by hashed API keys and rate limiting per key or per IP. A one-command container stack wires a CDN cache in front of the app in front of object storage, provisioning the storage bucket automatically on boot, so the whole production-shaped topology runs locally exactly as it would in production.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'A single static binary serves UI, API, and delivery, with concurrency primitives (singleflight, semaphores, rate limiting) the caching design leans on directly.' },
-				{ tech: 'libvips (govips)', why: 'A streaming, low-memory image engine with a fast thumbnail op, attention-based smart crop, and proper ICC handling — the features the product is built around.' },
-				{ tech: 'S3 SDK v2', why: 'One S3-compatible client covers AWS, MinIO, and GCS for both masters and the shared tier-2 variant cache.' },
-				{ tech: 'SvelteKit', why: 'Compiles to a static SPA the Go binary serves directly, giving a rich playground/dashboard with no separate Node runtime in production.' },
-				{ tech: 'Docker Compose', why: 'Delivers the whole CDN → app → storage topology as one command, so the caching architecture is reproducible and production-shaped.' }
+				{ tech: 'Go', why: 'A single static binary serves the UI, API, and image delivery, and its concurrency tools are what the request-coalescing, rate-limiting caching design is built on.' },
+				{ tech: 'libvips', why: 'A streaming, low-memory image engine with fast thumbnailing, content-aware cropping, and proper colour-profile handling — the exact capabilities the product is built around.' },
+				{ tech: 'S3-compatible storage', why: 'One storage client covers AWS, self-hosted MinIO, and other providers, for both originals and the shared variant cache.' },
+				{ tech: 'SvelteKit', why: 'Compiles to a static dashboard and playground the Go binary serves directly — a rich UI with no separate runtime in production.' },
+				{ tech: 'Docker Compose', why: 'Ships the whole CDN → app → storage topology as a single command, so the caching architecture is reproducible and production-shaped from the first run.' }
 			],
 			features: [
 				'AVIF/WebP/JPEG/PNG with Accept-based content negotiation',
@@ -409,50 +409,50 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'Multi-protocol ingest without trusting the client',
-					body: 'SRS terminates RTMP/SRT and bridges browser WebRTC→RTMP, but authorization is driven by the app rather than SRS. SRS posts on_publish/on_unpublish/on_hls hooks to internal endpoints guarded by a shared secret, which validate the per-stream ingest key against Postgres; for WHIP the key never leaves the server via a same-origin proxy.'
+					body: 'A dedicated media server accepts the incoming feed over RTMP, SRT, or browser WebRTC, but the decision of whether a given stream is allowed to publish belongs to the app, not the media server. The media server calls back into private, secret-guarded endpoints as a stream starts and stops, and those endpoints validate the stream\'s ingest key against the database. For browser publishing, the ingest key never reaches the client at all — it\'s injected by a same-origin server proxy.'
 				},
 				{
-					title: 'Adaptive-bitrate HLS transcoding with ffmpeg',
-					body: 'A builder programmatically assembles the ffmpeg argument vector for a 3-rung ABR ladder (720p/480p/360p) using the split + scale + var_stream_map pattern with aligned GOPs. The same builder serves live (event playlist) and VOD (seekable), and omits audio maps when the source has no audio stream.'
+					title: 'Adaptive-bitrate transcoding',
+					body: 'To keep playback smooth on any connection, each live feed is transcoded into a three-rung quality ladder (720p/480p/360p) whose segments are aligned so players can switch rungs seamlessly. The same transcode configuration drives both live playback and the seekable video-on-demand recording, and it adapts automatically to sources that carry no audio track.'
 				},
 				{
 					title: 'Long-running media jobs vs a request/response API',
-					body: 'ffmpeg processes run for the whole session — incompatible with a short HTTP request. The system splits into an API binary and a worker binary coordinated through the River Postgres-backed queue; live workers override the default timeout to run until the publisher disconnects, and an 8s read-timeout prevents jobs hanging on RTMP inputs that don’t EOF cleanly.'
+					body: 'A transcode runs for the entire length of a broadcast — completely at odds with a short-lived HTTP request. The system is split into an API service and a separate worker service, coordinated through a durable job queue. Live transcode jobs are allowed to run open-endedly until the broadcaster disconnects, with a read timeout that prevents a job from hanging forever on an input stream that never cleanly ends.'
 				},
 				{
 					title: 'Recording that survives an abrupt kill',
-					body: 'Because the read-timeout kills ffmpeg mid-write, no normal MP4 trailer is written, so recordings are muxed as fragmented MP4 (frag_keyframe + empty_moov) and stay valid even when terminated. Header-only fragments under 64 KiB are skipped rather than saved as broken files, and valid recordings are uploaded and registered as assets with a thumbnail and seek-preview storyboard.'
+					body: 'Because a live recording is often terminated mid-write when the broadcaster drops, a normal video file — which only becomes valid once its closing index is written — would be left corrupt. Recordings are instead written in a fragmented format that stays playable even if the process is killed at any moment. Truncated, content-free fragments are discarded rather than saved as broken files, and every valid recording is stored as an asset with a thumbnail and a scrubbing preview.'
 				}
 			],
 			implementation: [
 				{
-					title: 'API / worker split over a shared River queue',
-					body: 'The API wires an insert-only River client behind an Enqueuer interface so handlers never import River directly, while the worker registers the executors: live transcode+recording, restream, VOD, clip, Whisper captions, and webhook delivery. Restream jobs return their River job id so a go-live-off toggle can cancel the running relay.'
+					title: 'API / worker split over a shared job queue',
+					body: 'The API only ever enqueues work, behind an abstraction so request handlers never couple to the queue directly, while the worker service owns the actual executors: live transcode-and-record, restreaming, video-on-demand processing, clipping, auto-captioning, and webhook delivery. A restream job reports back its handle so toggling "go live off" can cancel the running relay cleanly.'
 				},
 				{
-					title: 'ffmpeg pipeline with live progress telemetry',
-					body: 'VOD and clip jobs run ffmpeg with -progress pipe:1, parse each block into frame/fps/speed/bitrate/percent, and stream throttled telemetry and log lines over SSE, persisting logs so the timeline survives the job. The restream worker is a pure -c copy passthrough to an external RTMP/RTMPS target, decrypting the destination key on the fly.'
+					title: 'Live progress telemetry',
+					body: 'Processing jobs stream their progress — frames, speed, bitrate, percentage — and their logs to the dashboard in real time over a live event channel, with logs persisted so the activity timeline survives even after the job ends. Restreaming is a pure passthrough relay to an external target such as YouTube or Twitch, decrypting the destination credentials only in memory as it connects.'
 				},
 				{
-					title: 'HLS output and object storage',
-					body: 'Workers write the ABR tree to a local HLS dir served as a dev origin (CDN-fronted in prod), with on-the-fly playlist rewriting that appends a signed token to every child URI for protected content. Recordings, VOD, clips, thumbnails, and captions go to MinIO/S3 through a small storage interface, read back via presigned URLs so ffmpeg streams directly from object storage.'
+					title: 'Adaptive playback and object storage',
+					body: 'Workers write the quality-ladder output to an origin that a CDN sits in front of in production, and for protected streams every segment URL is rewritten on the fly to carry a signed access token. Recordings, clips, thumbnails, and captions all go to S3-compatible object storage behind a small interface, read back through pre-signed URLs so the media tools can stream directly from storage.'
 				},
 				{
-					title: 'Versioned REST API on chi',
-					body: 'Everything sits under /v1 with layered chi middleware (request id, real IP, recoverer, CORS, timeout). Auth accepts JWT and lsk_ API keys, with a separate query-token path so EventSource can authorize SSE; public and rate-limited auth routes are grouped distinctly from the authenticated surface.'
+					title: 'Versioned, layered API',
+					body: 'The whole surface is versioned and wrapped in composable middleware for request tracing, recovery, CORS, and timeouts. It authenticates both session tokens and API keys, with a separate token-in-query path so the browser\'s live-event connections can authenticate too, and cleanly separates public and rate-limited auth routes from the authenticated surface.'
 				},
 				{
-					title: 'Real-time events and GeoIP analytics',
-					body: 'Every pipeline step is persisted to stream_events and published to Redis pub/sub, fanned out to dashboards over SSE and to dispatchers for signed webhooks and notifications. Viewer QoS beacons feed analytics, and a GeoIP resolver degrades to a no-op when no MaxMind DB is configured.'
+					title: 'Real-time events and geo analytics',
+					body: 'Every step of the pipeline is recorded and published on a low-latency message bus, fanned out both to dashboards in real time and to dispatchers that deliver signed webhooks and notifications. Viewer quality-of-service beacons feed analytics, and location lookup degrades gracefully to a no-op when no geo database is configured, so the feature is optional rather than required.'
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'One module builds both the API and worker binaries; goroutines and exec.CommandContext fit supervising long-lived ffmpeg processes with clean cancellation.' },
-				{ tech: 'chi', why: 'A lightweight net/http router whose composable middleware groups let header-auth, SSE query-token auth, rate-limited, and secret-guarded routes coexist in one tree.' },
-				{ tech: 'PostgreSQL (pgx + sqlc)', why: 'The single source of truth, with sqlc generating type-safe queries and goose handling migrations.' },
-				{ tech: 'River', why: 'Durable background jobs on the same Postgres — no extra broker — with per-job timeout overrides, retry/backoff for webhooks, and cancellation to stop live relays.' },
-				{ tech: 'ffmpeg / SRS', why: 'SRS handles multi-protocol ingest and WebRTC→RTMP bridging with HTTP hooks for auth; ffmpeg does the ABR transcode, recording, clipping, and restreaming.' },
-				{ tech: 'Redis', why: 'A low-latency pub/sub carrying stream and transcode-progress events, fanned out to SSE clients and webhook/notification dispatchers.' }
+				{ tech: 'Go', why: 'One codebase builds both the API and worker services, and its process control and concurrency tools are a natural fit for supervising long-lived transcode processes with clean cancellation.' },
+				{ tech: 'chi', why: 'A lightweight HTTP router whose composable middleware lets session-auth, event-stream auth, rate-limited, and secret-guarded routes all coexist in one clear tree.' },
+				{ tech: 'PostgreSQL', why: 'The single source of truth, with type-safe generated queries and managed schema migrations.' },
+				{ tech: 'River', why: 'Durable background jobs living in the same database — no extra message broker to run — with open-ended timeouts for live work, retries for webhooks, and cancellation to stop live relays on demand.' },
+				{ tech: 'ffmpeg / SRS', why: 'The media server handles multi-protocol ingest and browser-to-RTMP bridging with hooks for authorization; ffmpeg does the adaptive transcode, recording, clipping, and restreaming.' },
+				{ tech: 'Redis', why: 'A low-latency message bus carrying stream and progress events, fanned out to live dashboard connections and to webhook and notification dispatchers.' }
 			],
 			features: [
 				'RTMP/SRT ingest with per-stream keys and publish hooks, plus browser go-live over WebRTC/WHIP',
