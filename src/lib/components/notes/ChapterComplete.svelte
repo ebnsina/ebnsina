@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Check, Trophy, Sparkles } from '@lucide/svelte';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
+	import { nt, type Locale } from '$lib/i18n/notes';
 
 	let {
 		category,
@@ -9,7 +10,8 @@
 		level,
 		trackSlugs = [],
 		trackLabel = '',
-		nextHref = null
+		nextHref = null,
+		locale = 'en'
 	}: {
 		category: string;
 		slug: string;
@@ -17,10 +19,13 @@
 		trackSlugs?: string[];
 		trackLabel?: string;
 		nextHref?: string | null;
+		locale?: Locale;
 	} = $props();
 
+	const t = $derived(nt(locale));
 	const done = $derived(progress.ready && progress.isDone(category, slug));
 	const xp = $derived(xpForLevel(level));
+	const rankName = $derived(t.ranks[progress.rank.name] ?? progress.rank.name);
 
 	let sentinel = $state<HTMLElement>();
 	let toast = $state(false);
@@ -88,10 +93,10 @@
 		</button>
 		<div>
 			<p class="font-pixel text-sm">
-				{done ? 'Chapter complete' : 'Finished reading?'}
+				{done ? t.chapterComplete : t.finishedReading}
 			</p>
 			<p class="font-pixel text-[0.7rem] text-muted">
-				{done ? `+${xp} XP earned` : `Mark complete to earn ${xp} XP`}
+				{done ? t.xpEarned(xp) : t.markToEarn(xp)}
 			</p>
 		</div>
 	</div>
@@ -100,7 +105,7 @@
 		<a
 			href={nextHref}
 			class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
-			>Next chapter →</a
+			>{t.nextChapter}</a
 		>
 	{/if}
 </div>
@@ -117,10 +122,10 @@
 		<span class="inline-flex items-center gap-2">
 			{#if trackMastered}
 				<Trophy size={14} />
-				Track mastered — {trackLabel}!
+				{t.toastMastered(trackLabel)}
 			{:else}
 				<Sparkles size={14} />
-				+{xp} XP · {progress.rank.name} · {progress.xp} XP total
+				{t.toastXp(xp, rankName, progress.xp)}
 			{/if}
 		</span>
 	</div>

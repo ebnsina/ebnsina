@@ -4,6 +4,7 @@
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import { catVivid } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
+	import { nt, notesBase, type Locale } from '$lib/i18n/notes';
 
 	type Track = { category: string; label: string; slugs: string[]; minutes: number };
 	type Level = {
@@ -17,7 +18,10 @@
 		minutes: number;
 	};
 
-	let { levels }: { levels: Level[] } = $props();
+	let { levels, locale = 'en' }: { levels: Level[]; locale?: Locale } = $props();
+
+	const t = $derived(nt(locale));
+	const base = $derived(notesBase(locale));
 
 	onMount(() => progress.hydrate());
 
@@ -77,19 +81,19 @@
 <section class="mb-14">
 	<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
 		<div>
-			<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">The path</p>
+			<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">{t.thePath}</p>
 			<h2 class="mt-1 font-display text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-				A guided route, start to mastery
+				{t.pathHeading}
 			</h2>
 			<p class="mt-2 max-w-xl text-sm text-muted">
-				Four levels, in order. Follow the line top to bottom — or jump anywhere you like.
+				{t.pathSub}
 			</p>
 		</div>
 		{#if !allDone && next}
 			<a
-				href={`/notes/${next.category}/${next.slug}`}
+				href={`${base}/${next.category}/${next.slug}`}
 				class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-fg px-5 py-2.5 font-pixel text-xs text-bg transition-colors hover:bg-accent"
-				>{doneTotal === 0 ? 'Begin path' : 'Continue path'} <ArrowRight size={14} /></a
+				>{doneTotal === 0 ? t.beginPath : t.continuePath} <ArrowRight size={14} /></a
 			>
 		{/if}
 	</div>
@@ -110,9 +114,9 @@
 					>
 						<div class="flex items-center justify-between">
 							<span class="font-pixel text-[0.6rem] uppercase tracking-[0.18em] text-muted"
-								>Level {lvl.n}</span
+								>{t.levelWord(lvl.n)}</span
 							>
-							<LevelBadge level={lvl.level} />
+							<LevelBadge level={lvl.level} label={t.levels[lvl.level]} />
 						</div>
 						<h3 class="mt-2 font-display text-2xl font-bold tracking-tight">{lvl.title}</h3>
 
@@ -121,7 +125,7 @@
 							style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);"
 						>
 							<span class="inline-flex items-center gap-1.5"
-								><ListChecks size={14} /> {lvl.tracks.length} tracks</span
+								><ListChecks size={14} /> {t.tracksCount(lvl.tracks.length)}</span
 							>
 							<span class="inline-flex items-center gap-1.5"
 								><Clock size={14} /> {fmtH(lvl.minutes)}</span
@@ -135,7 +139,7 @@
 							style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);"
 						>
 							<p class="mb-2.5 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-								You'll learn
+								{t.youllLearn}
 							</p>
 							<ul class="space-y-1.5">
 								{#each lvl.outcomes as o (o)}
@@ -164,11 +168,11 @@
 
 				<!-- right: timeline of tracks -->
 				<ol class="relative space-y-7">
-					{#each lvl.tracks as t, idx (t.category)}
-						{@const td = progress.ready ? progress.doneIn(t.category, t.slugs) : 0}
-						{@const tdone = t.slugs.length > 0 && td === t.slugs.length}
-						{@const isNext = next ? t.category === next.category : false}
-						{@const c = catVivid(catIndex.get(t.category) ?? 0)}
+					{#each lvl.tracks as tk, idx (tk.category)}
+						{@const td = progress.ready ? progress.doneIn(tk.category, tk.slugs) : 0}
+						{@const tdone = tk.slugs.length > 0 && td === tk.slugs.length}
+						{@const isNext = next ? tk.category === next.category : false}
+						{@const c = catVivid(catIndex.get(tk.category) ?? 0)}
 						<li class="relative flex items-center gap-4 sm:gap-5">
 							<!-- node + connecting line -->
 							<div class="relative flex w-3 shrink-0 items-center justify-center self-stretch">
@@ -193,27 +197,27 @@
 
 							<!-- card -->
 							<a
-								href={`/notes/${t.category}`}
+								href={`${base}/${tk.category}`}
 								class="group flex flex-1 items-center gap-4 rounded-2xl py-2 pr-2.5"
 							>
 								<span
 									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
 									style="background: linear-gradient(155deg, color-mix(in oklch, {c} 88%, #fff), {c});"
-									aria-hidden="true">{initials(t.label)}</span
+									aria-hidden="true">{initials(tk.label)}</span
 								>
 								<span class="min-w-0 flex-1">
 									<span class="flex items-center gap-2">
 										<span
 											class="font-semibold tracking-tight transition-colors group-hover:text-accent"
-											>{t.label}</span
+											>{tk.label}</span
 										>
 										{#if tdone}
 											<Check size={13} strokeWidth={3} color="var(--accent)" />
 										{/if}
 									</span>
 									<span class="mt-0.5 block font-mono text-xs text-muted">
-										{t.slugs.length} chapters · {fmtH(t.minutes)}{#if td > 0 && !tdone}
-											· {td} done{/if}
+										{t.chaptersCount(tk.slugs.length)} · {fmtH(tk.minutes)}{#if td > 0 && !tdone}
+											· {td} {t.doneWord}{/if}
 									</span>
 								</span>
 								<ArrowRight
@@ -265,36 +269,34 @@
 			</div>
 
 			<h3 class="mt-6 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-				The Architect Path
+				{t.architectPath}
 			</h3>
 			<p class="mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
 				{#if allDone}
-					Every level cleared — the <span class="font-semibold text-accent">Architect</span> badge is
-					yours. That's the full stack, top to bottom.
+					{t.capstoneAllDone}
 				{:else if doneTotal === 0}
-					Work through all four levels to earn the <span class="font-semibold text-accent"
-						>Architect</span
-					> badge. It's a long road, but it starts with a single chapter.
+					{t.capstoneStart}
 				{:else}
-					{totalCh - doneTotal} chapters stand between you and the
-					<span class="font-semibold text-accent">Architect</span> badge. Keep the momentum going.
+					{t.capstoneMid(totalCh - doneTotal)}
 				{/if}
 			</p>
 
 			{#if !allDone && next}
 				<a
-					href={`/notes/${next.category}/${next.slug}`}
+					href={`${base}/${next.category}/${next.slug}`}
 					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg transition-colors hover:bg-fg"
-					>{doneTotal === 0 ? 'Begin Path' : 'Continue Path'} <ArrowRight size={16} /></a
+					>{doneTotal === 0 ? t.beginPath : t.continuePath} <ArrowRight size={16} /></a
 				>
 			{:else if allDone}
 				<span
 					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg"
-					>Path complete <Check size={16} strokeWidth={3} /></span
+					>{t.pathComplete} <Check size={16} strokeWidth={3} /></span
 				>
 			{/if}
 
-			<span class="mt-5 font-pixel text-xs text-muted">{doneTotal}/{totalCh} chapters</span>
+			<span class="mt-5 font-pixel text-xs text-muted"
+				>{t.chaptersCount(totalCh)} · {doneTotal}</span
+			>
 		</div>
 	</div>
 </section>

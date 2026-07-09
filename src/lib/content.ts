@@ -32,9 +32,20 @@ export type ChapterEntry = { category: string; slug: string; meta: ChapterMeta }
 
 const blogComps = import.meta.glob<MdModule>('/src/content/blog/*.md');
 const noteComps = import.meta.glob<MdModule>('/src/content/notes/*/*.md');
+const noteCompsBn = import.meta.glob<MdModule>('/src/content/notes-bn/*/*.md');
 
 const blogList = manifest.blog as BlogEntry[];
 const noteList = manifest.notes as ChapterEntry[];
+// Bangla is a *partial overlay*: the English list is the canonical catalog
+// (ordering, which chapters exist), and a BN entry overrides title/subtitle/
+// topics + the rendered body where a translation exists. Untranslated chapters
+// gracefully fall back to English, so /bn always shows the full roadmap.
+const noteListBn = ((manifest as { notesBn?: unknown }).notesBn ?? []) as ChapterEntry[];
+
+export type Locale = 'en' | 'bn';
+
+const bnMetaKey = (category: string, slug: string) => `${category}/${slug}`;
+const bnMetaMap = new Map(noteListBn.map((c) => [bnMetaKey(c.category, c.slug), c.meta]));
 
 // ---- blog ------------------------------------------------------------------
 
@@ -58,10 +69,16 @@ export async function loadPost(slug: string) {
 
 // ---- notes -----------------------------------------------------------------
 
-export function getChapters(category: string): ChapterEntry[] {
-	return noteList
+export function getChapters(category: string, locale: Locale = 'en'): ChapterEntry[] {
+	const chapters = noteList
 		.filter((c) => c.category === category)
 		.sort((a, b) => a.meta.chapter - b.meta.chapter);
+	if (locale === 'en') return chapters;
+	// Overlay BN metadata where a translation exists; keep English otherwise.
+	return chapters.map((c) => {
+		const bn = bnMetaMap.get(bnMetaKey(c.category, c.slug));
+		return bn ? { ...c, meta: bn } : c;
+	});
 }
 
 export function getNoteCategories(): string[] {
@@ -80,7 +97,16 @@ export function getTracks(): Array<{ category: string; slugs: string[] }> {
 	}));
 }
 
-export async function loadChapter(category: string, slug: string) {
+export async function loadChapter(category: string, slug: string, locale: Locale = 'en') {
+	if (locale === 'bn') {
+		// Prefer the translated body + metadata; fall back to English per-field.
+		const bnMeta = bnMetaMap.get(bnMetaKey(category, slug));
+		const bnLoader = noteCompsBn[`/src/content/notes-bn/${category}/${slug}.md`];
+		if (bnMeta && bnLoader) {
+			const mod = await bnLoader();
+			return { component: mod.default, meta: bnMeta };
+		}
+	}
 	const meta = noteList.find((c) => c.category === category && c.slug === slug)?.meta;
 	const loader = noteComps[`/src/content/notes/${category}/${slug}.md`];
 	if (!meta || !loader) return null;

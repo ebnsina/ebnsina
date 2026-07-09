@@ -2,8 +2,17 @@
 	import { onMount } from 'svelte';
 	import { Settings } from '@lucide/svelte';
 	import { progress } from '$lib/progress.svelte';
+	import { nt, type Locale } from '$lib/i18n/notes';
 
-	let { total }: { total: number } = $props();
+	let { total, locale = 'en' }: { total: number; locale?: Locale } = $props();
+
+	const t = $derived(nt(locale));
+	// Rank names are stored in English in the progress store; localize for display.
+	const rankName = $derived(t.ranks[progress.rank.name] ?? progress.rank.name);
+	const nextRankName = $derived(
+		progress.rank.next ? (t.ranks[progress.rank.next.name] ?? progress.rank.next.name) : ''
+	);
+	const curious = $derived(t.ranks['Curious']);
 
 	let fileInput = $state<HTMLInputElement>();
 	let menuEl = $state<HTMLElement>();
@@ -45,7 +54,7 @@
 		try {
 			progress.import(await file.text());
 		} catch {
-			importError = 'Could not read that file.';
+			importError = nt(locale).importError;
 		}
 		if (fileInput) fileInput.value = '';
 	}
@@ -71,13 +80,16 @@
 				L{progress.ready ? progress.rank.level : 1}
 			</div>
 			<div>
-				<p class="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-muted">Your journey</p>
+				<p class="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-muted">
+					{t.yourJourney}
+				</p>
 				<p class="font-pixel text-xl tracking-tight">
-					{progress.ready ? progress.rank.name : 'Curious'}
+					{progress.ready ? rankName : curious}
 				</p>
 				<p class="mt-1 font-pixel text-sm text-muted">
-					<span class="text-fg">{progress.ready ? progress.xp : 0} XP</span>
-					· {progress.ready ? progress.count : 0}/{total} chapters · {progress.ready ? pct : 0}%
+					<span class="text-fg">{progress.ready ? progress.xp : 0} {t.xp}</span>
+					· {progress.ready ? progress.count : 0}/{total}
+					{t.chaptersWord} · {progress.ready ? pct : 0}%
 				</p>
 			</div>
 		</div>
@@ -85,8 +97,8 @@
 		<div class="flex items-center gap-3">
 			<div class="hidden w-40 sm:block">
 				<div class="mb-1 flex justify-between font-pixel text-[0.6rem] text-muted">
-					<span>{progress.ready ? progress.rank.name : 'Curious'}</span>
-					<span>{progress.ready && progress.rank.next ? progress.rank.next.name : 'Max'}</span>
+					<span>{progress.ready ? rankName : curious}</span>
+					<span>{progress.ready && progress.rank.next ? nextRankName : t.max}</span>
 				</div>
 				<div
 					class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
@@ -98,7 +110,7 @@
 				</div>
 				{#if progress.ready && progress.rank.next}
 					<p class="mt-1 text-right font-pixel text-[0.6rem] text-muted">
-						{progress.rank.toNext} XP to {progress.rank.next.name}
+						{t.xpToNext(progress.rank.toNext, nextRankName)}
 					</p>
 				{/if}
 			</div>
@@ -107,7 +119,7 @@
 				<button
 					type="button"
 					onclick={() => (menuOpen = !menuOpen)}
-					aria-label="Manage progress"
+					aria-label={t.manageProgress}
 					aria-expanded={menuOpen}
 					class="grid size-9 place-items-center rounded-full border border-[color-mix(in_oklch,var(--fg)_12%,transparent)] text-muted transition-colors hover:text-fg"
 				>
@@ -118,9 +130,9 @@
 					<div
 						class="absolute right-0 top-11 z-30 w-52 rounded-xl border border-[color-mix(in_oklch,var(--fg)_10%,transparent)] bg-bg p-1.5 shadow-xl"
 					>
-						<button type="button" onclick={download} class="menu-item">Export progress</button>
+						<button type="button" onclick={download} class="menu-item">{t.exportProgress}</button>
 						<button type="button" onclick={() => fileInput?.click()} class="menu-item"
-							>Import progress</button
+							>{t.importProgress}</button
 						>
 						{#if importError}
 							<p class="px-3 py-1 text-xs text-accent">{importError}</p>
@@ -128,16 +140,16 @@
 						<div class="my-1 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)]"></div>
 						{#if confirmReset}
 							<button type="button" onclick={doReset} class="menu-item text-accent"
-								>Confirm reset</button
+								>{t.confirmReset}</button
 							>
 							<button type="button" onclick={() => (confirmReset = false)} class="menu-item"
-								>Cancel</button
+								>{t.cancel}</button
 							>
 						{:else}
 							<button
 								type="button"
 								onclick={() => (confirmReset = true)}
-								class="menu-item text-muted">Reset progress</button
+								class="menu-item text-muted">{t.resetProgress}</button
 							>
 						{/if}
 					</div>

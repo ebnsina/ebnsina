@@ -4,11 +4,16 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
+	import LocaleToggle from '$lib/components/notes/LocaleToggle.svelte';
 	import { GROUP_ORDER } from '$lib/data/categories';
 	import { catColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
+	import { nt } from '$lib/i18n/notes';
 
 	let { data } = $props();
+
+	const t = $derived(nt(data.locale));
+	const base = $derived(data.base);
 
 	onMount(() => progress.hydrate());
 
@@ -39,13 +44,16 @@
 
 <Seo title={`${data.meta.label} — Notes`} description={data.meta.description} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="mx-auto max-w-5xl px-5 sm:px-8" lang={data.locale}>
 	<header class="mb-8">
-		<a
-			href="/notes"
-			class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
-			>← Notes</a
-		>
+		<div class="flex items-center justify-between gap-3">
+			<a
+				href={base}
+				class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
+				>{t.backToNotes}</a
+			>
+			<LocaleToggle locale={data.locale} />
+		</div>
 		<h1 class="mb-3 mt-3 font-serif text-5xl font-semibold tracking-tight">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
@@ -57,20 +65,21 @@
 		<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
 			<p class="font-pixel text-sm">
 				<span class="text-fg">{doneCount}/{data.chapters.length}</span>
-				<span class="text-muted"> chapters · {trackXp} XP earned</span>
+				<span class="text-muted">{t.chapterTail(trackXp)}</span>
 			</p>
 			{#if allDone}
 				<div class="flex items-center gap-3">
 					<span class="inline-flex items-center gap-1.5 font-pixel text-sm text-accent">
-						<Trophy size={15} /> Track mastered
+						<Trophy size={15} />
+						{t.trackMastered}
 					</span>
 					<TrackBadge label={data.meta.label} color={trackColor} earned size="sm" />
 				</div>
 			{:else if nextChapter}
 				<a
-					href={`/notes/${data.category}/${nextChapter.slug}`}
+					href={`${base}/${data.category}/${nextChapter.slug}`}
 					class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
-					>{doneCount === 0 ? 'Start here' : 'Continue'} →</a
+					>{doneCount === 0 ? t.startHere : t.continueWord} →</a
 				>
 			{/if}
 		</div>
@@ -123,7 +132,7 @@
 				</div>
 
 				<a
-					href={`/notes/${data.category}/${ch.slug}`}
+					href={`${base}/${data.category}/${ch.slug}`}
 					class="group mb-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-2 sm:gap-4"
 				>
 					<!-- inline step badge (mobile only) -->
@@ -136,13 +145,15 @@
 							{#if isNext}
 								<span
 									class="shrink-0 rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg"
-									>{doneCount === 0 ? 'Start' : 'Next'}</span
+									>{doneCount === 0 ? t.startBadge : t.nextBadge}</span
 								>
 							{/if}
 						</span>
 						<span class="mt-0.5 block truncate text-sm text-muted">{ch.meta.subtitle}</span>
 					</span>
-					<span class="hidden flex-shrink-0 sm:block"><LevelBadge level={ch.meta.level} /></span>
+					<span class="hidden flex-shrink-0 sm:block"
+						><LevelBadge level={ch.meta.level} label={t.levels[ch.meta.level]} /></span
+					>
 					<span
 						class="hidden flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted sm:block"
 						>{ch.meta.readingTime}</span

@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { level }: { level: string } = $props();
+	let { level, label }: { level: string; label?: string } = $props();
 
 	const color = $derived(
 		(
@@ -17,5 +17,5 @@
 	class="inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest"
 	style="color: {color}; background: color-mix(in oklch, {color} 14%, transparent);"
 >
-	{level}
+	{label ?? level}
 </span>

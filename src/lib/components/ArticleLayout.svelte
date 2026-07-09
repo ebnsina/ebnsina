@@ -2,8 +2,12 @@
 	import type { Snippet } from 'svelte';
 	import { onMount, tick } from 'svelte';
 
-	let { header, children, footer }: { header: Snippet; children: Snippet; footer?: Snippet } =
-		$props();
+	let {
+		header,
+		children,
+		footer,
+		lang
+	}: { header: Snippet; children: Snippet; footer?: Snippet; lang?: string } = $props();
 
 	type Heading = { id: string; text: string; depth: number };
 	let headings = $state<Heading[]>([]);
@@ -87,6 +91,7 @@
 </script>
 
 <div
+	{lang}
 	class="mx-auto grid max-w-5xl items-start px-5 sm:px-8 gap-y-10 lg:grid-cols-[minmax(0,44rem)_13rem] lg:justify-between"
 >
 	<article bind:this={article} class="min-w-0">

@@ -9,6 +9,23 @@
 @import '@fontsource/cabin-condensed/600.css';
 @import '@fontsource/cabin-condensed/700.css';
 
+/* Hind Siliguri — the Bangla face for the /bn notes locale. None of the Latin
+   display faces above carry Bengali glyphs, so this covers the whole /bn UI.
+   Both the Bengali subset and the Latin subset are loaded so mixed
+   Bangla + Latin (digits, code names) render in one consistent family. */
+@import '@fontsource/hind-siliguri/bengali-400.css';
+@import '@fontsource/hind-siliguri/bengali-500.css';
+@import '@fontsource/hind-siliguri/bengali-600.css';
+@import '@fontsource/hind-siliguri/bengali-700.css';
+@import '@fontsource/hind-siliguri/400.css';
+@import '@fontsource/hind-siliguri/500.css';
+@import '@fontsource/hind-siliguri/600.css';
+@import '@fontsource/hind-siliguri/700.css';
+
+/* Alkatra — the Bangla heading/display face (variable, Bengali + Latin subsets).
+   Paired with Hind Siliguri for body text on the /bn locale. */
+@import '@fontsource-variable/alkatra';
+
 /* Oddval — the heading face, self-hosted. Only one weight (SemiBold) is
    available, so the @font-face claims the whole 400–700 range, letting the
    browser use the real glyphs across heading weights instead of faux-bolding.
@@ -88,6 +105,25 @@
 	--color-rule: var(--rule);
 	--color-accent: var(--accent);
 	--color-accent-soft: var(--accent-soft);
+}
+
+/* Bangla locale (/bn/notes). Override the display/text font tokens on the
+   lang="bn" subtree so every heading, body, and pixel-UI string picks up
+   Hind Siliguri. Latin digits keep Geist Pixel via the leading fallback;
+   Bengali glyphs fall through to Hind Siliguri. Mono (code) is left alone so
+   code blocks stay in Geist Mono. Bengali reads better with a touch more
+   line-height, so bump it on the subtree. */
+[lang='bn'] {
+	/* Body/UI text = Hind Siliguri; headings/display = Alkatra. */
+	--font-sans: 'Hind Siliguri', 'Cabin Condensed', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Alkatra Variable', 'Hind Siliguri', 'Oddval', ui-sans-serif, sans-serif;
+	--font-serif: 'Alkatra Variable', 'Hind Siliguri', 'Oddval', ui-sans-serif, sans-serif;
+	--font-pixel: 'Geist Pixel', 'Hind Siliguri', 'Geist Mono Variable', ui-monospace, monospace;
+	line-height: 1.75;
+}
+/* But never re-font code — fenced blocks and inline code stay monospace/Latin. */
+[lang='bn'] :where(code, pre, kbd, samp) {
+	--font-sans: 'Cabin Condensed', ui-sans-serif, system-ui, sans-serif;
 }
 
 html {

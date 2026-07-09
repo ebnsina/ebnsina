@@ -1,6 +1,5 @@
-import { error } from '@sveltejs/kit';
-import { loadChapter, getChapters, getNoteCategories } from '$lib/content';
-import { CATEGORIES } from '$lib/data/categories';
+import { loadChapterData } from '$lib/notes-load';
+import { getChapters, getNoteCategories } from '$lib/content';
 
 export function entries() {
 	const out: Array<{ category: string; slug: string }> = [];
@@ -10,23 +9,6 @@ export function entries() {
 	return out;
 }
 
-export async function load({ params }) {
-	const loaded = await loadChapter(params.category, params.slug);
-	const meta = CATEGORIES[params.category];
-	if (!loaded || !meta) error(404, 'Chapter not found');
-
-	const chapters = getChapters(params.category);
-	const idx = chapters.findIndex((c) => c.slug === params.slug);
-
-	return {
-		component: loaded.component,
-		meta: loaded.meta,
-		category: params.category,
-		slug: params.slug,
-		categoryLabel: meta.label,
-		trackSlugs: chapters.map((c) => c.slug),
-		total: chapters.length,
-		prev: idx > 0 ? chapters[idx - 1] : null,
-		next: idx < chapters.length - 1 ? chapters[idx + 1] : null
-	};
+export function load({ params }) {
+	return loadChapterData(params.category, params.slug, 'en');
 }

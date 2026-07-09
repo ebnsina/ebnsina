@@ -5890,5 +5890,5639 @@
 				"topics": ["websockets", "nginx", "systemd", "observability", "scaling"]
 			}
 		}
+	],
+	"notesBn": [
+		{
+			"category": "api-design",
+			"slug": "01-rest-fundamentals",
+			"meta": {
+				"title": "REST-এর মূল ধারণা",
+				"subtitle": "RESTful নীতি, HTTP মেথড, স্ট্যাটাস কোড, আর রিসোর্স নেমিং কনভেনশন বুঝে নিন — এগুলোই আধুনিক API-এর মূল ভিত্তি।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["REST", "HTTP methods", "status codes", "resource naming"]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "02-api-authentication",
+			"meta": {
+				"title": "API Authentication",
+				"subtitle": "API key, OAuth 2.0, JWT token, আর session-based auth দিয়ে আপনার API সুরক্ষিত করুন — কখন কোনটা ব্যবহার করবেন তা বুঝে নিন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["authentication", "API keys", "OAuth 2.0", "JWT", "sessions"]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "03-request-response-design",
+			"meta": {
+				"title": "Request ও Response ডিজাইন",
+				"subtitle": "সঠিক header, content negotiation, error format, আর envelope pattern দিয়ে পরিচ্ছন্ন request ও response স্ট্রাকচার ডিজাইন করুন।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": [
+					"request design",
+					"response design",
+					"headers",
+					"content negotiation",
+					"error handling"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "04-pagination-filtering",
+			"meta": {
+				"title": "Pagination ও Filtering",
+				"subtitle": "বড় ডেটাসেট দক্ষভাবে সামলাতে cursor ও offset pagination, filtering, sorting, আর field selection ইমপ্লিমেন্ট করুন।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["pagination", "cursor", "offset", "filtering", "sorting", "field selection"]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "05-versioning-evolution",
+			"meta": {
+				"title": "Versioning ও Evolution",
+				"subtitle": "বিদ্যমান client না ভেঙে আপনার API-কে বিকশিত করুন — URL versioning, header versioning, backward compatibility, আর deprecation strategy।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["versioning", "backward compatibility", "deprecation", "API evolution"]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "06-graphql",
+			"meta": {
+				"title": "GraphQL",
+				"subtitle": "GraphQL দিয়ে ঠিক যতটুকু ডেটা দরকার ততটুকুই query করুন — schema, query, mutation, subscription, আর N+1 সমস্যার সমাধান।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": [
+					"GraphQL",
+					"schema design",
+					"queries",
+					"mutations",
+					"subscriptions",
+					"N+1 problem"
+				]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "07-grpc-protobuf",
+			"meta": {
+				"title": "gRPC ও Protocol Buffers",
+				"subtitle": "gRPC দিয়ে হাই-পারফরম্যান্স API বানান — Protocol Buffers, service definition, streaming, আর কখন REST-এর বদলে gRPC বেছে নেবেন।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["gRPC", "Protocol Buffers", "protobuf", "streaming", "service definitions"]
+			}
+		},
+		{
+			"category": "api-design",
+			"slug": "08-rate-limiting-throttling",
+			"meta": {
+				"title": "Rate Limiting ও Throttling",
+				"subtitle": "token bucket, sliding window, distributed rate limiting, আর retry-after pattern দিয়ে আপনার API-কে অপব্যবহার থেকে রক্ষা করুন।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"rate limiting",
+					"throttling",
+					"token bucket",
+					"sliding window",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "API Gateway — রোডম্যাপ",
+				"subtitle": "nginx, Kong, বা Envoy দিয়ে নিজের গেটওয়ে বানান। Auth, rate limit, route, transform.",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "01-what-is-an-api-gateway",
+			"meta": {
+				"title": "What Is an API Gateway",
+				"subtitle": "আপনার সার্ভিসগুলোর সামনে একটাই entry point — backend-এ হাত না দিয়েই routing, auth, rate limiting আর transformation।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["api gateway", "reverse proxy", "routing", "cross-cutting concerns"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "02-routing-and-load-balancing",
+			"meta": {
+				"title": "Routing & Load Balancing",
+				"subtitle": "Path matching, header-based routing, weighted split আর health-aware balancing — gateway কীভাবে ঠিক করে প্রতিটা request কোথায় যাবে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["routing", "load balancing", "weighted traffic", "health checks", "nginx"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "03-auth-at-the-gateway",
+			"meta": {
+				"title": "Auth at the Gateway",
+				"subtitle": "JWT verification, API key validation, OAuth token introspection — identity একবারই সামলান যাতে আপনার সার্ভিসগুলোকে না করতে হয়।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["JWT", "API keys", "OAuth", "authentication", "authorization"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "04-rate-limiting",
+			"meta": {
+				"title": "Rate Limiting at the Gateway",
+				"subtitle": "Fixed window, sliding window, token bucket — service code-এ হাত না দিয়েই আপনার backend-কে abuse থেকে বাঁচান আর fair usage enforce করুন।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["rate limiting", "token bucket", "sliding window", "Redis", "throttling"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "05-request-transformation",
+			"meta": {
+				"title": "Request & Response Transformation",
+				"subtitle": "Header manipulation, payload reshaping, protocol translation — client যা পাঠায় তা backend যা আশা করে তার সাথে মানিয়ে নেওয়া।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["transformation", "headers", "payload", "versioning", "protocol translation"]
+			}
+		},
+		{
+			"category": "api-gateway",
+			"slug": "06-observability-and-production",
+			"meta": {
+				"title": "Observability & Production Gateway",
+				"subtitle": "Access log, distributed tracing, circuit breaker, আর আসল traffic-এর সামনে gateway বসানোর আগের operational checklist।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["observability", "tracing", "circuit breaker", "Kong", "production"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Auth ও Security — রোডম্যাপ",
+				"subtitle": "Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, এবং production hardening।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "01-authn-vs-authz",
+			"meta": {
+				"title": "Authentication vs Authorization",
+				"subtitle": "দুটো আলাদা প্রশ্ন: আপনি কে, আর আপনাকে কী করার অনুমতি দেওয়া হয়েছে। এদের গুলিয়ে ফেলাই security hole তৈরি হওয়ার কারণ।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["authentication", "authorization", "sessions", "tokens", "RBAC"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "02-password-hashing",
+			"meta": {
+				"title": "Password Hashing",
+				"subtitle": "Password-এর জন্য MD5 আর SHA-256 কেন ব্যর্থ হয়, bcrypt আর Argon2 কীভাবে কাজ করে, আর output নিয়ে কী করবেন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["bcrypt", "argon2", "hashing", "salting", "password storage"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "03-jwt-deep-dive",
+			"meta": {
+				"title": "JWT Deep Dive",
+				"subtitle": "Structure, signing algorithm, validation rule, আর যে সাধারণ ভুলগুলো JWT-কে insecure করে তোলে।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["JWT", "RS256", "HS256", "JWKS", "token validation"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "04-oauth-and-oidc",
+			"meta": {
+				"title": "OAuth 2.0 ও OpenID Connect",
+				"subtitle": "Delegated authorization আর federated identity — user-দের Google password না দিয়েই Google দিয়ে log in করতে দিন।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["OAuth 2.0", "OIDC", "authorization code", "PKCE", "federated identity"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "05-api-keys",
+			"meta": {
+				"title": "API Key Management",
+				"subtitle": "API key generate করা, store করা, rotate করা, আর revoke করা — machine-to-machine auth-এর পেছনের plumbing।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["API keys", "HMAC", "key rotation", "scopes", "machine-to-machine"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "06-common-vulnerabilities",
+			"meta": {
+				"title": "Common Auth Vulnerabilities",
+				"subtitle": "CSRF, session fixation, timing attack, insecure direct object reference — এগুলো কী আর কীভাবে বন্ধ করবেন।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["CSRF", "session fixation", "IDOR", "timing attacks", "OWASP"]
+			}
+		},
+		{
+			"category": "auth-security",
+			"slug": "07-production-checklist",
+			"meta": {
+				"title": "Auth in Production",
+				"subtitle": "অপারেশনাল checklist: আসল user-দের কাছে auth ship করার আগে কী verify করবেন, আর পরে কী monitor করবেন।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "8 মিনিট",
+				"topics": ["production", "checklist", "monitoring", "incident response", "hardening"]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Background Jobs — রোডম্যাপ",
+				"subtitle": "Worker loop, Redis ও Postgres-backed queue, retry, DLQ, idempotency, cron, এবং প্রোডাকশন প্যাটার্ন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "01-why-background-jobs",
+			"meta": {
+				"title": "Why Background Jobs",
+				"subtitle": "কী job queue-তে থাকা উচিত, কী request cycle-এ থাকা উচিত, এবং দুটো মেশালে কেন দুটোই ভেঙে পড়ে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 মিনিট",
+				"topics": ["background jobs", "queues", "async processing", "request lifecycle"]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "02-queue-backends",
+			"meta": {
+				"title": "Queue Backends",
+				"subtitle": "BullMQ দিয়ে Redis-backed queue, pg-boss দিয়ে Postgres-backed — internals, trade-off, এবং কোনটা কখন মানানসই।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["BullMQ", "pg-boss", "Redis", "PostgreSQL", "queue internals"]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "03-retries-and-backoff",
+			"meta": {
+				"title": "Retries & Backoff",
+				"subtitle": "Exponential backoff, jitter, max attempts, এবং কখন retry বন্ধ করে হাল ছেড়ে দিতে হবে তা জানা।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"retries",
+					"exponential backoff",
+					"jitter",
+					"dead-letter queue",
+					"error handling"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "04-idempotency",
+			"meta": {
+				"title": "Idempotency",
+				"subtitle": "Job এমনভাবে ডিজাইন করুন যাতে দুবার চালানো একবার চালানোর সমান হয় — কারণ at-least-once delivery নিশ্চিত করে যে আপনি সেগুলো দুবার চালাবেন।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"idempotency",
+					"at-least-once",
+					"exactly-once",
+					"deduplication",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "05-cron-and-scheduled-jobs",
+			"meta": {
+				"title": "Cron & Scheduled Jobs",
+				"subtitle": "একটি schedule অনুযায়ী কাজ চালানো — cron syntax, duplicate run এড়াতে leader election, এবং অপারেশনাল বিবেচনা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 মিনিট",
+				"topics": ["cron", "scheduled jobs", "leader election", "clock skew", "distributed cron"]
+			}
+		},
+		{
+			"category": "background-jobs",
+			"slug": "06-worker-patterns",
+			"meta": {
+				"title": "Worker Patterns & Production",
+				"subtitle": "Graceful shutdown, concurrency limit, priority queue, fan-out, এবং প্রোডাকশনে job চালানোর অপারেশনাল চেকলিস্ট।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "10 মিনিট",
+				"topics": ["graceful shutdown", "priority queues", "fan-out", "worker pools", "production"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Caching — রোডম্যাপ",
+				"subtitle": "প্রথমে in-process LRU। নিজে Redis সেল্ফ-হোস্ট করুন। Eviction পলিসি, invalidation, stampede।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["রোডম্যাপ"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "01-why-caching-exists",
+			"meta": {
+				"title": "ক্যাশিং কেন দরকার",
+				"subtitle": "মেমরি, ডিস্ক আর নেটওয়ার্কের মধ্যকার latency-র ফারাক — আর কেন প্রতিটি দ্রুত সিস্টেম সেটাকে কাজে লাগায়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["latency", "memory hierarchy", "cache fundamentals", "performance"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "02-cache-strategies",
+			"meta": {
+				"title": "ক্যাশ স্ট্র্যাটেজি",
+				"subtitle": "Cache-aside, read-through, write-through, write-behind — কোনটা কখন ব্যবহার করবেন আর ভুল করলে কী ভাঙে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["cache-aside", "read-through", "write-through", "write-behind", "patterns"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "03-eviction-policies",
+			"meta": {
+				"title": "Eviction Policies",
+				"subtitle": "LRU, LFU, TTL এবং তাদের সঙ্গীরা — মেমরি ভরে গেলে cache কীভাবে ঠিক করে কোনটা ফেলে দেবে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["LRU", "LFU", "TTL", "eviction", "memory management"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "04-redis-fundamentals",
+			"meta": {
+				"title": "Redis Fundamentals",
+				"subtitle": "ডেটা স্ট্রাকচার, কোর কমান্ড, পার্সিস্টেন্স মোড — প্রোডাকশনে আত্মবিশ্বাসের সাথে Redis চালাতে যা যা দরকার সবকিছু।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "18 মিনিট",
+				"topics": ["Redis", "data structures", "persistence", "commands", "pub/sub"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "05-cache-invalidation",
+			"meta": {
+				"title": "Cache Invalidation",
+				"subtitle": "কম্পিউটার সায়েন্সের সবচেয়ে কঠিন সমস্যা — TTL, event-driven purging, versioned keys, এবং কখন staleness মেনে নিতে হয়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["invalidation", "TTL", "versioned keys", "event-driven", "consistency"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "06-cache-stampede",
+			"meta": {
+				"title": "Cache Stampede ও Thundering Herd",
+				"subtitle": "একটি জনপ্রিয় cache entry expire হলে এবং একসাথে হাজার হাজার request database-এ আঘাত করলে কী ঘটে — এবং কীভাবে সেটা থামানো যায়।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["stampede", "thundering herd", "mutex", "probabilistic expiry", "dog pile"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "07-distributed-caching",
+			"meta": {
+				"title": "Distributed Caching",
+				"subtitle": "একাধিক সার্ভারের মধ্যে cache state ভাগ করে নেওয়া — consistent hashing, Redis Cluster, এবং যেসব failure mode আপনাকে চমকে দেবে।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": [
+					"Redis Cluster",
+					"consistent hashing",
+					"sharding",
+					"replication",
+					"distributed systems"
+				]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "08-http-caching",
+			"meta": {
+				"title": "HTTP Caching ও CDN",
+				"subtitle": "Cache-Control, ETag, এবং CDN edge caching — যে লেয়ারটি স্ট্যাটিক কনটেন্টের জন্য আপনার সার্ভারকে পুরোপুরি অপ্রয়োজনীয় করে দিতে পারে।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["Cache-Control", "ETag", "CDN", "edge caching", "HTTP headers"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "09-application-patterns",
+			"meta": {
+				"title": "অ্যাপ্লিকেশন ক্যাশিং প্যাটার্ন",
+				"subtitle": "Fragment caching, query result caching, session store, computed value memoization — বাস্তব অ্যাপ্লিকেশনের জন্য কাজে লাগার মতো প্যাটার্ন।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["fragment caching", "query cache", "session store", "memoization", "patterns"]
+			}
+		},
+		{
+			"category": "caching",
+			"slug": "10-production-caching",
+			"meta": {
+				"title": "প্রোডাকশন ক্যাশিং",
+				"subtitle": "hit ratio মনিটর করা, hot key শনাক্ত করা, Redis ব্যর্থতা সুন্দরভাবে সামলানো, আর কখন সবকিছু flush করতে হবে তা জানা।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": [
+					"monitoring",
+					"hot keys",
+					"circuit breaker",
+					"graceful degradation",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Capacity ও Cost — রোডম্যাপ",
+				"subtitle": "First principles থেকে sizing, cloud vs bare metal-এর economics, database cost, redundancy-এর দাম, এবং যে optimization সত্যিকারের টাকা বাঁচায়।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "01-sizing-fundamentals",
+			"meta": {
+				"title": "Sizing Fundamentals",
+				"subtitle": "CPU, memory, disk আর network — কিছু কেনার আগেই request load-কে resource requirement-এ কীভাবে অনুবাদ করবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": ["sizing", "capacity planning", "CPU", "memory", "throughput"]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "02-cloud-vs-bare-metal",
+			"meta": {
+				"title": "Cloud vs Bare Metal vs VPS",
+				"subtitle": "প্রতিটা deployment model-এর unit economics — কখন managed সুবিধা যা বাঁচায় তার চেয়ে বেশি খরচ করায়, আর কখন করায় না।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["cloud", "bare metal", "VPS", "unit economics", "TCO"]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "03-database-cost",
+			"meta": {
+				"title": "Database Cost & Sizing",
+				"subtitle": "IOPS, storage tier, connection limit, আর read-replica-র সেই হিসাব যা আপনার cost curve বদলে দেয়।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"database sizing",
+					"IOPS",
+					"read replicas",
+					"connection pooling",
+					"storage tiers"
+				]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "04-cost-of-redundancy",
+			"meta": {
+				"title": "The Cost of Redundancy",
+				"subtitle": "Multi-AZ, N+1, active-active — প্রতিটা availability pattern আসলে কত খরচ করে আর একটা বেছে নেওয়ার পেছনের হিসাব।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["redundancy", "high availability", "multi-AZ", "N+1", "active-active", "SLA"]
+			}
+		},
+		{
+			"category": "capacity-cost",
+			"slug": "05-cost-optimization",
+			"meta": {
+				"title": "Cost Optimization in Practice",
+				"subtitle": "Waste খুঁজে বের করা, rightsizing, reserved commitment, আর এমন একটা culture গড়া যা cloud spend-কে engineering work হিসেবে দেখে।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 মিনিট",
+				"topics": ["cost optimization", "rightsizing", "reserved instances", "FinOps", "cloud cost"]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Chaos ও Resilience — রোডম্যাপ",
+				"subtitle": "Fault injection, resilience patterns, GameDays, এবং SLO-ভিত্তিক ফিডব্যাক লুপ যা ব্যর্থতাকে শেখার হাতিয়ারে পরিণত করে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "01-what-is-chaos-engineering",
+			"meta": {
+				"title": "What Is Chaos Engineering",
+				"subtitle": "ইউজাররা টের পাওয়ার আগেই দুর্বলতা খুঁজে বের করতে ইচ্ছাকৃতভাবে failure ইনজেক্ট করা — এবং কেন সেরাটার আশায় বসে থাকার চেয়ে নিয়ন্ত্রিত experiment ভালো।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["chaos engineering", "resilience", "fault injection", "steady state", "GameDays"]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "02-resilience-patterns",
+			"meta": {
+				"title": "Resilience Patterns",
+				"subtitle": "Timeouts, retries, circuit breakers, bulkheads, এবং graceful degradation — সেই বিল্ডিং ব্লক যা failure-কে আটকে রাখে।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["circuit breaker", "bulkhead", "timeout", "retry", "graceful degradation"]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "03-fault-injection-tools",
+			"meta": {
+				"title": "Fault Injection Tools",
+				"subtitle": "Container-এর জন্য Pumba, network-এর জন্য tc, process-এর জন্য kill -9, cloud-এর জন্য AWS FIS — chaos experiment চালানোর ব্যবহারিক টুলকিট।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": [
+					"Pumba",
+					"tc",
+					"AWS FIS",
+					"fault injection",
+					"network partition",
+					"latency injection"
+				]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "04-gamedays",
+			"meta": {
+				"title": "GameDays",
+				"subtitle": "একটা দলের সাথে কীভাবে একটা কাঠামোবদ্ধ chaos experiment চালাবেন — planning, execution, post-mortem, এবং resilience culture গড়া।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["GameDay", "incident simulation", "post-mortem", "runbooks", "team exercises"]
+			}
+		},
+		{
+			"category": "chaos-resilience",
+			"slug": "05-steady-state-and-slos",
+			"meta": {
+				"title": "Steady State & SLOs",
+				"subtitle": "'কাজ করছে' মানে কী তা পরিমাপযোগ্য ভাষায় সংজ্ঞায়িত করা — SLIs, SLOs, error budgets, এবং সেই ফিডব্যাক লুপ যা reliability-র কাজকে চালায়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["SLO", "SLI", "error budget", "steady state", "reliability"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "01-client-server",
+			"meta": {
+				"title": "ক্লায়েন্ট-সার্ভার আর্কিটেকচার",
+				"subtitle": "একটি রিয়েল HTTP সার্ভার বানান যা সঠিক রাউটিং, পার্সিং আর এরর হ্যান্ডলিং সহ JSON API রিকোয়েস্ট হ্যান্ডল করে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 মিনিট",
+				"topics": ["HTTP", "request routing", "JSON", "error handling"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "02-rest-api",
+			"meta": {
+				"title": "REST API ডিজাইন",
+				"subtitle": "সঠিক HTTP semantics, ভ্যালিডেশন, pagination আর filtering সহ একটি সম্পূর্ণ REST API ডিজাইন আর বানান।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "20 মিনিট",
+				"topics": ["REST", "HTTP methods", "pagination", "validation", "status codes"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "03-database-fundamentals",
+			"meta": {
+				"title": "ডেটাবেস ফান্ডামেন্টালস",
+				"subtitle": "PostgreSQL-এ কানেক্ট করুন, স্কিমা ডিজাইন করুন, prepared statement দিয়ে নিরাপদ কোয়েরি লিখুন আর connection pool ম্যানেজ করুন।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "20 মিনিট",
+				"topics": ["PostgreSQL", "SQL", "connection pooling", "prepared statements", "migrations"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "04-caching",
+			"meta": {
+				"title": "ক্যাশিং বেসিকস",
+				"subtitle": "cache-aside প্যাটার্ন, TTL ম্যানেজমেন্ট আর cache invalidation স্ট্র্যাটেজির জন্য Redis ইন্টিগ্রেট করুন।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "15 মিনিট",
+				"topics": ["Redis", "cache-aside", "TTL", "cache invalidation"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "05-load-balancing",
+			"meta": {
+				"title": "লোড ব্যালান্সিং",
+				"subtitle": "round-robin distribution, health check আর sticky session সহ একটি reverse proxy বানান।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["load balancer", "reverse proxy", "health checks", "round-robin"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "06-message-queues",
+			"meta": {
+				"title": "মেসেজ কিউ",
+				"subtitle": "acknowledgment, retry আর dead letter queue সহ RabbitMQ/NATS দিয়ে producer আর consumer বানান।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["message queue", "RabbitMQ", "NATS", "async processing", "dead letter queue"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "07-rate-limiting",
+			"meta": {
+				"title": "রেট লিমিটিং",
+				"subtitle": "প্রোডাকশন API সুরক্ষার জন্য Redis দিয়ে token bucket আর sliding window rate limiter বানান।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["rate limiting", "token bucket", "sliding window", "Redis", "middleware"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "08-database-scaling",
+			"meta": {
+				"title": "ডেটাবেস শার্ডিং ও রেপ্লিকেশন",
+				"subtitle": "read replica, শার্ডিংয়ের জন্য consistent hashing আর shard-aware query routing implement করুন।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["sharding", "replication", "consistent hashing", "read replicas"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "09-distributed-consensus",
+			"meta": {
+				"title": "ডিস্ট্রিবিউটেড কনসেনসাস",
+				"subtitle": "term ম্যানেজমেন্ট, vote request আর heartbeat সহ সরলীকৃত Raft leader election implement করুন।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": ["Raft", "leader election", "consensus", "distributed systems"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "10-event-sourcing",
+			"meta": {
+				"title": "Event Sourcing ও CQRS",
+				"subtitle": "একটি e-commerce order সিস্টেমের জন্য projections, command handlers এবং event replay সহ একটি event store বানান।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": ["event sourcing", "CQRS", "projections", "event store", "domain events"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "11-observability",
+			"meta": {
+				"title": "Observability ও Service Mesh",
+				"subtitle": "OpenTelemetry দিয়ে distributed tracing, Prometheus metrics এবং correlation ID সহ structured logging বানান।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "20 মিনিট",
+				"topics": ["OpenTelemetry", "Prometheus", "tracing", "metrics", "structured logging"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "12-url-shortener",
+			"meta": {
+				"title": "কেস স্টাডি: স্কেলে URL Shortener",
+				"subtitle": "base62 encoding, Snowflake ID, caching, rate limiting এবং analytics সহ একটি production URL shortener ডিজাইন করে বানান।",
+				"chapter": 12,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": ["system design", "URL shortener", "Snowflake ID", "base62", "analytics pipeline"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "13-authentication",
+			"meta": {
+				"title": "Authentication ও Authorization",
+				"subtitle": "JWT-ভিত্তিক auth, refresh token, RBAC middleware এবং secure password hashing গোড়া থেকে বানান।",
+				"chapter": 13,
+				"level": "beginner",
+				"readingTime": "20 মিনিট",
+				"topics": ["JWT", "bcrypt", "RBAC", "refresh tokens", "middleware"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "14-api-gateway",
+			"meta": {
+				"title": "API Gateway",
+				"subtitle": "একটি gateway বানান যা routing, authentication, rate limiting এবং request aggregation একটিই layer-এ সামলায়।",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "18 মিনিট",
+				"topics": ["API gateway", "reverse proxy", "request aggregation", "middleware pipeline"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "15-cdn-edge-caching",
+			"meta": {
+				"title": "CDN ও Edge Caching",
+				"subtitle": "Cache header, private content-এর জন্য signed URL এবং cache purging strategy সহ edge caching বানান।",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["CDN", "edge caching", "Cache-Control", "signed URLs", "cache purging"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "16-websockets-realtime",
+			"meta": {
+				"title": "WebSockets ও Real-time",
+				"subtitle": "WebSocket connection, room, presence tracking এবং message history সহ একটি real-time chat server বানান।",
+				"chapter": 16,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["WebSocket", "real-time", "chat", "presence", "pub/sub"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "17-microservices-patterns",
+			"meta": {
+				"title": "Microservices Patterns",
+				"subtitle": "Saga pattern, circuit breaker, service discovery এবং distributed transaction implement করুন।",
+				"chapter": 17,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": [
+					"saga pattern",
+					"circuit breaker",
+					"service discovery",
+					"distributed transactions"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "18-chat-system-case-study",
+			"meta": {
+				"title": "কেস স্টাডি: স্কেলে Chat System",
+				"subtitle": "message delivery, read receipt, typing indicator এবং fan-out সহ একটি production chat system ডিজাইন করে বানান।",
+				"chapter": 18,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": ["chat system", "message delivery", "fan-out", "presence", "read receipts"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "19-notification-system",
+			"meta": {
+				"title": "Case Study: স্কেলে Notification System",
+				"subtitle": "multi-channel delivery, fan-out, priority queue, rate limiting, এবং user preferences সহ একটি production notification system ডিজাইন ও তৈরি করা।",
+				"chapter": 19,
+				"level": "advanced",
+				"readingTime": "30 মিনিট",
+				"topics": [
+					"notification system",
+					"fan-out",
+					"priority queue",
+					"multi-channel delivery",
+					"user preferences"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "20-payment-system",
+			"meta": {
+				"title": "কেস স্টাডি: পেমেন্ট সিস্টেম",
+				"subtitle": "idempotency, double-entry ledger, reconciliation, এবং webhook delivery সহ একটি প্রোডাকশন পেমেন্ট প্রসেসিং সিস্টেম ডিজাইন ও তৈরি করা।",
+				"chapter": 20,
+				"level": "advanced",
+				"readingTime": "35 মিনিট",
+				"topics": [
+					"payment system",
+					"idempotency",
+					"double-entry ledger",
+					"reconciliation",
+					"webhooks"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "21-news-feed",
+			"meta": {
+				"title": "কেস স্টাডি: সোশ্যাল মিডিয়া নিউজ ফিড",
+				"subtitle": "ফ্যান-আউট, র‍্যাঙ্কিং, ইনফিনিট স্ক্রল পেজিনেশন আর রিয়েল-টাইম আপডেট সহ একটি প্রোডাকশন নিউজ ফিড ডিজাইন ও তৈরি করুন।",
+				"chapter": 21,
+				"level": "advanced",
+				"readingTime": "32 মিনিট",
+				"topics": ["news feed", "fan-out", "ranking algorithm", "pagination", "real-time updates"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "22-tutorial-realtime-dashboard",
+			"meta": {
+				"title": "টিউটোরিয়াল: রিয়েল-টাইম অ্যানালিটিক্স ড্যাশবোর্ড বানানো",
+				"subtitle": "ইভেন্ট ইনজেশন, টাইম-সিরিজ অ্যাগ্রিগেশন, WebSocket স্ট্রিমিং, আর লাইভ কাউন্টার দিয়ে একটা রিয়েল-টাইম ড্যাশবোর্ড বানানোর ধাপে ধাপে গাইড।",
+				"chapter": 22,
+				"level": "intermediate",
+				"readingTime": "28 মিনিট",
+				"topics": ["tutorial", "real-time analytics", "time-series", "WebSocket", "event streaming"]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "23-tutorial-file-upload",
+			"meta": {
+				"title": "Tutorial: একটি File Upload Service বানানো",
+				"subtitle": "chunked upload, resumable transfer, virus scanning এবং CDN integration সহ একটি প্রোডাকশন file upload service বানানোর ধাপে ধাপে গাইড।",
+				"chapter": 23,
+				"level": "intermediate",
+				"readingTime": "26 মিনিট",
+				"topics": [
+					"tutorial",
+					"file upload",
+					"chunked upload",
+					"resumable transfer",
+					"content delivery"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "24-video-transcoding",
+			"meta": {
+				"title": "কেস স্টাডি: ভিডিও ট্রান্সকোডিং সার্ভিস",
+				"subtitle": "VOD প্রসেসিং, adaptive bitrate encoding, job scheduling এবং distributed workers সহ একটি প্রোডাকশন ভিডিও ট্রান্সকোডিং পাইপলাইন ডিজাইন ও তৈরি করুন।",
+				"chapter": 24,
+				"level": "advanced",
+				"readingTime": "34 মিনিট",
+				"topics": [
+					"video transcoding",
+					"VOD",
+					"adaptive bitrate",
+					"job queue",
+					"distributed processing"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "25-live-streaming",
+			"meta": {
+				"title": "Case Study: Live Streaming Platform",
+				"subtitle": "RTMP ingest, real-time transcoding, HLS delivery, chat integration আর viewer scaling সহ একটি প্রোডাকশন লাইভ স্ট্রিমিং সিস্টেম ডিজাইন ও তৈরি করা।",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "36 মিনিট",
+				"topics": [
+					"live streaming",
+					"RTMP",
+					"real-time transcoding",
+					"HLS",
+					"viewer scaling",
+					"low latency"
+				]
+			}
+		},
+		{
+			"category": "chapters",
+			"slug": "26-webinar-platform",
+			"meta": {
+				"title": "কেস স্টাডি: ওয়েবিনার ও ভিডিও কনফারেন্সিং প্ল্যাটফর্ম",
+				"subtitle": "মাল্টি-পার্টি ভিডিও, স্ক্রিন শেয়ারিং, Q&A, পোল, ব্রেকআউট রুম আর রেকর্ডিং সহ একটা প্রোডাকশন ওয়েবিনার সিস্টেম ডিজাইন ও তৈরি করুন।",
+				"chapter": 26,
+				"level": "advanced",
+				"readingTime": "33 মিনিট",
+				"topics": ["webinar", "video conferencing", "WebRTC", "SFU", "breakout rooms", "recording"]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Containers — রোডম্যাপ",
+				"subtitle": "Docker-এর মূল ধারণা, image layer, multi-stage build, লোকাল ডেভের জন্য Compose, এবং প্রোডাকশন security hardening।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "01-what-are-containers",
+			"meta": {
+				"title": "What Are Containers",
+				"subtitle": "Namespaces, cgroups, এবং union filesystem — docker run-এর নিচে আসলে কী ঘটছে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": ["containers", "namespaces", "cgroups", "union filesystem", "OCI"]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "02-writing-dockerfiles",
+			"meta": {
+				"title": "Writing Dockerfiles",
+				"subtitle": "Layer caching, multi-stage build, non-root user, এবং প্রোডাকশন image-এর জন্য যেসব instruction আসলে গুরুত্বপূর্ণ।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["Dockerfile", "multi-stage builds", "layer cache", "non-root", "image size"]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "03-docker-compose",
+			"meta": {
+				"title": "Docker Compose",
+				"subtitle": "Multi-service লোকাল এনভায়রনমেন্ট, dependency ordering, networking, এবং যেসব প্যাটার্ন compose-কে আসলেই কাজের করে তোলে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["docker compose", "networking", "volumes", "depends_on", "environment"]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "04-image-layers-and-registry",
+			"meta": {
+				"title": "Image Layers & Registries",
+				"subtitle": "বাস্তবে layer sharing কীভাবে কাজ করে, দক্ষভাবে push ও pull করা, এবং নিজের registry চালানো।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"image layers",
+					"registry",
+					"Docker Hub",
+					"GHCR",
+					"self-hosted registry",
+					"image tagging"
+				]
+			}
+		},
+		{
+			"category": "containers",
+			"slug": "05-container-security",
+			"meta": {
+				"title": "Container Security",
+				"subtitle": "Attack surface, capabilities, seccomp, read-only filesystem, এবং প্রোডাকশন hardening-এর জন্য যা আসলে গুরুত্বপূর্ণ।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"container security",
+					"capabilities",
+					"seccomp",
+					"read-only",
+					"rootless",
+					"supply chain"
+				]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Data Modeling — রোডম্যাপ",
+				"subtitle": "দশটি অধ্যায় যা আপনাকে 'primary key জিনিসটা কী' থেকে load-এর নিচে ইচ্ছাকৃত schema design পর্যন্ত নিয়ে যাবে — keys, normalization, denormalization, constraints, multi-tenancy, JSONB, আর zero-downtime evolution।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "data-modeling", "schemas", "postgres"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "01-what-data-modeling-is",
+			"meta": {
+				"title": "Data modeling জিনিসটা কী",
+				"subtitle": "Schema design হলো আপনার ship করা সবচেয়ে দামি জিনিস। প্রথম দিন যে column-গুলো বাছেন সেগুলো প্রতিটা framework, প্রতিটা refactor, প্রতিটা rewrite-কে ছাড়িয়ে টিকে থাকে। ভালো modeling মূলত CREATE TABLE টাইপ করার আগে ভাবা।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["data-modeling", "schemas", "orms", "design"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "02-entities-relationships",
+			"meta": {
+				"title": "Entities, attributes, relationships",
+				"subtitle": "SQL-এর আগে, ORM-এর আগে, box আর line আঁকুন। ER-চিন্তা হলো বিশ মিনিট যা এক বছরের refactoring বাঁচায়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["data-modeling", "er-diagrams", "relationships", "cardinality"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "03-keys",
+			"meta": {
+				"title": "Keys",
+				"subtitle": "আপনার স্কিমার সবচেয়ে দামি সিদ্ধান্ত হলো primary key। ভুল বেছে নিলে বছরের পর বছর সেটা এড়িয়ে কাজ করতে হবে। ঠিকঠাক বেছে নিলে ভুলেই যাবেন যে এটা আছে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "primary keys", "ulid", "uuid", "natural keys"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "04-normalization",
+			"meta": {
+				"title": "Normalization",
+				"subtitle": "1NF, 2NF, 3NF — তিনটা নিয়ম যা একই ডেটাকে দুবার রেকর্ড হওয়া থেকে ঠেকায়। এদের উপেক্ষা করুন, আর ডেটা সিঙ্ক থেকে সরে যাওয়ার সাথে সাথে আপনার স্কিমা ভেতর থেকে পচতে থাকবে।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "normalization", "1nf", "2nf", "3nf"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "05-denormalization",
+			"meta": {
+				"title": "Denormalization",
+				"subtitle": "কখনো কখনো একই fact ইচ্ছাকৃতভাবে দুই জায়গায় থাকে। ঠিকভাবে করলে hot query উড়তে থাকে। বাজেভাবে করলে ঠিক সেই drift তৈরি হয় যা ঠেকানোর জন্য normalization বানানো হয়েছিল।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["data-modeling", "denormalization", "performance", "caching"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "06-constraints",
+			"meta": {
+				"title": "Constraints",
+				"subtitle": "Application bug-এর বিরুদ্ধে schema হলো আপনার শেষ প্রতিরক্ষা। Constraint সেই নিয়মগুলো encode করে যা সবসময় সত্য থাকা উচিত — আপনার app মনে রাখুক বা না রাখুক, Postgres সেগুলো enforce করে।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "constraints", "foreign-keys", "check", "unique"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "07-time-soft-delete",
+			"meta": {
+				"title": "টাইম আর সফট ডিলিট",
+				"subtitle": "এমন টাইমস্ট্যাম্প যা টাইম জোন পেরিয়েও টিকে থাকে, সফট ডিলিট যা প্রতিটা query-কে বিষিয়ে তোলে না, আর history টেবিল যা 'গত মঙ্গলবার এটা দেখতে কেমন ছিল?' এর উত্তর দেয়",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "timestamps", "soft-delete", "history", "time-zones"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "08-multi-tenancy",
+			"meta": {
+				"title": "Multi-tenancy",
+				"subtitle": "একটা অ্যাপ থেকে অনেক কাস্টমারকে সার্ভ করার তিনটা আর্কিটেকচার: tenant কলামসহ single database, tenant-প্রতি schema, নাকি tenant-প্রতি database। প্রতিটার cost curve আলাদা।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "multi-tenancy", "rls", "isolation"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "09-jsonb",
+			"meta": {
+				"title": "JSONB আর schemaless ফাঁদ",
+				"subtitle": "JSONB হলো Postgres-এর অন্যতম সেরা ফিচার। ঠিকভাবে ব্যবহার করলে এটাই যেভাবে আপনি নিজের schema-র সাথে লড়াই বন্ধ করেন। ভুলভাবে ব্যবহার করলে এটাই যেভাবে relational database-এর ভেতরে আপনি একটা schemaless জঞ্জাল বানিয়ে ফেলেন।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["data-modeling", "jsonb", "postgres", "schemaless"]
+			}
+		},
+		{
+			"category": "data-modeling",
+			"slug": "10-schema-evolution",
+			"meta": {
+				"title": "Schema evolution",
+				"subtitle": "Live data-র বিরুদ্ধে প্রতিটা schema পরিবর্তনই একটা deploy। expand/contract pattern-ই যেভাবে আপনি এমন table বদলান যেখানে দশ লাখ row আর হাজারখানেক concurrent writer আছে — কোনো downtime ছাড়াই।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["data-modeling", "migrations", "expand-contract", "zero-downtime"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "01-storage-engines",
+			"meta": {
+				"title": "Storage Engines",
+				"subtitle": "ডেটাবেজ আসলে কীভাবে ডিস্কে ডেটা রাখে — pages, heaps, এবং read আর write অপটিমাইজেশনের মধ্যকার tradeoff।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["storage engine", "pages", "heap", "disk I/O"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "02-b-trees",
+			"meta": {
+				"title": "B-Trees & Indexes",
+				"subtitle": "প্রতিটা relational ডেটাবেজ index-এর পেছনের data structure — B-tree কীভাবে ডেটা sorted রাখে আর query দ্রুত করে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "16 মিনিট",
+				"topics": ["B-tree", "index", "balanced tree", "query performance"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "03-wal",
+			"meta": {
+				"title": "Write-Ahead Logging (WAL)",
+				"subtitle": "ডেটাবেজ কীভাবে ডেটা না হারিয়ে crash থেকে টিকে যায় — log-first strategy যা ACID সম্ভব করে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["WAL", "durability", "crash recovery", "checkpoints"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "04-mvcc",
+			"meta": {
+				"title": "MVCC — Multi-Version Concurrency Control",
+				"subtitle": "ডেটাবেজ কীভাবে reader আর writer-কে block ছাড়াই একসাথে কাজ করতে দেয় — snapshots, visibility rules, আর isolation levels।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "17 মিনিট",
+				"topics": ["MVCC", "transactions", "isolation levels", "snapshots"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "05-query-planning",
+			"meta": {
+				"title": "Query Planning & Execution",
+				"subtitle": "ডেটাবেজ কীভাবে আপনার SQL-কে একটা execution plan-এ পরিণত করে — parsing, optimization, আর কেন EXPLAIN আপনার সবচেয়ে ভালো বন্ধু।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["query planner", "EXPLAIN", "optimization", "execution plan"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "06-lsm-trees",
+			"meta": {
+				"title": "LSM Trees",
+				"subtitle": "B-tree-র write-optimized বিকল্প — RocksDB, Cassandra, আর LevelDB কীভাবে বিশাল write throughput সামলায়।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["LSM tree", "compaction", "memtable", "SSTable"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "07-transactions",
+			"meta": {
+				"title": "Transactions & ACID",
+				"subtitle": "Atomicity, Consistency, Isolation, Durability — যে গ্যারান্টিগুলো ডেটাবেজকে নির্ভরযোগ্য করে আর কীভাবে সেগুলো implement করা হয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["ACID", "transactions", "atomicity", "isolation"]
+			}
+		},
+		{
+			"category": "db-internals",
+			"slug": "08-replication-sharding",
+			"meta": {
+				"title": "Replication & Sharding",
+				"subtitle": "একটা মেশিনের বাইরে ডেটাবেজ scale করা — leader-follower replication, consensus, আর horizontal partitioning।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "18 মিনিট",
+				"topics": ["replication", "sharding", "partitioning", "consensus"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "01-containers",
+			"meta": {
+				"title": "Containers ও Docker",
+				"subtitle": "Container আসলে কী — namespaces, cgroups, layers — আর Docker কীভাবে আপনার অ্যাপকে প্যাকেজ করে যাতে সেটা যেকোনো জায়গায় চলে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["Docker", "containers", "images", "Dockerfile"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "02-kubernetes",
+			"meta": {
+				"title": "Kubernetes-এর প্রয়োজনীয় বিষয়",
+				"subtitle": "Pods, Deployments, Services — বড় স্কেলে container orchestration-এর মূল বিল্ডিং ব্লক।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "16 মিনিট",
+				"topics": ["Kubernetes", "pods", "deployments", "services"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "03-ci-cd",
+			"meta": {
+				"title": "CI/CD পাইপলাইন",
+				"subtitle": "আপনার কোড বিল্ড, টেস্ট আর ডিপ্লয় অটোমেট করুন — GitHub Actions, পাইপলাইন ডিজাইন, আর ডিপ্লয়মেন্ট স্ট্র্যাটেজি।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "15 মিনিট",
+				"topics": ["CI/CD", "GitHub Actions", "pipelines", "deployment"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "04-iac",
+			"meta": {
+				"title": "Infrastructure as Code",
+				"subtitle": "Terraform, declarative infrastructure, state management — আপনার cloud resource-গুলো version-controlled ফাইলে ডিফাইন করুন।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["Terraform", "IaC", "infrastructure", "cloud"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "05-monitoring",
+			"meta": {
+				"title": "Monitoring ও Observability",
+				"subtitle": "Metrics, logs, traces — production-এ আপনার সিস্টেম কী করছে তা বোঝার তিনটি স্তম্ভ।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["monitoring", "observability", "metrics", "logging", "tracing"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "06-networking-infra",
+			"meta": {
+				"title": "Cloud Networking",
+				"subtitle": "VPC, subnet, security group, load balancer — কীভাবে একটা secure cloud network architecture ডিজাইন করবেন।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["VPC", "subnets", "security groups", "load balancer"]
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "07-secrets-config",
+			"meta": {
+				"title": "Secrets ও Configuration",
+				"subtitle": "Environment variables, secret managers, config as code — sensitive data লিক না করে কীভাবে হ্যান্ডল করবেন।",
+				"chapter": 7,
+				"level": "intermediate",
+				"topics": ["secrets", "env vars", "config", "security"],
+				"readingTime": "12 মিনিট"
+			}
+		},
+		{
+			"category": "devops",
+			"slug": "08-reliability",
+			"meta": {
+				"title": "Reliability ও SRE Practices",
+				"subtitle": "SLOs, error budgets, incident response, এবং chaos engineering — কিছু ভুল হলেও সিস্টেম চালু রাখা।",
+				"chapter": 8,
+				"level": "advanced",
+				"topics": ["SRE", "SLO", "reliability", "incident response", "chaos engineering"],
+				"readingTime": "16 মিনিট"
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Disaster Recovery — রোডম্যাপ",
+				"subtitle": "RTO আর RPO, pg_dump আর WAL-G ব্যাকআপ, restore drill, multi-region replication, আর রাত ৩টায় কাজ করে এমন runbook।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "01-rto-and-rpo",
+			"meta": {
+				"title": "RTO, RPO, এবং এরা আসলে কী বোঝায়",
+				"subtitle": "দুটো সংখ্যা যা আপনার recovery requirement সংজ্ঞায়িত করে — আর কেন এগুলো ভুল করলে আপনার DR প্ল্যান অকেজো হয়ে যায়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 মিনিট",
+				"topics": ["RTO", "RPO", "disaster recovery", "SLA", "business continuity"]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "02-backup-strategies",
+			"meta": {
+				"title": "Backup Strategies",
+				"subtitle": "logical backup-এর জন্য pg_dump, continuous archival-এর জন্য WAL-G, retention-এর জন্য S3 lifecycle — আসলে আপনার ডেটা রাখার মেকানিক্স।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["pg_dump", "WAL-G", "WAL archiving", "backups", "S3", "retention"]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "03-restore-drills",
+			"meta": {
+				"title": "Restore Drills",
+				"subtitle": "কীভাবে আপনার ব্যাকআপ আসলেই টেস্ট করবেন — runbook স্ট্রাকচার, কী যাচাই করবেন, আর কীভাবে drill-কে নিয়মিত প্র্যাকটিসে পরিণত করবেন।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"restore drills",
+					"runbooks",
+					"backup verification",
+					"PITR",
+					"disaster simulation"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "04-multi-region-replication",
+			"meta": {
+				"title": "Multi-Region Replication",
+				"subtitle": "Streaming replication, logical replication, আর region জুড়ে active-passive vs active-active-এর trade-off।",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "11 মিনিট",
+				"topics": [
+					"streaming replication",
+					"logical replication",
+					"multi-region",
+					"failover",
+					"replication lag"
+				]
+			}
+		},
+		{
+			"category": "disaster-recovery",
+			"slug": "05-runbooks-and-incident-response",
+			"meta": {
+				"title": "Runbooks & Incident Response",
+				"subtitle": "মানুষ আসলেই ব্যবহার করবে এমন runbook লেখা, incident commander প্যাটার্ন, আর সত্যিকারের পরিবর্তন আনে এমন post-mortem।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["runbooks", "incident response", "post-mortem", "on-call", "communication"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Distributed Systems — রোডম্যাপ",
+				"subtitle": "একটি মেশিন থেকে অনেকগুলোতে: failure, time, replication, consensus, এবং যে trade-off গুলো প্রতিটি distributed system-কে সংজ্ঞায়িত করে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "distributed systems"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "01-what-is-distributed",
+			"meta": {
+				"title": "What Makes a System Distributed",
+				"subtitle": "কেন আমরা আদৌ distribute করি, কেন independent failure সবকিছু বদলে দেয়, এবং আটটি fallacy যা প্রতিটি নতুন মানুষকে হোঁচট খাওয়ায়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": ["distributed", "fallacies"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "02-failure-and-time",
+			"meta": {
+				"title": "Failure Models & Time",
+				"subtitle": "Node কীভাবে fail করে, কেন network partition-ই আসল failure, এবং কেন slow আর dead-এর পার্থক্য বলার জন্য clock ও timeout-কে বিশ্বাস করা যায় না।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["failure", "clocks", "timeouts"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "03-replication",
+			"meta": {
+				"title": "Replication",
+				"subtitle": "একাধিক মেশিনে data-র কপি রাখা: single-leader, multi-leader, ও leaderless ডিজাইন, sync বনাম async, এবং quorum।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["replication", "quorum", "leader"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "04-consistency-models",
+			"meta": {
+				"title": "Consistency Models",
+				"subtitle": "'consistent' আসলে কী বোঝায়: linearizable, sequential, causal, ও eventual consistency, এবং spectrum জুড়ে trade-off গুলো।",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["consistency", "linearizability", "causal"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "05-cap-pacelc",
+			"meta": {
+				"title": "CAP & PACELC",
+				"subtitle": "CAP theorem সূক্ষ্মভাবে বর্ণিত, কেন একটি partition consistency ও availability-র মধ্যে একটি পছন্দ বাধ্য করে, এবং PACELC যে latency মাত্রা যোগ করে।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "10 মিনিট",
+				"topics": ["cap", "pacelc", "tradeoffs"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "06-consensus",
+			"meta": {
+				"title": "Consensus: Raft & Paxos",
+				"subtitle": "Failure সত্ত্বেও একদল মেশিন কীভাবে একটি একক মানে একমত হয়: leader election, log replication, এবং Raft-এর একটি পূর্ণ walkthrough।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["consensus", "raft", "paxos"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "07-ordering-clocks",
+			"meta": {
+				"title": "Ordering & Logical Clocks",
+				"subtitle": "একটি shared clock ছাড়াই event order করা: happens-before, Lamport timestamp, vector clock, এবং hybrid logical clock।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "11 মিনিট",
+				"topics": ["lamport", "vector clocks", "ordering"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "08-distributed-transactions",
+			"meta": {
+				"title": "Distributed Transactions",
+				"subtitle": "Service জুড়ে পরিবর্তন সমন্বয় করা: two-phase commit ও তার blocking সমস্যা, saga, outbox pattern, এবং exactly-once নিয়ে ভুল ধারণা।",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "12 মিনিট",
+				"topics": ["2pc", "saga", "outbox"]
+			}
+		},
+		{
+			"category": "distributed-systems",
+			"slug": "09-building-reliable",
+			"meta": {
+				"title": "Building Reliable Distributed Systems",
+				"subtitle": "সব একসাথে জোড়া: backoff ও jitter সহ retry, idempotency ও deduplication, delivery semantics, এবং durable execution।",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "12 মিনিট",
+				"topics": ["idempotency", "retries", "durable execution"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "01-arrays-strings",
+			"meta": {
+				"title": "Arrays ও Strings",
+				"subtitle": "সবচেয়ে fundamental দুটি data structure আয়ত্ত করুন — contiguous memory, indexing, এবং common manipulation pattern।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["arrays", "strings", "two pointers", "sliding window"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "02-hash-maps",
+			"meta": {
+				"title": "Hash Maps & Sets",
+				"subtitle": "হ্যাশ-ভিত্তিক ডেটা স্ট্রাকচার দিয়ে O(n) lookup-কে O(1)-তে নামিয়ে আনুন — আপনার টুলকিটের সবচেয়ে ব্যবহারিক জিনিস।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["hash map", "hash set", "collision handling", "frequency counting"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "03-linked-lists",
+			"meta": {
+				"title": "Linked Lists",
+				"subtitle": "পয়েন্টার-ভিত্তিক ডেটা স্ট্রাকচার বুঝুন — nodes, traversal, এবং কেন এগুলো queues, LRU caches ও আরও অনেক কিছুর জন্য গুরুত্বপূর্ণ।",
+				"chapter": 3,
+				"level": "beginner",
+				"topics": ["linked list", "singly linked", "doubly linked", "fast slow pointers"],
+				"readingTime": "13 মিনিট"
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "04-stacks-queues",
+			"meta": {
+				"title": "Stacks ও Queues",
+				"subtitle": "LIFO আর FIFO — দুটি সাধারণ abstraction যা undo সিস্টেম, BFS, task scheduler আর expression parsing চালায়।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["stack", "queue", "monotonic stack", "BFS"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "05-trees",
+			"meta": {
+				"title": "Binary Trees ও BST",
+				"subtitle": "Recursive চিন্তা, tree traversal, আর binary search tree — hierarchical data-র প্রবেশদ্বার।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "16 মিনিট",
+				"topics": ["binary tree", "BST", "DFS", "BFS", "recursion"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "06-graphs",
+			"meta": {
+				"title": "Graphs",
+				"subtitle": "এনটিটিগুলোর মধ্যে সম্পর্ক প্রকাশ করুন — সোশ্যাল নেটওয়ার্ক, ম্যাপ, ডিপেন্ডেন্সি — BFS, DFS আর adjacency list দিয়ে।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "18 মিনিট",
+				"topics": ["graph", "adjacency list", "BFS", "DFS", "topological sort"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "07-sorting",
+			"meta": {
+				"title": "Sorting Algorithms",
+				"subtitle": "Merge sort, quicksort, আর কখন কোনটা ব্যবহার করবেন — সাথে sorted data থেকে যেসব প্যাটার্ন বেরিয়ে আসে।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["merge sort", "quicksort", "binary search", "sorting"]
+			}
+		},
+		{
+			"category": "dsa",
+			"slug": "08-dynamic-programming",
+			"meta": {
+				"title": "Dynamic Programming",
+				"subtitle": "জটিল সমস্যাকে overlapping subproblem-এ ভেঙে ফেলুন — shortest path, text diffing আর optimization-এর পেছনের টেকনিক।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "20 মিনিট",
+				"topics": ["dynamic programming", "memoization", "tabulation", "optimization"]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Ethical Hacking — রোডম্যাপ",
+				"subtitle": "শূন্য থেকে প্রফেশনাল পেনিট্রেশন টেস্টার। রিকন, এক্সপ্লয়টেশন, পোস্ট-এক্সপ্লয়টেশন, রিপোর্টিং — রিয়েল ল্যাব সহ।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "ethical hacking", "penetration testing", "cybersecurity"]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "01-foundations",
+			"meta": {
+				"title": "Foundations",
+				"subtitle": "নেটওয়ার্ক কীভাবে কাজ করে, TCP/IP, OSI মডেল, এবং দুর্বলতা খুঁজে বের করার জন্য অ্যাটাকারের মানসিক মডেল।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["TCP/IP", "OSI model", "networking", "ports", "protocols", "attacker mindset"]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "02-linux-for-hackers",
+			"meta": {
+				"title": "Linux for Hackers",
+				"subtitle": "টার্মিনাল দক্ষতা, ফাইল পারমিশন, bash স্ক্রিপ্টিং, এবং Kali Linux-এ যেসব টুল আসে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["linux", "bash", "kali", "terminal", "file permissions", "processes"]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "03-reconnaissance",
+			"meta": {
+				"title": "Reconnaissance",
+				"subtitle": "OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — টার্গেট না ছুঁয়েই ইন্টেলিজেন্স সংগ্রহ।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"OSINT",
+					"reconnaissance",
+					"Google dorks",
+					"Shodan",
+					"theHarvester",
+					"passive recon",
+					"active recon"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "04-scanning-enumeration",
+			"meta": {
+				"title": "Scanning & Enumeration",
+				"subtitle": "Nmap দক্ষতা, service fingerprinting, banner grabbing, এবং SMB, FTP, SNMP ও web directory enumerate করা।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": [
+					"nmap",
+					"scanning",
+					"enumeration",
+					"SMB",
+					"FTP",
+					"SNMP",
+					"banner grabbing",
+					"gobuster"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "05-vulnerability-analysis",
+			"meta": {
+				"title": "Vulnerability Analysis",
+				"subtitle": "CVE database, CVSS scoring, automated scanner, এবং ম্যানুয়াল vulnerability research — কোনটা exploitable তা খুঁজে বের করা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"CVE",
+					"CVSS",
+					"vulnerability scanning",
+					"OpenVAS",
+					"Nessus",
+					"exploit-db",
+					"vulnerability research"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "06-exploitation-basics",
+			"meta": {
+				"title": "Exploitation Basics",
+				"subtitle": "Metasploit framework, ম্যানুয়াল exploit development, shellcode, payload, ও listener — vulnerability-কে access-এ রূপান্তর।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": [
+					"metasploit",
+					"exploitation",
+					"payloads",
+					"msfvenom",
+					"reverse shell",
+					"bind shell",
+					"shellcode"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "07-web-app-hacking",
+			"meta": {
+				"title": "Web Application Hacking",
+				"subtitle": "OWASP Top 10, Burp Suite, SQL injection, XSS, SSRF, IDOR, command injection — সম্পূর্ণ web অ্যাটাকার টুলকিট।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": [
+					"OWASP",
+					"SQL injection",
+					"XSS",
+					"SSRF",
+					"IDOR",
+					"Burp Suite",
+					"command injection",
+					"web hacking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "08-network-attacks",
+			"meta": {
+				"title": "Network Attacks",
+				"subtitle": "ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — network লেয়ারে আক্রমণ।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"ARP spoofing",
+					"MITM",
+					"Wireshark",
+					"tcpdump",
+					"Bettercap",
+					"DNS poisoning",
+					"network attacks"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "09-privilege-escalation",
+			"meta": {
+				"title": "Privilege Escalation",
+				"subtitle": "Linux ও Windows privesc কৌশল — SUID binary, sudo misconfig, kernel exploit, service account অপব্যবহার, token impersonation।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "16 মিনিট",
+				"topics": [
+					"privilege escalation",
+					"SUID",
+					"sudo",
+					"Linux privesc",
+					"Windows privesc",
+					"token impersonation",
+					"kernel exploit"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "10-post-exploitation",
+			"meta": {
+				"title": "Post-Exploitation",
+				"subtitle": "Lateral movement, persistence, data exfiltration, নেটওয়ার্কের মধ্যে pivoting — root পাওয়ার পর কী হয়।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": [
+					"post-exploitation",
+					"lateral movement",
+					"persistence",
+					"pivoting",
+					"data exfiltration",
+					"Pass-the-Hash"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "11-cryptography-attacks",
+			"meta": {
+				"title": "Cryptography Attacks",
+				"subtitle": "Hash cracking, দুর্বল cipher exploitation, PKI দুর্বলতা, JWT আক্রমণ এবং password বিশ্লেষণ।",
+				"chapter": 11,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"hash cracking",
+					"hashcat",
+					"john the ripper",
+					"JWT",
+					"TLS attacks",
+					"cryptography",
+					"password cracking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "12-wireless-security",
+			"meta": {
+				"title": "Wireless Security",
+				"subtitle": "WPA2 handshake capture, WPS আক্রমণ, evil twin AP, deauthentication এবং wireless নেটওয়ার্ক প্রতিরক্ষা।",
+				"chapter": 12,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"wireless",
+					"WPA2",
+					"WPS",
+					"evil twin",
+					"aircrack",
+					"handshake capture",
+					"deauthentication",
+					"WiFi hacking"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "13-social-engineering",
+			"meta": {
+				"title": "Social Engineering",
+				"subtitle": "Phishing campaign, pretexting, vishing, physical intrusion — এবং যেসব প্রতিরক্ষা আসলেই কাজ করে।",
+				"chapter": 13,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"social engineering",
+					"phishing",
+					"pretexting",
+					"vishing",
+					"spear phishing",
+					"GoPhish",
+					"SET"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "14-ctf-strategy",
+			"meta": {
+				"title": "CTF Strategy",
+				"subtitle": "Capture the Flag প্রতিযোগিতায় কীভাবে এগোবেন, ক্যাটাগরি ভাঙা, প্ল্যাটফর্ম এবং প্রতিটি চ্যালেঞ্জ টাইপের জন্য একটি methodology।",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"CTF",
+					"Capture the Flag",
+					"HackTheBox",
+					"TryHackMe",
+					"forensics",
+					"reverse engineering",
+					"crypto CTF",
+					"pwn"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "15-pentest-reporting",
+			"meta": {
+				"title": "Pentest Reporting",
+				"subtitle": "পেশাদার report structure, CVSS scoring, evidence documentation, executive summary এবং remediation নির্দেশনা।",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"pentest report",
+					"reporting",
+					"CVSS",
+					"executive summary",
+					"remediation",
+					"documentation",
+					"bug bounty"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "24-mobile-security",
+			"meta": {
+				"title": "Mobile Security",
+				"subtitle": "Android APK অ্যানালাইসিস, iOS অ্যাপ টেস্টিং, Frida দিয়ে ডায়নামিক ইনস্ট্রুমেন্টেশন, SSL pinning bypass, এবং mobile OWASP Top 10।",
+				"chapter": 24,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": [
+					"mobile security",
+					"Android",
+					"iOS",
+					"APK analysis",
+					"Frida",
+					"SSL pinning bypass",
+					"MobSF",
+					"OWASP mobile",
+					"dynamic analysis"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "25-iot-embedded-security",
+			"meta": {
+				"title": "IoT & Embedded Security",
+				"subtitle": "Firmware এক্সট্রাকশন ও অ্যানালাইসিস, UART/JTAG ডিবাগিং, default credentials, protocol attack, এবং hardware hacking-এর মূল বিষয়।",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"IoT security",
+					"firmware analysis",
+					"hardware hacking",
+					"UART",
+					"JTAG",
+					"binwalk",
+					"default credentials",
+					"embedded systems"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "26-blue-team-defense",
+			"meta": {
+				"title": "Blue Team & Defense",
+				"subtitle": "SIEM, IDS/IPS, SOC অপারেশন, detection engineering, threat hunting, hardening guide, এবং defender-এর toolkit।",
+				"chapter": 26,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": [
+					"blue team",
+					"SIEM",
+					"IDS",
+					"IPS",
+					"SOC",
+					"detection engineering",
+					"hardening",
+					"threat hunting",
+					"Splunk",
+					"Elastic",
+					"Snort"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "27-threat-intelligence",
+			"meta": {
+				"title": "Threat Intelligence & MITRE ATT&CK",
+				"subtitle": "IOC, threat actor profiling, STIX/TAXII, ATT&CK Navigator, intelligence দিয়ে threat hunting, এবং একটা threat intel program গড়ে তোলা।",
+				"chapter": 27,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"threat intelligence",
+					"MITRE ATT&CK",
+					"IOC",
+					"STIX",
+					"TAXII",
+					"threat hunting",
+					"APT",
+					"threat actor",
+					"CTI"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "28-bug-bounty",
+			"meta": {
+				"title": "Bug Bounty",
+				"subtitle": "Methodology, platform নির্বাচন, recon automation, high-value target বাছাই, triaging, এবং HackerOne ও Bugcrowd-এ নিয়মিত আয় করা।",
+				"chapter": 28,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"bug bounty",
+					"HackerOne",
+					"Bugcrowd",
+					"vulnerability disclosure",
+					"recon automation",
+					"Nuclei",
+					"bug bounty methodology"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "29-fuzzing-vulnerability-research",
+			"meta": {
+				"title": "Fuzzing & Vulnerability Research",
+				"subtitle": "AFL++, LibFuzzer, coverage-guided fuzzing, 0-day খুঁজে বের করা, security-র জন্য code auditing, এবং structured vulnerability research।",
+				"chapter": 29,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"fuzzing",
+					"AFL",
+					"LibFuzzer",
+					"vulnerability research",
+					"0-day",
+					"code audit",
+					"coverage guided fuzzing",
+					"sanitizers"
+				]
+			}
+		},
+		{
+			"category": "ethical-hacking",
+			"slug": "30-secure-code-review",
+			"meta": {
+				"title": "Secure Code Review",
+				"subtitle": "SAST tools, manual code auditing, threat modeling, বাস্তব codebase-এ vulnerability খুঁজে বের করা, এবং SDLC-তে security যুক্ত করা।",
+				"chapter": 30,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"secure code review",
+					"SAST",
+					"code audit",
+					"SDLC",
+					"threat modeling",
+					"Semgrep",
+					"CodeQL",
+					"security review",
+					"AppSec"
+				]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Event-Driven ও Streaming — রোডম্যাপ",
+				"subtitle": "Pub/sub প্যাটার্ন, Debezium দিয়ে CDC, event sourcing, আর এমন schema evolution যা আপনার consumer-দের ভাঙবে না।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "01-events-vs-commands",
+			"meta": {
+				"title": "Events vs Commands vs Queries",
+				"subtitle": "ভিন্ন semantics-সহ তিন ধরনের আলাদা message — এই পার্থক্য বোঝাটাই ঠিক করে দেয় আপনি প্রতিটি integration কীভাবে design করবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["events", "commands", "queries", "CQRS", "message semantics"]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "02-pub-sub-patterns",
+			"meta": {
+				"title": "Pub/Sub Patterns",
+				"subtitle": "Topics, consumer groups, fan-out, filtering, আর সেই delivery guarantee-গুলো যা ঠিক করে দেয় আপনার subscriber কীসের উপর নির্ভর করতে পারবে।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["pub/sub", "consumer groups", "fan-out", "Kafka", "SNS", "delivery guarantees"]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "03-change-data-capture",
+			"meta": {
+				"title": "Change Data Capture",
+				"subtitle": "Debezium আর PostgreSQL logical replication দিয়ে প্রতিটি database write-কে event হিসেবে stream করুন — application code না ছুঁয়ে।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["CDC", "Debezium", "logical replication", "outbox pattern", "event streaming"]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "04-event-sourcing",
+			"meta": {
+				"title": "Event Sourcing",
+				"subtitle": "Current state-এর বদলে events-কে প্রধান রেকর্ড হিসেবে store করুন — event log আবার replay করে যেকোনো অতীত state ফিরে গড়ুন।",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["event sourcing", "event store", "aggregates", "projections", "snapshots"]
+			}
+		},
+		{
+			"category": "event-driven",
+			"slug": "05-schema-evolution",
+			"meta": {
+				"title": "Schema Evolution ও Event Versioning",
+				"subtitle": "Events চিরস্থায়ী — consumer না ভেঙে schema কীভাবে evolve করাবেন, আর যে registry সবাইকে সমন্বয়ে রাখে।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"schema evolution",
+					"Avro",
+					"Schema Registry",
+					"backward compatibility",
+					"event versioning"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "01-rendering-patterns",
+			"meta": {
+				"title": "রেন্ডারিং প্যাটার্ন",
+				"subtitle": "CSR, SSR, SSG, এবং ISR — আপনার ওয়েব অ্যাপ্লিকেশনের জন্য কখন এবং কেন কোন রেন্ডারিং স্ট্র্যাটেজি ব্যবহার করবেন তা বুঝুন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 মিনিট",
+				"topics": ["CSR", "SSR", "SSG", "ISR", "hydration", "rendering"]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "02-component-architecture",
+			"meta": {
+				"title": "কম্পোনেন্ট আর্কিটেকচার",
+				"subtitle": "Composition, props, slots, compound components, এবং atomic design — এমন reusable UI তৈরি করা যা scale করে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"components",
+					"composition",
+					"atomic design",
+					"props",
+					"slots",
+					"compound components"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "03-state-management",
+			"meta": {
+				"title": "স্টেট ম্যানেজমেন্ট",
+				"subtitle": "Local state, lifted state, context, global stores, আর signals — জটিল UI-তে ডেটা ফ্লো ম্যানেজ করা।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["state", "context", "zustand", "redux", "signals", "state machines"]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "04-routing-navigation",
+			"meta": {
+				"title": "রাউটিং ও নেভিগেশন",
+				"subtitle": "আধুনিক ওয়েব অ্যাপের জন্য client-side routing, file-based routing, dynamic routes, nested layouts, আর middleware।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["routing", "navigation", "dynamic routes", "layouts", "middleware"]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "05-data-fetching",
+			"meta": {
+				"title": "ডেটা ফেচিং প্যাটার্ন",
+				"subtitle": "Fetch, SWR, React Query, loading states, error boundaries, এবং caching strategy — শক্তিশালী ডেটা লেয়ার বানানোর জন্য।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["fetch", "SWR", "react query", "caching", "error boundaries", "loading states"]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "06-performance-optimization",
+			"meta": {
+				"title": "পারফরম্যান্স অপটিমাইজেশন",
+				"subtitle": "Code splitting, lazy loading, tree shaking, bundle analysis, আর Core Web Vitals — তোমার ফ্রন্টএন্ডকে দ্রুত বানানো।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": [
+					"performance",
+					"code splitting",
+					"lazy loading",
+					"tree shaking",
+					"core web vitals",
+					"bundle size"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "07-testing-strategies",
+			"meta": {
+				"title": "টেস্টিং স্ট্র্যাটেজি",
+				"subtitle": "ইউনিট টেস্ট, ইন্টিগ্রেশন টেস্ট, E2E টেস্ট, Testing Library প্যাটার্ন এবং মকিং — আপনার কোডে আস্থা তৈরি করা।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"testing",
+					"unit tests",
+					"integration tests",
+					"E2E",
+					"testing library",
+					"mocking"
+				]
+			}
+		},
+		{
+			"category": "frontend",
+			"slug": "08-accessibility-i18n",
+			"meta": {
+				"title": "Accessibility ও i18n",
+				"subtitle": "ARIA, সেমান্টিক HTML, কীবোর্ড নেভিগেশন, স্ক্রিন রিডার, RTL সাপোর্ট এবং ইন্টারন্যাশনালাইজেশন প্যাটার্ন।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"accessibility",
+					"a11y",
+					"ARIA",
+					"keyboard navigation",
+					"i18n",
+					"RTL",
+					"screen readers"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "01-getting-started",
+			"meta": {
+				"title": "Go দিয়ে শুরু করা",
+				"subtitle": "Go কেন আছে, কীভাবে সেটআপ করবেন, আর আপনার প্রথম প্রোগ্রাম — একটা লাইন লেখার আগে এর philosophy বুঝে নিন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "15 মিনিট",
+				"topics": ["setup", "hello world", "go philosophy", "toolchain"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "02-types-variables-control-flow",
+			"meta": {
+				"title": "Types, Variables ও Control Flow",
+				"subtitle": "Go-র type system সরল কিন্তু কড়া — বাস্তব কিছু বানানোর আগে বিল্ডিং ব্লকগুলো শিখে নিন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "18 মিনিট",
+				"topics": ["types", "variables", "constants", "if/else", "loops", "switch"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "03-functions-error-handling",
+			"meta": {
+				"title": "Functions ও Error Handling",
+				"subtitle": "Function আর error নিয়ে Go-র দৃষ্টিভঙ্গি বেশিরভাগ ভাষার চেয়ে একদম আলাদা — explicit, composable, আর এড়িয়ে যাওয়া অসম্ভব।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "20 মিনিট",
+				"topics": ["functions", "error handling", "multiple returns", "defer", "closures"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "04-pointers-memory",
+			"meta": {
+				"title": "Pointers ও Memory",
+				"subtitle": "Pointer আপনাকে ডেটা কপি না করেই শেয়ার করতে দেয় — একবার বুঝে নিলে & আর * নিয়ে আর কখনো ধন্দে পড়বেন না।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "16 মিনিট",
+				"topics": ["pointers", "memory", "stack", "heap", "nil", "pass by value"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "05-structs-methods",
+			"meta": {
+				"title": "Structs ও Methods",
+				"subtitle": "Go-তে class নেই — আছে struct আর method। সহজ, বেশি explicit, আর অবাক করার মতো শক্তিশালী।",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "18 মিনিট",
+				"topics": ["structs", "methods", "receivers", "embedding", "constructors"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "06-interfaces",
+			"meta": {
+				"title": "Interfaces ও Polymorphism",
+				"subtitle": "Go interface implicit — কোনো 'implements' keyword লাগে না। এটা সফটওয়্যার ডিজাইন করার পুরো ধরনটাই বদলে দেয়।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": [
+					"interfaces",
+					"polymorphism",
+					"type assertions",
+					"composition",
+					"dependency injection"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "07-generics",
+			"meta": {
+				"title": "Generics",
+				"subtitle": "যেকোনো type-এর সাথে কাজ করে এমন কোড লিখুন — Go 1.18-এর সবচেয়ে বড় feature type safety না হারিয়েই boilerplate মুছে দেয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "18 মিনিট",
+				"topics": ["generics", "type parameters", "constraints", "type inference"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "08-packages-modules-testing",
+			"meta": {
+				"title": "Packages, Modules ও Testing",
+				"subtitle": "বাস্তব প্রজেক্টের জন্য কীভাবে Go কোড গোছাবেন — dependency management, package design, আর সত্যিকারের bug ধরা test লেখা।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["packages", "modules", "testing", "benchmarks", "table-driven tests"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "09-strings-runes-encoding",
+			"meta": {
+				"title": "Strings, Runes ও Encoding",
+				"subtitle": "Go-তে string আসলে UTF-8 byte slice — এটা জানা থাকলে international text, emoji আর binary data হ্যান্ডেল করার সময় একটা গোটা শ্রেণীর bug এড়ানো যায়।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["strings", "runes", "UTF-8", "encoding", "bytes", "text processing"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "10-concurrency",
+			"meta": {
+				"title": "Goroutine দিয়ে Concurrency",
+				"subtitle": "Go-এর concurrency model-ই এর সেরা ফিচার — goroutine আর channel concurrent programming-কে ভয়ঙ্কর নয়, বরং স্বাভাবিক মনে করায়।",
+				"chapter": 10,
+				"level": "intermediate",
+				"readingTime": "22 মিনিট",
+				"topics": ["goroutines", "channels", "select", "WaitGroup", "concurrency patterns"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "11-advanced-concurrency",
+			"meta": {
+				"title": "Advanced Concurrency Pattern",
+				"subtitle": "Context, sync primitive, worker pool, আর যেসব pattern স্কেলে Go চালায় — Uber থেকে Cloudflare পর্যন্ত।",
+				"chapter": 11,
+				"level": "intermediate",
+				"readingTime": "22 মিনিট",
+				"topics": ["context", "sync", "mutex", "semaphore", "pipeline", "errgroup"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "12-working-with-data",
+			"meta": {
+				"title": "Data নিয়ে কাজ করা",
+				"subtitle": "JSON, HTTP client, database, আর file I/O — প্রতিটা Go backend service-এর নিত্যদিনের হাতিয়ার।",
+				"chapter": 12,
+				"level": "intermediate",
+				"readingTime": "22 মিনিট",
+				"topics": ["JSON", "HTTP", "database", "SQL", "file I/O", "REST API"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "13-building-rest-apis",
+			"meta": {
+				"title": "REST API বানানো",
+				"subtitle": "শূন্য থেকে একটা সম্পূর্ণ, production-grade REST API — routing, validation, error response, আর বাস্তব কোম্পানিতে ব্যবহৃত project structure।",
+				"chapter": 13,
+				"level": "intermediate",
+				"readingTime": "25 মিনিট",
+				"topics": ["REST API", "HTTP", "routing", "validation", "project structure", "CRUD"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "14-authentication-middleware",
+			"meta": {
+				"title": "Authentication ও Middleware",
+				"subtitle": "JWT authentication, middleware chain, CORS, rate limiting — প্রতিটা API-র দরকারি security আর cross-cutting concern।",
+				"chapter": 14,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["authentication", "JWT", "middleware", "CORS", "rate limiting", "security"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "15-database-patterns",
+			"meta": {
+				"title": "Database Pattern",
+				"subtitle": "Migration, repository pattern, connection pooling, আর query builder — যে database layer স্কেল করে।",
+				"chapter": 15,
+				"level": "intermediate",
+				"readingTime": "22 মিনিট",
+				"topics": [
+					"database",
+					"migrations",
+					"repository pattern",
+					"sqlc",
+					"transactions",
+					"connection pooling"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "16-grpc",
+			"meta": {
+				"title": "gRPC ও Protocol Buffers",
+				"subtitle": "High-performance service-to-service communication — service-রা যখন একে অপরের সাথে কথা বলে, gRPC তখন REST যা হতে চায় তা-ই।",
+				"chapter": 16,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["gRPC", "protobuf", "RPC", "microservices", "streaming", "service communication"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "17-websockets-realtime",
+			"meta": {
+				"title": "WebSockets ও Real-Time",
+				"subtitle": "Go-তে real-time ফিচার বানান — chat, live update, notification — WebSockets আর Go-এর concurrency model ব্যবহার করে।",
+				"chapter": 17,
+				"level": "intermediate",
+				"readingTime": "20 মিনিট",
+				"topics": ["WebSockets", "real-time", "chat", "pub/sub", "SSE", "gorilla/websocket"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "18-error-handling-at-scale",
+			"meta": {
+				"title": "Scale-এ Error Handling",
+				"subtitle": "'if err != nil'-এর বাইরে — error wrapping strategy, domain error, error budget, আর বড় Go codebase থেকে শেখা pattern।",
+				"chapter": 18,
+				"level": "advanced",
+				"readingTime": "18 মিনিট",
+				"topics": [
+					"error handling",
+					"error wrapping",
+					"domain errors",
+					"error types",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "19-testing-strategies",
+			"meta": {
+				"title": "Testing Strategy",
+				"subtitle": "Unit test, integration test, test fixture, mocking, আর testcontainers — এমন testing যা আসল bug ধরে, শুধু checkbox coverage নয়।",
+				"chapter": 19,
+				"level": "advanced",
+				"readingTime": "22 মিনিট",
+				"topics": [
+					"testing",
+					"integration tests",
+					"mocking",
+					"testcontainers",
+					"fixtures",
+					"golden files"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "20-observability",
+			"meta": {
+				"title": "Observability",
+				"subtitle": "Log, metric, আর trace — এই তিন স্তম্ভ আপনাকে বুঝতে দেয় production-এ আপনার Go service আসলে কী করছে।",
+				"chapter": 20,
+				"level": "advanced",
+				"readingTime": "20 মিনিট",
+				"topics": [
+					"observability",
+					"OpenTelemetry",
+					"metrics",
+					"tracing",
+					"Prometheus",
+					"monitoring"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "21-production-go",
+			"meta": {
+				"title": "Production Go",
+				"subtitle": "Logging, configuration, graceful shutdown, profiling, আর deployment — 'আমার মেশিনে তো কাজ করে' থেকে scale-এ চালানোর মাঝের সবকিছু।",
+				"chapter": 21,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": [
+					"logging",
+					"configuration",
+					"graceful shutdown",
+					"profiling",
+					"deployment",
+					"observability"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "22-cli-tools",
+			"meta": {
+				"title": "CLI Tool বানানো",
+				"subtitle": "Go-এর single-binary output একে CLI tool-এর জন্য পারফেক্ট করে তোলে — developer tool, automation script, আর DevOps utility বানান।",
+				"chapter": 22,
+				"level": "advanced",
+				"readingTime": "18 মিনিট",
+				"topics": ["CLI", "cobra", "flags", "terminal", "developer tools", "automation"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "23-design-patterns",
+			"meta": {
+				"title": "Go-তে Design Pattern",
+				"subtitle": "Go-এর সরলতা classic pattern প্রয়োগের ধরন বদলে দেয় — কোনো class নেই, কোনো inheritance নেই, শুধু composition আর interface।",
+				"chapter": 23,
+				"level": "advanced",
+				"readingTime": "20 মিনিট",
+				"topics": [
+					"design patterns",
+					"dependency injection",
+					"options pattern",
+					"strategy",
+					"observer",
+					"decorator"
+				]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "24-security",
+			"meta": {
+				"title": "Security Best Practice",
+				"subtitle": "SQL injection, XSS, CSRF, secrets management, আর cryptography — বাস্তব-জগতের attack থেকে আপনার Go service নিরাপদ রাখুন।",
+				"chapter": 24,
+				"level": "advanced",
+				"readingTime": "18 মিনিট",
+				"topics": ["security", "SQL injection", "XSS", "CSRF", "bcrypt", "secrets", "HTTPS"]
+			}
+		},
+		{
+			"category": "golang",
+			"slug": "25-url-shortener",
+			"meta": {
+				"title": "Case Study: URL Shortener",
+				"subtitle": "শূন্য থেকে একটা সম্পূর্ণ URL shortener বানান — যা শিখেছেন সব প্রয়োগ করে: HTTP, database, caching, testing, আর deployment।",
+				"chapter": 25,
+				"level": "advanced",
+				"readingTime": "25 মিনিট",
+				"topics": ["project", "URL shortener", "full-stack", "Redis", "PostgreSQL", "end-to-end"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "GraphQL Building — রোডম্যাপ",
+				"subtitle": "দশটি অধ্যায় যা 'একটা query তো নিছক একটা string' থেকে শুরু করে batched resolver, auth, subscription আর depth limit সহ nginx-এর পিছনে বসানো একটা self-hosted GraphQL server পর্যন্ত নিয়ে যায়।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "graphql", "schema", "resolvers", "dataloader", "federation"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "01-what-graphql-is",
+			"meta": {
+				"title": "GraphQL কী আর কখন ব্যবহার করবেন",
+				"subtitle": "GraphQL কোনো database নয়, কোনো transport নয়, আর HTTP-এর বিকল্পও নয়। এটা একটা query language আর একটা typed contract — আর এই পার্থক্যটাই এখান থেকে আপনার প্রতিটা সিদ্ধান্তকে আকার দেয়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["graphql", "rest", "api design", "schema"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "02-schema-first-design",
+			"meta": {
+				"title": "Schema-first design",
+				"subtitle": "Schema হলো আজ পর্যন্ত যত ক্লায়েন্ট আছে তাদের প্রত্যেকের সাথে আপনার contract। প্রথম দুপুরে নেওয়া সিদ্ধান্তগুলো — types, nullability, ID — বছরের পর বছর আপনাকে বয়ে বেড়াতে হয়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["graphql", "schema", "sdl", "types", "nullability"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "03-first-server",
+			"meta": {
+				"title": "তোমার প্রথম সার্ভার চালানো",
+				"subtitle": "graphql-yoga, শুরু থেকে শেষ পর্যন্ত, ষাট লাইনে। এই চ্যাপ্টার শেষে তোমার ল্যাপটপে একটা সত্যিকারের GraphQL সার্ভার থাকবে, curl দিয়ে কোয়েরি করা, Postgres-এর সাথে কথা বলছে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["graphql", "graphql-yoga", "node", "postgres"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "04-resolvers",
+			"meta": {
+				"title": "Resolvers আর execution tree",
+				"subtitle": "একটা resolver হলো একটা ফাংশন যা একটা ভ্যালু রিটার্ন করে। এগুলোকে একটা tree-তে সাজাও, আর সেই tree-ই তোমার API। একবার walk-টা দেখে ফেললে, প্রতিটা অদ্ভুত GraphQL বাগ স্পষ্ট হয়ে যায়।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["graphql", "resolvers", "execution", "context"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "05-n-plus-one",
+			"meta": {
+				"title": "N+1 সমস্যা",
+				"subtitle": "তোমার GraphQL সার্ভার এগারোটা SQL কোয়েরি চালায় যেখানে দুটো চালানো উচিত। প্রতিটা backend টিম এটা কঠিন পথে শেখে। এই চ্যাপ্টার হলো রোগনির্ণয় — চ্যাপ্টার 6 হলো নিরাময়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["graphql", "n+1", "performance", "sql", "postgres"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "06-dataloader",
+			"meta": {
+				"title": "DataLoader",
+				"subtitle": "DataLoader একটা ছোট লাইব্রেরি যা একটা event loop tick-এর ভেতরে load গুলো batch করে আর একটা request-এর সময়কাল জুড়ে key ধরে cache করে N+1 সমস্যা ঠিক করে। একবার wire করে দিলে তোমার resolver গুলো পরিষ্কার থাকে আর SQL graph collapse করে যায়।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["graphql", "dataloader", "batching", "performance"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "07-mutations",
+			"meta": {
+				"title": "Mutations, input types, validation",
+				"subtitle": "Write শুধু side effect সহ query নয়। এদের input type, validation, transaction, idempotency, আর এমন একটা return shape লাগে যা client-কে দ্বিতীয়বার fetch না করেই তার cache update করতে দেয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["graphql", "mutations", "input types", "validation", "transactions"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "08-auth",
+			"meta": {
+				"title": "Authentication এবং authorization",
+				"subtitle": "GraphQL-এ auth মূলত REST-এর মতোই — HTTP-তে JWT বা session, context-এ identity — শুধু পার্থক্য এই যে প্রতিটি field নিজেই একটা ছোট endpoint যার authorization check দরকার। layering-টা ঠিকমতো করো, নাহলে এটা তোমাকে ভোগাবে।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["graphql", "authentication", "authorization", "jwt", "directives"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "09-subscriptions",
+			"meta": {
+				"title": "WebSockets-এর উপর Subscriptions",
+				"subtitle": "Subscription হলো realtime query — client একটা long-lived connection খোলে আর server ঘটনা ঘটার সাথে সাথে event push করে। query আর mutation-এর তুলনায় ভিন্ন transport, ভিন্ন lifecycle, ভিন্ন failure mode।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["graphql", "subscriptions", "websockets", "realtime", "pubsub"]
+			}
+		},
+		{
+			"category": "graphql",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production hardening এবং self-host",
+				"subtitle": "Depth limit, complexity limit, persisted query, error sanitisation, federation, আর পুরো self-hosted nginx deploy। 'আমার laptop-এ চলে' আর 'বৈরী internet-এ টিকে থাকে' — এই দুইয়ের মাঝের সবকিছু।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "16 মিনিট",
+				"topics": ["graphql", "security", "performance", "federation", "nginx", "deployment"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "gRPC তৈরি — রোডম্যাপ",
+				"subtitle": "দশটি অধ্যায় যা আপনাকে 'protobuf একটা config language' থেকে শুরু করে একটা polyglot, mTLS দিয়ে সুরক্ষিত, observable gRPC service পর্যন্ত নিয়ে যাবে — যা nginx-এর পেছনে চলছে, streaming RPC আর টাইট deadline সহ।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "grpc", "protobuf", "http2", "rpc"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "01-what-grpc-is",
+			"meta": {
+				"title": "gRPC কী আর কখন ব্যবহার করবেন",
+				"subtitle": "gRPC হলো HTTP/2, সাথে protobuf, সাথে codegen। এই তিনটা মিলে আপনাকে একটা typed, দ্রুত, polyglot RPC system দেয়। প্রতিটা layer কী করছে সেটা জানাই এটা ভালোভাবে ব্যবহার করার অর্ধেক দক্ষতা।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["grpc", "rpc", "rest", "graphql", "protobuf"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "02-protobuf",
+			"meta": {
+				"title": "Protocol Buffers",
+				"subtitle": "Protobuf হলো schema language আর wire format। schema-র নিয়মগুলো ঠিকঠাক করুন, আপনার service গুলো এক দশক ধরে compatible থাকবে। ভুল করুন, একটা খারাপ commit-ই একসাথে প্রতিটা client ভেঙে ফেলবে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["grpc", "protobuf", "proto3", "schema", "wire format"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "03-http2",
+			"meta": {
+				"title": "নিচে যে HTTP/2 চলছে",
+				"subtitle": "gRPC হলো HTTP/2 — একটা নির্দিষ্ট সেট হেডার আর protobuf বাইটকে ফ্রেম করার একটা নির্দিষ্ট উপায় সহ। HTTP/2 আসলে কী করে সেটা জানলে প্রোডাকশনে আপনি যত gRPC failure mode-এ পড়বেন তার সবগুলোই ব্যাখ্যা হয়ে যায়।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["grpc", "http2", "framing", "multiplexing", "flow control"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "04-first-server",
+			"meta": {
+				"title": "আপনার প্রথম server আর client",
+				"subtitle": "এক অধ্যায়ে end-to-end Go gRPC — proto, codegen, server, client, reflection, grpcurl। শেষে আপনার হাতে একটা সত্যিকারের binary থাকবে যা আপনি deploy করতে পারবেন।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["grpc", "go", "protoc", "codegen", "reflection"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "05-polyglot",
+			"meta": {
+				"title": "Polyglot — Node আর Python client",
+				"subtitle": "একই `.proto`, তিন ভাষা। gRPC-এর পুরো বক্তব্যই হলো wire শেয়ার্ড আর codegen ফ্রি। একবার করে ফেললে এটা আর জাদু মনে হয় না।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["grpc", "node", "python", "codegen", "polyglot"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "06-streaming",
+			"meta": {
+				"title": "স্ট্রিমিং RPC",
+				"subtitle": "স্ট্রিম হলো gRPC-র সেই অংশ যেখানে এটা আর REST-এর মতো দেখতে থাকে না। Server-streaming, client-streaming, আর bidirectional — তিনটা শেপ যা বদলে দেয় আপনি কেমন ধরনের সার্ভিস বানাতে পারবেন।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["grpc", "streaming", "server stream", "bidi"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "07-errors-deadlines",
+			"meta": {
+				"title": "Errors, deadlines, metadata",
+				"subtitle": "স্ট্যাটাস কোড একটা নির্দিষ্ট সেট, deadline context-এর সাথে বয়ে চলে, metadata প্রতিটা কলে সওয়ার হয়। তিনটা একসাথে একটা কাজ-করা gRPC সার্ভিসকে debuggable আর survivable বানিয়ে দেয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["grpc", "errors", "deadlines", "metadata", "status codes"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "08-interceptors",
+			"meta": {
+				"title": "Interceptors",
+				"subtitle": "Interceptor হলো gRPC-র middleware। Cross-cutting concern — auth, logging, tracing, retry, panic recovery — এখানে থাকে, একবার, প্রতিটা RPC-র জন্য। layering ঠিকঠাক করলে আপনার হ্যান্ডলার ছোট থেকে যায়।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["grpc", "interceptors", "middleware", "auth", "logging"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "09-tls-mtls",
+			"meta": {
+				"title": "TLS ও mTLS",
+				"subtitle": "Server TLS ওয়্যার এনক্রিপ্ট করে এবং server-এর identity প্রমাণ করে। Mutual TLS ক্লায়েন্টদের জন্য একই প্রমাণ যোগ করে। দুটোই একই handshake-এর উপর চড়ে — আর একবার ছোট একটা CA থাকলে, দুটোই কয়েক লাইনের Go।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["grpc", "tls", "mtls", "certificates", "security"]
+			}
+		},
+		{
+			"category": "grpc",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production self-host",
+				"subtitle": "এমন load balancing যা HTTP/2-কে সম্মান করে, এমন observability যা আপনি আসলেই কাজে লাগান, framework-সমর্থিত health check, এবং একটা VPS-এ পূর্ণ systemd + nginx deploy।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": ["grpc", "load balancing", "observability", "nginx", "deployment"]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Horizontal Scaling — রোডম্যাপ",
+				"subtitle": "Stateless সার্ভিস, load balancer, auto-scaling, ডেটাবেস bottleneck, এবং একাধিক instance জুড়ে WebSocket fan-out।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "01-stateless-services",
+			"meta": {
+				"title": "Stateless Services",
+				"subtitle": "Horizontal scaling-এর জন্য stateless কেন পূর্বশর্ত — এবং কীভাবে আপনার অ্যাপ্লিকেশন থেকে state বের করে আনবেন যাতে যেকোনো instance যেকোনো request সামলাতে পারে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["stateless", "horizontal scaling", "sessions", "shared state", "twelve-factor"]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "02-load-balancers",
+			"meta": {
+				"title": "Load Balancers",
+				"subtitle": "Layer 4 বনাম Layer 7, algorithm, health check, connection draining — একাধিক instance জুড়ে ট্রাফিক বিতরণের কারিগরি।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"load balancer",
+					"L4",
+					"L7",
+					"round robin",
+					"health checks",
+					"connection draining"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "03-auto-scaling",
+			"meta": {
+				"title": "Auto-Scaling",
+				"subtitle": "চাহিদা অনুযায়ী scale out — target tracking, scheduled scaling, scale-in protection, এবং যে metric আসলে ভালো সিদ্ধান্ত চালায়।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["auto-scaling", "ASG", "HPA", "target tracking", "scale-in", "KEDA"]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "04-database-scaling",
+			"meta": {
+				"title": "Scaling the Database Layer",
+				"subtitle": "Read replica, connection pooling, এবং কেন ডেটাবেস প্রায় সবসময়ই horizontal scaling-এর bottleneck।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"read replicas",
+					"connection pooling",
+					"PgBouncer",
+					"database bottleneck",
+					"sharding"
+				]
+			}
+		},
+		{
+			"category": "horizontal-scaling",
+			"slug": "05-websockets-and-state",
+			"meta": {
+				"title": "WebSockets & Shared State at Scale",
+				"subtitle": "কীভাবে persistent connection, pub/sub fan-out, এবং যে Redis adapter Socket.io-কে একাধিক instance জুড়ে কাজ করায় তা সামলাবেন।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 মিনিট",
+				"topics": ["WebSockets", "Socket.io", "Redis adapter", "pub/sub", "sticky sessions"]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Infrastructure as Code — রোডম্যাপ",
+				"subtitle": "আগে Ansible playbook, তারপর নিজের infrastructure-এর ওপর Terraform।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "01-why-iac",
+			"meta": {
+				"title": "Infrastructure as Code কেন",
+				"subtitle": "Manual infrastructure-এর সমস্যা — drift, undocumented state, unrepeatable environment — আর IaC কীভাবে সেগুলো সমাধান করে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 মিনিট",
+				"topics": ["IaC", "infrastructure", "Terraform", "Ansible", "drift", "idempotency"]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "02-ansible-fundamentals",
+			"meta": {
+				"title": "Ansible Fundamentals",
+				"subtitle": "Inventory, playbook, role, আর variable — কোনো agent install না করেই নির্ভরযোগ্যভাবে server configure করা।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["Ansible", "playbooks", "roles", "inventory", "handlers", "templates"]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "03-terraform-fundamentals",
+			"meta": {
+				"title": "Terraform Fundamentals",
+				"subtitle": "Resource, state, provider, module, আর plan/apply workflow যা cloud provisioning-কে reproducible করে।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["Terraform", "HCL", "state", "providers", "modules", "plan", "apply"]
+			}
+		},
+		{
+			"category": "iac",
+			"slug": "04-terraform-patterns",
+			"meta": {
+				"title": "Terraform Patterns & Production",
+				"subtitle": "Module composition, environment, secrets, drift detection, আর যেসব practice বড় Terraform codebase-কে সামলানোর মতো রাখে।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["Terraform", "modules", "environments", "secrets", "drift", "refactoring"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Linux ও VPS বেসিকস — রোডম্যাপ",
+				"subtitle": "বারোটি চ্যাপ্টার যা আপনাকে একদম নতুন একটা VPS থেকে হার্ডেন করা, মনিটর করা, রিয়েল সফটওয়্যার চালানোর জন্য প্রস্তুত একটা বক্সে নিয়ে যাবে। কোনো ম্যানেজড ক্লাউড নয়।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "6 মিনিট",
+				"topics": ["roadmap", "linux", "vps", "self-hosted"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "01-picking-a-vps",
+			"meta": {
+				"title": "একটা VPS বাছাই করা",
+				"subtitle": "একটা VPS আসলে কী, কীভাবে এর সাইজ ঠিক করবেন, আর কারো ইকোসিস্টেমে নিজেকে আটকে না ফেলে কীভাবে আপনার প্রথম বক্স প্রভিশন করবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": ["vps", "linux", "provisioning", "hetzner", "ovh", "digitalocean"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "02-ssh-hardening",
+			"meta": {
+				"title": "প্রথম লগইন ও SSH হার্ডেনিং",
+				"subtitle": "একটা কী জেনারেট করুন, পাসওয়ার্ড লগইন বন্ধ করুন, sshd লক ডাউন করুন, আর সামনে fail2ban বসান। একটা VPS-এ আপনি যত ঘণ্টা কাটাবেন তার মধ্যে সবচেয়ে গুরুত্বপূর্ণ এক ঘণ্টা।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["ssh", "security", "openssh", "fail2ban", "hardening"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "03-filesystem",
+			"meta": {
+				"title": "Linux ফাইলসিস্টেম",
+				"subtitle": "সবকিছু কোথায় থাকে, কেন সেখানে থাকে, আর যে পারমিশন মডেল ঠিক করে আপনার প্রসেস কী ছুঁতে পারবে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["filesystem", "permissions", "fhs", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "04-processes-signals",
+			"meta": {
+				"title": "প্রসেস ও সিগন্যাল",
+				"subtitle": "একটা Linux প্রসেস আসলে কী, কীভাবে fork আর exec গোটা মহাবিশ্ব বানায়, আর যে সিগন্যালগুলো ঠিক করে আপনার অ্যাপ পরিষ্কারভাবে বন্ধ হবে নাকি চিৎকার করতে করতে মরবে।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["processes", "signals", "fork", "exec", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "05-systemd",
+			"meta": {
+				"title": "systemd",
+				"subtitle": "একটা unit ফাইল লিখুন। ক্র্যাশে রিস্টার্ট করুন। রিবুট পার করে টিকে থাকুন। journal পড়ুন। যে সুপারভাইজার একটা আধুনিক Linux বক্সে সবকিছু চালায়।",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["systemd", "services", "journald", "init", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "06-sockets-ports",
+			"meta": {
+				"title": "সকেট, পোর্ট, আর কী listen করছে",
+				"subtitle": "প্রতিটা নেটওয়ার্ক সার্ভিস একটা সকেট। প্রতিটা খোলা পোর্ট এমন একটা সকেট যা কেউ bind করেছে। আপনার VPS ঠিক কী এক্সপোজ করছে তা বলে দেওয়া চারটা টুল।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["sockets", "ports", "ss", "lsof", "netstat", "tcp"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "07-firewall",
+			"meta": {
+				"title": "Firewall Fundamentals",
+				"subtitle": "প্যাকেট আসলে কীভাবে কার্নেলের ভেতর দিয়ে যায়, আর কীভাবে nftables রুল লিখতে হয় যেন ঠিক যা চান তা-ই allow হয় আর বাকি সব reject হয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["firewall", "nftables", "iptables", "ufw", "netfilter", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "08-users-sudo",
+			"meta": {
+				"title": "Users, Groups, and Sudo",
+				"subtitle": "Linux কীভাবে চিনে নেয় কে কী করছে, সার্ভিসগুলো কেন নিজেদের আলাদা user হিসেবে চলে, আর sudo কীভাবে আপনাকে root না বানিয়েই root ক্ষমতা দেয়।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["users", "groups", "sudo", "permissions", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "09-logs-journalctl",
+			"meta": {
+				"title": "Logs & journalctl",
+				"subtitle": "আধুনিক একটা Linux বক্সে আউটপুটের প্রতিটা লাইন কোথায় যায়, কীভাবে সেটা query করবেন, কীভাবে ডিস্ক ভরে যাওয়া ঠেকাবেন, আর কখন লগ হোস্টের বাইরে পাঠাবেন।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["logs", "journalctl", "journald", "logrotate", "syslog", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "10-resource-limits",
+			"meta": {
+				"title": "Resource Limits",
+				"subtitle": "ulimit, cgroups, আর OOM killer — resource control-এর তিনটা স্তর যা ঠিক করে আপনার সার্ভিসগুলো বক্সটা ভদ্রভাবে ভাগ করে নেবে নাকি মরণপণ লড়াই করবে।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["cgroups", "ulimit", "oom", "limits", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "11-cron-timers",
+			"meta": {
+				"title": "Cron & systemd Timers",
+				"subtitle": "কোড একটা schedule ধরে চালানোর দুটো উপায়। কোনটা বেছে নেবেন, প্রতিটা কীভাবে লিখবেন, আর scheduled job মাসের পর মাস নীরবে ফেল হওয়া থেকে কীভাবে বাঁচাবেন।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "10 মিনিট",
+				"topics": ["cron", "systemd", "timers", "scheduling", "linux"]
+			}
+		},
+		{
+			"category": "linux-vps",
+			"slug": "12-production-checklist",
+			"meta": {
+				"title": "Production Checklist",
+				"subtitle": "এই ট্র্যাকের প্রতিটা ধাপ, একটা runbook-এ। একটা তাজা VPS প্রভিশন করুন আর দিন শেষে একটা hardened, monitored, deploy-এর জন্য প্রস্তুত বক্স নিয়ে বসুন।",
+				"chapter": 12,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": ["checklist", "hardening", "production", "linux", "vps"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Load Balancing — রোডম্যাপ",
+				"subtitle": "HAProxy আর nginx। L4 vs L7, health check, sticky session, weighted routing।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "01-l4-vs-l7",
+			"meta": {
+				"title": "L4 vs L7 Load Balancing",
+				"subtitle": "Packet route করা আর request route করার পার্থক্য — কখন কোন layer ব্যবহার করবেন আর প্রতিটা কী দেখতে পারে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["load balancing", "L4", "L7", "TCP", "HTTP", "nginx", "HAProxy"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "02-algorithms",
+			"meta": {
+				"title": "Load Balancing Algorithm",
+				"subtitle": "Round-robin, least connections, IP hash, weighted routing — কোন algorithm কখন মানানসই আর backend সমান না হলে কী ঘটে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"load balancing",
+					"round-robin",
+					"least connections",
+					"consistent hashing",
+					"weighted"
+				]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "03-health-checks",
+			"meta": {
+				"title": "Health Checks",
+				"subtitle": "Active vs passive detection, failure threshold, graceful draining — মৃত backend-গুলোকে rotation-এর বাইরে রাখা।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["health checks", "HAProxy", "nginx", "active", "passive", "connection draining"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "04-ssl-termination",
+			"meta": {
+				"title": "SSL Termination",
+				"subtitle": "Load balancer-এ TLS, certificate management, LB আর backend-এর মাঝে HTTPS, আর offload করা vs end-to-end encryption-এর trade-off।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": ["SSL", "TLS", "HTTPS", "certificates", "nginx", "HAProxy", "termination"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "05-haproxy-deep-dive",
+			"meta": {
+				"title": "HAProxy in Depth",
+				"subtitle": "Frontend/backend config, ACL, stats page, runtime API, আর যেসব pattern HAProxy-কে চাহিদাসম্পন্ন deployment-এর জন্য প্রথম পছন্দের proxy বানায়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["HAProxy", "ACLs", "stats", "runtime API", "rate limiting", "canary"]
+			}
+		},
+		{
+			"category": "load-balancing",
+			"slug": "06-advanced-patterns",
+			"meta": {
+				"title": "Advanced Load Balancing Pattern",
+				"subtitle": "Blue-green deployment, circuit breaker, global load balancing, আর anycast — যেসব deployment ভুল হওয়া চলে না তার pattern।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"blue-green",
+					"canary",
+					"circuit breaker",
+					"global load balancing",
+					"anycast",
+					"GeoDNS"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "মেসেজিং ও কিউ — রোডম্যাপ",
+				"subtitle": "RabbitMQ বা NATS সেলফ-হোস্ট করুন। তারপর ৩টি VPS জুড়ে একটা Kafka cluster চালান।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "01-why-messaging",
+			"meta": {
+				"title": "Messaging Systems কেন লাগে",
+				"subtitle": "স্কেলে সরাসরি HTTP call যেসব সমস্যা তৈরি করে — আর async messaging কীভাবে coupling, backpressure ও reliability সামলায়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["messaging", "queues", "async", "decoupling", "backpressure", "pub/sub"]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "02-rabbitmq",
+			"meta": {
+				"title": "RabbitMQ",
+				"subtitle": "Exchanges, queues, bindings, dead letter exchange — AMQP model আর নির্ভরযোগ্য task processing-এ এটা কীভাবে ব্যবহার করবেন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["RabbitMQ", "AMQP", "exchanges", "queues", "dead letter", "acknowledgements"]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "03-kafka",
+			"meta": {
+				"title": "Kafka",
+				"subtitle": "Topics, partitions, consumer groups, retention — সেই distributed log যেটা replay আর high-throughput event streaming সম্ভব করে।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": [
+					"Kafka",
+					"topics",
+					"partitions",
+					"consumer groups",
+					"KafkaJS",
+					"retention",
+					"compaction"
+				]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "04-nats",
+			"meta": {
+				"title": "NATS",
+				"subtitle": "Core pub/sub, JetStream persistence, KV store, আর একটা 3-node cluster চালানো — Kafka-র জটিলতা ছাড়াই নির্ভরযোগ্য messaging-এর দ্রুততম পথ।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["NATS", "JetStream", "pub/sub", "clustering", "KV store", "subjects"]
+			}
+		},
+		{
+			"category": "messaging",
+			"slug": "05-patterns",
+			"meta": {
+				"title": "Messaging Patterns",
+				"subtitle": "Saga, inbox/outbox, event-driven choreography বনাম orchestration — সেসব pattern যা partial failure সত্ত্বেও distributed system-কে নির্ভরযোগ্য করে।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": [
+					"saga",
+					"outbox",
+					"choreography",
+					"orchestration",
+					"idempotency",
+					"transactional messaging"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Microservices — রোডম্যাপ",
+				"subtitle": "কখন একটা monolith ভাঙবেন, service-দের মধ্যে gRPC, Consul দিয়ে service discovery।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "01-monolith-vs-microservices",
+			"meta": {
+				"title": "Monolith vs Microservices",
+				"subtitle": "ভাঙার আসল খরচ — কখন monolith-ই সঠিক সিদ্ধান্ত, কখন নয়, আর কাটার আগে কীভাবে seam গুলো চিনবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"microservices",
+					"monolith",
+					"architecture",
+					"domain boundaries",
+					"decomposition"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "02-grpc",
+			"meta": {
+				"title": "gRPC Between Services",
+				"subtitle": "Protocol Buffers, generated clients, streaming, আর internal service communication-এ কেন gRPC REST-কে হারায়।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": [
+					"gRPC",
+					"Protocol Buffers",
+					"protobuf",
+					"streaming",
+					"service definition",
+					"code generation"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "03-service-discovery",
+			"meta": {
+				"title": "Service Discovery",
+				"subtitle": "Service-রা কীভাবে একে অপরকে খুঁজে পায় — DNS-based discovery, Consul, client-side vs server-side load balancing, আর health-integrated routing।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["service discovery", "Consul", "DNS", "health checks", "service mesh", "Envoy"]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "04-api-gateway",
+			"meta": {
+				"title": "API Gateway",
+				"subtitle": "সব external traffic-এর entry point — routing, auth, rate limiting, request transformation, আর একটা gateway-এ কী রাখবেন না।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"API gateway",
+					"nginx",
+					"Kong",
+					"routing",
+					"rate limiting",
+					"auth",
+					"request transformation"
+				]
+			}
+		},
+		{
+			"category": "microservices",
+			"slug": "05-inter-service-reliability",
+			"meta": {
+				"title": "Inter-Service Reliability",
+				"subtitle": "Timeouts, retries, circuit breakers, আর bulkheads — যে pattern গুলো একটা slow service-কে পুরো outage-এ cascade হওয়া থেকে ঠেকায়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"circuit breaker",
+					"retry",
+					"timeout",
+					"bulkhead",
+					"resilience",
+					"cascading failure"
+				]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "01-how-internet-works",
+			"meta": {
+				"title": "ইন্টারনেট কীভাবে কাজ করে",
+				"subtitle": "প্যাকেট, রাউটার, আর যে ফিজিক্যাল ইনফ্রাস্ট্রাকচার কোটি কোটি ডিভাইসকে যুক্ত করে — প্রোটোকলে ঢোকার আগে বড় ছবিটা।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["internet", "packets", "routers", "ISP"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "02-dns",
+			"meta": {
+				"title": "DNS — ইন্টারনেটের ফোন বুক",
+				"subtitle": "ডোমেইন নাম কীভাবে IP অ্যাড্রেসে রূপ নেয় — recursive resolver, authoritative server, ক্যাশিং, আর DNS রেকর্ড টাইপ।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["DNS", "domain names", "resolvers", "records"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "03-tcp-ip",
+			"meta": {
+				"title": "TCP/IP — নির্ভরযোগ্য ডেলিভারি",
+				"subtitle": "Three-way handshake, flow control, congestion avoidance — কীভাবে TCP প্রতিটি byte সঠিক ক্রমে পৌঁছানোর গ্যারান্টি দেয়।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "16 মিনিট",
+				"topics": ["TCP", "IP", "handshake", "flow control", "congestion"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "04-udp",
+			"meta": {
+				"title": "UDP — নির্ভরযোগ্যতার বদলে গতি",
+				"subtitle": "যখন কয়েকটা প্যাকেট হারানো অপেক্ষা করার চেয়ে ভালো — ভিডিও কল, গেমিং, DNS lookup, আর নিজের reliability বানানো।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["UDP", "datagram", "real-time", "gaming"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "05-tls-https",
+			"meta": {
+				"title": "TLS ও HTTPS",
+				"subtitle": "সার্টিফিকেট, হ্যান্ডশেক আর এনক্রিপশন — TLS কীভাবে আপনার ডেটা প্রাইভেট রাখে আর নিশ্চিত করে যে আপনি সঠিক সার্ভারের সাথেই কথা বলছেন।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["TLS", "HTTPS", "certificates", "encryption", "handshake"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "06-http",
+			"meta": {
+				"title": "HTTP/1.1, HTTP/2, এবং HTTP/3",
+				"subtitle": "ওয়েবের প্রোটোকলের বিবর্তন — টেক্সট-ভিত্তিক request/response থেকে QUIC-এর উপর multiplexed stream পর্যন্ত।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "17 মিনিট",
+				"topics": ["HTTP", "HTTP/2", "HTTP/3", "QUIC", "multiplexing"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "07-websockets",
+			"meta": {
+				"title": "WebSockets ও রিয়েল-টাইম",
+				"subtitle": "একটি single connection-এর উপর full-duplex communication — chat, live update, collaborative editing, আর কখন এগুলো ব্যবহার করা উচিত নয়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["WebSocket", "real-time", "SSE", "long polling"]
+			}
+		},
+		{
+			"category": "networking",
+			"slug": "08-network-security",
+			"meta": {
+				"title": "Network Security",
+				"subtitle": "CORS, CSP, MITM attack, firewall — network layer-এ প্র্যাকটিক্যাল সিকিউরিটি যা প্রতিটি ডেভেলপারের বোঝা উচিত।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "16 মিনিট",
+				"topics": ["CORS", "CSP", "firewall", "MITM", "security headers"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "NoSQL — রোডম্যাপ",
+				"subtitle": "চারটি পরিবার, একটাই প্রশ্ন: তোমার access pattern কী? Key-value, document, wide-column আর graph store-এর ব্যাখ্যা।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "nosql"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "01-why-nosql",
+			"meta": {
+				"title": "Why NoSQL",
+				"subtitle": "relational database কোথায় scale-এ চাপে পড়ে, চারটি NoSQL পরিবার, ACID বনাম BASE, আর যেসব ক্ষেত্রে NoSQL ভুল উত্তর।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["nosql", "base", "cap"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "02-key-value",
+			"meta": {
+				"title": "Key-Value Stores",
+				"subtitle": "সবচেয়ে সহজ NoSQL model: একটা বিশাল distributed hash map। Redis, DynamoDB, TTL, আর যেসব workload-এ একটা O(1) lookup-কে কেউ হারাতে পারে না।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["key-value", "redis", "dynamodb"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "03-document",
+			"meta": {
+				"title": "ডকুমেন্ট ডেটাবেস",
+				"subtitle": "পুরো এন্টিটিকে JSON ডকুমেন্ট হিসেবে স্টোর করুন। MongoDB, embedding বনাম referencing সিদ্ধান্ত, indexing, এবং আপনি কীভাবে ডেটা পড়েন তার চারপাশে schema ডিজাইন করা।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["document", "mongodb", "embedding"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "04-wide-column",
+			"meta": {
+				"title": "Wide-Column স্টোর",
+				"subtitle": "Cassandra আর Bigtable: partition key, clustering key, query-first মডেলিং, write-optimized LSM পাথ, এবং tunable consistency।",
+				"chapter": 4,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["cassandra", "partition key", "clustering"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "05-graph",
+			"meta": {
+				"title": "গ্রাফ ডেটাবেস",
+				"subtitle": "Node, edge, আর property first-class নাগরিক হিসেবে। Neo4j আর Cypher, traversal, এবং যেসব query-তে গ্রাফ join-কে পেছনে ফেলে দেয়।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "11 মিনিট",
+				"topics": ["graph", "neo4j", "traversal"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "06-data-modeling-nosql",
+			"meta": {
+				"title": "NoSQL-এর জন্য ডেটা মডেলিং",
+				"subtitle": "অ্যাক্সেস-প্যাটার্ন-ফার্স্ট ডিজাইন, ইচ্ছাকৃত ডিনরমালাইজেশন, DynamoDB-তে সিঙ্গেল-টেবিল ডিজাইন, আর join না থাকলে relationship কীভাবে সামলাবেন।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["access patterns", "single-table", "denormalization"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "07-consistency-replication",
+			"meta": {
+				"title": "NoSQL-এ Consistency ও Replication",
+				"subtitle": "Tunable ও eventual consistency, quorum-এর হিসাব, LWW দিয়ে conflict resolution, vector clock আর CRDT, সাথে read repair ও anti-entropy।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["consistency", "replication", "conflicts"]
+			}
+		},
+		{
+			"category": "nosql",
+			"slug": "08-choosing-database",
+			"meta": {
+				"title": "সঠিক Database বেছে নেওয়া",
+				"subtitle": "একটা decision framework, polyglot persistence, SQL vs প্রতিটা NoSQL পরিবার, সাধারণ ভুলগুলো, আর কীভাবে একটা workload-কে একটা store-এর সাথে মেলাবেন।",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "12 মিনিট",
+				"topics": ["polyglot", "decision", "tradeoffs"]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Observability — রোডম্যাপ",
+				"subtitle": "journald দিয়ে logs, Prometheus আর Grafana দিয়ে metrics, Jaeger আর OpenTelemetry দিয়ে traces।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "01-three-pillars",
+			"meta": {
+				"title": "Observability-র তিন স্তম্ভ",
+				"subtitle": "Logs, metrics, আর traces — প্রতিটা আপনাকে কী বলে, কোথায় কম পড়ে যায়, আর 'কী নষ্ট হয়েছে আর কেন' এর উত্তর দিতে এরা কীভাবে একসাথে কাজ করে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["observability", "logs", "metrics", "traces", "SLO", "alerting"]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "02-structured-logging",
+			"meta": {
+				"title": "Structured Logging",
+				"subtitle": "JSON logs, log levels, correlation IDs, Loki দিয়ে log aggregation — এমন logs বানানো যা আপনি সত্যিই প্রোডাকশনে search করতে পারবেন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"logging",
+					"pino",
+					"Loki",
+					"Promtail",
+					"correlation ID",
+					"structured logs",
+					"journald"
+				]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "03-prometheus-grafana",
+			"meta": {
+				"title": "Prometheus & Grafana",
+				"subtitle": "Application instrument করা, PromQL লেখা, dashboard বানানো, আর যা সত্যিই গুরুত্বপূর্ণ তার উপর alert করা।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["Prometheus", "Grafana", "PromQL", "metrics", "alerting", "instrumentation"]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "04-distributed-tracing",
+			"meta": {
+				"title": "Distributed Tracing",
+				"subtitle": "OpenTelemetry instrumentation, service জুড়ে trace propagation, Jaeger, আর logs ও metrics যা পারে না তা খুঁজে বের করতে traces ব্যবহার করা।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["OpenTelemetry", "Jaeger", "traces", "spans", "context propagation", "sampling"]
+			}
+		},
+		{
+			"category": "observability",
+			"slug": "05-alerting-and-oncall",
+			"meta": {
+				"title": "Alerting & On-Call",
+				"subtitle": "যে alert তখনই fire করে যখন ইউজার আক্রান্ত হয়, metric একটু নড়লেই নয় — SLO-based alerting, runbooks, আর এমন on-call practice যা মানুষজনকে পুড়িয়ে ফেলে না।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"alerting",
+					"on-call",
+					"SLO",
+					"error budget",
+					"PagerDuty",
+					"runbooks",
+					"alert fatigue"
+				]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Operating Systems — রোডম্যাপ",
+				"subtitle": "কার্নেল কীভাবে raw hardware-কে আপনার প্রোগ্রামের নির্ভরযোগ্য process, memory আর file-এ রূপান্তরিত করে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "operating systems"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "01-what-an-os-does",
+			"meta": {
+				"title": "একটা Operating System যা করে",
+				"subtitle": "কার্নেল আপনার প্রোগ্রাম আর hardware-এর মাঝখানে বসে থাকে — প্রতিটা resource-কে protect, share আর arbitrate করে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["kernel", "syscall", "user mode"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "02-processes",
+			"meta": {
+				"title": "Processes",
+				"subtitle": "একটা চলমান প্রোগ্রামই একটা process — নিজের address space, নিজের resource, জন্ম থেকে মৃত্যু পর্যন্ত কার্নেল যাকে ট্র্যাক করে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["process", "fork", "exec"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "03-threads-concurrency",
+			"meta": {
+				"title": "Threads ও Concurrency",
+				"subtitle": "একটা address space share করা execution-এর একাধিক flow — দ্রুত, শক্তিশালী, আর শৃঙ্খলা ছাড়া বিপজ্জনক।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "14 মিনিট",
+				"topics": ["threads", "context switch", "race condition"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "04-scheduling",
+			"meta": {
+				"title": "CPU Scheduling",
+				"subtitle": "core-এর চেয়ে বেশি runnable thread থাকলে কার্নেলকে অবিরাম বেছে নিতে হয় পরের বার কে চলবে — দ্রুত আর ন্যায্যভাবে।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["scheduler", "preemption", "cfs"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "05-memory-management",
+			"meta": {
+				"title": "Memory Management ও Virtual Memory",
+				"subtitle": "প্রতিটা process ভাবে সে একটা বিশাল, private memory-র মালিক। কার্নেল আর MMU দুষ্প্রাপ্য physical RAM-এর উপর সেই illusion টিকিয়ে রাখে।",
+				"chapter": 5,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": ["virtual memory", "paging", "tlb"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "06-synchronization",
+			"meta": {
+				"title": "Synchronization",
+				"subtitle": "thread যখন data share করে, correctness নির্ভর করে কে কখন কী ছোঁবে তা নিয়ন্ত্রণ করার উপর — lock, signal আর যত্ন দিয়ে।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": ["mutex", "semaphore", "deadlock"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "07-file-systems",
+			"meta": {
+				"title": "File Systems",
+				"subtitle": "flat disk block-কে নামওয়ালা, hierarchical, durable file-এ পরিণত করা — মাঝখানে একটা cache যা সবকিছু বদলে দেয়।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["inode", "page cache", "journaling"]
+			}
+		},
+		{
+			"category": "operating-systems",
+			"slug": "08-io-syscalls",
+			"meta": {
+				"title": "I/O ও System Calls",
+				"subtitle": "read আর write আসলে কীভাবে কার্নেলের মধ্য দিয়ে যাত্রা করে — আর একটা thread কীভাবে একসাথে হাজার হাজার connection পাহারা দেয়।",
+				"chapter": 8,
+				"level": "mastery",
+				"readingTime": "16 মিনিট",
+				"topics": ["epoll", "non-blocking", "io_uring"]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Orchestration — রোডম্যাপ",
+				"subtitle": "নিজের VPS ফ্লিটজুড়ে একটা k3s ক্লাস্টার চালান। EKS নয়, GKE নয় — আপনার নিজের হার্ডওয়্যার।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "01-kubernetes-fundamentals",
+			"meta": {
+				"title": "Kubernetes Fundamentals",
+				"subtitle": "Pods, deployments, services, আর control loop — Kubernetes আসলে কী করে এবং যে primitive-গুলোর উপর বাকি সবকিছু দাঁড়িয়ে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["Kubernetes", "pods", "deployments", "services", "control loop", "kubectl"]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "02-k3s-cluster",
+			"meta": {
+				"title": "k3s on Your Own VPS",
+				"subtitle": "bare metal-এর উপর একটা production-grade Kubernetes ক্লাস্টার — k3s সেটআপ, node joining, persistent storage, এবং cost-conscious টিমের জন্য managed Kubernetes-এর চেয়ে k3s কেন এগিয়ে।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["k3s", "VPS", "bare metal", "Hetzner", "cluster setup", "Longhorn", "Traefik"]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "03-workloads",
+			"meta": {
+				"title": "Kubernetes Workloads",
+				"subtitle": "StatefulSets, DaemonSets, Jobs, CronJobs — প্রতি শ্রেণির workload-এর জন্য সঠিক object এবং কখন Deployment যথেষ্ট নয়।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["StatefulSet", "DaemonSet", "Job", "CronJob", "Kubernetes", "workloads"]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "04-networking-and-security",
+			"meta": {
+				"title": "Kubernetes Networking & Security",
+				"subtitle": "NetworkPolicies, RBAC, Pod Security Standards, Secrets management, এবং যে default-deny posture ক্লাস্টারকে hardened রাখে।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"NetworkPolicy",
+					"RBAC",
+					"Pod Security",
+					"Secrets",
+					"mTLS",
+					"Kubernetes security"
+				]
+			}
+		},
+		{
+			"category": "orchestration",
+			"slug": "05-gitops-and-deployments",
+			"meta": {
+				"title": "GitOps & Deployments",
+				"subtitle": "ArgoCD, Helm, Argo Rollouts দিয়ে progressive delivery — cluster state as code, automated sync, এবং এমন deployment যা নীরবে ভুল হয়ে যেতে পারে না।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["GitOps", "ArgoCD", "Helm", "Argo Rollouts", "canary", "blue-green", "CD"]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Performance Engineering — রোডম্যাপ",
+				"subtitle": "pprof আর perf দিয়ে profiling, flamegraph, latency budget, p99 চিন্তাভাবনা।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "01-latency-thinking",
+			"meta": {
+				"title": "Latency Thinking",
+				"subtitle": "P50 vs P99 vs P999, tail latency-র সমস্যা, latency budget, আর কেন average সবচেয়ে গুরুত্বপূর্ণ failure-গুলো লুকিয়ে ফেলে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": ["latency", "percentiles", "P99", "tail latency", "latency budget", "SLO"]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "02-profiling",
+			"meta": {
+				"title": "Profiling",
+				"subtitle": "Node.js --prof, Go pprof, Linux perf, আর flamegraph — optimization নিয়ে অনুমান করার আগে সময়টা আসলে কোথায় যাচ্ছে সেটা খুঁজে বের করা।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["profiling", "flamegraph", "pprof", "perf", "Node.js", "Go", "CPU", "memory"]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "03-database-performance",
+			"meta": {
+				"title": "Database Performance",
+				"subtitle": "Query plan, index strategy, N+1 query, connection pool tuning — database প্রায় সবসময়ই bottleneck।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"PostgreSQL",
+					"query optimization",
+					"EXPLAIN ANALYZE",
+					"indexes",
+					"N+1",
+					"connection pooling"
+				]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "04-caching",
+			"meta": {
+				"title": "Caching",
+				"subtitle": "Cache level, eviction policy, cache stampede, cache invalidation — আর কেন caching হলো সবচেয়ে বেশি প্রয়োগ করা আর সবচেয়ে কম ভাবা optimization।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["caching", "Redis", "CDN", "cache invalidation", "cache stampede", "LRU", "TTL"]
+			}
+		},
+		{
+			"category": "performance",
+			"slug": "05-load-testing",
+			"meta": {
+				"title": "Load Testing",
+				"subtitle": "k6, autocannon, বাস্তবসম্মত traffic model, breaking point খুঁজে বের করা — আর কেন staging-এ load testing production থেকে আলাদা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"load testing",
+					"k6",
+					"autocannon",
+					"throughput",
+					"breaking point",
+					"performance baseline"
+				]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Redis — রোডম্যাপ",
+				"subtitle": "একটি in-memory data structure store: cache, queue, lock, আর primary store — সবই একসাথে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "redis"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "01-what-redis-is",
+			"meta": {
+				"title": "Redis কী & Core Model",
+				"subtitle": "একটি in-memory key-value store, single-threaded event loop আর অসম্ভব সরল একটি wire protocol সহ।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["redis", "in-memory", "single-threaded"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "02-data-structures",
+			"meta": {
+				"title": "Core Data Structures",
+				"subtitle": "Strings, hashes, lists, sets, sorted sets — এবং যেসব বিশেষায়িত type এগুলোর উপর ভর করে চলে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["strings", "hashes", "lists", "sets", "sorted sets"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "03-keys-expiration-eviction",
+			"meta": {
+				"title": "Keys, Expiration & Eviction",
+				"subtitle": "Naming, TTLs, Redis কীভাবে expired key ফিরিয়ে নেয়, এবং memory ভরে গেলে কী ঘটে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["ttl", "expiration", "eviction"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "04-persistence",
+			"meta": {
+				"title": "Persistence: RDB & AOF",
+				"subtitle": "একটি in-memory store কীভাবে একটি restart-এ টিকে থাকে, এবং 'durable' আসলে তোমাকে কী দেয়।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["rdb", "aof", "durability"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "05-pubsub-streams",
+			"meta": {
+				"title": "Pub/Sub & Streams",
+				"subtitle": "Fire-and-forget messaging বনাম consumer group সহ একটি durable, replayable log।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["pubsub", "streams", "consumer groups"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "06-cache-queue-lock",
+			"meta": {
+				"title": "Redis as Cache, Queue & Distributed Lock",
+				"subtitle": "তিনটি কাজের-ঘোড়া প্যাটার্ন — এবং প্রতিটার ভেতরে লুকিয়ে থাকা ধারালো কিনারা।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["cache", "queue", "distributed lock"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "07-transactions-scripting",
+			"meta": {
+				"title": "Transactions & Lua Scripting",
+				"subtitle": "MULTI/EXEC, WATCH দিয়ে optimistic locking, এবং Lua দিয়ে atomic multi-step logic।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["multi", "lua", "atomicity"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "08-replication-cluster",
+			"meta": {
+				"title": "Replication, Sentinel & Cluster",
+				"subtitle": "এক node থেকে অনেক: copy, automatic failover, এবং hash slot জুড়ে sharding।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["replication", "sentinel", "cluster"]
+			}
+		},
+		{
+			"category": "redis",
+			"slug": "09-production",
+			"meta": {
+				"title": "Production-এ Redis চালানো",
+				"subtitle": "Memory, latency, monitoring, security, এবং যেসব ফাঁদ instance ডাউন করে দেয়।",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "14 মিনিট",
+				"topics": ["production", "monitoring", "performance"]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Replication & Sharding — রোডম্যাপ",
+				"subtitle": "Postgres streaming replica নিজ হাতে। Vitess ছাড়াই manual shard routing।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "01-replication-fundamentals",
+			"meta": {
+				"title": "Replication Fundamentals",
+				"subtitle": "Replication কেন আছে, synchronous vs asynchronous, WAL-ভিত্তিক streaming, এবং প্রতিটি replica যে consistency trade-off নিয়ে আসে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": [
+					"replication",
+					"PostgreSQL",
+					"WAL",
+					"synchronous",
+					"asynchronous",
+					"consistency",
+					"read replicas"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "02-postgres-streaming-replication",
+			"meta": {
+				"title": "Postgres Streaming Replication নিজ হাতে",
+				"subtitle": "একটি primary সেটআপ করা, pg_basebackup কনফিগার করা, একটি standby-তে WAL stream করা — কোনো managed service নেই, কোনো Patroni নেই, শুধু Postgres।",
+				"chapter": 2,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": [
+					"PostgreSQL",
+					"streaming replication",
+					"pg_basebackup",
+					"WAL",
+					"standby",
+					"failover"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "03-sharding-concepts",
+			"meta": {
+				"title": "Sharding Concepts",
+				"subtitle": "যখন replication যথেষ্ট নয়, partition key, shard routing strategy, এবং shard করলে আপনি যে operational জটিলতা মেনে নেন।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"sharding",
+					"partition key",
+					"consistent hashing",
+					"horizontal partitioning",
+					"shard routing"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "04-manual-shard-routing",
+			"meta": {
+				"title": "Manual Shard Routing",
+				"subtitle": "Application code-এ একটি shard router বানানো — connection management, transaction boundary, migration strategy, এবং সাধারণ ভুল এড়ানো।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": [
+					"shard routing",
+					"connection management",
+					"transactions",
+					"migration",
+					"TypeScript",
+					"PostgreSQL"
+				]
+			}
+		},
+		{
+			"category": "replication-sharding",
+			"slug": "05-postgres-partitioning",
+			"meta": {
+				"title": "Postgres Table Partitioning",
+				"subtitle": "Range, list, এবং hash partitioning — বড় table-এর single-server উত্তর, যা sharding-এর প্রতিশ্রুত বেশিরভাগ সুবিধা operational খরচ ছাড়াই এনে দেয়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"PostgreSQL",
+					"partitioning",
+					"range partition",
+					"hash partition",
+					"partition pruning",
+					"pg_partman"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Search — রোডম্যাপ",
+				"subtitle": "শূন্য থেকে একটা inverted index বানান। তারপর নিজে Meilisearch বা Elasticsearch সেল্ফ-হোস্ট করুন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "3 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "01-how-search-works",
+			"meta": {
+				"title": "How Search Works",
+				"subtitle": "Inverted index, tokenization, TF-IDF, BM25 — Postgres full-text থেকে Elasticsearch পর্যন্ত প্রতিটা search engine-এর পেছনের মেকানিক্স।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"inverted index",
+					"tokenization",
+					"TF-IDF",
+					"BM25",
+					"full-text search",
+					"relevance"
+				]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "02-postgres-full-text",
+			"meta": {
+				"title": "Postgres Full-Text Search",
+				"subtitle": "tsvector, GIN index, ranking, highlighting, এবং কখন Postgres search-ই আপনার প্রয়োজনের সব।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["PostgreSQL", "full-text search", "tsvector", "GIN", "ts_rank", "ts_headline"]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "03-meilisearch",
+			"meta": {
+				"title": "Meilisearch",
+				"subtitle": "সেল্ফ-হোস্টিং, ডকুমেন্ট indexing, typo tolerance, faceted search, এবং Meilisearch-কে আপনার ডেটাবেসের সাথে সিঙ্ক রাখা।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["Meilisearch", "typo tolerance", "facets", "indexing", "self-hosted", "sync"]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "04-elasticsearch",
+			"meta": {
+				"title": "Elasticsearch",
+				"subtitle": "Mapping, analyzer, Query DSL, aggregation, এবং একটা production cluster চালানো — যখন Meilisearch যথেষ্ট নয়।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["Elasticsearch", "mappings", "analyzers", "Query DSL", "aggregations", "cluster"]
+			}
+		},
+		{
+			"category": "search",
+			"slug": "05-search-in-practice",
+			"meta": {
+				"title": "Search in Practice",
+				"subtitle": "Relevance tuning, synonym, personalization, analytics, এবং সময়ের সাথে search-কে ভালোভাবে চালু রাখার অপারেশনাল প্যাটার্ন।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"relevance tuning",
+					"synonyms",
+					"analytics",
+					"A/B testing",
+					"search quality",
+					"click-through rate"
+				]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "SQL — রোডম্যাপ",
+				"subtitle": "আপনার প্রথম SELECT লেখা থেকে শুরু করে schema ডিজাইন আর zero-downtime migration শিপ করা পর্যন্ত পুরো পথ।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "sql", "postgres"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "01-relational-model",
+			"meta": {
+				"title": "The Relational Model & Basic Queries",
+				"subtitle": "Table, row, column, type — আর যে SELECT statement দিয়ে ডেটা আবার টেনে বের করা হয়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["select", "relational model", "ddl"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "02-aggregation",
+			"meta": {
+				"title": "Filtering, Grouping & Aggregation",
+				"subtitle": "COUNT, SUM, GROUP BY আর HAVING দিয়ে অনেকগুলো row-কে সারসংক্ষেপ উত্তরে গুটিয়ে আনুন।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["group by", "aggregate", "having"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "03-joins",
+			"meta": {
+				"title": "Joins",
+				"subtitle": "একাধিক টেবিল থেকে row একসাথে জোড়া দেওয়া — যে অপারেশন relational database-কে relational বানায়।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "16 মিনিট",
+				"topics": ["join", "inner join", "outer join"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "04-subqueries-ctes",
+			"meta": {
+				"title": "Subqueries & CTEs",
+				"subtitle": "Query-র ভেতরে query — scalar, correlated, derived table, WITH clause আর recursion।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["subquery", "cte", "recursive"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "05-indexes-query-plans",
+			"meta": {
+				"title": "Indexes ও Query Plans",
+				"subtitle": "ডেটাবেস কীভাবে দ্রুত row খুঁজে পায় — B-tree index, EXPLAIN, আর কখন একটা index অকেজো।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "17 মিনিট",
+				"topics": ["index", "explain", "b-tree"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "06-transactions-isolation",
+			"meta": {
+				"title": "Transactions ও Isolation Level",
+				"subtitle": "ACID, চারটা isolation level, MVCC, আর যে lock ও deadlock concurrent write সঠিক রাখে।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "18 মিনিট",
+				"topics": ["acid", "isolation", "mvcc", "locking"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "07-window-functions",
+			"meta": {
+				"title": "Window Functions",
+				"subtitle": "অ্যাগ্রিগেটের মতো ক্যালকুলেশন, কিন্তু প্রতিটি row রেখে দেয় — ranking, running total আর row-to-row তুলনা।",
+				"chapter": 7,
+				"level": "advanced",
+				"readingTime": "16 মিনিট",
+				"topics": ["window function", "partition by", "ranking"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "08-query-optimization",
+			"meta": {
+				"title": "Query Optimization & Performance",
+				"subtitle": "বাস্তবে plan পড়া, N+1 query মারা, বড় স্কেলে pagination, আর ক্লাসিক anti-pattern এড়ানো।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "17 মিনিট",
+				"topics": ["optimization", "n+1", "performance"]
+			}
+		},
+		{
+			"category": "sql",
+			"slug": "09-schema-design-migrations",
+			"meta": {
+				"title": "Schema Design ও Migrations",
+				"subtitle": "Constraints, normalization, generated columns, এবং zero-downtime পরিবর্তনের জন্য expand/contract প্যাটার্ন।",
+				"chapter": 9,
+				"level": "mastery",
+				"readingTime": "18 মিনিট",
+				"topics": ["schema", "constraints", "migrations"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "8 সপ্তাহের রোডম্যাপ: Fullstack → SRE",
+				"subtitle": "একজন কর্মরত fullstack engineer-কে junior-SRE-ready operator বানানোর জন্য দুই মাসের একটি সলিড প্ল্যান। প্রতিদিনের ব্রেকডাউন, রিয়েল ল্যাব, আর একটি ফাইনাল ক্যাপস্টোন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "18 মিনিট",
+				"topics": ["roadmap", "learning", "career", "fullstack to SRE", "hands-on"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "01-what-is-sre",
+			"meta": {
+				"title": "SRE আসলে কী",
+				"subtitle": "Class SRE implements DevOps। error-budget contract, toil cap, আর embedded engineer model যা Google-এর reliability-কে কাজ করায়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "14 মিনিট",
+				"topics": ["SRE", "error budget", "toil", "DevOps", "reliability"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "02-slis-slos-error-budgets",
+			"meta": {
+				"title": "SLIs, SLOs & Error Budgets",
+				"subtitle": "সঠিক SLI বেছে নাও, এমন একটা SLO সেট করো যা lawyer review-তে টেকে, আর Google-এর CRE team যেভাবে করে সেভাবে budget burn করো।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "18 মিনিট",
+				"topics": ["SLI", "SLO", "SLA", "error budget", "burn rate", "Prometheus"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "03-golden-signals-red-use",
+			"meta": {
+				"title": "Golden Signals, RED, and USE",
+				"subtitle": "যে তিনটা monitoring framework আসলে গুরুত্বপূর্ণ, কখন কোনটা ব্যবহার করবে, আর যে Prometheus + Grafana stack সেগুলো সব expose করে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "16 মিনিট",
+				"topics": ["monitoring", "golden signals", "RED", "USE", "Prometheus", "Grafana"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "04-incident-response",
+			"meta": {
+				"title": "Incident Response & On-Call",
+				"subtitle": "ICS roles, severity classification, comms cadence, আর যে on-call rotation engineer-দের burn out করে না।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "17 মিনিট",
+				"topics": ["incident response", "on-call", "ICS", "PagerDuty", "war room"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "05-postmortems",
+			"meta": {
+				"title": "Blameless Postmortems",
+				"subtitle": "Google, Etsy, আর Stripe যে full template ব্যবহার করে, সাথে action-item discipline যা একই incident দ্বিতীয়বার আটকায়।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "15 মিনিট",
+				"topics": ["postmortem", "blameless", "root cause", "five whys", "action items"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "06-capacity-planning",
+			"meta": {
+				"title": "Capacity Planning & Load Testing",
+				"subtitle": "Little's Law, Universal Scalability Law, headroom, আর একটা রিয়েল k6 + Locust load test যা তুমি আজই চালাতে পারো।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "18 মিনিট",
+				"topics": ["capacity planning", "load testing", "k6", "queueing theory", "Little's Law"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "07-production-readiness",
+			"meta": {
+				"title": "Production Readiness Reviews",
+				"subtitle": "যে PRR চেকলিস্ট প্রতিরোধযোগ্য launch-into-fire-এর 80% ঠেকিয়ে দেয়, একটি বাস্তব launch gate Terraform module সহ।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "16 মিনিট",
+				"topics": ["PRR", "launch review", "runbook", "production readiness", "checklist"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "08-chaos-engineering",
+			"meta": {
+				"title": "Chaos Engineering",
+				"subtitle": "Netflix Simian Army থেকে Chaos Mesh পর্যন্ত hypothesis-driven failure injection, বাস্তব experiment আর একটা safety harness সহ।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "16 মিনিট",
+				"topics": ["chaos engineering", "Chaos Mesh", "Gremlin", "fault injection", "gameday"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "09-disaster-recovery",
+			"meta": {
+				"title": "Disaster Recovery & Backups",
+				"subtitle": "RTO, RPO, multi-region failover, আর সেই restore drill যেটা প্রমাণ করে আপনার backup আসলেই আছে।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "16 মিনিট",
+				"topics": ["disaster recovery", "DR", "RTO", "RPO", "backups", "failover"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "10-toil-automation",
+			"meta": {
+				"title": "Toil & Automation",
+				"subtitle": "toil মাপা, 50% cap, আর one-off script থেকে self-healing operator পর্যন্ত automation taxonomy।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "15 মিনিট",
+				"topics": ["toil", "automation", "operators", "self-healing", "Kubernetes"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "11-scaling-roadmap",
+			"meta": {
+				"title": "Scaling & Distributed Systems — 8-Week Companion Roadmap",
+				"subtitle": "শূন্য থেকে scalable system ডিজাইন, বিল্ড আর অপারেট করা পর্যন্ত। দিনে 1–2 ঘণ্টা, 8 সপ্তাহ, 8টি বাস্তব project, 5টি case study, mini-YouTube capstone।",
+				"chapter": 11,
+				"level": "beginner",
+				"readingTime": "25 মিনিট",
+				"topics": ["scaling", "distributed systems", "roadmap", "capstone", "system design"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "12-linux-performance-mastery",
+			"meta": {
+				"title": "Linux Performance Mastery",
+				"subtitle": "`top` থেকে `perf`, `bpftrace`, আর flame graph পর্যন্ত। production-এ কিছু restart না করে kernel level-এ latency, CPU, memory, আর I/O diagnose করার senior-SRE toolkit।",
+				"chapter": 12,
+				"level": "mastery",
+				"readingTime": "32 মিনিট",
+				"topics": [
+					"linux",
+					"perf",
+					"eBPF",
+					"bpftrace",
+					"flame graphs",
+					"USE",
+					"kernel",
+					"performance"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "13-network-engineering",
+			"meta": {
+				"title": "Network Engineering for SREs",
+				"subtitle": "BGP, anycast, ECMP, CDN internals, packet capture, আর scale-এ TCP। যে networking layer-এ 'random' production অদ্ভুততা আসলে বাস করে।",
+				"chapter": 13,
+				"level": "mastery",
+				"readingTime": "30 মিনিট",
+				"topics": ["networking", "BGP", "anycast", "CDN", "TCP", "tcpdump", "XDP", "load balancing"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "14-database-internals-for-sres",
+			"meta": {
+				"title": "SRE-দের জন্য Database Internals",
+				"subtitle": "MVCC, replication lag, hot rows, query plans, B-tree vs LSM, স্কেলে connection pools। যে DB জ্ঞান 'আমি Postgres চালাই'-কে 'আমি চাপের মুখেও Postgres টিকিয়ে রাখি' থেকে আলাদা করে।",
+				"chapter": 14,
+				"level": "mastery",
+				"readingTime": "30 মিনিট",
+				"topics": [
+					"postgres",
+					"mysql",
+					"replication",
+					"MVCC",
+					"query planning",
+					"connection pool",
+					"B-tree",
+					"LSM"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "15-distributed-systems-theory",
+			"meta": {
+				"title": "SRE-দের জন্য Distributed Systems Theory",
+				"subtitle": "CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens। যে theory ব্যাখ্যা করে আপনার distributed system কেন যেভাবে ভাঙে সেভাবে ভাঙে।",
+				"chapter": 15,
+				"level": "mastery",
+				"readingTime": "32 মিনিট",
+				"topics": [
+					"distributed systems",
+					"CAP",
+					"Raft",
+					"Paxos",
+					"consensus",
+					"CRDT",
+					"vector clock",
+					"fencing tokens"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "16-kubernetes-at-scale",
+			"meta": {
+				"title": "স্কেলে Kubernetes",
+				"subtitle": "1,000+ node cluster, multi-tenancy, RBAC, NetworkPolicy, OPA/Kyverno, GitOps, etcd tuning। যখন 'just run kubectl apply' আর কোনো strategy নয়, তখনকার operating model।",
+				"chapter": 16,
+				"level": "mastery",
+				"readingTime": "30 মিনিট",
+				"topics": [
+					"kubernetes",
+					"etcd",
+					"RBAC",
+					"OPA",
+					"Kyverno",
+					"GitOps",
+					"multi-tenancy",
+					"scale"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "17-service-mesh-internals",
+			"meta": {
+				"title": "Service Mesh Internals",
+				"subtitle": "Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting। একটা mesh আসলে কী করে আর কখন এর জটিলতা পুষিয়ে দেয়।",
+				"chapter": 17,
+				"level": "mastery",
+				"readingTime": "28 মিনিট",
+				"topics": ["service mesh", "Envoy", "Istio", "Linkerd", "ambient", "mTLS", "xDS", "Cilium"]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "18-finops-cost-engineering",
+			"meta": {
+				"title": "FinOps ও Cost Engineering",
+				"subtitle": "Unit economics, rightsizing, spot, savings plans, cost-aware SLOs। যে senior SRE skill 'cloud bill অনেক বেশি'-কে একটা tracked, owned, কমতে থাকা সংখ্যায় পরিণত করে।",
+				"chapter": 18,
+				"level": "mastery",
+				"readingTime": "26 মিনিট",
+				"topics": [
+					"FinOps",
+					"cost",
+					"rightsizing",
+					"spot",
+					"savings plans",
+					"unit economics",
+					"cloud bill"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "19-reliability-culture-org",
+			"meta": {
+				"title": "Reliability Culture ও SRE Org Design",
+				"subtitle": "Staff+ SRE work, embedding, charters, blame-aware org, mentoring, sustainable on-call। যে non-technical lever প্রতিটা reliability program বানায় বা ভাঙে।",
+				"chapter": 19,
+				"level": "mastery",
+				"readingTime": "26 মিনিট",
+				"topics": [
+					"org design",
+					"staff SRE",
+					"culture",
+					"embedding",
+					"charters",
+					"on-call",
+					"mentoring"
+				]
+			}
+		},
+		{
+			"category": "sre",
+			"slug": "20-mastery-roadmap",
+			"meta": {
+				"title": "12-মাসের Mastery Roadmap — Junior SRE → Senior/Staff",
+				"subtitle": "যে year-long plan 8-week roadmap যেখানে থামে সেখান থেকে তুলে নেয়। Monthly milestone, বাস্তব production project, deep reading, আর যে artifact staff-level capability প্রমাণ করে।",
+				"chapter": 20,
+				"level": "mastery",
+				"readingTime": "30 মিনিট",
+				"topics": ["roadmap", "career", "mastery", "staff SRE", "year plan", "depth"]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "ফাইল ও অবজেক্ট স্টোরেজ — রোডম্যাপ",
+				"subtitle": "লোকাল ডিস্ক, NFS, তারপর নিজে সেল্ফ-হোস্ট করুন MinIO। nginx আর Varnish দিয়ে একটা CDN বানান।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "01-storage-primitives",
+			"meta": {
+				"title": "Storage Primitives",
+				"subtitle": "Block, file, আর object storage — প্রতিটা অ্যাবস্ট্রাকশন কী দেয়, কোথায় ভেঙে পড়ে, আর কীভাবে বেছে নেবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "8 মিনিট",
+				"topics": [
+					"block storage",
+					"file storage",
+					"object storage",
+					"NFS",
+					"S3",
+					"storage architecture"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "02-minio",
+			"meta": {
+				"title": "Self-Hosted Object Storage with MinIO",
+				"subtitle": "নিজের হার্ডওয়্যারে MinIO চালানো, S3-compatible API, distributed mode, lifecycle policy, আর অ্যাপ্লিকেশন কোড থেকে এটা ব্যবহার করা।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["MinIO", "S3", "object storage", "self-hosted", "distributed", "buckets"]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "03-file-uploads",
+			"meta": {
+				"title": "File Uploads",
+				"subtitle": "Multipart পার্সিং, ভ্যালিডেশন, virus scanning, সরাসরি স্টোরেজে আপলোড, আর প্রসেসিং পাইপলাইন।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"file uploads",
+					"multipart",
+					"presigned URLs",
+					"validation",
+					"image processing",
+					"virus scanning"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "04-cdn-nginx-varnish",
+			"meta": {
+				"title": "CDN with nginx and Varnish",
+				"subtitle": "ইউজারের কাছাকাছি static asset ক্যাশ করুন — nginx proxy_cache আর Varnish-কে reverse proxy হিসেবে দিয়ে সেল্ফ-হোস্টেড edge caching।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"CDN",
+					"nginx",
+					"Varnish",
+					"caching",
+					"edge caching",
+					"cache invalidation",
+					"HTTP headers"
+				]
+			}
+		},
+		{
+			"category": "storage",
+			"slug": "05-storage-in-practice",
+			"meta": {
+				"title": "Storage in Practice",
+				"subtitle": "খরচ অপটিমাইজেশন, access control, প্রাইভেট কনটেন্টের জন্য signed URL, backup strategy, আর অপারেশনাল প্যাটার্ন।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "8 মিনিট",
+				"topics": [
+					"storage cost",
+					"access control",
+					"signed URLs",
+					"backup",
+					"disaster recovery",
+					"storage operations"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Testing Strategy — রোডম্যাপ",
+				"subtitle": "Unit, integration, contract, e2e। k6 আর wrk দিয়ে load test। Property-based testing।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap"]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "01-testing-strategy",
+			"meta": {
+				"title": "Testing Strategy",
+				"subtitle": "Testing pyramid, প্রতিটি layer কী টেস্ট করে, আর যেসব ফাঁদ test suite-কে ধীর ও ভঙ্গুর করে তা কীভাবে এড়াবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "7 মিনিট",
+				"topics": [
+					"testing pyramid",
+					"unit tests",
+					"integration tests",
+					"e2e tests",
+					"test strategy",
+					"TDD"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "02-unit-testing",
+			"meta": {
+				"title": "Unit Testing",
+				"subtitle": "Isolation-এ pure logic টেস্ট করা — Vitest, assertion pattern, test double, আর একটা ভালো unit test কী দিয়ে তৈরি হয়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"unit testing",
+					"Vitest",
+					"Jest",
+					"mocking",
+					"spies",
+					"test doubles",
+					"assertions"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "03-integration-testing",
+			"meta": {
+				"title": "Integration Testing",
+				"subtitle": "সত্যিকারের boundary টেস্ট করা — database query, HTTP handler, message queue — যা গুরুত্বপূর্ণ তা mock না করেই।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": [
+					"integration testing",
+					"database testing",
+					"HTTP testing",
+					"Testcontainers",
+					"supertest",
+					"migrations"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "04-contract-testing",
+			"meta": {
+				"title": "Contract Testing",
+				"subtitle": "Service-গুলোকে একসাথে deploy না করেই যাচাই করা যে তারা API contract-এ একমত — consumer-driven contract-এর জন্য Pact।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"contract testing",
+					"Pact",
+					"consumer-driven contracts",
+					"API contracts",
+					"microservices testing"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "05-e2e-testing",
+			"meta": {
+				"title": "End-to-End Testing",
+				"subtitle": "একটা real browser-এ user journey টেস্ট করা — Playwright setup, selector, auth, CI, আর e2e test-কে দ্রুত ও নির্ভরযোগ্য রাখা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "9 মিনিট",
+				"topics": [
+					"e2e testing",
+					"Playwright",
+					"browser automation",
+					"Cypress",
+					"test reliability",
+					"flakiness"
+				]
+			}
+		},
+		{
+			"category": "testing",
+			"slug": "06-property-based-testing",
+			"meta": {
+				"title": "Property-Based Testing",
+				"subtitle": "স্বয়ংক্রিয়ভাবে শত শত random input তৈরি করা — fast-check এমন edge case খুঁজে বের করে যা আপনার example test মিস করে।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "8 মিনিট",
+				"topics": [
+					"property-based testing",
+					"fast-check",
+					"fuzzing",
+					"generative testing",
+					"invariants"
+				]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "TLS ও Certificates — রোডম্যাপ",
+				"subtitle": "আটটি চ্যাপ্টার যা TLS-কে রহস্য থেকে মাসল মেমরিতে নিয়ে যায় — এটা আসলে কী করে, কেন প্রতিটা অংশের অস্তিত্ব আছে, এবং কীভাবে কোনো ম্যানেজড সার্ভিস ছাড়াই আসল certificate ইস্যু, রিনিউ ও সার্ভ করবেন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "tls", "ssl", "certificates", "letsencrypt"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "01-what-tls-is",
+			"meta": {
+				"title": "TLS আসলে কী",
+				"subtitle": "TLS দুইটা কাজ করে: এটা আপনার traffic encrypt করে, আর প্রমাণ করে সার্ভার সেই যা বলে দাবি করছে। দুইটা অর্ধেক একসাথে কাজ করে — একা কোনোটাই যথেষ্ট নয়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "9 মিনিট",
+				"topics": ["tls", "ssl", "encryption", "identity", "https"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "02-tls-handshake",
+			"meta": {
+				"title": "TLS Handshake",
+				"subtitle": "ClientHello, ServerHello, key exchange, finished। পাঁচ-মেসেজের কথোপকথন যা একটা TCP connection-কে একটা secure session-এ পরিণত করে — এবং TLS 1.3 কীভাবে সেটা অর্ধেক করে ফেলল।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["tls", "handshake", "tls 1.3", "ecdhe", "alpn"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "03-certificates-chain-of-trust",
+			"meta": {
+				"title": "Certificates ও Chain of Trust",
+				"subtitle": "একটা .pem ফাইলের ভেতরে কী থাকে, CSR কী, intermediate certificate কেন থাকে, এবং একটা browser কীভাবে chain ধরে হেঁটে আগে থেকে trust করা একটা root-এ পৌঁছায়।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["certificates", "x509", "csr", "ca", "chain of trust"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "04-letsencrypt-acme",
+			"meta": {
+				"title": "Let's Encrypt ও ACME",
+				"subtitle": "যে protocol একটা free CA-কে বছরে 35 কোটি certificate ইস্যু করতে দেয়। Account, order, challenge, finalize, download — প্রতিটা certbot run পর্দার আড়ালে যা করে।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["letsencrypt", "acme", "certificates", "automation"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "05-issuing-with-certbot",
+			"meta": {
+				"title": "certbot দিয়ে আপনার প্রথম Cert ইস্যু করা",
+				"subtitle": "খালি DNS A record থেকে কাজ করা HTTPS পর্যন্ত দশ মিনিটে। কংক্রিট command, প্রতিটা flag ব্যাখ্যা করা, প্রতিটা প্রচলিত failure-এর সমাধান।",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["certbot", "letsencrypt", "nginx", "http-01", "tls"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "06-wildcard-dns01",
+			"meta": {
+				"title": "Wildcard Cert ও DNS-01",
+				"subtitle": "যখন HTTP validation যথেষ্ট নয় — wildcard cert ইস্যু করা, provider plugin দিয়ে DNS-01 automate করা, এবং DNS edit করতে পারা API token-এর security tradeoff।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "10 মিনিট",
+				"topics": ["wildcard", "dns-01", "letsencrypt", "cloudflare", "route53"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "07-nginx-tls-config",
+			"meta": {
+				"title": "TLS-এর জন্য nginx কনফিগার করা",
+				"subtitle": "একটা সম্পূর্ণ TLS server block — protocol, cipher, OCSP stapling, HSTS, আধুনিক key type, perfect forward secrecy। সেই config যা কপি-পেস্ট আবর্জনা ছাড়াই A+ স্কোর করে।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["nginx", "tls", "ssl", "hsts", "ocsp"]
+			}
+		},
+		{
+			"category": "tls-certs",
+			"slug": "08-renewal-monitoring",
+			"meta": {
+				"title": "Renewal, Monitoring ও Rotation",
+				"subtitle": "90 দিন পার করে বেঁচে থাকা। Renewal hook, expiration monitoring, key rotation, আর সেই রাতের runbook যখন আপনার cert নীরবে expire হয়ে গেল আর এখন কেউ সাইটে পৌঁছাতে পারছে না।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "11 মিনিট",
+				"topics": ["renewal", "monitoring", "key rotation", "letsencrypt", "tls"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Web Server Fundamentals — রোডম্যাপ",
+				"subtitle": "দশটি অধ্যায় যা ওয়েব সার্ভার সম্পর্কে একটি কার্যকর বোঝাপড়া গড়ে তোলে — raw TCP socket থেকে শুরু করে একটি real backend-এর সামনে বসানো টিউনড, হার্ডেনড nginx পর্যন্ত।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "http", "nginx", "web server", "sockets"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "01-what-is-a-web-server",
+			"meta": {
+				"title": "What is a Web Server",
+				"subtitle": "socket থেকে response পর্যন্ত একটি HTTP request-এর গঠন। প্রতিটি web server যে চারটি স্টেজ দিয়ে যায়, আর অংশগুলোর নাম।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["http", "web server", "tcp", "request lifecycle"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "02-http-from-raw-socket",
+			"meta": {
+				"title": "HTTP from a Raw Socket",
+				"subtitle": "netcat দিয়ে হাতে-কলমে HTTP বলুন। তারপর 60-লাইনের একটি Go server লিখুন যা ঠিক একই কাজ করে — কোনো framework নেই, কোনো চমক নেই।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["http", "sockets", "tcp", "go", "netcat"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "03-building-http-parser",
+			"meta": {
+				"title": "Building a Real HTTP/1.1 Parser",
+				"subtitle": "Request body, Content-Length, chunked transfer encoding, আর ডজনখানেক edge case যা একটি খেলনা parser-কে এমন একটিতে পরিণত করে যাকে আপনি production-এ ভরসা করবেন।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["http", "parser", "chunked encoding", "go", "request body"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "04-concurrency-models",
+			"meta": {
+				"title": "Concurrency Models",
+				"subtitle": "Process per request, thread per request, prefork, event loop, hybrid. web server-রা হাজার হাজার concurrent connection সামলানোর যে পাঁচটি উপায় ব্যবহার করে — আর কেন প্রতিটির অস্তিত্ব আছে।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "13 মিনিট",
+				"topics": ["concurrency", "threads", "event loop", "epoll", "go"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "05-static-files",
+			"meta": {
+				"title": "Static Files & MIME",
+				"subtitle": "একটা server কীভাবে একটা file path-কে তারে (wire-এ) bytes-এ পরিণত করে — content type, ETags, conditional request, আর যে cache header প্রতিটি browser-কে দ্রুত রাখে।",
+				"chapter": 5,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["static files", "mime", "etag", "cache control", "http"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "06-nginx-fundamentals",
+			"meta": {
+				"title": "nginx Fundamentals",
+				"subtitle": "ইনস্টল করুন, config-এর গঠন সাজান, server block লিখুন, location আর include বুঝুন। যে nginx মেন্টাল মডেল প্রতিটি advanced feature-এর জন্য টিকে থাকে।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["nginx", "configuration", "server blocks", "locations"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "07-reverse-proxy",
+			"meta": {
+				"title": "Reverse Proxy",
+				"subtitle": "আপনার application server-এর সামনে nginx। যে header-গুলো গুরুত্বপূর্ণ, যে timeout আপনাকে বাঁচায়, আর যে upstream pool failure সামলায়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "13 মিনিট",
+				"topics": ["reverse proxy", "nginx", "proxy_pass", "upstream", "headers"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "08-access-error-logs",
+			"meta": {
+				"title": "Access & Error Logs",
+				"subtitle": "nginx log format কাস্টমাইজ করুন, প্রতিটি field-এর মানে বুঝুন, status বা duration দিয়ে request খুঁজুন, আর সঠিকভাবে access log আর error log-এর পার্থক্য করুন।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["nginx", "logs", "access log", "error log", "log format"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "09-edge-caching",
+			"meta": {
+				"title": "Edge Caching with nginx",
+				"subtitle": "proxy_cache, microcaching, stale-while-revalidate, আর সেই cache key নিয়ম যা nginx-কে আপনার নিয়ন্ত্রণে থাকা একটি CDN বানিয়ে দেয়।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["nginx", "caching", "proxy_cache", "microcaching", "cdn"]
+			}
+		},
+		{
+			"category": "web-server",
+			"slug": "10-performance-hardening",
+			"meta": {
+				"title": "Performance & Hardening",
+				"subtitle": "Workers, sendfile, gzip আর brotli, security headers, rate limiting, connection limits, body size caps। যে dial-গুলো একটি কর্মক্ষম nginx-কে দ্রুত ও প্রতিরোধযোগ্য বানায়।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["nginx", "performance", "hardening", "rate limiting", "security headers", "tls"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "Webhooks — রোডম্যাপ",
+				"subtitle": "দশটি অধ্যায়, যেগুলো 'webhooks তো নিছক HTTP POST request' থেকে শুরু করে এমন একটা সেল্ফ-হোস্টেড, signed, retried, idempotent webhook সিস্টেম পর্যন্ত নিয়ে যায় যেটা receiver ঘণ্টার পর ঘণ্টা down থাকলেও টিকে থাকে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "webhooks", "hmac", "retries", "idempotency"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "01-what-webhooks-are",
+			"meta": {
+				"title": "Webhooks কী এবং কখন ব্যবহার করবেন",
+				"subtitle": "কিছু একটা ঘটলে অন্য কারও server-এ আপনি যে HTTP POST পাঠান, সেটাই একটা webhook। protocol-টা তুচ্ছ; কিন্তু failure mode-গুলো নয়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["webhooks", "events", "rest", "queues"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "02-event-contract",
+			"meta": {
+				"title": "Event contract design",
+				"subtitle": "আপনার event payload-এর গড়ন এমন একটা contract হয়ে দাঁড়ায় যা প্রত্যেক integrate-কারীর সাথে বাঁধা। প্রথম দুপুরে নেওয়া সিদ্ধান্তগুলো নিয়েই আপনাকে বছরের পর বছর কাটাতে হয়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["webhooks", "events", "schema", "versioning"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "03-sending",
+			"meta": {
+				"title": "Webhooks পাঠানো",
+				"subtitle": "Go-তে ষাট লাইনে end-to-end producer। শেষে আপনার হাতে একটা binary থাকবে যা একটা URL-এ JSON POST করে, non-2xx সামলায়, আর পরিষ্কারভাবে timeout করে। Signing, retries, আর outbox পরে আসছে।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["webhooks", "go", "http client", "producer"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "04-signing",
+			"meta": {
+				"title": "Payload signing",
+				"subtitle": "একটা unsigned webhook হলো একটা public POST endpoint। URL আন্দাজ করা যে কেউ event জাল করতে পারে। একটা timestamp সহ canonical string-এর ওপর HMAC-ই হলো সরল, সঠিক সমাধান।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["webhooks", "hmac", "signatures", "security", "replay"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "05-verifying",
+			"meta": {
+				"title": "Signature verify করা",
+				"subtitle": "receiver-এর কাজ হলো raw body পড়া, HMAC পুনরায় গণনা করা, constant time-এ compare করা, আর replay window-এর চেয়ে পুরনো event reject করা। ছোট কোড, ভুল করা সহজ।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["webhooks", "hmac", "verification", "receiver", "security"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "06-retries",
+			"meta": {
+				"title": "Retries ও backoff",
+				"subtitle": "একবার fail হওয়া delivery স্বাভাবিক। একটা hot loop-এ দশবার fail হওয়া delivery আপনার আর আপনার customer-এর service নামিয়ে দেয়। jitter সহ exponential backoff আর একটা hard deadline-ই হলো সরল, সঠিক সমাধান।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["webhooks", "retries", "backoff", "jitter", "deadlines"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "07-idempotency",
+			"meta": {
+				"title": "Receiver-এ idempotency",
+				"subtitle": "At-least-once delivery মানে duplicate। receiver-এর কাজ তবুও exactly once process করা। inbox pattern — dedupe key, atomic claim, idempotent side effect — সেটাই উপায়।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["webhooks", "idempotency", "inbox pattern", "dedup", "transactions"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "08-delivery-dlq",
+			"meta": {
+				"title": "Delivery guarantee ও dead-letter queue",
+				"subtitle": "কিছু event কখনও deliver হয় না। dead-letter queue হলো সেখানে যেখানে তারা যায়, dashboard হলো যেখানে মানুষ তাদের দেখে, আর manual replay হলো আপনি কীভাবে recover করেন। এর কোনোটাই ঐচ্ছিক নয়।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["webhooks", "dlq", "delivery", "alerts", "replay"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "09-observability",
+			"meta": {
+				"title": "Observability ও replay",
+				"subtitle": "Webhooks কোনো fire-and-forget feature নয়। এটা একটা operated feature। debug করার জন্য আপনি যে dashboard, metric, আর trace বানান, সেটাই সেই পার্থক্য গড়ে দেয় — যে feature আপনি maintain করেন আর যে feature আপনাকে maintain করায়।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "12 মিনিট",
+				"topics": ["webhooks", "observability", "metrics", "tracing", "dashboards"]
+			}
+		},
+		{
+			"category": "webhooks",
+			"slug": "10-production",
+			"meta": {
+				"title": "Self-host",
+				"subtitle": "outbox pattern আপনার domain transaction আর webhook queue-র মধ্যে সেতু গড়ে। worker pool সেটা drain করে। TLS সহ nginx-এর পেছনে, একটা VPS-এ, অধ্যায় ৯-এর সব operational টুকরো জোড়া দিয়ে।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["webhooks", "outbox", "worker pool", "nginx", "deployment"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "WebSockets ও realtime — রোডম্যাপ",
+				"subtitle": "দশটি চ্যাপ্টার যা 'WebSocket handshake আসলে কী' থেকে শুরু করে Redis pub/sub, presence, auth আর সামনে nginx সহ একটি self-hosted, horizontally scaled realtime server পর্যন্ত নিয়ে যাবে।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "5 মিনিট",
+				"topics": ["roadmap", "websockets", "sse", "realtime", "pubsub"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "01-what-websockets-are",
+			"meta": {
+				"title": "WebSockets কী এবং কখন ব্যবহার করবেন",
+				"subtitle": "একটা WebSocket হলো একটা bidirectional, persistent TCP connection যা জীবন শুরু করে একটা HTTP request হিসেবে। যখন REST বা RPC কোনোটাই মানায় না তখন কাজে লাগে। প্রায়ই ভুলভাবে ব্যবহৃত হয়।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "10 মিনিট",
+				"topics": ["websockets", "sse", "realtime", "polling"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "02-handshake-frames",
+			"meta": {
+				"title": "handshake আর frame protocol",
+				"subtitle": "একটা server ship করার জন্য যে অংশগুলো গুরুত্বপূর্ণ সেই অংশে RFC 6455। Upgrade header, frame layout, masking, opcodes, close code, আর library যে নিয়মগুলো মেনে চলে যাতে আপনাকে না চলতে হয়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["websockets", "rfc6455", "frames", "handshake"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "03-first-server",
+			"meta": {
+				"title": "আপনার প্রথম server",
+				"subtitle": "End-to-end Go WebSocket server আশি লাইনে, একটা browser client সহ। শেষে আপনার কাছে একটা echo service plus একটা ছোট chat room থাকবে — দুটোই localhost-এ চলছে, দুটোই বাস্তব।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "11 মিনিট",
+				"topics": ["websockets", "go", "coder/websocket", "browser"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "04-message-protocols",
+			"meta": {
+				"title": "উপরে message protocol",
+				"subtitle": "Raw frame byte বহন করে। বাস্তব app-এর type, version আর request/response correlation দরকার। বন্য পরিবেশে দশটা client আসার আগেই message envelope ডিজাইন করলে বছরের পর বছরের যন্ত্রণা বাঁচে।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "12 মিনিট",
+				"topics": ["websockets", "json", "protocol", "versioning", "envelope"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "05-sse",
+			"meta": {
+				"title": "Server-Sent Events",
+				"subtitle": "যখন client শুধু শোনে, SSE গুরুত্বপূর্ণ প্রতিটা মাত্রায় WebSockets-কে হারায় — সহজতর protocol, বিনামূল্যে reconnect, plain HTTP। One-way realtime-এর default।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "11 মিনিট",
+				"topics": ["sse", "server-sent-events", "realtime", "http"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "06-pubsub-scale",
+			"meta": {
+				"title": "Pub/sub at scale",
+				"subtitle": "একটা process হাজার হাজার connection ধরে রাখতে পারে; production-এ অনেকগুলো দরকার। যে অংশটা সেটা কাজ করায় তা হলো একটা pub/sub bus যা যেকোনো process থেকে অন্য প্রতিটা process-এর প্রতিটা connection-এ event fan করে।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["websockets", "pubsub", "redis", "nats", "scaling"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "07-presence-rooms",
+			"meta": {
+				"title": "Presence আর rooms",
+				"subtitle": "কে online আর তারা কোন channel দেখছে তা জানা একটা one-process demo-তে সহজ দেখায় আর scale-এ সত্যিই কঠিন। data model অর্ধেক কাজ; eviction story বাকি অর্ধেক।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["websockets", "presence", "rooms", "redis", "sets"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "08-auth-origin",
+			"meta": {
+				"title": "Auth, origin, আর rate limits",
+				"subtitle": "WebSocket handshake সাধারণ HTTP-র মতো দেখায়, যা এদের সাধারণ HTTP আক্রমণ plus কয়েকটা WebSocket-নির্দিষ্ট আক্রমণের শিকার করে। origin verify করুন, handshake-এ authenticate করুন, আর যত level পারেন সব level-এ rate-limit করুন।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "12 মিনিট",
+				"topics": ["websockets", "auth", "origin", "csrf", "rate limiting"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "09-backpressure",
+			"meta": {
+				"title": "Backpressure, reconnects, heartbeats",
+				"subtitle": "Network ড্রপ করে। Client stall করে। Tab ঘুমায়। এই চ্যাপ্টারের প্যাটার্নগুলোই একটা WebSocket service যা এক সপ্তাহ চলে আর একটা যা এক ঘণ্টা খুঁড়িয়ে চলে — এদের মধ্যে পার্থক্য।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "13 মিনিট",
+				"topics": ["websockets", "backpressure", "reconnect", "heartbeat", "resilience"]
+			}
+		},
+		{
+			"category": "websockets",
+			"slug": "10-production",
+			"meta": {
+				"title": "Production self-host",
+				"subtitle": "TLS সহ nginx-এর পেছনে, systemd-managed, observable, Redis-এর মাধ্যমে process জুড়ে scaled। GraphQL আর gRPC ট্র্যাকের মতোই একই operational shape — wire-এ আলাদা protocol।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "14 মিনিট",
+				"topics": ["websockets", "nginx", "systemd", "observability", "scaling"]
+			}
+		}
 	]
 }
