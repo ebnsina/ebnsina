@@ -891,7 +891,7 @@
 			id="btn-purge">Purge Cache</button
 		>
 		<select
-			class="pg-select font-['Cabin_Condensed'] text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none cursor-pointer appearance-none"
+			class="pg-select font-sans text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none cursor-pointer appearance-none"
 			id="sel-region"
 		>
 			<option value="sg">Singapore PoP</option>

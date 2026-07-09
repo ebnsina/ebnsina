@@ -35,6 +35,8 @@
 					return {
 						category: key,
 						label: categoryLabel(key, locale),
+						// avatar initials always use the English label (Bangla single letters read poorly)
+						enLabel: CATEGORIES[key]?.label ?? key,
 						slugs: chs.map((c) => c.slug),
 						minutes: chs.reduce((m, c) => m + minutesOf(c.meta.readingTime), 0)
 					};

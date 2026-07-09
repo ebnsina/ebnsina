@@ -18,7 +18,6 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@fontsource-variable/space-grotesk": "^5.2.10",
 		"@playwright/test": "^1.60.0",
 		"@sveltejs/adapter-vercel": "next",
 		"@sveltejs/kit": "next",
@@ -51,11 +50,8 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
-		"@fontsource-variable/alkatra": "^5.2.8",
-		"@fontsource-variable/bricolage-grotesque": "^5.2.10",
-		"@fontsource-variable/epilogue": "^5.2.8",
 		"@fontsource-variable/geist-mono": "^5.2.8",
-		"@fontsource/cabin-condensed": "^5.2.8",
+		"@fontsource-variable/mona-sans": "^5.2.8",
 		"@fontsource/hind-siliguri": "^5.2.7",
 		"@lucide/svelte": "^1.18.0",
 		"@threlte/core": "^8.5.16",

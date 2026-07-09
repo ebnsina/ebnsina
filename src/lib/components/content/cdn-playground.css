@@ -69,7 +69,7 @@ html.dark {
 	background: var(--pg-bg);
 }
 .svg-label {
-	font-family: 'Cabin Condensed', sans-serif;
+	font-family: var(--font-sans);
 	font-size: 13px;
 	fill: var(--pg-mute);
 }

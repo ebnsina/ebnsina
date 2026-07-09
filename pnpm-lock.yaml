@@ -8,19 +8,10 @@ importers:
 
   .:
     dependencies:
-      '@fontsource-variable/alkatra':
-        specifier: ^5.2.8
-        version: 5.2.8
-      '@fontsource-variable/bricolage-grotesque':
-        specifier: ^5.2.10
-        version: 5.2.10
-      '@fontsource-variable/epilogue':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@fontsource-variable/geist-mono':
         specifier: ^5.2.8
         version: 5.2.8
-      '@fontsource/cabin-condensed':
+      '@fontsource-variable/mona-sans':
         specifier: ^5.2.8
         version: 5.2.8
       '@fontsource/hind-siliguri':
@@ -48,9 +39,6 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.5.0(jiti@2.7.0))
-      '@fontsource-variable/space-grotesk':
-        specifier: ^5.2.10
-        version: 5.2.10
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
@@ -216,23 +204,11 @@ packages:
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@fontsource-variable/alkatra@5.2.8':
-    resolution: {integrity: sha512-x1f7NX1ALvojVG4GCN4GFV1O8t4b3MfnbUN+Ps34HrdNbxNmx/WAEWlj00IzoyBDMshYbAZGZIDa8uwwzQAoIQ==}
-
-  '@fontsource-variable/bricolage-grotesque@5.2.10':
-    resolution: {integrity: sha512-5EDsCqgGpKVcJWE4sg9ydli+t5WM97mISYw5lla/Ev4z71FwXh1oN0YUU8xjkRW9+wBCGD9R+ntAvI8G4bUFJg==}
-
-  '@fontsource-variable/epilogue@5.2.8':
-    resolution: {integrity: sha512-YfO0l0GxR1cs9YsSmc+jMhD9uClAXXslPRiO0y1snJOpX5Y4Mn6uTRXgHsugo51mI+cLzFOyxp0g3O0CsnBHtA==}
-
   '@fontsource-variable/geist-mono@5.2.8':
     resolution: {integrity: sha512-KI5bj+hkkRiHttYHmccotUZ80ZuZyai+RwI1d7UId0clkx/jXxlo8qYK8j54WzmpBjtMoEMPyllV7faDcj+6RA==}
 
-  '@fontsource-variable/space-grotesk@5.2.10':
-    resolution: {integrity: sha512-yJQO/o35/hAP3CFnpdFTwQku2yzJOae2HIpBmqkOVoxhhXJaQP3g+b6Jrz7u+eI7A5ZdCIf88uMWpBJdFiGr5w==}
-
-  '@fontsource/cabin-condensed@5.2.8':
-    resolution: {integrity: sha512-o3OGP5ZOl+kZSVjLxSWuan3YWiFrhrAQbwJhbSO6G9u/0GKlNf/QuUGU7FaCCe+HtOxzNv1Cz818PNaNKdZ8hQ==}
+  '@fontsource-variable/mona-sans@5.2.8':
+    resolution: {integrity: sha512-8OWdTcP8KvRxkU1Skkk+tX3D5XHN9buejxSDwrT7teRfGnpKBYxQUApV/+zS8TzeHiSU8H5Tc0HfBr57ahgcvA==}
 
   '@fontsource/hind-siliguri@5.2.7':
     resolution: {integrity: sha512-U/hVX5jtUbETFWyCxTsW/ZkxRS5xn2GP0IVx+m+eQeK8a/lw0Wp6lU6+Y2cJAd9phLo+eGTzKoG+6ahsYJaPBQ==}
@@ -2730,17 +2706,9 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@fontsource-variable/alkatra@5.2.8': {}
-
-  '@fontsource-variable/bricolage-grotesque@5.2.10': {}
-
-  '@fontsource-variable/epilogue@5.2.8': {}
-
   '@fontsource-variable/geist-mono@5.2.8': {}
 
-  '@fontsource-variable/space-grotesk@5.2.10': {}
-
-  '@fontsource/cabin-condensed@5.2.8': {}
+  '@fontsource-variable/mona-sans@5.2.8': {}
 
   '@fontsource/hind-siliguri@5.2.7': {}
 

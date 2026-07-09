@@ -6,7 +6,13 @@
 	import { progress } from '$lib/progress.svelte';
 	import { nt, notesBase, type Locale } from '$lib/i18n/notes';
 
-	type Track = { category: string; label: string; slugs: string[]; minutes: number };
+	type Track = {
+		category: string;
+		label: string;
+		enLabel?: string;
+		slugs: string[];
+		minutes: number;
+	};
 	type Level = {
 		n: number;
 		title: string;
@@ -203,7 +209,7 @@
 								<span
 									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
 									style="background: linear-gradient(155deg, color-mix(in oklch, {c} 88%, #fff), {c});"
-									aria-hidden="true">{initials(tk.label)}</span
+									aria-hidden="true">{initials(tk.enLabel ?? tk.label)}</span
 								>
 								<span class="min-w-0 flex-1">
 									<span class="flex items-center gap-2">
