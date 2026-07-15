@@ -13,6 +13,14 @@ topics: ['API gateway', 'reverse proxy', 'request aggregation', 'middleware pipe
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
+## গল্পে বুঝি
+
+করিম একটা বড় সরকারি অফিস ভবনে গেছে জমির একটা কাগজ ঠিক করাতে। ভেতরে ঢুকেই সে দেখল সামনে একটাই reception desk, আর তার পেছনে অসংখ্য department — কেউ সরাসরি ভেতরে ঢুকে যে কোনো ঘরে চলে যেতে পারে না। reception-এর লোক আগে করিমের ভোটার আইডি দেখল, নাম-ঠিকানা মিলিয়ে একটা visitor slip দিল, তারপর বলল — আপনার কাজ তো ভূমি শাখায়, তিনতলায় বাঁয়ের ঘর, এই slip দেখিয়ে ঢুকবেন। করিমকে কোন department কোথায় সেটা খুঁজে বেড়াতে হলো না; reception-ই ঠিক করে দিল সে কোথায় যাবে।
+
+একটু পরেই রহিম এসে হাজির — সে সকাল থেকে এই নিয়ে পাঁচবার এসেছে, প্রতিবার একই কথা জিজ্ঞেস করে কর্মচারীদের বিরক্ত করছে। এবার reception তাকে থামিয়ে দিল, বলল — ভাই, একটু পরে আসেন, বারবার একই তদবিরে ভেতরে পাঠানো যাবে না। পাশে ফাতেমা এল অন্য একটা কাজে; তার আইডি ঠিক ছিল, কিন্তু সে ভুল দরজায় যাচ্ছিল বলে reception তাকে হিসাব শাখায় redirect করে দিল। পুরো ভবনে ঢোকার একটাই দরজা, আর সেই দরজাই ঠিক করছে কে ঢুকবে, কে ঢুকবে না, আর কে কোন department-এ যাবে।
+
+এই reception desk-টাই আসলে একটা **API gateway**। ভেতরের department-গুলো হলো আলাদা আলাদা backend service, আইডি যাচাই করাটা **authentication**, রহিমকে বারবার ঢুকতে না দেওয়াটা **rate limiting**, আর ফাতেমাকে সঠিক শাখায় পাঠানোটা **routing** — client কখনো সরাসরি service-এ যায় না, সবাই একটাই দরজা দিয়ে ঢোকে। বাস্তবে Kong বা AWS API Gateway ঠিক এই কাজটাই করে: সব request-এর একটাই entry point, যেখানে auth, rate limit আর route একসাথে সামলানো হয়।
+
 ## API Gateway কী?
 
 একটি API gateway হলো সব client request-এর একক প্রবেশপথ। 10টা আলাদা microservice সরাসরি কল করার বদলে, client একটাই gateway কল করে যা route করে, authenticate করে, rate limit করে, আর মাঝে মাঝে একাধিক service-এর response aggregate করে।

@@ -19,6 +19,14 @@ topics: ['OAuth 2.0', 'OIDC', 'authorization code', 'PKCE', 'federated identity'
 
 </Callout>
 
+## গল্পে বুঝি
+
+করিম দামি একটা গাড়ি নিয়ে রেস্টুরেন্টে খেতে এসেছে। সামনে valet parking। এখন সে যদি valet ছেলেটার হাতে তার আসল master key তুলে দেয়, তাহলে ওই ছেলে শুধু গাড়ি পার্ক করাই না — চাইলে glovebox খুলবে, trunk-এ রাখা ল্যাপটপ নেবে, এমনকি গাড়িটা নিয়েই কেটে পড়তে পারবে। করিম চালাক, তাই সে master key দেয় না। সে দেয় একটা আলাদা valet key — এই চাবি দিয়ে শুধু গাড়ি স্টার্ট আর পার্ক করা যায়, কিন্তু glovebox বা trunk খোলা যায় না। খাওয়া শেষে করিম চাইলেই ওই valet key বাতিল করে দিতে পারে, master key তো তার পকেটেই থেকে গেছে।
+
+এদিকে valet stand-টা রেস্টুরেন্টের সাথেও পরিচিত। রেস্টুরেন্ট যখন জানতে চায় গাড়িটা কার, valet stand বলে দেয় — "হ্যাঁ, এই গাড়ি 305 নম্বর রুমের অতিথি করিমের।" রেস্টুরেন্টকে করিমের আসল পরিচয়পত্র দেখতে হয় না, valet stand-ই যাচাই করে বলে দেয় করিম আসলেই করিম।
+
+গল্পের valet key-টাই হলো **OAuth**: master key (আপনার আসল password) না দিয়েই একটা সীমিত, নির্দিষ্ট scope-এর delegated access দেওয়া — যা আপনি যেকোনো সময় revoke করতে পারেন। আর valet stand-এর "এটা করিম" বলে vouch করাটাই **OpenID Connect (OIDC)** — OAuth-এর উপরে identity প্রমাণ করা, আপনি আসলে কে সেটা যাচাই করা। বাস্তবে ঠিক এটাই ঘটে যখন আপনি "Login with Google" চাপেন: Google-কে আপনার password না দিয়েই কোনো third-party app-কে আপনার email বা profile-এর মতো সীমিত জিনিসে access দেন (OAuth), আর সেই app জানতে পারে আপনি কে (OIDC) — চাইলে পরে Google account থেকে সেই access তুলে নিতে পারেন।
+
 ## OAuth 2.0 কী সমাধান করে
 
 OAuth-এর আগে, একটা third-party app-কে অন্য একটা service-এ আপনার data access করতে দেওয়ার একমাত্র উপায় ছিল তাকে আপনার username আর password দেওয়া। Third-party-টার চিরকালের জন্য full access থাকত, password পরিবর্তন ছাড়া revoke করার কোনো উপায় ছাড়া।
