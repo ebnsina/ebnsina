@@ -65,9 +65,11 @@
 			</ul>
 		</div>
 		<div class="flex gap-4">
-			<a href={SITE.social.github} class="hover:text-fg" target="_blank" rel="noopener">GitHub</a>
-			<a href={SITE.social.twitter} class="hover:text-fg" target="_blank" rel="noopener">Twitter</a>
-			<a href={SITE.social.linkedin} class="hover:text-fg" target="_blank" rel="noopener"
+			<a href={SITE.social.github} class="hover:text-fg" target="_blank" rel="me noopener">GitHub</a>
+			<a href={SITE.social.twitter} class="hover:text-fg" target="_blank" rel="me noopener"
+				>Twitter</a
+			>
+			<a href={SITE.social.linkedin} class="hover:text-fg" target="_blank" rel="me noopener"
 				>LinkedIn</a
 			>
 			<a href="/rss.xml" class="hover:text-fg">RSS</a>
