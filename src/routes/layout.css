@@ -94,8 +94,8 @@ html {
 	color: var(--fg);
 	font-family: var(--font-sans);
 	/* Responsive root size — every rem-based size scales with the viewport.
-	   Mobile reads tighter; desktop keeps the editorial 18px. */
-	font-size: 15.5px;
+	   Mobile reads tighter; desktop keeps the editorial base. */
+	font-size: 14.5px;
 	line-height: 1.6;
 	scroll-behavior: smooth;
 	scroll-padding-top: 5.5rem;
@@ -108,17 +108,17 @@ html {
 }
 @media (min-width: 480px) {
 	html {
-		font-size: 16px;
+		font-size: 15px;
 	}
 }
 @media (min-width: 768px) {
 	html {
-		font-size: 17px;
+		font-size: 16px;
 	}
 }
 @media (min-width: 1024px) {
 	html {
-		font-size: 18px;
+		font-size: 17px;
 	}
 }
 
