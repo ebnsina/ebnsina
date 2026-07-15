@@ -4,7 +4,11 @@
 	import ContactCta from '$lib/components/ContactCta.svelte';
 </script>
 
-<Seo title="About" description="A bit about Ebn Sina — engineer, builder, occasional writer." />
+<Seo
+	title="About"
+	description="A bit about Ebn Sina — engineer, builder, occasional writer."
+	profilePage
+/>
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
@@ -16,6 +20,12 @@
 
 	<div class="prose-editorial max-w-[44rem]">
 		<p>
+			<strong>Ebn Sina</strong> is a software engineer who builds complex infrastructure and
+			developer products end to end — video infrastructure, CDN and edge delivery, analytics
+			pipelines, media players, error-tracking tools, e-commerce, and learning platforms — plus the
+			platform engineering that keeps them fast and durable.
+		</p>
+		<p>
 			I've spent the last several years shipping software that real people rely on — backend
 			services, developer tools, and the occasional deeply unfashionable internal CLI. I care about
 			correctness, taste, and shipping.
@@ -23,8 +33,11 @@
 		<p>
 			My work sits at the intersection of infrastructure and product: distributed backends built to
 			survive real traffic, frontends that don't make users wait, and the platform engineering layer
-			that makes both sustainable. Currently deep in video infrastructure — ingest pipelines,
-			transcoding at scale, and the edge caching that gets frames to viewers fast.
+			that makes both sustainable. I've built the hard, complex pieces across a lot of domains —
+			video infrastructure (ingest, transcoding at scale, edge caching), CDN and edge delivery,
+			analytics pipelines, media players, error-tracking and observability tooling, e-commerce
+			platforms, and learning systems. The common thread is systems with real load and real users
+			where the details matter.
 		</p>
 
 		<h2>Background</h2>

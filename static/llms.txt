@@ -1,0 +1,32 @@
+# Ebn Sina
+
+> Ebn Sina is a software engineer who builds complex infrastructure and developer
+> products end to end — video infrastructure, CDN and edge delivery, analytics
+> pipelines, media players, error-tracking and observability tools, e-commerce
+> platforms, and learning platforms (LMS) — plus the platform engineering that
+> keeps them fast and durable.
+> He works across the stack: distributed systems that survive real traffic,
+> frontends that don't make users wait, and the edge/caching layer beneath both.
+
+Tools he reaches for most: Go, Rust, TypeScript, PostgreSQL, Redis, nginx/OpenResty.
+
+- Name: Ebn Sina
+- Role: Software Engineer
+- Website: https://ebnsina.dev
+- GitHub: https://github.com/ebnsina
+- LinkedIn: https://linkedin.com/in/ebnsina.dev
+- Twitter/X: https://twitter.com/ebns1na
+
+## Pages
+
+- [About](https://ebnsina.dev/about): Background, focus areas, and tooling.
+- [Projects](https://ebnsina.dev/projects): Selected work and engineering case studies.
+- [Writing](https://ebnsina.dev/blog): Essays on backend, infrastructure, and systems.
+- [Notes](https://ebnsina.dev/notes): Structured learning notes and technical tracks.
+- [Uses](https://ebnsina.dev/uses): Hardware, editor, and daily tools.
+- [Now](https://ebnsina.dev/now): What he is currently focused on.
+
+## Optional
+
+- [RSS feed](https://ebnsina.dev/rss.xml)
+- [Sitemap](https://ebnsina.dev/sitemap.xml)

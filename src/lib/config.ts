@@ -2,7 +2,27 @@ export const SITE = {
 	name: 'Ebn Sina',
 	title: 'Ebn Sina — Software Engineer',
 	description:
-		'Software engineer building thoughtful, fast, durable systems. Distributed backends, snappy frontends, and the infrastructure that holds it all up.',
+		'Software engineer building complex infrastructure and developer products — video, CDN, analytics, media players, error tracking, e-commerce, and learning platforms — thoughtful, fast, and durable.',
+	// One-line factual identity for structured data / LLM extraction.
+	jobTitle: 'Software Engineer',
+	bio: 'Ebn Sina is a software engineer who builds complex infrastructure and developer products end to end — video infrastructure, CDN and edge delivery, analytics pipelines, media players, error-tracking tools, e-commerce platforms, and learning platforms — plus the platform engineering that keeps them fast and durable.',
+	knowsAbout: [
+		'Distributed systems',
+		'Backend engineering',
+		'Video infrastructure',
+		'Content delivery networks (CDN)',
+		'Edge computing',
+		'Analytics pipelines',
+		'Media players',
+		'Error tracking and observability',
+		'E-commerce platforms',
+		'Learning management systems (LMS)',
+		'Platform engineering',
+		'Go',
+		'Rust',
+		'TypeScript',
+		'PostgreSQL'
+	],
 	url: 'https://ebnsina.dev',
 	author: 'Ebn Sina',
 	email: 'ebnsina.dev@gmail.com',
