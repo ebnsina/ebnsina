@@ -19,6 +19,14 @@ topics: ['service mesh', 'Envoy', 'Istio', 'Linkerd', 'ambient', 'mTLS', 'xDS', 
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির অফিসে একটা অদ্ভুত নিয়ম চালু হলো। প্রতিটা ডিপার্টমেন্ট — অ্যাকাউন্টস, সেলস, সাপোর্ট — এর ঠিক পাশে বসিয়ে দেওয়া হলো একজন করে নিজস্ব personal secretary। ডিপার্টমেন্টের কেউ আর নিজে ফোন ধরে না, নিজে ডায়াল করে না; বাইরের সব যোগাযোগ ওই secretary-র হাত দিয়েই যায়। কল এলে secretary আগে ওপাশের লোকের পরিচয় যাচাই করে, তারপর একটা encrypted secure লাইনে কথা বলে — বেঠিক পরিচয় হলে লাইনই কাটে। কল কানেক্ট না হলে সে কয়েকবার আবার চেষ্টা করে, আর অনেকক্ষণ রিং হয়ে গেলে ছেড়ে দিয়ে ব্যর্থ ঘোষণা করে। কোনো এক শাখা অফিসে ডায়াল করতে হলে সে দেখে কোন শাখা এখন ফাঁকা, সেখানেই রুট করে। আর প্রতিটা কল সে খাতায় লিখে রাখে — কার সাথে, কতক্ষণ, ফল কী।
+
+মজার ব্যাপার হলো, ডিপার্টমেন্টের ইবনে সিনা বা আল-খোয়ারিজমিকে এসবের কিছুই শিখতে হয়নি — তারা শুধু নিজের আসল কাজটা করে যায়, ফোন সিস্টেমের ঝামেলা secretary সামলায়। আর প্রতিটা secretary কীভাবে চলবে — কীভাবে পরিচয় যাচাই করবে, কতবার রি-ট্রাই করবে, কোন শাখায় রুট করবে — সেটা কেউ আলাদা আলাদা শেখায়নি; head office থেকে একটাই manual নেমে আসে, সব secretary সেটা মেনে চলে। manual বদলালে সব secretary-র আচরণ একসাথে বদলায়।
+
+এই secretary-ই হলো **sidecar proxy** — প্রতিটা service-এর পাশে বসানো একটা dedicated proxy, যেটা service-এর হয়ে সব inter-service traffic সামলায়। পরিচয় যাচাই + secure লাইন হলো **mTLS**, রি-ট্রাই আর অনেকক্ষণে হাল ছেড়ে দেওয়া হলো **retries/timeouts**, ফাঁকা শাখায় রুট করা হলো **load balancing**, আর কল খাতায় তোলা হলো **observability** — সব service কোডে হাত না দিয়েই, transparently। head office-এর সেই একক manual হলো **control plane**, যেটা প্রতিটা sidecar-কে configure করে। বাস্তবে Istio ঠিক এই কাজটাই করে: প্রতিটা pod-এ Envoy proxy sidecar হিসেবে বসিয়ে দেয়, আর Istiod (control plane) xDS দিয়ে সব sidecar-কে config পাঠায় — নিচের চ্যাপ্টার জুড়ে আমরা এই ব্যাপারটাই গভীরে দেখব।
+
 ## এক প্যারায় service mesh কী
 
 একটা service mesh cross-cutting networking concern — mTLS, retries, timeouts, traffic shifting, telemetry, circuit breakers, load balancing — প্রতিটা service থেকে বের করে এমন একটা dedicated proxy-তে নিয়ে যায় যা প্রতিটা service-এর পাশে (sidecar) বা নিচে (ambient/eBPF) বসে। proxy-গুলো হলো **data plane**। একটা আলাদা **control plane** সেগুলো configure করে আর তাদের updated routing ও policy পাঠায়।

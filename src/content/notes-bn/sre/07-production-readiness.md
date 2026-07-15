@@ -19,6 +19,14 @@ occupancy-র আগে একটা building inspection — মানুষজ�
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি শহরের বিল্ডিং সেফটি ইন্সপেক্টর। শহরের প্রান্তে একটা নতুন কারখানা সবে তৈরি হয়েছে, মালিক আজই শ্রমিকদের ঢুকিয়ে উৎপাদন শুরু করতে চান। কিন্তু ফাতিমার occupancy certificate সই না হওয়া পর্যন্ত কারখানার গেটে তালা। তিনি হাতে একটা ছাপানো চেকলিস্ট নিয়ে ভেতরে ঢোকেন, আর এক এক করে যাচাই করেন — fire alarm আর smoke detector কি ওয়্যার করা এবং টেস্ট করা আছে? জরুরি বেরোনোর পথগুলো কি খোলা এবং চিহ্নিত? দেয়ালে টাঙানো লিখিত emergency drill-book কি জায়গামতো আছে? প্রতিটা শিফটের জন্য কি প্রশিক্ষিত লোক roster-এ বসানো? আর wiring কি পুরো লোড সামলাতে পারবে, নাকি সব মেশিন একসাথে চললে গলে যাবে?
+
+আজ smoke detector লাগানো আছে ঠিকই, কিন্তু কোনোটাই টেস্ট করা হয়নি, আর দ্বিতীয় শিফটের জন্য কোনো প্রশিক্ষিত লোক roster-এ নেই। ফাতিমা certificate সই করেন না — "এই দুটো ঠিক করুন, তারপর আবার আসব।" মালিক বিরক্ত হন, একদিন দেরি হয়। কিন্তু ফাতিমা জানেন, চালু কারখানায় আগুন লাগার পর detector কাজ করছে না আবিষ্কার করার খরচ আজকের এই দেরির চেয়ে হাজার গুণ বেশি।
+
+এই গল্পটাই আসলে **Production Readiness Review**। ফাতিমার occupancy sign-off = service launch করার আগের PRR gate। টেস্ট করা fire alarm আর smoke detector = **monitoring ও alerting**; দেয়ালের drill-book = **runbook**; প্রতি শিফটে প্রশিক্ষিত roster = **on-call coverage**; পুরো লোড সামলানো wiring = **capacity** (আর তার সাথে SLO দিয়ে মাপা নির্ভরযোগ্যতা); চিহ্নিত জরুরি বেরোনোর পথ = **graceful degradation/failover**। যেকোনো একটা item fail করলে launch block। বাস্তবে Google-এর SRE team ঠিক এভাবেই নতুন service-এর pager হাতে নেওয়ার আগে একটা structured PRR চালায় — একটা মিসিং dashboard launch-এর সময় ঠিক করা, 2am-এর incident-এ ঠিক করার চেয়ে ঢের সস্তা।
+
 ## PRR কেন থাকে
 
 Production Readiness Review (PRR) হলো একটা structured checkpoint, যেটা SRE কোনো service-এর pager গ্রহণ করার আগে হয়। এটা একটা কারণেই থাকে: **launch-এর সময় একটা missing dashboard ঠিক করার খরচ, 2am-এর incident-এর সময় সেটা ঠিক করার খরচের চেয়ে 10x কম।**
