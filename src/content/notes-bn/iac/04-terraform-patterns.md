@@ -19,6 +19,14 @@ standard building component সহ একটা engineering firm: তারা �
 
 </Callout>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির একটা architecture firm। শুরুর দিকে প্রতিটা নতুন প্রজেক্টে তারা সবকিছু শূন্য থেকে আঁকত — গেস্ট হাউস, বাউন্ডারি ওয়াল, পানির ট্যাংক, সব নতুন করে। ভুল হতো, সময় নষ্ট হতো। তাই ফাতিমা আল-ফিহরি একদিন বলল, "প্রতিবার নতুন করে আঁকা বন্ধ। আমরা কিছু prefab blueprint বানিয়ে ফেলি।" এখন তাদের একটা library আছে — যেমন "standard guest house" নামের একটা তৈরি নকশা, যেটাতে শুধু সাইজ আর রঙ বসিয়ে দিলেই যেকোনো প্লটে ফিট হয়ে যায়। একই কাজ বারবার আঁকতে হয় না, শুধু parameter পাল্টে দিলেই হয়।
+
+কিন্তু একটা ঝামেলা ছিল — পুরো এস্টেটের master build-register, মানে কোথায় কী তৈরি হয়েছে তার একটাই খাতা, সবাই একসাথে হাত দিত। দুইজন আর্কিটেক্ট একই সময়ে লিখতে গিয়ে দুইরকম এন্ট্রি ঢুকিয়ে দিত, খাতা এলোমেলো হয়ে যেত। তাই তারা খাতাটা একটা shared central safe-এ রাখল, আর নিয়ম করল — একবারে একজনই safe খুলে লিখতে পারবে, লেখা শেষ হলে তবেই পরের জন হাত দেবে। আবার একই "standard guest house" নকশা দিয়েই তারা তিন জায়গায় আলাদা আলাদা কপি বানায়: trial plot-এ ছোট করে টেস্ট, show plot-এ ক্লায়েন্টকে দেখানোর জন্য, আর final estate-এ আসল বসবাসের জন্য — নকশা এক, কিন্তু তিনটা আলাদা বিল্ড।
+
+এই গল্পটাই আসলে production Terraform। prefab blueprint যেটাতে শুধু সাইজ-রঙ বসিয়ে দিলেই হয় সেটাই **module** — parameterised, reusable building block। shared central safe-এ রাখা master build-register যেখানে একবারে একজন লিখতে পারে সেটাই central-এ রাখা **remote state** আর **state locking** — team-এ দুইজনের একসাথে apply করে state নষ্ট করা আটকায়। আর একই নকশা থেকে trial/show/final-এর আলাদা কপি বানানোটাই **workspaces/environments** — এক codebase থেকে dev, staging আর production আলাদা করে চালানো। বাস্তবে এভাবেই বড় infra টিম চলে: reusable module, S3 + DynamoDB দিয়ে locked remote state, আর environment প্রতি আলাদা directory/state — যাতে একজনের dev-এর experiment কখনো production-কে ছুঁয়ে না ফেলে।
+
 ## Scale-এর জন্য Repository Structure
 
 ছোট প্রজেক্টে একটা flat config কাজ করে। একাধিক service আর environment-এর জন্য:

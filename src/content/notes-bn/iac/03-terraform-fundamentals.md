@@ -11,6 +11,14 @@ topics: ['Terraform', 'HCL', 'state', 'providers', 'modules', 'plan', 'apply']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি এক বিশাল estate-এর manager। মালিক তাকে শুধু বলে দিয়েছেন estate-টা শেষমেশ দেখতে কেমন হওয়া উচিত — "তিনটা guest house থাকবে, একটা কুয়া থাকবে, চারপাশে একটা boundary wall থাকবে।" মালিক কিন্তু বলেননি কীভাবে করতে হবে, ইট গাঁথতে হবে নাকি রং করতে হবে; শুধু final চেহারাটা বলে দিয়েছেন। ফাতিমা একটা বাঁধানো register রাখেন যেখানে এই মুহূর্তে estate-এ ঠিক কী কী তৈরি আছে তা নিখুঁতভাবে লেখা — দুটো guest house, একটা কুয়া, একটা পুরনো wall, একটা ভাঙা shed।
+
+কিছু ছোঁয়ার আগে ফাতিমা কখনোই সরাসরি কাজে নেমে পড়েন না। তিনি প্রথমে desired চেহারার সাথে register-এর বর্তমান অবস্থা মিলিয়ে একটা তালিকা বানান — "একটা নতুন guest house বানাতে হবে, wall-টা আবার রং করতে হবে, পুরনো shed-টা ভেঙে ফেলতে হবে।" এই তালিকাটা তিনি মালিককে দেখান, অনুমোদন নেন, তারপরই শ্রমিকদের দিয়ে ঠিক ততটুকুই কাজ করান — যেন শেষে estate হুবহু desired চেহারায় পৌঁছায়, একটুও বেশি নয়, কমও নয়।
+
+এই গল্পটাই আসলে **Terraform**। মালিকের বলে দেওয়া final চেহারা হলো আপনার **declarative** config অর্থাৎ **desired state** — আপনি কী কী resource শেষমেশ চান তা ঘোষণা করেন, কীভাবে বানাতে হবে সেই ধাপ নয়। ফাতিমার register হলো **state file** — এই মুহূর্তে বাস্তবে কী কী তৈরি আছে তার হিসাব। desired-vs-register মিলিয়ে বানানো তালিকাটাই `terraform plan` (কী add হবে, কী change হবে, কী destroy হবে)। আর অনুমোদনের পর শ্রমিক দিয়ে কাজটা করানোই `terraform apply` — যা বাস্তবকে desired state-এর সাথে মিলিয়ে দেয়। বাস্তবে ঠিক এভাবেই AWS, GCP বা Cloudflare-এ infrastructure provision করা হয়: আপনি end state ঘোষণা করেন, Terraform state file দেখে plan কষে, তারপর apply করে reality-কে সেই অনুযায়ী সাজায়।
+
 <Callout type="info">
 
 **বাস্তব জীবনের উদাহরণ**
