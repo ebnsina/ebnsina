@@ -14,9 +14,9 @@ importers:
       '@fontsource-variable/mona-sans':
         specifier: ^5.2.8
         version: 5.2.8
-      '@fontsource/hind-siliguri':
-        specifier: ^5.2.7
-        version: 5.2.7
+      '@fontsource/noto-serif-bengali':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@lucide/svelte':
         specifier: ^1.18.0
         version: 1.18.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))
@@ -43,10 +43,10 @@ importers:
         specifier: ^1.60.0
         version: 1.60.0
       '@sveltejs/adapter-vercel':
-        specifier: next
+        specifier: 7.0.0-next.1
         version: 7.0.0-next.1(@sveltejs/kit@3.0.0-next.7(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.0))(typescript@6.0.3)(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0)))
       '@sveltejs/kit':
-        specifier: next
+        specifier: 3.0.0-next.7
         version: 3.0.0-next.7(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.0))(typescript@6.0.3)(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.1.2
@@ -210,8 +210,8 @@ packages:
   '@fontsource-variable/mona-sans@5.2.8':
     resolution: {integrity: sha512-8OWdTcP8KvRxkU1Skkk+tX3D5XHN9buejxSDwrT7teRfGnpKBYxQUApV/+zS8TzeHiSU8H5Tc0HfBr57ahgcvA==}
 
-  '@fontsource/hind-siliguri@5.2.7':
-    resolution: {integrity: sha512-U/hVX5jtUbETFWyCxTsW/ZkxRS5xn2GP0IVx+m+eQeK8a/lw0Wp6lU6+Y2cJAd9phLo+eGTzKoG+6ahsYJaPBQ==}
+  '@fontsource/noto-serif-bengali@5.2.10':
+    resolution: {integrity: sha512-pCuFQUgfuGfG2goWn73XKbPOTwMXzHq/aziyIRmN1t0HkPs1ueJlwczPobQsQAtYdX7bp5Oj3cp3hWSTuJhepA==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -2710,7 +2710,7 @@ snapshots:
 
   '@fontsource-variable/mona-sans@5.2.8': {}
 
-  '@fontsource/hind-siliguri@5.2.7': {}
+  '@fontsource/noto-serif-bengali@5.2.10': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
