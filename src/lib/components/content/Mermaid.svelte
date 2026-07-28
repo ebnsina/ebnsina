@@ -1,3 +1,11 @@
+<script module lang="ts">
+	// Shared across every instance on the page. mermaid.render() mounts a temp
+	// node under the id it is given, so two diagrams rendering concurrently with
+	// the same id clobber each other and one comes back empty — the counter has
+	// to be per-module, not per-component.
+	let uid = 0;
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -5,7 +13,6 @@
 
 	let svg = $state('');
 	let failed = $state(false);
-	let seq = 0;
 
 	// Neutral palette per theme (mermaid's khroma can't parse the oklch neutral
 	// tokens, so mirror them as hex). The ACCENT is read live from the --accent
@@ -89,7 +96,7 @@
 			}
 		});
 		try {
-			const id = `mermaid-${seq++}`;
+			const id = `mermaid-${uid++}`;
 			const out = await mermaid.render(id, sourceFor(narrow));
 			svg = out.svg;
 			failed = false;
