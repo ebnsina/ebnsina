@@ -18,6 +18,9 @@ async function highlighter(code: string, lang: string | null | undefined) {
 	} catch {
 		html = await codeToHtml(code, { lang: 'text', ...opts });
 	}
+	// Shiki emits no language class, so stamp it on the <pre>. ArticleLayout reads
+	// this to label each code block's collapse control.
+	html = html.replace('<pre class="shiki', `<pre data-lang="${lang || 'text'}" class="shiki`);
 	// escapeSvelte neutralises {, }, ` and \t\r\n; any other backslash (\d, \u, …)
 	// would still break the untagged template literal, so escape those too.
 	const safe = escapeSvelte(html).replace(/\\/g, '&#92;');

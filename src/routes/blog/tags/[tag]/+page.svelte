@@ -10,7 +10,7 @@
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<header class="mb-10">
 		<a href="/blog" class="text-sm text-muted hover:text-fg">← All writing</a>
-		<h1 class="mt-4 font-serif text-5xl font-semibold tracking-tight">
+		<h1 class="mt-4 font-serif text-4xl font-semibold tracking-tight">
 			<span class="text-muted">#</span>{data.tag}
 		</h1>
 		<p class="mt-2 text-muted">

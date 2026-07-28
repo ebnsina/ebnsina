@@ -1,78 +1,102 @@
 <script lang="ts">
 	import { SITE } from '$lib/config';
-	import { onMount } from 'svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	const year = new Date().getFullYear();
 
-	// The brand re-tint palette: Honolulu blue (--accent, the primary) plus four
-	// accents — Svelte orange, pink, rose, lime. `value` is written to --accent;
-	// `null` resets to the default Honolulu blue. Lime is deepened from #84cc16 to
-	// #65a30d so it stays legible when applied as the accent (link/text) colour.
-	const swatches = [
-		{ name: 'Honolulu', hex: '#0076b6', value: null },
-		{ name: 'Svelte', hex: '#ff3e00', value: '#ff3e00' },
-		{ name: 'Pink', hex: '#ec4899', value: '#ec4899' },
-		{ name: 'Rose', hex: '#f43f5e', value: '#f43f5e' },
-		{ name: 'Lime', hex: '#65a30d', value: '#65a30d' }
-	];
-
-	let active = $state<string | null>(null);
-
-	onMount(() => {
-		active = localStorage.getItem('brand-accent');
-	});
-
-	function pick(value: string | null) {
-		const root = document.documentElement;
-		if (value) {
-			root.style.setProperty('--accent', value);
-			localStorage.setItem('brand-accent', value);
-		} else {
-			root.style.removeProperty('--accent');
-			localStorage.removeItem('brand-accent');
+	// Sitemap columns. Kept here rather than derived from SITE.nav so the footer
+	// can group by intent (read / about me / off-site) and surface the feed and
+	// sitemap routes that never belong in the header.
+	const columns = [
+		{
+			heading: 'Read',
+			links: [
+				{ label: 'Writing', href: '/blog' },
+				{ label: 'Notes', href: '/notes' },
+				{ label: 'Directory', href: '/directory' },
+				{ label: 'Projects', href: '/projects' }
+			]
+		},
+		{
+			heading: 'About',
+			links: [
+				{ label: 'About me', href: '/about' },
+				{ label: 'Uses', href: '/uses' },
+				{ label: 'বাংলা নোটস', href: '/bn/notes' }
+			]
+		},
+		{
+			heading: 'Elsewhere',
+			links: [
+				{ label: 'GitHub', href: SITE.social.github, external: true },
+				{ label: 'Twitter', href: SITE.social.twitter, external: true },
+				{ label: 'LinkedIn', href: SITE.social.linkedin, external: true },
+				{ label: 'RSS feed', href: '/rss.xml' }
+			]
 		}
-		active = value;
-		window.dispatchEvent(new Event('themechange'));
-	}
+	];
 </script>
 
-<footer class="mt-12" style="border-top: 1px solid color-mix(in oklch, var(--fg) 6%, transparent)">
-	<div
-		class="mx-auto flex max-w-5xl flex-col gap-4 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-10"
-	>
-		<div class="flex items-center gap-3">
-			<p>© {year} {SITE.name}.</p>
-			<ul class="flex items-center gap-2">
-				{#each swatches as swatch (swatch.name)}
-					<li class="group relative flex">
-						<button
-							type="button"
-							onclick={() => pick(swatch.value)}
-							aria-label="Set brand colour to {swatch.name}"
-							aria-pressed={active === swatch.value}
-							class="block h-3 w-3 rounded-[4px] outline-none transition-transform duration-150 group-hover:scale-125 focus-visible:scale-125 {active ===
-							swatch.value
-								? 'ring-2 ring-fg/40 ring-offset-1 ring-offset-bg'
-								: ''}"
-							style="background: {swatch.hex}"
-						></button>
-						<span
-							class="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-xs text-bg opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-							style="background: {swatch.hex}"
-							role="tooltip">{swatch.name}</span
-						>
-					</li>
-				{/each}
-			</ul>
+<footer class="mt-20" style="border-top: 1px solid color-mix(in oklch, var(--fg) 7%, transparent)">
+	<div class="mx-auto max-w-5xl px-5 py-14 sm:px-8">
+		<div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8">
+			<!-- brand + contact: the CTA now lives here rather than repeating on every page -->
+			<div class="max-w-xs">
+				<p class="font-display text-base font-semibold tracking-tight">
+					Ebn <span class="text-accent">Sina</span>
+				</p>
+				<p class="mt-2.5 text-sm leading-relaxed text-muted">
+					Software engineer building infrastructure and developer products — and writing about the
+					craft behind them.
+				</p>
+				<a
+					href={`mailto:${SITE.email}`}
+					class="mt-4 inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
+				>
+					<Icon name="mail" size={14} /> Get in touch
+				</a>
+			</div>
+
+			{#each columns as col (col.heading)}
+				<nav aria-label={col.heading}>
+					<p class="mb-3.5 font-mono text-[0.66rem] uppercase tracking-[0.2em] text-muted">
+						{col.heading}
+					</p>
+					<ul class="space-y-2.5">
+						{#each col.links as link (link.href)}
+							<li>
+								<a
+									href={link.href}
+									target={link.external ? '_blank' : undefined}
+									rel={link.external ? 'me noopener' : undefined}
+									class="group inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-fg"
+								>
+									{link.label}
+									{#if link.external}
+										<Icon
+											name="arrowUpRight"
+											size={12}
+											class="opacity-0 transition-opacity group-hover:opacity-100"
+										/>
+									{/if}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				</nav>
+			{/each}
 		</div>
-		<div class="flex gap-4">
-			<a href={SITE.social.github} class="hover:text-fg" target="_blank" rel="me noopener">GitHub</a>
-			<a href={SITE.social.twitter} class="hover:text-fg" target="_blank" rel="me noopener"
-				>Twitter</a
-			>
-			<a href={SITE.social.linkedin} class="hover:text-fg" target="_blank" rel="me noopener"
-				>LinkedIn</a
-			>
-			<a href="/rss.xml" class="hover:text-fg">RSS</a>
+
+		<!-- bottom bar -->
+		<div
+			class="mt-12 flex flex-col gap-4 pt-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
+			style="border-top: 1px solid color-mix(in oklch, var(--fg) 7%, transparent)"
+		>
+			<p>
+				© {year}
+				<a href="/" class="transition-colors hover:text-accent">{SITE.name}</a>.
+			</p>
+
+			<a href="/rss.xml" class="transition-colors hover:text-fg">RSS</a>
 		</div>
 	</div>
 </footer>

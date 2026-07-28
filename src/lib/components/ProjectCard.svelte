@@ -18,7 +18,7 @@
 	style={auroraFor(project.title)}
 >
 	<h3
-		class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"
+		class="line-clamp-2 font-serif text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-accent"
 	>
 		{project.title}
 	</h3>

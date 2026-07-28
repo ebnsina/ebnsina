@@ -41,7 +41,7 @@
 				<span class="ml-auto"><LocaleToggle locale={data.locale} /></span>
 			</div>
 			<h1
-				class="mb-4 font-serif text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl sm:leading-[1.05] lg:text-5xl"
+				class="mb-4 font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl sm:leading-[1.1]"
 			>
 				{meta.title}
 			</h1>

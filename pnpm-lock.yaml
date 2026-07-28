@@ -17,9 +17,12 @@ importers:
       '@fontsource/noto-serif-bengali':
         specifier: ^5.2.10
         version: 5.2.10
-      '@lucide/svelte':
-        specifier: ^1.18.0
-        version: 1.18.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))
+      '@hugeicons/core-free-icons':
+        specifier: ^4.2.3
+        version: 4.2.3
+      '@hugeicons/svelte':
+        specifier: ^1.1.4
+        version: 1.1.4(svelte@5.56.3(@typescript-eslint/types@8.61.0))
       '@threlte/core':
         specifier: ^8.5.16
         version: 8.5.16(svelte@5.56.3(@typescript-eslint/types@8.61.0))(three@0.184.0)
@@ -215,6 +218,14 @@ packages:
 
   '@fontsource/noto-serif-bengali@5.2.10':
     resolution: {integrity: sha512-pCuFQUgfuGfG2goWn73XKbPOTwMXzHq/aziyIRmN1t0HkPs1ueJlwczPobQsQAtYdX7bp5Oj3cp3hWSTuJhepA==}
+
+  '@hugeicons/core-free-icons@4.2.3':
+    resolution: {integrity: sha512-fpiU0qFZkv4ABi23xJ2m4qNr0BBfuIaYjPboN8WDA6aj9D+OzXa7eykxKOpACZRuGbDz1U9S5DsNx1d5KNnsgA==}
+
+  '@hugeicons/svelte@1.1.4':
+    resolution: {integrity: sha512-G/oYlqhJ6DTN64/BuOPiFBz6zfAvocUHiewA7x/ktOElwKPl0NM3TAnZcvTy+DsYRH6CD03JdNYrQTu/mPFMBw==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -414,11 +425,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@lucide/svelte@1.18.0':
-    resolution: {integrity: sha512-S1cjiJflMLIirDZtZ8ou2Vy0xMrOqEQzYzDo29AUxoJiOjUfMHUeClvprJsGUEr60RYDJzEgkjSkWm1nlN9iyQ==}
-    peerDependencies:
-      svelte: ^5
 
   '@mapbox/node-pre-gyp@2.0.3':
     resolution: {integrity: sha512-uwPAhccfFJlsfCxMYTwOdVfOz3xqyj8xYL3zJj8f0pb30tLohnnFPhLuqp4/qoEz8sNxe4SESZedcBojRefIzg==}
@@ -2718,6 +2724,12 @@ snapshots:
 
   '@fontsource/noto-serif-bengali@5.2.10': {}
 
+  '@hugeicons/core-free-icons@4.2.3': {}
+
+  '@hugeicons/svelte@1.1.4(svelte@5.56.3(@typescript-eslint/types@8.61.0))':
+    dependencies:
+      svelte: 5.56.3(@typescript-eslint/types@8.61.0)
+
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -2861,10 +2873,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  '@lucide/svelte@1.18.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))':
-    dependencies:
-      svelte: 5.56.3(@typescript-eslint/types@8.61.0)
 
   '@mapbox/node-pre-gyp@2.0.3':
     dependencies:

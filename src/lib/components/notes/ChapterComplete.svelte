@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Check, Trophy, Sparkles } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 	import { nt, type Locale } from '$lib/i18n/notes';
 
@@ -72,41 +72,42 @@
 	});
 </script>
 
-<div
-	bind:this={sentinel}
-	class="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] px-5 py-4"
->
-	<div class="flex items-center gap-3">
-		<button
-			type="button"
-			onclick={onToggle}
-			class="grid size-7 shrink-0 place-items-center rounded-full border-2 transition-colors"
+<!-- The completion control was a bordered panel with a ringed checkbox and two
+	 stacked lines of status copy. It is now one row: a toggle, a short label, and
+	 the onward link — no box, no restated XP line. -->
+<div bind:this={sentinel} class="mt-14 flex flex-wrap items-center justify-between gap-4">
+	<button
+		type="button"
+		onclick={onToggle}
+		class="group inline-flex items-center gap-2.5 text-sm transition-colors"
+		class:text-accent={done}
+		class:text-muted={!done}
+		aria-pressed={done}
+		aria-label={done ? 'Mark chapter incomplete' : 'Mark chapter complete'}
+	>
+		<span
+			class="grid size-5 shrink-0 place-items-center border transition-colors"
 			class:border-accent={done}
 			class:bg-accent={done}
-			class:border-[color-mix(in_oklch,var(--fg)_22%,transparent)]={!done}
-			aria-pressed={done}
-			aria-label={done ? 'Mark chapter incomplete' : 'Mark chapter complete'}
+			class:border-[color-mix(in_oklch,var(--fg)_25%,transparent)]={!done}
 		>
 			{#if done}
-				<Check size={14} strokeWidth={3} color="var(--bg)" />
+				<Icon name="check" size={12} strokeWidth={3} color="#fff" />
 			{/if}
-		</button>
-		<div>
-			<p class="font-pixel text-sm">
-				{done ? t.chapterComplete : t.finishedReading}
-			</p>
-			<p class="font-pixel text-[0.7rem] text-muted">
-				{done ? t.xpEarned(xp) : t.markToEarn(xp)}
-			</p>
-		</div>
-	</div>
+		</span>
+		<span class="group-hover:text-fg">
+			{done ? t.chapterComplete : t.finishedReading}
+		</span>
+	</button>
 
 	{#if done && nextHref}
 		<a
 			href={nextHref}
-			class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
-			>{t.nextChapter}</a
+			class="group inline-flex items-center gap-1.5 text-sm font-medium text-accent"
 		>
+			{t.nextChapter}
+			<Icon name="arrowRight" size={14} class="transition-transform group-hover:translate-x-0.5" />
+		</a>
 	{/if}
 </div>
 
@@ -121,10 +122,10 @@
 	>
 		<span class="inline-flex items-center gap-2">
 			{#if trackMastered}
-				<Trophy size={14} />
+				<Icon name="trophy" size={14} />
 				{t.toastMastered(trackLabel)}
 			{:else}
-				<Sparkles size={14} />
+				<Icon name="sparkles" size={14} />
 				{t.toastXp(xp, rankName, progress.xp)}
 			{/if}
 		</span>

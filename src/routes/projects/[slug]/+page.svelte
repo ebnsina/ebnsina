@@ -1,9 +1,8 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
-	import ContactCta from '$lib/components/ContactCta.svelte';
 	import { reveal, vtName } from '$lib/actions';
-	import { auroraFor, catFor } from '$lib/colors';
-	import { ArrowUpRight } from '@lucide/svelte';
+	import { catFor } from '$lib/colors';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let { data } = $props();
 	const project = $derived(data.project);
@@ -30,7 +29,7 @@
 			{#if project.featured}<span>·</span><span style="color: var(--cc)">Featured</span>{/if}
 		</div>
 		<h1
-			class="font-serif text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl"
+			class="font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl"
 			style={`view-transition-name: ${vtName('project-title', project.slug)}`}
 		>
 			{project.title}
@@ -50,7 +49,7 @@
 				rel="noopener"
 				class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-fg underline decoration-[color-mix(in_oklch,var(--fg)_25%,transparent)] underline-offset-4 transition-colors hover:text-accent"
 			>
-				Visit project <ArrowUpRight size={15} strokeWidth={2.5} />
+				Visit project <Icon name="arrowUpRight" size={15} strokeWidth={2.5} />
 			</a>
 		{/if}
 	</header>
@@ -60,7 +59,7 @@
 		<h2 class="mb-3 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			The problem
 		</h2>
-		<p class="text-[1.05rem] leading-[1.8] text-fg/90">{cs.problem}</p>
+		<p class="text-base leading-[1.8] text-fg/90">{cs.problem}</p>
 	</section>
 
 	<!-- Challenges -->
@@ -68,10 +67,12 @@
 		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			Challenges
 		</h2>
-		<div class="space-y-6">
+		<!-- plain prose, separated by hairlines — these are long-form narrative
+			 entries, not cards, so colour would only get in the way of reading -->
+		<div class="space-y-7">
 			{#each cs.challenges as item (item.title)}
-				<div class="glass-card p-5" style={auroraFor(item.title)}>
-					<h3 class="mb-1.5 font-serif text-lg font-semibold tracking-tight">{item.title}</h3>
+				<div>
+					<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
 					<p class="leading-[1.75] text-muted">{item.body}</p>
 				</div>
 			{/each}
@@ -83,10 +84,10 @@
 		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			Implementation
 		</h2>
-		<div class="space-y-6">
+		<div class="space-y-7">
 			{#each cs.implementation as item (item.title)}
-				<div class="glass-card p-5" style={auroraFor(item.title)}>
-					<h3 class="mb-1.5 font-serif text-lg font-semibold tracking-tight">{item.title}</h3>
+				<div>
+					<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
 					<p class="leading-[1.75] text-muted">{item.body}</p>
 				</div>
 			{/each}
@@ -98,11 +99,10 @@
 		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			Why this stack
 		</h2>
-		<dl class="grid gap-3">
+		<dl class="grid">
 			{#each cs.stackWhy as row (row.tech)}
 				<div
-					class="glass-card grid grid-cols-[8rem_1fr] gap-4 p-4 sm:grid-cols-[10rem_1fr]"
-					style={auroraFor(row.tech)}
+					class="grid grid-cols-[8rem_1fr] gap-4 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-3.5 first:border-t-0 first:pt-0 sm:grid-cols-[10rem_1fr]"
 				>
 					<dt class="font-mono text-sm font-medium text-fg">{row.tech}</dt>
 					<dd class="text-sm leading-relaxed text-muted">{row.why}</dd>
@@ -116,18 +116,14 @@
 		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			What it does
 		</h2>
-		<ul class="grid gap-2.5 sm:grid-cols-2">
+		<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
 			{#each cs.features as feat (feat)}
-				<li
-					class="glass-card flex gap-2.5 p-4 text-sm leading-relaxed text-muted"
-					style={auroraFor(feat)}
-				>
-					<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/70"></span>
+				<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
+					<span class="mt-[0.55em] h-1 w-1 shrink-0 rounded-full" style="background: var(--cc)"
+					></span>
 					<span>{feat}</span>
 				</li>
 			{/each}
 		</ul>
 	</section>
-
-	<ContactCta />
 </article>

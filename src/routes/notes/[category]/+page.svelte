@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Check, Trophy, ArrowRight } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
 	import LocaleToggle from '$lib/components/notes/LocaleToggle.svelte';
 	import { GROUP_ORDER } from '$lib/data/categories';
-	import { auroraFor, catColor } from '$lib/colors';
+	import { catColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 	import { nt } from '$lib/i18n/notes';
 
@@ -28,9 +28,6 @@
 					0
 				)
 			: 0
-	);
-	const pct = $derived(
-		data.chapters.length ? Math.round((doneCount / data.chapters.length) * 100) : 0
 	);
 
 	// recommended next = first chapter (in order) not yet completed
@@ -54,15 +51,14 @@
 			>
 			<LocaleToggle locale={data.locale} />
 		</div>
-		<h1 class="mb-3 mt-3 font-serif text-5xl font-semibold tracking-tight">{data.meta.label}</h1>
+		<h1 class="mb-3 mt-3 font-serif text-3xl font-semibold tracking-tight">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
 
 	<!-- Track progress + guidance -->
-	<div
-		class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] p-5"
-	>
-		<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+	<!-- Track progress: one line, no panel. -->
+	<div class="mb-10">
+		<div class="flex flex-wrap items-center justify-between gap-3">
 			<p class="font-pixel text-sm">
 				<span class="text-fg">{doneCount}/{data.chapters.length}</span>
 				<span class="text-muted">{t.chapterTail(trackXp)}</span>
@@ -70,7 +66,7 @@
 			{#if allDone}
 				<div class="flex items-center gap-3">
 					<span class="inline-flex items-center gap-1.5 font-pixel text-sm text-accent">
-						<Trophy size={15} />
+						<Icon name="trophy" size={15} />
 						{t.trackMastered}
 					</span>
 					<TrackBadge label={data.meta.label} color={trackColor} earned size="sm" />
@@ -78,66 +74,43 @@
 			{:else if nextChapter}
 				<a
 					href={`${base}/${data.category}/${nextChapter.slug}`}
-					class="rounded-2xl bg-fg px-4 py-2 font-pixel text-xs text-bg transition-colors hover:bg-accent"
+					class="rounded-2xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 					>{doneCount === 0 ? t.startHere : t.continueWord} →</a
 				>
 			{/if}
 		</div>
-		<div
-			class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
-		>
-			<div
-				class="h-full rounded-full bg-accent transition-[width] duration-500"
-				style="width: {pct}%"
-			></div>
-		</div>
 	</div>
 
-	<!-- node circle, shared between the desktop rail and the inline mobile badge -->
+	<!-- Step marker: just the chapter number, or a tick once read. The bordered
+		 circle and the connector rail it hung on are gone — the ordered list is
+		 already sequential, so the rail was drawing something the numbers said. -->
 	{#snippet stepNode(ch: (typeof data.chapters)[number], isDone: boolean, isNext: boolean)}
 		<span
-			class="grid size-7 shrink-0 place-items-center rounded-full border-2 font-pixel text-[0.6rem] transition-colors"
-			class:border-accent={isDone || isNext}
-			class:bg-accent={isDone}
-			class:text-bg={isDone}
-			class:text-accent={isNext && !isDone}
-			class:border-[color-mix(in_oklch,var(--fg)_18%,transparent)]={!isDone && !isNext}
+			class="w-6 shrink-0 font-mono text-[0.65rem] transition-colors"
+			class:text-accent={isDone || isNext}
 			class:text-muted={!isDone && !isNext}
 		>
 			{#if isDone}
-				<Check size={13} strokeWidth={3} />
+				<Icon name="check" size={13} strokeWidth={3} />
 			{:else}
 				{String(ch.meta.chapter).padStart(2, '0')}
 			{/if}
 		</span>
 	{/snippet}
 
-	<!-- The path -->
-	<ol class="relative space-y-2">
-		{#each data.chapters as ch, i (ch.slug)}
+	<!-- The path. Chapters are a *list*, so they read as hairline-separated rows
+		 rather than a stack of full-bleed gradient bars — 25 of those in a column
+		 was the single biggest source of visual noise on this page. -->
+	<ol class="relative">
+		{#each data.chapters as ch (ch.slug)}
 			{@const isDone = progress.ready && progress.isDone(data.category, ch.slug)}
 			{@const isNext = nextChapter?.slug === ch.slug}
 			<li class="relative flex gap-4">
-				<!-- node + connector rail (desktop only — mobile uses the inline badge in the card) -->
-				<div class="relative hidden w-7 shrink-0 flex-col items-center sm:flex">
-					{#if i > 0}
-						<span
-							class="absolute -top-2 h-2 w-px bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"
-						></span>
-					{/if}
-					<span class="z-10 mt-3.5">{@render stepNode(ch, isDone, isNext)}</span>
-					{#if i < data.chapters.length - 1}
-						<span class="w-px flex-1 bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"></span>
-					{/if}
-				</div>
-
 				<a
 					href={`${base}/${data.category}/${ch.slug}`}
-					class="glass-card group mb-1 flex min-w-0 flex-1 items-center gap-3 p-3 pr-3 sm:gap-4"
-					style={auroraFor(ch.slug)}
+					class="group -mx-2.5 flex min-w-0 flex-1 items-center gap-3 px-2.5 py-3 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)] sm:gap-4"
 				>
-					<!-- inline step badge (mobile only) -->
-					<span class="sm:hidden">{@render stepNode(ch, isDone, isNext)}</span>
+					{@render stepNode(ch, isDone, isNext)}
 					<span class="min-w-0 flex-1">
 						<span class="flex items-center gap-2">
 							<span class="truncate font-semibold transition-colors group-hover:text-accent"
@@ -145,7 +118,7 @@
 							>
 							{#if isNext}
 								<span
-									class="shrink-0 rounded-lg bg-accent px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-bg"
+									class="shrink-0 rounded-lg bg-accent-solid px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-white"
 									>{doneCount === 0 ? t.startBadge : t.nextBadge}</span
 								>
 							{/if}
@@ -159,7 +132,8 @@
 						class="hidden flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted sm:block"
 						>{ch.meta.readingTime}</span
 					>
-					<ArrowRight
+					<Icon
+						name="arrowRight"
 						size={16}
 						class="hidden shrink-0 -translate-x-1 text-muted opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 sm:block"
 					/>

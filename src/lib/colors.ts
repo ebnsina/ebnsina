@@ -1,33 +1,32 @@
-/** Harmonised categorical palette — one coordinated family. Authored as
- *  oklch(0.6 0.11 H) (constant lightness/chroma, hue-only) and stored as the
- *  sRGB-hex equivalents so the same values work in CSS (color-mix/color) AND in
- *  three.js (THREE.Color, which can't parse oklch()). Used everywhere a category
- *  needs a colour — folders, track avatars, badges, level markers, project/blog
- *  cards, the 3D accents. Cherry (--accent) stays the only fully-saturated brand
- *  colour; these read as soft tints over the page background. */
+/** The site runs on ONE hue: indigo. What used to be a categorical palette of
+ *  eight hues is now eight steps along a single indigo lightness ramp — authored
+ *  as oklch(L 0.11 277) and stored as sRGB hex so the same values work in CSS
+ *  (color-mix) AND in three.js (THREE.Color can't parse oklch()).
+ *
+ *  Categories are therefore distinguished by *value*, not by hue. Keep it that
+ *  way: adding a second hue here re-introduces the rainbow this replaced. */
 export const CAT_COLORS = [
-	'#4984bf', // blue   (oklch 0.6 0.11 250)
-	'#8572bb', // violet (oklch 0.6 0.11 295)
-	'#ab6595', // plum   (oklch 0.6 0.11 340)
-	'#b96558', // clay   (oklch 0.6 0.11 30)
-	'#aa732b', // amber  (oklch 0.6 0.11 70)
-	'#6a8d43', // green  (oklch 0.6 0.11 130)
-	'#2d9570', // teal   (oklch 0.6 0.11 165)
-	'#00929f' // cyan   (oklch 0.6 0.11 205)
+	'#444a8e', // oklch 0.44 0.11 277
+	'#51599e', // oklch 0.49
+	'#5f67ae', // oklch 0.54
+	'#6d76be', // oklch 0.59
+	'#7b85ce', // oklch 0.64
+	'#8a95df', // oklch 0.69
+	'#99a4f0', // oklch 0.74
+	'#a8b4ff' // oklch 0.79
 ];
 
-// Vivid variant — same hue family at higher chroma (oklch 0.58 0.17 H). For
-// solid colour tiles (e.g. timeline avatars) that should pop with white text,
-// while soft-tint usage stays on CAT_COLORS.
+// Vivid variant — same indigo ramp at higher chroma (oklch L 0.17 277), for
+// solid tiles that carry white text; soft-tint usage stays on CAT_COLORS.
 export const CAT_VIVID = [
-	'#007cd9', // blue
-	'#8460d2', // violet
-	'#b84999', // plum
-	'#cb4838', // clay
-	'#b76200', // amber
-	'#578c00', // green
-	'#009860', // teal
-	'#0093aa' // cyan
+	'#3b39a6', // oklch 0.42 0.17 277
+	'#4749b7', // oklch 0.47
+	'#5458c8', // oklch 0.52
+	'#6168d9', // oklch 0.57
+	'#6f77ea', // oklch 0.62
+	'#7d87fb', // oklch 0.67
+	'#8b97ff', // oklch 0.72
+	'#9aa7ff' // oklch 0.77
 ];
 
 export const catColor = (i: number) =>
@@ -55,12 +54,13 @@ export const catVividFor = (key: string) => CAT_VIVID[hashIndex(key, CAT_VIVID.l
 /* ============================================================
    Aurora card gradients
    ============================================================
-   Cards no longer take a flat hue from the categorical palette — each one gets
-   its own aurora (auroragradient.com style): two or three soft lights blooming
-   over a deep base sweep. Every theme keeps a dark base so white text stays
-   legible, and varies the sweep angle + light origin so no two cards read the
-   same. Each entry feeds only CSS custom properties consumed by `.glass-card`:
-     l1/l2/l3 — the light bloom colours (bright → warm → deep)
+   Each card gets its own aurora: two or three soft lights blooming over a deep
+   base sweep, varied per card so no two read the same. These stay deliberately
+   multi-hued — the aurora is decorative background, not brand colour. Indigo
+   (--accent) is reserved for brand text, links and primary buttons. Every theme
+   keeps a dark base so white text stays legible. Each entry feeds only CSS
+   custom properties consumed by `.glass-card`:
+     l1/l2/l3 — the light bloom colours (bright → mid → deep)
      b1/b2/b3 — the base sweep, dark to darkest
      a        — sweep angle;  x/y — origin of the primary light */
 const AURORA_THEMES = [

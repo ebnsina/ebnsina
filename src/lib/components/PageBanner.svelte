@@ -5,12 +5,22 @@
 	import { catFor } from '$lib/colors';
 	import { threeEnabled } from '$lib/three/enabled';
 
+	import type { Snippet } from 'svelte';
+
 	let {
 		eyebrow,
 		title,
 		description,
-		shape
-	}: { eyebrow?: string; title: string; description?: string; shape: ShapeName } = $props();
+		shape,
+		actions
+	}: {
+		eyebrow?: string;
+		title: string;
+		description?: string;
+		shape: ShapeName;
+		/** optional controls rendered under the description (e.g. a locale toggle) */
+		actions?: Snippet;
+	} = $props();
 
 	// each page's object gets its own colour (fixed, not theme-reactive)
 	const accent = $derived(catFor(shape + title));
@@ -32,22 +42,25 @@
 	});
 </script>
 
-<section class="mb-14 grid items-center gap-6 sm:mb-16 sm:grid-cols-[1fr_23rem]">
+<section class="mb-10 grid items-center gap-6 sm:mb-12 sm:grid-cols-[1fr_20rem]">
 	<header>
 		{#if eyebrow}
 			<p class="mb-4 font-mono text-[0.7rem] uppercase tracking-[0.22em] text-muted">{eyebrow}</p>
 		{/if}
 		<h1
-			class="font-display text-[2.75rem] font-bold leading-[1.05] tracking-[-0.025em] sm:text-5xl"
+			class="font-display text-[1.6rem] font-semibold leading-[1.12] tracking-[-0.02em] sm:text-[1.9rem]"
 		>
 			{title}
 		</h1>
 		{#if description}
-			<p class="mt-4 max-w-xl text-lg leading-[1.65] text-muted">{description}</p>
+			<p class="mt-3.5 max-w-xl text-base leading-[1.6] text-muted">{description}</p>
+		{/if}
+		{#if actions}
+			<div class="mt-5">{@render actions()}</div>
 		{/if}
 	</header>
 
-	<div class="banner-3d hidden h-[21rem] sm:block" aria-hidden="true">
+	<div class="banner-3d hidden h-[15rem] sm:block" aria-hidden="true">
 		{#if Canvas3D}
 			<Canvas3D {accent} {shape} />
 		{/if}

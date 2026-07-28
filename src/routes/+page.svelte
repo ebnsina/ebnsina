@@ -2,13 +2,11 @@
 	import Hero from '$lib/three/Hero.svelte';
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import PostCard from '$lib/components/PostCard.svelte';
-	import ContactCta from '$lib/components/ContactCta.svelte';
 	import Typewriter from '$lib/components/Typewriter.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import { projects } from '$lib/data/projects';
 	import { SITE } from '$lib/config';
 	import { reveal } from '$lib/actions';
-	import { auroraFor } from '$lib/colors';
 
 	let { data } = $props();
 
@@ -23,41 +21,6 @@
 		'Reliability Engineer',
 		'Full-Stack Engineer'
 	];
-
-	const doing = [
-		{
-			k: 'Backend & distributed systems',
-			v: 'Services built to survive real traffic — queues, durable execution, consensus, and the failure modes most teams only discover in production.',
-			tags: ['Go', 'Rust', 'Postgres', 'Redis', 'NATS']
-		},
-		{
-			k: 'Frontend & product',
-			v: "Interfaces that don't make people wait. Accessible, fast, and considered down to the empty and loading states.",
-			tags: ['TypeScript', 'Svelte', 'React', 'WebGL']
-		},
-		{
-			k: 'Platform & reliability',
-			v: 'The unglamorous layer that keeps everything else sustainable — CI/CD, observability, infra-as-code, and SLOs that actually mean something.',
-			tags: ['Kubernetes', 'Terraform', 'OpenTelemetry', 'nginx']
-		}
-	];
-
-	const currently = [
-		'Building a video-infrastructure platform — ingest, transcoding pipelines, adaptive delivery, and the edge caching that ties it together.',
-		'Going deeper on distributed systems — specifically consensus and durable execution.',
-		'Working through Mastering SRE and re-reading Designing Data-Intensive Applications.',
-		'Tinkering with Rust on the side — embedded and WASM.'
-	];
-
-	const toolkit = [
-		{ group: 'Languages', items: ['Go', 'Rust', 'TypeScript', 'Python'] },
-		{ group: 'Data', items: ['PostgreSQL', 'Redis', 'NATS', 'Kafka'] },
-		{
-			group: 'Infrastructure',
-			items: ['Kubernetes', 'Terraform', 'nginx / OpenResty', 'Cloudflare']
-		},
-		{ group: 'Observability', items: ['OpenTelemetry', 'Prometheus', 'Grafana'] }
-	];
 </script>
 
 <Seo />
@@ -67,7 +30,12 @@
 	<section
 		class="relative -mx-5 mb-6 flex min-h-[54vh] items-center py-10 sm:-mx-8 sm:min-h-[82vh] sm:py-0"
 	>
-		<div class="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2">
+		<!-- The point cloud is masked away from the left half so it never sits
+			 behind the headline and copy, which was making them hard to read.
+			 Mobile renders no canvas at all (threeEnabled() is false <768px). -->
+		<div
+			class="hero-canvas pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2"
+		>
 			<Hero />
 		</div>
 
@@ -75,11 +43,11 @@
 			<p
 				class="mb-6 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.28em] text-muted"
 			>
-				<span class="corner-round inline-block size-1.5 rounded-full bg-accent"></span>
+				<span class="inline-block size-1.5 rounded-full bg-accent"></span>
 				<Typewriter words={TITLES} />
 			</p>
 			<h1
-				class="mb-7 max-w-xl font-display text-[2.2rem] font-bold leading-[1.05] tracking-[-0.03em] sm:text-5xl lg:text-6xl"
+				class="mb-7 max-w-xl font-display text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] sm:text-4xl lg:text-5xl"
 			>
 				Building <span class="text-accent">fast, durable</span> systems &mdash; and the craft behind them.
 			</h1>
@@ -91,7 +59,7 @@
 			<div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
 				<a
 					href="/projects"
-					class="rounded-2xl bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent"
+					class="rounded-2xl bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 					>See my work</a
 				>
 				<a
@@ -124,24 +92,6 @@
 					post-mortems, patterns that held up under load, and opinions I'd defend with diagrams.
 				</p>
 			</div>
-		</div>
-	</section>
-
-	<!-- What I do -->
-	<section class="border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16" use:reveal>
-		<p class="mb-8 font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">What I do</p>
-		<div class="grid gap-4 lg:grid-cols-3">
-			{#each doing as d (d.k)}
-				<div class="glass-card flex h-full flex-col p-6" style={auroraFor(d.k)}>
-					<h3 class="font-display text-lg font-bold tracking-tight">{d.k}</h3>
-					<p class="mt-2 text-sm leading-[1.6] text-muted">{d.v}</p>
-					<div class="mt-auto flex flex-wrap gap-1.5 pt-5">
-						{#each d.tags as t (t)}
-							<span class="tag-pill">{t}</span>
-						{/each}
-					</div>
-				</div>
-			{/each}
 		</div>
 	</section>
 
@@ -198,46 +148,14 @@
 			</div>
 		</section>
 	{/if}
-
-	<!-- Currently + Toolkit -->
-	<section
-		class="grid gap-12 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-16 lg:grid-cols-2"
-		use:reveal
-	>
-		<div>
-			<div class="mb-6 flex items-baseline justify-between">
-				<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Currently</p>
-				<a href="/now" class="text-sm text-muted transition-colors hover:text-fg">Now →</a>
-			</div>
-			<ul class="space-y-4">
-				{#each currently as item (item)}
-					<li class="flex gap-3 text-[0.97rem] leading-[1.6] text-muted">
-						<span class="mt-2 size-1.5 shrink-0 rounded-full bg-accent"></span>
-						<span>{item}</span>
-					</li>
-				{/each}
-			</ul>
-		</div>
-
-		<div>
-			<div class="mb-6 flex items-baseline justify-between">
-				<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">Toolkit</p>
-				<a href="/uses" class="text-sm text-muted transition-colors hover:text-fg">Uses →</a>
-			</div>
-			<div class="space-y-4">
-				{#each toolkit as t (t.group)}
-					<div class="grid grid-cols-[7rem_1fr] gap-3">
-						<span class="pt-0.5 text-sm font-medium">{t.group}</span>
-						<div class="flex flex-wrap gap-1.5">
-							{#each t.items as item (item)}
-								<span class="tag-pill">{item}</span>
-							{/each}
-						</div>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</section>
-
-	<ContactCta />
 </div>
+
+<style>
+	/* Keep the point cloud clear of the copy: fully transparent across the left
+	   (text) side, fading in across the middle. Only the standard `mask-image`
+	   is written — Lightning CSS adds the -webkit- alias, and hand-writing both
+	   makes it drop the standard one. */
+	.hero-canvas {
+		mask-image: linear-gradient(to right, transparent 46%, #000 72%);
+	}
+</style>

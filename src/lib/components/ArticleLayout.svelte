@@ -41,12 +41,30 @@
 				return { id, text: h.textContent ?? '', depth: h.tagName === 'H3' ? 3 : 2 };
 			});
 
-			// 2. copy buttons on code blocks
+			// 2. code blocks: fold control + copy button.
+			//    Each <pre> is moved into a <details open> so a reader can collapse a
+			//    block they've read past. Open by default — nothing is hidden; the
+			//    control is just there. The language comes from the `language-*`
+			//    class Shiki puts on the <code>.
 			article!.querySelectorAll<HTMLPreElement>('pre').forEach((pre) => {
 				if (pre.parentElement?.classList.contains('code-block-wrapper')) return;
+
+				const details = document.createElement('details');
+				details.className = 'code-details';
+				details.open = true;
+				const summary = document.createElement('summary');
+				summary.className = 'code-summary';
+				const code = pre.querySelector('code');
+				// set by the Shiki highlighter in vite.config.ts
+				const lang = pre.dataset.lang || 'code';
+				const lines = (code?.textContent ?? '').replace(/\n$/, '').split('\n').length;
+				summary.textContent = `${lang} · ${lines} ${lines === 1 ? 'line' : 'lines'}`;
+				details.appendChild(summary);
+				pre.parentNode!.insertBefore(details, pre);
+
 				const wrap = document.createElement('div');
 				wrap.className = 'code-block-wrapper';
-				pre.parentNode!.insertBefore(wrap, pre);
+				details.appendChild(wrap);
 				wrap.appendChild(pre);
 				const btn = document.createElement('button');
 				btn.className = 'copy-btn';

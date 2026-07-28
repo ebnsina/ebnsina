@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Trophy, Lock } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let {
 		label,
@@ -21,9 +21,9 @@
 <div class="badge" class:earned class:sm={size === 'sm'} style="--bc:{color}" title={label}>
 	<div class="medal">
 		{#if earned}
-			<Trophy strokeWidth={1.8} />
+			<Icon name="trophy" strokeWidth={1.8} />
 		{:else}
-			<Lock strokeWidth={1.8} />
+			<Icon name="lock" strokeWidth={1.8} />
 		{/if}
 	</div>
 	<span class="label">{label}</span>

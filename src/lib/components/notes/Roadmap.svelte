@@ -1,8 +1,17 @@
 <script lang="ts">
+	/**
+	 * The path, as four quiet sections rather than a gamified board.
+	 *
+	 * This replaced a layout built from sticky aurora level-cards and a dotted
+	 * timeline rail with initial-tiles per track. That version encoded the same
+	 * information three times over (rail + tile + label) and left the page feeling
+	 * like a dashboard. Here a level is just a heading and a blurb, and its tracks
+	 * are a plain two-column list of links — the hierarchy is carried by type and
+	 * whitespace, which is what makes 40 tracks scannable instead of loud.
+	 */
 	import { onMount } from 'svelte';
-	import { Check, ListChecks, Clock, ArrowRight, Landmark, Lock } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import { auroraAt } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
 	import { nt, notesBase, type Locale } from '$lib/i18n/notes';
 
@@ -33,28 +42,11 @@
 
 	const fmtH = (m: number) => (m >= 60 ? `${Math.round(m / 60)}h` : `${m}m`);
 
-	// continuous timeline line: stop at the first/last dot rather than overrunning
-	const lineStyle = (idx: number, len: number) => {
-		if (len <= 1) return 'display:none';
-		if (idx === 0) return 'top:50%; bottom:-1.75rem;';
-		if (idx === len - 1) return 'top:0; height:50%;';
-		return 'top:0; bottom:-1.75rem;';
-	};
-	const initials = (s: string) =>
-		s
-			.split(/[\s/&]+/)
-			.filter(Boolean)
-			.slice(0, 2)
-			.map((w) => w[0])
-			.join('')
-			.toUpperCase();
-
 	const ordered = $derived(
 		levels.flatMap((l) =>
 			l.tracks.flatMap((t) => t.slugs.map((s) => ({ category: t.category, slug: s })))
 		)
 	);
-	const totalCh = $derived(ordered.length);
 	const doneTotal = $derived(
 		progress.ready
 			? ordered.reduce((n, c) => n + (progress.isDone(c.category, c.slug) ? 1 : 0), 0)
@@ -63,234 +55,79 @@
 	const next = $derived(
 		progress.ready ? ordered.find((c) => !progress.isDone(c.category, c.slug)) : undefined
 	);
-	const allDone = $derived(progress.ready && doneTotal === totalCh && totalCh > 0);
-
-	// stable index per track, in path order — so avatars cycle through the aurora
-	// themes and adjacent tracks never share one.
-	const catIndex = $derived.by(() => {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local, non-reactive
-		const m = new Map<string, number>();
-		for (const l of levels)
-			for (const t of l.tracks) if (!m.has(t.category)) m.set(t.category, m.size);
-		return m;
-	});
 </script>
 
-<section class="mb-14">
-	<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
-		<div>
-			<p class="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted">{t.thePath}</p>
-			<h2 class="mt-1 font-display text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-				{t.pathHeading}
-			</h2>
-			<p class="mt-2 max-w-xl text-sm text-muted">
-				{t.pathSub}
-			</p>
+<section>
+	<div class="mb-12 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+		<div class="max-w-lg">
+			<h2 class="font-display text-xl font-semibold tracking-tight">{t.pathHeading}</h2>
+			<p class="mt-1.5 text-sm leading-relaxed text-muted">{t.pathSub}</p>
 		</div>
-		{#if !allDone && next}
+		{#if next}
 			<a
 				href={`${base}/${next.category}/${next.slug}`}
-				class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-fg px-5 py-2.5 font-pixel text-xs text-bg transition-colors hover:bg-accent"
-				>{doneTotal === 0 ? t.beginPath : t.continuePath} <ArrowRight size={14} /></a
+				class="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-accent"
 			>
+				{doneTotal === 0 ? t.beginPath : t.continuePath}
+				<Icon
+					name="arrowRight"
+					size={14}
+					class="transition-transform group-hover:translate-x-0.5"
+				/>
+			</a>
 		{/if}
 	</div>
 
-	<div class="space-y-12 lg:space-y-16">
+	<div>
 		{#each levels as lvl (lvl.n)}
 			{@const done = progress.ready
 				? lvl.tracks.reduce((n, t) => n + progress.doneIn(t.category, t.slugs), 0)
 				: 0}
-			{@const pct = lvl.totalCh ? Math.round((done / lvl.totalCh) * 100) : 0}
-			<div class="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[19rem_1fr]">
-				<!-- left: sticky level card -->
-				<div class="lg:sticky lg:top-24">
-					<div class="glass-card p-6" style={auroraAt(lvl.n - 1)}>
-						<div class="flex items-center justify-between">
-							<span class="font-pixel text-[0.6rem] uppercase tracking-[0.18em] text-muted"
-								>{t.levelWord(lvl.n)}</span
-							>
-							<LevelBadge level={lvl.level} label={t.levels[lvl.level]} />
-						</div>
-						<h3 class="mt-2 font-display text-2xl font-bold tracking-tight">{lvl.title}</h3>
-
-						<div
-							class="mt-4 flex items-center gap-5 border-y py-2.5 font-mono text-xs text-muted"
-							style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);"
-						>
-							<span class="inline-flex items-center gap-1.5"
-								><ListChecks size={14} /> {t.tracksCount(lvl.tracks.length)}</span
-							>
-							<span class="inline-flex items-center gap-1.5"
-								><Clock size={14} /> {fmtH(lvl.minutes)}</span
-							>
-						</div>
-
-						<p class="mt-4 text-sm leading-relaxed text-muted">{lvl.blurb}</p>
-
-						<div
-							class="mt-5 border-t pt-4"
-							style="border-color: color-mix(in oklch, var(--fg) 8%, transparent);"
-						>
-							<p class="mb-2.5 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-								{t.youllLearn}
-							</p>
-							<ul class="space-y-1.5">
-								{#each lvl.outcomes as o (o)}
-									<li class="flex items-start gap-2 text-sm">
-										<Check size={14} strokeWidth={3} color="#fff" class="mt-1 shrink-0" />
-										<span>{o}</span>
-									</li>
-								{/each}
-							</ul>
-						</div>
-
-						<div class="mt-5 flex items-center gap-3">
-							<div
-								class="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
-							>
-								<div
-									class="h-full rounded-full bg-accent transition-[width] duration-500"
-									style="width: {pct}%"
-								></div>
-							</div>
-							<span class="shrink-0 font-pixel text-[0.62rem] text-muted">{done}/{lvl.totalCh}</span
-							>
-						</div>
+			<section class="grid gap-x-12 gap-y-6 pb-16 lg:grid-cols-[15rem_1fr]">
+				<!-- level: a heading, not a card -->
+				<div class="lg:sticky lg:top-24 lg:self-start">
+					<div class="flex items-center gap-2.5">
+						<span class="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-muted">
+							{t.levelWord(lvl.n)}
+						</span>
+						<LevelBadge level={lvl.level} label={t.levels[lvl.level]} />
 					</div>
+					<h3 class="mt-2 font-display text-lg font-semibold tracking-tight">{lvl.title}</h3>
+					<p class="mt-2 text-sm leading-relaxed text-muted">{lvl.blurb}</p>
+					<p class="mt-3 font-mono text-[0.68rem] text-muted">
+						{t.tracksCount(lvl.tracks.length)} · {fmtH(lvl.minutes)}
+						{#if done > 0}· {done}/{lvl.totalCh}{/if}
+					</p>
 				</div>
 
-				<!-- right: timeline of tracks -->
-				<ol class="relative space-y-7">
-					{#each lvl.tracks as tk, idx (tk.category)}
+				<!-- its tracks: a plain list of links -->
+				<ul class="grid gap-x-10 sm:grid-cols-2">
+					{#each lvl.tracks as tk (tk.category)}
 						{@const td = progress.ready ? progress.doneIn(tk.category, tk.slugs) : 0}
 						{@const tdone = tk.slugs.length > 0 && td === tk.slugs.length}
-						{@const isNext = next ? tk.category === next.category : false}
-						{@const au = auroraAt(catIndex.get(tk.category) ?? 0)}
-						<li class="relative flex items-center gap-4 sm:gap-5">
-							<!-- node + connecting line -->
-							<div class="relative flex w-3 shrink-0 items-center justify-center self-stretch">
-								<span
-									class="absolute left-1/2 w-px -translate-x-1/2 bg-[color-mix(in_oklch,var(--fg)_12%,transparent)]"
-									style={lineStyle(idx, lvl.tracks.length)}
-								></span>
-								<span
-									class="corner-round relative size-3 rounded-full border-2 transition-colors"
-									class:bg-accent={tdone || isNext}
-									style={tdone || isNext
-										? 'border-color: var(--accent);'
-										: 'background: var(--bg); border-color: color-mix(in oklch, var(--fg) 25%, transparent);'}
-								>
-									{#if isNext}
-										<span
-											class="corner-round absolute -inset-1.5 -z-10 rounded-full bg-[color-mix(in_oklch,var(--accent)_22%,transparent)]"
-										></span>
-									{/if}
-								</span>
-							</div>
-
-							<!-- card -->
+						<li>
 							<a
 								href={`${base}/${tk.category}`}
-								class="group flex flex-1 items-center gap-4 rounded-2xl py-2 pr-2.5"
+								class="group -mx-2.5 flex items-baseline justify-between gap-4 px-2.5 py-2.5 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)]"
 							>
-								<span
-									class="glass-card grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
-									style={au}
-									aria-hidden="true">{initials(tk.enLabel ?? tk.label)}</span
-								>
-								<span class="min-w-0 flex-1">
-									<span class="flex items-center gap-2">
-										<span
-											class="font-semibold tracking-tight transition-colors group-hover:text-accent"
-											>{tk.label}</span
-										>
-										{#if tdone}
-											<Check size={13} strokeWidth={3} color="var(--accent)" />
-										{/if}
-									</span>
-									<span class="mt-0.5 block font-mono text-xs text-muted">
-										{t.chaptersCount(tk.slugs.length)} · {fmtH(tk.minutes)}{#if td > 0 && !tdone}
-											· {td} {t.doneWord}{/if}
-									</span>
+								<span class="flex min-w-0 items-center gap-1.5">
+									<span
+										class="truncate text-sm font-medium transition-colors group-hover:text-accent"
+										>{tk.label}</span
+									>
+									{#if tdone}
+										<Icon name="check" size={12} strokeWidth={3} color="var(--accent)" />
+									{/if}
 								</span>
-								<ArrowRight
-									size={16}
-									class="shrink-0 text-muted opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
-								/>
+								<span class="shrink-0 font-mono text-[0.68rem] text-muted">
+									{tk.slugs.length} · {fmtH(tk.minutes)}{#if td > 0 && !tdone}
+										· {td}{/if}
+								</span>
 							</a>
 						</li>
 					{/each}
-				</ol>
-			</div>
+				</ul>
+			</section>
 		{/each}
-
-		<!-- capstone: the path goal -->
-		<div
-			class="flex flex-col items-center rounded-2xl border px-6 py-12 text-center sm:py-14"
-			style={allDone
-				? 'border-color: color-mix(in oklch, var(--accent) 30%, transparent); background: color-mix(in oklch, var(--accent) 6%, var(--bg));'
-				: 'border-color: color-mix(in oklch, var(--fg) 8%, transparent); background: color-mix(in oklch, var(--fg) 2%, transparent);'}
-		>
-			<!-- hexagonal badge -->
-			<div class="relative">
-				<div
-					class="grid size-24 place-items-center"
-					style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); color: {allDone
-						? '#fff'
-						: 'color-mix(in oklch, var(--fg) 40%, transparent)'}; {allDone
-						? 'background: linear-gradient(155deg, color-mix(in oklch, var(--accent) 92%, #000), var(--accent));'
-						: 'background: linear-gradient(160deg, color-mix(in oklch, var(--fg) 11%, transparent), color-mix(in oklch, var(--fg) 5%, transparent));'}"
-					aria-hidden="true"
-				>
-					<Landmark size={38} />
-				</div>
-				<span
-					class="corner-round absolute -right-1 -top-1 grid size-7 place-items-center rounded-full border-2"
-					style="border-color: var(--bg); color: {allDone
-						? '#fff'
-						: 'color-mix(in oklch, var(--fg) 55%, transparent)'}; background: {allDone
-						? 'var(--accent)'
-						: 'color-mix(in oklch, var(--fg) 16%, var(--bg))'};"
-					aria-hidden="true"
-				>
-					{#if allDone}
-						<Check size={13} strokeWidth={3} />
-					{:else}
-						<Lock size={12} />
-					{/if}
-				</span>
-			</div>
-
-			<h3 class="mt-6 font-display text-2xl font-bold tracking-tight sm:text-3xl">
-				{t.architectPath}
-			</h3>
-			<p class="mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-				{#if allDone}
-					{t.capstoneAllDone}
-				{:else if doneTotal === 0}
-					{t.capstoneStart}
-				{:else}
-					{t.capstoneMid(totalCh - doneTotal)}
-				{/if}
-			</p>
-
-			{#if !allDone && next}
-				<a
-					href={`${base}/${next.category}/${next.slug}`}
-					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg transition-colors hover:bg-fg"
-					>{doneTotal === 0 ? t.beginPath : t.continuePath} <ArrowRight size={16} /></a
-				>
-			{:else if allDone}
-				<span
-					class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-bg"
-					>{t.pathComplete} <Check size={16} strokeWidth={3} /></span
-				>
-			{/if}
-
-			<span class="mt-5 font-pixel text-xs text-muted"
-				>{t.chaptersCount(totalCh)} · {doneTotal}</span
-			>
-		</div>
 	</div>
 </section>

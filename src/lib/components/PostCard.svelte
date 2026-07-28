@@ -21,7 +21,7 @@
 	style={auroraFor(title)}
 >
 	<h3
-		class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"
+		class="line-clamp-2 font-serif text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-accent"
 		style={slug ? `view-transition-name: ${vtName('post-title', slug)}` : undefined}
 	>
 		{title}

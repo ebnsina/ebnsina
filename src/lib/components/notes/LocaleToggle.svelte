@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Languages } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { LOCALE_LABEL, otherLocale, type Locale } from '$lib/i18n/notes';
 
 	let { locale = 'en' }: { locale?: Locale } = $props();
@@ -19,6 +19,6 @@
 	aria-label="Switch language"
 	hreflang={target}
 >
-	<Languages size={13} />
+	<Icon name="languages" size={13} />
 	{LOCALE_LABEL[target]}
 </a>

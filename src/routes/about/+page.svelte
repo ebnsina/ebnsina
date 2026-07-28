@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
-	import ContactCta from '$lib/components/ContactCta.svelte';
 </script>
 
 <Seo
@@ -20,10 +19,10 @@
 
 	<div class="prose-editorial max-w-[44rem]">
 		<p>
-			<strong>Ebn Sina</strong> is a software engineer who builds complex infrastructure and
-			developer products end to end — video infrastructure, CDN and edge delivery, analytics
-			pipelines, media players, error-tracking tools, e-commerce, and learning platforms — plus the
-			platform engineering that keeps them fast and durable.
+			<strong>Ebn Sina</strong> is a software engineer who builds complex infrastructure and developer
+			products end to end — video infrastructure, CDN and edge delivery, analytics pipelines, media players,
+			error-tracking tools, e-commerce, and learning platforms — plus the platform engineering that keeps
+			them fast and durable.
 		</p>
 		<p>
 			I've spent the last several years shipping software that real people rely on — backend
@@ -59,6 +58,4 @@
 			than I finish and take notes in the margins.
 		</p>
 	</div>
-
-	<ContactCta />
 </div>

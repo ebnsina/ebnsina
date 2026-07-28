@@ -1,4 +1,5 @@
 allowBuilds:
+  '@hugeicons/svelte': false
   '@tailwindcss/oxide': true
   esbuild: true
   sharp: false

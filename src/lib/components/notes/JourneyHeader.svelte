@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Settings } from '@lucide/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { progress } from '$lib/progress.svelte';
 	import { nt, type Locale } from '$lib/i18n/notes';
 
@@ -35,8 +35,6 @@
 		if (menuOpen && e.key === 'Escape') closeMenu();
 	}
 
-	const pct = $derived(total ? Math.round((progress.count / total) * 100) : 0);
-
 	function download() {
 		const blob = new Blob([progress.export()], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
@@ -68,62 +66,32 @@
 
 <svelte:window onclick={onWindowClick} onkeydown={onWindowKey} />
 
-<section
-	class="mb-8 rounded-2xl border border-[color-mix(in_oklch,var(--fg)_8%,transparent)] bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))] p-5 sm:p-6"
->
-	<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-		<div class="flex items-center gap-4">
-			<div
-				class="grid size-14 shrink-0 place-items-center rounded-full bg-[color-mix(in_oklch,var(--fg)_6%,var(--bg))] font-pixel text-sm text-accent"
-				aria-hidden="true"
-			>
-				L{progress.ready ? progress.rank.level : 1}
-			</div>
-			<div>
-				<p class="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-muted">
-					{t.yourJourney}
-				</p>
-				<p class="font-pixel text-xl tracking-tight">
-					{progress.ready ? rankName : curious}
-				</p>
-				<p class="mt-1 font-pixel text-sm text-muted">
-					<span class="text-fg">{progress.ready ? progress.xp : 0} {t.xp}</span>
-					· {progress.ready ? progress.count : 0}/{total}
-					{t.chaptersWord} · {progress.ready ? pct : 0}%
-				</p>
-			</div>
-		</div>
+<!-- Progress reduced to one line of text. This was a bordered panel with a level
+	 medallion, rank, XP, percentage and a rank-progress bar — a dashboard sitting
+	 between the reader and the notes. The numbers are all still here, stated once
+	 and quietly. -->
+<section class="mb-14 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+	<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+		<p class="font-mono text-[0.72rem] text-muted">
+			<span class="text-fg">{progress.ready ? progress.count : 0}/{total}</span>
+			{t.chaptersWord}
+			<span class="mx-1 opacity-40">·</span>
+			{progress.ready ? rankName : curious}
+			<span class="mx-1 opacity-40">·</span>
+			{progress.ready ? progress.xp : 0}
+			{t.xp}
+		</p>
 
 		<div class="flex items-center gap-3">
-			<div class="hidden w-40 sm:block">
-				<div class="mb-1 flex justify-between font-pixel text-[0.6rem] text-muted">
-					<span>{progress.ready ? rankName : curious}</span>
-					<span>{progress.ready && progress.rank.next ? nextRankName : t.max}</span>
-				</div>
-				<div
-					class="h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
-				>
-					<div
-						class="h-full rounded-full bg-accent transition-[width] duration-500"
-						style="width: {progress.ready ? progress.rank.pct : 0}%"
-					></div>
-				</div>
-				{#if progress.ready && progress.rank.next}
-					<p class="mt-1 text-right font-pixel text-[0.6rem] text-muted">
-						{t.xpToNext(progress.rank.toNext, nextRankName)}
-					</p>
-				{/if}
-			</div>
-
 			<div class="relative" bind:this={menuEl}>
 				<button
 					type="button"
 					onclick={() => (menuOpen = !menuOpen)}
 					aria-label={t.manageProgress}
 					aria-expanded={menuOpen}
-					class="grid size-9 place-items-center rounded-full border border-[color-mix(in_oklch,var(--fg)_12%,transparent)] text-muted transition-colors hover:text-fg"
+					class="grid size-7 place-items-center text-muted transition-colors hover:text-fg"
 				>
-					<Settings size={16} />
+					<Icon name="settings" size={16} />
 				</button>
 
 				{#if menuOpen}
@@ -157,6 +125,13 @@
 			</div>
 		</div>
 	</div>
+
+	{#if progress.ready && progress.rank.next}
+		<p class="font-mono text-[0.72rem] text-muted">
+			{t.xpToNext(progress.rank.toNext, nextRankName)}
+		</p>
+	{/if}
+
 	<input
 		bind:this={fileInput}
 		type="file"

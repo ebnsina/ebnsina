@@ -34,13 +34,12 @@ export const SITE = {
 		twitter: 'https://twitter.com/ebns1na',
 		linkedin: 'https://linkedin.com/in/ebnsina.dev'
 	},
+	// Header nav, deliberately short. Directory is the notes track listing, so it
+	// hangs off /notes rather than competing with it; Uses/Now/RSS live in the footer.
 	nav: [
 		{ label: 'Writing', href: '/blog' },
 		{ label: 'Notes', href: '/notes' },
-		{ label: 'Directory', href: '/directory' },
 		{ label: 'Projects', href: '/projects' },
-		{ label: 'About', href: '/about' },
-		{ label: 'Uses', href: '/uses' },
-		{ label: 'Now', href: '/now' }
+		{ label: 'About', href: '/about' }
 	]
 } as const;

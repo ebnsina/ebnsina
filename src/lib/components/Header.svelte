@@ -20,9 +20,10 @@
 	};
 </script>
 
-<header
-	class="sticky top-0 z-40 border-b border-[color-mix(in_oklch,var(--fg)_7%,transparent)] bg-bg"
->
+<!-- Transparent at rest so the header sits *inside* the hero rather than on a
+	 bar above it; once scrolled it fades in a blurred, semi-opaque surface (and
+	 only then a hairline) so content passing underneath stays legible. -->
+<header class="site-header sticky top-0 z-40" class:is-scrolled={scrolled}>
 	<div
 		class="mx-auto flex h-14 min-w-0 max-w-5xl items-center justify-between gap-3 px-5 sm:h-16 sm:px-8"
 	>
@@ -105,6 +106,31 @@
 </header>
 
 <style>
+	/* The bar itself is painted by a pseudo-element rather than by `background`,
+	   so the blur + tint can cross-fade on scroll without the nav links (which
+	   must never blur) sitting inside a filtered layer. */
+	.site-header::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		opacity: 0;
+		background: color-mix(in oklch, var(--bg) 72%, transparent);
+		/* no hand-written -webkit- alias: Lightning CSS prefixes from browserslist,
+		   and writing both makes it drop the standard property */
+		backdrop-filter: blur(14px) saturate(1.4);
+		/* no bottom rule in either state — the blur alone separates the bar */
+		transition: opacity 0.28s ease;
+	}
+	.site-header.is-scrolled::before {
+		opacity: 1;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.site-header::before {
+			transition: none;
+		}
+	}
+
 	/* Logo cross-fades "Ebn Sina" → "ES" on scroll. Both labels stack in one grid
 	   cell so the box stays the full width (nav never shifts) and they fade. */
 	.logo {

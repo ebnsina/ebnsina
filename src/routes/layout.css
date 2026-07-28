@@ -24,17 +24,24 @@
 :root {
 	color-scheme: light;
 	--bg: oklch(0.986 0.003 40);
-	--fg: oklch(0.21 0.012 20);
-	--muted: oklch(0.52 0.014 22);
-	--rule: oklch(0.9 0.006 30);
+	/* ink sits just off pure black — full-contrast headings read as shouting
+	   against the warm-neutral page */
+	--fg: oklch(0.25 0.012 20);
+	--muted: oklch(0.55 0.014 22);
+	--rule: oklch(0.915 0.005 30);
 	/* ─────────────────────────────────────────────────────────────────────
 	   BRAND ACCENT — single source of truth. To reskin the whole site, change
 	   these two hex values (this light one + the dark one below). Everything
 	   else — buttons, links, progress, selection, Mermaid diagrams — derives
 	   from --accent, so no other colour needs touching. ───────────────────── */
-	--accent: #0076b6; /* Honolulu blue — primary; AA 4.75:1 on --bg */
+	--accent: #5949fa; /* Indigo — brand text + links; 5.4:1 on --bg */
 	--accent-soft: color-mix(in oklch, var(--accent) 18%, var(--bg));
 	--brand-accent: var(--accent);
+	/* Filled-button indigo. Deliberately the SAME value in both themes: a primary
+	   button should read as one electric colour everywhere, and it always carries
+	   white ink (5.6:1). --accent itself has to lighten in dark mode to stay
+	   legible as text, which would wash the button out — hence the split. */
+	--accent-solid: #5949fa;
 	/* neutral base for mixing card colours (keeps hues true) */
 	--card-base: oklch(0.995 0 0);
 }
@@ -44,10 +51,10 @@
 	/* Neutral layered blacks — chroma kept near-zero so the UI reads as shades
 	   of black, not a red tint. Olive --accent stays the only saturated colour. */
 	--bg: oklch(0.165 0.002 250);
-	--fg: oklch(0.93 0.003 250);
-	--muted: oklch(0.64 0.004 250);
-	--rule: oklch(0.29 0.003 250);
-	--accent: #4da8da; /* Honolulu blue — brighter for the dark theme; AA 5.86:1 */
+	--fg: oklch(0.9 0.003 250);
+	--muted: oklch(0.62 0.004 250);
+	--rule: oklch(0.27 0.003 250);
+	--accent: #8d95ff; /* Indigo — lifted for the dark theme; 7.2:1 on --bg */
 	--card-base: oklch(0.205 0 0);
 }
 
@@ -68,6 +75,7 @@
 	--color-rule: var(--rule);
 	--color-accent: var(--accent);
 	--color-accent-soft: var(--accent-soft);
+	--color-accent-solid: var(--accent-solid);
 }
 
 /* Bangla locale (/bn/notes). Override the display/text font tokens on the
@@ -93,9 +101,10 @@ html {
 	background: var(--bg);
 	color: var(--fg);
 	font-family: var(--font-sans);
-	/* Responsive root size — every rem-based size scales with the viewport.
-	   Mobile reads tighter; desktop keeps the editorial base. */
-	font-size: 14.5px;
+	/* Responsive root size — every rem-based size scales with the viewport, so
+	   this ramp is the single lever for the whole site's type scale. Capped at
+	   16px: the previous 17px desktop step made body copy read oversized. */
+	font-size: 13.5px;
 	line-height: 1.6;
 	scroll-behavior: smooth;
 	scroll-padding-top: 5.5rem;
@@ -108,17 +117,17 @@ html {
 }
 @media (min-width: 480px) {
 	html {
-		font-size: 15px;
+		font-size: 14.25px;
 	}
 }
 @media (min-width: 768px) {
 	html {
-		font-size: 16px;
+		font-size: 14.75px;
 	}
 }
 @media (min-width: 1024px) {
 	html {
-		font-size: 17px;
+		font-size: 15.25px;
 	}
 }
 
@@ -129,12 +138,18 @@ body {
 		'liga' 1;
 }
 
-/* tighter, balanced display headings everywhere */
-:where(h1, h2, h3) {
-	text-wrap: balance;
-}
-:where(p) {
-	text-wrap: pretty;
+/* Tighter, balanced display headings everywhere.
+   These MUST live in @layer base: `text-wrap` is a longhand of `white-space`,
+   so an unlayered `text-wrap: balance` here outranks Tailwind's layered
+   utilities and silently defeats `truncate` / `text-nowrap` on any heading
+   (card titles were wrapping to two lines because of exactly that). */
+@layer base {
+	:where(h1, h2, h3) {
+		text-wrap: balance;
+	}
+	:where(p) {
+		text-wrap: pretty;
+	}
 }
 
 ::selection {
@@ -142,23 +157,17 @@ body {
 	color: var(--fg);
 }
 
-/* Squircle (superellipse) corners everywhere a radius applies — cards, pills,
-   buttons, code blocks, the diagram panel, inputs, images, etc. `corner-shape`
-   only has a visible effect when a `border-radius` is already set, so this is
-   naturally scoped to rounded surfaces and leaves square ones untouched.
-   Progressive enhancement: browsers without `corner-shape` keep normal rounding.
-   Feature-gated with @supports so the build's CSS processor (Lightning CSS)
-   doesn't prune the declaration. */
-@supports (corner-shape: squircle) {
-	*,
-	*::before,
-	*::after {
-		corner-shape: squircle;
-	}
-	/* escape hatch: keep genuine circles round (timeline dots, status dots) */
-	.corner-round {
-		corner-shape: round;
-	}
+/* Sharp corners, site-wide. This is a deliberate global design rule, so it
+   overrides every source of rounding at once — Tailwind's `rounded-*`
+   utilities, component styles, and the browser's own defaults on form
+   controls — rather than being unpicked one declaration at a time.
+   `!important` is doing exactly the job it exists for here: an intentional,
+   non-negotiable override. Corollary: `rounded-*` classes left in the markup
+   are inert, so don't trust them to indicate shape. */
+*,
+*::before,
+*::after {
+	border-radius: 0 !important;
 }
 
 @layer base {
@@ -254,13 +263,17 @@ body {
 	display: inline-flex;
 	align-items: center;
 	font-family: var(--font-mono);
-	font-size: 0.6875rem;
+	font-size: 0.66rem;
 	font-weight: 500;
 	letter-spacing: 0.02em;
 	padding: 0.2em 0.6em;
-	border-radius: 0.4rem;
-	border: 1px solid color-mix(in oklch, var(--fg) 9%, transparent);
-	background: color-mix(in oklch, var(--fg) 3%, transparent);
+	/* Glass chip: a translucent pane that samples whatever is behind it rather
+	   than painting its own tone. The fill is a mix of --fg into *transparent*,
+	   so it picks up the page in light and dark with no per-theme override.
+	   Deliberately borderless — an outline reads as a drawn box and kills the
+	   sense of a pane floating on the page; the blur alone defines the edge. */
+	background: color-mix(in oklch, var(--fg) 6%, transparent);
+	backdrop-filter: blur(6px) saturate(1.2);
 	color: var(--muted);
 	transition:
 		color 0.15s,
@@ -269,6 +282,7 @@ body {
 }
 .tag-pill:hover {
 	color: var(--accent);
+	background: color-mix(in oklch, var(--accent) 8%, transparent);
 	border-color: color-mix(in oklch, var(--accent) 35%, transparent);
 }
 /* accent variant — e.g. a project role */
@@ -282,7 +296,7 @@ body {
    ============================================================ */
 
 .prose-editorial {
-	font-size: 1.05rem;
+	font-size: 0.975rem;
 	line-height: 1.75;
 	letter-spacing: -0.003em;
 	color: var(--fg);
@@ -291,21 +305,21 @@ body {
    slightly smaller body, tighter leading, and trimmer heading rhythm. */
 @media (max-width: 639px) {
 	.prose-editorial {
-		font-size: 1rem;
+		font-size: 0.94rem;
 		line-height: 1.65;
 		letter-spacing: 0;
 	}
 	.prose-editorial h2 {
-		font-size: 1.375rem;
+		font-size: 1.2rem;
 		margin-top: 1.9em;
 		margin-bottom: 0.55em;
 	}
 	.prose-editorial h3 {
-		font-size: 1.12rem;
+		font-size: 1.02rem;
 		margin-top: 1.7em;
 	}
 	.prose-editorial h1 {
-		font-size: 1.85rem;
+		font-size: 1.6rem;
 	}
 	.prose-editorial p,
 	.prose-editorial ul,
@@ -316,18 +330,18 @@ body {
 .prose-editorial h2,
 .prose-editorial h3 {
 	font-family: var(--font-serif);
-	font-weight: 600;
-	letter-spacing: -0.02em;
-	line-height: 1.25;
+	font-weight: 550;
+	letter-spacing: -0.018em;
+	line-height: 1.3;
 }
 .prose-editorial h2 {
-	font-size: 1.6rem;
-	margin-top: 2.2em;
+	font-size: 1.3rem;
+	margin-top: 2.4em;
 	margin-bottom: 0.7em;
 }
 .prose-editorial h3 {
-	font-size: 1.22rem;
-	margin-top: 1.9em;
+	font-size: 1.08rem;
+	margin-top: 2em;
 	margin-bottom: 0.5em;
 }
 .prose-editorial p,
@@ -367,15 +381,15 @@ body {
 }
 .prose-editorial h1 {
 	font-family: var(--font-serif);
-	font-weight: 600;
-	letter-spacing: -0.02em;
-	font-size: 2.25rem;
+	font-weight: 550;
+	letter-spacing: -0.022em;
+	font-size: 1.85rem;
 	margin: 1.4em 0 0.5em;
 }
 .prose-editorial h4 {
 	font-family: var(--font-serif);
 	font-weight: 600;
-	font-size: 1.05rem;
+	font-size: 0.98rem;
 	margin: 1.6em 0 0.4em;
 }
 .prose-editorial blockquote {
@@ -408,7 +422,7 @@ body {
 .prose-editorial table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 0.9rem;
+	font-size: 0.86rem;
 	margin: 1.4em 0;
 	display: block;
 	overflow-x: auto;
@@ -430,7 +444,7 @@ body {
 
 .prose-editorial pre.shiki {
 	font-family: var(--font-mono);
-	font-size: 0.85rem;
+	font-size: 0.82rem;
 	line-height: 1.6;
 	padding: 1rem 1.1rem;
 	border-radius: 0.75rem;
@@ -454,6 +468,54 @@ body {
 
 .code-block-wrapper {
 	position: relative;
+}
+
+/* Collapsible code blocks. Open by default (set in ArticleLayout); the summary
+   is a quiet label the reader can click to fold a block away. */
+.code-details {
+	margin: 1.4em 0;
+}
+.code-details > .code-summary {
+	display: flex;
+	align-items: center;
+	gap: 0.45em;
+	width: fit-content;
+	cursor: pointer;
+	list-style: none;
+	font-family: var(--font-mono);
+	font-size: 0.66rem;
+	letter-spacing: 0.02em;
+	color: var(--muted);
+	padding: 0.15em 0;
+	transition: color 0.15s;
+}
+.code-details > .code-summary::-webkit-details-marker {
+	display: none;
+}
+/* our own disclosure triangle, so it rotates with the open state */
+.code-details > .code-summary::before {
+	content: '';
+	width: 0;
+	height: 0;
+	border-top: 3.5px solid transparent;
+	border-bottom: 3.5px solid transparent;
+	border-left: 5px solid currentColor;
+	transition: transform 0.18s ease;
+}
+.code-details[open] > .code-summary::before {
+	transform: rotate(90deg);
+}
+.code-details > .code-summary:hover {
+	color: var(--fg);
+}
+/* the block sits directly under its summary, so drop the <pre>'s own margin */
+.code-details .code-block-wrapper > pre.shiki {
+	margin: 0.35em 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	.code-details > .code-summary::before {
+		transition: none;
+	}
 }
 .copy-btn {
 	position: absolute;

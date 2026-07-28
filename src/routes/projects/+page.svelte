@@ -2,7 +2,6 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
-	import ContactCta from '$lib/components/ContactCta.svelte';
 	import { projects } from '$lib/data/projects';
 	import { SITE } from '$lib/config';
 	import { reveal } from '$lib/actions';
@@ -38,6 +37,4 @@
 			<div use:reveal class="h-full"><ProjectCard {project} /></div>
 		{/each}
 	</div>
-
-	<ContactCta />
 </div>

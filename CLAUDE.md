@@ -73,11 +73,22 @@ Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project w
 
 `src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--accent/--brand-accent`, plus `--accent-hex` consumed by three.js) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). Fonts: display/serif = Bricolage Grotesque, sans = Epilogue, mono = Geist Mono, **pixel = Geist Pixel** (self-hosted from the `geist` package at `static/fonts/`, used for the gamified notes UI via `font-pixel`). **Coloured surfaces are aurora gradients.** `src/lib/colors.ts` holds eight aurora themes; `auroraAt(i)` (cyclic) / `auroraFor(key)` (stable hash) return an inline style setting `--au-1/2/3` (bloom lights), `--au-b1/b2/b3` (base sweep), `--aa` (angle) and `--ax/--ay` (light origin). Put that style on an element carrying `.aurora-surface` (paints the gradient) or `.glass-card` (same, plus white ink and a pinned dark `--bg`). The layer stack lives in those classes, **not** in a custom property — a `var()` inside a custom property resolves against the element it was declared on, so a `--aurora-bg` var would give every card the `:root` fallback. Used by post/project cards, notes folders, roadmap level cards + track avatars, chapter rows and case-study panels. `catColor`/`catFor` (flat categorical hues) remain for the three.js accents and small markers.
 
+**Lightning CSS gotcha:** never hand-write a `-webkit-` alias next to a standard property — Lightning CSS then prunes the _standard_ one and only the prefixed version ships (this silently killed the header's `backdrop-filter`). Write the standard property alone and let it prefix from browserslist. (Same family of problem as the `corner-shape` `@supports` gate above.)
+
+The header (`Header.svelte`) is transparent at rest so it blends into the hero, and fades in a blurred surface once scrolled — painted by a `::before` so nav text is never inside a filtered layer. It has no bottom rule in either state.
+
 Brand/visual constraints: no neon/glow; minimal cards; geometric type with a cherry/burgundy accent.
 
 ## Icons
 
-Never use emoji in UI. Use icon components from **`@lucide/svelte`** (e.g. `import { Trophy } from '@lucide/svelte'` → `<Trophy size={14} strokeWidth={3} color="var(--bg)" />`); they inherit `currentColor`. Do not hand-roll inline `<svg>` icons either — prefer the Lucide component so icons stay consistent.
+Never use emoji in UI. Icons are **Hugeicons**, always reached through the single wrapper `src/lib/components/Icon.svelte`:
+
+```svelte
+import Icon from '$lib/components/Icon.svelte';
+<Icon name="trophy" size={14} strokeWidth={3} color="var(--bg)" />
+```
+
+`Icon.svelte` holds the whole icon set as a `name → Hugeicons glyph` map, so a role is registered once and every call site stays terse. **To use a new icon, add a role to that map** — do not import from `@hugeicons/core-free-icons` at a call site, and do not hand-roll inline `<svg>`. Colour defaults to `currentColor`.
 
 ## Conventions
 

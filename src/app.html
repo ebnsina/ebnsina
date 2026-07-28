@@ -7,13 +7,14 @@
 		<meta name="theme-color" content="#f6f7f2" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#1a1d24" media="(prefers-color-scheme: dark)" />
 		<script>
-			// FOUC guard: apply theme + brand accent before first paint
+			// FOUC guard: apply the light/dark theme before first paint.
+			// The brand accent is no longer user-selectable — indigo is the only
+			// hue — so clear any accent a previous visit persisted.
 			(() => {
 				const s = localStorage.getItem('theme');
 				const d = matchMedia('(prefers-color-scheme: dark)').matches;
 				if (s === 'dark' || (!s && d)) document.documentElement.classList.add('dark');
-				const a = localStorage.getItem('brand-accent');
-				if (a) document.documentElement.style.setProperty('--accent', a);
+				localStorage.removeItem('brand-accent');
 			})();
 		</script>
 		%sveltekit.head%
