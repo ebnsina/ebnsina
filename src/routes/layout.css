@@ -176,10 +176,20 @@ body {
    Card / panel
    ============================================================ */
 
-/* Vivid colour card — each card shows its own hue clearly (like the folders),
-   white text, a soft NEUTRAL shadow (no glow). Each card sets --cc. */
+/* Aurora card — each card gets its own aurora gradient: soft lights (--au-1/2/3)
+   blooming over a deep base sweep (--au-b1/b2/b3), with its own angle (--aa) and
+   light origin (--ax/--ay). All set from auroraFor()/auroraAt() in $lib/colors;
+   the values below are only the fallback. White text, soft NEUTRAL shadow. */
 .glass-card {
-	--card: var(--cc, var(--brand-accent));
+	--aa: 152deg;
+	--ax: 14%;
+	--ay: 8%;
+	--au-1: #8799ff;
+	--au-2: #f3d3cd;
+	--au-3: #58006b;
+	--au-b1: #0c27bf;
+	--au-b2: #081b86;
+	--au-b3: #14105e;
 	--fg: #ffffff;
 	--muted: rgba(255, 255, 255, 0.86);
 	--accent: #ffffff;
@@ -188,12 +198,24 @@ body {
 	color: #fff;
 	border-radius: 0.85rem;
 	background:
-		linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 48%),
-		linear-gradient(
-			155deg,
-			color-mix(in oklch, var(--card) 97%, #000),
-			color-mix(in oklch, var(--card) 84%, #000)
-		);
+		/* scrim — keeps white text legible wherever a light blooms */
+		linear-gradient(200deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3)),
+		radial-gradient(
+			120% 110% at var(--ax) var(--ay),
+			color-mix(in oklch, var(--au-1) 66%, transparent),
+			transparent 58%
+		),
+		radial-gradient(
+			95% 85% at calc(100% - var(--ax)) calc(100% - var(--ay)),
+			color-mix(in oklch, var(--au-2) 46%, transparent),
+			transparent 60%
+		),
+		radial-gradient(
+			110% 95% at calc(var(--ax) + 55%) calc(var(--ay) + 20%),
+			color-mix(in oklch, var(--au-3) 78%, transparent),
+			transparent 62%
+		),
+		linear-gradient(var(--aa), var(--au-b1), var(--au-b2) 62%, var(--au-b3));
 	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
 	transition:
 		box-shadow 0.25s ease,

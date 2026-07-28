@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Project } from '$lib/data/projects';
-	import { catFor } from '$lib/colors';
+	import { auroraFor } from '$lib/colors';
 	let { project }: { project: Project } = $props();
 	// Prefer the internal case-study page; fall back to a live/repo link.
 	const primary = $derived(project.caseStudy ? `/projects/${project.slug}` : (project.url ?? project.repo));
@@ -13,7 +13,7 @@
 	target={external ? '_blank' : undefined}
 	rel={external ? 'noopener' : undefined}
 	class="glass-card group flex h-full min-h-[7rem] flex-col justify-center p-5"
-	style="--cc: {catFor(project.title)}"
+	style={auroraFor(project.title)}
 >
 	<h3
 		class="truncate font-serif text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"

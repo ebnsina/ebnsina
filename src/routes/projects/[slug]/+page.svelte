@@ -2,7 +2,7 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ContactCta from '$lib/components/ContactCta.svelte';
 	import { reveal, vtName } from '$lib/actions';
-	import { catFor } from '$lib/colors';
+	import { auroraFor, catFor } from '$lib/colors';
 	import { ArrowUpRight } from '@lucide/svelte';
 
 	let { data } = $props();
@@ -87,7 +87,7 @@
 		</h2>
 		<div class="space-y-6">
 			{#each cs.implementation as item (item.title)}
-				<div class="glass-card p-5" style="--cc: {accent}">
+				<div class="glass-card p-5" style={auroraFor(item.title)}>
 					<h3 class="mb-1.5 font-serif text-lg font-semibold tracking-tight">{item.title}</h3>
 					<p class="leading-[1.75] text-muted">{item.body}</p>
 				</div>
