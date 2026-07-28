@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Check, ListChecks, Clock, ArrowRight, Landmark, Lock } from '@lucide/svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import { catVivid } from '$lib/colors';
+	import { auroraAt } from '$lib/colors';
 	import { progress } from '$lib/progress.svelte';
 	import { nt, notesBase, type Locale } from '$lib/i18n/notes';
 
@@ -30,14 +30,6 @@
 	const base = $derived(notesBase(locale));
 
 	onMount(() => progress.hydrate());
-
-	// harmonised level hues — same constant L/C family as the categorical palette
-	const LEVEL_COLOR: Record<string, string> = {
-		beginner: 'oklch(0.6 0.11 145)',
-		intermediate: 'oklch(0.6 0.11 70)',
-		advanced: 'oklch(0.6 0.11 30)',
-		mastery: 'oklch(0.6 0.11 295)'
-	};
 
 	const fmtH = (m: number) => (m >= 60 ? `${Math.round(m / 60)}h` : `${m}m`);
 
@@ -73,8 +65,8 @@
 	);
 	const allDone = $derived(progress.ready && doneTotal === totalCh && totalCh > 0);
 
-	// stable colour index per track, in path order — so vivid avatars cycle through
-	// the palette and adjacent tracks never share a hue.
+	// stable index per track, in path order — so avatars cycle through the aurora
+	// themes and adjacent tracks never share one.
 	const catIndex = $derived.by(() => {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local, non-reactive
 		const m = new Map<string, number>();
@@ -110,14 +102,10 @@
 				? lvl.tracks.reduce((n, t) => n + progress.doneIn(t.category, t.slugs), 0)
 				: 0}
 			{@const pct = lvl.totalCh ? Math.round((done / lvl.totalCh) * 100) : 0}
-			{@const color = LEVEL_COLOR[lvl.level]}
 			<div class="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[19rem_1fr]">
 				<!-- left: sticky level card -->
 				<div class="lg:sticky lg:top-24">
-					<div
-						class="rounded-2xl border p-6"
-						style="border-color: color-mix(in oklch, var(--fg) 8%, transparent); background: color-mix(in oklch, var(--fg) 2.5%, var(--bg));"
-					>
+					<div class="glass-card p-6" style={auroraAt(lvl.n - 1)}>
 						<div class="flex items-center justify-between">
 							<span class="font-pixel text-[0.6rem] uppercase tracking-[0.18em] text-muted"
 								>{t.levelWord(lvl.n)}</span
@@ -150,7 +138,7 @@
 							<ul class="space-y-1.5">
 								{#each lvl.outcomes as o (o)}
 									<li class="flex items-start gap-2 text-sm">
-										<Check size={14} strokeWidth={3} {color} class="mt-1 shrink-0" />
+										<Check size={14} strokeWidth={3} color="#fff" class="mt-1 shrink-0" />
 										<span>{o}</span>
 									</li>
 								{/each}
@@ -178,7 +166,7 @@
 						{@const td = progress.ready ? progress.doneIn(tk.category, tk.slugs) : 0}
 						{@const tdone = tk.slugs.length > 0 && td === tk.slugs.length}
 						{@const isNext = next ? tk.category === next.category : false}
-						{@const c = catVivid(catIndex.get(tk.category) ?? 0)}
+						{@const au = auroraAt(catIndex.get(tk.category) ?? 0)}
 						<li class="relative flex items-center gap-4 sm:gap-5">
 							<!-- node + connecting line -->
 							<div class="relative flex w-3 shrink-0 items-center justify-center self-stretch">
@@ -207,8 +195,8 @@
 								class="group flex flex-1 items-center gap-4 rounded-2xl py-2 pr-2.5"
 							>
 								<span
-									class="grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
-									style="background: linear-gradient(155deg, color-mix(in oklch, {c} 88%, #fff), {c});"
+									class="glass-card grid size-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"
+									style={au}
 									aria-hidden="true">{initials(tk.enLabel ?? tk.label)}</span
 								>
 								<span class="min-w-0 flex-1">

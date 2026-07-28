@@ -11,11 +11,7 @@
 	const accent = $derived(catFor(project.title));
 </script>
 
-<Seo
-	title={`${project.title} — Case study`}
-	description={cs.summary}
-	type="article"
-/>
+<Seo title={`${project.title} — Case study`} description={cs.summary} type="article" />
 
 <article class="mx-auto max-w-3xl px-5 pb-8 sm:px-8" style="--cc: {accent}">
 	<a
@@ -26,7 +22,9 @@
 	</a>
 
 	<header class="mb-12 mt-6 border-b border-[color-mix(in_oklch,var(--fg)_10%,transparent)] pb-10">
-		<div class="mb-4 flex flex-wrap items-center gap-3 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-muted">
+		<div
+			class="mb-4 flex flex-wrap items-center gap-3 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-muted"
+		>
 			<span>{project.year}</span>
 			{#if cs.status}<span>·</span><span>{cs.status}</span>{/if}
 			{#if project.featured}<span>·</span><span style="color: var(--cc)">Featured</span>{/if}
@@ -72,7 +70,7 @@
 		</h2>
 		<div class="space-y-6">
 			{#each cs.challenges as item (item.title)}
-				<div>
+				<div class="glass-card p-5" style={auroraFor(item.title)}>
 					<h3 class="mb-1.5 font-serif text-lg font-semibold tracking-tight">{item.title}</h3>
 					<p class="leading-[1.75] text-muted">{item.body}</p>
 				</div>
@@ -100,9 +98,12 @@
 		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
 			Why this stack
 		</h2>
-		<dl class="divide-y divide-[color-mix(in_oklch,var(--fg)_8%,transparent)]">
+		<dl class="grid gap-3">
 			{#each cs.stackWhy as row (row.tech)}
-				<div class="grid grid-cols-[8rem_1fr] gap-4 py-3 sm:grid-cols-[10rem_1fr]">
+				<div
+					class="glass-card grid grid-cols-[8rem_1fr] gap-4 p-4 sm:grid-cols-[10rem_1fr]"
+					style={auroraFor(row.tech)}
+				>
 					<dt class="font-mono text-sm font-medium text-fg">{row.tech}</dt>
 					<dd class="text-sm leading-relaxed text-muted">{row.why}</dd>
 				</div>
@@ -117,8 +118,11 @@
 		</h2>
 		<ul class="grid gap-2.5 sm:grid-cols-2">
 			{#each cs.features as feat (feat)}
-				<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
-					<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style="background: var(--cc)"></span>
+				<li
+					class="glass-card flex gap-2.5 p-4 text-sm leading-relaxed text-muted"
+					style={auroraFor(feat)}
+				>
+					<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/70"></span>
 					<span>{feat}</span>
 				</li>
 			{/each}

@@ -176,11 +176,14 @@ body {
    Card / panel
    ============================================================ */
 
-/* Aurora card — each card gets its own aurora gradient: soft lights (--au-1/2/3)
-   blooming over a deep base sweep (--au-b1/b2/b3), with its own angle (--aa) and
-   light origin (--ax/--ay). All set from auroraFor()/auroraAt() in $lib/colors;
-   the values below are only the fallback. White text, soft NEUTRAL shadow. */
-.glass-card {
+/* Aurora surface — soft lights (--au-1/2/3) blooming over a deep base sweep
+   (--au-b1/b2/b3), with its own angle (--aa) and light origin (--ax/--ay).
+   auroraFor()/auroraAt() in $lib/colors set those per element; the values on
+   :root are only the fallback. Paint it by putting `.aurora-surface` (or
+   `.glass-card`, which adds white ink) on the element carrying those vars —
+   the stack can't live in a custom property, since a var() inside one resolves
+   against the element it was declared on, not the one using it. */
+:root {
 	--aa: 152deg;
 	--ax: 14%;
 	--ay: 8%;
@@ -190,13 +193,10 @@ body {
 	--au-b1: #0c27bf;
 	--au-b2: #081b86;
 	--au-b3: #14105e;
-	--fg: #ffffff;
-	--muted: rgba(255, 255, 255, 0.86);
-	--accent: #ffffff;
-	position: relative;
-	overflow: hidden;
-	color: #fff;
-	border-radius: 0.85rem;
+}
+
+.aurora-surface,
+.glass-card {
 	background:
 		/* scrim — keeps white text legible wherever a light blooms */
 		linear-gradient(200deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3)),
@@ -216,11 +216,31 @@ body {
 			transparent 62%
 		),
 		linear-gradient(var(--aa), var(--au-b1), var(--au-b2) 62%, var(--au-b3));
+}
+
+/* Aurora card — an aurora surface with white ink. --bg is pinned to a dark ink
+   so `text-bg` / `bg-bg` utilities inside a card stay readable in both themes. */
+.glass-card {
+	--fg: #ffffff;
+	--muted: rgba(255, 255, 255, 0.86);
+	--accent: #ffffff;
+	--bg: #14101f;
+	position: relative;
+	overflow: hidden;
+	color: #fff;
+	border-radius: 0.85rem;
 	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
 	transition:
 		box-shadow 0.25s ease,
 		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* the level hues are tuned for the page background, not for an aurora — inside
+   a card the badge goes to white ink on a translucent chip instead */
+.glass-card .level-badge {
+	color: #fff !important;
+	background: rgba(255, 255, 255, 0.18) !important;
+}
+
 .glass-card:hover {
 	transform: translateY(-2px);
 	box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.45);

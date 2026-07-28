@@ -3,7 +3,9 @@
 	import { auroraFor } from '$lib/colors';
 	let { project }: { project: Project } = $props();
 	// Prefer the internal case-study page; fall back to a live/repo link.
-	const primary = $derived(project.caseStudy ? `/projects/${project.slug}` : (project.url ?? project.repo));
+	const primary = $derived(
+		project.caseStudy ? `/projects/${project.slug}` : (project.url ?? project.repo)
+	);
 	const external = $derived(!project.caseStudy && !!primary);
 </script>
 
@@ -22,7 +24,9 @@
 	</h3>
 	<p class="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">{project.description}</p>
 	{#if project.caseStudy}
-		<span class="mt-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-muted transition-colors group-hover:text-accent">
+		<span
+			class="mt-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-muted transition-colors group-hover:text-accent"
+		>
 			Case study →
 		</span>
 	{/if}

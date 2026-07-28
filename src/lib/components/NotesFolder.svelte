@@ -5,8 +5,12 @@
 	let {
 		name,
 		items,
-		color = '#5b8fd6'
-	}: { name: string; items: Array<{ key: string; meta: CategoryMeta }>; color?: string } = $props();
+		aurora = ''
+	}: {
+		name: string;
+		items: Array<{ key: string; meta: CategoryMeta }>;
+		aurora?: string;
+	} = $props();
 
 	const preview = $derived(
 		items
@@ -59,7 +63,7 @@
 	class="folder"
 	class:open
 	class:up
-	style="--c:{color}"
+	style={aurora}
 	onmouseenter={onEnter}
 	onmouseleave={onLeave}
 	onfocusin={show}
@@ -67,10 +71,11 @@
 	role="group"
 >
 	<button class="card" type="button" aria-expanded={open} onclick={toggle}>
+		<span class="back aurora-surface"></span>
 		<span class="tab"></span>
 		<span class="paper a"></span>
 		<span class="paper b"></span>
-		<span class="pocket">
+		<span class="pocket aurora-surface">
 			<span class="row">
 				<span class="name">{name}</span>
 				<span class="count">{items.length}</span>
@@ -102,9 +107,10 @@
 	.folder {
 		position: relative;
 		z-index: 1;
-		/* derive a soft light shade + a darker shade from the single base colour */
-		--c1: color-mix(in oklch, var(--c) 90%, #fff);
-		--c2: color-mix(in oklch, var(--c) 72%, #000);
+		/* the folder's own aurora vars land on this root element; these two are
+		   the light/dark ends of it, used for the trims and the open panel. */
+		--c1: var(--au-1);
+		--c2: var(--au-b2);
 	}
 	.folder.open {
 		z-index: 50;
@@ -126,17 +132,20 @@
 		/* the back panel */
 		border-radius: 0.55rem 0.85rem 0.85rem 0.85rem;
 	}
-	.card::before {
-		/* back gradient + glossy sheen */
+	/* back panel — the aurora itself (.aurora-surface paints it), plus a sheen */
+	.back {
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		box-shadow: 0 14px 30px -20px var(--au-b3);
+		transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.back::after {
 		content: '';
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 38%),
-			linear-gradient(150deg, var(--c1), var(--c2));
-		box-shadow: 0 14px 30px -20px var(--c2);
-		transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 38%);
 	}
 	/* folder tab */
 	.tab {
@@ -146,7 +155,7 @@
 		width: 3.6rem;
 		height: 0.7rem;
 		border-radius: 0.45rem 0.45rem 0 0;
-		background: linear-gradient(180deg, var(--c1), color-mix(in oklch, var(--c1) 80%, #000));
+		background: linear-gradient(180deg, var(--au-1), var(--au-b1));
 		z-index: 0;
 	}
 	/* peeking papers */
@@ -188,10 +197,10 @@
 		justify-content: flex-end;
 		gap: 0.25rem;
 		border-radius: 0.55rem 0.55rem 0.85rem 0.85rem;
-		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 60%),
-			linear-gradient(160deg, color-mix(in oklch, var(--c1) 92%, #fff), var(--c2));
+		/* the wash darkens the same aurora so the pocket reads as a plane in
+		   front of the back panel and the label stays legible */
 		box-shadow:
+			0 0 0 100px rgba(0, 0, 0, 0.26) inset,
 			0 -1px 0 rgba(255, 255, 255, 0.25) inset,
 			0 -10px 18px -16px rgba(0, 0, 0, 0.4);
 	}
@@ -296,7 +305,7 @@
 		color: #61616b;
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.card::before,
+		.back,
 		.paper,
 		.panel,
 		.chev {

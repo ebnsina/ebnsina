@@ -3,7 +3,7 @@
 	import { getCategoryGroups, GROUP_ORDER } from '$lib/data/categories';
 	import { getTotalChapters, getTracks } from '$lib/content';
 	import NotesFolder from '$lib/components/NotesFolder.svelte';
-	import { catColor } from '$lib/colors';
+	import { auroraAt } from '$lib/colors';
 
 	const groups = getCategoryGroups();
 	const total = getTotalChapters();
@@ -31,7 +31,7 @@
 		{#each GROUP_ORDER as groupName, gi (groupName)}
 			{@const items = groups[groupName]}
 			{#if items?.length}
-				<NotesFolder name={groupName} {items} color={catColor(gi)} />
+				<NotesFolder name={groupName} {items} aurora={auroraAt(gi)} />
 			{/if}
 		{/each}
 	</div>

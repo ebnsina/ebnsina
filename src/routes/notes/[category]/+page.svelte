@@ -6,7 +6,7 @@
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
 	import LocaleToggle from '$lib/components/notes/LocaleToggle.svelte';
 	import { GROUP_ORDER } from '$lib/data/categories';
-	import { catColor } from '$lib/colors';
+	import { auroraFor, catColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
 	import { nt } from '$lib/i18n/notes';
 
@@ -133,7 +133,8 @@
 
 				<a
 					href={`${base}/${data.category}/${ch.slug}`}
-					class="group mb-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-2 sm:gap-4"
+					class="glass-card group mb-1 flex min-w-0 flex-1 items-center gap-3 p-3 pr-3 sm:gap-4"
+					style={auroraFor(ch.slug)}
 				>
 					<!-- inline step badge (mobile only) -->
 					<span class="sm:hidden">{@render stepNode(ch, isDone, isNext)}</span>
