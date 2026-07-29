@@ -2,7 +2,7 @@
 title: 'ভিডিও মাস্টারি — পর্ব ৪: নেটফ্লিক্স কীভাবে করে'
 description: 'পার-টাইটেল থেকে পার-শট, VMAF, ডাইনামিক অপটিমাইজার, Cosmos মাইক্রোসার্ভিস পাইপলাইন, AV1 আর ফিল্ম গ্রেইন সিনথেসিস, আর Open Connect — নেটফ্লিক্সের নিজের লেখা থেকে, সংখ্যাসহ।'
 date: 2026-07-29
-tags: ['video', 'streaming', 'codec', 'cdn', 'vmaf', 'bangla', 'engineering']
+tags: ['video', 'netflix', 'streaming', 'vmaf', 'av1', 'cdn', 'bangla', 'engineering']
 minutesRead: 46
 ---
 

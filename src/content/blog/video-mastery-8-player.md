@@ -2,7 +2,7 @@
 title: 'ভিডিও মাস্টারি — পর্ব ৮: প্লেয়ার'
 description: 'নেটিভ HLS বনাম MSE বনাম Managed Media Source, বাফার ব্যবস্থাপনা, ABR অ্যালগরিদম (থ্রুপুট বনাম BOLA), স্টার্টআপের সিদ্ধান্ত, EME আর DRM, ক্যাপশন, CMCD, অটোপ্লে নীতি, আর ত্রুটি থেকে ফেরা।'
 date: 2026-07-30
-tags: ['video', 'streaming', 'drm', 'bangla', 'engineering']
+tags: ['video', 'player', 'abr', 'mse', 'eme', 'drm', 'captions', 'bangla', 'engineering']
 minutesRead: 46
 ---
 

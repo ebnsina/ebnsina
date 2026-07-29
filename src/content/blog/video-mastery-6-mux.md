@@ -2,7 +2,7 @@
 title: 'ভিডিও মাস্টারি — পর্ব ৬: Mux কীভাবে করে'
 description: 'জাস্ট-ইন-টাইম ট্রান্সকোডিং, নিউরাল নেটওয়ার্ক দিয়ে মিলিসেকেন্ডে পার-টাইটেল ল্যাডার, কোয়ালিটি টিয়ার, ওয়েবহুক-চালিত API, LL-HLS, আর ClickHouse-এ চলা QoE অ্যানালিটিক্স — সাথে তিন প্রোভাইডারের তুলনা।'
 date: 2026-07-29
-tags: ['video', 'transcoding', 'clickhouse', 'bangla', 'engineering']
+tags: ['video', 'mux', 'transcoding', 'api', 'qoe', 'clickhouse', 'bangla', 'engineering']
 minutesRead: 45
 ---
 
