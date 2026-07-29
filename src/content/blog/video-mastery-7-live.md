@@ -2,7 +2,7 @@
 title: 'ভিডিও মাস্টারি — পর্ব ৭: লাইভ'
 description: 'RTMP থেকে SRT আর WHIP, রিয়েল-টাইম এনকোডিংয়ের সীমা, LL-HLS আসলে কীভাবে কাজ করে, লেটেন্সির বাজেট, DVR, ফেইলওভার, SCTE-35 আর বিজ্ঞাপন, আর মাল্টি-CDN স্টিয়ারিং।'
 date: 2026-07-30
-tags: ['video', 'live', 'streaming', 'hls', 'webrtc', 'ads', 'cdn', 'bangla', 'engineering']
+tags: ['video', 'streaming', 'hls', 'cdn', 'bangla', 'engineering']
 minutesRead: 47
 ---
 

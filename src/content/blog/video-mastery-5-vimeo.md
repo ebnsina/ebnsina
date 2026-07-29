@@ -2,7 +2,7 @@
 title: 'ভিডিও মাস্টারি — পর্ব ৫: Vimeo কীভাবে করে'
 description: 'Falkor ট্রান্সকোডিং ইনফ্রা, স্পট ইনস্ট্যান্সে চাংকড এনকোডিং, এনকোডারের ভেতর থেকে VMAF মাপা, Artax দিয়ে প্রোগ্রেসিভ MP4 বানানো, DRM-এর তিন যুগ, আর স্টোরেজের খরচ কমানো।'
 date: 2026-07-29
-tags: ['video', 'vimeo', 'transcoding', 'vmaf', 'drm', 'storage', 'bangla', 'engineering']
+tags: ['video', 'transcoding', 'vmaf', 'drm', 'bangla', 'engineering']
 minutesRead: 44
 ---
 
