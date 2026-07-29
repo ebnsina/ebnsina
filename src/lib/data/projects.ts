@@ -64,7 +64,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'A sub-1KB tracker that still handles SPAs',
-					body: 'A tracking script that bloats a customer\'s page defeats the "fast" selling point, so the embeddable snippet is held under 1KB by a build-time size budget that fails the build if it regresses. It sends data with the browser\'s beacon API (falling back to a keep-alive request), hooks into client-side navigation so single-page apps still register each route change as a pageview, respects Do Not Track, and posts to a deliberately neutral endpoint path so ad-blockers don\'t flag it.'
+					body: "A tracking script that bloats a customer's page defeats the \"fast\" selling point, so the embeddable snippet is held under 1KB by a build-time size budget that fails the build if it regresses. It sends data with the browser's beacon API (falling back to a keep-alive request), hooks into client-side navigation so single-page apps still register each route change as a pageview, respects Do Not Track, and posts to a deliberately neutral endpoint path so ad-blockers don't flag it."
 				},
 				{
 					title: 'Per-tenant quota enforcement at ingest speed',
@@ -86,16 +86,34 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Provider-agnostic billing',
-					body: 'Payments sit behind a single interface with a real gateway adapter (cards plus local mobile wallets) and a mock adapter for development. Return-from-gateway callbacks are handled idempotently, so a duplicated or replayed callback can\'t double-charge or double-activate, and a card can be tokenized for automatic renewal.'
+					body: "Payments sit behind a single interface with a real gateway adapter (cards plus local mobile wallets) and a mock adapter for development. Return-from-gateway callbacks are handled idempotently, so a duplicated or replayed callback can't double-charge or double-activate, and a card can be tokenized for automatic renewal."
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'Lightweight concurrency makes the write-heavy, drop-under-load ingest endpoint natural to build, and it ships as a single dependency-free binary that is trivial to self-host.' },
-				{ tech: 'ClickHouse', why: 'A columnar analytics database: high-volume events compress well and aggregate queries over millions of rows stay fast, with continuously-maintained rollups for time series.' },
-				{ tech: 'PostgreSQL', why: 'The transactional source of truth for users, organizations, sites, subscriptions, and usage — the data that needs referential integrity and correctness over raw speed.' },
-				{ tech: 'SvelteKit', why: 'One server-rendered app spans the dashboard, marketing site, auth, billing, and read API, deployable as a Node service for self-hosting.' },
-				{ tech: 'esbuild', why: 'Bundles and minifies the tracking script down to its sub-1KB budget, enforced automatically at build time.' },
-				{ tech: 'Turborepo', why: 'A monorepo so one schema change can update the analytics store, the ingest code, and the typed query layer in a single commit.' }
+				{
+					tech: 'Go',
+					why: 'Lightweight concurrency makes the write-heavy, drop-under-load ingest endpoint natural to build, and it ships as a single dependency-free binary that is trivial to self-host.'
+				},
+				{
+					tech: 'ClickHouse',
+					why: 'A columnar analytics database: high-volume events compress well and aggregate queries over millions of rows stay fast, with continuously-maintained rollups for time series.'
+				},
+				{
+					tech: 'PostgreSQL',
+					why: 'The transactional source of truth for users, organizations, sites, subscriptions, and usage — the data that needs referential integrity and correctness over raw speed.'
+				},
+				{
+					tech: 'SvelteKit',
+					why: 'One server-rendered app spans the dashboard, marketing site, auth, billing, and read API, deployable as a Node service for self-hosting.'
+				},
+				{
+					tech: 'esbuild',
+					why: 'Bundles and minifies the tracking script down to its sub-1KB budget, enforced automatically at build time.'
+				},
+				{
+					tech: 'Turborepo',
+					why: 'A monorepo so one schema change can update the analytics store, the ingest code, and the typed query layer in a single commit.'
+				}
 			],
 			features: [
 				'Cookieless, no-PII tracking with daily-rotating visitor hashing and a sub-1KB SPA-aware script',
@@ -126,15 +144,15 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'Making screen-recording permission painless',
-					body: "macOS Screen Recording permission is notoriously awkward — it typically forces users to quit and relaunch the app before capture works. SnapKeep triggers the system permission prompt at the right moment on launch and then re-checks authorization every time it comes back to the foreground, so returning from System Settings picks up the newly-granted permission automatically, with no manual restart."
+					body: 'macOS Screen Recording permission is notoriously awkward — it typically forces users to quit and relaunch the app before capture works. SnapKeep triggers the system permission prompt at the right moment on launch and then re-checks authorization every time it comes back to the foreground, so returning from System Settings picks up the newly-granted permission automatically, with no manual restart.'
 				},
 				{
 					title: 'Low-latency recording and real-time encoding',
-					body: "Screen frames arrive continuously on a background thread and must be encoded to video without ever blocking the UI or dropping behind real time. The recording engine runs entirely off the main thread on its own synchronized queue and deals with the real constraints of hardware H.264 — dimensions rounded to even numbers, a real-time encoding budget, a bounded backlog, and starting the video timeline from the first captured frame before audio is mixed in."
+					body: 'Screen frames arrive continuously on a background thread and must be encoded to video without ever blocking the UI or dropping behind real time. The recording engine runs entirely off the main thread on its own synchronized queue and deals with the real constraints of hardware H.264 — dimensions rounded to even numbers, a real-time encoding budget, a bounded backlog, and starting the video timeline from the first captured frame before audio is mixed in.'
 				},
 				{
 					title: 'One annotation model, identical on screen and export',
-					body: 'Every markup tool — pen, marker, arrow, shapes, text, numbered steps, pixelate — is described by a single data model with one shared drawing routine used both for the live editing canvas and the final exported image, guaranteeing what you see is exactly what you save. Pixelate redaction carefully maps between on-screen coordinates and the image\'s true pixel grid so a redacted region can be cropped, downscaled, and re-enlarged into a solid mosaic that can\'t be reversed.'
+					body: "Every markup tool — pen, marker, arrow, shapes, text, numbered steps, pixelate — is described by a single data model with one shared drawing routine used both for the live editing canvas and the final exported image, guaranteeing what you see is exactly what you save. Pixelate redaction carefully maps between on-screen coordinates and the image's true pixel grid so a redacted region can be cropped, downscaled, and re-enlarged into a solid mosaic that can't be reversed."
 				},
 				{
 					title: 'Fully offline OCR and a menubar-only lifecycle',
@@ -156,16 +174,34 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Reproducible builds and one-click distribution',
-					body: 'The Xcode project is generated from a declarative spec so it can be recreated cleanly on any machine (Swift 6, hardened runtime, Apple silicon, macOS 14+). Pushing a version tag runs a CI workflow that builds a signed disk image and publishes a GitHub Release. The build isn\'t Apple-notarized yet, so the docs walk users through clearing the quarantine flag on first launch.'
+					body: "The Xcode project is generated from a declarative spec so it can be recreated cleanly on any machine (Swift 6, hardened runtime, Apple silicon, macOS 14+). Pushing a version tag runs a CI workflow that builds a signed disk image and publishes a GitHub Release. The build isn't Apple-notarized yet, so the docs walk users through clearing the quarantine flag on first launch."
 				}
 			],
 			stackWhy: [
-				{ tech: 'Swift 6', why: 'Its compile-time concurrency checking makes the off-main-thread capture and recording pipeline provably data-race-free rather than hopefully so.' },
-				{ tech: 'SwiftUI + AppKit', why: 'SwiftUI drives the menu-bar UI and reactive state; AppKit and Core Graphics handle the low-level window and pixel work SwiftUI alone can\'t reach.' },
-				{ tech: 'ScreenCaptureKit', why: "Apple's modern capture framework, providing both high-quality stills and live video with the ability to exclude specific windows or apps from a capture." },
-				{ tech: 'Vision', why: "On-device text recognition powers Copy-Text with zero network dependency, matching the fully-offline promise." },
-				{ tech: 'AVFoundation', why: 'Handles the video encoding, audio, and frame sampling behind MP4 recording and GIF export.' },
-				{ tech: 'Global hotkeys', why: 'System-level shortcut registration is the only reliable way to trigger capture regardless of which application is focused.' }
+				{
+					tech: 'Swift 6',
+					why: 'Its compile-time concurrency checking makes the off-main-thread capture and recording pipeline provably data-race-free rather than hopefully so.'
+				},
+				{
+					tech: 'SwiftUI + AppKit',
+					why: "SwiftUI drives the menu-bar UI and reactive state; AppKit and Core Graphics handle the low-level window and pixel work SwiftUI alone can't reach."
+				},
+				{
+					tech: 'ScreenCaptureKit',
+					why: "Apple's modern capture framework, providing both high-quality stills and live video with the ability to exclude specific windows or apps from a capture."
+				},
+				{
+					tech: 'Vision',
+					why: 'On-device text recognition powers Copy-Text with zero network dependency, matching the fully-offline promise.'
+				},
+				{
+					tech: 'AVFoundation',
+					why: 'Handles the video encoding, audio, and frame sampling behind MP4 recording and GIF export.'
+				},
+				{
+					tech: 'Global hotkeys',
+					why: 'System-level shortcut registration is the only reliable way to trigger capture regardless of which application is focused.'
+				}
 			],
 			features: [
 				'Region, window, full-screen, and recapture-last capture with freeze-frame overlay, live dimensions, and a magnifier loupe',
@@ -199,7 +235,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Keeping AI output structured and reliable',
-					body: 'Generated fixes and content drafts have to render as real UI, not a wall of chat text. Each AI request is given a strict schema the model must fill, so responses come back as validated, typed data rather than prose, and the prompts explicitly forbid jargon and inventing facts about the user\'s business — because the audience is beginners who can\'t tell a hallucination from a real recommendation.'
+					body: "Generated fixes and content drafts have to render as real UI, not a wall of chat text. Each AI request is given a strict schema the model must fill, so responses come back as validated, typed data rather than prose, and the prompts explicitly forbid jargon and inventing facts about the user's business — because the audience is beginners who can't tell a hallucination from a real recommendation."
 				},
 				{
 					title: 'Background crawling without a separate infra tier',
@@ -207,17 +243,17 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Teaching beginners, decoupled from AI',
-					body: 'Every issue the audit can find ships with hand-written, plain-language guidance — what it is, why it matters, how to fix it, how hard it is, and how much impact it has. This teaching content always works, with or without AI. When AI is configured it layers a tailored, copy-paste-ready fix on top; when it isn\'t, the manual steps stand on their own.'
+					body: "Every issue the audit can find ships with hand-written, plain-language guidance — what it is, why it matters, how to fix it, how hard it is, and how much impact it has. This teaching content always works, with or without AI. When AI is configured it layers a tailored, copy-paste-ready fix on top; when it isn't, the manual steps stand on their own."
 				}
 			],
 			implementation: [
 				{
 					title: 'Pluggable AI layer with structured output',
-					body: 'A small factory returns the configured provider\'s client, and the draft- and fix-generation features both request a schema-constrained response, so what comes back is already parsed and validated against the shape the UI expects — no fragile text-parsing of model output.'
+					body: "A small factory returns the configured provider's client, and the draft- and fix-generation features both request a schema-constrained response, so what comes back is already parsed and validated against the shape the UI expects — no fragile text-parsing of model output."
 				},
 				{
 					title: 'Scheduled background job pipeline',
-					body: 'Three job types — crawls, rank refreshes, and report generation — run on a shared queue backed by an in-memory store. Recurring work is registered once at startup on cron schedules (a daily rank sweep, a weekly report) in a way that\'s safe to run repeatedly without piling up duplicates.'
+					body: "Three job types — crawls, rank refreshes, and report generation — run on a shared queue backed by an in-memory store. Recurring work is registered once at startup on cron schedules (a daily rank sweep, a weekly report) in a way that's safe to run repeatedly without piling up duplicates."
 				},
 				{
 					title: 'Crawl → audit → score pipeline',
@@ -225,7 +261,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Type-safe server API',
-					body: 'The server API is built from feature-co-located endpoints validated at the boundary, rather than scattered controllers. Every query is scoped to the caller\'s organization and every mutation checks write permission first, so multi-tenant isolation is enforced consistently by construction.'
+					body: "The server API is built from feature-co-located endpoints validated at the boundary, rather than scattered controllers. Every query is scoped to the caller's organization and every mutation checks write permission first, so multi-tenant isolation is enforced consistently by construction."
 				},
 				{
 					title: 'A schema modeling the whole SEO domain',
@@ -233,12 +269,30 @@ export const projects: Project[] = [
 				}
 			],
 			stackWhy: [
-				{ tech: 'SvelteKit + Svelte 5', why: 'A single full-stack app with a type-safe server API, so there\'s no separate backend service to build and deploy.' },
-				{ tech: 'Drizzle + PostgreSQL', why: 'A type-safe schema whose types flow straight into validation, and a relational model that fits the site/crawl/keyword hierarchy naturally.' },
-				{ tech: 'TanStack AI', why: 'A provider-agnostic AI layer, which is what lets AI stay bring-your-own-key, optional, and swappable between vendors with schema-validated output.' },
-				{ tech: 'BullMQ + Redis', why: 'Durable background crawls, rank refreshes, and schedulers — run in-process for single-VPS simplicity, but able to be split out to scale later.' },
-				{ tech: 'Zod', why: 'One validator guards every external input — API requests and AI responses alike — so bad data is rejected at the edge.' },
-				{ tech: 'Tailwind CSS 4', why: 'A token-driven design system for a consistent flat UI, with rich typography for the rendered content previews.' }
+				{
+					tech: 'SvelteKit + Svelte 5',
+					why: "A single full-stack app with a type-safe server API, so there's no separate backend service to build and deploy."
+				},
+				{
+					tech: 'Drizzle + PostgreSQL',
+					why: 'A type-safe schema whose types flow straight into validation, and a relational model that fits the site/crawl/keyword hierarchy naturally.'
+				},
+				{
+					tech: 'TanStack AI',
+					why: 'A provider-agnostic AI layer, which is what lets AI stay bring-your-own-key, optional, and swappable between vendors with schema-validated output.'
+				},
+				{
+					tech: 'BullMQ + Redis',
+					why: 'Durable background crawls, rank refreshes, and schedulers — run in-process for single-VPS simplicity, but able to be split out to scale later.'
+				},
+				{
+					tech: 'Zod',
+					why: 'One validator guards every external input — API requests and AI responses alike — so bad data is rejected at the edge.'
+				},
+				{
+					tech: 'Tailwind CSS 4',
+					why: 'A token-driven design system for a consistent flat UI, with rich typography for the rendered content previews.'
+				}
 			],
 			features: [
 				'Automated site audit: crawl, rule-based findings, and a 0–100 health score with Core Web Vitals',
@@ -280,7 +334,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Heavy formatter libraries without bundle bloat',
-					body: "The developer formatters lean on genuinely large parsing libraries. If they all shipped up front, the whole site would load slowly for someone who only wanted a tip calculator. Each heavy library is instead loaded on demand, the first time its tool is actually opened, so the base download stays tiny and users only pay for what they use."
+					body: 'The developer formatters lean on genuinely large parsing libraries. If they all shipped up front, the whole site would load slowly for someone who only wanted a tip calculator. Each heavy library is instead loaded on demand, the first time its tool is actually opened, so the base download stays tiny and users only pay for what they use.'
 				}
 			],
 			implementation: [
@@ -290,7 +344,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Declarative schema with escape hatches',
-					body: 'A tool can be described three ways: a standard calculator (input fields plus a compute function), a reversible text transform (e.g. minify ↔ beautify), or — for the handful that don\'t fit a form, like the scientific calculator and the unit and color converters — a fully custom component. The common cases stay effortless without boxing in the exceptions.'
+					body: "A tool can be described three ways: a standard calculator (input fields plus a compute function), a reversible text transform (e.g. minify ↔ beautify), or — for the handful that don't fit a form, like the scientific calculator and the unit and color converters — a fully custom component. The common cases stay effortless without boxing in the exceptions."
 				},
 				{
 					title: 'Static prerendering',
@@ -298,16 +352,34 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Shared UI and pure-logic testing',
-					body: 'The shared shell seeds each tool\'s inputs from its declared defaults and recomputes results reactively as the user types, splitting the output into stat cards and table/chart blocks with reusable renderers. Because the calculation logic is pure and separated from the UI, it\'s covered by fast unit tests, with a separate browser test suite for the components.'
+					body: "The shared shell seeds each tool's inputs from its declared defaults and recomputes results reactively as the user types, splitting the output into stat cards and table/chart blocks with reusable renderers. Because the calculation logic is pure and separated from the UI, it's covered by fast unit tests, with a separate browser test suite for the components."
 				}
 			],
 			stackWhy: [
-				{ tech: 'SvelteKit + Svelte 5', why: 'File-based routing with per-page prerender control, plus fine-grained reactivity that makes live-recomputing calculators trivial to build.' },
-				{ tech: 'adapter-static', why: 'Emits pure static HTML/JS with no server: instant loads, hosting that\'s cheap anywhere, and a client-only privacy guarantee that\'s structural rather than promised.' },
-				{ tech: 'Tailwind CSS 4', why: 'One theme system gives all 49 tools consistent per-category theming without hand-written CSS per page.' },
-				{ tech: 'TypeScript', why: 'Typed contracts for tools, fields, and results make the declarative catalog safe and self-documenting, so a new tool has to conform to compile.' },
-				{ tech: 'On-demand formatters', why: 'Real parsing libraries give correct output for the developer tools, loaded lazily so they never weigh down the base bundle.' },
-				{ tech: 'Vitest + Playwright', why: 'Fast unit tests for the pure calculation logic, plus a browser suite for the interactive components.' }
+				{
+					tech: 'SvelteKit + Svelte 5',
+					why: 'File-based routing with per-page prerender control, plus fine-grained reactivity that makes live-recomputing calculators trivial to build.'
+				},
+				{
+					tech: 'adapter-static',
+					why: "Emits pure static HTML/JS with no server: instant loads, hosting that's cheap anywhere, and a client-only privacy guarantee that's structural rather than promised."
+				},
+				{
+					tech: 'Tailwind CSS 4',
+					why: 'One theme system gives all 49 tools consistent per-category theming without hand-written CSS per page.'
+				},
+				{
+					tech: 'TypeScript',
+					why: 'Typed contracts for tools, fields, and results make the declarative catalog safe and self-documenting, so a new tool has to conform to compile.'
+				},
+				{
+					tech: 'On-demand formatters',
+					why: 'Real parsing libraries give correct output for the developer tools, loaded lazily so they never weigh down the base bundle.'
+				},
+				{
+					tech: 'Vitest + Playwright',
+					why: 'Fast unit tests for the pure calculation logic, plus a browser suite for the interactive components.'
+				}
 			],
 			features: [
 				'Financial: mortgage, loan, compound interest, sales tax, ROI, savings goal — with amortization tables and charts',
@@ -337,7 +409,7 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'On-the-fly transforms without re-processing',
-					body: 'Generating an image variant on every request would burn CPU re-encoding the same thing over and over. Each unique variant is built exactly once and then served from a three-tier cache (CDN in front, an in-memory cache, and a persistent store behind it). When many requests ask for the same not-yet-built variant at once, they\'re collapsed into a single build instead of a stampede, and requested widths snap to a fixed ladder so the number of distinct variants — and cache entries — stays bounded.'
+					body: "Generating an image variant on every request would burn CPU re-encoding the same thing over and over. Each unique variant is built exactly once and then served from a three-tier cache (CDN in front, an in-memory cache, and a persistent store behind it). When many requests ask for the same not-yet-built variant at once, they're collapsed into a single build instead of a stampede, and requested widths snap to a fixed ladder so the number of distinct variants — and cache entries — stays bounded."
 				},
 				{
 					title: 'Tamper-proof signed URLs',
@@ -349,7 +421,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Colour fidelity over naive pipelines',
-					body: 'Most image pipelines assume every image is plain sRGB and silently shift the colours of anything wider-gamut. This one reads each image\'s embedded colour profile (Adobe RGB, Display P3, CMYK) and converts it correctly to sRGB before resizing or encoding, and it fixes orientation from photo metadata. An inspection endpoint even quantifies the difference, reporting how far a naive, profile-ignoring render drifts from the colour-managed one.'
+					body: "Most image pipelines assume every image is plain sRGB and silently shift the colours of anything wider-gamut. This one reads each image's embedded colour profile (Adobe RGB, Display P3, CMYK) and converts it correctly to sRGB before resizing or encoding, and it fixes orientation from photo metadata. An inspection endpoint even quantifies the difference, reporting how far a naive, profile-ignoring render drifts from the colour-managed one."
 				}
 			],
 			implementation: [
@@ -375,11 +447,26 @@ export const projects: Project[] = [
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'A single static binary serves the UI, API, and image delivery, and its concurrency tools are what the request-coalescing, rate-limiting caching design is built on.' },
-				{ tech: 'libvips', why: 'A streaming, low-memory image engine with fast thumbnailing, content-aware cropping, and proper colour-profile handling — the exact capabilities the product is built around.' },
-				{ tech: 'S3-compatible storage', why: 'One storage client covers AWS, self-hosted MinIO, and other providers, for both originals and the shared variant cache.' },
-				{ tech: 'SvelteKit', why: 'Compiles to a static dashboard and playground the Go binary serves directly — a rich UI with no separate runtime in production.' },
-				{ tech: 'Docker Compose', why: 'Ships the whole CDN → app → storage topology as a single command, so the caching architecture is reproducible and production-shaped from the first run.' }
+				{
+					tech: 'Go',
+					why: 'A single static binary serves the UI, API, and image delivery, and its concurrency tools are what the request-coalescing, rate-limiting caching design is built on.'
+				},
+				{
+					tech: 'libvips',
+					why: 'A streaming, low-memory image engine with fast thumbnailing, content-aware cropping, and proper colour-profile handling — the exact capabilities the product is built around.'
+				},
+				{
+					tech: 'S3-compatible storage',
+					why: 'One storage client covers AWS, self-hosted MinIO, and other providers, for both originals and the shared variant cache.'
+				},
+				{
+					tech: 'SvelteKit',
+					why: 'Compiles to a static dashboard and playground the Go binary serves directly — a rich UI with no separate runtime in production.'
+				},
+				{
+					tech: 'Docker Compose',
+					why: 'Ships the whole CDN → app → storage topology as a single command, so the caching architecture is reproducible and production-shaped from the first run.'
+				}
 			],
 			features: [
 				'AVIF/WebP/JPEG/PNG with Accept-based content negotiation',
@@ -409,7 +496,7 @@ export const projects: Project[] = [
 			challenges: [
 				{
 					title: 'Multi-protocol ingest without trusting the client',
-					body: 'A dedicated media server accepts the incoming feed over RTMP, SRT, or browser WebRTC, but the decision of whether a given stream is allowed to publish belongs to the app, not the media server. The media server calls back into private, secret-guarded endpoints as a stream starts and stops, and those endpoints validate the stream\'s ingest key against the database. For browser publishing, the ingest key never reaches the client at all — it\'s injected by a same-origin server proxy.'
+					body: "A dedicated media server accepts the incoming feed over RTMP, SRT, or browser WebRTC, but the decision of whether a given stream is allowed to publish belongs to the app, not the media server. The media server calls back into private, secret-guarded endpoints as a stream starts and stops, and those endpoints validate the stream's ingest key against the database. For browser publishing, the ingest key never reaches the client at all — it's injected by a same-origin server proxy."
 				},
 				{
 					title: 'Adaptive-bitrate transcoding',
@@ -439,7 +526,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Versioned, layered API',
-					body: 'The whole surface is versioned and wrapped in composable middleware for request tracing, recovery, CORS, and timeouts. It authenticates both session tokens and API keys, with a separate token-in-query path so the browser\'s live-event connections can authenticate too, and cleanly separates public and rate-limited auth routes from the authenticated surface.'
+					body: "The whole surface is versioned and wrapped in composable middleware for request tracing, recovery, CORS, and timeouts. It authenticates both session tokens and API keys, with a separate token-in-query path so the browser's live-event connections can authenticate too, and cleanly separates public and rate-limited auth routes from the authenticated surface."
 				},
 				{
 					title: 'Real-time events and geo analytics',
@@ -447,12 +534,30 @@ export const projects: Project[] = [
 				}
 			],
 			stackWhy: [
-				{ tech: 'Go', why: 'One codebase builds both the API and worker services, and its process control and concurrency tools are a natural fit for supervising long-lived transcode processes with clean cancellation.' },
-				{ tech: 'chi', why: 'A lightweight HTTP router whose composable middleware lets session-auth, event-stream auth, rate-limited, and secret-guarded routes all coexist in one clear tree.' },
-				{ tech: 'PostgreSQL', why: 'The single source of truth, with type-safe generated queries and managed schema migrations.' },
-				{ tech: 'River', why: 'Durable background jobs living in the same database — no extra message broker to run — with open-ended timeouts for live work, retries for webhooks, and cancellation to stop live relays on demand.' },
-				{ tech: 'ffmpeg / SRS', why: 'The media server handles multi-protocol ingest and browser-to-RTMP bridging with hooks for authorization; ffmpeg does the adaptive transcode, recording, clipping, and restreaming.' },
-				{ tech: 'Redis', why: 'A low-latency message bus carrying stream and progress events, fanned out to live dashboard connections and to webhook and notification dispatchers.' }
+				{
+					tech: 'Go',
+					why: 'One codebase builds both the API and worker services, and its process control and concurrency tools are a natural fit for supervising long-lived transcode processes with clean cancellation.'
+				},
+				{
+					tech: 'chi',
+					why: 'A lightweight HTTP router whose composable middleware lets session-auth, event-stream auth, rate-limited, and secret-guarded routes all coexist in one clear tree.'
+				},
+				{
+					tech: 'PostgreSQL',
+					why: 'The single source of truth, with type-safe generated queries and managed schema migrations.'
+				},
+				{
+					tech: 'River',
+					why: 'Durable background jobs living in the same database — no extra message broker to run — with open-ended timeouts for live work, retries for webhooks, and cancellation to stop live relays on demand.'
+				},
+				{
+					tech: 'ffmpeg / SRS',
+					why: 'The media server handles multi-protocol ingest and browser-to-RTMP bridging with hooks for authorization; ffmpeg does the adaptive transcode, recording, clipping, and restreaming.'
+				},
+				{
+					tech: 'Redis',
+					why: 'A low-latency message bus carrying stream and progress events, fanned out to live dashboard connections and to webhook and notification dispatchers.'
+				}
 			],
 			features: [
 				'RTMP/SRT ingest with per-stream keys and publish hooks, plus browser go-live over WebRTC/WHIP',

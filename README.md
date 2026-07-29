@@ -4,9 +4,9 @@ Maker @ [Nile Labs](https://github.com/nilelabs) · building fast, self-hosted t
 
 ```ts
 const ebnsina = {
-  stack: ["TypeScript", "Svelte / SvelteKit", "Go", "Rust"],
-  loves: ["clean DX", "small fast tools", "shipping"],
-  motto: "Make it work, make it right, make it fast.",
+	stack: ['TypeScript', 'Svelte / SvelteKit', 'Go', 'Rust'],
+	loves: ['clean DX', 'small fast tools', 'shipping'],
+	motto: 'Make it work, make it right, make it fast.'
 };
 ```
 
