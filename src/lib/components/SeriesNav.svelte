@@ -51,7 +51,7 @@
 		flex-direction: column;
 		justify-content: flex-end;
 		gap: 0.25rem;
-		min-height: 10rem;
+		min-height: 13.5rem;
 		padding: 1.15rem 1.25rem;
 		color: #fff;
 	}
