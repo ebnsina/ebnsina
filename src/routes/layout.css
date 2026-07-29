@@ -256,6 +256,59 @@ body {
 }
 
 /* ============================================================
+   Media card — aurora as cover art, content on the page surface
+   ============================================================
+   The counterpart to .glass-card: instead of setting text on the aurora, the
+   gradient is a cover band and the copy sits below on --bg. Ink stays the
+   page's own, so titles keep full contrast and the accent reads on hover.
+   Put .aurora-surface + an auroraFor()/auroraAt() style on the __cover. */
+
+.media-card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border-radius: 0.85rem;
+	background: var(--bg);
+	border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
+	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
+	text-decoration: none;
+	color: var(--fg);
+	transition:
+		box-shadow 0.25s ease,
+		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+		border-color 0.25s ease;
+}
+
+a.media-card:hover,
+.media-card--link:hover {
+	transform: translateY(-2px);
+	border-color: color-mix(in oklch, var(--accent) 30%, transparent);
+	box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.38);
+}
+
+.media-card__cover {
+	flex: none;
+	height: 6.5rem;
+}
+
+.media-card__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 0.9rem 1.1rem 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.media-card {
+		transition: none;
+	}
+	a.media-card:hover,
+	.media-card--link:hover {
+		transform: none;
+	}
+}
+
+/* ============================================================
    Tag / badge pill
    ============================================================ */
 
