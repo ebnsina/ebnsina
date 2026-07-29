@@ -4,6 +4,8 @@ description: 'পিক্সেল আর ফ্রেম থেকে শু�
 date: 2026-07-28
 tags: ['video', 'streaming', 'codec', 'hls', 'dash', 'bangla', 'engineering']
 minutesRead: 42
+series: 'ভিডিও মাস্টারি'
+seriesPart: 1
 ---
 
 <script>

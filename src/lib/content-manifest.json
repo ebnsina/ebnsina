@@ -58,7 +58,9 @@
 				"description": "পিক্সেল আর ফ্রেম থেকে শুরু করে কোডেক, রেট কন্ট্রোল, কন্টেইনার, সেগমেন্ট, ABR আর প্লেয়ারের ভেতরের পাইপলাইন — পুরো গল্পটা, ধাপে ধাপে।",
 				"date": "2026-07-28",
 				"tags": ["video", "streaming", "codec", "hls", "dash", "bangla", "engineering"],
-				"minutesRead": 42
+				"minutesRead": 42,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 1
 			}
 		},
 		{
@@ -68,7 +70,9 @@
 				"description": "ffmpeg দিয়ে হাতে-কলমে — probe থেকে ল্যাডার, কি-ফ্রেম বাঁধা, HLS প্যাকেজিং, থাম্বনেইল, সাবটাইটেল, আর একটা ওয়ার্কার যেটা পুরো কাজটা নিজে করে।",
 				"date": "2026-07-28",
 				"tags": ["video", "ffmpeg", "transcoding", "hls", "bangla", "engineering"],
-				"minutesRead": 48
+				"minutesRead": 48,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 2
 			}
 		},
 		{
@@ -78,7 +82,9 @@
 				"description": "দশজন থেকে দশ হাজার — আর্কিটেকচার, স্টেট মেশিন, চাংকড এনকোডিং, পার-টাইটেল ল্যাডার, প্যাকেজিং, CDN, খরচ, আর ব্যর্থতার পূর্ণ তালিকা।",
 				"date": "2026-07-28",
 				"tags": ["video", "transcoding", "architecture", "scaling", "bangla", "engineering"],
-				"minutesRead": 52
+				"minutesRead": 52,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 3
 			}
 		},
 		{
@@ -88,7 +94,9 @@
 				"description": "পার-টাইটেল থেকে পার-শট, VMAF, ডাইনামিক অপটিমাইজার, Cosmos মাইক্রোসার্ভিস পাইপলাইন, AV1 আর ফিল্ম গ্রেইন সিনথেসিস, আর Open Connect — নেটফ্লিক্সের নিজের লেখা থেকে, সংখ্যাসহ।",
 				"date": "2026-07-29",
 				"tags": ["video", "netflix", "streaming", "vmaf", "av1", "cdn", "bangla", "engineering"],
-				"minutesRead": 46
+				"minutesRead": 46,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 4
 			}
 		},
 		{
@@ -107,7 +115,9 @@
 					"bangla",
 					"engineering"
 				],
-				"minutesRead": 44
+				"minutesRead": 44,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 5
 			}
 		},
 		{
@@ -126,7 +136,9 @@
 					"bangla",
 					"engineering"
 				],
-				"minutesRead": 45
+				"minutesRead": 45,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 6
 			}
 		},
 		{
@@ -146,7 +158,9 @@
 					"bangla",
 					"engineering"
 				],
-				"minutesRead": 47
+				"minutesRead": 47,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 7
 			}
 		},
 		{
@@ -166,7 +180,9 @@
 					"bangla",
 					"engineering"
 				],
-				"minutesRead": 46
+				"minutesRead": 46,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 8
 			}
 		},
 		{

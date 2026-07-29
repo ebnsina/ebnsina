@@ -4,6 +4,8 @@ description: 'RTMP থেকে SRT আর WHIP, রিয়েল-টাইম
 date: 2026-07-30
 tags: ['video', 'live', 'streaming', 'hls', 'webrtc', 'ads', 'cdn', 'bangla', 'engineering']
 minutesRead: 47
+series: 'ভিডিও মাস্টারি'
+seriesPart: 7
 ---
 
 <script>

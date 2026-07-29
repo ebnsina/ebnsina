@@ -2,11 +2,14 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import FormattedDate from '$lib/components/FormattedDate.svelte';
+	import SeriesNav from '$lib/components/SeriesNav.svelte';
+	import { getSeries } from '$lib/content';
 	import { vtName } from '$lib/actions';
 
 	let { data } = $props();
 	const Content = $derived(data.component);
 	const meta = $derived(data.meta);
+	const series = $derived(getSeries(data.slug));
 </script>
 
 <Seo
@@ -50,6 +53,9 @@
 	<Content />
 
 	{#snippet footer()}
+		{#if series}
+			<SeriesNav {series} />
+		{/if}
 		<footer class="mt-16 flex justify-between pt-8 text-sm text-muted">
 			<a href="/blog" class="hover:text-fg">← All writing</a>
 			<a href="/rss.xml" class="hover:text-fg">Subscribe via RSS</a>

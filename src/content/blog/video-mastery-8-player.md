@@ -4,6 +4,8 @@ description: 'নেটিভ HLS বনাম MSE বনাম Managed Media So
 date: 2026-07-30
 tags: ['video', 'player', 'abr', 'mse', 'eme', 'drm', 'captions', 'bangla', 'engineering']
 minutesRead: 46
+series: 'ভিডিও মাস্টারি'
+seriesPart: 8
 ---
 
 <script>
@@ -317,5 +319,3 @@ hls.on(Hls.Events.ERROR, function (name, data) {
 - [CTA-5004: Common Media Client Data (CMCD)](https://cdn.cta.tech/cta/media/media/resources/standards/pdfs/cta-5004-final.pdf)
 - [WebKit — Safari 17.1-এর ফিচার (Managed Media Source)](https://webkit.org/blog/14735/webkit-features-in-safari-17-1/)
 - [Chrome — অটোপ্লে নীতি](https://developer.chrome.com/blog/autoplay)
-
-**সিরিজের সব পর্ব:** [১](/blog/video-mastery-1-video-and-player) · [২](/blog/video-mastery-2-build-a-transcoder) · [৩](/blog/video-mastery-3-production-transcoder) · [৪ — নেটফ্লিক্স](/blog/video-mastery-4-netflix) · [৫ — Vimeo](/blog/video-mastery-5-vimeo) · [৬ — Mux](/blog/video-mastery-6-mux) · [৭ — লাইভ](/blog/video-mastery-7-live)

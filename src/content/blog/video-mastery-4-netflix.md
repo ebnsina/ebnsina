@@ -4,6 +4,8 @@ description: 'পার-টাইটেল থেকে পার-শট, VMAF, 
 date: 2026-07-29
 tags: ['video', 'netflix', 'streaming', 'vmaf', 'av1', 'cdn', 'bangla', 'engineering']
 minutesRead: 46
+series: 'ভিডিও মাস্টারি'
+seriesPart: 4
 ---
 
 <script>

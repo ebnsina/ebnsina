@@ -4,6 +4,8 @@ description: 'জাস্ট-ইন-টাইম ট্রান্সকোড
 date: 2026-07-29
 tags: ['video', 'mux', 'transcoding', 'api', 'qoe', 'clickhouse', 'bangla', 'engineering']
 minutesRead: 45
+series: 'ভিডিও মাস্টারি'
+seriesPart: 6
 ---
 
 <script>
@@ -377,5 +379,3 @@ Kubernetes বাছার মূল কারণটাও ভিডিও-ন�
 - [How Cloud Native Technology helps Mux simplify online video streaming](https://www.cncf.io/blog/2020/06/05/how-cloud-native-technology-helps-mux-simplify-online-video-streaming/) — CNCF
 
 **পরের দুই পর্বে** — [**পর্ব ৭: লাইভ**](/blog/video-mastery-7-live), যেখানে সময়ের বাজেট শূন্য বলে এই সিরিজের প্রায় সব কৌশল বাতিল হয়ে যায়; আর [**পর্ব ৮: প্লেয়ার**](/blog/video-mastery-8-player), যেখানে এই পর্বের startup time আর rebuffer শতাংশের সংখ্যাগুলো আসলে তৈরি হয়।
-
-**সিরিজের বাকি পর্ব:** [পর্ব ১](/blog/video-mastery-1-video-and-player) · [পর্ব ২](/blog/video-mastery-2-build-a-transcoder) · [পর্ব ৩](/blog/video-mastery-3-production-transcoder) · [পর্ব ৪ — নেটফ্লিক্স](/blog/video-mastery-4-netflix) · [পর্ব ৫ — Vimeo](/blog/video-mastery-5-vimeo)

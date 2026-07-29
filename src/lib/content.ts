@@ -12,6 +12,10 @@ export type BlogMeta = {
 	draft?: boolean;
 	cover?: string;
 	minutesRead?: number;
+	/** Posts sharing a `series` render an ordered index of the whole series. */
+	series?: string;
+	/** Position within the series. Ordering key — not derived from date. */
+	seriesPart?: number;
 };
 
 export type ChapterMeta = {
@@ -57,6 +61,22 @@ export function getBlogPosts(): BlogEntry[] {
 
 export function getAllTags(): string[] {
 	return [...new Set(getBlogPosts().flatMap((p) => p.meta.tags ?? []))].sort();
+}
+
+export type SeriesInfo = { title: string; parts: BlogEntry[]; currentIndex: number };
+
+/** The ordered parts of the series a post belongs to, or null if it's standalone.
+ *  Ordered by `seriesPart` rather than date, so a backfilled or corrected part
+ *  still lands in the right place. */
+export function getSeries(slug: string): SeriesInfo | null {
+	const name = blogList.find((p) => p.slug === slug)?.meta.series;
+	if (!name) return null;
+	const parts = blogList
+		.filter((p) => p.meta.series === name && !p.meta.draft)
+		.sort((a, b) => (a.meta.seriesPart ?? 0) - (b.meta.seriesPart ?? 0));
+	const currentIndex = parts.findIndex((p) => p.slug === slug);
+	// A "series" of one is just a post.
+	return parts.length > 1 && currentIndex !== -1 ? { title: name, parts, currentIndex } : null;
 }
 
 export async function loadPost(slug: string) {

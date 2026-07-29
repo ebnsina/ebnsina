@@ -4,6 +4,8 @@ description: 'Falkor ট্রান্সকোডিং ইনফ্রা, �
 date: 2026-07-29
 tags: ['video', 'vimeo', 'transcoding', 'vmaf', 'drm', 'storage', 'bangla', 'engineering']
 minutesRead: 44
+series: 'ভিডিও মাস্টারি'
+seriesPart: 5
 ---
 
 <script>

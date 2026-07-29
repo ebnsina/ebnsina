@@ -4,6 +4,8 @@ description: 'ffmpeg দিয়ে হাতে-কলমে — probe থে�
 date: 2026-07-28
 tags: ['video', 'ffmpeg', 'transcoding', 'hls', 'bangla', 'engineering']
 minutesRead: 48
+series: 'ভিডিও মাস্টারি'
+seriesPart: 2
 ---
 
 <script>

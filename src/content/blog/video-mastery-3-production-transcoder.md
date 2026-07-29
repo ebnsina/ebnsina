@@ -4,6 +4,8 @@ description: 'দশজন থেকে দশ হাজার — আর্ক�
 date: 2026-07-28
 tags: ['video', 'transcoding', 'architecture', 'scaling', 'bangla', 'engineering']
 minutesRead: 52
+series: 'ভিডিও মাস্টারি'
+seriesPart: 3
 ---
 
 <script>
