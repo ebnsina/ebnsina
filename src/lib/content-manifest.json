@@ -82,6 +82,94 @@
 			}
 		},
 		{
+			"slug": "video-mastery-4-netflix",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৪: নেটফ্লিক্স কীভাবে করে",
+				"description": "পার-টাইটেল থেকে পার-শট, VMAF, ডাইনামিক অপটিমাইজার, Cosmos মাইক্রোসার্ভিস পাইপলাইন, AV1 আর ফিল্ম গ্রেইন সিনথেসিস, আর Open Connect — নেটফ্লিক্সের নিজের লেখা থেকে, সংখ্যাসহ।",
+				"date": "2026-07-29",
+				"tags": ["video", "netflix", "streaming", "vmaf", "av1", "cdn", "bangla", "engineering"],
+				"minutesRead": 46
+			}
+		},
+		{
+			"slug": "video-mastery-5-vimeo",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৫: Vimeo কীভাবে করে",
+				"description": "Falkor ট্রান্সকোডিং ইনফ্রা, স্পট ইনস্ট্যান্সে চাংকড এনকোডিং, এনকোডারের ভেতর থেকে VMAF মাপা, Artax দিয়ে প্রোগ্রেসিভ MP4 বানানো, DRM-এর তিন যুগ, আর স্টোরেজের খরচ কমানো।",
+				"date": "2026-07-29",
+				"tags": [
+					"video",
+					"vimeo",
+					"transcoding",
+					"vmaf",
+					"drm",
+					"storage",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 44
+			}
+		},
+		{
+			"slug": "video-mastery-6-mux",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৬: Mux কীভাবে করে",
+				"description": "জাস্ট-ইন-টাইম ট্রান্সকোডিং, নিউরাল নেটওয়ার্ক দিয়ে মিলিসেকেন্ডে পার-টাইটেল ল্যাডার, কোয়ালিটি টিয়ার, ওয়েবহুক-চালিত API, LL-HLS, আর ClickHouse-এ চলা QoE অ্যানালিটিক্স — সাথে তিন প্রোভাইডারের তুলনা।",
+				"date": "2026-07-29",
+				"tags": [
+					"video",
+					"mux",
+					"transcoding",
+					"api",
+					"qoe",
+					"clickhouse",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 45
+			}
+		},
+		{
+			"slug": "video-mastery-7-live",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৭: লাইভ",
+				"description": "RTMP থেকে SRT আর WHIP, রিয়েল-টাইম এনকোডিংয়ের সীমা, LL-HLS আসলে কীভাবে কাজ করে, লেটেন্সির বাজেট, DVR, ফেইলওভার, SCTE-35 আর বিজ্ঞাপন, আর মাল্টি-CDN স্টিয়ারিং।",
+				"date": "2026-07-30",
+				"tags": [
+					"video",
+					"live",
+					"streaming",
+					"hls",
+					"webrtc",
+					"ads",
+					"cdn",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 47
+			}
+		},
+		{
+			"slug": "video-mastery-8-player",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৮: প্লেয়ার",
+				"description": "নেটিভ HLS বনাম MSE বনাম Managed Media Source, বাফার ব্যবস্থাপনা, ABR অ্যালগরিদম (থ্রুপুট বনাম BOLA), স্টার্টআপের সিদ্ধান্ত, EME আর DRM, ক্যাপশন, CMCD, অটোপ্লে নীতি, আর ত্রুটি থেকে ফেরা।",
+				"date": "2026-07-30",
+				"tags": [
+					"video",
+					"player",
+					"abr",
+					"mse",
+					"eme",
+					"drm",
+					"captions",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 46
+			}
+		},
+		{
 			"slug": "vps-deploy-guide",
 			"meta": {
 				"title": "Full-Stack VPS Deployment: React, Node, Go, Postgres, Redis, ClickHouse, Redpanda & More",
