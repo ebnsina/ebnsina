@@ -11,6 +11,8 @@
 	import {
 		ArrowRight02Icon,
 		ArrowUpRight01Icon,
+		BookOpen01Icon,
+		Cancel01Icon,
 		Tick02Icon,
 		Clock01Icon,
 		BankIcon,
@@ -26,7 +28,9 @@
 	const ICONS = {
 		arrowRight: ArrowRight02Icon,
 		arrowUpRight: ArrowUpRight01Icon,
+		book: BookOpen01Icon,
 		check: Tick02Icon,
+		close: Cancel01Icon,
 		clock: Clock01Icon,
 		landmark: BankIcon,
 		languages: TranslateIcon,

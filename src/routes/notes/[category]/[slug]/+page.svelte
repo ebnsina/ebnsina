@@ -22,7 +22,7 @@
 <ArticleLayout lang={data.locale}>
 	{#snippet header()}
 		<header class="mb-10 pb-8">
-			<div class="mb-4 flex flex-wrap items-center gap-3">
+			<div class="article-meta mb-4 flex flex-wrap items-center gap-3">
 				<a
 					href={`${base}/${data.category}`}
 					class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
@@ -47,7 +47,7 @@
 			</h1>
 			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.subtitle}</p>
 			{#if meta.topics?.length}
-				<div class="mt-5 flex flex-wrap gap-2">
+				<div class="article-meta mt-5 flex flex-wrap gap-2">
 					{#each meta.topics as t (t)}
 						<span class="tag-pill">{t}</span>
 					{/each}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { onMount, tick } from 'svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let {
 		header,
@@ -8,6 +9,27 @@
 		footer,
 		lang
 	}: { header: Snippet; children: Snippet; footer?: Snippet; lang?: string } = $props();
+
+	// Reader mode: strips the page down to the article body — site header and
+	// footer, the TOC, the article's meta chrome and its outro all step aside.
+	// The choice sticks across articles (localStorage) since it's a reading
+	// preference, not per-page state.
+	const READER_KEY = 'reader-mode';
+	let reader = $state(false);
+
+	onMount(() => {
+		reader = localStorage.getItem(READER_KEY) === '1';
+		return () => document.documentElement.classList.remove('reader-mode');
+	});
+
+	$effect(() => {
+		document.documentElement.classList.toggle('reader-mode', reader);
+		localStorage.setItem(READER_KEY, reader ? '1' : '0');
+	});
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && reader) reader = false;
+	}
 
 	type Heading = { id: string; text: string; depth: number };
 	let headings = $state<Heading[]>([]);
@@ -108,49 +130,104 @@
 	}
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 <div
 	{lang}
-	class="mx-auto grid max-w-5xl items-start px-5 sm:px-8 gap-y-10 lg:grid-cols-[minmax(0,44rem)_13rem] lg:justify-between"
+	class="mx-auto items-start gap-y-10 px-5 sm:px-8 {reader
+		? 'max-w-[44rem]'
+		: 'grid max-w-5xl lg:grid-cols-[minmax(0,44rem)_13rem] lg:justify-between'}"
 >
 	<article bind:this={article} class="min-w-0">
 		{@render header()}
 		<div class="prose-editorial">
 			{@render children()}
 		</div>
-		{#if footer}
+		{#if footer && !reader}
 			{@render footer()}
 		{/if}
 	</article>
 
-	<aside
-		id="toc-aside"
-		class="sticky top-12 hidden max-h-[calc(100vh-3.5rem)] self-start overflow-y-auto pb-4 pr-1 pt-[4.5rem] lg:block"
-	>
-		{#if headings.length}
-			<nav aria-label="Table of contents">
-				<span
-					class="mb-3 block font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-muted"
-					>Contents</span
-				>
-				<ul
-					class="space-y-0.5 pl-4"
-					style="border-left: 1px solid color-mix(in oklch, var(--fg) 8%, transparent)"
-				>
-					{#each headings as h (h.id)}
-						<li>
-							<a
-								href={`#${h.id}`}
-								onclick={(e) => toToc(e, h.id)}
-								class="toc-link block py-1 text-[14px] leading-[1.5] text-muted no-underline transition-colors hover:text-fg"
-								class:toc-active={activeId === h.id}
-								class:pl-3={h.depth === 3}
-							>
-								{h.text}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</nav>
-		{/if}
-	</aside>
+	{#if !reader}
+		<aside
+			id="toc-aside"
+			class="sticky top-12 hidden max-h-[calc(100vh-3.5rem)] self-start overflow-y-auto pb-4 pr-1 pt-[4.5rem] lg:block"
+		>
+			{#if headings.length}
+				<nav aria-label="Table of contents">
+					<span
+						class="mb-3 block font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-muted"
+						>Contents</span
+					>
+					<ul
+						class="space-y-0.5 pl-4"
+						style="border-left: 1px solid color-mix(in oklch, var(--fg) 8%, transparent)"
+					>
+						{#each headings as h (h.id)}
+							<li>
+								<a
+									href={`#${h.id}`}
+									onclick={(e) => toToc(e, h.id)}
+									class="toc-link block py-1 text-[14px] leading-[1.5] text-muted no-underline transition-colors hover:text-fg"
+									class:toc-active={activeId === h.id}
+									class:pl-3={h.depth === 3}
+								>
+									{h.text}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				</nav>
+			{/if}
+		</aside>
+	{/if}
 </div>
+
+<button
+	type="button"
+	class="reader-toggle"
+	aria-pressed={reader}
+	title={reader ? 'Exit focus mode (Esc)' : 'Focus mode — hide everything but the article'}
+	onclick={() => (reader = !reader)}
+>
+	<!-- separate instances: the icon wrapper doesn't re-render on a changed glyph prop -->
+	{#if reader}
+		<Icon name="close" size={14} strokeWidth={2} />
+	{:else}
+		<Icon name="book" size={14} strokeWidth={2} />
+	{/if}
+	<span>{reader ? 'Exit focus' : 'Focus'}</span>
+</button>
+
+<style>
+	.reader-toggle {
+		position: fixed;
+		right: 1rem;
+		bottom: 1rem;
+		z-index: 45;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.45rem 0.75rem;
+		border: 1px solid var(--rule);
+		border-radius: 999px;
+		background: color-mix(in oklch, var(--bg) 88%, transparent);
+		backdrop-filter: blur(10px);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		color: var(--muted);
+		transition:
+			color 0.15s,
+			border-color 0.15s;
+	}
+	.reader-toggle:hover {
+		color: var(--fg);
+		border-color: color-mix(in oklch, var(--fg) 25%, transparent);
+	}
+	@media print {
+		.reader-toggle {
+			display: none;
+		}
+	}
+</style>

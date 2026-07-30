@@ -23,7 +23,7 @@
 	{#snippet header()}
 		<header class="mb-10 pb-8">
 			<div
-				class="mb-4 flex flex-wrap items-center gap-3 text-xs uppercase tracking-wider text-muted"
+				class="article-meta mb-4 flex flex-wrap items-center gap-3 text-xs uppercase tracking-wider text-muted"
 			>
 				<FormattedDate date={meta.date} />
 				{#if meta.minutesRead}
@@ -41,7 +41,7 @@
 			</h1>
 			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.description}</p>
 			{#if meta.tags?.length}
-				<div class="mt-5 flex flex-wrap gap-2">
+				<div class="article-meta mt-5 flex flex-wrap gap-2">
 					{#each meta.tags as t (t)}
 						<a href={`/blog/tags/${t}`} class="tag-pill">#{t}</a>
 					{/each}

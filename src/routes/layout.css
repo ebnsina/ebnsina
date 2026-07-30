@@ -707,3 +707,20 @@ html.nav-vt::view-transition-group(*) {
 		animation: none !important;
 	}
 }
+
+/* ── Reader mode ───────────────────────────────────────────────────────────
+   A distraction-free view of an article: everything that isn't the prose steps
+   aside. The article column itself is handled in ArticleLayout (it drops the TOC
+   track and the outro); these rules take care of the page chrome around it, plus
+   the meta chrome inside the article header (dates, badges, tags, locale
+   toggle) that the routes mark with `.article-meta`. */
+:root.reader-mode .site-header,
+:root.reader-mode body > footer,
+:root.reader-mode .article-meta {
+	display: none;
+}
+
+:root.reader-mode main {
+	padding-top: 3rem;
+	padding-bottom: 6rem;
+}
