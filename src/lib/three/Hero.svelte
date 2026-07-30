@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Component } from 'svelte';
-	import { catFor } from '$lib/colors';
+	import { CAT_COLORS } from '$lib/colors';
 	import { threeEnabled } from './enabled';
 
 	let HeroCanvas = $state<Component<{ accent?: string }> | null>(null);
-	const accent = catFor('hero-laptop');
+	// A star needs to sit high on the indigo ramp — the darker steps can't carry
+	// light. Picked explicitly rather than hashed, since there's only one hero.
+	const accent = CAT_COLORS[6];
 
 	onMount(() => {
 		// Skip WebGL entirely on phones / reduced-motion (perf + battery).

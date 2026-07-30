@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Canvas } from '@threlte/core';
-	import LaptopCloud from './LaptopCloud.svelte';
+	import LatticeCloud from './LatticeCloud.svelte';
 
-	let { accent = '#9c2a45' }: { accent?: string } = $props();
+	let { accent = '#99a4f0' }: { accent?: string } = $props();
 </script>
 
 <Canvas dpr={[1, 1.75]}>
-	<LaptopCloud {accent} />
+	<LatticeCloud {accent} />
 </Canvas>
