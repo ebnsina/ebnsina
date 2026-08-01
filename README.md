@@ -1,6 +1,6 @@
 ### Hi, I'm Ebn Sina 👋
 
-Maker @ [Nile Labs](https://github.com/nilelabs) · building fast, self-hosted tools · Rajshahi 🇧🇩
+Maker @ [Fajr Labs](https://github.com/fajrlabs) · building halal softwares for Muslims · Rajshahi 🇧🇩
 
 ```ts
 const ebnsina = {
