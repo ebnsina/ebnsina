@@ -3,8 +3,8 @@ import { getChapters, getNoteCategories } from '$lib/content';
 
 export function entries() {
 	const out: Array<{ category: string; slug: string }> = [];
-	for (const category of getNoteCategories()) {
-		for (const ch of getChapters(category)) out.push({ category, slug: ch.slug });
+	for (const category of getNoteCategories('bn')) {
+		for (const ch of getChapters(category, 'bn')) out.push({ category, slug: ch.slug });
 	}
 	return out;
 }

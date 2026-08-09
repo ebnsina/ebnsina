@@ -1,7 +1,7 @@
 // Shared load logic for the notes routes, parameterised by locale so the
 // English (/notes) and Bangla (/bn/notes) route trees stay single-sourced.
 import { error } from '@sveltejs/kit';
-import { loadChapter, getChapters } from '$lib/content';
+import { loadChapter, getChapters, hasCounterpart, hasCategoryCounterpart } from '$lib/content';
 import { categoryMeta } from '$lib/data/categories.bn';
 import { notesBase, type Locale } from '$lib/i18n/notes';
 
@@ -14,7 +14,8 @@ export function loadCategoryData(category: string, locale: Locale) {
 		base: notesBase(locale),
 		category,
 		meta,
-		chapters: getChapters(category, locale)
+		chapters: getChapters(category, locale),
+		hasCounterpart: hasCategoryCounterpart(category, locale)
 	};
 }
 
@@ -35,6 +36,7 @@ export async function loadChapterData(category: string, slug: string, locale: Lo
 		category,
 		slug,
 		categoryLabel: cat.label,
+		hasCounterpart: hasCounterpart(category, slug, locale),
 		trackSlugs: chapters.map((c) => c.slug),
 		total: chapters.length,
 		prev: idx > 0 ? chapters[idx - 1] : null,

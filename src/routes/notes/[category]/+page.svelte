@@ -49,7 +49,7 @@
 				class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
 				>{t.backToNotes}</a
 			>
-			<LocaleToggle locale={data.locale} />
+			<LocaleToggle locale={data.locale} available={data.hasCounterpart} />
 		</div>
 		<h1 class="mb-3 mt-3 font-serif text-3xl font-semibold tracking-tight">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>

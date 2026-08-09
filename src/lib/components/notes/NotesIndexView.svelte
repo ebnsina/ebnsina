@@ -27,17 +27,21 @@
 	const levels = $derived(
 		ROADMAP.map((lvl) => {
 			const tracks = lvl.groups.flatMap((g) =>
-				(groups[g] ?? []).map(({ key }) => {
-					const chs = getChapters(key);
-					return {
-						category: key,
-						label: categoryLabel(key, locale),
-						// avatar initials always use the English label (Bangla single letters read poorly)
-						enLabel: CATEGORIES[key]?.label ?? key,
-						slugs: chs.map((c) => c.slug),
-						minutes: chs.reduce((m, c) => m + minutesOf(c.meta.readingTime), 0)
-					};
-				})
+				(groups[g] ?? [])
+					// A track authored in one locale only has no chapters in the other;
+					// drop it rather than rendering an empty card.
+					.filter(({ key }) => getChapters(key, locale).length > 0)
+					.map(({ key }) => {
+						const chs = getChapters(key, locale);
+						return {
+							category: key,
+							label: categoryLabel(key, locale),
+							// avatar initials always use the English label (Bangla single letters read poorly)
+							enLabel: CATEGORIES[key]?.label ?? key,
+							slugs: chs.map((c) => c.slug),
+							minutes: chs.reduce((m, c) => m + minutesOf(c.meta.readingTime), 0)
+						};
+					})
 			);
 			const tr = t.roadmap[lvl.n];
 			return {

@@ -38,7 +38,9 @@
 				<span class="text-[10px] font-semibold uppercase tracking-widest text-muted">
 					{String(meta.chapter).padStart(2, '0')} / {String(data.total).padStart(2, '0')}
 				</span>
-				<span class="ml-auto"><LocaleToggle locale={data.locale} /></span>
+				<span class="ml-auto"
+					><LocaleToggle locale={data.locale} available={data.hasCounterpart} /></span
+				>
 			</div>
 			<h1
 				class="mb-4 font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl sm:leading-[1.1]"
