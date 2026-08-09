@@ -49,6 +49,21 @@ The notes prose is **Bangla**, served at `/notes` — there is no English catalo
 
 The rest of the site (home, blog chrome, projects, `/directory`, footer) stays **English**, and `/directory` uses the English track labels from `categories.ts`.
 
+### Global ⌘K search
+
+`SearchPalette.svelte` is mounted once in the root layout and opens from anywhere (⌘K / Ctrl+K, `/`, or the header's `SearchTrigger`); `src/lib/search-ui.svelte.ts` is the shared open/close rune that lets the triggers live in the header. Ranking lives in `src/lib/search.ts`.
+
+The index is **built, not computed at runtime**: `node scripts/build-manifest.mjs` writes `src/lib/search-index.json` in the same pass as the manifest (it already reads every file), giving each row a pre-lowercased, word-deduped haystack of topics, category, slug and every `##`/`###` heading. Title and subtitle are deliberately **excluded** from that haystack — they are scored as their own fields — and words already in them are filtered out, which is a third of the payload. **Rebuild it whenever content changes**, same command as the manifest.
+
+Tracks, projects and top-level pages are added at runtime in `search.ts` from modules the app already has, so the Bangla track labels are never duplicated into the index.
+
+Two properties to preserve when touching this:
+
+- **The index is lazy.** It must stay out of every page's module graph — `import('$lib/search-index.json')` inside `loadRows()` is what keeps the 88 KB (gzipped) chunk off the initial load. It is warmed on trigger hover/focus and on ⌘/Ctrl keydown, so opening rarely waits.
+- **Matching is plain `indexOf` over prepared strings** — no search library, no debounce, no index built in the browser. 50 full ranking passes over ~530 rows measure ~1 ms total; keep it that way rather than reaching for fuzzy matching.
+
+Query folding is `NFC` + lowercase, and the build-time word split keeps `\p{M}` so Bangla matras stay attached to their words. English `topics[]`/slugs sit alongside Bangla titles in the haystack on purpose: a reader typing either "caching" or "ক্যাশিং" finds the same track.
+
 ### Every notes chapter needs a story section (non-negotiable)
 
 **Each chapter carries one substantial narrative section that teaches the core idea through a concrete, everyday scene before any code or diagram.** The heading is `## গল্পে বুঝি`. This is the house style — a chapter without it does not match the rest of the notes.

@@ -16,10 +16,10 @@
 		Tick02Icon,
 		Clock01Icon,
 		BankIcon,
-		TranslateIcon,
 		CheckListIcon,
 		LockIcon,
 		Mail01Icon,
+		Search01Icon,
 		Settings01Icon,
 		SparklesIcon,
 		ChampionIcon
@@ -33,10 +33,10 @@
 		close: Cancel01Icon,
 		clock: Clock01Icon,
 		landmark: BankIcon,
-		languages: TranslateIcon,
 		listChecks: CheckListIcon,
 		lock: LockIcon,
 		mail: Mail01Icon,
+		search: Search01Icon,
 		settings: Settings01Icon,
 		sparkles: SparklesIcon,
 		trophy: ChampionIcon

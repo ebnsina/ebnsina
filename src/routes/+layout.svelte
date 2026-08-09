@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import SearchPalette from '$lib/components/SearchPalette.svelte';
 	import { onNavigate } from '$app/navigation';
 
 	let { children } = $props();
@@ -34,6 +35,7 @@
 >
 
 <Header />
+<SearchPalette />
 <main id="main" class="py-12 sm:py-20">
 	{@render children()}
 </main>

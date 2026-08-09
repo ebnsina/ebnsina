@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { SITE } from '$lib/config';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import SearchTrigger from './SearchTrigger.svelte';
 
 	let open = $state(false);
 	let scrolled = $state(false);
@@ -49,10 +50,12 @@
 				</a>
 			{/each}
 			<span class="mx-1.5 h-4 w-px shrink-0 bg-rule"></span>
+			<SearchTrigger />
 			<ThemeToggle />
 		</nav>
 
-		<div class="flex items-center gap-2 sm:hidden">
+		<div class="flex items-center gap-1 sm:hidden">
+			<SearchTrigger compact />
 			<ThemeToggle />
 			<button
 				aria-label="Toggle menu"
