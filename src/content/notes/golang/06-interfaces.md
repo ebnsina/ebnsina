@@ -1,9 +1,9 @@
 ---
-title: 'Interfaces & Polymorphism'
-subtitle: "Go interfaces are implicit — no 'implements' keyword needed. This changes everything about how you design software."
+title: 'Interfaces ও Polymorphism'
+subtitle: "Go interface implicit — কোনো 'implements' keyword লাগে না। এটা সফটওয়্যার ডিজাইন করার পুরো ধরনটাই বদলে দেয়।"
 chapter: 6
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['interfaces', 'polymorphism', 'type assertions', 'composition', 'dependency injection']
 ---
 
@@ -11,9 +11,17 @@ topics: ['interfaces', 'polymorphism', 'type assertions', 'composition', 'depend
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What Makes Go Interfaces Different
+## গল্পে বুঝি
 
-In Java, you write `class Dog implements Animal`. In Go, there's no `implements` keyword. A type satisfies an interface **automatically** if it has the right methods. This is called **structural typing** (or duck typing at compile time).
+ইবনে সিনার একটা কুরিয়ার কোম্পানি। একদিন ডেলিভারি বেড়ে গেল, তাই সে দোকানের সামনে একটা কাগজ ঝুলিয়ে দিল — "গাড়ি চালাতে পারে এমন লোক চাই।" এখানে খেয়াল করুন, ইবনে সিনা কিন্তু লেখেনি "শুধু পেশাদার ট্যাক্সিওয়ালা চাই" বা "শুধু ট্রাক ড্রাইভার চাই।" সে শুধু একটাই শর্ত দিয়েছে — লোকটা গাড়ি চালাতে **পারতে** হবে। এখন পাশের আল-খোয়ারিজমি, যে সারাজীবন ট্যাক্সি চালিয়েছে, সে-ও যোগ্য। পাড়ার ফাতিমা আল-ফিহরি, যে নিজের প্রাইভেট কারে অফিস যাওয়া-আসা করে, সে-ও যোগ্য। এমনকি ইবনে সিনা নিজে, যদি সে চালাতে জানে, সে-ও যোগ্য। কে সে, তার আগের পরিচয় কী — কিছুই বিচার্য নয়। শুধু "গাড়ি চালাতে পারে" এই একটা কাজ পারলেই সে ওই "ড্রাইভার" পদের জন্য উপযুক্ত।
+
+মজাটা হলো, ইবনে সিনার কাজটাও এতে সহজ হয়ে গেল। কোনদিন আল-খোয়ারিজমি অসুস্থ, তো ফাতিমা আল-ফিহরিকে ডেকে সেই একই ডেলিভারির গাড়িতে বসিয়ে দিলেই চলে। ইবনে সিনাকে নতুন করে কিছু শেখাতে হয় না, কারণ যে-ই আসুক, সে তো "চালাতে পারা" শর্তটা আগে থেকেই পূরণ করে। গাড়ি একই, রাস্তা একই, শুধু চালকের চেয়ারে বসা মানুষটা বদলে যায় — আর কাজ ঠিক আগের মতোই চলতে থাকে।
+
+এটাই আসলে Go-র **interface**। "গাড়ি চালাতে পারা" শর্তটাই হলো একটা interface — একটা behaviour contract, যা বলে দেয় কোন কাজটা (method) করতে জানতে হবে। আল-খোয়ারিজমি, ফাতিমা আল-ফিহরি বা ইবনে সিনা হলো আলাদা আলাদা concrete type; তাদের কেউ নিজেকে "আমি ড্রাইভার" বলে ঘোষণা দেয় না, বরং কাজটা করতে **পারলেই** তারা আপনাআপনি interface-টা implement করে ফেলে — পরিচয় দিয়ে নয়, সামর্থ্য দিয়ে বিচার। আর একজনের জায়গায় আরেকজনকে বসিয়ে দিয়েও একই কাজ চালিয়ে নেওয়াটাই **polymorphism**। বাস্তবে এভাবেই আমরা `PaymentProcessor`-এর জায়গায় Stripe, PayPal বা একটা mock — যে-ই "charge করতে পারে" — বসিয়ে দিই, বাকি কোড এক লাইনও না বদলে।
+
+## Go Interface-কে আলাদা করে কী
+
+Java-তে আপনি লেখেন `class Dog implements Animal`। Go-তে কোনো `implements` keyword নেই। একটা type **automatically** একটা interface পূরণ করে যদি তার সঠিক method থাকে। একে বলে **structural typing** (অথবা compile time-এ duck typing)।
 
 ```go
 // Define an interface
@@ -36,15 +44,15 @@ var w Writer = &FileWriter{path: "/tmp/log.txt"}
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Go interfaces are like electrical outlets. A device doesn't need to register itself as "outlet-compatible." If its plug has the right shape (methods), it fits. An American plug fits American outlets. A USB-C cable fits any USB-C port. No paperwork required.
+Go interface অনেকটা বৈদ্যুতিক আউটলেটের মতো। একটা ডিভাইসকে নিজেকে "outlet-compatible" হিসেবে register করতে হয় না। যদি এর প্লাগের সঠিক আকার থাকে (method), তাহলে এটা লেগে যায়। একটা American প্লাগ American আউটলেটে লাগে। একটা USB-C ক্যাবল যেকোনো USB-C পোর্টে লাগে। কোনো কাগজপত্র লাগে না।
 
 </Callout>
 
-## The Power of Small Interfaces
+## ছোট Interface-এর শক্তি
 
-Go's standard library uses tiny interfaces — often just one method. This makes them incredibly composable:
+Go-র standard library ছোট ছোট interface ব্যবহার করে — প্রায়ই কেবল একটা method। এটা এগুলোকে অবিশ্বাস্যভাবে composable করে তোলে:
 
 ```go
 // io.Reader — anything you can read from
@@ -75,17 +83,17 @@ type ReadWriteCloser interface {
 }
 ```
 
-These interfaces are satisfied by files, network connections, HTTP request bodies, buffers, compressed streams, and hundreds of other types — all without knowing about each other.
+এই interface-গুলো file, network connection, HTTP request body, buffer, compressed stream, আর আরও শত শত type দিয়ে পূরণ হয় — সবগুলো একে অপরের ব্যাপারে না জেনেই।
 
 <Callout type="tip">
 
-**Go proverb: "The bigger the interface, the weaker the abstraction."**
+**Go প্রবাদ: "Interface যত বড়, abstraction তত দুর্বল।"**
 
-An interface with 10 methods is hard to implement and hard to mock. An interface with 1 method is easy to implement, test, and compose. Accept the smallest interface that does the job.
+10 method-এর একটা interface implement করা কঠিন আর mock করা কঠিন। 1 method-এর একটা interface implement, test, আর compose করা সহজ। কাজটা যতটুকু করে তার সবচেয়ে ছোট interface গ্রহণ করুন।
 
 </Callout>
 
-## Real-World Interface: Payment Processing
+## বাস্তব জীবনের Interface: Payment Processing
 
 ```go
 // Small, focused interface
@@ -144,9 +152,9 @@ func (s *OrderService) PlaceOrder(ctx context.Context, order Order) error {
 }
 ```
 
-## The Empty Interface and `any`
+## Empty Interface এবং `any`
 
-`interface{}` (or its alias `any` since Go 1.18) accepts any type:
+`interface{}` (অথবা Go 1.18 থেকে এর alias `any`) যেকোনো type গ্রহণ করে:
 
 ```go
 func printAnything(v any) {
@@ -160,13 +168,13 @@ printAnything(true)      // Type: bool, Value: true
 
 <Callout type="warning">
 
-**Avoid `any` in your own APIs.** It throws away type safety. Use it only when you genuinely need to accept any type (like `json.Unmarshal`, `fmt.Println`). If you know the possible types, use generics or a type switch instead.
+**আপনার নিজের API-তে `any` এড়িয়ে চলুন।** এটা type safety ছুড়ে ফেলে দেয়। শুধু তখনই ব্যবহার করুন যখন আপনার সত্যিই যেকোনো type গ্রহণ করা দরকার (যেমন `json.Unmarshal`, `fmt.Println`)। সম্ভাব্য type-গুলো জানা থাকলে, এর বদলে generics বা একটা type switch ব্যবহার করুন।
 
 </Callout>
 
-## Type Assertions and Type Switches
+## Type Assertion এবং Type Switch
 
-When you have an interface value, you can extract the concrete type:
+আপনার কাছে একটা interface value থাকলে, আপনি concrete type বের করতে পারেন:
 
 ```go
 // Type assertion — "I believe this Writer is actually a *FileWriter"
@@ -194,9 +202,9 @@ func describe(v any) string {
 }
 ```
 
-## Interface Composition Pattern
+## Interface Composition প্যাটার্ন
 
-Build complex behavior from small, composable interfaces:
+ছোট, composable interface থেকে জটিল আচরণ তৈরি করুন:
 
 ```go
 // Small, focused interfaces
@@ -230,15 +238,15 @@ type AdminHandler struct {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-This is like access cards in an office. A regular employee card opens the front door and break room (Reader). A manager card also opens the supply closet and server room (Writer). The CTO card opens everything (Repository). You give each person the minimum access they need.
+এটা অনেকটা অফিসের access card-এর মতো। একজন সাধারণ কর্মচারীর কার্ড সদর দরজা আর break room খোলে (Reader)। একজন ম্যানেজারের কার্ড supply closet আর server room-ও খোলে (Writer)। CTO-র কার্ড সবকিছু খোলে (Repository)। আপনি প্রত্যেককে ঠিক ততটুকু access দেন যতটুকু তার দরকার।
 
 </Callout>
 
-## Accept Interfaces, Return Structs
+## Interface গ্রহণ করুন, Struct Return করুন
 
-This is the most important Go design rule for production code:
+Production কোডের জন্য এটাই সবচেয়ে গুরুত্বপূর্ণ Go ডিজাইন নিয়ম:
 
 ```go
 // GOOD: Accept interface — callers have flexibility
@@ -264,9 +272,9 @@ func NewUserService(db *sql.DB) UserServiceInterface {
 }
 ```
 
-## Testing with Interfaces
+## Interface দিয়ে Testing
 
-Interfaces make testing trivial — swap the real implementation with a mock:
+Interface testing-কে খুব সহজ করে দেয় — আসল implementation-কে একটা mock দিয়ে বদলে দিন:
 
 ```go
 // In production: real Stripe processor
@@ -301,9 +309,9 @@ func TestPlaceOrder(t *testing.T) {
 }
 ```
 
-## Nil Interface Gotcha
+## Nil Interface-এর ফাঁদ
 
-The most common interface pitfall in Go:
+Go-তে সবচেয়ে সাধারণ interface গোলযোগ:
 
 ```go
 type MyError struct {
@@ -340,15 +348,15 @@ func doWork() error {
 
 <Callout type="warning">
 
-**An interface in Go is a (type, value) pair.** It's only `nil` when BOTH are nil. If you assign a nil pointer of a specific type, the interface has a type but no value — it's NOT nil. Always return bare `nil` for "no error."
+**Go-তে একটা interface হলো একটা (type, value) জোড়া।** এটা কেবল তখনই `nil` যখন দুটোই nil। আপনি যদি একটা নির্দিষ্ট type-এর nil pointer assign করেন, তাহলে interface-এর একটা type আছে কিন্তু কোনো value নেই — এটা nil নয়। "কোনো error নেই"-এর জন্য সবসময় খালি `nil` return করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Interfaces are implicit** — no `implements` keyword. If the methods match, the type satisfies the interface
-2. **Keep interfaces small** — 1-3 methods. Compose them for larger contracts
-3. **Accept interfaces, return structs** — this maximizes flexibility for callers and clarity for implementers
-4. **Define interfaces where they're used**, not where they're implemented — the consumer knows what it needs
-5. **Interfaces enable testing** — swap real implementations for mocks without changing business logic
-6. **Watch for nil interfaces** — a nil pointer in an interface is NOT a nil interface
+1. **Interface implicit** — কোনো `implements` keyword নেই। method মিললে, type interface পূরণ করে
+2. **Interface ছোট রাখুন** — 1-3 method। বড় চুক্তির জন্য এগুলো compose করুন
+3. **Interface গ্রহণ করুন, struct return করুন** — এটা caller-দের জন্য flexibility আর implementer-দের জন্য স্পষ্টতা সর্বোচ্চ করে
+4. **Interface যেখানে ব্যবহার হয় সেখানে সংজ্ঞায়িত করুন**, যেখানে implement হয় সেখানে নয় — consumer জানে তার কী দরকার
+5. **Interface testing সম্ভব করে** — business logic না বদলেই আসল implementation-কে mock দিয়ে বদলান
+6. **Nil interface-এর ব্যাপারে সাবধান** — একটা interface-এ থাকা nil pointer কোনো nil interface নয়

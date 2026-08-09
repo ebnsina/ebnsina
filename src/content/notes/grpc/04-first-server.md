@@ -1,9 +1,9 @@
 ---
-title: 'Your first server and client'
-subtitle: 'End-to-end Go gRPC in one chapter — proto, codegen, server, client, reflection, grpcurl. By the end you have a real binary you could deploy.'
+title: 'আপনার প্রথম server আর client'
+subtitle: 'এক অধ্যায়ে end-to-end Go gRPC — proto, codegen, server, client, reflection, grpcurl। শেষে আপনার হাতে একটা সত্যিকারের binary থাকবে যা আপনি deploy করতে পারবেন।'
 chapter: 4
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['grpc', 'go', 'protoc', 'codegen', 'reflection']
 ---
 
@@ -11,34 +11,42 @@ topics: ['grpc', 'go', 'protoc', 'codegen', 'reflection']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Theory off. Code on.
+থিওরি অফ। কোড অন।
 
-This chapter ships a working gRPC service. Real Go binary, real protoc invocation, real client-server roundtrip on `localhost`. By the end you can `grpcurl` it and read the response.
+এই অধ্যায় একটা চালু gRPC service ship করে। সত্যিকারের Go binary, সত্যিকারের protoc invocation, `localhost`-এ সত্যিকারের client-server roundtrip। শেষে আপনি এটাকে `grpcurl` করতে পারবেন আর response পড়তে পারবেন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Setting up your first gRPC server is like plugging in a phone — the hardware is there, you just need to connect the wires correctly.
+আপনার প্রথম gRPC server সেট আপ করা একটা ফোন প্লাগ-ইন করার মতো — hardware তো আছেই, আপনাকে শুধু তারগুলো ঠিকভাবে জুড়তে হবে।
 
 </Callout>
 
-## What you need
+## গল্পে বুঝি
 
-- Go 1.22+ — `go version`.
-- `protoc` — `apt install protobuf-compiler` (Debian/Ubuntu), `brew install protobuf` (Mac). Verify `protoc --version` ≥ 25.
-- The Go plugins for protoc:
+ফাতিমা আল-ফিহরির রেস্তোরাঁয় রান্নাঘর আর ওয়েটার স্টেশনের মাঝখানে একটা দেয়াল। শুরুতে দুই পক্ষ বসে একটা কাগজে ঠিক করল — কোন কোন পদ অর্ডার করা যাবে, প্রতিটা পদের জন্য কী কী জানাতে হবে (টেবিল নম্বর, পরিমাণ), আর জবাবে কী ফেরত আসবে (কোন প্লেট, কী গার্নিশ)। এই লিখিত চুক্তিটাই সব — এর বাইরের কিছু চলবে না। এরপর আল-খোয়ারিজমি নামের ছুতোর সেই কাগজ ধরে দুই দেয়ালে দুটো মিলে-যাওয়া অর্ডার জানালা কেটে বসাল: রান্নাঘরের দিকেরটা অর্ডার নেওয়ার জন্য, ওয়েটারের দিকেরটা অর্ডার পাঠানোর জন্য — একই মাপ, একই খোপ।
+
+জানালা তো বসল, কিন্তু জানালার পেছনে কেউ না থাকলে তো কিছু রান্না হবে না। তাই রান্নাঘরের লোকজন জানালায় দাঁড়িয়ে প্রতিটা অর্ডার সত্যিই কেটেকুটে রান্না করে প্লেট সাজিয়ে দেয়। ফলে ইবনে সিনা যখন ওয়েটার স্টেশন থেকে জানালায় ঝুঁকে "টেবিল তিন, দুটো কাবাব" বলে হাঁক দেয়, কিছুক্ষণ পর সাজানো প্লেট হাতে চলে আসে — যেন রান্নাঘরটা তার পাশেই দাঁড়িয়ে, অথচ সে দেয়ালের ওপারে কী হচ্ছে কিছুই জানে না।
+
+এই গল্পটাই আসলে **প্রথম gRPC server আর client বানানো**। লিখিত মেনু-চুক্তিটা হলো `.proto`-এর **service definition** — কোন কোন method আছে আর প্রতিটার request/response কেমন। ছুতোরের দুই দেয়ালে মিলে-যাওয়া জানালা কেটে বসানোটা হলো **code generation** — একই `.proto` থেকে `protoc` server আর client দুই দিকের কোড বের করে দেয়। রান্নাঘরের লোক জানালায় দাঁড়িয়ে সত্যিই রান্না করাটা হলো **server-এ method implementation** (আমাদের `GetUser`, `CreateUser`)। আর ইবনে সিনার হাঁক দিয়ে প্লেট পাওয়াটা হলো **client-এর remote method call** — `client.GetUser(...)` লেখাটা দেখতে সাধারণ Go function কলের মতো, অথচ ভেতরে দেয়ালের ওপারে অন্য process-এ কাজটা হচ্ছে। বাস্তবেও ঠিক এভাবেই microservice-গুলো একে অন্যের সঙ্গে কথা বলে — আগে `.proto` চুক্তি, তারপর দুই পাশের generated stub, তারপর remote call যেন local।
+
+## যা যা লাগবে
+
+- Go 1.22+ — `go version`।
+- `protoc` — `apt install protobuf-compiler` (Debian/Ubuntu), `brew install protobuf` (Mac)। `protoc --version` ≥ 25 যাচাই করুন।
+- protoc-এর Go plugin-গুলো:
 
 ```bash
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
-Make sure `$(go env GOPATH)/bin` is in `$PATH`. Test with `which protoc-gen-go`.
+নিশ্চিত করুন `$(go env GOPATH)/bin` আপনার `$PATH`-এ আছে। `which protoc-gen-go` দিয়ে টেস্ট করুন।
 
-- `grpcurl` — `brew install grpcurl` (Mac) or `go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest`.
+- `grpcurl` — `brew install grpcurl` (Mac) বা `go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest`।
 
-## The project layout
+## প্রজেক্ট layout
 
 ```
 mygrpc/
@@ -62,7 +70,7 @@ go get google.golang.org/grpc
 go get google.golang.org/protobuf
 ```
 
-## The proto
+## proto ফাইলটা
 
 ```proto
 // proto/user/v1/user.proto
@@ -90,9 +98,9 @@ message ListUsersRequest  { int32 limit = 1; }
 message ListUsersResponse { repeated User users = 1; }
 ```
 
-## Generating the Go code
+## Go কোড generate করা
 
-From the project root:
+প্রজেক্ট root থেকে:
 
 ```bash
 protoc \
@@ -102,9 +110,9 @@ protoc \
   proto/user/v1/user.proto
 ```
 
-This emits `gen/user/v1/user.pb.go` (the message types) and `gen/user/v1/user_grpc.pb.go` (the service interfaces).
+এটা `gen/user/v1/user.pb.go` (message type-গুলো) আর `gen/user/v1/user_grpc.pb.go` (service interface-গুলো) বের করে।
 
-You will run this often. Wrap it in a `Makefile`:
+আপনি এটা প্রায়ই চালাবেন। একটা `Makefile`-এ মুড়ে রাখুন:
 
 ```makefile
 .PHONY: gen
@@ -115,15 +123,15 @@ gen:
 	  proto/user/v1/user.proto
 ```
 
-Then `make gen` whenever you touch the `.proto`.
+তারপর যখনই আপনি `.proto` ধরবেন, `make gen`।
 
 <Callout type="tip">
 
-**For real projects, use `buf` instead of raw protoc.** It is faster, lints, and detects breaking changes. Chapter 2 introduced it. The raw `protoc` invocation is here so you see what is actually happening — `buf` is the convenience wrapper.
+**সত্যিকারের প্রজেক্টের জন্য raw protoc-এর বদলে `buf` ব্যবহার করুন।** এটা দ্রুততর, lint করে, আর breaking change ধরে ফেলে। অধ্যায় 2-এ এটা পরিচয় করানো হয়েছে। raw `protoc` invocation-টা এখানে আছে যাতে আপনি দেখতে পান আসলে কী ঘটছে — `buf` হলো সুবিধার wrapper।
 
 </Callout>
 
-## The server implementation
+## Server implementation
 
 ```go
 // internal/userserver/server.go
@@ -193,13 +201,13 @@ func (s *Server) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.L
 }
 ```
 
-Two things worth flagging.
+দুটো জিনিস উল্লেখ করার মতো।
 
-**1. `pb.UnimplementedUserServiceServer`.** Every service definition gets an embeddable struct that returns "not implemented" for every method. Embed it. When you regenerate from a `.proto` with new RPCs, your code still compiles — old code returns "not implemented" for new methods until you implement them. Without embedding, every regen breaks the build.
+**1. `pb.UnimplementedUserServiceServer`।** প্রতিটা service definition একটা embeddable struct পায় যেটা প্রতিটা method-এর জন্য "not implemented" return করে। এটা embed করুন। যখন আপনি নতুন RPC সহ একটা `.proto` থেকে regenerate করবেন, আপনার কোড তখনও compile হবে — পুরনো কোড নতুন method-গুলোর জন্য "not implemented" return করবে যতক্ষণ না আপনি সেগুলো implement করছেন। embed না করলে প্রতিটা regen build ভেঙে দেয়।
 
-**2. `status.Error(codes.NotFound, ...)`.** Returning a plain Go error works but loses the gRPC status code. The wrapper attaches the code so clients can branch on it. Chapter 7 has the full status code map.
+**2. `status.Error(codes.NotFound, ...)`।** একটা plain Go error return করলে কাজ হয় কিন্তু gRPC status code হারিয়ে যায়। wrapper-টা code-টা যুক্ত করে দেয় যাতে client সেটার ওপর branch করতে পারে। পুরো status code map অধ্যায় 7-এ আছে।
 
-## The server entrypoint
+## Server entrypoint
 
 ```go
 // cmd/server/main.go
@@ -240,9 +248,9 @@ go run ./cmd/server
 # grpc serving on :9000
 ```
 
-## Talking to it with grpcurl
+## grpcurl দিয়ে এর সঙ্গে কথা বলা
 
-In another terminal:
+আরেকটা terminal-এ:
 
 ```bash
 grpcurl -plaintext localhost:9000 list
@@ -266,9 +274,9 @@ grpcurl -plaintext -d '{"name": "Ruqayya", "email": "ruqayya@example.com"}' \
 # { "id": "3", "name": "Ruqayya", "email": "ruqayya@example.com" }
 ```
 
-The `-plaintext` flag is because we are not running TLS yet (chapter 9). The discovery worked because `reflection.Register(s)` was called in main.
+`-plaintext` flag-টা এই কারণে যে আমরা এখনও TLS চালাচ্ছি না (অধ্যায় 9)। discovery কাজ করল কারণ main-এ `reflection.Register(s)` কল করা হয়েছিল।
 
-## A real client
+## একটা সত্যিকারের client
 
 ```go
 // cmd/client/main.go
@@ -329,21 +337,21 @@ go run ./cmd/client
 # listed 3 users
 ```
 
-That is end-to-end gRPC. A `.proto` defined the contract, `protoc` generated the Go code, the server implemented the interface, the client called methods that look like ordinary Go.
+এটাই end-to-end gRPC। একটা `.proto` contract সংজ্ঞায়িত করল, `protoc` Go কোড generate করল, server interface-টা implement করল, client এমন method কল করল যেগুলো সাধারণ Go-এর মতো দেখায়।
 
-## The shape of `*Server` and why it is generated
+## `*Server`-এর আকৃতি আর কেন এটা generated
 
-`pb.NewUserServiceClient(conn)` returns a struct generated from the proto. Its methods wrap the wire calls. Every method takes `(ctx, request, ...grpc.CallOption)` and returns `(response, error)`. That signature is the API surface for every gRPC client in every language.
+`pb.NewUserServiceClient(conn)` proto থেকে generate হওয়া একটা struct return করে। এর method-গুলো wire কলকে মুড়ে রাখে। প্রতিটা method `(ctx, request, ...grpc.CallOption)` নেয় আর `(response, error)` return করে। ওই signature-টা প্রতিটা ভাষায় প্রতিটা gRPC client-এর API surface।
 
-`pb.RegisterUserServiceServer(s, impl)` wires your `*Server` (which satisfies the generated interface) into the gRPC server's dispatch table. New `.proto` methods → regen → the interface gains new methods → your `UnimplementedUserServiceServer` embed satisfies them with `not implemented` until you implement them properly.
+`pb.RegisterUserServiceServer(s, impl)` আপনার `*Server`-কে (যেটা generated interface satisfy করে) gRPC server-এর dispatch table-এ যুক্ত করে। নতুন `.proto` method → regen → interface নতুন method পায় → আপনার `UnimplementedUserServiceServer` embed সেগুলোকে `not implemented` দিয়ে satisfy করে যতক্ষণ না আপনি ঠিকভাবে implement করছেন।
 
-This is the rhythm: edit `.proto` → `make gen` → write or update method implementations → rebuild.
+এটাই ছন্দ: `.proto` edit করুন → `make gen` → method implementation লিখুন বা আপডেট করুন → rebuild।
 
-## Reflection — friend in dev, often disabled in prod
+## Reflection — dev-এ বন্ধু, prod-এ প্রায়ই বন্ধ
 
-`reflection.Register(s)` exposes a special service that lets clients discover the schema at runtime. Convenient for development; arguably leaks information in production.
+`reflection.Register(s)` একটা বিশেষ service প্রকাশ করে যা client-দের runtime-এ schema আবিষ্কার করতে দেয়। development-এর জন্য সুবিধাজনক; প্রোডাকশনে যুক্তিসঙ্গতভাবে তথ্য ফাঁস করে।
 
-A common pattern: gate it behind an env var.
+একটা সাধারণ প্যাটার্ন: এটাকে একটা env var-এর পেছনে gate করুন।
 
 ```go
 if os.Getenv("ENABLE_REFLECTION") == "1" {
@@ -351,11 +359,11 @@ if os.Getenv("ENABLE_REFLECTION") == "1" {
 }
 ```
 
-Or only enable it for internal services. For public services where the proto is also published, leave it on — there is nothing to hide.
+অথবা কেবল internal service-এর জন্য enable করুন। যেসব public service-এ proto-ও প্রকাশিত, সেগুলোতে এটা চালু রাখুন — লুকানোর কিছু নেই।
 
-## Connection reuse — the most important client habit
+## Connection reuse — সবচেয়ে গুরুত্বপূর্ণ client অভ্যাস
 
-`pb.NewUserServiceClient(conn)` is cheap. `grpc.NewClient(...)` is expensive (it sets up the TCP/TLS/HTTP/2 connection). The mistake is creating a fresh `conn` per call:
+`pb.NewUserServiceClient(conn)` সস্তা। `grpc.NewClient(...)` খরচবহুল (এটা TCP/TLS/HTTP/2 connection সেট আপ করে)। ভুলটা হলো প্রতি কলে একটা নতুন `conn` বানানো:
 
 ```go
 // WRONG — defeats multiplexing, makes a new TCP+TLS handshake every call
@@ -366,7 +374,7 @@ func GetUser(id int64) (*pb.User, error) {
 }
 ```
 
-Hold the connection at app scope:
+connection-টা app scope-এ ধরে রাখুন:
 
 ```go
 var userClient pb.UserServiceClient
@@ -377,27 +385,27 @@ func init() {
 }
 ```
 
-One conn per backend, lifetime of the process. Multiplexing handles concurrency (chapter 3).
+প্রতি backend-এ একটা conn, process-এর আয়ুষ্কালজুড়ে। concurrency multiplexing সামলায় (অধ্যায় 3)।
 
-## Building a static binary
+## একটা static binary বানানো
 
-Unlike Node or Python, Go ships a single static binary:
+Node বা Python-এর মতো নয়, Go একটা single static binary ship করে:
 
 ```bash
 CGO_ENABLED=0 go build -o bin/server ./cmd/server
 ldd bin/server  # not a dynamic executable
 ```
 
-Copy `bin/server` to a VPS, write a systemd unit, done. No runtime to install.
+`bin/server` একটা VPS-এ কপি করুন, একটা systemd unit লিখুন, হয়ে গেল। install করার মতো কোনো runtime নেই।
 
-## Recap
+## রিক্যাপ
 
-- Project layout: `proto/` for `.proto`, `gen/` for generated code, `cmd/` for binaries, `internal/` for impl.
-- `protoc-gen-go` and `protoc-gen-go-grpc` emit `*.pb.go` and `*_grpc.pb.go`.
-- Embed `pb.UnimplementedXxxServer` in your impl so regens do not break compile.
-- Return errors as `status.Error(codes.X, msg)` so clients see proper status codes.
-- `reflection.Register(s)` enables `grpcurl list` and dynamic dispatch.
-- One `grpc.NewClient` per backend, lifetime of the process. Reuse the connection.
-- Builds a static binary with `CGO_ENABLED=0 go build`.
+- প্রজেক্ট layout: `.proto`-এর জন্য `proto/`, generated কোডের জন্য `gen/`, binary-র জন্য `cmd/`, impl-এর জন্য `internal/`।
+- `protoc-gen-go` আর `protoc-gen-go-grpc` `*.pb.go` আর `*_grpc.pb.go` বের করে।
+- আপনার impl-এ `pb.UnimplementedXxxServer` embed করুন যাতে regen compile না ভাঙে।
+- error-গুলো `status.Error(codes.X, msg)` হিসেবে return করুন যাতে client ঠিকঠাক status code দেখে।
+- `reflection.Register(s)` `grpcurl list` আর dynamic dispatch enable করে।
+- প্রতি backend-এ একটা `grpc.NewClient`, process-এর আয়ুষ্কালজুড়ে। connection reuse করুন।
+- `CGO_ENABLED=0 go build` দিয়ে একটা static binary বানায়।
 
-Next: [Polyglot — Node and Python clients](/notes/grpc/05-polyglot) — same `.proto`, three languages, all talking to the same server.
+পরবর্তী: [Polyglot — Node আর Python client](/notes/grpc/05-polyglot) — একই `.proto`, তিন ভাষা, সবাই একই server-এর সঙ্গে কথা বলছে।

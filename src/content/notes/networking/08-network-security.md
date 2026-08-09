@@ -1,9 +1,9 @@
 ---
 title: 'Network Security'
-subtitle: 'CORS, CSP, MITM attacks, firewalls — practical security at the network layer that every developer should understand.'
+subtitle: 'CORS, CSP, MITM attack, firewall — network layer-এ প্র্যাকটিক্যাল সিকিউরিটি যা প্রতিটি ডেভেলপারের বোঝা উচিত।'
 chapter: 8
 level: 'advanced'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['CORS', 'CSP', 'firewall', 'MITM', 'security headers']
 ---
 
@@ -11,19 +11,27 @@ topics: ['CORS', 'CSP', 'firewall', 'MITM', 'security headers']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা থাকে একটা গেটেড আবাসিক এলাকায়। পুরো এলাকা ঘিরে উঁচু একটা বাউন্ডারি ওয়াল, ভেতরে ঢোকা-বেরোনোর একটাই গেট। সেই গেটে একজন দারোয়ান বসে থাকে — কে ঢুকতে পারবে, কে বেরোতে পারবে, কোন গাড়ি ভেতরে যাবে, সব সে নিয়ম মিলিয়ে যাচাই করে। বাইরের অচেনা কেউ এলে লিস্টে নাম না থাকলে তাকে ফিরিয়ে দেয়। আবার এলাকার ভেতরটাও পুরো খোলা নয় — আলাদা আলাদা ব্লক, প্রতিটার নিজের তালা দেওয়া গেট, একটা ব্লকের চাবি দিয়ে পাশের ব্লকে ঢোকা যায় না।
+
+আল-খোয়ারিজমিকে একদিন শহরের একটা বিপজ্জনক এলাকা পার হয়ে অফিসে যেতে হয়। কমিউনিটি তাকে একটা ঢাকা, সিল করা প্রাইভেট ভ্যানে তুলে দেয় — বাইরের কেউ দেখতেও পায় না ভেতরে কে বসে আছে, ছিনতাইকারীও বুঝতে পারে না গাড়িতে কী যাচ্ছে। এদিকে পুরো এলাকা জুড়ে CCTV আর ফাতিমা আল-ফিহরি নামের এক সতর্ক নাইট-গার্ড আছে — কেউ সন্দেহজনকভাবে দেয়াল টপকাতে গেলে বা অচেনা কেউ ঘোরাঘুরি করলে সে সাথে সাথে টের পায় আর তাকে থামায়।
+
+এই গল্পটাই আসলে **network security**। গেটে দারোয়ানের নিয়ম মিলিয়ে ঢোকা-বেরোনো যাচাই করাটা হলো **firewall** — সীমানায় বসে ট্রাফিক filter করা। আল-খোয়ারিজমির ঢাকা সিল করা ভ্যানটা হলো **VPN encrypted tunnel** — বিপজ্জনক নেটওয়ার্ক পেরিয়েও ভেতরের ডেটা কেউ দেখতে পায় না। CCTV আর ফাতিমা আল-ফিহরির সতর্ক নজর হলো **IDS/IPS** — সন্দেহজনক নড়াচড়া detect করা (IDS) আর সেটা থামিয়ে দেওয়া (IPS)। আর আলাদা তালা দেওয়া ব্লকগুলো হলো **network segmentation** — এক ব্লকে সিঁধ কাটলেও পুরো এলাকা খুলে যায় না। বাস্তবে ঠিক এভাবেই একটা কোম্পানি firewall, VPN, IDS/IPS আর segmentation একসাথে সাজিয়ে defense-in-depth বানায় — কোনো একটা লেয়ার ফাঁকি দিলেও বাকিগুলো ধরে ফেলে।
+
 ## CORS — Cross-Origin Resource Sharing
 
-CORS is the browser's way of asking: "Is this frontend allowed to call this API?"
+CORS হলো ব্রাউজারের জিজ্ঞেস করার উপায়: "এই frontend-টা কি এই API কল করার অনুমতি পেয়েছে?"
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like the security layers at an airport — firewall (entrance gate check), packet inspection (baggage scanner), authentication (passport control), and encryption (sealed diplomatic pouches). Multiple layers of defense.
+অনেকটা এয়ারপোর্টের সিকিউরিটি লেয়ারগুলোর মতো — firewall (প্রবেশ গেটে চেক), packet inspection (ব্যাগেজ স্ক্যানার), authentication (পাসপোর্ট কন্ট্রোল), এবং encryption (সিল করা কূটনৈতিক থলে)। ডিফেন্সের একাধিক লেয়ার।
 
 </Callout>
 
-When `app.example.com` makes a request to `api.example.com`, the browser sends a **preflight** request:
+যখন `app.example.com` থেকে `api.example.com`-এ একটা request যায়, ব্রাউজার একটা **preflight** request পাঠায়:
 
 ```typescript
 // Browser sends preflight (automatically):
@@ -54,7 +62,7 @@ app.use(
 
 <Callout type="warning">
 
-**Never use `Access-Control-Allow-Origin: *` with `credentials: true`**. This lets any website make authenticated requests to your API. Always whitelist specific origins.
+**`credentials: true`-এর সাথে কখনো `Access-Control-Allow-Origin: *` ব্যবহার করবেন না**। এটা যেকোনো ওয়েবসাইটকে আপনার API-তে authenticated request পাঠানোর সুযোগ দেয়। সবসময় নির্দিষ্ট origin whitelist করুন।
 
 </Callout>
 
@@ -92,7 +100,7 @@ const securityHeaders = {
 
 ## Content Security Policy (CSP)
 
-CSP tells the browser exactly what resources your page is allowed to load. This prevents XSS attacks — even if an attacker injects a script tag, the browser won't execute it.
+CSP ব্রাউজারকে ঠিক ঠিক বলে দেয় আপনার page কোন কোন resource লোড করার অনুমতি পেয়েছে। এটা XSS attack ঠেকায় — attacker যদি একটা script tag inject-ও করে ফেলে, ব্রাউজার সেটা execute করবে না।
 
 ```typescript
 // Without CSP: injected <script> runs freely
@@ -122,18 +130,18 @@ function generateCSP(): { header: string; nonce: string } {
 // Scripts without the matching nonce are blocked
 ```
 
-## Man-in-the-Middle (MITM) Attacks
+## Man-in-the-Middle (MITM) Attack
 
-An attacker positions themselves between client and server, intercepting or modifying traffic.
+Attacker নিজেকে client আর server-এর মাঝখানে বসিয়ে দেয়, ট্রাফিক intercept বা modify করে।
 
-**Defenses:**
+**ডিফেন্স:**
 
-- **TLS everywhere** — encrypted traffic can't be read or modified
-- **HSTS** — prevents SSL stripping (downgrading HTTPS to HTTP)
-- **Certificate pinning** — mobile apps verify the exact certificate, not just the chain
-- **DNSSEC** — prevents DNS spoofing that could redirect traffic
+- **সর্বত্র TLS** — encrypted ট্রাফিক পড়া বা modify করা যায় না
+- **HSTS** — SSL stripping (HTTPS-কে HTTP-তে ডাউনগ্রেড করা) ঠেকায়
+- **Certificate pinning** — mobile app শুধু chain নয়, ঠিক নির্দিষ্ট certificate-টাই verify করে
+- **DNSSEC** — DNS spoofing ঠেকায় যা ট্রাফিক redirect করে দিতে পারত
 
-## Rate Limiting at the Network Layer
+## Network Layer-এ Rate Limiting
 
 ```typescript
 // Simple token bucket rate limiter
@@ -169,14 +177,14 @@ const limiter = new RateLimiter(100, 60_000);
 
 <Callout type="info">
 
-**Defense in depth**: No single security measure is enough. Use TLS + security headers + CSP + rate limiting + input validation together. Each layer catches what the others miss.
+**Defense in depth**: কোনো একটামাত্র সিকিউরিটি ব্যবস্থা যথেষ্ট নয়। TLS + security headers + CSP + rate limiting + input validation একসাথে ব্যবহার করুন। প্রতিটা লেয়ার সেটাই ধরে যা বাকিগুলো মিস করে।
 
 </Callout>
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **CORS is a browser feature**, not a server security measure — APIs are still callable from non-browser clients
-2. **Security headers are cheap insurance** — add them to every response
-3. **CSP prevents XSS** even when your code has injection vulnerabilities
-4. **TLS + HSTS together** prevent MITM and SSL stripping
-5. **Rate limiting at the network layer** is your first line of defense against abuse
+1. **CORS একটা ব্রাউজার ফিচার**, server-এর সিকিউরিটি ব্যবস্থা নয় — API এখনো non-browser client থেকে কল করা যায়
+2. **Security headers হলো সস্তা বিমা** — প্রতিটা response-এ এগুলো যোগ করুন
+3. **CSP XSS ঠেকায়** — এমনকি আপনার কোডে injection দুর্বলতা থাকলেও
+4. **TLS + HSTS একসাথে** MITM আর SSL stripping ঠেকায়
+5. **Network layer-এ rate limiting** হলো অপব্যবহারের বিরুদ্ধে আপনার প্রথম প্রতিরক্ষা লাইন

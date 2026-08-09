@@ -1,9 +1,9 @@
 ---
 title: 'Change Data Capture'
-subtitle: 'Stream every database write as an event using Debezium and PostgreSQL logical replication — without touching application code.'
+subtitle: 'Debezium আর PostgreSQL logical replication দিয়ে প্রতিটি database write-কে event হিসেবে stream করুন — application code না ছুঁয়ে।'
 chapter: 3
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['CDC', 'Debezium', 'logical replication', 'outbox pattern', 'event streaming']
 ---
 
@@ -13,15 +13,23 @@ topics: ['CDC', 'Debezium', 'logical replication', 'outbox pattern', 'event stre
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A stenographer who records every spoken word in a courtroom: they don't interrupt proceedings or change what happens — they capture everything as it occurs and produce a complete record. CDC does the same for your database: it reads the transaction log and turns every INSERT, UPDATE, and DELETE into an event stream, without touching your application.
+একজন stenographer যিনি আদালতে বলা প্রতিটি শব্দ লিখে রাখেন: তিনি কার্যক্রমে বাধা দেন না বা কী ঘটছে তা পাল্টান না — যা ঘটছে সব হুবহু ধরে রাখেন আর একটা সম্পূর্ণ রেকর্ড তৈরি করেন। CDC আপনার database-এর জন্য ঠিক তা-ই করে: এটা transaction log পড়ে আর প্রতিটি INSERT, UPDATE ও DELETE-কে একটা event stream-এ পরিণত করে, আপনার application না ছুঁয়ে।
 
 </Callout>
 
-## What CDC Solves
+## গল্পে বুঝি
 
-Publishing events from application code has a fundamental problem:
+বাগদাদের বড় বাণিজ্য-দপ্তরে একটাই মাস্টার লেজার — শহরের সব লেনদেন, মজুদ আর হিসাব ওখানেই লেখা হয়। আগে যা হতো, স্টকরুম, নোটিশ বোর্ড আর হিসাব-অফিসের লোকজন সারাদিন পরপর দৌড়ে এসে মাস্টার লেজার উল্টে দেখত কিছু বদলাল কিনা — বেশিরভাগ সময় দেখত কিছুই বদলায়নি, স্রেফ খাটুনি বৃথা। তাই আল-খোয়ারিজমি একটা নতুন নিয়ম চালু করলেন: একজন নিবেদিত কেরানি সারাক্ষণ মাস্টার লেজারের পাশেই বসে থাকবে।
+
+সেই কেরানির কাজ একটাই — লেজারে যে মুহূর্তে কোনো নতুন এন্ট্রি লেখা হয়, কোনো লাইন বদলানো হয় বা কেটে দেওয়া হয়, ঠিক সেই মুহূর্তে সে একটা ছোট "পরিবর্তন-চিরকুট" লিখে ফেলে — হুবহু কী বদলাল সেটুকুই। তারপর সেই চিরকুটের কপি সে স্টকরুম, নোটিশ বোর্ড আর হিসাব-অফিসে পাঠিয়ে দেয়। এখন আর কাউকে দৌড়ে এসে লেজার উল্টাতে হয় না — চিরকুট এলেই প্রত্যেকে নিজের খাতা মাস্টার লেজারের সাথে হুবহু মিলিয়ে রাখে, একদম আপনা-আপনি।
+
+এই কেরানিই আসলে **Change Data Capture (CDC)**। মাস্টার লেজার হলো source database, আর কেরানির প্রতিটি write/change/strike-out পড়ে ফেলাটাই CDC-র database change log (**WAL**/**binlog**) পড়া। যে "পরিবর্তন-চিরকুট" সে পাঠায় সেটাই একটা **change event**, আর যে department-গুলো লেজার বারবার না উল্টেই তাল মিলিয়ে থাকে সেটাই cache, search index আর analytics-এর **polling** ছাড়াই **sync** থাকা। বাস্তবে **Debezium** ঠিক এই কেরানির ভূমিকাটাই পালন করে — PostgreSQL-এর WAL পড়ে প্রতিটি row-change কে Kafka-তে event হিসেবে stream করে দেয়।
+
+## CDC কী সমস্যা সমাধান করে
+
+Application code থেকে events publish করার একটা মৌলিক সমস্যা আছে:
 
 ```typescript
 // Typical approach — has a consistency problem
@@ -36,13 +44,13 @@ async function createOrder(data: OrderData): Promise<Order> {
 }
 ```
 
-The database write and the event publish are two separate operations. Between them, anything can fail — crash, network error, OOM. You end up with data that exists in the database but no event was published, or vice versa.
+Database write আর event publish দুটো আলাদা অপারেশন। এদের মাঝখানে যেকোনো কিছু fail করতে পারে — crash, network error, OOM। শেষমেশ আপনার হাতে থাকে এমন ডেটা যা database-এ আছে কিন্তু কোনো event publish হয়নি, বা উল্টোটা।
 
-CDC solves this by reading the database's own transaction log. If a write committed, the CDC system will eventually publish an event. The database is the source of truth for both.
+CDC এটা সমাধান করে database-এর নিজের transaction log পড়ে। একটা write যদি commit হয়, CDC সিস্টেম শেষ পর্যন্ত একটা event publish করবেই। দুটোর জন্যই database হলো source of truth।
 
-## How CDC Works
+## CDC কীভাবে কাজ করে
 
-PostgreSQL's logical replication decodes WAL into row-level changes. Debezium reads this stream and publishes changes to Kafka:
+PostgreSQL-এর logical replication WAL-কে row-level পরিবর্তনে decode করে। Debezium এই stream পড়ে আর পরিবর্তনগুলো Kafka-তে publish করে:
 
 ```
 Application → writes to PostgreSQL
@@ -52,11 +60,11 @@ Debezium    → publishes INSERT/UPDATE/DELETE events to Kafka
 Consumers   → read from Kafka
 ```
 
-No application code changes. Every committed write automatically becomes an event.
+কোনো application code পরিবর্তন নেই। প্রতিটি commit হওয়া write স্বয়ংক্রিয়ভাবে একটা event হয়ে যায়।
 
 ## Debezium Setup
 
-**Enable logical replication in PostgreSQL:**
+**PostgreSQL-এ logical replication চালু করুন:**
 
 ```ini
 # postgresql.conf
@@ -65,7 +73,7 @@ max_replication_slots = 4    # one slot per Debezium connector
 max_wal_senders = 4
 ```
 
-**Create a replication user:**
+**একটা replication user তৈরি করুন:**
 
 ```sql
 CREATE USER debezium WITH REPLICATION LOGIN PASSWORD 'debeziumpass';
@@ -100,7 +108,7 @@ GRANT USAGE ON SCHEMA public TO debezium;
 }
 ```
 
-**Deploy with Docker Compose:**
+**Docker Compose দিয়ে deploy করুন:**
 
 ```yaml
 services:
@@ -136,9 +144,9 @@ services:
 #   -d @connector-config.json
 ```
 
-## The Event Structure
+## Event Structure
 
-Debezium produces events in this shape:
+Debezium এই আকারে events তৈরি করে:
 
 ```json
 {
@@ -165,7 +173,7 @@ Debezium produces events in this shape:
 }
 ```
 
-Consumer maps this to domain events:
+Consumer এটাকে domain event-এ map করে:
 
 ```typescript
 interface DebeziumEvent {
@@ -201,9 +209,9 @@ function toOrderEvent(raw: DebeziumEvent): OrderEvent | null {
 }
 ```
 
-## The Outbox Pattern
+## Outbox Pattern
 
-An alternative to CDC when you want semantic events (not raw row changes) but still need atomicity. Write events to an `outbox` table in the same transaction as your business data. A separate process (or CDC) reads and publishes them.
+CDC-র একটা বিকল্প যখন আপনি semantic event চান (raw row change নয়) কিন্তু তখনও atomicity দরকার। আপনার business data-র একই transaction-এ একটা `outbox` table-এ events লিখুন। একটা আলাদা process (বা CDC) সেগুলো পড়ে ও publish করে।
 
 ```typescript
 // Application: writes order + outbox event atomically
@@ -242,7 +250,7 @@ CREATE TABLE outbox (
 CREATE INDEX ON outbox (created_at) WHERE published_at IS NULL;
 ```
 
-**Outbox publisher (polling approach):**
+**Outbox publisher (polling পদ্ধতি):**
 
 ```typescript
 async function publishOutboxEvents(): Promise<void> {
@@ -267,23 +275,23 @@ async function publishOutboxEvents(): Promise<void> {
 }
 ```
 
-Or use Debezium to capture outbox table changes and forward them to Kafka — the "transactional outbox with Debezium" pattern avoids the polling and gives you sub-second event delivery.
+অথবা Debezium ব্যবহার করে outbox table-এর পরিবর্তন capture করে সেগুলো Kafka-তে forward করুন — "transactional outbox with Debezium" প্যাটার্নটা polling এড়িয়ে যায় আর আপনাকে sub-second event delivery দেয়।
 
-## CDC vs Outbox: Choosing
+## CDC vs Outbox: বেছে নেওয়া
 
-|                     | Raw CDC                  | Outbox Pattern             |
-| ------------------- | ------------------------ | -------------------------- |
-| Application changes | None                     | Must write to outbox table |
-| Event semantics     | Raw row changes          | Domain events you control  |
-| Filtering           | In consumer              | In application code        |
-| Schema coupling     | Consumer knows DB schema | Consumer sees event schema |
-| Setup complexity    | Debezium + Kafka         | Simpler (just a table)     |
+|                     | Raw CDC                 | Outbox Pattern                  |
+| ------------------- | ----------------------- | ------------------------------- |
+| Application changes | নেই                     | Outbox table-এ লিখতেই হবে       |
+| Event semantics     | Raw row changes         | আপনার নিয়ন্ত্রণে domain events |
+| Filtering           | Consumer-এ              | Application code-এ              |
+| Schema coupling     | Consumer DB schema জানে | Consumer event schema দেখে      |
+| Setup complexity    | Debezium + Kafka        | সহজ (শুধু একটা table)           |
 
-**Use raw CDC when:** You don't control the application code, or you need to stream data to another system (data warehouse, search index) and raw row changes are fine.
+**Raw CDC ব্যবহার করুন যখন:** আপনি application code নিয়ন্ত্রণ করেন না, অথবা আপনাকে অন্য একটা সিস্টেমে (data warehouse, search index) ডেটা stream করতে হবে আর raw row change-ই যথেষ্ট।
 
-**Use outbox when:** You want to emit semantic domain events, control the schema, and have the application code you're changing.
+**Outbox ব্যবহার করুন যখন:** আপনি semantic domain event emit করতে চান, schema নিয়ন্ত্রণ করতে চান, আর যে application code পাল্টাচ্ছেন সেটা আপনার হাতে আছে।
 
-## Monitoring CDC Health
+## CDC Health মনিটর করা
 
 ```bash
 # Check Debezium connector status
@@ -302,11 +310,11 @@ FROM pg_replication_slots
 WHERE slot_name = 'debezium_slot';
 ```
 
-**Alert on:**
+**যেসবে alert দিন:**
 
-- Connector state not RUNNING
-- Replication slot lag growing (Debezium falling behind, WAL accumulating)
-- Consumer group lag on Kafka (consumers not keeping up)
-- DLQ messages growing (events failing to process)
+- Connector state RUNNING না থাকলে
+- Replication slot lag বেড়ে চললে (Debezium পিছিয়ে পড়ছে, WAL জমছে)
+- Kafka-তে consumer group lag (consumer তাল মেলাতে পারছে না)
+- DLQ message বেড়ে চললে (events process-এ fail করছে)
 
-Replication slots hold WAL indefinitely until consumed — if Debezium stops, your WAL grows without bound, potentially filling disk. Monitor slot lag and alert aggressively.
+Replication slot consume না হওয়া পর্যন্ত WAL অসীম সময় ধরে রাখে — Debezium থেমে গেলে আপনার WAL সীমাহীনভাবে বাড়তে থাকে, সম্ভবত disk ভরে ফেলে। Slot lag মনিটর করুন আর আক্রমণাত্মকভাবে alert দিন।

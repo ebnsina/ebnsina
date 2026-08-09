@@ -1,9 +1,9 @@
 ---
-title: 'Stacks & Queues'
-subtitle: 'LIFO and FIFO — two simple abstractions that power undo systems, BFS, task schedulers, and expression parsing.'
+title: 'Stacks ও Queues'
+subtitle: 'LIFO আর FIFO — দুটি সাধারণ abstraction যা undo সিস্টেম, BFS, task scheduler আর expression parsing চালায়।'
 chapter: 4
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['stack', 'queue', 'monotonic stack', 'BFS']
 ---
 
@@ -11,15 +11,23 @@ topics: ['stack', 'queue', 'monotonic stack', 'BFS']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির হোটেলের রান্নাঘর। ধোয়া প্লেটগুলো একটার উপর একটা করে সাজানো থাকে একটা লম্বা স্তূপে। বাবুর্চি ইবনে সিনা যখন খাবার বাড়তে যায়, সে সবসময় স্তূপের একদম উপরের প্লেটটাই তুলে নেয় — মানে যে প্লেটটা সবার শেষে ধুয়ে রাখা হয়েছিল, সেটাই আগে হাতে ওঠে। নিচের পুরনো প্লেটগুলো ততক্ষণ চাপা পড়ে থাকে যতক্ষণ না উপরেরগুলো সরে যায়। উপর থেকেই রাখা, উপর থেকেই তোলা।
+
+আবার হোটেলের সামনে খাবারের লাইন। ফাতিমা আল-ফিহরি সকাল সকাল এসে সবার আগে টোকেন নিয়েছে, তার পেছনে একে একে আরও অনেকে দাঁড়িয়েছে। আল-খোয়ারিজমি যখন প্লেট বাড়ায়, সে লাইনের সামনের জন থেকে শুরু করে — যে আগে এসেছে, সে আগে খাবার পায়। শেষে আসা লোকটাকে সবার শেষ পর্যন্ত অপেক্ষা করতেই হবে, কেউ লাইন টপকাতে পারবে না।
+
+এই দুটো ছবিই আসলে দুটো আলাদা data structure। প্লেটের স্তূপ হলো **stack** — শেষে যেটা রাখা হয়, সেটাই আগে ওঠে, একে বলে **LIFO** (last in, first out); প্লেট রাখা মানে `push`, তোলা মানে `pop`। আর সামনের লাইন হলো **queue** — আগে যে আসে, আগে সে যায়, একে বলে **FIFO** (first in, first out)। বাস্তবে editor-এ Ctrl+Z দিয়ে **undo** করা ঠিক এই stack-এর মতোই কাজ করে (শেষ কাজটাই আগে বাতিল হয়), আর printer-এর **print queue** বা task scheduler ঠিক এই লাইনের মতো — যে job আগে জমা পড়ে, সেটাই আগে চলে।
+
 ## Stacks — Last In, First Out
 
-A stack is like a stack of plates: you can only add or remove from the top. This simple constraint makes it perfect for tracking state that needs to be unwound — function calls, undo history, matching brackets.
+Stack অনেকটা প্লেটের স্তূপের মতো: আপনি শুধু উপর থেকেই কিছু যোগ বা সরাতে পারবেন। এই সহজ সীমাবদ্ধতাটাই এটিকে এমন state ট্র্যাক করার জন্য দারুণ বানিয়ে দেয় যেগুলোকে আবার গুটিয়ে আনতে হয় — function call, undo history, ব্র্যাকেট মেলানো।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-**Stack:** Like a stack of plates in a cafeteria — you always take from the top (LIFO). **Queue:** Like the line at a coffee shop — first come, first served (FIFO).
+**Stack:** ক্যাফেটেরিয়ায় প্লেটের স্তূপের মতো — আপনি সবসময় উপর থেকে নেন (LIFO)। **Queue:** কফি শপের লাইনের মতো — যে আগে আসে, সে আগে সেবা পায় (FIFO)।
 
 </Callout>
 
@@ -46,7 +54,7 @@ class Stack<T> {
 }
 ```
 
-### Valid Parentheses — The Classic Stack Problem
+### Valid Parentheses — ক্লাসিক Stack সমস্যা
 
 ```typescript
 function isValid(s: string): boolean {
@@ -70,7 +78,7 @@ function isValid(s: string): boolean {
 
 ### Monotonic Stack
 
-A stack where elements are always in sorted order. Useful for "next greater element" problems.
+এমন একটি stack যেখানে element গুলো সবসময় sorted order-এ থাকে। "next greater element" ধরনের সমস্যার জন্য কাজে লাগে।
 
 ```typescript
 // For each element, find the next greater element
@@ -92,7 +100,7 @@ function nextGreaterElement(nums: number[]): number[] {
 
 ## Queues — First In, First Out
 
-A queue is like a line at a store: first person in line gets served first. Queues are essential for BFS, task scheduling, and buffering.
+Queue অনেকটা দোকানের লাইনের মতো: লাইনের প্রথম ব্যক্তি আগে সেবা পায়। BFS, task scheduling আর buffering-এর জন্য queue অপরিহার্য।
 
 ```typescript
 // Queue using an array (simple but O(n) dequeue)
@@ -118,7 +126,7 @@ class Queue<T> {
 }
 ```
 
-### BFS with a Queue
+### Queue দিয়ে BFS
 
 ```typescript
 // Level-order traversal of a binary tree
@@ -145,16 +153,16 @@ function levelOrder(root: TreeNode | null): number[][] {
 
 <Callout type="info">
 
-**Real-world uses:**
+**বাস্তব জীবনের ব্যবহার:**
 
-- **Stacks**: function call stack, undo/redo, browser back button, expression evaluation
-- **Queues**: BFS, print spoolers, message queues (Redis, RabbitMQ), task schedulers
+- **Stacks**: function call stack, undo/redo, ব্রাউজারের back button, expression evaluation
+- **Queues**: BFS, print spooler, message queue (Redis, RabbitMQ), task scheduler
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Stacks** are for problems where you need to "unwind" — matching, backtracking, DFS
-2. **Queues** are for problems where order matters — BFS, scheduling, buffering
-3. **Monotonic stacks** turn O(n²) "next greater/smaller" problems into O(n)
-4. Both are building blocks — you'll use them inside other algorithms constantly
+1. **Stacks** এমন সমস্যার জন্য যেখানে আপনাকে "unwind" করতে হয় — matching, backtracking, DFS
+2. **Queues** এমন সমস্যার জন্য যেখানে order গুরুত্বপূর্ণ — BFS, scheduling, buffering
+3. **Monotonic stacks** O(n²) "next greater/smaller" সমস্যাগুলোকে O(n)-এ নামিয়ে আনে
+4. দুটোই building block — অন্য algorithm-এর ভেতরে এগুলো আপনি নিয়মিত ব্যবহার করবেন

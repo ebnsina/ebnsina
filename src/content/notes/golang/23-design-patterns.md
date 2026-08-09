@@ -1,9 +1,9 @@
 ---
-title: 'Design Patterns in Go'
-subtitle: "Go's simplicity changes how you apply classic patterns — no classes, no inheritance, just composition and interfaces."
+title: 'Go-তে Design Pattern'
+subtitle: 'Go-এর সরলতা classic pattern প্রয়োগের ধরন বদলে দেয় — কোনো class নেই, কোনো inheritance নেই, শুধু composition আর interface।'
 chapter: 23
 level: 'advanced'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics:
   [
     'design patterns',
@@ -19,21 +19,29 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Patterns Are Different in Go
+## গল্পে বুঝি
 
-Classic design patterns were written for Java and C++. Go's simplicity — no classes, no inheritance, first-class functions — means many patterns either simplify dramatically or aren't needed at all.
+ইবনে সিনার ছোট ভাই তমাল দুই রকম খেলনা কিনেছিল। একটা LEGO-র সেট — ছোট ছোট আলাদা ব্লক, ইচ্ছেমতো স্ন্যাপ করে জোড়া দিয়ে গাড়ি বানানো যায়, চাকা খুলে ডানা লাগিয়ে দিলেই সেটা প্লেন হয়ে যায়। আরেকটা ছিল দোকান থেকে কেনা একটা গোটা মার্বেল পাথর কেটে বানানো ঘোড়ার মূর্তি — দেখতে সুন্দর, কিন্তু এক টুকরো, ঘোড়ার লেজটা একটু ছোট করতে চাইলেও কিছুই করার নেই, পুরোটা ফেলে নতুন মূর্তি কিনতে হবে। কয়েক দিন পর তমাল LEGO দিয়েই সারাদিন কাটায়, মূর্তিটা তাকের কোণে পড়ে থাকে — কারণ LEGO-তে সে যা খুশি বানাতে আর ভাঙতে পারে।
+
+Go-তে code লেখাটাও ঠিক এই LEGO-র মতো। এখানে বড় class hierarchy বা inheritance-এর গোটা মূর্তি বানানো হয় না — বরং ছোট ছোট interface আর function-কে ব্লকের মতো snap করে একটা struct-এ বসিয়ে দেওয়া হয়। behavior বদলাতে হলে পুরো জিনিস ফেলে দিতে হয় না, শুধু একটা ব্লক খুলে অন্যটা বসিয়ে দিলেই চলে — দাম বসানোর নিয়ম বদলাতে একটা pricing function swap করা, বা কোনো handler-কে auth-logging দিয়ে wrap করা।
+
+এই গল্পটাই আসলে Go-এর **composition over inheritance**। মূর্তির মতো আটকে থাকা inheritance-এর বদলে LEGO-র মতো ছোট টুকরো জোড়া দেওয়াই Go-এর মূল ধরন — আর এই ছোট টুকরো swap করাটাই **strategy pattern** (function pass করে দাম হিসাব বদলানো), টুকরোর ওপর টুকরো চাপিয়ে দেওয়াটাই **decorator pattern** (middleware দিয়ে handler wrap), ব্লক জোড়ার নিয়মটা লুকিয়ে দেওয়াটাই **factory** আর **functional options**। বাস্তবে Go-এর standard library আর প্রায় প্রতিটা বড় library ঠিক এভাবেই — rigid family tree না বানিয়ে composable interface দিয়ে — লেখা হয়, যাতে কালকে নতুন behavior লাগলে গোটা code না ভেঙে শুধু একটা নতুন ব্লক snap করা যায়।
+
+## Go-তে Pattern আলাদা
+
+Classic design pattern-গুলো লেখা হয়েছিল Java আর C++-এর জন্য। Go-এর সরলতা — কোনো class নেই, কোনো inheritance নেই, first-class function — মানে অনেক pattern হয় খুব সরল হয়ে যায়, নয়তো একেবারেই দরকার পড়ে না।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Using Java patterns in Go is like using a car jack to change a bicycle tire. The car jack works, but a simple hand pump is better for the job. Go's tools (interfaces, functions, composition) replace entire pattern families.
+Go-তে Java pattern ব্যবহার করা হলো সাইকেলের টায়ার বদলাতে গাড়ির জ্যাক ব্যবহার করার মতো। গাড়ির জ্যাক কাজ করে, কিন্তু কাজটার জন্য একটা সাধারণ হ্যান্ড পাম্প ভালো। Go-এর টুল (interface, function, composition) পুরো pattern পরিবারকেই বদলে দেয়।
 
 </Callout>
 
 ## Functional Options Pattern
 
-The most idiomatic Go pattern for configurable constructors. Used in the standard library and almost every major Go library:
+configurable constructor-এর জন্য সবচেয়ে idiomatic Go pattern। standard library আর প্রায় প্রতিটা বড় Go library-তে ব্যবহৃত হয়:
 
 ```go
 type Server struct {
@@ -108,13 +116,13 @@ defaultServer := NewServer("localhost")
 
 <Callout type="tip">
 
-**Why this pattern dominates Go:** It handles optional parameters (Go has no default arguments), is self-documenting (each option is named), backwards-compatible (add new options without breaking existing callers), and composable (bundle options into presets).
+**এই pattern কেন Go-তে রাজত্ব করে:** এটা optional parameter সামলায় (Go-তে default argument নেই), self-documenting (প্রতিটা option-এর নাম আছে), backwards-compatible (existing caller না ভেঙেই নতুন option যোগ করা যায়), আর composable (option-গুলোকে preset-এ বান্ডল করা যায়)।
 
 </Callout>
 
-## Dependency Injection (Without a Framework)
+## Dependency Injection (Framework ছাড়া)
 
-Go doesn't need a DI framework. Constructor injection with interfaces is enough:
+Go-এর কোনো DI framework দরকার নেই। interface সহ constructor injection-ই যথেষ্ট:
 
 ```go
 // Dependencies are interfaces
@@ -161,7 +169,7 @@ func main() {
 
 ## Strategy Pattern
 
-In Java: define an interface, create classes, inject strategy. In Go: pass a function.
+Java-তে: একটা interface define করুন, class বানান, strategy inject করুন। Go-তে: একটা function pass করুন।
 
 ```go
 // Go strategy pattern — just use functions
@@ -205,7 +213,7 @@ price := bulkOrder.calculatePrice(10.00, 50)  // $450 (10% discount)
 
 ## Decorator Pattern
 
-Wrap functionality with additional behavior. In Go, this is just middleware:
+অতিরিক্ত behavior দিয়ে কোনো functionality wrap করা। Go-তে এটা শুধুই middleware:
 
 ```go
 // HTTP handler decorator (middleware is the decorator pattern)
@@ -342,9 +350,9 @@ bus.Publish(ctx, Event{
 })
 ```
 
-## Builder Pattern (When Needed)
+## Builder Pattern (যখন দরকার)
 
-Useful for complex object construction — but often the functional options pattern is better:
+জটিল object construction-এর জন্য দরকারি — কিন্তু প্রায়ই functional options pattern ভালো:
 
 ```go
 type QueryBuilder struct {
@@ -409,7 +417,7 @@ query, args := NewQuery("users").
     Build()
 ```
 
-## Patterns You Don't Need in Go
+## যেসব Pattern Go-তে দরকার নেই
 
 | Java Pattern     | Go Alternative                             |
 | ---------------- | ------------------------------------------ |
@@ -420,11 +428,11 @@ query, args := NewQuery("users").
 | Command          | Functions are first-class — just pass them |
 | Visitor          | Type switch or interface methods           |
 
-## Key Takeaways
+## মূল কথা
 
-1. **Functional options** for configurable constructors — the #1 Go pattern
-2. **DI = constructor injection** — pass interfaces, wire in `main()`, no framework
-3. **Strategy = pass a function** — no class hierarchy needed
-4. **Decorator = wrap the interface** — same pattern as middleware
-5. **Observer = event bus** with typed events and async handlers
-6. **Many Java patterns are unnecessary** — Go's functions, interfaces, and composition replace them
+1. **Functional options** configurable constructor-এর জন্য — Go-এর #1 pattern
+2. **DI = constructor injection** — interface pass করুন, `main()`-এ wire করুন, কোনো framework নেই
+3. **Strategy = একটা function pass করুন** — কোনো class hierarchy দরকার নেই
+4. **Decorator = interface-টা wrap করুন** — middleware-এর মতোই একই pattern
+5. **Observer = event bus** typed event আর async handler সহ
+6. **অনেক Java pattern অপ্রয়োজনীয়** — Go-এর function, interface, আর composition সেগুলোর জায়গা নেয়

@@ -1,9 +1,9 @@
 ---
 title: 'Runbooks & Incident Response'
-subtitle: 'Writing runbooks people will actually use, incident commander patterns, post-mortems that produce real change.'
+subtitle: 'মানুষ আসলেই ব্যবহার করবে এমন runbook লেখা, incident commander প্যাটার্ন, আর সত্যিকারের পরিবর্তন আনে এমন post-mortem।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['runbooks', 'incident response', 'post-mortem', 'on-call', 'communication']
 ---
 
@@ -11,23 +11,31 @@ topics: ['runbooks', 'incident response', 'post-mortem', 'on-call', 'communicati
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+শহরের ফায়ার ব্রিগেডে ফাতিমা আল-ফিহরি ঢোকার প্রথম দিনই একটা কথা শিখেছিলেন — আগুন লাগলে এখানে কেউ মাথা খাটিয়ে নতুন কিছু বানায় না। প্রতিটা ধরনের আগুনের জন্য আগে থেকে লেখা, বহুবার মহড়া দেওয়া একটা ড্রিল-বুক আছে। রাসায়নিক গুদামে আগুন লাগলে বইয়ের পাতায় লেখা থাকে — "আগে ভাল্ব A বন্ধ করো, তারপর তিন তলা খালি করো, তারপর ফোম লাইন খোলো"। কেউ ঘটনাস্থলে দাঁড়িয়ে ভাবে না পরের ধাপ কী; পাতা উল্টে ঠিক পরের ধাপে চলে যায়।
+
+আর প্রতিটা ডাকে একজনই কমান্ডার থাকে — সেদিন ছিলেন ইবনে সিনা। তিনি নিজে হোস ধরেন না; তিনি শুধু নির্দেশ দেন কে কোথায় যাবে, কে ভেতরে ঢুকবে, কখন পিছু হটবে। আরেকজনের কাজ শুধু যোগাযোগ — বাইরের কন্ট্রোল রুম আর আশপাশের ভবনে খবর পৌঁছে দেওয়া, যাতে কমান্ডার আর দলকে বারবার ফোন ধরতে না হয়। এভাবেই রাত ৩টায় ক্লান্ত একটা দলও হুড়োহুড়ি না করে ঠান্ডা মাথায় কাজটা করে ফেলে, কারণ কী করতে হবে তা আগেই লেখা আর অনুশীলন করা আছে।
+
+এই গল্পটাই আসলে **runbook আর incident response**। প্রতিটা আগুনের জন্য আলাদা লেখা ড্রিল-বুক হলো একটা নির্দিষ্ট incident-এর জন্য লেখা **runbook** — ঠিক ধাপ, ঠিক ক্রমে। একজন কমান্ডার সবাইকে দিক দেখাচ্ছেন আর একজন শুধু যোগাযোগ সামলাচ্ছেন — এটাই ঠিকঠাক **incident-response রোল**: incident commander আর communicator। আর মহড়া দেওয়া প্ল্যান মেনে চলা, তাৎক্ষণিক improvisation না করা — এটাই একটা শান্ত, structured incident response। বাস্তবেও তাই: on-call ইঞ্জিনিয়ার চাপের মুহূর্তে নতুন সমাধান আবিষ্কার করে না, লেখা ও drilled runbook খুলে ঠান্ডা মাথায় ধাপে ধাপে এগোয়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-An ER triage protocol: not a guide for doctors who have time to think — it's a series of immediate, specific actions for the first five minutes when someone is brought in critical. Good runbooks are the same: written for a stressed engineer at 3am who needs to act, not think.
+একটা ER triage protocol: এটা এমন ডাক্তারদের জন্য গাইড নয় যাদের ভাবার সময় আছে — এটা প্রথম পাঁচ মিনিটের জন্য তাৎক্ষণিক, নির্দিষ্ট কিছু action-এর ধারাবাহিকতা, যখন কাউকে critical অবস্থায় আনা হয়। ভালো runbook একই: রাত ৩টায় চাপে থাকা একজন ইঞ্জিনিয়ারের জন্য লেখা যার action নিতে হবে, ভাবতে নয়।
 
 </Callout>
 
-## What Makes a Runbook Usable
+## একটা Runbook-কে কী Usable করে
 
-Most runbooks fail not because they're wrong, but because they're not actually useful in an incident:
+বেশিরভাগ runbook ফেল করে ভুল বলে নয়, বরং incident-এর সময় আসলে কাজে আসে না বলে:
 
-**Useless runbook:**
+**অকেজো runbook:**
 
-> "When the database is unavailable, restore service according to the DR procedure and notify stakeholders."
+> "ডেটাবেস unavailable হলে, DR প্রসিডিওর অনুযায়ী সার্ভিস restore করুন আর stakeholder-দের জানান।"
 
-**Useful runbook:**
+**কাজের runbook:**
 
 ````markdown
 # Database Unavailable Runbook
@@ -44,22 +52,22 @@ Most runbooks fail not because they're wrong, but because they're not actually u
    ```
 ````
 
-If this returns: "connection refused" → primary is down, continue
-If this returns data → false alarm, acknowledge and close
+এটা ফেরত দিলে: "connection refused" → primary down, চালিয়ে যান
+এটা ডেটা ফেরত দিলে → false alarm, acknowledge করে বন্ধ করুন
 
-2. Check if replica is available:
+2. replica available কি না চেক করুন:
 
    ```bash
    psql $REPLICA_DATABASE_URL -c "SELECT 1" 2>&1
    ```
 
-   Yes → Go to Section A (failover to replica)
-   No → Go to Section B (restore from backup)
+   হ্যাঁ → Section A-তে যান (replica-তে failover)
+   না → Section B-তে যান (ব্যাকআপ থেকে restore)
 
-3. Open incident:
-   - PagerDuty: escalate to secondary if no response in 5 min
-   - Slack: post in #incidents "Database outage in progress, investigating"
-   - Status page: set to "Investigating"
+3. incident খুলুন:
+   - PagerDuty: ৫ মিনিটে সাড়া না পেলে secondary-তে escalate করুন
+   - Slack: #incidents-এ পোস্ট করুন "Database outage in progress, investigating"
+   - Status page: "Investigating"-এ সেট করুন
 
 ````
 
@@ -110,33 +118,33 @@ Good runbooks are **imperative** (do this, then this), **specific** (exact comma
 - [ ] Update this runbook if any steps were wrong
 ````
 
-## Incident Roles
+## Incident Role
 
-Clear roles prevent the "too many cooks" problem where everyone is acting and nobody is coordinating.
+স্পষ্ট রোল "too many cooks" সমস্যা ঠেকায়, যেখানে সবাই action নিচ্ছে আর কেউ coordinate করছে না।
 
 **Incident Commander (IC):**
 
-- Owns the incident timeline and decisions
-- Delegates investigation tasks, doesn't do them personally
-- Manages external communication
-- Calls the "all clear" when resolved
-- One person — if there are two ICs, there is none
+- incident timeline আর সিদ্ধান্তের মালিক
+- investigation task delegate করে, নিজে করে না
+- বাইরের communication ম্যানেজ করে
+- resolve হলে "all clear" ডাকে
+- একজন মানুষ — দুজন IC থাকলে, একজনও নেই
 
 **Technical Lead:**
 
-- Drives investigation and resolution
-- Reports findings to IC
-- Can ask for help without losing ownership
+- investigation আর resolution চালায়
+- IC-কে findings রিপোর্ট করে
+- ownership না হারিয়ে সাহায্য চাইতে পারে
 
 **Communicator:**
 
-- Updates status page, Slack, customer communications
-- Frees technical leads from context-switching to comms
+- status page, Slack, customer communication আপডেট করে
+- technical lead-দের comms-এ context-switch করা থেকে মুক্ত রাখে
 
 **Scribe:**
 
-- Documents timeline in real time (timestamps, what was tried, what was found)
-- Invaluable for post-mortem — memory fades fast under stress
+- রিয়েল টাইমে timeline ডকুমেন্ট করে (timestamp, কী চেষ্টা করা হলো, কী পাওয়া গেল)
+- post-mortem-এর জন্য অমূল্য — চাপের মধ্যে স্মৃতি দ্রুত ফিকে হয়
 
 ```
 [10:02] IC: @alice you're technical lead. @bob you're communicator.
@@ -152,7 +160,7 @@ Clear roles prevent the "too many cooks" problem where everyone is acting and no
 
 ## Communication Cadence
 
-Silence is the worst thing during an incident. Update stakeholders even when you have nothing new:
+incident-এর সময় নীরবতাই সবচেয়ে খারাপ জিনিস। নতুন কিছু না থাকলেও stakeholder-দের আপডেট দিন:
 
 ```
 T+0:   Acknowledge the incident publicly ("We are aware and investigating")
@@ -162,13 +170,13 @@ T+45:  Update ("Fix deployed, monitoring recovery")
 T+60:  Resolution or escalation ("Resolved" or "Escalating, bringing in [team]")
 ```
 
-If you have nothing new: "We're still investigating, update in 15 minutes." Never go silent for more than 15 minutes during a P1.
+নতুন কিছু না থাকলে: "আমরা এখনো তদন্ত করছি, ১৫ মিনিটে আপডেট।" একটা P1-এর সময় ১৫ মিনিটের বেশি কখনো নীরব থাকবেন না।
 
-## The Post-Mortem
+## Post-Mortem
 
-A blameless post-mortem finds systemic causes, not individual fault. The goal is learning, not punishment.
+একটা blameless post-mortem systemic কারণ খোঁজে, ব্যক্তিগত দোষ নয়। লক্ষ্য শেখা, শাস্তি নয়।
 
-**Write within 48 hours — not after a week.**
+**৪৮ ঘণ্টার মধ্যে লিখুন — এক সপ্তাহ পরে নয়।**
 
 ```markdown
 # Post-Mortem: Database WAL Sender Crash — 2024-01-22
@@ -232,9 +240,9 @@ the WAL sender process.
 | Update runbook with memory pressure diagnostic steps | @alice | Jan 29 |
 ```
 
-## Making Post-Mortems Produce Change
+## Post-Mortem থেকে পরিবর্তন আনানো
 
-Post-mortems generate action items. Action items get forgotten. Close the loop:
+Post-mortem action item তৈরি করে। action item ভুলে যাওয়া হয়। loop-টা বন্ধ করুন:
 
 ```
 1. Track action items in your project management tool (not just the doc)
@@ -244,11 +252,11 @@ Post-mortems generate action items. Action items get forgotten. Close the loop:
 5. Verify the fix: re-run the drill that exposed the gap
 ```
 
-A post-mortem where nothing changes is documentation of a failure that will happen again.
+যে post-mortem-এ কিছুই বদলায় না সেটা এমন একটা failure-এর ডকুমেন্টেশন যা আবার ঘটবে।
 
 ## On-Call Health
 
-Good incident response requires healthy on-call practices:
+ভালো incident response-এর জন্য স্বাস্থ্যকর on-call প্র্যাকটিস দরকার:
 
 ```
 □ Alert fatigue audit: count pages per week per person
@@ -261,4 +269,4 @@ Good incident response requires healthy on-call practices:
 □ On-call engineers compensated fairly (time off, extra pay, or both)
 ```
 
-Burnout from on-call is an engineering effectiveness problem. Each incident handled by an exhausted engineer takes longer, resolves less well, and produces worse post-mortems.
+On-call থেকে burnout একটা engineering effectiveness সমস্যা। একজন ক্লান্ত ইঞ্জিনিয়ারের হ্যান্ডল করা প্রতিটা incident বেশি সময় নেয়, কম ভালোভাবে resolve হয়, আর খারাপ post-mortem তৈরি করে।

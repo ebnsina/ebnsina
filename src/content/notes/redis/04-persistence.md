@@ -1,9 +1,9 @@
 ---
 title: 'Persistence: RDB & AOF'
-subtitle: "How an in-memory store survives a restart, and what 'durable' really buys you."
+subtitle: "একটি in-memory store কীভাবে একটি restart-এ টিকে থাকে, এবং 'durable' আসলে তোমাকে কী দেয়।"
 chapter: 4
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['rdb', 'aof', 'durability']
 ---
 
@@ -11,17 +11,25 @@ topics: ['rdb', 'aof', 'durability']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-If everything lives in RAM, a crash or restart should wipe it all — yet a well-configured Redis comes back with its data intact. It does that by writing to disk in the background. Redis offers two persistence mechanisms with different trade-offs, and understanding them is the difference between "I lost an hour of data" and "I lost the last second." This chapter explains both and how durability is really a dial, not a switch.
+সবকিছু যদি RAM-এ থাকে, একটা crash বা restart-এর সব মুছে ফেলার কথা — তবু একটা ভালোভাবে configure করা Redis তার ডেটা অক্ষত অবস্থায় ফিরে আসে। এটা background-এ disk-এ লিখে সেটা করে। Redis দুটো persistence mechanism দেয় যাদের আলাদা trade-off আছে, এবং এগুলো বোঝা হলো "আমি এক ঘণ্টার ডেটা হারিয়েছি" আর "আমি শেষ সেকেন্ডটা হারিয়েছি"-র মধ্যে পার্থক্য। এই অধ্যায় দুটোই ব্যাখ্যা করে এবং কীভাবে durability আসলে একটা switch নয়, একটা dial।
 
-## What "in-memory" means for durability
+## গল্পে বুঝি
 
-The authoritative copy of your data is in RAM. Disk persistence is a _backup_ that lets Redis reconstruct that RAM image after a restart. This is the opposite of a traditional database, where disk is the source of truth and memory is a cache of it.
+আল-খোয়ারিজমির মুদি দোকানে কোন তাকে কত মাল আছে — চাল, ডাল, তেল, সাবান — সবটাই তার মাথায় গাঁথা। খদ্দের এলে সেকেন্ডেই বলে দিতে পারে কী আছে কী নেই, কারণ পুরো হিসাব তার মাথার ভেতরেই (in-memory)। কিন্তু এলাকায় লোডশেডিং হলে বা রাতে ঘুমিয়ে সকালে উঠে যদি মাথা ফাঁকা হয়ে যায়, তাহলে তো সব হিসাব উধাও। তাই আল-খোয়ারিজমি দুইভাবে নিজেকে বাঁচিয়ে রাখে। প্রথমত, প্রতি ঘণ্টায় সে দোকানের পুরো স্টক-বোর্ডের একটা ফুল ছবি তুলে রাখে — এক ক্লিকে গোটা তাকের অবস্থা। দ্বিতীয়ত, একইসাথে সে একটা চলতি খাতায় প্রতিটা বিক্রি ঘটার সাথে সাথে লিখে ফেলে — "দুই কেজি চিনি গেল, এক লিটার তেল গেল" — একটা লাইনও বাদ যায় না।
 
-The consequence: between the last successful disk write and a crash, whatever was only in memory is gone. How much that window holds — zero, one second, several minutes — depends entirely on how you configure persistence. Redis does not force a choice; it gives you knobs.
+একদিন সত্যিই ব্ল্যাকআউট হলো, মাথার হিসাব ফাঁকা। এখন আল-খোয়ারিজমির হাতে দুই উপায়। ঘণ্টার তোলা ছবিটা দেখে সে চট করে গোটা স্টক আবার সাজিয়ে ফেলতে পারে — দ্রুত, কিন্তু ছবিটা তোলার পর যে বিক্রিগুলো হয়েছে সেগুলো ছবিতে নেই, ওই শেষ কিছুক্ষণের হিসাব হারিয়ে গেল। আবার চলতি খাতাটা খুলে সে প্রথম লাইন থেকে একটা একটা করে সব বিক্রি রিপ্লে করলে হুবহু শেষ মুহূর্ত পর্যন্ত সঠিক অবস্থা ফিরে পায় — কিন্তু খাতা মোটা হয়ে গেছে, পড়ে শেষ করতে সময় লাগে। কোনটাতে সে বেশি ভরসা করবে, সেটা বুঝেই একটা বেছে নেয়।
 
-## RDB: point-in-time snapshots
+এই গল্পটাই আসলে Redis-এর **persistence**। মাথার হিসাব হলো RAM-এ থাকা লাইভ ডেটা, ঘণ্টায় তোলা ফুল ছবি হলো **RDB snapshot** (দ্রুত restore, কিন্তু শেষ কিছুক্ষণের ডেটা হারায়), আর চলতি খাতায় প্রতিটা বিক্রি টুকে রাখা হলো **AOF** — প্রতিটা write command-এর append-only log যা রিপ্লে করে হুবহু state ফেরানো যায়, কিন্তু log বড় হতে থাকে। ব্ল্যাকআউটের পর যেভাবে আল-খোয়ারিজমি ছবি বা খাতা থেকে দোকান আবার দাঁড় করায়, সেটাই crash **recovery**, আর "দ্রুত কিন্তু কিছুটা হারানো ছবি" বনাম "ধীর কিন্তু নিখুঁত খাতা" — এটাই snapshot-vs-log tradeoff। বাস্তবে অনেক production Redis দুটোই একসাথে চালায়: RDB দিয়ে দ্রুত backup, আর AOF দিয়ে ছোট ক্ষতির window।
 
-RDB (Redis Database) periodically saves a compact, binary snapshot of the entire dataset to a single file, typically `dump.rdb`. You configure triggers by how many writes happen in a window:
+## Durability-র জন্য "in-memory" মানে কী
+
+তোমার ডেটার authoritative copy RAM-এ। Disk persistence হলো একটা _backup_ যা Redis-কে restart-এর পর সেই RAM image পুনর্গঠন করতে দেয়। এটা একটা traditional database-এর উল্টো, যেখানে disk source of truth এবং memory তার একটা cache।
+
+পরিণতি: শেষ সফল disk write আর একটা crash-এর মাঝে, যা শুধু memory-তে ছিল তা চলে যায়। সেই window কতটা ধরে — শূন্য, এক সেকেন্ড, কয়েক মিনিট — সম্পূর্ণভাবে নির্ভর করে তুমি persistence কীভাবে configure করো তার উপর। Redis একটা পছন্দ চাপিয়ে দেয় না; এটা তোমাকে knob দেয়।
+
+## RDB: point-in-time snapshot
+
+RDB (Redis Database) পর্যায়ক্রমে পুরো dataset-এর একটা compact, binary snapshot একটা single ফাইলে সংরক্ষণ করে, সাধারণত `dump.rdb`। তুমি একটা window-তে কতগুলো write হয় তা দিয়ে trigger configure করো:
 
 ```text
 # redis.conf — save a snapshot if:
@@ -35,15 +43,15 @@ Background saving started
 (integer) 1718553600
 ```
 
-When a snapshot triggers, Redis calls `fork()`. The child process inherits a copy-on-write view of memory and writes it to disk while the parent keeps serving clients. Only memory pages that change during the save are duplicated, so the overhead is usually modest — though on a very large, write-heavy dataset the fork and copy-on-write churn can spike memory and latency.
+যখন একটা snapshot trigger হয়, Redis `fork()` কল করে। child process memory-র একটা copy-on-write view উত্তরাধিকার পায় এবং সেটা disk-এ লেখে যখন parent client serve করতে থাকে। শুধু সেসব memory page যা save-এর সময় বদলায় সেগুলো duplicate হয়, তাই overhead সাধারণত মাঝারি — যদিও একটা খুব বড়, write-ভারী dataset-এ fork আর copy-on-write churn memory আর latency spike করতে পারে।
 
-**Strengths.** A single compact file, trivial to copy off the box for backups or to seed a replica. Fast restart — loading one binary file is quicker than replaying a log. Minimal runtime overhead between snapshots.
+**শক্তি।** একটা single compact ফাইল, backup-এর জন্য বা একটা replica seed করতে box থেকে copy করা তুচ্ছ। দ্রুত restart — একটা binary ফাইল load করা একটা log replay করার চেয়ে দ্রুত। snapshot-এর মধ্যে ন্যূনতম runtime overhead।
 
-**Weakness.** It is a _point-in-time_ backup. If you snapshot every five minutes and crash four minutes in, you lose four minutes of writes. RDB alone is for data where some loss is acceptable.
+**দুর্বলতা।** এটা একটা _point-in-time_ backup। যদি তুমি প্রতি পাঁচ মিনিটে snapshot করো এবং চার মিনিটে crash করো, তুমি চার মিনিটের write হারাও। RDB একা সেই ডেটার জন্য যেখানে কিছু ক্ষতি গ্রহণযোগ্য।
 
-## AOF: the append-only log
+## AOF: append-only log
 
-AOF (Append Only File) takes the opposite approach: it logs every write command to a file as it happens. On restart Redis replays the log to rebuild the exact state.
+AOF (Append Only File) উল্টো পথ নেয়: এটা প্রতিটা write command ঘটার সাথে সাথে একটা ফাইলে log করে। restart-এ Redis exact state আবার গড়তে log replay করে।
 
 ```text
 # redis.conf
@@ -51,38 +59,38 @@ appendonly yes
 appendfsync everysec      # fsync policy (see below)
 ```
 
-The durability of AOF hinges on **when the log is flushed from the OS buffer to disk** — the `fsync` policy:
+AOF-এর durability নির্ভর করে **কখন log OS buffer থেকে disk-এ flush হয়** তার উপর — `fsync` policy:
 
-| `appendfsync` | Behavior                | Worst-case loss  | Speed          |
-| ------------- | ----------------------- | ---------------- | -------------- |
-| `always`      | fsync after every write | a single command | slowest        |
-| `everysec`    | fsync once per second   | about one second | fast (default) |
-| `no`          | let the OS decide when  | up to ~30s       | fastest        |
+| `appendfsync` | আচরণ                      | worst-case ক্ষতি    | গতি             |
+| ------------- | ------------------------- | ------------------- | --------------- |
+| `always`      | প্রতিটা write-এর পর fsync | একটা single command | সবচেয়ে ধীর     |
+| `everysec`    | সেকেন্ডে একবার fsync      | প্রায় এক সেকেন্ড   | দ্রুত (default) |
+| `no`          | OS-কে সিদ্ধান্ত নিতে দাও  | ~30s পর্যন্ত        | সবচেয়ে দ্রুত   |
 
-`everysec` is the sweet spot most deployments use: at most about one second of writes lost, with throughput close to no-fsync.
+`everysec` হলো sweet spot যা বেশিরভাগ deployment ব্যবহার করে: বড়জোর প্রায় এক সেকেন্ডের write হারানো, no-fsync-এর কাছাকাছি throughput সহ।
 
-Because an append-only log grows forever, Redis periodically **rewrites** it: it forks, builds the smallest set of commands that reproduces the current dataset, and replaces the old log. `BGREWRITEAOF` triggers this manually; `auto-aof-rewrite-percentage` automates it.
+যেহেতু একটা append-only log চিরকাল বাড়ে, Redis পর্যায়ক্রমে এটা **rewrite** করে: এটা fork করে, বর্তমান dataset পুনরুৎপাদন করার সবচেয়ে ছোট command সেট তৈরি করে, এবং পুরনো log প্রতিস্থাপন করে। `BGREWRITEAOF` এটা ম্যানুয়ালি trigger করে; `auto-aof-rewrite-percentage` এটা স্বয়ংক্রিয় করে।
 
 ```text
 127.0.0.1:6379> BGREWRITEAOF
 Background append only file rewriting started
 ```
 
-**Strengths.** Much smaller loss window than RDB — down to one second or even one command. The log is an append-only text-ish format you can inspect and, in a pinch, repair.
+**শক্তি।** RDB-র চেয়ে অনেক ছোট ক্ষতির window — এক সেকেন্ড বা এমনকি এক command পর্যন্ত নেমে আসে। log একটা append-only text-ঘেঁষা format যা তুমি পরিদর্শন করতে এবং, বিপদে পড়লে, মেরামত করতে পারো।
 
-**Weakness.** The file is larger than an RDB snapshot, and replaying a long log on restart is slower than loading a snapshot. With `always`, throughput drops noticeably.
+**দুর্বলতা।** ফাইলটা একটা RDB snapshot-এর চেয়ে বড়, এবং restart-এ একটা লম্বা log replay করা একটা snapshot load করার চেয়ে ধীর। `always` দিয়ে, throughput লক্ষণীয়ভাবে কমে।
 
 <Callout type="info">
 
-**Note:** `fsync` is the key concept behind every durability claim. Writing to a file does not mean the data is safely on disk — the OS buffers it in a page cache and writes lazily. Only `fsync` forces those bytes to the physical device. "How often do we fsync?" _is_ the durability question, for Redis and for databases generally.
+**নোট:** `fsync` হলো প্রতিটা durability দাবির পেছনের মূল ধারণা। একটা ফাইলে লেখা মানে ডেটা নিরাপদে disk-এ, তা নয় — OS এটা একটা page cache-এ buffer করে এবং অলসভাবে লেখে। শুধু `fsync` সেই byte-গুলোকে physical device-এ যেতে বাধ্য করে। "আমরা কত ঘন ঘন fsync করি?" _এটাই_ durability প্রশ্ন, Redis-এর জন্য এবং সাধারণভাবে database-এর জন্য।
 
 </Callout>
 
-## Combining both
+## দুটো মিলিয়ে ব্যবহার
 
-RDB and AOF are not mutually exclusive, and running both is the common production choice. AOF gives you a small loss window for normal recovery; RDB gives you a compact file for fast backups and quick reseeding. When both are enabled, Redis uses the AOF on restart because it is the more complete record.
+RDB আর AOF পরস্পর-বিরোধী নয়, এবং দুটোই চালানো সাধারণ production পছন্দ। AOF তোমাকে স্বাভাবিক recovery-র জন্য একটা ছোট ক্ষতির window দেয়; RDB দ্রুত backup আর দ্রুত reseeding-এর জন্য একটা compact ফাইল দেয়। দুটোই enabled থাকলে, Redis restart-এ AOF ব্যবহার করে কারণ এটা বেশি সম্পূর্ণ record।
 
-Modern Redis sharpens this with **mixed (RDB-AOF) persistence**: an AOF rewrite writes an RDB-format snapshot as the file's base, then appends new commands after it. You get fast snapshot-style loading for the bulk of the data plus the fine-grained tail of recent commands — the best of both.
+আধুনিক Redis এটা **mixed (RDB-AOF) persistence** দিয়ে ধারালো করে: একটা AOF rewrite ফাইলের base হিসেবে একটা RDB-format snapshot লেখে, তারপর এর পরে নতুন command append করে। তুমি ডেটার বেশিরভাগের জন্য দ্রুত snapshot-style loading প্লাস সাম্প্রতিক command-এর fine-grained tail পাও — দুটোরই সেরাটা।
 
 ```text
 # redis.conf
@@ -90,9 +98,9 @@ appendonly yes
 aof-use-rdb-preamble yes
 ```
 
-## Recovery in practice
+## বাস্তবে recovery
 
-On startup Redis loads persistence files automatically: AOF if enabled, otherwise RDB. You can verify and inspect with:
+startup-এ Redis স্বয়ংক্রিয়ভাবে persistence ফাইল load করে: AOF যদি enabled হয়, অন্যথায় RDB। তুমি এই দিয়ে যাচাই এবং পরিদর্শন করতে পারো:
 
 ```text
 127.0.0.1:6379> INFO persistence
@@ -105,14 +113,14 @@ aof_last_rewrite_time_sec:2
 aof_last_bgrewrite_status:ok
 ```
 
-A few operational realities:
+কয়েকটা operational বাস্তবতা:
 
-- **Backups are snapshots of a snapshot.** Copy the `dump.rdb` (and AOF) off the host on a schedule. Persistence protects against a process crash; off-box backups protect against losing the host.
-- **A corrupted AOF** can be checked and trimmed with the `redis-check-aof` tool; `redis-check-rdb` does the same for snapshots.
-- **Disabling persistence entirely** is valid for a pure cache where the source of truth is elsewhere. With `save ""` and `appendonly no`, a restart starts empty — which is fine if the cache simply refills from the database.
+- **Backup হলো একটা snapshot-এর snapshot।** একটা schedule-এ `dump.rdb` (আর AOF) host থেকে copy করো। persistence একটা process crash থেকে রক্ষা করে; off-box backup host হারানো থেকে রক্ষা করে।
+- **একটা corrupted AOF** `redis-check-aof` tool দিয়ে চেক এবং ছাঁটা যায়; `redis-check-rdb` snapshot-এর জন্য একই কাজ করে।
+- **সম্পূর্ণভাবে persistence disable করা** একটা pure cache-এর জন্য বৈধ যেখানে source of truth অন্য কোথাও। `save ""` আর `appendonly no` দিয়ে, একটা restart খালি অবস্থায় শুরু হয় — যা ঠিক আছে যদি cache শুধু database থেকে আবার ভরে যায়।
 
 <Callout type="tip">
 
-**Note:** Match persistence to the role. A **cache** in front of a database often needs none — losing it just means a cold start. A queue or a primary store needs AOF with `everysec` at minimum, plus RDB for backups. Decide by asking: if this instance died right now, what would it cost to lose the last second, the last minute, or all of it?
+**নোট:** persistence-কে role-এর সাথে মেলাও। একটা database-এর সামনে একটা **cache**-এর প্রায়ই কিছুরই দরকার নেই — এটা হারানো মানে শুধু একটা cold start। একটা queue বা primary store-এর ন্যূনতম `everysec` সহ AOF দরকার, প্লাস backup-এর জন্য RDB। এই প্রশ্ন করে সিদ্ধান্ত নাও: এই instance যদি এই মুহূর্তে মারা যায়, শেষ সেকেন্ড, শেষ মিনিট, বা পুরোটা হারাতে কত খরচ হবে?
 
 </Callout>

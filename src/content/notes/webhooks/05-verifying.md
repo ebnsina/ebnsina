@@ -1,9 +1,9 @@
 ---
-title: 'Verifying signatures'
-subtitle: "The receiver's job is to read the raw body, recompute the HMAC, compare in constant time, and reject events older than the replay window. Tiny code, easy to get wrong."
+title: 'Signature verify করা'
+subtitle: 'receiver-এর কাজ হলো raw body পড়া, HMAC পুনরায় গণনা করা, constant time-এ compare করা, আর replay window-এর চেয়ে পুরনো event reject করা। ছোট কোড, ভুল করা সহজ।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['webhooks', 'hmac', 'verification', 'receiver', 'security']
 ---
 
@@ -11,17 +11,25 @@ topics: ['webhooks', 'hmac', 'verification', 'receiver', 'security']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The receiver is the security boundary. Every webhook arriving at your URL is a potential forgery until proven otherwise. This chapter ships a Go receiver that verifies signatures correctly — and walks through the three classic bugs that turn signing into security theatre.
+receiver হলো security boundary। আপনার URL-এ আসা প্রতিটা webhook যতক্ষণ না প্রমাণিত হয়, ততক্ষণ একটা সম্ভাব্য জালিয়াতি। এই অধ্যায়ে একটা Go receiver ship হয় যা signature সঠিকভাবে verify করে — আর সেই তিনটে classic bug ঘুরে দেখায় যা signing-কে security theatre-এ পরিণত করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Verifying a signature is like a bouncer checking a stamp on your hand matches the one from the door — the stamp proves you paid, but only if it can't be faked.
+একটা signature verify করা অনেকটা একটা bouncer-এর মতো যে আপনার হাতের স্ট্যাম্প দরজার স্ট্যাম্পের সাথে মেলায় কিনা দেখে — স্ট্যাম্প প্রমাণ করে আপনি টাকা দিয়েছেন, কিন্তু কেবল যদি এটা জাল করা না যায়।
 
 </Callout>
 
-## The shape
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির অফিসে দিনে বহুবার সিলমোহর করা নোটিশ-স্লিপ আসে — কোনোটায় লেখা "এই চালানের দাম পরিশোধ হয়েছে", কোনোটায় "এই ঘর খালি করে দিন"। প্রতিটা স্লিপের কোণে মোমের সিল। কিন্তু ফাতিমা বোকা নন — স্লিপে সিল দেখেই তিনি বিশ্বাস করেন না। তাঁর আর তাঁর নিয়মিত বার্তাবাহক ইবনে সিনার মধ্যে একটা গোপন ছাঁচ আছে, যেটা শুধু তাঁরা দুজনেই জানেন। স্লিপ হাতে পেয়ে তিনি ওই স্লিপের ঠিক এই লেখার জন্য গোপন ছাঁচ দিয়ে নিজে হাতে বানিয়ে দেখেন — এই স্লিপের সঠিক সিলটা দেখতে ঠিক কেমন হওয়ার কথা। তারপর নিজের বানানো সিল আর স্লিপের গায়ের সিল পাশাপাশি রেখে মিলিয়ে দেখেন।
+
+দুটো হুবহু মিললে স্লিপটা আসল — তিনি কাজে হাত দেন। এক তিলও না মিললে ধরে নেন কেউ জাল ছাঁচে বানিয়েছে বা লেখা বদলে দিয়েছে, আর স্লিপটা সঙ্গে সঙ্গে ছুড়ে ফেলেন। এমনকি সিল নিখুঁত হলেও, স্লিপের তারিখ যদি সন্দেহজনকভাবে পুরনো হয় — যেন কেউ মাসখানেক আগের একটা আসল স্লিপ কোথাও থেকে তুলে নিয়ে আবার পাঠিয়ে দিয়েছে — তিনি সেটাও নেন না।
+
+এটাই signature verify করার পুরো গল্প। নিজে হাতে সঠিক সিল বানানো মানে shared secret দিয়ে HMAC পুনরায় recompute করা; নিজের বানানো সিলের সাথে স্লিপের গায়ের সিল মেলানো মানে signature header-এর সাথে constant-time compare করা; না মিললে স্লিপ ছুড়ে ফেলা মানে জাল বা tampered request reject করা; আর পুরনো তারিখের স্লিপ ফিরিয়ে দেওয়া মানে timestamp check দিয়ে replay attack ঠেকানো। বাস্তবে receiver ঠিক এভাবেই আসা webhook-কে যাচাই করে — সিল দেখেই নয়, নিজে গোপন secret দিয়ে সিলটা আবার বানিয়ে মিলিয়ে, তবেই বিশ্বাস করে।
+
+## গড়ন
 
 ```go
 package main
@@ -128,15 +136,15 @@ func handler(secret []byte) http.HandlerFunc {
 }
 ```
 
-That is the entire verification flow: parse, check replay window, recompute, compare. ~50 lines.
+এটাই পুরো verification flow: parse, replay window check, recompute, compare। ~৫০ লাইন।
 
-## The three classic bugs
+## তিনটে classic bug
 
-### 1. Verifying after framework body parsing
+### ১. Framework body parsing-এর পরে verify করা
 
-The single most common verification bug. The receiver's web framework auto-parses the JSON body before your handler runs. Your handler reads the parsed object and re-encodes it to verify — and the signature never matches.
+সবচেয়ে common verification bug। receiver-এর web framework আপনার handler চলার আগেই JSON body auto-parse করে। আপনার handler parsed object পড়ে সেটা verify করতে re-encode করে — আর signature কখনও মেলে না।
 
-**Wrong:**
+**ভুল:**
 
 ```go
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -148,9 +156,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-The re-encoded JSON differs from the original — different whitespace, different field order, different unicode escapes. HMAC of different bytes = different signature.
+re-encoded JSON মূলটার থেকে আলাদা — ভিন্ন whitespace, ভিন্ন field order, ভিন্ন unicode escape। ভিন্ন byte-এর HMAC = ভিন্ন signature।
 
-**Right:**
+**সঠিক:**
 
 ```go
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -163,15 +171,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Read the raw bytes once, verify on those bytes, parse only after. Frameworks like Gin, Echo, Express, FastAPI all parse the body unless you tell them not to. Use the framework's "raw body" hook (`gin.Context.GetRawData`, `req.body` in Express middleware before json parser, `Request.body` in FastAPI).
+raw byte একবার পড়ুন, ওই byte-এর ওপর verify করুন, কেবল তারপরে parse করুন। Gin, Echo, Express, FastAPI-র মতো framework সবই body parse করে, যদি না আপনি তাদের না করতে বলেন। framework-এর "raw body" hook ব্যবহার করুন (`gin.Context.GetRawData`, Express-এ json parser-এর আগের middleware-এ `req.body`, FastAPI-তে `Request.body`)।
 
 <Callout type="warn">
 
-**Test by editing your verifier to log the bytes it hashes.** Print the producer's bytes and the receiver's bytes side by side on the first integration. If they ever differ, even by one whitespace, your framework is reformatting. Fix the framework, not the verification.
+**আপনার verifier edit করে সে যে byte hash করে তা log করে টেস্ট করুন।** প্রথম integration-এ producer-এর byte আর receiver-এর byte পাশাপাশি print করুন। এক whitespace দিয়েও যদি কখনও আলাদা হয়, আপনার framework reformat করছে। verification নয়, framework ফিক্স করুন।
 
 </Callout>
 
-### 2. String comparison instead of constant-time compare
+### ২. Constant-time compare-এর বদলে string comparison
 
 ```go
 // WRONG — vulnerable to timing attack
@@ -180,9 +188,9 @@ if expectedHex == sigFromHeader {
 }
 ```
 
-`==` on strings short-circuits on the first byte that differs. An attacker who can measure response time across many guesses learns the prefix of the expected signature byte-by-byte until they have the whole thing.
+string-এ `==` প্রথম যে byte আলাদা সেখানে short-circuit করে। যে attacker অনেক অনুমানে response time মাপতে পারে, সে expected signature-এর prefix byte-by-byte শিখে ফেলে পুরোটা পাওয়া পর্যন্ত।
 
-`hmac.Equal` (Go) and `crypto.timingSafeEqual` (Node) compare in **constant time** — same duration regardless of where the difference is.
+`hmac.Equal` (Go) আর `crypto.timingSafeEqual` (Node) **constant time**-এ compare করে — পার্থক্য যেখানেই থাক, একই সময়কাল।
 
 ```go
 // RIGHT
@@ -191,11 +199,11 @@ if !hmac.Equal([]byte(expectedHex), []byte(sigFromHeader)) {
 }
 ```
 
-Always use the platform's constant-time compare for any cryptographic check. The few extra microseconds are not negotiable.
+যেকোনো cryptographic check-এর জন্য সবসময় platform-এর constant-time compare ব্যবহার করুন। কয়েক microsecond বেশির কোনো ছাড় নেই।
 
-### 3. Skipping the timestamp check
+### ৩. Timestamp check বাদ দেওয়া
 
-A signature that's mathematically valid does not prove the event is recent. Replay attacks send valid-but-old signed payloads. Without the timestamp window check, your receiver accepts every replay forever.
+গণিতগতভাবে valid একটা signature প্রমাণ করে না event-টা সাম্প্রতিক। Replay attack valid-কিন্তু-পুরনো signed payload পাঠায়। timestamp window check ছাড়া, আপনার receiver প্রতিটা replay চিরকাল accept করে।
 
 ```go
 if time.Since(ts) > replayWindow {
@@ -203,7 +211,7 @@ if time.Since(ts) > replayWindow {
 }
 ```
 
-Future timestamps are also suspicious — clocks drift, but only forward by minutes typically. A timestamp 30 minutes in the future suggests forgery or a broken producer:
+ভবিষ্যতের timestamp-ও সন্দেহজনক — clock drift করে, কিন্তু সাধারণত শুধু কয়েক মিনিট সামনে। ৩০ মিনিট ভবিষ্যতের একটা timestamp জালিয়াতি বা ভাঙা producer-এর ইঙ্গিত দেয়:
 
 ```go
 if time.Until(ts) > 1*time.Minute {
@@ -211,19 +219,19 @@ if time.Until(ts) > 1*time.Minute {
 }
 ```
 
-Tight bounds on both sides protect against clock-skew abuse. NTP keeps real production hosts within seconds of true time.
+দুই দিকেই টাইট বাউন্ড clock-skew abuse-এর বিরুদ্ধে রক্ষা করে। NTP আসল production host-কে true time-এর কয়েক সেকেন্ডের মধ্যে রাখে।
 
-## Body size limits
+## Body size limit
 
-Read with a hard cap. Without it, an attacker can stream gigabytes at your verifier and starve memory or trigger garbage collection storms.
+একটা hard cap সহ পড়ুন। এটা ছাড়া, একটা attacker আপনার verifier-এ gigabyte stream করে memory শেষ করতে বা garbage collection storm ট্রিগার করতে পারে।
 
 ```go
 body, err := io.ReadAll(io.LimitReader(r.Body, maxBody))
 ```
 
-1 MiB is generous for typical webhook payloads. If your producer sends bigger events, raise it; otherwise leave the cap tight.
+সাধারণ webhook payload-এর জন্য 1 MiB উদার। আপনার producer বড় event পাঠালে বাড়ান; নাহলে cap টাইট রাখুন।
 
-For an HTTP server, also set a `MaxHeaderBytes` and connection timeouts:
+একটা HTTP server-এর জন্য, একটা `MaxHeaderBytes` আর connection timeout-ও set করুন:
 
 ```go
 srv := &http.Server{
@@ -235,13 +243,13 @@ srv := &http.Server{
 }
 ```
 
-These prevent slowloris-style abuse against the verifier.
+এগুলো verifier-এর বিরুদ্ধে slowloris-ধরনের abuse ঠেকায়।
 
-## Returning correct status codes
+## সঠিক status code return করা
 
-What you return matters because the producer uses your status code to decide retry behaviour.
+আপনি কী return করেন তা গুরুত্বপূর্ণ, কারণ producer আপনার status code দিয়ে retry behaviour ঠিক করে।
 
-**On verification failure (bad signature, malformed header):** `400 Bad Request` or `401 Unauthorized`. The producer sees a 4xx, marks permanent or transient based on its retry policy. For signature-related 4xx, **the producer must not retry** — retrying with the same body and signature won't help.
+**verification failure-এ (bad signature, malformed header):** `400 Bad Request` বা `401 Unauthorized`। producer একটা 4xx দেখে, তার retry policy অনুযায়ী permanent বা transient mark করে। signature-সংক্রান্ত 4xx-এর জন্য, **producer-এর retry করা উচিত নয়** — একই body আর signature দিয়ে retry কাজে দেবে না।
 
 ```go
 if errors.Is(err, errBadSignature) {
@@ -250,7 +258,7 @@ if errors.Is(err, errBadSignature) {
 }
 ```
 
-**On internal processing failure (DB down, etc.):** `500 Internal Server Error`. The producer retries.
+**internal processing failure-এ (DB down, ইত্যাদি):** `500 Internal Server Error`। producer retry করে।
 
 ```go
 if err := process(body); err != nil {
@@ -259,11 +267,11 @@ if err := process(body); err != nil {
 }
 ```
 
-**On success:** `200 OK` (or 204 No Content). Anything 2xx is acknowledgement.
+**success-এ:** `200 OK` (বা 204 No Content)। 2xx যেকোনো কিছুই acknowledgement।
 
-A subtle but important rule: **return 200 quickly**, before doing slow work. The producer has a timeout (chapter 3 used 10 seconds). If your handler takes longer to process, the producer gives up and retries — and now you're processing the same event twice.
+একটা সূক্ষ্ম কিন্তু গুরুত্বপূর্ণ নিয়ম: **দ্রুত 200 return করুন**, ধীর কাজ করার আগে। producer-এর একটা timeout আছে (অধ্যায় ৩-এ ১০ সেকেন্ড ব্যবহার হয়েছিল)। আপনার handler process করতে বেশি সময় নিলে, producer হাল ছেড়ে retry করে — আর এখন আপনি একই event দুবার process করছেন।
 
-The fix:
+ফিক্স:
 
 ```go
 func handler(...) {
@@ -278,11 +286,11 @@ func handler(...) {
 }
 ```
 
-The webhook handler does verification + enqueue. A separate worker processes the job. Standard background-job pattern; covered in **Background jobs** track later in the path.
+webhook handler verification + enqueue করে। একটা আলাদা worker job process করে। Standard background-job pattern; path-এ পরে **Background jobs** track-এ কভার করা।
 
-## Multiple secrets — key rotation
+## একাধিক secret — key rotation
 
-To handle the v0/v1 rotation pattern from chapter 4, the receiver tries each version in the header until one matches:
+অধ্যায় ৪-এর v0/v1 rotation pattern সামলাতে, receiver header-এর প্রতিটা version চেষ্টা করে যতক্ষণ না একটা মেলে:
 
 ```go
 func verify(secrets []KeyedSecret, sigHeader string, body []byte) error {
@@ -310,11 +318,11 @@ type KeyedSecret struct {
 }
 ```
 
-Customers can hold both old and new secrets during rotation; either matches. After migration, drop the old.
+Customer-রা rotation-এর সময় পুরনো আর নতুন দুই secret-ই ধরে রাখতে পারে; যেকোনো একটা মেলে। migration-এর পরে পুরনোটা বাদ দিন।
 
-## Failing closed
+## Fail closed
 
-Default to rejecting unknown headers, missing timestamps, malformed signatures. Never accept the body unless every check passes.
+অজানা header, missing timestamp, malformed signature — এগুলো reject করাই default হোক। প্রতিটা check pass না করলে body কখনও accept করবেন না।
 
 ```go
 if sigHeader == "" {
@@ -322,55 +330,55 @@ if sigHeader == "" {
 }
 ```
 
-Unsigned events should never reach `process()`. The handler is the security boundary; nothing past it should ever process unverified data.
+Unsigned event কখনও `process()`-এ পৌঁছানো উচিত নয়। handler হলো security boundary; এর পরে কিছুই যেন কখনও unverified data process না করে।
 
-## Testing the verifier
+## Verifier টেস্ট করা
 
-Three tests every verifier needs.
+প্রতিটা verifier-এর তিনটে test দরকার।
 
-**1. Happy path.** A valid signed payload returns 200.
+**১. Happy path।** একটা valid signed payload 200 return করে।
 
-**2. Tampered body.** Modify a byte of the body, keep the signature, expect 401.
+**২. Tampered body।** body-র একটা byte পরিবর্তন করুন, signature রাখুন, 401 আশা করুন।
 
 ```go
 body[10] ^= 0x01 // flip a bit
 // expect 401
 ```
 
-**3. Replay.** Use a timestamp 10 minutes old, valid signature, expect 400 (stale).
+**৩. Replay।** ১০ মিনিট পুরনো একটা timestamp ব্যবহার করুন, valid signature, 400 আশা করুন (stale)।
 
-These three catch the bugs from earlier in this chapter. CI should run them every push.
+এই তিনটে এই অধ্যায়ের আগের bug-গুলো ধরে। CI-তে প্রতিটা push-এ এগুলো চলা উচিত।
 
-## What to log
+## যা log করবেন
 
-Per request:
+প্রতি request:
 
 - **Success:** `webhook-received event_id=evt_... type=payment.succeeded ts=... dur=12ms`
 - **Verify fail:** `webhook-rejected reason=bad-signature ip=10.0.0.5 type=...`
 
-Log enough to debug ("which event? which producer IP?") but **never log the secret or the full signature** — both go in audit trails that someone may eventually grep. The signature alone is not a credential, but logging it normalises sloppy handling of crypto material.
+debug করার মতো যথেষ্ট log করুন ("কোন event? কোন producer IP?") কিন্তু **secret বা full signature কখনও log করবেন না** — দুটোই audit trail-এ যায় যা কেউ একসময় grep করতে পারে। signature একা কোনো credential নয়, কিন্তু সেটা log করা crypto material-এর ঢিলেঢালা handling-কে স্বাভাবিক করে তোলে।
 
-## Multi-tenancy — finding the right secret
+## Multi-tenancy — সঠিক secret খোঁজা
 
-If you receive webhooks from multiple subscriptions on one URL, the receiver must figure out which secret to use. Two approaches:
+আপনি এক URL-এ একাধিক subscription থেকে webhook পেলে, receiver-কে বের করতে হবে কোন secret ব্যবহার করবে। দুটো উপায়:
 
-**A. URL-per-subscription.** `/webhooks/sub_42` carries the subscription ID in the path. Look it up in your DB to get the secret.
+**A. URL-per-subscription।** `/webhooks/sub_42` path-এ subscription ID বহন করে। secret পেতে DB-তে lookup করুন।
 
-**B. ID-in-body or header.** Producer includes a subscription ID in `X-Webhook-Subscription` or in the event payload. Look it up before verifying.
+**B. ID-in-body বা header।** producer `X-Webhook-Subscription`-এ বা event payload-এ একটা subscription ID অন্তর্ভুক্ত করে। verify করার আগে lookup করুন।
 
-A is cleaner: routing happens before any crypto. B forces you to parse some of the body before verification, which can leak info if you log parse errors. Prefer A.
+A পরিষ্কার: routing যেকোনো crypto-র আগে ঘটে। B আপনাকে verification-এর আগে body-র কিছু অংশ parse করতে বাধ্য করে, যা parse error log করলে info ফাঁস করতে পারে। A prefer করুন।
 
-## Recap
+## রিক্যাপ
 
-- Verifier: read raw body, parse header, replay-window check, recompute HMAC, constant-time compare.
-- Read raw bytes **before** any framework body parsing. Re-encoded JSON breaks signatures.
-- Use platform constant-time compare (`hmac.Equal`, `crypto.timingSafeEqual`).
-- Replay window: ~5 minutes past, ~1 minute future. Run NTP.
-- Body size cap (1 MiB), header timeouts, max header bytes.
-- 4xx on verify fail (no retry); 5xx on internal fail (retry).
-- Return 200 fast; defer slow work to a background queue.
-- Support multiple secrets during rotation (v0 + v1).
-- Fail closed: missing or malformed = reject.
-- Test happy path, tampered body, stale timestamp.
+- Verifier: raw body পড়ুন, header parse করুন, replay-window check, HMAC recompute, constant-time compare।
+- যেকোনো framework body parsing-এর **আগে** raw byte পড়ুন। re-encoded JSON signature ভাঙে।
+- Platform-এর constant-time compare ব্যবহার করুন (`hmac.Equal`, `crypto.timingSafeEqual`)।
+- Replay window: ~৫ মিনিট অতীত, ~১ মিনিট ভবিষ্যৎ। NTP চালান।
+- Body size cap (1 MiB), header timeout, max header byte।
+- verify fail-এ 4xx (no retry); internal fail-এ 5xx (retry)।
+- দ্রুত 200 return করুন; ধীর কাজ একটা background queue-তে defer করুন।
+- rotation-এর সময় একাধিক secret সমর্থন করুন (v0 + v1)।
+- Fail closed: missing বা malformed = reject।
+- Happy path, tampered body, stale timestamp টেস্ট করুন।
 
-Next: [Retries and backoff](/notes/webhooks/06-retries) — when to try again, when to give up, and the exponential-with-jitter pattern.
+পরবর্তী: [Retries ও backoff](/notes/webhooks/06-retries) — কখন আবার চেষ্টা করবেন, কখন হাল ছাড়বেন, আর jitter সহ exponential pattern।

@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Payment System'
-subtitle: 'Design and build a production payment processing system with idempotency, double-entry ledger, reconciliation, and webhook delivery.'
+title: 'কেস স্টাডি: পেমেন্ট সিস্টেম'
+subtitle: 'idempotency, double-entry ledger, reconciliation, এবং webhook delivery সহ একটি প্রোডাকশন পেমেন্ট প্রসেসিং সিস্টেম ডিজাইন ও তৈরি করা।'
 chapter: 20
 level: 'advanced'
-readingTime: '35 min'
+readingTime: '35 মিনিট'
 topics: ['payment system', 'idempotency', 'double-entry ledger', 'reconciliation', 'webhooks']
 ---
 
@@ -13,21 +13,29 @@ topics: ['payment system', 'idempotency', 'double-entry ledger', 'reconciliation
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Payments Are the Hardest Problem in System Design
+## গল্পে বুঝি
 
-Money cannot be lost, duplicated, or misrouted. A dropped message in a chat app is annoying; a dropped payment means real financial harm. Payment systems must guarantee **exactly-once processing** (charge the customer once, never twice), maintain a **perfect audit trail** (every cent must be accounted for), handle **partial failures gracefully** (what if the network dies mid-transaction?), and deliver **webhook notifications** so merchants know what happened.
+ইবনে সিনা একজন হুন্ডির ক্যাশ-কাউন্টার কেরানি — টাকা গোনা আর হিসাব রাখাই তার কাজ। তার সামনে একটা মোটা খাতা, যেটা সে চালায় কড়া double-entry নিয়মে: প্রতিটা টাকা যদি এক ঘর থেকে বেরোয়, তবে ঠিক সেই টাকা আরেক ঘরে ঢুকতেই হবে। আল-খোয়ারিজমির ঘর থেকে ৫০০ টাকা কমল তো ফাতিমা আল-ফিহরির ঘরে ৫০০ টাকা বাড়তেই হবে — এক পয়সা এদিক-ওদিক হলে দিনের শেষে খাতা মেলে না, আর ইবনে সিনা বাড়ি যেতে পারে না। এই দুই-ঘরে-লেখাই তার হিসাব সবসময় শূন্যে ব্যালেন্স রাখে।
 
-Think of it like a bank's vault room with double-entry bookkeeping.
+প্রতিটা পেমেন্ট স্লিপের গায়ে একটা করে ইউনিক serial নম্বর ছাপানো থাকে। আল-খোয়ারিজমি যখন একটা স্লিপ নিয়ে আসে, ইবনে সিনা প্রথমে serial-টা তার তালিকায় দেখে নেয়। ভিড়ের ঠেলায় বা লাইনের গণ্ডগোলে আল-খোয়ারিজমি যদি ভুল করে একই স্লিপ দ্বিতীয়বার কাউন্টারে বাড়িয়ে দেয়, ইবনে সিনা serial দেখেই চিনে ফেলে — "এইটা তো আগেই পাস করেছি" — আর দ্বিতীয়বার টাকা গোনে না, খাতাতেও দ্বিতীয় এন্ট্রি বসায় না। এক স্লিপে ঠিক একবারই টাকা যায়, কখনো দুইবার নয়। দিন শেষে ইবনে সিনা তার খাতাটা ব্যাংকের statement-এর পাশে রেখে লাইন ধরে মেলায় — কোন এন্ট্রি বাদ পড়ল, কোথায় গরমিল, সব ধরা পড়ে।
+
+এই পুরো গল্পটাই আসলে একটা **payment system**। স্লিপের ইউনিক serial হলো **idempotency key**, আর একই স্লিপ দুইবার এলে টাকা না গোনাটাই **exactly-once processing** — retry হলেও কাস্টমার দুইবার charge হয় না, no double-charge। ইবনে সিনার দুই-ঘরে-লেখা খাতা হলো **double-entry ledger** (প্রতি debit-এর একটা মিলে যাওয়া credit), আর দিন শেষে ব্যাংকের statement-এর সাথে খাতা মেলানোই **reconciliation**। Stripe বা bKash-এর মতো আসল সিস্টেম ঠিক এভাবেই — idempotency key দিয়ে ডুপ্লিকেট আটকে, double-entry ledger-এ হিসাব মিলিয়ে, আর provider-এর সাথে reconcile করে — কোটি কোটি টাকা এক পয়সাও না হারিয়ে সরায়।
+
+## সিস্টেম ডিজাইনে পেমেন্ট কেন সবচেয়ে কঠিন সমস্যা
+
+টাকা কখনো হারানো যাবে না, ডুপ্লিকেট হওয়া যাবে না, বা ভুল জায়গায় যাওয়া যাবে না। একটা চ্যাট অ্যাপে একটা মেসেজ ড্রপ হলে সেটা বিরক্তিকর; কিন্তু একটা পেমেন্ট ড্রপ হওয়া মানে সত্যিকারের আর্থিক ক্ষতি। পেমেন্ট সিস্টেমকে গ্যারান্টি দিতে হয় **exactly-once processing** (কাস্টমারকে একবার চার্জ করবে, কখনো দুইবার নয়), একটা **perfect audit trail** রাখতে হয় (প্রতিটা পয়সার হিসাব থাকতে হবে), **partial failures** সুন্দরভাবে হ্যান্ডেল করতে হয় (transaction-এর মাঝপথে যদি network মরে যায় তখন কী?), এবং **webhook notifications** ডেলিভার করতে হয় যাতে merchant-রা জানতে পারে কী হয়েছে।
+
+এটাকে একটা ব্যাংকের ভল্ট রুমের মতো ভাবুন যেখানে double-entry bookkeeping চলে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like double-entry bookkeeping — every time money moves, two entries are recorded: a debit from one account and a credit to another. The books must always balance.
+double-entry bookkeeping-এর মতো — প্রতিবার টাকা নড়াচড়া করলে দুটো এন্ট্রি রেকর্ড হয়: একটা অ্যাকাউন্ট থেকে debit আর আরেকটা অ্যাকাউন্টে credit। খাতা সবসময় ব্যালেন্স থাকতেই হবে।
 
 </Callout>
 
-Every time money moves, two entries are recorded: a debit from one account and a credit to another. The books must always balance. If the accountant is interrupted mid-entry, the incomplete transaction is rolled back. And every entry has a unique reference number — if someone accidentally submits the same deposit slip twice, the second one is recognized as a duplicate and ignored.
+প্রতিবার টাকা নড়াচড়া করলে দুটো এন্ট্রি রেকর্ড হয়: একটা অ্যাকাউন্ট থেকে debit আর আরেকটা অ্যাকাউন্টে credit। খাতা সবসময় ব্যালেন্স থাকতেই হবে। accountant যদি এন্ট্রির মাঝপথে বাধা পায়, তবে অসম্পূর্ণ transaction-টা roll back করা হয়। আর প্রতিটা এন্ট্রির একটা ইউনিক রেফারেন্স নম্বর থাকে — কেউ যদি ভুল করে একই deposit slip দুইবার সাবমিট করে, দ্বিতীয়টাকে ডুপ্লিকেট হিসেবে চিনে নিয়ে ইগনোর করা হয়।
 
 <Mermaid
 title="Payment System Architecture"
@@ -38,20 +46,20 @@ code={`graph TD
 
 ## Requirements
 
-- **Functional**: Process payments (charge, authorize, capture), issue refunds, idempotent operations via idempotency keys, double-entry ledger, webhook notifications to merchants, reconciliation engine
-- **Non-functional**: Zero money loss, exactly-once processing semantics, sub-500ms API response time, 99.99% availability
-- **Compliance**: Complete audit trail, immutable transaction log, all state transitions recorded
+- **Functional**: পেমেন্ট প্রসেস করা (charge, authorize, capture), refund ইস্যু করা, idempotency key দিয়ে idempotent operation, double-entry ledger, merchant-দের কাছে webhook notification, reconciliation engine
+- **Non-functional**: শূন্য টাকা loss, exactly-once processing semantics, sub-500ms API response time, 99.99% availability
+- **Compliance**: সম্পূর্ণ audit trail, immutable transaction log, সব state transition রেকর্ড করা
 
-## Step-by-Step: How a Payment Flows
+## ধাপে ধাপে: একটা পেমেন্ট কীভাবে প্রবাহিত হয়
 
-1. **Merchant sends payment request** — The API call includes an `Idempotency-Key` header (e.g., `order_12345_payment`). This key ensures the same request can be safely retried.
-2. **Idempotency check** — The gateway looks up the key. If it's been seen before, return the cached response immediately — no duplicate charge.
-3. **Payment enters state machine** — The payment starts in `pending` state and transitions through `processing` → `completed` or `failed`. Each transition is recorded.
-4. **Double-entry ledger records the transaction** — Two entries are created atomically: debit from the customer's account, credit to the merchant's account. The ledger always balances.
-5. **Webhook fires** — The merchant's webhook URL receives a signed notification (HMAC-SHA256) with the payment status. If delivery fails, we retry with exponential backoff.
-6. **Reconciliation verifies balances** — A background process sums all debits and credits. If they don't balance to zero, something went wrong — alert immediately.
+1. **Merchant পেমেন্ট রিকোয়েস্ট পাঠায়** — API কলে একটা `Idempotency-Key` header থাকে (যেমন, `order_12345_payment`)। এই key নিশ্চিত করে যে একই রিকোয়েস্ট নিরাপদে retry করা যাবে।
+2. **Idempotency check** — gateway key-টা খুঁজে দেখে। আগে যদি এটা দেখা হয়ে থাকে, সাথে সাথে cache করা response ফিরিয়ে দেয় — কোনো ডুপ্লিকেট charge নেই।
+3. **পেমেন্ট state machine-এ ঢোকে** — পেমেন্ট `pending` state-এ শুরু হয় এবং `processing` → `completed` বা `failed`-এর মধ্য দিয়ে transition করে। প্রতিটা transition রেকর্ড হয়।
+4. **Double-entry ledger transaction রেকর্ড করে** — দুটো এন্ট্রি atomically তৈরি হয়: কাস্টমারের অ্যাকাউন্ট থেকে debit, merchant-এর অ্যাকাউন্টে credit। ledger সবসময় ব্যালেন্স থাকে।
+5. **Webhook fire করে** — merchant-এর webhook URL পেমেন্ট status সহ একটা signed notification (HMAC-SHA256) পায়। delivery ফেইল করলে আমরা exponential backoff দিয়ে retry করি।
+6. **Reconciliation ব্যালেন্স যাচাই করে** — একটা background process সব debit আর credit যোগ করে। এগুলো যদি শূন্যে ব্যালেন্স না হয়, তবে কিছু একটা ভুল হয়েছে — সাথে সাথে alert করো।
 
-## Building the Payment System
+## পেমেন্ট সিস্টেম তৈরি করা
 
 <CodeTabs tsFile="payment-system.ts" goFile="payment-system.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -858,45 +866,45 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তের ব্যাখ্যা
 
-### Why Idempotency Keys?
+### Idempotency Key কেন?
 
-Networks fail. When a merchant sends a payment request and their connection drops before receiving the response, they don't know if the payment went through. Without idempotency, retrying would charge the customer twice. The idempotency key (usually tied to the order ID) ensures that even if the same request is sent 10 times, the customer is charged exactly once. This is the single most important safety mechanism in any payment system.
+Network ফেইল করে। যখন একটা merchant একটা পেমেন্ট রিকোয়েস্ট পাঠায় আর response পাওয়ার আগেই তার connection ড্রপ হয়ে যায়, তখন সে জানে না পেমেন্টটা হয়েছে কিনা। idempotency ছাড়া, retry করলে কাস্টমার দুইবার চার্জ হবে। idempotency key (সাধারণত order ID-এর সাথে বাঁধা) নিশ্চিত করে যে একই রিকোয়েস্ট ১০ বার পাঠানো হলেও কাস্টমার ঠিক একবারই চার্জ হবে। যেকোনো পেমেন্ট সিস্টেমে এটাই সবচেয়ে গুরুত্বপূর্ণ safety mechanism।
 
-### Why Double-Entry Ledger?
+### Double-Entry Ledger কেন?
 
-Every financial transaction creates two entries: a debit and a credit. The sum of all entries must always be zero. This isn't just an accounting tradition — it's a mathematical invariant that catches bugs. If a payment is processed but only one side is recorded, the reconciliation check will immediately flag it. Single-entry systems (just tracking balances) can silently lose money when race conditions or bugs cause inconsistent updates.
+প্রতিটা financial transaction দুটো এন্ট্রি তৈরি করে: একটা debit আর একটা credit। সব এন্ট্রির যোগফল সবসময় শূন্য হতেই হবে। এটা শুধু একটা accounting ঐতিহ্য নয় — এটা একটা mathematical invariant যা bug ধরে। যদি একটা পেমেন্ট প্রসেস হয় কিন্তু কেবল একদিক রেকর্ড হয়, তবে reconciliation check সাথে সাথে সেটা flag করবে। single-entry system (শুধু balance track করা) race condition বা bug-এর কারণে inconsistent update হলে নীরবে টাকা হারাতে পারে।
 
-### Why a State Machine?
+### State Machine কেন?
 
-Payment states must follow strict rules: you can't refund a pending payment, you can't complete an already-failed payment. A state machine makes invalid transitions impossible at the code level, not just the business logic level. This prevents an entire class of bugs where concurrent requests or retry logic could put a payment into an inconsistent state.
+পেমেন্ট state-গুলোকে কড়া নিয়ম মানতে হয়: তুমি একটা pending পেমেন্ট refund করতে পারো না, তুমি একটা ইতিমধ্যেই failed পেমেন্ট complete করতে পারো না। একটা state machine invalid transition-কে কোড লেভেলেই অসম্ভব করে দেয়, শুধু business logic লেভেলে নয়। এটা এমন একটা পুরো bug-শ্রেণি প্রতিরোধ করে যেখানে concurrent request বা retry logic একটা পেমেন্টকে inconsistent state-এ ফেলতে পারত।
 
-### Why HMAC-Signed Webhooks?
+### HMAC-Signed Webhook কেন?
 
-Merchants receive webhooks at their server endpoints. Without signatures, anyone could POST fake "payment completed" events to the merchant's webhook URL and get free products. HMAC-SHA256 signing with a shared secret ensures the merchant can verify that the webhook genuinely came from your payment system and hasn't been tampered with in transit.
+Merchant-রা তাদের server endpoint-এ webhook পায়। signature ছাড়া, যেকেউ merchant-এর webhook URL-এ ভুয়া "payment completed" event POST করে ফ্রি প্রোডাক্ট পেতে পারত। একটা shared secret দিয়ে HMAC-SHA256 signing নিশ্চিত করে যে merchant যাচাই করতে পারবে webhook-টা সত্যিই তোমার পেমেন্ট সিস্টেম থেকে এসেছে এবং পথে কেউ টেম্পার করেনি।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Idempotency keys prevent duplicate charges — the single most important safety mechanism in payments
-- Double-entry ledger ensures every debit has a matching credit — your books always balance to zero
-- Payment state machines make it impossible to reach invalid states (you can't refund a pending payment)
-- Webhook delivery needs retry with exponential backoff — merchants' servers go down
-- Reconciliation catches bugs that unit tests miss — run it continuously, not just at end of day
-- Immutable audit trails are not optional — regulators will ask for them
+- Idempotency key ডুপ্লিকেট charge প্রতিরোধ করে — পেমেন্টে সবচেয়ে গুরুত্বপূর্ণ safety mechanism
+- Double-entry ledger নিশ্চিত করে প্রতিটা debit-এর একটা মিলে যাওয়া credit আছে — তোমার খাতা সবসময় শূন্যে ব্যালেন্স হয়
+- Payment state machine invalid state-এ পৌঁছানো অসম্ভব করে দেয় (তুমি একটা pending পেমেন্ট refund করতে পারো না)
+- Webhook delivery-র exponential backoff সহ retry দরকার — merchant-দের server ডাউন হয়ে যায়
+- Reconciliation এমন bug ধরে যা unit test মিস করে — এটা একটানা চালাও, শুধু দিন শেষে নয়
+- Immutable audit trail ঐচ্ছিক নয় — regulator-রা এগুলো চাইবে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জগতে ব্যবহার
 
-- **Stripe** processes 1000+ payments per second using idempotency keys and double-entry accounting
-- **Square** uses event-sourced ledgers where every state change is an immutable event
-- **PayPal** reconciles billions of transactions daily across multiple currencies and payment methods
-- **Shopify** uses webhook delivery with HMAC signatures for payment event notifications
-- This architecture handles real-money transactions with zero-loss guarantees through idempotency and double-entry bookkeeping
+- **Stripe** idempotency key আর double-entry accounting ব্যবহার করে সেকেন্ডে 1000+ পেমেন্ট প্রসেস করে
+- **Square** event-sourced ledger ব্যবহার করে যেখানে প্রতিটা state change একটা immutable event
+- **PayPal** প্রতিদিন একাধিক currency আর payment method জুড়ে বিলিয়ন বিলিয়ন transaction reconcile করে
+- **Shopify** পেমেন্ট event notification-এর জন্য HMAC signature সহ webhook delivery ব্যবহার করে
+- এই architecture idempotency আর double-entry bookkeeping-এর মাধ্যমে zero-loss গ্যারান্টি সহ সত্যিকারের-টাকার transaction হ্যান্ডেল করে
 
 </div>

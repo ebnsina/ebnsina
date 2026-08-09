@@ -1,9 +1,9 @@
 ---
 title: 'Monolith vs Microservices'
-subtitle: "The real costs of splitting — when a monolith is the right call, when it isn't, and how to identify the seams before you cut."
+subtitle: 'ভাঙার আসল খরচ — কখন monolith-ই সঠিক সিদ্ধান্ত, কখন নয়, আর কাটার আগে কীভাবে seam গুলো চিনবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['microservices', 'monolith', 'architecture', 'domain boundaries', 'decomposition']
 ---
 
@@ -11,39 +11,47 @@ topics: ['microservices', 'monolith', 'architecture', 'domain boundaries', 'deco
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা শহরের মাঝে একটা বিশাল ডিপার্টমেন্ট স্টোর খুললেন — এক ছাদের নিচে জামা, জুতা, বই, মুদি, সবকিছু। একটাই ম্যানেজমেন্ট, একটাই ক্যাশ কাউন্টার, একটাই বিদ্যুৎ লাইন। দোকান খোলা দারুণ সহজ ছিল — এক জায়গায় সব সাজিয়ে দিলেই হলো, আলাদা করে কারও সাথে সমন্বয়ের ঝামেলা নেই। কিন্তু কয়েক মাস পর জুতার সেকশন এত জনপ্রিয় হলো যে জায়গা বাড়াতে হবে — আর সেটা করতে গিয়ে দেখা গেল আধা স্টোর ভেঙে নতুন করে সাজাতে হচ্ছে, এই কদিন পুরো দোকানই এলোমেলো। তার ওপর একদিন একটা ফিউজ উড়ে গেল, আর গোটা বিল্ডিং অন্ধকার — জুতা, বই, মুদি সব বন্ধ।
+
+পাশের এলাকায় আবার আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরি একটা মার্কেট গড়লেন — আলাদা আলাদা মালিকের ছোট ছোট বিশেষায়িত দোকান। জুতার দোকান নিজের মতো বড় করে, বই-এর দোকান নিজের মতো সাজায়, একটা দোকান বন্ধ থাকলেও বাকিরা দিব্যি চলে। একটা দোকানে লোডশেডিং হলে পাশেরটা তবু খোলা। কিন্তু এবার দরকার হলো রাস্তা, সাইনবোর্ড, দোকানে দোকানে হাঁটাহাঁটি, আর কে কোথায় আছে তার সমন্বয় — একটা ছাদের সরলতা আর নেই।
+
+এই গল্পটাই monolith বনাম microservices। এক ছাদের ডিপার্টমেন্ট স্টোর হলো **monolith** — শুরু করা আর চালানো সহজ, কিন্তু সব একে অপরের সাথে coupled, তাই এক অংশ scale করতে গেলে গোটাটায় হাত দিতে হয় আর একটা failure পুরো system নামিয়ে দেয়। আলাদা দোকানের মার্কেট হলো **microservices** — প্রতিটা service স্বাধীনভাবে deploy আর scale হয়, একটার failure বাকিদের ফেলে না, কিন্তু বিনিময়ে আসে network আর operational complexity (রাস্তা মানে network call, সমন্বয় মানে service discovery, monitoring, coordination)। বাস্তবে Amazon বা Netflix ঠিক এই কারণেই বহু ছোট service-এ ভাগ হয়েছে — তবে বেশিরভাগ ছোট team-এর জন্য এক ছাদের স্টোর দিয়ে শুরু করাটাই সঠিক।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A Swiss Army knife vs a professional chef's knife set: the Swiss Army knife does everything in one package — easy to carry, no coordination needed. A chef's set has specialized tools that each do one thing superbly. But the chef's set requires knowing which knife to grab, keeping them all sharp, and not losing any. The right choice depends on what you're cooking and how many cooks are in the kitchen.
+একটা Swiss Army knife বনাম একজন পেশাদার শেফের ছুরির সেট: Swiss Army knife একটাই প্যাকেজে সবকিছু করে — বহন করা সহজ, কোনো coordination লাগে না। শেফের সেটে থাকে বিশেষায়িত টুল, প্রতিটা একটা কাজ দুর্দান্তভাবে করে। কিন্তু শেফের সেটে জানতে হয় কোন ছুরি ধরতে হবে, সবগুলোকে ধারালো রাখতে হয়, আর একটাও হারানো চলবে না। সঠিক পছন্দ নির্ভর করে আপনি কী রাঁধছেন আর রান্নাঘরে কতজন রাঁধুনি আছে তার ওপর।
 
 </Callout>
 
-## The Monolith Is Not the Enemy
+## Monolith শত্রু নয়
 
-A well-structured monolith is faster to develop, easier to debug, simpler to deploy, and has lower operational overhead than a microservices architecture. Most teams split too early, not too late.
+একটা ভালোভাবে গঠিত monolith develop করা দ্রুততর, debug করা সহজ, deploy করা সরল, এবং একটা microservices architecture-এর তুলনায় এর operational overhead কম। বেশিরভাগ team খুব তাড়াতাড়ি ভাঙে, খুব দেরিতে নয়।
 
-What a monolith gives you:
+একটা monolith আপনাকে যা দেয়:
 
-- **In-process calls** — no network latency, no serialization, no partial failure between components
-- **Atomic transactions** — one database, ACID across all operations
-- **Simple deployment** — one artifact, one deploy, one rollback
-- **Easy debugging** — one process, one log stream, one stack trace
+- **In-process calls** — কোনো network latency নেই, কোনো serialization নেই, component-দের মধ্যে কোনো partial failure নেই
+- **Atomic transactions** — একটাই database, সব operation জুড়ে ACID
+- **Simple deployment** — একটা artifact, একটা deploy, একটা rollback
+- **Easy debugging** — একটা process, একটা log stream, একটা stack trace
 
-The monolith only becomes a problem when specific constraints emerge:
+Monolith তখনই সমস্যা হয়ে দাঁড়ায় যখন নির্দিষ্ট কিছু constraint দেখা দেয়:
 
-- **Independent deployment** — two teams want to deploy without coordinating releases
-- **Independent scaling** — the checkout flow needs 10x resources but the admin panel needs none
-- **Technology isolation** — the ML team needs Python; the rest of the codebase is Node
-- **Fault isolation** — one unreliable component should not take down the entire system
+- **Independent deployment** — দুটো team release coordinate না করেই deploy করতে চায়
+- **Independent scaling** — checkout flow-এর 10x resource দরকার কিন্তু admin panel-এর কিছুই লাগে না
+- **Technology isolation** — ML team-এর Python দরকার; বাকি codebase Node
+- **Fault isolation** — একটা অনির্ভরযোগ্য component পুরো system নামিয়ে ফেলবে না
 
-If none of these constraints apply, the monolith is the right choice.
+এসব constraint-এর কোনোটাই যদি প্রযোজ্য না হয়, তাহলে monolith-ই সঠিক পছন্দ।
 
-## The Real Costs of Microservices
+## Microservices-এর আসল খরচ
 
-Every service boundary you draw adds:
+আপনি যত service boundary আঁকবেন, প্রতিটা যোগ করে:
 
-**Network calls replace function calls:**
+**Function calls-এর জায়গায় network calls আসে:**
 
 ```typescript
 // Monolith — in-process, never fails due to network
@@ -53,7 +61,7 @@ const user = userRepository.findById(userId);
 const user = await userServiceClient.getUser(userId, { timeout: 5000, retries: 3 });
 ```
 
-**Distributed transactions replace ACID transactions:**
+**ACID transactions-এর জায়গায় distributed transactions আসে:**
 
 ```typescript
 // Monolith — one transaction, all-or-nothing
@@ -70,24 +78,24 @@ await paymentService.charge(orderId); // can succeed
 await inventoryService.decrement(itemId); // can fail — now what?
 ```
 
-**Operational overhead multiplies:**
+**Operational overhead বহুগুণ বেড়ে যায়:**
 
-- 10 services = 10 CI pipelines, 10 deployment configs, 10 monitoring dashboards
-- Service discovery, load balancing, circuit breakers needed for every call
-- Distributed tracing required to follow a request across services
-- Local development requires running all dependencies (or mocking them)
+- 10টা service = 10টা CI pipeline, 10টা deployment config, 10টা monitoring dashboard
+- প্রতিটা call-এর জন্য service discovery, load balancing, circuit breaker দরকার
+- একটা request-কে service জুড়ে follow করতে distributed tracing লাগে
+- Local development-এ সব dependency চালাতে হয় (বা mock করতে হয়)
 
-## Identifying Domain Boundaries
+## Domain Boundary চিহ্নিত করা
 
-Before splitting, find the seams. Good seams have:
+ভাঙার আগে seam খুঁজুন। ভালো seam-এর থাকে:
 
-1. **High cohesion inside** — the data and logic inside a boundary change together
-2. **Low coupling outside** — the boundary interacts with others through a narrow, stable interface
-3. **Independent lifecycle** — the team responsible can deploy without coordinating
+1. **ভেতরে high cohesion** — একটা boundary-র ভেতরের data ও logic একসাথে পরিবর্তন হয়
+2. **বাইরে low coupling** — boundary অন্যদের সাথে একটা সরু, stable interface-এর মাধ্যমে interact করে
+3. **Independent lifecycle** — দায়িত্বপ্রাপ্ত team coordinate না করেই deploy করতে পারে
 
-A practical heuristic: if changing a feature requires modifying code in more than 2 bounded contexts, your boundary is wrong.
+একটা কাজের heuristic: যদি একটা feature বদলাতে হলে 2টার বেশি bounded context-এ code পরিবর্তন করতে হয়, তাহলে আপনার boundary ভুল।
 
-**Event storming as a tool:** Gather the team, map all domain events on a timeline (`OrderPlaced`, `PaymentCharged`, `ItemShipped`). Cluster events that always change together — those clusters are your bounded contexts.
+**একটা টুল হিসেবে event storming:** team-কে জড়ো করুন, সব domain event একটা timeline-এ map করুন (`OrderPlaced`, `PaymentCharged`, `ItemShipped`)। যেসব event সবসময় একসাথে বদলায় সেগুলোকে cluster করুন — ওই cluster-গুলোই আপনার bounded context।
 
 ```
 [OrderPlaced] [OrderCancelled]     → Order domain
@@ -96,9 +104,9 @@ A practical heuristic: if changing a feature requires modifying code in more tha
 [UserRegistered] [UserDeleted]     → Identity domain
 ```
 
-## The Strangler Fig Pattern
+## Strangler Fig Pattern
 
-Don't rewrite — migrate incrementally. Build the new service alongside the monolith; redirect specific paths to it; shrink the monolith over time.
+Rewrite করবেন না — ধাপে ধাপে migrate করুন। monolith-এর পাশাপাশি নতুন service বানান; নির্দিষ্ট path গুলো সেটার দিকে redirect করুন; সময়ের সাথে monolith ছোট করে আনুন।
 
 ```nginx
 # API gateway or nginx: route by path
@@ -111,36 +119,36 @@ location /api/ {
 }
 ```
 
-Steps:
+ধাপগুলো:
 
-1. Identify the piece to extract (high-value and well-defined)
-2. Build the new service with its own database
-3. Route traffic to the new service
-4. Delete the corresponding code from the monolith
-5. Repeat
+1. যেটা extract করবেন সেটা চিহ্নিত করুন (high-value ও well-defined)
+2. নিজের database সহ নতুন service বানান
+3. Traffic নতুন service-এ route করুন
+4. Monolith থেকে সংশ্লিষ্ট code মুছে ফেলুন
+5. আবার করুন
 
-The monolith shrinks with each migration. You never have a big-bang rewrite.
+প্রতিটা migration-এর সাথে monolith ছোট হয়। আপনার কখনো একটা big-bang rewrite করতে হয় না।
 
 ## Data Ownership
 
-Each service must own its data. No service reads another service's database directly.
+প্রতিটা service-কে নিজের data-র মালিক হতে হবে। কোনো service সরাসরি অন্য service-এর database পড়ে না।
 
 ```
 ✗ PaymentService reads FROM orders table in OrderService's DB
 ✓ PaymentService calls OrderService API or consumes order events
 ```
 
-Shared databases create hidden coupling — a schema change in one service breaks another. Own your schema; expose your data through APIs or events.
+Shared database লুকানো coupling তৈরি করে — এক service-এ একটা schema পরিবর্তন আরেকটাকে ভেঙে দেয়। নিজের schema-র মালিক হোন; নিজের data API বা event-এর মাধ্যমে expose করুন।
 
-**Database-per-service patterns:**
+**Database-per-service pattern:**
 
-- Different schema in the same PostgreSQL instance (cheap, acceptable for small teams)
-- Different PostgreSQL instances (true isolation, higher ops cost)
-- Different database technology per service (Postgres for orders, Redis for sessions, Elasticsearch for search)
+- একই PostgreSQL instance-এ ভিন্ন schema (সস্তা, ছোট team-এর জন্য গ্রহণযোগ্য)
+- ভিন্ন PostgreSQL instance (প্রকৃত isolation, বেশি ops খরচ)
+- প্রতি service-এ ভিন্ন database technology (order-এর জন্য Postgres, session-এর জন্য Redis, search-এর জন্য Elasticsearch)
 
-## When to Split
+## কখন ভাঙবেন
 
-A useful checklist before extracting a service:
+একটা service extract করার আগে একটা কাজের checklist:
 
 ```
 [ ] Two teams actively block each other on deploys (not just occasionally)
@@ -151,11 +159,11 @@ A useful checklist before extracting a service:
 [ ] The team owns the full lifecycle (not a shared component)
 ```
 
-If fewer than 3 boxes are checked: keep it in the monolith. The coordination overhead is not justified.
+যদি 3টার কম box টিক করা থাকে: এটা monolith-এই রাখুন। coordination overhead-টা যুক্তিযুক্ত নয়।
 
-## The Modular Monolith Middle Ground
+## Modular Monolith — মাঝামাঝি সমাধান
 
-A monolith with enforced module boundaries gets many microservice benefits without the operational overhead:
+জোরদার করা module boundary সহ একটা monolith operational overhead ছাড়াই microservice-এর অনেক সুবিধা পায়:
 
 ```typescript
 // src/modules/orders/
@@ -173,6 +181,6 @@ A monolith with enforced module boundaries gets many microservice benefits witho
 // Never: import { OrderRepository } from '../orders/orders.repository'
 ```
 
-Tools like `eslint-plugin-boundaries` enforce module constraints at the linter level. The boundary is real — crossing it requires going through the public interface. When the time comes to extract a service, the seam already exists.
+`eslint-plugin-boundaries`-এর মতো টুল linter level-এ module constraint জোরদার করে। boundary-টা বাস্তব — এটা পার হতে হলে public interface দিয়ে যেতে হয়। যখন একটা service extract করার সময় আসে, seam-টা ইতিমধ্যে বিদ্যমান থাকে।
 
-This is the right starting point for most teams. Extract services only when the specific pressure justifies it.
+বেশিরভাগ team-এর জন্য এটাই সঠিক শুরুর বিন্দু। নির্দিষ্ট চাপ যখন যুক্তিযুক্ত করে কেবল তখনই service extract করুন।

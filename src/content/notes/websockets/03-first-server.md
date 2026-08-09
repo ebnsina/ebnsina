@@ -1,9 +1,9 @@
 ---
-title: 'Your first server'
-subtitle: 'End-to-end Go WebSocket server in eighty lines, with a browser client. By the end you have an echo service plus a tiny chat room — both running on localhost, both real.'
+title: 'আপনার প্রথম server'
+subtitle: 'End-to-end Go WebSocket server আশি লাইনে, একটা browser client সহ। শেষে আপনার কাছে একটা echo service plus একটা ছোট chat room থাকবে — দুটোই localhost-এ চলছে, দুটোই বাস্তব।'
 chapter: 3
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['websockets', 'go', 'coder/websocket', 'browser']
 ---
 
@@ -11,15 +11,23 @@ topics: ['websockets', 'go', 'coder/websocket', 'browser']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Theory off. Code on.
+## গল্পে বুঝি
 
-This chapter ships a real WebSocket server in Go using `github.com/coder/websocket`. We start with a single-connection echo server, then expand it to a many-connection broadcast room. Both are tiny; both are foundations for everything in the rest of the track.
+মেলার এক কোণে ইবনে সিনা প্রথমবারের মতো একটা তথ্য-বুথ খুলে বসলেন। নিয়মটা সহজ — যখনই কোনো দর্শনার্থী বুথের সামনে এসে দাঁড়ায়, ইবনে সিনা তার জন্য একটা আলাদা কথোপকথন শুরু করেন, একটা খোলা লাইন। ফাতিমা আল-ফিহরি এসে দাঁড়ালেন। ইবনে সিনা তক্ষুনি তার দিকে মনোযোগ দিলেন, আর কান পেতে রইলেন — ফাতিমা কখন কিছু বলবেন। ফাতিমা বললেন "সালাম", সঙ্গে সঙ্গে সেই একই খোলা লাইনে ইবনে সিনা জবাব দিলেন।
+
+প্রথম দিন তো, ইবনে সিনা এখনো জটিল কিছু সামলানো শেখেননি। তাই তিনি একটা সহজ নিয়ম মানলেন — দর্শনার্থী যা-ই বলুক, তিনি হুবহু সেটাই ফেরত বলেন। ফাতিমা বললেন "আজকের আবহাওয়া কেমন?", ইবনে সিনাও শুনিয়ে দিলেন "আজকের আবহাওয়া কেমন?"। এভাবে যাচাই করে নেওয়া যায় লাইনটা ঠিকঠাক কাজ করছে কিনা। কাজ শেষে ফাতিমা যখন বিদায় নিয়ে চলে গেলেন, ইবনে সিনা পরিষ্কারভাবে সেই কথোপকথনটা গুটিয়ে ফেললেন, লাইন বন্ধ করলেন — পরের দর্শনার্থীর জন্য প্রস্তুত।
+
+এই বুথটাই আসলে একটা WebSocket **server**। দর্শনার্থী এসে দাঁড়ানো মানে নতুন একটা connection **accept** করা। তার কথা শোনার জন্য কান পেতে থাকা হলো message handler — প্রতিবার সে কিছু বললে ওই handler চালু হয়। একই খোলা লাইনে জবাব দেওয়া হলো **send**, আর হুবহু ফেরত বলা হলো **echo** server। দর্শনার্থী চলে যাওয়া হলো **close** event, যেখানে connection পরিষ্কারভাবে বন্ধ হয়। বাস্তবে একটা chat বা live-notification server ঠিক এভাবেই কাজ করে — প্রতিটা client-এর জন্য একটা করে খোলা connection, message এলে সাড়া, আর client চলে গেলে connection বন্ধ।
+
+Theory off। Code on।
+
+এই চ্যাপ্টার `github.com/coder/websocket` ব্যবহার করে Go-তে একটা বাস্তব WebSocket server ship করে। আমরা একটা single-connection echo server দিয়ে শুরু করি, তারপর সেটাকে একটা many-connection broadcast room-এ বিস্তৃত করি। দুটোই ছোট; দুটোই বাকি ট্র্যাকের সবকিছুর ভিত্তি।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Building a WebSocket server is like setting up a walkie-talkie network — once the channel is open, anyone on the frequency can broadcast and everyone else hears it immediately.
+একটা WebSocket server বানানো হলো একটা walkie-talkie network সেট আপ করার মতো — একবার channel খোলা হলে, frequency-তে থাকা যে কেউ broadcast করতে পারে আর বাকি সবাই সাথে সাথে শোনে।
 
 </Callout>
 
@@ -31,9 +39,9 @@ go mod init example.com/mywebsocket
 go get github.com/coder/websocket
 ```
 
-That is the dependency. Modern Go WebSocket library, ~3000 lines, idiomatic, context-aware, MIT licensed.
+এটাই dependency। Modern Go WebSocket library, ~3000 লাইন, idiomatic, context-aware, MIT licensed।
 
-## The echo server
+## echo server
 
 ```go
 // echo/main.go
@@ -83,19 +91,19 @@ func main() {
 }
 ```
 
-Read the moving parts.
+চলমান অংশগুলো পড়ুন।
 
-**`websocket.Accept`** does the handshake — validates `Upgrade`, computes `Sec-WebSocket-Accept`, optionally negotiates extensions and subprotocols. Returns a `*websocket.Conn`. `OriginPatterns` whitelist restricts which origins may connect (see chapter 8 for the full pattern; for dev, `"localhost:*"` is fine).
+**`websocket.Accept`** handshake করে — `Upgrade` validate করে, `Sec-WebSocket-Accept` compute করে, ঐচ্ছিকভাবে extension আর subprotocol negotiate করে। একটা `*websocket.Conn` return করে। `OriginPatterns` whitelist সীমাবদ্ধ করে কোন origin connect করতে পারবে (পুরো প্যাটার্নের জন্য চ্যাপ্টার 8 দেখুন; dev-এর জন্য `"localhost:*"` ঠিক আছে)।
 
-**`c.CloseNow()` in `defer`** kills the connection if the handler exits without a clean close. Belt-and-braces — if anything panics or returns, the connection does not leak.
+**`c.CloseNow()` in `defer`** handler যদি একটা clean close ছাড়া exit করে তবে connection kill করে। Belt-and-braces — কিছু panic করলে বা return করলে, connection leak করে না।
 
-**`c.Read(ctx)` returns `(messageType, []byte, error)`.** Message type is `websocket.MessageText` or `websocket.MessageBinary`. The library reassembles fragments transparently — you see whole messages.
+**`c.Read(ctx)` returns `(messageType, []byte, error)`।** Message type হলো `websocket.MessageText` বা `websocket.MessageBinary`। library স্বচ্ছভাবে fragment reassemble করে — আপনি পুরো message দেখেন।
 
-**`c.Write(ctx, typ, data)`** sends one frame. Atomic; no interleaving with other writers (the library has an internal write lock).
+**`c.Write(ctx, typ, data)`** একটা frame পাঠায়। Atomic; অন্য writer-দের সাথে কোনো interleaving নেই (library-র একটা internal write lock আছে)।
 
-**Context timeout (10 min in this example)** caps how long any single read or write can block. For an echo server this is fine; for a real chat server with idle users, you want longer or no timeout (cancel on disconnect, not on idle).
+**Context timeout (এই উদাহরণে 10 min)** যেকোনো একটা read বা write কতক্ষণ block করতে পারে তা cap করে। একটা echo server-এর জন্য এটা ঠিক আছে; idle user সহ একটা বাস্তব chat server-এর জন্য, আপনি আরও লম্বা বা কোনো timeout চান না (idle-এ নয়, disconnect-এ cancel)।
 
-## A browser client
+## একটা browser client
 
 ```html
 <!-- static/index.html -->
@@ -132,13 +140,13 @@ go run ./echo
 # serving on http://localhost:8080
 ```
 
-Open `http://localhost:8080` in a browser, type something, press send. You see `sent: hello` then `recv: hello` — the echo round-tripped.
+একটা browser-এ `http://localhost:8080` খুলুন, কিছু type করুন, send চাপুন। আপনি `sent: hello` তারপর `recv: hello` দেখবেন — echo round-trip করেছে।
 
-That is end-to-end WebSockets in Go: ~30 lines server, ~20 lines client, no external services.
+এটাই Go-তে end-to-end WebSockets: ~30 লাইন server, ~20 লাইন client, কোনো external service নেই।
 
-## A real broadcast room
+## একটা বাস্তব broadcast room
 
-Echo is uninteresting. The actual primitive you want is "many clients connected; one client sends, all clients receive."
+Echo একঘেয়ে। আসল যে primitive-টা আপনি চান সেটা হলো "অনেক client connected; একটা client পাঠায়, সব client পায়।"
 
 ```go
 // chat/main.go
@@ -244,22 +252,22 @@ func main() {
 }
 ```
 
-Open two browser tabs. Send from one — it shows up in the other. That is the foundational pattern: per-connection reader and writer goroutines, a room map, broadcast pushing into per-client channels.
+দুটো browser tab খুলুন। একটা থেকে পাঠান — অন্যটায় দেখা যায়। এটাই ভিত্তিমূলক প্যাটার্ন: per-connection reader আর writer goroutine, একটা room map, per-client channel-এ push করা broadcast।
 
-## Why one writer goroutine per client
+## প্রতি client-এ একটা writer goroutine কেন
 
-A `*websocket.Conn` allows concurrent read and write, but only one writer at a time per direction. The library has internal locking, but if multiple goroutines call `Write` concurrently the messages can interleave (under the locking) in unhelpful ways.
+একটা `*websocket.Conn` concurrent read আর write অনুমতি দেয়, কিন্তু প্রতি direction-এ একবারে শুধু একটা writer। library-র internal locking আছে, কিন্তু একাধিক goroutine একসাথে `Write` call করলে message (locking-এর নিচে) অকাজের ভাবে interleave করতে পারে।
 
-The clean pattern is **one goroutine per direction**:
+পরিষ্কার প্যাটার্ন হলো **প্রতি direction-এ একটা goroutine**:
 
-- **Reader goroutine:** the HTTP handler itself, looping on `conn.Read`.
-- **Writer goroutine:** drains a per-client `chan []byte`, calls `conn.Write` one message at a time.
+- **Reader goroutine:** HTTP handler নিজেই, `conn.Read`-এ loop করছে।
+- **Writer goroutine:** একটা per-client `chan []byte` drain করে, একবারে একটা message করে `conn.Write` call করে।
 
-Anyone who wants to send to a client pushes onto the channel — they never call `Write` directly. The channel decouples the sender from the network, and the writer goroutine serializes everything cleanly.
+যে কেউ একটা client-এ পাঠাতে চায় সে channel-এ push করে — তারা কখনো সরাসরি `Write` call করে না। channel sender-কে network থেকে decouple করে, আর writer goroutine সবকিছু পরিষ্কারভাবে serialize করে।
 
-## Handling slow clients
+## slow client সামলানো
 
-The `select` in `broadcast` is critical:
+`broadcast`-এর `select`-টা গুরুত্বপূর্ণ:
 
 ```go
 select {
@@ -269,35 +277,35 @@ default:
 }
 ```
 
-If the client's outbound channel is full (slow consumer, slow network), broadcasting blocks. With many clients, one slow client stalls the whole room. The `default` case drops the message rather than blocking — the slow client misses an update, but other clients are unaffected.
+client-এর outbound channel full হলে (slow consumer, slow network), broadcasting block করে। অনেক client-এর সাথে, একটা slow client পুরো room stall করে দেয়। `default` case block করার বদলে message ড্রপ করে — slow client একটা update miss করে, কিন্তু বাকি client-রা অক্ষত থাকে।
 
-Other policies are possible:
+অন্য policy-ও সম্ভব:
 
-- **Drop oldest.** Pop one from the channel before pushing.
-- **Disconnect slow clients.** If their channel is full N times in a row, close the connection.
-- **Block (bad).** Don't.
+- **Drop oldest.** Push করার আগে channel থেকে একটা pop করুন।
+- **Slow client disconnect করুন।** তাদের channel পর পর N বার full হলে, connection বন্ধ করুন।
+- **Block (খারাপ)।** করবেন না।
 
-Chapter 9 covers backpressure in detail. For now, dropping is the right default.
+চ্যাপ্টার 9 backpressure বিস্তারিত cover করে। আপাতত, dropping-ই সঠিক default।
 
 <Callout type="warn">
 
-**Never call `conn.Write` directly from the broadcast loop.** A single slow client would block the whole room, which is exactly the failure mode the writer goroutine was designed to avoid. Always push to a buffered channel; let the writer goroutine handle the network call.
+**broadcast loop থেকে কখনো সরাসরি `conn.Write` call করবেন না।** একটা single slow client পুরো room block করবে, যেটা ঠিক সেই failure mode যা এড়াতে writer goroutine বানানো হয়েছিল। সবসময় একটা buffered channel-এ push করুন; writer goroutine-কে network call সামলাতে দিন।
 
 </Callout>
 
 ## Graceful close
 
-`conn.CloseNow()` slams the connection shut without a close handshake — appropriate when we are abandoning the connection due to error.
+`conn.CloseNow()` একটা close handshake ছাড়াই connection ঝপ করে বন্ধ করে দেয় — error-এর কারণে আমরা যখন connection পরিত্যাগ করছি তখন উপযুক্ত।
 
-For a clean close, use `conn.Close(code, reason)`:
+একটা clean close-এর জন্য, `conn.Close(code, reason)` ব্যবহার করুন:
 
 ```go
 conn.Close(websocket.StatusNormalClosure, "")
 ```
 
-This sends a close frame, waits briefly for the peer's reply, then closes TCP. Clean for the peer; the JS `onclose` event reports `code=1000`.
+এটা একটা close frame পাঠায়, peer-এর reply-র জন্য সংক্ষিপ্তভাবে অপেক্ষা করে, তারপর TCP বন্ধ করে। peer-এর জন্য clean; JS `onclose` event `code=1000` report করে।
 
-Add it on shutdown:
+shutdown-এ এটা যোগ করুন:
 
 ```go
 sigs := make(chan os.Signal, 1)
@@ -314,11 +322,11 @@ go func() {
 }()
 ```
 
-Status `1001 GoingAway` is the signal for "I am leaving on purpose." Browser clients can branch on it to decide whether to reconnect. Chapter 9 has the full reconnect protocol.
+Status `1001 GoingAway` হলো "আমি ইচ্ছে করে চলে যাচ্ছি"-র signal। Browser client এর উপর branch করে reconnect করবে কিনা ঠিক করতে পারে। চ্যাপ্টার 9-এ পুরো reconnect protocol আছে।
 
-## Adding `wscat` to your toolkit
+## আপনার toolkit-এ `wscat` যোগ করা
 
-`wscat` is the WebSocket equivalent of `curl`. Indispensable for testing servers without spinning up a browser.
+`wscat` হলো `curl`-এর WebSocket সমতুল্য। একটা browser না চালিয়ে server test করার জন্য অপরিহার্য।
 
 ```bash
 npm install -g wscat
@@ -327,35 +335,35 @@ wscat -c ws://localhost:8080/ws
 < hello
 ```
 
-Or send custom Origin headers, custom subprotocols, etc. Read the manpage; it is small.
+বা custom Origin header, custom subprotocol ইত্যাদি পাঠান। manpage পড়ুন; এটা ছোট।
 
-## Concurrency and limits
+## Concurrency আর limit
 
-A naive Go server using one goroutine per connection scales surprisingly far. On a small VPS:
+প্রতি connection-এ একটা goroutine ব্যবহার করা একটা naive Go server বিস্ময়করভাবে অনেক দূর scale করে। একটা ছোট VPS-এ:
 
-- ~10K concurrent connections is comfortable.
-- ~50K is tight but possible if your messages are small and infrequent.
-- Beyond that, look at `evio` / `gnet` (epoll-based, fewer goroutines) or split work across multiple processes.
+- ~10K concurrent connection আরামদায়ক।
+- ~50K টাইট কিন্তু সম্ভব যদি আপনার message ছোট আর কম-ঘন হয়।
+- এর বাইরে, `evio` / `gnet` দেখুন (epoll-based, কম goroutine) বা একাধিক process-এ কাজ ভাগ করুন।
 
-Each connection costs:
+প্রতিটা connection-এর খরচ:
 
-- One goroutine for read (~8 KB stack initially).
-- One goroutine for write (~8 KB stack).
-- One channel buffer (the `out` chan; ~64 × message-size).
-- One file descriptor.
+- read-এর জন্য একটা goroutine (শুরুতে ~8 KB stack)।
+- write-এর জন্য একটা goroutine (~8 KB stack)।
+- একটা channel buffer (`out` chan; ~64 × message-size)।
+- একটা file descriptor।
 
-Total ~50–100 KB per idle connection, plus whatever your message buffers are. Tune the OS limits for high counts (chapter 10).
+প্রতি idle connection-এ মোট ~50–100 KB, plus আপনার message buffer যা-ই হোক। high count-এর জন্য OS limit tune করুন (চ্যাপ্টার 10)।
 
-## A common bug: the reader does not see disconnects
+## একটা সাধারণ bug: reader disconnect দেখে না
 
-If you call only `conn.Write` and never `conn.Read`, you will not detect when the client disconnects until your write finally fails. That can be minutes.
+যদি শুধু `conn.Write` call করেন আর কখনো `conn.Read` না করেন, তবে client কখন disconnect করেছে তা আপনি detect করবেন না যতক্ষণ না আপনার write শেষমেশ fail করে। সেটা মিনিট লাগতে পারে।
 
-**The reader goroutine is not optional**, even if you have no messages from the client to handle. It exists to:
+**Reader goroutine optional নয়**, এমনকি client থেকে কোনো message সামলানোর না থাকলেও। এটা থাকে যাতে:
 
-1. Drain control frames (pings, close).
-2. Detect disconnects promptly.
+1. control frame (ping, close) drain করা যায়।
+2. disconnect দ্রুত detect করা যায়।
 
-For a server-push-only service, the reader loop just discards everything:
+একটা server-push-only service-এর জন্য, reader loop শুধু সবকিছু ফেলে দেয়:
 
 ```go
 go func() {
@@ -369,17 +377,17 @@ go func() {
 }()
 ```
 
-Cheap. Always present.
+সস্তা। সবসময় থাকবে।
 
 ## Recap
 
-- `coder/websocket` handles handshake, framing, fragmentation, control frames.
-- `Accept(w, r, opts)` upgrades; `Read(ctx)` and `Write(ctx, typ, data)` move messages.
-- One reader goroutine and one writer goroutine per connection. Always.
-- Broadcast pushes to per-client channels; never call `Write` directly from a fan-out loop.
-- Slow clients: drop messages with `select { ... default: }`. Disconnect after N drops.
-- `Close(code, reason)` for graceful shutdown; `CloseNow` for emergency.
-- Tools: `wscat` for command-line WS testing.
-- Reader is mandatory even on push-only services to detect disconnects and handle pings.
+- `coder/websocket` handshake, framing, fragmentation, control frame সামলায়।
+- `Accept(w, r, opts)` upgrade করে; `Read(ctx)` আর `Write(ctx, typ, data)` message নাড়ায়।
+- প্রতি connection-এ একটা reader goroutine আর একটা writer goroutine। সবসময়।
+- Broadcast per-client channel-এ push করে; একটা fan-out loop থেকে কখনো সরাসরি `Write` call করবেন না।
+- Slow client: `select { ... default: }` দিয়ে message ড্রপ করুন। N বার drop-এর পর disconnect করুন।
+- graceful shutdown-এর জন্য `Close(code, reason)`; emergency-র জন্য `CloseNow`।
+- Tool: command-line WS testing-এর জন্য `wscat`।
+- disconnect detect করতে আর ping সামলাতে push-only service-এও reader বাধ্যতামূলক।
 
-Next: [Message protocols on top](/notes/websockets/04-message-protocols) — JSON, msgpack, framing, versioning, and the request/response patterns you build on raw frames.
+পরবর্তী: [উপরে message protocol](/notes/websockets/04-message-protocols) — JSON, msgpack, framing, versioning, আর raw frame-এর উপর যে request/response প্যাটার্ন বানান।

@@ -1,9 +1,9 @@
 ---
-title: 'FinOps & Cost Engineering'
-subtitle: "Unit economics, rightsizing, spot, savings plans, cost-aware SLOs. The senior SRE skill that turns 'the cloud bill is too high' into a tracked, owned, falling number."
+title: 'FinOps ও Cost Engineering'
+subtitle: "Unit economics, rightsizing, spot, savings plans, cost-aware SLOs। যে senior SRE skill 'cloud bill অনেক বেশি'-কে একটা tracked, owned, কমতে থাকা সংখ্যায় পরিণত করে।"
 chapter: 18
 level: 'mastery'
-readingTime: '26 min'
+readingTime: '26 মিনিট'
 topics: ['FinOps', 'cost', 'rightsizing', 'spot', 'savings plans', 'unit economics', 'cloud bill']
 ---
 
@@ -13,23 +13,31 @@ topics: ['FinOps', 'cost', 'rightsizing', 'spot', 'savings plans', 'unit economi
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A household budget — knowing exactly where the money goes is the prerequisite to spending it better.
+একটা household budget — টাকা ঠিক কোথায় যায় সেটা জানা হলো ভালোভাবে খরচ করার পূর্বশর্ত।
 
 </Callout>
 
-## Why this is an SRE topic
+## গল্পে বুঝি
 
-CFO walks into engineering: "AWS bill is up 40% this quarter. Why?"
+ফাতিমা আল-ফিহরির বিশাল হাভেলিতে চারটা wing — একেকটায় আলাদা পরিবার, রান্নাঘর, অতিথিশালা। মাসের বিদ্যুৎ-পানির bill হঠাৎ দ্বিগুণ, কিন্তু কেউ বলতে পারে না টাকাটা ঠিক কোথায় যাচ্ছে। একটাই মিটার পুরো হাভেলির — তাই bill মানে শুধু মাথার উপর ঝোলা একটা মোটা সংখ্যা, কেউ দায়ী নয়, কেউ কমানোর তাগিদও অনুভব করে না।
 
-Nobody knows. Engineering doesn't see the bill. Finance doesn't understand `c6g.4xlarge`. The bill keeps growing 5% a month until layoffs are on the table.
+তখন হাভেলির সুবিবেচক কোষাধ্যক্ষ ইবনে সিনা প্রতিটা wing-এ আলাদা sub-meter বসিয়ে দিলেন — এবার স্পষ্ট দেখা গেল কোন wing কত পোড়ায়। প্রতিটা খরচ তিনি যে পরিবার ঘটিয়েছে তার নামে লিখে রাখলেন, যাতে হিসাব ন্যায্যভাবে ভাগ হয়। তারপর চোখে পড়া অপচয় ছাঁটলেন — অতিথিশালার যে গিজার সারাদিন অকারণে জ্বলত সেটা বন্ধ, আর যে বড় প্যাকেজ কেউ পুরো ব্যবহারই করত না সেটা ছোট করে আনলেন। শেষে নিয়ম করলেন — প্রতিটা wing নিজের অংশের জন্য নিজেই জবাবদিহি করবে। ব্যস, যে যা লাগে না সব বন্ধ করে দিল, আর মাসের bill নেমে এল।
 
-This is the gap FinOps fills. The senior SREs at every well-run modern shop own — at minimum — the _unit economics_ of their service: cost per request, cost per active user, cost per gigabyte stored. Those numbers turn cloud spend into an engineering problem with a measurable target.
+এই গল্পটাই আসলে **FinOps**। sub-meter বসিয়ে প্রতি wing-এর ব্যবহার দেখতে পাওয়াটা হলো cost **visibility**; প্রতিটা খরচ যে ঘটিয়েছে তার নামে লিখে রাখা হলো cost **allocation** ও **tagging**; অকারণে জ্বলা গিজার আর অতিরিক্ত-বড় প্যাকেজ ছাঁটাই হলো **optimization** — waste কাটা আর **right-size** করা; আর প্রতিটা wing নিজের বিলের জন্য জবাবদিহি করা হলো **accountability**। বাস্তবে ঠিক এভাবেই cloud bill-কে tag করা হয়, per-team dashboard-এ visible করা হয়, rightsizing ও spot দিয়ে trim করা হয়, আর team-কে নিজের spend-এর মালিক বানানো হয় — তখন "cloud bill অনেক বেশি" একটা tracked, owned, কমতে থাকা সংখ্যায় পরিণত হয়।
 
-## The three FinOps phases
+## এটা কেন একটা SRE topic
 
-The FinOps Foundation framework. You move through these continuously per workload:
+CFO engineering-এ ঢোকে: "AWS bill এই quarter-এ 40% বেড়েছে। কেন?"
+
+কেউ জানে না। Engineering bill দেখে না। Finance `c6g.4xlarge` বোঝে না। যতক্ষণ না layoff-এর কথা ওঠে ততক্ষণ bill মাসে 5% করে বেড়ে চলে।
+
+এই gap-টাই FinOps পূরণ করে। প্রতিটা well-run আধুনিক shop-এর senior SRE-রা — কমপক্ষে — তাদের service-এর _unit economics_-এর মালিক: cost per request, cost per active user, cost per gigabyte stored। এই সংখ্যাগুলো cloud spend-কে একটা measurable target সহ একটা engineering সমস্যায় পরিণত করে।
+
+## তিনটা FinOps phase
+
+FinOps Foundation framework। আপনি প্রতিটা workload-এ ক্রমাগত এগুলোর মধ্য দিয়ে যান:
 
 ```
 Inform   — see the bill, attribute to teams, build dashboards.
@@ -37,11 +45,11 @@ Optimize — rightsize, commit, refactor expensive paths.
 Operate  — automate, alert, embed cost in code review and design.
 ```
 
-Most teams are stuck at Inform. The leverage is in moving each workload into Optimize, then Operate.
+বেশিরভাগ team Inform-এ আটকে আছে। leverage হলো প্রতিটা workload-কে Optimize, তারপর Operate-এ নেওয়ায়।
 
-## The cost model: what you actually pay for
+## Cost model: আপনি আসলে কীসের দাম দেন
 
-Cloud invoices are easy to misread. A senior SRE breaks it into four buckets:
+Cloud invoice সহজে ভুল পড়া যায়। একজন senior SRE এটাকে চার bucket-এ ভাঙে:
 
 ```
 Compute       — EC2, Fargate, GKE nodes, Lambda. ~40-60% of bill.
@@ -50,14 +58,14 @@ Data transfer — egress (cross-AZ, cross-region, internet). ~10-25%.
 Managed       — RDS, ElastiCache, MSK, opensearch. ~10-20%.
 ```
 
-The two that always surprise:
+যে দুটো সবসময় চমকে দেয়:
 
-- **Cross-AZ data transfer.** $0.01/GB sounds tiny. At 100 TB/day across services that all live in different AZs, it's $30k/month. AWS makes that bucket ~impossible to query in the standard Cost Explorer.
-- **Snapshot storage.** Old EBS snapshots auto-charged forever. Many teams discover $50k of orphaned snapshots when they finally look.
+- **Cross-AZ data transfer.** $0.01/GB শুনতে সামান্য। ভিন্ন ভিন্ন AZ-তে থাকা service জুড়ে 100 TB/day-তে, এটা $30k/month। AWS সেই bucket-কে standard Cost Explorer-এ query করা ~অসম্ভব করে রাখে।
+- **Snapshot storage.** পুরনো EBS snapshot চিরকাল auto-charged। অনেক team শেষ পর্যন্ত যখন দেখে তখন $50k-এর orphaned snapshot আবিষ্কার করে।
 
-## Unit economics — the only metric that matters long-term
+## Unit economics — দীর্ঘমেয়াদে একমাত্র যে metric গুরুত্বপূর্ণ
 
-Total cloud spend tells you nothing without scale context. Cost per unit-of-business does:
+Total cloud spend scale context ছাড়া আপনাকে কিছুই বলে না। Cost per unit-of-business বলে:
 
 ```
 - $/request                  (API service)
@@ -67,11 +75,11 @@ Total cloud spend tells you nothing without scale context. Cost per unit-of-busi
 - $/transaction              (payments)
 ```
 
-The framing flip: instead of "AWS bill is too high," the conversation becomes "cost per request was $0.0008 in Q1, $0.0011 in Q2 — what changed and how do we get back to $0.0008?"
+framing পাল্টে যায়: "AWS bill অনেক বেশি"-র বদলে, কথোপকথন হয় "cost per request Q1-এ ছিল $0.0008, Q2-তে $0.0011 — কী পাল্টাল আর কীভাবে $0.0008-এ ফিরব?"
 
-Now engineering can act. They can profile, refactor, kill features, switch instance types, and track the line.
+এখন engineering কাজ করতে পারে। তারা profile করতে, refactor করতে, feature kill করতে, instance type switch করতে, আর line track করতে পারে।
 
-### A simple unit-economics dashboard
+### একটা সরল unit-economics dashboard
 
 ```
 For each service:
@@ -83,11 +91,11 @@ Alert when:
   cost_per_request_24h > 1.5 * cost_per_request_30d_avg
 ```
 
-A regression-detection alert on cost is the same shape as one on latency — and just as actionable.
+cost-এ একটা regression-detection alert latency-র উপরেরটার মতো একই আকারের — আর ঠিক ততটাই actionable।
 
-## Cost attribution — bills are a labeling problem
+## Cost attribution — bill হলো একটা labeling সমস্যা
 
-You cannot optimize what you can't attribute. The non-negotiable foundations:
+আপনি যা attribute করতে পারেন না তা optimize করতে পারেন না। non-negotiable ভিত্তি:
 
 ```
 - Tagging policy enforced from day one.
@@ -97,21 +105,21 @@ You cannot optimize what you can't attribute. The non-negotiable foundations:
 - Per-K8s-namespace cost via tools like Kubecost / OpenCost.
 ```
 
-Without these, the cost-explorer dashboard is a single line at the top of the org. With them, you can route a Slack message to the team that owns the $80k/month CloudFront distribution.
+এগুলো ছাড়া, cost-explorer dashboard হলো org-এর মাথায় একটা single line। এগুলো সহ, আপনি সেই team-এ একটা Slack message route করতে পারেন যারা $80k/month-এর CloudFront distribution-এর মালিক।
 
-### The K8s allocation problem
+### K8s allocation সমস্যা
 
-K8s clusters share nodes across teams. Naïve allocation says "team X used 30% of CPU, so they pay 30%." But team X also held 50% of memory reservation idle. **OpenCost / Kubecost** allocate by the actual scheduling cost: max(CPU%, memory%, GPU%) of requests, weighted by node price.
+K8s cluster team জুড়ে node share করে। naïve allocation বলে "team X 30% CPU ব্যবহার করেছে, তাই তারা 30% দেয়।" কিন্তু team X একইসাথে 50% memory reservation idle ধরেছিল। **OpenCost / Kubecost** actual scheduling cost দিয়ে allocate করে: request-এর max(CPU%, memory%, GPU%), node price দিয়ে weighted।
 
-Once you ship that to teams as a Slack-bot weekly, behaviors change in two weeks. Suddenly people _do_ set the right requests.
+একবার এটা team-দের কাছে একটা Slack-bot weekly হিসেবে ship করলে, দুই সপ্তাহে behavior পাল্টায়। হঠাৎ লোকজন সঠিক request _সেট করে_।
 
-## Rightsizing — the lowest-hanging fruit
+## Rightsizing — সবচেয়ে নিচের ঝুলন্ত ফল
 
-Rightsizing means matching reservations and instance types to actual usage.
+Rightsizing মানে reservation আর instance type-কে actual usage-এর সাথে মেলানো।
 
 ### CPU/memory rightsizing
 
-The pattern:
+pattern:
 
 ```
 1. Measure actual P95 utilization over 14 days.
@@ -120,11 +128,11 @@ The pattern:
 4. Re-evaluate quarterly.
 ```
 
-VPA (Vertical Pod Autoscaler) can do this automatically in "recommend" mode (it shows you what to set without changing things). Start there. Apply manually for the first quarter; then trust automation.
+VPA (Vertical Pod Autoscaler) এটা "recommend" mode-এ স্বয়ংক্রিয়ভাবে করতে পারে (কিছু না পাল্টে কী সেট করবেন তা দেখায়)। সেখান থেকে শুরু করুন। প্রথম quarter-এ manually apply করুন; তারপর automation-এ ভরসা করুন।
 
 ### Instance type rightsizing
 
-Cloud catalogs are dense. Two heuristics:
+Cloud catalog ঘন। দুটো heuristic:
 
 ```
 - Use Graviton/ARM instances where supported. Often 20-40% cheaper at
@@ -134,11 +142,11 @@ Cloud catalogs are dense. Two heuristics:
   is paying for 7 GB/CPU it doesn't use. Move to c5 (2 GB:CPU).
 ```
 
-A real example: a Go service running on `r5.2xlarge` ($0.504/hr) using 30% of memory, moved to `c6g.2xlarge` ($0.272/hr). Same throughput. 46% cheaper. Quarter-million dollars a year off the bill.
+একটা বাস্তব উদাহরণ: একটা Go service `r5.2xlarge`-এ ($0.504/hr) 30% memory ব্যবহার করে চলছিল, `c6g.2xlarge`-এ ($0.272/hr) সরানো হলো। একই throughput। 46% সস্তা। bill থেকে বছরে এক-চতুর্থাংশ মিলিয়ন ডলার।
 
-## Commitment-based discounts
+## Commitment-ভিত্তিক discount
 
-The cloud rewards forecastable spend.
+Cloud forecastable spend-কে পুরস্কৃত করে।
 
 ```
 On-demand        — pay for what you use, no commitment. Most expensive.
@@ -151,7 +159,7 @@ Spot instances    — bid on spare capacity. ~70-90% off. Can be reclaimed
                     with 2-min notice.
 ```
 
-The strategy senior teams converge on:
+Senior team যে strategy-তে converge করে:
 
 ```
 ~70% Reserved/Savings Plans (covers steady-state baseline)
@@ -159,11 +167,11 @@ The strategy senior teams converge on:
 ~10% On-demand              (covers spikes + non-spot-tolerant workloads)
 ```
 
-Underneath the commit %, your _actual_ coverage matters: aim for **95% of compute hours covered by RIs/SPs.** Below that, you're paying on-demand for steady load.
+commit %-এর নিচে, আপনার _actual_ coverage গুরুত্বপূর্ণ: লক্ষ্য **95% compute hour RI/SP দিয়ে covered**। এর নিচে, আপনি steady load-এর জন্য on-demand দিচ্ছেন।
 
 ### Spot strategy
 
-Spot is free money for stateless or fault-tolerant workloads.
+Spot stateless বা fault-tolerant workload-এর জন্য free money।
 
 ```
 Good for:    Stateless web tier behind PDB + autoscale, batch jobs,
@@ -173,15 +181,15 @@ Bad for:     Stateful single-instance things, anything where startup
              time > 2 minutes (the spot reclaim notice).
 ```
 
-Patterns:
+Pattern:
 
-- **Mixed-instance Auto Scaling Groups / Karpenter NodePools** that span 10+ instance types. Spot interruption rate is per-instance-type; spreading reduces "all-at-once" risk.
-- **Pod Disruption Budgets** to prevent K8s from draining all spot pods at once.
-- **Capacity Rebalance** events: AWS warns before reclaim. Drain the node gracefully.
+- 10+ instance type জুড়ে থাকা **Mixed-instance Auto Scaling Group / Karpenter NodePool**। Spot interruption rate per-instance-type; ছড়ানো "all-at-once" risk কমায়।
+- K8s-কে একসাথে সব spot pod drain করা থেকে ঠেকাতে **Pod Disruption Budget**।
+- **Capacity Rebalance** event: AWS reclaim-এর আগে সতর্ক করে। node-টা gracefully drain করুন।
 
-A well-configured spot fleet sees &lt; 1 interruption / pod / week and saves 70%+ on that capacity.
+একটা well-configured spot fleet প্রতি pod প্রতি week-এ &lt; 1 interruption দেখে আর সেই capacity-তে 70%+ সাশ্রয় করে।
 
-## Storage cost — the silent grower
+## Storage cost — নীরব বৃদ্ধিকারী
 
 ```
 EBS gp3 (general SSD)    $0.08/GB/mo + provisioned IOPS
@@ -192,7 +200,7 @@ S3 Glacier Deep           $0.00099/GB/mo + retrieval cost + delay
 Snapshots                 ~ $0.05/GB/mo (incremental, but never deleted)
 ```
 
-The senior-team checklist:
+Senior-team checklist:
 
 ```
 - S3 Lifecycle policies on every bucket. Tier to IA at 30 d, Glacier at 90 d,
@@ -204,11 +212,11 @@ The senior-team checklist:
 - Intelligent-Tiering for unpredictable-access buckets.
 ```
 
-A single afternoon doing this on a mid-sized account often cuts storage 30-50%.
+একটা mid-sized account-এ এটা করতে একটা বিকেল প্রায়ই storage 30-50% কমায়।
 
-## Network egress — the cost no one expects
+## Network egress — যে cost কেউ আশা করে না
 
-The cardinal rule: **if data crosses a billing boundary, you pay.**
+মূল নিয়ম: **data যদি একটা billing boundary পার করে, আপনি দাম দেন।**
 
 ```
 Same AZ, same VPC                    free
@@ -221,16 +229,16 @@ EC2 → S3 same region                 free
 NAT Gateway data processing          $0.045/GB on top of egress
 ```
 
-The traps that kill bills:
+যে ফাঁদগুলো bill মেরে ফেলে:
 
-- **NAT Gateway in front of S3.** Use a VPC Gateway Endpoint instead. $0 vs $45k/month for high-volume traffic.
-- **Cross-AZ pod-to-pod chatter.** A microservice mesh that doesn't pin pods to nearest replicas pays cross-AZ on every internal call. Topology-aware routing (K8s `service.kubernetes.io/topology-mode: Auto`) helps.
-- **Image pulls from another region.** Mirror your registry per-region.
-- **Logs and metrics shipped cross-region.** Aggregate in-region first; ship summaries.
+- **S3-র সামনে NAT Gateway।** এর বদলে একটা VPC Gateway Endpoint ব্যবহার করুন। high-volume traffic-এর জন্য $0 vs $45k/month।
+- **Cross-AZ pod-to-pod chatter।** যে microservice mesh নিকটতম replica-তে pod pin করে না সেটা প্রতিটা internal call-এ cross-AZ দেয়। Topology-aware routing (K8s `service.kubernetes.io/topology-mode: Auto`) সাহায্য করে।
+- **আরেকটা region থেকে image pull।** আপনার registry per-region mirror করুন।
+- **Log আর metric cross-region ship করা।** আগে in-region aggregate করুন; summary ship করুন।
 
-## Data transfer architecture decisions
+## Data transfer architecture সিদ্ধান্ত
 
-These are design choices that compound:
+এগুলো এমন design পছন্দ যা যৌগিক হয়:
 
 ```
 - Multi-region active-active doubles compute + storage AND adds cross-region
@@ -243,9 +251,9 @@ These are design choices that compound:
   than direct S3 egress because volume tiers + cached responses don't re-egress.
 ```
 
-## Managed services — convenience tax math
+## Managed service — convenience tax-এর হিসাব
 
-Managed services (RDS, ElastiCache, MSK, OpenSearch) charge a premium over self-hosted. The math:
+Managed service (RDS, ElastiCache, MSK, OpenSearch) self-hosted-এর উপর একটা premium নেয়। হিসাব:
 
 ```
 Self-hosted Postgres on EC2:
@@ -257,7 +265,7 @@ RDS Postgres on db.r6g.2xlarge:
 Premium: ~3x for managed.
 ```
 
-When that 3x is worth it:
+সেই 3x কখন worth it:
 
 ```
 - You don't have a DBA.
@@ -266,7 +274,7 @@ When that 3x is worth it:
 - Team time freed up is more valuable than the dollars.
 ```
 
-When it isn't:
+কখন নয়:
 
 ```
 - You have specific tuning needs the managed service won't expose.
@@ -274,11 +282,11 @@ When it isn't:
 - You're already operating a fleet of stateful systems.
 ```
 
-A "we're moving everything to RDS" decision should be sized; it can be a $1M/year line.
+একটা "আমরা সবকিছু RDS-এ সরাচ্ছি" সিদ্ধান্ত size করা উচিত; এটা একটা $1M/year line হতে পারে।
 
 ## Cost-aware SLOs
 
-The classic SRE move: trade reliability for cost.
+classic SRE move: cost-এর বিনিময়ে reliability trade করা।
 
 ```
 Going from 99.9% → 99.99% might mean:
@@ -295,11 +303,11 @@ Going from 99.99% → 99.999% might mean:
 The cost ratio: each "9" roughly 2-5x previous.
 ```
 
-Bring this to product reviews: "the 99.99% SLO costs $X/month more than 99.9%. Do you want to spend it here or on the new feature?" Now reliability is a budget conversation, not a slogan.
+এটা product review-এ আনুন: "99.99% SLO-র খরচ 99.9%-এর চেয়ে $X/month বেশি। আপনি এটা এখানে খরচ করতে চান নাকি নতুন feature-এ?" এখন reliability একটা budget কথোপকথন, একটা slogan নয়।
 
-## Cost in code review
+## Code review-এ cost
 
-The cultural shift that matters:
+যে সাংস্কৃতিক পরিবর্তন গুরুত্বপূর্ণ:
 
 ```
 PR template additions:
@@ -312,11 +320,11 @@ CI checks:
   - flag PRs that add a new managed service with no cost estimate
 ```
 
-This sounds heavy until you've seen a single PR add $200k/year of S3 PUT requests.
+এটা ভারী শোনায় যতক্ষণ না আপনি একটা single PR-কে $200k/year-এর S3 PUT request যোগ করতে দেখেছেন।
 
-## Cost incidents — yes, they're a thing
+## Cost incident — হ্যাঁ, এগুলো একটা জিনিস
 
-A 5x egress spike at 2 AM is an incident. Treat it like one.
+রাত 2টায় একটা 5x egress spike একটা incident। এটাকে সেভাবেই treat করুন।
 
 ```
 Page-worthy cost anomalies:
@@ -330,11 +338,11 @@ Post-incident:
   - Action items to prevent recurrence (often: a guardrail or quota)
 ```
 
-A real incident: a developer enabled CloudFront access logs to a bucket with no lifecycle policy. 90 days later, the bucket was 200 TB. Postmortem fixed the lifecycle policy _and_ the IaC template that should have enforced it.
+একটা বাস্তব incident: একজন developer কোনো lifecycle policy ছাড়া একটা bucket-এ CloudFront access log enable করল। 90 দিন পর, bucket 200 TB। Postmortem lifecycle policy _আর_ যে IaC template-এর এটা enforce করা উচিত ছিল সেটা — দুটোই ফিক্স করল।
 
-## Reserved capacity for compute beyond commits
+## commit-এর বাইরে compute-এর জন্য reserved capacity
 
-Beyond Savings Plans, two more levers at scale:
+Savings Plans-এর বাইরে, স্কেলে আরও দুটো lever:
 
 ```
 - AWS Capacity Reservations: pay for capacity in a specific AZ.
@@ -364,28 +372,28 @@ Cultural:
   - "Who runs that thing?" registry in your IDP
 ```
 
-## Common mistakes
+## Common ভুল
 
-1. **No tagging discipline.** Every cost question becomes a forensic exercise.
-2. **Treating cost as finance's problem.** Engineering owns the dial.
-3. **No commitment coverage.** Paying on-demand for steady-state load is leaving 30-50% on the table.
-4. **Reflexive multi-region.** Doubles cost; only justified by real DR/latency needs.
-5. **Forgetting old snapshots, orphaned EBS volumes, dead Elastic IPs.** Audit quarterly.
-6. **Cost-anomaly alerts that no one owns.** Route to the team's Slack, not a generic channel.
+1. **কোনো tagging discipline নেই।** প্রতিটা cost প্রশ্ন একটা forensic exercise হয়ে যায়।
+2. **cost-কে finance-এর সমস্যা হিসেবে treat করা।** Engineering dial-এর মালিক।
+3. **কোনো commitment coverage নেই।** steady-state load-এর জন্য on-demand দেওয়া মানে 30-50% ছেড়ে দেওয়া।
+4. **প্রতিবর্তীভাবে multi-region।** cost দ্বিগুণ করে; শুধু বাস্তব DR/latency প্রয়োজনে justified।
+5. **পুরনো snapshot, orphaned EBS volume, dead Elastic IP ভুলে যাওয়া।** quarterly audit করুন।
+6. **Cost-anomaly alert যার কেউ মালিক নয়।** team-এর Slack-এ route করুন, একটা generic channel-এ নয়।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [FinOps Foundation](https://www.finops.org/) — framework, certifications, community
-- [AWS pricing](https://aws.amazon.com/pricing/) and [AWS Cost Management docs](https://docs.aws.amazon.com/cost-management/) — current rates + tooling
+- [FinOps Foundation](https://www.finops.org/) — framework, certification, community
+- [AWS pricing](https://aws.amazon.com/pricing/) আর [AWS Cost Management docs](https://docs.aws.amazon.com/cost-management/) — current rate + tooling
 - [Google Cloud cost optimization](https://cloud.google.com/architecture/framework/cost-optimization) — counterpart guidance
 - [OpenCost](https://www.opencost.io/) — vendor-neutral K8s cost allocation
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Unit economics is the line that turns spend into engineering action.**
-2. **Tagging + per-team dashboards** are the prerequisite for everything else.
-3. **Rightsizing CPU/memory + Graviton + correct instance ratio** is the cheapest 30%.
-4. **70% Savings Plan / 20% Spot / 10% On-demand** is the steady-state shape.
-5. **Network egress is the cost no one expects** — VPC endpoints, topology-aware routing, in-region aggregation.
-6. **Cost-aware SLOs make reliability a product conversation** instead of a slogan.
-7. **A cost spike is an incident** — treat it with the same rigor as latency.
+1. **Unit economics হলো সেই line যা spend-কে engineering action-এ পরিণত করে।**
+2. **Tagging + per-team dashboard** হলো বাকি সবকিছুর পূর্বশর্ত।
+3. **CPU/memory rightsizing + Graviton + সঠিক instance ratio** হলো সবচেয়ে সস্তা 30%।
+4. **70% Savings Plan / 20% Spot / 10% On-demand** হলো steady-state আকার।
+5. **Network egress হলো সেই cost যা কেউ আশা করে না** — VPC endpoint, topology-aware routing, in-region aggregation।
+6. **Cost-aware SLO reliability-কে একটা slogan-এর বদলে একটা product কথোপকথন বানায়।**
+7. **একটা cost spike একটা incident** — latency-র মতো একই কঠোরতায় treat করুন।

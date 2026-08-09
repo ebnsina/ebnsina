@@ -1,9 +1,9 @@
 ---
 title: 'Database Performance'
-subtitle: 'Query plans, index strategy, N+1 queries, connection pool tuning — the database is almost always the bottleneck.'
+subtitle: 'Query plan, index strategy, N+1 query, connection pool tuning — database প্রায় সবসময়ই bottleneck।'
 chapter: 3
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   ['PostgreSQL', 'query optimization', 'EXPLAIN ANALYZE', 'indexes', 'N+1', 'connection pooling']
 ---
@@ -12,17 +12,25 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+সরকারি অফিসের এক ব্যস্ত রেকর্ড রুমে বসেন কেরানি ফাতিমা আল-ফিহরি। দিনভর মানুষ এসে পুরনো ফাইল খোঁজে — জমির দলিল, জন্মনিবন্ধন, মামলার কাগজ। শুরুর দিকে ফাতিমা প্রতিটা তাক এক এক করে খুঁজতেন, একটা ফাইল বের করতেই আধা ঘণ্টা। এখন উনি টেবিলের পাশে একটা ছোট বাক্সে সব ফাইলের নাম বর্ণানুক্রমে ইনডেক্স কার্ডে সাজিয়ে রেখেছেন — নাম দেখেই সরাসরি জানেন কোন তাকের কোন খোপে ফাইলটা, পুরো ঘর হাতড়াতে হয় না। আবার আগে যেদিন দশজন দশটা ফাইল চাইত, উনি দশবার আর্কাইভ ঘরে হেঁটে যেতেন; এখন সকালে গোটা দিনের তালিকা এক কাগজে লিখে এক ট্রিপেই সব ফাইল নিয়ে আসেন।
+
+কাজের চাপ সামলাতে উনি আরও দুটো বুদ্ধি খাটান। প্রতিবার নতুন কাজের লোক ভাড়া না করে চার-পাঁচজন রানারকে সবসময় হাতের কাছে রেডি রাখেন — একজনের কাজ শেষ হলেই তাকে পরের কাজে পাঠান, বারবার নতুন লোক জোগাড়ের ঝামেলা নেই। আর কেউ ২০০ পাতার মোটা ফাইল থেকে শুধু দুই পাতা চাইলে ইবনে সিনা পুরো ফাইল কাউন্টারে বয়ে আনেন না — শুধু ওই দুই পাতা ফটোকপি করে হাতে ধরিয়ে দেন।
+
+এই গল্পটাই আসলে **database performance**। ইনডেক্স কার্ডের বাক্স দেখে সরাসরি তাকে যাওয়াটাই **index** ব্যবহার — পুরো ঘর হাতড়ানো মানে **full scan**। দশটা ফাইলের জন্য দশবার না হেঁটে এক ট্রিপে সব আনাটাই **N+1** কোয়েরি এড়িয়ে **batching**। বারবার নতুন লোক না নিয়ে রানারদের পুনর্ব্যবহার করাটাই **connection pool**, আর পুরো ফাইলের বদলে শুধু দরকারি দুই পাতা ফটোকপি করাটাই কেবল প্রয়োজনীয় **column** ফেচ করা। বাস্তবেও PostgreSQL-এ index দিয়ে full scan এড়ানো, ORM-এ N+1 batch করা, connection pool রিইউজ করা আর `SELECT *`-এর বদলে শুধু দরকারি column নেওয়া — এই চারটাই database দ্রুত রাখার সবচেয়ে বড় হাতিয়ার।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A library without a card catalogue: you need a book about quantum mechanics, so you search every shelf in order. A card catalogue (index) tells you exactly which shelf and position. EXPLAIN ANALYZE shows you whether your database is reading every row (sequential scan — no card catalogue) or jumping directly to the data (index scan — catalogue in use).
+card catalogue ছাড়া একটা library: তোমার quantum mechanics-এর একটা বই দরকার, তাই তুমি প্রতিটা shelf একে একে খোঁজো। একটা card catalogue (index) তোমাকে ঠিক কোন shelf আর কোন জায়গায় সেটা বলে দেয়। EXPLAIN ANALYZE তোমাকে দেখায় তোমার database প্রতিটা row পড়ছে কিনা (sequential scan — কোনো card catalogue নেই) নাকি সরাসরি ডেটায় লাফিয়ে যাচ্ছে (index scan — catalogue ব্যবহৃত হচ্ছে)।
 
 </Callout>
 
 ## EXPLAIN ANALYZE
 
-Every performance investigation starts here:
+প্রতিটা performance তদন্ত এখান থেকে শুরু হয়:
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
@@ -49,13 +57,13 @@ Planning Time: 1.234 ms
 Execution Time: 45.456 ms
 ```
 
-**What to look for:**
+**যা খুঁজবে:**
 
-- `Seq Scan` on a large table → needs an index
-- `Rows Removed by Filter: 89432` → index isn't selective enough (wrong index or wrong column order)
-- `loops=100` on an inner scan → N+1 pattern (100 separate queries for 100 customers)
-- `read=12` in Buffers → disk reads (cache miss — page not in `shared_buffers`)
-- High `actual time` vs low `cost` estimate → outdated statistics (run `ANALYZE`)
+- বড় table-এ `Seq Scan` → একটা index দরকার
+- `Rows Removed by Filter: 89432` → index যথেষ্ট selective না (ভুল index বা ভুল column order)
+- inner scan-এ `loops=100` → N+1 pattern (100 customer-এর জন্য 100টা আলাদা query)
+- Buffers-এ `read=12` → disk read (cache miss — page `shared_buffers`-এ নেই)
+- কম `cost` estimate-এর তুলনায় বেশি `actual time` → পুরনো statistics (`ANALYZE` চালাও)
 
 ## Index Strategy
 
@@ -86,14 +94,14 @@ CREATE INDEX orders_metadata_idx ON orders USING gin(metadata);
 -- Supports: WHERE metadata @> '{"source": "mobile"}'
 ```
 
-**Which columns to index:**
+**কোন column index করবে:**
 
-- Foreign keys (JOINs)
-- Columns in `WHERE` clauses with high cardinality (status has 3 values = low cardinality = bad candidate alone)
-- Columns in `ORDER BY` on large result sets
-- Columns used in both `WHERE` and `ORDER BY` — composite index
+- Foreign key (JOIN)
+- উঁচু cardinality-র `WHERE` clause-এর column (status-এর 3টা value আছে = কম cardinality = একা খারাপ candidate)
+- বড় result set-এ `ORDER BY`-এর column
+- `WHERE` আর `ORDER BY` দুটোতেই ব্যবহৃত column — composite index
 
-**Check for missing indexes:**
+**অনুপস্থিত index চেক করা:**
 
 ```sql
 -- Tables doing sequential scans that should be indexed
@@ -104,9 +112,9 @@ WHERE seq_scan > 1000
 ORDER BY seq_scan DESC;
 ```
 
-## N+1 Queries
+## N+1 Query
 
-The classic ORM trap: fetch 100 orders, then fetch each order's customer separately.
+ক্লাসিক ORM ফাঁদ: 100টা order fetch করো, তারপর প্রতিটা order-এর customer আলাদাভাবে fetch করো।
 
 ```typescript
 // BAD — N+1
@@ -136,7 +144,7 @@ orders.rows.forEach((o) => (o.customer = customerMap[o.customerId]));
 // Total: 2 queries
 ```
 
-Detect N+1 in production:
+Production-এ N+1 শনাক্ত করা:
 
 ```typescript
 // Log queries with pg (postgres client)
@@ -189,7 +197,7 @@ pool.on('error', (err) => {
 });
 ```
 
-**How many connections?**
+**কতগুলো connection?**
 
 ```
 max_connections = min(
@@ -198,7 +206,7 @@ max_connections = min(
 )
 ```
 
-A Postgres connection uses ~5-10MB. A 4GB server: ~400 connections maximum, but optimal concurrent queries is usually `2 × cpu_cores`. For a 4-core server: 8 optimal. Beyond that, connections queue wait, not execute.
+একটা Postgres connection ~5-10MB ব্যবহার করে। একটা 4GB server: সর্বোচ্চ ~400 connection, কিন্তু optimal concurrent query সাধারণত `2 × cpu_cores`। একটা 4-core server-এর জন্য: 8 optimal। এর বেশি হলে, connection queue-এ অপেক্ষা করে, execute করে না।
 
 ```sql
 -- Check current connections
@@ -215,7 +223,7 @@ WHERE state != 'idle'
 ORDER BY duration DESC;
 ```
 
-Use PgBouncer in `transaction` mode to allow thousands of application connections with a small number of actual Postgres connections.
+অল্প সংখ্যক আসল Postgres connection দিয়ে হাজার হাজার application connection-এর অনুমতি দিতে PgBouncer-কে `transaction` mode-এ ব্যবহার করো।
 
 ## Slow Query Log
 
@@ -238,9 +246,9 @@ pgbadger /var/log/postgresql/postgresql-*.log \
 cat slow-queries.json | jq '.slowest_queries[:10][] | {query, mean_time, count}'
 ```
 
-## Query Optimization Patterns
+## Query Optimization Pattern
 
-**Pagination — avoid OFFSET for deep pages:**
+**Pagination — গভীর page-এর জন্য OFFSET এড়াও:**
 
 ```sql
 -- BAD — offset scans all previous rows
@@ -253,7 +261,7 @@ ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-**Avoid functions on indexed columns:**
+**Indexed column-এ function এড়াও:**
 
 ```sql
 -- BAD — function prevents index use
@@ -269,7 +277,7 @@ CREATE INDEX orders_date_idx ON orders (DATE(created_at));
 CREATE INDEX customers_email_lower_idx ON customers (LOWER(email));
 ```
 
-**Batch upserts:**
+**Batch upsert:**
 
 ```sql
 -- Single roundtrip for 1000 rows
@@ -293,7 +301,7 @@ await db.query(
 );
 ```
 
-**Materialized views for expensive aggregations:**
+**ব্যয়বহুল aggregation-এর জন্য Materialized view:**
 
 ```sql
 -- Expensive to compute on every request

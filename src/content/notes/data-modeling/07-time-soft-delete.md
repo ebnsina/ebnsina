@@ -1,9 +1,9 @@
 ---
-title: 'Time and soft delete'
-subtitle: "Timestamps that survive time zones, soft delete that doesn't poison every query, and history tables that answer 'what did this look like last Tuesday?'"
+title: 'টাইম আর সফট ডিলিট'
+subtitle: "এমন টাইমস্ট্যাম্প যা টাইম জোন পেরিয়েও টিকে থাকে, সফট ডিলিট যা প্রতিটা query-কে বিষিয়ে তোলে না, আর history টেবিল যা 'গত মঙ্গলবার এটা দেখতে কেমন ছিল?' এর উত্তর দেয়"
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'timestamps', 'soft-delete', 'history', 'time-zones']
 ---
 
@@ -11,26 +11,34 @@ topics: ['data-modeling', 'timestamps', 'soft-delete', 'history', 'time-zones']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Two properties of time make it the source of more schema bugs than any other data type. First, time zones — you can store the same instant five different ways and three of them will be wrong. Second, the past — most apps eventually need to know "what was true last week," and naïve schemas can't answer that.
+সময়ের দুটো বৈশিষ্ট্য এটাকে যেকোনো ডেটা টাইপের চেয়ে বেশি schema বাগের উৎস বানিয়ে ফেলে। প্রথমত, টাইম জোন — একই instant আপনি পাঁচ ভাবে store করতে পারেন, আর তার তিনটাই ভুল হবে। দ্বিতীয়ত, অতীত — বেশিরভাগ অ্যাপকে শেষমেশ জানতে হয় "গত সপ্তাহে কী সত্যি ছিল," আর naïve schema সেটার উত্তর দিতে পারে না।
 
-This chapter covers the patterns that work: `TIMESTAMPTZ` everywhere, three useful timestamp columns by default, soft delete done right, and history tables.
+এই চ্যাপ্টারে সেই প্যাটার্নগুলো আছে যেগুলো কাজ করে: সবখানে `TIMESTAMPTZ`, ডিফল্ট হিসেবে তিনটা কাজের timestamp কলাম, সঠিক ভাবে করা soft delete, আর history টেবিল।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-An archive folder instead of permanent delete — the email is gone from your inbox but still recoverable.
+পার্মানেন্ট ডিলিটের বদলে একটা archive ফোল্ডার — ইমেইলটা আপনার inbox থেকে গায়েব, কিন্তু এখনও ফিরিয়ে আনা যায়।
 
 </Callout>
 
-## Timestamps — `TIMESTAMPTZ`, always
+## গল্পে বুঝি
 
-Postgres has two timestamp types:
+বুখারার এক পুরনো বাজারে ইবনে সিনা হিসাব রাখেন একটা মোটা খাতায়। তাঁর একটাই নিয়ম — খাতা থেকে কোনো এন্ট্রি কখনও রাবার দিয়ে মোছা যাবে না। প্রতিটা লেনদেন লেখার সময় তিনি পাশে বসিয়ে দেন দুটো তারিখ: কবে প্রথম এন্ট্রিটা লেখা হলো, আর সবশেষে কবে সেটায় হাত পড়ল, মানে সংশোধন হলো। কোনো দোকানদার এসে দাম বদলালে ইবনে সিনা পুরনো লাইন মোছেন না, শুধু সংশোধনের তারিখটা নতুন করে বসিয়ে দেন।
 
-- `TIMESTAMP` (without time zone): a wall-clock value with no zone. _Looks_ like a moment in time but isn't.
-- `TIMESTAMPTZ` (with time zone): a UTC instant.
+এক সকালে আল-খোয়ারিজমি এসে একটা লেনদেন বাতিল করতে বললেন। ইবনে সিনা রাবার ধরলেন না — বদলে ওই লাইনটার ওপর পরিপাটি একটা দাগ টেনে পাশে লিখলেন "১২ রজব তারিখে বাতিল"। লাইনটা খাতায় থেকেই গেল, শুধু দিনের মোট হিসাব কষার সময় তিনি দাগ-দেওয়া লাইনগুলো বাদ দিয়ে যোগ করেন। পরের সপ্তাহে ফাতিমা আল-ফিহরি এসে বললেন বাতিলটা ভুল হয়েছিল — ইবনে সিনা নিশ্চিন্তে দাগটা তুলে দিলেন, এন্ট্রি আবার জীবন্ত, কারণ সেটা কখনও মুছেই ফেলা হয়নি।
 
-**Always use `TIMESTAMPTZ`.** Even when you "know" the data is in a single time zone. Even when you don't display time zones in the UI.
+এই খাতাই আসলে আমাদের schema। লেখার আর সংশোধনের তারিখ দুটো হলো `created_at` আর `updated_at` timestamp — কবে row তৈরি হলো আর সবশেষে কবে বদলাল। রাবারে মোছার বদলে লাইনে দাগ টেনে "বাতিলের তারিখ" লেখাটাই soft delete — row মুছে না ফেলে একটা `deleted_at` বসিয়ে দেওয়া। ফলে পুরো ইতিহাস অক্ষত থাকে (audit) আর ভুল বাতিল অনায়াসে ফিরিয়ে আনা যায় (restore), অথচ দিনের মোট হিসাব দাগ-দেওয়া লাইন বাদ দেয় — ঠিক যেমন query-তে `WHERE deleted_at IS NULL` দিয়ে soft-deleted row ছেঁকে বাদ দেওয়া হয়। বাস্তবেও ব্যাংক, অ্যাকাউন্টিং সফটওয়্যার বা যেকোনো compliance-নির্ভর সিস্টেম ঠিক এভাবেই ডেটা কখনও সত্যিকারভাবে মোছে না — মার্ক করে রাখে, যাতে "গত মাসে এটা দেখতে কেমন ছিল" প্রশ্নের উত্তর সবসময় থাকে।
+
+## Timestamp — `TIMESTAMPTZ`, সবসময়
+
+Postgres-এ দুই ধরনের timestamp টাইপ আছে:
+
+- `TIMESTAMP` (টাইম জোন ছাড়া): কোনো জোন ছাড়া একটা wall-clock মান। দেখতে সময়ের একটা মুহূর্ত মনে হয়, কিন্তু আসলে নয়।
+- `TIMESTAMPTZ` (টাইম জোন সহ): একটা UTC instant।
+
+**সবসময় `TIMESTAMPTZ` ব্যবহার করুন।** এমনকি যখন আপনি "জানেন" ডেটা একটাই টাইম জোনে আছে। এমনকি যখন UI-তে টাইম জোন দেখানও না।
 
 ```sql
 CREATE TABLE events (
@@ -40,11 +48,11 @@ CREATE TABLE events (
 );
 ```
 
-`TIMESTAMPTZ` stores 8 bytes representing UTC seconds + microseconds. When you read it, Postgres converts to your session's time zone. When you write a value, Postgres converts to UTC. The storage is canonical; the display is local.
+`TIMESTAMPTZ` ৮ বাইট store করে যা UTC সেকেন্ড + মাইক্রোসেকেন্ড রিপ্রেজেন্ট করে। যখন আপনি এটা পড়েন, Postgres আপনার session-এর টাইম জোনে কনভার্ট করে। যখন একটা মান লেখেন, Postgres UTC-তে কনভার্ট করে। storage হলো canonical; display হলো লোকাল।
 
-A common confusion: `TIMESTAMPTZ` does **not** store the time zone the data was written in. It only stores UTC. The "with time zone" part of the name refers to the fact that it accepts time-zoned input and converts.
+একটা কমন কনফিউশন: `TIMESTAMPTZ` কিন্তু যে টাইম জোনে ডেটা লেখা হয়েছিল সেটা **store করে না**। এটা শুধু UTC store করে। নামের "with time zone" অংশটা আসলে এই বোঝায় যে এটা টাইম-জোনসহ input গ্রহণ করে আর কনভার্ট করে।
 
-If you also need to know the user's original time zone (e.g. for booking apps where "9 AM Tokyo time" must stay "9 AM Tokyo time" even when DST shifts), store the zone separately:
+আপনার যদি ইউজারের মূল টাইম জোনও জানার দরকার হয় (যেমন booking অ্যাপে যেখানে "টোকিও সময় সকাল ৯টা" DST শিফট হলেও "টোকিও সময় সকাল ৯টা"-ই থাকতে হবে), তাহলে জোনটা আলাদা করে store করুন:
 
 ```sql
 CREATE TABLE bookings (
@@ -55,17 +63,17 @@ CREATE TABLE bookings (
 );
 ```
 
-Now you have UTC for storage/sorting and the zone for display.
+এখন storage/sorting-এর জন্য UTC আছে আর display-র জন্য জোন আছে।
 
 <Callout type="warn">
 
-**Never use `TIMESTAMP` without time zone for new data.** It's a footgun that "works" until the first daylight-saving boundary or the first time you deploy across regions. The 8 bytes are the same; the correctness isn't.
+**নতুন ডেটার জন্য কখনও `TIMESTAMP` (টাইম জোন ছাড়া) ব্যবহার করবেন না।** এটা এমন একটা footgun যা প্রথম daylight-saving সীমানা বা প্রথমবার একাধিক region-এ deploy করা পর্যন্ত "কাজ করে"। ৮ বাইট একই; কিন্তু correctness এক নয়।
 
 </Callout>
 
-## The three default timestamps
+## তিনটা ডিফল্ট timestamp
 
-Almost every entity table benefits from three timestamps:
+প্রায় প্রতিটা entity টেবিল তিনটা timestamp থেকে উপকৃত হয়:
 
 ```sql
 CREATE TABLE posts (
@@ -77,13 +85,13 @@ CREATE TABLE posts (
 );
 ```
 
-**`created_at`** — when the row was first inserted. Set once, never changes.
+**`created_at`** — row-টা প্রথম কবে insert হয়েছিল। একবার সেট হয়, আর কখনও বদলায় না।
 
-**`updated_at`** — when the row was last changed. Updated on every UPDATE.
+**`updated_at`** — row-টা শেষ কবে বদলানো হয়েছিল। প্রতিটা UPDATE-এ আপডেট হয়।
 
-**`deleted_at`** — soft-delete marker (more below). NULL means active.
+**`deleted_at`** — soft-delete মার্কার (নিচে আরও)। NULL মানে active।
 
-Maintenance for `updated_at`:
+`updated_at`-এর maintenance:
 
 ```sql
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
@@ -99,21 +107,21 @@ FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 ```
 
-Now every UPDATE on `posts` automatically refreshes `updated_at`. Apply this trigger to every entity table — one-line copy per table.
+এখন `posts`-এ প্রতিটা UPDATE অটোমেটিক `updated_at` রিফ্রেশ করে। প্রতিটা entity টেবিলে এই trigger লাগান — টেবিলপ্রতি এক লাইন কপি।
 
-Application-level alternative: every UPDATE in app code includes `updated_at = now()`. Works, but easy to forget.
+Application-লেভেল বিকল্প: app কোডে প্রতিটা UPDATE-এ `updated_at = now()` রাখা। কাজ করে, কিন্তু ভুলে যাওয়া সহজ।
 
-The benefit of all three timestamps:
+তিনটা timestamp-এরই সুবিধা:
 
-- "When did this go wrong?" → `created_at`.
-- "Has this been touched recently?" → `updated_at`.
-- "Why don't I see this anymore?" → `deleted_at`.
+- "এটা কখন খারাপ হলো?" → `created_at`।
+- "এটা সম্প্রতি কি ছোঁয়া হয়েছে?" → `updated_at`।
+- "এটা আর দেখছি না কেন?" → `deleted_at`।
 
-In production debugging, these three columns answer the first question 80% of the time.
+Production debugging-এ এই তিনটা কলাম প্রথম প্রশ্নের উত্তর ৮০% সময়ই দিয়ে দেয়।
 
 ## Soft delete
 
-A soft delete marks a row as deleted without physically removing it.
+Soft delete একটা row-কে ফিজিক্যালি রিমুভ না করেই deleted হিসেবে মার্ক করে।
 
 ```sql
 ALTER TABLE posts ADD COLUMN deleted_at TIMESTAMPTZ;
@@ -125,36 +133,36 @@ UPDATE posts SET deleted_at = now() WHERE id = 42;
 SELECT * FROM posts WHERE deleted_at IS NULL;
 ```
 
-Reasons to soft-delete:
+Soft-delete করার কারণ:
 
-- **Recovery.** "Undelete" is a single UPDATE.
-- **Audit.** Row history is preserved for compliance, debugging, analytics.
-- **Foreign key safety.** A deleted row that's still referenced by FKs from other tables doesn't cause cascade chaos.
-- **Cross-system replication.** Downstream caches and analytics can see the deletion as a state change rather than a missing row.
+- **Recovery.** "Undelete" মানে একটা মাত্র UPDATE।
+- **Audit.** compliance, debugging, analytics-এর জন্য row-এর history রক্ষা পায়।
+- **Foreign key safety.** যে deleted row এখনও অন্য টেবিল থেকে FK দিয়ে রেফারেন্স করা হচ্ছে সেটা cascade বিশৃঙ্খলা তৈরি করে না।
+- **Cross-system replication.** downstream cache আর analytics ডিলিশনটাকে একটা missing row হিসেবে না দেখে একটা state change হিসেবে দেখতে পারে।
 
-The cost: every query has to remember `WHERE deleted_at IS NULL`. Forget once, and your "list posts" includes deleted ones. Worse, "count posts" double-counts; "look up post by slug" can return the deleted version.
+খরচটা: প্রতিটা query-কে `WHERE deleted_at IS NULL` মনে রাখতে হয়। একবার ভুলে গেলে আপনার "list posts"-এ deleted পোস্টও চলে আসে। আরও খারাপ, "count posts" ডাবল-কাউন্ট করে; "slug দিয়ে post খোঁজা" deleted ভার্সন রিটার্ন করতে পারে।
 
-### The soft-delete trap
+### সফট-ডিলিটের ফাঁদ
 
-The trap is real. Three failure modes:
+ফাঁদটা বাস্তব। তিনটা failure mode:
 
-**1. Forgetful queries.** A new endpoint returns deleted rows because the developer forgot the filter. Common, hard to test (deleted rows are uncommon in dev).
+**১. ভুলোমনা query.** নতুন একটা endpoint deleted row রিটার্ন করে কারণ ডেভেলপার filter-টা ভুলে গেছে। কমন, টেস্ট করা কঠিন (dev-এ deleted row বিরল)।
 
-**2. Unique constraints break.** `email UNIQUE` doesn't allow a deleted user with email `a@b.com` to coexist with a new user with the same email. Either user can't sign up, or you have to allow it on the deleted side.
+**২. Unique constraint ভেঙে যায়।** `email UNIQUE` `a@b.com` ইমেইলওয়ালা একটা deleted ইউজারকে একই ইমেইলওয়ালা নতুন ইউজারের সাথে সহাবস্থান করতে দেয় না। হয় ইউজার sign up করতে পারে না, নয়তো deleted দিকটায় আপনাকে এটা allow করতে হয়।
 
-**3. Performance drag.** Indexes include the deleted rows. Queries scan more pages. For a heavily-deleted table, this adds up.
+**৩. Performance drag.** Index-এ deleted row-ও থাকে। query আরও বেশি page scan করে। যে টেবিলে প্রচুর delete হয় সেখানে এটা জমে ওঠে।
 
-Mitigations for each:
+প্রতিটার mitigation:
 
-**For forgetful queries:** use a view.
+**ভুলোমনা query-র জন্য:** একটা view ব্যবহার করুন।
 
 ```sql
 CREATE VIEW posts_active AS SELECT * FROM posts WHERE deleted_at IS NULL;
 ```
 
-App code queries `posts_active` for display. Admin tools query `posts` directly. The default is correct; you opt into deleted data explicitly.
+App কোড display-র জন্য `posts_active` query করে। Admin টুল সরাসরি `posts` query করে। ডিফল্টটাই সঠিক; deleted ডেটায় ঢুকতে হলে আপনাকে ইচ্ছাকৃতভাবে opt in করতে হয়।
 
-**For unique constraints:** partial unique index.
+**Unique constraint-এর জন্য:** partial unique index।
 
 ```sql
 CREATE UNIQUE INDEX users_email_active
@@ -162,9 +170,9 @@ ON users(email)
 WHERE deleted_at IS NULL;
 ```
 
-Email is unique among active users; deleted users can hold their old email forever (or you can wipe it).
+active ইউজারদের মধ্যে ইমেইল unique; deleted ইউজাররা তাদের পুরনো ইমেইল চিরকাল রাখতে পারে (বা আপনি সেটা মুছে দিতে পারেন)।
 
-**For performance:** partial indexes everywhere.
+**Performance-এর জন্য:** সবখানে partial index।
 
 ```sql
 CREATE INDEX posts_created_active
@@ -172,9 +180,9 @@ ON posts(created_at DESC)
 WHERE deleted_at IS NULL;
 ```
 
-The index only covers active rows. Lookups on the active set are fast; deleted rows aren't in the index.
+Index-টা শুধু active row cover করে। active set-এর lookup দ্রুত; deleted row index-এ নেই।
 
-For very heavy delete rates, consider **archiving** to a cold table:
+খুব বেশি delete-হার হলে একটা cold টেবিলে **archiving** করার কথা ভাবুন:
 
 ```sql
 -- nightly job
@@ -182,20 +190,20 @@ INSERT INTO posts_archive SELECT * FROM posts WHERE deleted_at < now() - interva
 DELETE FROM posts WHERE deleted_at < now() - interval '90 days';
 ```
 
-Active table stays small; deleted history lives in archive. Compliance lookups query the archive.
+active টেবিল ছোট থাকে; deleted history archive-এ থাকে। compliance lookup archive query করে।
 
-## When NOT to soft-delete
+## কখন soft-delete করবেন না
 
-- **Sensitive data with deletion compliance.** GDPR's "right to be forgotten" requires actual deletion of personal data. Soft-delete + hard-delete-on-request is a valid pattern, but the hard delete must really erase.
-- **Append-only logs.** Already historical; "deleting" doesn't make sense.
-- **Truly transient data.** Notifications older than 30 days, ephemeral session tokens. Hard delete.
-- **Privacy-sensitive joins.** A `user_messages` table where the user is deleted — keeping their messages soft-deleted may be a leak. Hard-delete or anonymize.
+- **Deletion compliance আছে এমন sensitive ডেটা।** GDPR-এর "right to be forgotten" ব্যক্তিগত ডেটার সত্যিকার ডিলিশন দাবি করে। Soft-delete + অনুরোধে hard-delete একটা বৈধ প্যাটার্ন, কিন্তু hard delete-টাকে সত্যিই মুছে ফেলতে হবে।
+- **Append-only log.** ইতিমধ্যেই ঐতিহাসিক; "delete" করার কোনো মানে হয় না।
+- **সত্যিকার transient ডেটা।** ৩০ দিনের বেশি পুরনো notification, ephemeral session token। Hard delete।
+- **Privacy-sensitive join.** একটা `user_messages` টেবিল যেখানে ইউজার deleted — তাদের মেসেজ soft-deleted রাখা একটা leak হতে পারে। Hard-delete করুন বা anonymize করুন।
 
-## History tables
+## History টেবিল
 
-Soft delete preserves "what was deleted." History tables preserve "what changed and when."
+Soft delete "কী delete হয়েছিল" রক্ষা করে। History টেবিল "কী বদলেছিল আর কখন" রক্ষা করে।
 
-A simple pattern: a parallel `_history` table that captures every state.
+একটা সহজ প্যাটার্ন: একটা প্যারালাল `_history` টেবিল যা প্রতিটা state ক্যাপচার করে।
 
 ```sql
 CREATE TABLE customers (
@@ -217,7 +225,7 @@ CREATE TABLE customers_history (
 );
 ```
 
-A trigger captures changes:
+একটা trigger পরিবর্তনগুলো ক্যাপচার করে:
 
 ```sql
 CREATE OR REPLACE FUNCTION customers_archive() RETURNS TRIGGER AS $$
@@ -240,7 +248,7 @@ AFTER INSERT OR UPDATE ON customers
 FOR EACH ROW EXECUTE FUNCTION customers_archive();
 ```
 
-Now `customers_history` answers "what was customer 42's plan on 2026-04-01?":
+এখন `customers_history` "২০২৬-০৪-০১ তারিখে customer 42-এর plan কী ছিল?" এর উত্তর দেয়:
 
 ```sql
 SELECT plan FROM customers_history
@@ -249,17 +257,17 @@ WHERE id = 42
   AND (valid_to IS NULL OR valid_to > '2026-04-01');
 ```
 
-Pattern variants:
+প্যাটার্নের ভ্যারিয়েন্ট:
 
-- **Append-only history table.** Every UPDATE inserts a new row; old rows have `valid_to`. As above.
-- **Audit log.** Less structured: `change_log` table with `(table_name, row_id, action, changed_at, payload JSONB)`. More flexible, less queryable.
-- **PostgreSQL temporal tables (extension `temporal_tables`).** Manages history automatically. Worth knowing about; depends on your tolerance for extensions.
+- **Append-only history টেবিল।** প্রতিটা UPDATE একটা নতুন row insert করে; পুরনো row-এ `valid_to` থাকে। উপরে যেমন।
+- **Audit log.** কম structured: `change_log` টেবিল সহ `(table_name, row_id, action, changed_at, payload JSONB)`। বেশি flexible, কম queryable।
+- **PostgreSQL temporal table (extension `temporal_tables`)।** history অটোমেটিক ম্যানেজ করে। জেনে রাখা মূল্যবান; extension-এর প্রতি আপনার সহনশীলতার ওপর নির্ভর করে।
 
-For most apps, an append-only history per critical table is the simple, correct shape. Don't try to history-track every table — just the ones where "what was true at this moment" matters (compliance, billing, legal).
+বেশিরভাগ অ্যাপের জন্য প্রতিটা critical টেবিলে একটা append-only history-ই সহজ, সঠিক আকৃতি। প্রতিটা টেবিল history-track করার চেষ্টা করবেন না — শুধু সেগুলোই যেখানে "এই মুহূর্তে কী সত্যি ছিল" গুরুত্বপূর্ণ (compliance, billing, legal)।
 
-## Time-range columns
+## Time-range কলাম
 
-Postgres has `TSTZRANGE` for time ranges:
+Postgres-এ time range-এর জন্য `TSTZRANGE` আছে:
 
 ```sql
 CREATE TABLE rentals (
@@ -270,31 +278,31 @@ CREATE TABLE rentals (
 );
 ```
 
-The `during` column captures both start and end in one column, with native support for "overlaps", "contains", "adjacent" operators. Combined with EXCLUDE constraints (chapter 6), it prevents booking conflicts at the schema level.
+`during` কলাম একটা কলামেই start আর end দুটোই ক্যাপচার করে, "overlaps", "contains", "adjacent" অপারেটরের native সাপোর্টসহ। EXCLUDE constraint (চ্যাপ্টার 6) এর সাথে মিলিয়ে এটা schema লেভেলেই booking conflict ঠেকায়।
 
-If you currently have `start_at` and `end_at` columns and routinely write queries like `WHERE start_at &lt; $1 AND end_at > $2` — that's a sign `TSTZRANGE` will be cleaner.
+আপনার যদি এখন `start_at` আর `end_at` কলাম থাকে আর নিয়মিত `WHERE start_at &lt; $1 AND end_at > $2` টাইপের query লেখেন — এটা একটা সংকেত যে `TSTZRANGE` আরও পরিচ্ছন্ন হবে।
 
-## Common time mistakes
+## সময় নিয়ে কমন ভুল
 
-**1. Mixing seconds and milliseconds.** `created_at_ms` BIGINT vs `created_at_sec` INT. Pick one — milliseconds — for all integer timestamps. Or just use `TIMESTAMPTZ` everywhere.
+**১. সেকেন্ড আর মিলিসেকেন্ড মেশানো।** `created_at_ms` BIGINT বনাম `created_at_sec` INT। সব integer timestamp-এর জন্য একটা বেছে নিন — মিলিসেকেন্ড। অথবা সবখানে `TIMESTAMPTZ`-ই ব্যবহার করুন।
 
-**2. Storing local time as `TIMESTAMP`.** "It's just a timestamp, why does it matter?" It matters when DST happens, when the server moves regions, when a user crosses time zones.
+**২. লোকাল টাইমকে `TIMESTAMP` হিসেবে store করা।** "এটা তো শুধু একটা timestamp, কী এসে যায়?" DST হলে, সার্ভার region বদলালে, ইউজার টাইম জোন পার হলে — তখন এসে যায়।
 
-**3. Comparing timestamps with `=`.** `WHERE created_at = '2026-01-01'` casts to midnight UTC. The user meant "anywhere on Jan 1." Use ranges: `WHERE created_at >= '2026-01-01' AND created_at &lt; '2026-01-02'`.
+**৩. `=` দিয়ে timestamp তুলনা করা।** `WHERE created_at = '2026-01-01'` UTC মধ্যরাতে cast করে। ইউজার বুঝিয়েছিল "১ জানুয়ারির যেকোনো সময়।" range ব্যবহার করুন: `WHERE created_at >= '2026-01-01' AND created_at &lt; '2026-01-02'`।
 
-**4. Trusting client clocks.** `INSERT INTO events(occurred_at) VALUES ($client_timestamp)` lets a buggy or malicious client insert events in the past or future. For events the server controls, use `now()`. For events the client reports (with verification), set both `occurred_at` (client) and `received_at` (server).
+**৪. ক্লায়েন্টের clock-এ বিশ্বাস করা।** `INSERT INTO events(occurred_at) VALUES ($client_timestamp)` একটা বাগি বা malicious ক্লায়েন্টকে অতীতে বা ভবিষ্যতে event insert করতে দেয়। সার্ভারের নিয়ন্ত্রণে থাকা event-এর জন্য `now()` ব্যবহার করুন। ক্লায়েন্টের রিপোর্ট করা event-এর জন্য (verification সহ) `occurred_at` (ক্লায়েন্ট) আর `received_at` (সার্ভার) দুটোই সেট করুন।
 
-**5. Forgetting `NOT NULL` on `created_at`.** "Created at NULL" means "we don't know when this was created" — almost always a bug. NOT NULL DEFAULT now() makes it impossible.
+**৫. `created_at`-এ `NOT NULL` ভুলে যাওয়া।** "Created at NULL" মানে "এটা কখন তৈরি হয়েছিল আমরা জানি না" — প্রায় সবসময়ই একটা বাগ। NOT NULL DEFAULT now() এটাকে অসম্ভব করে দেয়।
 
-## Recap
+## রিক্যাপ
 
-- `TIMESTAMPTZ` everywhere. `TIMESTAMP` (without zone) is a footgun.
-- Three default timestamps: `created_at`, `updated_at`, `deleted_at`.
-- `updated_at` via trigger so app code can't forget.
-- Soft delete pattern: `deleted_at TIMESTAMPTZ` nullable, view for active, partial indexes for performance and uniqueness.
-- Don't soft-delete sensitive data subject to deletion compliance.
-- History tables for "what was true and when" — append-only, with `valid_from`/`valid_to`.
-- `TSTZRANGE` + EXCLUDE for booking-style overlap prevention.
-- Common bugs: mixing seconds/ms, equality on timestamps, trusting client clocks, allowing NULL on `created_at`.
+- সবখানে `TIMESTAMPTZ`। `TIMESTAMP` (জোন ছাড়া) একটা footgun।
+- তিনটা ডিফল্ট timestamp: `created_at`, `updated_at`, `deleted_at`।
+- `updated_at` trigger দিয়ে, যাতে app কোড ভুলে যেতে না পারে।
+- Soft delete প্যাটার্ন: `deleted_at TIMESTAMPTZ` nullable, active-র জন্য view, performance আর uniqueness-এর জন্য partial index।
+- Deletion compliance-এর আওতায় থাকা sensitive ডেটা soft-delete করবেন না।
+- "কী সত্যি ছিল আর কখন" এর জন্য history টেবিল — append-only, `valid_from`/`valid_to` সহ।
+- Booking-স্টাইল overlap ঠেকানোর জন্য `TSTZRANGE` + EXCLUDE।
+- কমন বাগ: সেকেন্ড/ms মেশানো, timestamp-এ equality, ক্লায়েন্ট clock-এ বিশ্বাস, `created_at`-এ NULL allow করা।
 
-Next: [Multi-tenancy](/notes/data-modeling/08-multi-tenancy) — single-DB, schema-per-tenant, row-level security.
+পরবর্তী: [Multi-tenancy](/notes/data-modeling/08-multi-tenancy) — single-DB, schema-per-tenant, row-level security।

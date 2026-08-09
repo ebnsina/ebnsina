@@ -1,9 +1,9 @@
 ---
 title: 'Distributed Caching'
-subtitle: 'Sharing cache state across multiple servers — consistent hashing, Redis Cluster, and the failure modes that will surprise you.'
+subtitle: 'একাধিক সার্ভারের মধ্যে cache state ভাগ করে নেওয়া — consistent hashing, Redis Cluster, এবং যেসব failure mode আপনাকে চমকে দেবে।'
 chapter: 7
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['Redis Cluster', 'consistent hashing', 'sharding', 'replication', 'distributed systems']
 ---
 
@@ -11,23 +11,31 @@ topics: ['Redis Cluster', 'consistent hashing', 'sharding', 'replication', 'dist
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Distributed Caching Exists
+## গল্পে বুঝি
 
-A single Redis node runs out of memory. Or it becomes a bottleneck for write throughput. Or you need it to survive a single node failure. Distributed caching solves these by spreading data across multiple nodes.
+চট্টগ্রামের রিয়াজউদ্দিন বাজার — বিশাল পাইকারি বাজার, হাজার হাজার বস্তা মালামাল। আগে ইবনে সিনার একটামাত্র গুদাম ছিল, কিন্তু একটা গুদামে আর জায়গা হয় না, তার উপর সেটা ভরে গেলে মাল বের করতে-ঢোকাতে জ্যাম লেগে যায়। তাই ইবনে সিনা কয়েকটা গুদাম বানাল আর একটা সহজ নিয়ম চালু করল: মালের নামের প্রথম অক্ষর অনুযায়ী কোন গুদামে কী থাকবে সেটা ঠিক করা। আল-খোয়ারিজমি যখন "চিনি" খোঁজে, তাকে সবগুলো গুদামে দৌড়াতে হয় না — নিয়মটা দেখেই সে জানে চিনি কোন গুদামে, সোজা সেখানেই চলে যায়। এই নিয়মটাই সবার জানা, তাই যেকোনো লোক যেকোনো মাল এক চেষ্টাতেই সঠিক গুদামে গিয়ে পায়।
 
-The problem: when you have N nodes, how do you know which node holds key `user:123`? And what happens when you add or remove a node?
+সমস্যা হলো নতুন গুদাম যোগ করা বা কোনোটা বন্ধ হয়ে গেলে। ইবনে সিনা যদি এমন নিয়ম করে যে "মোট গুদাম সংখ্যা দিয়ে ভাগ করে বাকি" মিলিয়ে গুদাম ঠিক হবে, তাহলে একটা নতুন গুদাম বসালেই প্রায় সব মালের হিসাব বদলে যায় — গোটা বাজারকে মাল সরাতে হয়, বিশাল হুলুস্থুল। তাই ইবনে সিনা চালাক নিয়ম ব্যবহার করে — এমন একটা চিরকুট-ব্যবস্থা যেখানে গুদাম আর মাল দুটোকেই একই বৃত্তে সাজানো থাকে, আর প্রতিটা মাল তার পাশের গুদামে যায়। এতে নতুন একটা গুদাম বসালে কেবল তার আশপাশের অল্প কিছু মাল সরাতে হয়, ফাতিমা আল-ফিহরির মশলা বা আল-খোয়ারিজমির চিনি — বাকি বেশিরভাগ মাল যেখানে ছিল সেখানেই থাকে।
+
+এই গল্পটাই আসলে **distributed cache**। প্রতিটা গুদাম হলো একটা cache node, নামের প্রথম অক্ষরের চালাক নিয়মটাই **consistent hashing** — যা দিয়ে যেকোনো key কোন node-এ আছে তা এক ধাপেই বের করা যায় এবং একটা node যোগ বা বাদ দিলে সামান্য কিছু key-ই কেবল reshuffle হয়। বাস্তবে **Redis Cluster** ঠিক এভাবেই 16,384-টা slot অনেক node-এ ভাগ করে চালায়, যাতে একটা মেশিনের memory ছাড়িয়ে গেলেও ডেটা ছড়িয়ে রাখা যায় আর node fail করলেও পুরো সিস্টেম টিকে থাকে।
+
+## Distributed Caching কেন দরকার
+
+একটা একক Redis node-এর memory একসময় ফুরিয়ে যায়। কিংবা সেটা write throughput-এর জন্য bottleneck হয়ে দাঁড়ায়। অথবা আপনার দরকার হয় যেন একটা node fail করলেও সিস্টেম টিকে থাকে। Distributed caching এই সমস্যাগুলো সমাধান করে একাধিক node-এর মধ্যে ডেটা ছড়িয়ে দিয়ে।
+
+সমস্যাটা হলো: আপনার কাছে যখন N-টা node আছে, তখন আপনি কীভাবে জানবেন যে `user:123` key-টা কোন node-এ আছে? আর যখন আপনি একটা node যোগ বা বাদ দেন, তখন কী হয়?
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A library with one filing cabinet runs out of space. You buy three more cabinets and split the alphabet: A–G in cabinet 1, H–N in cabinet 2, O–Z in cabinet 3. Simple — until you add a 5th cabinet and have to move half the files. Consistent hashing is the system that minimizes how many files you move when the cabinet count changes.
+একটা লাইব্রেরিতে একটামাত্র ফাইলিং ক্যাবিনেট আছে, সেটার জায়গা ফুরিয়ে যায়। আপনি আরও তিনটা ক্যাবিনেট কিনে বর্ণমালা ভাগ করে দিলেন: A–G ক্যাবিনেট 1-এ, H–N ক্যাবিনেট 2-এ, O–Z ক্যাবিনেট 3-এ। সহজ — যতক্ষণ না আপনি 5ম একটা ক্যাবিনেট যোগ করেন আর অর্ধেক ফাইল সরাতে বাধ্য হন। Consistent hashing হলো সেই সিস্টেম যা ক্যাবিনেটের সংখ্যা বদলালে কতগুলো ফাইল সরাতে হবে তা সর্বনিম্ন করে রাখে।
 
 </Callout>
 
-## Naive Sharding: Modulo Hashing
+## সরল Sharding: Modulo Hashing
 
-The simple approach: `nodeIndex = hash(key) % numNodes`.
+সহজ পদ্ধতিটা হলো: `nodeIndex = hash(key) % numNodes`।
 
 ```typescript
 class ModuloShardedCache {
@@ -48,11 +56,11 @@ class ModuloShardedCache {
 }
 ```
 
-**The problem:** Add a node (4 → 5 nodes), and `hash % 5` maps differently from `hash % 4`. Almost every key goes to a new node. Effective cache hit ratio drops to near zero during the transition. Your database gets hammered.
+**সমস্যাটা:** একটা node যোগ করুন (4 → 5 nodes), আর `hash % 5` তখন `hash % 4`-এর চেয়ে ভিন্নভাবে map হয়। প্রায় প্রতিটা key-ই একটা নতুন node-এ চলে যায়। এই transition-এর সময় কার্যকর cache hit ratio প্রায় শূন্যে নেমে আসে। আপনার database প্রচণ্ড চাপে পড়ে।
 
 ## Consistent Hashing
 
-Map both keys and nodes onto a circular ring (0 to 2³²). Each key is stored on the first node clockwise from its position on the ring.
+key এবং node দুটোকেই একটা বৃত্তাকার ring-এর উপর map করুন (0 থেকে 2³²)। প্রতিটা key তার ring-এর অবস্থান থেকে ঘড়ির কাঁটার দিকে প্রথম যে node পাওয়া যায়, সেখানে সংরক্ষণ করা হয়।
 
 ```typescript
 import { createHash } from 'crypto';
@@ -109,13 +117,13 @@ console.log(ring.getNode('user:123')); // deterministic: 'redis-2'
 console.log(ring.getNode('user:456')); // deterministic: 'redis-1'
 ```
 
-**Virtual nodes** distribute each physical node across 150 positions on the ring, preventing hot spots when node counts are small.
+**Virtual nodes** প্রতিটা physical node-কে ring-এর উপর 150-টা অবস্থানে ছড়িয়ে দেয়, যা node-এর সংখ্যা কম থাকলে hot spot হওয়া ঠেকায়।
 
-When you add a 4th node, only the keys in its ring segment need to move — roughly 1/4 of all keys. The other 3/4 are unaffected. Your cache hit ratio drops by ~25%, not ~100%.
+যখন আপনি 4র্থ একটা node যোগ করেন, তখন কেবল তার ring segment-এর key-গুলোকেই সরাতে হয় — মোটামুটি সব key-এর 1/4 অংশ। বাকি 3/4 অংশ অপরিবর্তিত থাকে। আপনার cache hit ratio ~100% নয়, বরং ~25% কমে।
 
 ## Redis Cluster
 
-Redis Cluster is the production-grade distributed Redis, built-in. It uses **hash slots** (not consistent hashing) — 16,384 slots divided among master nodes.
+Redis Cluster হলো production-grade distributed Redis, একদম বিল্ট-ইন। এটা consistent hashing নয়, বরং **hash slot** ব্যবহার করে — 16,384-টা slot master node-গুলোর মধ্যে ভাগ করা।
 
 ```bash
 # Create a cluster: 3 masters, 3 replicas
@@ -146,7 +154,7 @@ await cluster.set('user:123', 'alice');
 const val = await cluster.get('user:123');
 ```
 
-**Slot calculation:** `HASH_SLOT = CRC16(key) % 16384`
+**Slot গণনা:** `HASH_SLOT = CRC16(key) % 16384`
 
 ```bash
 redis-cli -c CLUSTER KEYSLOT user:123  # → 8100
@@ -154,7 +162,7 @@ redis-cli -c CLUSTER INFO              # cluster state, slots, nodes
 redis-cli -c CLUSTER NODES            # topology
 ```
 
-**Hash tags** force keys to the same slot (needed for multi-key operations):
+**Hash tag** key-গুলোকে একই slot-এ যেতে বাধ্য করে (multi-key অপারেশনের জন্য দরকার):
 
 ```bash
 # Both keys hash on 'user' → same slot → can use MGET/MSET
@@ -165,13 +173,13 @@ MGET {user}.123:profile {user}.123:settings  # works in cluster
 
 <Callout type="warning">
 
-**Multi-key commands require all keys on the same node.** In Redis Cluster, `MGET key1 key2` fails if keys land on different nodes. Use hash tags to co-locate related keys, or restructure to avoid multi-key commands.
+**Multi-key কমান্ডের জন্য সব key একই node-এ থাকা লাগে।** Redis Cluster-এ, key-গুলো ভিন্ন node-এ পড়লে `MGET key1 key2` fail করে। সম্পর্কিত key-গুলো একসাথে রাখতে hash tag ব্যবহার করুন, অথবা multi-key কমান্ড এড়াতে গঠন বদলে ফেলুন।
 
 </Callout>
 
 ## Replication
 
-A Redis Cluster master can have one or more replicas. Replicas serve reads and take over if the master fails.
+একটা Redis Cluster master-এর এক বা একাধিক replica থাকতে পারে। Replica-গুলো read সার্ভ করে এবং master fail করলে দায়িত্ব নিয়ে নেয়।
 
 ```bash
 # Replica syncs from master
@@ -189,13 +197,13 @@ const clusterWithReplicas = createCluster({
 });
 ```
 
-**Replication lag:** Replica data is slightly behind master. For cache reads, this is usually fine. For strong consistency (user just updated their profile and expects to read it back), route reads to the master.
+**Replication lag:** Replica-র ডেটা master-এর চেয়ে সামান্য পিছিয়ে থাকে। Cache read-এর ক্ষেত্রে এটা সাধারণত ঠিক আছে। কিন্তু strong consistency দরকার হলে (একজন user মাত্রই তার profile আপডেট করেছে এবং সেটা read করে দেখতে চায়), read-গুলো master-এ পাঠান।
 
-## Failure Modes
+## Failure Mode
 
-**Network partition:** Some clients can't reach some nodes. The cluster may reject writes to maintain consistency (`CLUSTERDOWN` error). Design for this — add retry logic with backoff.
+**Network partition:** কিছু client কিছু node-এ পৌঁছাতে পারে না। Consistency বজায় রাখতে cluster হয়তো write প্রত্যাখ্যান করবে (`CLUSTERDOWN` error)। এর জন্য ডিজাইন করুন — backoff সহ retry logic যোগ করুন।
 
-**Node failure:** Redis Cluster automatically promotes a replica to master (within seconds). During the election, writes to that node's slots fail. Build retry logic:
+**Node failure:** Redis Cluster স্বয়ংক্রিয়ভাবে একটা replica-কে master-এ উন্নীত করে (কয়েক সেকেন্ডের মধ্যে)। এই election চলাকালীন সেই node-এর slot-গুলোতে write fail করে। Retry logic তৈরি করুন:
 
 ```typescript
 async function resilientSet(key: string, value: string, ttl: number): Promise<void> {
@@ -212,12 +220,12 @@ async function resilientSet(key: string, value: string, ttl: number): Promise<vo
 }
 ```
 
-**Hot keys:** One key (a trending post, viral product) gets millions of reads per second. All reads go to the same node — it becomes a bottleneck regardless of cluster size.
+**Hot key:** একটা key (কোনো ট্রেন্ডিং পোস্ট, ভাইরাল প্রোডাক্ট) সেকেন্ডে লক্ষ লক্ষ read পায়। সব read একই node-এ যায় — cluster-এর আকার যাই হোক, সেটা bottleneck হয়ে দাঁড়ায়।
 
-Solutions for hot keys:
+Hot key-এর সমাধান:
 
-1. **Local in-process cache** — cache the hot key in every app instance's memory for 1–5 seconds
-2. **Key fanning** — store copies at `hot-key:0`, `hot-key:1`, ..., `hot-key:N` and read randomly
+1. **Local in-process cache** — প্রতিটা app instance-এর memory-তে hot key-টা 1–5 সেকেন্ডের জন্য cache করুন
+2. **Key fanning** — `hot-key:0`, `hot-key:1`, ..., `hot-key:N`-এ কপি রাখুন এবং র‍্যান্ডমভাবে read করুন
 
 ```typescript
 // Hot key mitigation: local in-process cache
@@ -235,11 +243,11 @@ async function getWithLocalCache(key: string): Promise<string | null> {
 }
 ```
 
-## Deployment Patterns
+## Deployment Pattern
 
-**Single-node Redis** — development, low traffic. One point of failure.
+**Single-node Redis** — development, কম ট্র্যাফিক। একটাই failure-এর বিন্দু।
 
-**Redis Sentinel** — single master + replicas + Sentinel processes that monitor and auto-failover. No data sharding — all data on one master. For HA without horizontal scale.
+**Redis Sentinel** — single master + replica + Sentinel process যা monitor করে এবং auto-failover করে। কোনো data sharding নেই — সব ডেটা এক master-এ। Horizontal scale ছাড়াই HA-র জন্য।
 
 ```bash
 # sentinel.conf
@@ -248,6 +256,6 @@ sentinel down-after-milliseconds mymaster 5000
 sentinel failover-timeout mymaster 10000
 ```
 
-**Redis Cluster** — automatic sharding across N masters, each with replicas. Horizontal scale + HA. Use this when your dataset exceeds a single node's memory.
+**Redis Cluster** — N-টা master-এর মধ্যে স্বয়ংক্রিয় sharding, প্রতিটার replica সহ। Horizontal scale + HA। আপনার dataset যখন একটা একক node-এর memory ছাড়িয়ে যায়, তখন এটা ব্যবহার করুন।
 
-**Managed Redis** — AWS ElastiCache, Google Cloud Memorystore, Upstash. Cluster management is handled for you. Almost always the right choice unless you have very specific requirements.
+**Managed Redis** — AWS ElastiCache, Google Cloud Memorystore, Upstash। Cluster ম্যানেজমেন্ট আপনার হয়ে সামলানো হয়। খুব নির্দিষ্ট কোনো প্রয়োজন না থাকলে প্রায় সবসময়ই এটাই সঠিক পছন্দ।

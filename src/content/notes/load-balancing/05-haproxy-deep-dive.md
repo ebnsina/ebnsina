@@ -1,9 +1,9 @@
 ---
 title: 'HAProxy in Depth'
-subtitle: 'Frontend/backend config, ACLs, the stats page, runtime API, and the patterns that make HAProxy the go-to proxy for demanding deployments.'
+subtitle: 'Frontend/backend config, ACL, stats page, runtime API, আর যেসব pattern HAProxy-কে চাহিদাসম্পন্ন deployment-এর জন্য প্রথম পছন্দের proxy বানায়।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['HAProxy', 'ACLs', 'stats', 'runtime API', 'rate limiting', 'canary']
 ---
 
@@ -11,17 +11,25 @@ topics: ['HAProxy', 'ACLs', 'stats', 'runtime API', 'rate limiting', 'canary']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বিশাল এক বাস টার্মিনালের কন্ট্রোল রুমে বসে আছেন ফাতিমা আল-ফিহরি — টার্মিনালের ট্রাফিক কন্ট্রোলার। সামনে লাগানো কয়েকটা লেবেল করা এন্ট্রি গেট, সব যানবাহন ঢোকে ওই গেট দিয়েই — একটা গেট শহরের গাড়ির জন্য, আরেকটা মালবাহী ট্রাকের জন্য। পেছনে সাজানো কয়েকটা ডেস্টিনেশন পুল — এক পুলে যাত্রীবাহী বাসের বহর, আরেক পুলে কার্গো ট্রাকের বহর, আরেকটায় স্থানীয় লোকাল সার্ভিস। ফাতিমার হাতে একটা রুলবুক, তাতে সব IF-THEN নিয়ম লেখা — "যা ঢুকছে সেটা যদি কার্গো ট্রাক হয় → পুল B-তে পাঠাও", "যদি গন্তব্য শহরতলি হয় → লোকাল পুলে পাঠাও"। প্রতিটা যান গেটে ঢোকামাত্র ফাতিমা তার গায়ে লেখা লেবেল দেখে রুলবুক মিলিয়ে ঠিক করেন কোন পুলে যাবে।
+
+দেয়ালজুড়ে একটা বড় লাইভ স্ট্যাটাস বোর্ড ঝুলছে — প্রতিটা গেটে এখন কত চাপ, কোন পুলে কয়টা গাড়ি খালি আছে, কোন বহর ব্যস্ত, কোনটার কোনো গাড়ি বিগড়ে গেছে — সব রিয়েল-টাইমে জ্বলজ্বল করছে। কোনো পুলের সব গাড়ি অচল হয়ে গেলে বোর্ডে লাল হয়ে ওঠে, ফাতিমা সঙ্গে সঙ্গে ওই পুলে গাড়ি পাঠানো বন্ধ করে দেন। রুলবুক না বদলেও শুধু বোর্ড দেখেই তিনি পুরো টার্মিনালের নাড়ি বুঝে ফেলেন।
+
+এই গল্পটাই আসলে **HAProxy**। লেবেল করা এন্ট্রি গেটগুলো হলো **frontend** — একটা পোর্টে bind হয়ে সব incoming ট্রাফিক এখানেই ঢোকে। পেছনের ডেস্টিনেশন পুলগুলো হলো **backend** — server-দের একেকটা pool যেখানে request পাঠানো হয়। ফাতিমার রুলবুকের IF-THEN নিয়মগুলোই **ACL** — request-এর বৈশিষ্ট্য (host, path, header) দেখে ঠিক করে কোন backend-এ যাবে। আর দেয়ালের লাইভ স্ট্যাটাস বোর্ড হলো HAProxy-র **stats page** — প্রতিটা frontend, backend আর server-এর load, session count আর health check status রিয়েল-টাইমে দেখায়। বাস্তবে এভাবেই একটা HAProxy instance এক পোর্টে ট্রাফিক নিয়ে, ACL দিয়ে বেছে সঠিক server pool-এ পাঠায় আর stats page-এ পুরো সিস্টেমের স্বাস্থ্য দেখায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-An air traffic control tower: it doesn't fly the planes, it directs them. It knows which runway is clear (backend capacity), which planes have priority (ACLs, weights), enforces rules (rate limits, ACLs), and keeps a live display of everything in the air (stats page). HAProxy is the ATC for your HTTP traffic.
+একটা air traffic control tower: এটা plane চালায় না, দিকনির্দেশ দেয়। এটা জানে কোন runway খালি (backend capacity), কোন plane-এর অগ্রাধিকার আছে (ACL, weight), নিয়ম প্রয়োগ করে (rate limit, ACL), আর আকাশে যা কিছু আছে তার একটা live display রাখে (stats page)। HAProxy আপনার HTTP traffic-এর জন্য সেই ATC।
 
 </Callout>
 
-## The Core Config Structure
+## মূল Config Structure
 
-HAProxy config has four sections:
+HAProxy config-এর চারটা section আছে:
 
 ```
 global      — process-level settings (user, logging, max connections)
@@ -30,7 +38,7 @@ frontend    — listens on a port, classifies and routes incoming connections
 backend     — group of servers that handle requests
 ```
 
-A minimal but production-ready starting point:
+একটা ন্যূনতম কিন্তু production-ready শুরুর বিন্দু:
 
 ```
 global
@@ -72,15 +80,15 @@ backend api_servers
     server s2 10.0.0.11:3000 check inter 10s fall 3 rise 2
 ```
 
-## ACLs (Access Control Lists)
+## ACL (Access Control List)
 
-ACLs match conditions against the request and allow branching logic:
+ACL request-এর বিপরীতে condition match করে আর branching logic-এর অনুমতি দেয়:
 
 ```
 acl <name> <criterion> <value>
 ```
 
-Common criteria:
+সাধারণ criteria:
 
 ```
 path_beg /api/          — URL begins with
@@ -91,7 +99,7 @@ method POST            — HTTP method
 status 503             — response status (for backend conditions)
 ```
 
-**Routing by host:**
+**Host দিয়ে routing:**
 
 ```
 frontend https_in
@@ -105,7 +113,7 @@ frontend https_in
     default_backend web_servers
 ```
 
-**Routing by path:**
+**Path দিয়ে routing:**
 
 ```
 frontend https_in
@@ -119,7 +127,7 @@ frontend https_in
     default_backend web_servers
 ```
 
-**Block by IP (maintenance/security):**
+**IP দিয়ে block (maintenance/security):**
 
 ```
 frontend https_in
@@ -133,7 +141,7 @@ frontend https_in
 
 ## Rate Limiting
 
-HAProxy has built-in rate limiting via stick tables:
+HAProxy-তে stick table-এর মাধ্যমে built-in rate limiting আছে:
 
 ```
 backend rate_limit_table
@@ -149,11 +157,11 @@ frontend https_in
     default_backend api_servers
 ```
 
-This is in-memory, per-HAProxy-instance. For distributed rate limiting across multiple HAProxy instances, use a dedicated store (Redis) or HAProxy Enterprise's peer tables.
+এটা in-memory, per-HAProxy-instance। একাধিক HAProxy instance জুড়ে distributed rate limiting-এর জন্য, একটা dedicated store (Redis) বা HAProxy Enterprise-এর peer table ব্যবহার করুন।
 
-## Canary Deployments
+## Canary Deployment
 
-Route a percentage of traffic to a new backend:
+একটা নতুন backend-এ traffic-এর একটা শতাংশ route করুন:
 
 ```
 backend api_v1
@@ -168,7 +176,7 @@ frontend https_in
     default_backend api_v1
 ```
 
-Or route specific users (by cookie or header) for deterministic testing:
+অথবা deterministic testing-এর জন্য নির্দিষ্ট user (cookie বা header দিয়ে) route করুন:
 
 ```
 frontend https_in
@@ -179,11 +187,11 @@ frontend https_in
     default_backend api_v1
 ```
 
-Gradually increase `rand(10)` to `rand(5)` (20%), `rand(2)` (50%), then fully cut over by removing the condition.
+ধীরে ধীরে `rand(10)` বাড়িয়ে `rand(5)` (20%), `rand(2)` (50%) করুন, তারপর condition-টা সরিয়ে পুরোপুরি cut over করুন।
 
-## The Stats Page
+## Stats Page
 
-HAProxy's built-in dashboard shows real-time state of all frontends, backends, and servers:
+HAProxy-র built-in dashboard সব frontend, backend আর server-এর real-time state দেখায়:
 
 ```
 listen stats
@@ -199,9 +207,9 @@ listen stats
     http-request deny if !internal
 ```
 
-Visit `http://haproxy:8404/stats` — shows per-server request rates, error rates, queue depth, session counts, health check status.
+`http://haproxy:8404/stats`-এ যান — per-server request rate, error rate, queue depth, session count, health check status দেখায়।
 
-**CSV export for monitoring:**
+**Monitoring-এর জন্য CSV export:**
 
 ```bash
 curl -s http://admin:supersecret@haproxy:8404/stats;csv | \
@@ -212,7 +220,7 @@ curl -s http://admin:supersecret@haproxy:8404/stats;csv | \
 
 ## Runtime API
 
-The stats socket allows live config changes without reloading:
+stats socket reload ছাড়াই live config পরিবর্তনের অনুমতি দেয়:
 
 ```bash
 # Show all backends and their status
@@ -235,11 +243,11 @@ echo "add server api_servers/s3 10.0.0.30:3000" | socat stdio /run/haproxy/admin
 echo "set server api_servers/s3 state ready" | socat stdio /run/haproxy/admin.sock
 ```
 
-This is how deployment scripts handle server rotation without config reloads.
+এভাবেই deployment script config reload ছাড়াই server rotation সামলায়।
 
-## Zero-Downtime Reloads
+## Zero-Downtime Reload
 
-HAProxy reloads gracefully — new process picks up new config, old process finishes existing connections:
+HAProxy সুন্দরভাবে reload হয় — নতুন process নতুন config নেয়, পুরনো process বিদ্যমান connection শেষ করে:
 
 ```bash
 # Reload without dropping connections
@@ -248,11 +256,11 @@ haproxy -f /etc/haproxy/haproxy.cfg -p /var/run/haproxy.pid -sf $(cat /var/run/h
 systemctl reload haproxy
 ```
 
-The `-sf` flag (soft-stop-and-finish) tells the old process to finish its connections, then exit. No dropped connections.
+`-sf` flag (soft-stop-and-finish) পুরনো process-কে তার connection শেষ করে, তারপর বেরিয়ে যেতে বলে। কোনো connection drop হয় না।
 
 ## Logging
 
-Enable detailed request logging:
+বিস্তারিত request logging enable করুন:
 
 ```
 global
@@ -263,7 +271,7 @@ defaults
     log-format "%ci:%cp [%t] %ft %b/%s %Tq/%Tw/%Tc/%Tr/%Tt %ST %B %tsc %ac/%fc/%bc/%sc/%rc %{+Q}r"
 ```
 
-Key fields:
+গুরুত্বপূর্ণ field:
 
 - `%ci` — client IP
 - `%Tq/%Tw/%Tc/%Tr/%Tt` — time: queue/wait/connect/response/total (ms)
@@ -271,16 +279,16 @@ Key fields:
 - `%B` — bytes sent
 - `%{+Q}r` — full HTTP request line
 
-Send to stdout in containers (for log aggregators):
+container-এ stdout-এ পাঠান (log aggregator-এর জন্য):
 
 ```
 global
     log stdout format raw local0
 ```
 
-## Timeouts
+## Timeout
 
-The three critical timeouts and what they control:
+তিনটা গুরুত্বপূর্ণ timeout আর তারা কী নিয়ন্ত্রণ করে:
 
 ```
 timeout connect 5s    # How long HAProxy waits to connect to a backend
@@ -288,18 +296,18 @@ timeout client  30s   # How long an idle client connection is kept open
 timeout server  30s   # How long HAProxy waits for a backend response
 ```
 
-For long-running requests (file uploads, streaming):
+দীর্ঘ চলা request-এর জন্য (file upload, streaming):
 
 ```
 backend api_servers
     timeout server 5m    # override default for this backend
 ```
 
-For WebSockets:
+WebSocket-এর জন্য:
 
 ```
 backend ws_servers
     timeout tunnel 1h    # keeps tunnel alive for websocket connections
 ```
 
-WebSocket connections don't follow the `client`/`server` timeout after upgrade — they use `tunnel`.
+WebSocket connection upgrade-এর পর `client`/`server` timeout মানে না — তারা `tunnel` ব্যবহার করে।

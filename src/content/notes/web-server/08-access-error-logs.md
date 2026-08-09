@@ -1,9 +1,9 @@
 ---
 title: 'Access & Error Logs'
-subtitle: 'Customize nginx log formats, understand what each field means, find requests by status or duration, and tell access logs apart from error logs the right way.'
+subtitle: 'nginx log format কাস্টমাইজ করুন, প্রতিটি field-এর মানে বুঝুন, status বা duration দিয়ে request খুঁজুন, আর সঠিকভাবে access log আর error log-এর পার্থক্য করুন।'
 chapter: 8
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['nginx', 'logs', 'access log', 'error log', 'log format']
 ---
 
@@ -11,56 +11,64 @@ topics: ['nginx', 'logs', 'access log', 'error log', 'log format']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Two logs, two purposes
+## গল্পে বুঝি
 
-nginx writes two streams:
+আল-খোয়ারিজমি বাগদাদের একটা বড় দালানের দারোয়ান। তার হাতে সবসময় দুটো খাতা থাকে। প্রথমটা ভিজিটর খাতা — দালানে যে-ই ঢোকে, প্রতিটা মানুষের নাম, সে কী চেয়েছে (কার সাথে দেখা করতে এসেছে বা কোন অফিসে গেছে), তাকে ঢুকতে দেওয়া হয়েছে নাকি ফিরিয়ে দেওয়া হয়েছে, আর ঠিক কখন — সব লাইন ধরে লেখা থাকে। দিনে হাজারখানেক লোক এলে হাজারটা লাইনই ওঠে, ভালো-মন্দ নির্বিশেষে। এই খাতা দেখে যে কেউ বলে দিতে পারে গতকাল দুপুরে কারা কারা এসেছিল আর কে কোথায় গিয়েছিল।
 
-- **access log** — one line per HTTP request. Who, what, when, status, size, duration. Default: `/var/log/nginx/access.log`.
-- **error log** — anomalies. Failed config reloads, upstream connection failures, timeouts, malformed requests, denied requests. Default: `/var/log/nginx/error.log`.
+দ্বিতীয় খাতাটা আলাদা — ঘটনার খাতা। এখানে সব লেখা হয় না, শুধু গোলমাল লেখা হয়। লিফট আটকে গেল, কাউকে অনুমতি না থাকায় ঢুকতে দেওয়া গেল না, তিনতলায় আগুন-আগুন বলে হুড়োহুড়ি পড়ল — এসবই ঘটনার খাতায় ওঠে, সময় আর বিবরণসহ। কোনো দিন কিছু গোলমাল না হলে এই খাতা প্রায় ফাঁকাই থাকে। কিন্তু কোনো দিন গণ্ডগোল হলে ইবনে সিনা এসে দুই খাতা পাশাপাশি রেখে মেলান — ভিজিটর খাতায় দেখেন ঠিক ওই সময়ে কারা এসেছিল, আর ঘটনার খাতায় দেখেন তখন কী বিপত্তি ঘটেছিল — দুটো মিলিয়ে গোটা দিনটা হুবহু পুনর্গঠন করে ফেলেন।
 
-Most "is the site working?" answers come from access logs. Most "why did this break?" answers come from error logs. Knowing where to look saves time.
+ঠিক এই দুটো খাতাই হলো nginx-এর দুই log। ভিজিটর খাতা হলো **access log** — প্রতিটা request-এর জন্য একটা লাইন, কে (IP), কী চেয়েছে (request line), সাড়া কী পেয়েছে (status code), আর কখন (time)। ঘটনার খাতা হলো **error log** — শুধু ব্যর্থতা আর সতর্কতা, যেমন backend সাড়া দিল না বা কাউকে ঢুকতে দেওয়া গেল না। "সাইট কি চলছে, কারা এল" — এর উত্তর access log-এ; "ভাঙল কেন" — এর উত্তর error log-এ। আর দুটো একসাথে মেলানোটাই বাস্তবে হলো debugging আর traffic analysis: একটা slow বা ব্যর্থ request-এর সময় ধরে access log-এ কোন request-টা ছিল খুঁজে বের করে error log-এ তার আসল কারণ পাওয়া — ঠিক যেমন বড় সাইটগুলো একটা shared request ID দিয়ে দুই log জুড়ে ঘটনা পুরোপুরি সাজিয়ে ফেলে।
+
+## দুটি log, দুটি উদ্দেশ্য
+
+nginx দুটি stream লেখে:
+
+- **access log** — প্রতি HTTP request-এ একটি লাইন। কে, কী, কখন, status, size, duration। ডিফল্ট: `/var/log/nginx/access.log`।
+- **error log** — অস্বাভাবিকতা। ব্যর্থ config reload, upstream connection failure, timeout, malformed request, denied request। ডিফল্ট: `/var/log/nginx/error.log`।
+
+"সাইট কি কাজ করছে?" — এর বেশিরভাগ উত্তর আসে access log থেকে। "এটা ভাঙল কেন?" — এর বেশিরভাগ উত্তর আসে error log থেকে। কোথায় দেখতে হবে তা জানলে সময় বাঁচে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Access and error logs are like a security camera recording every visitor — you may not watch it live, but it becomes invaluable when something goes wrong and you need to reconstruct events.
+Access আর error log অনেকটা প্রতিটি ভিজিটরকে রেকর্ড করা security camera-র মতো — আপনি হয়তো লাইভ দেখেন না, কিন্তু যখন কিছু ভুল হয় আর ঘটনাগুলো পুনর্গঠন করতে হয় তখন এটা অমূল্য হয়ে ওঠে।
 
 </Callout>
 
-## The default access log format
+## ডিফল্ট access log format
 
 ```text
 192.0.2.4 - - [04/May/2026:10:42:11 +0000] "GET /api/users HTTP/1.1" 200 1234 "https://example.com/" "Mozilla/5.0 ..."
 ```
 
-Fields, separated by spaces (with quoting):
+Field-গুলো, space দিয়ে আলাদা (quoting সহ):
 
-| Field                          | Variable           | Meaning                                          |
-| ------------------------------ | ------------------ | ------------------------------------------------ |
-| `192.0.2.4`                    | `$remote_addr`     | Client IP (or proxy IP if there is one in front) |
-| `-`                            | `$remote_user`     | Auth user (rare)                                 |
-| `[04/May/2026:10:42:11 +0000]` | `$time_local`      | Local timestamp                                  |
-| `"GET /api/users HTTP/1.1"`    | `$request`         | Request line                                     |
-| `200`                          | `$status`          | Response status                                  |
-| `1234`                         | `$body_bytes_sent` | Response body size in bytes                      |
-| `"https://example.com/"`       | `$http_referer`    | Referer header                                   |
-| `"Mozilla/5.0 ..."`            | `$http_user_agent` | User-Agent header                                |
+| Field                          | Variable           | মানে                                      |
+| ------------------------------ | ------------------ | ----------------------------------------- |
+| `192.0.2.4`                    | `$remote_addr`     | Client IP (বা সামনে proxy থাকলে proxy IP) |
+| `-`                            | `$remote_user`     | Auth user (বিরল)                          |
+| `[04/May/2026:10:42:11 +0000]` | `$time_local`      | Local timestamp                           |
+| `"GET /api/users HTTP/1.1"`    | `$request`         | Request line                              |
+| `200`                          | `$status`          | Response status                           |
+| `1234`                         | `$body_bytes_sent` | Response body-র size bytes-এ              |
+| `"https://example.com/"`       | `$http_referer`    | Referer header                            |
+| `"Mozilla/5.0 ..."`            | `$http_user_agent` | User-Agent header                         |
 
-This is the **combined** format — the de-facto standard since Apache. Every log analyzer, GoAccess, AWStats, ELK, every grep pattern on the internet expects something close to it.
+এটি **combined** format — Apache-র সময় থেকে কার্যত স্ট্যান্ডার্ড। প্রতিটি log analyzer, GoAccess, AWStats, ELK, ইন্টারনেটের প্রতিটি grep pattern এর কাছাকাছি কিছু আশা করে।
 
-## Why the default is not enough
+## ডিফল্ট কেন যথেষ্ট নয়
 
-The combined format is missing things you will want:
+combined format-এ আপনার যা লাগবে এমন কিছু জিনিস নেই:
 
-- **Request duration** (`$request_time`) — how long did this request take total?
-- **Upstream response time** (`$upstream_response_time`) — how long did the backend take?
-- **Backend pool member** (`$upstream_addr`) — which backend handled this?
-- **Upstream status** (`$upstream_status`) — what did the backend return (vs what nginx returned)?
-- **Request ID** (`$request_id`) — for correlating logs across nginx and your app.
-- **Real IP** through proxies — `$http_x_forwarded_for`.
+- **Request duration** (`$request_time`) — এই request-টা মোট কতক্ষণ নিল?
+- **Upstream response time** (`$upstream_response_time`) — backend কতক্ষণ নিল?
+- **Backend pool member** (`$upstream_addr`) — কোন backend এটা সামলাল?
+- **Upstream status** (`$upstream_status`) — backend কী ফেরত দিল (nginx যা ফেরত দিল তার বিপরীতে)?
+- **Request ID** (`$request_id`) — nginx আর আপনার app-এর মধ্যে log correlate করার জন্য।
+- proxy-র মধ্য দিয়ে **Real IP** — `$http_x_forwarded_for`।
 
-Define a richer format:
+একটি সমৃদ্ধ format ডিফাইন করুন:
 
 ```nginx
 http {
@@ -77,26 +85,26 @@ http {
 }
 ```
 
-Now every line has duration, backend status, and the request ID:
+এখন প্রতিটি লাইনে duration, backend status, আর request ID থাকে:
 
 ```text
 192.0.2.4 - - [2026-05-04T10:42:11+00:00] "GET /api/users HTTP/1.1" 200 1234 "https://example.com/" "Mozilla/5.0" "10.0.0.5" rt=0.123 urt=0.115 us=200 ua=127.0.0.1:8080 rid=4f5d6e7a8b9c
 ```
 
-`$time_iso8601` instead of `$time_local` is much friendlier for parsers and grep windows.
+`$time_local`-এর বদলে `$time_iso8601` parser আর grep window-র জন্য অনেক বেশি সুবিধাজনক।
 
-## Understanding `$request_time` vs `$upstream_response_time`
+## `$request_time` বনাম `$upstream_response_time` বোঝা
 
-Two timing fields, often confused:
+দুটি timing field, প্রায়ই গুলিয়ে ফেলা হয়:
 
-- **`$request_time`** — total time nginx spent on this request: from receiving the first byte of the request to writing the last byte of the response.
-- **`$upstream_response_time`** — time nginx spent talking to the backend: from connecting to the backend to receiving its full response.
+- **`$request_time`** — এই request-এ nginx মোট যে সময় ব্যয় করেছে: request-এর প্রথম byte পাওয়া থেকে response-এর শেষ byte লেখা পর্যন্ত।
+- **`$upstream_response_time`** — backend-এর সাথে কথা বলতে nginx যে সময় ব্যয় করেছে: backend-এ connect করা থেকে তার পূর্ণ response পাওয়া পর্যন্ত।
 
-If `$request_time` is much larger than `$upstream_response_time`, the time was spent reading the request from a slow client or writing the response to one. If they are close, the backend was slow.
+যদি `$request_time`, `$upstream_response_time`-এর চেয়ে অনেক বড় হয়, তাহলে সময়টা ব্যয় হয়েছে একটি slow client থেকে request পড়তে অথবা একটিকে response লিখতে। যদি এরা কাছাকাছি হয়, তাহলে backend ধীর ছিল।
 
-## JSON log format — the modern choice
+## JSON log format — আধুনিক পছন্দ
 
-For shipping to log aggregators, JSON is easier to parse:
+log aggregator-এ পাঠানোর জন্য JSON parse করা সহজ:
 
 ```nginx
 log_format json_main escape=json
@@ -120,7 +128,7 @@ log_format json_main escape=json
 access_log /var/log/nginx/access.log json_main;
 ```
 
-`escape=json` is critical — it correctly escapes quotes and special characters in field values so the resulting JSON is valid.
+`escape=json` অত্যন্ত জরুরি — এটি field value-র মধ্যে থাকা quote আর special character সঠিকভাবে escape করে যাতে ফলাফল JSON valid হয়।
 
 Output:
 
@@ -128,7 +136,7 @@ Output:
 {"time":"2026-05-04T10:42:11+00:00","remote_addr":"192.0.2.4",...,"status":200,"request_time":0.123,...}
 ```
 
-`jq` queries become trivial:
+`jq` query তুচ্ছ হয়ে যায়:
 
 ```bash
 # All slow requests
@@ -141,9 +149,9 @@ sudo cat /var/log/nginx/access.log | jq 'select(.status >= 500)'
 jq -s 'group_by(.request_uri) | map({uri: .[0].request_uri, p99: (sort_by(.request_time)[(length*0.99|floor)].request_time)})' /var/log/nginx/access.log
 ```
 
-## Conditional logging — skip noise
+## Conditional logging — noise বাদ দেওয়া
 
-Health checks, asset requests, and authenticated keep-alive pings can drown the signal:
+Health check, asset request, আর authenticated keep-alive ping signal-কে ডুবিয়ে দিতে পারে:
 
 ```nginx
 map $request_uri $loggable {
@@ -158,9 +166,9 @@ server {
 }
 ```
 
-`if=` is a feature of `access_log`. When the variable is `0` or empty, the line is skipped.
+`if=` হলো `access_log`-এর একটি feature। যখন variable-টা `0` বা খালি, লাইনটা বাদ পড়ে।
 
-Or skip per-status:
+অথবা status অনুযায়ী বাদ দিন:
 
 ```nginx
 map $status $log_4xx {
@@ -172,11 +180,11 @@ access_log /var/log/nginx/errors.log main_ext if=$log_4xx;
 access_log /var/log/nginx/access.log main_ext;
 ```
 
-Two log files: one with everything, one with only errors. The errors file is short and grep-friendly.
+দুটি log file: একটায় সবকিছু, একটায় শুধু error। error file-টা ছোট আর grep-বান্ধব।
 
-## Rotating with logrotate
+## logrotate দিয়ে rotate করা
 
-Out of the box, `/etc/logrotate.d/nginx`:
+বাক্সের বাইরেই, `/etc/logrotate.d/nginx`:
 
 ```text
 /var/log/nginx/*.log {
@@ -199,39 +207,39 @@ Out of the box, `/etc/logrotate.d/nginx`:
 }
 ```
 
-Daily rotation, 14 days kept, gzipped. The `postrotate` hook tells nginx to reopen its log files (so it does not keep writing to the renamed file) via the `nginx rotate` init script (which sends `USR1` to the master).
+প্রতিদিন rotation, 14 দিন রাখা, gzipped। `postrotate` hook nginx-কে বলে তার log file আবার খুলতে (যাতে সেটা renamed file-এ লিখতে না থাকে) `nginx rotate` init script-এর মাধ্যমে (যা master-কে `USR1` পাঠায়)।
 
-Test a rotation without waiting:
+অপেক্ষা না করেই একটা rotation টেস্ট করুন:
 
 ```bash
 sudo logrotate -fv /etc/logrotate.d/nginx
 ls -la /var/log/nginx/
 ```
 
-## The error log
+## error log
 
-Different file, different format, far more critical when something is broken:
+ভিন্ন file, ভিন্ন format, কিছু ভাঙলে অনেক বেশি জরুরি:
 
 ```text
 2026/05/04 10:42:11 [error] 1234#1234: *5678 connect() failed (111: Connection refused) while connecting to upstream, client: 192.0.2.4, server: example.com, request: "GET /api/users HTTP/1.1", upstream: "http://127.0.0.1:8080/api/users", host: "example.com"
 ```
 
-Read it as:
+এভাবে পড়ুন:
 
 - **Timestamp.**
-- **Severity** — `[debug]`, `[info]`, `[notice]`, `[warn]`, `[error]`, `[crit]`, `[alert]`, `[emerg]`.
-- **PID and TID.**
-- **Internal request ID** — `*5678`.
-- **The error message.**
-- **Context** — client, server, request, upstream, host.
+- **Severity** — `[debug]`, `[info]`, `[notice]`, `[warn]`, `[error]`, `[crit]`, `[alert]`, `[emerg]`।
+- **PID আর TID.**
+- **Internal request ID** — `*5678`।
+- **error message.**
+- **Context** — client, server, request, upstream, host।
 
-Configure severity in `nginx.conf`:
+`nginx.conf`-এ severity কনফিগার করুন:
 
 ```nginx
 error_log /var/log/nginx/error.log warn;
 ```
 
-Per server, you can have a separate error log:
+প্রতি server-এর জন্য আপনি একটি আলাদা error log রাখতে পারেন:
 
 ```nginx
 server {
@@ -241,19 +249,19 @@ server {
 }
 ```
 
-## Common error log entries — what they mean
+## সাধারণ error log entry — এদের মানে কী
 
-- **`upstream timed out (110: Connection timed out)`** — backend did not respond in time. Check `proxy_read_timeout`.
-- **`connect() failed (111: Connection refused)`** — backend is not listening. Check that your app is up.
-- **`upstream prematurely closed connection`** — backend crashed or returned partial response. Check the backend's logs.
-- **`client intended to send too large body`** — request body exceeded `client_max_body_size`. Default is 1MB.
-- **`request rate exceeded`** — your `limit_req` zone fired.
-- **`SSL_do_handshake() failed`** — TLS negotiation failed. Old client or wrong cert chain.
-- **`worker_connections are not enough`** — you hit the per-worker connection limit. Raise `worker_connections` and `worker_rlimit_nofile`.
+- **`upstream timed out (110: Connection timed out)`** — backend সময়মতো সাড়া দেয়নি। `proxy_read_timeout` চেক করুন।
+- **`connect() failed (111: Connection refused)`** — backend listen করছে না। আপনার app চালু আছে কিনা চেক করুন।
+- **`upstream prematurely closed connection`** — backend ক্র্যাশ করেছে বা partial response দিয়েছে। backend-এর log চেক করুন।
+- **`client intended to send too large body`** — request body `client_max_body_size` ছাড়িয়ে গেছে। ডিফল্ট 1MB।
+- **`request rate exceeded`** — আপনার `limit_req` zone fire করেছে।
+- **`SSL_do_handshake() failed`** — TLS negotiation ব্যর্থ হয়েছে। পুরনো client বা ভুল cert chain।
+- **`worker_connections are not enough`** — আপনি per-worker connection limit-এ পৌঁছে গেছেন। `worker_connections` আর `worker_rlimit_nofile` বাড়ান।
 
-## Querying access logs without a tool
+## কোনো tool ছাড়াই access log query করা
 
-Just `grep`, `awk`, and `cut`:
+শুধু `grep`, `awk`, আর `cut`:
 
 ```bash
 # Top 10 IPs by request count today
@@ -277,18 +285,18 @@ sudo awk '{print $7, $11}' /var/log/nginx/access.log | sort \
   | sort -k2 -rn | head
 ```
 
-These one-liners answer 80% of "what is happening" questions before you reach for a log aggregator.
+log aggregator-এর কাছে যাওয়ার আগেই এই one-liner-গুলো "কী ঘটছে" ধরনের 80% প্রশ্নের উত্তর দেয়।
 
-## GoAccess — a real-time terminal dashboard
+## GoAccess — একটি real-time terminal dashboard
 
 ```bash
 sudo apt install -y goaccess
 sudo goaccess /var/log/nginx/access.log -c
 ```
 
-Pick the log format (CCBS = Combined). It builds a live dashboard: top URLs, top IPs, status codes, response sizes, OS/browser breakdown. No setup, no JS, no infrastructure — runs in your SSH session.
+log format বেছে নিন (CCBS = Combined)। এটি একটি live dashboard তৈরি করে: top URL, top IP, status code, response size, OS/browser breakdown। কোনো setup নেই, কোনো JS নেই, কোনো infrastructure নেই — আপনার SSH session-এই চলে।
 
-For a public HTML report:
+একটি public HTML report-এর জন্য:
 
 ```bash
 sudo goaccess /var/log/nginx/access.log \
@@ -296,25 +304,25 @@ sudo goaccess /var/log/nginx/access.log \
   -o /var/www/example.com/stats.html
 ```
 
-## Shipping logs off-host
+## host-এর বাইরে log পাঠানো
 
-A single VPS holds its own logs. They die with the box. For real systems:
+একটি single VPS তার নিজের log ধরে রাখে। box-এর সাথেই সেগুলো মরে যায়। real system-এর জন্য:
 
-- **Vector / Fluent Bit / Promtail** — small forwarders that read log files (or journald) and ship to a central destination (Loki, Elasticsearch, S3, ClickHouse).
-- **rsyslog** with TCP/TLS forwarding — older but rock-solid.
-- **`journalctl -o json -f` piped through a forwarder** — when nginx is configured to log to journald (via stdout) instead of files.
+- **Vector / Fluent Bit / Promtail** — ছোট forwarder যা log file (বা journald) পড়ে আর একটি central destination-এ পাঠায় (Loki, Elasticsearch, S3, ClickHouse)।
+- **rsyslog** TCP/TLS forwarding সহ — পুরনো কিন্তু rock-solid।
+- **`journalctl -o json -f` একটি forwarder-এর মধ্য দিয়ে pipe করা** — যখন nginx file-এর বদলে journald-এ (stdout-এর মাধ্যমে) log করতে কনফিগার করা থাকে।
 
-For this chapter, the rule is: _be able to query the local logs cold_. Once you can, exporting them is a five-line config.
+এই অধ্যায়ের জন্য নিয়ম হলো: _local log-কে ঠান্ডা মাথায় query করতে পারা_। একবার পারলে, সেগুলো export করা পাঁচ-লাইনের config।
 
-## Application logs — what to log from your app
+## Application log — আপনার app থেকে কী log করবেন
 
-nginx logs the request envelope. Your application logs the _content_ — what business decision was made, which user did what, why a 500 happened. Pair them:
+nginx request-এর envelope log করে। আপনার application _content_ log করে — কোন business সিদ্ধান্ত নেওয়া হলো, কোন user কী করল, একটা 500 কেন হলো। এদের জোড়া লাগান:
 
-- Both nginx and the app log the same `$request_id`.
-- App logs JSON (or another structured format).
-- App logs go to stdout; journald collects them; you query with `journalctl -u myapp`.
+- nginx আর app দুটোই একই `$request_id` log করে।
+- App JSON (বা অন্য structured format) log করে।
+- App log stdout-এ যায়; journald সেগুলো সংগ্রহ করে; আপনি `journalctl -u myapp` দিয়ে query করেন।
 
-A typical correlated debug session:
+একটি সাধারণ correlated debug session:
 
 ```bash
 # Find a slow request in nginx
@@ -325,14 +333,14 @@ sudo cat /var/log/nginx/access.log | jq 'select(.request_time > 5)'
 journalctl -u myapp --since "10 min ago" | grep "<request_id>"
 ```
 
-## Recap
+## রিক্যাপ
 
-- Access logs record every request; error logs record anomalies. Both default to `/var/log/nginx/`.
-- Default format is "combined." Add `$request_time`, `$upstream_response_time`, `$upstream_addr`, `$request_id`.
-- JSON format with `escape=json` is the cleanest path to log aggregation.
-- Skip noisy endpoints with `if=` on `access_log`. Split errors to a second file for easy grepping.
-- Rotate via logrotate; tell nginx to reopen file descriptors after rotation.
-- Read error log entries by severity, message, and context. Most "site is broken" problems show up here first.
-- Pair nginx logs and app logs via shared `$request_id` for cross-system debugging.
+- Access log প্রতিটি request রেকর্ড করে; error log অস্বাভাবিকতা রেকর্ড করে। দুটোরই ডিফল্ট `/var/log/nginx/`।
+- ডিফল্ট format হলো "combined"। `$request_time`, `$upstream_response_time`, `$upstream_addr`, `$request_id` যোগ করুন।
+- `escape=json` সহ JSON format হলো log aggregation-এর সবচেয়ে পরিষ্কার পথ।
+- `access_log`-এ `if=` দিয়ে noisy endpoint বাদ দিন। সহজ grep-এর জন্য error আলাদা file-এ split করুন।
+- logrotate দিয়ে rotate করুন; rotation-এর পর nginx-কে file descriptor আবার খুলতে বলুন।
+- error log entry পড়ুন severity, message, আর context দিয়ে। বেশিরভাগ "সাইট ভেঙে গেছে" সমস্যা প্রথমে এখানেই দেখা যায়।
+- cross-system debugging-এর জন্য shared `$request_id` দিয়ে nginx log আর app log জোড়া লাগান।
 
-Next chapter: caching at the edge — how nginx can answer 80% of your requests from RAM without ever touching the backend.
+পরের অধ্যায়: edge-এ caching — কীভাবে nginx backend-কে ছুঁয়েও না দেখে RAM থেকে আপনার 80% request-এর উত্তর দিতে পারে।

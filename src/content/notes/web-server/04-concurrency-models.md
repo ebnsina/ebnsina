@@ -1,9 +1,9 @@
 ---
 title: 'Concurrency Models'
-subtitle: 'Process per request, thread per request, prefork, event loop, hybrid. The five ways web servers handle thousands of concurrent connections — and why each one exists.'
+subtitle: 'Process per request, thread per request, prefork, event loop, hybrid. web server-রা হাজার হাজার concurrent connection সামলানোর যে পাঁচটি উপায় ব্যবহার করে — আর কেন প্রতিটির অস্তিত্ব আছে।'
 chapter: 4
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['concurrency', 'threads', 'event loop', 'epoll', 'go']
 ---
 
@@ -11,27 +11,35 @@ topics: ['concurrency', 'threads', 'event loop', 'epoll', 'go']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The fundamental question
+## গল্পে বুঝি
 
-When a connection arrives, **what runs?** That single decision is the difference between Apache, nginx, Node, Go, and every other web server you have ever used. Five common answers, each with real tradeoffs.
+কর্ডোবার এক ব্যস্ত রেস্তোরাঁয় ভরপুর একসাথে অনেকগুলো টেবিলে খদ্দের বসে আছে, সবাই একসাথে অর্ডার দিচ্ছে। মালিক ইবনে সিনা প্রথমে সবচেয়ে সহজ পথটা ধরলেন — প্রতিটা টেবিলের জন্য আলাদা একজন করে ডেডিকেটেড ওয়েটার। টেবিল ভরে গেলে সেই টেবিলের ওয়েটার শুধু ওই খদ্দেরদেরই দেখে, ব্যাপারটা পরিষ্কার আর সহজ। কিন্তু বিকেলের ভিড়ে যখন পঞ্চাশটা টেবিল ভরে গেল, ইবনে সিনার হাতে আর ওয়েটার রইল না — নতুন টেবিলে বসা খদ্দেররা দাঁড়িয়ে থাকতে বাধ্য হলো, শুধু বসানোর মতো লোক নেই বলে।
 
-Picture a server with N concurrent connections. For each model below, we will ask:
+পাশের রেস্তোরাঁয় আল-খোয়ারিজমি অন্য কায়দা ধরলেন। তিনি রাখলেন একজন অসম্ভব চটপটে ওয়েটার, যে কোনো টেবিলের সামনে দাঁড়িয়ে অপেক্ষা করে না। এক টেবিলে অর্ডার নিয়েই দৌড়ে চলে যায় ওই টেবিলে যেটার এই মুহূর্তে কিছু লাগছে — কারো পানি, কারো বিল, কারো নতুন প্লেট। রান্নাঘরে খাবার তৈরি হওয়ার ফাঁকা সময়টায় সে কখনো বসে থাকে না, ততক্ষণে দশটা টেবিল ঘুরে আসে। একজন লোকেই সে অনায়াসে গোটা হলঘর সামলায় — যতক্ষণ না কোনো টেবিল তাকে দীর্ঘ কোনো কাজে আটকে ফেলে; একটা টেবিল যদি তাকে বসিয়ে রেখে গল্প জোড়ে, বাকি সব টেবিল ঠায় অপেক্ষায় পড়ে থাকে। তৃতীয় দোকানে ফাতিমা আল-ফিহরি রাখলেন গোটা পাঁচেক ওয়েটারের একটা নির্দিষ্ট দল, যারা একটা সাধারণ অর্ডার-লাইন থেকে যে যখন ফাঁকা হয় সে-ই পরের টেবিল তুলে নেয়।
 
-- How many OS resources does it use?
-- What blocks what?
-- Where does it fall over under load?
+এই তিন কায়দাই আসলে server-এর তিনটা **concurrency model**। প্রতি টেবিলে এক ওয়েটার হলো **thread-per-connection** — সহজ, কিন্তু connection বাড়লে thread ফুরিয়ে যায় (RAM আর scheduler-এই আটকায়)। কখনো-না-দাঁড়ানো চটপটে একজন ওয়েটার হলো **single-threaded event loop** — **non-blocking I/O** দিয়ে একটা thread-ই হাজার connection সামলায়, কিন্তু একটা blocking কাজ পুরো loop আটকে দেয়। আর নির্দিষ্ট দলটা হলো **worker/process pool** — isolation ভালো, কিন্তু concurrency দলের সাইজেই সীমিত (সবাই ব্যস্ত হলে পরের খদ্দের queue-তে বসে থাকে)। বাস্তবে Apache-র ক্লাসিক model প্রতি connection-এ thread/process দেয়, আর nginx ও Node.js event loop + non-blocking I/O দিয়ে অল্প resource-এ বিশাল concurrency টানে — এই পার্থক্যটাই দুই ধরনের server-এর মূল ভাগ।
+
+## মূল প্রশ্নটা
+
+যখন একটা connection আসে, **কী রান হয়?** ঐ একটা সিদ্ধান্তই Apache, nginx, Node, Go, আর আপনার ব্যবহার করা অন্য প্রতিটি web server-এর মধ্যে পার্থক্য গড়ে দেয়। পাঁচটি সাধারণ উত্তর, প্রতিটির সাথেই বাস্তব tradeoff জড়িয়ে আছে।
+
+কল্পনা করুন একটা server-এ N-টা concurrent connection আছে। নিচের প্রতিটি মডেলের জন্য আমরা জিজ্ঞেস করব:
+
+- এটা কতগুলো OS resource ব্যবহার করে?
+- কী কাকে block করে?
+- load-এর নিচে এটা কোথায় ভেঙে পড়ে?
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Concurrency models are like restaurant staffing strategies — one waiter handling all tables sequentially, one waiter assigned per table, or one highly attentive waiter who mentally juggles every table at once without ever blocking.
+Concurrency model অনেকটা রেস্তোরাঁর staffing কৌশলের মতো — একজন waiter সব টেবিল একের পর এক সামলাচ্ছে, প্রতি টেবিলে একজন করে waiter দেওয়া, অথবা একজন অত্যন্ত মনোযোগী waiter যে কখনো block না হয়ে মনে মনে সব টেবিল একসাথে সামলে যাচ্ছে।
 
 </Callout>
 
 ## Model 1 — Process per request
 
-The original Unix design. The accept loop calls `fork()` for every connection, the child handles the request, the parent continues accepting.
+মূল Unix ডিজাইন। accept loop প্রতিটি connection-এর জন্য `fork()` কল করে, child request সামলায়, parent accept করতে থাকে।
 
 ```c
 while (1) {
@@ -46,15 +54,15 @@ while (1) {
 }
 ```
 
-**Pros.** Maximum isolation — a crash in one request takes down only that child. No shared memory means no concurrency bugs. CGI worked this way; original inetd worked this way.
+**সুবিধা।** সর্বোচ্চ isolation — একটা request-এ crash হলে শুধু সেই child-টাই পড়ে যায়। shared memory নেই মানে কোনো concurrency bug নেই। CGI এভাবে কাজ করত; আদি inetd এভাবে কাজ করত।
 
-**Cons.** Forking is _expensive_ — kernel allocates a new process control block, copies page tables, sets up file descriptors. Hundreds of microseconds per fork. At a thousand requests per second on a small VPS, you spend more time forking than handling requests. Memory blows up linearly.
+**অসুবিধা।** fork করা _ব্যয়বহুল_ — kernel একটা নতুন process control block বরাদ্দ করে, page table কপি করে, file descriptor সেট আপ করে। প্রতি fork-এ কয়েকশো microsecond। ছোট একটা VPS-এ সেকেন্ডে হাজারটা request হলে, request সামলানোর চেয়ে fork করাতেই বেশি সময় যায়। memory লিনিয়ারলি ফুলে ওঠে।
 
-**Where you still see it.** Old CGI scripts, qmail, some specialty cron-driven setups. Rare for modern web.
+**এখনো কোথায় দেখবেন।** পুরনো CGI script, qmail, কিছু বিশেষ cron-চালিত setup। আধুনিক web-এ বিরল।
 
 ## Model 2 — Thread per request
 
-Same loop, but spawn an OS thread instead of forking:
+একই loop, কিন্তু fork করার বদলে একটা OS thread spawn করা:
 
 ```c
 while (1) {
@@ -63,17 +71,17 @@ while (1) {
 }
 ```
 
-Threads share memory with the parent, so spawning is much cheaper than forking — tens of microseconds, not hundreds. They share the same heap, file descriptors, and global state.
+Thread parent-এর সাথে memory শেয়ার করে, তাই spawn করা fork করার চেয়ে অনেক সস্তা — কয়েকশো নয়, কয়েক দশ microsecond। এরা একই heap, file descriptor, আর global state শেয়ার করে।
 
-**Pros.** Simple programming model. Each handler is a synchronous function; if it needs to read from disk, it just blocks. Concurrency happens because the kernel schedules threads onto cores.
+**সুবিধা।** সহজ programming model। প্রতিটি handler একটা synchronous function; disk থেকে পড়তে হলে সেটা শুধু block হয়ে যায়। concurrency ঘটে কারণ kernel thread-গুলোকে core-এ schedule করে।
 
-**Cons.** Each OS thread has a stack — Linux defaults to 8MB virtual, ~64KB resident. A thousand threads consume noticeable RAM. Context-switching between threads is fast but not free. At ~10K concurrent connections, the kernel scheduler starts becoming the bottleneck.
+**অসুবিধা।** প্রতিটি OS thread-এর একটা stack থাকে — Linux ডিফল্টে 8MB virtual, ~64KB resident। হাজারটা thread লক্ষণীয় পরিমাণ RAM খায়। thread-এর মধ্যে context-switch করা দ্রুত কিন্তু বিনামূল্যে নয়। ~10K concurrent connection-এ kernel scheduler bottleneck হতে শুরু করে।
 
-**Where you see it.** Apache's `mpm_worker` mode, Tomcat, the "spawn one thread per connection" pattern in many JVM frameworks. Fine up to a few thousand concurrent connections; falls over beyond that.
+**কোথায় দেখবেন।** Apache-র `mpm_worker` mode, Tomcat, অনেক JVM framework-এর "প্রতি connection-এ একটা thread spawn" প্যাটার্ন। কয়েক হাজার concurrent connection পর্যন্ত ঠিকঠাক; এর বেশি হলে ভেঙে পড়ে।
 
 ## Model 3 — Prefork (worker pool)
 
-Fix forking-per-request by _preforking_ a fixed pool of worker processes at startup. Each worker has its own accept loop on the shared listener:
+request-প্রতি fork করা ঠিক করুন startup-এ একটা নির্দিষ্ট pool worker process _prefork_ করে। প্রতিটি worker-এর নিজস্ব accept loop থাকে shared listener-এর ওপর:
 
 ```c
 // at startup
@@ -92,17 +100,17 @@ void worker_loop() {
 }
 ```
 
-The kernel handles `accept()` from multiple processes correctly — only one wakes up per connection.
+kernel একাধিক process থেকে `accept()` সঠিকভাবে সামলায় — প্রতি connection-এ শুধু একটাই জেগে ওঠে।
 
-**Pros.** No forking on the hot path. Process isolation is preserved. If a worker crashes, the master spawns another. If one worker has a memory leak, you can recycle it after N requests without affecting others.
+**সুবিধা।** hot path-এ কোনো fork নেই। process isolation বজায় থাকে। একটা worker crash করলে master আরেকটা spawn করে। একটা worker-এ memory leak থাকলে, আপনি সেটাকে N request পর অন্যদের প্রভাবিত না করে recycle করতে পারেন।
 
-**Cons.** Each worker handles only one connection at a time, so the pool size limits concurrency. If you have 100 workers and 101 clients arrive, the 101st waits.
+**অসুবিধা।** প্রতিটি worker একবারে শুধু একটা connection সামলায়, তাই pool-এর সাইজই concurrency-কে সীমিত করে দেয়। 100টা worker আর 101টা client এলে, 101তম-টা অপেক্ষা করে।
 
-**Where you see it.** Apache's `mpm_prefork` (the default for years), PHP-FPM, Gunicorn (the default `sync` worker class). Still extremely common in PHP/Python deployments. Unicorn (Ruby) is the same idea.
+**কোথায় দেখবেন।** Apache-র `mpm_prefork` (বছরের পর বছর ডিফল্ট), PHP-FPM, Gunicorn (ডিফল্ট `sync` worker class)। এখনো PHP/Python deployment-এ অত্যন্ত সাধারণ। Unicorn (Ruby)-ও একই ধারণা।
 
 ## Model 4 — Event loop (reactor pattern)
 
-A single thread runs an _event loop_. When a connection arrives, the kernel notifies the loop via `epoll` (Linux), `kqueue` (BSD/macOS), or `IOCP` (Windows). The loop registers callbacks for "this socket is readable" and "this socket is writable," then continues spinning.
+একটাই thread একটা _event loop_ চালায়। যখন একটা connection আসে, kernel `epoll` (Linux), `kqueue` (BSD/macOS), বা `IOCP` (Windows)-এর মাধ্যমে loop-কে জানায়। loop "এই socket readable" আর "এই socket writable"-এর জন্য callback register করে, তারপর ঘুরতে থাকে।
 
 ```c
 int ep = epoll_create1(0);
@@ -126,27 +134,27 @@ while (1) {
 }
 ```
 
-The loop never blocks on a single connection. While one connection is waiting on disk I/O, the loop is happily reading from another connection's socket. The OS stays out of the way.
+loop কখনো একটা মাত্র connection-এ block হয় না। একটা connection যখন disk I/O-র অপেক্ষায় থাকে, loop তখন আনন্দে আরেকটা connection-এর socket থেকে পড়ছে। OS মাঝখান থেকে সরে থাকে।
 
-**Pros.** One thread can comfortably manage 10K+ connections. RAM usage scales with _connections_, not threads (~10KB per connection). Latency is low because there is no context-switching.
+**সুবিধা।** একটা thread স্বচ্ছন্দে 10K+ connection সামলাতে পারে। RAM ব্যবহার _connection_-এর সাথে scale করে, thread-এর সাথে নয় (~প্রতি connection-এ 10KB)। latency কম কারণ কোনো context-switch নেই।
 
-**Cons.** Programming model is harder. Every blocking call must be made non-blocking (`fcntl(F_SETFL, O_NONBLOCK)`) or run on a separate thread, or the whole loop stalls. If your handler accidentally does a synchronous `pg_query()`, every other client waits. This is the **single-threaded blocking** trap and the source of most "Node went down because someone called `fs.readFileSync`" stories.
+**অসুবিধা।** programming model কঠিন। প্রতিটি blocking call-কে non-blocking (`fcntl(F_SETFL, O_NONBLOCK)`) বানাতে হবে অথবা আলাদা thread-এ চালাতে হবে, নয়তো পুরো loop আটকে যায়। আপনার handler ভুলে একটা synchronous `pg_query()` করলে, অন্য প্রতিটি client অপেক্ষা করে। এটাই **single-threaded blocking** ফাঁদ, আর "কেউ `fs.readFileSync` কল করায় Node পড়ে গেল" জাতীয় গল্পের উৎস।
 
-**Where you see it.** nginx, HAProxy, Redis, Node.js, Python asyncio (uvloop), Vert.x, Tokio. The dominant model for high-performance servers.
+**কোথায় দেখবেন।** nginx, HAProxy, Redis, Node.js, Python asyncio (uvloop), Vert.x, Tokio। high-performance server-এর প্রধান মডেল।
 
 <Callout type="info">
 
-**The C10K problem.**
+**C10K problem।**
 
-In 1999 Dan Kegel wrote a paper asking how to handle 10,000 concurrent connections on a single machine. Thread-per-connection could not. The answer — `epoll`, `kqueue`, the reactor pattern — became event-loop servers. Today the question is C10M (ten million), and the techniques are largely the same: avoid syscalls per byte, share state across cores carefully.
+1999 সালে Dan Kegel একটা পেপার লেখেন, যেখানে প্রশ্ন করা হয় একটা মেশিনে 10,000 concurrent connection কীভাবে সামলানো যায়। Thread-per-connection পারত না। উত্তর — `epoll`, `kqueue`, reactor pattern — হয়ে উঠল event-loop server। আজ প্রশ্নটা C10M (এক কোটি), আর কৌশলগুলো মূলত একই: প্রতি byte-এ syscall এড়ানো, core-গুলোর মধ্যে state সাবধানে শেয়ার করা।
 
 </Callout>
 
-## Model 5 — M:N goroutines (or virtual threads)
+## Model 5 — M:N goroutines (বা virtual threads)
 
-A hybrid: many _lightweight_ userspace threads multiplexed onto few OS threads. The runtime schedules them. When one blocks (on I/O, lock, channel), the runtime parks it and runs another on the same OS thread.
+একটা hybrid: অনেকগুলো _lightweight_ userspace thread কম কয়েকটা OS thread-এর ওপর multiplex করা। runtime এদের schedule করে। একটা যখন block হয় (I/O, lock, channel-এ), runtime সেটাকে park করে আর একই OS thread-এ আরেকটা চালায়।
 
-This is **goroutines** in Go. It is **virtual threads** (Loom) in Java 21+. It is **fibers** in some other languages.
+এটাই Go-তে **goroutines**। এটাই Java 21+-এ **virtual threads** (Loom)। কিছু অন্য ভাষায় এটাই **fibers**।
 
 ```go
 listener, _ := net.Listen("tcp", ":8080")
@@ -156,31 +164,31 @@ for {
 }
 ```
 
-The Go runtime under the hood uses `epoll`/`kqueue`. When `handle(conn)` calls `conn.Read()`, the runtime parks that goroutine on an `epoll` set and continues running others on the same thread. When data arrives, the kernel wakes the runtime, which resumes the goroutine.
+Go runtime ভেতরে `epoll`/`kqueue` ব্যবহার করে। যখন `handle(conn)` `conn.Read()` কল করে, runtime সেই goroutine-কে একটা `epoll` set-এ park করে আর একই thread-এ অন্যদের চালাতে থাকে। data এলে, kernel runtime-কে জাগায়, যা goroutine-টা resume করে।
 
-**Pros.** Synchronous-looking code (no callbacks, no `await` ceremony) with event-loop-like performance. Cheap goroutines (a few KB each) mean you can spawn one per connection without thinking.
+**সুবিধা।** synchronous-দেখতে কোড (কোনো callback নেই, কোনো `await` ঝামেলা নেই) event-loop-এর মতো performance সহ। সস্তা goroutine (প্রতিটি কয়েক KB) মানে না ভেবেই আপনি প্রতি connection-এ একটা করে spawn করতে পারেন।
 
-**Cons.** Runtime is part of your binary. Stack growth and shrinkage have costs. You still have to think about concurrency — channels, mutexes, races. A blocking C call without `cgo` cooperation can stall an OS thread (the runtime spawns another, but it costs).
+**অসুবিধা।** runtime আপনার binary-র অংশ। stack বাড়া-কমার খরচ আছে। এখনো আপনাকে concurrency নিয়ে ভাবতে হয় — channel, mutex, race। `cgo`-র সহযোগিতা ছাড়া একটা blocking C call একটা OS thread আটকে দিতে পারে (runtime আরেকটা spawn করে, কিন্তু তার খরচ আছে)।
 
-**Where you see it.** Go's `net/http`. Java with virtual threads. Rust's `tokio` is similar in spirit (async/await over an executor).
+**কোথায় দেখবেন।** Go-র `net/http`। virtual thread সহ Java। Rust-এর `tokio` চেতনায় একই রকম (একটা executor-এর ওপর async/await)।
 
-## Comparing them under load
+## load-এর নিচে এদের তুলনা
 
-Imagine a single small VPS, four cores, 4GB RAM, expected workload of 5,000 concurrent connections, each doing one DB query that takes 50ms.
+কল্পনা করুন একটা ছোট VPS, চারটা core, 4GB RAM, প্রত্যাশিত workload 5,000 concurrent connection, প্রতিটি একটা করে DB query করছে যেটায় 50ms লাগে।
 
-| Model                      | Memory | Throughput            | Bottleneck          |
-| -------------------------- | ------ | --------------------- | ------------------- |
-| Process-per-request        | ~5GB+  | Falls over forking    | Process create cost |
-| Thread-per-request         | ~500MB | Decent until ~2K      | Scheduler, RAM      |
-| Prefork worker pool of 100 | ~200MB | Caps at 100 in flight | Pool size           |
-| Event loop                 | ~50MB  | Handles all 5K        | Blocking syscalls   |
-| Goroutines                 | ~100MB | Handles all 5K        | Runtime scheduler   |
+| Model                      | Memory | Throughput               | Bottleneck          |
+| -------------------------- | ------ | ------------------------ | ------------------- |
+| Process-per-request        | ~5GB+  | fork করতে করতে পড়ে যায় | Process create cost |
+| Thread-per-request         | ~500MB | ~2K পর্যন্ত ভালো         | Scheduler, RAM      |
+| Prefork worker pool of 100 | ~200MB | in-flight 100-তে আটকায়  | Pool size           |
+| Event loop                 | ~50MB  | পুরো 5K সামলায়          | Blocking syscalls   |
+| Goroutines                 | ~100MB | পুরো 5K সামলায়          | Runtime scheduler   |
 
-Event loop and goroutines are the only two that comfortably handle the workload on a small box.
+Event loop আর goroutines — এই দুটোই একটা ছোট মেশিনে এই workload স্বচ্ছন্দে সামলাতে পারে।
 
-## What `net/http` actually is
+## `net/http` আসলে কী
 
-Go's `net/http` server is goroutine-per-connection. The accept loop runs in one goroutine. Each new connection spawns a goroutine that handles the entire request lifecycle. The runtime multiplexes those goroutines onto a small number of OS threads (typically `GOMAXPROCS`, default `nproc`).
+Go-র `net/http` server goroutine-per-connection। accept loop একটা goroutine-এ চলে। প্রতিটি নতুন connection একটা goroutine spawn করে যা পুরো request lifecycle সামলায়। runtime সেই goroutine-গুলোকে কম কয়েকটা OS thread-এর ওপর multiplex করে (সাধারণত `GOMAXPROCS`, ডিফল্ট `nproc`)।
 
 ```go
 // Simplified version of http.Server.Serve
@@ -192,11 +200,11 @@ for {
 }
 ```
 
-That `go c.serve(ctx)` is the entire concurrency model. Cheap, simple, scales to many thousands.
+ঐ `go c.serve(ctx)`-ই পুরো concurrency model। সস্তা, সহজ, হাজার হাজার পর্যন্ত scale করে।
 
-## What nginx actually is
+## nginx আসলে কী
 
-nginx is a _master_ process plus a small number of _worker_ processes, each running its own event loop. The default is one worker per CPU core (`worker_processes auto`). Each worker can handle thousands of connections concurrently via `epoll`.
+nginx হলো একটা _master_ process আর কম কয়েকটা _worker_ process, প্রতিটি নিজের event loop চালায়। ডিফল্ট হলো প্রতি CPU core-এ একটা করে worker (`worker_processes auto`)। প্রতিটি worker `epoll`-এর মাধ্যমে concurrent-ভাবে হাজার হাজার connection সামলাতে পারে।
 
 ```text
 master (root, port 80/443)
@@ -206,39 +214,39 @@ master (root, port 80/443)
   └─ worker N
 ```
 
-This hybrid — multiple processes (one per core) each running an event loop — is the gold standard for static-content and reverse-proxy workloads. CPU-bound work is parallelized across cores; within a core, the event loop avoids context-switching overhead.
+এই hybrid — একাধিক process (প্রতি core-এ একটা) প্রতিটি একটা event loop চালাচ্ছে — static-content আর reverse-proxy workload-এর জন্য gold standard। CPU-bound কাজ core-গুলোর মধ্যে parallelize হয়; একটা core-এর মধ্যে, event loop context-switch-এর overhead এড়ায়।
 
-## When to pick which model
+## কখন কোন মডেল বেছে নেবেন
 
-If you are choosing — usually by picking a language and framework — here is the cheat sheet:
+আপনি যদি বেছে নিচ্ছেন — সাধারণত একটা ভাষা আর framework বেছে নিয়ে — এই হলো cheat sheet:
 
-- **Static content, lots of connections, low CPU per request** — event loop. nginx is purpose-built for this.
-- **CPU-bound work, modest concurrency** — thread-per-request or worker pool. JVM or .NET shines here.
-- **Mixed I/O-heavy + CPU-medium with developer ergonomics** — goroutines (Go), virtual threads (Java 21+), or async/await (Rust, modern Python).
-- **PHP / classic Ruby / classic Python** — prefork worker pool. PHP-FPM, Unicorn, Gunicorn sync workers. Simple, debuggable, fine for most apps under a few thousand RPS.
+- **Static content, প্রচুর connection, request-প্রতি কম CPU** — event loop। nginx এর জন্যই বানানো।
+- **CPU-bound কাজ, মাঝারি concurrency** — thread-per-request বা worker pool। JVM বা .NET এখানে জ্বলজ্বল করে।
+- **মিশ্র I/O-ভারী + CPU-মাঝারি, developer ergonomics সহ** — goroutines (Go), virtual threads (Java 21+), বা async/await (Rust, আধুনিক Python)।
+- **PHP / classic Ruby / classic Python** — prefork worker pool। PHP-FPM, Unicorn, Gunicorn sync worker। সহজ, debug-যোগ্য, কয়েক হাজার RPS-এর নিচে বেশিরভাগ app-এর জন্য ঠিকঠাক।
 
-## Why most production setups use _two_ models
+## কেন বেশিরভাগ production setup _দুটো_ মডেল ব্যবহার করে
 
-Front a Go application server (goroutines) with nginx (event loop). Why both?
+একটা Go application server (goroutines)-এর সামনে nginx (event loop) বসান। দুটোই কেন?
 
-- **nginx terminates TLS, HTTP/2, and gzip in front of cheap CPU cores using a model optimized for that work.**
-- **Your app handles dynamic logic in goroutines, which is the optimal model for I/O-heavy app code.**
+- **nginx সস্তা CPU core-এর সামনে TLS, HTTP/2, আর gzip terminate করে, সেই কাজের জন্য optimize করা একটা মডেল দিয়ে।**
+- **আপনার app dynamic logic goroutine-এ সামলায়, যা I/O-ভারী app কোডের জন্য optimal মডেল।**
 
-Each is doing what it is good at. Trying to do TLS termination in Go is fine — `crypto/tls` is solid — but at scale, nginx is faster and easier to tune.
+প্রতিটি সে যা ভালো পারে তাই করছে। Go-তে TLS termination করা ঠিকই আছে — `crypto/tls` মজবুত — কিন্তু scale-এ, nginx দ্রুততর আর tune করা সহজ।
 
-## Common mistakes
+## সাধারণ ভুল
 
-- **Calling sync I/O in an event loop.** `fs.readFileSync` in Node, `time.sleep()` in `asyncio`. The whole loop stalls.
-- **Spawning a goroutine per shed-record-of-the-database.** Goroutines are cheap but not free. A goroutine per _connection_ is right; a goroutine per inner-loop iteration over millions of records is a leak.
-- **Underprovisioning prefork workers.** PHP-FPM with `pm.max_children = 5` will queue every request beyond the fifth. Set it based on memory headroom, not the default.
-- **Overprovisioning threads.** A JVM with `-Xss8m` and 10,000 threads is asking for OOM. Use virtual threads on Java 21+ or move to async.
+- **event loop-এ sync I/O কল করা।** Node-এ `fs.readFileSync`, `asyncio`-তে `time.sleep()`। পুরো loop আটকে যায়।
+- **database-এর প্রতি রেকর্ডে একটা করে goroutine spawn করা।** goroutine সস্তা কিন্তু বিনামূল্যে নয়। প্রতি _connection_-এ একটা goroutine ঠিক আছে; লক্ষ লক্ষ রেকর্ডের inner-loop প্রতি iteration-এ একটা goroutine একটা leak।
+- **prefork worker কম দেওয়া।** `pm.max_children = 5` সহ PHP-FPM পঞ্চম-এর পরের প্রতিটি request queue করবে। ডিফল্ট নয়, memory headroom-এর ভিত্তিতে সেট করুন।
+- **thread বেশি দেওয়া।** `-Xss8m` আর 10,000 thread সহ একটা JVM OOM ডেকে আনছে। Java 21+-এ virtual thread ব্যবহার করুন অথবা async-এ যান।
 
-## Recap
+## রিক্যাপ
 
-- Five common models: process-per-request, thread-per-request, prefork pool, event loop, goroutines/virtual threads.
-- Event loops scale to many connections per CPU; programming is harder; never block.
-- Goroutines (and virtual threads) give synchronous-looking code with event-loop performance.
-- Production typically pairs a goroutine/event-loop _application_ server with an event-loop _reverse proxy_ (nginx).
-- The right model depends on workload: I/O-bound vs CPU-bound vs concurrency level.
+- পাঁচটি সাধারণ মডেল: process-per-request, thread-per-request, prefork pool, event loop, goroutines/virtual threads।
+- Event loop প্রতি CPU-তে অনেক connection scale করে; programming কঠিন; কখনো block করবেন না।
+- Goroutines (আর virtual threads) event-loop performance সহ synchronous-দেখতে কোড দেয়।
+- Production সাধারণত একটা goroutine/event-loop _application_ server-কে একটা event-loop _reverse proxy_ (nginx)-এর সাথে জোড়া বাঁধে।
+- সঠিক মডেল workload-এর ওপর নির্ভর করে: I/O-bound বনাম CPU-bound বনাম concurrency-র মাত্রা।
 
-Next chapter: serving static files — the half of "web server" that nginx is _embarrassingly_ better at than your app.
+পরের অধ্যায়: static file serve করা — "web server"-এর সেই অর্ধেক, যেটায় nginx আপনার app-এর চেয়ে _লজ্জাজনকভাবে_ ভালো।

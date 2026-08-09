@@ -1,9 +1,9 @@
 ---
-title: 'What TLS Actually Is'
-subtitle: 'TLS does two jobs: it encrypts your traffic, and it proves the server is who it says it is. The two halves work together — neither alone is enough.'
+title: 'TLS আসলে কী'
+subtitle: 'TLS দুইটা কাজ করে: এটা আপনার traffic encrypt করে, আর প্রমাণ করে সার্ভার সেই যা বলে দাবি করছে। দুইটা অর্ধেক একসাথে কাজ করে — একা কোনোটাই যথেষ্ট নয়।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['tls', 'ssl', 'encryption', 'identity', 'https']
 ---
 
@@ -13,24 +13,32 @@ topics: ['tls', 'ssl', 'encryption', 'identity', 'https']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A tamper-evident envelope that also proves who sealed it — private, authentic, and detectable if opened in transit.
+একটা tamper-evident খাম যেটা আবার প্রমাণও করে কে এটা সিল করেছে — private, authentic, এবং পথে খোলা হলে ধরা পড়ে।
 
 </Callout>
 
-## The two jobs
+## গল্পে বুঝি
 
-When you load `https://example.com`, two things must be true:
+ইবনে সিনা বুখারা থেকে কর্ডোবায় ফাতিমা আল-ফিহরির কাছে একটা গোপন চিঠি পাঠাবেন। মাঝখানের পুরো পথটা যায় এক অচেনা কুরিয়ারের হাত দিয়ে — যাকে বিশ্বাস করার কোনো কারণ নেই। এই কুরিয়ার চাইলে চিঠিটা খুলে পড়তে পারে, নিজেকে ফাতিমা সাজিয়ে চিঠিটা হাতিয়ে নিতে পারে, এমনকি ভেতরের লেখা বদলে দিয়ে আবার সিল করে দিতে পারে। তিনটা বিপদ, একসাথে।
 
-1. **No one else can read what you and example.com say to each other.** Not your ISP, not the coffee-shop wifi, not a router halfway around the world.
-2. **You are actually talking to example.com.** Not to an attacker who has placed themselves in the middle and is reading everything you send.
+তাই ইবনে সিনা তিনটা ব্যবস্থা নিলেন। প্রথমত, চিঠিটা এমন একটা বাক্সে তালাবন্ধ করলেন যেটা কেবল ফাতিমার কাছে থাকা চাবিতেই খোলে — কুরিয়ার বাক্স বহন করলেও ভেতরের লেখার একবিন্দুও পড়তে পারবে না। দ্বিতীয়ত, বাক্স নেওয়ার আগে তিনি ফাতিমার দোকানের সরকারি ছাপ-দেওয়া অফিসিয়াল সিলটা মিলিয়ে দেখলেন — যাতে নিশ্চিত হন এটা আসলেই ফাতিমা, কোনো ছদ্মবেশী নয়। তৃতীয়ত, বাক্সের মুখে এমন গালা-মোম লাগালেন যে পথে কেউ একবার খুললেই মোম ভেঙে দাগ পড়ে যাবে — গন্তব্যে পৌঁছে ফাটল দেখলেই বোঝা যাবে কেউ হাত দিয়েছে।
 
-These are _encryption_ and _authentication_, and TLS is the protocol that delivers both in the same package. Drop either half and the other becomes useless: an encrypted channel to an attacker is no better than plaintext to the real server.
+এই গল্পটাই আসলে **TLS**। তালাবন্ধ বাক্স হলো _encryption_ — কুরিয়ার (আপনার ISP বা কফি-শপের wifi) বহন করলেও পড়তে পারে না। যাচাই-করা অফিসিয়াল সিল হলো _authentication_ — certificate দিয়ে TLS প্রমাণ করে ওপাশে সত্যিই আসল সার্ভার, কোনো man-in-the-middle নয়। আর তামের-এভিডেন্ট মোম হলো _integrity_ — পথে data বদলানো হলে সাথে সাথে ধরা পড়ে। বাস্তবে যখন browser-এ HTTPS-এর padlock আইকনটা দেখেন, তখন এই তিনটা নিশ্চয়তাই একসাথে কাজ করছে।
 
-## Why HTTP alone is not enough
+## দুইটা কাজ
 
-HTTP is plaintext. Every byte of every request and response travels in the clear. On the same network as the user, anyone can read passwords, session cookies, page contents — and worse, modify them in flight.
+আপনি যখন `https://example.com` লোড করেন, তখন দুইটা জিনিস সত্য হতে হবে:
+
+1. **আপনি আর example.com একে অপরকে যা বলেন তা অন্য কেউ পড়তে পারবে না।** আপনার ISP নয়, কফি-শপের wifi নয়, পৃথিবীর অর্ধেক দূরের কোনো router নয়।
+2. **আপনি আসলেই example.com-এর সাথে কথা বলছেন।** এমন কোনো attacker-এর সাথে নয় যে মাঝখানে বসে আপনার পাঠানো সবকিছু পড়ছে।
+
+এগুলো হলো _encryption_ আর _authentication_, আর TLS হলো সেই প্রোটোকল যা একই প্যাকেজে দুইটাই দেয়। যেকোনো একটা অর্ধেক বাদ দিলে অন্যটা অকেজো হয়ে যায়: একজন attacker-এর সাথে encrypted channel আসল সার্ভারে plaintext-এর চেয়ে ভালো কিছু নয়।
+
+## HTTP একা কেন যথেষ্ট নয়
+
+HTTP plaintext। প্রতিটা request আর response-এর প্রতিটা byte খোলামেলা যায়। ইউজারের মতো একই নেটওয়ার্কে থাকলে যে কেউ password, session cookie, page content পড়তে পারে — আর আরও খারাপ, চলার পথে সেগুলো পরিবর্তন করতে পারে।
 
 ```bash
 # What an HTTP request looks like on the wire:
@@ -40,7 +48,7 @@ Host: example.com
 Cookie: session=abc123secret
 ```
 
-That cookie just leaked to anyone packet-sniffing the network. With HTTPS, a sniffer sees this:
+সেই cookie এইমাত্র নেটওয়ার্কে packet-sniffing করা যে কারও কাছে ফাঁস হয়ে গেল। HTTPS-এর সাথে একজন sniffer এটা দেখে:
 
 ```text
 0x0000:  4500 005c 1234 4000 4006 b1c4 c0a8 0102
@@ -49,21 +57,21 @@ That cookie just leaked to anyone packet-sniffing the network. With HTTPS, a sni
 ...
 ```
 
-Random-looking ciphertext. The sniffer can see _that_ you connected to a particular IP, but not what you said.
+দেখতে র‍্যান্ডম ciphertext। sniffer দেখতে পায় _যে_ আপনি একটা নির্দিষ্ট IP-তে কানেক্ট করেছেন, কিন্তু আপনি কী বলেছেন তা নয়।
 
-## Symmetric vs asymmetric encryption — both are needed
+## Symmetric বনাম asymmetric encryption — দুইটাই দরকার
 
-TLS uses two kinds of cryptography simultaneously, because each is good at something the other is bad at.
+TLS একই সাথে দুই ধরনের cryptography ব্যবহার করে, কারণ প্রতিটা এমন কিছুতে ভালো যেটায় অন্যটা খারাপ।
 
-**Symmetric encryption** uses a single shared key. Both sides have the same key, both sides encrypt and decrypt with it. AES is the most common modern symmetric cipher. It is _extremely fast_ — a modern CPU encrypts 1GB/s per core with hardware-accelerated AES-GCM.
+**Symmetric encryption** একটা মাত্র shared key ব্যবহার করে। দুই পক্ষেরই একই key থাকে, দুই পক্ষই সেটা দিয়ে encrypt আর decrypt করে। AES হলো সবচেয়ে প্রচলিত আধুনিক symmetric cipher। এটা _অত্যন্ত দ্রুত_ — hardware-accelerated AES-GCM দিয়ে একটা আধুনিক CPU per core প্রতি সেকেন্ডে 1GB encrypt করে।
 
-The catch: how do you exchange the shared key in the first place? Send it over the network, and an eavesdropper has it.
+সমস্যাটা: প্রথমেই shared key-টা আপনি বিনিময় করবেন কীভাবে? নেটওয়ার্কে পাঠান, আর একজন eavesdropper সেটা পেয়ে যায়।
 
-**Asymmetric encryption** uses a _pair_ of keys: a public key (safe to share) and a private key (secret). Anything encrypted with the public key can only be decrypted with the private key. This solves the key-exchange problem — the server publishes its public key, the client uses it to send a secret only the server can read.
+**Asymmetric encryption** একটা key-এর _জোড়া_ ব্যবহার করে: একটা public key (শেয়ার করা নিরাপদ) আর একটা private key (গোপন)। public key দিয়ে encrypt করা যেকোনো কিছু কেবল private key দিয়েই decrypt করা যায়। এটা key-exchange সমস্যার সমাধান করে — সার্ভার তার public key প্রকাশ করে, client সেটা ব্যবহার করে এমন একটা secret পাঠায় যা কেবল সার্ভার পড়তে পারে।
 
-The catch: asymmetric crypto is _slow_. RSA at 2048 bits is around 100x slower than AES per byte. Using it for every packet would crush performance.
+সমস্যাটা: asymmetric crypto _ধীর_। 2048 bit-এ RSA per byte AES-এর চেয়ে প্রায় 100x ধীর। প্রতিটা packet-এর জন্য এটা ব্যবহার করলে performance-এর দফারফা হয়ে যাবে।
 
-The TLS solution: use _both_. Asymmetric crypto to negotiate a shared symmetric key, then symmetric crypto for the rest of the session.
+TLS-এর সমাধান: _দুইটাই_ ব্যবহার করা। একটা shared symmetric key নেগোশিয়েট করতে asymmetric crypto, তারপর বাকি session-এর জন্য symmetric crypto।
 
 ```text
 client   ──── (encrypted with server's public key) ───►  server
@@ -72,15 +80,15 @@ client   ──── (encrypted with server's public key) ───►  server
 [then both sides encrypt/decrypt subsequent traffic with K]
 ```
 
-Modern TLS does not literally encrypt the symmetric key with the server's public key — it uses **Diffie-Hellman key exchange**, where both sides combine their own ephemeral randomness with the other side's contribution to derive the same K, without ever sending K itself. But the principle is the same: asymmetric for setup, symmetric for the bulk traffic.
+আধুনিক TLS আক্ষরিক অর্থে সার্ভারের public key দিয়ে symmetric key encrypt করে না — এটা **Diffie-Hellman key exchange** ব্যবহার করে, যেখানে দুই পক্ষই তাদের নিজেদের ephemeral randomness অন্য পক্ষের অবদানের সাথে মিলিয়ে একই K বের করে, K নিজে কখনো না পাঠিয়েই। কিন্তু নীতিটা একই: setup-এর জন্য asymmetric, bulk traffic-এর জন্য symmetric।
 
-## Identity — the certificate
+## Identity — certificate
 
-Encryption alone is not enough. Imagine you connect to `example.com`. Your traffic is encrypted... but to whom? Without identity, an attacker on your network can intercept the connection, present _their own_ public key, and you happily encrypt your password to them. They decrypt, log it, then forward to the real server. Classic man-in-the-middle.
+Encryption একাই যথেষ্ট নয়। ধরুন আপনি `example.com`-এ কানেক্ট করলেন। আপনার traffic encrypted... কিন্তু কার কাছে? Identity ছাড়া আপনার নেটওয়ার্কের একজন attacker কানেকশন intercept করতে পারে, _তার নিজের_ public key উপস্থাপন করতে পারে, আর আপনি খুশিমনে আপনার password তাকে encrypt করে পাঠান। সে decrypt করে, লগ করে, তারপর আসল সার্ভারে forward করে। ক্লাসিক man-in-the-middle।
 
-Identity comes from a **certificate**: a small file that says "this public key belongs to example.com" — and is signed by a third party your computer already trusts (a Certificate Authority).
+Identity আসে একটা **certificate** থেকে: একটা ছোট ফাইল যা বলে "এই public key example.com-এর" — আর এটা এমন একটা third party দ্বারা signed যাকে আপনার কম্পিউটার আগে থেকেই trust করে (একটা Certificate Authority)।
 
-A certificate looks like this (when decoded):
+একটা certificate দেখতে এমন (decode করলে):
 
 ```text
 Subject: CN = example.com
@@ -90,77 +98,77 @@ Valid: 2026-04-01 to 2026-06-30
 Signature: <Let's Encrypt's signature over all of the above>
 ```
 
-Your browser comes preinstalled with a list of root CAs (Let's Encrypt, DigiCert, GlobalSign, Sectigo, and a few dozen others). When the server presents its certificate, your browser:
+আপনার browser-এ আগে থেকেই একটা root CA-র তালিকা ইনস্টল করা থাকে (Let's Encrypt, DigiCert, GlobalSign, Sectigo, এবং আরও কয়েক ডজন)। সার্ভার যখন তার certificate উপস্থাপন করে, আপনার browser:
 
-1. Checks that the certificate's domain (`CN` or `SAN`) matches the domain you typed.
-2. Verifies the signature using Let's Encrypt's public key.
-3. Verifies that Let's Encrypt's certificate was, in turn, signed by a root CA your OS trusts.
-4. Checks the validity dates and the revocation status.
+1. চেক করে certificate-এর domain (`CN` বা `SAN`) আপনার টাইপ করা domain-এর সাথে মেলে কিনা।
+2. Let's Encrypt-এর public key দিয়ে signature verify করে।
+3. verify করে যে Let's Encrypt-এর certificate-টাও, ঘুরেফিরে, আপনার OS trust করে এমন একটা root CA দ্বারা signed।
+4. validity date আর revocation status চেক করে।
 
-If all of that passes, the public key in the certificate is trusted to be the real example.com's. The man-in-the-middle attack falls apart because the attacker cannot produce a valid certificate for example.com signed by a real CA — they would have to compromise the CA itself, which is what makes CAs the most security-critical organizations on the internet.
+এসব যদি পাস করে, তাহলে certificate-এর public key-কে আসল example.com-এর বলে trust করা হয়। man-in-the-middle attack ভেঙে পড়ে কারণ attacker একটা আসল CA দ্বারা signed example.com-এর জন্য একটা valid certificate তৈরি করতে পারে না — তার জন্য CA-কেই compromise করতে হতো, আর এটাই CA-দের ইন্টারনেটের সবচেয়ে security-critical প্রতিষ্ঠান করে তোলে।
 
-## TLS vs SSL — same thing, mostly
+## TLS বনাম SSL — বেশিরভাগ ক্ষেত্রেই একই জিনিস
 
-You will hear "SSL" used as a synonym for TLS. Historically:
+আপনি "SSL"-কে TLS-এর সমার্থক হিসেবে ব্যবহৃত হতে শুনবেন। ঐতিহাসিকভাবে:
 
-- **SSL 1.0** — Netscape, 1994. Never released; broken before launch.
-- **SSL 2.0** — 1995. Broken; deprecated.
-- **SSL 3.0** — 1996. Broken; POODLE attack in 2014. Disabled everywhere.
-- **TLS 1.0** — 1999. Renamed from SSL. Old; deprecated by browsers.
-- **TLS 1.1** — 2006. Marginal; deprecated.
-- **TLS 1.2** — 2008. Still widely used. Safe with modern config.
-- **TLS 1.3** — 2018. Current. Faster handshake, simpler protocol, no legacy cruft.
+- **SSL 1.0** — Netscape, 1994। কখনো রিলিজ হয়নি; লঞ্চের আগেই ভাঙা।
+- **SSL 2.0** — 1995। ভাঙা; deprecated।
+- **SSL 3.0** — 1996। ভাঙা; 2014-তে POODLE attack। সবজায়গায় disabled।
+- **TLS 1.0** — 1999। SSL থেকে নাম বদলানো। পুরোনো; browser-রা deprecate করেছে।
+- **TLS 1.1** — 2006। প্রান্তিক; deprecated।
+- **TLS 1.2** — 2008। এখনও ব্যাপকভাবে ব্যবহৃত। আধুনিক config-এ নিরাপদ।
+- **TLS 1.3** — 2018। বর্তমান। দ্রুততর handshake, সহজতর প্রোটোকল, কোনো legacy আবর্জনা নেই।
 
-Modern systems should support TLS 1.2 and 1.3 only. Everything older is unsafe or vulnerable to known attacks.
+আধুনিক সিস্টেমের কেবল TLS 1.2 আর 1.3 সাপোর্ট করা উচিত। এর চেয়ে পুরোনো সবকিছু অনিরাপদ বা পরিচিত attack-এর প্রতি vulnerable।
 
-The colloquial "SSL certificate" is a TLS certificate. People say SSL because they grew up with that name; the technology is TLS.
+মুখে মুখে বলা "SSL certificate" আসলে একটা TLS certificate। মানুষ SSL বলে কারণ তারা সেই নামটা নিয়ে বড় হয়েছে; প্রযুক্তিটা হলো TLS।
 
-## What TLS does _not_ do
+## TLS যা _করে না_
 
-A few common misconceptions worth clearing:
+কয়েকটা প্রচলিত ভুল ধারণা পরিষ্কার করা দরকার:
 
-- **TLS does not hide which site you visited.** The destination IP is still in the clear. With **SNI** (Server Name Indication), the hostname is also in the clear during the handshake — though TLS 1.3 + Encrypted Client Hello can hide it.
-- **TLS does not prevent the server from logging your data.** Once the server decrypts the request, it can do whatever it wants. Encryption protects bytes in flight, not at rest.
-- **TLS does not authenticate you to the server** by default. The certificate proves the server's identity to _you_. Mutual TLS (mTLS) — where the client also has a certificate — is the optional inverse, used in service-to-service authentication.
-- **TLS does not protect against bugs in your application.** A site with TLS but a SQL injection vulnerability is wide open. TLS protects the channel; you protect the application.
-- **TLS does not prevent traffic analysis.** An attacker watching encrypted traffic can still see _how much_ and _when_ — the size of bursts of bytes can leak which page you loaded, even if the bytes themselves are unreadable.
+- **আপনি কোন সাইটে গেছেন তা TLS লুকায় না।** গন্তব্যের IP এখনও খোলা থাকে। **SNI** (Server Name Indication) দিয়ে handshake-এর সময় hostname-ও খোলা থাকে — যদিও TLS 1.3 + Encrypted Client Hello সেটা লুকাতে পারে।
+- **সার্ভারকে আপনার ডেটা লগ করা থেকে TLS আটকায় না।** সার্ভার একবার request decrypt করলে, এটা যা খুশি করতে পারে। Encryption চলার পথের byte রক্ষা করে, বিশ্রামরত অবস্থায় নয়।
+- **ডিফল্টভাবে TLS আপনাকে সার্ভারের কাছে authenticate করে না।** certificate সার্ভারের identity _আপনার_ কাছে প্রমাণ করে। Mutual TLS (mTLS) — যেখানে client-এরও একটা certificate থাকে — হলো ঐচ্ছিক উল্টোটা, যা service-to-service authentication-এ ব্যবহৃত হয়।
+- **আপনার application-এর bug-এর বিরুদ্ধে TLS রক্ষা করে না।** TLS আছে কিন্তু SQL injection vulnerability আছে এমন একটা সাইট সম্পূর্ণ খোলা। TLS channel রক্ষা করে; application আপনি রক্ষা করেন।
+- **Traffic analysis-এর বিরুদ্ধে TLS রক্ষা করে না।** encrypted traffic দেখা একজন attacker এখনও দেখতে পারে _কতটুকু_ আর _কখন_ — byte-এর burst-এর আকার ফাঁস করে দিতে পারে আপনি কোন page লোড করেছেন, byte-গুলো নিজে অপাঠ্য হলেও।
 
-## Performance cost — much smaller than you think
+## Performance খরচ — আপনি যা ভাবেন তার চেয়ে অনেক কম
 
-The historical objection to "always-HTTPS" was performance. In 2010 it was real. In 2026 it is not.
+"সবসময়-HTTPS"-এর বিরুদ্ধে ঐতিহাসিক আপত্তি ছিল performance। 2010-তে এটা সত্য ছিল। 2026-তে নয়।
 
-- **CPU cost** — modern CPUs have AES-NI hardware acceleration. AES-GCM at gigabits per second per core. ChaCha20-Poly1305 (used on devices without AES-NI) is similarly fast.
-- **Latency cost** — the handshake adds 1–2 round trips. TLS 1.3 brought this to 1 RTT (sometimes 0 with session resumption). On a fast network, 50–100 ms one time per session.
-- **Memory cost** — a few KB per active connection for cipher state. Negligible compared to other per-connection overhead.
+- **CPU খরচ** — আধুনিক CPU-তে AES-NI hardware acceleration আছে। per core প্রতি সেকেন্ডে gigabit-এ AES-GCM। ChaCha20-Poly1305 (AES-NI ছাড়া ডিভাইসে ব্যবহৃত) একইভাবে দ্রুত।
+- **Latency খরচ** — handshake 1–2 round trip যোগ করে। TLS 1.3 এটাকে 1 RTT-তে নামিয়েছে (session resumption দিয়ে কখনো 0)। দ্রুত নেটওয়ার্কে, session প্রতি একবার 50–100 ms।
+- **Memory খরচ** — cipher state-এর জন্য active connection প্রতি কয়েক KB। অন্যান্য per-connection overhead-এর তুলনায় নগণ্য।
 
-For 99.9% of services, the answer to "should I use HTTPS" is: yes, always, no exceptions. The cost is invisible. The benefit is that your users' traffic is private.
+  99.9% সার্ভিসের জন্য "আমার কি HTTPS ব্যবহার করা উচিত"-এর উত্তর হলো: হ্যাঁ, সবসময়, কোনো ব্যতিক্রম নেই। খরচ অদৃশ্য। লাভ হলো আপনার ইউজারদের traffic private।
 
 <Callout type="info">
 
-**TLS is mandatory in modern web platforms.**
+**আধুনিক web platform-এ TLS বাধ্যতামূলক।**
 
-HTTP/2 and HTTP/3 require TLS in browsers. Service workers require TLS. The Geolocation API, microphone, camera, push notifications — all require TLS. Even if you do not care about privacy, the platform itself has effectively required TLS since around 2017.
+Browser-এ HTTP/2 আর HTTP/3-এর জন্য TLS দরকার। Service worker-এর জন্য TLS দরকার। Geolocation API, microphone, camera, push notification — সবের জন্য TLS দরকার। আপনি privacy নিয়ে চিন্তা না করলেও, platform নিজেই কার্যত 2017-এর দিক থেকে TLS বাধ্যতামূলক করেছে।
 
 </Callout>
 
-## What you actually need to do
+## আপনাকে আসলে যা করতে হবে
 
-To turn a plain-HTTP site into HTTPS, you need:
+একটা প্লেইন-HTTP সাইটকে HTTPS-এ পরিণত করতে আপনার লাগবে:
 
-1. **A domain you control** — `example.com`, with DNS pointing at your server.
-2. **A certificate** issued for that domain by a CA — typically Let's Encrypt, free and automated.
-3. **A web server configured** to use the certificate — nginx, with paths in `/etc/letsencrypt/live/example.com/`.
-4. **A renewal process** — Let's Encrypt certs are valid for 90 days; certbot renews automatically.
+1. **আপনার নিয়ন্ত্রণে থাকা একটা domain** — `example.com`, যার DNS আপনার সার্ভারে পয়েন্ট করা।
+2. **একটা certificate** যা সেই domain-এর জন্য একটা CA ইস্যু করেছে — সাধারণত Let's Encrypt, free আর automated।
+3. **certificate ব্যবহার করতে কনফিগার করা একটা web server** — nginx, path-গুলো `/etc/letsencrypt/live/example.com/`-এ।
+4. **একটা renewal process** — Let's Encrypt cert 90 দিনের জন্য valid; certbot স্বয়ংক্রিয়ভাবে renew করে।
 
-The next chapters cover each in turn. Chapter 2 walks through what actually happens during a TLS handshake. Chapter 3 explains certificates and the chain of trust. Chapters 4–6 issue a real certificate. Chapters 7–8 configure nginx and keep things running.
+পরের চ্যাপ্টারগুলো প্রতিটা একে একে কভার করে। চ্যাপ্টার 2 একটা TLS handshake-এর সময় আসলে কী ঘটে তা দেখায়। চ্যাপ্টার 3 certificate আর chain of trust ব্যাখ্যা করে। চ্যাপ্টার 4–6 একটা আসল certificate ইস্যু করে। চ্যাপ্টার 7–8 nginx কনফিগার করে আর সবকিছু চালু রাখে।
 
-## Recap
+## রিক্যাপ
 
-- TLS does two jobs: encrypts the channel and proves the server's identity. Both halves are required.
-- Symmetric encryption (AES) is fast but needs a shared key. Asymmetric (RSA, ECC) solves key exchange but is slow. TLS uses both.
-- Certificates bind a public key to a domain. A trusted CA signs them. Browsers verify signatures up to a preinstalled root CA.
-- TLS 1.2 and 1.3 are the modern versions. Everything older is deprecated.
-- TLS protects bytes in transit, not application bugs, not data at rest. It does not hide the destination IP.
-- Performance cost is negligible on modern hardware. There is essentially no reason not to use HTTPS.
+- TLS দুইটা কাজ করে: channel encrypt করে আর সার্ভারের identity প্রমাণ করে। দুইটা অর্ধেকই দরকার।
+- Symmetric encryption (AES) দ্রুত কিন্তু একটা shared key দরকার। Asymmetric (RSA, ECC) key exchange সমাধান করে কিন্তু ধীর। TLS দুইটাই ব্যবহার করে।
+- Certificate একটা public key-কে একটা domain-এর সাথে বাঁধে। একটা trusted CA সেগুলো sign করে। Browser আগে থেকে ইনস্টল করা root CA পর্যন্ত signature verify করে।
+- TLS 1.2 আর 1.3 হলো আধুনিক ভার্সন। এর চেয়ে পুরোনো সবকিছু deprecated।
+- TLS চলার পথের byte রক্ষা করে, application bug নয়, বিশ্রামরত ডেটা নয়। এটা গন্তব্যের IP লুকায় না।
+- আধুনিক hardware-এ performance খরচ নগণ্য। HTTPS ব্যবহার না করার আসলে কোনো কারণ নেই।
 
-Next chapter: the handshake, byte by byte.
+পরের চ্যাপ্টার: handshake, byte বাই byte।

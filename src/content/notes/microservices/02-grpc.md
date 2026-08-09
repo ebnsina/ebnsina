@@ -1,9 +1,9 @@
 ---
 title: 'gRPC Between Services'
-subtitle: 'Protocol Buffers, generated clients, streaming, and why gRPC beats REST for internal service communication.'
+subtitle: 'Protocol Buffers, generated clients, streaming, আর internal service communication-এ কেন gRPC REST-কে হারায়।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics:
   ['gRPC', 'Protocol Buffers', 'protobuf', 'streaming', 'service definition', 'code generation']
 ---
@@ -14,32 +14,40 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A standardized electrical plug specification vs adapters everywhere: when every country agrees on one plug format (the `.proto` file), any device (service) made to that spec works in any outlet (client) without adapters (hand-written HTTP clients). Change the spec, regenerate the adapters — no drift between what's documented and what's implemented.
+একটা standardized electrical plug specification বনাম সর্বত্র adapter: যখন প্রতিটা দেশ একটা plug format-এ (the `.proto` file) একমত হয়, তখন ওই spec অনুযায়ী বানানো যেকোনো ডিভাইস (service) যেকোনো outlet-এ (client) adapter (হাতে লেখা HTTP client) ছাড়াই কাজ করে। spec বদলান, adapter আবার generate করুন — যা documented আর যা implemented তার মধ্যে কোনো drift থাকে না।
 
 </Callout>
 
-## Why gRPC for Internal APIs
+## গল্পে বুঝি
 
-REST over HTTP/1.1 has no schema enforcement, no code generation, and no streaming. Each team writes their own HTTP client, their own serialization, their own error handling. At 10 services, you have 10 slightly different conventions.
+একটা industrial estate-এ পাশাপাশি দুটো specialist workshop। একটা আল-খোয়ারিজমির — সে ধাতুর নিখুঁত gear কাটে; পাশেরটা ইবনে সিনার — সে সেই gear দিয়ে ঘড়ির যন্ত্র জোড়া দেয়। ইবনে সিনার প্রতিটা যন্ত্রের জন্য নানা মাপের gear দরকার, তাই সারাদিন সে আল-খোয়ারিজমির কাছে অর্ডার পাঠায়। দুই ওয়ার্কশপের দেয়াল ফুটো করে ওরা একটা প্রাইভেট conveyor-tube বসিয়েছে — একটা ছোট টিকিট টিউবে ঢুকিয়ে দিলেই সেকেন্ডের মধ্যে পাশের ওয়ার্কশপে চলে যায়।
 
-gRPC solves this:
+মজার ব্যাপার হলো টিকিটের ফরম্যাট। বাইরের কাস্টমার যখন অর্ডার দেয়, তাকে লম্বা কাগুজে ফর্ম ভরতে হয় — "কী চান, কতটা, কোন ফিনিশ" সব পুরো বাক্যে লিখে। কিন্তু দুই ওয়ার্কশপ আগেভাগেই নিজেদের মধ্যে একটা compact কোড ঠিক করে রেখেছে: টিকিটে শুধু লেখা থাকে "G7-x40-B2"। আল-খোয়ারিজমি চোখ বুলিয়েই বোঝে — 7 নম্বর gear, 40টা, ব্রোঞ্জ। ফরম্যাটটা দুজনের কাছেই আগে থেকে ফিক্সড বলে ভুল বোঝাবুঝির সুযোগ নেই, আর ছোট বলে টিউবে যেতেও দ্রুত।
 
-|                     | REST/JSON                  | gRPC                        |
-| ------------------- | -------------------------- | --------------------------- |
-| **Schema**          | Optional (OpenAPI)         | Required (`.proto`)         |
-| **Code generation** | Optional                   | Built-in                    |
-| **Serialization**   | JSON (text, verbose)       | Protobuf (binary, compact)  |
-| **Streaming**       | No (SSE/WebSocket bolt-on) | First-class (4 modes)       |
-| **Performance**     | Baseline                   | ~5-10x faster serialization |
-| **Browser support** | Native                     | Requires grpc-web proxy     |
+গল্পটাই আসলে **gRPC**। পাশাপাশি দুই ওয়ার্কশপ হলো দুটো internal microservice, আর প্রাইভেট conveyor-tube হলো সরাসরি service-to-service channel। আগে থেকে ঠিক করা compact টিকিট-ফরম্যাটটাই হলো protobuf **contract** — contract-first বলেই মেসেজ ছোট, binary আর unambiguous। আর বাইরের কাস্টমারের লম্বা প্লেইন ফর্ম হলো **REST**/JSON — public API-র জন্য পড়তে-লিখতে সহজ, কিন্তু ভারী। বাস্তবে ঠিক এভাবেই Google-এর ভেতরের হাজারো service নিজেদের মধ্যে gRPC-তে কথা বলে, আর ব্রাউজারের মুখোমুখি public endpoint-এ REST রাখে।
 
-**Internal APIs** (service-to-service): gRPC. **Public APIs** (browser clients): REST or GraphQL.
+## Internal API-র জন্য কেন gRPC
+
+HTTP/1.1-এর ওপর REST-এ কোনো schema enforcement নেই, কোনো code generation নেই, আর কোনো streaming নেই। প্রতিটা team নিজের HTTP client, নিজের serialization, নিজের error handling লেখে। 10টা service-এ আপনার 10টা সামান্য ভিন্ন convention হয়ে যায়।
+
+gRPC এটা সমাধান করে:
+
+|                     | REST/JSON                  | gRPC                       |
+| ------------------- | -------------------------- | -------------------------- |
+| **Schema**          | ঐচ্ছিক (OpenAPI)           | আবশ্যক (`.proto`)          |
+| **Code generation** | ঐচ্ছিক                     | Built-in                   |
+| **Serialization**   | JSON (text, verbose)       | Protobuf (binary, compact) |
+| **Streaming**       | না (SSE/WebSocket bolt-on) | First-class (4টা mode)     |
+| **Performance**     | Baseline                   | ~5-10x দ্রুত serialization |
+| **Browser support** | Native                     | grpc-web proxy দরকার       |
+
+**Internal API** (service-to-service): gRPC। **Public API** (browser client): REST বা GraphQL।
 
 ## Protocol Buffers
 
-Define the contract in a `.proto` file:
+Contract-টা একটা `.proto` file-এ define করুন:
 
 ```protobuf
 // proto/order/v1/order.proto
@@ -157,7 +165,7 @@ buf generate
 # src/gen/order/v1/order_connect.ts — service client/server
 ```
 
-## Server Implementation (Node.js with Connect)
+## Server Implementation (Connect সহ Node.js)
 
 ```typescript
 import { ConnectRouter } from '@connectrpc/connect';
@@ -249,9 +257,9 @@ for await (const update of client.watchOrderStatus({ orderId: order.id })) {
 }
 ```
 
-The client is fully typed from the proto definition. No manual HTTP client, no JSON parsing, no type casting.
+Client-টা proto definition থেকে সম্পূর্ণভাবে typed। কোনো manual HTTP client নেই, কোনো JSON parsing নেই, কোনো type casting নেই।
 
-## The 4 Streaming Modes
+## ৪টা Streaming Mode
 
 ```protobuf
 service DataService {
@@ -269,25 +277,25 @@ service DataService {
 }
 ```
 
-Use server streaming for:
+Server streaming ব্যবহার করুন এর জন্য:
 
-- Real-time feeds (order status, stock prices, notifications)
-- Large result sets (send 1M rows without buffering all in memory)
+- Real-time feed (order status, stock price, notification)
+- বড় result set (সব memory-তে buffer না করে 1M row পাঠানো)
 
-Use client streaming for:
+Client streaming ব্যবহার করুন এর জন্য:
 
-- File uploads
-- Bulk data ingestion (send 10k events, get one ack)
+- File upload
+- Bulk data ingestion (10k event পাঠান, একটা ack পান)
 
-Use bidirectional for:
+Bidirectional ব্যবহার করুন এর জন্য:
 
 - Chat
 - Collaborative editing
-- Interactive shell sessions
+- Interactive shell session
 
 ## Error Handling
 
-gRPC has standard status codes — use them consistently:
+gRPC-তে standard status code আছে — এগুলো ধারাবাহিকভাবে ব্যবহার করুন:
 
 ```typescript
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -311,7 +319,7 @@ throw new ConnectError('Database unavailable', Code.Unavailable);
 throw new ConnectError('Request timed out', Code.DeadlineExceeded);
 ```
 
-On the client side:
+Client side-এ:
 
 ```typescript
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -359,19 +367,19 @@ const transport = createGrpcTransport({
 
 ## Schema Evolution
 
-Protobuf fields are identified by number, not name. Safe changes:
+Protobuf field গুলো number দিয়ে চিহ্নিত হয়, name দিয়ে নয়। নিরাপদ পরিবর্তন:
 
-- Add a new field (new consumers can use it; old consumers ignore it)
-- Rename a field (number stays the same — wire format unchanged)
-- Add a new enum value
+- একটা নতুন field যোগ করা (নতুন consumer সেটা ব্যবহার করতে পারে; পুরনো consumer উপেক্ষা করে)
+- একটা field rename করা (number একই থাকে — wire format অপরিবর্তিত)
+- একটা নতুন enum value যোগ করা
 
-Breaking changes:
+Breaking পরিবর্তন:
 
-- Remove a field and reuse its number
-- Change a field's type
-- Renumber fields
+- একটা field সরিয়ে তার number আবার ব্যবহার করা
+- একটা field-এর type বদলানো
+- Field গুলো renumber করা
 
-**Reserve removed field numbers** to prevent accidental reuse:
+**সরানো field number গুলো reserve করুন** যাতে ভুলবশত আবার ব্যবহার না হয়:
 
 ```protobuf
 message Order {
@@ -384,4 +392,4 @@ message Order {
 }
 ```
 
-Store `.proto` files in a shared repo with a schema registry (Buf Schema Registry) to enforce compatibility rules via CI.
+`.proto` file গুলো একটা schema registry (Buf Schema Registry) সহ একটা shared repo-তে রাখুন যাতে CI-এর মাধ্যমে compatibility নিয়ম জোরদার হয়।

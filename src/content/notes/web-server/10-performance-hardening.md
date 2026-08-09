@@ -1,9 +1,9 @@
 ---
 title: 'Performance & Hardening'
-subtitle: 'Workers, sendfile, gzip and brotli, security headers, rate limiting, connection limits, body size caps. The dials that turn a working nginx into a fast, defensible one.'
+subtitle: 'Workers, sendfile, gzip আর brotli, security headers, rate limiting, connection limits, body size caps। যে dial-গুলো একটি কর্মক্ষম nginx-কে দ্রুত ও প্রতিরোধযোগ্য বানায়।'
 chapter: 10
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['nginx', 'performance', 'hardening', 'rate limiting', 'security headers', 'tls']
 ---
 
@@ -11,35 +11,43 @@ topics: ['nginx', 'performance', 'hardening', 'rate limiting', 'security headers
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The four levers
+## গল্পে বুঝি
 
-A tuned nginx adjusts four things from the defaults:
+ফাতিমা আল-ফিহরি বাগদাদের একটা শিপিং ডিপো চালান। প্রতিদিন হাজার হাজার পার্সেল ঢোকে, বেরোয়। শুরুতে ডিপোটা কাজ করত, কিন্তু ধীর আর অরক্ষিত। ফাতিমা প্রথমে পার্সেলগুলো vacuum দিয়ে ছোট করে প্যাক করা শুরু করলেন — একই জিনিস কম জায়গায়, তাই কুরিয়ারের ভ্যানে বেশি ধরে আর দ্রুত রওনা হয়। এরপর তিনি খেয়াল করলেন, প্রতিটা পার্সেলের জন্য আলাদা ভ্যান ভাড়া করলে সময় নষ্ট হয়; তাই একটা ভ্যান কিছুক্ষণ দাঁড় করিয়ে রাখেন, পরের কয়েকটা পার্সেলও সেই একই ভ্যানেই তুলে দেন।
 
-1. **Workers and connection limits** — match the box's cores and FD budget.
-2. **I/O efficiency** — sendfile, tcp_nopush, tcp_nodelay, keepalive.
-3. **Compression** — gzip and brotli, ideally precompressed at build time.
-4. **Defensive limits** — request size, rate limits, slow-client timeouts, security headers.
+কিন্তু ডিপোতে বিশৃঙ্খলাও ছিল। একজন প্রেরক একাই শত শত পার্সেল ঢেলে বাকিদের আটকে দিত, আর কোনো একটা কাজ ঘণ্টার পর ঘণ্টা একটা bay দখল করে বসে থাকত। ফাতিমা নিয়ম করলেন — এক প্রেরক নির্দিষ্ট সংখ্যার বেশি পার্সেল দিতে পারবে না, আর কোনো কাজ নির্দিষ্ট সময়ের বেশি bay ধরে রাখতে পারবে না। পাশাপাশি প্রতিটা চালান tamper-proof সিল করা বাক্সে বন্ধ করলেন, যাতে পথে কেউ খুলতে না পারে। আর শেষে বাক্সের গায়ে ছাপানো ডিপোর ব্র্যান্ড আর ভেতরের ম্যাপ মুছে দিলেন — চোর বাইরে থেকে দেখে যেন কিছুই আঁচ করতে না পারে।
 
-Each one is a few lines. Together they turn a default install (which already handles thousands of req/s) into one that handles tens of thousands and refuses obvious abuse.
+এই গল্পটাই এই chapter-এর pattern। vacuum-প্যাক করে পার্সেল ছোট করা হলো **gzip/compression** (byte কমিয়ে দ্রুত পাঠানো)। একটা ভ্যান দাঁড় করিয়ে রেখে পরের পার্সেলও তাতে তোলা হলো **keep-alive** (একই connection পুনরায় ব্যবহার)। এক প্রেরকের পার্সেল-সীমা আর bay-এর সময়সীমা হলো **rate limit**, **connection limit** আর **timeout**। tamper-proof সিল করা বাক্স হলো **TLS**। আর বাক্সের গায়ের ব্র্যান্ড-ম্যাপ মুছে দেওয়া হলো **server version হাইড করা** (`server_tokens off`) আর **security header** সেট করা — বাইরে থেকে attacker যেন কম তথ্য পায়। বাস্তবে nginx-এ ঠিক এই dial-গুলো ঘুরিয়েই একটা কাজ-চলা server-কে দ্রুত আর হার্ডেনড production server বানানো হয়।
+
+## চারটি lever
+
+একটি টিউনড nginx ডিফল্ট থেকে চারটি জিনিস সমন্বয় করে:
+
+1. **Workers আর connection limit** — box-এর core আর FD budget-এর সাথে মেলান।
+2. **I/O efficiency** — sendfile, tcp_nopush, tcp_nodelay, keepalive।
+3. **Compression** — gzip আর brotli, আদর্শভাবে build time-এ precompressed।
+4. **Defensive limit** — request size, rate limit, slow-client timeout, security header।
+
+প্রতিটাই কয়েক লাইন। একসাথে এরা একটি ডিফল্ট install-কে (যা এমনিতেই হাজার হাজার req/s সামলায়) এমন কিছুতে পরিণত করে যা কয়েক দশ হাজার সামলায় আর স্পষ্ট abuse প্রত্যাখ্যান করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Performance hardening is like tuning a race car — the engine already works, but every deliberate adjustment extracts more speed and reliability from what's already there.
+Performance hardening অনেকটা একটা race car টিউন করার মতো — engine এমনিতেই কাজ করে, কিন্তু প্রতিটি সুচিন্তিত সমন্বয় যা আছে তা থেকেই আরও গতি আর নির্ভরযোগ্যতা বের করে আনে।
 
 </Callout>
 
-## Workers — one per CPU core
+## Workers — প্রতি CPU core-এ একটি
 
 ```nginx
 worker_processes auto;
 worker_rlimit_nofile 65536;
 ```
 
-`auto` sets `worker_processes` equal to the number of CPU cores. On a 4-core VPS, you get 4 workers, each running its own event loop, each pinned to a different core (effectively).
+`auto` `worker_processes`-কে CPU core-এর সংখ্যার সমান করে। একটি 4-core VPS-এ আপনি 4টি worker পান, প্রতিটি নিজের event loop চালায়, প্রতিটি (কার্যত) একটি করে আলাদা core-এ pinned।
 
-`worker_rlimit_nofile` raises the per-worker file descriptor limit above the system default of 1024. This must accommodate every active connection plus open backend connections plus open file handles. 65536 is a safe upper bound for most setups.
+`worker_rlimit_nofile` per-worker file descriptor limit-কে system-এর ডিফল্ট 1024-এর ওপরে তোলে। এটাকে প্রতিটি active connection, খোলা backend connection, আর খোলা file handle-এর জায়গা দিতে হবে। বেশিরভাগ setup-এর জন্য 65536 একটি নিরাপদ upper bound।
 
 ```nginx
 events {
@@ -49,9 +57,9 @@ events {
 }
 ```
 
-- **`worker_connections`** — max simultaneous connections per worker. Multiplied by `worker_processes`, that is your total cap. 4096 × 4 = 16384 simultaneous connections per box.
-- **`multi_accept on`** — accept all available connections on a wakeup, not just one. Marginal but free.
-- **`use epoll`** — explicit on Linux. nginx auto-detects, but stating it documents intent.
+- **`worker_connections`** — প্রতি worker-এ সর্বোচ্চ simultaneous connection। `worker_processes` দিয়ে গুণ করলে সেটাই আপনার মোট cap। 4096 × 4 = প্রতি box-এ 16384 simultaneous connection।
+- **`multi_accept on`** — একটি wakeup-এ সব available connection accept করো, শুধু একটা নয়। সামান্য কিন্তু বিনামূল্যে।
+- **`use epoll`** — Linux-এ explicit। nginx auto-detect করে, কিন্তু এটা বলা intent নথিভুক্ত করে।
 
 ## sendfile, tcp_nopush, tcp_nodelay
 
@@ -67,14 +75,14 @@ http {
 }
 ```
 
-- **`sendfile on`** — use the `sendfile()` syscall to ship file bytes directly from the page cache to the socket, skipping userspace. Crucial for static content; saves CPU.
-- **`tcp_nopush on`** — combined with sendfile, packs response data into full packets before sending. Reduces packet count.
-- **`tcp_nodelay on`** — disables Nagle's algorithm on keepalive connections so small responses are not delayed. Sounds contradictory with `tcp_nopush`, but nginx handles the interaction correctly: `tcp_nopush` for the bulk send, `tcp_nodelay` for the final flush.
-- **`keepalive_timeout 65`** — keep idle connections open for 65 seconds. Long enough that the next page navigation reuses the connection; short enough that idle scanners do not tie up FDs.
-- **`keepalive_requests 1000`** — close a connection after 1000 requests. Prevents per-connection memory bloat over the very long term.
-- **`server_tokens off`** — drop nginx's version from `Server:` headers and error pages. Marginal security but free.
+- **`sendfile on`** — file byte সরাসরি page cache থেকে socket-এ পাঠাতে `sendfile()` syscall ব্যবহার করে, userspace এড়িয়ে। static content-এর জন্য অত্যন্ত জরুরি; CPU বাঁচায়।
+- **`tcp_nopush on`** — sendfile-এর সাথে মিলিয়ে, পাঠানোর আগে response data-কে পূর্ণ packet-এ প্যাক করে। packet সংখ্যা কমায়।
+- **`tcp_nodelay on`** — keepalive connection-এ Nagle-র algorithm বন্ধ করে যাতে ছোট response দেরি না হয়। `tcp_nopush`-এর সাথে সাংঘর্ষিক শোনায়, কিন্তু nginx এই interaction সঠিকভাবে সামলায়: বাল্ক পাঠানোর জন্য `tcp_nopush`, চূড়ান্ত flush-এর জন্য `tcp_nodelay`।
+- **`keepalive_timeout 65`** — idle connection 65 সেকেন্ড খোলা রাখো। যথেষ্ট লম্বা যাতে পরের page navigation connection পুনরায় ব্যবহার করে; যথেষ্ট ছোট যাতে idle scanner FD আটকে না রাখে।
+- **`keepalive_requests 1000`** — 1000 request-এর পর একটি connection বন্ধ করো। খুব দীর্ঘমেয়াদে per-connection memory স্ফীতি আটকায়।
+- **`server_tokens off`** — `Server:` header আর error page থেকে nginx-এর version বাদ দাও। সামান্য security কিন্তু বিনামূল্যে।
 
-## gzip and brotli
+## gzip আর brotli
 
 ```nginx
 http {
@@ -96,18 +104,18 @@ http {
 }
 ```
 
-- **`gzip_comp_level 5`** — sweet spot. Level 9 saves a few extra percent but costs significantly more CPU per request.
-- **`gzip_min_length 1024`** — do not compress tiny responses; the overhead is not worth it.
-- **`gzip_types`** — what to compress. **Do not** compress already-compressed formats: jpg, png, mp4, woff2 — they get larger.
-- **`gzip_vary on`** — adds `Vary: Accept-Encoding` so caches handle compressed and uncompressed clients separately.
+- **`gzip_comp_level 5`** — sweet spot। Level 9 আরও কয়েক শতাংশ বাঁচায় কিন্তু প্রতি request-এ উল্লেখযোগ্য বেশি CPU খরচ করে।
+- **`gzip_min_length 1024`** — খুব ছোট response compress করবেন না; overhead-এর মূল্য নেই।
+- **`gzip_types`** — কী compress করবে। ইতিমধ্যে compressed format compress **করবেন না**: jpg, png, mp4, woff2 — এরা বড় হয়ে যায়।
+- **`gzip_vary on`** — `Vary: Accept-Encoding` যোগ করে যাতে cache compressed আর uncompressed client আলাদাভাবে সামলায়।
 
-For brotli (better compression than gzip, slightly more CPU), nginx needs the `ngx_brotli` module, which Debian and Ubuntu now ship as `libnginx-mod-http-brotli-filter`:
+brotli-র জন্য (gzip-এর চেয়ে ভালো compression, সামান্য বেশি CPU) nginx-এর `ngx_brotli` module দরকার, যা Debian আর Ubuntu এখন `libnginx-mod-http-brotli-filter` হিসেবে ship করে:
 
 ```bash
 sudo apt install -y libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static
 ```
 
-Then:
+তারপর:
 
 ```nginx
 brotli on;
@@ -116,11 +124,11 @@ brotli_static on;
 brotli_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
 ```
 
-`brotli_static on` and `gzip_static on` look for pre-compressed `.br` and `.gz` files alongside the original (e.g., `app.js.br` next to `app.js`) and serve them when the client supports the encoding. If your build step produces these, nginx never spends CPU compressing — pure savings.
+`brotli_static on` আর `gzip_static on` মূল file-এর পাশে pre-compressed `.br` আর `.gz` file খোঁজে (যেমন `app.js`-এর পাশে `app.js.br`) আর client encoding সাপোর্ট করলে সেগুলো serve করে। আপনার build step এগুলো তৈরি করলে nginx কখনো compress করতে CPU ব্যয় করে না — বিশুদ্ধ সাশ্রয়।
 
 ## TLS — modern, fast, safe
 
-Assuming Let's Encrypt certs at `/etc/letsencrypt/live/example.com/`:
+`/etc/letsencrypt/live/example.com/`-এ Let's Encrypt cert আছে ধরে নিয়ে:
 
 ```nginx
 server {
@@ -150,15 +158,15 @@ server {
 }
 ```
 
-Key points:
+মূল পয়েন্ট:
 
-- **`http2 on;`** — modern syntax. Old configs say `listen 443 ssl http2;` — same idea.
-- **TLS 1.2 + 1.3 only.** TLS 1.0 and 1.1 are deprecated by every browser.
-- **Modern cipher list.** This list is the Mozilla "intermediate" recommendation as of writing — covers all current browsers, no weak ciphers.
-- **OCSP stapling.** Serves the certificate's revocation status alongside the cert, saving the client a round-trip.
-- **HSTS.** Tells browsers "always use HTTPS for this domain for the next 2 years." Be careful — once browsers see HSTS, they remember; if you want to revert to HTTP later, you cannot.
+- **`http2 on;`** — আধুনিক syntax। পুরনো config-এ থাকে `listen 443 ssl http2;` — একই ধারণা।
+- **শুধু TLS 1.2 + 1.3।** TLS 1.0 আর 1.1 প্রতিটি browser deprecate করেছে।
+- **আধুনিক cipher তালিকা।** লেখার সময় এই তালিকা Mozilla-র "intermediate" সুপারিশ — সব current browser কভার করে, কোনো দুর্বল cipher নেই।
+- **OCSP stapling.** cert-এর সাথে certificate-এর revocation status serve করে, client-এর একটা round-trip বাঁচায়।
+- **HSTS.** browser-কে বলে "পরের 2 বছর এই domain-এর জন্য সবসময় HTTPS ব্যবহার করো"। সাবধান — একবার browser HSTS দেখলে, মনে রাখে; পরে HTTP-তে ফিরতে চাইলে পারবেন না।
 
-Always have an HTTP→HTTPS redirect:
+সবসময় একটি HTTP→HTTPS redirect রাখুন:
 
 ```nginx
 server {
@@ -169,7 +177,7 @@ server {
 }
 ```
 
-## Body size limits
+## Body size limit
 
 ```nginx
 http {
@@ -182,13 +190,13 @@ http {
 }
 ```
 
-- **`client_max_body_size 10m`** — request body capped at 10MB. Increase per location for upload endpoints; decrease everywhere else. Default of 1MB fails for many APIs without warning.
-- **`client_body_timeout 60s`** — max time between body bytes from the client. Slow uploads beyond this drop. Tune for your workload.
-- **`client_header_timeout 10s`** — max time to read the request headers. Defends against Slowloris.
+- **`client_max_body_size 10m`** — request body 10MB-এ সীমাবদ্ধ। upload endpoint-এর জন্য per location বাড়ান; অন্য সব জায়গায় কমান। 1MB-এর ডিফল্ট অনেক API-তে বিনা সতর্কবার্তায় ব্যর্থ হয়।
+- **`client_body_timeout 60s`** — client থেকে body byte-এর মধ্যে সর্বোচ্চ সময়। এর বাইরের slow upload drop হয়। আপনার workload-এর জন্য tune করুন।
+- **`client_header_timeout 10s`** — request header পড়ার সর্বোচ্চ সময়। Slowloris-এর বিরুদ্ধে রক্ষা করে।
 
 ## Rate limiting
 
-Two layers: per-second rate (smooth flow) and per-burst (allow short spikes).
+দুটি layer: per-second rate (মসৃণ প্রবাহ) আর per-burst (ছোট spike অনুমোদন)।
 
 ```nginx
 http {
@@ -199,11 +207,11 @@ http {
 }
 ```
 
-- **`limit_req_zone`** — defines a memory zone for tracking request rates per key. `$binary_remote_addr` keys on the client IP (4 bytes for IPv4, 16 for IPv6 — fits more entries than `$remote_addr`).
-- **`zone=api_rl:10m rate=10r/s`** — name `api_rl`, 10MB shared zone, target rate 10 requests per second.
-- **`limit_conn_zone`** — same idea for concurrent connections per key.
+- **`limit_req_zone`** — per key request rate ট্র্যাক করার জন্য একটি memory zone ডিফাইন করে। `$binary_remote_addr` client IP-তে key করে (IPv4-এর জন্য 4 byte, IPv6-এর জন্য 16 — `$remote_addr`-এর চেয়ে বেশি entry ধরে)।
+- **`zone=api_rl:10m rate=10r/s`** — নাম `api_rl`, 10MB shared zone, target rate সেকেন্ডে 10 request।
+- **`limit_conn_zone`** — per key concurrent connection-এর জন্য একই ধারণা।
 
-Apply in a location:
+একটি location-এ প্রয়োগ করুন:
 
 ```nginx
 server {
@@ -221,28 +229,28 @@ server {
 }
 ```
 
-- **`burst=20`** — allow a burst of up to 20 requests. After that, requests are queued or rejected.
-- **`nodelay`** — when the burst is allowed, do not delay them; reject only after the burst is full.
-- **`limit_conn conn_per_ip 10`** — at most 10 concurrent connections from a single client.
+- **`burst=20`** — 20টি পর্যন্ত request-এর একটি burst অনুমোদন করো। এর পর request queue হয় বা প্রত্যাখ্যাত হয়।
+- **`nodelay`** — burst অনুমোদিত হলে দেরি করো না; শুধু burst পূর্ণ হলেই প্রত্যাখ্যান করো।
+- **`limit_conn conn_per_ip 10`** — একটি client থেকে সর্বোচ্চ 10টি concurrent connection।
 
-A request that exceeds the rate gets `503 Service Unavailable` (configurable to 429):
+rate ছাড়িয়ে যাওয়া request `503 Service Unavailable` পায় (429-তে কনফিগারযোগ্য):
 
 ```nginx
 limit_req_status 429;
 limit_conn_status 429;
 ```
 
-`429 Too Many Requests` is the spec-correct status for rate-limited responses.
+`429 Too Many Requests` হলো rate-limited response-এর জন্য spec-অনুযায়ী সঠিক status।
 
 <Callout type="info">
 
-**Rate limiting on the proxy is the cheapest defense.**
+**proxy-তে rate limiting হলো সবচেয়ে সস্তা প্রতিরক্ষা।**
 
-Each rejected request costs nginx a memory-zone lookup (microseconds). The same request hitting your backend would cost a database query, an auth check, and a render — milliseconds. A box being abused becomes orders of magnitude cheaper to protect when nginx absorbs the rejections.
+প্রতিটি প্রত্যাখ্যাত request nginx-এর একটি memory-zone lookup খরচ করে (microsecond)। একই request আপনার backend-এ hit করলে খরচ করত একটি database query, একটি auth check, আর একটি render — millisecond। nginx যখন প্রত্যাখ্যানগুলো শুষে নেয় তখন abuse হওয়া একটা box রক্ষা করা কয়েক অর্ডার অফ ম্যাগনিটিউড সস্তা হয়ে যায়।
 
 </Callout>
 
-## Security headers
+## Security header
 
 ```nginx
 add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
@@ -253,20 +261,20 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'" always;
 ```
 
-What each prevents:
+প্রতিটি যা আটকায়:
 
-- **HSTS** — downgrade-to-HTTP attacks.
-- **X-Frame-Options: DENY** — clickjacking via framing.
-- **X-Content-Type-Options: nosniff** — browser MIME-sniffing turning text into HTML.
-- **Referrer-Policy** — leaking the full referer URL to third parties.
-- **Permissions-Policy** — blocks geolocation, mic, camera, etc., unless explicitly enabled.
-- **Content-Security-Policy** — most powerful and most painful to set up. Restricts where scripts/styles/images can come from. The line above is a starting point; tighten for your app.
+- **HSTS** — downgrade-to-HTTP আক্রমণ।
+- **X-Frame-Options: DENY** — framing-এর মাধ্যমে clickjacking।
+- **X-Content-Type-Options: nosniff** — browser MIME-sniffing text-কে HTML বানিয়ে ফেলা।
+- **Referrer-Policy** — তৃতীয় পক্ষের কাছে পুরো referer URL ফাঁস হওয়া।
+- **Permissions-Policy** — স্পষ্টভাবে সক্ষম না করা পর্যন্ত geolocation, mic, camera ইত্যাদি block করে।
+- **Content-Security-Policy** — সবচেয়ে শক্তিশালী আর সেটআপ করতে সবচেয়ে কষ্টকর। script/style/image কোথা থেকে আসতে পারে তা সীমাবদ্ধ করে। উপরের লাইনটা একটা শুরুর বিন্দু; আপনার app-এর জন্য আরও আঁটসাঁট করুন।
 
-The `always` parameter is essential — without it, headers are dropped on error responses.
+`always` parameter অপরিহার্য — এটা ছাড়া error response-এ header বাদ পড়ে।
 
-## ngx_http_realip_module — restoring the client IP
+## ngx_http_realip_module — client IP পুনরুদ্ধার
 
-When nginx is behind a CDN or another load balancer, `$remote_addr` is the _upstream proxy_, not the client. Configure nginx to trust `X-Forwarded-For`:
+যখন nginx একটি CDN বা অন্য load balancer-এর পেছনে থাকে, `$remote_addr` হলো _upstream proxy_, client নয়। nginx-কে `X-Forwarded-For` বিশ্বাস করতে কনফিগার করুন:
 
 ```nginx
 set_real_ip_from 10.0.0.0/8;
@@ -276,11 +284,11 @@ real_ip_header X-Forwarded-For;
 real_ip_recursive on;
 ```
 
-`set_real_ip_from` lists trusted proxy networks. Only when a request comes from one of these is the `X-Forwarded-For` chain trusted. `real_ip_recursive on` walks the chain backward until a non-trusted IP is found — that is the actual client.
+`set_real_ip_from` বিশ্বস্ত proxy network-গুলোর তালিকা করে। শুধু যখন কোনো request এদের একটা থেকে আসে তখনই `X-Forwarded-For` chain বিশ্বাস করা হয়। `real_ip_recursive on` chain-টা পেছন দিকে হাঁটে যতক্ষণ না একটি non-trusted IP পাওয়া যায় — সেটাই আসল client।
 
-Now `$remote_addr` shows the real client; rate limiting works correctly on the right key; logs are accurate.
+এখন `$remote_addr` আসল client দেখায়; rate limiting সঠিক key-তে সঠিকভাবে কাজ করে; log নির্ভুল।
 
-## Connection tuning for high traffic
+## high traffic-এর জন্য connection tuning
 
 ```nginx
 http {
@@ -291,11 +299,11 @@ http {
 }
 ```
 
-Caches the result of `stat()` and `open()` for static files in memory, so frequent requests do not pay the syscall cost twice. For a static-heavy server, this alone is a few percent win.
+static file-এর জন্য `stat()` আর `open()`-এর ফলাফল memory-তে cache করে, যাতে ঘন ঘন request দুবার syscall-এর খরচ না দেয়। একটি static-ভারী server-এর জন্য এটাই কয়েক শতাংশের জয়।
 
-## Putting it all together — production base config
+## সব একসাথে জোড়া লাগানো — production base config
 
-A minimal production-grade `nginx.conf` outline:
+একটি ন্যূনতম production-grade `nginx.conf`-এর রূপরেখা:
 
 ```nginx
 worker_processes auto;
@@ -363,9 +371,9 @@ http {
 }
 ```
 
-This is the base. Add per-site `server { ... }` blocks under `sites-available` and symlink to `sites-enabled`.
+এটাই base। `sites-available`-এর অধীনে per-site `server { ... }` block যোগ করুন আর `sites-enabled`-এ symlink করুন।
 
-## Testing performance
+## performance টেস্ট করা
 
 ```bash
 # Simple synthetic load
@@ -379,7 +387,7 @@ wrk -t8 -c1000 -d60s -H 'Host: example.com' https://192.0.2.5/api/items
 k6 run --vus 100 --duration 30s loadtest.js
 ```
 
-Watch nginx during the test:
+টেস্টের সময় nginx লক্ষ্য করুন:
 
 ```bash
 sudo tail -f /var/log/nginx/access.log | jq 'select(.request_time > 0.5)'
@@ -388,17 +396,17 @@ htop                # check CPU per worker
 ss -s              # connection counts
 ```
 
-Bottlenecks usually appear at predictable points: backend exhaustion (5xx in upstream_status), worker_connections limit (errors in nginx error log), or `worker_rlimit_nofile` (`accept() failed (24: Too many open files)`).
+Bottleneck সাধারণত অনুমানযোগ্য জায়গায় দেখা দেয়: backend exhaustion (upstream_status-এ 5xx), worker_connections limit (nginx error log-এ error), অথবা `worker_rlimit_nofile` (`accept() failed (24: Too many open files)`)।
 
-## Recap
+## রিক্যাপ
 
-- One worker per core. Raise `worker_rlimit_nofile` and `worker_connections`.
-- Enable `sendfile`, `tcp_nopush`, `tcp_nodelay`, sane keepalive.
-- gzip + brotli, with precompressed assets via `gzip_static` / `brotli_static`.
-- TLS 1.2/1.3, modern ciphers, OCSP stapling, HSTS, force-redirect HTTP→HTTPS.
-- Cap request body size and slow-client timeouts. `limit_req` and `limit_conn` per IP.
-- Set `X-Frame-Options`, `X-Content-Type-Options`, CSP, Permissions-Policy. Always with `always`.
-- `set_real_ip_from` so logs and rate-limiting see the real client behind a CDN.
-- `wrk` to load-test, `htop` and access logs to find bottlenecks.
+- প্রতি core-এ একটি worker। `worker_rlimit_nofile` আর `worker_connections` বাড়ান।
+- `sendfile`, `tcp_nopush`, `tcp_nodelay`, সেনসিবল keepalive সক্রিয় করুন।
+- gzip + brotli, `gzip_static` / `brotli_static` দিয়ে precompressed asset সহ।
+- TLS 1.2/1.3, আধুনিক cipher, OCSP stapling, HSTS, HTTP→HTTPS force-redirect।
+- request body size আর slow-client timeout সীমিত করুন। per IP `limit_req` আর `limit_conn`।
+- `X-Frame-Options`, `X-Content-Type-Options`, CSP, Permissions-Policy সেট করুন। সবসময় `always` সহ।
+- `set_real_ip_from` যাতে log আর rate-limiting একটি CDN-এর পেছনে আসল client দেখে।
+- load-test করতে `wrk`, bottleneck খুঁজতে `htop` আর access log।
 
-This is the end of the Web Server Fundamentals track. You now have a working mental model of HTTP from raw sockets all the way to a hardened production nginx — and can read, modify, and trust your own config.
+এটাই Web Server Fundamentals ট্র্যাকের শেষ। raw socket থেকে HTTP-র শুরু, একদম একটি হার্ডেনড production nginx পর্যন্ত — আপনার এখন একটি কর্মক্ষম mental model আছে, আর আপনি নিজের config পড়তে, পরিবর্তন করতে, আর বিশ্বাস করতে পারেন।

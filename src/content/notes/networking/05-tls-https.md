@@ -1,9 +1,9 @@
 ---
-title: 'TLS & HTTPS'
-subtitle: "Certificates, handshakes, and encryption — how TLS keeps your data private and verifies you're talking to the right server."
+title: 'TLS ও HTTPS'
+subtitle: 'সার্টিফিকেট, হ্যান্ডশেক আর এনক্রিপশন — TLS কীভাবে আপনার ডেটা প্রাইভেট রাখে আর নিশ্চিত করে যে আপনি সঠিক সার্ভারের সাথেই কথা বলছেন।'
 chapter: 5
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['TLS', 'HTTPS', 'certificates', 'encryption', 'handshake']
 ---
 
@@ -11,27 +11,35 @@ topics: ['TLS', 'HTTPS', 'certificates', 'encryption', 'handshake']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What TLS Does
+## গল্পে বুঝি
 
-TLS (Transport Layer Security) provides three guarantees:
+ইবনে সিনা শহরের বাইরে থাকা এক গয়নার দোকানে গোপনে অর্ডার পাঠাতে চায়, কিন্তু চিঠিটা নিয়ে যাবে এমন এক কুরিয়ার যাকে সে চেনে না, বিশ্বাসও করে না। প্রথম সমস্যা — যে দোকানে চিঠি যাচ্ছে সেটা কি আসল দোকান, নাকি মাঝপথে কেউ নকল দোকান সাজিয়ে বসে আছে? তাই ইবনে সিনা চিঠি দেওয়ার আগে দোকানের কাছে একটা সিল-করা পরিচয়পত্র চায়। সেই পরিচয়পত্রে শহরের সবার বিশ্বাসী এক নোটারির স্ট্যাম্প বসানো — যে নোটারিকে ইবনে সিনা আগে থেকেই চেনে ও মানে। স্ট্যাম্পটা মিলে গেলে ইবনে সিনা নিশ্চিত হয়, এটা আসলেই সেই দোকান, ছদ্মবেশী কেউ নয়।
 
-1. **Confidentiality** — data is encrypted; eavesdroppers see gibberish
-2. **Integrity** — data can't be modified in transit without detection
-3. **Authentication** — you're talking to the real server, not an impersonator
+পরিচয় নিশ্চিত হওয়ার পর ইবনে সিনা আর দোকান মিলে একটা তালার গোপন কম্বিনেশন ঠিক করে নেয় — এমন চালাকিভাবে যে কুরিয়ার দুই পাশের কথা শুনেও কম্বিনেশনটা বুঝতে পারে না। এরপর থেকে ইবনে সিনা যা-ই পাঠায়, একটা তালাবদ্ধ বাক্সে ভরে পাঠায়, যে বাক্স শুধু এই দুজনেই খুলতে পারে। কুরিয়ার বাক্সটা বয়ে নিয়ে যায় ঠিকই, কিন্তু ভেতরে কী আছে পড়তেও পারে না, চুপিচুপি বদলেও দিতে পারে না — বদলালে তালা মেলে না, ধরা পড়ে যায়।
 
-HTTPS is just HTTP over TLS. The `S` means your browser established a TLS connection before sending any HTTP data.
+এই গল্পটাই আসলে **TLS/HTTPS**। দোকানের সিল-করা পরিচয়পত্র হলো **certificate**, আর সবার বিশ্বাসী নোটারি হলো **CA** — এই certificate সাইন করা থাকে বলেই ব্রাউজার নিশ্চিত হয় সে আসল সার্ভারের সাথেই কথা বলছে (authentication)। তালার গোপন কম্বিনেশন গোপনে ঠিক করাটাই **handshake** আর **key exchange** — যেখানে দুই পক্ষ একটা shared secret বানায় কিন্তু তারের ওপর দিয়ে সেটা পাঠায় না। আর তালাবদ্ধ বাক্সে সব পাঠানোটাই **encryption** ও integrity — মাঝের কেউ পড়তে বা বদলাতে পারে না। বাস্তবে যখন কোনো সাইট HTTPS-এ চলে, ব্রাউজারের অ্যাড্রেস বারে যে ছোট্ট padlock আইকনটা দেখেন — সেটাই বলে দেয় এই পুরো ব্যবস্থাটা চালু আছে।
+
+## TLS আসলে কী করে
+
+TLS (Transport Layer Security) তিনটি জিনিস নিশ্চিত করে:
+
+1. **Confidentiality** — ডেটা এনক্রিপ্টেড; আড়ি পাতা লোকজন শুধু আবোলতাবোল দেখে
+2. **Integrity** — ট্রানজিটে ডেটা বদলানো হলে সেটা ধরা পড়বেই
+3. **Authentication** — আপনি আসল সার্ভারের সাথেই কথা বলছেন, কোনো ছদ্মবেশীর সাথে নয়
+
+HTTPS আসলে TLS-এর উপর দিয়ে চলা HTTP ছাড়া কিছুই না। `S` মানে হলো কোনো HTTP ডেটা পাঠানোর আগেই আপনার ব্রাউজার একটা TLS কানেকশন তৈরি করেছে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like the sealed envelope system at a bank — before sending sensitive documents, both parties verify identity (certificates), agree on a secret code (key exchange), and then all messages travel in sealed envelopes (encryption).
+ব্যাংকের সিলড খামের সিস্টেমের মতো — সংবেদনশীল ডকুমেন্ট পাঠানোর আগে দুই পক্ষই পরিচয় যাচাই করে (certificates), একটা গোপন কোডে সম্মত হয় (key exchange), এরপর সব মেসেজ সিল করা খামে যাতায়াত করে (encryption)।
 
 </Callout>
 
-## The TLS 1.3 Handshake
+## TLS 1.3 হ্যান্ডশেক
 
-TLS 1.3 reduced the handshake from 2 round-trips (TLS 1.2) to just 1:
+TLS 1.3 হ্যান্ডশেককে 2 round-trip (TLS 1.2) থেকে কমিয়ে মাত্র 1-এ নিয়ে এসেছে:
 
 ```typescript
 // TLS 1.3 Handshake (simplified)
@@ -65,15 +73,15 @@ interface TLSClientHello {
 }
 ```
 
-## Certificates and Trust
+## সার্টিফিকেট আর ট্রাস্ট
 
-How does your browser know it's really talking to `google.com`?
+আপনার ব্রাউজার কীভাবে জানে যে সে আসলেই `google.com`-এর সাথে কথা বলছে?
 
 **Certificate chain:**
 
-1. Google's server presents a **certificate** signed by a Certificate Authority (CA)
-2. The CA's certificate is signed by a **root CA**
-3. Root CA certificates are pre-installed in your browser/OS (the **trust store**)
+1. Google-এর সার্ভার একটা **certificate** দেখায় যেটা কোনো Certificate Authority (CA) সাইন করেছে
+2. সেই CA-এর certificate আবার একটা **root CA** সাইন করে
+3. Root CA certificate গুলো আগে থেকেই আপনার ব্রাউজার/OS-এ ইনস্টল করা থাকে (এটাই **trust store**)
 
 ```typescript
 interface X509Certificate {
@@ -111,7 +119,7 @@ function verifyCertChain(certs: X509Certificate[]): boolean {
 
 ## Key Exchange: Diffie-Hellman
 
-TLS uses Diffie-Hellman to create a shared secret without ever sending it over the wire. Even if someone records all the traffic, they can't derive the key.
+TLS একটা shared secret বানাতে Diffie-Hellman ব্যবহার করে, অথচ সেটা কখনো তারের ওপর দিয়ে পাঠায় না। কেউ যদি পুরো ট্রাফিক রেকর্ডও করে ফেলে, তবুও সে key বের করতে পারবে না।
 
 ```typescript
 // Simplified Diffie-Hellman concept
@@ -134,11 +142,11 @@ TLS uses Diffie-Hellman to create a shared secret without ever sending it over t
 
 <Callout type="tip">
 
-**Perfect Forward Secrecy (PFS)**: TLS 1.3 generates new key pairs for every connection. Even if someone steals the server's long-term private key, they can't decrypt past conversations — because each session used a unique ephemeral key.
+**Perfect Forward Secrecy (PFS)**: TLS 1.3 প্রতিটা কানেকশনের জন্য নতুন key pair জেনারেট করে। কেউ যদি সার্ভারের long-term private key চুরিও করে ফেলে, তবুও সে আগের কথোপকথন ডিক্রিপ্ট করতে পারবে না — কারণ প্রতিটা session একটা ইউনিক ephemeral key ব্যবহার করেছিল।
 
 </Callout>
 
-## Common TLS Issues
+## সাধারণ TLS সমস্যা
 
 ```typescript
 // Certificate pinning — extra security for mobile apps
@@ -159,14 +167,14 @@ function verifyPin(cert: X509Certificate): boolean {
 
 <Callout type="warning">
 
-**Never disable certificate verification** in production code (`rejectUnauthorized: false` in Node.js). It defeats the entire purpose of TLS — an attacker can present any certificate and you'll accept it.
+প্রোডাকশন কোডে **কখনো certificate verification বন্ধ করবেন না** (Node.js-এ `rejectUnauthorized: false`)। এতে TLS-এর পুরো উদ্দেশ্যটাই ভেস্তে যায় — একজন অ্যাটাকার যেকোনো certificate দেখাতে পারবে আর আপনি সেটা মেনে নেবেন।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **TLS provides encryption, integrity, and authentication** — all three matter
-2. **TLS 1.3 is 1 round-trip** — significantly faster than TLS 1.2
-3. **Certificates form a chain of trust** back to pre-installed root CAs
-4. **Diffie-Hellman key exchange** creates shared secrets without sending them over the wire
-5. **Perfect Forward Secrecy** means compromising today's key doesn't reveal yesterday's traffic
+1. **TLS এনক্রিপশন, integrity আর authentication দেয়** — তিনটাই গুরুত্বপূর্ণ
+2. **TLS 1.3 হলো 1 round-trip** — TLS 1.2-এর চেয়ে অনেক বেশি দ্রুত
+3. **Certificate গুলো একটা chain of trust তৈরি করে** যা আগে থেকে ইনস্টল করা root CA পর্যন্ত পৌঁছায়
+4. **Diffie-Hellman key exchange** shared secret বানায় সেটা তারের ওপর দিয়ে না পাঠিয়েই
+5. **Perfect Forward Secrecy** মানে আজকের key ফাঁস হলেও গতকালের ট্রাফিক ফাঁস হয় না

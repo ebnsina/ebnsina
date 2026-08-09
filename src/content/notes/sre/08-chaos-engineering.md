@@ -1,9 +1,9 @@
 ---
 title: 'Chaos Engineering'
-subtitle: 'Hypothesis-driven failure injection from Netflix Simian Army to Chaos Mesh, with real experiments and a safety harness.'
+subtitle: 'Netflix Simian Army থেকে Chaos Mesh পর্যন্ত hypothesis-driven failure injection, বাস্তব experiment আর একটা safety harness সহ।'
 chapter: 8
 level: 'advanced'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['chaos engineering', 'Chaos Mesh', 'Gremlin', 'fault injection', 'gameday']
 ---
 
@@ -13,18 +13,26 @@ topics: ['chaos engineering', 'Chaos Mesh', 'Gremlin', 'fault injection', 'gamed
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-A vaccine trial — you deliberately introduce a controlled, weakened version of the threat to see how the system responds, so that when the real thing hits, you already know it survives.
+একটা vaccine trial — আপনি ইচ্ছাকৃতভাবে threat-এর একটা নিয়ন্ত্রিত, দুর্বল করা সংস্করণ ঢুকিয়ে দেখেন system কীভাবে সাড়া দেয়, যাতে আসল জিনিসটা আঘাত করলে আপনি আগে থেকেই জানেন সেটা টিকে যাবে।
 
 </Callout>
 
-## The principle
+## গল্পে বুঝি
+
+শহরের বিদ্যুৎ কন্ট্রোল রুমে আজ একটা planned resilience test। বড় স্ক্রিনে পুরো গ্রিডের ম্যাপ — সব সাবস্টেশন সবুজ, শহর ঝলমল করছে। প্রধান প্রকৌশলী ফাতিমা আল-ফিহরি বললেন, "কাগজে-কলমে আমাদের backup path আছে, একটা সাবস্টেশন বসে গেলে পাশেরগুলো নাকি লোড টেনে নেবে। কিন্তু বাস্তবে কেউ কখনো পরীক্ষা করে দেখেনি।" আসল ঝড়ের রাতে সেটা কাজ করবে কিনা, সেই ভরসাটা তো কেবল কাগজে। তাই আজ সবাই সজাগ থাকতে থাকতে, নিয়ন্ত্রিত অবস্থায় তারা ইচ্ছাকৃতভাবে একটা সচল সাবস্টেশন ট্রিপ করাবেন — দেখতে চান গ্রিড সত্যিই নিজে থেকে বিদ্যুৎ ঘুরিয়ে দেয় কিনা, শহর জ্বলতে থাকে কিনা।
+
+ইবনে সিনা হাত রাখলেন সুইচে, kill switch হাতের নাগালে রেখে একটা সাবস্টেশন ট্রিপ করালেন। এক মুহূর্ত দম বন্ধ — তারপর ম্যাপে দেখা গেল লোড আপনাআপনি পাশের লাইনে সরে গেল, শহরের একটা বাতিও নিভল না। failover সত্যিই কাজ করে, প্রমাণ হলো। কিন্তু আল-খোয়ারিজমি একটা প্যানেলে লাল ওঠানামা দেখে থমকে গেলেন — একটা রিরুট লাইন প্রায় তার সীমার শেষ প্রান্তে গরম হয়ে উঠছে। এই দুর্বল লাইনটা আসল ঝড়ে নীরবে পুড়ে গিয়ে পুরো এলাকা অন্ধকার করে দিত, অথচ স্বাভাবিক দিনে কেউ টেরই পেত না। তারা পরীক্ষা থামিয়ে লাইনটা মেরামত করলেন — কোনো সত্যিকারের blackout হওয়ার আগেই।
+
+এই পুরো গল্পটাই আসলে **chaos engineering**। সজাগ তদারকির মধ্যে একটা সচল সাবস্টেশন ইচ্ছাকৃতভাবে ট্রিপ করানো হলো আসল, চালু system-এ একটা controlled failure inject করা; গ্রিড নিজে থেকে বিদ্যুৎ ঘুরিয়ে শহর জ্বালিয়ে রাখল মানে redundancy আর failover সত্যিই কাজ করে সেটা verify করা; আর সেই লুকানো দুর্বল লাইন খুঁজে পাওয়া মানে আসল outage-এর আগেই hidden weakness ধরে ফেলা। বাস্তবে Netflix ঠিক এই কাজটাই করে তাদের **Chaos Monkey** দিয়ে — production-এ এলোমেলোভাবে চালু server বন্ধ করে দেয়, যাতে আসল crash আসার আগেই প্রমাণ হয় system সেটা সামলাতে পারে।
+
+## মূলনীতি
 
 > Chaos Engineering is the discipline of experimenting on a system in order to build confidence in the system's capability to withstand turbulent conditions in production.
 > — _Principles of Chaos Engineering_
 
-The keyword is **discipline**. Chaos engineering is not "let's randomly break things." It is the scientific method applied to production resilience: hypothesize, experiment, measure, learn.
+মূল শব্দটা হলো **discipline**। Chaos engineering মানে "চলো র‍্যান্ডমভাবে জিনিস ভাঙি" নয়। এটা production resilience-এ প্রয়োগ করা scientific method: hypothesize, experiment, measure, learn।
 
 ```
 1. Define steady state (a quantitative SLI you'll watch)
@@ -34,9 +42,9 @@ The keyword is **discipline**. Chaos engineering is not "let's randomly break th
 5. If the hypothesis broke, fix the system, then re-run
 ```
 
-## The four guardrails (from the Netflix CRE playbook)
+## চারটি guardrail (Netflix CRE playbook থেকে)
 
-You cannot do chaos in production safely without these:
+এগুলো ছাড়া আপনি production-এ নিরাপদে chaos করতে পারবেন না:
 
 ```
 1. Run in production for accuracy — but only after staging passes
@@ -45,17 +53,17 @@ You cannot do chaos in production safely without these:
 4. Run during business hours — when the team can respond
 ```
 
-The "business hours only" rule surprises people. The point: if your experiment exposes a bug, you want the team awake and fresh, not paged out of bed at 3am.
+"business hours only" নিয়মটা মানুষকে অবাক করে। মূল কথাটা হলো: যদি আপনার experiment একটা bug ফাঁস করে, আপনি চান team জেগে থাকুক আর তাজা থাকুক, রাত 3am-এ pager-এ ঘুম থেকে উঠে নয়।
 
 <Callout type="warning">
 
-**Never run chaos experiments without all four guardrails.** A team that injected DNS failure on a Friday afternoon at Netflix in 2014 took down the streaming tier worldwide. The experiment had no kill switch and no blast radius limit. They had to wait for the experiment to finish on its own. Don't be that team.
+**চারটি guardrail ছাড়া কখনো chaos experiment চালাবেন না।** 2014 সালে Netflix-এ একটা team একটা শুক্রবার বিকেলে DNS failure inject করে বিশ্বব্যাপী streaming tier ফেলে দিয়েছিল। experiment-টার কোনো kill switch ছিল না আর কোনো blast radius limit ছিল না। তাদের experiment নিজে নিজে শেষ হওয়া পর্যন্ত অপেক্ষা করতে হয়েছিল। সেই team হবেন না।
 
 </Callout>
 
-## A maturity ladder
+## একটা maturity ladder
 
-Don't start with "kill a region." Start small.
+"একটা region kill করো" দিয়ে শুরু করবেন না। ছোট থেকে শুরু করুন।
 
 ```
 Level 1 — Single host failures
@@ -80,11 +88,11 @@ Level 5 — Gameday
   Goal: validate humans + processes, not just systems.
 ```
 
-Skipping levels is how teams turn chaos engineering into chaos.
+level skip করাই হলো সেই উপায় যেভাবে team chaos engineering-কে chaos-এ রূপান্তরিত করে।
 
-## Real experiment with Chaos Mesh
+## Chaos Mesh দিয়ে বাস্তব experiment
 
-Chaos Mesh is the leading open-source chaos platform for Kubernetes. CNCF graduated. Production-ready.
+Chaos Mesh হলো Kubernetes-এর জন্য শীর্ষস্থানীয় open-source chaos platform। CNCF graduated। Production-ready।
 
 ```yaml
 # experiments/checkout-pod-kill.yaml
@@ -111,7 +119,7 @@ spec:
     cron: '@every 30s'
 ```
 
-The `chaos-eligible: "true"` label is the critical guardrail — services must explicitly opt in to being targeted. No team gets surprised.
+`chaos-eligible: "true"` label-টাই সেই critical guardrail — service-কে target হওয়ার জন্য স্পষ্টভাবে opt in করতে হবে। কোনো team surprise হয় না।
 
 ### Network latency injection
 
@@ -145,7 +153,7 @@ spec:
   duration: '3m'
 ```
 
-### Kill switch (the most important file in chaos)
+### Kill switch (chaos-এর সবচেয়ে গুরুত্বপূর্ণ file)
 
 ```bash
 #!/usr/bin/env bash
@@ -167,11 +175,11 @@ echo "All experiments terminated. Verify no chaos remaining:"
 kubectl get all -n chaos-testing
 ```
 
-Bound it to a single command, document it in every chaos experiment doc, and put the link in the runbook.
+এটাকে একটা single command-এ বেঁধে দিন, প্রতিটা chaos experiment doc-এ document করুন, আর link-টা runbook-এ রাখুন।
 
 ## Experiment template
 
-Every experiment is documented before it runs. This is the template real chaos teams use:
+প্রতিটা experiment চালানোর আগে document করা হয়। বাস্তব chaos team যে template ব্যবহার করে সেটা এই:
 
 ```markdown
 # Chaos Experiment: checkout pod kill (1 of 12, every 30s, 5 min)
@@ -221,9 +229,9 @@ by the deployment controller (typical replacement time: 8-15s).
 [ filled in after; including hypothesis status, anomalies, action items ]
 ```
 
-## Gameday: the next level
+## Gameday: পরের level
 
-A gameday is a planned, multi-team exercise simulating a complex incident. Half a day of structured chaos.
+একটা gameday হলো একটা পরিকল্পিত, multi-team exercise যেটা একটা জটিল incident simulate করে। আধা দিনের structured chaos।
 
 ```typescript
 // Gameday: simulated multi-region failover
@@ -253,19 +261,19 @@ const gameday = {
 };
 ```
 
-Gamedays expose process bugs that no automated experiment catches: stale on-call schedules, runbooks pointing to deleted dashboards, the one engineer who knew the failover script being on PTO.
+Gameday এমন process bug ফাঁস করে যা কোনো automated experiment ধরতে পারে না: বাসি on-call schedule, deleted dashboard-এ point করা runbook, failover script জানা একমাত্র engineer যে PTO-তে আছে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-Fire departments don't wait for real fires to practice. They run controlled burns and drill weekly. A fire crew that has only ever fought real fires is a crew with a high mortality rate. Gamedays are your controlled burns.
+Fire department আসল আগুনের জন্য practice করার অপেক্ষা করে না। তারা controlled burn চালায় আর সপ্তাহে drill করে। যে fire crew শুধু আসল আগুনের সাথে লড়েছে, সেই crew-এর mortality rate বেশি। Gameday হলো আপনার controlled burn।
 
 </Callout>
 
-## Chaos in CI (the underrated pattern)
+## CI-তে chaos (কম গুরুত্ব পাওয়া pattern)
 
-Run small, deterministic chaos on every PR. Catches resilience regressions at code-review time.
+প্রতিটা PR-এ ছোট, deterministic chaos চালান। code-review-এর সময়েই resilience regression ধরে।
 
 ```yaml
 # .github/workflows/chaos-ci.yml
@@ -298,29 +306,29 @@ jobs:
           npm run test:integration
 ```
 
-Now any PR that introduces a regression in retry/timeout handling fails CI. The test catches it before code reaches review.
+এখন retry/timeout handling-এ regression আনা যেকোনো PR CI-তে fail করে। code review-তে পৌঁছানোর আগেই test সেটা ধরে ফেলে।
 
-## What chaos engineering won't tell you
+## chaos engineering আপনাকে যা বলবে না
 
-It is not a replacement for:
+এটা এগুলোর বিকল্প নয়:
 
-- **Capacity planning** — chaos doesn't predict load growth
-- **Architecture review** — chaos finds known failure modes; architecture review finds unknown ones
-- **Postmortem analysis** — chaos validates fixes; it doesn't generate them
+- **Capacity planning** — chaos load growth predict করে না
+- **Architecture review** — chaos পরিচিত failure mode খুঁজে পায়; architecture review অজানাগুলো খুঁজে পায়
+- **Postmortem analysis** — chaos fix validate করে; সেগুলো তৈরি করে না
 
-Chaos answers "did the fix work?" Postmortems answer "what's broken?" Architecture answers "what could be broken?" You need all three.
+Chaos উত্তর দেয় "fix-টা কাজ করেছে কি?" Postmortem উত্তর দেয় "কী ভাঙা?" Architecture উত্তর দেয় "কী ভাঙতে পারত?" আপনার তিনটাই লাগবে।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Principles of Chaos Engineering](https://principlesofchaos.org/) — the manifesto
+- [Principles of Chaos Engineering](https://principlesofchaos.org/) — manifesto
 - [Chaos Mesh docs](https://chaos-mesh.org/docs/) — CNCF graduated, K8s-native
-- [LitmusChaos](https://litmuschaos.io/) — alternative CNCF chaos platform
-- [Netflix tech blog — chaos](https://netflixtechblog.com/tagged/chaos-engineering) — where the practice was born
+- [LitmusChaos](https://litmuschaos.io/) — বিকল্প CNCF chaos platform
+- [Netflix tech blog — chaos](https://netflixtechblog.com/tagged/chaos-engineering) — যেখানে এই practice-এর জন্ম
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Hypothesis-driven**, not "break stuff and see"
-2. **Four guardrails are non-negotiable**: prod accuracy, blast limit, kill switch, business hours
-3. **Climb the ladder** — pod kill before region kill
-4. **Document every experiment** with the template — they accumulate into a resilience knowledge base
-5. **Gamedays + chaos in CI** — exercise both humans and code on a regular cadence
+1. **Hypothesis-driven**, "জিনিস ভেঙে দেখা" নয়
+2. **চারটি guardrail non-negotiable**: prod accuracy, blast limit, kill switch, business hours
+3. **ladder বেয়ে উঠুন** — region kill-এর আগে pod kill
+4. **প্রতিটা experiment document করুন** template দিয়ে — এগুলো জমে একটা resilience knowledge base হয়
+5. **Gameday + CI-তে chaos** — নিয়মিত cadence-এ মানুষ আর code দুটোকেই exercise করান

@@ -1,9 +1,9 @@
 ---
 title: 'Image Layers & Registries'
-subtitle: 'How layer sharing works in practice, pushing and pulling efficiently, and running your own registry.'
+subtitle: 'বাস্তবে layer sharing কীভাবে কাজ করে, দক্ষভাবে push ও pull করা, এবং নিজের registry চালানো।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['image layers', 'registry', 'Docker Hub', 'GHCR', 'self-hosted registry', 'image tagging']
 ---
 
@@ -13,15 +13,23 @@ topics: ['image layers', 'registry', 'Docker Hub', 'GHCR', 'self-hosted registry
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A Git repository for your filesystem: each commit is a layer, you only transfer the diff when you push or pull, and multiple branches can share common history without duplicating it. Image registries work the same way — layers already on the server are skipped during push.
+আপনার filesystem-এর জন্য একটা Git repository: প্রতিটা commit একটা layer, push বা pull করার সময় আপনি শুধু diff-টা ট্রান্সফার করেন, আর একাধিক branch ডুপ্লিকেট না করে common history শেয়ার করতে পারে। Image registry একইভাবে কাজ করে — server-এ ইতিমধ্যে থাকা layer push-এর সময় বাদ পড়ে যায়।
 
 </Callout>
 
-## How Layer Sharing Works
+## গল্পে বুঝি
 
-When you push an image, Docker sends only layers that don't already exist in the registry. When you pull, only missing layers are downloaded. This is why base images matter: if 100 services all use `node:20-alpine`, that layer is stored once and shared.
+ইবনে সিনা একজন চিত্রশিল্পী। সে কিন্তু একটা ছবি এক টানে আঁকে না — কয়েকটা স্বচ্ছ ট্রেসিং শিট পরপর সাজিয়ে ছবিটা বানায়। সবার নিচে থাকে বেস আউটলাইন শিট (মূল অবয়ব), তার উপর রঙের শিট, তার উপর ডিটেইলের শিট। শিটগুলো একটার উপর একটা বসালেই পুরো ছবিটা চোখে ভেসে ওঠে। এখন সে যদি দুটো আলাদা ছবি আঁকতে চায় আর দুটোরই বেস আউটলাইন একই হয়, তাহলে সে ওই আউটলাইন শিটটা আবার নতুন করে আঁকে না — একই শিটটাই দুটো ছবির নিচে শেয়ার করে দেয়। শুধু উপরের রঙ আর ডিটেইলের শিট বদলায়।
+
+শিট বানানো শেষ হলে ইবনে সিনা ছবিটা জমা রাখে পাড়ার কেন্দ্রীয় আর্ট লাইব্রেরিতে, যেখানে ফাতিমা আল-ফিহরি বা আল-খোয়ারিজমি যে কেউ গিয়ে ছবি ধার করে নিতে পারে, আবার নিজের আঁকা ছবিও জমা দিতে পারে। মজার ব্যাপার — কেউ যখন কোনো ছবি ধার করে, লাইব্রেরির লোক শুধু সেই শিটগুলোই বের করে দেয় যেগুলো তার কাছে আগে থেকে নেই; যে বেস আউটলাইন শিটটা তার কাছে ইতিমধ্যে আছে, সেটা আবার দেয় না।
+
+এই গল্পটাই আসলে container **image**। প্রতিটা স্বচ্ছ ট্রেসিং শিট হলো একটা **layer**, শিটগুলো পরপর সাজানোই layered image, আর একই আউটলাইন শিট দুই ছবিতে শেয়ার করাটাই হলো layer sharing/**cache** — একই layer একবারই store হয়ে অনেক image-এ কাজে লাগে। কেন্দ্রীয় আর্ট লাইব্রেরিটাই হলো **registry**, ছবি জমা দেওয়া মানে **push**, আর ধার করে নেওয়া মানে **pull** — আর ধার করার সময় শুধু অনুপস্থিত শিট/layer টানাটাই cache-এর জাদু। বাস্তবে Docker Hub ঠিক এই আর্ট লাইব্রেরিটাই: আপনি image push করলে যে layer server-এ আগে থেকে আছে সেটা বাদ পড়ে, আর pull করার সময়ও শুধু নতুন layer download হয়।
+
+## Layer Sharing কীভাবে কাজ করে
+
+আপনি যখন একটা image push করেন, Docker শুধু সেই layer-গুলো পাঠায় যেগুলো registry-তে আগে থেকে নেই। আপনি যখন pull করেন, শুধু অনুপস্থিত layer-গুলো download হয়। এই কারণেই base image গুরুত্বপূর্ণ: ১০০টা সার্ভিস যদি সবাই `node:20-alpine` ব্যবহার করে, সেই layer একবার store হয়ে শেয়ার হয়।
 
 ```bash
 # Push an image — watch which layers are skipped
@@ -44,7 +52,7 @@ docker images --digests
 
 ## Tagging Strategy
 
-Tags are mutable pointers to image digests. A digest is immutable. Good tagging strategy gives you both:
+Tag হলো image digest-এর দিকে mutable pointer। একটা digest immutable। ভালো tagging strategy আপনাকে দুটোই দেয়:
 
 ```bash
 # Semantic versioning + git SHA
@@ -59,7 +67,7 @@ docker push myregistry.io/myapp:${GIT_SHA}
 docker push myregistry.io/myapp:latest
 ```
 
-**Reference images by digest in production — not tags:**
+**প্রোডাকশনে image-কে digest দিয়ে রেফারেন্স করুন — tag দিয়ে নয়:**
 
 ```yaml
 # docker-compose.prod.yml
@@ -69,9 +77,9 @@ services:
     image: myregistry.io/myapp@sha256:abc123def456...
 ```
 
-Referencing by digest guarantees you're running exactly what you tested, not whatever `latest` points to after the next push.
+Digest দিয়ে রেফারেন্স করলে নিশ্চিত হয় যে আপনি ঠিক যা টেস্ট করেছেন সেটাই চালাচ্ছেন, পরের push-এর পর `latest` যেদিকে নির্দেশ করে সেটা নয়।
 
-## Public Registries
+## Public Registry
 
 **Docker Hub:**
 
@@ -119,9 +127,9 @@ docker push 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
 # integrated with IAM for authentication
 ```
 
-## Running a Self-Hosted Registry
+## একটা Self-Hosted Registry চালানো
 
-For air-gapped environments, caching, or cost control:
+air-gapped এনভায়রনমেন্ট, caching, বা খরচ নিয়ন্ত্রণের জন্য:
 
 **Docker Registry (official, minimal):**
 
@@ -155,7 +163,7 @@ docker push localhost:5000/myapp:v1.0.0
 docker pull localhost:5000/myapp:v1.0.0
 ```
 
-**For production self-hosted: use Harbor or Gitea Container Registry** — they add authentication, RBAC, vulnerability scanning, and a proper web UI.
+**প্রোডাকশন self-hosted-এর জন্য: Harbor বা Gitea Container Registry ব্যবহার করুন** — এগুলো authentication, RBAC, vulnerability scanning, আর একটা যথাযথ web UI যোগ করে।
 
 **Harbor (enterprise-grade):**
 
@@ -171,7 +179,7 @@ helm install harbor harbor/harbor \
 
 ## Image Scanning
 
-Scan images for known vulnerabilities before deploying:
+ডিপ্লয় করার আগে পরিচিত vulnerability-র জন্য image scan করুন:
 
 ```bash
 # Trivy (open source, fast)
@@ -187,7 +195,7 @@ trivy image --exit-code 1 --severity HIGH,CRITICAL myapp:latest
 grype myapp:latest
 ```
 
-**In GitHub Actions:**
+**GitHub Actions-এ:**
 
 ```yaml
 - name: Scan image
@@ -199,9 +207,9 @@ grype myapp:latest
     severity: HIGH,CRITICAL
 ```
 
-## Multi-Platform Images
+## Multi-Platform Image
 
-Build images that work on both x86_64 (AMD64) and ARM (Apple Silicon, Graviton):
+এমন image build করুন যা x86_64 (AMD64) আর ARM (Apple Silicon, Graviton) দুটোতেই চলে:
 
 ```bash
 # Enable buildx (multi-platform builder)
@@ -227,13 +235,13 @@ docker buildx build \
     tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
 ```
 
-Multi-platform images are stored as a manifest list — one tag points to multiple platform-specific digests. Docker automatically pulls the right one for the host architecture.
+Multi-platform image একটা manifest list হিসেবে store হয় — একটা tag একাধিক platform-specific digest-এর দিকে নির্দেশ করে। Docker হোস্ট আর্কিটেকচারের জন্য স্বয়ংক্রিয়ভাবে সঠিকটা pull করে।
 
-## Layer Optimization for CI Speed
+## CI Speed-এর জন্য Layer Optimization
 
-CI build time is mostly layer cache misses. Strategies:
+CI build time মূলত layer cache miss। কৌশল:
 
-**Export and import the cache:**
+**Cache export ও import করুন:**
 
 ```yaml
 # GitHub Actions: cache Docker layers between runs
@@ -250,7 +258,7 @@ CI build time is mostly layer cache misses. Strategies:
     cache-to: type=gha,mode=max # write back (max = all layers, not just final)
 ```
 
-**Use a registry cache:**
+**একটা registry cache ব্যবহার করুন:**
 
 ```bash
 # Use the registry itself as a cache store
@@ -262,4 +270,4 @@ docker buildx build \
   .
 ```
 
-This pulls the previous build's layers from the registry and uses them as cache for the current build — even on a fresh CI runner with no local cache.
+এটা registry থেকে আগের build-এর layer-গুলো pull করে আর সেগুলোকে বর্তমান build-এর cache হিসেবে ব্যবহার করে — এমনকি লোকাল cache ছাড়া একটা ফ্রেশ CI runner-এও।

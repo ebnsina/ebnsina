@@ -1,9 +1,9 @@
 ---
-title: 'What SRE Actually Is'
-subtitle: "Class SRE implements DevOps. The error-budget contract, toil cap, and the embedded engineer model that makes Google's reliability work."
+title: 'SRE আসলে কী'
+subtitle: 'Class SRE implements DevOps। error-budget contract, toil cap, আর embedded engineer model যা Google-এর reliability-কে কাজ করায়।'
 chapter: 1
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['SRE', 'error budget', 'toil', 'DevOps', 'reliability']
 ---
 
@@ -11,36 +11,44 @@ topics: ['SRE', 'error budget', 'toil', 'DevOps', 'reliability']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The one-sentence definition
+## গল্পে বুঝি
 
-> Site Reliability Engineering is what happens when you ask a software engineer to design an operations team.
-> — Ben Treynor Sloss, founder of SRE at Google
+একটা বড় হাসপাতাল বিল্ডিং-এর অপারেশন্স চিফ ফাতিমা আল-ফিহরি। কিন্তু তিনি শুধু একজন ম্যানেজার নন, ট্রেনিং-এ একজন engineer। আগে যিনি এই দায়িত্বে ছিলেন, তিনি সারাদিন দৌড়াতেন — এখানে পাইপ লিক করছে বালতি বসাও, ওখানে ফিউজ উড়েছে হাতে সুইচ পাল্টাও, লিফট আটকে গেছে গিয়ে ধাক্কা দাও। সারাদিন এই manual firefighting-এই শেষ, বিল্ডিং তবু প্রায়ই বন্ধ থাকত।
 
-That sentence is the whole discipline. SRE replaces shell-script-driven ops with engineering: code, automation, statistical thinking, and a hard budget for how much "ops work" a team is allowed to absorb.
+ফাতিমা এসে দৌড়ানো বন্ধ করলেন, বদলে বিল্ডিংটাকেই এমনভাবে গড়লেন যেন সমস্যাগুলো নিজে নিজেই সামলে যায় — automatic sprinkler, লিক ধরার sensor, নিজে-রিসেট-হওয়া breaker। এখন অল্প কয়েকজন লোক দিয়েই বিল্ডিং নির্ভরযোগ্যভাবে চলে। আর তিনি জানেন, "একটা ফল্টও কখনো হবে না" এমন নিখুঁত বিল্ডিং বানাতে গেলে খরচ এত বেড়ে যাবে যে ওটা কোনোদিন তৈরিই হবে না। তাই তিনি টার্গেট করেন "যথেষ্ট নির্ভরযোগ্য" — বাকি বাজেট আর সময়টা নতুন সুবিধা বানানোয় খরচ করেন।
+
+এই গল্পটাই আসলে **SRE**। ফাতিমার engineer হয়ে operations চালানোটাই হলো software engineering দিয়ে ops সামলানো — SRE-র মূল কথা। হাতে হাতে আগুন নেভানোর বদলে automatic system বসানোটাই **toil**-কে **automation** দিয়ে replace করা। আর "নিখুঁত uptime নয়, যথেষ্ট নির্ভরযোগ্য" টার্গেট করাটাই **error budget** দিয়ে reliability-কে খরচ আর feature velocity-র বিপরীতে balance করা। বাস্তবে Google এভাবেই SRE চালু করেছিল — তারা software engineer-দের দিয়ে operations টিম বানায় এবং 100% uptime তাড়া করে না, বরং একটা error budget সেট করে বাকিটা নতুন feature ship করায় খরচ করে।
+
+## এক-বাক্যের সংজ্ঞা
+
+> Site Reliability Engineering হচ্ছে সেটাই যা ঘটে যখন তুমি একজন software engineer-কে একটা operations team ডিজাইন করতে বলো।
+> — Ben Treynor Sloss, Google-এ SRE-র প্রতিষ্ঠাতা
+
+ঐ বাক্যটাই পুরো disciplineটা। SRE, shell-script-চালিত ops-কে engineering দিয়ে replace করে: code, automation, statistical thinking, আর একটা team কতটুকু "ops work" শুষে নিতে পারবে তার একটা hard budget।
 
 ## SRE vs DevOps vs Platform Engineering
 
-These three terms get used interchangeably and they are not the same.
+এই তিনটা টার্ম একে অপরের বদলে ব্যবহার হয় আর এরা এক জিনিস নয়।
 
-| Discipline       | Owns                              | Optimizes for           | Headline metric      |
+| Discipline       | কী owns করে                       | কীসের জন্য optimize করে | Headline metric      |
 | ---------------- | --------------------------------- | ----------------------- | -------------------- |
 | **DevOps**       | Pipeline + culture                | Deploy frequency        | Lead time, MTTR      |
 | **Platform Eng** | Internal developer platform (IDP) | Developer self-service  | Time-to-first-deploy |
 | **SRE**          | Production reliability            | Error budget compliance | SLO attainment       |
 
-You can think of it as: DevOps is a philosophy, Platform Engineering is a product, SRE is a job role with hard numerical constraints.
+তুমি এভাবে ভাবতে পারো: DevOps হচ্ছে একটা philosophy, Platform Engineering হচ্ছে একটা product, SRE হচ্ছে hard numerical constraint সহ একটা job role।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A pilot is not a mechanic. A mechanic is not the airline's safety board. SRE is the safety board: they set the safety budget (error budget), they investigate every incident, and they have the authority to ground the fleet (block releases) when the budget is blown.
+একজন pilot mechanic নন। একজন mechanic এয়ারলাইনের safety board নন। SRE হচ্ছে safety board: তারা safety budget (error budget) সেট করে, প্রতিটা incident তদন্ত করে, আর budget উড়ে গেলে fleet-কে ground করার (releases block করার) authority তাদের আছে।
 
 </Callout>
 
 ## The error-budget contract
 
-The single most important SRE concept. It turns reliability into a negotiable currency between product (who want features) and SRE (who want stability).
+সবচেয়ে গুরুত্বপূর্ণ SRE কনসেপ্ট। এটা reliability-কে product (যারা features চায়) আর SRE (যারা stability চায়)-এর মধ্যে একটা negotiable currency-তে পরিণত করে।
 
 ```typescript
 // Service Level Objective — the promise to users
@@ -64,7 +72,7 @@ const monthlyRequests = 100_000_000;
 const allowedFailures = monthlyRequests * errorBudget; // 100,000
 ```
 
-### What "error budget" actually buys you
+### "error budget" আসলে তোমাকে কী কিনে দেয়
 
 ```typescript
 // Pre-SRE world: ops vetoes every risky deploy
@@ -84,11 +92,11 @@ function deployPolicy(state: BudgetState) {
 }
 ```
 
-This is the deal: product gets to spend the budget on launches, experiments, and risky migrations. SRE never says "no, that's too risky." They say "the budget is spent, you cannot deploy non-reliability work until the rolling window recovers." The number adjudicates, not a person.
+এটাই deal: product-রা budget-টা launches, experiments, আর risky migrations-এ খরচ করতে পারে। SRE কখনো বলে না "না, ওটা বড্ড risky।" তারা বলে "budget খরচ হয়ে গেছে, rolling window রিকভার না হওয়া পর্যন্ত তুমি non-reliability work deploy করতে পারবে না।" সংখ্যাটা বিচার করে, কোনো মানুষ নয়।
 
 ## The toil cap
 
-The second pillar. Toil is manual, repetitive, automatable, tactical work that scales linearly with service growth. Google caps SRE toil at **50% of a team's time**.
+দ্বিতীয় pillar। Toil হচ্ছে manual, repetitive, automatable, tactical কাজ যা service-এর growth-এর সাথে linearly বাড়ে। Google, SRE toil-কে একটা **team-এর সময়ের 50%-এ** cap করে দেয়।
 
 ```typescript
 // Toil examples (must be eliminated):
@@ -108,17 +116,17 @@ const engineering = [
 ];
 ```
 
-If a team is at 80% toil, they have no time to build the automation that would reduce toil. They drown. The cap is what prevents the drowning spiral.
+একটা team যদি 80% toil-এ থাকে, তাহলে toil কমানোর automation বানানোর সময় তাদের থাকে না। তারা ডুবে যায়। cap-টাই ঐ ডুবে যাওয়ার spiral আটকায়।
 
 <Callout type="tip">
 
-**Track toil quarterly.** Have every SRE log time in two columns: toil vs project. If toil exceeds 50% for two quarters, the team gets headcount or scope cuts. This is non-negotiable. Without the cap, SRE is just a renamed ops team.
+**Toil ত্রৈমাসিকভাবে track করো।** প্রতিটা SRE-কে দুই কলামে সময় log করাও: toil vs project। দুই quarter ধরে toil 50% ছাড়ালে team-কে headcount দেওয়া হয় বা scope কমানো হয়। এটা non-negotiable। cap ছাড়া SRE শুধু একটা নাম-বদলানো ops team।
 
 </Callout>
 
 ## The embedded engineer model
 
-A real SRE team does not sit in a separate "ops" silo. The model that works:
+একটা রিয়েল SRE team আলাদা একটা "ops" silo-তে বসে না। যে model কাজ করে:
 
 ```
 Product team owns the service.
@@ -132,7 +140,7 @@ If the service degrades after disengagement, SRE can hand it
 back ("we are returning the pager"). This is a real, exercised right.
 ```
 
-The "returning the pager" mechanism is the back-pressure that prevents product teams from shipping unreliable services and dumping them on SRE.
+"returning the pager" mechanism-টাই সেই back-pressure যা product team-কে unreliable service ship করে SRE-র ঘাড়ে ফেলা থেকে আটকায়।
 
 ## SRE org structures (real examples)
 
@@ -163,7 +171,7 @@ const patterns = {
 
 ## A day in the life
 
-What an SRE actually does, hour by hour, on a typical Tuesday:
+একটা সাধারণ Tuesday-তে একজন SRE ঘণ্টার পর ঘণ্টা আসলে কী করে:
 
 ```
 09:00  Standup. Review last night's SLO burn rate dashboard.
@@ -178,11 +186,11 @@ What an SRE actually does, hour by hour, on a typical Tuesday:
 17:00  Hand off pager to APAC oncall. Write up timeline before logging off.
 ```
 
-Notice what is missing: no firefighting all day, no manual ticket grinding. The pager fires occasionally; most of the day is engineering work.
+খেয়াল করো কী নেই: সারাদিন firefighting নেই, manual ticket ঘষা নেই। pager মাঝেমধ্যে fire করে; দিনের বেশিরভাগটা engineering work।
 
-## When you do NOT need SRE
+## কখন তোমার SRE লাগবে না
 
-Not every company should have an SRE team. Honest signals you are not ready:
+প্রতিটা company-র SRE team থাকা উচিত নয়। সৎ signal যে তুমি এখনো ready নও:
 
 ```typescript
 // You probably don't need dedicated SRE if:
@@ -196,19 +204,19 @@ const hireFirstSRE =
 	productEngineersSpendingMoreThanThirtyPercentOnOps;
 ```
 
-Spinning up an SRE team prematurely creates the same silo problem SRE was invented to solve.
+অকালে একটা SRE team দাঁড় করানো ঠিক সেই silo সমস্যাটাই তৈরি করে যেটা সমাধানের জন্য SRE আবিষ্কার হয়েছিল।
 
 ## Stay current
 
-- [Google SRE Book — chapter 1](https://sre.google/sre-book/introduction/) — the canonical definition
-- [Google SRE Workbook](https://sre.google/workbook/table-of-contents/) — practical chapters, free
+- [Google SRE Book — chapter 1](https://sre.google/sre-book/introduction/) — canonical definition
+- [Google SRE Workbook](https://sre.google/workbook/table-of-contents/) — practical chapters, ফ্রি
 - [Charity Majors — On Call](https://charity.wtf/) — modern blameless ops thinking
-- [SREcon archives](https://www.usenix.org/srecon) — yearly talks on how SRE orgs evolve
+- [SREcon archives](https://www.usenix.org/srecon) — SRE org কীভাবে evolve হয় তার yearly talks
 
 ## Key Takeaways
 
-1. **SRE is operations done by software engineers** — code replaces toil
-2. **Error budget is the contract** — it converts reliability into a tradeable resource
-3. **50% toil cap is non-negotiable** — without it SRE collapses into ops
-4. **Embedding + return-the-pager** keeps product teams accountable for what they build
-5. **Don't hire SRE before you have the scale to justify it** — premature SRE is just expensive ops
+1. **SRE হচ্ছে software engineer-দের করা operations** — code, toil-কে replace করে
+2. **Error budget হচ্ছে contract** — এটা reliability-কে একটা tradeable resource-এ রূপান্তর করে
+3. **50% toil cap non-negotiable** — এটা ছাড়া SRE ops-এ ধসে পড়ে
+4. **Embedding + return-the-pager** product team-দের যা বানায় তার জন্য accountable রাখে
+5. **যথেষ্ট scale না থাকতে SRE hire করো না** — অকালের SRE শুধু ব্যয়বহুল ops

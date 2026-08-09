@@ -1,9 +1,9 @@
 ---
-title: 'The Three Pillars of Observability'
-subtitle: "Logs, metrics, and traces — what each tells you, where each falls short, and how they work together to answer 'what's broken and why.'"
+title: 'Observability-র তিন স্তম্ভ'
+subtitle: "Logs, metrics, আর traces — প্রতিটা আপনাকে কী বলে, কোথায় কম পড়ে যায়, আর 'কী নষ্ট হয়েছে আর কেন' এর উত্তর দিতে এরা কীভাবে একসাথে কাজ করে।"
 chapter: 1
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['observability', 'logs', 'metrics', 'traces', 'SLO', 'alerting']
 ---
 
@@ -13,26 +13,34 @@ topics: ['observability', 'logs', 'metrics', 'traces', 'SLO', 'alerting']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A doctor's diagnostic tools: metrics are the vitals monitor (heart rate, blood pressure — you know something is wrong instantly). Logs are the patient's symptom journal (detailed narrative of what happened, when). Traces are the MRI — they show exactly what's happening inside and where the problem is. You need all three; each alone is insufficient.
+একজন ডাক্তারের ডায়াগনস্টিক টুলগুলো ভাবুন: metrics হলো vitals monitor (হার্ট রেট, ব্লাড প্রেশার — কিছু একটা যে গণ্ডগোল হয়েছে সেটা সাথে সাথে বুঝে যান)। Logs হলো রোগীর symptom journal (কখন কী ঘটেছে তার বিস্তারিত বিবরণ)। Traces হলো MRI — ভেতরে ঠিক কী ঘটছে আর সমস্যাটা কোথায়, তা এরা দেখিয়ে দেয়। তিনটাই দরকার; আলাদা আলাদাভাবে প্রতিটা যথেষ্ট নয়।
 
 </Callout>
 
+## গল্পে বুঝি
+
+একটা ক্রিকেট ম্যাচের অ্যানালিসিস রুমে বসে আছেন ইবনে সিনা। খেলা শেষ, এখন তাকে বের করতে হবে ঠিক কোথায় দলটা পিছিয়ে পড়ল। সামনে তিন রকমের রেকর্ড। প্রথমটা হলো বল-বাই-বল লিখিত commentary — প্রতিটা ডেলিভারিতে ঠিক কী ঘটল তার আলাদা আলাদা এন্ট্রি: "১২.৩ ওভার, আল-খোয়ারিজমি বোল্ড, off-stump ভাঙল"। দ্বিতীয়টা হলো স্কোরবোর্ড — মোট রান, run-rate, কত উইকেট পড়েছে, প্রতি ওভারে গড় কত; পুরো ম্যাচটাকে সংখ্যায় সংক্ষেপে বলে দেয়।
+
+কিন্তু ইবনে সিনার আসল প্রশ্ন — আমাদের সেরা ব্যাটসম্যান ফাতিমা আল-ফিহরি ৩০ বল খেলে মাত্র ১২ রান করল কেন? তখন সে তৃতীয় রেকর্ডটা টানে: শুধু ফাতিমার পুরো ইনিংসের path — সে যত বল খেলেছে প্রতিটা এক জায়গায় সাজানো। কোন বলে সে রান পেল, কোন ওভারে আটকে গেল, কোন বোলারের সামনে গিয়ে গতি হারাল — সব এক লাইনে। দেখা গেল, একটাই স্পিনারের সামনে টানা আট বল সে আটকে ছিল, ওখানেই আসল সমস্যা।
+
+গল্পের বল-বাই-বল commentary হলো **logs** (আলাদা আলাদা timestamped event — কী ঘটেছে), স্কোরবোর্ডের run-rate আর উইকেটের টোটাল হলো **metrics** (সময়ের সাথে সংখ্যায় aggregate — কতটা), আর ফাতিমার একক ইনিংসের সম্পূর্ণ path হলো একটা **trace** (একটাই request পুরো সিস্টেমে কোথায় কোথায় গেল, কোথায় আটকাল — কোথায়)। তিনটা মিলিয়েই অ্যানালিস্ট বলতে পারে কী হয়েছে, কতটা, আর ঠিক কোথায় গণ্ডগোল। বাস্তবে আপনার সিস্টেমেও ঠিক এই তিনটাই লাগে — metrics দেখে বুঝবেন সমস্যা আছে, logs দেখে বুঝবেন কী error, আর একটা trace টেনে বুঝবেন কোন service-এ সময়টা নষ্ট হচ্ছে।
+
 ## Logs
 
-Logs are discrete events: something happened at a specific time.
+Logs হলো আলাদা আলাদা event: নির্দিষ্ট একটা সময়ে কিছু একটা ঘটেছে।
 
 ```
 2024-01-15T10:23:41Z ERROR payment failed order_id=ord-123 reason="card_declined" user_id=usr-456
 2024-01-15T10:23:42Z INFO  order cancelled order_id=ord-123
 ```
 
-**What logs answer:** "What happened?" Logs give you the narrative — the sequence of events that led to a failure.
+**Logs কোন প্রশ্নের উত্তর দেয়:** "কী ঘটেছে?" Logs আপনাকে গল্পটা দেয় — যে ঘটনাক্রমে ফেইলিওরটা হলো তার ধারাবাহিকতা।
 
-**Where logs fail:** volume and search. A system processing 10k req/sec generates millions of log lines per hour. Finding the specific error in that stream requires good tooling (Loki, Elasticsearch) and good structure (JSON, not freeform text).
+**Logs কোথায় ফেইল করে:** ভলিউম আর search। সেকেন্ডে 10k req প্রসেস করা একটা সিস্টেম ঘণ্টায় লক্ষ লক্ষ log line তৈরি করে। সেই স্রোতের মধ্যে নির্দিষ্ট error খুঁজে বের করতে ভালো টুলিং (Loki, Elasticsearch) আর ভালো structure (JSON, ফ্রিফর্ম টেক্সট নয়) দরকার।
 
-**Structured logging (do this):**
+**Structured logging (এটাই করুন):**
 
 ```typescript
 import pino from 'pino';
@@ -49,11 +57,11 @@ console.log(`Order ${orderId} failed: ${err.message}`);
 log.error({ orderId, userId, err: err.message, code: err.code }, 'Order creation failed');
 ```
 
-Structured logs are JSON — searchable, filterable, aggregatable. Freeform text logs require regex to extract any useful information.
+Structured logs হলো JSON — search করা যায়, filter করা যায়, aggregate করা যায়। ফ্রিফর্ম টেক্সট log থেকে কোনো কাজের তথ্য বের করতে regex লাগে।
 
 ## Metrics
 
-Metrics are numeric measurements sampled over time.
+Metrics হলো সময়ের সাথে নেওয়া সংখ্যাগত পরিমাপ।
 
 ```
 http_requests_total{method="POST", path="/orders", status="500"} 142
@@ -61,20 +69,20 @@ http_request_duration_seconds{p99} 0.847
 order_processing_queue_depth 234
 ```
 
-**What metrics answer:** "Is something wrong right now?" Metrics are how you detect incidents before users report them. A spike in error rate, a drop in throughput, a queue depth growing — metrics catch these in real time.
+**Metrics কোন প্রশ্নের উত্তর দেয়:** "এই মুহূর্তে কি কিছু ভুল হচ্ছে?" ইউজার রিপোর্ট করার আগেই incident ধরে ফেলার উপায় হলো metrics। error rate হঠাৎ বেড়ে যাওয়া, throughput কমে যাওয়া, queue depth বাড়তে থাকা — metrics এগুলো রিয়েল টাইমে ধরে ফেলে।
 
-**Where metrics fail:** they tell you _that_ something is wrong, not _why_. An error rate spike on `/orders` tells you there's a problem; the logs tell you what the error is; the traces tell you which service is causing it.
+**Metrics কোথায় ফেইল করে:** এরা আপনাকে বলে _যে_ কিছু একটা ভুল হচ্ছে, কিন্তু _কেন_ তা নয়। `/orders`-এ error rate হঠাৎ বেড়ে গেলে সেটা বলে যে একটা সমস্যা আছে; logs বলে error-টা কী; traces বলে কোন service সেটা ঘটাচ্ছে।
 
-**The four golden signals** (Google SRE):
+**চারটা golden signal** (Google SRE):
 
-- **Latency** — how long requests take (distinguish success latency from error latency)
-- **Traffic** — how much demand (requests/sec, messages/sec)
-- **Errors** — rate of failed requests
-- **Saturation** — how full is the system (queue depth, CPU, memory, connection pool)
+- **Latency** — request কত সময় নেয় (success latency আর error latency আলাদা করে দেখুন)
+- **Traffic** — কত চাহিদা (requests/sec, messages/sec)
+- **Errors** — ফেইল হওয়া request-এর হার
+- **Saturation** — সিস্টেম কতটা ভর্তি (queue depth, CPU, memory, connection pool)
 
 ## Traces
 
-Traces follow a single request as it flows through multiple services.
+Traces একটা একক request কে অনুসরণ করে যখন সেটা একাধিক service-এর মধ্য দিয়ে যায়।
 
 ```
 Trace: ord-request-abc123 (total: 847ms)
@@ -88,48 +96,48 @@ Trace: ord-request-abc123 (total: 847ms)
   └─ Response               15ms
 ```
 
-**What traces answer:** "Where is the time going?" In a microservices system with 10 services involved in one request, a trace shows exactly which service or operation is slow.
+**Traces কোন প্রশ্নের উত্তর দেয়:** "সময়টা কোথায় যাচ্ছে?" একটা microservices সিস্টেমে যেখানে একটা request-এ 10টা service জড়িত, সেখানে একটা trace ঠিক দেখিয়ে দেয় কোন service বা operation-টা ধীর।
 
-**Where traces fail:** sampling. Collecting 100% of traces at high throughput is expensive. Most systems sample 1-10% of traces, which means rare errors might not be captured. Use head-based sampling (decide at ingress) or tail-based sampling (buffer traces, decide after completion based on whether errors occurred).
+**Traces কোথায় ফেইল করে:** sampling। high throughput-এ 100% trace সংগ্রহ করা ব্যয়বহুল। বেশিরভাগ সিস্টেম trace-এর 1-10% sample করে, যার মানে বিরল error হয়তো ধরাই পড়ল না। head-based sampling (ingress-এ সিদ্ধান্ত নিন) বা tail-based sampling (trace বাফার করুন, error ঘটেছিল কিনা তার ভিত্তিতে সম্পূর্ণ হওয়ার পরে সিদ্ধান্ত নিন) ব্যবহার করুন।
 
-## How They Work Together
+## এরা কীভাবে একসাথে কাজ করে
 
-The workflow for an incident:
+একটা incident-এর workflow:
 
-1. **Metrics alert fires** — error rate on `/api/orders` > 5% for 5 minutes
-2. **Check dashboards** — which specific error codes? What's the latency distribution? When did it start?
-3. **Search logs** — find the actual error messages. Stack traces. What's failing?
-4. **Pull a trace** — find a failing request. Which service returned the error? Which downstream call failed?
-5. **Fix and verify** — deploy fix. Watch metrics return to baseline.
+1. **Metrics alert fire করে** — `/api/orders`-এ error rate 5 মিনিট ধরে > 5%
+2. **Dashboard দেখুন** — কোন নির্দিষ্ট error code? latency distribution কেমন? কখন শুরু হলো?
+3. **Logs search করুন** — আসল error message খুঁজুন। Stack trace। কী ফেইল করছে?
+4. **একটা trace টানুন** — একটা ফেইল হওয়া request খুঁজুন। কোন service error return করল? কোন downstream call ফেইল করল?
+5. **ঠিক করুন আর যাচাই করুন** — fix deploy করুন। metrics baseline-এ ফিরে আসতে দেখুন।
 
-Without all three: metrics tells you there's a fire but not where. Logs show you individual fires but not the pattern. Traces show the path but not when the incident started.
+এই তিনটা ছাড়া: metrics বলে আগুন লেগেছে কিন্তু কোথায় তা নয়। Logs আলাদা আলাদা আগুন দেখায় কিন্তু প্যাটার্ন নয়। Traces পথটা দেখায় কিন্তু incident কখন শুরু হলো তা নয়।
 
 ## SLOs: The North Star
 
-Before choosing tools, define what you're measuring for.
+টুল বাছাই করার আগে ঠিক করুন আপনি কীসের জন্য পরিমাপ করছেন।
 
-**SLI (Service Level Indicator):** what you measure.
+**SLI (Service Level Indicator):** আপনি যা পরিমাপ করেন।
 
 ```
 Request success rate = successful_requests / total_requests
 Request latency P99 = 99th percentile response time
 ```
 
-**SLO (Service Level Objective):** the target.
+**SLO (Service Level Objective):** লক্ষ্য।
 
 ```
 Success rate: 99.9% over 30 days
 P99 latency: < 500ms
 ```
 
-**Error budget:** how much failure the SLO allows.
+**Error budget:** SLO কতটুকু ফেইলিওর মেনে নেয়।
 
 ```
 99.9% success → 0.1% allowed failures
 In 30 days (43,200 minutes): 43.2 minutes of downtime budget
 ```
 
-SLOs make alerting rational: alert when error budget is burning too fast, not when any error occurs.
+SLO alerting-কে যুক্তিসঙ্গত করে: alert করুন যখন error budget খুব দ্রুত পুড়ছে, যেকোনো error ঘটলেই নয়।
 
 ```yaml
 # Prometheus alert based on error budget burn rate
@@ -143,9 +151,9 @@ expr: |
 severity: warning
 ```
 
-## Choosing Your Stack
+## আপনার Stack বাছাই করা
 
-For a small-to-medium production system, a pragmatic stack:
+একটা small-to-medium প্রোডাকশন সিস্টেমের জন্য একটা বাস্তবসম্মত stack:
 
 ```
 Logs:    Loki + Promtail (self-hosted) or Datadog Logs
@@ -155,7 +163,7 @@ Traces:  Jaeger or Tempo (self-hosted) or Datadog APM
 Instrumentation: OpenTelemetry SDKs (vendor-neutral)
 ```
 
-OpenTelemetry is the key: instrument once with the OTel SDK, export to any backend. Don't instrument directly to Datadog or Jaeger — if you switch backends, you don't have to re-instrument.
+OpenTelemetry-ই আসল চাবি: OTel SDK দিয়ে একবার instrument করুন, যেকোনো backend-এ export করুন। সরাসরি Datadog বা Jaeger-এ instrument করবেন না — backend বদলালে আবার নতুন করে instrument করতে হবে না।
 
 ```typescript
 // Instrument once with OpenTelemetry
@@ -172,4 +180,4 @@ sdk.start();
 // Now switch to Datadog by changing the collector config, not the app code
 ```
 
-The chapters ahead cover each pillar in depth: structured logging with Loki, metrics with Prometheus and Grafana, and distributed tracing with OpenTelemetry and Jaeger.
+সামনের অধ্যায়গুলো প্রতিটা স্তম্ভ গভীরভাবে কভার করে: Loki দিয়ে structured logging, Prometheus আর Grafana দিয়ে metrics, এবং OpenTelemetry আর Jaeger দিয়ে distributed tracing।

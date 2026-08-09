@@ -1,9 +1,9 @@
 ---
-title: 'Issuing Your First Cert with certbot'
-subtitle: 'From bare DNS A record to working HTTPS in ten minutes. Concrete commands, every flag explained, every common failure addressed.'
+title: 'certbot দিয়ে আপনার প্রথম Cert ইস্যু করা'
+subtitle: 'খালি DNS A record থেকে কাজ করা HTTPS পর্যন্ত দশ মিনিটে। কংক্রিট command, প্রতিটা flag ব্যাখ্যা করা, প্রতিটা প্রচলিত failure-এর সমাধান।'
 chapter: 5
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['certbot', 'letsencrypt', 'nginx', 'http-01', 'tls']
 ---
 
@@ -13,21 +13,29 @@ topics: ['certbot', 'letsencrypt', 'nginx', 'http-01', 'tls']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Applying for a driver's license — you prove identity once, get a credential, and renew before it expires.
+একটা driver's license-এর জন্য আবেদন করা — আপনি একবার identity প্রমাণ করেন, একটা credential পান, আর expire হওয়ার আগে renew করেন।
 
 </Callout>
 
-## Prereqs
+## গল্পে বুঝি
 
-Before running certbot, three things must be true:
+ফাতিমা আল-ফিহরি বাজারে একটা নতুন দোকান খুলেছেন। নিয়ম হলো, সামনের দরজায় সরকারি নোটারির সিলমারা একটা সার্টিফিকেট টাঙানো থাকতে হবে — নইলে খদ্দেররা ভাববে দোকানটা আসল কিনা। কিন্তু নোটারির অফিসে যাওয়া, লাইনে দাঁড়ানো, তারা যে প্রমাণ-চিহ্নটা চায় সেটা নির্দিষ্ট জায়গায় রেখে আসা, সিলমারা কাগজ ফেরত আনা, তারপর সেটা দরজায় ঠিকঠাক লাগানো — এতগুলো ধাপ ফাতিমার হাতে সময় নেই। তাই তিনি একজন নির্ভরযোগ্য আদমি রাখলেন, নাম আল-খোয়ারিজমি, যিনি এই পুরো কাজটা একাই সামলান।
 
-1. **You own a domain** — purchased from any registrar. `.com`, `.dev`, `.io`, anything. ~$10/year.
-2. **DNS A record points at your VPS's public IPv4.** (And AAAA for IPv6 if you want.)
-3. **Ports 80 and 443 are reachable from the public internet.** Both your VPS firewall and any cloud firewall must allow them.
+ফাতিমা শুধু একবার বললেন, "আমার দোকানের সার্টিফিকেটটা এনে দাও।" আল-খোয়ারিজমি বিনা পয়সার নোটারি অফিসে গেলেন, তারা যে প্রমাণ-চিহ্নটা চাইল সেটা ঠিক জায়গায় রেখে ফাতিমার মালিকানা প্রমাণ করলেন, সিলমারা সার্টিফিকেট নিয়ে এলেন, নিজ হাতে দোকানের সামনের দরজায় মজবুত করে লাগিয়ে দিলেন। শুধু তাই নয়, তিনি একটা স্থায়ী ব্যবস্থাও করে রাখলেন — পুরনো সার্টিফিকেটের মেয়াদ শেষ হওয়ার আগেই যেন নিজে থেকে গিয়ে টাটকাটা এনে বদলে দেন, ফাতিমাকে আর মনে করিয়ে দিতে না হয়।
 
-Verify each:
+গল্পের আল-খোয়ারিজমি হলো **certbot**। এক ইনস্ট্রাকশনে সে পুরো কাজটা করে: নোটারিতে গিয়ে প্রমাণ-চিহ্ন রাখা মানে **ACME request আর challenge** স্বয়ংক্রিয়ভাবে সারা, সিলমারা কাগজ দরজায় লাগানো মানে **certificate টা web server-এ install করা**, আর মেয়াদ শেষের আগে টাটকা এনে বদলানোর স্থায়ী ব্যবস্থা মানে **auto-renewal** সেট করা। বাস্তবে ঠিক এভাবেই `sudo certbot --nginx -d example.com` একটা কমান্ডে Let's Encrypt থেকে cert নেয়, nginx-এ বসিয়ে দেয়, আর একটা systemd timer দিয়ে দিনে দুইবার নিজে থেকে renew করে — আপনাকে হাতে একটা ধাপও করতে হয় না।
+
+## প্রিরেকুইজিট
+
+certbot চালানোর আগে, তিনটা জিনিস সত্য হতে হবে:
+
+1. **আপনার একটা domain আছে** — যেকোনো registrar থেকে কেনা। `.com`, `.dev`, `.io`, যেকোনো কিছু। ~$10/বছর।
+2. **DNS A record আপনার VPS-এর public IPv4-তে পয়েন্ট করে।** (আর IPv6 চাইলে AAAA।)
+3. **Port 80 আর 443 public internet থেকে reachable।** আপনার VPS firewall আর যেকোনো cloud firewall দুইটাকেই এগুলো allow করতে হবে।
+
+প্রতিটা verify করুন:
 
 ```bash
 # Domain DNS resolves to your IP
@@ -43,26 +51,26 @@ curl -I https://example.com/
 # Connection refused — fine for now
 ```
 
-If `dig` returns nothing, your DNS is not set up. If `curl http://` times out, your firewall is blocking port 80 (revisit chapter 7 of Linux & VPS).
+`dig` কিছু না ফেরালে, আপনার DNS সেট আপ করা নেই। `curl http://` timeout হলে, আপনার firewall port 80 block করছে (Linux & VPS-এর চ্যাপ্টার 7 পুনরায় দেখুন)।
 
 <Callout type="info">
 
-**DNS propagation.** New A records can take up to an hour to propagate, though typical times are 1–5 minutes. If `dig +short` returns nothing right after creating the record, wait. Trying certbot too early will fail with `DNS problem: NXDOMAIN`.
+**DNS propagation.** নতুন A record propagate হতে এক ঘণ্টা পর্যন্ত লাগতে পারে, যদিও সাধারণ সময় 1–5 মিনিট। record তৈরির ঠিক পরে `dig +short` কিছু না ফেরালে, অপেক্ষা করুন। certbot খুব তাড়াতাড়ি চেষ্টা করলে `DNS problem: NXDOMAIN` দিয়ে ফেল করবে।
 
 </Callout>
 
-## Install certbot
+## certbot ইনস্টল করা
 
 ```bash
 sudo apt update
 sudo apt install -y certbot python3-certbot-nginx
 ```
 
-The `python3-certbot-nginx` plugin auto-edits nginx configs to add the TLS settings. You can also run certbot in "certonly" mode (chapter 7) and edit nginx by hand, which is what serious sysadmins prefer for predictability.
+`python3-certbot-nginx` plugin TLS setting যোগ করতে nginx config auto-edit করে। আপনি certbot-কে "certonly" mode-এও (চ্যাপ্টার 7) চালাতে আর nginx হাতে edit করতে পারেন, যা predictability-র জন্য serious sysadmin-রা পছন্দ করে।
 
-## A clean nginx server block to start from
+## শুরু করার জন্য একটা পরিষ্কার nginx server block
 
-Create or edit `/etc/nginx/sites-available/example.com`:
+`/etc/nginx/sites-available/example.com` তৈরি বা edit করুন:
 
 ```nginx
 server {
@@ -79,7 +87,7 @@ server {
 }
 ```
 
-Enable it:
+এটা enable করুন:
 
 ```bash
 sudo mkdir -p /var/www/example.com
@@ -90,34 +98,34 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Confirm it works:
+কাজ করে কিনা নিশ্চিত করুন:
 
 ```bash
 curl -I http://example.com/
 # HTTP/1.1 200 OK
 ```
 
-Now you have an HTTP-only site, ready for certbot.
+এখন আপনার একটা HTTP-only সাইট আছে, certbot-এর জন্য প্রস্তুত।
 
-## Run certbot
+## certbot চালান
 
 ```bash
 sudo certbot --nginx -d example.com -d www.example.com
 ```
 
-Walk through the prompts:
+prompt-গুলো ধরে হাঁটুন:
 
-1. **Email address.** Used for renewal failure notifications and security advisories. Worth setting to a real inbox.
+1. **Email address।** renewal failure notification আর security advisory-র জন্য ব্যবহৃত। একটা আসল inbox-এ সেট করা মূল্যবান।
 
-2. **Terms of Service.** Type `Y`. (You read them. Of course.)
+2. **Terms of Service।** `Y` টাইপ করুন। (আপনি পড়েছেন। অবশ্যই।)
 
-3. **EFF newsletter.** Up to you.
+3. **EFF newsletter।** আপনার ইচ্ছা।
 
-4. **Choose redirect.**
-   - `1: No redirect` — leave HTTP working.
-   - `2: Redirect` — HTTP→HTTPS 301. Pick this for almost everything.
+4. **redirect বাছুন।**
+   - `1: No redirect` — HTTP কাজ করতে দিন।
+   - `2: Redirect` — HTTP→HTTPS 301। প্রায় সবকিছুর জন্য এটা বাছুন।
 
-certbot does the work. Output looks like:
+certbot কাজটা করে। Output দেখতে এমন:
 
 ```text
 Account registered.
@@ -134,7 +142,7 @@ Successfully deployed certificate for www.example.com to /etc/nginx/sites-enable
 Congratulations! You have successfully enabled HTTPS on https://example.com and https://www.example.com
 ```
 
-Verify:
+Verify করুন:
 
 ```bash
 curl -I https://example.com/
@@ -142,17 +150,17 @@ curl -I https://example.com/
 # server: nginx/1.24.0
 ```
 
-It works. Browsers will trust it without warnings.
+কাজ করে। browser warning ছাড়াই এটা trust করবে।
 
-## What certbot actually changed
+## certbot আসলে কী বদলেছে
 
-Inspect the modified nginx config:
+modified nginx config পরিদর্শন করুন:
 
 ```bash
 sudo cat /etc/nginx/sites-enabled/example.com
 ```
 
-certbot added these lines:
+certbot এই line-গুলো যোগ করেছে:
 
 ```nginx
 server {
@@ -189,11 +197,11 @@ server {
 }
 ```
 
-The first server block now serves HTTPS using the Let's Encrypt cert. The second server block listens on port 80 and 301-redirects every request to HTTPS.
+প্রথম server block এখন Let's Encrypt cert দিয়ে HTTPS সার্ভ করে। দ্বিতীয় server block port 80-এ listen করে আর প্রতিটা request-কে HTTPS-এ 301-redirect করে।
 
-The `include /etc/letsencrypt/options-ssl-nginx.conf` pulls in safe defaults (TLS 1.2/1.3, modern ciphers, OCSP stapling). You can override or replace these in chapter 7.
+`include /etc/letsencrypt/options-ssl-nginx.conf` safe default (TLS 1.2/1.3, আধুনিক cipher, OCSP stapling) টেনে আনে। আপনি চ্যাপ্টার 7-এ এগুলো override বা replace করতে পারেন।
 
-## Inspect the certificate
+## certificate পরিদর্শন করা
 
 ```bash
 $ sudo openssl x509 -in /etc/letsencrypt/live/example.com/cert.pem -text -noout | head -20
@@ -215,9 +223,9 @@ Certificate:
             DNS:example.com, DNS:www.example.com
 ```
 
-Two domains in SAN, ECDSA P-256 key, valid for 90 days. Exactly what we asked for.
+SAN-এ দুইটা domain, ECDSA P-256 key, 90 দিনের জন্য valid। ঠিক যা আমরা চেয়েছি।
 
-## Test the renewal — without actually renewing
+## renewal টেস্ট করা — আসলে renew না করেই
 
 ```bash
 sudo certbot renew --dry-run
@@ -235,11 +243,11 @@ Congratulations, all simulated renewals succeeded:
   /etc/letsencrypt/live/example.com/fullchain.pem (success)
 ```
 
-`--dry-run` uses the staging server, so it does not consume rate limits or replace your cert. If this command succeeds, real renewals will too.
+`--dry-run` staging server ব্যবহার করে, তাই এটা rate limit খরচ করে না বা আপনার cert replace করে না। এই command সফল হলে, আসল renewal-ও হবে।
 
-## The renewal timer
+## renewal timer
 
-Already installed by the certbot package:
+certbot package আগে থেকেই ইনস্টল করে:
 
 ```bash
 $ systemctl list-timers certbot
@@ -247,9 +255,9 @@ NEXT                         LEFT          LAST                         PASSED  
 Mon 2026-05-04 12:42:11 UTC  10h left      Sun 2026-05-03 22:42:11 UTC  1h ago   certbot.timer
 ```
 
-Twice a day, the timer runs `certbot renew`. Renewal happens 30 days before expiration. The hook reloads nginx automatically.
+দিনে দুইবার, timer `certbot renew` চালায়। Renewal expiration-এর 30 দিন আগে ঘটে। hook স্বয়ংক্রিয়ভাবে nginx reload করে।
 
-You can inspect the timer:
+আপনি timer পরিদর্শন করতে পারেন:
 
 ```bash
 sudo systemctl cat certbot.timer
@@ -262,26 +270,26 @@ RandomizedDelaySec=43200
 Persistent=true
 ```
 
-Twice daily, with up to 12 hours of jitter, persistent across reboots. Rock solid.
+দিনে দুইবার, 12 ঘণ্টা পর্যন্ত jitter সহ, reboot জুড়ে persistent। একদম মজবুত।
 
-## Common failures and fixes
+## প্রচলিত failure আর সমাধান
 
 **`Detail: Fetching http://example.com/.well-known/acme-challenge/abc... Connection refused`**
 
-Your VPS is not reachable on port 80 from outside. Check:
+আপনার VPS বাইরে থেকে port 80-এ reachable নয়। চেক করুন:
 
 ```bash
 sudo nft list ruleset | grep 'tcp dport 80'
 sudo ss -tlnp | grep ':80'
 ```
 
-Open the port (chapter 7 of Linux & VPS), make sure nginx is listening on it.
+port খুলুন (Linux & VPS-এর চ্যাপ্টার 7), নিশ্চিত করুন nginx এতে listen করছে।
 
 **`Detail: ... 404 Not Found`**
 
-certbot placed the challenge file but nginx is not serving it. Usually because of a wrong document root or a `location /` that catches everything before the well-known prefix is matched.
+certbot challenge ফাইল রেখেছে কিন্তু nginx এটা সার্ভ করছে না। সাধারণত একটা ভুল document root বা একটা `location /`-এর কারণে যা well-known prefix ম্যাচ হওয়ার আগেই সবকিছু ধরে ফেলে।
 
-Add this snippet _above_ any other `location /` block:
+যেকোনো অন্য `location /` block-এর _উপরে_ এই snippet যোগ করুন:
 
 ```nginx
 location /.well-known/acme-challenge/ {
@@ -290,91 +298,91 @@ location /.well-known/acme-challenge/ {
 }
 ```
 
-Make sure `/var/www/letsencrypt` exists and is readable by nginx.
+নিশ্চিত করুন `/var/www/letsencrypt` আছে আর nginx-এর কাছে readable।
 
 **`DNS problem: NXDOMAIN looking up A for example.com`**
 
-Your A record is missing or unpropagated. Check:
+আপনার A record অনুপস্থিত বা unpropagated। চেক করুন:
 
 ```bash
 dig +short example.com @1.1.1.1
 dig +short example.com @8.8.8.8
 ```
 
-If both return nothing, the record isn't published. If one returns the IP and another doesn't, propagation is in flight — wait.
+দুইটাই কিছু না ফেরালে, record প্রকাশিত হয়নি। একটা IP ফেরায় আর আরেকটা না ফেরালে, propagation চলছে — অপেক্ষা করুন।
 
 **`Too many failed authorizations recently`**
 
-You hit the 5-failures-per-hour rate limit. Switch to staging, fix your config, then come back:
+আপনি ঘণ্টায় 5-failure rate limit-এ লেগেছেন। staging-এ সুইচ করুন, আপনার config ঠিক করুন, তারপর ফিরে আসুন:
 
 ```bash
 sudo certbot certonly --staging --nginx -d example.com
 ```
 
-After everything works in staging, run the production command. The staging cert will be replaced cleanly.
+staging-এ সবকিছু কাজ করার পর, production command চালান। staging cert পরিষ্কারভাবে replace হবে।
 
 **`There were too many requests of a given type`**
 
-You hit a duplicate cert or new-order rate limit. Wait a few hours and retry, or reduce the number of names you are requesting at once.
+আপনি একটা duplicate cert বা new-order rate limit-এ লেগেছেন। কয়েক ঘণ্টা অপেক্ষা করে retry করুন, বা একসাথে যে নামগুলো request করছেন তার সংখ্যা কমান।
 
-## Adding more domains to an existing cert
+## বিদ্যমান cert-এ আরও domain যোগ করা
 
-To extend your cert with a new subdomain (`api.example.com`):
+আপনার cert-কে একটা নতুন subdomain (`api.example.com`) দিয়ে বাড়াতে:
 
 ```bash
 sudo certbot --nginx -d example.com -d www.example.com -d api.example.com
 ```
 
-The same command, with the new name added. certbot replaces the existing cert. The new cert covers all three names.
+একই command, নতুন নাম যোগ করা। certbot বিদ্যমান cert replace করে। নতুন cert তিনটা নামই কভার করে।
 
-To remove names later, edit `/etc/letsencrypt/renewal/example.com.conf` (the renewal-time domain list) — but more reliably, delete and reissue:
+পরে নাম সরাতে, `/etc/letsencrypt/renewal/example.com.conf` (renewal-time domain তালিকা) edit করুন — কিন্তু আরও নির্ভরযোগ্যভাবে, delete করে reissue করুন:
 
 ```bash
 sudo certbot delete --cert-name example.com
 sudo certbot --nginx -d example.com -d www.example.com
 ```
 
-## Storing certs separately per domain
+## domain প্রতি আলাদা cert সংরক্ষণ
 
-By default, certbot creates one cert with multiple SAN entries. If you prefer one cert per domain (different lifecycles, different servers), use:
+ডিফল্টভাবে, certbot একাধিক SAN entry সহ একটা cert তৈরি করে। আপনি domain প্রতি একটা cert পছন্দ করলে (ভিন্ন lifecycle, ভিন্ন server), ব্যবহার করুন:
 
 ```bash
 sudo certbot --nginx -d example.com         # cert "example.com"
 sudo certbot --nginx -d api.example.com     # separate cert "api.example.com"
 ```
 
-Each cert lives in its own directory under `/etc/letsencrypt/live/`. Both renew on the same timer.
+প্রতিটা cert `/etc/letsencrypt/live/`-এর অধীনে নিজের directory-তে থাকে। দুইটাই একই timer-এ renew হয়।
 
-## Removing certbot's nginx-managed config
+## certbot-এর nginx-managed config সরানো
 
-If you decide later you want to manage nginx by hand:
+আপনি পরে সিদ্ধান্ত নিলে যে nginx হাতে ম্যানেজ করতে চান:
 
 ```bash
 sudo certbot certonly --nginx -d example.com
 ```
 
-`certonly` issues the cert but does **not** modify nginx. You then edit nginx yourself, pointing at `/etc/letsencrypt/live/example.com/{fullchain,privkey}.pem` (chapter 7 covers the recommended config).
+`certonly` cert ইস্যু করে কিন্তু nginx **modify করে না**। তারপর আপনি নিজে nginx edit করেন, `/etc/letsencrypt/live/example.com/{fullchain,privkey}.pem`-এ পয়েন্ট করে (চ্যাপ্টার 7 প্রস্তাবিত config কভার করে)।
 
-For mixed setups (some sites managed by certbot, others by hand), this is fine.
+মিশ্র সেটআপের জন্য (কিছু সাইট certbot দ্বারা ম্যানেজড, অন্যগুলো হাতে), এটা ঠিক আছে।
 
-## Sanity check from outside
+## বাইরে থেকে sanity check
 
-Run an SSL Labs scan:
+একটা SSL Labs scan চালান:
 
 ```text
 https://www.ssllabs.com/ssltest/analyze.html?d=example.com
 ```
 
-A fresh certbot install should score A or A+. If you see lower, the next chapters cover the dials to tune.
+একটা fresh certbot install-এর A বা A+ স্কোর করা উচিত। কম দেখলে, পরের চ্যাপ্টারগুলো tune করার dial কভার করে।
 
-## Recap
+## রিক্যাপ
 
-- Install: `apt install certbot python3-certbot-nginx`. Run: `sudo certbot --nginx -d <domain>`.
-- Prereqs: domain pointing at the VPS, ports 80/443 open, basic nginx server block in place.
-- certbot writes `fullchain.pem` and `privkey.pem` to `/etc/letsencrypt/live/<domain>/` and edits nginx automatically.
-- A systemd timer renews twice daily, 30 days before expiration, with a reload hook.
-- `certbot renew --dry-run` is the safe way to test renewal without burning rate limits.
-- Failures usually trace back to: port 80 unreachable, location matching, or DNS propagation.
-- For more control, use `certonly` and edit nginx by hand.
+- ইনস্টল: `apt install certbot python3-certbot-nginx`। চালান: `sudo certbot --nginx -d <domain>`।
+- প্রিরেকুইজিট: VPS-এ পয়েন্ট করা domain, port 80/443 খোলা, বেসিক nginx server block সাজানো।
+- certbot `fullchain.pem` আর `privkey.pem` `/etc/letsencrypt/live/<domain>/`-এ লেখে আর স্বয়ংক্রিয়ভাবে nginx edit করে।
+- একটা systemd timer দিনে দুইবার renew করে, expiration-এর 30 দিন আগে, একটা reload hook সহ।
+- `certbot renew --dry-run` হলো rate limit না পুড়িয়ে renewal টেস্ট করার নিরাপদ উপায়।
+- Failure সাধারণত ফিরে যায়: port 80 unreachable, location matching, বা DNS propagation-এ।
+- আরও নিয়ন্ত্রণের জন্য, `certonly` ব্যবহার করুন আর nginx হাতে edit করুন।
 
-Next chapter: when HTTP-01 is not enough — wildcards and DNS-01 challenges.
+পরের চ্যাপ্টার: যখন HTTP-01 যথেষ্ট নয় — wildcard আর DNS-01 challenge।

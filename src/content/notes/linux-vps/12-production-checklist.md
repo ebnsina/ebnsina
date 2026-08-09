@@ -1,9 +1,9 @@
 ---
 title: 'Production Checklist'
-subtitle: 'Every step from this track, in one runbook. Provision a fresh VPS and end the day with a hardened, monitored, ready-to-deploy box.'
+subtitle: 'এই ট্র্যাকের প্রতিটা ধাপ, একটা runbook-এ। একটা তাজা VPS প্রভিশন করুন আর দিন শেষে একটা hardened, monitored, deploy-এর জন্য প্রস্তুত বক্স নিয়ে বসুন।'
 chapter: 12
 level: 'advanced'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['checklist', 'hardening', 'production', 'linux', 'vps']
 ---
 
@@ -11,49 +11,57 @@ topics: ['checklist', 'hardening', 'production', 'linux', 'vps']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি নতুন একটা দোকান খুলছেন। কিন্তু চাবি ঘুরিয়ে দরজা খুলে দিয়েই ভেতরে কাস্টমার ঢুকতে দেওয়াটা তার স্বভাব না। তার হাতে একটা pre-opening checklist — একটা কাগজে লম্বা তালিকা, প্রতিটা লাইনের পাশে একটা করে টিক দেওয়ার ঘর। যতক্ষণ না প্রতিটা ঘরে টিক পড়ছে, দোকানের সদর দরজা জনসাধারণের জন্য খুলবে না। এক এক করে সে ধরে যায়।
+
+প্রথম লাইন — সদর দরজায় শক্ত তালাটা লাগানো হয়েছে তো? লাগানো, টিক। গেটে দারোয়ান বসেছে, যে অপরিচিত সবাইকে ফিরিয়ে দেবে আর শুধু প্রত্যাশিত লোককে ঢুকতে দেবে? বসেছে, টিক। ফায়ার আর পেস্ট-কন্ট্রোল সার্ভিস কি নিয়মিত অটো-ভিজিটে সেট করা? করা, টিক। খাতাপত্রের নকল কপি বাইরের একটা নিরাপদ জায়গায় রাখা আছে? আছে, টিক। CCTV আর ঘটনার রেজিস্টার চালু, প্রতিটা নড়াচড়া লেখা হচ্ছে? চালু, টিক। কর্মচারীরা মাস্টার-চাবি নয়, নিজের নিজের সীমিত ব্যাজে কাজ করছে? করছে, টিক। প্রতি রাঁধুনির জন্য মাপা রেশন বরাদ্দ, যেন একজন সব খেয়ে না ফেলে? বরাদ্দ, টিক। সবগুলো ঘরে টিক পড়ার পরেই — একটাও বাকি না রেখে — ফাতিমা দরজা খুলে দেন।
+
+এই checklist-ই আসলে একটা **production checklist**। শক্ত তালা হলো **SSH hardening** (non-default পোর্ট, key-only auth), দারোয়ান হলো **firewall** (default-deny, শুধু জানা পোর্ট খোলা), অটো ফায়ার/পেস্ট-সার্ভিস হলো **automatic security updates** (unattended-upgrades), খাতার বাইরের কপি হলো **backup** (কনফিগ git repo-তে সেভ), CCTV আর রেজিস্টার হলো **monitoring/logs** (journald retention, audit, fail2ban), সীমিত ব্যাজ হলো **non-root user** (root SSH disabled, sudo দিয়ে কাজ), আর মাপা রেশন হলো resource **limits** (swap, sysctl, MaxAuthTries)। বাস্তবেও নিয়মটা একই — একটা তাজা VPS-এ প্রতিটা box টিক না পড়া পর্যন্ত সেটাকে production-এ বিশ্বাস করবেন না; একটা আইটেম "না" থাকলে ফিরে গিয়ে সেটা শেষ করুন, তারপর দরজা খুলুন।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A production checklist is like a pre-flight checklist — not because pilots forget, but because the consequences of forgetting are too high to rely on memory alone.
+একটা production checklist অনেকটা pre-flight checklist-এর মতো — পাইলটরা ভুলে যান বলে নয়, বরং ভুলে যাওয়ার পরিণতি এত বেশি যে শুধু স্মৃতির ওপর ভরসা করা যায় না।
 
 </Callout>
 
-## How to use this chapter
+## এই অধ্যায় কীভাবে ব্যবহার করবেন
 
-This is a runbook. Every time you provision a new VPS, run through it top to bottom. The goal is reproducibility — a box you set up by hand should look identical to a box you set up next month.
+এটা একটা runbook। যতবার একটা নতুন VPS প্রভিশন করবেন, উপর থেকে নিচে এটা ধরে যান। লক্ষ্য হলো পুনরুৎপাদনযোগ্যতা — আপনি হাতে সেটআপ করা একটা বক্স যেন পরের মাসে সেটআপ করা বক্সের সাথে হুবহু মিলে যায়।
 
-Eventually you will automate this with Ansible (chapter 23) or a shell script. For your first ten boxes, do it by hand so you understand every line.
+শেষমেশ আপনি এটা Ansible (অধ্যায় 23) বা একটা shell স্ক্রিপ্ট দিয়ে অটোমেট করবেন। আপনার প্রথম দশটা বক্সের জন্য এটা হাতে করুন যেন প্রতিটা লাইন বোঝেন।
 
-Plan for ~90 minutes the first time, ~20 the tenth.
+প্রথমবারের জন্য ~90 মিনিট, দশমবারের জন্য ~20 মিনিটের পরিকল্পনা রাখুন।
 
-## 0. Before you start
+## 0. শুরু করার আগে
 
-You need:
+আপনার দরকার:
 
-- A VPS provider account.
-- An SSH key on your laptop (`~/.ssh/id_ed25519` and `id_ed25519.pub`).
-- Your laptop's `~/.ssh/config` open in another window.
+- একটা VPS প্রোভাইডার অ্যাকাউন্ট।
+- আপনার ল্যাপটপে একটা SSH key (`~/.ssh/id_ed25519` আর `id_ed25519.pub`)।
+- আরেকটা উইন্ডোতে আপনার ল্যাপটপের `~/.ssh/config` খোলা।
 
-Decide:
+ঠিক করুন:
 
-- A hostname (e.g., `web-01`, `db-01`, `app-eu-01`).
-- Which user account to create (the rest of this assumes `deploy`).
-- Which non-standard SSH port (e.g., `2222`).
+- একটা hostname (যেমন, `web-01`, `db-01`, `app-eu-01`)।
+- কোন user অ্যাকাউন্ট তৈরি করবেন (বাকিটা `deploy` ধরে নিয়ে চলবে)।
+- কোন non-standard SSH পোর্ট (যেমন, `2222`)।
 
 ## 1. Provision
 
-1. Create the VM in your provider's UI. Pick Debian 12 or Ubuntu 24.04 LTS. Smallest plan with ≥1GB RAM. Add your SSH public key during provisioning.
-2. Note the public IPv4 address.
-3. Record the box in your inventory (a text file is fine, or 1Password, or whatever).
+1. আপনার প্রোভাইডারের UI-তে VM তৈরি করুন। Debian 12 বা Ubuntu 24.04 LTS বেছে নিন। ≥1GB RAM সহ সবচেয়ে ছোট প্ল্যান। প্রভিশনিংয়ের সময় আপনার SSH public key যোগ করুন।
+2. public IPv4 ঠিকানাটা টুকে রাখুন।
+3. আপনার inventory-তে বক্সটা রেকর্ড করুন (একটা টেক্সট ফাইলই যথেষ্ট, বা 1Password, বা যা-ই হোক)।
 
-## 2. First connection — as root
+## 2. প্রথম কানেকশন — root হিসেবে
 
 ```bash
 ssh root@<public-ip>
 ```
 
-Verify you got the box you think you got:
+যাচাই করুন আপনি যে বক্সটা ভাবছেন সেটাই পেয়েছেন:
 
 ```bash
 hostname
@@ -63,7 +71,7 @@ free -h
 df -h
 ```
 
-## 3. System update
+## 3. সিস্টেম আপডেট
 
 ```bash
 apt update
@@ -71,49 +79,49 @@ apt upgrade -y
 apt autoremove -y
 ```
 
-Reboot if a new kernel was installed:
+নতুন kernel ইনস্টল হলে reboot করুন:
 
 ```bash
 [ -f /var/run/reboot-required ] && reboot
 ```
 
-After reboot, log back in and continue.
+reboot-এর পরে আবার লগ ইন করে এগিয়ে যান।
 
-## 4. Set the hostname
+## 4. hostname সেট করা
 
 ```bash
 hostnamectl set-hostname web-01
 echo "127.0.1.1 web-01" >> /etc/hosts
 ```
 
-Verify:
+যাচাই করুন:
 
 ```bash
 hostname
 hostnamectl
 ```
 
-## 5. Set the time zone
+## 5. টাইম জোন সেট করা
 
-UTC is the right default for servers — every log timestamp is comparable across regions:
+সার্ভারের জন্য UTC-ই সঠিক ডিফল্ট — প্রতিটা লগ timestamp অঞ্চল নির্বিশেষে তুলনীয়:
 
 ```bash
 timedatectl set-timezone UTC
 timedatectl
 ```
 
-If you want local time, replace `UTC` with `Europe/Berlin`, `America/New_York`, etc.
+লোকাল সময় চাইলে `UTC`-এর বদলে `Europe/Berlin`, `America/New_York` ইত্যাদি বসান।
 
-## 6. Create a non-root user
+## 6. একটা non-root user তৈরি করা
 
 ```bash
 adduser deploy
 usermod -aG sudo deploy
 ```
 
-Set a strong password (you will rarely use it, but you need one for the rare case where SSH fails). Save it in your password manager.
+একটা শক্তিশালী password সেট করুন (আপনি কদাচিৎ ব্যবহার করবেন, কিন্তু SSH ফেল করার বিরল ক্ষেত্রে একটা লাগবে)। এটা আপনার password manager-এ সেভ করুন।
 
-Copy your SSH key to the new user:
+নতুন user-এ আপনার SSH key কপি করুন:
 
 ```bash
 mkdir -p /home/deploy/.ssh
@@ -123,9 +131,9 @@ chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
 ```
 
-## 7. Verify deploy works
+## 7. deploy কাজ করছে যাচাই করা
 
-**Open a brand new terminal** (do not close the root session) and run:
+**একদম নতুন একটা টার্মিনাল খুলুন** (root সেশন বন্ধ করবেন না) আর চালান:
 
 ```bash
 ssh deploy@<public-ip>
@@ -134,15 +142,15 @@ sudo whoami
 exit
 ```
 
-If that worked, return to the root session.
+এটা কাজ করলে, root সেশনে ফিরে যান।
 
-## 8. Harden SSH
+## 8. SSH harden করা
 
 ```bash
 nano /etc/ssh/sshd_config
 ```
 
-Set these lines (uncomment if needed):
+এই লাইনগুলো সেট করুন (দরকার হলে uncomment করুন):
 
 ```text
 Port 2222
@@ -160,27 +168,27 @@ LoginGraceTime 30
 AllowUsers deploy
 ```
 
-Reload:
+Reload করুন:
 
 ```bash
 systemctl reload ssh
 ```
 
-**From a new terminal**, verify:
+**একটা নতুন টার্মিনাল থেকে**, যাচাই করুন:
 
 ```bash
 ssh -p 2222 deploy@<public-ip>
 ```
 
-If that succeeds, the root session is no longer needed — but keep it open until firewall is done.
+এটা সফল হলে, root সেশন আর দরকার নেই — তবে firewall শেষ না হওয়া পর্যন্ত এটা খোলা রাখুন।
 
-## 9. Configure firewall
+## 9. Firewall কনফিগার করা
 
 ```bash
 apt install -y nftables
 ```
 
-Write `/etc/nftables.conf`:
+`/etc/nftables.conf` লিখুন:
 
 ```nft
 #!/usr/sbin/nft -f
@@ -212,7 +220,7 @@ table inet filter {
 }
 ```
 
-Apply:
+Apply করুন:
 
 ```bash
 nft -f /etc/nftables.conf
@@ -220,15 +228,15 @@ nft list ruleset
 systemctl enable --now nftables
 ```
 
-**From a new terminal**, verify SSH still works:
+**একটা নতুন টার্মিনাল থেকে**, যাচাই করুন SSH এখনও কাজ করছে:
 
 ```bash
 ssh -p 2222 deploy@<public-ip>
 ```
 
-If yes, you can close the root session.
+হ্যাঁ হলে, আপনি root সেশন বন্ধ করতে পারেন।
 
-## 10. Install fail2ban
+## 10. fail2ban ইনস্টল করা
 
 ```bash
 sudo apt install -y fail2ban
@@ -254,21 +262,21 @@ sudo systemctl restart fail2ban
 sudo fail2ban-client status sshd
 ```
 
-## 11. Unattended security upgrades
+## 11. Unattended security upgrade
 
 ```bash
 sudo apt install -y unattended-upgrades apt-listchanges
 sudo dpkg-reconfigure -plow unattended-upgrades
 ```
 
-That installs a daily timer that applies security updates. Verify:
+এটা একটা daily timer ইনস্টল করে যা security update apply করে। যাচাই করুন:
 
 ```bash
 sudo systemctl status unattended-upgrades.service
 sudo cat /etc/apt/apt.conf.d/20auto-upgrades
 ```
 
-It should contain:
+এতে থাকা উচিত:
 
 ```text
 APT::Periodic::Update-Package-Lists "1";
@@ -284,11 +292,11 @@ chronyc tracking
 chronyc sources
 ```
 
-Time skew breaks TLS, replication, distributed locks, and your sanity. Confirm sync.
+Time skew TLS, replication, distributed lock, আর আপনার মানসিক শান্তি ভেঙে দেয়। sync নিশ্চিত করুন।
 
 ## 13. Journal retention
 
-Edit `/etc/systemd/journald.conf`:
+`/etc/systemd/journald.conf` এডিট করুন:
 
 ```ini
 [Journal]
@@ -303,9 +311,9 @@ sudo systemctl restart systemd-journald
 journalctl --disk-usage
 ```
 
-## 14. Swap (small VPS only)
+## 14. Swap (শুধু ছোট VPS)
 
-A 1 or 2GB box benefits from a small swap file as a safety net for memory spikes:
+একটা 1 বা 2GB বক্স memory spike-এর সেফটি নেট হিসেবে একটা ছোট swap ফাইল থেকে উপকৃত হয়:
 
 ```bash
 sudo fallocate -l 2G /swapfile
@@ -319,11 +327,11 @@ echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swappiness.conf
 sudo sysctl --system
 ```
 
-For boxes with ≥8GB RAM, swap is usually unnecessary and can hide memory leaks. Skip this step.
+≥8GB RAM সহ বক্সের জন্য swap সাধারণত অপ্রয়োজনীয় আর memory leak লুকিয়ে ফেলতে পারে। এই ধাপ এড়িয়ে যান।
 
-## 15. Tune kernel networking
+## 15. Kernel networking টিউন করা
 
-Drop a sysctl file with sensible production defaults:
+যুক্তিসঙ্গত production ডিফল্ট সহ একটা sysctl ফাইল রাখুন:
 
 ```bash
 sudo nano /etc/sysctl.d/99-server.conf
@@ -353,9 +361,9 @@ net.ipv6.conf.all.accept_source_route = 0
 sudo sysctl --system
 ```
 
-## 16. Useful tools
+## 16. কাজের টুল
 
-A small set of utilities you will reach for constantly:
+কিছু ইউটিলিটি যা আপনি নিয়মিত হাতে নেবেন:
 
 ```bash
 sudo apt install -y \
@@ -378,9 +386,9 @@ sudo apt install -y \
   lsof
 ```
 
-## 17. Configure local SSH alias
+## 17. লোকাল SSH alias কনফিগার করা
 
-Back on **your laptop**, edit `~/.ssh/config`:
+আবার **আপনার ল্যাপটপে**, `~/.ssh/config` এডিট করুন:
 
 ```text
 Host web-01
@@ -392,17 +400,17 @@ Host web-01
     ServerAliveCountMax 3
 ```
 
-Test:
+Test করুন:
 
 ```bash
 ssh web-01
 ```
 
-You should be in.
+আপনার ঢুকে যাওয়ার কথা।
 
-## 18. Audit — what is exposed?
+## 18. Audit — কী কী expose হয়ে আছে?
 
-Before walking away, audit the box's network surface:
+চলে যাওয়ার আগে, বক্সের নেটওয়ার্ক surface audit করুন:
 
 ```bash
 sudo ss -tlnp                                        # listening TCP
@@ -412,16 +420,16 @@ sudo systemctl list-units --state=running --type=service  # what is running
 sudo journalctl -p err -b                            # any errors since boot
 ```
 
-Read every line of `ss -tlnp`. If you do not recognize a listening service, find out before you walk away.
+`ss -tlnp`-এর প্রতিটা লাইন পড়ুন। কোনো listening সার্ভিস চিনতে না পারলে, চলে যাওয়ার আগে জেনে নিন।
 
-A clean, freshly-hardened box should listen on:
+একটা পরিষ্কার, সদ্য-hardened বক্স এসবে listen করবে:
 
-- `:22` or `:2222` (sshd)
-- nothing else, until you start installing services
+- `:22` বা `:2222` (sshd)
+- আর কিছু নয়, যতক্ষণ না আপনি সার্ভিস ইনস্টল করা শুরু করেন
 
-## 19. Backup the unit files and configs
+## 19. unit ফাইল আর কনফিগ backup করা
 
-Even at this stage, you have a small handful of files that took manual work to write:
+এই পর্যায়েও, আপনার হাতে গোনা কয়েকটা ফাইল আছে যা লিখতে হাতে খাটতে হয়েছে:
 
 - `/etc/ssh/sshd_config`
 - `/etc/nftables.conf`
@@ -429,7 +437,7 @@ Even at this stage, you have a small handful of files that took manual work to w
 - `/etc/fail2ban/jail.local`
 - `/etc/sysctl.d/99-server.conf`
 
-Copy them to a git repository, even one you keep private on the box itself for now. The next time you provision, you can drop them in instead of reading this chapter again.
+এগুলো একটা git repository-তে কপি করুন, এমনকি যদি সেটা আপাতত বক্সেই private রাখেন। পরের বার প্রভিশন করার সময়, এই অধ্যায় আবার না পড়ে সেগুলো শুধু বসিয়ে দিতে পারবেন।
 
 ```bash
 mkdir -p ~/server-config
@@ -441,42 +449,42 @@ cp /etc/sysctl.d/99-server.conf ~/server-config/
 cd ~/server-config && git init && git add . && git commit -m "initial setup of $(hostname)"
 ```
 
-Eventually this becomes an Ansible playbook (chapter 23). For now, a git repo is enough.
+শেষমেশ এটা একটা Ansible playbook হয়ে যায় (অধ্যায় 23)। আপাতত, একটা git repo-ই যথেষ্ট।
 
-## 20. The done state
+## 20. সম্পন্ন অবস্থা
 
-You should be able to truthfully answer **yes** to all of these:
+আপনার এই সবগুলোতে সততার সাথে **হ্যাঁ** উত্তর দিতে পারা উচিত:
 
-- [ ] OS fully patched, kernel current, reboot done.
-- [ ] Hostname and time zone set.
-- [ ] Non-root user with sudo, root SSH disabled.
-- [ ] SSH on a non-default port, key-only auth, MaxAuthTries 3.
-- [ ] Firewall default-deny on input, only SSH and HTTP/HTTPS open.
-- [ ] fail2ban running, watching SSH.
-- [ ] Unattended security upgrades enabled.
-- [ ] Time syncing via chrony.
-- [ ] Journald retention bounded.
-- [ ] Swap configured on small boxes (or skipped on large).
-- [ ] Kernel networking tuned via sysctl.
-- [ ] Common utilities installed.
-- [ ] Local SSH alias works.
-- [ ] Audit pass — only expected services listening.
-- [ ] Configs backed up to a git repo.
+- [ ] OS পুরোপুরি patched, kernel current, reboot হয়ে গেছে।
+- [ ] Hostname আর টাইম জোন সেট।
+- [ ] sudo সহ non-root user, root SSH disabled।
+- [ ] non-default পোর্টে SSH, key-only auth, MaxAuthTries 3।
+- [ ] input-এ firewall default-deny, শুধু SSH আর HTTP/HTTPS খোলা।
+- [ ] fail2ban চলছে, SSH দেখছে।
+- [ ] Unattended security upgrade enabled।
+- [ ] chrony-এর মাধ্যমে time sync হচ্ছে।
+- [ ] Journald retention সীমাবদ্ধ।
+- [ ] ছোট বক্সে Swap কনফিগার করা (বা বড় বক্সে বাদ দেওয়া)।
+- [ ] sysctl দিয়ে kernel networking টিউন করা।
+- [ ] সাধারণ ইউটিলিটি ইনস্টল করা।
+- [ ] লোকাল SSH alias কাজ করছে।
+- [ ] Audit pass — শুধু প্রত্যাশিত সার্ভিস listen করছে।
+- [ ] কনফিগ একটা git repo-তে backup করা।
 
-If any item is "no," go back and finish it. This is the box you will deploy real software to. Get it right once, every time.
+কোনো আইটেম "না" হলে, ফিরে গিয়ে সেটা শেষ করুন। এটাই সেই বক্স যেখানে আপনি সত্যিকারের সফটওয়্যার deploy করবেন। একবার ঠিক করুন, প্রতিবার।
 
-## What this earns you
+## এতে আপনি কী পান
 
-A box configured this way is hardened against the common attacks (brute force, drive-by scanners, casual lateral movement), survives reboots correctly, has bounded log volume, syncs its clock, and is ready to host whatever you throw at it next — Postgres, Redis, your Go binary, nginx, all of it.
+এভাবে কনফিগার করা একটা বক্স সাধারণ আক্রমণের বিরুদ্ধে hardened (brute force, drive-by scanner, নৈমিত্তিক lateral movement), reboot ঠিকঠাক টিকে যায়, লগ ভলিউম সীমাবদ্ধ, তার ঘড়ি sync করে, আর এরপর যা-ই এনে দেন তা হোস্ট করতে প্রস্তুত — Postgres, Redis, আপনার Go binary, nginx, সব।
 
-Every other chapter in this site assumes you are starting from a box like this. Go build the next one.
+এই সাইটের বাকি প্রতিটা অধ্যায় ধরে নেয় আপনি এমন একটা বক্স থেকে শুরু করছেন। যান, পরেরটা বানান।
 
-## Recap
+## রিক্যাপ
 
-- Provision, update, hostname, timezone, user, SSH lockdown, firewall, fail2ban — in that order.
-- Verify each step from a fresh terminal before moving on.
-- Tune swappiness, sysctl, journal retention to sensible defaults.
-- Audit listening ports before walking away.
-- Save your configs in version control.
+- Provision, update, hostname, timezone, user, SSH lockdown, firewall, fail2ban — এই ক্রমে।
+- এগোনোর আগে প্রতিটা ধাপ একটা তাজা টার্মিনাল থেকে যাচাই করুন।
+- swappiness, sysctl, journal retention যুক্তিসঙ্গত ডিফল্টে টিউন করুন।
+- চলে যাওয়ার আগে listening পোর্ট audit করুন।
+- আপনার কনফিগ version control-এ সেভ করুন।
 
-This is the end of the Linux & VPS basics track. You are now ready for chapter 1 of any other topic on this site.
+এটাই Linux ও VPS বেসিকস ট্র্যাকের শেষ। আপনি এখন এই সাইটের যেকোনো অন্য টপিকের অধ্যায় 1-এর জন্য প্রস্তুত।

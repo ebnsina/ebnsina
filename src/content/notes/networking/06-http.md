@@ -1,9 +1,9 @@
 ---
-title: 'HTTP/1.1, HTTP/2, and HTTP/3'
-subtitle: "The evolution of the web's protocol — from text-based request/response to multiplexed streams over QUIC."
+title: 'HTTP/1.1, HTTP/2, এবং HTTP/3'
+subtitle: 'ওয়েবের প্রোটোকলের বিবর্তন — টেক্সট-ভিত্তিক request/response থেকে QUIC-এর উপর multiplexed stream পর্যন্ত।'
 chapter: 6
 level: 'intermediate'
-readingTime: '17 min'
+readingTime: '17 মিনিট'
 topics: ['HTTP', 'HTTP/2', 'HTTP/3', 'QUIC', 'multiplexing']
 ---
 
@@ -11,15 +11,23 @@ topics: ['HTTP', 'HTTP/2', 'HTTP/3', 'QUIC', 'multiplexing']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## HTTP/1.1 — The Foundation
+## গল্পে বুঝি
 
-HTTP/1.1 is text-based and simple. One request, one response, over a TCP connection.
+আল-খোয়ারিজমির একটা পার্সেল ডেলিভারি সার্ভিস। শুরুতে নিয়মটা ছিল সহজ — একজন ডেলিভারি বয়, ইবনে সিনা, একটাই সরু গলি দিয়ে একবারে একটা করে পার্সেল হাতে নিয়ে যায়। প্রথম পার্সেলটা পৌঁছে দিয়ে ফিরে না আসা পর্যন্ত পরের পার্সেল ধরাই হয় না। একদিন একটা পার্সেলের ঠিকানা খুঁজে পেতে ইবনে সিনার আধা ঘণ্টা লেগে গেল, আর পেছনে পাঁচটা তৈরি পার্সেল শুধু অপেক্ষা করতে থাকল — যদিও সেগুলো এক মিনিটেই পৌঁছে দেওয়া যেত।
+
+আল-খোয়ারিজমি বুঝল, এভাবে চলবে না। প্রথমে সে ব্যবস্থা বদলাল — ইবনে সিনা এখন একই ট্রিপে অনেকগুলো পার্সেল সাজিয়ে একসাথে নিয়ে যায়, একটার জন্য আরেকটা আটকে থাকে না। কিন্তু সমস্যা হলো, ওই একটাই সরু গলি — গলির মুখে একটা রিকশা উল্টে পড়লে পুরো ট্রিপটাই আটকে যায়, সব পার্সেল একসাথে থেমে থাকে। শেষমেশ আল-খোয়ারিজমি ইবনে সিনাকে একটা চটপটে মোটরসাইকেল কিনে দিল, যেটা এক রাস্তা বন্ধ দেখলেই সঙ্গে সঙ্গে অন্য গলি দিয়ে ঘুরে যায় — একটা পার্সেল আটকালেও বাকিগুলো চলতেই থাকে।
+
+এই গল্পটাই আসলে HTTP-এর বিবর্তন। শুরুর "একবারে এক পার্সেল, আগেরটা শেষ না হলে পরেরটা নয়" — এটাই **HTTP/1.1**-এর **head-of-line blocking**: এক connection-এ একটা ধীর request পুরো লাইন আটকে দেয়। "একই ট্রিপে অনেক পার্সেল একসাথে" — এটাই **HTTP/2**-এর **multiplexing**: একটাই connection-এ অনেক request পাশাপাশি চলে। কিন্তু ওই সরু গলিই হলো TCP — একটা packet হারালে সব stream থেমে যায়। আর চটপটে মোটরসাইকেল, যেটা এক রাস্তা বন্ধ দেখলেই ঘুরে যায়, সেটাই **HTTP/3**, যা **QUIC** (UDP-এর উপর) দিয়ে চলে — একটা stream-এ packet হারালেও বাকি stream স্বাধীনভাবে বয়ে চলে। বাস্তবে এই কারণেই আজ CloudFlare, YouTube, বড় CDN গুলো HTTP/3 চালু করছে — বিশেষ করে মোবাইলে, যেখানে packet হারানো আর নেটওয়ার্ক বদল খুব সাধারণ ব্যাপার।
+
+## HTTP/1.1 — ভিত্তি
+
+HTTP/1.1 টেক্সট-ভিত্তিক এবং সহজ। একটি TCP connection-এর উপর এক request, এক response।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like filling out forms at a government office — you submit a form (request) with specific fields (headers), wait for processing, and receive a response with a status: "Approved" (200), "Wrong form" (400), "Come back later" (503).
+সরকারি অফিসে ফর্ম পূরণ করার মতো — আপনি নির্দিষ্ট ফিল্ড (headers) সহ একটি ফর্ম (request) জমা দেন, প্রসেসিংয়ের জন্য অপেক্ষা করেন, এবং একটি status সহ response পান: "Approved" (200), "Wrong form" (400), "Come back later" (503)।
 
 </Callout>
 
@@ -39,19 +47,19 @@ Content-Length: 27\r
 {"users": [{"id": 1}]}`;
 ```
 
-### The Problem: Head-of-Line Blocking
+### সমস্যা: Head-of-Line Blocking
 
-HTTP/1.1 processes requests **sequentially** on each connection. If request #1 is slow, requests #2 and #3 wait behind it — even if the server could answer them instantly.
+HTTP/1.1 প্রতিটি connection-এ request গুলো **sequentially** প্রসেস করে। যদি request #1 ধীর হয়, তাহলে request #2 এবং #3 তার পেছনে অপেক্ষা করে — এমনকি server সেগুলোর উত্তর সঙ্গে সঙ্গে দিতে পারলেও।
 
-Workarounds (all have downsides):
+Workaround গুলো (সবগুলোরই নেতিবাচক দিক আছে):
 
-- **Multiple connections** — browsers open 6 parallel connections per domain (wastes resources)
-- **Domain sharding** — serve assets from `img1.example.com`, `img2.example.com` (DNS overhead)
-- **Bundling** — combine many files into one (can't cache individually)
+- **Multiple connections** — browser প্রতি domain-এ 6টি parallel connection খোলে (রিসোর্স নষ্ট করে)
+- **Domain sharding** — `img1.example.com`, `img2.example.com` থেকে asset সার্ভ করা (DNS overhead)
+- **Bundling** — অনেক ফাইল একসাথে জোড়া দেওয়া (আলাদাভাবে cache করা যায় না)
 
 ## HTTP/2 — Multiplexing
 
-HTTP/2 solves head-of-line blocking by multiplexing many requests over a **single TCP connection** using streams.
+HTTP/2 একটি **single TCP connection**-এর উপর stream ব্যবহার করে অনেক request multiplex করে head-of-line blocking সমাধান করে।
 
 ```typescript
 // HTTP/2 sends binary frames, not text
@@ -73,7 +81,7 @@ interface HTTP2Frame {
 // No waiting! Responses interleave freely.
 ```
 
-### Key HTTP/2 Features
+### HTTP/2-এর মূল ফিচার
 
 ```typescript
 // 1. Header compression (HPACK)
@@ -92,13 +100,13 @@ interface HTTP2Frame {
 
 <Callout type="info">
 
-**HTTP/2 still has a problem**: It runs over TCP, and TCP treats ALL streams as one byte stream. If one TCP packet is lost, ALL streams stall until it's retransmitted — TCP-level head-of-line blocking.
+**HTTP/2-তেও একটা সমস্যা আছে**: এটি TCP-এর উপর চলে, আর TCP সব stream-কে একটাই byte stream হিসেবে দেখে। যদি একটি TCP packet হারিয়ে যায়, তাহলে সেটি retransmit না হওয়া পর্যন্ত সব stream আটকে থাকে — TCP-level head-of-line blocking।
 
 </Callout>
 
 ## HTTP/3 — QUIC
 
-HTTP/3 replaces TCP with **QUIC** (built on UDP). Each stream is independent at the transport layer — a lost packet in stream 1 doesn't block stream 3.
+HTTP/3, TCP-কে **QUIC** (UDP-এর উপর তৈরি) দিয়ে প্রতিস্থাপন করে। প্রতিটি stream transport layer-এ স্বাধীন — stream 1-এ একটি হারানো packet, stream 3-কে আটকায় না।
 
 ```typescript
 // QUIC advantages over TCP:
@@ -132,18 +140,18 @@ interface QUICStream {
 }
 ```
 
-## Protocol Comparison
+## প্রোটোকল তুলনা
 
-| Feature              | HTTP/1.1          | HTTP/2         | HTTP/3                    |
-| -------------------- | ----------------- | -------------- | ------------------------- |
-| Transport            | TCP               | TCP            | QUIC (UDP)                |
-| Multiplexing         | No (1 req/conn)   | Yes (streams)  | Yes (independent streams) |
-| Header format        | Text              | Binary (HPACK) | Binary (QPACK)            |
-| HOL blocking         | Application + TCP | TCP only       | None                      |
-| Connection setup     | 2-3 RTT           | 2-3 RTT        | 1 RTT (0-RTT reconnect)   |
-| Connection migration | No                | No             | Yes                       |
+| ফিচার                | HTTP/1.1          | HTTP/2          | HTTP/3                      |
+| -------------------- | ----------------- | --------------- | --------------------------- |
+| Transport            | TCP               | TCP             | QUIC (UDP)                  |
+| Multiplexing         | নেই (1 req/conn)  | হ্যাঁ (streams) | হ্যাঁ (independent streams) |
+| Header format        | Text              | Binary (HPACK)  | Binary (QPACK)              |
+| HOL blocking         | Application + TCP | শুধু TCP        | নেই                         |
+| Connection setup     | 2-3 RTT           | 2-3 RTT         | 1 RTT (0-RTT reconnect)     |
+| Connection migration | নেই               | নেই             | হ্যাঁ                       |
 
-## What to Use
+## কী ব্যবহার করবেন
 
 ```typescript
 // In practice, you don't choose — the browser negotiates.
@@ -175,14 +183,14 @@ server.listen(443);
 
 <Callout type="tip">
 
-**For most developers**: Enable HTTP/2 on your reverse proxy (Nginx, Caddy, CloudFlare) and you're done. HTTP/3 adoption is growing fast — CloudFlare and major CDNs already support it.
+**বেশিরভাগ ডেভেলপারের জন্য**: আপনার reverse proxy (Nginx, Caddy, CloudFlare)-তে HTTP/2 enable করুন, ব্যস হয়ে গেল। HTTP/3-এর adoption দ্রুত বাড়ছে — CloudFlare এবং বড় CDN গুলো ইতিমধ্যেই এটি সাপোর্ট করে।
 
 </Callout>
 
-## Key Takeaways
+## মূল শিক্ষণীয় বিষয়
 
-1. **HTTP/1.1's sequential model** forced workarounds like bundling and domain sharding
-2. **HTTP/2 multiplexes streams** over one TCP connection but still has TCP-level HOL blocking
-3. **HTTP/3 (QUIC) eliminates HOL blocking** entirely with independent streams over UDP
-4. **Connection migration** (QUIC) is critical for mobile — WiFi/cellular switching is seamless
-5. **Enable HTTP/2+ on your reverse proxy** — don't worry about it in application code
+1. **HTTP/1.1-এর sequential model** bundling এবং domain sharding-এর মতো workaround-এ বাধ্য করেছিল
+2. **HTTP/2 stream গুলোকে multiplex করে** একটি TCP connection-এর উপর, কিন্তু এখনও TCP-level HOL blocking আছে
+3. **HTTP/3 (QUIC) HOL blocking সম্পূর্ণ দূর করে** UDP-এর উপর independent stream দিয়ে
+4. **Connection migration** (QUIC) মোবাইলের জন্য অত্যন্ত গুরুত্বপূর্ণ — WiFi/cellular সুইচিং নির্বিঘ্ন
+5. **আপনার reverse proxy-তে HTTP/2+ enable করুন** — application code-এ এটি নিয়ে চিন্তা করবেন না

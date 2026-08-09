@@ -1,9 +1,9 @@
 ---
 title: 'Replication'
-subtitle: 'Keeping copies of data on multiple machines: single-leader, multi-leader, and leaderless designs, sync vs async, and quorums.'
+subtitle: 'একাধিক মেশিনে data-র কপি রাখা: single-leader, multi-leader, ও leaderless ডিজাইন, sync বনাম async, এবং quorum।'
 chapter: 3
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['replication', 'quorum', 'leader']
 ---
 
@@ -11,11 +11,19 @@ topics: ['replication', 'quorum', 'leader']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-**Replication** means keeping a copy of the same data on more than one machine. You do it for three reasons: to survive the loss of a machine (availability), to serve reads from nearby or additional copies (scale and latency), and to keep data close to users (locality). The hard part is not making copies — it is keeping them consistent while machines and networks fail. Every replication design is a different answer to one question: _where are writes allowed to happen?_
+## গল্পে বুঝি
+
+বাগদাদের এক পুরনো scriptorium — বড় হলঘরে সারি সারি লেখার টেবিল, আর সবচেয়ে সামনে বসেন প্রধান লিপিকার ফাতিমা আল-ফিহরি। তিনি মূল পাণ্ডুলিপিটা লেখেন, লাইনের পর লাইন। কিন্তু কাগজ পুড়ে গেলে বা পোকায় খেলে একটামাত্র কপি হারিয়ে গেলে পুরো জ্ঞানটাই শেষ। তাই তাঁর পেছনে বসেন কয়েকজন কপিয়িস্ট — আল-খোয়ারিজমি, ইবনে সিনা, মারিয়াম আল-আসতুরলাবি — প্রত্যেকে ফাতিমার লেখা হুবহু নকল করে নিজের নিজের কপি বানান। এতে একটা কপি নষ্ট হলেও বাকিগুলো টিকে থাকে, আর অনেক পাঠক একসাথে ভিন্ন ভিন্ন কপি পড়তে পারেন।
+
+এখন প্রশ্ন হলো — ফাতিমা কত দ্রুত এগোবেন। একরকম নিয়ম: তিনি একটা লাইন লিখে থেমে থাকেন যতক্ষণ না তিন কপিয়িস্টই সেই লাইন নকল শেষ করে মাথা তোলেন; সবাই মিলে যাওয়ার পরই তিনি পরের লাইনে যান। এতে প্রতিটা কপি সবসময় হুবহু সমান থাকে, আগুন লাগলেও কিছু হারায় না — কিন্তু গতি সবচেয়ে ধীর কপিয়িস্টের হাতের গতিতে বাঁধা, একজন ক্লান্ত হয়ে থেমে গেলে ফাতিমার কলমও থেমে যায়। আরেক নিয়ম: ফাতিমা কারও জন্য অপেক্ষা না করে টানা লিখে যান, কপিয়িস্টরা পেছন থেকে যতটা পারেন ধরে ধরে এগোন। কাজ দ্রুত চলে, কিন্তু কপিয়িস্টরা কয়েক লাইন পিছিয়ে থাকেন, আর ঠিক সেই মুহূর্তে আগুন লাগলে যে শেষ লাইনগুলো এখনো কেউ নকল করেনি সেগুলো চিরতরে হারিয়ে যায়।
+
+এই scriptorium-ই আসলে **replication**। ফাতিমা হলেন **leader** (primary), যেখানে সব মূল লেখা হয়; কপিয়িস্টরা হলেন **follower** replica, যারা leader-এর পরিবর্তন একই order-এ নকল করে যায় — একটা নষ্ট হলেও data টেকে, আর read অনেক কপি থেকে সার্ভ করা যায়। সবাই লাইন শেষ করা পর্যন্ত অপেক্ষা করাটা **synchronous** replication — নিরাপদ, কিছু হারায় না, কিন্তু সবচেয়ে ধীর follower-এর গতিতে আটকে থাকে। আর কারও জন্য না থেমে ছুটে চলাটা **asynchronous** replication — দ্রুত, কিন্তু follower পিছিয়ে থাকে (replication lag) আর leader হঠাৎ মরে গেলে শেষ কয়েকটা এখনো-নকল-না-হওয়া write হারিয়ে যেতে পারে। বাস্তবে PostgreSQL বা MySQL ঠিক এভাবেই কাজ করে — বেশিরভাগ সিস্টেম একটা মাঝপথ (semi-synchronous) বেছে নেয়: অন্তত একজন follower নিশ্চিত করা পর্যন্ত অপেক্ষা, বাকিরা পেছন থেকে ধরে আসুক।
+
+**Replication** মানে একই data-র একটি কপি একাধিক মেশিনে রাখা। তুমি এটা তিনটি কারণে করো: একটি মেশিনের ক্ষতি সহ্য করতে (availability), কাছাকাছি বা অতিরিক্ত কপি থেকে read সার্ভ করতে (scale ও latency), এবং data ব্যবহারকারীদের কাছাকাছি রাখতে (locality)। কঠিন অংশটা কপি বানানো নয় — মেশিন ও network fail করার সময়ও সেগুলো consistent রাখা। প্রতিটি replication ডিজাইন একটি প্রশ্নের ভিন্ন উত্তর: _write কোথায় ঘটতে দেওয়া হবে?_
 
 ## Single-leader replication
 
-The most common design. One replica is designated the **leader** (primary); all others are **followers** (replicas, secondaries). All writes go to the leader. The leader applies the write, then streams the change to its followers, which apply it in the same order. Reads can be served by any replica.
+সবচেয়ে সাধারণ ডিজাইন। একটি replica-কে **leader** (primary) মনোনীত করা হয়; বাকি সবাই **follower** (replica, secondary)। সব write leader-এ যায়। Leader write-টি প্রয়োগ করে, তারপর পরিবর্তনটি তার follower গুলোতে stream করে, যারা তা একই order-এ প্রয়োগ করে। Read যেকোনো replica সার্ভ করতে পারে।
 
 ```text
           writes
@@ -29,26 +37,26 @@ The most common design. One replica is designated the **leader** (primary); all 
                client      client
 ```
 
-This is exactly how PostgreSQL streaming replication, MySQL replication, and most managed databases work. Its great virtue is simplicity: because every write passes through one node in one order, there are no write conflicts to resolve. Its weaknesses are that the leader is a write bottleneck and a single point of failure — losing the leader requires a **failover**, promoting a follower to leader, which is delicate to get right.
+PostgreSQL streaming replication, MySQL replication, এবং বেশিরভাগ managed database ঠিক এভাবেই কাজ করে। এর বড় গুণ সরলতা: যেহেতু প্রতিটি write একটি node-এর মধ্য দিয়ে একটি order-এ যায়, সমাধান করার মতো কোনো write conflict নেই। এর দুর্বলতা হলো leader একটি write bottleneck আর একটি single point of failure — leader হারানোর জন্য একটি **failover** লাগে, একটি follower-কে leader-এ উন্নীত করা, যা ঠিকঠাক করা সূক্ষ্ম কাজ।
 
 ## Multi-leader replication
 
-Now allow more than one node to accept writes, each acting as a leader and replicating its writes to the others. This is mainly used across datacenters: each region has a local leader so writes are fast locally, and leaders sync across regions in the background.
+এখন একাধিক node-কে write গ্রহণ করতে দাও, প্রত্যেকে একটি leader হিসেবে কাজ করে আর তার write অন্যদের replicate করে। এটা মূলত datacenter জুড়ে ব্যবহৃত হয়: প্রতিটি region-এ একটি local leader থাকে যাতে write local-এ দ্রুত হয়, আর leader গুলো background-এ region জুড়ে sync করে।
 
-The benefit is write availability and low write latency in every region. The cost is severe: two leaders can accept conflicting writes to the same record at the same time, and there is no single order to fall back on. You must **detect and resolve conflicts** — by last-write-wins (lossy), by application-specific merge logic, or by conflict-free data types (CRDTs). Multi-leader is powerful but should be reached for only when single-leader genuinely cannot meet latency needs.
+সুবিধা হলো প্রতিটি region-এ write availability ও কম write latency। খরচটা তীব্র: দুটি leader একই record-এ একই সময়ে সাংঘর্ষিক write গ্রহণ করতে পারে, আর ফিরে যাওয়ার মতো কোনো একক order নেই। তোমাকে **conflict detect ও resolve করতে হবে** — last-write-wins দিয়ে (lossy), application-নির্দিষ্ট merge logic দিয়ে, বা conflict-free data type (CRDT) দিয়ে। Multi-leader শক্তিশালী কিন্তু শুধু তখনই ধরা উচিত যখন single-leader সত্যিই latency চাহিদা মেটাতে পারে না।
 
 ## Leaderless replication
 
-In the leaderless (Dynamo-style) design, popularized by Amazon Dynamo and used by Cassandra and Riak, there is no leader at all. The client (or a coordinator on its behalf) sends each write to **several replicas at once** and considers it successful once enough of them acknowledge. Reads also query several replicas at once and reconcile any disagreement they find.
+Leaderless (Dynamo-style) ডিজাইনে, যা Amazon Dynamo জনপ্রিয় করেছে আর Cassandra ও Riak ব্যবহার করে, কোনো leader-ই নেই। Client (বা তার পক্ষে একটি coordinator) প্রতিটি write **একসাথে কয়েকটি replica-তে** পাঠায় এবং যথেষ্ট সংখ্যক acknowledge করলে সফল বিবেচনা করে। Read-ও একসাথে কয়েকটি replica-কে query করে আর যেকোনো মতভেদ পেলে তা মিলিয়ে নেয়।
 
-Because writes and reads talk to overlapping sets of replicas directly, the system keeps accepting writes even when some replicas are down — there is no leader to lose. The trade-off is that replicas can temporarily hold different values, so the system needs anti-entropy mechanisms (read repair, background sync) and a way to decide which value wins. The cleverness lives in the **quorum** math.
+যেহেতু write ও read সরাসরি overlap করা replica set-এর সাথে কথা বলে, কিছু replica down থাকলেও সিস্টেম write গ্রহণ করতে থাকে — হারানোর মতো কোনো leader নেই। Trade-off হলো replica গুলো সাময়িকভাবে ভিন্ন মান ধরে রাখতে পারে, তাই সিস্টেমের anti-entropy mechanism লাগে (read repair, background sync) আর কোন মান জিতবে তা ঠিক করার একটি উপায়। চতুরতাটা থাকে **quorum** গণিতে।
 
-## Synchronous vs asynchronous replication
+## Synchronous বনাম asynchronous replication
 
-Cutting across all three designs is _when_ the write is acknowledged to the client.
+তিনটি ডিজাইন জুড়েই কেটে যায় প্রশ্ন — client-কে write-টি _কখন_ acknowledge করা হয়।
 
-- **Synchronous:** the leader waits for the follower to confirm it has the write before telling the client "done." The follower is guaranteed up to date, so a failover loses nothing — but the client waits for the slowest follower, and if that follower is down, writes stall.
-- **Asynchronous:** the leader acknowledges immediately and ships the write to followers afterward. Writes are fast and the leader doesn't depend on followers being up, but a follower can lag (**replication lag**), and if the leader dies before a write reaches any follower, that write is **lost**.
+- **Synchronous:** client-কে "done" বলার আগে leader অপেক্ষা করে follower নিশ্চিত করা পর্যন্ত যে তার কাছে write আছে। Follower নিশ্চিতভাবে up to date, তাই একটি failover কিছুই হারায় না — কিন্তু client সবচেয়ে ধীর follower-এর জন্য অপেক্ষা করে, আর সেই follower down থাকলে write আটকে যায়।
+- **Asynchronous:** leader তাৎক্ষণিকভাবে acknowledge করে আর পরে follower-এ write পাঠায়। Write দ্রুত হয় আর leader follower up থাকার উপর নির্ভর করে না, কিন্তু একটি follower পিছিয়ে থাকতে পারে (**replication lag**), আর একটি write কোনো follower-এ পৌঁছানোর আগে leader মরে গেলে সেই write **হারিয়ে যায়**।
 
 ```text
 Synchronous:   client -> leader -> follower(ack) -> leader -> client(ack)
@@ -56,17 +64,17 @@ Asynchronous:  client -> leader -> client(ack)
                                 \-> follower (later)
 ```
 
-Most systems use a pragmatic middle ground: **semi-synchronous**, where the leader waits for one follower to confirm (so at least one durable copy exists) while the rest replicate asynchronously.
+বেশিরভাগ সিস্টেম একটি ব্যবহারিক মাঝপথ ব্যবহার করে: **semi-synchronous**, যেখানে leader একটি follower নিশ্চিত করা পর্যন্ত অপেক্ষা করে (যাতে অন্তত একটি durable কপি থাকে) আর বাকিরা asynchronous-ভাবে replicate করে।
 
-## Quorums: R + W &gt; N
+## Quorum: R + W &gt; N
 
-Leaderless systems make the trade-off explicit and tunable. Let:
+Leaderless সিস্টেম trade-off-টা স্পষ্ট ও tunable করে। ধরো:
 
-- **N** = the number of replicas each piece of data is stored on.
-- **W** = the number of replicas that must acknowledge a _write_ for it to count as successful.
-- **R** = the number of replicas that must respond to a _read_ before the client accepts the result.
+- **N** = প্রতিটি data প্রতি যত replica-তে সংরক্ষিত হয়।
+- **W** = একটি _write_ সফল গণ্য হতে যত replica-কে acknowledge করতে হবে।
+- **R** = client ফলাফল গ্রহণ করার আগে একটি _read_-এ যত replica-কে সাড়া দিতে হবে।
 
-The key insight: if **W + R &gt; N**, then the set of replicas a read contacts is guaranteed to **overlap** the set that acknowledged the latest write by at least one replica. That overlapping replica has the newest value, so the read is guaranteed to see it (the reader then picks the newest among the responses, using version numbers).
+মূল অন্তর্দৃষ্টি: যদি **W + R &gt; N** হয়, তাহলে একটি read যে replica সেটের সাথে যোগাযোগ করে তা নিশ্চিতভাবে সর্বশেষ write acknowledge করা সেটের সাথে অন্তত একটি replica-তে **overlap** করবে। সেই overlap করা replica-তে নতুনতম মান আছে, তাই read নিশ্চিতভাবে তা দেখবে (reader তারপর version number ব্যবহার করে সাড়াগুলোর মধ্যে নতুনতমটি বেছে নেয়)।
 
 ```text
 N = 3.  Choose W = 2, R = 2.   W + R = 4 > 3, so reads and writes overlap.
@@ -76,34 +84,34 @@ N = 3.  Choose W = 2, R = 2.   W + R = 4 > 3, so reads and writes overlap.
   overlap at r2 -> read sees the latest write
 ```
 
-Tuning W and R lets you slide along a spectrum:
+W ও R টিউন করলে তুমি একটি spectrum জুড়ে সরতে পারো:
 
-| Setting         | Effect                                                   |
+| Setting         | প্রভাব                                                   |
 | --------------- | -------------------------------------------------------- |
-| W = N, R = 1    | Fast reads, slow/fragile writes, strong read consistency |
-| W = 1, R = N    | Fast writes, slow reads, write always available          |
-| W = R = (N+1)/2 | Balanced "quorum" — survives a minority of failures      |
+| W = N, R = 1    | দ্রুত read, ধীর/ভঙ্গুর write, শক্তিশালী read consistency |
+| W = 1, R = N    | দ্রুত write, ধীর read, write সবসময় উপলব্ধ               |
+| W = R = (N+1)/2 | ভারসাম্যপূর্ণ "quorum" — সংখ্যালঘু failure সহ্য করে      |
 
 <Callout type="info">
 
-**Note:** A quorum with W + R &gt; N is not the same as linearizability. With concurrent writes, clock skew, or failed writes that partially succeeded, quorum reads can still return stale or ambiguous values. Quorums make staleness _unlikely and bounded_; they do not by themselves give the strong guarantees of chapter 4.
+**নোট:** W + R &gt; N সহ একটি quorum linearizability-র সমান নয়। Concurrent write, clock skew, বা আংশিকভাবে সফল হওয়া failed write থাকলে quorum read এখনো বাসি বা অস্পষ্ট মান ফেরত দিতে পারে। Quorum staleness-কে _অসম্ভাব্য ও সীমাবদ্ধ_ করে; তারা নিজে থেকে অধ্যায় ৪-এর শক্তিশালী গ্যারান্টি দেয় না।
 
 </Callout>
 
 ## Read-your-writes consistency
 
-Replication lag produces a jarring user-facing bug. A user updates their profile (write goes to the leader), then immediately reloads the page (read served by a lagging follower that hasn't received the update yet) — and sees their _old_ profile. It looks like the write was lost.
+Replication lag একটি বিরক্তিকর user-facing bug তৈরি করে। একজন ব্যবহারকারী তার profile update করে (write leader-এ যায়), তারপর সাথে সাথে page reload করে (read সার্ভ করে একটি পিছিয়ে থাকা follower যে এখনো update পায়নি) — আর তার _পুরনো_ profile দেখে। মনে হয় যেন write হারিয়ে গেছে।
 
-**Read-your-writes consistency** (also called read-after-write) guarantees that a user always sees their own most recent writes, even if other users might briefly see stale data. Common techniques:
+**Read-your-writes consistency** (read-after-write নামেও পরিচিত) গ্যারান্টি দেয় যে একজন ব্যবহারকারী সবসময় তার নিজের সবচেয়ে সাম্প্রতিক write দেখে, যদিও অন্য ব্যবহারকারীরা সংক্ষিপ্তভাবে বাসি data দেখতে পারে। সাধারণ কৌশল:
 
-- For a short window after a user writes, route their reads to the leader.
-- Track the position (log sequence number) of the user's last write and only serve their reads from a replica that has caught up to that position.
-- Have the client remember its last-write timestamp and ask replicas to wait until they are at least that current.
+- একজন ব্যবহারকারী write করার পর একটি ছোট window-এর জন্য তার read leader-এ route করো।
+- ব্যবহারকারীর শেষ write-এর অবস্থান (log sequence number) track করো আর শুধু সেই replica থেকে তার read সার্ভ করো যেটা সেই অবস্থানে ধরে ফেলেছে।
+- Client-কে তার last-write timestamp মনে রাখতে দাও আর replica গুলোকে অন্তত ততটা current না হওয়া পর্যন্ত অপেক্ষা করতে বলো।
 
-This is one of several **client-centric** guarantees (alongside monotonic reads — never seeing time go backward — and consistent prefix reads) that fix the most disorienting symptoms of asynchronous replication without paying for full strong consistency. The next chapter formalizes exactly what those guarantees are.
+এটি কয়েকটি **client-centric** গ্যারান্টির একটি (monotonic read — কখনো time পিছিয়ে যেতে না দেখা — এবং consistent prefix read-এর পাশাপাশি) যা পূর্ণ শক্তিশালী consistency-র মূল্য না দিয়েই asynchronous replication-এর সবচেয়ে বিভ্রান্তিকর উপসর্গগুলো ঠিক করে। পরের অধ্যায় সেই গ্যারান্টিগুলো ঠিক কী তা আনুষ্ঠানিক করে।
 
 <Callout type="tip">
 
-**Practical default:** start with single-leader, asynchronous replication and add read-your-writes routing for the handful of flows where users immediately re-read their own writes. Reach for multi-leader or leaderless only when a concrete requirement — cross-region writes, always-on writes during partitions — forces it.
+**ব্যবহারিক default:** single-leader, asynchronous replication দিয়ে শুরু করো আর যে গুটিকয়েক flow-তে ব্যবহারকারীরা সাথে সাথে নিজের write আবার পড়ে সেগুলোর জন্য read-your-writes routing যোগ করো। Multi-leader বা leaderless-এর দিকে শুধু তখনই হাত বাড়াও যখন একটি সুনির্দিষ্ট প্রয়োজন — cross-region write, partition-এর সময় সবসময়-চালু write — তা বাধ্য করে।
 
 </Callout>

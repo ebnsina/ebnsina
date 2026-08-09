@@ -1,9 +1,9 @@
 ---
-title: 'Caching Basics'
-subtitle: 'Integrate Redis for cache-aside pattern, TTL management, and cache invalidation strategies.'
+title: 'ক্যাশিং বেসিকস'
+subtitle: 'cache-aside প্যাটার্ন, TTL ম্যানেজমেন্ট আর cache invalidation স্ট্র্যাটেজির জন্য Redis ইন্টিগ্রেট করুন।'
 chapter: 4
 level: 'beginner'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['Redis', 'cache-aside', 'TTL', 'cache invalidation']
 ---
 
@@ -13,21 +13,29 @@ topics: ['Redis', 'cache-aside', 'TTL', 'cache invalidation']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Caching?
+## গল্পে বুঝি
 
-Database queries take 5-50ms. Network calls take 50-500ms. Reading from Redis takes 0.1-1ms. Caching stores frequently accessed data in memory so you skip the expensive operation entirely.
+মোড়ের মাথায় ইবনে সিনার একটা চায়ের দোকান। সবচেয়ে বেশি বিক্রি হয় দুধ চা — চিনি, চা-পাতা, দুধ। এই জিনিসগুলো যদি প্রতিবার দোকানের পেছনের গুদাম থেকে এনে বানাতে হতো, প্রতি কাপে পাঁচ মিনিট চলে যেত, সামনে লাইন লম্বা হয়ে যেত। তাই ইবনে সিনা চালাক — যেগুলো ঘনঘন লাগে, সেগুলো সে সামনের কাউন্টারেই হাতের নাগালে সাজিয়ে রাখে। অর্ডার এলেই সেকেন্ডে চা রেডি।
 
-Think of it like keeping your most-used books on your desk instead of walking to the library every time.
+কিন্তু কাউন্টার তো ছোট, সব জিনিস তো আর রাখা যায় না। তাই শুধু যেগুলো সত্যিই বেশি লাগে সেগুলোই থাকে। কেউ হঠাৎ লেবু চা চাইলে আর লেবু কাউন্টারে না থাকলে ইবনে সিনা একবার গুদাম পর্যন্ত হেঁটে যায়, লেবু এনে চা বানায়, আর কয়েকটা লেবু কাউন্টারে রেখে দেয় — পরেরবার যেন আর হাঁটতে না হয়। আবার দুধ তো কয়েক ঘণ্টা পরেই টকে যায়, তখন কাউন্টারের দুধ ফেলে গুদাম থেকে টাটকা দুধ আনতে হয়।
+
+এই গল্পটাই আসলে **caching**। কাউন্টার হলো cache (দ্রুত, কিন্তু ছোট মেমরি), আর পেছনের গুদাম হলো database (ধীর, কিন্তু সব ডেটা ওখানেই)। কাউন্টারে জিনিস না পেয়ে গুদাম থেকে এনে রেখে দেওয়াটাই **cache-aside** প্যাটার্ন, আর কয়েক ঘণ্টা পর দুধ ফেলে দেওয়াটাই **TTL** দিয়ে cache expire করা। বাস্তবে Redis বা Memcached দিয়ে ঠিক এভাবেই database-এর উপর চাপ কমানো হয় — Facebook, YouTube থেকে শুরু করে প্রায় সব বড় সাইট ঘনঘন লাগা ডেটা এভাবেই ক্যাশে রাখে।
+
+## ক্যাশিং কেন?
+
+ডেটাবেস কোয়েরিতে 5-50ms লাগে। নেটওয়ার্ক কলে 50-500ms লাগে। Redis থেকে পড়তে লাগে 0.1-1ms। ক্যাশিং প্রায়ই ব্যবহৃত ডেটা মেমরিতে রাখে যাতে আপনি খরুচে অপারেশনটা পুরোপুরি এড়িয়ে যেতে পারেন।
+
+এটাকে এমনভাবে ভাবুন — প্রতিবার লাইব্রেরিতে হেঁটে যাওয়ার বদলে আপনার সবচেয়ে বেশি ব্যবহৃত বইগুলো ডেস্কেই রেখে দেওয়া।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like keeping your most-used books on your desk instead of walking to the library every time. The desk is small (limited memory), so you only keep what you actually use.
+প্রতিবার লাইব্রেরিতে হেঁটে যাওয়ার বদলে আপনার সবচেয়ে বেশি ব্যবহৃত বইগুলো ডেস্কে রাখার মতো। ডেস্ক ছোট (সীমিত মেমরি), তাই আপনি শুধু যেগুলো আসলে ব্যবহার করেন সেগুলোই রাখেন।
 
 </Callout>
 
-The desk is small (limited memory), so you only keep what you actually use.
+ডেস্ক ছোট (সীমিত মেমরি), তাই আপনি শুধু যেগুলো আসলে ব্যবহার করেন সেগুলোই রাখেন।
 
 <Mermaid
 title="Cache-Aside Pattern"
@@ -37,13 +45,13 @@ code={`graph LR
   D -. store in cache .-> R`}
 />
 
-## Cache-Aside Pattern
+## Cache-Aside প্যাটার্ন
 
-The most common caching strategy:
+সবচেয়ে প্রচলিত ক্যাশিং স্ট্র্যাটেজি:
 
-1. Check cache first
-2. On **cache hit** — return cached data
-3. On **cache miss** — query the database, store result in cache, return it
+1. আগে ক্যাশ চেক করুন
+2. **cache hit** হলে — ক্যাশ করা ডেটা ফেরত দিন
+3. **cache miss** হলে — ডেটাবেস কোয়েরি করুন, রেজাল্ট ক্যাশে রাখুন, তারপর ফেরত দিন
 
 <CodeTabs tsFile="cache.ts" goFile="cache.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -474,38 +482,38 @@ func main() {
 
 <Callout type="warning" title="Cache Invalidation Is Hard">
 
-Phil Karlton famously said: "There are only two hard things in Computer Science: cache invalidation and naming things." When you update data, you must invalidate all cached versions. Miss one, and users see stale data. The write-through pattern above handles this by updating cache immediately after DB writes.
+Phil Karlton-এর বিখ্যাত উক্তি: "কম্পিউটার সায়েন্সে মাত্র দুটো কঠিন জিনিস আছে: cache invalidation আর জিনিসের নামকরণ।" আপনি যখন ডেটা আপডেট করেন, তখন সব ক্যাশ করা ভার্সন invalidate করতে হবে। একটা মিস করলেই ইউজাররা বাসি ডেটা দেখবে। উপরের write-through প্যাটার্ন DB রাইটের সাথে সাথেই ক্যাশ আপডেট করে এটা সামলায়।
 
 </Callout>
 
-## Cache Strategies Compared
+## ক্যাশ স্ট্র্যাটেজির তুলনা
 
-| Strategy      | How It Works                           | Best For                     |
-| ------------- | -------------------------------------- | ---------------------------- |
-| Cache-Aside   | App checks cache, falls back to DB     | General purpose, read-heavy  |
-| Write-Through | App writes to cache and DB together    | Data that must be consistent |
-| Write-Behind  | App writes to cache, async flush to DB | High write throughput        |
-| Read-Through  | Cache itself fetches from DB on miss   | CDN-style caching            |
+| স্ট্র্যাটেজি  | কীভাবে কাজ করে                           | কীসের জন্য সেরা              |
+| ------------- | ---------------------------------------- | ---------------------------- |
+| Cache-Aside   | অ্যাপ ক্যাশ চেক করে, DB-তে fall back করে | সাধারণ কাজ, read-heavy       |
+| Write-Through | অ্যাপ ক্যাশ আর DB-তে একসাথে লেখে         | যে ডেটা consistent থাকতে হবে |
+| Write-Behind  | অ্যাপ ক্যাশে লেখে, async করে DB-তে flush | High write throughput        |
+| Read-Through  | ক্যাশ নিজেই miss-এ DB থেকে fetch করে     | CDN-স্টাইল ক্যাশিং           |
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Cache-aside is the most common and safest pattern — start here
-- Always set a TTL — stale cache is better than no cache, but infinite staleness is a bug
-- Cache negative results (null/404) to prevent repeated DB lookups for missing data
-- Use pipeline/batch operations when invalidating multiple keys
-- Monitor your cache hit ratio — below 80% means your TTLs or keys need tuning
+- Cache-aside সবচেয়ে প্রচলিত আর নিরাপদ প্যাটার্ন — এখান থেকেই শুরু করুন
+- সবসময় একটা TTL সেট করুন — বাসি ক্যাশ ক্যাশ না থাকার চেয়ে ভালো, কিন্তু অসীম বাসিভাব একটা বাগ
+- মিসিং ডেটার জন্য বারবার DB lookup ঠেকাতে negative রেজাল্ট (null/404) ক্যাশ করুন
+- একাধিক key invalidate করার সময় pipeline/batch অপারেশন ব্যবহার করুন
+- আপনার cache hit ratio মনিটর করুন — 80%-এর নিচে মানে আপনার TTL বা key টিউন করা দরকার
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Twitter** caches timelines in Redis — each user's home timeline is pre-computed and cached
-- **GitHub** caches repository metadata, user profiles, and API responses in Memcached/Redis
-- **Stack Overflow** serves 5.5 billion page views/month with heavy Redis caching and achieves sub-10ms response times
-- Add caching when your database becomes the bottleneck (high CPU, slow queries, connection exhaustion)
+- **Twitter** Redis-এ টাইমলাইন ক্যাশ করে — প্রতিটা ইউজারের হোম টাইমলাইন আগে থেকে হিসাব করে ক্যাশ করা থাকে
+- **GitHub** repository মেটাডেটা, ইউজার প্রোফাইল আর API রেসপন্স Memcached/Redis-এ ক্যাশ করে
+- **Stack Overflow** ভারী Redis ক্যাশিং দিয়ে মাসে 5.5 বিলিয়ন page view সার্ভ করে আর sub-10ms রেসপন্স টাইম অর্জন করে
+- আপনার ডেটাবেস যখন bottleneck হয়ে যায় (high CPU, ধীর কোয়েরি, connection নিঃশেষ) তখন ক্যাশিং যোগ করুন
 
 </div>

@@ -1,9 +1,9 @@
 ---
 title: 'Fault Injection Tools'
-subtitle: 'Pumba for containers, tc for network, kill -9 for processes, AWS FIS for cloud — the practical toolkit for running chaos experiments.'
+subtitle: 'Container-এর জন্য Pumba, network-এর জন্য tc, process-এর জন্য kill -9, cloud-এর জন্য AWS FIS — chaos experiment চালানোর ব্যবহারিক টুলকিট।'
 chapter: 3
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['Pumba', 'tc', 'AWS FIS', 'fault injection', 'network partition', 'latency injection']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Pumba', 'tc', 'AWS FIS', 'fault injection', 'network partition', 'late
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A flight simulator: instead of crashing real planes to train pilots, you inject engine failures, instrument malfunctions, and severe weather in a controlled environment. The simulation is realistic enough that what pilots learn transfers to real emergencies. Fault injection tools are your flight simulator.
+একটা flight simulator: পাইলট ট্রেন করতে আসল প্লেন ক্র্যাশ করার বদলে, আপনি নিয়ন্ত্রিত এনভায়রনমেন্টে engine failure, instrument malfunction, আর প্রচণ্ড আবহাওয়া ইনজেক্ট করেন। সিমুলেশন যথেষ্ট বাস্তবসম্মত যাতে পাইলটরা যা শেখে তা আসল emergency-তে কাজে লাগে। Fault injection tools হলো আপনার flight simulator।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা বড় কারখানা — লম্বা অ্যাসেম্বলি লাইন, সারি সারি মেশিন, কনভেয়র বেল্ট আর করিডোর দিয়ে এক ঘর থেকে আরেক ঘরে পার্টস যায়। লাইন বন্ধ হলে লোকসান, তাই তিনি জানতে চান কোথায় দুর্বলতা লুকিয়ে আছে — কিন্তু আসল বিপর্যয় ঘটার জন্য বসে থাকতে চান না। তাই তিনি ইবনে সিনাকে ভাড়া করলেন, একজন অনুমোদিত "স্ট্রেস-টেস্টার", যার হাতে একটা সুনির্দিষ্ট টুলকিট আছে। ইবনে সিনা যা খুশি ভাঙচুর করেন না — শুধু কমান্ড দিলে, নিরাপদে, একটা করে মেপে-মেপে গোলযোগ ঘটান।
+
+ফাতিমা বলেন, "দেখি তো, একটা মেশিন হঠাৎ বন্ধ হলে ব্যাকআপটা চালু হয় কিনা।" ইবনে সিনা একটা নির্দিষ্ট মেশিনের প্লাগ টেনে খুলে দেন — সাথে সাথে দেখা যায় পাশের স্ট্যান্ডবাই মেশিন কাজ তুলে নেয় কিনা। এরপর তিনি একটা কনভেয়র বেল্টের গতি ইচ্ছে করে হামাগুড়ির মতো ধীর করে দেন, দেখতে যে ধীর লাইনে বাকি ধাপগুলো জট পাকিয়ে যায় নাকি সামলে নেয়। শেষে একটা করিডোর সাময়িকভাবে আটকে দেন, যাতে পার্টস এক ঘর থেকে আরেক ঘরে পৌঁছাতেই না পারে — আর তিনি হাতে kill switch রাখেন, যেকোনো মুহূর্তে সব স্বাভাবিক করে দিতে।
+
+এই গল্পটাই আসলে **fault injection tools**। ইবনে সিনার নিয়ন্ত্রিত টুলকিট হলো fault injection tool — নিখুঁত, ছোট, ফিরিয়ে-আনার-যোগ্য গোলযোগ। মেশিনের প্লাগ খুলে ফেলা মানে একটা **instance kill** করা (`kill -9`, `pumba kill`, বা AWS FIS দিয়ে EC2 terminate)। কনভেয়র ধীর করে দেওয়া মানে **latency inject** করা (`tc netem delay`, Chaos Mesh NetworkChaos)। করিডোর আটকে দেওয়া মানে **network fault** ঘটানো — packet drop বা partition। বাস্তবে Chaos Mesh (Kubernetes), Gremlin (SaaS), আর Toxiproxy (proxy-লেভেল latency/fault) ঠিক এই কাজটাই করে: অনুমোদিত, targeted, নিয়ন্ত্রণযোগ্য পদ্ধতিতে system-এ fault ঢুকিয়ে resilience যাচাই করে — লাইন সত্যিই ভেঙে যাওয়ার আগেই।
+
 ## Process Failures: kill -9
 
-The simplest fault injection. Terminate a process and see what happens:
+সবচেয়ে সহজ fault injection। একটা process terminate করুন আর দেখুন কী হয়:
 
 ```bash
 # Kill a specific process
@@ -40,7 +48,7 @@ stress-ng --vm 1 --vm-bytes 90% --timeout 60s
 # - Application should restart via process manager (PM2, systemd)
 ```
 
-**Simulate crash recovery in Node.js:**
+**Node.js-এ crash recovery simulate করুন:**
 
 ```bash
 # PM2: should restart crashed process
@@ -56,7 +64,7 @@ systemctl status myapp # should show restart
 
 ## Network Faults: tc (Traffic Control)
 
-Linux `tc` command injects network faults at the OS level. Works for any process on the host.
+Linux `tc` command OS লেভেলে network fault ইনজেক্ট করে। Host-এর যেকোনো process-এর জন্য কাজ করে।
 
 ```bash
 # Add 200ms latency to all outbound traffic on eth0
@@ -81,7 +89,7 @@ tc qdisc add dev eth0 root netem delay 100ms loss 1%
 tc qdisc del dev eth0 root
 ```
 
-**Target specific destination (not all traffic):**
+**নির্দিষ্ট destination টার্গেট করুন (সব traffic নয়):**
 
 ```bash
 # Only delay traffic to a specific IP
@@ -93,7 +101,7 @@ tc qdisc add dev eth0 parent 1:1 handle 10: netem delay 500ms
 
 ## Container Faults: Pumba
 
-[Pumba](https://github.com/alexei-led/pumba) injects faults into Docker containers without modifying application code:
+[Pumba](https://github.com/alexei-led/pumba) application code পরিবর্তন না করেই Docker container-এ fault ইনজেক্ট করে:
 
 ```bash
 # Install
@@ -124,7 +132,7 @@ pumba netem --duration 3m rate --rate 100kbit myapp
 pumba pause --duration 30s myapp
 ```
 
-**In Docker Compose for a chaos experiment:**
+**একটা chaos experiment-এর জন্য Docker Compose-এ:**
 
 ```yaml
 # docker-compose.chaos.yml
@@ -142,9 +150,9 @@ services:
       - payment-service
 ```
 
-## Kubernetes: Chaos Mesh and Litmus
+## Kubernetes: Chaos Mesh এবং Litmus
 
-For Kubernetes environments, dedicated chaos operators give you declarative fault injection:
+Kubernetes এনভায়রনমেন্টের জন্য, ডেডিকেটেড chaos operator আপনাকে declarative fault injection দেয়:
 
 **Chaos Mesh:**
 
@@ -202,7 +210,7 @@ spec:
 
 ## AWS Fault Injection Simulator (FIS)
 
-For AWS-native infrastructure, FIS injects faults at the cloud level:
+AWS-নেটিভ infrastructure-এর জন্য, FIS cloud লেভেলে fault ইনজেক্ট করে:
 
 ```json
 {
@@ -236,7 +244,7 @@ For AWS-native infrastructure, FIS injects faults at the cloud level:
 }
 ```
 
-**FIS stop conditions** are critical — automatically abort the experiment if a CloudWatch alarm fires. This is your safety net:
+**FIS stop conditions** খুবই গুরুত্বপূর্ণ — একটা CloudWatch alarm fire করলে স্বয়ংক্রিয়ভাবে experiment abort করুন। এটাই আপনার safety net:
 
 ```bash
 # Create experiment with stop condition
@@ -253,7 +261,7 @@ aws fis get-experiment --id EXP456
 
 ## Application-Level Fault Injection
 
-Inject faults inside your code for development and testing:
+Development এবং testing-এর জন্য আপনার code-এর ভেতরে fault ইনজেক্ট করুন:
 
 ```typescript
 // Middleware that randomly injects faults based on env vars
@@ -283,11 +291,11 @@ function chaosMiddleware(req: Request, res: Response, next: NextFunction): void 
 app.use(chaosMiddleware);
 ```
 
-This lets you test how your frontend handles backend errors without needing infrastructure tools.
+এটা আপনাকে infrastructure tool ছাড়াই টেস্ট করতে দেয় আপনার frontend কীভাবে backend error সামলায়।
 
 ## Safety Practices
 
-**Always have a kill switch:**
+**সবসময় একটা kill switch রাখুন:**
 
 ```bash
 # Single command to stop all chaos experiments
@@ -297,7 +305,7 @@ kubectl delete podchaos,networkchaos,stresschaos --all -n chaos-testing
 ./scripts/chaos-stop-all.sh
 ```
 
-**Start with synthetic traffic, not real user traffic:**
+**Synthetic traffic দিয়ে শুরু করুন, আসল user traffic দিয়ে নয়:**
 
 ```bash
 # Direct chaos only at test traffic using labels/headers
@@ -305,7 +313,7 @@ kubectl delete podchaos,networkchaos,stresschaos --all -n chaos-testing
 # Production traffic skips chaos middleware
 ```
 
-**Automate blast radius limits:**
+**Blast radius limit স্বয়ংক্রিয় করুন:**
 
 ```yaml
 # Chaos Mesh: never kill more than 1 pod at a time
@@ -314,5 +322,5 @@ spec:
   value: '1' # not a percentage — absolute limit
 ```
 
-**Document and schedule experiments:**
-Keep a chaos runbook: what experiment was run, when, by whom, what the hypothesis was, what was observed, and what was fixed. This builds institutional knowledge and helps you not repeat the same experiments without learning.
+**Experiment ডকুমেন্ট আর schedule করুন:**
+একটা chaos runbook রাখুন: কী experiment চালানো হয়েছিল, কখন, কে করেছিল, hypothesis কী ছিল, কী observe করা হলো, আর কী fix করা হলো। এটা প্রাতিষ্ঠানিক জ্ঞান গড়ে তোলে আর আপনাকে না শিখে একই experiment বারবার না চালাতে সাহায্য করে।

@@ -1,9 +1,9 @@
 ---
-title: 'Authentication & Middleware'
-subtitle: 'JWT authentication, middleware chains, CORS, rate limiting — the security and cross-cutting concerns every API needs.'
+title: 'Authentication ও Middleware'
+subtitle: 'JWT authentication, middleware chain, CORS, rate limiting — প্রতিটা API-র দরকারি security আর cross-cutting concern।'
 chapter: 14
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['authentication', 'JWT', 'middleware', 'CORS', 'rate limiting', 'security']
 ---
 
@@ -11,9 +11,17 @@ topics: ['authentication', 'JWT', 'middleware', 'CORS', 'rate limiting', 'securi
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা একটা বড় গার্মেন্টস ফ্যাক্টরিতে চাকরি করে। ভেতরে কাটিং, সেলাই, প্যাকিং — অনেকগুলো ডিপার্টমেন্ট, প্রত্যেকে যার যার আসল কাজে ব্যস্ত। কিন্তু কেউ চাইলেই সোজা হেঁটে কোনো ডিপার্টমেন্টে ঢুকে যেতে পারে না। মেইন গেটেই একটা পাহারা বসানো — যে-ই আসুক, ভেতরে যাওয়ার আগে গেটের কয়েকটা ধাপ পার হতেই হয়।
+
+একদিন সকালে আল-খোয়ারিজমি এল সাপ্লায়ার হিসেবে দেখা করতে। গেটে দারোয়ান প্রথমে তার আইডি কার্ড চাইল — কার্ড না থাকলে ওখানেই থামিয়ে দিত, ভেতরে ঢুকতেই দিত না। আইডি ঠিক থাকায় এবার রেজিস্টার খাতায় তার নাম, সময় আর কোথায় যাচ্ছে লিখে রাখল। এই দুই ধাপ পার হওয়ার পরই তাকে সেলাই ডিপার্টমেন্টের দিকে যেতে দেওয়া হলো, যেখানে আসল কাজটা হয়। ফাতিমা আল-ফিহরি যখন এল, তার বেলাতেও ঠিক একই ধাপ — একই গেট, একই ক্রম।
+
+এই গল্পটাই আসলে **middleware**। গেটের ধাপগুলো হলো middleware **chain** — request আসল **handler**-এ (ডিপার্টমেন্টে) পৌঁছানোর আগেই এক এক করে চলে। আইডি চেকটা হলো **authentication** middleware — কে আসছে সেটা যাচাই করে, ঠিক না হলে গেটেই আটকে দেয়, handler পর্যন্ত পৌঁছাতেই দেয় না। রেজিস্টার খাতাটা হলো **logging** middleware — প্রতিটা request নীরবে টুকে রাখে। বাস্তবে প্রতিটা API এভাবেই কাজ করে: business logic-এ হাত না দিয়ে auth, logging, rate limiting-এর মতো cross-cutting কাজগুলো handler-কে মুড়ে আলাদা স্তরে সামলানো হয়।
+
 ## Middleware Pattern
 
-Middleware wraps HTTP handlers to add behavior before and after request processing. It's Go's way of handling cross-cutting concerns without cluttering business logic.
+Middleware request process করার আগে ও পরে আচরণ যোগ করতে HTTP handler-কে মুড়ে দেয়। business logic-কে জঞ্জালে না ভরে cross-cutting concern সামলানোর এটাই Go-এর উপায়।
 
 ```go
 // A middleware is a function that takes a handler and returns a new handler
@@ -53,13 +61,13 @@ func (w *statusWriter) WriteHeader(status int) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Middleware is like security checkpoints at an airport. Before you reach your gate (handler), you pass through ID check (auth), baggage scan (validation), and metal detector (rate limiting). Each checkpoint is independent — you can add or remove them without changing the gate itself.
+Middleware অনেকটা বিমানবন্দরের নিরাপত্তা চেকপয়েন্টের মতো। আপনার গেটে (handler) পৌঁছানোর আগে আপনি ID চেক (auth), লাগেজ স্ক্যান (validation), আর মেটাল ডিটেক্টর (rate limiting)-এর মধ্য দিয়ে যান। প্রতিটা চেকপয়েন্ট স্বাধীন — গেট না বদলেই আপনি এগুলো যোগ বা বাদ দিতে পারেন।
 
 </Callout>
 
-## Chaining Middleware
+## Middleware Chaining
 
 ```go
 func Chain(handler http.Handler, middlewares ...Middleware) http.Handler {
@@ -87,7 +95,7 @@ http.ListenAndServe(":8080", finalHandler)
 
 ## Panic Recovery
 
-Prevents a single panicking handler from crashing the entire server:
+একটা panic করা handler যাতে পুরো server ক্র্যাশ করতে না পারে তা ঠেকায়:
 
 ```go
 func Recovery() Middleware {
@@ -111,7 +119,7 @@ func Recovery() Middleware {
 
 ## JWT Authentication
 
-JSON Web Tokens are the industry standard for stateless API authentication:
+JSON Web Token হলো stateless API authentication-এর industry standard:
 
 ```go
 import "github.com/golang-jwt/jwt/v5"
@@ -245,7 +253,7 @@ func RequireRole(roles ...string) Middleware {
 
 ## CORS Middleware
 
-Required for browser-based clients calling your API from a different domain:
+আলাদা domain থেকে আপনার API কল করা browser-based client-এর জন্য দরকার:
 
 ```go
 type CORSConfig struct {
@@ -286,7 +294,7 @@ func CORS(cfg CORSConfig) Middleware {
 
 ## Rate Limiting
 
-Protect your API from abuse:
+আপনার API-কে অপব্যবহার থেকে রক্ষা করুন:
 
 ```go
 func RateLimit(requestsPerSecond int) Middleware {
@@ -333,7 +341,7 @@ func PerIPRateLimit(requestsPerSecond int) Middleware {
 
 ## Request ID Middleware
 
-Trace requests across services:
+service-গুলোর মধ্য দিয়ে request ট্রেস করুন:
 
 ```go
 func RequestID() Middleware {
@@ -354,7 +362,7 @@ func RequestID() Middleware {
 
 ## Selective Middleware
 
-Apply auth only to protected routes:
+শুধু protected route-এ auth প্রয়োগ করুন:
 
 ```go
 func main() {
@@ -378,12 +386,12 @@ func main() {
 }
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Middleware signature: `func(http.Handler) http.Handler`** — wraps handlers with extra behavior
-2. **Chain middleware** for clean composition — logging, recovery, CORS, auth, rate limiting
-3. **JWT for stateless auth** — token contains user info, no session storage needed
-4. **Store user in `context.Context`** — handlers extract it without knowing about auth details
-5. **CORS is mandatory** for browser clients — handle OPTIONS preflight
-6. **Rate limit per IP** in production — global rate limits don't protect against individual abuse
-7. **Apply auth selectively** — not every route needs authentication
+1. **Middleware signature: `func(http.Handler) http.Handler`** — handler-কে অতিরিক্ত আচরণ দিয়ে মোড়ে
+2. **Middleware chain করুন** পরিচ্ছন্ন composition-এর জন্য — logging, recovery, CORS, auth, rate limiting
+3. **stateless auth-এর জন্য JWT** — token-এ user info থাকে, কোনো session storage লাগে না
+4. **`context.Context`-এ user সংরক্ষণ করুন** — handler auth-এর খুঁটিনাটি না জেনেই সেটা বের করে নেয়
+5. **browser client-এর জন্য CORS বাধ্যতামূলক** — OPTIONS preflight সামলান
+6. **production-এ per IP rate limit করুন** — global rate limit ব্যক্তিগত অপব্যবহার থেকে রক্ষা করে না
+7. **auth বাছাই করে প্রয়োগ করুন** — প্রতিটা route-এর authentication লাগে না

@@ -1,9 +1,9 @@
 ---
-title: 'Redis — Roadmap'
-subtitle: 'An in-memory data structure store: cache, queue, lock, and primary store all in one.'
+title: 'Redis — রোডম্যাপ'
+subtitle: 'একটি in-memory data structure store: cache, queue, lock, আর primary store — সবই একসাথে।'
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'redis']
 ---
 
@@ -13,36 +13,36 @@ topics: ['roadmap', 'redis']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A well-organized kitchen pass: the line cook doesn't run to the walk-in fridge for every order. The most-used ingredients sit in labelled containers within arm's reach, each shaped for its job — a deep bin for stock, a flat tray for garnish, a sorted rack for plating. Redis is that pass for your data: many specialized in-memory structures, each tuned to a different access pattern, all a microsecond away.
+একটা সুসংগঠিত রান্নাঘরের pass: line cook প্রতিটা অর্ডারের জন্য walk-in ফ্রিজ পর্যন্ত ছুটে যায় না। সবচেয়ে বেশি ব্যবহৃত উপকরণগুলো হাতের নাগালেই লেবেল করা কন্টেইনারে থাকে, প্রতিটাই তার কাজের জন্য আকৃতি পাওয়া — stock-এর জন্য গভীর বিন, garnish-এর জন্য চ্যাপ্টা ট্রে, plating-এর জন্য সাজানো র‍্যাক। তোমার ডেটার জন্য Redis হলো সেই pass: অনেকগুলো বিশেষায়িত in-memory structure, প্রতিটা আলাদা access pattern-এর জন্য টিউন করা, সবই এক microsecond দূরত্বে।
 
 </Callout>
 
-## What you will be able to do
+## তুমি যা করতে পারবে
 
-By the end of this track you will understand Redis well enough to use it deliberately rather than as a magic black box. You will know which of its data structures fits which problem, how to control memory and expiration, how it survives a restart, and how it behaves under replication and failure. You will be able to build a cache, a work queue, and a distributed lock, write atomic multi-step operations with Lua, and reason about what can go wrong in production.
+এই ট্র্যাক শেষ করার পর তুমি Redis-কে যথেষ্ট ভালোভাবে বুঝবে যাতে একে একটা magic black box হিসেবে না, বরং ইচ্ছাকৃতভাবে ব্যবহার করতে পারো। তুমি জানবে কোন data structure কোন সমস্যায় ফিট করে, কীভাবে memory আর expiration নিয়ন্ত্রণ করতে হয়, restart-এর পরও এটা কীভাবে টিকে থাকে, এবং replication ও failure-এর অধীনে এটা কেমন আচরণ করে। তুমি একটা cache, একটা work queue, আর একটা distributed lock বানাতে পারবে, Lua দিয়ে atomic multi-step অপারেশন লিখতে পারবে, এবং production-এ কী কী ভুল হতে পারে তা নিয়ে যুক্তি করতে পারবে।
 
-## Prerequisites
+## পূর্বশর্ত
 
-You should be comfortable on a command line and understand basic client-server networking. A little knowledge of how databases store data helps but is not required.
+তোমার command line-এ স্বাচ্ছন্দ্য থাকা উচিত এবং বেসিক client-server networking বোঝা উচিত। databases কীভাবে ডেটা রাখে সে সম্পর্কে সামান্য জ্ঞান সাহায্য করে, তবে বাধ্যতামূলক নয়।
 
-This track pairs naturally with three others on this site:
+এই ট্র্যাক এই সাইটের আরও তিনটি ট্র্যাকের সাথে স্বাভাবিকভাবে জোড়া মেলে:
 
-- **Caching** — Redis is the most common shared cache; that track covers strategies and invalidation in depth.
-- **NoSQL** — Redis is a key-value store; the NoSQL track frames where it sits among other non-relational models.
-- **Background Jobs** — Redis backs many job queues; that track covers the worker side of the patterns introduced here.
+- **Caching** — Redis হলো সবচেয়ে সাধারণ shared cache; ওই ট্র্যাক strategies আর invalidation গভীরভাবে কভার করে।
+- **NoSQL** — Redis একটা key-value store; NoSQL ট্র্যাক দেখায় এটা অন্যান্য non-relational মডেলগুলোর মধ্যে কোথায় বসে।
+- **Background Jobs** — Redis অনেক job queue-এর পেছনে থাকে; ওই ট্র্যাক এখানে পরিচয় করানো প্যাটার্নগুলোর worker দিকটা কভার করে।
 
-## Chapters in this track
+## এই ট্র্যাকের অধ্যায়গুলো
 
-1. **What Redis Is & the Core Model** — in-memory key-value store, the single-threaded event loop, why it is fast, the RESP protocol, and connecting with redis-cli.
-2. **Core Data Structures** — strings, hashes, lists, sets, sorted sets, plus bitmaps, HyperLogLog, and geo, each with commands and a real use.
-3. **Keys, Expiration & Eviction** — key naming, TTLs, lazy vs active expiration, maxmemory policies, and why SCAN beats KEYS.
-4. **Persistence: RDB & AOF** — snapshots, the append-only log, fsync policies, and what durability really means for an in-memory store.
-5. **Pub/Sub & Streams** — fire-and-forget messaging, durable Streams, consumer groups, and when you need a real broker instead.
-6. **Redis as Cache, Queue & Distributed Lock** — cache-aside, list-based queues, reliable queues, and the distributed-lock debate.
-7. **Transactions & Lua Scripting** — MULTI/EXEC/WATCH, why these are not rollback transactions, and atomic scripting with EVAL.
-8. **Replication, Sentinel & Cluster** — primary/replica replication, Sentinel for failover, hash-slot sharding, and consistency trade-offs.
-9. **Operating Redis in Production** — memory and fragmentation, the slow log, key metrics, big-key avoidance, security, and common pitfalls.
+1. **Redis কী & Core Model** — in-memory key-value store, single-threaded event loop, কেন এটা দ্রুত, RESP protocol, এবং redis-cli দিয়ে connect করা।
+2. **Core Data Structures** — strings, hashes, lists, sets, sorted sets, সাথে bitmaps, HyperLogLog, আর geo — প্রতিটার command আর বাস্তব ব্যবহার সহ।
+3. **Keys, Expiration & Eviction** — key naming, TTLs, lazy বনাম active expiration, maxmemory policies, এবং কেন SCAN, KEYS-এর চেয়ে ভালো।
+4. **Persistence: RDB & AOF** — snapshots, append-only log, fsync policies, এবং একটা in-memory store-এর জন্য durability আসলে কী মানে।
+5. **Pub/Sub & Streams** — fire-and-forget messaging, durable Streams, consumer groups, এবং কখন তোমার আসল broker দরকার।
+6. **Redis as Cache, Queue & Distributed Lock** — cache-aside, list-based queues, reliable queues, এবং distributed-lock বিতর্ক।
+7. **Transactions & Lua Scripting** — MULTI/EXEC/WATCH, কেন এগুলো rollback transaction নয়, এবং EVAL দিয়ে atomic scripting।
+8. **Replication, Sentinel & Cluster** — primary/replica replication, failover-এর জন্য Sentinel, hash-slot sharding, এবং consistency trade-off।
+9. **Production-এ Redis চালানো** — memory ও fragmentation, slow log, key metrics, big-key এড়ানো, security, এবং সাধারণ ফাঁদ।
 
-Work through them in order the first time. Afterwards each chapter stands alone as a reference.
+প্রথমবার এগুলো ক্রম অনুযায়ী পড়ো। এরপর প্রতিটা অধ্যায় নিজেই একটা reference হিসেবে দাঁড়াতে পারে।

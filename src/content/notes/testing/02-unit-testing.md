@@ -1,9 +1,9 @@
 ---
 title: 'Unit Testing'
-subtitle: 'Testing pure logic in isolation — Vitest, assertion patterns, test doubles, and what makes a good unit test.'
+subtitle: 'Isolation-এ pure logic টেস্ট করা — Vitest, assertion pattern, test double, আর একটা ভালো unit test কী দিয়ে তৈরি হয়।'
 chapter: 2
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['unit testing', 'Vitest', 'Jest', 'mocking', 'spies', 'test doubles', 'assertions']
 ---
 
@@ -11,17 +11,25 @@ topics: ['unit testing', 'Vitest', 'Jest', 'mocking', 'spies', 'test doubles', '
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমি একজন ইলেকট্রিশিয়ান। পুরো বিল্ডিংয়ের ওয়্যারিং করার আগে তার হাতে একটা ছোট বেঞ্চ টেস্টার থাকে — টেবিলের ওপর ছোট্ট একটা যন্ত্র, দুটো তার আর একটা সুইচ। নতুন একটা বাল্ব হাতে নিয়ে সে সেটাকে শুধু এই টেস্টারে লাগায়, একটা নির্দিষ্ট ভোল্টেজ দেয়, আর দেখে — বাল্বটা জ্বলে ওঠে কিনা। পুরোপুরি একা, বিল্ডিংয়ের কোনো তার, কোনো মিটার, কোনো মেইন লাইনের সাথে যুক্ত না।
+
+বাল্বটা জ্বলে উঠলে সে জানে এটা ঠিক আছে। আর না জ্বললে? সে সাথে সাথেই নিশ্চিত — সমস্যাটা এই বাল্বেই, অন্য কোথাও না। বিল্ডিংয়ের হাজারটা তারের মধ্যে খুঁজে বেড়াতে হয় না, ফিউজ বক্স খুলে বসে থাকতে হয় না। এক সেকেন্ডে পরিষ্কার — পাস কি ফেল। খারাপ বাল্বটা ঝুড়িতে ফেলে সে পরেরটা তুলে নেয়।
+
+এই বেঞ্চ টেস্টারই আসলে **unit test**। বেঞ্চের ওপর একটা বাল্ব = **isolation**-এ টেস্ট করা একটা function; নির্দিষ্ট ভোল্টেজ দিয়ে "জ্বলে উঠল কিনা" দেখা = একটা known **input** দিয়ে expected **output** যাচাই করা; বেঞ্চটা যে বিল্ডিং থেকে আলাদা = external dependency (database, network) **mock** করে সরিয়ে দেওয়া; আর এক সেকেন্ডে পরিষ্কার পাস/ফেল = একটা fast, **deterministic** টেস্ট। বাস্তবে ঠিক তাই — `calculateDiscount` function-টা ভুল আউটপুট দিলে unit test সাথে সাথে সেটা ধরিয়ে দেয়, পুরো অ্যাপ চালিয়ে কোন জায়গায় বাগ তা আন্দাজ করতে হয় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Testing a recipe ingredient in isolation: you taste the sauce before it goes in the dish. If the sauce is wrong, you know exactly what to fix — you don't have to serve the whole meal and guess which ingredient was off. Unit tests give you that same pinpoint feedback on individual functions.
+কোনো recipe-র একটা ingredient আলাদাভাবে টেস্ট করা: sauce টা dish-এ যাওয়ার আগেই আপনি সেটার স্বাদ নেন। sauce ভুল হলে ঠিক কী ঠিক করতে হবে তা আপনি জানেন — পুরো খাবার পরিবেশন করে কোন ingredient-টা বেঠিক ছিল তা আন্দাজ করতে হয় না। Unit test আপনাকে আলাদা function-এর ওপর ঠিক সেই একই নিখুঁত feedback দেয়।
 
 </Callout>
 
 ## Setup: Vitest
 
-Vitest is the modern choice for TypeScript projects — fast, ESM-native, compatible with Jest's API:
+Vitest হলো TypeScript প্রজেক্টের জন্য আধুনিক পছন্দ — দ্রুত, ESM-native, Jest-এর API-র সাথে compatible:
 
 ```bash
 npm install -D vitest @vitest/coverage-v8
@@ -55,7 +63,7 @@ export default defineConfig({
 }
 ```
 
-## Anatomy of a Good Unit Test
+## একটা ভালো Unit Test-এর গঠন
 
 ```typescript
 // src/pricing.test.ts
@@ -90,9 +98,9 @@ describe('calculateDiscount', () => {
 });
 ```
 
-Each test: one logical assertion, descriptive name that reads as a sentence, no shared mutable state between tests.
+প্রতিটি test: একটা logical assertion, একটা বর্ণনামূলক নাম যা একটা বাক্যের মতো পড়া যায়, test-গুলোর মধ্যে কোনো shared mutable state নেই।
 
-## Assertions
+## Assertion
 
 ```typescript
 // Equality
@@ -133,7 +141,7 @@ await expect(asyncFn()).rejects.toThrow('error');
 expect(renderResult).toMatchSnapshot();
 ```
 
-## Spies and Mocks
+## Spy আর Mock
 
 ```typescript
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -182,7 +190,7 @@ beforeEach(() => {
 });
 ```
 
-## Testing Async Code
+## Async Code টেস্ট করা
 
 ```typescript
 // Async/await (preferred)
@@ -215,7 +223,7 @@ it('debounces rapid calls', async () => {
 });
 ```
 
-## Testing Classes
+## Class টেস্ট করা
 
 ```typescript
 class Cart {
@@ -268,9 +276,9 @@ describe('Cart', () => {
 });
 ```
 
-## Parameterized Tests
+## Parameterized Test
 
-Test the same logic across many inputs without duplicating test code:
+test কোড ডুপ্লিকেট না করে একই logic অনেকগুলো input-এর ওপর টেস্ট করুন:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -296,17 +304,17 @@ it.each([
 });
 ```
 
-## What Not to Unit Test
+## যা Unit Test করবেন না
 
-- Framework code (Express routing, ORM queries) — test these at integration level
-- Simple getters/setters with no logic
-- Configuration objects
-- Code that's all I/O (DB calls, HTTP calls) — mock the I/O or use integration tests
-- Private methods — if you need to test them, your class may need splitting
+- Framework code (Express routing, ORM query) — এগুলো integration level-এ টেস্ট করুন
+- logic নেই এমন সাধারণ getter/setter
+- Configuration object
+- পুরোটাই I/O এমন code (DB call, HTTP call) — I/O mock করুন বা integration test ব্যবহার করুন
+- Private method — এগুলো টেস্ট করার দরকার হলে, আপনার class হয়তো ভাগ করা দরকার
 
-Focus unit tests on: algorithms, business rules, data transformations, error handling, edge cases.
+Unit test-এর ফোকাস রাখুন: algorithm, business rule, data transformation, error handling, edge case-এর ওপর।
 
-## Running Tests
+## Test চালানো
 
 ```bash
 # Run once

@@ -1,9 +1,9 @@
 ---
-title: 'What webhooks are and when to use them'
-subtitle: "A webhook is an HTTP POST you make to somebody else's server when something happens. The protocol is trivial; the failure modes are not."
+title: 'Webhooks কী এবং কখন ব্যবহার করবেন'
+subtitle: 'কিছু একটা ঘটলে অন্য কারও server-এ আপনি যে HTTP POST পাঠান, সেটাই একটা webhook। protocol-টা তুচ্ছ; কিন্তু failure mode-গুলো নয়।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['webhooks', 'events', 'rest', 'queues']
 ---
 
@@ -11,19 +11,27 @@ topics: ['webhooks', 'events', 'rest', 'queues']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-You signed up for Stripe. A customer paid. Stripe needed to tell your server. They could have made you poll an API every minute, but instead they posted to a URL you gave them. That POST was a webhook.
+## গল্পে বুঝি
 
-Webhooks are the simplest possible inter-service push primitive. They are also the place where most teams ship their first real distributed-system bug — because "fire-and-forget HTTP POST" sounds easy and the failure cases are subtle.
+ইবনে সিনা দর্জির দোকানে একটা স্যুট সেলাই করতে দিয়েছেন। পুরনো নিয়মে তিনি প্রতি ঘণ্টায় দোকানে গিয়ে জিজ্ঞেস করতেন, "আমার স্যুটটা কি হয়ে গেছে?" — বেশিরভাগ সময়ই উত্তর "না, এখনও হয়নি"। এতে তাঁর নিজের সময় নষ্ট, আবার দর্জি আল-খোয়ারিজমিরও কাজের মাঝে বারবার থামতে হয়। একদিন হলে দশবার হাঁটাহাঁটি, অথচ কাজের কোনো খবর নেই।
+
+তখন ফাতিমা আল-ফিহরি বুদ্ধি দিলেন — "বারবার এসে জিজ্ঞেস করার দরকার কী? দর্জিকে একবার তোমার বাসার ঠিকানাটা দিয়ে এসো। স্যুট তৈরি হওয়ার সঙ্গে সঙ্গে সে নিজের একজন লোককে দিয়ে তোমার দরজায় খবর পাঠিয়ে দেবে।" ইবনে সিনা ঠিক তাই করলেন। এখন আর তাঁকে একবারও দোকানে ছুটতে হয় না; স্যুট শেষ হওয়ার ঠিক মুহূর্তেই দর্জির লোক এসে তাঁর দরজায় কড়া নাড়ে।
+
+এই গল্পটাই আসলে **webhook**। বারবার দোকানে গিয়ে "হয়েছে কি?" জিজ্ঞেস করা হলো **polling** — বেশিরভাগ কলই বৃথা যায়, latency বেশি, দুই পক্ষেরই খরচ। আর একবার ঠিকানা দিয়ে আসা হলো একটা webhook URL register করা, আর কাজ শেষ হওয়ামাত্র দর্জির লোকের দরজায় হাজির হওয়াটাই হলো provider-এর সেই event-এ আপনার URL-এ একটা HTTP callback push করা — event হওয়ার ঠিক মুহূর্তেই খবর, কোনো বারবার হাঁটাহাঁটি নয়। বাস্তবে Stripe বা GitHub ঠিক এভাবেই কাজ করে: payment succeeded বা নতুন push হওয়ার সঙ্গে সঙ্গে তারা আপনার দেওয়া URL-এ একটা POST পাঠায়, আপনাকে প্রতি মিনিটে API poll করতে হয় না।
+
+আপনি Stripe-এ sign up করলেন। একজন customer পেমেন্ট করল। Stripe-কে আপনার server-কে জানাতে হলো। তারা আপনাকে প্রতি মিনিটে একটা API poll করাতে পারত, কিন্তু তার বদলে আপনার দেওয়া একটা URL-এ POST করল। ওই POST-টাই ছিল একটা webhook।
+
+Webhooks হলো inter-service push-এর সবচেয়ে সরল primitive। এটা আবার সেই জায়গা যেখানে বেশিরভাগ টিম তাদের প্রথম আসল distributed-system bug ship করে — কারণ "fire-and-forget HTTP POST" শুনতে সহজ লাগে অথচ failure case-গুলো সূক্ষ্ম।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A webhook is like a smoke detector that calls the fire station itself, rather than waiting for someone to check if there's smoke.
+একটা webhook অনেকটা এমন একটা smoke detector-এর মতো যেটা নিজে থেকেই fire station-এ ফোন করে, ধোঁয়া আছে কিনা কেউ এসে দেখবে তার অপেক্ষায় বসে থাকে না।
 
 </Callout>
 
-## The shape of a webhook
+## একটা webhook-এর গড়ন
 
 ```
 POST /your/webhook/url HTTP/1.1
@@ -41,116 +49,116 @@ X-Webhook-Signature: t=1714831200,v1=abc...
 }
 ```
 
-That is the whole protocol. A POST. JSON body. A few headers carrying the event ID, timestamp, and HMAC signature. The receiver responds with `2xx` to acknowledge or `5xx`/timeout to fail.
+পুরো protocol-টা এটুকুই। একটা POST। JSON body। কয়েকটা header যা event ID, timestamp, আর HMAC signature বহন করে। receiver `2xx` দিয়ে acknowledge করে অথবা `5xx`/timeout দিয়ে fail করে।
 
-Everything else in this track — signing, retries, idempotency, dead-letter queues — is the operational story around making that simple POST reliable across networks that drop packets, receivers that go down for hours, and attackers who would love to forge events.
+এই track-এর বাকি সবকিছু — signing, retries, idempotency, dead-letter queue — হলো ওই সরল POST-টাকে এমন নেটওয়ার্কের ওপর নির্ভরযোগ্য করার অপারেশনাল গল্প, যে নেটওয়ার্ক packet drop করে, যেখানে receiver ঘণ্টার পর ঘণ্টা down থাকে, আর যেখানে attacker-রা event জাল করতে মুখিয়ে থাকে।
 
 ## Push vs pull
 
-Two ways for a system to learn that something happened in another system.
+একটা সিস্টেম কীভাবে জানবে যে অন্য একটা সিস্টেমে কিছু ঘটেছে — এর দুটো উপায়।
 
-**Pull (polling).** Your code calls `GET /api/payments?since=...` every minute. Easy to write, expensive to operate, latency = polling interval. Right when events are rare and stale data is fine.
+**Pull (polling)।** আপনার কোড প্রতি মিনিটে `GET /api/payments?since=...` কল করে। লিখতে সহজ, চালাতে খরচসাপেক্ষ, latency = polling interval। যখন event বিরল আর বাসি data-তেও চলে, তখন এটা ঠিক আছে।
 
-**Push (webhook).** They call you when something happens. Low-latency, low-overhead, but introduces a whole new failure surface: what if your server is down when their POST arrives?
+**Push (webhook)।** কিছু ঘটলে তারা আপনাকে কল করে। Low-latency, low-overhead, কিন্তু পুরো একটা নতুন failure surface নিয়ে আসে: তাদের POST পৌঁছানোর সময় যদি আপনার server down থাকে, তাহলে কী হবে?
 
-Most production integrations end up using both: webhooks for low-latency notification, polling as a safety net for missed events.
+বেশিরভাগ production integration শেষমেশ দুটোই ব্যবহার করে: low-latency notification-এর জন্য webhooks, আর মিস হওয়া event ধরার জন্য safety net হিসেবে polling।
 
-## Webhooks vs message queues vs WebSockets
+## Webhooks vs message queue vs WebSockets
 
-|             | Webhooks                       | Message queues                | WebSockets                    |
-| ----------- | ------------------------------ | ----------------------------- | ----------------------------- |
-| Direction   | producer → receiver, push      | producer → broker → consumer  | bidirectional                 |
-| Transport   | HTTP POST                      | AMQP / Kafka / SQS / NATS     | WebSocket frames              |
-| Coupling    | producer knows receiver URL    | both know broker              | persistent connection         |
-| Reach       | any HTTPS endpoint on internet | usually inside one trust zone | usually browser ↔ your server |
-| Operational | mostly the producer            | mostly the broker             | both ends                     |
-| Replay      | producer replays               | broker replays                | reconnect + resume            |
+|             | Webhooks                          | Message queues                | WebSockets                     |
+| ----------- | --------------------------------- | ----------------------------- | ------------------------------ |
+| Direction   | producer → receiver, push         | producer → broker → consumer  | দুইমুখী (bidirectional)        |
+| Transport   | HTTP POST                         | AMQP / Kafka / SQS / NATS     | WebSocket frame                |
+| Coupling    | producer receiver-এর URL জানে     | দুজনেই broker চেনে            | persistent connection          |
+| Reach       | internet-এর যেকোনো HTTPS endpoint | সাধারণত এক trust zone-এর ভেতর | সাধারণত browser ↔ আপনার server |
+| Operational | মূলত producer                     | মূলত broker                   | দুই প্রান্তই                   |
+| Replay      | producer replay করে               | broker replay করে             | reconnect + resume             |
 
-Webhooks are the right answer when:
+Webhooks-ই সঠিক উত্তর যখন:
 
-- The receiver lives in a different organisation, network, or trust zone.
-- You need to notify many independent receivers (one event, multiple subscribers, each with their own URL).
-- You want the receiver to use plain HTTPS — no broker SDK, no WebSocket library.
-- The receiver decides whether and when to consume; the producer does not maintain a queue per consumer.
+- receiver ভিন্ন কোনো organisation, network, বা trust zone-এ থাকে।
+- আপনাকে অনেকগুলো স্বাধীন receiver-কে জানাতে হয় (একটা event, একাধিক subscriber, প্রত্যেকের নিজস্ব URL)।
+- আপনি চান receiver শুধু plain HTTPS ব্যবহার করুক — কোনো broker SDK নেই, কোনো WebSocket library নেই।
+- receiver ঠিক করে কখন এবং আদৌ consume করবে কিনা; producer প্রতি consumer-এর জন্য আলাদা queue রাখে না।
 
-They are wrong when:
+এগুলো ভুল যখন:
 
-- Both sides are inside one infrastructure you control. Use a queue (chapter on **Messaging & queues** later in the path).
-- You need realtime UI updates to a browser. Use WebSockets or SSE (track you just finished).
-- You need ordering guarantees stronger than "eventually delivered." Webhooks reorder under retries.
-- Throughput is sustained at >1K events/sec per receiver. The HTTP overhead dominates; switch to a queue and let the receiver drain.
+- দুই পক্ষই আপনার নিয়ন্ত্রণে থাকা এক infrastructure-এর ভেতরে। একটা queue ব্যবহার করুন (path-এ পরে **Messaging & queues** অধ্যায়)।
+- আপনার browser-এ realtime UI update দরকার। WebSockets বা SSE ব্যবহার করুন (যে track আপনি সবেমাত্র শেষ করলেন)।
+- "eventually delivered"-এর চেয়ে শক্ত ordering guarantee লাগে। Retry-এর সময় webhooks reorder করে।
+- প্রতি receiver-এ throughput টানা >1K events/sec। HTTP overhead-ই তখন প্রধান হয়ে যায়; একটা queue-তে switch করুন আর receiver-কে drain করতে দিন।
 
-## The four hard parts
+## চারটে কঠিন অংশ
 
-A POST request is one HTTP call. A _production_ webhook system has to solve:
+একটা POST request মানে একটা HTTP call। কিন্তু একটা _production_ webhook সিস্টেমকে solve করতে হয়:
 
-**1. Authenticity.** The receiver must know the POST really came from you and not from an attacker who guessed the URL. → HMAC signing (chapter 4).
+**১. Authenticity।** receiver-কে নিশ্চিত হতে হবে POST-টা সত্যিই আপনার কাছ থেকে এসেছে, URL আন্দাজ করে ফেলা কোনো attacker-এর কাছ থেকে নয়। → HMAC signing (অধ্যায় ৪)।
 
-**2. At-least-once delivery.** Networks drop. Receivers crash mid-process. The producer must retry until the receiver acknowledges. → Retries with backoff (chapter 6).
+**২. At-least-once delivery।** নেটওয়ার্ক drop করে। Receiver প্রসেসিংয়ের মাঝপথে crash করে। receiver acknowledge না করা পর্যন্ত producer-কে retry করতে হবে। → backoff সহ Retries (অধ্যায় ৬)।
 
-**3. Idempotency.** Retries mean the same event arrives multiple times. The receiver must process it once. → Event IDs and dedup (chapter 7).
+**৩. Idempotency।** Retry মানে একই event একাধিকবার পৌঁছায়। receiver-কে সেটা একবারই process করতে হবে। → Event ID আর dedup (অধ্যায় ৭)।
 
-**4. Durability.** A producer that crashes after writing to its database but before sending the POST loses the event forever. → The outbox pattern (chapter 10).
+**৪. Durability।** যে producer database-এ লিখে ফেলার পর কিন্তু POST পাঠানোর আগে crash করে, সে event-টা চিরতরে হারায়। → outbox pattern (অধ্যায় ১০)।
 
-Skipping any one of these turns webhooks into "almost-correct events" — silent data loss, double-charges, missed notifications. The four together are the difference between a feature that works on the demo and one that works for years.
+এর যেকোনো একটা বাদ দিলে webhooks হয়ে যায় "প্রায়-সঠিক event" — নীরব data loss, double-charge, মিস হওয়া notification। চারটে একসাথেই সেই পার্থক্য গড়ে দেয় — demo-তে কাজ করা feature আর বছরের পর বছর কাজ করা feature-এর মধ্যে।
 
-## A real webhook system
+## একটা আসল webhook সিস্টেম
 
-Stripe's webhook infrastructure is the canonical reference. The shape:
+Stripe-এর webhook infrastructure হলো canonical reference। এর গড়ন:
 
-- Producer (Stripe) generates events for every state change.
-- Each customer registers one or more endpoint URLs and chooses event types they care about.
-- Producer signs every payload with the customer's secret.
-- Producer attempts delivery; on non-2xx or timeout, retries with exponential backoff for up to 3 days.
-- Customer's receiver verifies signature, dedupes by event ID, processes, returns 200.
-- Stripe exposes a dashboard with delivery history, the request/response of each attempt, manual retry buttons.
+- Producer (Stripe) প্রতিটা state change-এর জন্য event generate করে।
+- প্রতিটা customer এক বা একাধিক endpoint URL register করে এবং তারা যে event type নিয়ে ভাবে সেগুলো বেছে নেয়।
+- Producer প্রতিটা payload customer-এর secret দিয়ে sign করে।
+- Producer delivery-র চেষ্টা করে; non-2xx বা timeout হলে, ৩ দিন পর্যন্ত exponential backoff-এ retry করে।
+- Customer-এর receiver signature verify করে, event ID দিয়ে dedupe করে, process করে, 200 return করে।
+- Stripe একটা dashboard expose করে — যেখানে delivery history, প্রতিটা attempt-এর request/response, আর manual retry বাটন থাকে।
 
-That dashboard is the giveaway. Webhooks are not a fire-and-forget feature; they are an _operated_ feature. You build the system _and_ the tooling to debug it.
+ওই dashboard-টাই হলো আসল ইঙ্গিত। Webhooks কোনো fire-and-forget feature নয়; এটা একটা _operated_ feature। আপনি সিস্টেমটা _এবং_ সেটা debug করার tooling — দুটোই বানান।
 
-## The receiver perspective
+## Receiver-এর দৃষ্টিভঙ্গি
 
-If you are integrating with someone else's webhooks, the rules are simple:
+আপনি যদি অন্য কারও webhook-এর সাথে integrate করেন, নিয়মগুলো সরল:
 
-- **Respond 200 quickly** (under a few seconds). Defer slow work to a background queue.
-- **Respond 200 even if you've seen this event ID before.** Idempotency is your job.
-- **Verify the signature on every request.** Reject anything that fails the check.
-- **Reject events older than your replay window** (5 minutes is typical).
-- **Be ready to receive duplicates** — at-least-once is the contract.
+- **তাড়াতাড়ি 200 return করুন** (কয়েক সেকেন্ডের মধ্যে)। ধীর কাজ background queue-তে defer করুন।
+- **এই event ID আগে দেখলেও 200 return করুন।** Idempotency আপনার দায়িত্ব।
+- **প্রতিটা request-এ signature verify করুন।** check ফেল করে এমন যেকোনো কিছু reject করুন।
+- **আপনার replay window-এর চেয়ে পুরনো event reject করুন** (সাধারণত ৫ মিনিট)।
+- **Duplicate পাওয়ার জন্য তৈরি থাকুন** — at-least-once-ই হলো contract।
 
-Most of the bugs come from receivers doing slow synchronous work on the webhook handler. The producer times out, retries, and now you have N copies of the same payment processed.
+বেশিরভাগ bug আসে সেসব receiver থেকে যারা webhook handler-এই ধীর synchronous কাজ করে। producer timeout করে, retry করে, আর এখন আপনার হাতে একই payment-এর N কপি process হয়ে বসে।
 
 <Callout type="warn">
 
-**Receivers must be idempotent.** A producer with a perfect retry policy still delivers some events twice when the receiver's 200 response gets lost between TCP and your application. The receiver dedupes; the producer cannot guarantee exactly-once.
+**Receiver-দের idempotent হতেই হবে।** একদম নিখুঁত retry policy সহ একটা producer-ও কিছু event দুবার deliver করবে, যখন receiver-এর 200 response TCP আর আপনার application-এর মাঝে হারিয়ে যায়। receiver dedupe করে; producer exactly-once গ্যারান্টি দিতে পারে না।
 
 </Callout>
 
-## When webhooks fail and you do not notice
+## যখন webhooks fail করে অথচ আপনি টের পান না
 
-Three silent failure modes worth memorizing:
+তিনটে নীরব failure mode মনে রাখার মতো:
 
-**1. Receiver returns 200 but throws after.** Producer thinks the event landed. Receiver dropped it on the floor. Fix: receivers acknowledge _after_ persisting the event, not before.
+**১. Receiver 200 return করে কিন্তু পরে throw করে।** producer ভাবে event পৌঁছে গেছে। receiver সেটা মেঝেতে ফেলে দিয়েছে। ফিক্স: receiver-রা event persist করার _পরে_ acknowledge করে, আগে নয়।
 
-**2. Producer crashes after the side-effect, before sending.** A payment is recorded in your DB but no webhook is sent. Customers' systems never learn. Fix: outbox pattern (chapter 10).
+**২. Producer side-effect-এর পরে, পাঠানোর আগে crash করে।** আপনার DB-তে একটা payment record হয়েছে কিন্তু কোনো webhook যায়নি। Customer-দের সিস্টেম কখনও জানতেই পারে না। ফিক্স: outbox pattern (অধ্যায় ১০)।
 
-**3. Permanent failure goes unnoticed.** Receiver URL is dead, producer retries for 3 days, gives up, no one is paged. Fix: dead-letter queue with alerting (chapter 8).
+**৩. স্থায়ী failure নজরে পড়ে না।** receiver URL মৃত, producer ৩ দিন retry করে, হাল ছেড়ে দেয়, কাউকে page করা হয় না। ফিক্স: alerting সহ dead-letter queue (অধ্যায় ৮)।
 
-If your webhook system has none of these, you have not built it yet — you just shipped its happy path.
+আপনার webhook সিস্টেমে এর একটাও না থাকলে, আপনি এটা এখনও বানানই নি — আপনি শুধু এর happy path ship করেছেন।
 
-## What "self-hosted" looks like
+## "Self-hosted" দেখতে কেমন
 
-The whole track stays vendor-neutral. No "use AWS EventBridge" or "deploy to Hookdeck." We build a Go producer, a Go receiver, Postgres for the outbox and inbox, and ship behind nginx on a VPS. Same operational shape as the rest of the path.
+পুরো track-টা vendor-neutral থাকে। কোনো "AWS EventBridge ব্যবহার করো" বা "Hookdeck-এ deploy করো" নেই। আমরা একটা Go producer, একটা Go receiver, outbox আর inbox-এর জন্য Postgres বানাই, আর একটা VPS-এ nginx-এর পেছনে ship করি। path-এর বাকি অংশের মতোই একই অপারেশনাল গড়ন।
 
-You also get to feel the operator's pain. Running webhooks teaches you why managed services charge for them — they handle the dead receivers, the noisy retries, the replay UI. After you build it once you can decide whether to build or buy.
+আপনি operator-এর যন্ত্রণাটাও অনুভব করার সুযোগ পান। Webhooks চালানো আপনাকে শেখায় managed service-রা কেন এর জন্য টাকা নেয় — তারা মৃত receiver, noisy retry, replay UI সামলায়। একবার নিজে বানিয়ে ফেললে আপনি ঠিক করতে পারবেন build করবেন নাকি buy।
 
-## Recap
+## রিক্যাপ
 
-- A webhook is a POST you make when something happens. JSON body, a few headers, 2xx ack.
-- Push is the alternative to polling. Lower latency, harder operations.
-- Webhooks fit cross-trust-boundary push to many receivers; queues fit inside one infra.
-- The four hard parts: authenticity (HMAC), at-least-once (retries), idempotency (dedup), durability (outbox).
-- Receivers must respond fast, dedupe, verify signature, accept replay.
-- Silent failures come from receivers ack'ing too early, producers crashing post-side-effect, and unnoticed permanent failures.
-- We build it self-hosted in Go + Postgres on a VPS — same shape as Stripe, your scale.
+- একটা webhook হলো কিছু ঘটলে আপনার করা একটা POST। JSON body, কয়েকটা header, 2xx ack।
+- Push হলো polling-এর বিকল্প। Latency কম, operation কঠিন।
+- Webhooks খাটে cross-trust-boundary push-এ, অনেক receiver-এর কাছে; queue খাটে এক infra-এর ভেতরে।
+- চারটে কঠিন অংশ: authenticity (HMAC), at-least-once (retries), idempotency (dedup), durability (outbox)।
+- Receiver-দের দ্রুত response দিতে হবে, dedupe করতে হবে, signature verify করতে হবে, replay accept করতে হবে।
+- নীরব failure আসে receiver খুব তাড়াতাড়ি ack করা থেকে, producer side-effect-এর পরে crash করা থেকে, আর নজরে না পড়া স্থায়ী failure থেকে।
+- আমরা এটা Go + Postgres-এ VPS-এ self-hosted বানাই — Stripe-এর মতোই গড়ন, আপনার scale-এ।
 
-Next: [Event contract design](/notes/webhooks/02-event-contract) — types, fields, idempotency keys, and the schema-evolution rules that keep your customers' code working.
+পরবর্তী: [Event contract design](/notes/webhooks/02-event-contract) — type, field, idempotency key, আর সেই schema-evolution নিয়ম যা আপনার customer-দের কোড চালু রাখে।

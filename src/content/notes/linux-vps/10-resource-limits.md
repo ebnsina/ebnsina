@@ -1,9 +1,9 @@
 ---
 title: 'Resource Limits'
-subtitle: 'ulimit, cgroups, and the OOM killer — three layers of resource control that decide whether your services share the box politely or fight to the death.'
+subtitle: 'ulimit, cgroups, আর OOM killer — resource control-এর তিনটা স্তর যা ঠিক করে আপনার সার্ভিসগুলো বক্সটা ভদ্রভাবে ভাগ করে নেবে নাকি মরণপণ লড়াই করবে।'
 chapter: 10
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['cgroups', 'ulimit', 'oom', 'limits', 'linux']
 ---
 
@@ -13,27 +13,35 @@ topics: ['cgroups', 'ulimit', 'oom', 'limits', 'linux']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Resource limits are like a circuit breaker — they prevent one overloaded appliance from drawing too much current and taking down the whole house.
+Resource limit অনেকটা সার্কিট ব্রেকারের মতো — এটা একটা ওভারলোডেড যন্ত্রকে বেশি কারেন্ট টেনে পুরো বাড়ি ফেলে দেওয়া থেকে ঠেকায়।
 
 </Callout>
 
-## Why limits exist
+## গল্পে বুঝি
 
-A Linux box has finite resources: CPU cycles, RAM, file descriptors, processes, disk I/O bandwidth. Every running service competes for those resources. Without limits, a single bug — a memory leak, a runaway loop, a process spawning child processes in a tight loop — can starve every other service on the box, including ssh and journald, leaving you locked out and the machine effectively dead.
+পুরনো শহরের এক গলিতে একটা সাঝা রান্নাঘর — এলাকার অনেক রাঁধুনি এখানেই রান্না করেন। কিন্তু গ্যাসের চাপ সীমিত, পানির লাইন একটা, আর হাঁড়ি-পাতিল আর কাউন্টারের জায়গাও গোনা। ম্যানেজার ফাতিমা আল-ফিহরি তাই প্রত্যেক রাঁধুনির জন্য একটা রেশন বেঁধে দিয়েছেন: এতটুকু গ্যাস, এতগুলো হাঁড়ি, আর কাউন্টারে এতটুকু জায়গা — এর বেশি কেউ নেবে না।
 
-There are three layers of limits to know:
+একদিন এক রাঁধুনি বড় দাওয়াতের অর্ডার পেয়ে লোভে সব চুলা জ্বালিয়ে, সব হাঁড়ি টেনে নিয়ে পুরো গ্যাস শুষে নিতে চাইল। রেশন না থাকলে বাকি সবাই ঠান্ডা চুলার সামনে বসে থাকত, কারও রান্নাই হতো না। কিন্তু ফাতিমার বেঁধে দেওয়া সীমার কারণে ওই একজন নিজের কোটার বেশি গ্যাস বা হাঁড়ি পেল না — তার রান্না আটকে গেল ঠিকই, কিন্তু পাশের রাঁধুনিরা নির্বিঘ্নে নিজেদের রান্না চালিয়ে গেলেন।
 
-1. **Per-process limits (ulimit / rlimits)** — set when a process starts, enforced by the kernel.
-2. **Cgroups** — group-level limits across a set of processes (your whole service or container).
-3. **The OOM killer** — kernel's last resort when memory is exhausted.
+এই সাঝা রান্নাঘরটাই আসলে আপনার Linux বক্স, আর প্রত্যেক রাঁধুনি একেকটা process বা user। ফাতিমার বেঁধে দেওয়া গ্যাস-হাঁড়ি-জায়গার রেশনই হলো **ulimit** আর **cgroups** — per-process বা per-user করে CPU, memory আর open files-এর ওপর সীমা। ওই লোভী রাঁধুনিকে আটকে দেওয়াটাই একটা runaway process-কে cap করা, যাতে সে পুরো মেশিন অনাহারে ফেলে বা ক্র্যাশ করতে না পারে। বাস্তবে একটা memory leak করা service বা টাইট লুপে child spawn করা bug ঠিক এভাবেই গোটা সার্ভার নামিয়ে দিতে পারত — resource limit থাকলে ক্ষতিটা ওই একটা service-এই আটকে থাকে, বাকি সবকিছু (ssh সহ) সচল থাকে।
 
-systemd ties all three together for services it supervises.
+## limit কেন থাকে
 
-## Per-process limits — `ulimit`
+একটা Linux বক্সের resource সীমিত: CPU cycle, RAM, file descriptor, প্রসেস, disk I/O ব্যান্ডউইথ। চলমান প্রতিটা সার্ভিস এই resource-গুলোর জন্য প্রতিযোগিতা করে। limit ছাড়া, একটামাত্র bug — একটা memory leak, একটা runaway loop, একটা প্রসেস টাইট লুপে child প্রসেস spawn করা — বক্সের বাকি সব সার্ভিসকে (ssh আর journald সহ) অনাহারে ফেলে দিতে পারে, আপনাকে লক আউট করে দিয়ে আর মেশিনটাকে কার্যত মৃত বানিয়ে।
 
-When the kernel forks a process, it inherits a set of resource limits called **rlimits**. The shell exposes them as `ulimit`:
+জানার মতো limit-এর তিনটা স্তর আছে:
+
+1. **Per-process limit (ulimit / rlimits)** — প্রসেস শুরু হওয়ার সময় সেট হয়, কার্নেল enforce করে।
+2. **Cgroups** — একগুচ্ছ প্রসেসের ওপর group-লেভেল limit (আপনার পুরো সার্ভিস বা কন্টেইনার)।
+3. **OOM killer** — memory ফুরিয়ে গেলে কার্নেলের শেষ ভরসা।
+
+systemd তার সুপারভাইজ করা সার্ভিসগুলোর জন্য এই তিনটাকেই একসাথে বেঁধে দেয়।
+
+## Per-process limit — `ulimit`
+
+কার্নেল যখন একটা প্রসেস fork করে, সেটা **rlimits** নামে একগুচ্ছ resource limit উত্তরাধিকারসূত্রে পায়। shell সেগুলোকে `ulimit` হিসেবে প্রকাশ করে:
 
 ```bash
 $ ulimit -a
@@ -55,23 +63,23 @@ virtual memory          (kbytes, -v) unlimited
 file locks                      (-x) unlimited
 ```
 
-The most important ones in practice:
+বাস্তবে সবচেয়ে গুরুত্বপূর্ণগুলো:
 
-| Limit              | Flag | What happens at the cap                                                  |
-| ------------------ | ---- | ------------------------------------------------------------------------ |
-| Open files (FDs)   | `-n` | `accept()` and `open()` start returning `EMFILE`. Network services fail. |
-| Max user processes | `-u` | `fork()` returns `EAGAIN`. Cannot spawn workers.                         |
-| Stack size         | `-s` | Deep recursion crashes the process.                                      |
-| Max RAM (virtual)  | `-v` | `malloc()` fails. App handles or crashes.                                |
-| CPU time           | `-t` | Process is killed after this many seconds of CPU time.                   |
+| Limit              | Flag | cap-এ পৌঁছালে যা হয়                                                            |
+| ------------------ | ---- | ------------------------------------------------------------------------------- |
+| Open files (FDs)   | `-n` | `accept()` আর `open()` `EMFILE` ফেরত দিতে শুরু করে। নেটওয়ার্ক সার্ভিস ফেল করে। |
+| Max user processes | `-u` | `fork()` `EAGAIN` ফেরত দেয়। worker spawn করা যায় না।                          |
+| Stack size         | `-s` | গভীর recursion প্রসেস ক্র্যাশ করে।                                              |
+| Max RAM (virtual)  | `-v` | `malloc()` ফেল করে। অ্যাপ সামলায় বা ক্র্যাশ করে।                               |
+| CPU time           | `-t` | এত সেকেন্ড CPU time-এর পরে প্রসেস kill হয়ে যায়।                               |
 
-`ulimit` shows **soft** limits by default, the value the process is currently subject to. `ulimit -aH` shows **hard** limits, the cap a process can raise its soft limit to without being root.
+`ulimit` ডিফল্টভাবে **soft** limit দেখায়, যে মানের অধীনে প্রসেসটা এখন আছে। `ulimit -aH` দেখায় **hard** limit, যে cap পর্যন্ত একটা প্রসেস root না হয়ে তার soft limit বাড়াতে পারে।
 
-## The 1024 file descriptor problem
+## 1024 file descriptor সমস্যা
 
-The default for `ulimit -n` on most distros is **1024**. That is the number of open files (including sockets) a single process can have. For any real network service, this is _too low_.
+বেশিরভাগ distro-তে `ulimit -n`-এর ডিফল্ট **1024**। এটা একটা প্রসেসের খোলা রাখতে পারা ফাইলের সংখ্যা (socket সহ)। যেকোনো সত্যিকারের নেটওয়ার্ক সার্ভিসের জন্য এটা _খুব কম_।
 
-Run a quick test:
+একটা দ্রুত টেস্ট চালান:
 
 ```bash
 # In one terminal:
@@ -81,14 +89,14 @@ Traceback (most recent call last):
 OSError: [Errno 24] Too many open files
 ```
 
-Solution: raise it. systemd lets you set this per service in the unit file:
+সমাধান: এটা বাড়ান। systemd আপনাকে unit ফাইলে per-service এটা সেট করতে দেয়:
 
 ```ini
 [Service]
 LimitNOFILE=65536
 ```
 
-Or globally for non-systemd processes, edit `/etc/security/limits.conf`:
+বা non-systemd প্রসেসের জন্য গ্লোবালভাবে, `/etc/security/limits.conf` এডিট করুন:
 
 ```text
 *               soft    nofile          65536
@@ -97,13 +105,13 @@ deploy          soft    nproc           16384
 deploy          hard    nproc           32768
 ```
 
-For systemd-managed services, `limits.conf` does not apply — the unit file's `LimitNOFILE` is what matters.
+systemd-পরিচালিত সার্ভিসের জন্য `limits.conf` প্রযোজ্য নয় — unit ফাইলের `LimitNOFILE`-ই যা গুরুত্বপূর্ণ।
 
-## cgroups — the modern resource cage
+## cgroups — আধুনিক resource খাঁচা
 
-**cgroups** (control groups) are a kernel feature that takes a set of processes and applies _collective_ limits to them: total memory, total CPU share, total I/O bandwidth. systemd uses cgroups to manage every service it runs.
+**cgroups** (control groups) হলো একটা কার্নেল ফিচার যা একগুচ্ছ প্রসেস নিয়ে তাদের ওপর _সম্মিলিত_ limit প্রয়োগ করে: মোট memory, মোট CPU share, মোট I/O ব্যান্ডউইথ। systemd তার চালানো প্রতিটা সার্ভিস পরিচালনা করতে cgroups ব্যবহার করে।
 
-You can see this:
+আপনি এটা দেখতে পারেন:
 
 ```bash
 $ systemctl status nginx
@@ -115,19 +123,19 @@ $ systemctl status nginx
              └─1236 nginx: worker process
 ```
 
-The `CGroup: /system.slice/nginx.service` line tells you nginx and all its children live in one cgroup. Limits applied to that cgroup apply to all of them combined.
+`CGroup: /system.slice/nginx.service` লাইনটা বলে nginx আর তার সব child একটা cgroup-এ থাকে। ওই cgroup-এ প্রয়োগ করা limit তাদের সবার ওপর একসাথে প্রযোজ্য।
 
-The three cgroup controllers you will use most:
+সবচেয়ে বেশি ব্যবহার করবেন এমন তিনটা cgroup controller:
 
-| Controller | What it limits                              |
+| Controller | যা limit করে                                |
 | ---------- | ------------------------------------------- |
-| `memory`   | RAM consumed by the cgroup as a whole.      |
-| `cpu`      | CPU share or hard quota.                    |
-| `io`       | Block-device read/write bandwidth and IOPS. |
+| `memory`   | cgroup-টা সামগ্রিকভাবে যত RAM খরচ করে।      |
+| `cpu`      | CPU share বা hard quota।                    |
+| `io`       | Block-device read/write ব্যান্ডউইথ আর IOPS। |
 
-## Setting cgroup limits via systemd
+## systemd-এর মাধ্যমে cgroup limit সেট করা
 
-You can almost always avoid touching cgroups directly. systemd unit files have first-class properties:
+আপনি প্রায় সবসময়ই সরাসরি cgroups ঘাঁটা এড়াতে পারেন। systemd unit ফাইলে first-class property আছে:
 
 ```ini
 [Service]
@@ -146,21 +154,21 @@ IOWeight=100                 # 1–10000, relative
 IOReadBandwidthMax=/var/lib/myapp 100M   # per-device read cap
 ```
 
-After editing, `daemon-reload` and restart the service.
+এডিট করার পরে, `daemon-reload` করুন আর সার্ভিসটা restart করুন।
 
-To check what is in effect:
+কী কার্যকর আছে তা চেক করতে:
 
 ```bash
 systemctl show myapp --property=MemoryMax,MemoryCurrent,CPUQuota
 ```
 
-## Watching cgroup usage live
+## cgroup ব্যবহার লাইভ দেখা
 
 ```bash
 systemd-cgtop
 ```
 
-Looks like `top`, but rows are cgroups (services), columns are CPU/memory/I/O usage:
+দেখতে `top`-এর মতো, কিন্তু row-গুলো cgroup (সার্ভিস), column-গুলো CPU/memory/I/O ব্যবহার:
 
 ```text
 Control Group                            Tasks   %CPU   Memory  Input/s Output/s
@@ -171,34 +179,34 @@ system.slice/nginx.service                   3    1.2    24M        -        -
 system.slice/myapp.service                   2    0.8   128M        -        -
 ```
 
-`cgtop` is the answer to "which service is using my CPU?" without scrolling through `top`.
+`top`-এর ভেতর স্ক্রল না করেই "কোন সার্ভিস আমার CPU খাচ্ছে?" প্রশ্নের উত্তর হলো `cgtop`।
 
-## The OOM killer
+## OOM killer
 
-When the system genuinely runs out of memory and cannot reclaim any, the kernel invokes the **out-of-memory killer**: it scores every process and kills the one that looks worst (high recent memory usage, low importance, no special protection).
+সিস্টেম যখন সত্যিই memory ফুরিয়ে ফেলে আর কিছুই reclaim করতে পারে না, কার্নেল **out-of-memory killer** ডাকে: এটা প্রতিটা প্রসেসকে স্কোর দেয় আর যেটাকে সবচেয়ে খারাপ দেখায় সেটাকে kill করে (সাম্প্রতিক বেশি memory ব্যবহার, কম গুরুত্ব, কোনো বিশেষ সুরক্ষা নেই)।
 
-When this happens you will see:
+এটা ঘটলে আপনি দেখবেন:
 
 ```bash
 $ dmesg | grep -i "killed process"
 [12345.678901] Out of memory: Killed process 1234 (myapp) total-vm:1234567kB, anon-rss:987654kB
 ```
 
-Or via journalctl:
+অথবা journalctl-এর মাধ্যমে:
 
 ```bash
 journalctl -k --grep="killed process"
 ```
 
-The OOM killer is the kernel admitting defeat. It is a _symptom_, not a feature you should rely on. If your services are getting OOM-killed, you have either:
+OOM killer হলো কার্নেলের হার মেনে নেওয়া। এটা একটা _উপসর্গ_, এমন কোনো ফিচার নয় যার ওপর আপনার নির্ভর করা উচিত। আপনার সার্ভিসগুলো যদি OOM-kill হতে থাকে, তাহলে হয়:
 
-- Underprovisioned RAM (buy more, or move things off this box).
-- A memory leak (fix it).
-- Misconfigured cgroup limits (raised above what the box has).
+- RAM কম দিয়েছেন (আরও কিনুন, বা জিনিস এই বক্স থেকে সরান)।
+- একটা memory leak আছে (ঠিক করুন)।
+- cgroup limit ভুল কনফিগার করা (বক্সে যা আছে তার চেয়ে বেশি বাড়িয়ে দিয়েছেন)।
 
-## OOM scoring and protection
+## OOM scoring আর সুরক্ষা
 
-Each process has an OOM score. Two adjustments matter:
+প্রতিটা প্রসেসের একটা OOM score আছে। দুটো adjustment গুরুত্বপূর্ণ:
 
 ```bash
 $ cat /proc/1234/oom_score
@@ -207,59 +215,59 @@ $ cat /proc/1234/oom_score_adj
 0
 ```
 
-- `oom_score` — kernel-computed. Higher = more likely to be killed.
-- `oom_score_adj` — your override, range -1000 (immune) to +1000 (kill first).
+- `oom_score` — কার্নেল-হিসাবকৃত। বেশি = kill হওয়ার সম্ভাবনা বেশি।
+- `oom_score_adj` — আপনার override, রেঞ্জ -1000 (immune) থেকে +1000 (আগে kill)।
 
-Make a service unkillable by the OOM killer (use sparingly — kernel and journald are good candidates, your buggy app is not):
+একটা সার্ভিসকে OOM killer দিয়ে অ-killable বানান (কম ব্যবহার করুন — কার্নেল আর journald ভালো candidate, আপনার buggy অ্যাপ নয়):
 
 ```ini
 [Service]
 OOMScoreAdjust=-500
 ```
 
-For most services, set per-cgroup memory limits with `MemoryMax` instead. When a service hits its own cgroup limit, only _that service_ is killed, not random other services on the box.
+বেশিরভাগ সার্ভিসের জন্য, তার বদলে `MemoryMax` দিয়ে per-cgroup memory limit সেট করুন। একটা সার্ভিস যখন তার নিজের cgroup limit ছোঁয়, তখন শুধু _সেই সার্ভিসটাই_ kill হয়, বক্সের অন্য এলোমেলো সার্ভিস নয়।
 
-## CPU pinning and weights
+## CPU pinning আর weight
 
-On a multi-core VPS with multiple services, you can give one priority over another:
+একাধিক সার্ভিস সহ একটা multi-core VPS-এ, আপনি একটাকে আরেকটার চেয়ে অগ্রাধিকার দিতে পারেন:
 
 ```ini
 [Service]
 CPUWeight=200            # 2x default share
 ```
 
-Or pin a service to specific cores:
+অথবা একটা সার্ভিসকে নির্দিষ্ট core-এ pin করুন:
 
 ```ini
 [Service]
 CPUAffinity=0 1
 ```
 
-This is rarely needed on small VPS but is the right tool when you have, say, a CPU-bound batch job that should never starve nginx.
+ছোট VPS-এ এটা কদাচিৎ দরকার হয়, কিন্তু যখন আপনার, ধরুন, একটা CPU-bound batch job আছে যেটার কখনও nginx-কে অনাহারে ফেলা উচিত নয়, তখন এটাই সঠিক হাতিয়ার।
 
-## Disk I/O limits
+## Disk I/O limit
 
-A backup script that fully saturates disk I/O can make your database unresponsive. Set an I/O cap on the backup:
+একটা backup স্ক্রিপ্ট যা পুরো disk I/O saturate করে দেয় সেটা আপনার database-কে অসাড় করে দিতে পারে। backup-এর ওপর একটা I/O cap সেট করুন:
 
 ```ini
 [Service]
 IOWeight=10
 ```
 
-`IOWeight` is relative — the backup gets 10% of the share that a default-weight service gets. Under contention, the database wins.
+`IOWeight` আপেক্ষিক — backup একটা default-weight সার্ভিস যে share পায় তার 10% পায়। প্রতিযোগিতায় database জেতে।
 
-Hard caps:
+Hard cap:
 
 ```ini
 IOReadBandwidthMax=/dev/sda 50M
 IOWriteBandwidthMax=/dev/sda 50M
 ```
 
-These cap the _cgroup's_ total throughput on a specific device. The service can still burst above when no one else is using the disk.
+এগুলো একটা নির্দিষ্ট device-এ _cgroup-এর_ মোট throughput cap করে। disk আর কেউ ব্যবহার না করলে সার্ভিসটা এখনও তার ওপরে burst করতে পারে।
 
-## Practical: a hardened service template
+## প্র্যাক্টিক্যাল: একটা hardened সার্ভিস টেমপ্লেট
 
-Combine everything into one solid service template:
+সবকিছু একটা মজবুত সার্ভিস টেমপ্লেটে মিলিয়ে ফেলুন:
 
 ```ini
 [Unit]
@@ -303,9 +311,9 @@ ReadWritePaths=/var/lib/myapp /var/log/myapp
 WantedBy=multi-user.target
 ```
 
-`OOMPolicy=stop` means: if this service is OOM-killed, do not restart it in a loop. Without that, a leaking service will be restarted, leak, get killed, restart, leak — a tight loop that just heats your CPU.
+`OOMPolicy=stop` মানে: এই সার্ভিসটা OOM-kill হলে, সেটাকে লুপে restart করো না। সেটা ছাড়া, একটা leak করা সার্ভিস restart হবে, leak করবে, kill হবে, restart হবে, leak করবে — একটা টাইট লুপ যা শুধু আপনার CPU গরম করে।
 
-## Diagnosing "what is using all the RAM?"
+## নির্ণয়: "সব RAM কে খাচ্ছে?"
 
 ```bash
 free -h                     # totals
@@ -315,14 +323,14 @@ slabtop                                           # kernel-side memory caches
 cat /proc/meminfo                                 # the full picture
 ```
 
-`MemAvailable` in `/proc/meminfo` is the most honest number — it estimates how much RAM is reclaimable for a new allocation, accounting for caches.
+`/proc/meminfo`-তে `MemAvailable` হলো সবচেয়ে সৎ সংখ্যা — এটা আন্দাজ করে একটা নতুন allocation-এর জন্য কতটুকু RAM reclaim করা যাবে, cache হিসাব করে।
 
-## Recap
+## রিক্যাপ
 
-- Per-process rlimits are the original system. Default `nofile=1024` is too low for network services — raise it via `LimitNOFILE`.
-- cgroups apply collective limits to a service. systemd's `MemoryMax`, `CPUQuota`, `TasksMax` are the everyday levers.
-- `systemd-cgtop` shows live per-service usage. The first place to look when the box feels slow.
-- The OOM killer is the kernel saying "no more memory anywhere." Use per-service `MemoryMax` to localize the damage.
-- A solid service template combines rlimits, cgroup caps, OOM policy, and sandbox directives.
+- Per-process rlimit হলো আদি সিস্টেম। ডিফল্ট `nofile=1024` নেটওয়ার্ক সার্ভিসের জন্য খুব কম — `LimitNOFILE` দিয়ে বাড়ান।
+- cgroups একটা সার্ভিসে সম্মিলিত limit প্রয়োগ করে। systemd-এর `MemoryMax`, `CPUQuota`, `TasksMax` হলো দৈনন্দিন লিভার।
+- `systemd-cgtop` লাইভ per-service ব্যবহার দেখায়। বক্স ধীর মনে হলে প্রথমে এখানে দেখুন।
+- OOM killer হলো কার্নেলের "কোথাও আর memory নেই" বলা। ক্ষতি স্থানীয় করতে per-service `MemoryMax` ব্যবহার করুন।
+- একটা মজবুত সার্ভিস টেমপ্লেট rlimit, cgroup cap, OOM policy আর sandbox ডিরেক্টিভ মিলিয়ে দেয়।
 
-Next chapter: scheduling — cron and systemd timers for the work that runs on a clock.
+পরের অধ্যায়: scheduling — ঘড়ি ধরে চলা কাজের জন্য cron আর systemd timer।

@@ -1,9 +1,9 @@
 ---
-title: 'Schema Evolution & Event Versioning'
-subtitle: 'Events are forever — how to evolve schemas without breaking consumers, and the registry that keeps everyone coordinated.'
+title: 'Schema Evolution ও Event Versioning'
+subtitle: 'Events চিরস্থায়ী — consumer না ভেঙে schema কীভাবে evolve করাবেন, আর যে registry সবাইকে সমন্বয়ে রাখে।'
 chapter: 5
 level: 'advanced'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   ['schema evolution', 'Avro', 'Schema Registry', 'backward compatibility', 'event versioning']
 ---
@@ -14,25 +14,33 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Amending a legal contract: you can't go back and change what the original contract said — other parties signed it and relied on it. You issue an addendum that clarifies or extends the original. Event schemas work the same way: existing consumers depend on the current format, so you extend rather than replace, and old versions remain valid until all consumers migrate.
+একটা আইনি চুক্তি সংশোধন করা: মূল চুক্তিতে যা লেখা ছিল আপনি ফিরে গিয়ে তা পাল্টাতে পারেন না — অন্য পক্ষরা সেটায় সই করেছে আর তার উপর নির্ভর করেছে। আপনি একটা addendum জারি করেন যা মূলটিকে স্পষ্ট করে বা বাড়ায়। Event schema ঠিক একইভাবে কাজ করে: বিদ্যমান consumer বর্তমান format-এর উপর নির্ভর করে, তাই আপনি replace না করে extend করেন, আর সব consumer migrate না হওয়া পর্যন্ত পুরনো version বৈধ থাকে।
 
 </Callout>
 
-## Why Schema Evolution Is Hard
+## গল্পে বুঝি
 
-Events are durable. Once published to Kafka or S3, they may be retained for years. Once a consumer is deployed that reads version 1 of an event, you can't safely change version 1's schema — the deployed consumer will break.
+জেলা রেকর্ড অফিসে একটা জমি-রেজিস্ট্রেশন ফর্ম পঞ্চাশ বছর ধরে চলছে। ইবনে সিনা সেখানকার পুরনো কেরানি — তাঁর আলমারিভরা ড্রয়ারে লক্ষ লক্ষ পুরনো ভরা ফর্ম জমা, আর নিয়ম হলো এই আর্কাইভের প্রতিটা কপি চিরকাল পড়ার যোগ্য থাকতে হবে। এখন সরকার চাইছে নতুন করে "মোবাইল নম্বর" তথ্যটাও নেওয়া হোক। আল-খোয়ারিজমি প্রস্তাব দিলেন পুরনো "টেলিগ্রাম ঠিকানা" ঘরটাকেই মোবাইল নম্বরের জন্য কাজে লাগিয়ে দিতে। ইবনে সিনা মাথা নাড়লেন — তাহলে আর্কাইভের প্রতিটা পুরনো ফর্মের ওই ঘরের মানে হঠাৎ বদলে যাবে, লক্ষ লক্ষ কপি ভুল অর্থ বইতে শুরু করবে।
 
-You have three options when a schema needs to change:
+তার বদলে তাঁরা ফর্মের নিচে একটা নতুন ঘর জুড়ে দিলেন — খালি থাকলেও চলবে, বাধ্যতামূলক নয়। পুরনো ফর্মগুলোতে এই ঘরটা নেই, কিন্তু সেগুলো এখনও পুরোপুরি বৈধ। প্রতিটা ফর্মের কোণে একটা ভার্সন স্ট্যাম্প বসানো — "সংস্করণ ৩", "সংস্করণ ৪"। কোনো পুরনো "সংস্করণ ২" ফর্ম নতুন কাউন্টারে এলে ফাতিমা আল-ফিহরি সেটা হাতে নিয়ে নতুন লেআউটে "অনুবাদ" করে দেন — খালি নতুন ঘরটায় ডিফল্ট বসিয়ে, বাকি সব ঘর যেমন আছে রেখে।
 
-1. Make a backward-compatible change (add optional fields — safe)
-2. Make a forward-compatible change (remove fields — risky)
-3. Create a new version and run both in parallel (safe, but complex)
+এই গল্পটাই **schema evolution**। চিরকাল আর্কাইভে থাকা ফর্ম = চিরকাল স্টোর হওয়া events, যেগুলো পুরনো আর নতুন দুই ধরনের consumer-ই পড়ে। শুধু নতুন **optional field** জোড়া (নতুন খালি ঘর) = **backward compatibility** — পুরনো events ভাঙে না। কোনো ঘর কখনও repurpose বা মুছে না ফেলা = existing field না ভাঙা (নাহলে forward compatibility নষ্ট হয়)। কোণের ভার্সন স্ট্যাম্প = **event versioning**, আর পুরনো ফর্মকে নতুন লেআউটে অনুবাদ করা = **upcasting** — পড়ার সময় পুরনো event-কে নতুন shape-এ তুলে আনা। বাস্তবে Kafka/Avro-তে ঠিক এভাবেই schema registry নতুন field-কে optional-with-default রাখতে বাধ্য করে, যাতে বছর-পুরনো events আর আজকের consumer পাশাপাশি টিকে থাকে।
+
+## Schema Evolution কেন কঠিন
+
+Events durable। একবার Kafka বা S3-তে publish হলে, সেগুলো বছরের পর বছর ধরে রাখা হতে পারে। একবার একটা consumer deploy হয়ে গেলে যেটা একটা event-এর version 1 পড়ে, আপনি নিরাপদে version 1-এর schema পাল্টাতে পারবেন না — deploy করা consumer ভেঙে যাবে।
+
+একটা schema পাল্টানোর দরকার হলে আপনার সামনে তিনটা option থাকে:
+
+1. একটা backward-compatible পরিবর্তন করুন (optional field যোগ করুন — নিরাপদ)
+2. একটা forward-compatible পরিবর্তন করুন (field সরান — ঝুঁকিপূর্ণ)
+3. একটা নতুন version তৈরি করে দুটোই সমান্তরালে চালান (নিরাপদ, কিন্তু জটিল)
 
 ## Compatibility Rules
 
-**Backward compatible** (new consumers can read old events):
+**Backward compatible** (নতুন consumer পুরনো events পড়তে পারে):
 
 ```typescript
 // V1 event — already deployed and in Kafka
@@ -43,7 +51,7 @@ You have three options when a schema needs to change:
 { type: 'OrderPlaced', orderId: '123', userId: 'u_1', amount: 9999, currency: 'EUR' }
 ```
 
-**Not backward compatible** (breaks deployed consumers):
+**Backward compatible নয়** (deploy করা consumer ভাঙে):
 
 ```typescript
 // BREAKING: removing a field
@@ -59,9 +67,9 @@ You have three options when a schema needs to change:
 // Consumer expecting number gets string
 ```
 
-## Safe Evolution Strategies
+## নিরাপদ Evolution কৌশল
 
-**Add optional fields with defaults:**
+**Default-সহ optional field যোগ করুন:**
 
 ```typescript
 // V1 — deployed
@@ -83,7 +91,7 @@ interface OrderPlacedV1_1 {
 }
 ```
 
-Consumer handles both old and new:
+Consumer পুরনো ও নতুন দুটোই handle করে:
 
 ```typescript
 function handleOrderPlaced(event: OrderPlacedV1_1): void {
@@ -92,7 +100,7 @@ function handleOrderPlaced(event: OrderPlacedV1_1): void {
 }
 ```
 
-**Explicit versioning — parallel events:**
+**Explicit versioning — সমান্তরাল events:**
 
 ```typescript
 // Keep publishing V1 for old consumers
@@ -109,7 +117,7 @@ await publish({ type: 'OrderPlacedV2', ...newData });
 // Deprecate and remove V1 once all consumers migrated
 ```
 
-**Rename with transitional period:**
+**Transitional period-সহ rename করা:**
 
 ```typescript
 // Step 1: Publish both old and new field name
@@ -126,7 +134,7 @@ await publish({ type: 'OrderPlacedV2', ...newData });
 
 ## Schema Registry
 
-A schema registry enforces compatibility rules before events are published. Confluent Schema Registry is the standard for Kafka:
+একটা schema registry events publish হওয়ার আগে compatibility নিয়ম প্রয়োগ করে। Kafka-র জন্য Confluent Schema Registry হলো standard:
 
 ```typescript
 import { SchemaRegistry } from '@kafkajs/confluent-schema-registry';
@@ -169,15 +177,15 @@ await producer.send({
 const decoded = await registry.decode(message.value);
 ```
 
-The registry enforces one of three compatibility modes:
+Registry তিনটা compatibility mode-এর একটা প্রয়োগ করে:
 
-- **BACKWARD:** New schema can read old data (new consumers handle old events)
-- **FORWARD:** Old schema can read new data (old consumers handle new events)
-- **FULL:** Both — the safest, most restrictive
+- **BACKWARD:** নতুন schema পুরনো ডেটা পড়তে পারে (নতুন consumer পুরনো events handle করে)
+- **FORWARD:** পুরনো schema নতুন ডেটা পড়তে পারে (পুরনো consumer নতুন events handle করে)
+- **FULL:** দুটোই — সবচেয়ে নিরাপদ, সবচেয়ে কড়া
 
 ## Avro vs JSON
 
-JSON events are flexible but untyped — a field rename silently breaks consumers. Avro provides a binary format with a schema embedded in every message:
+JSON events নমনীয় কিন্তু untyped — একটা field rename নীরবে consumer ভেঙে ফেলে। Avro একটা binary format দেয় যেখানে প্রতিটি message-এ একটা schema embedded থাকে:
 
 ```json
 // Avro schema
@@ -197,24 +205,24 @@ JSON events are flexible but untyped — a field rename silently breaks consumer
 }
 ```
 
-**Avro advantages:**
+**Avro-র সুবিধা:**
 
-- Schema encoded with message — consumer always knows the schema
-- Registry enforces compatibility before publish
-- Compact binary format (smaller than JSON)
-- Strongly typed — rename detected at schema registration, not at runtime
+- Schema message-এর সাথে encode করা — consumer সবসময় schema জানে
+- Registry publish-এর আগে compatibility প্রয়োগ করে
+- Compact binary format (JSON-এর চেয়ে ছোট)
+- Strongly typed — rename runtime-এ নয়, schema registration-এই ধরা পড়ে
 
-**JSON advantages:**
+**JSON-এর সুবিধা:**
 
-- Human readable — easier to debug
-- No toolchain required
-- Flexible — good for early-stage where schemas change rapidly
+- Human readable — debug করা সহজ
+- কোনো toolchain লাগে না
+- নমনীয় — early-stage-এর জন্য ভালো যেখানে schema দ্রুত পাল্টায়
 
-Start with JSON events + a versioning convention. Adopt Avro + Schema Registry when you have multiple teams consuming events and schema drift becomes a real problem.
+JSON events + একটা versioning convention দিয়ে শুরু করুন। যখন একাধিক team events consume করছে আর schema drift একটা সত্যিকারের সমস্যা হয়ে দাঁড়ায় তখন Avro + Schema Registry গ্রহণ করুন।
 
 ## Consumer-Driven Contract Testing
 
-Producers should test against what consumers actually need — not guess. Consumer-driven contract tests let consumers declare their expectations and producers verify they meet them.
+Producer-দের অনুমান করার বদলে consumer-দের আসলে যা দরকার তার বিপরীতে test করা উচিত। Consumer-driven contract test consumer-দের তাদের প্রত্যাশা ঘোষণা করতে দেয় আর producer যাচাই করে তারা সেগুলো পূরণ করছে কিনা।
 
 ```typescript
 // Consumer defines its contract (what it needs from the event)
@@ -238,9 +246,9 @@ describe('OrderPlaced event contract', () => {
 });
 ```
 
-Tools like Pact automate this — consumers publish their contracts to a broker, and producers verify against them before deploying.
+Pact-এর মতো tool এটা স্বয়ংক্রিয় করে — consumer-রা তাদের contract একটা broker-এ publish করে, আর producer deploy করার আগে সেগুলোর বিপরীতে যাচাই করে।
 
-## Event Versioning Checklist
+## Event Versioning চেকলিস্ট
 
 ```
 □ Every event has a 'version' field in the envelope
@@ -254,7 +262,7 @@ Tools like Pact automate this — consumers publish their contracts to a broker,
 □ Consumer tests explicitly test handling of old event versions
 ```
 
-**Handling unknown fields defensively:**
+**Unknown field সাবধানে handle করা:**
 
 ```typescript
 // WRONG — crashes on new fields
@@ -276,4 +284,4 @@ function parseEvent(raw: unknown): OrderPlaced {
 }
 ```
 
-The consumer only extracts what it needs. New fields added by the producer are ignored. Old required fields removed by the producer cause an error only if the consumer was relying on them — which is caught by contract tests before deployment.
+Consumer শুধু যা দরকার তা-ই extract করে। Producer-এর যোগ করা নতুন field উপেক্ষা করা হয়। Producer-এর সরানো পুরনো required field শুধু তখনই একটা error ঘটায় যদি consumer সেটার উপর নির্ভর করছিল — যা deploy-এর আগেই contract test দিয়ে ধরা পড়ে।

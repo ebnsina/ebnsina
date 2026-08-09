@@ -1,9 +1,9 @@
 ---
 title: 'How Search Works'
-subtitle: 'Inverted indexes, tokenization, TF-IDF, BM25 — the mechanics behind every search engine from Postgres full-text to Elasticsearch.'
+subtitle: 'Inverted index, tokenization, TF-IDF, BM25 — Postgres full-text থেকে Elasticsearch পর্যন্ত প্রতিটা search engine-এর পেছনের মেকানিক্স।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['inverted index', 'tokenization', 'TF-IDF', 'BM25', 'full-text search', 'relevance']
 ---
 
@@ -11,17 +11,25 @@ topics: ['inverted index', 'tokenization', 'TF-IDF', 'BM25', 'full-text search',
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি লাইব্রেরিতে বসে একটা ৯০০ পৃষ্ঠার মোটা রেফারেন্স বই ঘাঁটছেন। তাঁর দরকার — বইটায় "photosynthesis" শব্দটা ঠিক কোন কোন জায়গায় আলোচনা করা হয়েছে। প্রথমে তিনি ভাবলেন, এক পৃষ্ঠা এক পৃষ্ঠা করে পুরো বইটা পড়ে যাবেন। কিন্তু হিসাব করে দেখলেন, ৯০০ পৃষ্ঠা চোখ বুলাতে বুলাতেই দিন পার হয়ে যাবে — আর একটা শব্দের জন্য এত খাটুনি অর্থহীন।
+
+তারপর তাঁর চোখ গেল বইয়ের একদম পেছনের index পাতাগুলোর দিকে। সেখানে বর্ণানুক্রমে প্রতিটা গুরুত্বপূর্ণ শব্দের পাশে লেখা — কোন কোন পৃষ্ঠায় শব্দটা আছে। তিনি "photosynthesis" খুঁজে পেলেন: "pages 142, 388, 566"। ব্যস, আর পুরো বই পড়তে হলো না — সরাসরি ওই পৃষ্ঠাগুলোতে চলে গেলেন, সেকেন্ডের মধ্যে। মজার ব্যাপার হলো, এই index-টা কেউ একবার পুরো বই স্ক্যান করে বানিয়ে রেখেছে, যাতে পরের প্রতিটা খোঁজ সঙ্গে সঙ্গে হয়ে যায়। আর index-এ শব্দটার সবচেয়ে বিস্তারিত আলোচনা যেখানে, সেই পৃষ্ঠাটাই প্রথমে ধরা থাকে।
+
+এই গল্পটাই আসলে একটা search engine কীভাবে কাজ করে তার ছবি। পুরো বই এক পৃষ্ঠা এক পৃষ্ঠা করে পড়া মানে প্রতিটা document পুরো স্ক্যান করা — অসম্ভব ধীর। পেছনের index, যেখানে প্রতিটা শব্দের পাশে তার পৃষ্ঠাগুলোর তালিকা, সেটাই **inverted index** — শব্দ থেকে সেই document-গুলোর ম্যাপিং যেখানে শব্দটা আছে। index-এ ফ্লিপ করে সরাসরি পৃষ্ঠায় লাফ দেওয়াটা হলো একটা তাৎক্ষণিক index lookup, আর সবচেয়ে প্রাসঙ্গিক পৃষ্ঠা আগে দেখানোটা হলো **relevance ranking**। বাস্তবে Postgres full-text search থেকে Elasticsearch পর্যন্ত সব search engine ঠিক এভাবেই — indexing-এর সময় একবার শব্দ থেকে document-এর ম্যাপ বানিয়ে রাখে, যাতে query-এর সময় স্ক্যান না করে সরাসরি উত্তর তুলে আনা যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A book's index at the back: instead of reading every page to find mentions of "database," you flip to the index, find "database: pages 12, 47, 203," and jump straight there. An inverted index is that same structure — a mapping from every word to the documents containing it — built for every document in your collection.
+একটা বইয়ের পেছনের index: "database"-এর উল্লেখ খুঁজতে প্রতিটা পৃষ্ঠা পড়ার বদলে আপনি index-এ যান, "database: pages 12, 47, 203" পান, আর সরাসরি সেখানে চলে যান। একটা inverted index হলো ঠিক সেই স্ট্রাকচারটাই — প্রতিটা শব্দ থেকে সেই ডকুমেন্টগুলোতে একটা ম্যাপিং যেখানে শব্দটা আছে — আপনার কালেকশনের প্রতিটা ডকুমেন্টের জন্য বানানো।
 
 </Callout>
 
 ## The Inverted Index
 
-A database query scans rows. A search engine uses an inverted index: a map from terms to document IDs.
+একটা database query row স্ক্যান করে। একটা search engine একটা inverted index ব্যবহার করে: term থেকে document ID-এর একটা ম্যাপ।
 
 ```
 Document 1: "fast database queries"
@@ -38,11 +46,11 @@ Inverted index:
   "optimization"→[3]
 ```
 
-Query "database fast": find intersection of `database → [1, 2]` and `fast → [1, 3]` → document 1. No scanning needed.
+Query "database fast": `database → [1, 2]` আর `fast → [1, 3]`-এর intersection বের করুন → document 1। কোনো স্ক্যানিং লাগে না।
 
-## Tokenization and Normalization
+## Tokenization এবং Normalization
 
-Before indexing, text is processed into tokens:
+Indexing-এর আগে টেক্সটকে token-এ প্রসেস করা হয়:
 
 ```
 Input: "The FASTEST Database Queries!"
@@ -54,15 +62,15 @@ Input: "The FASTEST Database Queries!"
    (or keep: "fastest", "database", "queries")
 ```
 
-**Stemming** reduces words to root forms (running → run, databases → databas). Imprecise but catches variants.
+**Stemming** শব্দগুলোকে root form-এ নামিয়ে আনে (running → run, databases → databas)। নিখুঁত না হলেও ভ্যারিয়েন্ট ধরতে পারে।
 
-**Lemmatization** reduces to dictionary form (running → run, better → good). More accurate but slower.
+**Lemmatization** dictionary form-এ নামিয়ে আনে (running → run, better → good)। বেশি নিখুঁত কিন্তু ধীর।
 
-**Stopwords** (the, a, is, at) add noise without aiding search — filtered before indexing.
+**Stopwords** (the, a, is, at) search-এ কোনো সাহায্য না করে শুধু noise যোগ করে — index করার আগে ফিল্টার করা হয়।
 
-The same pipeline runs at query time: the search term goes through the same normalization so "DATABASES" finds documents indexed under "databas".
+একই pipeline query-এর সময়েও চলে: search term-টা একই normalization-এর মধ্য দিয়ে যায়, যাতে "DATABASES" সেই ডকুমেন্টগুলো খুঁজে পায় যেগুলো "databas"-এর অধীনে index করা।
 
-## Building a Minimal Inverted Index
+## একটা Minimal Inverted Index বানানো
 
 ```typescript
 class InvertedIndex {
@@ -115,20 +123,20 @@ idx.search('database fast'); // → ["fast database queries"]
 idx.search('database'); // → ["fast database queries", "optimizing database performance"]
 ```
 
-This is the core of every search engine — the rest is relevance ranking, scalability, and features.
+এটাই প্রতিটা search engine-এর মূল — বাকিটা হলো relevance ranking, scalability আর ফিচার।
 
 ## Relevance: TF-IDF
 
-All matching documents are not equally relevant. A document mentioning "database" 10 times is more relevant than one mentioning it once. But "the" appears in every document — its presence doesn't signal relevance.
+সব ম্যাচিং ডকুমেন্ট সমানভাবে relevant না। "database" ১০ বার উল্লেখ করা একটা ডকুমেন্ট একবার উল্লেখ করা ডকুমেন্টের চেয়ে বেশি relevant। কিন্তু "the" প্রতিটা ডকুমেন্টে থাকে — এর উপস্থিতি relevance-এর কোনো সিগন্যাল দেয় না।
 
-**TF (Term Frequency):** how often does the term appear in this document?
+**TF (Term Frequency):** এই ডকুমেন্টে term-টা কতবার আসে?
 
 ```
 TF("database", doc1) = 1/3 = 0.33   (1 occurrence, 3 words)
 TF("database", doc2) = 1/4 = 0.25
 ```
 
-**IDF (Inverse Document Frequency):** how rare is this term across all documents?
+**IDF (Inverse Document Frequency):** সব ডকুমেন্ট জুড়ে term-টা কতটা বিরল?
 
 ```
 IDF("database") = log(3 / 2) = 0.18   (3 docs total, 2 contain "database")
@@ -142,11 +150,11 @@ IDF("the")      = log(3 / 3) = 0       (in every doc → zero signal)
 score(doc1, "database") = TF × IDF = 0.33 × 0.18 = 0.059
 ```
 
-Documents are ranked by their TF-IDF score sum across all query terms.
+সব query term জুড়ে TF-IDF score-এর যোগফল দিয়ে ডকুমেন্টগুলো rank করা হয়।
 
 ## BM25 (Better Matching 25)
 
-Modern search engines use BM25 — an improvement over TF-IDF that handles document length variation:
+আধুনিক search engine-গুলো BM25 ব্যবহার করে — TF-IDF-এর উপর একটা উন্নতি যা document length-এর তারতম্য হ্যান্ডল করে:
 
 ```
 BM25(q, d) = Σ IDF(qi) × (TF(qi, d) × (k1 + 1)) / (TF(qi, d) + k1 × (1 - b + b × |d| / avgdl))
@@ -156,16 +164,16 @@ b = 0.75           (length normalization — longer docs don't get unfair advant
 avgdl = average document length
 ```
 
-In plain terms: BM25 gives higher scores to documents where:
+সহজ ভাষায়: BM25 সেই ডকুমেন্টগুলোকে বেশি score দেয় যেখানে:
 
-- The term appears frequently (but with diminishing returns)
-- The document is shorter relative to average (a short doc mentioning "database" twice is more focused than a long doc mentioning it twice)
+- term-টা ঘন ঘন আসে (তবে diminishing returns-সহ)
+- ডকুমেন্টটা গড়ের তুলনায় ছোট (একটা ছোট ডকুমেন্ট যেখানে "database" দুবার আছে সেটা একটা লম্বা ডকুমেন্টের চেয়ে বেশি ফোকাসড যেখানে দুবার আছে)
 
-Elasticsearch, Meilisearch, Typesense, and Postgres FTS all use BM25 or a variant.
+Elasticsearch, Meilisearch, Typesense আর Postgres FTS সবাই BM25 বা এর কোনো ভ্যারিয়েন্ট ব্যবহার করে।
 
-## What Postgres Full-Text Search Does
+## Postgres Full-Text Search যা করে
 
-Postgres has a built-in full-text search implementation:
+Postgres-এর একটা বিল্ট-ইন full-text search ইমপ্লিমেন্টেশন আছে:
 
 ```sql
 -- Create tsvector (the inverted index representation)
@@ -200,11 +208,11 @@ ADD COLUMN search_vector tsvector
   ) STORED;
 ```
 
-Postgres FTS is excellent for simple search on existing Postgres data. It lacks features like typo tolerance, faceting, synonym handling, and the relevance tuning that dedicated search engines provide.
+Postgres FTS আপনার বিদ্যমান Postgres ডেটার উপর সাধারণ search-এর জন্য চমৎকার। এতে typo tolerance, faceting, synonym handling আর relevance tuning-এর মতো ফিচার নেই যেগুলো ডেডিকেটেড search engine দেয়।
 
-## Phrase Search and Proximity
+## Phrase Search এবং Proximity
 
-Beyond simple token matching — finding "database performance" as a phrase, not just documents containing both words anywhere:
+সাধারণ token ম্যাচিংয়ের বাইরে — "database performance"-কে একটা phrase হিসেবে খুঁজে পাওয়া, শুধু এমন ডকুমেন্ট না যেখানে দুটো শব্দই যেকোনো জায়গায় আছে:
 
 ```sql
 -- Phrase search (tokens must be adjacent)
@@ -217,11 +225,11 @@ WHERE search_vector @@ to_tsquery('english', 'database <3> performance');
 -- "database" within 3 positions of "performance"
 ```
 
-This is why positions are stored in `tsvector` — they enable phrase and proximity queries.
+এই কারণেই `tsvector`-এ position স্টোর করা হয় — এগুলো phrase আর proximity query সম্ভব করে।
 
 ## Fuzzy Search
 
-Matching despite typos ("databse" → "database"):
+typo থাকা সত্ত্বেও ম্যাচ করা ("databse" → "database"):
 
 ```sql
 -- Postgres pg_trgm: trigram similarity
@@ -236,13 +244,13 @@ ORDER BY sim DESC;
 CREATE INDEX articles_title_trgm ON articles USING GIST(title gist_trgm_ops);
 ```
 
-Trigrams split text into 3-character sequences ("dat", "ata", "tab", "aba", ...) and compare overlap. A string with 80% shared trigrams is considered similar.
+Trigram টেক্সটকে ৩-অক্ষরের সিকোয়েন্সে ভাগ করে ("dat", "ata", "tab", "aba", ...) আর overlap তুলনা করে। ৮০% শেয়ার্ড trigram থাকা একটা স্ট্রিংকে similar ধরা হয়।
 
-Dedicated search engines handle fuzzy matching better — Meilisearch and Typesense have built-in typo tolerance with configurable distance.
+ডেডিকেটেড search engine-গুলো fuzzy matching ভালো হ্যান্ডল করে — Meilisearch আর Typesense-এ configurable distance-সহ বিল্ট-ইন typo tolerance আছে।
 
 ## The Search Pipeline
 
-Every search engine is fundamentally this pipeline:
+প্রতিটা search engine মূলত এই pipeline-টাই:
 
 ```
 Input text
@@ -266,4 +274,4 @@ Apply filters (facets, ranges)
 Paginate and return
 ```
 
-Understanding this pipeline explains why dedicated search engines exist: each step can be configured, tuned, and extended — language-specific analyzers, custom token filters, synonym expansion, boosting by field, document-level scoring signals (popularity, recency). Postgres covers the basics; Elasticsearch and Meilisearch expose the full pipeline.
+এই pipeline বোঝা ব্যাখ্যা করে কেন ডেডিকেটেড search engine আছে: প্রতিটা ধাপ configure, tune আর extend করা যায় — language-specific analyzer, custom token filter, synonym expansion, field অনুযায়ী boosting, document-level scoring signal (popularity, recency)। Postgres বেসিকগুলো কভার করে; Elasticsearch আর Meilisearch পুরো pipeline-টা এক্সপোজ করে।

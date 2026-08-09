@@ -1,9 +1,9 @@
 ---
 title: 'Threat Intelligence & MITRE ATT&CK'
-subtitle: 'IOCs, threat actor profiling, STIX/TAXII, ATT&CK Navigator, threat hunting with intelligence, and building a threat intel program.'
+subtitle: 'IOC, threat actor profiling, STIX/TAXII, ATT&CK Navigator, intelligence দিয়ে threat hunting, এবং একটা threat intel program গড়ে তোলা।'
 chapter: 27
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics:
   [
     'threat intelligence',
@@ -22,17 +22,25 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+শহরের থানার ইনচার্জ ফাতিমা আল-ফিহরি একটা মোটা খাতা রাখেন, যেটাকে সবাই বলে "কৌশলের খাতা"। এই খাতায় শহরের চেনা চোর-ডাকাত দলগুলোর প্রতিটা কায়দা লেখা — কোন দল বাড়িতে হানা দেওয়ার আগে কীভাবে কয়েকদিন ধরে বাড়িটার উপর নজর রাখে, কে জানালার শিক কাটতে কোন যন্ত্র পছন্দ করে, কোন দল রাতের পাহারাদারকে গল্পে ভুলিয়ে পাশ কাটায়। প্রতিটা কৌশল, প্রতিটা দলের পছন্দের হাতিয়ার — সব একই খাতায় সাজানো, যাতে যেকোনো টহল পুলিশ খুলে দেখে ঠিক জানতে পারে কোন লক্ষণটা কীসের ইঙ্গিত।
+
+তরুণ কনস্টেবল আল-খোয়ারিজমিকে ফাতিমা প্রথম দিনই খাতাটা ধরিয়ে দিয়ে বলেন — "আক্রমণের অপেক্ষা কোরো না। আগে জেনে নাও চোরেরা কীভাবে কাজ করে, তাহলে রাস্তায় সেই লক্ষণ চোখে পড়লেই তুমি চিনে ফেলবে।" এরপর ফাতিমা তাঁর পাহারাদারদের প্রশিক্ষণটাও এই খাতা ধরে ধরে সাজান — খাতার প্রতিটা চেনা কৌশলের বিপরীতে ঠিক কোন পাহারাদার কোন মোড়ে, কোন লক্ষণে সজাগ থাকবে, সেটা মিলিয়ে দেন। ফলে অপরিচিত কোনো ঘটনা নয়, বরং আগে থেকে জানা কায়দাই ধরা পড়ে হাতেনাতে।
+
+এই গল্পটাই আসলে **threat intelligence** আর **MITRE ATT&CK**। চোর দলগুলোর চেনা কায়দা লেখা সেই "কৌশলের খাতা" হলো attacker-দের জানা tactics ও techniques-এর একটা shared knowledge base — যেখানে MITRE ATT&CK ঠিক এভাবেই দুনিয়াজুড়ে চেনা adversary-দের আচরণ ক্যাটালগ করে রাখে। টহল পুলিশের চেনা লক্ষণ চিনে ফেলাটা হলো defender-দের জানা আচরণ আগেভাগে anticipate করা আর detection দিয়ে ধরা। আর পাহারাদারের প্রশিক্ষণকে খাতার সাথে মিলিয়ে দেওয়াটাই হলো নিজের defense আর detection-কে ATT&CK-এর technique-গুলোর সাথে map করা। বাস্তবে SOC টিম আর threat hunter-রা ঠিক এভাবেই ATT&CK Navigator-এ নিজেদের coverage রঙিন করে দেখে কোন চেনা attacker-behavior-এর বিরুদ্ধে তারা প্রস্তুত, আর কোথায় ফাঁক রয়ে গেছে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Intelligence agencies don't wait for attacks to study adversaries — they profile them in advance. Knowing that a specific APT group targets healthcare with spearphishing Word documents lets you harden defenses for that exact scenario before you're in their crosshairs.
+গোয়েন্দা সংস্থাগুলো প্রতিপক্ষকে বোঝার জন্য attack-এর অপেক্ষা করে না — তারা আগেভাগেই তাদের profile তৈরি করে ফেলে। কোনো নির্দিষ্ট APT group যে spearphishing Word document দিয়ে healthcare-কে target করে, সেটা জানা থাকলে আপনি ঠিক সেই scenario-র জন্য আগেই defense শক্ত করতে পারবেন — তাদের নজরে পড়ার আগেই।
 
 </Callout>
 
 ## MITRE ATT&CK Framework
 
-ATT&CK (Adversarial Tactics, Techniques, and Common Knowledge) is a globally-accessible knowledge base of adversary behavior.
+ATT&CK (Adversarial Tactics, Techniques, and Common Knowledge) হলো adversary-দের আচরণ নিয়ে একটা globally-accessible knowledge base।
 
 ```
 Structure:
@@ -192,7 +200,7 @@ misp.add_named_attribute(event, 'ip-dst', '192.168.99.100')
 
 ## APT Group Profiles
 
-Understanding major threat actors helps prioritize defenses:
+বড় threat actor-দের বোঝা defense-এর priority ঠিক করতে সাহায্য করে:
 
 ```
 APT28 (Fancy Bear) — Russia, GRU

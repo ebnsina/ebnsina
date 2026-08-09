@@ -1,9 +1,9 @@
 ---
-title: 'Presence and rooms'
-subtitle: 'Knowing who is online and which channel they are watching looks easy in a one-process demo and is genuinely hard at scale. The data model is half the work; the eviction story is the other half.'
+title: 'Presence আর rooms'
+subtitle: 'কে online আর তারা কোন channel দেখছে তা জানা একটা one-process demo-তে সহজ দেখায় আর scale-এ সত্যিই কঠিন। data model অর্ধেক কাজ; eviction story বাকি অর্ধেক।'
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['websockets', 'presence', 'rooms', 'redis', 'sets']
 ---
 
@@ -11,24 +11,32 @@ topics: ['websockets', 'presence', 'rooms', 'redis', 'sets']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-In chapter 6 we wired multi-process pub/sub. This chapter answers two questions every realtime app eventually faces:
+## গল্পে বুঝি
 
-- **Presence:** who is currently online? How do we tell the rest of the room when someone joins or leaves?
-- **Rooms:** which clients are subscribed to which channels? How do we keep that map consistent across processes when clients can reconnect to any of them?
+ফাতিমা আল-ফিহরি একটা community centre চালান। সামনের ডেস্কে একটা খাতা রাখা — কেউ ভবনে ঢুকলেই নাম সই করে, বেরোনোর সময় আবার সই করে চলে যায়। তাই খাতা দেখলেই যে কেউ এক নজরে বলে দিতে পারে এই মুহূর্তে ঠিক কারা ভেতরে আছে। কিন্তু ঝামেলা হয় তখনই, যখন কেউ কাউকে কিছু না বলে চুপিসারে পেছনের দরজা দিয়ে বেরিয়ে যায় — খাতায় তার নাম রয়ে যায়, অথচ লোকটা আসলে নেই।
 
-Both are state-tracking problems. The trap is: connections die in many ways, and a stale presence record is worse than no record. Get the eviction right or your "who is online" widget shows ghosts.
+ভবনের ভেতরে আবার আলাদা আলাদা কয়েকটা meeting room — একটা "কবিতার ঘর", একটা "গণিতের ঘর", একটা "বিতর্কের ঘর"। ইবনে সিনা যখন কবিতার ঘরে দাঁড়িয়ে একটা ঘোষণা দেন, সেটা শুধু সেই ঘরে বসে থাকা লোকজনই শোনে — পাশের গণিতের ঘরে আল-খোয়ারিজমি কিছুই টের পান না। প্রতিটা ঘর নিজের ভেতরের কথা নিজের ভেতরেই রাখে; কেউ আরেক ঘরের ঘোষণা শোনার জন্য উঠে গিয়ে সেই ঘরে ঢোকে।
+
+এই গল্পটাই আসলে **presence** আর **rooms**। সামনের ডেস্কের live sign-in খাতা হলো presence tracking — এখন কারা online তার হিসাব; বেরোনোর সময় সই করা হলো disconnect যা presence থেকে নামটা মুছে দেয় (আর চুপিসারে বেরিয়ে যাওয়াটাই সেই stale "ভূত" যা eviction দিয়ে সামলাতে হয়)। আর প্রতিটা meeting room হলো একটা room বা channel, আর এক ঘরে দেওয়া ঘোষণা শুধু সেই ঘরের লোকই শোনে — এটাই একটা room-এর member-দের কাছে scoped broadcast। বাস্তবে chat app-এ "কে online" dot আর collaborative doc-এ "এই ফাইলটা এখন কারা দেখছে" — সব ঠিক এভাবেই presence আর room দিয়ে কাজ করে।
+
+চ্যাপ্টার 6-এ আমরা multi-process pub/sub wire করেছি। এই চ্যাপ্টার দুটো প্রশ্নের উত্তর দেয় যা প্রতিটা realtime app-কে শেষমেশ মুখোমুখি হতে হয়:
+
+- **Presence:** এখন কে online? কেউ join বা leave করলে room-এর বাকিদের আমরা কীভাবে জানাব?
+- **Rooms:** কোন client কোন channel-এ subscribed? client যখন যেকোনোটায় reconnect করতে পারে তখন process জুড়ে সেই map কীভাবে সামঞ্জস্যপূর্ণ রাখব?
+
+দুটোই state-tracking সমস্যা। ফাঁদটা হলো: connection অনেকভাবে মারা যায়, আর একটা stale presence record কোনো record না থাকার চেয়ে খারাপ। eviction ঠিক করুন নাহলে আপনার "কে online" widget ভূত দেখাবে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Presence tracking is like a physical room where you can see who has walked in and who has left — the challenge is knowing when someone slipped out without saying goodbye.
+Presence tracking হলো একটা physical room-এর মতো যেখানে আপনি দেখতে পান কে ভেতরে এসেছে আর কে বেরিয়ে গেছে — চ্যালেঞ্জটা হলো কেউ বিদায় না বলে চুপিসারে বেরিয়ে গেলে সেটা জানা।
 
 </Callout>
 
-## Per-process presence — the easy part
+## Per-process presence — সহজ অংশ
 
-If you only run one process, presence is in-memory. Chapter 6 already had `rooms map[string]map[*Client]struct{}`. For each room you can iterate the clients and emit presence events:
+আপনি যদি শুধু একটা process চালান, presence in-memory। চ্যাপ্টার 6-এ ইতিমধ্যে `rooms map[string]map[*Client]struct{}` ছিল। প্রতিটা room-এর জন্য আপনি client iterate করে presence event emit করতে পারেন:
 
 ```go
 func (h *Hub) onJoin(c *Client, room string) {
@@ -52,13 +60,13 @@ func (h *Hub) listMembers(room string) []string {
 }
 ```
 
-When the client connects, send them the current member list. When others join or leave, broadcast a `presence.joined` / `presence.left` event. This is the entire pattern, and it works perfectly inside one process.
+client connect করলে, তাদের বর্তমান member list পাঠান। অন্যরা join বা leave করলে, একটা `presence.joined` / `presence.left` event broadcast করুন। এটাই পুরো প্যাটার্ন, আর এটা একটা process-এর ভেতরে নিখুঁতভাবে কাজ করে।
 
-The moment you scale to multiple processes (chapter 6), `listMembers` only sees clients connected to the local process. You need a shared store.
+আপনি একাধিক process-এ scale করার (চ্যাপ্টার 6) মুহূর্তে, `listMembers` শুধু local process-এ connected client দেখে। আপনার একটা shared store দরকার।
 
-## Multi-process presence — Redis sets
+## Multi-process presence — Redis set
 
-The natural shape is a Redis **set** per room: `presence:room:general` contains every user ID currently in `general`. Adding a member, removing, listing, and counting are O(1) or O(N) ops:
+স্বাভাবিক shape হলো প্রতি room-এ একটা Redis **set**: `presence:room:general` বর্তমানে `general`-এ থাকা প্রতিটা user ID ধারণ করে। একটা member যোগ, remove, list, আর count করা O(1) বা O(N) op:
 
 ```go
 // on join
@@ -74,23 +82,23 @@ rdb.SMembers(ctx, "presence:room:" + room).Result()
 rdb.SCard(ctx, "presence:room:" + room).Result()
 ```
 
-After every change, publish a `presence.changed` event so other processes (and their clients) hear about it.
+প্রতিটা পরিবর্তনের পর, একটা `presence.changed` event publish করুন যাতে অন্য process (আর তাদের client) এটা সম্পর্কে শোনে।
 
-This works until a process crashes without cleaning up. Then the set has stale members forever, and your "who is online" widget shows people who aren't.
+একটা process cleanup না করে crash না করা পর্যন্ত এটা কাজ করে। তারপর set-এ চিরকাল stale member থাকে, আর আপনার "কে online" widget এমন লোক দেখায় যারা নেই।
 
-## Ghosts and how to evict them
+## ভূত আর কীভাবে তাদের evict করবেন
 
-Three sources of stale presence:
+stale presence-এর তিনটা উৎস:
 
-1. **Process crashed.** It never ran the leave handler.
-2. **Network died.** Process is alive but the client is gone; the disconnect detection took minutes.
-3. **Same user, two devices.** They have two connections; closing one doesn't make them offline.
+1. **Process crashed.** এটা কখনো leave handler চালায়নি।
+2. **Network died.** Process জীবিত কিন্তু client চলে গেছে; disconnect detection মিনিট নিয়েছে।
+3. **একই user, দুটো device।** তাদের দুটো connection আছে; একটা বন্ধ করলে তারা offline হয় না।
 
-The fix: presence entries **expire** unless renewed. Treat each connected client as holding a renewable lease.
+Fix: presence entry **expire** হয় যদি না renew করা হয়। প্রতিটা connected client-কে একটা renewable lease ধারণকারী হিসেবে ভাবুন।
 
-The pattern: store presence as a **Redis hash with per-member timestamps**, plus a separate sorted set indexed by expiry, plus a periodic sweeper.
+প্যাটার্ন: presence-কে **per-member timestamp সহ একটা Redis hash** হিসেবে store করুন, plus expiry দিয়ে indexed একটা আলাদা sorted set, plus একটা periodic sweeper।
 
-Simpler version that handles 90% of cases: **per-connection key with a TTL, refreshed by heartbeats**.
+সহজতর সংস্করণ যা 90% ক্ষেত্র সামলায়: **একটা TTL সহ per-connection key, heartbeat দিয়ে refreshed**।
 
 ```go
 // every 30 seconds, while connected:
@@ -111,19 +119,19 @@ rdb.ZRemRangeByScore(ctx, "presence:room:" + room, "-inf", strconv.FormatInt(tim
 ids, _ := rdb.ZRange(ctx, "presence:room:" + room, 0, -1).Result()
 ```
 
-Sorted sets with expiry-as-score are the standard pattern. A read either trims expired entries or ignores them; a write re-scores the entry to push its expiry forward.
+expiry-as-score সহ sorted set হলো standard প্যাটার্ন। একটা read হয় expired entry ছাঁটে নয়তো উপেক্ষা করে; একটা write তার expiry এগিয়ে দিতে entry-কে re-score করে।
 
-The **score** is the expiry timestamp. A periodic sweeper (or every reader) drops members whose score is in the past. Even if a process dies, its members age out within one heartbeat interval.
+**score** হলো expiry timestamp। একটা periodic sweeper (বা প্রতিটা reader) যে member-দের score অতীতে তাদের ফেলে দেয়। একটা process মারা গেলেও, তার member এক heartbeat interval-এর মধ্যে age out হয়।
 
 <Callout type="warn">
 
-**Do not try to make presence perfectly accurate.** A 30-second window where a crashed process's members linger is fine. Trying to make it instant requires distributed coordination that adds complexity for little real benefit. Pick a heartbeat interval (15–60 seconds), accept that staleness is bounded, document it, move on.
+**presence-কে নিখুঁতভাবে accurate করার চেষ্টা করবেন না।** একটা 30-সেকেন্ড window যেখানে একটা crashed process-এর member ঝুলে থাকে সেটা ঠিক আছে। এটাকে instant করার চেষ্টা distributed coordination দাবি করে যা সামান্য বাস্তব সুবিধার জন্য জটিলতা যোগ করে। একটা heartbeat interval (15–60 সেকেন্ড) বাছুন, staleness bounded তা মেনে নিন, document করুন, এগিয়ে যান।
 
 </Callout>
 
-## The heartbeat itself
+## heartbeat নিজেই
 
-In the WebSocket world, you already have control-frame pings (chapter 2). Use _application-level_ heartbeats for presence:
+WebSocket জগতে, আপনার ইতিমধ্যে control-frame ping আছে (চ্যাপ্টার 2)। presence-এর জন্য _application-level_ heartbeat ব্যবহার করুন:
 
 ```go
 ticker := time.NewTicker(30 * time.Second)
@@ -139,52 +147,52 @@ for {
 }
 ```
 
-Refresh updates the sorted set entry for this connection, pushing the expiry 60 seconds out. If the process dies, the entries age out; if the client disconnects gracefully, you `ZREM` them immediately.
+Refresh এই connection-এর জন্য sorted set entry update করে, expiry 60 সেকেন্ড এগিয়ে ঠেলে দেয়। process মারা গেলে, entry age out হয়; client gracefully disconnect করলে, আপনি সাথে সাথে তাদের `ZREM` করেন।
 
-The refresh should ride on the writer goroutine's existing context — when the writer dies (any reason), you stop refreshing, and Redis evicts.
+refresh-টা writer goroutine-এর existing context-এর উপর চড়া উচিত — writer মারা গেলে (যে কারণেই হোক), আপনি refresh বন্ধ করেন, আর Redis evict করে।
 
-## Multi-device users
+## Multi-device user
 
-A single user has two laptops open. Both connect; both add to presence. They count once for "is the user online" but you need both connections for "send them this message."
+একজন single user-এর দুটো laptop খোলা। দুটোই connect করে; দুটোই presence-এ যোগ হয়। "user online কিনা"-র জন্য তারা একবার গোনা হয় কিন্তু "তাদের এই message পাঠাও"-র জন্য আপনার দুটো connection-ই দরকার।
 
-The model:
+model:
 
-- **Connection-level identity:** `connID` (random UUID per connection).
-- **User-level identity:** `userID` (the logged-in user).
+- **Connection-level identity:** `connID` (প্রতি connection-এ random UUID)।
+- **User-level identity:** `userID` (logged-in user)।
 
-Track both. Presence sorted set members are `connID`; you also maintain `presence:user:42 → set of connIDs`. The user is online iff `presence:user:42` is non-empty.
+দুটোই track করুন। Presence sorted set member হলো `connID`; আপনি `presence:user:42 → set of connIDs`-ও maintain করেন। User online iff `presence:user:42` non-empty।
 
-When all of a user's connections drop (or expire), they go offline; emit a `presence.user.left` event. When the first connection appears, `presence.user.joined`.
+একটা user-এর সব connection ড্রপ (বা expire) করলে, তারা offline হয়; একটা `presence.user.left` event emit করুন। প্রথম connection আসলে, `presence.user.joined`।
 
-Most apps need both granularities. "Send to user" needs a list of conn IDs (broadcast to all of them); "is user online" needs the user-level rollup.
+বেশিরভাগ app-এর দুটো granularity-ই দরকার। "user-এ পাঠাও"-র জন্য conn ID-র একটা list দরকার (সবগুলোতে broadcast); "user online কিনা"-র জন্য user-level rollup দরকার।
 
-## Joining and leaving rooms
+## room-এ join আর leave করা
 
-Three patterns for room subscription, in order of complexity:
+room subscription-এর তিনটা প্যাটার্ন, জটিলতার ক্রমে:
 
-**1. Permanent rooms.** Like Slack channels. You either are a member (server-side persisted) or not. Joining writes a row; leaving removes it. Reconnect re-subscribes to all your rooms.
+**1. Permanent room.** Slack channel-এর মতো। আপনি হয় member (server-side persisted) নয়তো নন। Join একটা row লেখে; leave এটা remove করে। Reconnect আপনার সব room-এ re-subscribe করে।
 
-**2. Ephemeral rooms.** Like a live document. Join creates a room if it doesn't exist; leave possibly deletes it (if last member). Server doesn't persist membership across disconnects.
+**2. Ephemeral room.** একটা live document-এর মতো। Join একটা room তৈরি করে যদি না থাকে; leave সম্ভবত এটা মুছে দেয় (last member হলে)। Server disconnect জুড়ে membership persist করে না।
 
-**3. Reactive rooms.** Like a "viewers" indicator. Joining is implicit (user opens the page); leaving is implicit (user closes it). Membership is purely the live presence set.
+**3. Reactive room.** একটা "viewers" indicator-এর মতো। Join implicit (user page খোলে); leave implicit (user এটা বন্ধ করে)। Membership নিছক live presence set।
 
-The implementation pattern is the same — a per-room presence set — but the **persistence story** differs. Permanent rooms need a `room_members` table; ephemeral rooms only need Redis; reactive rooms only need the presence sweeper.
+implementation প্যাটার্ন একই — একটা per-room presence set — কিন্তু **persistence story** ভিন্ন। Permanent room-এর একটা `room_members` table দরকার; ephemeral room-এর শুধু Redis দরকার; reactive room-এর শুধু presence sweeper দরকার।
 
-## Subscribing to rooms across the bus
+## bus জুড়ে room-এ subscribe করা
 
-When a process has clients in `room:general`, it should be subscribed to the Redis channel `room:general`. As clients move (join/leave), subscriptions change.
+একটা process-এর যখন `room:general`-এ client থাকে, এটার Redis channel `room:general`-এ subscribed থাকা উচিত। client নড়াচড়া করার সাথে সাথে (join/leave), subscription বদলায়।
 
-Two approaches.
+দুটো approach।
 
-**A. Pattern-subscribe to everything.**
+**A. সবকিছুতে pattern-subscribe।**
 
 ```go
 sub := rdb.PSubscribe(ctx, "room:*")
 ```
 
-The process receives every room's events; it filters by matching against local clients. Simple. Wasteful at scale (every process gets every event for every room).
+process প্রতিটা room-এর event receive করে; এটা local client-এর সাথে match করে filter করে। সহজ। Scale-এ অপচয়ী (প্রতিটা process প্রতিটা room-এর প্রতিটা event পায়)।
 
-**B. Subscribe per-room as the first local client joins.**
+**B. প্রথম local client join করার সাথে সাথে per-room subscribe।**
 
 ```go
 func (h *Hub) join(c *Client, room string) {
@@ -198,26 +206,26 @@ func (h *Hub) join(c *Client, room string) {
 }
 ```
 
-On the last client leaving the room locally, unsubscribe. Each process only listens to rooms it has clients in. Scales to thousands of rooms.
+room-এ locally শেষ client leave করলে, unsubscribe। প্রতিটা process শুধু সেই room-এ শোনে যেখানে তার client আছে। হাজার হাজার room-এ scale করে।
 
-Pick approach A for a few hundred rooms, B for thousands or more. Most chat-style apps do A and never feel the cost.
+কয়েকশো room-এর জন্য approach A বাছুন, হাজার বা তার বেশির জন্য B। বেশিরভাগ chat-style app A করে আর কখনো খরচ টের পায় না।
 
-## Presence as a feature spec
+## একটা feature spec হিসেবে presence
 
-A real presence feature usually has more requirements than "online/offline":
+একটা বাস্তব presence feature-এর সাধারণত "online/offline"-এর চেয়ে বেশি requirement থাকে:
 
-- **Idle vs active.** User has been idle for 5 minutes; show them as away. The client tells you (mouse moved? keypress?). Presence sets become hashes carrying status.
-- **Custom status.** "in a meeting", "🍌 lunch". Stored as a field per user.
-- **Typing indicators.** A bursty, ephemeral presence — appear when typing, disappear after 5 seconds. Either short-TTL Redis keys or a pure pub/sub broadcast.
-- **Last-seen.** Even when offline, "last seen 2 hours ago." Persist `last_seen_at` to Postgres on disconnect.
+- **Idle vs active.** User 5 মিনিট idle ছিল; তাদের away দেখান। client আপনাকে বলে (mouse নড়ল? keypress?)। Presence set hash হয়ে যায় status বহন করে।
+- **Custom status.** "in a meeting", "🍌 lunch"। প্রতি user-এ একটা field হিসেবে stored।
+- **Typing indicator.** একটা bursty, ephemeral presence — typing করলে appear, 5 সেকেন্ড পর disappear। হয় short-TTL Redis key নয়তো একটা pure pub/sub broadcast।
+- **Last-seen.** offline থাকলেও, "last seen 2 hours ago"। disconnect-এ Postgres-এ `last_seen_at` persist করুন।
 
-Each is a small extension. The common pattern: `presence:user:42` is a hash carrying `status`, `device`, `since`, etc. Heartbeat refreshes the TTL. Other clients subscribe to a Redis channel for changes.
+প্রতিটা একটা ছোট extension। সাধারণ প্যাটার্ন: `presence:user:42` হলো একটা hash যা `status`, `device`, `since` ইত্যাদি বহন করে। Heartbeat TTL refresh করে। অন্য client পরিবর্তনের জন্য একটা Redis channel subscribe করে।
 
-## Reconnects and presence
+## Reconnect আর presence
 
-A flaky client reconnects every minute. Presence ping-pongs: leave/join/leave/join.
+একটা flaky client প্রতি মিনিটে reconnect করে। Presence ping-pong করে: leave/join/leave/join।
 
-To smooth this, **debounce** the offline event. When a connection dies, do not immediately fire `presence.user.left`. Wait some grace period (15–30 seconds). If the user reconnects within it, suppress the event.
+এটা মসৃণ করতে, offline event **debounce** করুন। একটা connection মারা গেলে, সাথে সাথে `presence.user.left` fire করবেন না। কিছু grace period (15–30 সেকেন্ড) অপেক্ষা করুন। User এর মধ্যে reconnect করলে, event suppress করুন।
 
 ```go
 func (h *Hub) onDisconnect(client *Client) {
@@ -232,37 +240,37 @@ func (h *Hub) onDisconnect(client *Client) {
 }
 ```
 
-Without this, a 1-second network blip causes every other client to see the user disappear and reappear. Annoying for chat, fatal for collaborative editing.
+এটা ছাড়া, একটা 1-সেকেন্ড network blip প্রতিটা অন্য client-কে user-কে disappear আর reappear করতে দেখায়। Chat-এর জন্য বিরক্তিকর, collaborative editing-এর জন্য মারাত্মক।
 
-## Presence with SSE
+## SSE সহ presence
 
-Same patterns work with SSE. The differences:
+একই প্যাটার্ন SSE-তে কাজ করে। পার্থক্য:
 
-- The server pushes presence events; the client cannot say "I joined a room" over SSE — it does that via a normal `POST /rooms/:id/join`.
-- Subscriptions are still per-server-connection (one SSE stream per browser).
-- Heartbeats can be the SSE comment lines (chapter 5) — same liveness check.
+- server presence event push করে; client SSE-র উপর "আমি একটা room-এ join করেছি" বলতে পারে না — এটা একটা সাধারণ `POST /rooms/:id/join`-এর মাধ্যমে করে।
+- Subscription এখনো per-server-connection (প্রতি browser-এ একটা SSE stream)।
+- Heartbeat হতে পারে SSE comment line (চ্যাপ্টার 5) — একই liveness check।
 
-Where WebSockets feel natural for chat (typing back), SSE plus REST is the right shape for "show me presence + I commit changes via REST" — collaborative documents often work this way.
+যেখানে WebSockets chat-এর জন্য (পাল্টা typing) স্বাভাবিক লাগে, SSE plus REST হলো "আমাকে presence দেখাও + আমি REST-এর মাধ্যমে পরিবর্তন commit করি"-র জন্য সঠিক shape — collaborative document প্রায়ই এভাবে কাজ করে।
 
-## Storage and limits
+## Storage আর limit
 
-A few sizing notes for Redis-based presence:
+Redis-based presence-এর জন্য কয়েকটা sizing note:
 
-- A sorted set with 10,000 members is small (a few hundred KB). Redis handles millions easily.
-- Heartbeat traffic at 30s intervals × 10K connected users = 333 ops/sec. Trivial.
-- The sweeper running every 60s and dropping expired members from each room is amortised across all reads (any reader can run `ZREMRANGEBYSCORE` first).
-- For very large fan-out (100K+ users in one room), consider sampling or pagination — sending a "who's here" event with a hundred members is more useful than ten thousand.
+- 10,000 member সহ একটা sorted set ছোট (কয়েকশো KB)। Redis সহজে লক্ষ লক্ষ সামলায়।
+- 30s interval-এ heartbeat traffic × 10K connected user = 333 op/sec। তুচ্ছ।
+- প্রতি 60s-এ চলা আর প্রতিটা room থেকে expired member ফেলা sweeper সব read জুড়ে amortised (যেকোনো reader প্রথমে `ZREMRANGEBYSCORE` চালাতে পারে)।
+- খুব বড় fan-out-এর (এক room-এ 100K+ user) জন্য, sampling বা pagination বিবেচনা করুন — একশো member সহ একটা "who's here" event পাঠানো দশ হাজারের চেয়ে বেশি কাজের।
 
 ## Recap
 
-- Presence is state-tracking with eviction. The eviction is the hard part.
-- Single process: in-memory map. Multi-process: Redis sorted set with expiry-as-score.
-- Heartbeats refresh entries. If a process dies, members age out within one heartbeat window.
-- Track at two levels: per-connection (for routing) and per-user (for "is online").
-- Rooms come in three flavours: permanent, ephemeral, reactive. Same data shape, different persistence.
-- Subscribe per-room (B) for thousands of rooms; pattern-subscribe (A) for hundreds.
-- Debounce disconnect events with a grace period to avoid flicker.
-- Presence as a feature: idle/active, custom status, typing indicators, last-seen — all small extensions.
-- Same patterns work for SSE — separate the read channel (SSE) from the write channel (REST).
+- Presence হলো eviction সহ state-tracking। eviction-ই কঠিন অংশ।
+- Single process: in-memory map। Multi-process: expiry-as-score সহ Redis sorted set।
+- Heartbeat entry refresh করে। একটা process মারা গেলে, member এক heartbeat window-এর মধ্যে age out হয়।
+- দুই level-এ track করুন: per-connection (routing-এর জন্য) আর per-user ("online কিনা"-র জন্য)।
+- Room তিন ধরনের আসে: permanent, ephemeral, reactive। একই data shape, আলাদা persistence।
+- হাজার হাজার room-এর জন্য per-room subscribe (B); কয়েকশোর জন্য pattern-subscribe (A)।
+- Flicker এড়াতে একটা grace period দিয়ে disconnect event debounce করুন।
+- একটা feature হিসেবে presence: idle/active, custom status, typing indicator, last-seen — সব ছোট extension।
+- একই প্যাটার্ন SSE-তে কাজ করে — read channel (SSE) write channel (REST) থেকে আলাদা করুন।
 
-Next: [Auth, origin, and rate limits](/notes/websockets/08-auth-origin) — production-safe handshakes that survive the open internet.
+পরবর্তী: [Auth, origin, আর rate limits](/notes/websockets/08-auth-origin) — production-safe handshake যা খোলা internet-এ টিকে থাকে।

@@ -1,9 +1,9 @@
 ---
 title: 'Failure Models & Time'
-subtitle: 'How nodes fail, why a network partition is the failure that matters, and why clocks and timeouts cannot be trusted to tell slow from dead.'
+subtitle: 'Node কীভাবে fail করে, কেন network partition-ই আসল failure, এবং কেন slow আর dead-এর পার্থক্য বলার জন্য clock ও timeout-কে বিশ্বাস করা যায় না।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['failure', 'clocks', 'timeouts']
 ---
 
@@ -11,43 +11,51 @@ topics: ['failure', 'clocks', 'timeouts']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-To build a system that survives failure, you first have to say precisely what "failure" means. Casual language — "the server went down" — hides important distinctions. A node that crashes cleanly is a very different problem from a node that keeps answering with wrong data. This chapter pins down the failure models and then turns to the two things you fundamentally cannot trust: time and timeouts.
+Failure থেকে টিকে থাকার মতো একটি সিস্টেম বানাতে হলে প্রথমে তোমাকে সূক্ষ্মভাবে বলতে হবে "failure" মানে কী। আটপৌরে ভাষা — "server-টা down হয়ে গেছে" — গুরুত্বপূর্ণ পার্থক্যগুলো লুকিয়ে ফেলে। যে node পরিষ্কারভাবে crash করে সেটা এমন একটা node থেকে খুব ভিন্ন সমস্যা যেটা ভুল data দিয়ে উত্তর দিতেই থাকে। এই অধ্যায় failure model গুলো স্পষ্ট করে, তারপর সেই দুটো জিনিসের দিকে ফেরে যেগুলোকে তুমি মৌলিকভাবে বিশ্বাস করতে পারো না: time ও timeout।
 
-## Failure models
+## গল্পে বুঝি
 
-A **failure model** is an explicit statement of how components are allowed to misbehave. Algorithms are proved correct only against a stated model, so naming the model is not pedantry — it is the contract.
+আল-বিরুনি বুখারায় বসে দূরের এক গ্রামে থাকা আল-খোয়ারিজমির কাছে জরুরি বার্তা পাঠালেন — এক পায়ে-হাঁটা বার্তাবাহকের হাতে চিঠি দিয়ে। বললেন, "উত্তর নিয়ে ফিরে এসো।" এখন আল-বিরুনি অপেক্ষা করছেন। একদিন গেল, দুইদিন গেল, তিনদিন গেল — কোনো উত্তর নেই। কিন্তু নীরবতা তো তিনটে সম্পূর্ণ আলাদা জিনিস একসাথে লুকিয়ে রাখছে। হতে পারে আল-খোয়ারিজমি অসুস্থ হয়ে মারা গেছেন, চিঠিটা কেউ আর পড়বেই না। হতে পারে তিনি দিব্যি বেঁচে আছেন, শুধু ধীরেসুস্থে ভাবছেন আর উত্তর লিখতে দেরি করছেন। আবার হতে পারে দুই গ্রামের মাঝের রাস্তাটাই বন্যায় কেটে গেছে — মানুষটার কোনো দোষ নেই, বার্তাবাহকই পার হতে পারছে না। বুখারায় বসে আল-বিরুনির কাছে এই তিনটে ঘটনা হুবহু একই রকম দেখায়: শুধু নীরবতা।
 
-### Crash (fail-stop) failures
+আর একটা আরও সূক্ষ্ম সমস্যা আছে। ধরা যাক শেষমেশ উত্তর এল, তাতে লেখা "সকালবেলা পাঠালাম"। কিন্তু কোন সকাল? আল-বিরুনির ঘড়ি আর আল-খোয়ারিজমির ঘড়ি তো এক নয় — দুই গ্রামে কোনো মিলিয়ে-নেওয়া একটাই ঘড়ি নেই। কার সকাল আগে, কার পরে, সেটা নিয়েই তারা একমত হতে পারে না। তাই আল-বিরুনি একটা নিয়ম বানালেন — "তিনদিন অপেক্ষা করব, তারপরও উত্তর না এলে ধরে নেব লোকটা আর নেই, নতুন বার্তাবাহক পাঠাব।" নিয়মটা কাজ চালায়, কিন্তু এটা নিছক একটা অনুমান। আল-খোয়ারিজমি হয়তো চতুর্থ দিনে দিব্যি উত্তর পাঠাতেন — তাহলে আল-বিরুনি বেঁচে থাকা মানুষকে "মৃত" ধরে নিয়ে ভুল করলেন।
 
-The node simply stops. It executes correctly until the moment it halts, then does nothing: no more messages, no wrong answers, just silence. This is the friendliest model. The catch is that other nodes cannot directly observe the crash; they only observe the absence of messages, which — as we will see — is ambiguous.
+এই গল্পটাই আসলে distributed system-এর **failure ও time** সমস্যা। দূরের নীরব গ্রামবাসী হলো এমন একটা node — যে crash করেছে, নাকি শুধু slow, নাকি network partition-এ আটকে গেছে, বাইরে থেকে তা বলার উপায় নেই; তিনটেই এক রকম "কোনো উত্তর নেই" হয়ে দেখা দেয়, তাই failure detection মৌলিকভাবে অস্পষ্ট। দুই গ্রামের আলাদা ঘড়ি হলো ঠিক সেই কারণ যে জন্য মেশিনে-মেশিনে global time নেই — কে আগে ঘটল তা wall-clock দিয়ে মেলানো যায় না। আর "তিনদিনের নিয়ম" হলো **timeout** — একটা বাস্তব কিন্তু ভ্রমপ্রবণ অনুমান, যা slow-কে dead ভেবে ভুল করতে পারে। বাস্তবে ঠিক এই কারণেই Raft বা Paxos-এর মতো সিস্টেম timeout-কে একা কোনো অপরিবর্তনীয় সিদ্ধান্তে বিশ্বাস করে না, আর event order করতে physical clock-এর বদলে logical clock ব্যবহার করে।
 
-### Omission failures
+## Failure model
 
-The node is alive but drops some messages. A **send omission** loses an outgoing message; a **receive omission** loses an incoming one. Crucially, a dropped network link looks exactly like an omission failure to the nodes on either side. Omission failures are the everyday reality of unreliable networks.
+একটি **failure model** হলো component গুলোকে কীভাবে misbehave করার অনুমতি দেওয়া হয়েছে তার একটি সুস্পষ্ট বিবৃতি। Algorithm গুলো শুধু একটি বর্ণিত model-এর বিপরীতে সঠিক প্রমাণিত হয়, তাই model-এর নাম বলা কোনো পাণ্ডিত্য নয় — এটাই চুক্তি।
 
-### Byzantine failures
+### Crash (fail-stop) failure
 
-The node behaves arbitrarily: it may send wrong, inconsistent, or actively malicious messages, telling one peer it voted yes and another that it voted no. The name comes from the "Byzantine Generals Problem." This is the hardest model and matters when nodes can be compromised or are run by parties who may cheat — for example, in blockchains. Tolerating Byzantine faults requires more replicas and far more expensive protocols, so most internal systems assume only crash and omission failures.
+Node শুধু থেমে যায়। যতক্ষণ না থামে ততক্ষণ এটি সঠিকভাবে চলে, তারপর কিছুই করে না: আর কোনো message নেই, কোনো ভুল উত্তর নেই, শুধু নীরবতা। এটা সবচেয়ে বন্ধুত্বপূর্ণ model। সমস্যা হলো অন্য node গুলো সরাসরি crash-টা দেখতে পারে না; তারা শুধু message-এর অনুপস্থিতি দেখে, যা — আমরা দেখব — অস্পষ্ট।
 
-| Model             | Node behavior          | Difficulty | Typical use                       |
-| ----------------- | ---------------------- | ---------- | --------------------------------- |
-| Crash / fail-stop | Stops cleanly          | Easiest    | Internal services, most databases |
-| Omission          | Drops messages         | Moderate   | Realistic networks                |
-| Byzantine         | Arbitrary or malicious | Hardest    | Blockchains, untrusted parties    |
+### Omission failure
+
+Node জীবিত কিন্তু কিছু message drop করে। একটি **send omission** একটি বহির্গামী message হারায়; একটি **receive omission** একটি আগত message হারায়। গুরুত্বপূর্ণভাবে, একটি drop হওয়া network link দুই পাশের node-এর কাছে হুবহু একটি omission failure-এর মতো দেখায়। Omission failure হলো অনির্ভরযোগ্য network-এর দৈনন্দিন বাস্তবতা।
+
+### Byzantine failure
+
+Node যথেচ্ছভাবে আচরণ করে: এটি ভুল, অসংগত, বা সক্রিয়ভাবে দুরভিসন্ধিমূলক message পাঠাতে পারে, এক peer-কে বলে সে yes ভোট দিয়েছে আর আরেকজনকে বলে no ভোট দিয়েছে। নামটা এসেছে "Byzantine Generals Problem" থেকে। এটা সবচেয়ে কঠিন model এবং তখনই গুরুত্বপূর্ণ যখন node compromise হতে পারে বা এমন পক্ষ চালায় যারা প্রতারণা করতে পারে — যেমন, blockchain-এ। Byzantine fault সহ্য করতে বেশি replica আর অনেক বেশি ব্যয়বহুল protocol লাগে, তাই বেশিরভাগ internal সিস্টেম শুধু crash ও omission failure ধরে নেয়।
+
+| Model             | Node আচরণ                | কাঠিন্য      | সাধারণ ব্যবহার                      |
+| ----------------- | ------------------------ | ------------ | ----------------------------------- |
+| Crash / fail-stop | পরিষ্কারভাবে থামে        | সবচেয়ে সহজ  | Internal service, বেশিরভাগ database |
+| Omission          | Message drop করে         | মাঝারি       | বাস্তবসম্মত network                 |
+| Byzantine         | যথেচ্ছ বা দুরভিসন্ধিমূলক | সবচেয়ে কঠিন | Blockchain, অবিশ্বস্ত পক্ষ          |
 
 <Callout type="info">
 
-**Note:** Most distributed databases and consensus systems (Raft, Paxos, ZooKeeper) assume the crash/omission model, not the Byzantine one. They guarantee correctness as long as nodes either work correctly or stop — never lie. Choosing the weakest model that fits your threat reality keeps the protocol affordable.
+**নোট:** বেশিরভাগ distributed database ও consensus সিস্টেম (Raft, Paxos, ZooKeeper) crash/omission model ধরে নেয়, Byzantine নয়। তারা ততক্ষণ correctness গ্যারান্টি দেয় যতক্ষণ node হয় সঠিকভাবে কাজ করে নয়তো থামে — কখনো মিথ্যা বলে না। তোমার threat বাস্তবতার সাথে মেলে এমন দুর্বলতম model বেছে নিলে protocol সাশ্রয়ী থাকে।
 
 </Callout>
 
 ## Partial failure
 
-On one machine, failure is total: the process is alive or it isn't. Distributed systems live in the uncomfortable middle. At any instant some nodes are healthy, some have crashed, some are slow, and some links are down — and no single node has a complete, current picture of which is which. Designing for **partial failure** means assuming that any subset of the system can be unavailable at any time, and that your code must do something sensible anyway, rather than blocking forever or corrupting state.
+একটা মেশিনে failure সম্পূর্ণ: process জীবিত নয়তো নয়। Distributed system থাকে অস্বস্তিকর মাঝখানে। যেকোনো মুহূর্তে কিছু node সুস্থ, কিছু crash করেছে, কিছু ধীর, আর কিছু link down — এবং কোন কোনটা কী তার সম্পূর্ণ, বর্তমান ছবি কোনো একক node-এর কাছে নেই। **Partial failure**-এর জন্য ডিজাইন করা মানে এই ধরে নেওয়া যে সিস্টেমের যেকোনো subset যেকোনো সময় অনুপলব্ধ থাকতে পারে, এবং তোমার code-কে তারপরও অনন্তকাল block করা বা state নষ্ট করার বদলে যুক্তিসঙ্গত কিছু করতে হবে।
 
-## Network partitions
+## Network partition
 
-A **network partition** is the failure that defines the field. The network splits so that two groups of healthy nodes cannot talk to each other, even though every node inside each group is fine and can talk among itself.
+একটি **network partition** হলো সেই failure যা এই ক্ষেত্রটাকে সংজ্ঞায়িত করে। Network এমনভাবে ভাগ হয় যে সুস্থ node-এর দুটি দল একে অপরের সাথে কথা বলতে পারে না, যদিও প্রতিটি দলের ভেতরের প্রতিটি node ঠিক আছে আর নিজেদের মধ্যে কথা বলতে পারে।
 
 ```text
 Before partition:        After partition:
@@ -57,34 +65,34 @@ Before partition:        After partition:
   D --- E --- F            D --- E  ||  F
 ```
 
-From inside group one, the nodes in group two look crashed — silence — and vice versa. But they are not crashed; they are running and possibly still accepting requests. Now you have a genuine dilemma: if both halves keep serving writes, they will diverge and you get **split-brain** — two conflicting versions of reality that must later be reconciled. Partitions are the scenario that forces the CAP trade-off we will study in chapter 5.
+এক নম্বর দলের ভেতর থেকে দুই নম্বর দলের node গুলো crash হওয়া মনে হয় — নীরবতা — এবং উল্টোটাও তাই। কিন্তু তারা crash করেনি; তারা চলছে আর সম্ভবত এখনো request গ্রহণ করছে। এখন তোমার সামনে একটা সত্যিকারের দ্বিধা: দুই অর্ধেকই যদি write সার্ভ করতে থাকে, তারা diverge করবে আর তুমি পাবে **split-brain** — বাস্তবতার দুটি সাংঘর্ষিক সংস্করণ যা পরে মিলিয়ে নিতে হবে। Partition হলো সেই দৃশ্যপট যা অধ্যায় ৫-এ পড়া CAP trade-off বাধ্য করে।
 
-## Why wall-clock time is unreliable
+## কেন wall-clock time অনির্ভরযোগ্য
 
-It is tempting to use timestamps to order events or to expire data. Resist it. The wall-clock time a machine reports cannot be trusted across machines, for several compounding reasons:
+Event order করতে বা data expire করতে timestamp ব্যবহার করার প্রলোভন হয়। এটা এড়াও। একটি মেশিন যে wall-clock time জানায় তা মেশিন জুড়ে বিশ্বাস করা যায় না, কয়েকটি ক্রমবর্ধমান কারণে:
 
-- **Clock drift.** Quartz clocks run slightly fast or slow. Without correction, two machines diverge by seconds per day.
-- **Imperfect synchronization.** NTP corrects drift but only to within milliseconds to tens of milliseconds — and that error is larger than many of the events you might want to order.
-- **Clock jumps.** When NTP corrects a clock, time can jump forward or even **backward**. Code that assumes time only moves forward breaks badly here, sometimes silently expiring fresh data or computing negative durations.
+- **Clock drift.** Quartz clock সামান্য দ্রুত বা ধীর চলে। সংশোধন ছাড়া দুটি মেশিন প্রতিদিন কয়েক সেকেন্ড করে সরে যায়।
+- **অসম্পূর্ণ synchronization.** NTP drift সংশোধন করে কিন্তু শুধু কয়েক millisecond থেকে দশ millisecond-এর মধ্যে — আর সেই ত্রুটি তুমি যেসব event order করতে চাও তার অনেকগুলোর চেয়ে বড়।
+- **Clock jump.** NTP যখন একটি clock সংশোধন করে, time সামনে বা এমনকি **পিছনে** লাফ দিতে পারে। যে code ধরে নেয় time শুধু সামনে এগোয় তা এখানে খারাপভাবে ভাঙে, কখনো নীরবে fresh data expire করে বা ঋণাত্মক duration হিসাব করে।
 
-The dangerous consequence: if you compare timestamps from two machines to decide which write happened "last," you can easily pick the wrong one. A write that genuinely happened later may carry an earlier timestamp simply because that machine's clock was behind. This is why robust systems order events with **logical clocks** (chapter 7) rather than physical ones.
+বিপজ্জনক পরিণতি: তুমি যদি কোন write "সর্বশেষ" ঘটেছে তা ঠিক করতে দুটি মেশিনের timestamp তুলনা করো, তুমি সহজেই ভুলটা বেছে নিতে পারো। যে write সত্যিই পরে ঘটেছে তা কেবল সেই মেশিনের clock পিছিয়ে থাকায় একটি আগের timestamp বহন করতে পারে। এজন্যই মজবুত সিস্টেম event order করে **logical clock** (অধ্যায় ৭) দিয়ে, physical clock দিয়ে নয়।
 
 <Callout type="warning">
 
-**Never use wall-clock timestamps from different machines to determine the order of events.** Clock skew can make a later event appear earlier. For ordering, use logical clocks; for measuring elapsed time on one machine, use a monotonic clock, which is immune to NTP jumps.
+**Event-এর order নির্ধারণে কখনো ভিন্ন মেশিনের wall-clock timestamp ব্যবহার কোরো না।** Clock skew একটি পরের event-কে আগে দেখাতে পারে। Order-এর জন্য logical clock ব্যবহার করো; একটি মেশিনে অতিবাহিত সময় মাপতে monotonic clock ব্যবহার করো, যা NTP jump থেকে মুক্ত।
 
 </Callout>
 
-For measuring durations on a single machine — a timeout, a benchmark — use the **monotonic clock**, which only ever moves forward and ignores NTP adjustments. Use the wall clock only for displaying human-readable times, never for logic that depends on ordering.
+একটি একক মেশিনে duration মাপতে — একটি timeout, একটি benchmark — **monotonic clock** ব্যবহার করো, যা কেবল সামনে এগোয় আর NTP adjustment উপেক্ষা করে। Wall clock শুধু মানুষ-পাঠযোগ্য সময় দেখানোর জন্য ব্যবহার করো, order-নির্ভর কোনো logic-এর জন্য কখনো নয়।
 
-## Timeouts and the slow-vs-dead problem
+## Timeout ও slow-বনাম-dead সমস্যা
 
-Because a crashed node and a slow node both produce silence, the only tool you have to detect failure is the **timeout**: wait a while, and if no reply arrives, assume the node is dead. But this assumption is fundamentally a guess, and choosing the timeout is a no-win trade-off:
+যেহেতু একটি crash হওয়া node আর একটি ধীর node দুটোই নীরবতা তৈরি করে, failure শনাক্ত করার একমাত্র হাতিয়ার তোমার কাছে হলো **timeout**: কিছুক্ষণ অপেক্ষা করো, আর যদি কোনো উত্তর না আসে, ধরে নাও node মৃত। কিন্তু এই ধারণাটা মূলত একটা অনুমান, আর timeout বেছে নেওয়া একটা কেউ-জেতে-না trade-off:
 
-- **Too short:** you declare a healthy-but-slow node dead, triggering needless failovers. Worse, the "dead" node is still running and may still be processing the request, leading to duplicate work or split-brain.
-- **Too long:** you leave clients hanging and the system unresponsive while you wait to be sure.
+- **খুব ছোট:** তুমি একটি সুস্থ-কিন্তু-ধীর node-কে মৃত ঘোষণা করো, অপ্রয়োজনীয় failover ঘটাও। আরও খারাপ, "মৃত" node এখনো চলছে আর হয়তো এখনো request process করছে, যা duplicate কাজ বা split-brain-এর দিকে নেয়।
+- **খুব বড়:** তুমি client-কে ঝুলিয়ে রাখো আর নিশ্চিত হওয়ার জন্য অপেক্ষা করতে করতে সিস্টেম unresponsive থাকে।
 
-There is no value that is correct in all conditions, because the network gives you no way to distinguish "slow" from "dead."
+সব পরিস্থিতিতে সঠিক এমন কোনো মান নেই, কারণ network তোমাকে "slow"-কে "dead" থেকে আলাদা করার কোনো উপায় দেয় না।
 
 ```text
 A sends request to B, starts a timer.
@@ -96,14 +104,14 @@ A sends request to B, starts a timer.
 A's timer fires. A sees the same thing in all three cases: nothing.
 ```
 
-This is not a limitation of any particular language or library. It is provable. In a model where messages can be arbitrarily delayed (an **asynchronous network**), there is no algorithm that can reliably tell a crashed node from a slow one. This result is the practical face of the famous **FLP impossibility**, which shows that consensus cannot be guaranteed in a fully asynchronous system with even one possible crash. Real systems escape it by assuming the network is _mostly_ timely and using timeouts as a practical — but fallible — failure detector.
+এটা কোনো নির্দিষ্ট language বা library-এর সীমাবদ্ধতা নয়। এটা প্রমাণযোগ্য। এমন একটি model-এ যেখানে message যথেচ্ছভাবে দেরি হতে পারে (একটি **asynchronous network**), এমন কোনো algorithm নেই যা নির্ভরযোগ্যভাবে একটি crash হওয়া node-কে একটি ধীর node থেকে আলাদা করতে পারে। এই ফলাফলটি বিখ্যাত **FLP impossibility**-র বাস্তব রূপ, যা দেখায় যে একটিমাত্র সম্ভাব্য crash সহ একটি সম্পূর্ণ asynchronous সিস্টেমে consensus গ্যারান্টি করা যায় না। বাস্তব সিস্টেম এটা এড়ায় এই ধরে নিয়ে যে network _বেশিরভাগ সময়_ সময়মতো, এবং timeout-কে একটি বাস্তব — কিন্তু ভ্রমপ্রবণ — failure detector হিসেবে ব্যবহার করে।
 
 <Callout type="tip">
 
-**Practical guidance:** since timeouts can be wrong, never let a timeout alone cause irreversible action. Pair failure detection with mechanisms that tolerate a false positive — leases that expire, fencing tokens that reject stale leaders, and idempotent operations that make a retried-but-actually-completed request harmless.
+**ব্যবহারিক পরামর্শ:** যেহেতু timeout ভুল হতে পারে, একটি timeout-কে একা কখনো একটি অপরিবর্তনীয় action ঘটাতে দিও না। Failure detection-কে এমন mechanism-এর সাথে জোড়া লাগাও যা একটি false positive সহ্য করে — লিজ যা expire হয়, fencing token যা বাসি leader প্রত্যাখ্যান করে, এবং idempotent operation যা একটি retry-হওয়া-কিন্তু-আসলে-সম্পন্ন request-কে নিরীহ করে।
 
 </Callout>
 
-## Where this leaves us
+## এখান থেকে আমরা কোথায়
 
-Failure is partial, the network can partition healthy nodes apart, clocks lie, and timeouts cannot tell slow from dead. Every technique in the rest of this track — replication, quorums, consensus, logical clocks — exists to build reliable behavior on top of these untrustworthy foundations. The next chapter starts that construction with replication.
+Failure partial, network সুস্থ node গুলোকে আলাদা করে partition করতে পারে, clock মিথ্যা বলে, আর timeout slow-কে dead থেকে আলাদা করতে পারে না। এই ট্র্যাকের বাকি প্রতিটি কৌশল — replication, quorum, consensus, logical clock — এই অবিশ্বাস্য ভিত্তির উপর নির্ভরযোগ্য আচরণ গড়ার জন্যই আছে। পরের অধ্যায় সেই নির্মাণ শুরু করে replication দিয়ে।

@@ -1,9 +1,9 @@
 ---
 title: 'Storage Primitives'
-subtitle: 'Block, file, and object storage — what each abstraction provides, where each breaks down, and how to choose.'
+subtitle: 'Block, file, আর object storage — প্রতিটা অ্যাবস্ট্রাকশন কী দেয়, কোথায় ভেঙে পড়ে, আর কীভাবে বেছে নেবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['block storage', 'file storage', 'object storage', 'NFS', 'S3', 'storage architecture']
 ---
 
@@ -13,15 +13,23 @@ topics: ['block storage', 'file storage', 'object storage', 'NFS', 'S3', 'storag
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Three ways to store physical documents: block storage is blank notebooks — raw pages, you organize them however you want. File storage is a filing cabinet — pre-organized into folders and drawers, multiple people can open it at once. Object storage is a flat warehouse with numbered bins — each bin has a label, you fetch the whole bin at once, no filing system, infinite warehouse.
+কাগজের ডকুমেন্ট রাখার তিনটা উপায়: block storage হলো ফাঁকা নোটবুক — কাঁচা পৃষ্ঠা, যেভাবে খুশি সাজান। file storage হলো একটা ফাইলিং ক্যাবিনেট — আগে থেকেই ফোল্ডার আর ড্রয়ারে সাজানো, একসাথে অনেকে খুলতে পারে। object storage হলো নম্বর দেওয়া বিনসহ একটা সমতল ওয়্যারহাউস — প্রতিটা বিনে একটা লেবেল, পুরো বিনটা একবারে তুলে আনেন, কোনো ফাইলিং সিস্টেম নেই, অসীম ওয়্যারহাউস।
 
 </Callout>
 
+## গল্পে বুঝি
+
+শহরে নতুন এসেছেন ইবনে সিনা, হাতে ভর্তি জিনিসপত্র, রাখার জায়গা দরকার। মোড়ের কাছেই তিনটা আলাদা দোকান। প্রথমটায় সারি সারি খালি নম্বর দেওয়া locker ভাড়া পাওয়া যায় — ভেতরটা একদম ফাঁকা, কোনো তাক নেই, কোনো ভাগ নেই। কোন জিনিস কোথায় রাখবেন, কীভাবে সাজাবেন, সব আপনাকেই ঠিক করতে হবে। জায়গাটা কাঁচা, কিন্তু পুরো নিয়ন্ত্রণ আপনার হাতে।
+
+দ্বিতীয় দোকানটা আল-খোয়ারিজমির ফাইলিং অফিস — ভেতরে আগে থেকেই সাজানো ফোল্ডার আর ড্রয়ারের নেস্টেড সিস্টেম। "ব্যক্তিগত / চিঠি / ২০২৬" — এভাবে path ধরে হেঁটে হেঁটে যেকোনো কাগজ খুঁজে বের করা যায়, আর অফিসের অনেক কর্মী একসাথে সেই একই তাক ঘেঁটে দেখতে পারে। তৃতীয়টা ফাতিমা আল-ফিহরির valet cloakroom — এখানে সাজানোর ঝামেলাই নেই। যেকোনো জিনিস কাউন্টারে বাড়িয়ে দিন, বিনিময়ে একটা নম্বরওয়ালা claim-ticket পাবেন। জিনিসটা ভেতরে ঠিক কোন তাকে, কোন কোণে রাখা হলো — আপনি জানেনও না, জানার দরকারও নেই। পরে শুধু ticket দেখালেই জিনিস ফেরত। আর এই cloakroom এত বড় যে লক্ষ লক্ষ মানুষের জিনিস অনায়াসে রাখতে পারে, কখনো "জায়গা নেই" বলে না।
+
+এই তিন দোকানই আসলে তিন রকম storage। ইবনে সিনার ফাঁকা locker হলো **block storage** — কাঁচা block, structure পুরোটা আপনাকেই সামলাতে হয়, ঠিক একটা raw disk-এর মতো। আল-খোয়ারিজমির path ধরে ঘাঁটা ফাইলিং অফিস হলো **file storage** — ফোল্ডার/ফাইলের hierarchy, NFS-এর মতো একসাথে অনেকে mount করে। আর ফাতিমার cloakroom হলো **object storage** — একটা blob হাতে দিন, একটা key (claim-ticket) নিন, ভেতরের সাজানো নিয়ে ভাবতে হয় না, flat namespace আর কার্যত অসীম scale। বাস্তবে AWS S3 হলো ঠিক এই cloakroom — আপনি object আর তার metadata জমা দেন, key দিয়ে ফেরত পান, বাকিটা ওরা সামলায়।
+
 ## Block Storage
 
-Raw, addressable storage presented as a disk. The operating system handles the filesystem on top.
+কাঁচা, অ্যাড্রেসযোগ্য স্টোরেজ যা একটা ডিস্ক হিসেবে দেখা যায়। এর উপর ফাইলসিস্টেমটা অপারেটিং সিস্টেম সামলায়।
 
 ```
 Application
@@ -33,19 +41,19 @@ Block device (/dev/sda, /dev/nvme0n1)
 Physical disk or network-attached block (EBS, Longhorn, Ceph)
 ```
 
-**Characteristics:**
+**বৈশিষ্ট্য:**
 
-- Low-level — the OS decides how to organize data
-- Random access — seek to any byte position
-- Single-attach — one server mounts a block device at a time (with exceptions)
-- Fastest — databases, VMs, OS volumes
-- Not inherently sharable — can't mount the same EBS volume on two EC2 instances simultaneously
+- লো-লেভেল — ডেটা কীভাবে সাজানো হবে তা OS ঠিক করে
+- র‍্যান্ডম অ্যাক্সেস — যেকোনো বাইট পজিশনে seek করা যায়
+- সিঙ্গেল-অ্যাটাচ — একসময়ে একটা সার্ভারই একটা block device মাউন্ট করে (ব্যতিক্রম আছে)
+- সবচেয়ে দ্রুত — ডেটাবেস, VM, OS ভলিউম
+- মূলগতভাবে শেয়ারযোগ্য নয় — একই EBS ভলিউম দুটো EC2 ইনস্ট্যান্সে একসাথে মাউন্ট করা যায় না
 
-**Use for:** databases (Postgres, MySQL, MongoDB data directories), VM images, OS volumes.
+**যেখানে ব্যবহার করবেন:** ডেটাবেস (Postgres, MySQL, MongoDB-এর data directory), VM ইমেজ, OS ভলিউম।
 
 ## File Storage (Network Filesystem)
 
-A filesystem shared over a network — multiple servers mount the same directory and see the same files.
+একটা ফাইলসিস্টেম যা নেটওয়ার্কে শেয়ার করা — একাধিক সার্ভার একই ডিরেক্টরি মাউন্ট করে একই ফাইল দেখে।
 
 ```
 Server A              Server B
@@ -55,17 +63,17 @@ Server A              Server B
     Fileserver (Synology, EFS, Azure Files)
 ```
 
-**Characteristics:**
+**বৈশিষ্ট্য:**
 
-- Familiar filesystem API (`open`, `read`, `write`, `ls`)
-- Multi-mount — many servers read/write simultaneously
-- Distributed locking (with caveats — file locking over NFS is unreliable)
-- Slower than local block (network RTT on every operation)
-- Not for databases — POSIX compliance gaps cause corruption
+- পরিচিত ফাইলসিস্টেম API (`open`, `read`, `write`, `ls`)
+- মাল্টি-মাউন্ট — একসাথে অনেক সার্ভার read/write করে
+- ডিস্ট্রিবিউটেড লকিং (তবে সতর্কতা আছে — NFS-এর উপর file locking অনির্ভরযোগ্য)
+- লোকাল block-এর চেয়ে ধীর (প্রতিটা অপারেশনে network RTT)
+- ডেটাবেসের জন্য নয় — POSIX compliance-এ ফাঁক থাকায় corruption হয়
 
-**Use for:** shared configuration files, legacy application data that expects a filesystem, media files accessed by a rendering cluster, WordPress uploads shared across app servers.
+**যেখানে ব্যবহার করবেন:** শেয়ার্ড কনফিগারেশন ফাইল, লিগ্যাসি অ্যাপ্লিকেশন ডেটা যা একটা ফাইলসিস্টেম আশা করে, একটা rendering cluster দিয়ে অ্যাক্সেস করা মিডিয়া ফাইল, একাধিক অ্যাপ সার্ভারে শেয়ার করা WordPress uploads।
 
-**NFS quick setup:**
+**NFS দ্রুত সেটআপ:**
 
 ```bash
 # Server
@@ -84,7 +92,7 @@ mount -t nfs 10.0.0.10:/exports/shared /mnt/shared
 
 ## Object Storage
 
-Files stored as flat objects (key → binary blob). No hierarchy, no random writes — get and put entire objects.
+ফাইল জমা থাকে সমতল object হিসেবে (key → বাইনারি blob)। কোনো hierarchy নেই, র‍্যান্ডম write নেই — পুরো object get আর put করেন।
 
 ```
 PUT /bucket/user-avatars/user-123.jpg    (store)
@@ -92,51 +100,51 @@ GET /bucket/user-avatars/user-123.jpg    (retrieve)
 DELETE /bucket/user-avatars/user-123.jpg (delete)
 ```
 
-**Characteristics:**
+**বৈশিষ্ট্য:**
 
-- Infinite scale — no capacity planning, no "disk full"
-- HTTP API — presigned URLs, direct browser upload
-- Eventual consistency (now strongly consistent on AWS S3)
-- Immutable by default — can't append to an object, must replace it
-- Cheap — $0.023/GB/month on S3 vs $0.10/GB/month for EBS
-- Not a filesystem — no `ls` that scales, no random writes, no POSIX
+- অসীম স্কেল — কোনো capacity planning নেই, "disk full" নেই
+- HTTP API — presigned URL, সরাসরি ব্রাউজার থেকে আপলোড
+- eventual consistency (এখন AWS S3-তে strongly consistent)
+- ডিফল্টে immutable — একটা object-এ append করা যায় না, রিপ্লেস করতে হয়
+- সস্তা — S3-তে $0.023/GB/month বনাম EBS-এ $0.10/GB/month
+- এটা ফাইলসিস্টেম নয় — স্কেল করে এমন `ls` নেই, র‍্যান্ডম write নেই, POSIX নেই
 
-**Use for:** user uploads (images, documents), media files, backups, static assets, logs, large datasets, database dumps.
+**যেখানে ব্যবহার করবেন:** ইউজার আপলোড (ছবি, ডকুমেন্ট), মিডিয়া ফাইল, ব্যাকআপ, static asset, লগ, বড় ডেটাসেট, ডেটাবেস ডাম্প।
 
-## Comparison
+## তুলনা
 
-|                    | Block                | File (NFS)             | Object (S3)                |
-| ------------------ | -------------------- | ---------------------- | -------------------------- |
-| **Abstraction**    | Raw disk             | Filesystem             | Key-value                  |
-| **Access pattern** | Random read/write    | Sequential + random    | Full-object GET/PUT        |
-| **Multi-mount**    | No (mostly)          | Yes                    | Yes (HTTP)                 |
-| **Scale**          | Finite (volume size) | Finite (NAS capacity)  | Effectively infinite       |
-| **Speed**          | Fastest              | Medium                 | Medium (HTTP overhead)     |
-| **Cost**           | Highest              | Medium                 | Cheapest                   |
-| **Use case**       | Databases, VMs       | Legacy apps, shared FS | User files, media, backups |
+|                    | Block                  | File (NFS)                  | Object (S3)                  |
+| ------------------ | ---------------------- | --------------------------- | ---------------------------- |
+| **Abstraction**    | কাঁচা ডিস্ক            | ফাইলসিস্টেম                 | Key-value                    |
+| **Access pattern** | র‍্যান্ডম read/write   | Sequential + random         | পুরো-object GET/PUT          |
+| **Multi-mount**    | না (বেশিরভাগ ক্ষেত্রে) | হ্যাঁ                       | হ্যাঁ (HTTP)                 |
+| **Scale**          | সীমিত (volume size)    | সীমিত (NAS capacity)        | কার্যত অসীম                  |
+| **Speed**          | সবচেয়ে দ্রুত          | মাঝারি                      | মাঝারি (HTTP overhead)       |
+| **Cost**           | সবচেয়ে বেশি           | মাঝারি                      | সবচেয়ে সস্তা                |
+| **Use case**       | ডেটাবেস, VM            | লিগ্যাসি অ্যাপ, শেয়ার্ড FS | ইউজার ফাইল, মিডিয়া, ব্যাকআপ |
 
-## Choosing in Practice
+## বাস্তবে বেছে নেওয়া
 
-**User avatar uploads:** object storage. Cheap, scales to millions, serve via CDN, presigned URLs for direct upload from browser.
+**ইউজার avatar আপলোড:** object storage। সস্তা, লক্ষ লক্ষে স্কেল করে, CDN দিয়ে সার্ভ করুন, ব্রাউজার থেকে সরাসরি আপলোডের জন্য presigned URL।
 
-**Database data directory:** block storage. Must be a real filesystem, must support random I/O.
+**ডেটাবেসের data directory:** block storage। অবশ্যই একটা সত্যিকারের ফাইলসিস্টেম হতে হবে, random I/O সাপোর্ট করতে হবে।
 
-**Shared config across app servers:** NFS or object storage. For small files read at startup: object storage. For files the app writes to and expects filesystem semantics: NFS.
+**অ্যাপ সার্ভারগুলোতে শেয়ার্ড config:** NFS বা object storage। startup-এ পড়া ছোট ফাইলের জন্য: object storage। অ্যাপ যেসব ফাইলে write করে আর ফাইলসিস্টেম সেম্যান্টিক্স আশা করে: NFS।
 
-**Logs:** object storage. Write sequentially, read rarely, keep for months, cheap.
+**লগ:** object storage। sequential-ভাবে write করুন, কদাচিৎ পড়ুন, মাসের পর মাস রাখুন, সস্তা।
 
-**Video files:** object storage. Large, immutable, serve via CDN with range requests.
+**ভিডিও ফাইল:** object storage। বড়, immutable, range request সহ CDN দিয়ে সার্ভ করুন।
 
-**Temp files for a job:** local disk or ephemeral block storage. Cheap, fast, throw away when done.
+**একটা job-এর temp ফাইল:** লোকাল ডিস্ক বা ephemeral block storage। সস্তা, দ্রুত, কাজ শেষে ফেলে দিন।
 
-## The Problem with Local Disk in Distributed Systems
+## ডিস্ট্রিবিউটেড সিস্টেমে লোকাল ডিস্কের সমস্যা
 
 ```
 Server 1: user uploads avatar.jpg → stored at /data/uploads/avatar.jpg
 Server 2: user requests avatar.jpg → 404 (the file is on server 1)
 ```
 
-Every stateless server instance must reach the same storage. Local disk breaks horizontal scaling. Object storage solves this — all servers make HTTP calls to the same endpoint.
+প্রতিটা stateless সার্ভার ইনস্ট্যান্সকে একই স্টোরেজে পৌঁছাতে হবে। লোকাল ডিস্ক horizontal scaling ভেঙে দেয়। object storage এটা সমাধান করে — সব সার্ভার একই endpoint-এ HTTP কল করে।
 
 ```typescript
 // BAD — local disk, breaks with multiple servers
@@ -163,9 +171,9 @@ async function saveAvatar(userId: string, buffer: Buffer) {
 }
 ```
 
-## POSIX vs S3 Semantics
+## POSIX বনাম S3 সেম্যান্টিক্স
 
-File operations you can do on a filesystem that don't work on S3:
+ফাইলসিস্টেমে করা যায় এমন কিছু file operation যা S3-তে কাজ করে না:
 
 ```bash
 # POSIX — works on local disk and NFS
@@ -178,11 +186,11 @@ sed -i 's/old/new/' /data/config  # in-place edit
 # Must download the entire object, modify, re-upload
 ```
 
-If your application does any of these, it can't use S3 directly. Use a local disk or NFS for that specific workload.
+আপনার অ্যাপ্লিকেশন যদি এগুলোর কোনোটা করে, তাহলে সেটা সরাসরি S3 ব্যবহার করতে পারবে না। ওই নির্দিষ্ট workload-এর জন্য একটা লোকাল ডিস্ক বা NFS ব্যবহার করুন।
 
 ## Storage Tiers
 
-Cloud object storage offers multiple tiers at different price/access trade-offs:
+ক্লাউড object storage বিভিন্ন price/access ট্রেড-অফে একাধিক tier অফার করে:
 
 ```
 S3 Standard       $0.023/GB   — frequently accessed data

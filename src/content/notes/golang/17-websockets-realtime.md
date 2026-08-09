@@ -1,9 +1,9 @@
 ---
-title: 'WebSockets & Real-Time'
-subtitle: "Build real-time features in Go — chat, live updates, notifications — using WebSockets and Go's concurrency model."
+title: 'WebSockets ও Real-Time'
+subtitle: 'Go-তে real-time ফিচার বানান — chat, live update, notification — WebSockets আর Go-এর concurrency model ব্যবহার করে।'
 chapter: 17
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['WebSockets', 'real-time', 'chat', 'pub/sub', 'SSE', 'gorilla/websocket']
 ---
 
@@ -11,19 +11,27 @@ topics: ['WebSockets', 'real-time', 'chat', 'pub/sub', 'SSE', 'gorilla/websocket
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## WebSockets vs HTTP
+## গল্পে বুঝি
 
-HTTP is request-response: client asks, server answers, connection closes. WebSockets maintain a **persistent, bidirectional connection** — both sides can send messages at any time.
+একটা কুরিয়ার কোম্পানির ডিসপ্যাচ অফিসে ফাতিমা আল-ফিহরি বসে আছেন হেডফোন-মাইক নিয়ে, সামনে একটা CB-রেডিও সেট। শহরজুড়ে ছড়িয়ে থাকা প্রতিটা ডেলিভারি ভ্যানের ড্রাইভার — ইবনে সিনা, আল-খোয়ারিজমি, আরও দশজন — সবার হাতে একটা করে ওয়াকি-টকি হ্যান্ডসেট। এই রেডিও চ্যানেলটা সারাক্ষণ খোলা থাকে; ফোনের মতো একবার কথা বলে লাইন কেটে দিতে হয় না। রাস্তায় জ্যাম দেখলে ইবনে সিনা সাথে সাথে বলে ওঠে "মিরপুর রোড বন্ধ", আবার ফাতিমা আল-ফিহরিও তখনই তাকে নতুন রুট বলে দিতে পারেন — দুই পক্ষই যখন খুশি কথা বলতে পারে।
+
+সবচেয়ে মজার জিনিসটা হলো broadcast। হঠাৎ যদি অফিস থেকে সবাইকে একসাথে জানাতে হয় "আজ ৬টার পর কোনো ডেলিভারি নেই", ফাতিমা আল-ফিহরিকে একে একে সবাইকে ফোন করতে হয় না — তিনি একবার মাইকে বললেই সেই একটা মেসেজ চালু থাকা প্রতিটা হ্যান্ডসেটে একসাথে পৌঁছে যায়। কোনো ড্রাইভার গ্যারেজে ঢুকে রেডিও বন্ধ করে দিলে ফাতিমা আল-ফিহরি তাকে তালিকা থেকে বাদ দিয়ে দেন, বাকিদের চ্যানেল আগের মতোই চলতে থাকে।
+
+এই খোলা রেডিও লিংকটাই হলো একটা persistent, দুই-মুখী WebSocket connection — ফোন কলের মতো একবার কানেক্ট হলে দুই দিক থেকেই মেসেজ যায়। ফাতিমা আল-ফিহরি হলেন hub, যে সব connection একজায়গায় ম্যানেজ করে; মাইকে একবার বলে সবার কাছে পৌঁছে দেওয়াটাই সব connected client-এর কাছে broadcast করা (fan-out)। আর প্রতিটা ড্রাইভারের হ্যান্ডসেট হলো per-connection goroutine — প্রত্যেকের জন্য আলাদা লাইন শোনে আর কথা বলে। বাস্তবে live chat বা real-time notification ঠিক এভাবেই কাজ করে — একজন কিছু লিখলে বা কোনো ঘটনা ঘটলে hub সেটা একসাথে সব ইউজারের স্ক্রিনে পৌঁছে দেয়।
+
+## WebSockets বনাম HTTP
+
+HTTP হলো request-response: client জিজ্ঞেস করে, server উত্তর দেয়, connection বন্ধ হয়ে যায়। WebSockets একটা **persistent, bidirectional connection** ধরে রাখে — দুই পক্ষই যেকোনো সময় message পাঠাতে পারে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-HTTP is like texting — you send a message and wait for a reply. WebSockets are like a phone call — once connected, both sides can talk whenever they want, and the line stays open until someone hangs up.
+HTTP হলো texting-এর মতো — আপনি একটা message পাঠান আর reply-এর জন্য অপেক্ষা করেন। WebSockets হলো ফোন কলের মতো — একবার connect হয়ে গেলে দুই পক্ষই যখন খুশি কথা বলতে পারে, আর কেউ hang up না করা পর্যন্ত লাইনটা খোলা থাকে।
 
 </Callout>
 
-## WebSocket Server with gorilla/websocket
+## gorilla/websocket দিয়ে WebSocket Server
 
 ```go
 import "github.com/gorilla/websocket"
@@ -62,9 +70,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## Building a Chat Room
+## একটা Chat Room বানানো
 
-A real-world chat system with a hub that manages all connections:
+একটা বাস্তব chat system, যেখানে একটা hub সব connection ম্যানেজ করে:
 
 ```go
 // Hub manages all connected clients and broadcasts messages
@@ -190,7 +198,7 @@ func (c *Client) writePump() {
 }
 ```
 
-## Wiring the Chat Server
+## Chat Server-টা wire করা
 
 ```go
 func main() {
@@ -230,15 +238,15 @@ func main() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-The Hub is like a radio station's control room. Every listener (client) has a radio receiver (WebSocket connection). When someone calls in (sends a message), the control room (hub) broadcasts it to every active receiver. If a receiver loses signal (disconnects), the hub removes them from the broadcast list.
+Hub হলো একটা রেডিও স্টেশনের কন্ট্রোল রুমের মতো। প্রতিটা শ্রোতার (client) একটা রেডিও রিসিভার (WebSocket connection) আছে। কেউ যখন কল করে (message পাঠায়), কন্ট্রোল রুম (hub) সেটা প্রতিটা active রিসিভারে broadcast করে। কোনো রিসিভার signal হারালে (disconnect হলে), hub তাকে broadcast list থেকে সরিয়ে দেয়।
 
 </Callout>
 
 ## Server-Sent Events (SSE)
 
-For one-way server-to-client streaming, SSE is simpler than WebSockets:
+one-way server-to-client streaming-এর জন্য SSE, WebSockets-এর চেয়ে সহজ:
 
 ```go
 func handleSSE(w http.ResponseWriter, r *http.Request) {
@@ -275,14 +283,14 @@ func handleSSE(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-**When to use SSE vs WebSockets:**
+**SSE বনাম WebSockets — কখন কোনটা ব্যবহার করবেন:**
 
-- **SSE** — server pushes updates to client (live scores, stock tickers, notifications). Simpler, auto-reconnects, works over HTTP/2.
-- **WebSockets** — bidirectional communication (chat, collaborative editing, gaming). More complex but more powerful.
+- **SSE** — server client-এ update push করে (live score, stock ticker, notification)। সহজ, auto-reconnect হয়, HTTP/2-এর উপর কাজ করে।
+- **WebSockets** — bidirectional communication (chat, collaborative editing, gaming)। বেশি জটিল কিন্তু বেশি শক্তিশালী।
 
-## Scaling WebSockets with Redis Pub/Sub
+## Redis Pub/Sub দিয়ে WebSockets Scale করা
 
-When you run multiple server instances, WebSocket connections are local to each instance. Redis pub/sub syncs messages across instances:
+যখন আপনি একাধিক server instance চালান, WebSocket connection প্রতিটা instance-এর জন্য local থাকে। Redis pub/sub instance-গুলোর মধ্যে message sync করে দেয়:
 
 ```go
 type DistributedHub struct {
@@ -321,11 +329,11 @@ func (dh *DistributedHub) Broadcast(ctx context.Context, message []byte) {
 }
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **WebSockets for bidirectional**, **SSE for server-push** — pick the simpler option when possible
-2. **Hub pattern** centralizes client management — register, unregister, broadcast
-3. **Two goroutines per client** — one reading, one writing. Never share a connection between goroutines
-4. **Ping/pong keeps connections alive** — detect dead clients before they pile up
-5. **Buffered send channels** with overflow detection prevent slow clients from blocking the hub
-6. **Redis pub/sub** for scaling across multiple server instances
+1. **bidirectional-এর জন্য WebSockets**, **server-push-এর জন্য SSE** — যখন সম্ভব সহজ option-টা বেছে নিন
+2. **Hub pattern** client ম্যানেজমেন্ট এক জায়গায় নিয়ে আসে — register, unregister, broadcast
+3. **প্রতি client-এ দুইটা goroutine** — একটা reading, একটা writing। কখনো একাধিক goroutine-এর মধ্যে একটা connection share করবেন না
+4. **Ping/pong connection alive রাখে** — মৃত client-গুলো জমে যাওয়ার আগেই detect করুন
+5. **Buffered send channel** overflow detection সহ, slow client-দের hub block করা থেকে আটকায়
+6. একাধিক server instance-এ scale করার জন্য **Redis pub/sub**

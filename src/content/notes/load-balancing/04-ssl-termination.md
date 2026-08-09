@@ -1,9 +1,9 @@
 ---
 title: 'SSL Termination'
-subtitle: 'TLS at the load balancer, certificate management, HTTPS between LB and backends, and the trade-offs of offloading vs end-to-end encryption.'
+subtitle: 'Load balancer-এ TLS, certificate management, LB আর backend-এর মাঝে HTTPS, আর offload করা vs end-to-end encryption-এর trade-off।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['SSL', 'TLS', 'HTTPS', 'certificates', 'nginx', 'HAProxy', 'termination']
 ---
 
@@ -11,24 +11,32 @@ topics: ['SSL', 'TLS', 'HTTPS', 'certificates', 'nginx', 'HAProxy', 'termination
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বাগদাদের এক বিশাল বাণিজ্য-প্রতিষ্ঠানের সদর ফটকে একটা front mailroom আছে, যেখানে ফাতিমা আল-ফিহরির নেতৃত্বে একটা বিশেষজ্ঞ দল বসে। বাইরে থেকে আসা প্রতিটা গোপন চিঠি মোমের সিল দিয়ে বন্ধ করা, তালাবদ্ধ — সিল না ভেঙে ভেতরের একটা কথাও পড়া যায় না। ফাতিমার দলের কাছেই আছে সব সিল-চাবি আর সিল ভাঙার যন্ত্রপাতি। তারা সদর ফটকেই প্রতিটা চিঠির সিল ভাঙে, ভেতরের লেখা পড়ার উপযোগী সাধারণ কপি বানায়, তারপর সেই খোলা কপি ভেতরের সঠিক দপ্তরে পাঠিয়ে দেয়।
+
+ভেতরের দপ্তরগুলো — হিসাব বিভাগ, চিঠিপত্র বিভাগ, আল-খোয়ারিজমির গণিত বিভাগ — কেউই আর নিজের ঘরে সিল ভাঙার দামি যন্ত্র বা প্রশিক্ষিত লোক রাখে না। তারা শুধু সামনের ঘর থেকে আসা পরিষ্কার কপি হাতে পায় আর নিজের কাজে মন দেয়। নতুন সিল-নকশা এলে বা পুরনো চাবি বদলাতে হলে সেটাও শুধু ওই একটা front mailroom-এই সামলানো হয় — গোটা ভবনে ছড়িয়ে-ছিটিয়ে নয়।
+
+এই front mailroom-ই হলো **SSL termination**। সিল করা তালাবদ্ধ চিঠি হলো incoming HTTPS traffic, আর সদর ফটকে ফাতিমার দলের সিল ভাঙা মানে load balancer edge-এ TLS terminate করা। খোলা কপি ভেতরে পাঠানো মানে backend-এ plain HTTP forward করা — তাই প্রতিটা backend আর নিজে decrypt করার CPU খরচ বহন করে না, ঠিক যেমন ভেতরের দপ্তরগুলো সিল ভাঙার যন্ত্র রাখে না। আর সব সিল-চাবি এক ঘরে থাকা মানে certificate একটাই জায়গায় centrally manage করা। বাস্তবে nginx বা HAProxy দিয়ে ঠিক এভাবেই HTTPS edge-এ terminate করে backend-কে হালকা রাখা হয় — আর PCI-DSS/HIPAA-র মতো নিয়ন্ত্রিত ক্ষেত্রে দরকার হলে ভেতরের করিডোরেও আবার encrypt (re-encryption) করে end-to-end TLS রাখা যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A secure mail room in an office building: incoming encrypted mail is decrypted at the front desk (the load balancer), then delivered in plaintext to the right department (backend server) via internal hallways. The external threat is handled at the edge; internally, you trust your own network. Whether to re-encrypt the internal hallways is a policy decision based on your threat model.
+একটা অফিস ভবনের নিরাপদ mail room: আসা encrypted চিঠি front desk-এ (load balancer) decrypt করা হয়, তারপর অভ্যন্তরীণ করিডোর দিয়ে সঠিক department-এ (backend server) plaintext-এ পৌঁছে দেওয়া হয়। বাইরের হুমকি edge-এ সামলানো হয়; ভেতরে, আপনি নিজের network-কে বিশ্বাস করেন। অভ্যন্তরীণ করিডোরগুলো আবার encrypt করবেন কিনা সেটা আপনার threat model-এর ভিত্তিতে একটা policy সিদ্ধান্ত।
 
 </Callout>
 
-## Why Terminate at the LB
+## LB-তে কেন Terminate করবেন
 
-TLS is computationally expensive — handshake, cipher negotiation, record processing. Terminating at the load balancer has several advantages:
+TLS গণনাগতভাবে ব্যয়বহুল — handshake, cipher negotiation, record processing। load balancer-এ terminate করার কয়েকটা সুবিধা আছে:
 
-1. **Single cert location** — one place to renew, one place for OCSP stapling
-2. **Backends stay simple** — no TLS code or certs on every server
-3. **LB can inspect requests** — can't do path routing without seeing plaintext HTTP
-4. **Offload CPU** — dedicated hardware or optimized LB instances handle TLS
+1. **একটাই cert location** — renew করার একটা জায়গা, OCSP stapling-এর একটা জায়গা
+2. **Backend সহজ থাকে** — প্রতিটা server-এ কোনো TLS code বা cert নেই
+3. **LB request inspect করতে পারে** — plaintext HTTP না দেখে path routing করা যায় না
+4. **CPU offload** — dedicated hardware বা optimized LB instance TLS সামলায়
 
-The trade-off: traffic between LB and backends is unencrypted (or requires separate internal TLS). For regulated industries (PCI-DSS, HIPAA), end-to-end encryption may be required.
+Trade-off: LB আর backend-এর মাঝের traffic unencrypted থাকে (বা আলাদা internal TLS দরকার হয়)। নিয়ন্ত্রিত industry-র জন্য (PCI-DSS, HIPAA), end-to-end encryption দরকার হতে পারে।
 
 ## nginx SSL Termination
 
@@ -102,15 +110,15 @@ backend api_servers
     server s2 10.0.0.11:3000 check
 ```
 
-HAProxy expects the cert and key concatenated into a single `.pem` file:
+HAProxy আশা করে cert আর key একটা `.pem` file-এ যুক্ত করা থাকবে:
 
 ```bash
 cat api.example.com.crt api.example.com.key > /etc/ssl/api.example.com.pem
 ```
 
-## Certificate Automation with Let's Encrypt
+## Let's Encrypt দিয়ে Certificate Automation
 
-Manual cert renewal is a maintenance burden. Use `certbot` to automate:
+হাতে cert renew করা একটা রক্ষণাবেক্ষণের বোঝা। Automate করতে `certbot` ব্যবহার করুন:
 
 ```bash
 # Install certbot
@@ -126,7 +134,7 @@ certbot renew --dry-run
 # 0 12 * * * /usr/bin/certbot renew --quiet
 ```
 
-For HAProxy, post-renewal hook to concatenate and reload:
+HAProxy-র জন্য, concatenate করে reload করতে post-renewal hook:
 
 ```bash
 # /etc/letsencrypt/renewal-hooks/post/haproxy.sh
@@ -138,11 +146,11 @@ cat /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
 systemctl reload haproxy
 ```
 
-## Multiple Domains (SNI)
+## একাধিক Domain (SNI)
 
-Server Name Indication (SNI) lets one IP handle multiple domains — the client sends the hostname in the TLS handshake, and the LB picks the right cert.
+Server Name Indication (SNI) একটা IP-কে একাধিক domain সামলাতে দেয় — client TLS handshake-এ hostname পাঠায়, আর LB সঠিক cert বেছে নেয়।
 
-**nginx — multiple certs:**
+**nginx — একাধিক cert:**
 
 ```nginx
 server {
@@ -168,11 +176,11 @@ server {
 bind *:443 ssl crt /etc/haproxy/ssl/
 ```
 
-HAProxy scans the directory for `.pem` files and serves the right one based on SNI. Add a cert by dropping a file in the directory and reloading.
+HAProxy directory-তে `.pem` file খোঁজে আর SNI-র ভিত্তিতে সঠিকটা serve করে। directory-তে একটা file ফেলে reload করে একটা cert যোগ করুন।
 
-## Re-encrypting Backend Traffic
+## Backend Traffic আবার Encrypt করা
 
-If you need end-to-end TLS (LB → backend is also encrypted):
+যদি আপনার end-to-end TLS দরকার হয় (LB → backend-ও encrypted):
 
 **nginx:**
 
@@ -194,7 +202,7 @@ backend api_servers
     server s1 10.0.0.10:3443 check ssl verify required ca-file /etc/ssl/ca.crt
 ```
 
-For mutual TLS (mTLS) — backend verifies the LB's client cert:
+mutual TLS (mTLS)-এর জন্য — backend LB-র client cert verify করে:
 
 ```
 backend api_servers
@@ -205,34 +213,34 @@ backend api_servers
 
 ## TLS 1.3 Performance
 
-TLS 1.3 reduces handshake to 1 round-trip (vs 2 for 1.2) and supports 0-RTT resumption for returning clients:
+TLS 1.3 handshake-কে 1 round-trip-এ কমায় (1.2-এর জন্য 2-এর বিপরীতে) আর returning client-এর জন্য 0-RTT resumption support করে:
 
 ```nginx
 ssl_protocols TLSv1.3;    # TLS 1.3 only
 ```
 
-0-RTT in nginx (experimental — has replay attack risk for non-idempotent requests):
+nginx-এ 0-RTT (experimental — non-idempotent request-এর জন্য replay attack-এর ঝুঁকি আছে):
 
 ```nginx
 ssl_early_data on;
 proxy_set_header Early-Data $ssl_early_data;
 ```
 
-In production: support both 1.2 and 1.3. Browsers negotiate the highest supported version. Disable 1.0 and 1.1:
+Production-এ: 1.2 আর 1.3 দুটোই support করুন। Browser সর্বোচ্চ supported version negotiate করে। 1.0 আর 1.1 disable করুন:
 
 ```nginx
 ssl_protocols TLSv1.2 TLSv1.3;
 ```
 
-## Forwarding the Real Protocol
+## আসল Protocol Forward করা
 
-Backend applications need to know the original protocol was HTTPS (for redirects, cookies, HSTS):
+Backend application-এর জানা দরকার মূল protocol HTTPS ছিল (redirect, cookie, HSTS-এর জন্য):
 
 ```nginx
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
-Application reads it:
+Application এটা পড়ে:
 
 ```typescript
 // Express
@@ -244,4 +252,4 @@ app.get('/redirect', (req, res) => {
 });
 ```
 
-Without this, your app generates `http://` redirect URLs to HTTPS clients, causing redirect loops.
+এটা ছাড়া, আপনার app HTTPS client-দের জন্য `http://` redirect URL তৈরি করবে, যা redirect loop ঘটায়।

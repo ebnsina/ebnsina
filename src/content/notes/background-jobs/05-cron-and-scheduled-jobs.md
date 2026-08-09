@@ -1,9 +1,9 @@
 ---
 title: 'Cron & Scheduled Jobs'
-subtitle: 'Running work on a schedule — cron syntax, leader election to avoid duplicate runs, and operational considerations.'
+subtitle: 'একটি schedule অনুযায়ী কাজ চালানো — cron syntax, duplicate run এড়াতে leader election, এবং অপারেশনাল বিবেচনা।'
 chapter: 5
 level: 'intermediate'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['cron', 'scheduled jobs', 'leader election', 'clock skew', 'distributed cron']
 ---
 
@@ -13,27 +13,35 @@ topics: ['cron', 'scheduled jobs', 'leader election', 'clock skew', 'distributed
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A timer on a coffee maker: it runs at the same time every morning regardless of who's home. In a distributed system with multiple servers, you need to make sure only one server is the "coffee maker" — otherwise you get three pots brewing at 7am.
+একটি কফি মেকারের টাইমার: বাড়িতে কে আছে তা নির্বিশেষে এটি প্রতিদিন সকালে একই সময়ে চলে। একাধিক server-যুক্ত distributed system-এ আপনাকে নিশ্চিত করতে হবে যে শুধু একটি server-ই "কফি মেকার" — নাহলে সকাল ৭টায় তিন পাত্র কফি তৈরি হবে।
 
 </Callout>
 
-## The Problem with Cron in Distributed Systems
+## গল্পে বুঝি
 
-Classic Unix cron runs on a single machine. When you run multiple application servers, every server runs its own crontab — meaning every job runs N times, once per server. This causes duplicate emails, double charges, and data corruption.
+শহরের মাঝখানে পুরনো একটা ক্লক-টাওয়ার। তার দেখাশোনা করে আল-খোয়ারিজমি। প্রতিদিন ভোরে, ঠিক দুপুরে আর সন্ধ্যায় — বাঁধা এই তিনটে সময়ে সে টাওয়ারের বড় ঘণ্টাটা বাজায়। কেউ তাকে বলে দেয় না, কেউ অর্ডার করে না, কারও অনুরোধেরও দরকার হয় না। সময় হলেই ঘণ্টা বাজে, আর গোটা শহর বুঝে যায় — এখন ভোর, এখন দুপুর, এখন সন্ধ্যা। মানুষজন এই ঘণ্টার ওপর এতটাই নির্ভর করে যে দোকান খোলা, নামাজের প্রস্তুতি, বাজারে যাওয়া — সব এই বাঁধা সিগন্যাল ধরে চলে।
 
-Solutions:
+শহরের প্রধান ফাতিমা আল-ফিহরি একটা ব্যাপারে খুব কড়া — ঘণ্টার জন্য মাত্র একজন keeper নিয়োগ করা হয়। কেউ একবার প্রস্তাব দিয়েছিল, নিরাপত্তার জন্য তিনজন keeper রাখা হোক। ফাতিমা সাফ না করে দিলেন। কারণ তিনজন keeper যদি দুপুরে তিনবার ঘণ্টা বাজায়, শহরের লোক তিনবার সিগন্যাল শুনবে — কেউ ভাববে বিপদ, কেউ গুনতে ভুল করবে, পুরো শহরে বিভ্রান্তি ছড়িয়ে পড়বে। তাই নিয়ম একটাই: ঘণ্টার দায়িত্ব একজনের হাতেই থাকবে, বাকিরা কেবল প্রস্তুত থাকবে — keeper অসুস্থ হলে তখন একজন তার জায়গা নেবে।
 
-1. Run cron on a dedicated single machine (fragile — that machine becomes a SPOF)
-2. Use a queue-backed scheduler (BullMQ repeatable jobs, pg-boss schedules)
-3. Implement leader election so only one server schedules at a time
+এই গল্পটাই আসলে **cron আর scheduled jobs**। ভোর-দুপুর-সন্ধ্যার বাঁধা সময়গুলোই হলো একটা **cron schedule**, আর অনুরোধ ছাড়াই নিজে থেকে ঘণ্টা বেজে ওঠাটাই একটা **recurring scheduled job**। একজন keeper নিয়োগ করা মানে হলো **leader election** বা একটা **lock** ধরে রাখা — যাতে **cluster**-এ একাধিক server-এর মধ্যে ঠিক একটাই scheduled task চালায়। আর তিন keeper একসাথে ঘণ্টা বাজানোটাই সেই duplicate-run সমস্যা: বাস্তবে প্রতিটা server যদি নিজের crontab চালায়, একই job N বার চলবে — duplicate email, double charge, corrupt data। তাই ঠিক ফাতিমার নিয়মের মতোই, distributed setup-এ leader/lock দিয়ে নিশ্চিত করতে হয় যে scheduled task-টা একবারই চলে।
+
+## Distributed System-এ Cron-এর সমস্যা
+
+ক্লাসিক Unix cron একটি single machine-এ চলে। আপনি যখন একাধিক application server চালান, প্রতিটি server তার নিজের crontab চালায় — মানে প্রতিটি job N বার চলে, প্রতি server-এ একবার করে। এতে duplicate email, double charge, এবং data corruption হয়।
+
+সমাধান:
+
+1. একটি dedicated single machine-এ cron চালানো (ভঙ্গুর — সেই machine-ই SPOF হয়ে যায়)
+2. একটি queue-backed scheduler ব্যবহার করা (BullMQ repeatable job, pg-boss schedule)
+3. Leader election প্রয়োগ করা যাতে একসময়ে শুধু একটি server schedule করে
 
 ## Queue-Backed Cron
 
-The cleanest approach: store the schedule in the queue, not in crontab. The queue handles deduplication across multiple workers.
+সবচেয়ে পরিচ্ছন্ন পন্থা: schedule-টা crontab-এ নয়, queue-তে রাখুন। Queue একাধিক worker জুড়ে deduplication সামলায়।
 
-**BullMQ repeatable jobs:**
+**BullMQ repeatable job:**
 
 ```typescript
 import { Queue } from 'bullmq';
@@ -77,7 +85,7 @@ const worker = new Worker(
 );
 ```
 
-**pg-boss schedules:**
+**pg-boss schedule:**
 
 ```typescript
 // Register the schedule
@@ -103,7 +111,7 @@ await boss.work('send-weekly-digest', async (job) => {
 });
 ```
 
-## Cron Syntax Reference
+## Cron Syntax রেফারেন্স
 
 ```
 ┌───────────── minute (0-59)
@@ -122,11 +130,11 @@ await boss.work('send-weekly-digest', async (job) => {
 30 23 * * *     → 11:30pm every day
 ```
 
-## Leader Election (When You Need It)
+## Leader Election (যখন প্রয়োজন)
 
-If you can't use a queue-backed scheduler, elect a leader among your servers. Only the leader runs scheduled tasks.
+আপনি যদি queue-backed scheduler ব্যবহার করতে না পারেন, তবে আপনার server-দের মধ্যে একজন leader নির্বাচন করুন। শুধু leader-ই scheduled task চালায়।
 
-**Simple approach: Redis-based lock with heartbeat**
+**সহজ পন্থা: heartbeat সহ Redis-based lock**
 
 ```typescript
 const LEADER_KEY = 'scheduler:leader';
@@ -180,7 +188,7 @@ cron.schedule('0 8 * * *', async () => {
 });
 ```
 
-**pg-advisory-lock approach (Postgres):**
+**pg-advisory-lock পন্থা (Postgres):**
 
 ```typescript
 // Each server competes for the same advisory lock
@@ -211,9 +219,9 @@ cron.schedule('0 0 * * *', () => {
 });
 ```
 
-## Clock Skew and Timezone Pitfalls
+## Clock Skew ও Timezone-এর ফাঁদ
 
-Server clocks drift. NTP corrects them, but two servers might disagree by up to a few seconds. For most cron jobs this doesn't matter, but for jobs that run at exactly midnight or month boundaries, account for it:
+Server clock drift করে। NTP সেগুলো ঠিক করে, কিন্তু দুটো server কয়েক সেকেন্ড পর্যন্ত আলাদা হতে পারে। বেশিরভাগ cron job-এ এতে কিছু যায় আসে না, কিন্তু যেসব job ঠিক মধ্যরাতে বা মাসের সীমানায় চলে, তাদের জন্য এটা হিসেবে রাখুন:
 
 ```typescript
 // Prefer UTC internally — convert to user's timezone only for display
@@ -246,18 +254,18 @@ async function scheduleTimezoneAwareEmails(): Promise<void> {
 }
 ```
 
-## Missed Runs
+## Missed Run
 
-When a server is down during a scheduled time, the job doesn't run. Decide your policy:
+একটি scheduled সময়ে server down থাকলে job চলে না। আপনার policy ঠিক করুন:
 
-**Skip missed runs** (default for most jobs — the next run will happen normally):
+**Missed run skip করা** (বেশিরভাগ job-এর জন্য default — পরের run স্বাভাবিকভাবেই হবে):
 
 ```typescript
 // BullMQ default: if server is down at 3am, the 3am job is skipped
 // Next run is 3am tomorrow — this is usually fine for daily reports
 ```
 
-**Run missed jobs on startup** (critical jobs that must not be skipped):
+**Startup-এ missed job চালানো** (গুরুত্বপূর্ণ job যা কখনো skip হওয়া চলবে না):
 
 ```typescript
 async function onStartup(): Promise<void> {
@@ -271,7 +279,7 @@ async function onStartup(): Promise<void> {
 }
 ```
 
-## Operational Checklist
+## অপারেশনাল চেকলিস্ট
 
 ```
 □ Scheduled jobs run in the queue (not OS crontab) on multi-server deployments

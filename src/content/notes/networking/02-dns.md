@@ -1,9 +1,9 @@
 ---
-title: "DNS — The Internet's Phone Book"
-subtitle: 'How domain names become IP addresses — recursive resolvers, authoritative servers, caching, and DNS record types.'
+title: 'DNS — ইন্টারনেটের ফোন বুক'
+subtitle: 'ডোমেইন নাম কীভাবে IP অ্যাড্রেসে রূপ নেয় — recursive resolver, authoritative server, ক্যাশিং, আর DNS রেকর্ড টাইপ।'
 chapter: 2
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['DNS', 'domain names', 'resolvers', 'records']
 ---
 
@@ -11,28 +11,36 @@ topics: ['DNS', 'domain names', 'resolvers', 'records']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why DNS Exists
+## গল্পে বুঝি
 
-Humans remember names (`google.com`), computers need numbers (`142.250.80.46`). DNS (Domain Name System) bridges this gap — it's a globally distributed database that maps domain names to IP addresses.
+আল-খোয়ারিজমির হঠাৎ একটা ইলেকট্রিশিয়ান দরকার, কিন্তু সে শুধু দোকানের নামটা জানে — "নূর ইলেকট্রিক", মোবাইল নাম্বারটা নেই। তখন সে ল্যান্ডফোন থেকে ডিরেক্টরি-এনকোয়ারিতে (পুরনো দিনের ১৬৩ নাম্বার সার্ভিস) কল করে অপারেটরকে বলে, "নূর ইলেকট্রিকের নাম্বারটা দেন তো।" অপারেটর নিজের কাছে না পেলে তার বড় ডিরেক্টরিতে খোঁজে, দরকার হলে এলাকাভিত্তিক রেজিস্ট্রি পর্যন্ত যায়, তারপর নাম্বারটা ফেরত দেয়। আল-খোয়ারিজমি নামটা দিল, নাম্বারটা পেল — নাম থেকে নাম্বার।
+
+এই কাজটা প্রতিবার করতে গেলে ঝামেলা, তাই আল-খোয়ারিজমি নাম্বারটা পাওয়ার পর নিজের একটা ছোট নোটবুকে টুকে রাখে — পরের দুই-তিন সপ্তাহ আর অপারেটরকে ফোন করতে হয় না, সরাসরি নোটবুক দেখে ডায়াল করে। তবে দোকান তো নাম্বার বদলাতেও পারে, তাই আল-খোয়ারিজমি মনে মনে ধরে নেয় নোটের এই নাম্বার মাসখানেকের বেশি ভরসা করা ঠিক না — পুরনো হয়ে গেলে আবার অপারেটরকে জিজ্ঞেস করে টাটকা নাম্বার নিয়ে নেয়।
+
+এই গল্পটাই আসলে **DNS**। দোকানের নাম হলো domain (`google.com`), আর মোবাইল নাম্বার হলো **IP address** — DNS নাম থেকে নাম্বারে রূপ দেয়। আল-খোয়ারিজমির অপারেটর হলো **recursive resolver**, আর অপারেটরের নিজের ডিরেক্টরি → এলাকাভিত্তিক রেজিস্ট্রি → মাস্টার রেজিস্ট্রি পর্যন্ত ওঠাটাই resolver → root → TLD → authoritative server-এর chain। আল-খোয়ারিজমির নোটবুকে নাম্বার টুকে রাখা হলো **caching**, আর "মাসখানেকের বেশি ভরসা নয়" — ঠিক ওটাই **TTL** (কতক্ষণ পর্যন্ত ক্যাশ করা নাম্বারকে বিশ্বাস করা যাবে)। বাস্তবে আপনার ব্রাউজার আর OS ঠিক এভাবেই লুকআপের রেজাল্ট TTL শেষ হওয়া পর্যন্ত ক্যাশ করে রাখে, তাই দ্বিতীয়বার একই সাইটে যেতে আর পুরো chain ঘুরতে হয় না।
+
+## DNS কেন দরকার
+
+মানুষ নাম মনে রাখে (`google.com`), কম্পিউটারের দরকার নাম্বার (`142.250.80.46`)। DNS (Domain Name System) এই দুটোর মাঝের ফাঁকটা পূরণ করে — এটা একটা গ্লোবালি ডিস্ট্রিবিউটেড ডেটাবেস যেটা ডোমেইন নামকে IP অ্যাড্রেসে ম্যাপ করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like calling 411 (directory assistance) to find a phone number. You give a name, they return the number. DNS is the internet's phone book — you type "google.com" and DNS returns the IP address.
+ফোন নাম্বার খুঁজতে 411 (directory assistance) এ কল করার মতো। আপনি একটা নাম দেন, তারা নাম্বারটা ফেরত দেয়। DNS হলো ইন্টারনেটের ফোন বুক — আপনি "google.com" টাইপ করেন আর DNS IP অ্যাড্রেসটা ফেরত দেয়।
 
 </Callout>
 
-## The DNS Resolution Process
+## DNS Resolution প্রক্রিয়া
 
-When you type `api.example.com` in your browser:
+আপনি যখন ব্রাউজারে `api.example.com` টাইপ করেন:
 
-1. **Browser cache** — checked first (cached from previous lookups)
-2. **OS cache** — your operating system's resolver cache
-3. **Recursive resolver** — your ISP's DNS server (or `8.8.8.8`, `1.1.1.1`)
-4. **Root nameserver** — knows where to find `.com`
-5. **TLD nameserver** — knows where to find `example.com`
-6. **Authoritative nameserver** — has the actual answer
+1. **Browser cache** — প্রথমে এটা চেক করা হয় (আগের লুকআপ থেকে ক্যাশ করা)
+2. **OS cache** — আপনার অপারেটিং সিস্টেমের resolver cache
+3. **Recursive resolver** — আপনার ISP-এর DNS server (কিংবা `8.8.8.8`, `1.1.1.1`)
+4. **Root nameserver** — জানে `.com` কোথায় খুঁজতে হবে
+5. **TLD nameserver** — জানে `example.com` কোথায় খুঁজতে হবে
+6. **Authoritative nameserver** — আসল উত্তরটা এর কাছে আছে
 
 ```typescript
 // Simplified DNS resolution
@@ -64,23 +72,23 @@ async function resolve(domain: string): Promise<string> {
 }
 ```
 
-## DNS Record Types
+## DNS রেকর্ড টাইপ
 
-| Type  | Purpose                 | Example Value                     |
-| ----- | ----------------------- | --------------------------------- |
-| A     | Domain → IPv4 address   | `93.184.216.34`                   |
-| AAAA  | Domain → IPv6 address   | `2606:2800:220:1::`               |
-| CNAME | Alias to another domain | `www.example.com → example.com`   |
-| MX    | Mail server for domain  | `mail.example.com` (priority: 10) |
-| TXT   | Arbitrary text          | SPF records, domain verification  |
-| NS    | Nameserver for zone     | `ns1.example.com`                 |
+| Type  | উদ্দেশ্য              | উদাহরণ ভ্যালু                     |
+| ----- | --------------------- | --------------------------------- |
+| A     | Domain → IPv4 address | `93.184.216.34`                   |
+| AAAA  | Domain → IPv6 address | `2606:2800:220:1::`               |
+| CNAME | অন্য ডোমেইনের alias   | `www.example.com → example.com`   |
+| MX    | ডোমেইনের mail server  | `mail.example.com` (priority: 10) |
+| TXT   | যেকোনো টেক্সট         | SPF records, domain verification  |
+| NS    | zone-এর nameserver    | `ns1.example.com`                 |
 
-## TTL and Caching
+## TTL আর ক্যাশিং
 
-Every DNS record has a **TTL (Time to Live)** — how many seconds resolvers should cache it. This is a tradeoff:
+প্রতিটা DNS রেকর্ডের একটা **TTL (Time to Live)** থাকে — resolver-দের এটা কত সেকেন্ড ক্যাশ করে রাখা উচিত। এটা একটা tradeoff:
 
-- **Short TTL (60s)**: Changes propagate fast, but more DNS queries (slower for users)
-- **Long TTL (86400s)**: Fewer queries, but changes take up to 24 hours to propagate
+- **Short TTL (60s)**: পরিবর্তন দ্রুত propagate হয়, কিন্তু বেশি DNS query (ইউজারদের জন্য ধীর)
+- **Long TTL (86400s)**: কম query, কিন্তু পরিবর্তন propagate হতে ২৪ ঘণ্টা পর্যন্ত লাগতে পারে
 
 ```typescript
 // Real-world TTL strategy
@@ -98,13 +106,13 @@ const records = {
 
 <Callout type="tip">
 
-**DNS propagation** isn't really "propagation" — it's cache expiration. When you change a DNS record, the old record stays cached everywhere until its TTL expires. That's why lowering TTL _before_ a migration is a common practice.
+**DNS propagation** আসলে "propagation" না — এটা cache expiration। আপনি যখন একটা DNS রেকর্ড বদলান, পুরনো রেকর্ডটা সব জায়গায় ক্যাশ হয়ে থাকে যতক্ষণ না এর TTL শেষ হয়। এজন্যই migration-এর _আগে_ TTL কমিয়ে রাখা একটা কমন প্র্যাকটিস।
 
 </Callout>
 
-## DNS as a Load Balancer
+## DNS একটা Load Balancer হিসেবে
 
-DNS can return multiple IP addresses for one domain. The resolver rotates through them (round-robin), spreading traffic across servers:
+DNS একটা ডোমেইনের জন্য একাধিক IP অ্যাড্রেস ফেরত দিতে পারে। Resolver সেগুলোর মধ্যে ঘুরে ঘুরে (round-robin) ট্রাফিক একাধিক সার্ভারে ছড়িয়ে দেয়:
 
 ```typescript
 // Round-robin DNS
@@ -126,17 +134,17 @@ function geoDNS(clientIP: string): string {
 }
 ```
 
-## Security: DNS Attacks
+## সিকিউরিটি: DNS Attack
 
-DNS was designed without security. Common attacks:
+DNS ডিজাইন করা হয়েছিল সিকিউরিটি ছাড়াই। কমন আক্রমণগুলো:
 
-- **DNS spoofing**: Attacker sends fake DNS responses, redirecting users to malicious servers
-- **DNS amplification DDoS**: Attacker uses DNS servers to amplify traffic aimed at a victim
-- **DNSSEC**: Cryptographic signatures on DNS records to prevent spoofing (adoption still growing)
+- **DNS spoofing**: আক্রমণকারী ভুয়া DNS response পাঠায়, ইউজারদের ম্যালিশিয়াস সার্ভারে রিডাইরেক্ট করে
+- **DNS amplification DDoS**: আক্রমণকারী DNS server ব্যবহার করে একজন ভিকটিমের দিকে লক্ষ্য করা ট্রাফিক amplify করে
+- **DNSSEC**: spoofing ঠেকাতে DNS রেকর্ডে ক্রিপ্টোগ্রাফিক signature (adoption এখনো বাড়ছে)
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **DNS is hierarchical** — root → TLD → authoritative, with caching at every level
-2. **TTL controls caching** — lower it before migrations, raise it for stable records
-3. **DNS is more than name→IP** — it handles mail routing, verification, aliasing, and load balancing
-4. **DNS is a single point of failure** — if your DNS goes down, nothing works (use multiple providers)
+1. **DNS hierarchical** — root → TLD → authoritative, প্রতিটা লেভেলে ক্যাশিং সহ
+2. **TTL ক্যাশিং নিয়ন্ত্রণ করে** — migration-এর আগে কমান, stable রেকর্ডের জন্য বাড়ান
+3. **DNS শুধু name→IP-এর চেয়ে বেশি** — এটা mail routing, verification, aliasing, আর load balancing সামলায়
+4. **DNS একটা single point of failure** — আপনার DNS ডাউন হলে কিছুই কাজ করে না (একাধিক provider ব্যবহার করুন)

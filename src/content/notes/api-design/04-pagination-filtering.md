@@ -1,9 +1,9 @@
 ---
-title: 'Pagination & Filtering'
-subtitle: 'Implement cursor and offset pagination, filtering, sorting, and field selection to handle large datasets efficiently.'
+title: 'Pagination ও Filtering'
+subtitle: 'বড় ডেটাসেট দক্ষভাবে সামলাতে cursor ও offset pagination, filtering, sorting, আর field selection ইমপ্লিমেন্ট করুন।'
 chapter: 4
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['pagination', 'cursor', 'offset', 'filtering', 'sorting', 'field selection']
 ---
 
@@ -11,23 +11,31 @@ topics: ['pagination', 'cursor', 'offset', 'filtering', 'sorting', 'field select
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Paginate?
+## গল্পে বুঝি
 
-Returning all records in a single response is a recipe for disaster. A table with 10 million rows would consume gigabytes of memory, take minutes to serialize, and probably crash the client.
+আল-খোয়ারিজমি গেছে জেলা ভূমি অফিসে, তার এলাকার এক দাগের পুরনো রেকর্ড খুঁজতে। অফিসের পেছনের ঘরে লাখ লাখ ফাইল — কেউ তো আর সব ফাইল একসাথে সামনে এনে ঢেলে দেয় না, দিলে টেবিলই ভেঙে পড়বে, খুঁজতেও সারাদিন লেগে যাবে। তাই কেরানি ফাতিমা আল-ফিহরি একবারে এক ট্রে, ধরুন ২০টা ফাইল বের করে হাতে দেয়। আল-খোয়ারিজমি সেই ২০টা দেখে বলে, "পরের ট্রে-টা দেন" — ফাতিমা আল-ফিহরি আবার পরের ২০টা এনে দেয়।
 
-Pagination lets you return data in manageable chunks.
+এখানে একটা চালাকি আছে। ফাতিমা আল-ফিহরি প্রতিবার একদম গোড়া থেকে গুনে গুনে আসে না। শেষ ট্রে-র শেষ ফাইলটার গায়ে সে একটা কাগজের স্লিপ গুঁজে রাখে — "এই পর্যন্ত দেখা হয়েছে"। পরের ট্রে চাইলে সে ওই স্লিপের ঠিক পরের ফাইল থেকে টেনে আনে, প্রথম থেকে আবার গোনা লাগে না। আল-খোয়ারিজমি আবার বলতে পারে, "শুধু ২০১৫ সালের, অমুক মৌজার ফাইলগুলো দেন" — তখন ফাতিমা আল-ফিহরি শুধু সেই শর্তে মেলা ফাইলগুলোই বেছে আনে, বাকিগুলো ঘাঁটে না।
+
+এই পুরো ব্যাপারটাই **pagination**। এক ট্রে-তে ২০টা ফাইল দেওয়াটা হলো **limit** — একবারে কতটা রেকর্ড ফেরত আসবে। "প্রথম থেকে ১০০ ফাইল গুনে তারপর দাও" এভাবে গোনাটা **offset** — বড় হলে ধীর, আর মাঝখানে কেউ ফাইল ঢোকালে-সরালে হিসাব এলোমেলো। আর স্লিপ গুঁজে ঠিক ওখান থেকে শুরু করাটাই **cursor** — দ্রুত, আর মাঝপথে রেকর্ড বদলালেও গোলমাল হয় না। শেষে নির্দিষ্ট মৌজা বা সাল দিয়ে বেছে আনাটা হলো **filter** আর **sort**। বাস্তবে ঠিক এভাবেই Facebook-এর নিউজ ফিড বা কোনো e-commerce সাইটের প্রোডাক্ট লিস্ট — সব একসাথে না পাঠিয়ে অল্প অল্প করে, cursor ধরে স্ক্রল অনুযায়ী লোড করে।
+
+## Paginate কেন করবেন?
+
+একটি single response-এ সব record রিটার্ন করা মানে বিপর্যয় ডেকে আনা। ১ কোটি row-এর একটি টেবিল গিগাবাইট মেমরি খেয়ে ফেলবে, serialize করতে কয়েক মিনিট লাগবে, আর সম্ভবত client crash করবে।
+
+Pagination আপনাকে সহজে সামলানো যায় এমন ছোট ছোট ভাগে ডেটা রিটার্ন করতে দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like browsing a product catalog — you don't flip through all 10,000 pages at once. You see 20 items per page with filters for price, category, and a "next page" button.
+একটা প্রোডাক্ট ক্যাটালগ ব্রাউজ করার মতো — আপনি একবারে ১০,০০০ পৃষ্ঠা উল্টান না। প্রতি পৃষ্ঠায় ২০টি আইটেম দেখেন, সাথে দাম আর ক্যাটাগরির ফিল্টার আর একটা "next page" বাটন।
 
 </Callout>
 
 ## Offset Pagination
 
-The simplest approach. The client sends `page` and `limit` (or `offset` and `limit`).
+সবচেয়ে সহজ পদ্ধতি। client `page` আর `limit` (বা `offset` আর `limit`) পাঠায়।
 
 ```typescript
 // Client request
@@ -57,12 +65,12 @@ app.get('/api/products', async (req, res) => {
 });
 ```
 
-### Offset Pagination Problems
+### Offset Pagination-এর সমস্যা
 
-Offset pagination has two critical issues:
+Offset pagination-এ দুটি গুরুতর সমস্যা আছে:
 
-1. **Performance** — `OFFSET 100000` still scans 100,000 rows before returning results
-2. **Data drift** — If items are inserted or deleted between requests, you may skip or duplicate items
+1. **Performance** — `OFFSET 100000` রেজাল্ট রিটার্ন করার আগেও ১,০০,০০০ row স্ক্যান করে
+2. **Data drift** — দুই request-এর মাঝে আইটেম insert বা delete হলে আপনি আইটেম skip করতে বা ডুপ্লিকেট পেতে পারেন
 
 ```typescript
 // Example of data drift
@@ -75,19 +83,19 @@ Offset pagination has two critical issues:
 
 <Callout type="warning">
 
-**When NOT to Use Offset Pagination**
+**কখন Offset Pagination ব্যবহার করবেন না**
 
-- Datasets larger than ~100K rows (performance degrades)
-- Real-time data where items are frequently inserted or deleted
-- Infinite scroll UIs where consistency matters
+- ~100K row-এর বেশি ডেটাসেট (performance খারাপ হয়)
+- real-time ডেটা যেখানে আইটেম প্রায়ই insert বা delete হয়
+- infinite scroll UI যেখানে consistency গুরুত্বপূর্ণ
 
-Use cursor pagination instead for these cases.
+এসব ক্ষেত্রে বরং cursor pagination ব্যবহার করুন।
 
 </Callout>
 
 ## Cursor Pagination
 
-Cursor pagination uses a pointer (usually an ID or timestamp) to fetch the next batch of results. It is faster and avoids data drift.
+Cursor pagination পরের batch-এর রেজাল্ট আনতে একটি pointer (সাধারণত একটি ID বা timestamp) ব্যবহার করে। এটা দ্রুত এবং data drift এড়ায়।
 
 ```typescript
 // Client request
@@ -138,9 +146,9 @@ function decodeCursor(cursor: string): Record<string, unknown> {
 }
 ```
 
-### Cursor Pagination with Sorting
+### Sorting-সহ Cursor Pagination
 
-When you sort by a non-unique field (like `createdAt`), you need a compound cursor:
+আপনি যখন কোনো non-unique ফিল্ড (যেমন `createdAt`) দিয়ে sort করেন, তখন একটি compound cursor দরকার:
 
 ```typescript
 app.get('/api/products', async (req, res) => {
@@ -176,30 +184,30 @@ app.get('/api/products', async (req, res) => {
 });
 ```
 
-## Offset vs Cursor: When to Use Each
+## Offset বনাম Cursor: কখন কোনটা
 
-| Feature                   | Offset         | Cursor    |
-| ------------------------- | -------------- | --------- |
-| Jump to page N            | Yes            | No        |
-| Performance at scale      | Poor           | Excellent |
-| Data consistency          | Drift possible | Stable    |
-| Implementation complexity | Simple         | Moderate  |
-| SEO-friendly URLs         | Yes            | No        |
-| Infinite scroll           | Possible       | Ideal     |
+| বৈশিষ্ট্য              | Offset      | Cursor    |
+| ---------------------- | ----------- | --------- |
+| সরাসরি page N-এ যাওয়া | হ্যাঁ       | না        |
+| scale-এ performance    | খারাপ       | চমৎকার    |
+| Data consistency       | drift সম্ভব | স্থিতিশীল |
+| ইমপ্লিমেন্টেশন জটিলতা  | সহজ         | মাঝারি    |
+| SEO-friendly URL       | হ্যাঁ       | না        |
+| Infinite scroll        | সম্ভব       | আদর্শ     |
 
 <Callout type="tip">
 
-**Practical Advice**
+**ব্যবহারিক পরামর্শ**
 
-- Use **offset** for admin dashboards, backoffice tools, and small datasets
-- Use **cursor** for user-facing feeds, infinite scroll, and large datasets
-- You can support both — use offset by default and offer cursor as an option
+- admin dashboard, backoffice tool, আর ছোট ডেটাসেটের জন্য **offset** ব্যবহার করুন
+- user-facing feed, infinite scroll, আর বড় ডেটাসেটের জন্য **cursor** ব্যবহার করুন
+- আপনি দুটোই সাপোর্ট করতে পারেন — ডিফল্ট offset রাখুন আর cursor-কে একটি option হিসেবে দিন
 
 </Callout>
 
 ## Filtering
 
-Let clients narrow down results using query parameters:
+client-কে query parameter দিয়ে রেজাল্ট সংকুচিত করতে দিন:
 
 ```typescript
 // GET /api/products?category=electronics&min_price=1000&max_price=50000&in_stock=true
@@ -240,7 +248,7 @@ app.get('/api/products', async (req, res) => {
 
 ## Sorting
 
-Allow clients to specify sort order:
+client-কে sort order নির্ধারণ করতে দিন:
 
 ```typescript
 // GET /api/products?sort=price        (ascending)
@@ -276,7 +284,7 @@ app.get('/api/products', async (req, res) => {
 
 ## Field Selection (Sparse Fieldsets)
 
-Let clients request only the fields they need to reduce payload size:
+payload সাইজ কমাতে client-কে শুধু প্রয়োজনীয় ফিল্ডগুলোই চাইতে দিন:
 
 ```typescript
 // GET /api/products?fields=id,name,price
@@ -319,17 +327,17 @@ app.get('/api/products', async (req, res) => {
 
 <Callout type="warning">
 
-**Security Note on Field Selection**
+**Field Selection নিয়ে সিকিউরিটি নোট**
 
-Always use an allowlist of fields. Never let clients request arbitrary fields — they might access internal fields like `passwordHash`, `internalNotes`, or `costPrice`.
+সবসময় ফিল্ডের একটি allowlist ব্যবহার করুন। client-কে কখনো ইচ্ছেমতো ফিল্ড চাইতে দেবেন না — তারা `passwordHash`, `internalNotes`, বা `costPrice`-এর মতো internal ফিল্ডে ঢুকে পড়তে পারে।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Offset pagination** is simple but degrades at scale — use for admin tools and small datasets
-2. **Cursor pagination** is fast and consistent — use for feeds, infinite scroll, and large datasets
-3. **Compound cursors** (sort value + ID) handle sorting with cursor pagination
-4. **Filtering** should use query params with whitelisted fields
-5. **Sorting** with `-field` for descending is a clean, standard pattern
-6. **Field selection** reduces payload size but must use an allowlist for security
+1. **Offset pagination** সহজ কিন্তু scale-এ খারাপ হয় — admin tool আর ছোট ডেটাসেটের জন্য ব্যবহার করুন
+2. **Cursor pagination** দ্রুত আর সামঞ্জস্যপূর্ণ — feed, infinite scroll, আর বড় ডেটাসেটের জন্য ব্যবহার করুন
+3. **Compound cursor** (sort value + ID) cursor pagination-এ sorting সামলায়
+4. **Filtering**-এ whitelist করা ফিল্ড-সহ query param ব্যবহার করা উচিত
+5. descending-এর জন্য `-field` দিয়ে **sorting** একটি পরিচ্ছন্ন, স্ট্যান্ডার্ড pattern
+6. **Field selection** payload সাইজ কমায় কিন্তু সিকিউরিটির জন্য অবশ্যই allowlist ব্যবহার করতে হবে

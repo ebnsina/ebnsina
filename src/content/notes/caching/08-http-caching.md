@@ -1,9 +1,9 @@
 ---
-title: 'HTTP Caching & CDN'
-subtitle: 'Cache-Control, ETags, and CDN edge caching — the layer that can eliminate your server entirely for static content.'
+title: 'HTTP Caching ও CDN'
+subtitle: 'Cache-Control, ETag, এবং CDN edge caching — যে লেয়ারটি স্ট্যাটিক কনটেন্টের জন্য আপনার সার্ভারকে পুরোপুরি অপ্রয়োজনীয় করে দিতে পারে।'
 chapter: 8
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['Cache-Control', 'ETag', 'CDN', 'edge caching', 'HTTP headers']
 ---
 
@@ -11,41 +11,49 @@ topics: ['Cache-Control', 'ETag', 'CDN', 'edge caching', 'HTTP headers']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why HTTP Caching Exists
+## গল্পে বুঝি
 
-Every HTTP response can carry instructions about how it should be cached — by browsers, proxies, and CDN edge nodes. When these instructions are set correctly, repeat requests for the same resource never reach your server at all.
+ইবনে সিনার নতুন পত্রিকা পড়ার নেশা। কিন্তু পত্রিকার হেড অফিস আর ছাপাখানা শহরের ঠিক মাঝখানে — বাসা থেকে যেতে-আসতেই দুই ঘণ্টা। প্রতিদিন সকালে হেড অফিস পর্যন্ত হেঁটে গিয়ে একটা কাগজ আনা অসম্ভব। ভাগ্য ভালো, পত্রিকা কোম্পানি প্রতিটা পাড়াতেই একটা করে ছোট এজেন্ট-দোকান বসিয়ে দিয়েছে। ভোরে হেড অফিস থেকে একগাদা কপি প্রতিটা পাড়ার দোকানে পৌঁছে যায়, আর ইবনে সিনা দুই মিনিট হেঁটে মোড়ের দোকান থেকেই আজকের কাগজটা নিয়ে আসে — হেড অফিস পর্যন্ত যেতেই হয় না।
 
-The problem it solves: serving the same bytes to millions of users is wasteful. A 500KB JavaScript bundle served from a single origin to 10 million users is 5TB of transfer. HTTP caching means most of those users never contact your origin.
+প্রতিটা কপির উপরে ছাপা থাকে তারিখ — "১৫ জুলাই সংস্করণ"। ওই তারিখ পর্যন্ত ইবনে সিনা নিশ্চিন্ত, দোকানের কপিটাই টাটকা, আবার হেড অফিসে খোঁজ নেওয়ার দরকার নেই। কিন্তু একদিন শহরে বড় খবর হলো, ইবনে সিনার সন্দেহ হলো নতুন সংস্করণ বেরিয়েছে কিনা। সে দোকানে গিয়ে জিজ্ঞেস করল, "নতুন এডিশন এসেছে নাকি?" দোকানদার আল-খোয়ারিজমি হেড অফিসে এক ফোন দিয়ে ফিরে বলল, "না ভাই, এখনো ওই একটাই — এটাই টাটকা।" ইবনে সিনাকে গোটা কাগজ আবার আনতে হলো না, শুধু "এখনো একই আছে" — এই ছোট্ট নিশ্চয়তাটুকুই যথেষ্ট।
+
+এই পুরো ব্যবস্থাটাই **HTTP caching ও CDN**। পাড়ার এজেন্ট-দোকান হলো CDN edge, দূরের হেড অফিস হলো origin server; কাগজে ছাপা তারিখ হলো `Cache-Control: max-age` — যতক্ষণ মেয়াদ আছে ততক্ষণ edge থেকেই পরিবেশন হয়, origin ছোঁয়া লাগে না। আর "নতুন এডিশন এসেছে?" জিজ্ঞেস করে গোটা কাগজ ছাড়াই "একই আছে" জবাব পাওয়া — এটাই `ETag` দিয়ে freshness re-check, যেখানে সার্ভার পুরো বডি না পাঠিয়ে `304 Not Modified` দেয়। বাস্তবে Cloudflare, Fastly-এর মতো CDN ঠিক এভাবেই দুনিয়াজুড়ে ইউজারের কাছের edge থেকে স্ট্যাটিক কনটেন্ট সার্ভ করে origin-এর চাপ প্রায় শূন্যে নামিয়ে আনে।
+
+## HTTP Caching কেন আছে
+
+প্রতিটি HTTP রেসপন্স নিজের সাথে নির্দেশনা বহন করতে পারে যে এটি কীভাবে ক্যাশ করা হবে — ব্রাউজার, প্রক্সি এবং CDN edge node দ্বারা। এই নির্দেশনাগুলো সঠিকভাবে সেট করা থাকলে, একই রিসোর্সের জন্য বারবার আসা রিকোয়েস্ট আর কখনোই আপনার সার্ভার পর্যন্ত পৌঁছায় না।
+
+এটি যে সমস্যাটি সমাধান করে: লাখ লাখ ইউজারকে একই বাইট বারবার পরিবেশন করা অপচয়। একটি একক অরিজিন থেকে 500KB এর একটি JavaScript bundle 10 মিলিয়ন ইউজারকে দিলে সেটা 5TB ট্রান্সফার। HTTP caching মানে এই ইউজারদের বেশিরভাগই কখনো আপনার অরিজিনের সাথে যোগাযোগই করে না।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A newspaper printer prints 100,000 copies in the morning. Each copy goes to a delivery depot (CDN edge node). Readers pick up from the depot, not the printer. The printer only runs when there's a new edition. HTTP caching is the same: your server is the printer, CDN edges are the depots, and `Cache-Control` tells the depot how long to keep today's edition before discarding it.
+একটি সংবাদপত্রের প্রেস সকালে 100,000 কপি ছাপায়। প্রতিটি কপি একটি ডেলিভারি ডিপোতে (CDN edge node) যায়। পাঠকরা প্রেস থেকে নয়, ডিপো থেকে কপি সংগ্রহ করে। নতুন সংস্করণ থাকলেই কেবল প্রেস চালু হয়। HTTP caching-ও ঠিক একই রকম: আপনার সার্ভার হলো প্রেস, CDN edge হলো ডিপো, আর `Cache-Control` ডিপোকে বলে দেয় আজকের সংস্করণটি ফেলে দেওয়ার আগে কতক্ষণ রাখতে হবে।
 
 </Callout>
 
 ## Cache-Control Header
 
-The primary mechanism. Controls who can cache, for how long, and under what conditions.
+প্রধান কৌশল। এটি নিয়ন্ত্রণ করে কে ক্যাশ করতে পারবে, কতক্ষণের জন্য, এবং কোন শর্তে।
 
 ```http
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-**Key directives:**
+**গুরুত্বপূর্ণ ডিরেক্টিভ:**
 
-| Directive                  | Meaning                                             |
-| -------------------------- | --------------------------------------------------- |
-| `public`                   | CDNs and proxies can cache this                     |
-| `private`                  | Only the browser can cache (not CDN)                |
-| `no-store`                 | Never cache anywhere                                |
-| `no-cache`                 | Cache but revalidate before serving                 |
-| `max-age=N`                | Fresh for N seconds                                 |
-| `s-maxage=N`               | CDN freshness (overrides max-age for CDNs)          |
-| `stale-while-revalidate=N` | Serve stale for N seconds while refreshing          |
-| `immutable`                | Never revalidate during max-age (browser hint)      |
-| `must-revalidate`          | Must contact origin when stale, never serve expired |
+| Directive                  | অর্থ                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `public`                   | CDN এবং প্রক্সি এটি ক্যাশ করতে পারবে                                                  |
+| `private`                  | কেবল ব্রাউজার ক্যাশ করতে পারবে (CDN নয়)                                              |
+| `no-store`                 | কোথাও কখনোই ক্যাশ করবে না                                                             |
+| `no-cache`                 | ক্যাশ করবে কিন্তু পরিবেশনের আগে রিভ্যালিডেট করবে                                      |
+| `max-age=N`                | N সেকেন্ডের জন্য ফ্রেশ                                                                |
+| `s-maxage=N`               | CDN-এর ফ্রেশনেস (CDN-এর ক্ষেত্রে max-age ওভাররাইড করে)                                |
+| `stale-while-revalidate=N` | রিফ্রেশ করার সময় N সেকেন্ড পর্যন্ত stale পরিবেশন করবে                                |
+| `immutable`                | max-age চলাকালে কখনো রিভ্যালিডেট করবে না (ব্রাউজার hint)                              |
+| `must-revalidate`          | stale হলে অবশ্যই অরিজিনের সাথে যোগাযোগ করবে, মেয়াদোত্তীর্ণ কিছু কখনো পরিবেশন করবে না |
 
 ```typescript
 // Express/Node.js — set cache headers
@@ -76,13 +84,13 @@ app.get('/api/me', authenticate, (req, res) => {
 
 <Callout type="tip">
 
-**Content-hash your asset filenames.** `app.js?v=1.2.3` is fragile — someone may cache the old file and ignore the version query. `app.a4f8c2b1.js` is the hash of the file content — when the file changes, the URL changes, and browsers fetch fresh automatically. Then you can safely set `max-age=31536000`.
+**আপনার অ্যাসেট ফাইলনেমকে content-hash করুন।** `app.js?v=1.2.3` ভঙ্গুর — কেউ হয়তো পুরনো ফাইল ক্যাশ করে ভার্সন কোয়েরি উপেক্ষা করবে। `app.a4f8c2b1.js` হলো ফাইল কনটেন্টের হ্যাশ — ফাইল বদলালে URL বদলায়, এবং ব্রাউজার স্বয়ংক্রিয়ভাবে ফ্রেশ কপি ফেচ করে। তখন আপনি নিরাপদে `max-age=31536000` সেট করতে পারেন।
 
 </Callout>
 
-## ETag and Conditional Requests
+## ETag এবং Conditional Request
 
-An ETag is a fingerprint of the response body. On subsequent requests, the browser sends it back; the server validates and either returns fresh data or `304 Not Modified` (no body, saves bandwidth).
+একটি ETag হলো রেসপন্স বডির একটি ফিঙ্গারপ্রিন্ট। পরবর্তী রিকোয়েস্টগুলোতে ব্রাউজার এটি ফেরত পাঠায়; সার্ভার তা যাচাই করে এবং হয় ফ্রেশ ডেটা ফেরত দেয় অথবা `304 Not Modified` দেয় (কোনো বডি ছাড়া, ব্যান্ডউইথ বাঁচায়)।
 
 ```typescript
 import { createHash } from 'crypto';
@@ -107,7 +115,7 @@ app.get('/api/config', async (req, res) => {
 });
 ```
 
-**Last-Modified / If-Modified-Since** — older, timestamp-based equivalent:
+**Last-Modified / If-Modified-Since** — পুরনো, টাইমস্ট্যাম্প-ভিত্তিক সমতুল্য:
 
 ```typescript
 app.get('/api/posts/:id', async (req, res) => {
@@ -126,7 +134,7 @@ app.get('/api/posts/:id', async (req, res) => {
 
 ## CDN Edge Caching
 
-A CDN places servers (PoPs — points of presence) close to users worldwide. Requests hit the nearest PoP. If the PoP has the response cached, it serves it without ever contacting your origin.
+একটি CDN বিশ্বজুড়ে ইউজারদের কাছাকাছি সার্ভার (PoP — points of presence) বসিয়ে দেয়। রিকোয়েস্ট সবচেয়ে কাছের PoP-এ পৌঁছায়। PoP-এর কাছে রেসপন্স ক্যাশ করা থাকলে, সেটি আপনার অরিজিনের সাথে যোগাযোগ না করেই তা পরিবেশন করে।
 
 ```
 User (London) → Cloudflare London PoP → cached response (2ms)
@@ -158,7 +166,7 @@ export default {
 };
 ```
 
-**CDN cache purging** — when content changes, purge the CDN cache:
+**CDN cache purging** — কনটেন্ট বদলালে CDN ক্যাশ purge করুন:
 
 ```typescript
 // Cloudflare API purge
@@ -185,7 +193,7 @@ async function updateProduct(id: string, data: Partial<Product>): Promise<void> 
 
 ## Vary Header
 
-Tells CDNs to cache different versions based on request headers:
+CDN-কে বলে রিকোয়েস্ট হেডারের ভিত্তিতে ভিন্ন ভিন্ন সংস্করণ ক্যাশ করতে:
 
 ```typescript
 // Different response for mobile vs desktop
@@ -198,54 +206,54 @@ res.set('Vary', 'Accept'); // JSON vs HTML
 
 <Callout type="warning">
 
-**Avoid `Vary: User-Agent`**. User-Agent strings are nearly infinite. CDNs create a separate cache entry per variation — your cache hit ratio plummets. If you need device-specific content, serve it from different URLs or use Client Hints instead.
+**`Vary: User-Agent` এড়িয়ে চলুন।** User-Agent স্ট্রিং প্রায় অসীম। CDN প্রতিটি ভিন্নতার জন্য আলাদা ক্যাশ এন্ট্রি তৈরি করে — আপনার cache hit ratio ধসে পড়ে। ডিভাইস-নির্দিষ্ট কনটেন্ট দরকার হলে সেটি ভিন্ন URL থেকে পরিবেশন করুন অথবা Client Hints ব্যবহার করুন।
 
 </Callout>
 
-## Common Caching Patterns
+## সাধারণ Caching প্যাটার্ন
 
-**Static assets (JS, CSS, images):**
+**স্ট্যাটিক অ্যাসেট (JS, CSS, images):**
 
 ```http
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-Cache forever. When the file changes, the URL changes (content hash).
+চিরকালের জন্য ক্যাশ করুন। ফাইল বদলালে URL বদলায় (content hash)।
 
-**API responses (cacheable):**
+**API রেসপন্স (ক্যাশযোগ্য):**
 
 ```http
 Cache-Control: public, max-age=60, stale-while-revalidate=30
 ```
 
-Fresh for 1 minute, serve stale for 30 extra seconds while revalidating.
+1 মিনিটের জন্য ফ্রেশ, রিভ্যালিডেট করার সময় অতিরিক্ত 30 সেকেন্ড stale পরিবেশন করুন।
 
-**User-specific API responses:**
+**ইউজার-নির্দিষ্ট API রেসপন্স:**
 
 ```http
 Cache-Control: private, max-age=30
 ```
 
-Browser can cache, CDN cannot.
+ব্রাউজার ক্যাশ করতে পারবে, CDN পারবে না।
 
-**Never cache:**
+**কখনোই ক্যাশ করবেন না:**
 
 ```http
 Cache-Control: no-store
 ```
 
-Mutations, payments, sensitive user data.
+Mutation, পেমেন্ট, সংবেদনশীল ইউজার ডেটা।
 
-**HTML pages (SPA shell):**
+**HTML পেজ (SPA shell):**
 
 ```http
 Cache-Control: public, max-age=0, must-revalidate
 ETag: "abc123"
 ```
 
-Always revalidate but serve the cached version if ETag matches (304 response).
+সবসময় রিভ্যালিডেট করুন কিন্তু ETag মিললে ক্যাশ করা সংস্করণ পরিবেশন করুন (304 রেসপন্স)।
 
-## Cache-Control Strategy by Resource Type
+## রিসোর্স টাইপ অনুযায়ী Cache-Control কৌশল
 
 ```typescript
 function getCacheHeaders(resource: 'asset' | 'api' | 'html' | 'user-data'): string {
@@ -264,7 +272,7 @@ function getCacheHeaders(resource: 'asset' | 'api' | 'html' | 'user-data'): stri
 }
 ```
 
-## Debugging HTTP Cache
+## HTTP Cache ডিবাগ করা
 
 ```bash
 # Check response headers
@@ -280,4 +288,4 @@ curl -I https://yoursite.com/api/products/1
 # Age header tells you how old the cached response is (seconds since origin served it)
 ```
 
-The `Age` header is your best debugging tool. If `Age: 0`, the CDN just fetched from origin. If `Age: 240`, this response has been cached for 4 minutes.
+`Age` হেডার আপনার সেরা ডিবাগিং টুল। `Age: 0` হলে, CDN এইমাত্র অরিজিন থেকে ফেচ করেছে। `Age: 240` হলে, এই রেসপন্সটি 4 মিনিট ধরে ক্যাশ করা আছে।

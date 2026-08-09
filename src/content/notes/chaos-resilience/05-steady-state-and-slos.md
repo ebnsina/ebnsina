@@ -1,9 +1,9 @@
 ---
 title: 'Steady State & SLOs'
-subtitle: "Defining what 'working' means in measurable terms — SLIs, SLOs, error budgets, and the feedback loop that drives reliability work."
+subtitle: "'কাজ করছে' মানে কী তা পরিমাপযোগ্য ভাষায় সংজ্ঞায়িত করা — SLIs, SLOs, error budgets, এবং সেই ফিডব্যাক লুপ যা reliability-র কাজকে চালায়।"
 chapter: 5
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['SLO', 'SLI', 'error budget', 'steady state', 'reliability']
 ---
 
@@ -13,29 +13,37 @@ topics: ['SLO', 'SLI', 'error budget', 'steady state', 'reliability']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A thermostat: it doesn't just know that temperature matters — it has a specific target (68°F), measures the current state continuously, and triggers action when the gap is too large. SLOs are your thermostat for reliability: a specific target, continuous measurement, and a trigger for when to act.
+একটা thermostat: এটা শুধু জানে না যে তাপমাত্রা গুরুত্বপূর্ণ — এর একটা নির্দিষ্ট target আছে (68°F), এটা current state ক্রমাগত মাপে, আর ব্যবধান খুব বড় হলে action ট্রিগার করে। SLOs হলো reliability-র জন্য আপনার thermostat: একটা নির্দিষ্ট target, ক্রমাগত পরিমাপ, আর কখন action নিতে হবে তার একটা ট্রিগার।
 
 </Callout>
 
-## Steady State Is Not "No Errors"
+## গল্পে বুঝি
 
-"The system is working" is meaningless for chaos engineering. You need a measurable definition:
+চিকিৎসক ইবনে সিনার চেম্বারে এক রোগী এসেছেন হার্টের চেকআপ করাতে। ইবনে সিনা প্রথমে রোগীকে চুপচাপ বসিয়ে বিশ্রাম নেওয়ালেন, তারপর মেপে নিলেন তার বিশ্রামরত অবস্থার স্বাভাবিক ভাইটাল সাইন — নাড়ির গতি প্রতি মিনিটে ৭২, রক্তচাপ ১২০ বাই ৮০, শ্বাসপ্রশ্বাস স্বাভাবিক। এই মাপা সংখ্যাগুলোই এখন রোগীর "স্বাভাবিক" অবস্থার একটা পরিষ্কার ছবি — অনুমান নয়, সংখ্যায় লেখা।
 
-**Bad steady state definition:**
+এবার আসল পরীক্ষা। ইবনে সিনা রোগীকে ট্রেডমিলে তুললেন, ধীরে ধীরে গতি বাড়ালেন — এটাই ইচ্ছাকৃত চাপ। তার মাথায় একটা স্পষ্ট প্রশ্ন: "একটা সুস্থ হার্ট কি এই চাপেও ভাইটালগুলো নিরাপদ সীমার ভেতরে রাখতে পারবে?" সীমাটা তিনি আগেই ঠিক করে রেখেছেন — নাড়ি ১৬০ ছাড়ানো চলবে না, বুকে ব্যথা বা শ্বাসকষ্ট দেখা দিলেই থামতে হবে। পুরো সময় তিনি মনিটরে চোখ রাখেন। রোগী দৌড়ানোর সময় নাড়ি যদি হঠাৎ নিরাপদ সীমার বাইরে চলে যায়, তিনি এক মুহূর্তও দেরি না করে মেশিন থামিয়ে দেন।
 
-> "The system is up and handling requests normally."
+এই পুরো ব্যাপারটাই আসলে একটা **chaos experiment**। রোগীর বিশ্রামরত স্বাভাবিক ভাইটাল হলো মাপা **steady state**, আর আগে থেকে ঠিক করা নিরাপদ সীমা হলো **SLO**। "চাপেও ভাইটাল নিরাপদ থাকবে" — এই প্রত্যাশাটাই experiment-এর **hypothesis**, আর মনিটরে চোখ রেখে সীমা ভাঙলেই থামিয়ে দেওয়াটা হলো steady-state **metric** মেপে **SLO** breach হলে rollback করা। বাস্তবে ঠিক এভাবেই latency inject করার আগে-পরে steady state মেপে দেখা হয়, আর SLO ভাঙার লক্ষণ দেখলেই experiment abort করে সিস্টেম আগের অবস্থায় ফিরিয়ে আনা হয়।
 
-**Good steady state definition:**
+## Steady State মানে "কোনো error নেই" নয়
 
-> "p99 request latency &lt; 300ms, error rate &lt; 0.5%, successful checkout rate > 99.2%, all measured over a 5-minute rolling window."
+"সিস্টেম কাজ করছে" chaos engineering-এর জন্য অর্থহীন। আপনার একটা পরিমাপযোগ্য সংজ্ঞা দরকার:
 
-Now you can answer: "Is this still true with 200ms of injected latency?" The answer is either yes or no, measurable in real time.
+**খারাপ steady state সংজ্ঞা:**
+
+> "সিস্টেম up আছে আর স্বাভাবিকভাবে request সামলাচ্ছে।"
+
+**ভালো steady state সংজ্ঞা:**
+
+> "p99 request latency &lt; 300ms, error rate &lt; 0.5%, সফল checkout rate > 99.2%, সবকিছু একটা 5-মিনিটের rolling window-এ মাপা।"
+
+এখন আপনি উত্তর দিতে পারবেন: "200ms injected latency দিয়েও কি এটা সত্য থাকে?" উত্তর হয় হ্যাঁ নয়তো না, রিয়েল-টাইমে পরিমাপযোগ্য।
 
 ## Service Level Indicators (SLIs)
 
-An SLI is a metric that represents the quality of your service from the user's perspective:
+একটা SLI হলো একটা metric যা ইউজারের দৃষ্টিকোণ থেকে আপনার service-এর মান প্রতিনিধিত্ব করে:
 
 ```typescript
 // Availability SLI: fraction of requests that succeed
@@ -51,9 +59,9 @@ const throughputSLI = successfulOpsPerSecond;
 const errorRate = errorRequests / totalRequests;
 ```
 
-SLIs measure what users experience, not what your infrastructure shows. CPU at 80% is not an SLI — it doesn't tell you if users are getting good service. 99.5% requests completing under 300ms is an SLI.
+SLI মাপে ইউজাররা কী অনুভব করে, আপনার infrastructure কী দেখায় তা নয়। CPU 80%-এ থাকা একটা SLI নয় — এটা আপনাকে বলে না ইউজাররা ভালো service পাচ্ছে কি না। 99.5% request 300ms-এর নিচে সম্পন্ন হওয়া একটা SLI।
 
-**Implementing SLI collection:**
+**SLI collection বাস্তবায়ন:**
 
 ```typescript
 const requestDuration = new Histogram({
@@ -80,7 +88,7 @@ app.use((req, res, next) => {
 });
 ```
 
-**Prometheus queries for your SLIs:**
+**আপনার SLI-এর জন্য Prometheus query:**
 
 ```promql
 # Availability SLI (5m window)
@@ -96,7 +104,7 @@ sum(rate(http_request_duration_seconds_count[5m]))
 
 ## Service Level Objectives (SLOs)
 
-An SLO is a target value for an SLI:
+একটা SLO হলো একটা SLI-এর জন্য একটা target value:
 
 ```
 SLI: availability = successful requests / total requests
@@ -109,9 +117,9 @@ SLI: successful checkout rate
 SLO: > 99.2% of checkout attempts succeed
 ```
 
-SLOs are aspirational targets — not contractual guarantees (those are SLAs). Setting them slightly below your actual capability gives you room to experiment and improve without burning your error budget.
+SLO হলো আকাঙ্ক্ষিত target — চুক্তিভিত্তিক গ্যারান্টি নয় (সেগুলো SLA)। এগুলো আপনার প্রকৃত সক্ষমতার সামান্য নিচে সেট করলে আপনার error budget না পুড়িয়ে পরীক্ষা আর উন্নতির জায়গা থাকে।
 
-**Setting realistic SLOs:**
+**বাস্তবসম্মত SLO সেট করা:**
 
 ```
 Step 1: Measure your current actual performance over 30 days
@@ -126,7 +134,7 @@ Example:
 
 ## Error Budgets
 
-The error budget is the inverse of your SLO — the amount of failure you're allowed:
+Error budget হলো আপনার SLO-এর বিপরীত — আপনাকে যতটুকু failure-এর অনুমতি দেওয়া হয়েছে:
 
 ```
 SLO: 99.9% availability
@@ -139,10 +147,10 @@ SLO: 99.99% availability
   Allowed downtime: 43,200 × 0.0001 = 4.32 minutes/month
 ```
 
-The error budget drives decisions:
+Error budget সিদ্ধান্ত চালায়:
 
-- **Budget remaining:** Confidence to run chaos experiments, deploy risky changes, take calculated risks.
-- **Budget exhausted:** Freeze feature deployments, focus on reliability improvements, cancel chaos experiments until budget recovers.
+- **Budget বাকি:** Chaos experiment চালানোর, ঝুঁকিপূর্ণ পরিবর্তন deploy করার, হিসাব করা ঝুঁকি নেওয়ার আত্মবিশ্বাস।
+- **Budget নিঃশেষ:** Feature deployment ফ্রিজ করুন, reliability উন্নতিতে মনোযোগ দিন, budget recover না হওয়া পর্যন্ত chaos experiment বাতিল করুন।
 
 ```typescript
 interface ErrorBudget {
@@ -177,7 +185,7 @@ function calculateErrorBudget(
 
 ## Error Budget Policy
 
-Document what the team does at different budget levels:
+বিভিন্ন budget লেভেলে দল কী করে তা ডকুমেন্ট করুন:
 
 ```markdown
 ## Error Budget Policy
@@ -209,9 +217,9 @@ Document what the team does at different budget levels:
 - Recovery plan required before feature work resumes
 ```
 
-## Chaos Experiments and the Error Budget
+## Chaos Experiment এবং Error Budget
 
-Chaos experiments intentionally consume error budget — that's the point. Track this explicitly:
+Chaos experiment ইচ্ছাকৃতভাবে error budget খরচ করে — সেটাই উদ্দেশ্য। এটা স্পষ্টভাবে ট্র্যাক করুন:
 
 ```typescript
 interface ChaosExperiment {
@@ -230,11 +238,11 @@ function canRunExperiment(budget: ErrorBudget, experiment: ChaosExperiment): boo
 }
 ```
 
-If you're low on error budget, run experiments in staging only. Save production experiments for when you have budget to spend.
+আপনার error budget কম থাকলে, শুধু staging-এ experiment চালান। Production experiment তখনকার জন্য রাখুন যখন খরচ করার মতো budget আছে।
 
-## SLOs for Downstream Dependencies
+## Downstream Dependency-র জন্য SLOs
 
-Your SLO is limited by your dependencies' SLOs. If payment service has 99.9% availability, your checkout flow cannot realistically offer better than 99.9%:
+আপনার SLO আপনার dependency-দের SLO দ্বারা সীমাবদ্ধ। যদি payment service-এর 99.9% availability থাকে, আপনার checkout flow বাস্তবসম্মতভাবে 99.9%-এর চেয়ে ভালো অফার করতে পারে না:
 
 ```
 Your availability = product of all critical dependency availabilities
@@ -244,11 +252,11 @@ Your availability = product of all critical dependency availabilities
 Realistic SLO: 99.8% (leaves margin for correlated failures)
 ```
 
-Track each dependency's SLO and their actual performance. When a dependency degrades below its SLO, that's a legitimate excuse for your own budget burn — and a signal to invest in circuit breakers or fallbacks for that dependency.
+প্রতিটা dependency-র SLO আর তাদের প্রকৃত performance ট্র্যাক করুন। যখন একটা dependency তার SLO-এর নিচে degrade করে, সেটা আপনার নিজের budget burn-এর একটা বৈধ অজুহাত — এবং সেই dependency-র জন্য circuit breaker বা fallback-এ বিনিয়োগ করার একটা signal।
 
-## Dashboards for Steady State
+## Steady State-এর জন্য Dashboards
 
-Put SLI/SLO visibility front and center:
+SLI/SLO visibility সামনে আর কেন্দ্রে রাখুন:
 
 ```
 Main reliability dashboard:
@@ -266,4 +274,4 @@ Main reliability dashboard:
 └─────────────────────────────────────────────────┘
 ```
 
-This dashboard tells you in 10 seconds whether the system is healthy and how much risk budget you have. Reference it before every chaos experiment and every major deployment.
+এই dashboard আপনাকে ১০ সেকেন্ডে বলে দেয় সিস্টেম সুস্থ কি না আর আপনার কতটুকু risk budget আছে। প্রতিটা chaos experiment আর প্রতিটা বড় deployment-এর আগে এটা দেখুন।

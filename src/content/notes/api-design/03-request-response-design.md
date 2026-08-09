@@ -1,9 +1,9 @@
 ---
-title: 'Request & Response Design'
-subtitle: 'Design clean request and response structures with proper headers, content negotiation, error formats, and envelope patterns.'
+title: 'Request ও Response ডিজাইন'
+subtitle: 'সঠিক header, content negotiation, error format, আর envelope pattern দিয়ে পরিচ্ছন্ন request ও response স্ট্রাকচার ডিজাইন করুন।'
 chapter: 3
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['request design', 'response design', 'headers', 'content negotiation', 'error handling']
 ---
 
@@ -11,23 +11,31 @@ topics: ['request design', 'response design', 'headers', 'content negotiation', 
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Structure Matters
+## গল্পে বুঝি
 
-A well-designed request/response structure makes your API predictable. When every endpoint follows the same patterns, developers can guess how a new endpoint works without reading the docs.
+আল-খোয়ারিজমি নতুন একটা ব্যাংক অ্যাকাউন্ট খুলতে গেল। কাউন্টারের ভদ্রলোক তাকে একটা ছাপানো আবেদন ফর্ম দিলেন — সেখানে ঠিক যতটুকু দরকার ততটুকুই ঘর: নাম, বাবার নাম, NID নম্বর, ঠিকানা, মোবাইল, প্রাথমিক জমার পরিমাণ। প্রতিটা ঘরের পাশে ছোট করে লেখা কোনটা বাধ্যতামূলক, কোনটা ঐচ্ছিক, আর কোন ফরম্যাটে লিখতে হবে (তারিখ দিন-মাস-বছর, টাকার অঙ্ক)। আল-খোয়ারিজমিকে ফর্ম কীভাবে ভরতে হবে সেটা কাউকে জিজ্ঞেস করতে হলো না — ফর্ম দেখেই বুঝে গেল, কারণ সব ঘর পরিষ্কার আর একটা নির্দিষ্ট ক্রমে সাজানো।
+
+ফর্ম জমা দেওয়ার কয়েকদিন পর ব্যাংক থেকে একটা চিঠি এলো — সবসময় একই ছাঁচের চিঠি। উপরে একটা রেজাল্ট কোড: হয় "অনুমোদিত" (সাথে অ্যাকাউন্ট নম্বর), নয়তো "বাতিল"। আল-খোয়ারিজমির বেলায় লেখা ছিল "বাতিল", কিন্তু নিচেই স্পষ্ট কারণ — "NID-এর সাথে দেওয়া জন্মতারিখ মেলেনি"। শুধু গোল গোল "হবে না" নয়, ঠিক কোন ঘরে কী সমস্যা সেটা লেখা, যাতে আল-খোয়ারিজমি ওই ঘরটাই ঠিক করে আবার জমা দিতে পারে।
+
+এই ব্যাপারটাই হলো ভালো **request** আর **response** ডিজাইন। আবেদন ফর্মটাই হলো request — ঠিক যতটুকু দরকার ততগুলো **field**, পরিষ্কার নাম, নির্দিষ্ট ফরম্যাট আর ক্রমে সাজানো (এই চ্যাপ্টারে header, body আর validation)। ফিরতি চিঠিটা হলো response — সবসময় একই **envelope** ছাঁচে, উপরে একটা **status code** (অনুমোদিত মানে 200/201, বাতিল মানে 422), আর ভুল হলে গোল "না" নয়, বরং কোন field-এ কী **error** সেটা স্পষ্ট করে বলা। বাস্তবে bKash বা কোনো ব্যাংকের অ্যাকাউন্ট-খোলার API ঠিক এভাবেই কাজ করে — অ্যাপ পরিষ্কার payload পাঠায়, সার্ভার একই ফরম্যাটে predictable জবাব দেয়, যাতে ইউজার বুঝতে পারে সফল হলো নাকি ঠিক কোথায় ভুল হলো।
+
+## স্ট্রাকচার কেন জরুরি
+
+একটি ভালোভাবে ডিজাইন করা request/response স্ট্রাকচার আপনার API-কে predictable করে তোলে। প্রতিটি endpoint যখন একই pattern মেনে চলে, তখন ডেভেলপাররা docs না পড়েই একটি নতুন endpoint কীভাবে কাজ করে তা আন্দাজ করতে পারে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like filling out a form at a government office — the form has required fields (headers), a body (your information), and you get back a receipt with a status stamp.
+সরকারি অফিসে একটা ফর্ম পূরণ করার মতো — ফর্মে required ফিল্ড (header), একটি body (আপনার তথ্য) থাকে, আর বিনিময়ে আপনি স্ট্যাটাস স্ট্যাম্প-সহ একটি রসিদ পান।
 
 </Callout>
 
-## Request Design
+## Request ডিজাইন
 
-### Request Headers
+### Request Header
 
-Headers carry metadata about the request. These are the essential ones:
+Header request সম্পর্কিত metadata বহন করে। এগুলোই সবচেয়ে জরুরি:
 
 ```typescript
 // Common request headers
@@ -52,9 +60,9 @@ const headers = {
 };
 ```
 
-### Idempotency Keys
+### Idempotency Key
 
-Idempotency keys prevent duplicate operations when a client retries a request (network timeout, etc.).
+client যখন একটি request retry করে (network timeout ইত্যাদি), তখন idempotency key ডুপ্লিকেট operation ঠেকায়।
 
 ```typescript
 import { randomUUID } from 'crypto';
@@ -103,7 +111,7 @@ app.post('/api/payments', async (req, res) => {
 
 ### Request Body Validation
 
-Always validate incoming data. Never trust the client.
+সবসময় incoming ডেটা validate করুন। কখনো client-কে বিশ্বাস করবেন না।
 
 ```typescript
 import { z } from 'zod';
@@ -148,20 +156,20 @@ app.post('/api/users', validate(CreateUserSchema), async (req, res) => {
 
 <Callout type="warning">
 
-**Never Trust Client Input**
+**কখনো Client Input বিশ্বাস করবেন না**
 
-- Always validate on the server, even if you validate on the client
-- Sanitize strings to prevent XSS and SQL injection
-- Set maximum sizes for arrays and strings
-- Use allowlists (enum of valid values) instead of blocklists
+- client-এ validate করলেও সবসময় সার্ভারেও validate করুন
+- XSS আর SQL injection ঠেকাতে string sanitize করুন
+- array আর string-এর জন্য সর্বোচ্চ সাইজ সেট করুন
+- blocklist-এর বদলে allowlist (valid value-এর enum) ব্যবহার করুন
 
 </Callout>
 
-## Response Design
+## Response ডিজাইন
 
-### The Envelope Pattern
+### Envelope Pattern
 
-Wrap your responses in a consistent structure so clients always know what to expect:
+আপনার response-গুলো একটি সামঞ্জস্যপূর্ণ স্ট্রাকচারে মুড়ে দিন যাতে client সবসময় জানে কী আশা করা যায়:
 
 ```typescript
 // Single resource
@@ -205,7 +213,7 @@ Wrap your responses in a consistent structure so clients always know what to exp
 }
 ```
 
-### Implementing the Envelope
+### Envelope ইমপ্লিমেন্ট করা
 
 ```typescript
 // Response helper functions
@@ -271,9 +279,9 @@ app.get('/api/users/:id', async (req, res) => {
 });
 ```
 
-## Error Response Standards
+## Error Response স্ট্যান্ডার্ড
 
-### Consistent Error Format
+### সামঞ্জস্যপূর্ণ Error Format
 
 ```typescript
 // Define error codes as constants
@@ -326,7 +334,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 ## Content Negotiation
 
-Content negotiation lets clients specify what format they want:
+Content negotiation client-কে জানাতে দেয় সে কোন format চায়:
 
 ```typescript
 app.get('/api/reports/:id', async (req, res) => {
@@ -355,18 +363,18 @@ app.get('/api/reports/:id', async (req, res) => {
 
 <Callout type="tip">
 
-**Response Design Checklist**
+**Response ডিজাইন চেকলিস্ট**
 
-- Always wrap responses in an envelope: `{ data, error, meta }`
-- Include a `requestId` in every response for debugging
-- Use consistent error codes across all endpoints
-- Return `null` for missing optional fields, omit them, or use a default — pick one strategy and stick with it
-- Include pagination metadata for all list endpoints
-- Set proper `Content-Type` and `Cache-Control` headers
+- সবসময় response একটি envelope-এ মুড়ুন: `{ data, error, meta }`
+- ডিবাগিংয়ের জন্য প্রতিটি response-এ একটি `requestId` রাখুন
+- সব endpoint জুড়ে সামঞ্জস্যপূর্ণ error code ব্যবহার করুন
+- না-থাকা optional ফিল্ডের জন্য `null` রিটার্ন করুন, বাদ দিন, বা default ব্যবহার করুন — একটি strategy বেছে নিয়ে তাতেই লেগে থাকুন
+- সব list endpoint-এর জন্য pagination metadata রাখুন
+- সঠিক `Content-Type` আর `Cache-Control` header সেট করুন
 
 </Callout>
 
-## Response Headers
+## Response Header
 
 ```typescript
 // Common response headers
@@ -397,11 +405,11 @@ app.get('/api/countries', (req, res) => {
 });
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Validate all input** with a schema library like Zod — never trust client data
-2. **Use an envelope pattern** for consistent response structure across all endpoints
-3. **Idempotency keys** prevent duplicate operations on retries
-4. **Standardize error responses** with machine-readable codes and human-readable messages
-5. **Content negotiation** lets the same endpoint serve JSON, CSV, or XML based on the Accept header
-6. **Include request IDs** in every response to make debugging possible
+1. Zod-এর মতো একটি schema লাইব্রেরি দিয়ে **সব input validate করুন** — কখনো client ডেটা বিশ্বাস করবেন না
+2. সব endpoint জুড়ে সামঞ্জস্যপূর্ণ response স্ট্রাকচারের জন্য **envelope pattern ব্যবহার করুন**
+3. **Idempotency key** retry-এর সময় ডুপ্লিকেট operation ঠেকায়
+4. machine-readable code আর human-readable message দিয়ে **error response স্ট্যান্ডার্ডাইজ করুন**
+5. **Content negotiation** একই endpoint-কে Accept header অনুযায়ী JSON, CSV, বা XML সার্ভ করতে দেয়
+6. ডিবাগিং সম্ভব করতে **প্রতিটি response-এ request ID রাখুন**

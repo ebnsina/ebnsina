@@ -1,19 +1,19 @@
 ---
-title: 'Incident Response & Digital Forensics'
-subtitle: 'Memory forensics with Volatility, disk imaging, timeline analysis, log analysis, and the IR lifecycle from detection to remediation.'
+title: 'ইনসিডেন্ট রেসপন্স ও ডিজিটাল ফরেনসিক্স'
+subtitle: 'Volatility দিয়ে মেমরি ফরেনসিক্স, ডিস্ক ইমেজিং, টাইমলাইন অ্যানালাইসিস, লগ অ্যানালাইসিস, এবং ডিটেকশন থেকে রেমিডিয়েশন পর্যন্ত IR লাইফসাইকেল।'
 chapter: 21
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics:
   [
-    'incident response',
-    'digital forensics',
+    'ইনসিডেন্ট রেসপন্স',
+    'ডিজিটাল ফরেনসিক্স',
     'Volatility',
-    'memory forensics',
-    'disk forensics',
+    'মেমরি ফরেনসিক্স',
+    'ডিস্ক ফরেনসিক্স',
     'DFIR',
-    'timeline analysis',
-    'log analysis'
+    'টাইমলাইন অ্যানালাইসিস',
+    'লগ অ্যানালাইসিস'
   ]
 ---
 
@@ -21,15 +21,23 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+শহরের বাজারে ফাতিমা আল-ফিহরির গয়নার দোকানে সকালে ঢুকে দেখা গেল — সিন্দুক খোলা, হিসাবের খাতা উধাও। মালিক চেঁচামেচি শুরুর আগেই ডাকা হলো ঝানু গোয়েন্দা আল-খোয়ারিজমিকে। সে এসেই প্রথমে কাউকে ভেতরে ঢুকতে দিল না — দরজায় দড়ি টানিয়ে পুরো দোকান সিল করে দিল, যাতে কেউ হাঁটাচলা করে মেঝের কাদা-পায়ের ছাপ বা সিন্দুকের আঁচড় নষ্ট না করে ফেলে। আগে দৃশ্যটা যেমন আছে ঠিক তেমনই রক্ষা করা, তারপর তদন্ত।
+
+এবার সে ধীরে ধীরে ক্লু জোড়া লাগাতে লাগল। পেছনের জানালার ছিটকিনি ভাঙা, বাইরের কাদায় রাত দুটোর দিকের তাজা পায়ের ছাপ — মানে ঢোকার পথ ওটাই। কাদামাখা ছাপ সোজা গেছে সিন্দুক পর্যন্ত, আর হিসাবের খাতাটাই শুধু নেই — মানে চোর ঠিক কী নিয়েছে সেটাও পরিষ্কার। প্রতিটা প্রমাণ — ভাঙা ছিটকিনি, ছাপের ছবি, সিন্দুকের আঁচড় — সে আলাদা থলিতে ভরে, তারিখ-সময় লিখে সিলগালা করল, যাতে আদালতে দাঁড়ালে কেউ বলতে না পারে "এটা তো পরে বসানো"। শেষে দোকানি জানালায় শক্ত গ্রিল লাগিয়ে সেই ফাঁকটাই বন্ধ করল, যেটা দিয়ে চোর ঢুকেছিল।
+
+এই গল্পটাই আসলে **incident response** ও **forensics**। breach-এর পর গোয়েন্দার দোকান সিল করা মানে **containment** — বাড়তি ক্ষতি থামানো — আর দৃশ্য অবিকৃত রাখা মানে **evidence** preserve করা (রিবুট বা তাড়াহুড়ো করলে ভোলাটাইল প্রমাণ মুছে যায়)। ক্লু থেকে "রাত দুটোয় জানালা দিয়ে ঢুকে খাতা নিয়েছে" সাজানোটাই **timeline** analysis — entry point আর attacker কী কী করেছে সেটা পুনর্গঠন। সিলগালা করা থলি আর তারিখ লেখা হলো **chain of custody** — প্রমাণ কার হাতে কখন ছিল তার নিরবচ্ছিন্ন হিসাব, যাতে তা বিশ্বাসযোগ্য থাকে। আর জানালায় গ্রিল লাগানো মানে recover করা ও ওই গ্যাপ বন্ধ করে recurrence ঠেকানো। বাস্তবে ঠিক এভাবেই DFIR টিম কাজ করে — আগে contain, তারপর disk image আর memory dump নিয়ে অবিকৃত প্রমাণ থেকে হামলার timeline বানায়, chain of custody মেনে; শুধু তারপরই সিস্টেম clean করে ঢোকার পথ বন্ধ করে।
+
 <Callout type="info">
 
 **Real-World Analogy**
 
-A crime scene investigator doesn't clean up before photographing — they document everything in place first. Digital forensics works the same way: preserve evidence before taking any action, because rebooting a compromised machine destroys volatile data.
+একজন ক্রাইম সিন ইনভেস্টিগেটর ছবি তোলার আগে জায়গা পরিষ্কার করে না — তারা প্রথমে সবকিছু যেমন আছে তেমনভাবে ডকুমেন্ট করে। ডিজিটাল ফরেনসিক্সও একইভাবে কাজ করে: কোনো অ্যাকশন নেওয়ার আগে এভিডেন্স প্রিজার্ভ করতে হয়, কারণ কম্প্রোমাইজড মেশিন রিবুট করলে ভোলাটাইল ডেটা নষ্ট হয়ে যায়।
 
 </Callout>
 
-## The IR Lifecycle
+## IR লাইফসাইকেল
 
 ```
 1. Preparation    → SIEM, logging, runbooks, IR plan before incidents happen
@@ -40,9 +48,9 @@ A crime scene investigator doesn't clean up before photographing — they docume
 6. Lessons Learned → postmortem, detection improvements
 ```
 
-## Evidence Preservation (Order of Volatility)
+## এভিডেন্স প্রিজার্ভেশন (Order of Volatility)
 
-Collect the most volatile evidence first — it disappears when the machine is powered off or rebooted:
+সবচেয়ে ভোলাটাইল এভিডেন্স আগে কালেক্ট করো — মেশিন পাওয়ার অফ বা রিবুট হলে এগুলো হারিয়ে যায়:
 
 ```
 1. CPU registers, CPU cache         (disappears in microseconds)
@@ -55,13 +63,13 @@ Collect the most volatile evidence first — it disappears when the machine is p
 8. Backups, archived data           (stable)
 ```
 
-**Never do these before imaging:**
+**ইমেজিং করার আগে এগুলো কখনো করবে না:**
 
-- Reboot the machine
-- Run antivirus (modifies timestamps, may delete evidence)
-- Install tools on the live system (modifies filesystem)
+- মেশিন রিবুট করা
+- অ্যান্টিভাইরাস চালানো (টাইমস্ট্যাম্প মডিফাই করে, এভিডেন্স ডিলিট করে দিতে পারে)
+- লাইভ সিস্টেমে টুল ইনস্টল করা (ফাইলসিস্টেম মডিফাই করে)
 
-## Memory Acquisition
+## মেমরি অ্যাকুইজিশন
 
 ```bash
 # Linux — dump RAM
@@ -79,9 +87,9 @@ winpmem.exe -o memory.raw
 # RAM Map by Sysinternals
 ```
 
-## Volatility — Memory Analysis
+## Volatility — মেমরি অ্যানালাইসিস
 
-Volatility is the standard tool for analyzing memory dumps.
+মেমরি ডাম্প অ্যানালাইজ করার জন্য Volatility হলো স্ট্যান্ডার্ড টুল।
 
 ```bash
 # Install Volatility 3
@@ -132,7 +140,7 @@ python3 vol.py -f memory.lime linux.malfind
 python3 vol.py -f memory.lime linux.check_syscall  # detect syscall table hooks (rootkits)
 ```
 
-## Disk Forensics
+## ডিস্ক ফরেনসিক্স
 
 ```bash
 # Create forensic image (never work on original)
@@ -150,7 +158,7 @@ sudo mount -o ro,noatime,loop disk.img /mnt/analysis/
 # Analyzes: deleted files, browser history, USB history, recent files, registry
 ```
 
-## Timeline Analysis
+## টাইমলাইন অ্যানালাইসিস
 
 ```bash
 # Create filesystem timeline (MACtime — Modified, Accessed, Created)
@@ -168,9 +176,9 @@ psort.py dump.plaso "date > '2024-01-15'"        # filter
 pinfo.py dump.plaso                               # info about extracted data
 ```
 
-## Log Analysis
+## লগ অ্যানালাইসিস
 
-### Linux System Logs
+### Linux সিস্টেম লগ
 
 ```bash
 # Authentication events
@@ -203,7 +211,7 @@ grep " 404 " /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sor
 grep -iE "(sqlmap|nikto|nmap|masscan|dirbuster|gobuster)" /var/log/nginx/access.log
 ```
 
-### Windows Event Logs
+### Windows ইভেন্ট লগ
 
 ```powershell
 # Key Windows Event IDs:
@@ -231,9 +239,9 @@ Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4688} |
   ForEach-Object { $_.Message } | Select-String "powershell|cmd|wscript|cscript"
 ```
 
-## Threat Hunting
+## থ্রেট হান্টিং
 
-Proactive searching for attackers who have evaded detection:
+যেসব অ্যাটাকার ডিটেকশন এড়িয়ে গেছে তাদের প্রোঅ্যাকটিভলি খোঁজা:
 
 ```bash
 # Hunt for unusual scheduled tasks
@@ -261,7 +269,7 @@ Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4688} |
   Where-Object {$_.Message -match "mimikatz|procdump|wce|fgdump|hashdump"}
 ```
 
-## SIEM and Detection Rules
+## SIEM ও ডিটেকশন রুল
 
 ```yaml
 # Sigma rule — vendor-neutral detection rule format
@@ -292,7 +300,7 @@ tags:
   - attack.t1059.001
 ```
 
-## Real Project: IR Scenario
+## রিয়েল প্রজেক্ট: IR সিনারিও
 
 ```bash
 # Scenario: Web server was compromised. Respond.

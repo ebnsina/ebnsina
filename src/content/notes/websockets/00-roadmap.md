@@ -1,9 +1,9 @@
 ---
-title: 'WebSockets & realtime — Roadmap'
-subtitle: "Ten chapters that go from 'what is the WebSocket handshake' to a self-hosted, horizontally scaled realtime server with Redis pub/sub, presence, auth, and nginx in front."
+title: 'WebSockets ও realtime — রোডম্যাপ'
+subtitle: "দশটি চ্যাপ্টার যা 'WebSocket handshake আসলে কী' থেকে শুরু করে Redis pub/sub, presence, auth আর সামনে nginx সহ একটি self-hosted, horizontally scaled realtime server পর্যন্ত নিয়ে যাবে।"
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'websockets', 'sse', 'realtime', 'pubsub']
 ---
 
@@ -11,39 +11,39 @@ topics: ['roadmap', 'websockets', 'sse', 'realtime', 'pubsub']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What you will be able to do at the end
+## শেষে গিয়ে আপনি কী করতে পারবেন
 
-You will know exactly what a WebSocket is at the wire level, when to use one and when SSE or polling is the right call, how to write a Go server that handles thousands of concurrent connections, how to fan out messages across many server processes with Redis or NATS, how to track presence, and how to deploy the whole thing self-hosted behind nginx with TLS and sane timeouts.
+আপনি ঠিক জানবেন wire level-এ একটা WebSocket আসলে কী, কখন এটা ব্যবহার করবেন আর কখন SSE বা polling সঠিক পছন্দ, কীভাবে একটা Go server লিখবেন যা হাজার হাজার concurrent connection সামলায়, কীভাবে Redis বা NATS দিয়ে অনেকগুলো server process জুড়ে message fan out করবেন, কীভাবে presence track করবেন, এবং কীভাবে পুরো জিনিসটা TLS আর sane timeout সহ nginx-এর পেছনে self-hosted করে deploy করবেন।
 
 <Callout type="info">
 
-**Prereqs:** finish **Linux & VPS basics**, **Networking**, and **Web Server fundamentals**. WebSockets ride on HTTP/1.1 Upgrade — without those tracks, "why does nginx drop the connection at 60 seconds" mystifies you. Go is the primary language; the patterns translate to Node and Python.
+**Prereqs:** **Linux & VPS basics**, **Networking**, আর **Web Server fundamentals** শেষ করুন। WebSockets HTTP/1.1 Upgrade-এর উপর চলে — এই ট্র্যাকগুলো ছাড়া "nginx কেন 60 সেকেন্ডে connection ড্রপ করে দেয়" ব্যাপারটা রহস্য মনে হবে। Go এখানে প্রধান ভাষা; প্যাটার্নগুলো Node আর Python-এও একইভাবে খাটে।
 
 </Callout>
 
-## The 10 chapters, in order
+## ১০টি চ্যাপ্টার, ক্রম অনুযায়ী
 
 **Foundations**
 
-1. **What WebSockets are and when to use them** — vs SSE, vs polling, vs gRPC streams
-2. **The handshake and frame protocol** — Upgrade, masking, opcodes, close codes
-3. **Your first server** — Go, end-to-end, in 80 lines
-4. **Message protocols on top** — JSON, msgpack, framing, versioning
+1. **WebSockets কী এবং কখন ব্যবহার করবেন** — vs SSE, vs polling, vs gRPC streams
+2. **handshake আর frame protocol** — Upgrade, masking, opcodes, close codes
+3. **আপনার প্রথম server** — Go, end-to-end, ৮০ লাইনে
+4. **উপরে message protocol** — JSON, msgpack, framing, versioning
 
 **Real services**
 
-5. **Server-Sent Events** — when one-way is enough, and how to do it well
-6. **Pub/sub at scale** — Redis and NATS, fan-out across processes
-7. **Presence and rooms** — tracking who is online, joining channels
-8. **Auth, origin, rate limits** — production-safe connection handshakes
+5. **Server-Sent Events** — যখন one-way যথেষ্ট, এবং কীভাবে সেটা ভালোভাবে করবেন
+6. **Pub/sub at scale** — Redis আর NATS, process জুড়ে fan-out
+7. **Presence আর rooms** — কে online তা track করা, channel-এ join করা
+8. **Auth, origin, rate limits** — production-safe connection handshake
 
 **Production**
 
-9. **Backpressure, reconnects, heartbeats** — surviving slow clients and bad networks
+9. **Backpressure, reconnects, heartbeats** — slow client আর খারাপ network-এ টিকে থাকা
 10. **Production self-host** — nginx, systemd, observability, scaling out
 
-## How to use this track
+## এই ট্র্যাক কীভাবে ব্যবহার করবেন
 
-Read in order. The first three chapters explain what a WebSocket is and ship a working server. From chapter 4 onward each chapter adds a real production capability. Total reading time: ~3 hours. Hands-on time, the first time you build it all: a long weekend.
+ক্রম অনুযায়ী পড়ুন। প্রথম তিন চ্যাপ্টার ব্যাখ্যা করে একটা WebSocket কী এবং একটা কাজ করা server ship করে। চ্যাপ্টার 4 থেকে প্রতিটা চ্যাপ্টার একটা করে বাস্তব production capability যোগ করে। মোট পড়ার সময়: ~3 ঘণ্টা। প্রথমবার পুরোটা বানাতে hands-on সময়: একটা লম্বা weekend।
 
-You need Go 1.22+, Redis (for chapter 6 onward), and a VPS with a domain pointed at it for chapter 10. Everything else runs on `localhost`.
+আপনার লাগবে Go 1.22+, Redis (চ্যাপ্টার 6 থেকে), আর চ্যাপ্টার 10-এর জন্য একটা VPS যার দিকে একটা domain pointed। বাকি সব `localhost`-এ চলে।

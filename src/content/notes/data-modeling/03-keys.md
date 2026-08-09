@@ -1,9 +1,9 @@
 ---
 title: 'Keys'
-subtitle: 'The primary key is the most expensive choice in your schema. Pick wrong and you spend years working around it. Pick right and you forget it exists.'
+subtitle: 'আপনার স্কিমার সবচেয়ে দামি সিদ্ধান্ত হলো primary key। ভুল বেছে নিলে বছরের পর বছর সেটা এড়িয়ে কাজ করতে হবে। ঠিকঠাক বেছে নিলে ভুলেই যাবেন যে এটা আছে।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'primary keys', 'ulid', 'uuid', 'natural keys']
 ---
 
@@ -11,30 +11,38 @@ topics: ['data-modeling', 'primary keys', 'ulid', 'uuid', 'natural keys']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি শহরের একটা লাইব্রেরি চালান। প্রতিদিন নতুন মেম্বার আসে, বই ধার নেয়, ফেরত দেয়। শুরুর দিকে তিনি সবাইকে নাম দিয়ে চিনতেন, কিন্তু ঝামেলা বাধল যেদিন দুজন ভিন্ন ইবনে সিনা একই দিনে বই ধার নিতে এলেন। কার কাছে কোন বই — সব গুলিয়ে গেল। তখন ফাতিমা প্রতিটা মেম্বারকে একটা ইউনিক membership number দিলেন। এখন নাম মিলে গেলেও সমস্যা নেই — number দিয়ে ঠিক এক মেম্বারকেই আলাদা করে চেনা যায়।
+
+এরপর দাঁড়াল দ্বিতীয় প্রশ্ন — কোন বই কে নিয়েছে, সেটা কীভাবে লিখে রাখবেন? ফাতিমা ঠিক করলেন প্রতিটা borrow-slip-এ শুধু ধারকারীর membership number লিখে রাখবেন। তাহলে যেকোনো slip দেখে number ধরে মেম্বারের রেকর্ডে গিয়ে দেখা যায় কে বইটা নিয়েছে। একটা মজার সিদ্ধান্তও নিতে হলো — মেম্বারকে চেনার জন্য কি তার national ID card-এর নম্বর ব্যবহার করবেন, যেটা আগে থেকেই দুনিয়ায় আছে? নাকি লাইব্রেরি নিজেই একটা তাজা number বানিয়ে দেবে? আল-খোয়ারিজমির পরামর্শে ফাতিমা লাইব্রেরির নিজের number-ই বেছে নিলেন, কারণ কারো national ID বদলে যেতে পারে, কারো কাছে নাও থাকতে পারে — কিন্তু লাইব্রেরির দেওয়া number চিরকাল স্থির।
+
+গল্পটাই আসলে keys। প্রতিটা মেম্বারকে ইউনিকভাবে চেনানো membership number হলো **primary key**। borrow-slip-এ বসানো সেই number, যা বইকে মেম্বারের সাথে জোড়ে, সেটা মেম্বার টেবিলকে reference করা **foreign key**। আগে থেকে দুনিয়ায় থাকা national ID দিয়ে চেনানো হলো **natural key**, আর লাইব্রেরির নিজের বানানো number হলো **surrogate key**। বাস্তবেও ঠিক এই কারণেই বেশিরভাগ সিস্টেম user-এর email বা NID-র বদলে নিজের একটা surrogate id ব্যবহার করে — বাইরের জগতের value বদলায়, নিজের দেওয়া key বদলায় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব-জীবনের উদাহরণ**
 
-A passport number — it uniquely identifies you across all systems, never changes, and was chosen to be collision-proof at global scale. A bad primary key is like using your name: not unique, changes, and causes chaos the moment two people share it.
+একটা passport number — সব সিস্টেমের মধ্যে এটা আপনাকে ইউনিকভাবে শনাক্ত করে, কখনো বদলায় না, আর গ্লোবাল স্কেলে কলিশন-প্রুফ হওয়ার জন্য বেছে নেওয়া হয়েছে। একটা খারাপ primary key হলো নিজের নাম ব্যবহার করার মতো: ইউনিক নয়, বদলায়, আর দুজন মানুষের নাম মিলে গেলেই বিশৃঙ্খলা শুরু হয়।
 
 </Callout>
 
-Every table needs a primary key. The choice between `BIGSERIAL`, `UUID`, `ULID`, or a natural key is not a style preference — each lands in different places when your app grows past one machine, sends events to other systems, or has to migrate data across environments.
+প্রতিটা টেবিলের একটা primary key দরকার। `BIGSERIAL`, `UUID`, `ULID`, নাকি একটা natural key — এই পছন্দটা কোনো স্টাইলের ব্যাপার নয়। আপনার অ্যাপ যখন এক মেশিন ছাড়িয়ে বড় হয়, অন্য সিস্টেমে event পাঠায়, কিংবা এক এনভায়রনমেন্ট থেকে আরেকটায় ডেটা migrate করতে হয় — তখন এদের প্রত্যেকটা আলাদা জায়গায় গিয়ে দাঁড়ায়।
 
-This chapter is the cost/benefit table for the four real options, plus the rules for composite keys, when to expose IDs publicly, and the perennial "natural vs surrogate" debate.
+এই চ্যাপ্টারটা হলো চারটা বাস্তব অপশনের cost/benefit টেবিল, সাথে composite key-এর নিয়ম, কখন ID পাবলিকভাবে expose করবেন, আর চিরন্তন "natural vs surrogate" বিতর্ক।
 
-## What a primary key is
+## primary key কী
 
-A primary key uniquely identifies a row. Two consequences:
+একটা primary key একটা row-কে ইউনিকভাবে শনাক্ত করে। এর দুটো পরিণতি:
 
-1. **No duplicates.** No two rows share the same primary key value.
-2. **No NULLs.** Every row has one.
+1. **কোনো ডুপ্লিকেট নেই।** দুটো row একই primary key value শেয়ার করে না।
+2. **কোনো NULL নেই।** প্রতিটা row-এর একটা value আছে।
 
-Postgres enforces both automatically and creates a unique B-tree index for fast lookup. That index is also the fundamental access path — every other index references the primary key under the hood (in InnoDB; Postgres is slightly different but behaves similarly in practice).
+Postgres দুটোই স্বয়ংক্রিয়ভাবে enforce করে এবং দ্রুত lookup-এর জন্য একটা unique B-tree index তৈরি করে। সেই index-টাই আসলে মূল access path — প্রতিটা অন্য index ভেতরে ভেতরে primary key-কে রেফারেন্স করে (InnoDB-তে; Postgres একটু আলাদা কিন্তু বাস্তবে প্রায় একইরকম আচরণ করে)।
 
-A primary key is forever. Or at least: it is _as good as_ forever. Migrating to a different key is a multi-day operation on any table with significant data, so the choice is high-stakes.
+একটা primary key চিরকালীন। অন্তত: এটা _প্রায়_ চিরকালীন। আলাদা কী-তে migrate করা মানে উল্লেখযোগ্য ডেটাসহ যেকোনো টেবিলে কয়েক দিনের অপারেশন, তাই এই পছন্দটা হাই-স্টেক।
 
-## The four options
+## চারটা অপশন
 
 ### 1. `BIGSERIAL` (integer, auto-incremented)
 
@@ -45,22 +53,22 @@ CREATE TABLE users (
 );
 ```
 
-`BIGSERIAL` is shorthand for `BIGINT NOT NULL DEFAULT nextval('users_id_seq')`. Postgres assigns 1, 2, 3, ... to inserted rows.
+`BIGSERIAL` হলো `BIGINT NOT NULL DEFAULT nextval('users_id_seq')`-এর শর্টহ্যান্ড। Postgres insert হওয়া row-গুলোকে 1, 2, 3, ... assign করে।
 
-**Pros:**
+**সুবিধা:**
 
-- 8 bytes. Smallest of the surrogate options. Fastest indexes.
-- Sequential. New rows land at the end of the index — cache-friendly inserts.
-- Easy to read in logs. `user 4271` is something you can ask about.
-- Naturally orderable by insertion. `ORDER BY id DESC` returns newest first.
+- 8 bytes। surrogate অপশনগুলোর মধ্যে সবচেয়ে ছোট। সবচেয়ে দ্রুত index।
+- Sequential। নতুন row index-এর শেষে গিয়ে বসে — cache-friendly insert।
+- log-এ পড়া সহজ। `user 4271` এমন কিছু যা নিয়ে আপনি জিজ্ঞেস করতে পারেন।
+- insert অনুযায়ী স্বাভাবিকভাবেই orderable। `ORDER BY id DESC` সবচেয়ে নতুনটা আগে ফেরত দেয়।
 
-**Cons:**
+**অসুবিধা:**
 
-- Predictable. `/api/users/42` invites enumeration attacks ("can I see user 41? user 43?").
-- Single source of truth — you can't generate IDs offline or in another service.
-- Hard to merge data from two sources without renumbering.
+- Predictable। `/api/users/42` enumeration attack-কে আমন্ত্রণ জানায় ("আমি কি user 41 দেখতে পারি? user 43?")।
+- একক সোর্স অফ ট্রুথ — আপনি অফলাইনে বা আরেকটা সার্ভিসে ID generate করতে পারবেন না।
+- renumber না করে দুই সোর্সের ডেটা merge করা কঠিন।
 
-**Use for:** internal systems, single-database apps, anywhere IDs aren't exposed externally and don't need to be generated outside the DB.
+**যেখানে ব্যবহার করবেন:** internal সিস্টেম, single-database অ্যাপ, যেখানে ID বাইরে expose হয় না আর DB-র বাইরে generate করার দরকার নেই।
 
 ### 2. UUID v4 (random)
 
@@ -71,22 +79,22 @@ CREATE TABLE users (
 );
 ```
 
-128-bit random number. `gen_random_uuid()` is built into Postgres 13+; before that, install `pgcrypto`.
+128-bit random number। `gen_random_uuid()` Postgres 13+-এ বিল্ট-ইন; তার আগে `pgcrypto` install করতে হয়।
 
-**Pros:**
+**সুবিধা:**
 
-- Globally unique. Two services can mint IDs without coordination.
-- Unguessable. Public APIs can use them without enumeration risk.
-- Mergeable. Two databases' rows can be combined without conflict.
+- Globally unique। দুটো সার্ভিস কোনো coordination ছাড়াই ID তৈরি করতে পারে।
+- Unguessable। পাবলিক API enumeration ঝুঁকি ছাড়াই এগুলো ব্যবহার করতে পারে।
+- Mergeable। দুই database-এর row কনফ্লিক্ট ছাড়াই combine করা যায়।
 
-**Cons:**
+**অসুবিধা:**
 
-- 16 bytes — twice the size of `BIGSERIAL`. Indexes are bigger.
-- Random. New rows land all over the index — page splits, more I/O.
-- Hard to read. `0d6b3e07-2d5d-4aab-9a8e-1bafa20fbb02` is opaque.
-- Time-ordering needs a separate column.
+- 16 bytes — `BIGSERIAL`-এর দ্বিগুণ সাইজ। index বড় হয়।
+- Random। নতুন row index-জুড়ে ছড়িয়ে পড়ে — page split, বেশি I/O।
+- পড়া কঠিন। `0d6b3e07-2d5d-4aab-9a8e-1bafa20fbb02` দুর্বোধ্য।
+- Time-ordering-এর জন্য আলাদা একটা column দরকার।
 
-**Use for:** distributed systems, multi-source-of-truth, when public IDs need to be unguessable.
+**যেখানে ব্যবহার করবেন:** distributed সিস্টেম, multi-source-of-truth, যখন পাবলিক ID unguessable হওয়া দরকার।
 
 ### 3. UUID v7 / ULID (time-ordered random)
 
@@ -98,26 +106,26 @@ CREATE TABLE users (
 );
 ```
 
-UUIDv7 is a UUID with the first 48 bits being a millisecond timestamp; the rest random. **ULID** is the same idea with a different encoding — 26 chars of Crockford base32.
+UUIDv7 হলো একটা UUID যার প্রথম 48 bit একটা millisecond timestamp; বাকিটা random। **ULID** একই আইডিয়া কিন্তু ভিন্ন encoding — Crockford base32-এর 26 character।
 
-**Pros:**
+**সুবিধা:**
 
-- Globally unique like UUIDv4.
-- Time-prefixed: new rows land at the end of the index. Insert-friendly.
-- Sortable by creation time without a separate column.
-- ULIDs are slightly more readable: `01HF5J7XK4TG6N2VRT9P0M3DZ4`.
+- UUIDv4-এর মতোই globally unique।
+- Time-prefixed: নতুন row index-এর শেষে গিয়ে বসে। insert-friendly।
+- আলাদা column ছাড়াই creation time অনুযায়ী sortable।
+- ULID একটু বেশি readable: `01HF5J7XK4TG6N2VRT9P0M3DZ4`।
 
-**Cons:**
+**অসুবিধা:**
 
-- Still 16 bytes (UUIDv7) or 26 chars (ULID).
-- Slightly less random — first 48 bits are predictable (time). Doesn't matter for security in most cases; matters for theoretical privacy in rare ones.
-- ULIDs aren't natively typed in Postgres — you store as `text` or `bytea`.
+- এখনো 16 bytes (UUIDv7) বা 26 character (ULID)।
+- একটু কম random — প্রথম 48 bit predictable (time)। বেশিরভাগ ক্ষেত্রে security-র জন্য এতে কিছু আসে-যায় না; বিরল কিছু ক্ষেত্রে theoretical privacy-র জন্য গুরুত্বপূর্ণ।
+- ULID Postgres-এ natively typed নয় — আপনি `text` বা `bytea` হিসেবে store করেন।
 
-**Use for:** distributed systems where you also want sortable IDs. The modern default for new public-facing systems.
+**যেখানে ব্যবহার করবেন:** distributed সিস্টেম যেখানে আপনি sortable ID-ও চান। নতুন public-facing সিস্টেমের জন্য আধুনিক default।
 
 ### 4. Natural keys
 
-A "natural" key is a real-world value that uniquely identifies the entity — an email, an ISBN, a country code:
+একটা "natural" key হলো বাস্তব-জগতের একটা value যা entity-কে ইউনিকভাবে শনাক্ত করে — একটা email, একটা ISBN, একটা country code:
 
 ```sql
 CREATE TABLE countries (
@@ -126,38 +134,38 @@ CREATE TABLE countries (
 );
 ```
 
-**Pros:**
+**সুবিধা:**
 
-- No surrogate column needed. Schema is one column smaller.
-- Joins are self-explanatory: `WHERE country = 'US'` doesn't need a separate lookup.
+- কোনো surrogate column লাগে না। স্কিমা এক column ছোট হয়।
+- Join স্বতঃস্পষ্ট: `WHERE country = 'US'`-এর জন্য আলাদা lookup লাগে না।
 
-**Cons:**
+**অসুবিধা:**
 
-- Real-world values change. Country codes are stable; emails are not. Anything that _could_ change is a bad PK.
-- Mistakes propagate. A typo in the natural key requires updating every foreign key.
-- Composite keys (multiple columns) make joins verbose.
+- বাস্তব-জগতের value বদলায়। Country code স্থিতিশীল; email নয়। যা কিছু বদলাতে _পারে_ সেটা খারাপ PK।
+- ভুল ছড়িয়ে পড়ে। natural key-তে একটা typo হলে প্রতিটা foreign key আপডেট করতে হয়।
+- Composite key (একাধিক column) join-কে দীর্ঘ করে তোলে।
 
-**Use for:** truly stable real-world identifiers — country codes, currency codes, ISO standards. Almost never anything user-supplied.
+**যেখানে ব্যবহার করবেন:** সত্যিকারের স্থিতিশীল বাস্তব-জগতের identifier — country code, currency code, ISO স্ট্যান্ডার্ড। প্রায় কখনোই user-এর দেওয়া কিছু নয়।
 
-## The right choice for 90% of tables
+## ৯০% টেবিলের জন্য সঠিক পছন্দ
 
-For new tables, in 2026:
+নতুন টেবিলের জন্য, 2026-এ:
 
-- **Internal-only data:** `BIGSERIAL`. Smallest, fastest, easiest to debug.
-- **Public-facing data:** ULID or UUIDv7. Mergeable, unguessable, sortable.
-- **Reference tables (countries, currencies):** natural key.
+- **শুধু internal ডেটা:** `BIGSERIAL`। সবচেয়ে ছোট, দ্রুত, ডিবাগ করা সহজ।
+- **Public-facing ডেটা:** ULID বা UUIDv7। Mergeable, unguessable, sortable।
+- **Reference টেবিল (countries, currencies):** natural key।
 
-Don't agonize over this. Pick one default for new tables and move on.
+এটা নিয়ে বেশি মাথা ঘামাবেন না। নতুন টেবিলের জন্য একটা default বেছে নিয়ে এগিয়ে যান।
 
 <Callout type="tip">
 
-**The "BIGSERIAL internal + ULID external" pattern.** Some systems use `BIGSERIAL id` as the primary key (best for indexes and joins) plus a separate `public_id ULID` column with a unique constraint, exposed in URLs. You get fast internal joins and unguessable public IDs. Adds one column and one index per table — usually worth it for any user-facing entity.
+**"BIGSERIAL internal + ULID external" প্যাটার্ন।** কিছু সিস্টেম primary key হিসেবে `BIGSERIAL id` ব্যবহার করে (index আর join-এর জন্য সেরা) সাথে একটা আলাদা `public_id ULID` column যাতে unique constraint থাকে, যেটা URL-এ expose করা হয়। আপনি দ্রুত internal join আর unguessable পাবলিক ID দুটোই পান। প্রতি টেবিলে এক column আর এক index যোগ হয় — যেকোনো user-facing entity-র জন্য সাধারণত এটা করার মূল্য আছে।
 
 </Callout>
 
 ## Composite primary keys
 
-Sometimes the natural primary key is two (or more) columns:
+কখনো কখনো natural primary key দুটো (বা তার বেশি) column হয়:
 
 ```sql
 CREATE TABLE org_memberships (
@@ -168,33 +176,33 @@ CREATE TABLE org_memberships (
 );
 ```
 
-The pair `(user_id, org_id)` is unique — a user is in an org at most once.
+`(user_id, org_id)` জোড়াটা ইউনিক — একজন user একটা org-এ বড়জোর একবার থাকে।
 
-**When composite is right:**
+**কখন composite ঠিক:**
 
-- Pure join tables (chapter 2): both FKs together identify the relationship.
-- Time-series partitions: `(metric_id, bucket_start)`.
-- Append-only logs: `(stream_id, sequence)`.
+- খাঁটি join টেবিল (chapter 2): দুই FK একসাথে সম্পর্কটা শনাক্ত করে।
+- Time-series partition: `(metric_id, bucket_start)`।
+- Append-only log: `(stream_id, sequence)`।
 
-**When composite is wrong:**
+**কখন composite ভুল:**
 
-- The table represents an entity with its own life (it grows attributes, gets referenced elsewhere). Add a surrogate ID. Composite keys make foreign keys from other tables verbose.
+- টেবিলটা এমন একটা entity প্রকাশ করে যার নিজস্ব জীবন আছে (এতে attribute বাড়ে, অন্য জায়গায় reference হয়)। একটা surrogate ID যোগ করুন। Composite key অন্য টেবিল থেকে আসা foreign key-গুলোকে দীর্ঘ করে তোলে।
 
-The rule: if any other table will reference this table, prefer a single surrogate key. Two-column FKs cascade through every related table and become a maintenance burden.
+নিয়মটা: অন্য কোনো টেবিল যদি এই টেবিলকে reference করে, তাহলে একটা single surrogate key-কে অগ্রাধিকার দিন। দুই-column FK প্রতিটা সম্পর্কিত টেবিলে cascade করে আর maintenance-এর বোঝা হয়ে দাঁড়ায়।
 
-## Exposing IDs to the world
+## বিশ্বের কাছে ID expose করা
 
-Two questions for public IDs:
+পাবলিক ID-র জন্য দুটো প্রশ্ন:
 
-**1. Should they be guessable?** A `BIGSERIAL` URL pattern (`/api/orders/42`) lets anyone iterate through your orders. Rate limiting and auth help, but the underlying enumeration risk is real. Use UUID/ULID for public surfaces.
+**1. এগুলো কি guessable হওয়া উচিত?** একটা `BIGSERIAL` URL প্যাটার্ন (`/api/orders/42`) যে কাউকে আপনার order-এর মধ্য দিয়ে iterate করতে দেয়। Rate limiting আর auth সাহায্য করে, কিন্তু অন্তর্নিহিত enumeration ঝুঁকিটা বাস্তব। পাবলিক surface-এর জন্য UUID/ULID ব্যবহার করুন।
 
-**2. Should they hint at type?** Stripe's IDs (`cus_abc`, `py_xyz`, `sub_def`) prefix the resource type, which makes logs readable and prevents accidentally swapping IDs across types. Easy to add:
+**2. এগুলো কি type-এর ইঙ্গিত দেবে?** Stripe-এর ID (`cus_abc`, `py_xyz`, `sub_def`) resource type-কে prefix করে, যা log-কে readable করে আর ভুল করে type-এর মধ্যে ID অদল-বদল হওয়া ঠেকায়। যোগ করা সহজ:
 
 ```sql
 ALTER TABLE customers ADD COLUMN public_id TEXT GENERATED ALWAYS AS ('cus_' || id::text) STORED;
 ```
 
-Or generate the prefixed ID at insert:
+কিংবা insert-এর সময় prefixed ID generate করুন:
 
 ```go
 func newID(prefix string) string {
@@ -202,21 +210,21 @@ func newID(prefix string) string {
 }
 ```
 
-Stripe-style IDs are not just aesthetic. They prevent a common bug: passing a customer ID where a payment ID was expected. The prefix mismatch surfaces the bug at the API boundary.
+Stripe-স্টাইলের ID শুধু নান্দনিক নয়। এগুলো একটা সাধারণ bug ঠেকায়: যেখানে payment ID প্রত্যাশিত ছিল সেখানে customer ID পাস করা। prefix মিলে না গেলে API boundary-তেই bug-টা ধরা পড়ে।
 
-## When to _not_ use a single primary key
+## কখন একটা single primary key ব্যবহার _না_ করবেন
 
-Some shapes don't fit "one row, one key":
+কিছু shape "এক row, এক key"-তে মানায় না:
 
-- **Bitemporal tables.** Rows have both "valid time" and "transaction time"; PK is `(entity_id, valid_from, transaction_from)`.
-- **Event-sourced aggregates.** Each event is a row; PK is `(aggregate_id, sequence)`.
-- **Wide-column shadow tables.** A change-log table where the PK is `(table_name, row_id, changed_at)`.
+- **Bitemporal টেবিল।** Row-এ "valid time" আর "transaction time" দুটোই থাকে; PK হলো `(entity_id, valid_from, transaction_from)`।
+- **Event-sourced aggregate।** প্রতিটা event একটা row; PK হলো `(aggregate_id, sequence)`।
+- **Wide-column shadow টেবিল।** একটা change-log টেবিল যেখানে PK হলো `(table_name, row_id, changed_at)`।
 
-These are advanced patterns; chapter 7 touches on temporal data. Default to a simple PK and move to these only when there's a clear reason.
+এগুলো advanced প্যাটার্ন; chapter 7 temporal ডেটা ছুঁয়ে যায়। default হিসেবে একটা সাধারণ PK রাখুন, স্পষ্ট কারণ থাকলে তবেই এগুলোতে যান।
 
 ## Sequence vs identity
 
-In Postgres there's a syntactic alternative to `BIGSERIAL`:
+Postgres-এ `BIGSERIAL`-এর একটা syntactic বিকল্প আছে:
 
 ```sql
 -- legacy
@@ -226,17 +234,17 @@ CREATE TABLE users (id BIGSERIAL PRIMARY KEY, ...);
 CREATE TABLE users (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, ...);
 ```
 
-`GENERATED ALWAYS AS IDENTITY` is the SQL standard. It does the same thing but slightly more strict — you can't manually `INSERT` an `id` value (with `BY DEFAULT` you can). For new tables, prefer the identity syntax. Behaves identically at runtime.
+`GENERATED ALWAYS AS IDENTITY` হলো SQL স্ট্যান্ডার্ড। এটা একই কাজ করে কিন্তু একটু বেশি strict — আপনি ম্যানুয়ালি একটা `id` value `INSERT` করতে পারবেন না (`BY DEFAULT` দিয়ে পারবেন)। নতুন টেবিলের জন্য identity syntax-কে অগ্রাধিকার দিন। runtime-এ একইরকম আচরণ করে।
 
-## Why not just use `email` as the user PK?
+## `email`-কেই user PK করলে সমস্যা কী?
 
-A common naïve question. Reasons:
+একটা সাধারণ সরল প্রশ্ন। কারণগুলো:
 
-1. **Emails change.** Users update their email; now you have to update every foreign key referencing them.
-2. **Emails are PII.** They appear in indexes, logs, replication streams, query plans. A surrogate key doesn't.
-3. **Composite-key joins on TEXT are slower** than `BIGINT` joins. Email is variable-length; integer comparison is faster.
+1. **Email বদলায়।** User তাদের email আপডেট করে; এখন সেটাকে reference করা প্রতিটা foreign key আপনাকে আপডেট করতে হবে।
+2. **Email হলো PII।** এগুলো index, log, replication stream, query plan-এ দেখা দেয়। একটা surrogate key-তে দেয় না।
+3. **TEXT-এর উপর composite-key join ধীর** `BIGINT` join-এর চেয়ে। Email variable-length; integer comparison দ্রুত।
 
-The convention "always use a surrogate key for entities" exists because real-world identifiers turn out to be unstable. The schema gets the surrogate; the application enforces uniqueness on the natural attribute.
+"entity-র জন্য সবসময় একটা surrogate key ব্যবহার করো" convention-টা আছে কারণ বাস্তব-জগতের identifier অস্থিতিশীল হয়ে দাঁড়ায়। স্কিমা পায় surrogate; অ্যাপ্লিকেশন natural attribute-এর উপর uniqueness enforce করে।
 
 ```sql
 CREATE TABLE users (
@@ -246,35 +254,35 @@ CREATE TABLE users (
 );
 ```
 
-## ID type and migration
+## ID type আর migration
 
-If you change a primary key type, every foreign key referencing it must change too. The cost grows linearly with the number of related tables.
+আপনি যদি একটা primary key type বদলান, সেটাকে reference করা প্রতিটা foreign key-ও বদলাতে হবে। সম্পর্কিত টেবিলের সংখ্যার সাথে খরচ linearly বাড়ে।
 
-**Going from `BIGSERIAL` to `UUID`** on an existing table:
+একটা existing টেবিলে **`BIGSERIAL` থেকে `UUID`-তে যাওয়া**:
 
-1. Add a new `uuid_id` column to the parent.
-2. Backfill new UUIDs for every row.
-3. Add `uuid_<parent>_id` columns to every child. Backfill via JOIN.
-4. Switch app code to use the new IDs.
-5. Drop old columns.
+1. parent-এ একটা নতুন `uuid_id` column যোগ করুন।
+2. প্রতিটা row-এর জন্য নতুন UUID backfill করুন।
+3. প্রতিটা child-এ `uuid_<parent>_id` column যোগ করুন। JOIN দিয়ে backfill করুন।
+4. অ্যাপ কোড নতুন ID ব্যবহার করার জন্য switch করুন।
+5. পুরনো column drop করুন।
 
-This is weeks of work for a busy system. **The right time to pick the right key type is when the table is empty.** Default to ULID/UUIDv7 for any new public-facing table now to avoid this migration in three years.
+একটা ব্যস্ত সিস্টেমের জন্য এটা কয়েক সপ্তাহের কাজ। **সঠিক key type বেছে নেওয়ার সঠিক সময় হলো যখন টেবিলটা খালি।** তিন বছর পরে এই migration এড়াতে এখনই যেকোনো নতুন public-facing টেবিলের জন্য default হিসেবে ULID/UUIDv7 নিন।
 
-## What about hashids and short URLs
+## hashids আর short URL-এর কী
 
-`hashids`, `nanoid`, and bespoke alphabet IDs (YouTube's 11-char URLs) come up. They are forms of surrogate key with custom encoding. Trade-offs:
+`hashids`, `nanoid`, আর কাস্টম alphabet ID (YouTube-এর 11-character URL) আলোচনায় আসে। এগুলো কাস্টম encoding-সহ surrogate key-এর রূপ। ট্রেড-অফ:
 
-- **`nanoid`** — short random IDs in a custom alphabet. Like UUIDv4 but smaller. Fine for non-time-sortable cases.
-- **`hashids`** — encodes integers reversibly. Looks short but is just a `BIGSERIAL` in disguise — vulnerable to the same enumeration the integer was. Avoid for security.
-- **Custom short codes** (`abc123`) — usually app-generated with retry on collision. Works for non-hot paths.
+- **`nanoid`** — একটা কাস্টম alphabet-এ ছোট random ID। UUIDv4-এর মতো কিন্তু ছোট। non-time-sortable ক্ষেত্রে ঠিক আছে।
+- **`hashids`** — integer-কে উল্টো করা যায় এমনভাবে encode করে। ছোট দেখায় কিন্তু আসলে একটা ছদ্মবেশী `BIGSERIAL` — integer-টা যে enumeration-এর ঝুঁকিতে ছিল সেই একই ঝুঁকিতে দুর্বল। security-র জন্য এড়িয়ে চলুন।
+- **কাস্টম short code** (`abc123`) — সাধারণত collision-এ retry সহ অ্যাপ-generated। non-hot path-এর জন্য কাজ করে।
 
-For most projects, ULID is enough. Custom IDs solve niche problems.
+বেশিরভাগ প্রজেক্টের জন্য ULID যথেষ্ট। কাস্টম ID নির্দিষ্ট niche সমস্যা সমাধান করে।
 
-## Indexing and the primary key
+## Indexing আর primary key
 
-The primary key automatically gets a unique B-tree index. You don't add one manually.
+primary key স্বয়ংক্রিয়ভাবে একটা unique B-tree index পায়। আপনি ম্যানুয়ালি একটা যোগ করেন না।
 
-For composite PKs, only the leading column gets an index for non-PK queries:
+Composite PK-র জন্য, শুধু leading column non-PK query-র জন্য একটা index পায়:
 
 ```sql
 PRIMARY KEY (user_id, org_id)
@@ -283,17 +291,17 @@ PRIMARY KEY (user_id, org_id)
 CREATE INDEX ON memberships(org_id);
 ```
 
-This is the "leftmost prefix rule" of B-tree indexes. Forgetting it leaves half your queries slow.
+এটা B-tree index-এর "leftmost prefix rule"। এটা ভুলে গেলে আপনার অর্ধেক query ধীর থেকে যায়।
 
-## Recap
+## রিক্যাপ
 
-- Every table has a PK. Pick deliberately; it's expensive to change.
-- `BIGSERIAL` for internal data; ULID/UUIDv7 for public-facing; natural keys only for stable real-world IDs.
-- "BIGSERIAL internal + ULID public" is a good default for user-facing entities.
-- Composite PKs only for join tables and time-series — anything with its own life gets a surrogate.
-- Public IDs should be unguessable and (optionally) prefixed by type.
-- Use `GENERATED AS IDENTITY` over `BIGSERIAL` in new code (SQL standard).
-- Email/username/anything-user-typed is not a PK. Surrogate + UNIQUE constraint.
-- Composite PKs index only the leading column; add explicit indexes for the rest.
+- প্রতিটা টেবিলে একটা PK থাকে। ভেবেচিন্তে বেছে নিন; বদলানো ব্যয়বহুল।
+- internal ডেটার জন্য `BIGSERIAL`; public-facing-এর জন্য ULID/UUIDv7; শুধু স্থিতিশীল বাস্তব-জগতের ID-র জন্য natural key।
+- "BIGSERIAL internal + ULID public" user-facing entity-র জন্য একটা ভালো default।
+- Composite PK শুধু join টেবিল আর time-series-এর জন্য — নিজস্ব জীবন আছে এমন যেকোনো কিছু একটা surrogate পায়।
+- পাবলিক ID unguessable আর (ঐচ্ছিকভাবে) type দিয়ে prefixed হওয়া উচিত।
+- নতুন কোডে `BIGSERIAL`-এর বদলে `GENERATED AS IDENTITY` ব্যবহার করুন (SQL স্ট্যান্ডার্ড)।
+- Email/username/user-এর টাইপ করা যেকোনো কিছু PK নয়। surrogate + UNIQUE constraint।
+- Composite PK শুধু leading column index করে; বাকিগুলোর জন্য explicit index যোগ করুন।
 
-Next: [Normalization](/notes/data-modeling/04-normalization) — 1NF, 2NF, 3NF in plain English with real examples.
+পরবর্তী: [Normalization](/notes/data-modeling/04-normalization) — 1NF, 2NF, 3NF বাস্তব উদাহরণসহ সহজ ভাষায়।

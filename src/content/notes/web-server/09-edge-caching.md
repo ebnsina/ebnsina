@@ -1,9 +1,9 @@
 ---
 title: 'Edge Caching with nginx'
-subtitle: 'proxy_cache, microcaching, stale-while-revalidate, and the cache key rules that turn nginx into a CDN you control.'
+subtitle: 'proxy_cache, microcaching, stale-while-revalidate, আর সেই cache key নিয়ম যা nginx-কে আপনার নিয়ন্ত্রণে থাকা একটি CDN বানিয়ে দেয়।'
 chapter: 9
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['nginx', 'caching', 'proxy_cache', 'microcaching', 'cdn']
 ---
 
@@ -11,39 +11,47 @@ topics: ['nginx', 'caching', 'proxy_cache', 'microcaching', 'cdn']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The fundamental insight
+## গল্পে বুঝি
 
-Most of your traffic is the same thing being asked for over and over. The home page, the public product page, the API listing of "top items today." If your backend takes 300ms to render the home page and a thousand users request it per minute, you have spent **5 minutes of CPU per minute of wall clock**. nginx can answer 999 of those requests from RAM in under a millisecond and let the backend regenerate the response only when it changes.
+ফাতিমা আল-ফিহরি একটা পুরনো লাইব্রেরির ফ্রন্ট-ডেস্কে বসেন। লোকজন এসে নানা সার্টিফিকেটের নকল চায়, আর মূল কাগজগুলো রাখা থাকে পেছনের এক বিশাল, ধীর আর্কাইভে — সেখান থেকে একটা কাগজ খুঁজে বের করতে অনেক সময় লাগে। একদিন ইবনে সিনা এসে একটা খুব জনপ্রিয় সার্টিফিকেট চাইলেন। ফাতিমা প্রথমবার হেঁটে পেছনের আর্কাইভে গেলেন, কাগজটা খুঁজে বের করলেন, কিন্তু সেটা হাতে দেওয়ার আগে একটা ফটোকপি করে ডেস্কের ড্রয়ারেই রেখে দিলেন।
 
-This is **edge caching**. Done right, it cuts backend CPU by an order of magnitude and dramatically improves p99 latency.
+এর পর যখনই কেউ — আল-খোয়ারিজমি হোক বা আর কেউ — ঠিক সেই একই সার্টিফিকেট চায়, ফাতিমা আর পেছনে হাঁটেন না; ড্রয়ার থেকে ফটোকপিটা সেকেন্ডেই বাড়িয়ে দেন। আর্কাইভ একদম অক্ষত থাকে, লাইনও এগোয় দ্রুত। তবে ফাতিমা জানেন ফটোকপি চিরকাল রাখা যায় না — তাই প্রতিটা কপিতে একটা মেয়াদ লিখে রাখেন, সময় পেরোলে বা মূল কাগজ বদলে গেলে পুরনো কপিটা ছিঁড়ে ফেলে দেন, যেন কেউ ভুল বা বাসি তথ্য না পায়।
+
+এই গল্পটাই আসলে nginx-এর **edge caching**। ফাতিমার ডেস্কের ফটোকপি হলো nginx-এর নিজের কাছে জমা রাখা cached response, আর পেছনের ধীর আর্কাইভ হলো **backend** server — প্রথম request-টা backend পর্যন্ত যায়, পরের সব একই request ফটোকপি থেকে মেটে, তাই backend-এর উপর চাপ নাটকীয়ভাবে কমে (backend offload)। "ঠিক সেই একই সার্টিফিকেট" চেনার নিয়মটাই **cache key** — nginx URL, method ইত্যাদি দিয়ে ঠিক করে কোন request একই জিনিস চাইছে। আর মেয়াদ লিখে পুরনো কপি ছিঁড়ে ফেলাটাই **TTL** আর **invalidation** — `proxy_cache_valid`-এর সময় পেরোলে বা মূল বদলালে nginx বাসি entry বাদ দিয়ে backend থেকে টাটকা নিয়ে আসে। বাস্তবে একটা news homepage বা public API-এর সামনে nginx বসিয়ে ছোট TTL দিলে হাজার request-per-second-ও backend-এ পৌঁছায় সেকেন্ডে একটা করে।
+
+## মূল অন্তর্দৃষ্টি
+
+আপনার বেশিরভাগ traffic হলো একই জিনিস বারবার চাওয়া। home page, public product page, "আজকের top items"-এর API listing। যদি আপনার backend home page render করতে 300ms নেয় আর মিনিটে হাজার user সেটা request করে, তাহলে আপনি **wall clock-এর প্রতি মিনিটে 5 মিনিট CPU** ব্যয় করেছেন। nginx সেই request-গুলোর 999টার উত্তর RAM থেকে এক millisecond-এরও কমে দিতে পারে, আর backend-কে response আবার তৈরি করতে দেয় শুধু তখনই যখন সেটা বদলায়।
+
+এটাই **edge caching**। ঠিকভাবে করলে এটি backend CPU-কে এক অর্ডার অফ ম্যাগনিটিউড কমিয়ে দেয় আর p99 latency নাটকীয়ভাবে উন্নত করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Edge caching is like a convenience store in your neighborhood versus driving to a warehouse — the same products, but much closer, so the trip takes seconds instead of minutes.
+Edge caching অনেকটা একটা warehouse-এ গাড়ি চালিয়ে যাওয়ার বদলে আপনার পাড়ার একটা convenience store-এর মতো — একই পণ্য, কিন্তু অনেক কাছে, তাই যাত্রাটা মিনিটের বদলে সেকেন্ডে হয়।
 
 </Callout>
 
-## When caching applies
+## caching কখন প্রযোজ্য
 
-Cache **responses**, not just files. The cache key is whatever you decide it is — typically the URL plus the request method, optionally minus things that do not affect the response (cookies, query params for tracking, etc.).
+**response** cache করুন, শুধু file নয়। cache key যা আপনি ঠিক করেন তা-ই — সাধারণত URL আর request method, ঐচ্ছিকভাবে যা response-কে প্রভাবিত করে না তা বাদ দিয়ে (cookie, tracking-এর query param, ইত্যাদি)।
 
-Good candidates:
+ভালো প্রার্থী:
 
-- **Public, non-personalized HTML** — marketing pages, blog posts, public profiles, product pages.
-- **Public API responses that change slowly** — listings, leaderboards, "latest N items."
-- **Large static-ish responses** — generated images, CSV exports, computed reports.
+- **Public, non-personalized HTML** — marketing page, blog post, public profile, product page।
+- **ধীরে বদলায় এমন public API response** — listing, leaderboard, "latest N items"।
+- **বড় static-ish response** — generated image, CSV export, computed report।
 
-Bad candidates:
+খারাপ প্রার্থী:
 
-- **Per-user content** — dashboards, account pages, anything that varies by `Cookie` or `Authorization`.
-- **Responses with frequent low-volume changes** — cache invalidation outweighs the savings.
-- **Mutating endpoints** — POST/PUT/PATCH/DELETE. Never cached by default.
+- **Per-user content** — dashboard, account page, `Cookie` বা `Authorization` অনুযায়ী যা বদলায় এমন যেকোনো কিছু।
+- **ঘন ঘন কম-ভলিউমের পরিবর্তন সহ response** — cache invalidation সাশ্রয়ের চেয়ে বেশি ভারী হয়ে যায়।
+- **Mutating endpoint** — POST/PUT/PATCH/DELETE। ডিফল্টভাবে কখনো cache হয় না।
 
-## Setting up a cache zone
+## একটি cache zone সেটআপ করা
 
-Define a cache zone in `nginx.conf` (in the `http` context):
+`nginx.conf`-এ (`http` context-এ) একটি cache zone ডিফাইন করুন:
 
 ```nginx
 proxy_cache_path /var/cache/nginx/main
@@ -54,16 +62,16 @@ proxy_cache_path /var/cache/nginx/main
                  use_temp_path=off;
 ```
 
-What each parameter means:
+প্রতিটি parameter-এর মানে:
 
-- **path** — `/var/cache/nginx/main`. Where cached responses are stored on disk.
-- **levels** — directory hierarchy. `1:2` means a two-level directory tree (`a/bc/`) to avoid millions of files in one folder.
-- **keys_zone** — name and size of the shared-memory zone holding cache _keys_ (and metadata). 1MB ~ 8000 keys; 10m ~ 80000.
-- **max_size** — max disk usage for cached content. Old entries are evicted to make room.
-- **inactive** — entries not accessed for this long are deleted regardless of `max_size`.
-- **use_temp_path=off** — write directly into the cache directory instead of using a temp dir. Faster on the same filesystem.
+- **path** — `/var/cache/nginx/main`। cache করা response disk-এ কোথায় জমা হবে।
+- **levels** — directory hierarchy। `1:2` মানে একটি দুই-স্তরের directory tree (`a/bc/`), যাতে এক folder-এ লক্ষ লক্ষ file না জমে।
+- **keys_zone** — cache _key_ (আর metadata) ধরে রাখা shared-memory zone-এর নাম আর size। 1MB ~ 8000 key; 10m ~ 80000।
+- **max_size** — cache করা content-এর জন্য সর্বোচ্চ disk ব্যবহার। জায়গা করতে পুরনো entry evict হয়।
+- **inactive** — এত সময় ধরে অ্যাক্সেস না হওয়া entry `max_size` যা-ই হোক মুছে যায়।
+- **use_temp_path=off** — temp dir ব্যবহার না করে সরাসরি cache directory-তে লেখা। একই filesystem-এ দ্রুততর।
 
-Now use it in a location:
+এবার এটি একটি location-এ ব্যবহার করুন:
 
 ```nginx
 server {
@@ -83,9 +91,9 @@ server {
 }
 ```
 
-That is the entire cache configuration. nginx now caches successful and 302 responses for 10 minutes, 404s for 1 minute. Below we unpack every line.
+এটাই পুরো cache configuration। nginx এখন সফল আর 302 response 10 মিনিটের জন্য, 404 এক মিনিটের জন্য cache করে। নিচে আমরা প্রতিটি লাইন খুলে দেখব।
 
-## proxy_cache_valid — how long to cache by status
+## proxy_cache_valid — status অনুযায়ী কতক্ষণ cache করবে
 
 ```nginx
 proxy_cache_valid 200 302 10m;
@@ -93,11 +101,11 @@ proxy_cache_valid 404 1m;
 proxy_cache_valid any 30s;
 ```
 
-The first matching rule wins. You can specify per-status or `any`. Short caches for `404` (in case the resource is created) and `5xx` (do not cache failures for long, but a few seconds prevents a thundering herd) are common patterns.
+প্রথম মিলে যাওয়া নিয়ম জেতে। আপনি per-status বা `any` উল্লেখ করতে পারেন। `404`-এর জন্য ছোট cache (resource তৈরি হওয়ার ক্ষেত্রে) আর `5xx`-এর জন্য (failure বেশিক্ষণ cache করবেন না, কিন্তু কয়েক সেকেন্ড thundering herd আটকায়) সাধারণ pattern।
 
-## Cache-Control headers from the backend
+## backend থেকে Cache-Control header
 
-If the backend response carries `Cache-Control: max-age=N`, nginx honors it and overrides `proxy_cache_valid`:
+যদি backend response-এ `Cache-Control: max-age=N` থাকে, nginx সেটা মেনে চলে আর `proxy_cache_valid`-কে override করে:
 
 ```text
 HTTP/1.1 200 OK
@@ -105,79 +113,79 @@ Content-Type: application/json
 Cache-Control: public, max-age=300
 ```
 
-This is usually how you should drive caching: the application decides which responses are safe to cache and for how long, and sets `Cache-Control`. nginx and downstream caches all behave correctly without per-route nginx config.
+সাধারণত এভাবেই আপনার caching চালানো উচিত: application সিদ্ধান্ত নেয় কোন response cache করা নিরাপদ আর কতক্ষণ, আর `Cache-Control` সেট করে। nginx আর downstream cache সবাই per-route nginx config ছাড়াই সঠিকভাবে আচরণ করে।
 
-To **ignore** backend headers and force nginx's own rules:
+backend header **উপেক্ষা** করে nginx-এর নিজস্ব নিয়ম জোর করে চালাতে:
 
 ```nginx
 proxy_ignore_headers Cache-Control Expires Set-Cookie;
 ```
 
-## Cache keys — the most important config
+## Cache key — সবচেয়ে গুরুত্বপূর্ণ config
 
-By default, the key is `$scheme$proxy_host$request_uri`. That is fine until it isn't.
+ডিফল্টভাবে key হলো `$scheme$proxy_host$request_uri`। এটা ঠিক থাকে যতক্ষণ না ঠিক থাকে না।
 
-Customize it:
+এটা কাস্টমাইজ করুন:
 
 ```nginx
 proxy_cache_key "$scheme$host$request_uri$is_args$args";
 ```
 
-Now keys include the query string. Without `$args`, `?page=1` and `?page=2` would both hit the same cache entry — disaster.
+এখন key-তে query string অন্তর্ভুক্ত। `$args` ছাড়া `?page=1` আর `?page=2` দুটোই একই cache entry-তে hit করত — বিপর্যয়।
 
-For per-language sites:
+per-language সাইটের জন্য:
 
 ```nginx
 proxy_cache_key "$scheme$host$request_uri:$http_accept_language";
 ```
 
-For a logged-in vs anonymous distinction, where logged-in responses should not be cached at all:
+logged-in বনাম anonymous পার্থক্যের জন্য, যেখানে logged-in response একদমই cache করা উচিত নয়:
 
 ```nginx
 proxy_no_cache $http_authorization $cookie_session;
 proxy_cache_bypass $http_authorization $cookie_session;
 ```
 
-`proxy_no_cache` — do not store the response.
-`proxy_cache_bypass` — fetch fresh, ignoring any cached entry.
+`proxy_no_cache` — response জমা করো না।
+`proxy_cache_bypass` — কোনো cache করা entry উপেক্ষা করে fresh নিয়ে আসো।
 
-If either variable is non-empty, the request bypasses the cache. So any request with `Authorization:` or a `session=` cookie goes straight to the backend.
+যদি এদের যেকোনো variable non-empty হয়, request cache bypass করে। তাই `Authorization:` বা `session=` cookie সহ যেকোনো request সরাসরি backend-এ যায়।
 
-## proxy_cache_use_stale — the killer feature
+## proxy_cache_use_stale — চমৎকার feature
 
 ```nginx
 proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
 ```
 
-If the backend fails (timeout, 5xx, refused), serve a **stale** cached entry instead of an error. This single directive is the difference between "the site is up" and "the site has a 502 page" during a backend incident.
+যদি backend ব্যর্থ হয় (timeout, 5xx, refused), error-এর বদলে একটি **stale** cache করা entry serve করো। এই একটি directive-ই একটি backend incident-এর সময় "সাইট চালু আছে" আর "সাইটে একটা 502 page আছে"-র মধ্যে পার্থক্য।
 
-`updating` is special: while one request is regenerating the cache entry, _other_ concurrent requests are served the stale entry. Without it, every concurrent request would queue waiting for the same regeneration — the _thundering herd_.
+`updating` বিশেষ: যখন একটি request cache entry আবার তৈরি করছে, _অন্য_ concurrent request-গুলোকে stale entry serve করা হয়। এটা ছাড়া প্রতিটি concurrent request একই regeneration-এর জন্য queue-তে অপেক্ষা করত — _thundering herd_।
 
-## proxy_cache_lock — the single regeneration
+## proxy_cache_lock — একক regeneration
 
 ```nginx
 proxy_cache_lock on;
 proxy_cache_lock_timeout 5s;
 ```
 
-When a cache miss occurs, only one request gets to talk to the backend. Concurrent requests for the same key wait. After the first response arrives and is cached, the waiting requests are served from cache.
+যখন একটি cache miss ঘটে, শুধু একটি request-ই backend-এর সাথে কথা বলার সুযোগ পায়। একই key-এর জন্য concurrent request অপেক্ষা করে। প্রথম response এসে cache হওয়ার পর, অপেক্ষমাণ request-গুলোকে cache থেকে serve করা হয়।
 
-Without lock, a thousand concurrent misses for the home page would all hit the backend simultaneously. With lock, one does, and 999 wait briefly.
+lock ছাড়া home page-এর জন্য হাজার concurrent miss একসাথে backend-এ hit করত। lock সহ একটি করে, আর 999টা সংক্ষিপ্তভাবে অপেক্ষা করে।
 
-Combined with `use_stale ... updating`, the lock applies only when there is no stale entry to serve. The pattern is:
+`use_stale ... updating`-এর সাথে মিলিয়ে, lock তখনই প্রযোজ্য হয় যখন serve করার মতো কোনো stale entry নেই। pattern-টা হলো:
 
-- Stale entry exists → serve it, regenerate in the background.
-- No stale entry → first request fetches; others wait via lock.
+- Stale entry আছে → সেটা serve করো, background-এ regenerate করো।
+- কোনো stale entry নেই → প্রথম request নিয়ে আসে; অন্যরা lock-এর মাধ্যমে অপেক্ষা করে।
 
-## proxy_cache_revalidate — using ETag and Last-Modified
+## proxy_cache_revalidate — ETag আর Last-Modified ব্যবহার
 
 ```nginx
 proxy_cache_revalidate on;
 ```
 
-When a cached entry expires, instead of fetching the full response, nginx sends a conditional `If-Modified-Since` / `If-None-Match` to the backend. If the backend returns `304 Not Modified`, nginx refreshes the cache entry's freshness and serves it. Saves bandwidth and backend CPU on entries that have not actually changed.
+যখন একটি cache করা entry expire হয়, পূর্ণ response নিয়ে আসার বদলে nginx backend-এ একটি conditional `If-Modified-Since` / `If-None-Match` পাঠায়। যদি backend `304 Not Modified` ফেরত দেয়, nginx cache entry-র freshness রিফ্রেশ করে আর সেটা serve করে। যেসব entry আসলে বদলায়নি তাতে bandwidth আর backend CPU বাঁচায়।
 
-For this to help, your backend must respect `If-Modified-Since` / `If-None-Match` and return `304` when applicable. Most frameworks do this automatically for static content; for dynamic content, you have to opt in.
+এটা কাজে লাগতে হলে আপনার backend-কে `If-Modified-Since` / `If-None-Match` মানতে হবে আর প্রযোজ্য ক্ষেত্রে `304` ফেরত দিতে হবে। বেশিরভাগ framework static content-এর জন্য এটা স্বয়ংক্রিয়ভাবে করে; dynamic content-এর জন্য আপনাকে opt in করতে হবে।
 
 ## X-Cache-Status — debugging visibility
 
@@ -185,27 +193,27 @@ For this to help, your backend must respect `If-Modified-Since` / `If-None-Match
 add_header X-Cache-Status $upstream_cache_status;
 ```
 
-Now responses include:
+এখন response-এ থাকে:
 
 ```text
 X-Cache-Status: HIT
 ```
 
-Possible values:
+সম্ভাব্য value:
 
-- **MISS** — not in cache; fetched from backend.
-- **HIT** — served from cache.
-- **EXPIRED** — was in cache but expired; fetched fresh.
-- **UPDATING** — cache being regenerated; served stale.
-- **STALE** — backend failed; served stale.
-- **REVALIDATED** — backend returned 304; served from cache.
-- **BYPASS** — `proxy_cache_bypass` matched.
+- **MISS** — cache-এ নেই; backend থেকে আনা হয়েছে।
+- **HIT** — cache থেকে serve করা।
+- **EXPIRED** — cache-এ ছিল কিন্তু expire হয়েছে; fresh আনা হয়েছে।
+- **UPDATING** — cache regenerate হচ্ছে; stale serve করা হয়েছে।
+- **STALE** — backend ব্যর্থ; stale serve করা হয়েছে।
+- **REVALIDATED** — backend 304 ফেরত দিয়েছে; cache থেকে serve করা।
+- **BYPASS** — `proxy_cache_bypass` মিলে গেছে।
 
-Add this header during tuning. Watch the ratio of `HIT` to `MISS` to see whether caching is working. Remove it (or move to a debug-only condition) before exposing to the public — it leaks implementation detail.
+tuning-এর সময় এই header যোগ করুন। caching কাজ করছে কিনা দেখতে `HIT` আর `MISS`-এর অনুপাত লক্ষ্য করুন। public-এ প্রকাশের আগে এটা সরিয়ে ফেলুন (বা debug-only condition-এ সরান) — এটা implementation detail ফাঁস করে।
 
-## Microcaching — the secret weapon
+## Microcaching — গোপন অস্ত্র
 
-For dynamic content where even 1-2 seconds of staleness is acceptable:
+যে dynamic content-এ 1-2 সেকেন্ডের staleness-ও গ্রহণযোগ্য, তার জন্য:
 
 ```nginx
 proxy_cache main;
@@ -213,29 +221,29 @@ proxy_cache_valid 200 1s;
 proxy_cache_lock on;
 ```
 
-A one-second cache turns a thousand requests-per-second into one request-per-second hitting the backend. The user-visible staleness is at most 1s, which is invisible in practice. For most "dynamic but not personalized" content (news homepages, listing pages, public APIs), this single trick reduces backend load by 99%.
+এক-সেকেন্ডের cache হাজার request-per-second-কে backend-এ hit করা এক request-per-second-এ পরিণত করে। user-দৃশ্যমান staleness সর্বোচ্চ 1s, যা বাস্তবে অদৃশ্য। বেশিরভাগ "dynamic কিন্তু personalized নয়" content-এর জন্য (news homepage, listing page, public API), এই একটি কৌশল backend load 99% কমিয়ে দেয়।
 
-This is what the term _edge caching_ really means in production.
+Production-এ _edge caching_ শব্দটা আসলে এটাই বোঝায়।
 
-## Vary — caching different responses for different clients
+## Vary — ভিন্ন client-এর জন্য ভিন্ন response cache করা
 
-Some backends return different bodies based on `Accept-Encoding` (gzip vs identity), `Accept-Language`, or other request headers. The response includes:
+কিছু backend `Accept-Encoding` (gzip বনাম identity), `Accept-Language`, বা অন্য request header-এর উপর ভিত্তি করে ভিন্ন body ফেরত দেয়। response-এ থাকে:
 
 ```text
 Vary: Accept-Encoding, Accept-Language
 ```
 
-nginx honors `Vary` and stores separate cache entries for each combination. Without `Vary`, nginx might serve a gzipped response to a client that did not send `Accept-Encoding: gzip`, breaking the response.
+nginx `Vary` মানে আর প্রতিটি combination-এর জন্য আলাদা cache entry জমা রাখে। `Vary` ছাড়া nginx হয়তো এমন client-কে gzip করা response serve করত যে `Accept-Encoding: gzip` পাঠায়নি, response ভেঙে ফেলত।
 
-Be aware: `Vary: User-Agent` is a footgun — every browser version becomes its own cache entry, and the cache is effectively useless. Vary on a few well-defined headers only.
+সাবধান: `Vary: User-Agent` একটা footgun — প্রতিটি browser version নিজের একটা cache entry হয়ে যায়, আর cache কার্যত অকেজো। শুধু কয়েকটি সুনির্দিষ্ট header-এ Vary করুন।
 
-## Purging the cache
+## cache purge করা
 
-Free nginx (open-source) does not include built-in purge. Three workarounds:
+Free nginx (open-source)-এ built-in purge নেই। তিনটি workaround:
 
-**1. Cache-busting URLs.** Easiest, used by every CDN. Append a content hash to URLs (`/assets/app.7f3a2b9.js`); changing the content changes the URL; the old URL stays cached forever but is never requested.
+**1. Cache-busting URL.** সবচেয়ে সহজ, প্রতিটি CDN ব্যবহার করে। URL-এ একটি content hash যোগ করুন (`/assets/app.7f3a2b9.js`); content বদলালে URL বদলায়; পুরনো URL চিরকাল cache-এ থাকে কিন্তু কখনো request হয় না।
 
-**2. Manual file deletion.** The cache is a directory tree; files are named by hash of the cache key. Use the `nginx-cache-purge` script or compute the key hash manually:
+**2. Manual file deletion.** cache একটি directory tree; file-গুলোর নাম cache key-র hash অনুযায়ী। `nginx-cache-purge` script ব্যবহার করুন বা key hash হাতে compute করুন:
 
 ```bash
 # Compute the cache file path for a key
@@ -245,7 +253,7 @@ HASH=$(echo -n "$KEY" | md5sum | awk '{print $1}')
 echo "/var/cache/nginx/main/${HASH: -1}/${HASH: -3:2}/$HASH"
 ```
 
-Delete that file, and nginx misses on the next request and refetches.
+সেই file মুছে ফেলুন, আর nginx পরের request-এ miss করে আবার fetch করে।
 
 **3. ngx_cache_purge module** (third-party):
 
@@ -257,11 +265,11 @@ location ~ /purge(/.*) {
 }
 ```
 
-Then `curl http://localhost/purge/api/users` removes that entry.
+তারপর `curl http://localhost/purge/api/users` সেই entry সরিয়ে দেয়।
 
-For a small site, cache-busting URLs cover 90% of the need. For larger systems, prefer short TTLs over manual purges.
+ছোট সাইটের জন্য cache-busting URL 90% প্রয়োজন মেটায়। বড় system-এর জন্য manual purge-এর চেয়ে ছোট TTL পছন্দ করুন।
 
-## Inspecting the cache
+## cache পরিদর্শন করা
 
 ```bash
 # How big is the cache?
@@ -274,24 +282,24 @@ sudo find /var/cache/nginx/main -type f | wc -l
 sudo find /var/cache/nginx/main -type f -mmin -10 -ls
 ```
 
-Each cached file is the response, prefixed with metadata (status, headers, original key). You can `head -50` one to see what nginx stored.
+প্রতিটি cache করা file হলো response, যার আগে metadata (status, header, original key) থাকে। কী জমা করল দেখতে একটাতে `head -50` করতে পারেন।
 
-## When _not_ to use proxy_cache
+## proxy*cache *কখন\_ ব্যবহার করবেন না
 
-- **Cookies vary the response.** Cache will serve user A's response to user B. Either bypass on `Cookie:`, or strip cookies before caching, or do not cache.
-- **CSRF tokens or per-request unique fields** in the response body. Same problem.
-- **Backend is fast and CPU-cheap.** The cache adds a layer; if there is nothing to gain, do not add complexity.
-- **You need cache invalidation that is harder than TTL.** Build it explicitly with a queue and your backend, not with workarounds in nginx.
+- **Cookie response বদলায়।** cache user A-র response user B-কে serve করবে। হয় `Cookie:`-তে bypass করুন, নয়তো cache করার আগে cookie ছেঁটে ফেলুন, নয়তো cache করবেন না।
+- **response body-তে CSRF token বা per-request unique field।** একই সমস্যা।
+- **Backend দ্রুত আর CPU-সাশ্রয়ী।** cache একটা layer যোগ করে; যদি পাওয়ার কিছু না থাকে, জটিলতা যোগ করবেন না।
+- **আপনার এমন cache invalidation দরকার যা TTL-এর চেয়ে কঠিন।** এটা একটা queue আর আপনার backend দিয়ে স্পষ্টভাবে তৈরি করুন, nginx-এর workaround দিয়ে নয়।
 
-## Recap
+## রিক্যাপ
 
-- `proxy_cache_path` defines a cache zone. `proxy_cache` activates it in a location.
-- Cache keys default to the full URL. Customize with `proxy_cache_key` to include or exclude query strings, headers, cookies.
-- `proxy_cache_valid` sets per-status TTLs. Backend `Cache-Control` headers override.
-- `proxy_cache_use_stale` keeps the site up when the backend fails. `proxy_cache_lock` prevents thundering-herd regeneration.
-- `proxy_cache_revalidate` upgrades 304 responses to cache refreshes — saves bandwidth.
-- Microcaching (TTL of 1s) cuts dynamic-page load by orders of magnitude.
-- Add `X-Cache-Status` header during tuning. Remove it for production.
-- For invalidation, prefer cache-busting URLs and short TTLs over manual purge.
+- `proxy_cache_path` একটি cache zone ডিফাইন করে। `proxy_cache` সেটা একটি location-এ সক্রিয় করে।
+- Cache key ডিফল্টে পুরো URL। query string, header, cookie অন্তর্ভুক্ত বা বাদ দিতে `proxy_cache_key` দিয়ে কাস্টমাইজ করুন।
+- `proxy_cache_valid` per-status TTL সেট করে। backend-এর `Cache-Control` header override করে।
+- `proxy_cache_use_stale` backend ব্যর্থ হলে সাইট চালু রাখে। `proxy_cache_lock` thundering-herd regeneration আটকায়।
+- `proxy_cache_revalidate` 304 response-কে cache refresh-এ উন্নীত করে — bandwidth বাঁচায়।
+- Microcaching (1s-এর TTL) dynamic-page load কয়েক অর্ডার অফ ম্যাগনিটিউড কমায়।
+- tuning-এর সময় `X-Cache-Status` header যোগ করুন। production-এর জন্য সরিয়ে ফেলুন।
+- invalidation-এর জন্য manual purge-এর চেয়ে cache-busting URL আর ছোট TTL পছন্দ করুন।
 
-Next and final chapter: workers, sendfile, gzip/brotli, security headers, rate limiting — turning a working nginx into a tuned and hardened one.
+পরের এবং শেষ অধ্যায়: workers, sendfile, gzip/brotli, security headers, rate limiting — একটি কর্মক্ষম nginx-কে একটি টিউনড আর হার্ডেনড nginx-এ পরিণত করা।

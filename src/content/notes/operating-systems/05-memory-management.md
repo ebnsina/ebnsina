@@ -1,9 +1,9 @@
 ---
-title: 'Memory Management & Virtual Memory'
-subtitle: 'Every process thinks it owns a vast, private memory. The kernel and MMU maintain that illusion over scarce physical RAM.'
+title: 'Memory Management ও Virtual Memory'
+subtitle: 'প্রতিটা process ভাবে সে একটা বিশাল, private memory-র মালিক। কার্নেল আর MMU দুষ্প্রাপ্য physical RAM-এর উপর সেই illusion টিকিয়ে রাখে।'
 chapter: 5
 level: 'advanced'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['virtual memory', 'paging', 'tlb']
 ---
 
@@ -11,23 +11,31 @@ topics: ['virtual memory', 'paging', 'tlb']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে আল-হাইসামের একটা বিশাল গুদাম-দোকান আছে, যেখানে হাজার হাজার তাক আর অগুনতি জিনিস। কিন্তু ক্রেতাকে সে কখনো পুরো গুদামের নকশা দেখায় না — তাতে সবাই বিভ্রান্ত হয়ে যেত, আর একজন আরেকজনের জিনিসে হাত দিত। তাই প্রতিটা ক্রেতাকে সে একটা করে সহজ, নিজস্ব লকার-ম্যাপ ধরিয়ে দেয় — ১, ২, ৩, ৪ এভাবে সাজানো নম্বর। প্রতিটা ক্রেতার কাছে মনে হয় পুরো গুদামটা যেন তারই, আর তার জিনিসগুলো পরিপাটি করে ১ থেকে সাজানো।
+
+আসল ম্যাজিকটা লুকিয়ে আছে ইবনে আল-হাইসামের হাতে থাকা একটা মাস্টার খাতায়। ক্রেতা এসে বলে "আমার ৩ নম্বর লকারের জিনিসটা দিন" — সে খাতা খুলে দেখে, এই ক্রেতার ৩ নম্বর আসলে গুদামের একদম পেছনের সারির ৯১৭ নম্বর তাকে। ক্রেতা কখনো সেই আসল নম্বর জানেও না। আর কিছু জিনিস মাসের পর মাস কেউ চায় না; সেগুলো তাক জ্যাম করে রাখে। তাই আল-হাইসাম সেসব দূরের একটা back-store গুদামে সরিয়ে দেয়, খাতায় টুকে রাখে "এটা এখন পেছনের ঘরে"। কেউ হঠাৎ চাইলে লোক পাঠিয়ে সেটা আবার সামনে এনে তাকে বসায় — একটু সময় লাগে, কিন্তু জায়গা বাঁচে।
+
+এই গল্পটাই আসলে **virtual memory**। প্রতিটা ক্রেতার নিজস্ব ১-২-৩ লকার-ম্যাপ হলো প্রতিটা process-এর নিজের **virtual address space** — সবাই ভাবে বিশাল, private memory তারই। মাস্টার খাতা হলো **page table**, আর "আপনার ৩ = আসল ৯১৭" এই অনুবাদটাই **virtual-to-physical translation**; গুদামের আসল তাকগুলো হলো **physical memory** (RAM)। আর অব্যবহৃত জিনিস দূরের back-store-এ সরিয়ে রাখা, দরকার হলে ফিরিয়ে আনা — এটাই **paging/swap to disk**। বাস্তবে আপনার লিনাক্স মেশিনে ঠিক এভাবেই কার্নেল আর MMU প্রতিটা program-কে যা আছে তার চেয়ে বেশি memory-র illusion দেয়, আর RAM ভরে গেলে কম-ব্যবহৃত page ডিস্কে swap করে জায়গা বানায়।
+
 ## Virtual vs Physical Memory
 
-When your program reads address `0x7fff_1234`, that is a **virtual address**. It is not the location in the physical RAM chips. Every process has its own virtual address space, and the kernel maps each process's virtual addresses to **physical addresses** in RAM.
+আপনার program যখন `0x7fff_1234` address পড়ে, সেটা একটা **virtual address**। এটা physical RAM chip-এর ভেতরের location নয়। প্রতিটা process-এর নিজের virtual address space থাকে, আর কার্নেল প্রতিটা process-এর virtual address-কে RAM-এর **physical address**-এ map করে।
 
-This indirection buys three crucial things:
+এই indirection তিনটা গুরুত্বপূর্ণ জিনিস কিনে দেয়:
 
-- **Isolation** — process A's address `0x1000` and process B's `0x1000` map to different physical memory. They cannot see each other.
-- **The illusion of abundance** — each process can be handed a huge, contiguous-looking address space even though physical RAM is smaller and fragmented.
-- **Flexibility** — memory can be moved, shared, swapped to disk, or lazily allocated, all transparently to the program.
+- **Isolation** — process A-র `0x1000` address আর process B-র `0x1000` ভিন্ন physical memory-তে map করে। তারা একে অন্যকে দেখতে পারে না।
+- **প্রাচুর্যের illusion** — প্রতিটা process-কে একটা বিশাল, দেখতে-contiguous address space দেওয়া যায় যদিও physical RAM ছোট আর খণ্ডিত।
+- **Flexibility** — memory সরানো, share করা, disk-এ swap করা, বা lazily allocate করা যায়, সবই program-এর কাছে transparent।
 
-The translation is done in hardware by the **MMU** (Memory Management Unit) on every single memory access, using tables the kernel sets up.
+এই translation প্রতিটা single memory access-এ hardware-এ **MMU** (Memory Management Unit) করে, কার্নেলের সেট আপ করা table ব্যবহার করে।
 
 ## Paging
 
-Memory is managed in fixed-size chunks called **pages** — almost always **4 KB** on x86. Physical RAM is divided into equal-size **page frames**. The MMU maps virtual pages to physical frames.
+Memory নির্দিষ্ট-আকারের chunk-এ পরিচালিত হয় যাদের বলে **page** — x86-এ প্রায় সবসময় **4 KB**। Physical RAM সমান আকারের **page frame**-এ বিভক্ত। MMU virtual page-কে physical frame-এ map করে।
 
-A virtual address splits into two parts:
+একটা virtual address দুই অংশে বিভক্ত হয়:
 
 ```text
  virtual address (simplified)
@@ -38,58 +46,58 @@ A virtual address splits into two parts:
     the frame              the frame base
 ```
 
-The high bits select a page; the MMU translates that to a frame; the low **offset** bits index within the page and pass through unchanged. Because pages are fixed-size, any virtual page can go in any physical frame — no need for contiguous physical memory. This eliminates the external fragmentation that plagued older segment-based schemes.
+উঁচু bit-গুলো একটা page নির্বাচন করে; MMU সেটাকে একটা frame-এ translate করে; নিচু **offset** bit-গুলো page-এর ভেতরে index করে আর অপরিবর্তিত পাস হয়ে যায়। যেহেতু page নির্দিষ্ট-আকারের, যেকোনো virtual page যেকোনো physical frame-এ যেতে পারে — contiguous physical memory-র দরকার নেই। এটা সেই external fragmentation দূর করে যা পুরনো segment-ভিত্তিক scheme-কে জর্জরিত করত।
 
-## Page Tables
+## Page Table
 
-The mapping from virtual page to physical frame lives in a **page table**, one per process. A flat table would be enormous (a 48-bit address space has trillions of pages), so real systems use **multi-level page tables** — a tree. On x86-64, address translation walks four levels:
+Virtual page থেকে physical frame-এর mapping থাকে একটা **page table**-এ, process প্রতি একটা। একটা flat table বিশাল হবে (একটা 48-bit address space-এ ট্রিলিয়ন ট্রিলিয়ন page থাকে), তাই বাস্তব system **multi-level page table** ব্যবহার করে — একটা tree। x86-64-এ, address translation চারটা level হেঁটে যায়:
 
 ```text
 virtual addr -> [L4] -> [L3] -> [L2] -> [L1] -> frame + offset
 ```
 
-Only the branches that are actually used consume memory, so a sparse address space costs little. Each entry also carries permission bits — readable, writable, executable, user-accessible — which is how the text segment is enforced read-only and how a write to read-only memory is caught.
+শুধু যে branch-গুলো আসলে ব্যবহৃত হয় সেগুলোই memory খায়, তাই একটা sparse address space-এর খরচ সামান্য। প্রতিটা entry-তে permission bit-ও থাকে — readable, writable, executable, user-accessible — এভাবেই text segment read-only হিসেবে enforce হয় আর read-only memory-তে একটা write ধরা পড়ে।
 
-The CPU register `CR3` points to the top of the current process's page table. A context switch between processes reloads `CR3`, instantly swapping in the new process's view of memory.
+CPU register `CR3` বর্তমান process-এর page table-এর শীর্ষে point করে। Process-দের মধ্যে একটা context switch `CR3` reload করে, তাৎক্ষণিকভাবে নতুন process-এর memory-র view swap করে দেয়।
 
-## The TLB
+## TLB
 
-Walking a four-level page table on _every_ memory access would be ruinously slow — four extra memory reads per access. The fix is a cache inside the CPU called the **TLB** (Translation Lookaside Buffer). It caches recent virtual-to-physical translations.
+_প্রতিটা_ memory access-এ একটা চার-level page table হাঁটা ভয়ংকর ধীর হবে — access প্রতি চারটা অতিরিক্ত memory read। সমাধান হলো CPU-র ভেতরের একটা cache যার নাম **TLB** (Translation Lookaside Buffer)। এটা সাম্প্রতিক virtual-to-physical translation cache করে।
 
-- **TLB hit** — the translation is cached; the address resolves in essentially zero extra time.
-- **TLB miss** — the MMU walks the page table, then caches the result for next time.
+- **TLB hit** — translation cache-এ আছে; address মূলত শূন্য অতিরিক্ত সময়ে resolve হয়।
+- **TLB miss** — MMU page table হাঁটে, তারপর পরের বারের জন্য result cache করে।
 
-The TLB is small (hundreds to a few thousand entries), so good locality matters enormously. This is also why context switches are costly: switching `CR3` invalidates much of the TLB, and the new process suffers a burst of misses as it warms up again.
+TLB ছোট (শত থেকে কয়েক হাজার entry), তাই ভালো locality বিরাট গুরুত্বপূর্ণ। এ কারণেও context switch ব্যয়বহুল: `CR3` switch করলে TLB-র বেশিরভাগ invalidate হয়, আর নতুন process আবার গরম হওয়ার সময় একগুচ্ছ miss ভোগ করে।
 
 <Callout type="info">
 
-**Note:** **Huge pages** (2 MB or 1 GB instead of 4 KB) let one TLB entry cover far more memory, cutting TLB misses for memory-hungry workloads like databases. The trade-off is coarser granularity and potential waste.
+**নোট:** **Huge page** (4 KB-এর বদলে 2 MB বা 1 GB) একটা TLB entry-কে অনেক বেশি memory cover করতে দেয়, database-এর মতো memory-ক্ষুধার্ত workload-এর জন্য TLB miss কমায়। Trade-off হলো মোটা granularity আর সম্ভাব্য অপচয়।
 
 </Callout>
 
-## Page Faults
+## Page Fault
 
-When a process accesses a virtual page that has no valid mapping in the page table, the MMU raises a **page fault** — a trap into the kernel. The kernel inspects why:
+একটা process যখন এমন একটা virtual page access করে যার page table-এ কোনো valid mapping নেই, তখন MMU একটা **page fault** তোলে — কার্নেলে একটা trap। কার্নেল কেন হলো তা পরীক্ষা করে:
 
-- **Minor fault** — the page is legitimate but not yet mapped (e.g., it's already in RAM, just needs a table entry, or it's a copy-on-write page being written). The kernel fixes the mapping and resumes the program. Fast.
-- **Major fault** — the page's contents must be brought in from disk (from the executable, a memory-mapped file, or the swap area). The process blocks while I/O happens. Slow.
-- **Invalid fault** — the access is genuinely illegal (a null-pointer dereference, writing read-only memory). The kernel sends `SIGSEGV` and the program crashes. This is a segmentation fault.
+- **Minor fault** — page-টা বৈধ কিন্তু এখনো map করা হয়নি (যেমন, এটা ইতিমধ্যে RAM-এ আছে, শুধু একটা table entry দরকার, বা এটা একটা copy-on-write page যাতে write হচ্ছে)। কার্নেল mapping ঠিক করে আর program resume করে। দ্রুত।
+- **Major fault** — page-এর content disk থেকে আনতে হবে (executable থেকে, একটা memory-mapped file থেকে, বা swap area থেকে)। I/O হওয়ার সময় process block করে। ধীর।
+- **Invalid fault** — access-টা সত্যিই illegal (একটা null-pointer dereference, read-only memory-তে write)। কার্নেল `SIGSEGV` পাঠায় আর program crash করে। এটাই একটা segmentation fault।
 
 <Callout type="tip">
 
-**Tip:** `ps` shows minor and major fault counts. A high _major_ fault rate means the working set doesn't fit in RAM and the system is hitting disk constantly — the symptom of thrashing.
+**টিপ:** `ps` minor আর major fault count দেখায়। উঁচু _major_ fault rate মানে working set RAM-এ আঁটছে না আর system অবিরাম disk-এ আঘাত করছে — thrashing-এর লক্ষণ।
 
 </Callout>
 
-## Demand Paging and Swapping
+## Demand Paging আর Swapping
 
-The kernel is lazy on purpose. **Demand paging** means a page is only loaded into physical RAM when it's actually touched. When you `exec` a 100 MB binary, the kernel doesn't read 100 MB up front — it sets up the mappings and lets page faults pull in only the pages the program actually runs. This makes startup fast and avoids loading code that's never executed.
+কার্নেল ইচ্ছাকৃতভাবে অলস। **Demand paging** মানে একটা page কেবল তখনই physical RAM-এ load হয় যখন সেটা আসলে ছোঁয়া হয়। আপনি যখন একটা 100 MB binary `exec` করেন, কার্নেল আগে থেকে 100 MB পড়ে না — এটা mapping সেট আপ করে আর page fault-কে দিয়ে শুধু সেই page-গুলো টানায় যা program আসলে চালায়। এটা startup দ্রুত করে আর কখনো execute না হওয়া কোড load করা এড়ায়।
 
-When physical RAM fills up, the kernel must evict pages to make room. It picks victim pages (approximating _least-recently-used_) and:
+Physical RAM ভরে গেলে, কার্নেলকে জায়গা করতে page evict করতে হয়। এটা victim page বাছে (_least-recently-used_ approximate করে) আর:
 
-- If the page is clean and backed by a file (like program code), it's simply dropped — it can be re-read from the file later.
-- If the page is dirty (modified anonymous memory), it must be written out to the **swap** area on disk first.
+- Page-টা যদি clean আর একটা file দিয়ে backed হয় (যেমন program code), সেটা কেবল ফেলে দেওয়া হয় — এটা পরে file থেকে আবার পড়া যায়।
+- Page-টা যদি dirty হয় (modified anonymous memory), সেটাকে আগে disk-এ **swap** area-তে write করতে হয়।
 
-Bringing that page back later causes a major page fault. If the active working set is larger than RAM, the system spends all its time swapping pages in and out — **thrashing** — and throughput collapses while the disk stays pegged.
+সেই page পরে ফিরিয়ে আনলে একটা major page fault হয়। Active working set যদি RAM-এর চেয়ে বড় হয়, system তার সব সময় page in আর out করতেই কাটায় — **thrashing** — আর throughput ধসে পড়ে যখন disk আটকে থাকে।
 
-This is the fundamental tension of memory management: virtual memory lets you allocate more than you have, but performance falls off a cliff once your _active_ footprint exceeds physical RAM. The next chapter turns to coordinating access to this shared memory safely: synchronization.
+এটাই memory management-এর মৌলিক টানাপোড়েন: virtual memory আপনাকে যা আছে তার চেয়ে বেশি allocate করতে দেয়, কিন্তু আপনার _active_ footprint physical RAM ছাড়িয়ে গেলে performance খাদের কিনারা থেকে পড়ে যায়। পরের অধ্যায় এই shared memory-তে access নিরাপদে coordinate করার দিকে ফেরে: synchronization।

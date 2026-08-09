@@ -1,9 +1,9 @@
 ---
-title: 'Picking a VPS'
-subtitle: "What a VPS actually is, how to size one, and how to provision your first box without locking yourself into anyone's ecosystem."
+title: 'একটা VPS বাছাই করা'
+subtitle: 'একটা VPS আসলে কী, কীভাবে এর সাইজ ঠিক করবেন, আর কারো ইকোসিস্টেমে নিজেকে আটকে না ফেলে কীভাবে আপনার প্রথম বক্স প্রভিশন করবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['vps', 'linux', 'provisioning', 'hetzner', 'ovh', 'digitalocean']
 ---
 
@@ -13,57 +13,65 @@ topics: ['vps', 'linux', 'provisioning', 'hetzner', 'ovh', 'digitalocean']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Picking a VPS is like choosing an apartment — location, size, and price all matter, and you can always move, but it's more painful than you expect.
+একটা VPS বাছাই করা অনেকটা একটা অ্যাপার্টমেন্ট বেছে নেওয়ার মতো — লোকেশন, সাইজ, আর দাম সবই গুরুত্বপূর্ণ, আর আপনি সবসময় সরে যেতে পারেন, কিন্তু আপনি যতটা ভাবেন তার চেয়ে বেশি ঝামেলার।
 
 </Callout>
 
-## What a VPS actually is
+## গল্পে বুঝি
 
-A **virtual private server** is a slice of a real, physical computer in someone's data center. The provider runs a hypervisor (KVM, Xen, or VMware) on a big machine with hundreds of cores and a terabyte of RAM, and they sell you a virtual machine on top — your own kernel, your own filesystem, your own IP address.
+ইবনে সিনা শহরের নতুন এলাকায় একটা দোকান ভাড়া নিতে যাচ্ছেন — কাপড়ের ব্যবসা খুলবেন। তিনি প্রথমে দেখলেন দোকানের ফ্লোর সাইজ আর তাক কতটুকু: খদ্দের ঢুকে ঘোরাফেরা করতে পারবে তো, আর একসঙ্গে কয়েকজন এলে সামলানো যাবে তো? তারপর দেখলেন পেছনের গুদামঘর — অতিরিক্ত মালপত্র, থান কাপড়ের গাঁট রাখার জায়গা আছে কিনা। খুব বড় হল নিলে ভাড়া গুনতে গিয়ে পকেট খালি, আবার খুব ছোট নিলে খদ্দের-মালপত্র দুটোই আঁটবে না।
 
-You get root. You get a static public IP. You get a real Linux distribution. That is it. There is no "platform," no managed dashboard with sixty buttons, no surprise bill at the end of the month for an idle queue. You pay a flat fee, you do whatever you want with the box.
+সবচেয়ে বড় কথা লোকেশন। আল-খোয়ারিজমি পরামর্শ দিলেন — যে পাড়ায় তাঁর খদ্দেররা থাকে, দোকানটা সেই বাজারেই নিতে। দূরের সস্তা এলাকায় দোকান নিলে ভাড়া কম, কিন্তু খদ্দেরকে অনেকটা পথ হেঁটে আসতে হবে, তারা বিরক্ত হয়ে কাছের অন্য দোকানে চলে যাবে। ফাতিমা আল-ফিহরি নিজের অভিজ্ঞতা থেকে বললেন, শুরুতে দরকারমতো একটা মাঝারি দোকানই যথেষ্ট — ব্যবসা বাড়লে বড় জায়গায় সরে যাওয়া যায়।
+
+এই গল্পটাই আসলে একটা **VPS** বাছাই। দোকানের ফ্লোর সাইজ আর তাক হলো **CPU** আর **RAM** — একসঙ্গে কতটা কাজ আর কত ভিজিটর সামলাবে। পেছনের গুদাম হলো **disk** — আপনার ফাইল, ডেটাবেস, লগ রাখার জায়গা। খদ্দেরদের কাছের বাজারে দোকান নেওয়াটাই ইউজারদের কাছের একটা **region** বাছা, যাতে **latency** কম থাকে আর সাইট দ্রুত লোড হয়। আর দরকারমতো মাঝারি দোকান নেওয়াটাই প্ল্যানের রাইট-সাইজিং — যতটা লাগে ততটাই কিনুন, ব্যবসা বাড়লে রিসাইজ করে নেবেন। বাস্তবে এই কারণেই বাংলাদেশের ইউজারদের জন্য Singapore region প্রায়ই EU/US-এর চেয়ে ভালো — কাছের region মানে কম latency, তাই দূরের সস্তা প্ল্যানের চেয়ে কাছের প্ল্যানই বেশি কাজের।
+
+## একটা VPS আসলে কী
+
+একটা **virtual private server** হলো কারো ডেটা সেন্টারে থাকা একটা রিয়েল, ফিজিক্যাল কম্পিউটারের একটা টুকরো। প্রোভাইডার শত শত কোর আর এক টেরাবাইট RAM-ওয়ালা একটা বড় মেশিনে একটা হাইপারভাইজার (KVM, Xen, বা VMware) চালায়, আর তার উপরে আপনাকে একটা ভার্চুয়াল মেশিন বিক্রি করে — আপনার নিজের কার্নেল, নিজের ফাইলসিস্টেম, নিজের IP অ্যাড্রেস।
+
+আপনি root পান। আপনি একটা স্ট্যাটিক পাবলিক IP পান। আপনি একটা রিয়েল Linux ডিস্ট্রিবিউশন পান। ব্যস, এটুকুই। কোনো "প্ল্যাটফর্ম" নেই, ষাটটা বাটনওয়ালা কোনো ম্যানেজড ড্যাশবোর্ড নেই, মাসের শেষে একটা আইডল কিউয়ের জন্য কোনো চমকে দেওয়া বিল নেই। আপনি একটা ফ্ল্যাট ফি দেন, আর বক্স দিয়ে যা ইচ্ছা করেন।
 
 <Callout type="info">
 
-**Why a VPS over managed cloud?**
+**ম্যানেজড ক্লাউডের বদলে VPS কেন?**
 
-Because you understand exactly what you are paying for and exactly what is running. Managed services are great when you know what they do under the hood — but you cannot get there without first running things yourself.
+কারণ আপনি ঠিক ঠিক বোঝেন আপনি কীসের জন্য টাকা দিচ্ছেন আর ঠিক কী চলছে। ম্যানেজড সার্ভিস দারুণ, যখন আপনি জানেন সেগুলো ভেতরে ভেতরে কী করে — কিন্তু আগে নিজে জিনিসগুলো চালানো ছাড়া আপনি সেই জায়গায় পৌঁছাতে পারবেন না।
 
 </Callout>
 
-## What it is not
+## এটা যা নয়
 
-- **Not shared hosting.** You are not sharing a PHP install with two thousand WordPress sites. You have your own kernel.
-- **Not a serverless platform.** Nothing scales for you. Nothing wakes up on demand. The box is on, full stop.
-- **Not bulletproof.** A single VPS can disappear. Hardware fails, providers have outages, the network drops. You will learn to design for that — but a single $5 box is the right starting point.
+- **শেয়ার্ড হোস্টিং নয়।** আপনি দুই হাজার WordPress সাইটের সঙ্গে একটা PHP ইনস্টল শেয়ার করছেন না। আপনার নিজের কার্নেল আছে।
+- **সার্ভারলেস প্ল্যাটফর্ম নয়।** কোনো কিছু আপনার হয়ে স্কেল করে না। কোনো কিছু চাহিদা অনুযায়ী জেগে ওঠে না। বক্স চালু থাকে, ব্যস।
+- **অভেদ্য নয়।** একটা একক VPS হাওয়া হয়ে যেতে পারে। হার্ডওয়্যার ফেইল করে, প্রোভাইডারদের আউটেজ হয়, নেটওয়ার্ক পড়ে যায়। আপনি সেই মাথায় রেখে ডিজাইন করা শিখবেন — কিন্তু একটা একক $5 বক্সই শুরু করার সঠিক জায়গা।
 
-## Choosing a provider
+## প্রোভাইডার বাছাই করা
 
-Any of these will do for learning. Pick one based on price, region, and reputation:
+শেখার জন্য এদের যেকোনোটাই চলবে। দাম, রিজিয়ন, আর রেপুটেশনের ভিত্তিতে একটা বাছুন:
 
-| Provider               | Smallest plan                      | Notes                                      |
-| ---------------------- | ---------------------------------- | ------------------------------------------ |
-| **Hetzner Cloud**      | ~€4/mo (2 vCPU, 4GB RAM, 40GB SSD) | Best price/performance. EU and US regions. |
-| **OVH / Public Cloud** | ~€3/mo                             | Cheap, French, occasionally rough UI.      |
-| **DigitalOcean**       | $4/mo (1 vCPU, 512MB RAM, 10GB)    | Polished docs, slightly pricier.           |
-| **Linode (Akamai)**    | $5/mo (1 vCPU, 1GB RAM, 25GB)      | Solid, similar to DO.                      |
-| **Vultr**              | $3.50/mo                           | Many regions worldwide.                    |
+| Provider               | সবচেয়ে ছোট প্ল্যান                | নোট                                       |
+| ---------------------- | ---------------------------------- | ----------------------------------------- |
+| **Hetzner Cloud**      | ~€4/mo (2 vCPU, 4GB RAM, 40GB SSD) | সেরা price/performance। EU আর US রিজিয়ন। |
+| **OVH / Public Cloud** | ~€3/mo                             | সস্তা, ফরাসি, মাঝেমধ্যে খসখসে UI।         |
+| **DigitalOcean**       | $4/mo (1 vCPU, 512MB RAM, 10GB)    | ঝকঝকে ডকুমেন্টেশন, একটু দামি।             |
+| **Linode (Akamai)**    | $5/mo (1 vCPU, 1GB RAM, 25GB)      | মজবুত, DO-এর মতোই।                        |
+| **Vultr**              | $3.50/mo                           | বিশ্বজুড়ে অনেক রিজিয়ন।                  |
 
-The skill is **identical** across all of them. The hardening, the firewall rules, the systemd units — none of it changes. Pick one.
+স্কিলটা এদের সবার মধ্যে **একদম একই**। হার্ডেনিং, ফায়ারওয়াল রুল, systemd ইউনিট — কোনো কিছুই বদলায় না। একটা বাছুন।
 
-## Sizing your first box
+## আপনার প্রথম বক্সের সাইজ ঠিক করা
 
-Default to the smallest plan with at least **1GB of RAM**. That is enough to run:
+ডিফল্ট হিসেবে অন্তত **1GB RAM**-ওয়ালা সবচেয়ে ছোট প্ল্যান নিন। এটুকু যথেষ্ট এসব চালানোর জন্য:
 
 - nginx
-- A small Postgres
-- A backend service in Go or Node
+- একটা ছোট Postgres
+- Go বা Node-এ একটা ব্যাকএন্ড সার্ভিস
 - Redis
-- ssh, journald, the firewall
+- ssh, journald, ফায়ারওয়াল
 
-If you go below 1GB, you will spend more time fighting the OOM killer than learning. If you need more later, you can resize.
+আপনি 1GB-এর নিচে গেলে শেখার চেয়ে বেশি সময় OOM killer-এর সঙ্গে লড়াই করে কাটাবেন। পরে বেশি দরকার হলে রিসাইজ করতে পারবেন।
 
 ```text
 Rule of thumb for the first VPS:
@@ -74,43 +82,43 @@ Rule of thumb for the first VPS:
   ~$4–6/month
 ```
 
-## Picking the OS
+## OS বাছাই করা
 
-Pick **Debian 12 (Bookworm)** or **Ubuntu Server LTS (24.04)** for your first box. Both are mainstream, both have huge package selections, both have years of free security updates.
+আপনার প্রথম বক্সের জন্য **Debian 12 (Bookworm)** বা **Ubuntu Server LTS (24.04)** বাছুন। দুটোই মেইনস্ট্রিম, দুটোরই বিশাল প্যাকেজ সিলেকশন আছে, দুটোরই বছরের পর বছর ফ্রি সিকিউরিটি আপডেট আছে।
 
-- **Debian** is leaner, fewer surprises, what most production servers run.
-- **Ubuntu** is friendlier, has slightly more recent packages, more tutorials online.
+- **Debian** বেশি হালকা, কম চমক, বেশিরভাগ প্রোডাকশন সার্ভার এটাই চালায়।
+- **Ubuntu** বেশি বন্ধুসুলভ, প্যাকেজ একটু বেশি সাম্প্রতিক, অনলাইনে বেশি টিউটোরিয়াল।
 
-Avoid for now:
+আপাতত এড়িয়ে চলুন:
 
-- **Alpine** — different libc, occasional gotchas with prebuilt binaries.
-- **Arch / rolling distros** — fast-moving, fine for a desktop, painful for a server.
-- **CentOS Stream / RHEL clones** — the dnf/yum world is fine but every other tutorial assumes apt.
+- **Alpine** — আলাদা libc, প্রিবিল্ট বাইনারির সঙ্গে মাঝেমধ্যে গোলযোগ।
+- **Arch / rolling distros** — দ্রুত বদলায়, ডেস্কটপের জন্য ঠিকঠাক, সার্ভারের জন্য কষ্টকর।
+- **CentOS Stream / RHEL clones** — dnf/yum-এর জগৎ ঠিকঠাক কিন্তু বাকি প্রতিটা টিউটোরিয়াল apt ধরে নেয়।
 
-## Provisioning the box (Hetzner example)
+## বক্স প্রভিশন করা (Hetzner উদাহরণ)
 
-Concrete walkthrough. The flow is identical at every other provider — only the buttons move.
+কংক্রিট একটা ওয়াকথ্রু। ফ্লো প্রতিটা অন্য প্রোভাইডারেও একদম একই — শুধু বাটনগুলো নড়ে।
 
-1. Sign up. Verify your email and add a payment method.
-2. Click **New Project**, then **New Server**.
-3. Pick a **location** close to your users (or to you, for learning).
-4. Pick **Debian 12** as the image.
-5. Pick the **CX22** plan (or equivalent — 2 vCPU, 4GB RAM, ~€4/mo).
-6. **Add an SSH key** — paste the public key from your laptop. (We will cover making one in chapter 2 if you do not already have one.)
-7. Give the server a name like `web-01`.
-8. Click **Create & Buy now**.
+1. সাইন আপ করুন। আপনার ইমেইল ভেরিফাই করুন আর একটা পেমেন্ট মেথড যোগ করুন।
+2. **New Project**-এ ক্লিক করুন, তারপর **New Server**।
+3. আপনার ইউজারদের কাছাকাছি (কিংবা শেখার জন্য নিজের কাছাকাছি) একটা **location** বাছুন।
+4. ইমেজ হিসেবে **Debian 12** বাছুন।
+5. **CX22** প্ল্যান বাছুন (বা সমতুল্য — 2 vCPU, 4GB RAM, ~€4/mo)।
+6. **Add an SSH key** — আপনার ল্যাপটপ থেকে পাবলিক কী পেস্ট করুন। (আপনার কাছে যদি আগে থেকে একটা না থাকে, চ্যাপ্টার 2-এ আমরা একটা বানানো কভার করব।)
+7. সার্ভারকে `web-01`-এর মতো একটা নাম দিন।
+8. **Create & Buy now**-এ ক্লিক করুন।
 
-In about 15 seconds, the provider hands you back a public IPv4 like `49.13.123.45`. That is your box.
+প্রায় ১৫ সেকেন্ডে প্রোভাইডার আপনাকে `49.13.123.45`-এর মতো একটা পাবলিক IPv4 ফেরত দেবে। ওটাই আপনার বক্স।
 
-## First connection
+## প্রথম কানেকশন
 
 ```bash
 ssh root@49.13.123.45
 ```
 
-If you added your SSH key during provisioning, you go straight in. If not, the provider emails you a temporary root password — use it once, change it immediately, then add a key (chapter 2).
+প্রভিশনিংয়ের সময় আপনি যদি আপনার SSH কী যোগ করে থাকেন, আপনি সোজা ঢুকে যাবেন। না করলে প্রোভাইডার আপনাকে একটা অস্থায়ী root পাসওয়ার্ড ইমেইল করে — একবার ব্যবহার করুন, সঙ্গে সঙ্গে বদলে ফেলুন, তারপর একটা কী যোগ করুন (চ্যাপ্টার 2)।
 
-You should see something like:
+আপনার এমন কিছু দেখা উচিত:
 
 ```
 Linux web-01 6.1.0-21-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.90-1
@@ -120,29 +128,29 @@ individual files in /usr/share/doc/*/copyright.
 root@web-01:~#
 ```
 
-Congratulations — you are root on a real Linux box on the internet, in a data center somewhere in Europe or America. From here on, every chapter teaches you what to do with it.
+অভিনন্দন — আপনি ইন্টারনেটে একটা রিয়েল Linux বক্সে root, ইউরোপ বা আমেরিকার কোথাও কোনো এক ডেটা সেন্টারে। এখান থেকে প্রতিটা চ্যাপ্টার আপনাকে শেখায় এটা দিয়ে কী করতে হবে।
 
-## What to do right now
+## এখনই যা করবেন
 
-1. Run `uname -a` — see your kernel version.
-2. Run `cat /etc/os-release` — see your distribution.
-3. Run `ip addr` — see your network interfaces and IPs.
-4. Run `free -h` — see your memory.
-5. Run `df -h` — see your disk.
+1. `uname -a` চালান — আপনার কার্নেল ভার্সন দেখুন।
+2. `cat /etc/os-release` চালান — আপনার ডিস্ট্রিবিউশন দেখুন।
+3. `ip addr` চালান — আপনার নেটওয়ার্ক ইন্টারফেস আর IP দেখুন।
+4. `free -h` চালান — আপনার মেমরি দেখুন।
+5. `df -h` চালান — আপনার ডিস্ক দেখুন।
 
-That is your environment. In the next chapter, we lock down the front door before anything else.
+ওটাই আপনার এনভায়রনমেন্ট। পরের চ্যাপ্টারে, অন্য কিছু করার আগে আমরা সদর দরজায় তালা দিই।
 
 <Callout type="warn">
 
-**Do not skip chapter 2.**
+**চ্যাপ্টার 2 এড়িয়ে যাবেন না।**
 
-A fresh VPS with password auth and root SSH enabled will start getting brute-forced within minutes of being on the public internet. Hardening before anything else is non-negotiable.
+পাসওয়ার্ড auth আর root SSH চালু থাকা একটা তরতাজা VPS পাবলিক ইন্টারনেটে ওঠার কয়েক মিনিটের মধ্যেই ব্রুট-ফোর্স হতে শুরু করবে। অন্য যেকোনো কিছুর আগে হার্ডেন করা — এটা নিয়ে আপস চলে না।
 
 </Callout>
 
-## Recap
+## রিক্যাপ
 
-- A VPS is a virtual machine on someone else's metal. You get root, a public IP, a real OS.
-- Pick Hetzner, OVH, DigitalOcean, Linode, or Vultr — the skills transfer.
-- Default to Debian 12 or Ubuntu LTS, smallest plan with ≥1GB RAM.
-- Provision, SSH in as root, take a snapshot of what you see — then move on to hardening.
+- একটা VPS হলো অন্য কারো ধাতুর উপরে একটা ভার্চুয়াল মেশিন। আপনি root, একটা পাবলিক IP, একটা রিয়েল OS পান।
+- Hetzner, OVH, DigitalOcean, Linode, বা Vultr বাছুন — স্কিল ট্রান্সফার হয়।
+- Debian 12 বা Ubuntu LTS ডিফল্ট রাখুন, ≥1GB RAM-ওয়ালা সবচেয়ে ছোট প্ল্যান।
+- প্রভিশন করুন, root হিসেবে SSH করুন, যা দেখছেন তার একটা স্ন্যাপশট নিন — তারপর হার্ডেনিংয়ে এগিয়ে যান।

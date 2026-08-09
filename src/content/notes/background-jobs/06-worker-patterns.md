@@ -1,9 +1,9 @@
 ---
 title: 'Worker Patterns & Production'
-subtitle: 'Graceful shutdown, concurrency limits, priority queues, fan-out, and the operational checklist for running jobs in production.'
+subtitle: 'Graceful shutdown, concurrency limit, priority queue, fan-out, এবং প্রোডাকশনে job চালানোর অপারেশনাল চেকলিস্ট।'
 chapter: 6
 level: 'advanced'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['graceful shutdown', 'priority queues', 'fan-out', 'worker pools', 'production']
 ---
 
@@ -13,15 +13,23 @@ topics: ['graceful shutdown', 'priority queues', 'fan-out', 'worker pools', 'pro
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A hospital triage system: incoming patients aren't handled first-come-first-served — critical cases go immediately to surgery while routine checkups wait. A patient being treated mid-examination isn't abandoned when shift changes — care continues until a clean handoff. Production workers need the same: priority handling and graceful handoffs.
+একটি হাসপাতালের triage system: আসা রোগীদের first-come-first-served ভিত্তিতে সামলানো হয় না — critical কেস সঙ্গে সঙ্গে সার্জারিতে যায় আর রুটিন চেকআপ অপেক্ষা করে। পরীক্ষার মাঝপথে থাকা কোনো রোগীকে শিফট বদলের সময় ফেলে যাওয়া হয় না — পরিচ্ছন্ন হস্তান্তর না হওয়া পর্যন্ত সেবা চলতে থাকে। প্রোডাকশন worker-এরও একই দরকার: priority handling এবং graceful handoff।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা কাঠের কারখানা। সামনে দেয়ালে একটা লোহার স্পাইকে গেঁথে রাখা থাকে কাজের স্লিপ — প্রতিটা স্লিপে একটা করে অর্ডার। ইবনে সিনা, আল-খোয়ারিজমি সহ কয়েকজন কারিগর পাশাপাশি বসে কাজ করে; কেউ একটা স্লিপ শেষ করলেই স্পাইক থেকে পরের স্লিপটা টেনে নিয়ে শুরু করে দেয়। কেউ কারও জন্য বসে থাকে না — সবাই একসাথে, যে যার গতিতে অর্ডার সামলায়। কিন্তু একটা সমস্যা: হঠাৎ যদি সব কারিগর একসাথে পেছনের কাটিং-রুমে ঢুকে পড়ে, ভিড়ে মেশিন জ্যাম হয়ে যায়। তাই ফাতিমা নিয়ম করে দিয়েছেন — একসাথে বড়জোর চারজন পেছনে কাজ করবে, বাকিরা সামনে অপেক্ষা করবে।
+
+একদিন একটা স্লিপ বেঁকে-চুরে গেছে; যেই কারিগর সেটা নিয়ে মেশিনে বসায়, সেটা আটকে যায়, কাজ থেমে যায়। প্রথমে ইবনে সিনা চেষ্টা করল, আটকে গেল; আল-খোয়ারিজমি চেষ্টা করল, আবার আটকে গেল। এভাবে চললে ওই একটা স্লিপই পুরো লাইন বসিয়ে দেবে। ফাতিমা তাই স্লিপটা স্পাইক থেকে তুলে পাশের একটা আলাদা "সমস্যা-ট্রে"-তে রেখে দিলেন — পরে ধীরেসুস্থে দেখা যাবে, এখন বাকি সবাই আবার স্বাভাবিক গতিতে কাজ চালিয়ে যাক। আর দেয়ালে ঝোলানো একটা বোর্ডে তিনি দাগ কেটে রাখেন — কতগুলো অর্ডার শেষ হলো, কতগুলো আটকাল — যেন এক নজরেই কারখানার অবস্থা বোঝা যায়।
+
+গল্পের কারিগরদের দল, যারা একই স্পাইক থেকে পরের স্লিপ টেনে নিয়ে একসাথে কাজ করছে — এটাই **worker pool**। যেই বাঁকা স্লিপটা বারবার আটকে যাচ্ছিল সেটা **poison message/job**, আর সেটা তুলে আলাদা "সমস্যা-ট্রে"-তে রাখা মানে failed job-কে **dead-letter queue (DLQ)**-তে সরিয়ে দেওয়া — যাতে সেটা পুরো লাইন ব্লক না করে। একসাথে সর্বোচ্চ চারজনকে পেছনে ঢুকতে দেওয়া হলো **concurrency limit**, আর দেয়ালের done/failed বোর্ডটা হলো **monitoring**। বাস্তবে BullMQ-তে ঠিক এভাবেই হয় — একটা worker `concurrency` সেট করে একাধিক job সমান্তরালে টানে, সব retry শেষেও fail করা poison job DLQ-তে জমা হয়, আর `completed`/`failed` event থেকে metric তুলে queue depth ও error rate-এর ওপর নজর রাখা হয়।
+
 ## Graceful Shutdown
 
-Workers must finish their current jobs before stopping. An abrupt shutdown (SIGKILL) mid-job leaves your data in an inconsistent state.
+Worker-কে থামার আগে তাদের চলতি job শেষ করতে হবে। কোনো job-এর মাঝপথে হঠাৎ shutdown (SIGKILL) হলে আপনার data একটি inconsistent state-এ থেকে যায়।
 
 ```typescript
 import { Worker } from 'bullmq';
@@ -53,7 +61,7 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 ```
 
-**Container deployment:** Set `terminationGracePeriodSeconds` in Kubernetes to be longer than your longest expected job:
+**Container deployment:** Kubernetes-এ `terminationGracePeriodSeconds`-কে আপনার সবচেয়ে দীর্ঘ প্রত্যাশিত job-এর চেয়ে বেশি করে সেট করুন:
 
 ```yaml
 spec:
@@ -66,11 +74,11 @@ spec:
   terminationGracePeriodSeconds: 60 # matches your 30s worker timeout + buffer
 ```
 
-## Priority Queues
+## Priority Queue
 
-Some jobs are more urgent than others. Implement multiple queues with dedicated workers per priority tier, or use BullMQ's built-in priority:
+কিছু job অন্যদের চেয়ে বেশি জরুরি। প্রতি priority tier-এ dedicated worker সহ একাধিক queue প্রয়োগ করুন, অথবা BullMQ-র built-in priority ব্যবহার করুন:
 
-**Multiple queues (explicit control):**
+**একাধিক queue (explicit control):**
 
 ```typescript
 const criticalQueue = new Queue('critical', { connection });
@@ -83,7 +91,7 @@ const defaultWorker = new Worker('default', handler, { connection, concurrency: 
 const bulkWorker = new Worker('bulk', handler, { connection, concurrency: 2 });
 ```
 
-**BullMQ priority (single queue, ordered by priority value):**
+**BullMQ priority (একটি single queue, priority value অনুযায়ী সাজানো):**
 
 ```typescript
 // Lower number = higher priority
@@ -92,11 +100,11 @@ await queue.add('send-report', { userId }, { priority: 10 });
 await queue.add('sync-data', { userId }, { priority: 100 }); // picked last
 ```
 
-BullMQ priority uses sorted sets — workers always pick the lowest-priority-number job next. This works well but can starve lower-priority jobs during sustained high load. For that, use weighted round-robin across multiple queues instead.
+BullMQ priority sorted set ব্যবহার করে — worker সবসময় পরে সবচেয়ে কম priority-number-এর job তুলে নেয়। এটি ভালো কাজ করে কিন্তু টানা high load-এর সময় কম-priority-র job-কে অভুক্ত রাখতে পারে। সেক্ষেত্রে বরং একাধিক queue জুড়ে weighted round-robin ব্যবহার করুন।
 
 ## Fan-Out Pattern
 
-One job spawns many child jobs. Useful for bulk operations where you want per-item retries and concurrency:
+একটি job অনেকগুলো child job তৈরি করে। bulk অপারেশনের জন্য উপকারী যেখানে আপনি per-item retry ও concurrency চান:
 
 ```typescript
 // Parent job: dispatch work to children
@@ -130,15 +138,15 @@ async function processOrder(job: Job<{ orderId: string }>): Promise<void> {
 }
 ```
 
-Fan-out gives you:
+Fan-out আপনাকে দেয়:
 
-- Independent retry per item (one bad order doesn't block others)
-- Parallelism (many workers handle children simultaneously)
-- Progress visibility (see completed/failed counts per child)
+- প্রতি item-এ independent retry (একটি খারাপ order অন্যগুলোকে block করে না)
+- Parallelism (অনেক worker একসাথে child সামলায়)
+- Progress visibility (প্রতি child-এর completed/failed count দেখা)
 
-## Flow Control: Job Dependencies
+## Flow Control: Job Dependency
 
-BullMQ Flows let you define parent-child job trees with automatic progression:
+BullMQ Flow আপনাকে automatic progression সহ parent-child job tree সংজ্ঞায়িত করতে দেয়:
 
 ```typescript
 import { FlowProducer } from 'bullmq';
@@ -179,9 +187,9 @@ const invoicingWorker = new Worker('invoicing', async (job) => {
 });
 ```
 
-## Rate Limiting Workers
+## Worker-এ Rate Limiting
 
-Prevent hammering external APIs:
+external API-তে বারবার আঘাত ঠেকান:
 
 ```typescript
 import { RateLimiter } from 'limiter';
@@ -199,7 +207,7 @@ const worker = new Worker(
 ); // 20 concurrent, but rate-limited to 10/s
 ```
 
-BullMQ also supports queue-level rate limiting:
+BullMQ queue-level rate limiting-ও সাপোর্ট করে:
 
 ```typescript
 const worker = new Worker('api-sync', handler, {
@@ -211,7 +219,7 @@ const worker = new Worker('api-sync', handler, {
 });
 ```
 
-## Worker Health Monitoring
+## Worker Health মনিটরিং
 
 ```typescript
 // Emit metrics for each job
@@ -234,15 +242,15 @@ worker.on('stalled', (jobId) => {
 });
 ```
 
-**Key production metrics:**
+**মূল প্রোডাকশন metric:**
 
-- `job.duration` p50/p95/p99 per job type
-- `job.completed` and `job.failed` rates
-- Queue depth (waiting count) per queue
-- Worker active count vs concurrency limit
+- প্রতি job type-এ `job.duration` p50/p95/p99
+- `job.completed` ও `job.failed` rate
+- প্রতি queue-তে queue depth (waiting count)
+- Worker active count বনাম concurrency limit
 - Stalled job count
 
-## Production Checklist
+## প্রোডাকশন চেকলিস্ট
 
 ```
 □ Graceful shutdown on SIGTERM — drain active jobs before exit
@@ -259,7 +267,7 @@ worker.on('stalled', (jobId) => {
 □ Job timeouts set (don't let a job hang forever)
 ```
 
-**Job payload size discipline:**
+**Job payload size-এর নিয়ম:**
 
 ```typescript
 // WRONG — large payload in queue
@@ -272,4 +280,4 @@ const s3Key = await s3.upload(file);
 await queue.add('process-upload', { s3Key }); // tiny payload
 ```
 
-Job payloads live in Redis/Postgres — keep them small. Aim for under 1KB. If you need more, store it in S3 or a DB table and reference it by ID.
+Job payload Redis/Postgres-এ থাকে — সেগুলো ছোট রাখুন। 1KB-এর নিচে রাখার চেষ্টা করুন। বেশি লাগলে সেটা S3-তে বা একটি DB টেবিলে রাখুন এবং ID দিয়ে reference করুন।

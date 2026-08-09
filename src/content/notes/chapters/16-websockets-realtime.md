@@ -1,9 +1,9 @@
 ---
-title: 'WebSockets & Real-time'
-subtitle: 'Build a real-time chat server with WebSocket connections, rooms, presence tracking, and message history.'
+title: 'WebSockets ও Real-time'
+subtitle: 'WebSocket connection, room, presence tracking এবং message history সহ একটি real-time chat server বানান।'
 chapter: 16
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['WebSocket', 'real-time', 'chat', 'presence', 'pub/sub']
 ---
 
@@ -13,11 +13,19 @@ topics: ['WebSocket', 'real-time', 'chat', 'presence', 'pub/sub']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What are WebSockets?
+## গল্পে বুঝি
 
-**WebSockets** provide full-duplex, persistent connections between client and server. Unlike HTTP's request/response model, WebSockets allow both sides to send messages at any time without waiting for a request. This is the foundation of every real-time feature you use daily -- chat, live notifications, collaborative editing, and multiplayer games.
+ইবনে সিনা আর আল-খোয়ারিজমি দূরের দুই শহরে থাকে। যোগাযোগ করতে ইবনে সিনা একটা চিঠি লেখে, ডাকে দেয়, তারপর জবাবের জন্য বসে থাকে। আল-খোয়ারিজমির উত্তর জানতে হলে প্রতিবার নতুন করে চিঠি পাঠাতে হয় — একটা প্রশ্ন, একটা খাম, একটা জবাব। কিছু জানার আছে কিনা বারবার খোঁজ নিতে ইবনে সিনা যদি ঘণ্টায় ঘণ্টায় "নতুন কিছু হলো?" লিখে চিঠি পাঠাতে থাকে, বেশিরভাগ সময়ই ফাঁকা "না, কিছু হয়নি" জবাব ফিরে আসে — অথচ ডাক খরচ আর অপেক্ষা দুটোই গুনতে হয়। এদিকে আল-খোয়ারিজমির হঠাৎ জরুরি খবর দেওয়ার দরকার হলেও সে নিজে থেকে কিছু জানাতে পারে না, ইবনে সিনার পরের চিঠির জন্য বসে থাকতে হয়।
 
-Think of HTTP like sending letters back and forth. Each letter is independent, and you wait for a reply. WebSockets are like a phone call -- once the line is open, both parties can talk whenever they want, instantly, until someone hangs up.
+একদিন ইবনে সিনা আল-খোয়ারিজমিকে সরাসরি ফোন করল। লাইন যুক্ত হওয়ার পর দুজনের কেউই আর ফোন রাখল না — লাইনটা খোলা থাকল। এখন ইবনে সিনার কিছু বলার হলে সঙ্গে সঙ্গে বলে, আবার আল-খোয়ারিজমির কোনো খবর এলে সে-ও সঙ্গে সঙ্গে জানিয়ে দেয়, কেউ জিজ্ঞেস করা পর্যন্ত অপেক্ষা করতে হয় না। কেউ আর বারবার ডায়াল করছে না, নতুন করে খাম পাঠাচ্ছে না — একটাই খোলা লাইনে দুজন যখন খুশি কথা বলছে। পাশ থেকে ফাতিমা আল-ফিহরিও ঢুকলে সে-ও একই লাইনে সঙ্গে সঙ্গে যুক্ত হয়ে যায়।
+
+গল্পের প্রতিটা চিঠি-আর-জবাব হলো একেকটা HTTP **request/response** — প্রতিবার আলাদা করে চাইতে হয়। বারবার "নতুন কিছু হলো?" চিঠি পাঠানোটা হলো **polling**, যা বেশিরভাগ সময় খালি জবাব নিয়ে ফেরে। খোলা ফোন লাইনটাই **WebSocket** — একটা persistent, দুই-মুখী connection যেখানে server নিজে থেকে যেকোনো মুহূর্তে client-কে খবর পাঠাতে পারে (**server push**), client-এর চাওয়ার অপেক্ষা না করেই। ঠিক এই কারণেই chat, live dashboard, বা multiplayer game-এ WebSocket ব্যবহার হয় — যেখানে দুই পক্ষকেই সঙ্গে সঙ্গে, লাইন খোলা রেখে কথা বলতে হয়।
+
+## WebSocket কী?
+
+**WebSocket** client আর server-এর মধ্যে full-duplex, persistent connection দেয়। HTTP-র request/response মডেলের বিপরীতে, WebSocket দুই পক্ষকেই request-এর জন্য অপেক্ষা না করে যেকোনো সময় message পাঠাতে দেয়। এটাই প্রতিদিন আপনার ব্যবহার করা প্রতিটি real-time feature-এর ভিত্তি — chat, live notification, collaborative editing এবং multiplayer game।
+
+HTTP-কে ভাবুন একে অপরকে চিঠি পাঠানোর মতো। প্রতিটি চিঠি স্বাধীন, আর আপনি জবাবের জন্য অপেক্ষা করেন। WebSocket হলো একটা ফোন কলের মতো — একবার লাইন খুলে গেলে, দুই পক্ষই যখন খুশি তখনই, সঙ্গে সঙ্গে কথা বলতে পারে, যতক্ষণ না কেউ ফোন রাখে।
 
 <Mermaid
 title="WebSocket Chat Architecture"
@@ -26,21 +34,21 @@ code={`graph LR
   B["Client B<br/>WebSocket"] --> WS2["WebSocket Server<br/>Connection Manager"] --> MS["Message Store<br/>Ring Buffer"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উদাহরণ
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a phone call vs. sending letters — once a call is connected, both sides can talk freely without hanging up. HTTP is like letters (one message per envelope), WebSocket is a phone call (persistent connection).
+ফোন কল বনাম চিঠি পাঠানোর মতো — একবার কল যুক্ত হলে, দুই পক্ষই ফোন না রেখে অবাধে কথা বলতে পারে। HTTP হলো চিঠির মতো (প্রতি খামে একটা message), WebSocket হলো একটা ফোন কল (persistent connection)।
 
 </Callout>
 
-When you open Slack, your browser establishes a WebSocket connection to Slack's servers. That connection stays open. When someone types a message in your channel, the server pushes it to your browser instantly -- you don't need to refresh or poll. The same connection handles typing indicators, presence updates ("Fatima is online"), and read receipts. Discord handles over 5 million concurrent WebSocket connections using this exact architecture.
+আপনি Slack খুললে, আপনার browser Slack-এর server-এর সাথে একটি WebSocket connection স্থাপন করে। সেই connection খোলা থাকে। কেউ আপনার channel-এ message টাইপ করলে, server সঙ্গে সঙ্গে সেটা আপনার browser-এ push করে — আপনাকে refresh বা poll করতে হয় না। একই connection typing indicator, presence update ("Fatima অনলাইনে") এবং read receipt সামলায়। Discord ঠিক এই architecture ব্যবহার করে 50 লক্ষেরও বেশি concurrent WebSocket connection সামলায়।
 
-## Building a Real-Time Chat Server
+## একটি Real-Time Chat Server বানানো
 
-Here's a complete WebSocket chat server with rooms, presence tracking, message history via a ring buffer, and ping/pong heartbeats. This is production-grade architecture -- not a toy example.
+এখানে একটি সম্পূর্ণ WebSocket chat server আছে — room, presence tracking, ring buffer দিয়ে message history এবং ping/pong heartbeat সহ। এটা production-grade architecture — কোনো toy উদাহরণ নয়।
 
 <CodeTabs tsFile="chat-server.ts" goFile="chat-server.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -882,35 +890,35 @@ func main() {
 </div>
 </CodeTabs>
 
-## What Makes This Production-Ready
+## এটাকে যা Production-Ready করে
 
-- **Ping/pong heartbeats** -- detects and cleans up dead connections that TCP keepalive might miss
-- **Ring buffer history** -- fixed-memory message storage that never grows unbounded
-- **Room-scoped broadcasts** -- messages only go to members of the target room, not all connections
-- **Message size limits** -- prevents clients from sending oversized payloads (4KB cap)
-- **Graceful shutdown** -- sends WebSocket close frames before terminating connections
-- **Thread safety** (Go) -- mutexes protect shared state from concurrent goroutine access
+- **Ping/pong heartbeat** -- TCP keepalive যেসব dead connection মিস করতে পারে, সেগুলো শনাক্ত করে পরিষ্কার করে
+- **Ring buffer history** -- নির্দিষ্ট memory-র message storage যা কখনো অসীমভাবে বাড়ে না
+- **Room-scoped broadcast** -- message শুধু target room-এর member-দের কাছে যায়, সব connection-এ নয়
+- **Message size limit** -- client-দের বড় payload পাঠানো আটকায় (4KB cap)
+- **Graceful shutdown** -- connection বন্ধ করার আগে WebSocket close frame পাঠায়
+- **Thread safety** (Go) -- mutex shared state-কে concurrent goroutine access থেকে রক্ষা করে
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- WebSockets provide full-duplex communication -- both client and server can send messages at any time
-- Always implement ping/pong heartbeats to detect dead connections (30-second intervals are standard)
-- Use a ring buffer for message history to bound memory usage in the server process
-- Room-based architecture scales better than broadcasting to all connections
-- Handle reconnection gracefully -- clients should auto-reconnect with exponential backoff
-- Set read/write deadlines to prevent resource leaks from stalled connections
+- WebSocket full-duplex communication দেয় -- client আর server দুজনেই যেকোনো সময় message পাঠাতে পারে
+- Dead connection শনাক্ত করতে সবসময় ping/pong heartbeat implement করুন (30-সেকেন্ড interval standard)
+- Server process-এ memory ব্যবহার সীমিত রাখতে message history-র জন্য একটি ring buffer ব্যবহার করুন
+- Room-ভিত্তিক architecture সব connection-এ broadcast করার চেয়ে ভালো স্কেল করে
+- Reconnection সুন্দরভাবে সামলান -- client-দের exponential backoff সহ auto-reconnect করা উচিত
+- আটকে থাকা connection থেকে resource leak আটকাতে read/write deadline সেট করুন
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Slack** maintains persistent WebSocket connections for real-time messaging, typing indicators, and presence
-- **Discord** handles millions of concurrent WebSocket connections with a room (guild/channel) architecture
-- **Figma** uses WebSockets for real-time collaborative editing with operational transforms
-- When you need sub-second latency, WebSockets beat HTTP polling by 10-100x in both latency and server load
+- **Slack** real-time messaging, typing indicator এবং presence-এর জন্য persistent WebSocket connection বজায় রাখে
+- **Discord** একটি room (guild/channel) architecture দিয়ে কয়েক লক্ষ concurrent WebSocket connection সামলায়
+- **Figma** operational transform সহ real-time collaborative editing-এর জন্য WebSocket ব্যবহার করে
+- Sub-second latency দরকার হলে, WebSocket latency আর server load দুই দিকেই HTTP polling-কে 10-100x ছাড়িয়ে যায়
 
 </div>

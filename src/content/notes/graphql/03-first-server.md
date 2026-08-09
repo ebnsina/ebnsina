@@ -1,9 +1,9 @@
 ---
-title: 'Running your first server'
-subtitle: 'graphql-yoga, end-to-end, in sixty lines. By the end of this chapter you will have a real GraphQL server on your laptop, queried with curl, talking to Postgres.'
+title: 'তোমার প্রথম সার্ভার চালানো'
+subtitle: 'graphql-yoga, শুরু থেকে শেষ পর্যন্ত, ষাট লাইনে। এই চ্যাপ্টার শেষে তোমার ল্যাপটপে একটা সত্যিকারের GraphQL সার্ভার থাকবে, curl দিয়ে কোয়েরি করা, Postgres-এর সাথে কথা বলছে।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['graphql', 'graphql-yoga', 'node', 'postgres']
 ---
 
@@ -11,23 +11,31 @@ topics: ['graphql', 'graphql-yoga', 'node', 'postgres']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Theory off. Code on.
+## গল্পে বুঝি
 
-This chapter ships a minimal GraphQL server that reads from a real Postgres database. It is intentionally bare — no DataLoader (chapter 6), no auth (chapter 8), no subscriptions (chapter 9). You can copy the whole thing in five minutes and curl it.
+ফাতিমা আল-ফিহরি প্রথমবারের মতো একটা একক তথ্যকেন্দ্রের অনুসন্ধান ডেস্ক খুলছেন। শাটার তোলার আগে তিনি সামনের বোর্ডে একটা তালিকা টাঙিয়ে দিলেন — মানুষ ঠিক কোন কোন বিষয়ে জিজ্ঞেস করতে পারবে। কেউ কোনো ব্যক্তির খোঁজ চাইতে পারে, কেউ তার লেখা প্রবন্ধের খোঁজ, কেউ পুরো তালিকা। যা বোর্ডে নেই, তা এখানে জিজ্ঞেস করা যাবে না — এই টাঙানো তালিকাই ঠিক করে দেয় কী কী প্রশ্ন বৈধ।
+
+কিন্তু তালিকা টাঙালেই তো উত্তর আসে না। ফাতিমা তাই প্রতি ধরনের প্রশ্নের জন্য একজন করে কেরানি বসিয়ে দিলেন — ইবনে সিনা বসলেন ব্যক্তির খোঁজ সামলাতে, আল-খোয়ারিজমি বসলেন প্রবন্ধের খোঁজে। প্রশ্ন এলে যে যার বিষয়ের কেরানি উঠে গিয়ে আসল উত্তরটা খুঁজে নিয়ে আসে। সব গোছানো হলে ফাতিমা শাটার তুললেন, আর প্রথম মানুষটা এসে জিজ্ঞেস করল — "এক নম্বর ব্যক্তির নাম আর তার প্রবন্ধগুলো কী?" ইবনে সিনা উঠে গিয়ে ঠিক ততটুকুই এনে দিলেন, এক কণাও বেশি নয়।
+
+গল্পটাই আসলে তোমার প্রথম GraphQL সার্ভার। বোর্ডে টাঙানো বৈধ প্রশ্নের তালিকা হলো **schema** — এর types আর `Query` ঠিক করে কী জিজ্ঞেস করা যাবে। প্রতি ধরনের প্রশ্নে একজন কেরানি বসানো হলো field-এ **resolver** wire করা — প্রতিটা field-এর জন্য একটা function যে গিয়ে আসল ডেটা আনে। আর শাটার তোলা মানে **server** চালু করা, আর প্রথম মানুষটার প্রশ্ন মানে প্রথম **query** চালানো। বাস্তবে ঠিক এটাই — GraphQL সার্ভার আগে schema পড়ে বৈধ প্রশ্ন ঠিক করে, তারপর field-গুলোর resolver দিয়ে ডেটা আনে, আর client শুধু যে field চায় ততটুকুই ফেরত পায়।
+
+থিওরি বন্ধ। কোড চালু।
+
+এই চ্যাপ্টার একটা মিনিমাল GraphQL সার্ভার ছাড়ছে যা একটা সত্যিকারের Postgres ডেটাবেস থেকে পড়ে। এটা ইচ্ছাকৃতভাবেই খালি — কোনো DataLoader নেই (চ্যাপ্টার 6), কোনো auth নেই (চ্যাপ্টার 8), কোনো subscriptions নেই (চ্যাপ্টার 9)। তুমি পুরোটা পাঁচ মিনিটে কপি করে curl করতে পারবে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Building your first GraphQL server is like opening a shop — you define what you sell (schema), then handle customers (resolvers).
+তোমার প্রথম GraphQL সার্ভার বানানো অনেকটা একটা দোকান খোলার মতো — তুমি ঠিক করো কী বিক্রি করবে (schema), তারপর কাস্টমারদের সামলাও (resolvers)।
 
 </Callout>
 
-## What you will need
+## যা যা লাগবে
 
-- Node 20+ — `node --version`.
-- Postgres running locally (or anywhere reachable). On a VPS: `apt install postgresql`. Mac: `brew install postgresql@16`.
-- A project directory.
+- Node 20+ — `node --version`।
+- Postgres লোকালি চলছে (বা যেকোনো জায়গায় যেখানে পৌঁছানো যায়)। একটা VPS-এ: `apt install postgresql`। Mac-এ: `brew install postgresql@16`।
+- একটা প্রজেক্ট ডিরেক্টরি।
 
 ```bash
 mkdir my-graphql && cd my-graphql
@@ -36,11 +44,11 @@ npm install graphql graphql-yoga pg
 npm install -D nodemon
 ```
 
-That is the whole dependency footprint. Three packages.
+এটাই পুরো ডিপেন্ডেন্সি ফুটপ্রিন্ট। তিনটা প্যাকেজ।
 
-## The database
+## ডেটাবেস
 
-Create the schema and seed two rows:
+schema বানাও আর দুটো রো seed করো:
 
 ```sql
 -- save as schema.sql
@@ -76,7 +84,7 @@ createdb my_graphql
 psql my_graphql < schema.sql
 ```
 
-## The schema
+## schema
 
 ```graphql
 # schema.graphql
@@ -105,7 +113,7 @@ type Query {
 }
 ```
 
-## The server
+## সার্ভার
 
 ```js
 // server.js
@@ -173,17 +181,17 @@ server.listen(4000, () => {
 });
 ```
 
-Sixty lines. That is a working GraphQL server.
+ষাট লাইন। এটাই একটা কাজ করা GraphQL সার্ভার।
 
 ```bash
 node server.js
 ```
 
-Open `http://localhost:4000/graphql` in a browser — graphql-yoga ships with **GraphiQL** built in. You get a query editor, autocomplete, schema browser, and inline docs.
+ব্রাউজারে `http://localhost:4000/graphql` খোলো — graphql-yoga-এর সাথে বিল্ট-ইন **GraphiQL** আসে। তুমি একটা কোয়েরি এডিটর, autocomplete, schema browser, আর inline docs পাও।
 
-## A real query
+## একটা সত্যিকারের কোয়েরি
 
-Paste this into GraphiQL:
+এটা GraphiQL-এ পেস্ট করো:
 
 ```graphql
 {
@@ -198,22 +206,22 @@ Paste this into GraphiQL:
 }
 ```
 
-Run it. You get exactly those fields. Try removing `email` — it is gone from the response. Try adding `email` back — it is back. The shape of the response always mirrors the query. That is the GraphQL contract.
+চালাও। তুমি ঠিক ওই ফিল্ডগুলোই পাবে। `email` সরিয়ে দেখো — এটা response থেকে চলে গেছে। `email` আবার যোগ করে দেখো — এটা ফিরে এসেছে। response-এর shape সবসময় কোয়েরির প্রতিচ্ছবি। এটাই GraphQL-এর contract।
 
-## What just happened
+## এইমাত্র কী হলো
 
-A GraphQL request goes through this pipeline:
+একটা GraphQL রিকোয়েস্ট এই pipeline-এর মধ্য দিয়ে যায়:
 
-1. **Parse** — turn the query string into an AST.
-2. **Validate** — check every field exists in the schema, every type matches, arguments are valid.
-3. **Execute** — walk the AST, calling a resolver for each field.
-4. **Format** — collect resolver return values into the response shape.
+1. **Parse** — কোয়েরি স্ট্রিংটাকে একটা AST-এ পরিণত করা।
+2. **Validate** — প্রতিটা ফিল্ড schema-তে আছে কিনা, প্রতিটা type মেলে কিনা, argument-গুলো valid কিনা তা চেক করা।
+3. **Execute** — AST ধরে হাঁটা, প্রতিটা ফিল্ডের জন্য একটা resolver কল করা।
+4. **Format** — resolver-এর রিটার্ন ভ্যালুগুলো response shape-এ জড়ো করা।
 
-You did not write the parser, validator, or executor — `graphql` (the JS reference impl) did. You wrote _resolvers_. That is the only code you actually own.
+তুমি parser, validator, বা executor লেখোনি — `graphql` (JS reference impl) সেটা করেছে। তুমি লিখেছ _resolvers_। এটাই একমাত্র কোড যা আসলে তোমার নিজের।
 
-## Curl it
+## এটা curl করো
 
-GraphiQL is nice but the API is just JSON over HTTP:
+GraphiQL ভালো কিন্তু API আসলে HTTP-এর ওপর দিয়ে শুধু JSON:
 
 ```bash
 curl -X POST http://localhost:4000/graphql \
@@ -221,7 +229,7 @@ curl -X POST http://localhost:4000/graphql \
   -d '{"query": "{ users { id name } }"}' | jq
 ```
 
-Variables live in a separate field (the right way — never string-interpolate user input into a query):
+Variable-গুলো একটা আলাদা ফিল্ডে থাকে (এটাই সঠিক পথ — কখনো ইউজার ইনপুট কোয়েরিতে string-interpolate করো না):
 
 ```bash
 curl -X POST http://localhost:4000/graphql \
@@ -232,17 +240,17 @@ curl -X POST http://localhost:4000/graphql \
   }' | jq
 ```
 
-## Resolver return contracts
+## Resolver-এর রিটার্ন contract
 
-Notice two things in the resolvers:
+resolver-গুলোতে দুটো জিনিস খেয়াল করো:
 
-**1. Field resolvers are optional.** Postgres returns `name`, `email`, and `id` — these become `User.name`, `User.email`, `User.id` automatically because the names match. graphql-yoga uses the column value as the field value if no resolver is defined.
+**1. Field resolver-গুলো অপশনাল।** Postgres `name`, `email`, আর `id` রিটার্ন করে — এগুলো স্বয়ংক্রিয়ভাবে `User.name`, `User.email`, `User.id` হয়ে যায় কারণ নামগুলো মেলে। কোনো resolver ডিফাইন করা না থাকলে graphql-yoga column-এর ভ্যালুটাই ফিল্ডের ভ্যালু হিসেবে ব্যবহার করে।
 
-**2. Naming mismatch needs a resolver.** Postgres has `created_at`; the schema has `createdAt`. So `User.createdAt: (u) => u.created_at` is required. Most teams either standardize on snake_case in DB and camelCase in schema (writing tiny resolvers) or use a query-time mapping (`SELECT created_at AS "createdAt"`). Both work.
+**2. নামের মিল না থাকলে resolver লাগে।** Postgres-এ আছে `created_at`; schema-তে আছে `createdAt`। তাই `User.createdAt: (u) => u.created_at` দরকার। বেশিরভাগ টিম হয় DB-তে snake_case আর schema-তে camelCase-এ স্ট্যান্ডার্ডাইজ করে (ছোট ছোট resolver লিখে) নয়তো query-time mapping ব্যবহার করে (`SELECT created_at AS "createdAt"`)। দুটোই কাজ করে।
 
-## What is wrong with this server
+## এই সার্ভারে কী সমস্যা
 
-It is slow. Specifically: query for ten users with their posts, you fire **eleven SQL queries** — one for users, then one per user for posts.
+এটা স্লো। বিশেষভাবে: দশজন ইউজারকে তাদের পোস্টসহ কোয়েরি করো, তুমি **এগারোটা SQL কোয়েরি** ছোড়ো — একটা ইউজারদের জন্য, তারপর প্রতি ইউজারের জন্য একটা করে পোস্টের।
 
 ```graphql
 {
@@ -255,7 +263,7 @@ It is slow. Specifically: query for ten users with their posts, you fire **eleve
 }
 ```
 
-That is the **N+1 problem** and it is the most important lesson in GraphQL. We dedicate two whole chapters to it (5 and 6). For now: notice the problem exists, finish reading this chapter.
+এটাই **N+1 সমস্যা** আর এটা GraphQL-এর সবচেয়ে গুরুত্বপূর্ণ শিক্ষা। এর জন্য আমরা দুটো পুরো চ্যাপ্টার (5 আর 6) উৎসর্গ করেছি। এখনকার জন্য: খেয়াল করো সমস্যাটা আছে, এই চ্যাপ্টার পড়া শেষ করো।
 
 ## Dev workflow
 
@@ -266,11 +274,11 @@ That is the **N+1 problem** and it is the most important lesson in GraphQL. We d
 }
 ```
 
-`npm run dev` reloads on file changes. The schema file is on the watch list too, so editing `schema.graphql` reloads.
+`npm run dev` ফাইল বদলালে reload করে। schema ফাইলটাও watch list-এ আছে, তাই `schema.graphql` এডিট করলে reload হয়।
 
-## Equivalents in Go and Python
+## Go আর Python-এ সমতুল্য
 
-**Go (gqlgen)** — schema-first, generates Go code. The same schema, the same resolvers, but typed at compile time:
+**Go (gqlgen)** — schema-first, Go কোড জেনারেট করে। একই schema, একই resolvers, কিন্তু compile time-এ typed:
 
 ```go
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
@@ -278,7 +286,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 }
 ```
 
-**Python (Strawberry)** — code-first, types drive the schema:
+**Python (Strawberry)** — code-first, type-গুলো schema চালায়:
 
 ```python
 @strawberry.type
@@ -294,21 +302,21 @@ class Query:
         return await fetch_user(id)
 ```
 
-The mental model — schema, resolvers, execution tree — is identical. Pick the language you ship.
+মেন্টাল মডেল — schema, resolvers, execution tree — একদম একই। যে ভাষা ship করবে সেটা বেছে নাও।
 
 <Callout type="info">
 
-**Why graphql-yoga over Apollo Server?** Apollo Server v4 is fine, but graphql-yoga has a smaller footprint, is plugin-based via `envelop`, supports HTTP/WebSocket/file uploads in one package, and does not push you toward Apollo's hosted services. Both work. Yoga is friendlier for self-hosted.
+**Apollo Server-এর বদলে graphql-yoga কেন?** Apollo Server v4 ঠিকই আছে, কিন্তু graphql-yoga-এর footprint ছোট, `envelop`-এর মাধ্যমে plugin-based, এক প্যাকেজে HTTP/WebSocket/file uploads সাপোর্ট করে, আর তোমাকে Apollo-র hosted service-এর দিকে ঠেলে দেয় না। দুটোই কাজ করে। self-hosted-এর জন্য Yoga বেশি বন্ধুত্বপূর্ণ।
 
 </Callout>
 
-## Recap
+## রিক্যাপ
 
-- Three dependencies: `graphql`, `graphql-yoga`, `pg`.
-- Schema is SDL in a `.graphql` file. Resolvers are a plain JS object.
-- Yoga ships GraphiQL — query editor in the browser, free.
-- Field resolvers default to property access. Override only when names mismatch or you need to fetch.
-- The whole pipeline: parse → validate → execute → format. You write resolvers; the runtime does the rest.
-- This server is correct but slow. Chapter 5 is why.
+- তিনটা ডিপেন্ডেন্সি: `graphql`, `graphql-yoga`, `pg`।
+- Schema হলো একটা `.graphql` ফাইলে SDL। Resolvers হলো একটা সাধারণ JS object।
+- Yoga GraphiQL ছাড়ে — ব্রাউজারে কোয়েরি এডিটর, বিনামূল্যে।
+- Field resolver-গুলো ডিফল্টে property access করে। শুধু তখনই override করো যখন নাম মেলে না বা তোমার fetch করা দরকার।
+- পুরো pipeline: parse → validate → execute → format। তুমি resolvers লেখো; runtime বাকিটা করে।
+- এই সার্ভার সঠিক কিন্তু স্লো। চ্যাপ্টার 5 হলো কেন।
 
-Next: [Resolvers and the execution tree](/notes/graphql/04-resolvers) — what the engine is actually doing while it walks your query.
+পরবর্তী: [Resolvers আর execution tree](/notes/graphql/04-resolvers) — engine তোমার কোয়েরি ধরে হাঁটার সময় আসলে কী করছে।

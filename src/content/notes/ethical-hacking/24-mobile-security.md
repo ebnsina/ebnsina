@@ -1,9 +1,9 @@
 ---
 title: 'Mobile Security'
-subtitle: 'Android APK analysis, iOS app testing, dynamic instrumentation with Frida, SSL pinning bypass, and mobile OWASP Top 10.'
+subtitle: 'Android APK অ্যানালাইসিস, iOS অ্যাপ টেস্টিং, Frida দিয়ে ডায়নামিক ইনস্ট্রুমেন্টেশন, SSL pinning bypass, এবং mobile OWASP Top 10।'
 chapter: 24
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics:
   [
     'mobile security',
@@ -22,11 +22,19 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনার এক প্রতিবেশী আল-খোয়ারিজমি ছিলেন ভীষণ অসাবধান। তার ব্যাংকের PIN আর সব পাসওয়ার্ড লেখা থাকত একটা আলগা কাগজের টুকরোয়, আর সেই টুকরো তিনি গুঁজে রাখতেন খোলা একটা মানিব্যাগে — যে ব্যাগ তিনি সবখানে সঙ্গে নিয়ে ঘুরতেন। ব্যাগে কোনো তালা নেই, কাগজে কোনো ঢাকা নেই। কেউ যদি ব্যাগটা হারিয়ে ফেলে বা ছিনিয়ে নেয়, এক পলকেই তার সব গোপন কথা অন্যের হাতে। আর ফোনে ব্যাংকের কাজ করার সময় তিনি ভরা মজলিসের মাঝখানে গলা তুলে নিজের অ্যাকাউন্ট নম্বর, কোড সব চেঁচিয়ে বলতেন — চারপাশের সবাই শুনে ফেলত।
+
+ফাতিমা আল-ফিহরি ছিলেন উল্টো — সাবধানী। তিনি গোপন জিনিস রাখতেন একটা তালাবদ্ধ থলিতে, চাবি নিজের কাছে। আর ব্যাংকের কথা বলতেন শুধু আলাদা ঘরে, নিচু গলায়, যেখানে আর কেউ নেই। ব্যাগ হারালেও থলি খুলবে না, আর কথাও কেউ শুনবে না।
+
+একটা ফোন আসলে ঠিক ওই সহজে-হারানো মানিব্যাগের মতোই — যেকোনো সময় হারিয়ে যেতে পারে, চুরি হতে পারে, বা কেউ খুলে ভেতরটা ঘেঁটে দেখতে পারে। আল-খোয়ারিজমির আলগা কাগজে লেখা PIN হলো ডিভাইসে **plaintext local storage**-এ রাখা secret, আর মজলিসে চেঁচিয়ে বলাটা হলো **insecure transport** — এনক্রিপশন ছাড়া ডেটা পাঠানো। যেহেতু ডিভাইসটা হাতছাড়া হয়ে যেতে পারে, তাই কখনো ধরে নেবেন না ফোনটা নিরাপদ — ক্লায়েন্টকে বিশ্বাস করবেন না। ফাতিমার তালাবদ্ধ থলি আর আড়ালে কথা বলাই হলো সমাধান: stored secret **encryption at rest** দিয়ে লক করে রাখা আর সব ডেটা **TLS**-এর ওপর দিয়ে পাঠানো। বাস্তবে এ কারণেই ব্যাংকিং অ্যাপ টোকেন-পাসওয়ার্ড Keychain বা Keystore-এ এনক্রিপ্ট করে রাখে এবং প্রতিটা কল certificate pinning সহ HTTPS-এ পাঠায় — ফোন হারালেও যেন গোপন কথা গোপনই থাকে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Every mobile app is a client-side application that users can reverse-engineer at will — unlike a server, you can't hide the code. Secrets baked into mobile apps are not secrets; protections that only exist on the device are breakable.
+প্রতিটি মোবাইল অ্যাপ হলো একটা client-side অ্যাপ্লিকেশন যা ব্যবহারকারীরা ইচ্ছেমতো reverse-engineer করতে পারে — সার্ভারের মতো নয়, এখানে আপনি কোড লুকিয়ে রাখতে পারবেন না। মোবাইল অ্যাপের ভেতরে বেক করা secret আসলে secret নয়; যেসব protection শুধু ডিভাইসেই থাকে, সেগুলো ভাঙা যায়।
 
 </Callout>
 
@@ -129,7 +137,7 @@ adb push BurpCA.cer /sdcard/
 
 ## Frida — Dynamic Instrumentation
 
-Frida injects JavaScript into running processes to hook functions, bypass security checks, and extract data.
+Frida চলমান process-এর ভেতরে JavaScript ইনজেক্ট করে function hook করতে, security check bypass করতে, এবং data বের করে আনতে।
 
 ```bash
 # Install Frida
@@ -169,7 +177,7 @@ Java.perform(function () {
 
 ### SSL Pinning Bypass
 
-SSL pinning prevents traffic interception — the app only trusts its own certificate. Bypass it with Frida:
+SSL pinning ট্রাফিক intercept করা আটকায় — অ্যাপ শুধু তার নিজের certificate-কেই বিশ্বাস করে। Frida দিয়ে এটা bypass করুন:
 
 ```javascript
 // Universal SSL Pinning Bypass — covers most frameworks

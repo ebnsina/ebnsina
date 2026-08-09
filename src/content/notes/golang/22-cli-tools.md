@@ -1,9 +1,9 @@
 ---
-title: 'Building CLI Tools'
-subtitle: "Go's single-binary output makes it perfect for CLI tools — build developer tools, automation scripts, and DevOps utilities."
+title: 'CLI Tool বানানো'
+subtitle: 'Go-এর single-binary output একে CLI tool-এর জন্য পারফেক্ট করে তোলে — developer tool, automation script, আর DevOps utility বানান।'
 chapter: 22
 level: 'advanced'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['CLI', 'cobra', 'flags', 'terminal', 'developer tools', 'automation']
 ---
 
@@ -11,19 +11,27 @@ topics: ['CLI', 'cobra', 'flags', 'terminal', 'developer tools', 'automation']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Go for CLI Tools
+## গল্পে বুঝি
 
-Docker, Kubernetes (kubectl), Terraform, Hugo, GitHub CLI — all written in Go. The reason: **single binary, zero dependencies**. Ship one file, works on Linux, macOS, Windows.
+আল-খোয়ারিজমি স্টেশনে গিয়ে দেখে একটা বড় টিকিট ভেন্ডিং মেশিন দাঁড়িয়ে আছে। মেশিনটা একটা না, তিনটা কাজ করে — সামনে তিনটা বড় বাটন: "টিকিট কিনুন", "রিফান্ড", আর "কার্ড রিচার্জ"। আল-খোয়ারিজমি আগে ঠিক করে সে কোন কাজটা করবে, তারপর সেই বাটনটা চাপে। কিনতে চাইলে "কিনুন" বাটন, টাকা ফেরত চাইলে "রিফান্ড" — একেকটা বাটন একেকটা আলাদা কাজের দরজা খুলে দেয়।
+
+"কিনুন" চাপার পর মেশিন কিছু ছোট টগল দেখায় — এসি না নন-এসি, কয়টা টিকিট। এগুলো আল-খোয়ারিজমি ইচ্ছেমতো সেট করে, না ছুঁলে মেশিন নিজের ডিফল্ট (একটা টিকিট, নন-এসি) ধরে নেয়। তারপর সে গন্তব্যের নাম টাইপ করে — "ঢাকা"। কোন বাটন কী করে বুঝতে না পারলে পাশের দেয়ালে একটা ছাপানো গাইড ঝোলানো আছে, আল-খোয়ারিজমি সেটা পড়ে নেয়। টিকিট ঠিকঠাক বেরোলে মেশিনের মাথায় সবুজ বাতি জ্বলে, আর কিছু গড়বড় হলে — গন্তব্য ভুল বা টাকা কম — লাল বাতি জ্বলে ওঠে।
+
+এই মেশিনটাই আসলে একটা CLI tool। তিনটা মূল বাটন হলো **subcommand** (`buy`, `refund`, `recharge`) — প্রতিটা আলাদা কাজ। এসি/নন-এসি বা সংখ্যার টগলগুলো হলো **flag** (যেমন `--class ac --count 2`), যেগুলোর ডিফল্ট মান থাকে। টাইপ করা গন্তব্য "ঢাকা" হলো **argument** — মূল ইনপুট যেটা কমান্ড কাজ করে। দেয়ালের ছাপানো গাইড হলো `--help`, আর সবুজ/লাল বাতি হলো **exit code** — 0 মানে সফল, non-zero মানে error। বাস্তবে `git` ঠিক এভাবেই বানানো — `git commit`, `git push` হলো subcommand, `-m "message"` হলো flag, ব্রাঞ্চের নাম argument, `git --help` গাইড, আর কমান্ড fail করলে non-zero exit code দেয় যেটা দিয়ে script বুঝতে পারে কিছু ভুল হয়েছে।
+
+## CLI Tool-এর জন্য Go কেন
+
+Docker, Kubernetes (kubectl), Terraform, Hugo, GitHub CLI — সবই Go-তে লেখা। কারণটা: **single binary, zero dependency**। একটা file ship করুন, Linux, macOS, Windows-এ কাজ করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Go CLI tools are like a Swiss Army knife you can carry anywhere. Python scripts need Python installed. Node scripts need Node. Java needs the JVM. A Go binary works on any machine — download, run, done. No `pip install`, no `npm install`, no runtime.
+Go CLI tool হলো একটা সুইস আর্মি নাইফের মতো যেটা আপনি যেকোনো জায়গায় নিয়ে যেতে পারেন। Python script চালাতে Python install থাকা দরকার। Node script-এর Node দরকার। Java-র দরকার JVM। একটা Go binary যেকোনো মেশিনে কাজ করে — download, run, শেষ। কোনো `pip install` নেই, কোনো `npm install` নেই, কোনো runtime নেই।
 
 </Callout>
 
-## Simple CLI with Standard Library
+## Standard Library দিয়ে সাধারণ CLI
 
 ```go
 package main
@@ -65,9 +73,9 @@ go build -o greet .
 # HELLO, FATIMA!
 ```
 
-## Production CLI with Cobra
+## Cobra দিয়ে Production CLI
 
-For real CLI tools, use Cobra — the framework behind kubectl, Hugo, and GitHub CLI:
+আসল CLI tool-এর জন্য Cobra ব্যবহার করুন — kubectl, Hugo, আর GitHub CLI-এর পেছনের framework:
 
 ```go
 // cmd/root.go
@@ -233,7 +241,7 @@ if promptConfirm("Delete all completed tasks?") {
 }
 ```
 
-## Progress Indicators
+## Progress Indicator
 
 ```go
 func processFiles(files []string) {
@@ -251,7 +259,7 @@ func processFiles(files []string) {
 }
 ```
 
-## Configuration Files
+## Configuration File
 
 ```go
 import "github.com/spf13/viper"
@@ -297,7 +305,7 @@ func loadConfig() (*Config, error) {
 
 ## Cross-Compilation
 
-Build for any platform from any platform:
+যেকোনো platform থেকে যেকোনো platform-এর জন্য build করুন:
 
 ```bash
 # Build for all platforms
@@ -308,7 +316,7 @@ GOOS=darwin  GOARCH=arm64 go build -o dist/taskr-darwin-arm64 .
 GOOS=windows GOARCH=amd64 go build -o dist/taskr-windows-amd64.exe .
 ```
 
-## Using GoReleaser for Distribution
+## Distribution-এর জন্য GoReleaser ব্যবহার
 
 ```yaml
 # .goreleaser.yaml
@@ -338,11 +346,11 @@ brews:
 goreleaser release --clean
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Start with `flag`** for simple tools, graduate to **Cobra** for complex CLIs
-2. **Subcommands** organize functionality — `taskr add`, `taskr list`, `taskr done`
-3. **`tabwriter`** for aligned table output — built into the standard library
-4. **Cross-compile** with `GOOS` and `GOARCH` — build for any platform from any platform
-5. **Viper** for configuration — YAML files, env vars, and defaults in one package
-6. **GoReleaser** automates builds, packaging, and distribution including Homebrew taps
+1. **সাধারণ tool-এর জন্য `flag` দিয়ে শুরু করুন**, জটিল CLI-এর জন্য **Cobra**-তে যান
+2. **Subcommand** কাজকে সাজিয়ে রাখে — `taskr add`, `taskr list`, `taskr done`
+3. **`tabwriter`** সারিবদ্ধ table output-এর জন্য — standard library-তে built-in
+4. **`GOOS` আর `GOARCH` দিয়ে Cross-compile করুন** — যেকোনো platform থেকে যেকোনো platform-এর জন্য build
+5. **Viper** configuration-এর জন্য — YAML file, env var, আর default একটা package-এ
+6. **GoReleaser** build, packaging, আর distribution (Homebrew tap সহ) automate করে

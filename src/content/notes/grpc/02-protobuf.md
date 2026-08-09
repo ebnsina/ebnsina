@@ -1,9 +1,9 @@
 ---
 title: 'Protocol Buffers'
-subtitle: 'Protobuf is the schema language and the wire format. Get the schema rules right and your services stay compatible for a decade. Get them wrong and one bad commit breaks every client at once.'
+subtitle: 'Protobuf হলো schema language আর wire format। schema-র নিয়মগুলো ঠিকঠাক করুন, আপনার service গুলো এক দশক ধরে compatible থাকবে। ভুল করুন, একটা খারাপ commit-ই একসাথে প্রতিটা client ভেঙে ফেলবে।'
 chapter: 2
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['grpc', 'protobuf', 'proto3', 'schema', 'wire format']
 ---
 
@@ -11,19 +11,27 @@ topics: ['grpc', 'protobuf', 'proto3', 'schema', 'wire format']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A `.proto` file is the contract. It defines messages (data shapes) and services (RPCs). `protoc` reads the file and emits language-specific code. The wire format is decoupled — a Go server can talk to a Python client because both encode and decode the same bytes.
+একটা `.proto` ফাইল হলো contract। এটা message (data shape) আর service (RPC) সংজ্ঞায়িত করে। `protoc` ফাইলটা পড়ে আর language-specific কোড emit করে। wire format টা decoupled — একটা Go server একটা Python client-এর সাথে কথা বলতে পারে কারণ দুটোই একই byte encode আর decode করে।
 
-This chapter is the language reference plus the rules you must not break. Every protobuf horror story is one of these rules being broken in a hurry.
+এই অধ্যায় হলো language reference, সাথে সেই নিয়মগুলো যা আপনার ভাঙা উচিত না। প্রতিটা protobuf ভয়ের গল্প হলো এই নিয়মগুলোর একটা তাড়াহুড়ো করে ভাঙার ঘটনা।
 
 <Callout type="info">
 
 **Real-World Analogy**
 
-A protobuf schema is like a shared blueprint both sender and receiver have agreed on — no guessing what the fields mean.
+একটা protobuf schema হলো একটা shared blueprint-এর মতো যা sender আর receiver দুজনেই মেনে নিয়েছে — field গুলোর মানে কী তা আন্দাজ করার দরকার নেই।
 
 </Callout>
 
-## A real `.proto` file
+## গল্পে বুঝি
+
+পুরনো ঢাকার এক গলিতে আল-খোয়ারিজমির লন্ড্রি আর ড্রাই-ক্লিনের দোকান। আগে কাস্টমার এসে একটা লম্বা বাক্য বলত — "আমার সাদা শার্টটা ধুয়ে ইস্তিরি করে দেবেন", আর আল-খোয়ারিজমি খাতায় পুরোটা লিখত। কিন্তু ভিড়ের সময় এত কথা লেখা-পড়ায় ভুল হতো, কে কোন কাপড় বলেছে গুলিয়ে যেত। তাই সে একটা ছোট টিকিট বানাল, যেখানে কয়েকটা নম্বর দেওয়া বাক্স আছে — বাক্স #১-এ কাপড়ের ধরন, #২-তে রং, #৩-তে সার্ভিস। কাস্টমার আর দোকানি দুজনের হাতেই একই নকশার টিকিট। এখন ইবনে সিনা এসে শুধু একটা ছোট কোড-করা স্লিপ ধরিয়ে দেয় — "১: শার্ট, ২: সাদা, ৩: ওয়াশ+আয়রন" — লম্বা বাক্যের বদলে এক টুকরো ছোট্ট চিরকুট, যা দুজনেই হুবহু একইভাবে পড়ে।
+
+মজার ব্যাপারটা হলো নম্বর নিয়ে। কয়েক মাস পরে দোকানে নতুন একটা সার্ভিস যোগ হলো — সুগন্ধি স্প্রে। আল-খোয়ারিজমি টিকিটে বাক্স #৪ বসিয়ে দিল। কিন্তু ফাতিমা আল-ফিহরির কাছে পুরনো ছাপানো টিকিট রয়ে গেছে যাতে বাক্স #৪ নেই — সমস্যা নেই, তার #১, #২, #৩ ঠিক আগের মতোই পড়া যায়, কারণ প্রতিটা তথ্য বাক্সের অবস্থান দিয়ে নয়, নম্বর দিয়ে চেনা হয়। নতুন টিকিট #৪ ভরে আনলেও পুরনো দোকানি যদি #৪ না চেনে, সে ওটা নীরবে এড়িয়ে বাকিটা ঠিকঠাক বুঝে নেয়।
+
+এই টিকিটের নকশাটাই আসলে একটা **`.proto` schema** — কোন বাক্সে কী থাকবে তার নিয়ম, যা sender আর receiver দুজনেই মেনে নিয়েছে। নম্বর দেওয়া বাক্সগুলো হলো **field number**, আর ছোট কোড-করা স্লিপটা হলো compact **binary** message — লম্বা বাক্যের বদলে টানটান কয়েকটা byte। আর বাক্স #৪ যোগ করেও পুরনো টিকিট না ভাঙাটাই হলো **forward/backward compatibility** — যেহেতু সবকিছু position নয়, number দিয়ে keyed, তাই পুরনো ক্লায়েন্ট নতুন field উপেক্ষা করে আর নতুন ক্লায়েন্ট পুরনো data পড়তে পারে। বাস্তবে protobuf ঠিক এভাবেই কাজ করে: Google-এর মতো কোম্পানিতে হাজারো service বছরের পর বছর একে অপরের সাথে কথা বলে যায়, কারণ তারা field-এর নাম বা অবস্থান নয়, ওই স্থায়ী number-গুলোকে contract হিসেবে ধরে রাখে।
+
+## একটা আসল `.proto` ফাইল
 
 ```proto
 syntax = "proto3";
@@ -76,33 +84,33 @@ message ListUsersResponse {
 }
 ```
 
-Read it slowly. Every concept you need for 90% of `.proto` files is in there.
+ধীরে পড়ুন। 90% `.proto` ফাইলের জন্য আপনার যা যা concept দরকার তার সবই এখানে আছে।
 
-## Anatomy of a `.proto`
+## একটা `.proto`-র anatomy
 
-**`syntax = "proto3";`** — proto3, the modern dialect. proto2 is legacy; do not use it for new code.
+**`syntax = "proto3";`** — proto3, আধুনিক dialect। proto2 legacy; নতুন কোডের জন্য এটা ব্যবহার করবেন না।
 
-**`package user.v1;`** — namespacing. Goes into generated code as a module/package and into the wire as part of the fully-qualified name. The `.v1` is intentional; see versioning below.
+**`package user.v1;`** — namespacing। generated code-এ একটা module/package হিসেবে আর wire-এ fully-qualified name-এর অংশ হিসেবে যায়। `.v1`-টা ইচ্ছাকৃত; নিচে versioning দেখুন।
 
-**`option go_package = "..."`** — language-specific output paths. Each language has its own `option` directives. You will see `option java_package`, `option ruby_package`, etc. in real codebases.
+**`option go_package = "..."`** — language-specific output path। প্রতিটা ভাষার নিজস্ব `option` directive আছে। আসল codebase-এ আপনি `option java_package`, `option ruby_package` ইত্যাদি দেখবেন।
 
-**`import "..."`** — pull in another `.proto`. Standard well-known types live in `google/protobuf/*.proto` (Timestamp, Duration, Empty, FieldMask, Any).
+**`import "..."`** — আরেকটা `.proto` টেনে আনে। Standard well-known type গুলো `google/protobuf/*.proto`-তে থাকে (Timestamp, Duration, Empty, FieldMask, Any)।
 
-**`service`** — a set of RPCs. Each RPC has a request type and a response type. We expand on services in chapter 4.
+**`service`** — RPC-র একটা সেট। প্রতিটা RPC-র একটা request type আর একটা response type আছে। service নিয়ে আমরা অধ্যায় 4-এ বিস্তারিত বলব।
 
-**`message`** — a record. Fields are typed and numbered.
+**`message`** — একটা record। Field গুলো typed আর numbered।
 
-**`enum`** — a finite set of values. The `_UNSPECIFIED = 0` convention is mandatory; see below.
+**`enum`** — মানগুলোর একটা সসীম সেট। `_UNSPECIFIED = 0` convention বাধ্যতামূলক; নিচে দেখুন।
 
-## Field numbers — the most important rule
+## Field number — সবচেয়ে গুরুত্বপূর্ণ নিয়ম
 
-Every field has a number. That number is the _only_ thing that goes on the wire — names are stripped. So the contract is the numbers, not the names.
+প্রতিটা field-এর একটা number আছে। সেই number-ই _একমাত্র_ জিনিস যা wire-এ যায় — name গুলো ছেঁটে ফেলা হয়। তাই contract হলো number গুলো, name নয়।
 
-**The rules:**
+**নিয়মগুলো:**
 
-1. **Numbers 1 through 15 are one byte.** Numbers 16 through 2047 are two bytes. Use 1–15 for the fields you serialize most often.
-2. **Numbers are forever.** Once a field has a number, that number cannot be reused for any other field. Ever.
-3. **Reserve numbers when you delete fields.** This is the second-most-important rule.
+1. **1 থেকে 15 number গুলো এক byte।** 16 থেকে 2047 number গুলো দুই byte। যে field গুলো আপনি সবচেয়ে বেশি serialize করেন সেগুলোর জন্য 1–15 ব্যবহার করুন।
+2. **Number চিরস্থায়ী।** একবার একটা field-এর একটা number হয়ে গেলে, সেই number আর কোনো field-এর জন্য পুনরায় ব্যবহার করা যায় না। কখনোই না।
+3. **Field মুছলে number reserve করুন।** এটা দ্বিতীয়-সবচেয়ে-গুরুত্বপূর্ণ নিয়ম।
 
 ```proto
 message User {
@@ -117,15 +125,15 @@ message User {
 }
 ```
 
-If you do not reserve, someone adds `string country = 4` next year and clients with old data send what they think is `phone` (a string of digits) into a `country` field. Garbage data, no error, silent corruption.
+আপনি যদি reserve না করেন, কেউ পরের বছর `string country = 4` যোগ করে আর পুরনো data সহ client গুলো যেটাকে তারা `phone` মনে করে (কয়েকটা সংখ্যার একটা string) সেটা একটা `country` field-এ পাঠায়। Garbage data, কোনো error নেই, নীরব corruption।
 
 <Callout type="warn">
 
-**Reserve. Always.** Deleting a field without reserving its number is the most common protobuf bug in real codebases. The wire format is forgiving; that forgiveness becomes a footgun.
+**Reserve করুন। সবসময়।** একটা field-এর number reserve না করে সেটা মুছে ফেলা হলো আসল codebase-এ সবচেয়ে common protobuf bug। wire format ক্ষমাশীল; সেই ক্ষমাশীলতাই একটা footgun হয়ে ওঠে।
 
 </Callout>
 
-## Scalar types
+## Scalar type
 
 | Proto type            | Go type             | Notes                                              |
 | --------------------- | ------------------- | -------------------------------------------------- |
@@ -139,22 +147,22 @@ If you do not reserve, someone adds `string country = 4` next year and clients w
 | `string`              | `string`            | UTF-8                                              |
 | `bytes`               | `[]byte`            | arbitrary bytes                                    |
 
-The integer choice matters. `int64` for "user IDs" — if some IDs are large, varint costs many bytes per ID. `fixed64` for opaque large IDs (random hashes). `sint32` for "delta" values that can be negative.
+integer পছন্দটা গুরুত্বপূর্ণ। "user ID"-র জন্য `int64` — কিছু ID যদি বড় হয়, তাহলে varint প্রতি ID-তে অনেক byte খরচ করে। opaque বড় ID-র (random hash) জন্য `fixed64`। negative হতে পারে এমন "delta" মানের জন্য `sint32`।
 
-## Default values
+## Default value
 
-In proto3, every scalar has a default — `0` for numbers, `""` for strings, `false` for bool, empty for repeated and bytes. **Default values are not on the wire.** A `User` message with `name = ""` serializes the same way as a `User` with `name` not set.
+proto3-তে প্রতিটা scalar-এর একটা default আছে — number-এর জন্য `0`, string-এর জন্য `""`, bool-এর জন্য `false`, repeated আর bytes-এর জন্য empty। **Default value গুলো wire-এ থাকে না।** `name = ""` সহ একটা `User` message ঠিক একইভাবে serialize হয় যেভাবে `name` সেট না করা একটা `User` হয়।
 
-This causes two kinds of confusion:
+এটা দুই ধরনের বিভ্রান্তি ঘটায়:
 
-1. **You cannot tell "explicitly set to zero" from "unset."** A `Status status = 3` where status is `0` is indistinguishable from an unset field.
-2. **Adding `optional` brings explicit presence back.** Since proto3 v3.15, you can write `optional string nickname = 7;` and the generated code exposes a "has it" check (`HasNickname()` in Go).
+1. **আপনি "স্পষ্টভাবে zero সেট করা"-কে "unset"-এর থেকে আলাদা করতে পারবেন না।** একটা `Status status = 3` যেখানে status হলো `0`, সেটা একটা unset field থেকে আলাদা করা যায় না।
+2. **`optional` যোগ করলে স্পষ্ট presence ফিরে আসে।** proto3 v3.15 থেকে আপনি `optional string nickname = 7;` লিখতে পারেন আর generated code একটা "has it" check প্রকাশ করে (Go-তে `HasNickname()`)।
 
-Use `optional` for fields where "unset" and "explicit empty" are different concepts. Otherwise, accept default semantics.
+যে field-এ "unset" আর "explicit empty" আলাদা concept, সেখানে `optional` ব্যবহার করুন। নইলে default semantics মেনে নিন।
 
-## Enums and the zero rule
+## Enum আর zero-র নিয়ম
 
-The first enum value must be `_UNSPECIFIED = 0`:
+প্রথম enum value অবশ্যই `_UNSPECIFIED = 0` হতে হবে:
 
 ```proto
 enum Role {
@@ -164,11 +172,11 @@ enum Role {
 }
 ```
 
-Why: zero is the proto3 default. Any unset enum becomes `_UNSPECIFIED`, which makes "the client did not say" explicit. Without the unspecified zero, an unset `Role` would silently become `MEMBER`, which is a bug factory.
+কেন: zero হলো proto3 default। যেকোনো unset enum `_UNSPECIFIED` হয়ে যায়, যা "client কিছু বলেনি" ব্যাপারটা স্পষ্ট করে। unspecified zero ছাড়া, একটা unset `Role` নীরবে `MEMBER` হয়ে যেত, যা একটা bug factory।
 
-Some teams prefix every enum value with the enum name (e.g. `ROLE_MEMBER`). The reason: enum values are global per file in many languages. Without prefixes, two enums with the same value names collide.
+কিছু টিম প্রতিটা enum value-র আগে enum-এর name বসায় (যেমন `ROLE_MEMBER`)। কারণ: অনেক ভাষায় enum value গুলো প্রতি file-এ global। prefix ছাড়া, একই value name সহ দুটো enum সংঘর্ষ করে।
 
-## Repeated, maps, oneof
+## Repeated, map, oneof
 
 ```proto
 message Post {
@@ -182,23 +190,23 @@ message Post {
 }
 ```
 
-**`repeated`** is a list. Order is preserved.
+**`repeated`** হলো একটা list। ক্রম সংরক্ষিত থাকে।
 
-**`map<K, V>`** is a key-value map. Keys can be integral or string types; values can be anything except other maps. Maps do not preserve insertion order on the wire.
+**`map<K, V>`** হলো একটা key-value map। Key integral বা string type হতে পারে; value অন্য map ছাড়া যেকোনো কিছু হতে পারে। Map wire-এ insertion order সংরক্ষণ করে না।
 
-**`oneof`** lets exactly one of several fields be set. Setting one clears the others. Use for tagged unions ("either a URL or an internal ID, never both").
+**`oneof`** কয়েকটা field-এর ঠিক একটাকে সেট হতে দেয়। একটা সেট করলে বাকিগুলো clear হয়ে যায়। tagged union-এর জন্য ব্যবহার করুন ("হয় একটা URL নয়তো একটা internal ID, কখনো দুটো একসাথে না")।
 
-## Well-known types
+## Well-known type
 
-Standard Google types you will reach for:
+Standard Google type যেগুলোর দিকে আপনি হাত বাড়াবেন:
 
-- `google.protobuf.Timestamp` — UTC instants, seconds + nanoseconds.
-- `google.protobuf.Duration` — durations, signed.
-- `google.protobuf.Empty` — for RPCs that have no request or response data: `rpc Ping (Empty) returns (Empty);`.
-- `google.protobuf.FieldMask` — paths into a message ("update only `email` and `name`"). Use for partial updates.
-- `google.protobuf.Any` — type-erased message ("some other proto, look up its type by URL"). Powerful, dangerous, use rarely.
+- `google.protobuf.Timestamp` — UTC instant, second + nanosecond।
+- `google.protobuf.Duration` — duration, signed।
+- `google.protobuf.Empty` — যেসব RPC-তে কোনো request বা response data নেই তার জন্য: `rpc Ping (Empty) returns (Empty);`।
+- `google.protobuf.FieldMask` — একটা message-এর ভেতরে path ("শুধু `email` আর `name` update করো")। partial update-এর জন্য ব্যবহার করুন।
+- `google.protobuf.Any` — type-erased message ("অন্য কোনো proto, তার type URL দিয়ে খুঁজে নাও")। শক্তিশালী, বিপজ্জনক, কম ব্যবহার করুন।
 
-Always import explicitly:
+সবসময় স্পষ্টভাবে import করুন:
 
 ```proto
 import "google/protobuf/timestamp.proto";
@@ -208,13 +216,13 @@ message User {
 }
 ```
 
-Never invent your own timestamp type. Other tools (gRPC-gateway, buf, openapi generators) understand `Timestamp` natively.
+কখনো নিজের timestamp type বানাবেন না। অন্য tool গুলো (gRPC-gateway, buf, openapi generator) `Timestamp` natively বোঝে।
 
-## The wire format, briefly
+## wire format, সংক্ষেপে
 
-You do not need to encode protobuf by hand, but knowing the shape helps debugging.
+আপনাকে হাত দিয়ে protobuf encode করতে হবে না, কিন্তু shape জানলে debugging-এ সাহায্য করে।
 
-Each field on the wire is `(tag, value)`. The tag packs the field number and the wire type. There are five wire types:
+wire-এ প্রতিটা field হলো `(tag, value)`। tag-টা field number আর wire type প্যাক করে। পাঁচটা wire type আছে:
 
 | Wire type            | Used for                                   |
 | -------------------- | ------------------------------------------ |
@@ -223,46 +231,46 @@ Each field on the wire is `(tag, value)`. The tag packs the field number and the
 | 2 — Length-delimited | string, bytes, embedded messages, repeated |
 | 5 — 32-bit           | fixed32, sfixed32, float                   |
 
-Default values are skipped. Unknown fields are preserved on round-trips (so a server that doesn't know about a new field still passes it through). Endianness is little-endian for fixed types.
+Default value গুলো skip করা হয়। Unknown field গুলো round-trip-এ সংরক্ষিত থাকে (তাই একটা server যা একটা নতুন field সম্পর্কে জানে না সেটাও এটা pass through করে)। fixed type-এর জন্য endianness little-endian।
 
-Two practical consequences:
+দুটো practical পরিণতি:
 
-1. **Varint encoding rewards small numbers.** Field numbers 1–15 take one byte for the tag. Field numbers 16+ take two bytes. Same for integer values: small unsigned ints are tiny, large ones are bigger.
-2. **You can decode a protobuf without the schema** — `protoc --decode_raw` shows the wire structure. You see field numbers, types, and bytes; you do not see field _names_ (those are stripped).
+1. **Varint encoding ছোট number-কে পুরস্কৃত করে।** Field number 1–15 tag-এর জন্য এক byte নেয়। Field number 16+ দুই byte নেয়। integer value-র জন্যও একই: ছোট unsigned int খুব ছোট, বড়গুলো বড়।
+2. **আপনি schema ছাড়াই একটা protobuf decode করতে পারেন** — `protoc --decode_raw` wire structure দেখায়। আপনি field number, type, আর byte দেখেন; আপনি field _name_ দেখেন না (সেগুলো ছেঁটে ফেলা)।
 
-`protoc --decode_raw &lt; captured-message.bin` is the gRPC equivalent of "open it in a hex editor."
+`protoc --decode_raw &lt; captured-message.bin` হলো "একটা hex editor-এ এটা খোলা"-র gRPC সমতুল্য।
 
-## Schema evolution rules
+## Schema evolution-এর নিয়ম
 
-This is what keeps a service compatible across years.
+এটাই একটা service-কে বছরের পর বছর compatible রাখে।
 
-**Safe changes (backward compatible):**
+**নিরাপদ পরিবর্তন (backward compatible):**
 
-- Add a new field. Old clients ignore it.
-- Add a new enum value. Old clients see `_UNSPECIFIED`.
-- Mark a field `optional` (proto3.15+). Now you can detect presence.
-- Add a new RPC to a service.
-- Add a new message type.
+- একটা নতুন field যোগ করুন। পুরনো client উপেক্ষা করে।
+- একটা নতুন enum value যোগ করুন। পুরনো client `_UNSPECIFIED` দেখে।
+- একটা field-কে `optional` mark করুন (proto3.15+)। এখন আপনি presence detect করতে পারবেন।
+- একটা service-এ একটা নতুন RPC যোগ করুন।
+- একটা নতুন message type যোগ করুন।
 
-**Breaking changes (avoid):**
+**Breaking পরিবর্তন (এড়িয়ে চলুন):**
 
-- Change a field's number.
-- Change a field's type (most cases).
-- Rename a field. The wire is fine but generated code changes; clients must regenerate.
-- Remove a field without reserving its number.
-- Change `repeated` to non-`repeated` or vice versa.
+- একটা field-এর number বদলানো।
+- একটা field-এর type বদলানো (বেশিরভাগ ক্ষেত্রে)।
+- একটা field rename করা। wire ঠিক আছে কিন্তু generated code বদলায়; client-কে আবার generate করতে হয়।
+- number reserve না করে একটা field মুছে ফেলা।
+- `repeated`-কে non-`repeated`-এ বদলানো বা উল্টোটা।
 
-`buf breaking` (from the `buf` tool) automates checking this. Run it in CI on every PR; reject any breaking change unless explicitly approved.
+`buf breaking` (`buf` tool থেকে) এটা check করা automate করে। প্রতিটা PR-এ CI-তে চালান; স্পষ্টভাবে approve না করা পর্যন্ত যেকোনো breaking change reject করুন।
 
-## Versioning a `.proto` package
+## একটা `.proto` package-এর versioning
 
-Use `package user.v1;`. When you need a hard break, create `user.v2;` alongside it. Old service stays running; new clients move over field by field. Two RPCs, two service definitions, both deployed. There is no rolling upgrade trick that beats "ship v2, retire v1 when usage is zero."
+`package user.v1;` ব্যবহার করুন। যখন আপনার একটা hard break দরকার, তখন এর পাশে `user.v2;` তৈরি করুন। পুরনো service চলতেই থাকে; নতুন client field ধরে ধরে সরে আসে। দুটো RPC, দুটো service definition, দুটোই deployed। "v2 ship করো, usage zero হলে v1 retire করো"-কে হারিয়ে দেয় এমন কোনো rolling upgrade কৌশল নেই।
 
-This is why every well-run proto repo has `proto/user/v1/`, `proto/user/v2/`, `proto/billing/v1/` directory layout.
+এই কারণেই প্রতিটা ভালোভাবে চালানো proto repo-তে `proto/user/v1/`, `proto/user/v2/`, `proto/billing/v1/` directory layout থাকে।
 
-## Linting and breaking-change detection
+## Linting আর breaking-change detection
 
-`buf` is the modern toolchain:
+`buf` হলো আধুনিক toolchain:
 
 ```bash
 brew install bufbuild/buf/buf  # or apt
@@ -272,9 +280,9 @@ buf breaking --against '.git#branch=main'  # checks vs main
 buf generate  # codegen via buf.gen.yaml
 ```
 
-Use `buf` over raw `protoc` for any non-trivial codebase. The lint rules catch real bugs (no enum zero value, missing service comments, naming, missing reserve on deletion).
+যেকোনো non-trivial codebase-এর জন্য raw `protoc`-এর বদলে `buf` ব্যবহার করুন। lint rule গুলো আসল bug ধরে (কোনো enum zero value নেই, service comment অনুপস্থিত, naming, deletion-এ reserve অনুপস্থিত)।
 
-## A complete `buf.yaml`
+## একটা সম্পূর্ণ `buf.yaml`
 
 ```yaml
 # buf.yaml
@@ -305,17 +313,17 @@ plugins:
       - paths=source_relative
 ```
 
-`buf generate` reads both, fetches the remote plugins, emits code into `gen/go/`. Add `gen/` to `.gitignore` if codegen runs in CI; check it in if you want reproducibility offline.
+`buf generate` দুটোই পড়ে, remote plugin গুলো fetch করে, `gen/go/`-তে কোড emit করে। codegen যদি CI-তে চলে তাহলে `gen/`-কে `.gitignore`-এ যোগ করুন; offline reproducibility চাইলে এটা check in করুন।
 
-## Recap
+## রিক্যাপ
 
-- `.proto` is a small, strict language. Five concepts: messages, fields, enums, services, packages.
-- Field numbers are forever. Reserve them when you delete fields.
-- proto3 default values are not on the wire. `optional` brings presence back.
-- Enums must have `_UNSPECIFIED = 0`. Zero is unset.
-- Use well-known types (`Timestamp`, `Duration`, `Empty`) — never invent your own.
-- Wire format: tag (field number + wire type) plus value. Unknown fields preserved.
-- Safe: add fields, RPCs, enum values. Unsafe: change types, numbers, remove without reserve.
-- Use `buf` for lint, format, breaking-change checks. Run in CI.
+- `.proto` একটা ছোট, কড়া language। পাঁচটা concept: message, field, enum, service, package।
+- Field number চিরস্থায়ী। Field মুছলে সেগুলো reserve করুন।
+- proto3 default value গুলো wire-এ থাকে না। `optional` presence ফিরিয়ে আনে।
+- Enum-এ অবশ্যই `_UNSPECIFIED = 0` থাকতে হবে। Zero হলো unset।
+- well-known type ব্যবহার করুন (`Timestamp`, `Duration`, `Empty`) — কখনো নিজের বানাবেন না।
+- wire format: tag (field number + wire type) সাথে value। Unknown field সংরক্ষিত।
+- নিরাপদ: field, RPC, enum value যোগ করা। অনিরাপদ: type, number বদলানো, reserve ছাড়া মুছে ফেলা।
+- lint, format, breaking-change check-এর জন্য `buf` ব্যবহার করুন। CI-তে চালান।
 
-Next: [HTTP/2 underneath](/notes/grpc/03-http2) — the transport that makes gRPC fast, and what its features mean for your service.
+পরবর্তী: [নিচে HTTP/2](/notes/grpc/03-http2) — যে transport gRPC-কে দ্রুত করে, আর আপনার service-এর জন্য এর feature গুলোর মানে কী।

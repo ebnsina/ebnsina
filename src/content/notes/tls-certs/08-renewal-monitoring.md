@@ -1,9 +1,9 @@
 ---
-title: 'Renewal, Monitoring, and Rotation'
-subtitle: 'Surviving past 90 days. Renewal hooks, expiration monitoring, key rotation, and the runbook for the night your cert quietly expired and now nobody can reach the site.'
+title: 'Renewal, Monitoring ও Rotation'
+subtitle: '90 দিন পার করে বেঁচে থাকা। Renewal hook, expiration monitoring, key rotation, আর সেই রাতের runbook যখন আপনার cert নীরবে expire হয়ে গেল আর এখন কেউ সাইটে পৌঁছাতে পারছে না।'
 chapter: 8
 level: 'advanced'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['renewal', 'monitoring', 'key rotation', 'letsencrypt', 'tls']
 ---
 
@@ -13,21 +13,29 @@ topics: ['renewal', 'monitoring', 'key rotation', 'letsencrypt', 'tls']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A passport expiry alert — the credential is still valid today, but you need to act before it isn't.
+একটা passport expiry alert — credential আজ এখনও valid, কিন্তু valid না থাকার আগে আপনাকে ব্যবস্থা নিতে হবে।
 
 </Callout>
 
-## The 90-day cliff
+## গল্পে বুঝি
 
-Let's Encrypt certificates expire after 90 days. This is deliberate — short lifetimes limit damage from undetected key compromise and force everyone to automate. But it also means that any setup that _worked once_ but no longer renews quietly walks toward a hard outage.
+বুখারার বাজারে ফাতিমা আল-ফিহরির একটা কাপড়ের দোকান। দোকান চালাতে হলে পৌরসভার একটা ট্রেড লাইসেন্স লাগে, আর সেই লাইসেন্সের গায়ে বড় করে লেখা একটা expiry date — নির্দিষ্ট দিনের পর সেটা আর বৈধ নয়। লাইসেন্স lapse করলে পরিদর্শক এসে সোজা শাটার নামিয়ে তালা মেরে দেয়, ক্রেতারা বন্ধ দরজা দেখে ফিরে যায়। তাই ফাতিমা বোকার মতো শেষ দিনের অপেক্ষায় বসে থাকে না। সে পৌরসভায় auto-renewal-এর ব্যবস্থা করে রেখেছে — expiry-র বেশ আগেই লাইসেন্স নিজে থেকেই নবায়ন হয়ে যায়, তাকে হাঁটতেও হয় না।
 
-You have one job: make renewal work, prove it works, and notice if it breaks. This chapter covers all three.
+কিন্তু ফাতিমা জানে, যন্ত্র নীরবে ফেল করতে পারে — পৌরসভার ফাইল হারায়, ফি আটকে যায়, নোটিশ আসে না। তাই backup হিসেবে সে নিজের দেয়াল-ক্যালেন্ডারে expiry-র দুই সপ্তাহ আগে একটা লাল দাগ দিয়ে রাখে; সেই দিন এলে অ্যালার্ম বাজে, আর সে নিজে গিয়ে যাচাই করে auto-renewal সত্যিই হয়েছে কিনা। আর প্রতি কয়েক মাস অন্তর, সাবধানতার খাতিরে, সে দোকানের তালা-চাবি পুরো বদলে ফেলে — পুরোনো চাবি কারও হাতে থেকে গেলেও যেন কাজে না লাগে।
 
-## Confirm renewal is configured
+এই গল্পটাই আসলে এই চ্যাপ্টার। লাইসেন্সের expiry date হলো আপনার certificate-এর expiry (Let's Encrypt-এ ৯০ দিন); lapse হওয়ার আগেই নিজে থেকে নবায়ন হয়ে যাওয়া হলো automated renewal (certbot-এর systemd timer); ক্যালেন্ডারের লাল দাগ আর অ্যালার্ম হলো expiry monitoring/alerting — auto-renewal নীরবে ফেল করলে ধরার জন্য backup; আর মাঝেমধ্যে তালা বদলানো হলো key rotation (`reuse_key = False`)। আর শাটার নামিয়ে তালা মারা? সেটাই expired cert-এর outage — বাস্তবে একটা ভুলে যাওয়া expired certificate থেকে বড় বড় কোম্পানির সাইট পুরো ঘণ্টার পর ঘণ্টা ডাউন হয়েছে, প্রতিটা ব্রাউজারে ভয়ংকর লাল warning দেখিয়ে। তাই তিন স্তরের monitoring একসাথে চালান — একটা ফেল করলেও অন্যটা বাঁচায়।
 
-After your first `certbot --nginx` run, a renewal config is at `/etc/letsencrypt/renewal/example.com.conf`:
+## 90-দিনের খাদ
+
+Let's Encrypt certificate 90 দিন পর expire হয়। এটা ইচ্ছাকৃত — ছোট lifetime অজানা key compromise থেকে ক্ষতি সীমিত করে আর সবাইকে automate করতে বাধ্য করে। কিন্তু এর মানে এও যে যেকোনো সেটআপ যা _একবার কাজ করেছিল_ কিন্তু আর renew হয় না, তা নীরবে একটা কঠিন outage-এর দিকে হাঁটে।
+
+আপনার একটাই কাজ: renewal কাজ করান, প্রমাণ করুন এটা কাজ করে, আর ভাঙলে খেয়াল করুন। এই চ্যাপ্টার তিনটাই কভার করে।
+
+## renewal কনফিগার করা আছে কিনা নিশ্চিত করুন
+
+আপনার প্রথম `certbot --nginx` run-এর পর, একটা renewal config থাকে `/etc/letsencrypt/renewal/example.com.conf`-এ:
 
 ```ini
 # /etc/letsencrypt/renewal/example.com.conf
@@ -46,7 +54,7 @@ server = https://acme-v02.api.letsencrypt.org/directory
 key_type = ecdsa
 ```
 
-This file tells certbot how to renew. The systemd timer reads every renewal config in this directory and processes each.
+এই ফাইল certbot-কে বলে কীভাবে renew করতে হবে। systemd timer এই directory-র প্রতিটা renewal config পড়ে আর প্রতিটা process করে।
 
 ```bash
 $ sudo systemctl list-timers certbot
@@ -54,27 +62,27 @@ NEXT                         LEFT     LAST                         PASSED   UNIT
 Mon 2026-05-04 12:42:11 UTC  10h      Sun 2026-05-03 22:42:11 UTC  1h ago   certbot.timer
 ```
 
-Twice a day. Renewals happen 30 days before expiration; if nothing is due, certbot exits silently.
+দিনে দুইবার। Renewal expiration-এর 30 দিন আগে ঘটে; কিছু due না থাকলে, certbot নীরবে বেরিয়ে যায়।
 
-Test:
+টেস্ট:
 
 ```bash
 sudo certbot renew --dry-run
 ```
 
-If this passes for every cert listed, real renewals will too.
+তালিকাভুক্ত প্রতিটা cert-এর জন্য এটা পাস করলে, আসল renewal-ও হবে।
 
-## Renewal hooks — reload the right service
+## Renewal hook — সঠিক service reload করুন
 
-When a cert renews, the new files appear, but services holding the _old_ cert in memory keep using it until reloaded. nginx, postgres, dovecot, every TLS-using daemon needs to be told.
+একটা cert renew হলে, নতুন ফাইল দেখা যায়, কিন্তু memory-তে _পুরোনো_ cert ধরে থাকা service reload না হওয়া পর্যন্ত সেটাই ব্যবহার করে যায়। nginx, postgres, dovecot, প্রতিটা TLS-ব্যবহারকারী daemon-কে বলতে হবে।
 
-certbot supports hooks:
+certbot hook সাপোর্ট করে:
 
-- **pre-hook** — runs before renewal attempts. Useful to `nginx stop` if you are using standalone validation (rare with `--nginx`).
-- **deploy-hook** — runs after a successful renewal, only for renewed certs.
-- **post-hook** — runs after all renewals attempted, even if none renewed.
+- **pre-hook** — renewal চেষ্টার আগে চলে। standalone validation ব্যবহার করলে `nginx stop` করতে উপকারী (`--nginx`-এর সাথে বিরল)।
+- **deploy-hook** — একটা সফল renewal-এর পর চলে, কেবল renew করা cert-এর জন্য।
+- **post-hook** — সব renewal চেষ্টার পর চলে, কোনোটা renew না হলেও।
 
-The default certbot install on Debian/Ubuntu sets up nginx reload automatically via a deploy hook in `/etc/letsencrypt/renewal-hooks/deploy/`. But for non-nginx services, you set them up:
+Debian/Ubuntu-তে ডিফল্ট certbot install `/etc/letsencrypt/renewal-hooks/deploy/`-এ একটা deploy hook-এর মাধ্যমে স্বয়ংক্রিয়ভাবে nginx reload সেট আপ করে। কিন্তু non-nginx service-এর জন্য, আপনি সেগুলো সেট আপ করেন:
 
 ```bash
 # /etc/letsencrypt/renewal-hooks/deploy/postgres-reload.sh
@@ -86,13 +94,13 @@ systemctl reload postgresql
 sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/postgres-reload.sh
 ```
 
-Now after every renewal, postgres reloads its config and picks up the new cert.
+এখন প্রতিটা renewal-এর পর, postgres তার config reload করে আর নতুন cert তুলে নেয়।
 
-For services that need an actual restart (rare), use `restart` instead of `reload`. nginx, postgres, and most daemons reload TLS config without dropping connections — prefer it.
+যেসব service-এর একটা আসল restart লাগে (বিরল), `reload`-এর বদলে `restart` ব্যবহার করুন। nginx, postgres, আর বেশিরভাগ daemon connection না ফেলে TLS config reload করে — এটা পছন্দ করুন।
 
-## Per-cert renewal hooks
+## Per-cert renewal hook
 
-If you need different hooks per cert, edit the renewal config:
+আপনার cert প্রতি ভিন্ন hook লাগলে, renewal config edit করুন:
 
 ```ini
 # /etc/letsencrypt/renewal/example.com.conf
@@ -101,27 +109,27 @@ If you need different hooks per cert, edit the renewal config:
 renew_hook = systemctl reload nginx
 ```
 
-The hook only runs after this specific cert's successful renewal.
+hook কেবল এই নির্দিষ্ট cert-এর সফল renewal-এর পর চলে।
 
-## Monitoring expiration
+## expiration monitoring
 
-Even with all the automation, things can break — a misconfigured nginx, a deleted A record, a DNS plugin's stale credentials, an upstream change in the ACME protocol. You need to _notice_ before the cert expires.
+সব automation থাকা সত্ত্বেও, জিনিস ভাঙতে পারে — একটা misconfigured nginx, একটা মুছে ফেলা A record, একটা DNS plugin-এর বাসি credentials, ACME protocol-এ একটা upstream পরিবর্তন। cert expire হওয়ার আগে আপনাকে _খেয়াল_ করতে হবে।
 
-Three layers, in order of value:
+মূল্যের ক্রমে তিনটা layer:
 
-### 1. certbot's own email notifications
+### 1. certbot-এর নিজের email notification
 
-Set during the first run; stored in the certbot account. Let's Encrypt sends an email when a cert is within 20 days of expiring without having been renewed. This is the safety net — but it relies on the email actually being read.
+প্রথম run-এর সময় সেট করা; certbot account-এ সংরক্ষিত। renew না হয়ে একটা cert expire হওয়ার 20 দিনের মধ্যে থাকলে Let's Encrypt একটা email পাঠায়। এটা safety net — কিন্তু এটা email আসলে পড়া হওয়ার ওপর নির্ভর করে।
 
-To verify or change:
+verify বা পরিবর্তন করতে:
 
 ```bash
 sudo certbot register --update-registration --email new-email@example.com
 ```
 
-### 2. Local check — a daily systemd timer
+### 2. Local check — একটা দৈনিক systemd timer
 
-Drop a small script that checks every cert and alerts if any are too close to expiring.
+একটা ছোট script রাখুন যা প্রতিটা cert চেক করে আর কোনোটা expire হওয়ার খুব কাছে থাকলে alert করে।
 
 ```bash
 sudo nano /usr/local/bin/check-tls-expiry.sh
@@ -160,7 +168,7 @@ exit $WARN
 sudo chmod +x /usr/local/bin/check-tls-expiry.sh
 ```
 
-Wrap it in a systemd timer:
+এটা একটা systemd timer-এ মুড়ুন:
 
 ```ini
 # /etc/systemd/system/check-tls-expiry.service
@@ -193,27 +201,27 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now check-tls-expiry.timer
 ```
 
-If the script exits non-zero, the systemd unit fails. Configure systemd to email you on failure (a subject for chapter 9 of SRE), or pair with a notification system.
+script non-zero-তে বেরোলে, systemd unit ফেল করে। failure-এ আপনাকে email করতে systemd কনফিগার করুন (SRE-এর চ্যাপ্টার 9-এর একটা বিষয়), বা একটা notification system-এর সাথে জোড়া দিন।
 
 ### 3. External monitoring
 
-The script above runs _on the server_. If the server is gone (network partition, power outage, deletion), the check is gone too. External monitoring catches those:
+উপরের script _server-এ_ চলে। server চলে গেলে (network partition, power outage, deletion), check-ও চলে যায়। External monitoring সেগুলো ধরে:
 
-- **UptimeRobot, Pingdom, Better Uptime, Healthchecks.io** — most have a "TLS expiry" check that hits your domain and reads the cert from the outside. Free tiers cover small fleets.
-- **Self-hosted: blackbox_exporter** + Prometheus — `probe_ssl_earliest_cert_expiry` metric. Alert when within N days.
+- **UptimeRobot, Pingdom, Better Uptime, Healthchecks.io** — বেশিরভাগের একটা "TLS expiry" check আছে যা আপনার domain-এ লাগে আর বাইরে থেকে cert পড়ে। Free tier ছোট fleet কভার করে।
+- **Self-hosted: blackbox_exporter** + Prometheus — `probe_ssl_earliest_cert_expiry` metric। N দিনের মধ্যে থাকলে alert করুন।
 
-External checks notice when:
+External check খেয়াল করে যখন:
 
-- The cert stopped renewing on the box.
-- The cert renewed but nginx never reloaded.
-- The DNS A record was changed and nginx is serving a different (or no) cert.
-- The box went away entirely.
+- cert box-এ renew বন্ধ হয়েছে।
+- cert renew হয়েছে কিন্তু nginx কখনো reload হয়নি।
+- DNS A record বদলেছে আর nginx একটা ভিন্ন (বা কোনো) cert সার্ভ করছে।
+- box পুরোপুরি চলে গেছে।
 
-For any production site, run at least one external check. Paid services start at $0–$10/month and have saved every operator at least once.
+যেকোনো production সাইটের জন্য, অন্তত একটা external check চালান। Paid service $0–$10/মাস থেকে শুরু হয় আর প্রতিটা operator-কে অন্তত একবার বাঁচিয়েছে।
 
-## Reading and inspecting certs from outside
+## বাইরে থেকে cert পড়া আর পরিদর্শন করা
 
-A few one-liners worth memorizing:
+মুখস্থ করার মতো কয়েকটা one-liner:
 
 ```bash
 # Days until expiry
@@ -229,56 +237,56 @@ echo | openssl s_client -connect example.com:443 -servername example.com -verify
 # Last line: "Verify return code: 0 (ok)" if all good
 ```
 
-When you suspect a renewal landed badly, these tell you what nginx is actually serving — often different from what is in `/etc/letsencrypt/live/`.
+আপনি সন্দেহ করলে একটা renewal খারাপভাবে নেমেছে, এগুলো আপনাকে বলে nginx আসলে কী সার্ভ করছে — প্রায়ই `/etc/letsencrypt/live/`-এ যা আছে তার থেকে ভিন্ন।
 
-## Forcing a renewal
+## একটা renewal জোর করা
 
-Normally certbot only renews within 30 days of expiry. To force one (after fixing a config issue, before a major event, etc.):
+সাধারণত certbot কেবল expiry-র 30 দিনের মধ্যে renew করে। একটা জোর করতে (একটা config সমস্যা ঠিক করার পর, একটা বড় ইভেন্টের আগে, ইত্যাদি):
 
 ```bash
 sudo certbot renew --force-renewal --cert-name example.com
 ```
 
-`--cert-name` limits to one cert; without it, **all** certs renew, which can hit rate limits.
+`--cert-name` একটা cert-এ সীমাবদ্ধ করে; এটা ছাড়া, **সব** cert renew হয়, যা rate limit-এ লাগতে পারে।
 
-For testing the whole flow without burning a real renewal, use staging:
+একটা আসল renewal না পুড়িয়ে পুরো flow টেস্ট করতে, staging ব্যবহার করুন:
 
 ```bash
 sudo certbot --staging --force-renewal --cert-name example.com -d example.com
 ```
 
-The staging cert is not trusted, but you can confirm the renewal mechanics work, then run a real renewal when you are confident.
+staging cert trusted নয়, কিন্তু আপনি renewal mechanics কাজ করে তা নিশ্চিত করতে পারেন, তারপর আত্মবিশ্বাসী হলে একটা আসল renewal চালান।
 
 ## Key rotation
 
-Standard certbot renewal **reuses** the existing private key. That is fine for most setups but means the same key has been on disk through every renewal — possibly for years.
+Standard certbot renewal বিদ্যমান private key **পুনর্ব্যবহার করে**। এটা বেশিরভাগ সেটআপের জন্য ঠিক কিন্তু মানে একই key প্রতিটা renewal জুড়ে disk-এ ছিল — সম্ভবত বছরের পর বছর।
 
-To rotate the key on every renewal (safer, recommended):
+প্রতিটা renewal-এ key rotate করতে (নিরাপদ, প্রস্তাবিত):
 
 ```bash
 sudo certbot renew --reuse-key=false
 ```
 
-Or set it permanently in the renewal config:
+বা renewal config-এ স্থায়ীভাবে সেট করুন:
 
 ```ini
 [renewalparams]
 reuse_key = False
 ```
 
-Going forward, every renewal generates a fresh key. If a key was somehow exfiltrated, exposure is bounded by the renewal window (90 days at most, typically 60).
+এখন থেকে, প্রতিটা renewal একটা fresh key তৈরি করে। একটা key কোনোভাবে exfiltrate হলে, exposure renewal window (সর্বোচ্চ 90 দিন, সাধারণত 60) দিয়ে সীমাবদ্ধ।
 
-## Switching key types
+## key type সুইচ করা
 
-Modern certbot defaults to ECDSA, which is what you want. If you have older RSA certs and want to migrate:
+আধুনিক certbot ডিফল্ট ECDSA-তে, যা আপনি চান। আপনার পুরোনো RSA cert থাকলে আর migrate করতে চাইলে:
 
 ```bash
 sudo certbot --nginx --key-type ecdsa --force-renewal -d example.com
 ```
 
-ECDSA P-256 keys are ~10x faster to sign with than RSA 2048 — meaningful for high-traffic sites doing thousands of TLS handshakes per second. Smaller signatures save bandwidth too.
+ECDSA P-256 key দিয়ে sign করা RSA 2048-এর চেয়ে ~10x দ্রুত — সেকেন্ডে হাজার হাজার TLS handshake করা high-traffic সাইটের জন্য অর্থপূর্ণ। ছোট signature bandwidth-ও বাঁচায়।
 
-## What to do when a renewal fails
+## একটা renewal ফেল করলে কী করবেন
 
 ```bash
 # 1. See what happened
@@ -293,46 +301,46 @@ sudo certbot renew --dry-run
 sudo certbot renew --cert-name example.com --force-renewal
 ```
 
-The certbot log is verbose but readable. Search for `Detail:` lines — those have the actual server-side rejection reason.
+certbot log দীর্ঘ কিন্তু পাঠযোগ্য। `Detail:` line খুঁজুন — সেগুলোতে আসল server-side প্রত্যাখ্যানের কারণ আছে।
 
-## What to do when a cert has expired
+## একটা cert expire হলে কী করবেন
 
-You have ~~24 hours~~ no time. Browsers reject expired certs immediately.
+আপনার হাতে ~~24 ঘণ্টা~~ কোনো সময় নেই। browser expired cert তৎক্ষণাৎ প্রত্যাখ্যান করে।
 
-Order of operations:
+অপারেশনের ক্রম:
 
-1. **Confirm expiration** — `openssl s_client -connect example.com:443 &lt; /dev/null | openssl x509 -enddate -noout`.
-2. **Fix the renewal config** — usually the root cause is a misconfigured location, deleted A record, or expired DNS API token.
-3. **Force a renewal** — `sudo certbot renew --force-renewal --cert-name example.com`.
-4. **Reload nginx** — `sudo systemctl reload nginx`.
-5. **Verify externally** — from another machine, `curl -I https://example.com/`.
+1. **expiration নিশ্চিত করুন** — `openssl s_client -connect example.com:443 &lt; /dev/null | openssl x509 -enddate -noout`।
+2. **renewal config ঠিক করুন** — সাধারণত মূল কারণ একটা misconfigured location, মুছে ফেলা A record, বা expired DNS API token।
+3. **একটা renewal জোর করুন** — `sudo certbot renew --force-renewal --cert-name example.com`।
+4. **nginx reload করুন** — `sudo systemctl reload nginx`।
+5. **বাইরে থেকে verify করুন** — অন্য একটা machine থেকে, `curl -I https://example.com/`।
 
-If you cannot solve it in minutes, fall back temporarily to a self-signed cert so the service is reachable (with a warning) while you debug. Better than 100% downtime.
+মিনিটের মধ্যে সমাধান করতে না পারলে, ডিবাগ করার সময় service reachable রাখতে অস্থায়ীভাবে একটা self-signed cert-এ fall back করুন (একটা warning সহ)। 100% downtime-এর চেয়ে ভালো।
 
-## CT logs — verify your cert was issued correctly
+## CT log — আপনার cert সঠিকভাবে ইস্যু হয়েছে তা verify করুন
 
-Every Let's Encrypt cert is logged to public **Certificate Transparency** logs. Anyone can see it. You can monitor for unexpected certs issued for your domain (which would suggest a CA mistake or compromise).
+প্রতিটা Let's Encrypt cert public **Certificate Transparency** log-এ লগ হয়। যে কেউ এটা দেখতে পারে। আপনি আপনার domain-এর জন্য ইস্যু করা অপ্রত্যাশিত cert monitor করতে পারেন (যা একটা CA ভুল বা compromise-এর ইঙ্গিত দিতে পারে)।
 
-Tools:
+Tool:
 
-- **crt.sh** — web UI for searching CT logs. Search `example.com` to see every cert ever issued.
-- **Cert Spotter** (sslmate) — sends an email when a new cert appears for your domain.
+- **crt.sh** — CT log খোঁজার web UI। `example.com` খুঁজে কখনো ইস্যু করা প্রতিটা cert দেখুন।
+- **Cert Spotter** (sslmate) — আপনার domain-এর জন্য একটা নতুন cert দেখা দিলে একটা email পাঠায়।
 
-If you ever see a cert for your domain that you did not request, treat it as a serious incident — contact the issuing CA immediately.
+আপনি কখনো আপনার domain-এর জন্য এমন একটা cert দেখলে যা আপনি request করেননি, এটাকে একটা গুরুতর incident হিসেবে treat করুন — তৎক্ষণাৎ issuing CA-র সাথে যোগাযোগ করুন।
 
-## Cert pinning — generally avoid in modern setups
+## Cert pinning — আধুনিক সেটআপে সাধারণত এড়িয়ে চলুন
 
-Older guidance: pin a specific cert in browsers (HPKP). Modern guidance: **do not**. HPKP was deprecated by browsers around 2018 because of the risk of pinning yourself into a corner — if you lose the pinned key, the site is unreachable for the pin's lifetime.
+পুরোনো নির্দেশনা: browser-এ একটা নির্দিষ্ট cert pin করুন (HPKP)। আধুনিক নির্দেশনা: **করবেন না**। HPKP browser-রা 2018-এর দিকে deprecate করেছিল নিজেকে একটা কোণে pin করার ঝুঁকির কারণে — pin করা key হারালে, pin-এর lifetime-এর জন্য সাইট unreachable।
 
-If you have a pinning use case (mobile app talking to your API), pin in the app — but pin the _public key_ (SPKI), not the cert itself, and pin a backup key as well.
+আপনার একটা pinning use case থাকলে (আপনার API-এর সাথে কথা বলা একটা mobile app), app-এ pin করুন — কিন্তু cert নিজে নয়, _public key_ (SPKI) pin করুন, আর সাথে একটা backup key-ও pin করুন।
 
-## Recap
+## রিক্যাপ
 
-- Renewal happens via the certbot systemd timer, twice daily, 30 days before expiration.
-- Add deploy hooks for non-nginx services (postgres, etc.) so they reload after renewal.
-- Monitor expiration three ways: certbot email, local script, external checks. Run all three.
-- `certbot renew --dry-run` is the safe rehearsal. `--force-renewal` for emergencies.
-- Rotate keys (`reuse_key = False`) for better security hygiene.
-- Use Certificate Transparency monitors to catch unexpected certs issued for your domain.
+- Renewal certbot systemd timer-এর মাধ্যমে ঘটে, দিনে দুইবার, expiration-এর 30 দিন আগে।
+- non-nginx service-এর (postgres, ইত্যাদি) জন্য deploy hook যোগ করুন যাতে তারা renewal-এর পর reload হয়।
+- expiration তিনভাবে monitor করুন: certbot email, local script, external check। তিনটাই চালান।
+- `certbot renew --dry-run` হলো নিরাপদ মহড়া। জরুরি অবস্থার জন্য `--force-renewal`।
+- ভালো security hygiene-এর জন্য key rotate করুন (`reuse_key = False`)।
+- আপনার domain-এর জন্য ইস্যু করা অপ্রত্যাশিত cert ধরতে Certificate Transparency monitor ব্যবহার করুন।
 
-This is the end of the **TLS & Certificates** track. You can now issue, configure, deploy, monitor, and renew real TLS certificates without touching a managed service. Every domain you ever own will have HTTPS in 60 seconds.
+এটা হলো **TLS & Certificates** ট্র্যাকের শেষ। আপনি এখন কোনো ম্যানেজড সার্ভিস না ছুঁয়ে আসল TLS certificate ইস্যু, কনফিগার, deploy, monitor, আর renew করতে পারেন। আপনার মালিকানার প্রতিটা domain 60 সেকেন্ডে HTTPS পাবে।

@@ -20,8 +20,7 @@
 			heading: 'About',
 			links: [
 				{ label: 'About me', href: '/about' },
-				{ label: 'Uses', href: '/uses' },
-				{ label: 'বাংলা নোটস', href: '/bn/notes' }
+				{ label: 'Uses', href: '/uses' }
 			]
 		},
 		{

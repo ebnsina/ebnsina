@@ -1,9 +1,9 @@
 ---
-title: 'Observability & Service Mesh'
-subtitle: 'Implement distributed tracing with OpenTelemetry, Prometheus metrics, and structured logging with correlation IDs.'
+title: 'Observability ও Service Mesh'
+subtitle: 'OpenTelemetry দিয়ে distributed tracing, Prometheus metrics এবং correlation ID সহ structured logging বানান।'
 chapter: 11
 level: 'advanced'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['OpenTelemetry', 'Prometheus', 'tracing', 'metrics', 'structured logging']
 ---
 
@@ -13,19 +13,27 @@ topics: ['OpenTelemetry', 'Prometheus', 'tracing', 'metrics', 'structured loggin
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## The Three Pillars of Observability
+## গল্পে বুঝি
 
-You can't debug a distributed system by SSHing into servers and reading log files. You need three complementary signals:
+শহরের বড় হাসপাতালে ইবনে সিনা ভর্তি হয়েছে জরুরি বিভাগে। তার হাতে একটা ব্যান্ড, তাতে লেখা একটাই patient ID। এই ID দিয়েই তার সব কিছু বাঁধা। ওয়ার্ডের নার্স ফাতিমা আল-ফিহরি প্রতিবার কিছু হলে খাতায় লিখে রাখে — কখন ওষুধ দেওয়া হলো, কখন ইবনে সিনা বমি করল, কখন ডাক্তার এসে দেখে গেল। এগুলো আলাদা আলাদা ঘটনা, প্রতিটার সাথে সময় আর সেই patient ID লেখা। এদিকে ইবনে সিনার বিছানার পাশে একটা মনিটর সারাক্ষণ pulse, temperature, oxygen-এর সংখ্যা দেখিয়ে যাচ্ছে — প্রতি সেকেন্ডে সংখ্যাগুলো বদলাচ্ছে, আর কোনোটা বিপদসীমা পার হলেই অ্যালার্ম বেজে ওঠে।
 
-- **Logs** — what happened (structured JSON with correlation IDs)
-- **Metrics** — how much (request count, latency percentiles, error rates)
-- **Traces** — how long and where (end-to-end request flow across services)
+ইবনে সিনার অবস্থা খারাপ হওয়ায় তাকে জরুরি বিভাগ থেকে ICU, তারপর অপারেশন থিয়েটার, শেষে কেবিনে সরানো হলো। প্রতিটা ওয়ার্ডে ঢোকা-বের হওয়ার সময়, কে দেখল, কতক্ষণ থাকল — সব একটা case-file-এ গোছানো, যেটা দেখলে ইবনে সিনার পুরো যাত্রাটা এক নজরে বোঝা যায়, কোন ধাপে বেশি সময় গেল তাও ধরা যায়। আর এই সব বিভাগের মধ্যে খবর নিরাপদে পৌঁছে দেয় হাসপাতালের ইন্টারকম আর ওয়ার্ড-বয় ব্যবস্থা — রিপোর্ট এক তলা থেকে আরেক তলায় যায়, লাইন ব্যস্ত থাকলে আবার চেষ্টা করে, আর কে কখন কী পাঠাল তার হিসাবও রাখে; ডাক্তারদের নিজেদের এসব নিয়ে ভাবতে হয় না।
+
+এই গল্পটাই আসলে **observability**। নার্সের খাতার আলাদা আলাদা নোট হলো **logs**, মনিটরের চলমান সংখ্যাগুলো হলো **metrics**, ইবনে সিনার ওয়ার্ড-টু-ওয়ার্ড case-file হলো **traces**, আর সবকিছু একসূত্রে বাঁধা এই একটা patient ID-ই হলো **correlation ID**। বিভাগে-বিভাগে নির্ভরযোগ্যভাবে খবর পৌঁছে দেওয়া ইন্টারকম ব্যবস্থাটা হলো **service mesh**। বাস্তবে ঠিক এভাবেই Prometheus metrics জমায়, OpenTelemetry logs-traces এক correlation ID-তে বাঁধে, আর Istio-র মতো service mesh সার্ভিসগুলোর মধ্যে যোগাযোগ, retry আর telemetry সামলায়।
+
+## Observability-র তিনটি স্তম্ভ
+
+সার্ভারে SSH করে log file পড়ে আপনি একটি distributed system debug করতে পারবেন না। আপনার দরকার তিনটি পরিপূরক signal:
+
+- **Logs** — কী ঘটেছে (correlation ID সহ structured JSON)
+- **Metrics** — কতটুকু (request count, latency percentile, error rate)
+- **Traces** — কতক্ষণ আর কোথায় (service-জুড়ে end-to-end request flow)
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a hospital monitoring system — heart rate monitors track vitals (metrics), nurses log observations (logs), and patient charts trace the care journey (traces). An alarm fires when vitals drop.
+একটি হাসপাতালের monitoring সিস্টেমের মতো — heart rate monitor vitals track করে (metrics), নার্সরা observation লিখে রাখে (logs), আর patient chart care journey-টা trace করে (traces)। Vitals নেমে গেলে alarm বেজে ওঠে।
 
 </Callout>
 
@@ -38,7 +46,7 @@ code={`graph TD
   B --> T["Traces<br/>Jaeger / Tempo"]`}
 />
 
-## Production Observability Setup
+## Production Observability সেটআপ
 
 <CodeTabs tsFile="observability.ts" goFile="observability.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -694,23 +702,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- Always use **structured JSON logging** — grep-friendly text logs don't scale
-- **Correlation IDs** (trace ID, request ID) let you follow a request across all services
-- Expose a `/metrics` endpoint in Prometheus format — it's the industry standard
-- Create **child spans** for downstream calls (DB queries, HTTP calls) to see where time is spent
-- **Fail open** on observability — if tracing/metrics fail, don't block the request
+- সবসময় **structured JSON logging** ব্যবহার করুন — grep-friendly text log স্কেল করে না
+- **Correlation ID** (trace ID, request ID) দিয়ে আপনি সব service-জুড়ে একটি request follow করতে পারেন
+- Prometheus format-এ একটি `/metrics` endpoint expose করুন — এটাই industry standard
+- Downstream call-এর (DB query, HTTP call) জন্য **child span** বানান, যাতে দেখা যায় সময় কোথায় খরচ হচ্ছে
+- Observability-তে **fail open** করুন — tracing/metrics ব্যর্থ হলে request block করবেন না
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Uber** built Jaeger (now CNCF) for distributed tracing across 4,000+ microservices
-- **Netflix** uses distributed tracing to debug latency across their service mesh
-- **Datadog, Grafana, New Relic** all consume OpenTelemetry data — instrumenting with OTEL keeps you vendor-neutral
-- Add observability from day one. Retrofitting tracing into an existing system is 10x harder.
+- **Uber** ৪,০০০+ microservice-জুড়ে distributed tracing-এর জন্য Jaeger (এখন CNCF) বানিয়েছে
+- **Netflix** তাদের service mesh-জুড়ে latency debug করতে distributed tracing ব্যবহার করে
+- **Datadog, Grafana, New Relic** সবাই OpenTelemetry data নেয় — OTEL দিয়ে instrument করলে আপনি vendor-neutral থাকেন
+- প্রথম দিন থেকেই observability যোগ করুন। বিদ্যমান সিস্টেমে পরে tracing বসানো ১০ গুণ কঠিন।
 
 </div>

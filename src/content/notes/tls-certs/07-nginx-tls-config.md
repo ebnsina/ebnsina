@@ -1,9 +1,9 @@
 ---
-title: 'Configuring nginx for TLS'
-subtitle: 'A complete TLS server block — protocols, ciphers, OCSP stapling, HSTS, modern key types, perfect forward secrecy. The config that scores A+ without copy-paste cargo.'
+title: 'TLS-এর জন্য nginx কনফিগার করা'
+subtitle: 'একটা সম্পূর্ণ TLS server block — protocol, cipher, OCSP stapling, HSTS, আধুনিক key type, perfect forward secrecy। সেই config যা কপি-পেস্ট আবর্জনা ছাড়াই A+ স্কোর করে।'
 chapter: 7
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['nginx', 'tls', 'ssl', 'hsts', 'ocsp']
 ---
 
@@ -13,29 +13,37 @@ topics: ['nginx', 'tls', 'ssl', 'hsts', 'ocsp']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Installing a lock — the certificate is the key, the nginx config is how you wire the lock to the door.
+একটা তালা লাগানো — certificate হলো চাবি, nginx config হলো কীভাবে আপনি তালাটা দরজায় লাগান।
 
 </Callout>
 
-## What "good TLS config" means
+## গল্পে বুঝি
 
-After 30 years of TLS evolution, "good" has settled into a small set of choices:
+ফাতিমা আল-ফিহরির গয়নার দোকান। এতদিন সামনের কাঠের দরজায় একটা সাধারণ ছিটকিনি ছিল — যে কেউ চাইলে খুলে ভেতরে ঢুকতে পারত। অবশেষে পৌরসভা থেকে স্ট্যাম্প-করা সার্টিফিকেট এসেছে, আর তার সাথে এসেছে একটা ভারী সিকিউর দরজা আর তার নিজস্ব চাবি। ফাতিমা মিস্ত্রি ইবনে সিনাকে ডেকে বলল — এই সার্টিফিকেটটা আর তার সাথে মিলিয়ে দেওয়া এই চাবিটা, দুটো একসাথেই লকের ভেতর বসাও। একটা ছাড়া অন্যটা কোনো কাজে আসবে না; চাবি সার্টিফিকেটের সাথে হুবহু ম্যাচ করলে তবেই লক খুলবে।
 
-- **TLS 1.2 and 1.3 only.** Everything older has known attacks.
-- **Modern AEAD ciphers.** AES-GCM and ChaCha20-Poly1305. No CBC, no RC4, no DES.
-- **Forward secrecy.** ECDHE for key exchange. No static RSA.
-- **OCSP stapling.** Saves the client a round-trip to the CA.
-- **HSTS.** Tells browsers "always use HTTPS."
-- **HTTP/2.** Often HTTP/3 too.
-- **Strong key types.** ECDSA P-256 or RSA 2048+ — modern certbot defaults are fine.
+তারপর ফাতিমা পাশের দেওয়ালে একটা আলাদা "সিকিউর" প্রবেশপথ খুলল — এখন সব খদ্দের এই একটা দরজা দিয়েই ঢুকবে। সে দোকানের নিয়ম টাঙিয়ে দিল — শুধু আধুনিক, শক্ত লক গ্রহণযোগ্য; পুরোনো যে হালকা ছিটকিনিগুলো চোরে সেফটিপিন দিয়ে খুলে ফেলত, সেগুলো একদম বাতিল। আর পুরোনো অরক্ষিত সাইড-দরজাটার গায়ে একটা সাইনবোর্ড টাঙাল — কেউ ভুল করে ওদিকে এলে সাইনবোর্ড তাকে সোজা ঘুরিয়ে নতুন সিকিউর দরজায় পাঠিয়ে দেবে, ওই সাইড-দরজা দিয়ে আর কাউকে ভেতরে ঢুকতে দেবে না।
 
-Mozilla maintains a [SSL Configuration Generator](https://ssl-config.mozilla.org/) that produces config for nginx, Apache, HAProxy, and others, at three levels: modern (TLS 1.3 only, breaks anything before iOS 13/Chrome 70), intermediate (TLS 1.2+1.3, what most should use), and old (back to Windows XP — avoid).
+এটাই আসলে TLS-এর জন্য nginx কনফিগার করা। লকের ভেতর সার্টিফিকেট আর তার ম্যাচিং চাবি একসাথে বসানো হলো `ssl_certificate` আর `ssl_certificate_key` — certificate আর private key একসাথে না দিলে TLS চালুই হবে না। আলাদা সিকিউর দরজা খোলা হলো `listen 443 ssl` — এনক্রিপ্টেড ট্রাফিকের জন্য ডেডিকেটেড 443 port। পুরোনো হালকা লক বাতিল করা হলো `ssl_protocols` আর `ssl_ciphers` দিয়ে শুধু শক্ত TLS version আর AEAD cipher গ্রহণ করা, দুর্বল পুরোনো protocol বাদ দেওয়া। আর সাইড-দরজার সাইনবোর্ড হলো port 80-এর `return 301 https://...` — HTTP থেকে HTTPS-এ redirect। বাস্তবেও ঠিক এভাবেই — এই চ্যাপ্টারের পুরো server block-টা এই চারটে কাজেরই একটা করে line।
 
-This chapter is the config that lands at A+ on SSL Labs without copying random gists.
+## "ভালো TLS config" মানে কী
 
-## The complete server block
+TLS বিবর্তনের 30 বছর পর, "ভালো" একটা ছোট সেট পছন্দে স্থির হয়েছে:
+
+- **কেবল TLS 1.2 আর 1.3।** এর চেয়ে পুরোনো সবকিছুর পরিচিত attack আছে।
+- **আধুনিক AEAD cipher।** AES-GCM আর ChaCha20-Poly1305। কোনো CBC নয়, RC4 নয়, DES নয়।
+- **Forward secrecy।** key exchange-এর জন্য ECDHE। কোনো static RSA নয়।
+- **OCSP stapling।** client-এর CA-তে একটা round-trip বাঁচায়।
+- **HSTS।** browser-দের বলে "সবসময় HTTPS ব্যবহার করো।"
+- **HTTP/2।** প্রায়ই HTTP/3-ও।
+- **শক্ত key type।** ECDSA P-256 বা RSA 2048+ — আধুনিক certbot ডিফল্ট ঠিক আছে।
+
+Mozilla একটা [SSL Configuration Generator](https://ssl-config.mozilla.org/) রক্ষণাবেক্ষণ করে যা nginx, Apache, HAProxy, আর অন্যদের জন্য তিনটা level-এ config তৈরি করে: modern (কেবল TLS 1.3, iOS 13/Chrome 70-এর আগের সবকিছু ভাঙে), intermediate (TLS 1.2+1.3, বেশিরভাগের যা ব্যবহার করা উচিত), আর old (Windows XP পর্যন্ত পেছনে — এড়িয়ে চলুন)।
+
+এই চ্যাপ্টার হলো সেই config যা random gist কপি না করেই SSL Labs-এ A+-এ পৌঁছায়।
+
+## সম্পূর্ণ server block
 
 ```nginx
 # /etc/nginx/sites-available/example.com
@@ -102,9 +110,9 @@ server {
 }
 ```
 
-This is the template. Every line is doing real work. Below we walk through each block.
+এটাই template। প্রতিটা line আসল কাজ করছে। নিচে আমরা প্রতিটা block ধরে হাঁটি।
 
-## Listen and HTTP/2
+## Listen আর HTTP/2
 
 ```nginx
 listen 443 ssl;
@@ -112,11 +120,11 @@ listen [::]:443 ssl;
 http2 on;
 ```
 
-- `listen 443 ssl` — TCP port 443 over IPv4, with TLS.
-- `listen [::]:443 ssl` — same on IPv6.
-- `http2 on` — modern syntax for enabling HTTP/2. Older configs say `listen 443 ssl http2;` — same thing.
+- `listen 443 ssl` — IPv4-এর ওপর TCP port 443, TLS সহ।
+- `listen [::]:443 ssl` — IPv6-তে একই।
+- `http2 on` — HTTP/2 enable করার আধুনিক syntax। পুরোনো config বলে `listen 443 ssl http2;` — একই জিনিস।
 
-For HTTP/3 (QUIC) — still emerging, optional:
+HTTP/3-এর (QUIC) জন্য — এখনও উদীয়মান, ঐচ্ছিক:
 
 ```nginx
 listen 443 quic reuseport;
@@ -125,9 +133,9 @@ listen [::]:443 quic reuseport;
 add_header Alt-Svc 'h3=":443"; ma=86400';
 ```
 
-The `Alt-Svc` header tells the browser "you can also reach me on HTTP/3 at port 443" — subsequent requests upgrade. Requires nginx 1.25+ with QUIC support compiled in.
+`Alt-Svc` header browser-কে বলে "তুমি আমাকে port 443-এ HTTP/3-তেও পেতে পারো" — পরবর্তী request upgrade হয়। QUIC সাপোর্ট compile করা nginx 1.25+ লাগে।
 
-## Cert files
+## Cert ফাইল
 
 ```nginx
 ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
@@ -135,11 +143,11 @@ ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
 ssl_trusted_certificate /etc/letsencrypt/live/example.com/chain.pem;
 ```
 
-- **`fullchain.pem`** — leaf + intermediates. **Always this file**, never `cert.pem` alone, or some clients see "untrusted cert" errors.
-- **`privkey.pem`** — the private key. Keep `chmod 600` and root-owned (chapter 3).
-- **`chain.pem`** — intermediates only, used by `ssl_stapling_verify`.
+- **`fullchain.pem`** — leaf + intermediate। **সবসময় এই ফাইল**, কখনো শুধু `cert.pem` নয়, নয়তো কিছু client "untrusted cert" error দেখে।
+- **`privkey.pem`** — private key। `chmod 600` আর root-owned রাখুন (চ্যাপ্টার 3)।
+- **`chain.pem`** — কেবল intermediate, `ssl_stapling_verify`-তে ব্যবহৃত।
 
-## Protocols and ciphers
+## Protocol আর cipher
 
 ```nginx
 ssl_protocols TLSv1.2 TLSv1.3;
@@ -147,16 +155,16 @@ ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:...';
 ssl_prefer_server_ciphers off;
 ```
 
-- **`ssl_protocols TLSv1.2 TLSv1.3`** — only modern TLS. TLS 1.0 and 1.1 are deprecated and disabled in every modern browser.
-- **`ssl_ciphers`** — only matters for TLS 1.2. TLS 1.3 has a fixed, small set of ciphers chosen by the spec; no per-server config.
-- **`ssl_prefer_server_ciphers off`** — let the client pick. With modern clients all options are equally safe; the client knows which cipher its hardware accelerates best.
+- **`ssl_protocols TLSv1.2 TLSv1.3`** — কেবল আধুনিক TLS। TLS 1.0 আর 1.1 deprecated আর প্রতিটা আধুনিক browser-এ disabled।
+- **`ssl_ciphers`** — কেবল TLS 1.2-এর জন্য গুরুত্বপূর্ণ। TLS 1.3-এর spec দ্বারা বাছাই করা একটা fixed, ছোট সেট cipher আছে; কোনো per-server config নেই।
+- **`ssl_prefer_server_ciphers off`** — client-কে বাছতে দিন। আধুনিক client-দের সাথে সব option সমানভাবে নিরাপদ; client জানে তার hardware কোন cipher সবচেয়ে ভালো accelerate করে।
 
-The cipher list above is Mozilla's "intermediate" recommendation. Every cipher:
+উপরের cipher তালিকা হলো Mozilla-র "intermediate" সুপারিশ। প্রতিটা cipher:
 
-- Starts with `ECDHE` or `DHE` — ephemeral key exchange, gives forward secrecy.
-- Uses AES-GCM or ChaCha20-Poly1305 — authenticated encryption (AEAD).
+- `ECDHE` বা `DHE` দিয়ে শুরু হয় — ephemeral key exchange, forward secrecy দেয়।
+- AES-GCM বা ChaCha20-Poly1305 ব্যবহার করে — authenticated encryption (AEAD)।
 
-If you serve only modern browsers (anything from the last 5 years), you can drop the `DHE` lines for ECDHE-only. If you need to support IE 11 or very old Android, you would drop down to Mozilla's "old" profile — don't, unless you have a specific compatibility requirement.
+আপনি কেবল আধুনিক browser (গত 5 বছরের যেকোনো কিছু) সার্ভ করলে, ECDHE-only-র জন্য `DHE` line বাদ দিতে পারেন। আপনার IE 11 বা খুব পুরোনো Android সাপোর্ট করা লাগলে, আপনি Mozilla-র "old" profile-এ নামতেন — নামবেন না, যদি না আপনার একটা নির্দিষ্ট compatibility প্রয়োজন থাকে।
 
 ## Session cache
 
@@ -166,11 +174,11 @@ ssl_session_timeout 1d;
 ssl_session_tickets off;
 ```
 
-A returning client can resume a previous TLS session, skipping the full handshake. nginx caches session keys in shared memory.
+একটা ফিরে আসা client একটা আগের TLS session resume করতে পারে, full handshake এড়িয়ে। nginx shared memory-তে session key cache করে।
 
-- `shared:SSL:10m` — name `SSL`, 10MB shared memory. ~40,000 sessions.
-- `ssl_session_timeout 1d` — sessions valid for 24 hours.
-- `ssl_session_tickets off` — disable an alternative session-resumption mechanism that has historical security issues if not rotated frequently. Disabling and using only the cache is safer.
+- `shared:SSL:10m` — নাম `SSL`, 10MB shared memory। ~40,000 session।
+- `ssl_session_timeout 1d` — session 24 ঘণ্টার জন্য valid।
+- `ssl_session_tickets off` — একটা বিকল্প session-resumption mechanism disable করে যার ঐতিহাসিক security সমস্যা আছে যদি ঘন ঘন rotate না করা হয়। disable করে কেবল cache ব্যবহার করা নিরাপদ।
 
 ## OCSP stapling
 
@@ -181,22 +189,22 @@ resolver 1.1.1.1 8.8.8.8 valid=300s;
 resolver_timeout 5s;
 ```
 
-OCSP (Online Certificate Status Protocol) lets a browser ask the CA "is this cert revoked?" Without stapling, the browser makes that request every time it sees the cert — slow, leaky (the CA learns who is visiting your site), and a single point of failure.
+OCSP (Online Certificate Status Protocol) একটা browser-কে CA-কে জিজ্ঞাসা করতে দেয় "এই cert কি revoke হয়েছে?" stapling ছাড়া, browser cert দেখার প্রতিবার সেই request করে — ধীর, ফাঁসযুক্ত (CA শেখে কে আপনার সাইট visit করছে), আর একটা single point of failure।
 
-With **stapling**, _your nginx_ makes the OCSP request periodically, caches the response, and includes it in the TLS handshake. The browser sees a fresh CA-signed "still valid" response without doing a separate request.
+**stapling** দিয়ে, _আপনার nginx_ পর্যায়ক্রমে OCSP request করে, response cache করে, আর TLS handshake-এ অন্তর্ভুক্ত করে। browser একটা আলাদা request না করেই একটা fresh CA-signed "এখনও valid" response দেখে।
 
-- `ssl_stapling on` — fetch and cache OCSP responses.
-- `ssl_stapling_verify on` — verify the OCSP response with `ssl_trusted_certificate` before serving it.
-- `resolver` — DNS server nginx uses to look up the OCSP responder URL. Public DNS (1.1.1.1, 8.8.8.8) is fine.
+- `ssl_stapling on` — OCSP response fetch আর cache করে।
+- `ssl_stapling_verify on` — সার্ভ করার আগে `ssl_trusted_certificate` দিয়ে OCSP response verify করে।
+- `resolver` — OCSP responder URL lookup করতে nginx যে DNS server ব্যবহার করে। Public DNS (1.1.1.1, 8.8.8.8) ঠিক আছে।
 
-Verify stapling works:
+stapling কাজ করে কিনা verify করুন:
 
 ```bash
 echo | openssl s_client -connect example.com:443 -status 2>/dev/null \
   | grep -A 2 "OCSP response"
 ```
 
-If you see `OCSP Response Status: successful (0x0)`, stapling is working.
+আপনি `OCSP Response Status: successful (0x0)` দেখলে, stapling কাজ করছে।
 
 ## HSTS
 
@@ -204,41 +212,41 @@ If you see `OCSP Response Status: successful (0x0)`, stapling is working.
 add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
 ```
 
-HTTP Strict Transport Security: the browser remembers "this domain must use HTTPS" for `max-age` seconds. Even if the user types `http://example.com` after that, the browser silently upgrades to HTTPS without ever sending an unencrypted request.
+HTTP Strict Transport Security: browser `max-age` সেকেন্ডের জন্য মনে রাখে "এই domain-কে HTTPS ব্যবহার করতে হবে।" এর পরে ইউজার `http://example.com` টাইপ করলেও, browser কখনো একটা unencrypted request না পাঠিয়েই নীরবে HTTPS-এ upgrade করে।
 
-- `max-age=63072000` — 2 years. Standard recommendation.
-- `includeSubDomains` — apply to every subdomain too. Be sure all your subdomains are HTTPS-only before adding this.
-- `preload` — ask Chrome/Firefox to ship your domain in the browser's preload list. Means the very first request from a fresh install upgrades to HTTPS. Apply at [hstspreload.org](https://hstspreload.org/) — but **only** when you are absolutely committed; removal is slow.
+- `max-age=63072000` — 2 বছর। Standard সুপারিশ।
+- `includeSubDomains` — প্রতিটা subdomain-এও প্রয়োগ করুন। এটা যোগ করার আগে নিশ্চিত হন আপনার সব subdomain HTTPS-only।
+- `preload` — Chrome/Firefox-কে আপনার domain browser-এর preload তালিকায় পাঠাতে বলুন। মানে একটা fresh install থেকে একেবারে প্রথম request HTTPS-এ upgrade হয়। [hstspreload.org](https://hstspreload.org/)-এ apply করুন — কিন্তু **কেবল** যখন আপনি একেবারে প্রতিশ্রুতিবদ্ধ; removal ধীর।
 
 <Callout type="warn">
 
-**HSTS is sticky.**
+**HSTS আঠালো।**
 
-Once a browser has seen a long `max-age`, it remembers — even if you remove the header. To go back to HTTP for that domain, every visiting browser would need to revisit and see `max-age=0` (or wait out the original max-age). Plan accordingly. For staging or testing domains, use a very short max-age until you are confident.
+একটা browser একবার একটা দীর্ঘ `max-age` দেখলে, এটা মনে রাখে — আপনি header সরালেও। সেই domain-এর জন্য HTTP-তে ফিরতে, প্রতিটা visiting browser-কে পুনরায় visit করে `max-age=0` দেখতে হবে (বা মূল max-age শেষ হওয়ার অপেক্ষা করতে হবে)। সেভাবেই পরিকল্পনা করুন। staging বা testing domain-এর জন্য, আত্মবিশ্বাসী না হওয়া পর্যন্ত একটা খুব ছোট max-age ব্যবহার করুন।
 
 </Callout>
 
-## Why no Diffie-Hellman parameters
+## কেন কোনো Diffie-Hellman parameter নেই
 
-Older nginx configs include:
+পুরোনো nginx config-এ থাকে:
 
 ```nginx
 ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 ```
 
-This was needed for `DHE_*` cipher suites. With modern Mozilla intermediate config, the DHE ciphers are at the bottom of the list and rarely chosen. With Mozilla "modern" config (TLS 1.3 only), there is no DHE at all.
+এটা `DHE_*` cipher suite-এর জন্য দরকার ছিল। আধুনিক Mozilla intermediate config-এ, DHE cipher তালিকার নিচে থাকে আর কদাচিৎ বাছাই হয়। Mozilla "modern" config-এ (কেবল TLS 1.3), কোনো DHE-ই নেই।
 
-If you keep DHE in the cipher list, generating proper DH params is a one-time:
+আপনি cipher তালিকায় DHE রাখলে, সঠিক DH param তৈরি করা একটা এককালীন:
 
 ```bash
 sudo openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
 ```
 
-certbot installs a default. If you are not concerned about IE 11, you can drop DHE entirely.
+certbot একটা ডিফল্ট ইনস্টল করে। আপনি IE 11 নিয়ে চিন্তিত না হলে, DHE পুরোপুরি বাদ দিতে পারেন।
 
-## Sharing TLS config across many sites
+## অনেক সাইট জুড়ে TLS config শেয়ার করা
 
-Repeating that whole TLS block in every site is tedious. Pull it into a snippet:
+প্রতিটা সাইটে সেই পুরো TLS block পুনরাবৃত্তি করা ক্লান্তিকর। এটা একটা snippet-এ টানুন:
 
 ```bash
 sudo nano /etc/nginx/snippets/ssl-modern.conf
@@ -264,7 +272,7 @@ add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 ```
 
-Then in each site:
+তারপর প্রতিটা সাইটে:
 
 ```nginx
 server {
@@ -282,11 +290,11 @@ server {
 }
 ```
 
-One file, one place to update when standards evolve.
+একটা ফাইল, standard বিবর্তিত হলে update করার একটা জায়গা।
 
-## Adding HTTPS in front of an existing app
+## একটা বিদ্যমান app-এর সামনে HTTPS যোগ করা
 
-If you already have a backend on `127.0.0.1:8080` and want nginx in front with TLS:
+আপনার আগে থেকেই `127.0.0.1:8080`-এ একটা backend থাকলে আর TLS সহ সামনে nginx চাইলে:
 
 ```nginx
 server {
@@ -312,23 +320,23 @@ server {
 }
 ```
 
-This is the canonical "TLS termination at the edge, plain HTTP to the backend" setup. Your app runs unchanged; nginx handles all the TLS.
+এটা হলো canonical "edge-এ TLS termination, backend-এ plain HTTP" সেটআপ। আপনার app অপরিবর্তিত চলে; nginx সব TLS সামলায়।
 
-## Verify with tools
+## tool দিয়ে verify করা
 
 **SSL Labs:** https://www.ssllabs.com/ssltest/analyze.html?d=example.com
 
-A score of A or A+ is the goal. The detailed report tells you exactly which ciphers and protocols are accepted and any weaknesses.
+A বা A+ স্কোর হলো লক্ষ্য। বিস্তারিত report আপনাকে ঠিক বলে দেয় কোন cipher আর protocol গৃহীত আর যেকোনো দুর্বলতা।
 
-**testssl.sh** — local tool, no external scan:
+**testssl.sh** — local tool, কোনো external scan নেই:
 
 ```bash
 docker run --rm -ti drwetter/testssl.sh https://example.com
 ```
 
-Comprehensive output, saves a JSON or HTML report.
+Comprehensive output, একটা JSON বা HTML report সেভ করে।
 
-**curl** for sanity checks:
+**curl** sanity check-এর জন্য:
 
 ```bash
 curl -I https://example.com/
@@ -338,20 +346,20 @@ curl -I https://example.com/
 #   server: nginx
 ```
 
-If `curl --tlsv1.0` connects, you have TLS 1.0 enabled — fix it. Production should refuse:
+`curl --tlsv1.0` কানেক্ট হলে, আপনার TLS 1.0 enabled — ঠিক করুন। Production-এর প্রত্যাখ্যান করা উচিত:
 
 ```bash
 curl --tlsv1.0 --tls-max 1.0 https://example.com
 # curl: (35) error:0A0000BF:SSL routines::no protocols available
 ```
 
-## Recap
+## রিক্যাপ
 
-- Mozilla "intermediate" config + TLS 1.2/1.3 + modern ciphers + ECDHE = A+ on SSL Labs.
-- Always use `fullchain.pem` for `ssl_certificate`. Keep `privkey.pem` at mode 600.
-- OCSP stapling saves a round-trip and protects user privacy. Enable it.
-- HSTS tells browsers "always HTTPS." Two years is the standard. Be careful with `preload`.
-- Pull TLS config into a `snippets/` file and include it from each site.
-- Verify with SSL Labs and `testssl.sh`. Confirm TLS 1.0/1.1 are rejected.
+- Mozilla "intermediate" config + TLS 1.2/1.3 + আধুনিক cipher + ECDHE = SSL Labs-এ A+।
+- `ssl_certificate`-এর জন্য সবসময় `fullchain.pem` ব্যবহার করুন। `privkey.pem` mode 600-এ রাখুন।
+- OCSP stapling একটা round-trip বাঁচায় আর ইউজার privacy রক্ষা করে। এটা enable করুন।
+- HSTS browser-দের বলে "সবসময় HTTPS।" দুই বছর হলো standard। `preload` নিয়ে সতর্ক থাকুন।
+- TLS config একটা `snippets/` ফাইলে টানুন আর প্রতিটা সাইট থেকে include করুন।
+- SSL Labs আর `testssl.sh` দিয়ে verify করুন। TLS 1.0/1.1 প্রত্যাখ্যাত তা নিশ্চিত করুন।
 
-Next and final chapter: keeping certs alive — renewal monitoring, hooks, rotation, and what to do when something fails.
+পরের আর শেষ চ্যাপ্টার: cert চালু রাখা — renewal monitoring, hook, rotation, আর কিছু ফেল করলে কী করতে হবে।

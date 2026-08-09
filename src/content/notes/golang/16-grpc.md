@@ -1,9 +1,9 @@
 ---
-title: 'gRPC & Protocol Buffers'
-subtitle: 'High-performance service-to-service communication — gRPC is what REST wants to be when services talk to each other.'
+title: 'gRPC ও Protocol Buffers'
+subtitle: 'High-performance service-to-service communication — service-রা যখন একে অপরের সাথে কথা বলে, gRPC তখন REST যা হতে চায় তা-ই।'
 chapter: 16
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['gRPC', 'protobuf', 'RPC', 'microservices', 'streaming', 'service communication']
 ---
 
@@ -11,30 +11,38 @@ topics: ['gRPC', 'protobuf', 'RPC', 'microservices', 'streaming', 'service commu
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why gRPC?
+## গল্পে বুঝি
 
-REST is great for browser-to-server communication. But for service-to-service communication inside your backend, gRPC is often the better choice:
+ইবনে সিনার কোম্পানির দুটো অফিস — ঢাকায় হেড অফিস, চট্টগ্রামে ব্রাঞ্চ। আগে দুই অফিস একে অপরকে লম্বা চিঠি লিখত — "অমুক গ্রাহকের নাম, ঠিকানা, অর্ডার নম্বর, তারিখ..." — পুরো কাহিনি প্রতিবার নতুন করে লেখা। কেউ একটা শব্দ এদিক-ওদিক লিখলে অন্য অফিস ভুল বুঝত, আর মোটা খামে ডাকখরচও বেশি পড়ত।
 
-| Feature         | REST/JSON                          | gRPC/Protobuf                             |
-| --------------- | ---------------------------------- | ----------------------------------------- |
-| Serialization   | JSON (text, ~10x larger)           | Protobuf (binary, compact)                |
-| Schema          | OpenAPI (optional, often outdated) | `.proto` files (required, always current) |
-| Code generation | Optional                           | Built-in (Go, Java, Python, etc.)         |
-| Streaming       | WebSockets (separate protocol)     | Built-in bidirectional streaming          |
-| Performance     | Good                               | Great (2-10x faster serialization)        |
-| Browser support | Native                             | Needs gRPC-Web proxy                      |
+তাই আল-খোয়ারিজমি একটা বুদ্ধি বের করল। সে একজন ছাপাখানার মালিককে দিয়ে দুই অফিসের জন্য একদম হুবহু একই রকম ছাপানো ফর্ম বানাল — যেখানে ঘর নম্বর ১ মানে গ্রাহকের নাম, ঘর ২ মানে অর্ডার নম্বর, ঘর ৩ মানে তারিখ। এখন হেড অফিস আর ব্রাঞ্চ, দুই জায়গাতেই এক তাড়া খালি ফর্ম। চিঠি লেখার দরকার নেই — ফাতিমা আল-ফিহরি শুধু ঘরগুলোতে ছোট ছোট সংখ্যা বসিয়ে একটা এক টুকরো স্লিপ পাঠায়। ওপারে যেহেতু হুবহু একই ফর্ম, ফাতিমা আল-ফিহরির সহকর্মী চোখ বন্ধ করেই বলে দিতে পারে ঘর ২-এ যা আছে সেটাই অর্ডার নম্বর। কোনো ভুল বোঝাবুঝি নেই, স্লিপ ছোট, পাঠানোও দ্রুত।
+
+এই ছাপানো ফর্মটাই হলো gRPC-র **`.proto` contract** — client আর server দুই পক্ষ একই schema-তে একমত। ছাপাখানার মালিক, যে দুই পক্ষের জন্য মিলিয়ে খালি ফর্ম বানিয়ে দেয়, সে-ই **protoc code generation**: এক `.proto` থেকে দুই দিকের মিলে-যাওয়া কোড তৈরি করে দেয়। আর ঘরে-ভরা সেই ছোট্ট স্লিপ হলো **compact binary message** — লম্বা JSON চিঠির বদলে কেবল দরকারি মানটুকু, তাই হালকা ও দ্রুত। বাস্তবে এভাবেই এক backend service আরেক service-কে **service-to-service** ডাকে: দুই পক্ষ আগে থেকেই ফর্ম চেনে বলে ব্যাখ্যার দরকার হয় না, শুধু ভরা-স্লিপ যায়-আসে। Google, Netflix-এর মতো কোম্পানি তাদের ভেতরের হাজারো microservice-এর কথাবার্তা ঠিক এভাবেই gRPC দিয়ে চালায়।
+
+## gRPC কেন?
+
+browser-to-server communication-এর জন্য REST দারুণ। কিন্তু আপনার backend-এর ভেতরে service-to-service communication-এর জন্য gRPC প্রায়ই ভালো পছন্দ:
+
+| Feature         | REST/JSON                         | gRPC/Protobuf                             |
+| --------------- | --------------------------------- | ----------------------------------------- |
+| Serialization   | JSON (text, ~10x বড়)             | Protobuf (binary, compact)                |
+| Schema          | OpenAPI (optional, প্রায়ই পুরনো) | `.proto` file (required, সবসময় হালনাগাদ) |
+| Code generation | Optional                          | Built-in (Go, Java, Python, ইত্যাদি)      |
+| Streaming       | WebSocket (আলাদা protocol)        | Built-in bidirectional streaming          |
+| Performance     | ভালো                              | দুর্দান্ত (2-10x দ্রুত serialization)     |
+| Browser support | Native                            | gRPC-Web proxy দরকার                      |
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-REST is like sending letters — each letter needs an address (URL), a format (JSON), and the post office (HTTP) delivers it. gRPC is like a phone call — you establish a connection, both sides speak a shared language (protobuf), and communication is instant and bidirectional.
+REST অনেকটা চিঠি পাঠানোর মতো — প্রতিটা চিঠির একটা ঠিকানা (URL), একটা format (JSON) লাগে, আর ডাকঘর (HTTP) সেটা পৌঁছে দেয়। gRPC অনেকটা ফোন কলের মতো — আপনি একটা connection স্থাপন করেন, দুই পক্ষ একটা shared language (protobuf) বলে, আর communication তাৎক্ষণিক ও bidirectional।
 
 </Callout>
 
-## Defining a Service with Protobuf
+## Protobuf দিয়ে একটা Service সংজ্ঞায়িত করা
 
-Protocol Buffers (protobuf) define your API schema:
+Protocol Buffers (protobuf) আপনার API schema সংজ্ঞায়িত করে:
 
 ```protobuf
 // proto/user/v1/user.proto
@@ -98,7 +106,7 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 protoc --go_out=. --go-grpc_out=. proto/user/v1/user.proto
 ```
 
-## Implementing the Server
+## Server Implement করা
 
 ```go
 package main
@@ -195,7 +203,7 @@ func main() {
 
 ## gRPC Client
 
-The generated code gives you a type-safe client:
+generate করা কোড আপনাকে একটা type-safe client দেয়:
 
 ```go
 func main() {
@@ -233,7 +241,7 @@ func main() {
 
 ## gRPC Streaming
 
-One of gRPC's killer features — built-in streaming:
+gRPC-র অন্যতম সেরা ফিচার — built-in streaming:
 
 ```protobuf
 service AnalyticsService {
@@ -272,7 +280,7 @@ func (s *analyticsServer) WatchMetrics(req *pb.WatchMetricsRequest, stream pb.An
 }
 ```
 
-## gRPC Interceptors (Middleware)
+## gRPC Interceptor (Middleware)
 
 ```go
 // Unary interceptor (for single request/response RPCs)
@@ -300,15 +308,15 @@ grpcServer := grpc.NewServer(
 
 <Callout type="tip">
 
-**Use gRPC for internal service-to-service communication** and REST for external/browser-facing APIs. Many companies run both — a REST gateway that translates to gRPC internally. Tools like `grpc-gateway` automate this translation from protobuf definitions.
+**internal service-to-service communication-এর জন্য gRPC ব্যবহার করুন** আর external/browser-facing API-র জন্য REST। অনেক কোম্পানি দুটোই চালায় — একটা REST gateway যা ভেতরে gRPC-তে translate করে। `grpc-gateway`-র মতো tool protobuf সংজ্ঞা থেকে এই translation স্বয়ংক্রিয় করে।
 
 </Callout>
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Protobuf defines the contract** — `.proto` files are the single source of truth for your API
-2. **Code generation** creates type-safe clients and servers in any language
-3. **gRPC status codes** replace HTTP status codes — `codes.NotFound`, `codes.InvalidArgument`
-4. **Streaming is built-in** — server, client, and bidirectional streaming without WebSockets
-5. **Interceptors are gRPC middleware** — logging, auth, metrics work the same as HTTP middleware
-6. **Use for internal services**, REST for external APIs — combine with `grpc-gateway` for both
+1. **Protobuf contract সংজ্ঞায়িত করে** — `.proto` file হলো আপনার API-র একমাত্র সত্যের উৎস
+2. **Code generation** যেকোনো ভাষায় type-safe client আর server বানায়
+3. **gRPC status code** HTTP status code-এর জায়গা নেয় — `codes.NotFound`, `codes.InvalidArgument`
+4. **Streaming built-in** — WebSocket ছাড়াই server, client, আর bidirectional streaming
+5. **Interceptor হলো gRPC middleware** — logging, auth, metrics HTTP middleware-এর মতোই কাজ করে
+6. **internal service-এর জন্য ব্যবহার করুন**, external API-র জন্য REST — দুটোরই জন্য `grpc-gateway`-র সাথে মেলান

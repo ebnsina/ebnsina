@@ -1,9 +1,9 @@
 ---
 title: 'Observability'
-subtitle: 'Logs, metrics, and traces — the three pillars that let you understand what your Go service is doing in production.'
+subtitle: 'Log, metric, আর trace — এই তিন স্তম্ভ আপনাকে বুঝতে দেয় production-এ আপনার Go service আসলে কী করছে।'
 chapter: 20
 level: 'advanced'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['observability', 'OpenTelemetry', 'metrics', 'tracing', 'Prometheus', 'monitoring']
 ---
 
@@ -11,21 +11,29 @@ topics: ['observability', 'OpenTelemetry', 'metrics', 'tracing', 'Prometheus', '
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Three Pillars
+## গল্পে বুঝি
 
-Production services need three types of observability data:
+শহরের এক ডেলিভারি কোম্পানির কন্ট্রোল রুমে আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরি সারাদিন একদেয়ালজোড়া স্ক্রিনের দিকে তাকিয়ে বসে থাকে। বাঁ দিকের স্ক্রিনে একটা লম্বা ইভেন্ট লগ গড়িয়ে গড়িয়ে নামছে — "৯টা ১২, ভ্যান-৭ পার্সেল তুলল ধানমন্ডি থেকে", "৯টা ৩১, ভ্যান-৭ ড্রপ করল মিরপুর হাবে", প্রতিটা লাইনে সময়, ভ্যান নম্বর, জায়গা — সব নির্দিষ্ট করে লেখা। মাঝের স্ক্রিনে কয়েকটা বড় গেজ ঘুরছে — এই মুহূর্তে রাস্তায় কত ভ্যান, গড় ডেলিভারি টাইম কত মিনিট, বহরের তেল কতটুকু বাকি। কোনো লাইন ঘেঁটে দেখতে হয় না, একনজরে গোটা বহরের হালচাল বোঝা যায়।
 
-| Pillar      | Question It Answers           | Example                                                          |
+দুপুরে এক কাস্টমার ফোন করে বলল, "আমার পার্সেলটা কই? ট্র্যাকিং নম্বর TRK-8842।" ফাতিমা আল-ফিহরি ওই নম্বরটা টাইপ করতেই ডান দিকের স্ক্রিনে একটা GPS ব্রেডক্রাম্ব ট্রেইল ফুটে উঠল — ওই একটা পার্সেল ধানমন্ডি থেকে উঠে ভ্যান-৭-এ মিরপুর হাব, সেখানে ভ্যান-১২-এ হাতবদল হয়ে উত্তরার পথে — প্রতিটা হাতবদলে ঠিক কত সময় লাগল, কোথায় আধঘণ্টা আটকে ছিল, পুরোটা এক সুতোয় গাঁথা। এক ভ্যান থেকে আরেক ভ্যানে গেলেও ট্র্যাকিং নম্বরটা এক থাকে বলেই গোটা যাত্রাটা জোড়া দেওয়া যায়।
+
+এই কন্ট্রোল রুমটাই আসলে **observability**-র তিন স্তম্ভ। গড়িয়ে নামা ইভেন্ট লগ হলো **structured logging** — কী ঘটল তার সময়-জায়গা-সহ নির্দিষ্ট রেকর্ড। গেজগুলো হলো **metrics** — গোটা সিস্টেম কেমন চলছে তার একনজরের সংখ্যা (rate, latency, saturation)। GPS ব্রেডক্রাম্ব ট্রেইল হলো distributed **tracing** — একটা request কোন কোন service ঘুরে গেল, প্রতিটা ধাপে কত সময় লাগল। আর ট্র্যাকিং নম্বরটাই **correlation ID** — যা দিয়ে ভিন্ন ভ্যানের (service-এর) বিচ্ছিন্ন log আর span-গুলো এক request-এ জোড়া লাগে। বাস্তবে Go service-এ ঠিক এই কাজটাই করে — metrics তোলে **Prometheus**, আর trace ছড়িয়ে দেয় **OpenTelemetry**, request ঢোকার সময় বসানো একটা correlation ID পুরো পথ ধরে বয়ে নিয়ে যায়।
+
+## তিন স্তম্ভ
+
+Production service-এর তিন ধরনের observability data দরকার:
+
+| স্তম্ভ      | যে প্রশ্নের উত্তর দেয়        | উদাহরণ                                                           |
 | ----------- | ----------------------------- | ---------------------------------------------------------------- |
-| **Logs**    | What happened?                | "User 42 login failed: invalid password"                         |
-| **Metrics** | How is the system performing? | "p99 latency = 250ms, error rate = 0.5%"                         |
-| **Traces**  | How does a request flow?      | "Request → API Gateway → User Service → Database (total: 180ms)" |
+| **Logs**    | কী ঘটেছিল?                    | "User 42 login failed: invalid password"                         |
+| **Metrics** | System কেমন perform করছে?     | "p99 latency = 250ms, error rate = 0.5%"                         |
+| **Traces**  | একটা request কীভাবে flow করে? | "Request → API Gateway → User Service → Database (total: 180ms)" |
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-**Logs** = security camera footage. You review them when something goes wrong. **Metrics** = dashboard gauges (speed, fuel, temperature). You glance at them to know if everything is healthy. **Traces** = GPS tracking. You see the exact path a package took from warehouse to doorstep, with time spent at each stop.
+**Log** = সিকিউরিটি ক্যামেরার ফুটেজ। কিছু গড়বড় হলে আপনি সেগুলো দেখে বোঝেন। **Metric** = ড্যাশবোর্ডের গেজ (গতি, তেল, তাপমাত্রা)। সব ঠিক আছে কিনা জানতে আপনি একনজরে দেখেন। **Trace** = GPS ট্র্যাকিং। একটা প্যাকেজ ওয়্যারহাউস থেকে দরজা পর্যন্ত ঠিক কোন পথে গেল, প্রতিটা স্টপে কতটা সময় লাগল — সব দেখেন।
 
 </Callout>
 
@@ -78,7 +86,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 ## Prometheus Metrics
 
-Prometheus is the standard for Go service metrics:
+Go service-এর metric-এর জন্য Prometheus হলো standard:
 
 ```go
 import "github.com/prometheus/client_golang/prometheus"
@@ -151,7 +159,7 @@ func MetricsMiddleware() Middleware {
 mux.Handle("GET /metrics", promhttp.Handler())
 ```
 
-### Custom Business Metrics
+### Custom Business Metric
 
 ```go
 var (
@@ -186,9 +194,9 @@ func (s *OrderService) PlaceOrder(ctx context.Context, order Order) error {
 }
 ```
 
-## Distributed Tracing with OpenTelemetry
+## OpenTelemetry দিয়ে Distributed Tracing
 
-Traces follow a request across multiple services:
+Trace একটা request-কে একাধিক service জুড়ে follow করে:
 
 ```go
 import (
@@ -220,7 +228,7 @@ func setupTracing(ctx context.Context, serviceName string) (func(), error) {
 }
 ```
 
-### Instrumenting Your Code
+### আপনার Code Instrument করা
 
 ```go
 var tracer = otel.Tracer("bookstore")
@@ -264,7 +272,7 @@ func (s *BookService) GetByID(ctx context.Context, id int) (*Book, error) {
 
 ## Health Check Dashboard
 
-Combine all three pillars into a health overview:
+তিন স্তম্ভকে একসাথে করে একটা health overview বানান:
 
 ```go
 type HealthStatus struct {
@@ -324,12 +332,12 @@ func (h *HealthHandler) DetailedHealth(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Structured logging with `slog`** — JSON in production, text in development
-2. **Four metric types**: counters (things that go up), gauges (things that go up and down), histograms (distributions), summaries (quantiles)
-3. **RED method for services**: Rate (requests/sec), Errors (error rate), Duration (latency)
-4. **USE method for resources**: Utilization, Saturation, Errors (for CPU, memory, connections)
-5. **Traces follow requests across services** — each span is a unit of work with timing
-6. **Expose `/metrics` for Prometheus**, `/health` for load balancers, `/debug/pprof` for profiling
-7. **Don't over-instrument** — start with RED metrics and add specific ones when investigating issues
+1. **`slog` দিয়ে structured logging** — production-এ JSON, development-এ text
+2. **চার ধরনের metric**: counter (যা শুধু বাড়ে), gauge (যা বাড়ে-কমে), histogram (distribution), summary (quantile)
+3. **service-এর জন্য RED method**: Rate (requests/sec), Errors (error rate), Duration (latency)
+4. **resource-এর জন্য USE method**: Utilization, Saturation, Errors (CPU, memory, connection-এর জন্য)
+5. **Trace একটা request-কে service জুড়ে follow করে** — প্রতিটা span হলো timing সহ একটা কাজের একক
+6. **Prometheus-এর জন্য `/metrics` expose করুন**, load balancer-এর জন্য `/health`, profiling-এর জন্য `/debug/pprof`
+7. **অতিরিক্ত instrument করবেন না** — RED metric দিয়ে শুরু করুন, সমস্যা খুঁজতে গেলে নির্দিষ্ট metric যোগ করুন

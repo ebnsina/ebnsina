@@ -1,9 +1,9 @@
 ---
 title: 'Building Reliable Distributed Systems'
-subtitle: 'Putting it together: retries with backoff and jitter, idempotency and deduplication, delivery semantics, and durable execution.'
+subtitle: 'সব একসাথে জোড়া: backoff ও jitter সহ retry, idempotency ও deduplication, delivery semantics, এবং durable execution।'
 chapter: 9
 level: 'mastery'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['idempotency', 'retries', 'durable execution']
 ---
 
@@ -11,19 +11,27 @@ topics: ['idempotency', 'retries', 'durable execution']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Everything so far has been about understanding distributed systems. This final chapter is about _operating_ in one: the concrete, hard-won patterns that turn the inevitability of partial failure into something your system survives gracefully. The unifying mindset is simple to state and hard to internalize — **assume every remote call can fail, time out, or succeed-but-look-like-it-failed, and design so that handling that case is the normal path, not the exception.**
+## গল্পে বুঝি
 
-## Retries
+একটা জরুরি রাজকীয় পার্সেল বাগদাদ থেকে কর্ডোভা পৌঁছে দিতে হবে — রিলে দৌড়ের মতো, একেকটা স্টেজে একেকজন দৌড়বিদ পার্সেলটা নিয়ে পরের স্টেজে দিয়ে আসে। ইবনে আল-হাইসাম পুরো রুটটা সাজাচ্ছেন, আর তাঁর মাথায় একটাই চিন্তা — যেকোনো একজন দৌড়বিদ পথে অসুস্থ হয়ে পড়লেও পার্সেল যেন থেমে না থাকে। তাই প্রতিটা স্টেজেই তিনি একজন বাড়তি দৌড়বিদ তৈরি রাখেন; মূল লোকটা ব্যর্থ হলে বসে থাকা লোকটা সঙ্গে সঙ্গে ছোটে।
 
-When a remote call fails or times out, the first instinct is to retry — and it is usually right, because many failures are transient (a brief blip, a momentary overload). But naive retries are dangerous in two distinct ways, and you must defend against both.
+আল-খোয়ারিজমি প্রতিটা স্টেজে একজন করে চেকার বসিয়ে দেন, যাঁরা নজর রাখেন দৌড়বিদ ঠিক সময়ে পরের স্টেজে "পৌঁছেছি" বলে খবর পাঠাল কি না। একটা নির্দিষ্ট সময়ের মধ্যে খবর না এলে ধরে নেওয়া হয় লোকটা পথেই আটকে গেছে, আর পরের বাড়তি দৌড়বিদকে পাঠানো হয় — তবে প্রথমবার একটু অপেক্ষা করে, দ্বিতীয়বার আরও বেশি অপেক্ষা করে, যাতে হুটহাট সবাইকে একসাথে না ছোটানো হয়। এদিকে ইবনে সিনা প্রতিটা পার্সেলে একটা অনন্য সিল মেরে দেন — কর্ডোভার শেষ চেকপোস্টে ফাতিমা আল-ফিহরি সেই সিল দেখে বোঝেন এই পার্সেল আগে একবার এসে গেছে কি না; একই সিলের পার্সেল দুবার এলে দ্বিতীয়টা তিনি নীরবে বাদ দিয়ে দেন, দুবার প্রসেস করেন না। আর কোনো একটা রুট পুরো বন্ধ হয়ে গেলে চেকাররা পার্সেলটা ঘুরিয়ে পাশের রুট দিয়ে পাঠিয়ে দেন — একটু দেরিতে হলেও পৌঁছায়, একেবারে আটকে থাকে না।
+
+এই গল্পটাই আসলে **অনির্ভরযোগ্য অংশ দিয়ে নির্ভরযোগ্য সিস্টেম বানানো**। প্রতিটা স্টেজে বাড়তি দৌড়বিদ রাখা হলো **redundancy**; খবর না এলে অপেক্ষা করে আবার পাঠানো হলো **timeout** আর **retry**, আর প্রতিবার অপেক্ষা বাড়ানোটা হলো **backoff**। পার্সেলের অনন্য সিল হলো **idempotency** — একই কাজ দুবার হয়ে গেলেও প্রভাব একবারই পড়ে (ঠিক যেমন idempotency key দিয়ে duplicate request বাদ দেওয়া হয়)। চেকারদের নজরদারি হলো **health check ও monitoring**, আর রুট ঘুরিয়ে দেওয়া হলো **graceful degradation** — পুরো ব্যর্থ হওয়ার বদলে একটু কমানো পথে হলেও কাজ চালিয়ে নেওয়া। বাস্তবে Temporal বা AWS Step Functions-এর মতো durable execution engine ঠিক এই কাজটাই করে — partial failure-কে ব্যতিক্রম নয়, স্বাভাবিক পথ ধরে নিয়ে সিস্টেমকে টিকিয়ে রাখে।
+
+এতক্ষণ পর্যন্ত সবকিছু ছিল distributed system বোঝা নিয়ে। এই শেষ অধ্যায় একটার ভেতরে _কাজ করা_ নিয়ে: সেই সুনির্দিষ্ট, কষ্টার্জিত প্যাটার্ন যা partial failure-এর অনিবার্যতাকে এমন কিছুতে পরিণত করে যা তোমার সিস্টেম সুন্দরভাবে সামলে টিকে থাকে। একীভূত মানসিকতাটা বলা সহজ আর আত্মস্থ করা কঠিন — **ধরে নাও প্রতিটি remote call fail করতে পারে, time out করতে পারে, বা সফল-হয়েও-fail-করা-দেখাতে পারে, আর এমনভাবে ডিজাইন করো যাতে সেই ক্ষেত্র সামলানো স্বাভাবিক পথ হয়, ব্যতিক্রম নয়।**
+
+## Retry
+
+একটি remote call fail বা time out করলে, প্রথম প্রবৃত্তি হলো retry করা — আর এটা সাধারণত ঠিক, কারণ অনেক failure ক্ষণস্থায়ী (একটি সংক্ষিপ্ত ব্লিপ, একটি ক্ষণিকের overload)। কিন্তু সরল retry দুটি ভিন্ন উপায়ে বিপজ্জনক, আর তোমাকে দুটোরই বিরুদ্ধে রক্ষা করতে হবে।
 
 ### The thundering herd
 
-If a service hiccups and a thousand clients all retry immediately, they hit the recovering service with a synchronized wall of traffic, knocking it down again. The retries _cause_ the next outage. The defenses are backoff and jitter.
+একটি service হেঁচকি খেলে আর হাজারটা client সবাই তাৎক্ষণিকভাবে retry করলে, তারা সেরে ওঠা service-কে একটি synchronized traffic-এর দেয়াল দিয়ে আঘাত করে, এটাকে আবার ফেলে দেয়। Retry গুলোই পরের outage-এর _কারণ_ হয়। প্রতিরক্ষা হলো backoff ও jitter।
 
-**Exponential backoff:** wait longer after each successive failure — 1s, 2s, 4s, 8s — giving the struggling service room to recover instead of hammering it.
+**Exponential backoff:** প্রতিটি পরপর failure-এর পর দীর্ঘতর অপেক্ষা করো — 1s, 2s, 4s, 8s — struggling service-কে হাতুড়ি না মেরে সেরে ওঠার জায়গা দাও।
 
-**Jitter:** add randomness to each wait so retries spread out in time rather than firing in lockstep. Without jitter, exponential backoff still synchronizes all clients onto the same retry instants (everyone waits exactly 2s, then exactly 4s).
+**Jitter:** প্রতিটি অপেক্ষায় randomness যোগ করো যাতে retry lockstep-এ ছোঁড়ার বদলে সময়ে ছড়িয়ে পড়ে। Jitter ছাড়া, exponential backoff তারপরও সব client-কে একই retry মুহূর্তে synchronize করে (সবাই ঠিক 2s অপেক্ষা করে, তারপর ঠিক 4s)।
 
 ```text
 No jitter:        all clients retry at t = 1, 2, 4, 8  (synchronized spikes)
@@ -32,55 +40,55 @@ Full jitter:      each waits random(0, 2^n)            (smoothly spread out)
 wait = random_between(0, min(cap, base * 2^attempt))
 ```
 
-**Full jitter** — picking a random delay anywhere between zero and the backoff ceiling — is the simplest scheme that works well; it both backs off and de-synchronizes.
+**Full jitter** — শূন্য আর backoff সীমার মধ্যে যেকোনো জায়গায় একটি random delay বেছে নেওয়া — সবচেয়ে সরল স্কিম যা ভালো কাজ করে; এটা একইসাথে backoff করে আর de-synchronize করে।
 
-### Knowing when not to retry
+### কখন retry না করতে হয় তা জানা
 
-Retries only make sense for _transient_ failures. Retrying a deterministic error (a `400 Bad Request`, a validation failure) just wastes resources — it will fail identically every time. And retries must be **bounded**: cap the number of attempts and the total time, then give up and surface the failure. Unbounded retries turn a transient blip into a permanent resource leak. Pair retries with a **circuit breaker**: after too many failures to a dependency, stop calling it for a cooldown period, failing fast instead of piling up.
+Retry শুধু _ক্ষণস্থায়ী_ failure-এর জন্য অর্থপূর্ণ। একটি deterministic error (একটি `400 Bad Request`, একটি validation failure) retry করা শুধু resource নষ্ট করে — এটা প্রতিবার একইভাবে fail করবে। আর retry অবশ্যই **সীমাবদ্ধ** হতে হবে: চেষ্টার সংখ্যা আর মোট সময় সীমিত করো, তারপর হাল ছেড়ে failure সামনে আনো। অসীম retry একটি ক্ষণস্থায়ী ব্লিপকে একটি স্থায়ী resource leak-এ পরিণত করে। Retry-কে একটি **circuit breaker**-এর সাথে জোড়ো: একটি dependency-তে অনেকবার failure-এর পর, একটি cooldown সময়ের জন্য এটা call করা বন্ধ করো, জমে যাওয়ার বদলে দ্রুত fail করো।
 
 <Callout type="warning">
 
-**Retries multiply load at the worst possible moment** — during an outage, when the system is already struggling. Always combine retries with exponential backoff, jitter, a hard attempt cap, and a circuit breaker. Retries without these turn a small incident into a self-inflicted, cascading outage.
+**Retry সবচেয়ে খারাপ সম্ভাব্য মুহূর্তে load বাড়ায়** — একটি outage-এর সময়, যখন সিস্টেম ইতিমধ্যে সংগ্রাম করছে। সবসময় retry-কে exponential backoff, jitter, একটি কঠিন চেষ্টার সীমা, আর একটি circuit breaker-এর সাথে মেলাও। এগুলো ছাড়া retry একটি ছোট ঘটনাকে একটি স্ব-প্রণোদিত, cascading outage-এ পরিণত করে।
 
 </Callout>
 
-## Idempotency is the prerequisite for retries
+## Idempotency হলো retry-র পূর্বশর্ত
 
-Here is the catch that makes the previous chapter essential: **you cannot safely retry an operation unless it is idempotent.** Recall the slow-vs-dead ambiguity (chapter 2) — when a call times out, the operation may have _already succeeded_; the response just got lost. If you retry a non-idempotent operation in that situation, you do it twice: a double charge, a duplicate order, a doubled balance.
+এখানে সেই ফাঁকিটা যা আগের অধ্যায়কে অপরিহার্য করে: **একটি operation idempotent না হলে তুমি নিরাপদে retry করতে পারো না।** slow-বনাম-dead অস্পষ্টতা মনে করো (অধ্যায় ২) — একটি call time out করলে, operation-টা হয়তো _ইতিমধ্যে সফল হয়েছে_; response-টাই হারিয়েছে। সেই পরিস্থিতিতে তুমি একটি non-idempotent operation retry করলে, তুমি এটা দুবার করো: একটি double charge, একটি duplicate order, একটি দ্বিগুণ balance।
 
-So retries and idempotency are inseparable. Before you add a retry anywhere, ensure the target operation is idempotent — naturally (setting a value, which is the same however many times you do it) or via an **idempotency key** (chapter 8) that lets the server recognize and de-duplicate a repeated request.
+তাই retry আর idempotency অবিচ্ছেদ্য। কোথাও একটি retry যোগ করার আগে, নিশ্চিত করো target operation idempotent — স্বাভাবিকভাবে (একটি মান set করা, যা যতবারই করো একই) বা একটি **idempotency key** (অধ্যায় ৮) দিয়ে যা server-কে একটি পুনরাবৃত্ত request চিনতে ও de-duplicate করতে দেয়।
 
 ## Delivery semantics
 
-Every message-passing system makes one of three guarantees. Knowing which one you have — and which one you need — is fundamental.
+প্রতিটি message-passing সিস্টেম তিনটি গ্যারান্টির একটি দেয়। তোমার কোনটা আছে — আর কোনটা দরকার — তা জানা মৌলিক।
 
-| Semantic          | Guarantee                   | Risk                          | How                                     |
-| ----------------- | --------------------------- | ----------------------------- | --------------------------------------- |
-| **At-most-once**  | Delivered zero or one time  | May **lose** messages         | Send and forget; never retry            |
-| **At-least-once** | Delivered one or more times | May **duplicate** messages    | Retry until acknowledged                |
-| **Exactly-once**  | Effect happens once         | (Impossible as pure delivery) | At-least-once **+** idempotent consumer |
+| Semantic          | গ্যারান্টি                  | ঝুঁকি                            | কীভাবে                                  |
+| ----------------- | --------------------------- | -------------------------------- | --------------------------------------- |
+| **At-most-once**  | শূন্য বা একবার deliver হয়  | Message **হারাতে** পারে          | Send and forget; কখনো retry নয়         |
+| **At-least-once** | এক বা একাধিকবার deliver হয় | Message **duplicate** করতে পারে  | Acknowledge হওয়া পর্যন্ত retry         |
+| **Exactly-once**  | প্রভাব একবার ঘটে            | (বিশুদ্ধ delivery হিসেবে অসম্ভব) | At-least-once **+** idempotent consumer |
 
-The practical takeaways:
+ব্যবহারিক শিক্ষা:
 
-- **At-most-once** is acceptable only when losing a message is harmless — metrics, best-effort notifications.
-- **At-least-once** is the sensible default for anything that matters: retry until you get an acknowledgment, accept that duplicates will happen.
-- **Exactly-once** processing is achieved, not delivered: at-least-once plus a deduplicating, idempotent consumer (chapter 8). Stop chasing exactly-once _delivery_; it does not exist on an unreliable network.
+- **At-most-once** শুধু তখনই গ্রহণযোগ্য যখন একটি message হারানো নিরীহ — metrics, best-effort notification।
+- **At-least-once** হলো গুরুত্বপূর্ণ যেকোনো কিছুর জন্য যুক্তিসঙ্গত default: একটি acknowledgment না পাওয়া পর্যন্ত retry করো, মেনে নাও duplicate ঘটবে।
+- **Exactly-once** processing অর্জিত হয়, deliver হয় না: at-least-once প্লাস একটি deduplicating, idempotent consumer (অধ্যায় ৮)। exactly-once _delivery_-র পিছনে ছোটা বন্ধ করো; একটি অনির্ভরযোগ্য network-এ এটা নেই।
 
 ## Deduplication
 
-At-least-once delivery means duplicates are guaranteed, so consumers need to recognize and drop them. Practical dedup strategies:
+At-least-once delivery মানে duplicate নিশ্চিত, তাই consumer-কে সেগুলো চিনে drop করতে হবে। ব্যবহারিক dedup কৌশল:
 
-- **Idempotency key on each message** plus a store of processed keys — the consumer skips a key it has already handled.
-- **Natural idempotency** — design the operation so a replay is a no-op (e.g. "set status to shipped" rather than "increment shipped count").
-- **A deduplication window** — keep recently-seen message IDs for a bounded time (a TTL set, a Bloom filter), assuming duplicates arrive close together. This trades a tiny risk of a missed dedup against unbounded storage.
+- **প্রতিটি message-এ idempotency key** প্লাস process করা key-এর একটি store — consumer এমন একটি key এড়ায় যা এটা ইতিমধ্যে সামলেছে।
+- **Natural idempotency** — operation-টা এমনভাবে ডিজাইন করো যাতে একটি replay একটি no-op হয় (যেমন "shipped count বাড়াও"-এর বদলে "status shipped-এ set করো")।
+- **একটি deduplication window** — সাম্প্রতিক-দেখা message ID একটি সীমাবদ্ধ সময়ের জন্য রাখো (একটি TTL set, একটি Bloom filter), ধরে নিয়ে যে duplicate কাছাকাছি আসে। এটা একটি missed dedup-এর সামান্য ঝুঁকি অসীম storage-এর বিপরীতে trade করে।
 
-The dedup store has the same requirement as idempotency keys: marking a message "processed" and applying its effect must be **atomic**, or a crash between them reopens the duplicate window.
+Dedup store-এর idempotency key-এর মতোই একই প্রয়োজন: একটি message "processed" চিহ্নিত করা আর তার প্রভাব প্রয়োগ করা **atomic** হতে হবে, নয়তো তাদের মাঝে একটি crash duplicate window আবার খুলে দেয়।
 
-## Durable execution and workflows
+## Durable execution ও workflow
 
-A multi-step workflow — the order saga of chapter 8 — has a fragile property: if the process running it crashes at step 3, where does it resume? Plain code holds its progress in memory and in the call stack, both of which vanish on a crash. You are left writing tangled state machines and recovery logic by hand for every workflow.
+একটি multi-step workflow — অধ্যায় ৮-এর order saga — একটি ভঙ্গুর বৈশিষ্ট্য রাখে: এটা চালানো process ধাপ ৩-এ crash করলে, এটা কোথায় resume করে? Plain code তার অগ্রগতি memory-তে আর call stack-এ রাখে, দুটোই একটি crash-এ উবে যায়। তোমাকে প্রতিটি workflow-এর জন্য হাতে জটপাকানো state machine আর recovery logic লিখতে হয়।
 
-**Durable execution** engines (Temporal, AWS Step Functions, restate, and similar) solve this directly. They run your workflow as ordinary-looking code, but **persist every step's input and result** to durable storage as the workflow progresses. If the worker crashes, the engine restarts the workflow on another worker and **replays** it, skipping completed steps by feeding back their recorded results — so execution resumes exactly where it left off, sometimes hours or days later.
+**Durable execution** engine (Temporal, AWS Step Functions, restate, ও অনুরূপ) এটা সরাসরি সমাধান করে। তারা তোমার workflow-কে সাধারণ-দেখতে code হিসেবে চালায়, কিন্তু workflow এগোনোর সাথে সাথে **প্রতিটি ধাপের input ও result durable storage-এ persist করে**। Worker crash করলে, engine অন্য একটি worker-এ workflow restart করে আর এটা **replay** করে, সম্পন্ন ধাপগুলোর রেকর্ড করা result ফিরিয়ে দিয়ে সেগুলো এড়িয়ে — যাতে execution ঠিক যেখানে থেমেছিল সেখান থেকে resume করে, কখনো ঘণ্টা বা দিন পরে।
 
 ```text
 Workflow: charge -> reserve -> ship
@@ -94,29 +102,29 @@ On recovery:     replay -> charge: use saved result (skip)
                            ship: actually run    <- resumes here
 ```
 
-For replay to be correct, the durable engine relies on the very ideas from this whole track: steps must be **idempotent** (replay may re-invoke a step whose result wasn't recorded before the crash), and side effects go through the engine so they can be tracked and retried. Durable execution is, in effect, the saga + outbox + idempotency + retry stack of chapter 8 packaged as a reusable runtime — which is why it has become the modern default for orchestrating long-running, multi-service workflows.
+Replay সঠিক হতে, durable engine এই পুরো ট্র্যাকের একদম সেই ধারণাগুলোর উপর নির্ভর করে: ধাপ **idempotent** হতে হবে (replay এমন একটি ধাপ পুনরায় invoke করতে পারে যার result crash-এর আগে রেকর্ড হয়নি), আর side effect engine-এর মধ্য দিয়ে যায় যাতে সেগুলো track ও retry করা যায়। Durable execution কার্যত অধ্যায় ৮-এর saga + outbox + idempotency + retry stack একটি পুনর্ব্যবহারযোগ্য runtime হিসেবে প্যাকেজ করা — এজন্যই এটা দীর্ঘ-চলা, multi-service workflow orchestrate করার আধুনিক default হয়ে উঠেছে।
 
 <Callout type="info">
 
-**Note:** Durable execution does not repeal the laws of distributed systems — it _encapsulates_ the patterns you would otherwise build by hand. Your activities still must be idempotent, your timeouts still can't tell slow from dead, and "exactly-once" is still really at-least-once plus dedup. The engine just removes the boilerplate of persisting and resuming workflow state.
+**নোট:** Durable execution distributed system-এর নিয়ম রদ করে না — এটা সেই প্যাটার্নগুলো _encapsulate_ করে যেগুলো তুমি অন্যথায় হাতে বানাতে। তোমার activity-কে এখনো idempotent হতে হবে, তোমার timeout এখনো slow-কে dead থেকে বলতে পারে না, আর "exactly-once" এখনো আসলে at-least-once প্লাস dedup। Engine শুধু workflow state persist ও resume করার boilerplate সরিয়ে দেয়।
 
 </Callout>
 
-## Designing for partial failure: a checklist
+## Partial failure-এর জন্য ডিজাইন: একটি checklist
 
-Pulling the whole track together, a system that survives the real world tends to share these traits:
+পুরো ট্র্যাক একসাথে টেনে, বাস্তব জগতে টিকে থাকা একটি সিস্টেম এই বৈশিষ্ট্যগুলো ভাগ করে:
 
-- **Assume every dependency can be unavailable.** Add timeouts to every remote call; never block forever.
-- **Make operations idempotent** so retries and replays are safe.
-- **Retry with exponential backoff, jitter, a cap, and a circuit breaker** — never naively.
-- **Choose at-least-once delivery** and pair it with idempotent, deduplicating consumers.
-- **Avoid 2PC across services**; use sagas with compensations and the outbox pattern.
-- **Degrade gracefully:** serve stale data or a reduced feature set rather than failing completely, where the consistency model allows it.
-- **Pick the weakest consistency model** that meets each requirement, to maximize availability and minimize latency.
-- **Make failure observable:** without good metrics, logs, and traces, you cannot tell slow from dead — the central problem of chapter 2 — let alone fix it.
+- **ধরে নাও প্রতিটি dependency অনুপলব্ধ থাকতে পারে।** প্রতিটি remote call-এ timeout যোগ করো; কখনো চিরকাল block কোরো না।
+- **Operation idempotent বানাও** যাতে retry আর replay নিরাপদ হয়।
+- **Exponential backoff, jitter, একটি সীমা, ও একটি circuit breaker দিয়ে retry করো** — কখনো সরলভাবে নয়।
+- **At-least-once delivery বেছে নাও** আর এটাকে idempotent, deduplicating consumer-এর সাথে মেলাও।
+- **Service জুড়ে 2PC এড়াও**; compensation সহ saga আর outbox pattern ব্যবহার করো।
+- **সুন্দরভাবে degrade করো:** consistency model যেখানে অনুমতি দেয়, সম্পূর্ণ fail করার বদলে বাসি data বা একটি কমানো feature set সার্ভ করো।
+- **সবচেয়ে দুর্বল consistency model বেছে নাও** যা প্রতিটি প্রয়োজন মেটায়, availability সর্বোচ্চ ও latency সর্বনিম্ন করতে।
+- **Failure observable বানাও:** ভালো metrics, log, ও trace ছাড়া, তুমি slow-কে dead থেকে বলতে পারো না — অধ্যায় ২-এর কেন্দ্রীয় সমস্যা — ঠিক করা তো দূরের কথা।
 
 <Callout type="tip">
 
-**The one habit that matters most:** treat the unhappy path as the main path. In distributed systems, timeouts, retries, duplicates, and partial failures are not edge cases you handle if you have time — they are the normal operating condition. Code that handles them first, and the happy path as a special case of "nothing went wrong this time," is code that survives production.
+**যে একটি অভ্যাস সবচেয়ে গুরুত্বপূর্ণ:** unhappy path-কে মূল path হিসেবে দেখো। Distributed system-এ, timeout, retry, duplicate, ও partial failure এমন edge case নয় যা সময় থাকলে সামলাও — এগুলো স্বাভাবিক কর্মাবস্থা। যে code এগুলো প্রথমে সামলায়, আর happy path-কে "এবার কিছু ভুল হয়নি" এর একটি বিশেষ ক্ষেত্র হিসেবে দেখে, সেই code production-এ টিকে থাকে।
 
 </Callout>

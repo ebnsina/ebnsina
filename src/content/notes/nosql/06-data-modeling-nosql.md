@@ -1,9 +1,9 @@
 ---
-title: 'Data Modeling for NoSQL'
-subtitle: 'Access-pattern-first design, deliberate denormalization, single-table design in DynamoDB, and relationships when there are no joins.'
+title: 'NoSQL-এর জন্য ডেটা মডেলিং'
+subtitle: 'অ্যাক্সেস-প্যাটার্ন-ফার্স্ট ডিজাইন, ইচ্ছাকৃত ডিনরমালাইজেশন, DynamoDB-তে সিঙ্গেল-টেবিল ডিজাইন, আর join না থাকলে relationship কীভাবে সামলাবেন।'
 chapter: 6
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['access patterns', 'single-table', 'denormalization']
 ---
 
@@ -13,30 +13,38 @@ topics: ['access patterns', 'single-table', 'denormalization']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A library can shelve books by subject _or_ by author _or_ by publication year — but only one at a time on the physical shelf. To make every kind of search fast, librarians build card catalogs: pre-sorted index cards, one drawer per way you might search. NoSQL modeling is the same move. You can't reshuffle the shelf per query, so you decide up front every way you'll look things up and physically arrange (and duplicate) the data to make each lookup a single grab.
+একটা লাইব্রেরি বইগুলো সাজাতে পারে বিষয় অনুযায়ী _অথবা_ লেখক অনুযায়ী _অথবা_ প্রকাশের বছর অনুযায়ী — কিন্তু ফিজিক্যাল শেলফে একসাথে যেকোনো একভাবেই। প্রতি ধরনের খোঁজাখুঁজি দ্রুত করতে লাইব্রেরিয়ানরা কার্ড ক্যাটালগ বানায়: আগে থেকে সাজানো ইনডেক্স কার্ড, আপনি যতভাবে খুঁজতে পারেন প্রতিটির জন্য আলাদা একটা ড্রয়ার। NoSQL মডেলিংও ঠিক একই ব্যাপার। আপনি প্রতি query-র জন্য শেলফ নতুন করে সাজাতে পারবেন না, তাই আগে থেকেই ঠিক করে ফেলেন কোন কোন উপায়ে জিনিস খুঁজবেন এবং প্রতিটা lookup যাতে এক টানেই পাওয়া যায় সেভাবে ডেটা ফিজিক্যালি সাজিয়ে (এবং ডুপ্লিকেট করে) রাখেন।
 
 </Callout>
 
-## Access-Pattern-First Design
+## গল্পে বুঝি
 
-Relational modeling starts with the _data_: identify entities, normalize them, and trust the query planner to assemble any question later. NoSQL modeling inverts this. You start with the _questions_ and arrange storage so each one is a direct lookup, because there is no general-purpose join engine to lean on.
+ফাতিমা আল-ফিহরি আপা একটা টিফিন সার্ভিস চালান — অফিসপাড়ায় দুপুরের খাবার পৌঁছে দেন। শুরুতে তাঁর রান্নাঘরে আলাদা আলাদা বড় গামলা ছিল: একটায় ভাত, একটায় মুরগির তরকারি, একটায় সালাদ। যখনই কোনো অর্ডার আসত, একজন লোক প্রতিটা গামলা থেকে আলাদা করে তুলে একটা বাক্সে সাজাত। কিন্তু লাঞ্চ আওয়ারে যখন একসাথে দুইশো অর্ডার এসে পড়ে, তখন এই তুলে-সাজানোর কাজটাই বটলনেক হয়ে যায় — গ্রাহকের বাক্স দেরিতে পৌঁছায়, ভাত ঠান্ডা হয়ে যায়।
 
-The process:
+তাই ফাতিমা আল-ফিহরি আপা কৌশল বদলালেন। এখন তিনি ভোরেই পুরো বাক্স আগে থেকে প্যাক করে ফেলেন — প্রতিটা বাক্সে ভাত, তরকারি আর সালাদ একসাথে গোছানো, ঠিক যেভাবে গ্রাহক অর্ডার করেছেন। অর্ডার এলেই শুধু র‍্যাক থেকে বাক্সটা তুলে দিয়ে দেওয়া, এক টানেই কাজ শেষ। হ্যাঁ, একই মুরগির তরকারি এখন একশোটা বাক্সে আলাদা আলাদা করে ঢালা আছে — জিনিসটা ডুপ্লিকেট হয়েছে। কিন্তু তাতে ঠান্ডা মাথায় তিনি রাজি, কারণ সার্ভ করার সময়ে আর কোনো জোড়া লাগানোর কাজ থাকে না।
 
-1. **Enumerate every access pattern.** Write them as concrete sentences: "get a user by id," "list a user's orders newest-first," "get an order with its line items," "find all orders containing SKU X."
-2. **Note the frequency and latency budget of each.** The hot path deserves the most design effort.
-3. **Design storage so the hot patterns are single-key (or single-partition) reads.** Shape documents, partition keys, and duplicated tables to match.
-4. **Add secondary indexes for the rarer patterns.**
+এই গল্পটাই আসলে **NoSQL data modeling**। আলাদা গামলায় রেখে প্রতি অর্ডারে সাজানো হলো relational **normalization** — সব কিছু একবার রাখো, প্রতিবার read-এ join করে জোড়া লাগাও। আর আগে থেকে পুরো বাক্স প্যাক করাটা হলো **access pattern** ধরে মডেল করা: আপনি জানেন খাবারটা কীভাবে _সার্ভ_ হবে, তাই সেভাবেই সম্পর্কযুক্ত ডেটা **embed** করে **denormalize** করে রাখেন, এমনকি সেজন্য একই তরকারি অনেক বাক্সে **duplicate** হলেও — যাতে প্রতিটা read এক fetch-এই মিটে যায়। বাস্তবে MongoDB-তে একটা order document-এর ভেতরেই তার line item গুলো embed করে রাখাটা ঠিক এই কাজটাই করে; পড়ার সময় আর অন্য collection-এ গিয়ে জোড়া লাগাতে হয় না।
 
-If you cannot list your access patterns, you are not ready to model in NoSQL — that uncertainty is precisely what a relational database's flexibility is for.
+## অ্যাক্সেস-প্যাটার্ন-ফার্স্ট ডিজাইন
 
-## Denormalization and Duplication
+Relational মডেলিং শুরু হয় _ডেটা_ দিয়ে: entity গুলো চিহ্নিত করুন, normalize করুন, আর পরে যেকোনো প্রশ্ন সাজিয়ে দেওয়ার জন্য query planner-এর ওপর ভরসা রাখুন। NoSQL মডেলিং এটা উল্টে দেয়। আপনি শুরু করেন _প্রশ্ন_ দিয়ে এবং storage এমনভাবে সাজান যাতে প্রতিটা প্রশ্ন হয়ে যায় সরাসরি একটা lookup, কারণ ভরসা করার মতো কোনো general-purpose join engine এখানে নেই।
 
-Relational modeling prizes normalization: store each fact once, reference it everywhere. NoSQL deliberately does the opposite — it **duplicates** data so reads don't have to join.
+প্রক্রিয়াটা:
 
-Consider showing an order with the customer's name. Normalized, the order holds only `customerId` and you fetch the customer separately. Denormalized, you copy the name into the order:
+1. **প্রতিটা access pattern লিখে ফেলুন।** স্পষ্ট বাক্য হিসেবে লিখুন: "id দিয়ে একজন user আনো," "একজন user-এর order গুলো নতুন-আগে ক্রমে দেখাও," "একটা order তার line item সহ আনো," "SKU X আছে এমন সব order খুঁজে বের করো।"
+2. **প্রতিটার frequency আর latency budget নোট করুন।** hot path-ই সবচেয়ে বেশি ডিজাইন-শ্রম পাওয়ার যোগ্য।
+3. **Storage এমনভাবে ডিজাইন করুন যাতে hot pattern গুলো single-key (বা single-partition) read হয়।** document, partition key আর ডুপ্লিকেট করা টেবিল এমনভাবে গঠন করুন যাতে মিলে যায়।
+4. **বিরল pattern গুলোর জন্য secondary index যোগ করুন।**
+
+আপনি যদি আপনার access pattern গুলো লিস্ট করতে না পারেন, তাহলে আপনি এখনো NoSQL-এ মডেল করার জন্য প্রস্তুত নন — ঠিক ওই অনিশ্চয়তাটা সামলানোর জন্যই relational database-এর নমনীয়তা।
+
+## ডিনরমালাইজেশন আর ডুপ্লিকেশন
+
+Relational মডেলিং normalization-কে মূল্য দেয়: প্রতিটা তথ্য একবার রাখো, সব জায়গায় reference করো। NoSQL ইচ্ছা করে ঠিক উল্টোটা করে — এটা ডেটা **ডুপ্লিকেট** করে যাতে read-এর সময় join করতে না হয়।
+
+ধরুন একটা order দেখাতে চান customer-এর নাম সহ। Normalized অবস্থায় order-এ শুধু `customerId` থাকে আর customer-কে আলাদা করে fetch করেন। Denormalized অবস্থায় নামটা order-এর ভেতরেই copy করে রাখেন:
 
 ```json
 {
@@ -47,21 +55,21 @@ Consider showing an order with the customer's name. Normalized, the order holds 
 }
 ```
 
-Now rendering the order is one read. The cost surfaces on writes: if Zubaida renames herself, every order carrying `customerName` is stale until you update it. You accept that trade because, for most workloads, reads vastly outnumber that kind of write, and a slightly stale display name is harmless.
+এখন order render করতে একটাই read। খরচটা দেখা দেয় write-এর বেলায়: Zubaida যদি নিজের নাম বদলায়, `customerName` বহন করা প্রতিটা order আপনি update না করা পর্যন্ত পুরনো (stale) থেকে যাবে। আপনি এই বিনিময়টা মেনে নেন কারণ বেশিরভাগ workload-এ এ ধরনের write-এর তুলনায় read অনেক অনেক বেশি হয়, আর একটু পুরনো display name দেখানো ক্ষতিকর কিছু নয়।
 
-Denormalization is a deliberate exchange: **cheaper reads and write fan-out, in return for write amplification and the burden of keeping copies in sync.** The skill is choosing _which_ fields to duplicate — copy the small, hot, display-only fields; reference the large, volatile, or rarely-shown ones.
+ডিনরমালাইজেশন একটা ইচ্ছাকৃত বিনিময়: **সস্তা read আর write fan-out, বিনিময়ে write amplification আর copy গুলো sync রাখার দায়িত্ব।** দক্ষতাটা হলো _কোন_ field গুলো ডুপ্লিকেট করবেন সেটা বেছে নেওয়া — ছোট, hot, শুধু-দেখানোর field গুলো copy করুন; বড়, দ্রুত-বদলানো বা কালেভদ্রে দেখানো field গুলো reference করুন।
 
 <Callout type="tip">
 
-**Note:** Duplicate data you read often and update rarely. A user's display name (read on every order, changed almost never) is a great duplication candidate. A user's account balance (changes constantly, must be exact) is a terrible one — never duplicate the source of truth for something that must stay strictly correct.
+**নোট:** যে ডেটা বেশি read করেন আর কম update করেন সেটা ডুপ্লিকেট করুন। একজন user-এর display name (প্রতি order-এ read হয়, প্রায় কখনোই বদলায় না) দারুণ ডুপ্লিকেশন candidate। একজন user-এর account balance (সারাক্ষণ বদলায়, নিখুঁত হতে হবে) জঘন্য candidate — যে জিনিসকে কঠোরভাবে সঠিক থাকতে হয় তার source of truth কখনো ডুপ্লিকেট করবেন না।
 
 </Callout>
 
-## Single-Table Design (DynamoDB)
+## সিঙ্গেল-টেবিল ডিজাইন (DynamoDB)
 
-DynamoDB's most powerful and counterintuitive pattern is putting _multiple entity types in one table_. Because a query can only hit one table and one partition efficiently, the way to fetch related entities together is to make them **share a partition**.
+DynamoDB-র সবচেয়ে শক্তিশালী আর প্রথম দেখায় উল্টো-মনে-হওয়া pattern হলো _একটাই টেবিলে একাধিক ধরনের entity_ রাখা। যেহেতু একটা query কার্যকরভাবে শুধু একটা টেবিল আর একটা partition-এই হিট করতে পারে, সম্পর্কযুক্ত entity গুলো একসাথে আনার উপায় হলো তাদের **একই partition share করানো**।
 
-The trick is overloaded, generic keys — `PK` (partition) and `SK` (sort) — whose meaning is encoded by a prefix:
+কৌশলটা হলো overloaded, generic key — `PK` (partition) আর `SK` (sort) — যাদের অর্থ একটা prefix দিয়ে এনকোড করা:
 
 ```json
 { "PK": "USER#42", "SK": "PROFILE",      "name": "Zubaida", "tier": "gold" }
@@ -70,7 +78,7 @@ The trick is overloaded, generic keys — `PK` (partition) and `SK` (sort) — w
 { "PK": "USER#42", "SK": "ADDRESS#home", "city": "Dhaka" }
 ```
 
-All of user 42's items live in one partition. Now a single query answers several questions at once:
+user 42-এর সব item একটাই partition-এ থাকে। এখন একটা query একসাথে কয়েকটা প্রশ্নের উত্তর দেয়:
 
 ```text
 # Everything about user 42 (profile, orders, addresses) — one query
@@ -83,15 +91,15 @@ Query: PK = "USER#42" AND begins_with(SK, "ORDER#")
 GetItem: PK = "USER#42", SK = "PROFILE"
 ```
 
-For access patterns that don't start from the partition key — say "all `pending` orders across every user" — you add a **Global Secondary Index (GSI)** that re-partitions the same items by a different key (here, `status`). Each GSI is, in effect, another card-catalog drawer over the same data.
+যেসব access pattern partition key থেকে শুরু হয় না — যেমন "প্রতিটা user জুড়ে সব `pending` order" — তার জন্য আপনি একটা **Global Secondary Index (GSI)** যোগ করেন যা একই item গুলোকে একটা ভিন্ন key দিয়ে (এখানে `status`) নতুন করে partition করে। প্রতিটা GSI আসলে একই ডেটার ওপর আরেকটা কার্ড-ক্যাটালগ ড্রয়ার।
 
-Single-table design is dense and unintuitive, and it is justified only when single-digit-millisecond latency at massive scale matters. For smaller systems it is over-engineering — but understanding it reveals the core NoSQL lesson: **the key structure _is_ the data model.**
+Single-table design ঘন আর সহজবোধ্য নয়, আর এটা তখনই যুক্তিসঙ্গত যখন বিশাল স্কেলে single-digit-millisecond latency দরকার হয়। ছোট সিস্টেমের জন্য এটা over-engineering — তবে এটা বোঝা NoSQL-এর মূল শিক্ষাটা খুলে দেয়: **key-এর গঠন _ই_ হলো ডেটা মডেল।**
 
-## Relationships Without Joins
+## Join ছাড়াই Relationship
 
-Without a `JOIN` keyword, you model relationships structurally. The right technique depends on cardinality.
+`JOIN` keyword ছাড়া আপনি relationship মডেল করেন গঠনগতভাবে (structurally)। সঠিক কৌশলটা নির্ভর করে cardinality-র ওপর।
 
-**One-to-few (bounded):** embed the children in the parent.
+**One-to-few (সীমাবদ্ধ):** child গুলোকে parent-এর ভেতরে embed করুন।
 
 ```json
 {
@@ -103,14 +111,14 @@ Without a `JOIN` keyword, you model relationships structurally. The right techni
 }
 ```
 
-**One-to-many (unbounded):** keep children as separate items sharing the parent's partition (single-table), or reference by id and query a secondary index.
+**One-to-many (অসীম):** child গুলোকে parent-এর partition share করা আলাদা item হিসেবে রাখুন (single-table), অথবা id দিয়ে reference করে একটা secondary index-এ query করুন।
 
 ```json
 { "PK": "USER#42", "SK": "ORDER#8841" }
 { "PK": "USER#42", "SK": "ORDER#8842" }
 ```
 
-**Many-to-many:** store the link as its own item(s), often duplicated so the relationship is fast to read from _both_ directions.
+**Many-to-many:** link-টাকে তার নিজের item হিসেবে রাখুন, প্রায়ই ডুপ্লিকেট করে যাতে relationship-টা _দুই_ দিক থেকেই দ্রুত read করা যায়।
 
 ```json
 // "student 7 is enrolled in course 9" — written both ways for two-direction reads
@@ -118,13 +126,13 @@ Without a `JOIN` keyword, you model relationships structurally. The right techni
 { "PK": "COURSE#9", "SK": "STUDENT#7" }
 ```
 
-The pattern repeats across families: in MongoDB you choose embed-vs-reference; in Cassandra you build one table per direction of the relationship; in DynamoDB you co-locate by partition. In all of them, **the relationship is something you physically arrange and maintain, not something the database derives on the fly.**
+Pattern-টা পরিবারভেদে বারবার আসে: MongoDB-তে আপনি embed-নাকি-reference বেছে নেন; Cassandra-তে relationship-এর প্রতি দিকের জন্য একটা করে টেবিল বানান; DynamoDB-তে partition দিয়ে একসাথে রাখেন। সবগুলোতেই, **relationship এমন একটা জিনিস যা আপনি ফিজিক্যালি সাজান আর রক্ষণাবেক্ষণ করেন, database তাৎক্ষণিকভাবে বের করে দেয় না।**
 
-## A Worked Modeling Session
+## একটা বাস্তব মডেলিং সেশন
 
-Suppose a SaaS app needs: get a workspace; list a workspace's projects; list a project's tasks; and "show me all tasks assigned to me across all projects."
+ধরুন একটা SaaS অ্যাপের দরকার: একটা workspace আনা; একটা workspace-এর project গুলো লিস্ট করা; একটা project-এর task গুলো লিস্ট করা; আর "সব project জুড়ে আমাকে assign করা সব task দেখাও।"
 
-The first three are a clean hierarchy — co-locate them by workspace and project so each is a single-partition read:
+প্রথম তিনটা একটা পরিষ্কার hierarchy — এদের workspace আর project দিয়ে একসাথে রাখুন যাতে প্রতিটা single-partition read হয়:
 
 ```json
 { "PK": "WS#cordoba",            "SK": "META",            "name": "Cordoba" }
@@ -133,18 +141,18 @@ The first three are a clean hierarchy — co-locate them by workspace and projec
 { "PK": "WS#cordoba#PROJ#web",   "SK": "TASK#102",        "title": "Add auth", "assignee": "u_19" }
 ```
 
-The fourth pattern cuts _across_ the hierarchy — it doesn't start from a workspace or project, so no partition serves it. That is the textbook case for a secondary index keyed by assignee:
+চতুর্থ pattern-টা hierarchy-র _আড়াআড়ি_ কাটে — এটা কোনো workspace বা project থেকে শুরু হয় না, তাই কোনো partition এর সেবা দেয় না। assignee দিয়ে key করা একটা secondary index-এর ঠিক textbook উদাহরণ এটা:
 
 ```text
 GSI:  PK = ASSIGNEE#u_42   →   returns every task assigned to u_42, any project
 ```
 
-Notice the rhythm: hierarchical reads fall out of the key design; cross-cutting reads each get an index. You did not write a single join — you arranged the data so the questions answer themselves.
+ছন্দটা খেয়াল করুন: hierarchical read গুলো key design থেকেই বেরিয়ে আসে; আড়াআড়ি read প্রতিটা একটা করে index পায়। আপনি একটাও join লেখেননি — আপনি ডেটা এমনভাবে সাজিয়েছেন যাতে প্রশ্নগুলো নিজেরাই নিজেদের উত্তর দেয়।
 
 <Callout type="warning">
 
-**Warning:** The cardinal sin of NoSQL modeling is reproducing a normalized relational schema and then emulating joins in application code — fetching a list of ids, then looping to fetch each one (the "N+1" pattern across the network). It is slow, fragile, and throws away the reason you chose NoSQL. If your design needs joins on every read, either denormalize so the read is one lookup, or admit the workload wanted a relational database and use one.
+**সতর্কতা:** NoSQL মডেলিংয়ের চরম পাপ হলো একটা normalized relational schema হুবহু বানিয়ে ফেলা এবং তারপর application code-এ join এমুলেট করা — id-এর একটা লিস্ট আনা, তারপর loop চালিয়ে প্রতিটা একে একে আনা (network জুড়ে "N+1" pattern)। এটা ধীর, ভঙ্গুর, আর NoSQL বেছে নেওয়ার কারণটাকেই ছুড়ে ফেলে দেয়। আপনার ডিজাইনে যদি প্রতি read-এ join লাগে, হয় denormalize করুন যাতে read এক lookup হয়, নয়তো মেনে নিন যে workload-টার একটা relational database দরকার ছিল আর সেটাই ব্যবহার করুন।
 
 </Callout>
 
-Model around how you read, duplicate what you read often and change rarely, and make every relationship a deliberate structure. Do that and NoSQL gives you predictable performance at any scale. Skip it and you build a slower, buggier relational database with none of the guardrails.
+আপনি কীভাবে read করেন তার চারপাশে মডেল করুন, যা বেশি read করেন আর কম বদলান তা ডুপ্লিকেট করুন, আর প্রতিটা relationship-কে একটা ইচ্ছাকৃত গঠন বানান। এটা করলে NoSQL আপনাকে যেকোনো স্কেলে অনুমানযোগ্য performance দেবে। এটা এড়িয়ে গেলে আপনি একটা ধীরতর, বেশি বাগযুক্ত relational database বানাবেন — কোনো রকম guardrail ছাড়াই।

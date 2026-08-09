@@ -1,9 +1,9 @@
 ---
-title: 'What Redis Is & the Core Model'
-subtitle: 'An in-memory key-value store with a single-threaded event loop and a dead-simple wire protocol.'
+title: 'Redis কী & Core Model'
+subtitle: 'একটি in-memory key-value store, single-threaded event loop আর অসম্ভব সরল একটি wire protocol সহ।'
 chapter: 1
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['redis', 'in-memory', 'single-threaded']
 ---
 
@@ -11,37 +11,45 @@ topics: ['redis', 'in-memory', 'single-threaded']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What Redis actually is
+## গল্পে বুঝি
 
-Redis stands for **RE**mote **DI**ctionary **S**erver. At its heart it is a dictionary — a map from keys to values — that lives in RAM and is reachable over the network. Where a plain hash map holds only opaque blobs, Redis values are themselves rich data structures: strings, lists, hashes, sets, sorted sets, and more. The server understands these structures and exposes operations on them, so the work happens next to the data instead of being shipped to your application.
+আল-খোয়ারিজমি মিয়ার মুদি দোকানে কোনো দাম-স্টকের খাতা কাউন্টারে নেই। আপনি জিজ্ঞেস করলেন, "চিনি কত?" — সাথে সাথে জবাব, "আটান্ন টাকা কেজি, বস্তা আছে তিনটা।" ডাল, তেল, আটা — যা-ই নাম ধরে জিজ্ঞেস করেন, আল-খোয়ারিজমি মিয়া চোখ বন্ধ করে মুখস্থ বলে দেন, কারণ সব দাম আর স্টকের হিসাব তার মাথায় গাঁথা। পাশের দোকানের ইবনে সিনা প্রতিবার পেছনের স্টোর রুমে হেঁটে গিয়ে ফাইল ঘেঁটে দাম বের করে — আল-খোয়ারিজমি মিয়ার কাছে সেই হাঁটাহাঁটির বালাই নেই, উত্তর আসে নিমেষে।
 
-Because the entire dataset lives in memory, reads and writes are measured in microseconds, not milliseconds. There is no disk seek on the hot path. Disk is used only for durability (covered in chapter 4), never to serve a normal request.
+তবে এই মুখস্থ রাখার একটা ঝুঁকি আছে। একদিন প্রচণ্ড জ্বরে আল-খোয়ারিজমি মিয়া দুদিন অজ্ঞান হয়ে রইলেন — উঠে দেখলেন মাথার অনেক হিসাব ঘোলা হয়ে গেছে। যেগুলো আগেভাগে খাতায় টুকে রেখেছিলেন সেগুলোই কেবল ফিরে পেলেন, বাকিটা হারিয়ে গেল। তাই তিনি এখন গুরুত্বপূর্ণ হিসাবগুলো মাথায় রাখার পাশাপাশি একটা খাতাতেও লিখে রাখেন।
 
-## Why it is fast
+এটাই আসলে Redis। আল-খোয়ারিজমি মিয়ার মাথা হলো RAM — সব ডেটা সেখানেই থাকে বলে এটা একটা **in-memory store**, আর তাই উত্তর আসে বিদ্যুৎবেগে (এই **speed**-টাই Redis-এর আসল জোর)। জিনিসের নাম ধরে জিজ্ঞেস করাটা হলো **key** দিয়ে খোঁজা — নাম বললেই মান পাওয়া, ঠিক **key-value** মডেল। আর জ্বরে হিসাব হারানোটা হলো **volatility**: RAM-এর ডেটা power চলে গেলে মুছে যায়, খাতায় (disk-এ) লিখে না রাখলে ফেরত পাওয়া যায় না। বাস্তবে এই কারণেই Redis-কে বেশি ব্যবহার করা হয় cache আর session storage-এর মতো কাজে — যেখানে দ্রুত উত্তর দরকার, আর মূল সত্যটা (source of truth) database-এ থেকেই যায়।
 
-Three design choices explain most of Redis's speed.
+## Redis আসলে কী
 
-- **Everything is in memory.** RAM access is roughly a hundred thousand times faster than a random disk seek. Redis trades the cost of memory for the speed of memory.
-- **A single-threaded command loop.** One thread executes commands one at a time, in order. This sounds like a limitation, and for raw CPU parallelism it is. But it means there are no locks, no mutexes, and no contention on the data structures. Each command runs to completion atomically with respect to other commands. The simplicity is itself a performance feature.
-- **An efficient event loop and a tiny protocol.** Redis multiplexes thousands of client connections on that one thread using an event loop (epoll/kqueue under the hood). Parsing the protocol is nearly free.
+Redis মানে **RE**mote **DI**ctionary **S**erver। মূলে এটা একটা dictionary — keys থেকে values-এর একটা map — যা RAM-এ থাকে এবং network-এর মাধ্যমে পৌঁছানো যায়। একটা সাধারণ hash map যেখানে শুধু অস্বচ্ছ blob রাখে, Redis-এর values নিজেরাই সমৃদ্ধ data structure: strings, lists, hashes, sets, sorted sets, আরও অনেক কিছু। server এই structure-গুলো বোঝে এবং এগুলোর উপর অপারেশন expose করে, তাই কাজটা ডেটার পাশেই ঘটে, তোমার application-এ পাঠানোর বদলে।
 
-A single-threaded core does not mean a single process. Modern Redis offloads some work — closing connections, certain deletes, and persistence — to background threads, and you run multiple Redis processes to use multiple cores. But the logical model you reason about is: one command at a time, atomic, no surprises.
+যেহেতু পুরো dataset memory-তে থাকে, read আর write মাপা হয় microsecond-এ, millisecond-এ নয়। hot path-এ কোনো disk seek নেই। disk শুধু durability-র জন্য ব্যবহৃত হয় (অধ্যায় 4-এ কভার করা), কখনোই একটা সাধারণ request serve করতে নয়।
+
+## কেন এটা দ্রুত
+
+তিনটা design সিদ্ধান্ত Redis-এর গতির বেশিরভাগটা ব্যাখ্যা করে।
+
+- **সবকিছু memory-তে।** RAM access একটা random disk seek-এর চেয়ে মোটামুটি এক লক্ষ গুণ দ্রুত। Redis memory-র খরচ দিয়ে memory-র গতি কিনে নেয়।
+- **একটা single-threaded command loop।** একটা thread একবারে একটা করে command চালায়, ক্রম অনুযায়ী। এটা একটা সীমাবদ্ধতার মতো শোনায়, আর raw CPU parallelism-এর জন্য তা-ই। কিন্তু এর মানে কোনো lock নেই, কোনো mutex নেই, এবং data structure-গুলোর উপর কোনো contention নেই। প্রতিটা command অন্য command-গুলোর তুলনায় atomically সম্পূর্ণ হয়ে চলে। এই সরলতা নিজেই একটা performance feature।
+- **একটা efficient event loop আর ক্ষুদ্র protocol।** Redis সেই একটা thread-এ হাজারো client connection-কে একটা event loop ব্যবহার করে multiplex করে (ভেতরে epoll/kqueue)। protocol parse করা প্রায় বিনামূল্যে।
+
+একটা single-threaded core মানে একটা single process নয়। আধুনিক Redis কিছু কাজ background thread-এ সরিয়ে দেয় — connection বন্ধ করা, নির্দিষ্ট কিছু delete, আর persistence — এবং তুমি একাধিক core ব্যবহার করতে একাধিক Redis process চালাও। কিন্তু যে logical model নিয়ে তুমি ভাবো তা হলো: একবারে একটা command, atomic, কোনো চমক ছাড়াই।
 
 <Callout type="tip">
 
-**Note:** Because commands are atomic and serialized, you never need a lock to make a single Redis command safe. The trouble starts only when a _business operation_ spans several commands — that is what transactions and Lua scripting (chapter 7) are for.
+**নোট:** যেহেতু command-গুলো atomic এবং serialized, একটা single Redis command-কে safe করতে তোমার কখনো lock দরকার হয় না। ঝামেলা তখনই শুরু হয় যখন একটা _business operation_ কয়েকটা command জুড়ে বিস্তৃত হয় — সেটার জন্যই transactions আর Lua scripting (অধ্যায় 7)।
 
 </Callout>
 
-## The single-threaded event loop, concretely
+## Single-threaded event loop, concretely
 
-Imagine three clients hit the server at the same instant with `INCR counter`. With a naive multithreaded store you would worry about a lost update — two threads read the same value and both write back. In Redis there is no race: the loop picks one command, runs it fully, then the next, then the next. The counter ends at the right value with no locking code anywhere. This is the mental model to keep: **a queue of commands, drained one at a time.**
+কল্পনা করো তিনটা client ঠিক একই মুহূর্তে server-এ `INCR counter` দিয়ে আঘাত করলো। একটা naive multithreaded store-এ তুমি একটা lost update নিয়ে চিন্তা করতে — দুটো thread একই value পড়ে এবং দুটোই আবার লিখে ফেলে। Redis-এ কোনো race নেই: loop একটা command বেছে নেয়, পুরোপুরি চালায়, তারপর পরেরটা, তারপর পরেরটা। কোথাও কোনো locking code ছাড়াই counter সঠিক value-তে শেষ হয়। এই মানসিক model-টা মনে রাখো: **command-এর একটা queue, একবারে একটা করে খালি করা হচ্ছে।**
 
-The flip side: a slow command blocks every other client until it finishes. A single `KEYS *` over a million keys, or a giant sorted-set range, can stall the whole server. Avoiding O(N) commands on big collections is a recurring theme in this track.
+উল্টো দিকটা: একটা slow command প্রতিটা অন্য client-কে ব্লক করে রাখে যতক্ষণ না এটা শেষ হয়। এক মিলিয়ন key-এর উপর একটা `KEYS *`, কিংবা একটা বিশাল sorted-set range, পুরো server-কে থামিয়ে দিতে পারে। বড় collection-এর উপর O(N) command এড়ানো এই ট্র্যাকের একটা বারবার আসা থিম।
 
-## The RESP protocol
+## RESP protocol
 
-Clients talk to Redis using **RESP** (REdis Serialization Protocol). It is text-based and human-readable, which is why you can debug it with plain `telnet` or `nc`. Each type is prefixed by a single byte:
+Client-রা Redis-এর সাথে **RESP** (REdis Serialization Protocol) ব্যবহার করে কথা বলে। এটা text-based এবং human-readable, যে কারণে তুমি সাধারণ `telnet` বা `nc` দিয়ে এটা debug করতে পারো। প্রতিটা type একটা single byte দিয়ে prefix করা:
 
 ```text
 +   simple string   -> +OK\r\n
@@ -51,17 +59,17 @@ $   bulk string     -> $5\r\nhello\r\n
 *   array           -> *2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n
 ```
 
-A command is sent as an array of bulk strings. `SET name redis` goes over the wire as:
+একটা command bulk string-এর একটা array হিসেবে পাঠানো হয়। `SET name redis` wire-এ যায় এভাবে:
 
 ```text
 *3\r\n$3\r\nSET\r\n$4\r\nname\r\n$5\r\nredis\r\n
 ```
 
-You rarely write this by hand — a client library does it — but knowing the shape demystifies what `redis-cli` is doing and explains why pipelining (sending many commands before reading replies) is such an easy win: the protocol has no per-command handshake.
+তুমি খুব কমই এটা হাতে লেখো — একটা client library এটা করে — কিন্তু আকৃতিটা জানা `redis-cli` কী করছে তার রহস্য দূর করে এবং ব্যাখ্যা করে কেন pipelining (reply পড়ার আগে অনেক command পাঠানো) এত সহজ একটা জয়: protocol-এ per-command কোনো handshake নেই।
 
-## Installing and connecting
+## Install করা আর connect করা
 
-On most systems Redis installs in one line, and `redis-cli` is the interactive client:
+বেশিরভাগ system-এ Redis এক লাইনে install হয়, এবং `redis-cli` হলো interactive client:
 
 ```bash
 # macOS
@@ -76,7 +84,7 @@ redis-cli
 redis-cli -h 127.0.0.1 -p 6379
 ```
 
-A first session looks like this. The lines after each command are the server's replies:
+একটা প্রথম session দেখতে এমন। প্রতিটা command-এর পরের লাইনগুলো হলো server-এর reply:
 
 ```text
 127.0.0.1:6379> PING
@@ -95,30 +103,30 @@ OK
 (integer) 0
 ```
 
-`PING` is the health check, `SET`/`GET` the workhorses, and the `(integer)` replies are RESP integers — `DEL` returns how many keys it removed, `EXISTS` returns a count.
+`PING` হলো health check, `SET`/`GET` হলো মূল কাজের ঘোড়া, এবং `(integer)` reply-গুলো হলো RESP integer — `DEL` কতটা key সরিয়েছে তা ফেরত দেয়, `EXISTS` একটা count ফেরত দেয়।
 
-## When to use Redis (and when not to)
+## কখন Redis ব্যবহার করবে (আর কখন নয়)
 
-Redis shines when access is fast and the data fits in memory:
+Redis তখন জ্বলে ওঠে যখন access দ্রুত এবং ডেটা memory-তে ধরে:
 
-- **Caching** the results of expensive queries or computations.
-- **Session storage** for web apps.
-- **Rate limiting** and counters, using atomic increments.
-- **Queues and job brokers** with lists and streams.
-- **Leaderboards and ranking** with sorted sets.
-- **Ephemeral real-time data** like presence, typing indicators, and short-lived locks.
+- ব্যয়বহুল query বা computation-এর ফলাফল **Caching** করা।
+- web app-এর জন্য **Session storage**।
+- **Rate limiting** আর counter, atomic increment ব্যবহার করে।
+- lists আর streams দিয়ে **Queues আর job brokers**।
+- sorted set দিয়ে **Leaderboards আর ranking**।
+- presence, typing indicator, আর short-lived lock-এর মতো **Ephemeral real-time data**।
 
-Reach for a traditional database instead when:
+বরং একটা traditional database-এর দিকে যাও যখন:
 
-- Your working set is far larger than affordable RAM and most of it is cold.
-- You need rich ad-hoc queries, joins, and a query planner.
-- You need the strict, multi-row, roll-backable transactions of a relational engine.
-- The data is the source of truth and losing the last second of writes is unacceptable without careful durability tuning.
+- তোমার working set সাশ্রয়ী RAM-এর চেয়ে অনেক বড় এবং এর বেশিরভাগ cold।
+- তোমার rich ad-hoc query, join, আর একটা query planner দরকার।
+- তোমার একটা relational engine-এর কঠোর, multi-row, roll-back-যোগ্য transaction দরকার।
+- ডেটাই source of truth এবং সতর্ক durability tuning ছাড়া শেষ এক সেকেন্ডের write হারানো অগ্রহণযোগ্য।
 
 <Callout type="info">
 
-**Note:** "In-memory" does not have to mean "volatile." Redis can persist to disk and reload on restart (chapter 4). But its durability guarantees are weaker and more configurable than a relational database's, so for a true system of record it is usually paired with one, not used as a replacement.
+**নোট:** "In-memory" মানে অবশ্যই "volatile" নয়। Redis disk-এ persist করতে পারে এবং restart-এ আবার load করতে পারে (অধ্যায় 4)। কিন্তু এর durability guarantee একটা relational database-এর চেয়ে দুর্বল এবং বেশি configurable, তাই একটা সত্যিকারের system of record-এর জন্য এটা সাধারণত একটার সাথে জোড়া লাগানো হয়, বদল হিসেবে ব্যবহৃত হয় না।
 
 </Callout>
 
-The right framing: Redis is a **toolbox of fast data structures over the network**, not a drop-in for your primary database. The rest of this track is about learning the tools well enough to pick the right one.
+সঠিক framing: Redis হলো **network-এর উপর দ্রুত data structure-এর একটা toolbox**, তোমার primary database-এর drop-in বদল নয়। এই ট্র্যাকের বাকিটা হলো tool-গুলোকে যথেষ্ট ভালোভাবে শেখা যাতে সঠিকটা বেছে নেওয়া যায়।

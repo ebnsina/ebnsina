@@ -1,9 +1,9 @@
 ---
 title: 'Constraints'
-subtitle: 'The schema is your last line of defense against application bugs. Constraints encode the rules that should always be true — Postgres enforces them whether your app remembers to or not.'
+subtitle: 'Application bug-এর বিরুদ্ধে schema হলো আপনার শেষ প্রতিরক্ষা। Constraint সেই নিয়মগুলো encode করে যা সবসময় সত্য থাকা উচিত — আপনার app মনে রাখুক বা না রাখুক, Postgres সেগুলো enforce করে।'
 chapter: 6
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'constraints', 'foreign-keys', 'check', 'unique']
 ---
 
@@ -11,19 +11,27 @@ topics: ['data-modeling', 'constraints', 'foreign-keys', 'check', 'unique']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A constraint is a promise the database makes about the data it accepts. Promises that hold across every code path, every microservice, every developer who joined last week. Promises that hold even when somebody runs a one-off SQL update at 2 AM.
+Constraint হলো database যে data গ্রহণ করে তা নিয়ে database-এর একটা প্রতিশ্রুতি। এমন প্রতিশ্রুতি যা প্রতিটা code path, প্রতিটা microservice, গত সপ্তাহে যোগ দেওয়া প্রতিটা developer জুড়ে টিকে থাকে। এমন প্রতিশ্রুতি যা টিকে থাকে এমনকি যখন কেউ রাত 2টায় একটা one-off SQL update চালায়।
 
-Most data quality bugs can be traced to a missing constraint. This chapter is the toolkit.
+বেশিরভাগ data quality bug-কে একটা missing constraint-এ ফিরিয়ে নেওয়া যায়। এই chapter হলো সেই toolkit।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A form that won't submit without a valid email — the database enforces rules so application code doesn't have to.
+একটা form যা valid email ছাড়া submit হবে না — database নিয়ম enforce করে যাতে application code-কে করতে না হয়।
 
 </Callout>
 
-## The six constraint types
+## গল্পে বুঝি
+
+রেজিস্ট্রেশন অফিসের কাউন্টারে বসেন ফাতিমা আল-ফিহরি — কড়া ধাঁচের ফর্ম-চেকিং ক্লার্ক। যে ফর্মই তাঁর টেবিলে আসে, ফাইলে যাওয়ার আগে তিনি নিয়মে না মিললে সেটা ফেরত দেন। ইবনে সিনা একটা ফর্ম জমা দিলেন যেখানে বাধ্যতামূলক "নাম" ঘরটা ফাঁকা — ফাতিমা সঙ্গে সঙ্গে ফিরিয়ে দিলেন, "নাম ছাড়া ফর্ম নেব না।" পরের জন এমন একটা ID নম্বর লিখলেন যেটা আগেই একজনের নামে রেজিস্টার করা — সেটাও বাউন্স, "এই নম্বর তো আগেই আছে।"
+
+এরপর এক ফর্মে বয়স লেখা মাইনাস পাঁচ — ফাতিমা হেসে সেটা ছুঁড়ে ফেললেন, "বয়স তো positive হতে হবে।" আর আল-খোয়ারিজমি এমন এক অভিভাবক-অ্যাকাউন্ট নম্বর রেফার করলেন যেটার কোনো অস্তিত্বই নেই ফাইলে — "যে অ্যাকাউন্ট নেই, তার রেফারেন্স নেব কী করে?" বলে সেটাও প্রত্যাখ্যাত। কাউন্টারেই যাচাই হয় বলে একটাও ভুল ফর্ম কখনো পেছনের ফাইল পর্যন্ত পৌঁছায় না।
+
+এই কাউন্টারটাই আসলে database-এর **constraint**। বাধ্যতামূলক ঘর ফাঁকা থাকায় ফর্ম বাতিল হলো **NOT NULL** — column-এ value থাকতেই হবে। আগের রেজিস্টার করা ID বাউন্স হওয়াটা **UNIQUE** — duplicate value ঢুকবে না। মাইনাস পাঁচ বয়স ছুঁড়ে ফেলা হলো **CHECK** — value একটা নিয়ম (age positive) মানতে হবে। আর অস্তিত্বহীন অ্যাকাউন্টের রেফারেন্স প্রত্যাখ্যান হলো **foreign key** — reference-কে অবশ্যই আসল একটা row-কে point করতে হবে। ফাতিমা কাউন্টারেই validity নিশ্চিত করেন বলে ভুল ডেটা ফাইলে ঢোকে না — ঠিক তেমনই database constraint enforce করে, তাই app code-এ bug থাকলেও খারাপ ডেটা টেবিলে ঢুকতে পারে না। বাস্তবে Postgres-এ এই চার ধরনের constraint দিয়েই data validity-র শেষ প্রতিরক্ষা তৈরি হয়।
+
+## ছয়টা constraint type
 
 ```
 NOT NULL    — column must have a value
@@ -34,9 +42,9 @@ CHECK       — value must satisfy an expression
 EXCLUDE     — values across rows must not overlap (e.g. time ranges)
 ```
 
-Postgres also has GENERATED columns (chapter 4), which aren't strictly constraints but enforce a similar invariant.
+Postgres-এ GENERATED column-ও আছে (chapter 4), যা কড়াভাবে constraint নয় কিন্তু একই রকম invariant enforce করে।
 
-## NOT NULL — the cheapest insurance
+## NOT NULL — সবচেয়ে সস্তা bima
 
 ```sql
 CREATE TABLE users (
@@ -46,19 +54,19 @@ CREATE TABLE users (
 );
 ```
 
-Default to NOT NULL on every column. Only allow NULL when "no value yet" or "not applicable" is a meaningful state.
+প্রতিটা column-এ default হিসেবে NOT NULL রাখুন। শুধু তখনই NULL অনুমোদন করুন যখন "এখনো কোনো value নেই" বা "প্রযোজ্য নয়" একটা অর্থপূর্ণ state।
 
-The discipline: when adding a nullable column, ask _what does NULL mean here?_ If the answer is "I don't know, it's just optional", make it NOT NULL with a sensible default.
+শৃঙ্খলা: একটা nullable column যোগ করার সময় জিজ্ঞেস করুন _এখানে NULL মানে কী?_ উত্তর যদি হয় "জানি না, এটা just optional", তাহলে একটা যুক্তিসঙ্গত default সহ এটা NOT NULL করুন।
 
-A few common cases where NULL is right:
+কয়েকটা সাধারণ কেস যেখানে NULL সঠিক:
 
-- **`deleted_at`**: NULL means "not deleted." (Chapter 7.)
-- **`accepted_at`** on an invitation: NULL means "still pending."
-- **`canceled_at`** on a subscription: NULL means "active."
+- **`deleted_at`**: NULL মানে "delete হয়নি।" (Chapter 7.)
+- **`accepted_at`** একটা invitation-এ: NULL মানে "এখনো pending।"
+- **`canceled_at`** একটা subscription-এ: NULL মানে "active।"
 
-Three values become a state machine: NULL means one thing; presence means another, with the timestamp telling you when.
+তিনটা value একটা state machine হয়ে যায়: NULL এক জিনিস বোঝায়; উপস্থিতি অন্য জিনিস, আর timestamp আপনাকে বলে কখন।
 
-## UNIQUE — preventing duplicates
+## UNIQUE — duplicate ঠেকানো
 
 ```sql
 CREATE TABLE users (
@@ -67,9 +75,9 @@ CREATE TABLE users (
 );
 ```
 
-Two rows can't share the email. Enforced at write time; violation is a clean error.
+দুটো row একই email শেয়ার করতে পারে না। Write-এর সময় enforce করা; violation একটা পরিষ্কার error।
 
-For multi-column uniqueness:
+Multi-column uniqueness-এর জন্য:
 
 ```sql
 CREATE TABLE org_memberships (
@@ -80,9 +88,9 @@ CREATE TABLE org_memberships (
 );
 ```
 
-The pair is unique — a user is in an org at most once.
+Pair-টা unique — একজন user একটা org-এ বড়জোর একবার থাকে।
 
-**Partial unique indexes** are a Postgres power tool:
+**Partial unique index** হলো একটা Postgres power tool:
 
 ```sql
 -- only one active subscription per user
@@ -91,13 +99,13 @@ ON subscriptions(user_id)
 WHERE canceled_at IS NULL;
 ```
 
-This says "across all rows where `canceled_at IS NULL`, `user_id` is unique." Lets you have many historical canceled subscriptions per user but only one active. Hard to express with a regular UNIQUE; trivial with a partial index.
+এটা বলে "যেসব row-এ `canceled_at IS NULL`, তাদের মধ্যে `user_id` unique।" এতে প্রতি user-এর অনেক পুরনো canceled subscription থাকতে পারে কিন্তু শুধু একটা active। একটা সাধারণ UNIQUE দিয়ে প্রকাশ করা কঠিন; একটা partial index দিয়ে খুবই সহজ।
 
-UNIQUE creates an index automatically — usually a B-tree, exactly the same as `CREATE UNIQUE INDEX`. You get the lookup performance for free.
+UNIQUE automatically একটা index তৈরি করে — সাধারণত একটা B-tree, ঠিক `CREATE UNIQUE INDEX`-এর মতোই। আপনি lookup performance বিনামূল্যে পান।
 
 ## PRIMARY KEY
 
-Already covered in chapter 3. Worth repeating: a primary key is `NOT NULL UNIQUE` plus a clustered/canonical index. Every table has exactly one. Some databases let you skip it; Postgres lets you, but you really should not.
+Chapter 3-এ ইতিমধ্যে আলোচনা হয়েছে। আবার বলার মতো: একটা primary key হলো `NOT NULL UNIQUE` প্লাস একটা clustered/canonical index। প্রতিটা table-এ ঠিক একটা থাকে। কিছু database আপনাকে এটা বাদ দিতে দেয়; Postgres দেয়, কিন্তু আপনার সত্যিই দেওয়া উচিত না।
 
 ## FOREIGN KEY — relational integrity
 
@@ -109,9 +117,9 @@ CREATE TABLE orders (
 );
 ```
 
-`orders.customer_id` must reference a row that exists in `users`. Insert with a non-existent ID → error. Try to delete a user that has orders → blocked (default behavior).
+`orders.customer_id`-কে অবশ্যই `users`-এ থাকা একটা row reference করতে হবে। একটা অস্তিত্বহীন ID দিয়ে insert → error। যে user-এর order আছে তাকে delete করার চেষ্টা → blocked (default behavior)।
 
-The four `ON DELETE` policies:
+চারটা `ON DELETE` policy:
 
 ```sql
 ON DELETE NO ACTION  -- default: error if children exist
@@ -121,27 +129,27 @@ ON DELETE SET NULL   -- nullify the FK in children (column must be nullable)
 ON DELETE SET DEFAULT
 ```
 
-The choice matters and should be deliberate per relationship:
+পছন্দটা গুরুত্বপূর্ণ আর প্রতিটা relationship-এর জন্য ইচ্ছাকৃত হওয়া উচিত:
 
-- **CASCADE** for owned data: comments belong to a post — delete post, delete comments.
-- **RESTRICT** for shared references: don't let a user be deleted if they have orders. Force the app to handle it.
-- **SET NULL** for soft references: a `created_by_user_id` on an audit row — when the user is deleted, keep the audit but null the reference.
+- **CASCADE** owned data-র জন্য: comment একটা post-এর অন্তর্গত — post delete, comment delete।
+- **RESTRICT** shared reference-এর জন্য: একজন user-এর order থাকলে তাকে delete হতে দেবেন না। App-কে সেটা handle করতে বাধ্য করুন।
+- **SET NULL** soft reference-এর জন্য: একটা audit row-এ একটা `created_by_user_id` — user delete হলে, audit রাখুন কিন্তু reference null করুন।
 
-Skipping foreign keys "for performance" is a bad trade. The cost of FK validation on insert is small; the cost of orphan rows in the wild is enormous. Always index the FK column (Postgres does not auto-index FKs):
+"পারফরম্যান্সের জন্য" foreign key বাদ দেওয়া একটা খারাপ trade। Insert-এ FK validation-এর খরচ ছোট; বাইরে orphan row-এর খরচ বিশাল। সবসময় FK column-এ index করুন (Postgres FK auto-index করে না):
 
 ```sql
 CREATE INDEX ON orders(customer_id);
 ```
 
-Without that index, "find all orders for user X" is a full table scan, _and_ deleting a user is a full table scan to check for orphans.
+সেই index ছাড়া, "user X-এর সব order খুঁজে বের করা" একটা full table scan, _আর_ একজন user delete করা orphan check করার জন্য একটা full table scan।
 
 <Callout type="warn">
 
-**Always index foreign key columns.** Postgres does not create the index automatically (unlike for primary keys). A missing FK index turns every reference check into a scan. Run this query periodically: `SELECT conrelid::regclass, conname FROM pg_constraint WHERE contype = 'f';` and verify each has a covering index.
+**সবসময় foreign key column-এ index করুন।** Postgres automatically index তৈরি করে না (primary key-এর মতো নয়)। একটা missing FK index প্রতিটা reference check-কে একটা scan-এ পরিণত করে। এই query নিয়মিত চালান: `SELECT conrelid::regclass, conname FROM pg_constraint WHERE contype = 'f';` আর যাচাই করুন প্রতিটার একটা covering index আছে।
 
 </Callout>
 
-## CHECK — domain constraints
+## CHECK — domain constraint
 
 ```sql
 CREATE TABLE products (
@@ -151,7 +159,7 @@ CREATE TABLE products (
 );
 ```
 
-CHECK constraints accept any boolean expression. Common patterns:
+CHECK constraint যেকোনো boolean expression গ্রহণ করে। সাধারণ pattern:
 
 ```sql
 -- range
@@ -177,9 +185,9 @@ CHECK (
 )
 ```
 
-CHECK constraints can reference any column in the same row but not other rows. For "this row's value must satisfy a condition involving another table," use triggers or application-level validation.
+CHECK constraint একই row-এর যেকোনো column reference করতে পারে কিন্তু অন্য row নয়। "এই row-এর value-কে অন্য একটা table জড়িত একটা condition satisfy করতে হবে"-র জন্য trigger বা application-level validation ব্যবহার করুন।
 
-A common debate: **CHECK vs ENUM**.
+একটা সাধারণ বিতর্ক: **CHECK বনাম ENUM**।
 
 ```sql
 -- ENUM type
@@ -190,18 +198,18 @@ CREATE TABLE orders (..., status order_status NOT NULL);
 CREATE TABLE orders (..., status TEXT NOT NULL CHECK (status IN ('pending','paid','shipped','canceled')));
 ```
 
-Trade-offs:
+Trade-off:
 
-- ENUM is more compact (4 bytes vs variable-length text).
-- ENUM enforces the same vocabulary across the whole database.
-- ENUM has clunkier evolution: adding a value requires `ALTER TYPE`; removing or reordering values is hard.
-- CHECK is easier to evolve but allows accidental "shipped " (trailing space) until you `TRIM`.
+- ENUM বেশি compact (4 byte বনাম variable-length text)।
+- ENUM পুরো database জুড়ে একই vocabulary enforce করে।
+- ENUM-এর evolution বেশি ঝামেলার: একটা value যোগ করতে `ALTER TYPE` লাগে; value সরানো বা reorder করা কঠিন।
+- CHECK evolve করা সহজ কিন্তু আপনি `TRIM` না করা পর্যন্ত দুর্ঘটনাবশত "shipped " (শেষে space) মেনে নেয়।
 
-For statuses you'll add to over time, prefer CHECK. For truly fixed vocabularies (currency codes, ISO country codes), ENUM is fine.
+যেসব status আপনি সময়ের সাথে যোগ করবেন, তাদের জন্য CHECK-কে অগ্রাধিকার দিন। সত্যিকারের fixed vocabulary-র জন্য (currency code, ISO country code), ENUM ঠিক আছে।
 
 ## EXCLUDE — overlap prevention
 
-EXCLUDE is the constraint you reach for when UNIQUE isn't quite the right shape.
+UNIQUE যখন ঠিক সঠিক আকারের নয়, তখন EXCLUDE হলো সেই constraint যার দিকে হাত বাড়ান।
 
 ```sql
 CREATE EXTENSION btree_gist;
@@ -214,15 +222,15 @@ CREATE TABLE bookings (
 );
 ```
 
-The constraint reads: "no two rows where `room_id` is the same AND `during` overlaps." Try to insert a booking for room 1 from 9am to 10am when there's already one from 9:30am to 10:30am — error. Database enforces it.
+Constraint-টা পড়ে: "এমন কোনো দুটো row নেই যেখানে `room_id` একই এবং `during` overlap করে।" Room 1-এর জন্য সকাল 9টা থেকে 10টা একটা booking insert করার চেষ্টা করুন যখন ইতিমধ্যে একটা আছে সকাল 9:30 থেকে 10:30 — error। Database এটা enforce করে।
 
-EXCLUDE is unique for ranges and geometric data. Without it, you'd write application-level checks that race under concurrency.
+Range আর geometric data-র জন্য EXCLUDE অনন্য। এটা ছাড়া আপনি application-level check লিখতেন যা concurrency-তে race করে।
 
-It's underused. If you have time-range, range-of-numbers, or spatial data with non-overlap rules, EXCLUDE is the cleanest answer.
+এটা কম ব্যবহৃত। যদি আপনার time-range, range-of-number, বা non-overlap নিয়ম সহ spatial data থাকে, তাহলে EXCLUDE-ই সবচেয়ে পরিষ্কার উত্তর।
 
-## Generated columns (revisited)
+## Generated column (আবার)
 
-Not technically a constraint, but enforces an invariant:
+কারিগরিভাবে constraint নয়, কিন্তু একটা invariant enforce করে:
 
 ```sql
 CREATE TABLE invoices (
@@ -233,33 +241,33 @@ CREATE TABLE invoices (
 );
 ```
 
-The DB recomputes `total` on every INSERT or UPDATE. It cannot drift. Good for derived values that always come from the same row's other columns.
+DB প্রতিটা INSERT বা UPDATE-এ `total` আবার compute করে। এটা drift করতে পারে না। যেসব derived value সবসময় একই row-এর অন্য column থেকে আসে তাদের জন্য ভালো।
 
-Postgres has STORED (computed at write time) and (in newer versions) VIRTUAL (computed at read time). STORED is more common — small storage cost, no read overhead.
+Postgres-এ STORED (write-এর সময় compute) আর (নতুন version-এ) VIRTUAL (read-এর সময় compute) আছে। STORED বেশি সাধারণ — সামান্য storage খরচ, কোনো read overhead নেই।
 
-## Where to enforce a rule — schema vs app vs both
+## কোথায় একটা নিয়ম enforce করবেন — schema বনাম app বনাম দুটোই
 
-A common question: should this validation live in the schema or in app code?
+একটা সাধারণ প্রশ্ন: এই validation schema-তে থাকবে নাকি app code-এ?
 
-**Schema** when:
+**Schema** যখন:
 
-- The rule is universal (every code path must obey).
-- The rule can be expressed in SQL (range, format, FK, uniqueness).
-- The rule is about "what is true," not "what should happen."
+- নিয়মটা universal (প্রতিটা code path মানতে হবে)।
+- নিয়মটা SQL-এ প্রকাশ করা যায় (range, format, FK, uniqueness)।
+- নিয়মটা "কী সত্য" নিয়ে, "কী ঘটা উচিত" নিয়ে নয়।
 
-**Application** when:
+**Application** যখন:
 
-- The rule needs context the DB doesn't have (current user, feature flags, business rules).
-- The rule produces friendly error messages with multiple field-level violations.
-- The rule cross-references external services.
+- নিয়মটার এমন context দরকার যা DB-র নেই (current user, feature flag, business rule)।
+- নিয়মটা একাধিক field-level violation সহ friendly error message তৈরি করে।
+- নিয়মটা external service cross-reference করে।
 
-**Both** when stakes are high. Application-level validation gives nice UX (form errors at field level); schema constraints catch bugs in code paths the validation missed.
+**দুটোই** যখন ঝুঁকি বেশি। Application-level validation সুন্দর UX দেয় (field level-এ form error); schema constraint validation যেসব code path মিস করেছে সেখানকার bug ধরে।
 
-The trap: validating only in app code, then a manual SQL update or an unrelated service breaks the invariant. Production data goes bad in ways that are hard to detect and harder to fix.
+ফাঁদ: শুধু app code-এ validate করা, তারপর একটা manual SQL update বা একটা unrelated service invariant ভেঙে দেয়। Production data এমনভাবে নষ্ট হয় যা ধরা কঠিন আর ঠিক করা আরও কঠিন।
 
-## Naming constraints
+## Constraint-এর নামকরণ
 
-Always name your constraints. Postgres generates names like `users_email_key1` or `orders_check5` by default — useful for one query, terrible for migrations.
+সবসময় আপনার constraint-এর নাম দিন। Postgres default-এ `users_email_key1` বা `orders_check5`-এর মতো নাম তৈরি করে — একটা query-র জন্য কাজের, migration-এর জন্য ভয়ঙ্কর।
 
 ```sql
 ALTER TABLE orders
@@ -267,13 +275,13 @@ ALTER TABLE orders
   CHECK (status IN ('pending','paid','shipped','canceled'));
 ```
 
-Now you can `ALTER TABLE orders DROP CONSTRAINT orders_status_valid;` later. Without naming, you'd have to look up the auto-generated name.
+এখন আপনি পরে `ALTER TABLE orders DROP CONSTRAINT orders_status_valid;` করতে পারবেন। নাম না দিলে, auto-generated নাম খুঁজে বের করতে হতো।
 
-Convention: `<table>_<column(s)>_<type>`. `users_email_unique`, `orders_status_check`, `payments_amount_positive_check`.
+Convention: `<table>_<column(s)>_<type>`। `users_email_unique`, `orders_status_check`, `payments_amount_positive_check`।
 
-## Deferred constraints
+## Deferred constraint
 
-By default, constraints are checked at the end of each statement. Sometimes you need to defer until commit:
+Default-এ, constraint প্রতিটা statement-এর শেষে check করা হয়। কখনো কখনো commit পর্যন্ত defer করতে হয়:
 
 ```sql
 ALTER TABLE A ADD CONSTRAINT a_b_fk FOREIGN KEY (b_id) REFERENCES B(id) DEFERRABLE INITIALLY IMMEDIATE;
@@ -286,13 +294,13 @@ INSERT INTO B ...;
 COMMIT; -- check all constraints now
 ```
 
-Useful for circular FK dependencies — A references B, B references A — where you must insert both rows before any FK can validate.
+Circular FK dependency-র জন্য কাজের — A reference করে B, B reference করে A — যেখানে কোনো FK validate হওয়ার আগে আপনাকে দুটো row-ই insert করতে হবে।
 
-Most schemas don't need this. Reach for deferred constraints when you have a real circular reference.
+বেশিরভাগ schema-র এটা দরকার নেই। যখন একটা আসল circular reference থাকে তখনই deferred constraint-এর দিকে হাত বাড়ান।
 
-## Big-table constraint addition
+## বড় table-এ constraint যোগ করা
 
-Adding a NOT NULL or CHECK constraint to a billion-row table is a long-running operation that holds an exclusive lock. Postgres has a workaround for CHECK:
+একটা billion-row table-এ একটা NOT NULL বা CHECK constraint যোগ করা একটা দীর্ঘ-চলা operation যা একটা exclusive lock ধরে রাখে। CHECK-এর জন্য Postgres-এর একটা workaround আছে:
 
 ```sql
 -- step 1: add constraint NOT VALID — does not check existing rows
@@ -303,9 +311,9 @@ ALTER TABLE big_table
 ALTER TABLE big_table VALIDATE CONSTRAINT big_table_x_check;
 ```
 
-`NOT VALID` makes the constraint apply to _new_ writes immediately while existing rows are not checked. `VALIDATE` then scans existing rows without holding an exclusive lock. Two-step migration; zero downtime.
+`NOT VALID` constraint-টাকে সাথে সাথে _নতুন_ write-এ প্রযোজ্য করে যখন existing row check করা হয় না। তারপর `VALIDATE` একটা exclusive lock না ধরে existing row scan করে। দুই-ধাপের migration; zero downtime।
 
-For NOT NULL, the same idea works via a CHECK first, then promoting:
+NOT NULL-এর জন্য, একই ধারণা কাজ করে আগে একটা CHECK দিয়ে, তারপর promote করে:
 
 ```sql
 -- step 1
@@ -317,25 +325,25 @@ ALTER TABLE big_table ALTER COLUMN x SET NOT NULL;
 ALTER TABLE big_table DROP CONSTRAINT big_table_x_not_null;
 ```
 
-Chapter 10 covers more of these expand/contract patterns.
+Chapter 10-এ এই expand/contract pattern-এর আরও কিছু আলোচনা আছে।
 
-## What constraints don't do
+## Constraint যা করে না
 
-- **They don't replace input validation.** Users get friendly errors from the app layer; the schema is the safety net.
-- **They don't prevent every bug.** A constraint can't say "the right person is approving this." Logic-level rules belong in code.
-- **They don't always enforce performance.** A CHECK that calls an expensive function on every insert is a foot-gun.
+- **এরা input validation-এর বিকল্প নয়।** User app layer থেকে friendly error পায়; schema হলো safety net।
+- **এরা প্রতিটা bug ঠেকায় না।** একটা constraint বলতে পারে না "সঠিক ব্যক্তি এটা approve করছে।" Logic-level নিয়ম code-এ থাকে।
+- **এরা সবসময় performance enforce করে না।** একটা CHECK যা প্রতিটা insert-এ একটা expensive function call করে সেটা একটা foot-gun।
 
 ## Recap
 
-- Six constraint types: NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY, CHECK, EXCLUDE.
-- Default to NOT NULL; allow NULL only when its meaning is explicit.
-- UNIQUE creates an index. Partial unique indexes solve "one active per user" cleanly.
-- FK ON DELETE: CASCADE for owned data, RESTRICT for shared, SET NULL for soft references. Always index the FK column.
-- CHECK for ranges, formats, enum-like, cross-column. Easier to evolve than ENUM types.
-- EXCLUDE for non-overlap rules — time ranges, geometric data.
-- Generated columns prevent drift on derived values.
-- Name your constraints. Convention: `<table>_<col>_<type>`.
-- Big tables: add CHECKs as `NOT VALID` then `VALIDATE` to avoid blocking.
-- Constraints are the last line; layer with app validation for UX and edge cases.
+- ছয়টা constraint type: NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY, CHECK, EXCLUDE।
+- Default হিসেবে NOT NULL রাখুন; NULL শুধু তখনই অনুমোদন করুন যখন এর অর্থ স্পষ্ট।
+- UNIQUE একটা index তৈরি করে। Partial unique index "প্রতি user-এ একটা active"-কে পরিষ্কারভাবে সমাধান করে।
+- FK ON DELETE: owned data-র জন্য CASCADE, shared-এর জন্য RESTRICT, soft reference-এর জন্য SET NULL। সবসময় FK column-এ index করুন।
+- Range, format, enum-like, cross-column-এর জন্য CHECK। ENUM type-এর চেয়ে evolve করা সহজ।
+- Non-overlap নিয়মের জন্য EXCLUDE — time range, geometric data।
+- Generated column derived value-তে drift ঠেকায়।
+- আপনার constraint-এর নাম দিন। Convention: `<table>_<col>_<type>`।
+- বড় table: block ঠেকাতে CHECK-কে `NOT VALID` হিসেবে যোগ করুন তারপর `VALIDATE` করুন।
+- Constraint হলো শেষ প্রতিরক্ষা; UX আর edge case-এর জন্য app validation দিয়ে layer করুন।
 
-Next: [Time and soft delete](/notes/data-modeling/07-time-soft-delete) — timestamps, time zones, history, and the soft-delete trap.
+পরবর্তী: [Time and soft delete](/notes/data-modeling/07-time-soft-delete) — timestamp, time zone, history, আর soft-delete-এর ফাঁদ।

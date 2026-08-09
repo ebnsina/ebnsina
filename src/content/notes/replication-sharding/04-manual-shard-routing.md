@@ -1,9 +1,9 @@
 ---
 title: 'Manual Shard Routing'
-subtitle: 'Building a shard router in application code — connection management, transaction boundaries, migration strategies, and avoiding common pitfalls.'
+subtitle: 'Application code-এ একটি shard router বানানো — connection management, transaction boundary, migration strategy, এবং সাধারণ ভুল এড়ানো।'
 chapter: 4
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics:
   [
     'shard routing',
@@ -21,15 +21,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A bank with regional branches: the central system knows which branch holds each account (the router). When you want to move money between accounts in different branches, the tellers at both branches coordinate (distributed transaction). The routing table is the map; the tellers are the shard connections; the coordination protocol is how you avoid losing money in transit.
+আঞ্চলিক শাখাসহ একটি ব্যাংক: কেন্দ্রীয় সিস্টেম জানে কোন শাখায় কোন account আছে (router)। যখন আপনি ভিন্ন শাখার account-এর মধ্যে টাকা সরাতে চান, দুই শাখার teller-রা সমন্বয় করে (distributed transaction)। Routing table হলো মানচিত্র; teller-রা হলো shard connection; আর coordination protocol হলো কীভাবে আপনি চলার পথে টাকা হারানো এড়ান।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা বিশাল গুদাম, ভেতরে সারি সারি নম্বর দেওয়া স্টোররুম — রুম ১, রুম ২, রুম ৩, রুম ৪। প্রতিদিন শত শত পার্সেল আসে, আর প্রতিটার গায়ে গ্রাহকের একটা আইডি নম্বর লেখা। এখন কথা হলো, কোন পার্সেল কোন রুমে রাখা হবে, সেটা মনে রাখার জন্য ফাতিমা কোনো খাতা-রেজিস্টার রাখেন না। তিনি ডিসপ্যাচ ক্লার্ক আল-খোয়ারিজমিকে একটা বাঁধা নিয়ম শিখিয়ে দিয়েছেন: "আইডি নম্বরটা নাও, রুমের সংখ্যা দিয়ে ভাগ করো, যে ভাগশেষ থাকে সেটাই রুম নম্বর।" আইডি ৪২, রুম ৪টা — ভাগশেষ ২, মানে রুম ২-এ যাবে। পরে যখন সেই পার্সেল আবার লাগবে, আল-খোয়ারিজমি একই হিসাব কষে সোজা রুম ২-এ চলে যান। কোনো কেন্দ্রীয় খাতা লাগে না, হিসাবটাই ঠিকানা বলে দেয়।
+
+কয়েক মাস সব মসৃণ চলল। কিন্তু একদিন গুদাম উপচে পড়তে লাগল, ইবনে সিনা পরামর্শ দিলেন — আরেকটা স্টোররুম বসাও, রুম ৫। যেই না পঞ্চম রুম যোগ হলো, আল-খোয়ারিজমির নিয়মটাই বদলে গেল: এখন ভাগ হবে ৫ দিয়ে, ৪ দিয়ে নয়। ফলে পুরনো প্রায় সব পার্সেলের হিসাব মিলছে না — যে পার্সেল আগে রুম ২-তে ছিল, নতুন নিয়মে সেটা হয়তো রুম ৫-এ যাওয়ার কথা। বাধ্য হয়ে গোটা গুদামের বিশাল স্তূপ নামিয়ে, একটা একটা করে নতুন হিসাবে মিলিয়ে আবার সাজাতে হলো। কয়েক দিন ধরে সেই এলাহি কাণ্ড চলল।
+
+এই গল্পটাই আসলে **manual shard routing**। ডিসপ্যাচ ক্লার্কের বাঁধা নিয়ম প্রয়োগ করা মানে হলো **application** নিজেই হিসাব কষে ঠিক করছে ডেটা কোন shard-এ আছে — "আইডি রুম-সংখ্যা দিয়ে ভাগ করে ভাগশেষ নাও" মানে `hash(key) % N`, প্রতিটা নম্বর দেওয়া স্টোররুম একেকটা **shard**, আর কোনো কেন্দ্রীয় index ছাড়াই হিসাবই ঠিকানা বলে দেয়। কিন্তু নতুন রুম যোগ করতেই যেমন `N` বদলে পুরো স্তূপ নতুন করে সাজাতে হলো, ঠিক তেমনি shard সংখ্যা বাড়ালে `% N`-এর ফল বদলে যায় আর প্রায় সব key নতুন shard-এ সরাতে হয় — এটাই খরুচে **resharding**-এর যন্ত্রণা। বাস্তবেও তাই বড় সিস্টেমগুলো এই ব্যথা কমাতে সরাসরি `% N`-এর বদলে consistent hashing ব্যবহার করে, যাতে নতুন shard যোগ করলে সব key নয়, অল্প কিছু key-ই সরাতে হয় (এই chapter-এর কোডেও `ConsistentHashRing` তাই দেখবেন)।
+
 ## Shard Manager
 
-A centralized class that owns all shard connections and routing logic:
+একটি কেন্দ্রীয় class যা সব shard connection এবং routing logic-এর মালিক:
 
 ```typescript
 import { Pool, PoolClient } from 'pg';
@@ -96,9 +104,9 @@ export const shards = new ShardManager([
 ]);
 ```
 
-## Repository Pattern with Shard Routing
+## Shard Routing সহ Repository Pattern
 
-Wrap shard-aware data access in a repository — application code never knows which shard it's talking to:
+Shard-aware data access-কে একটি repository-তে মুড়ে দিন — application code কখনও জানে না সে কোন shard-এর সাথে কথা বলছে:
 
 ```typescript
 class OrderRepository {
@@ -150,9 +158,9 @@ class OrderRepository {
 }
 ```
 
-## Transactions Within a Shard
+## এক Shard-এর মধ্যে Transaction
 
-Standard Postgres transactions work fine — as long as everything is on the same shard:
+Standard Postgres transaction ঠিকঠাক কাজ করে — যতক্ষণ সবকিছু একই shard-এ থাকে:
 
 ```typescript
 class OrderService {
@@ -192,11 +200,11 @@ class OrderService {
 }
 ```
 
-All tables involved in the transaction must be on the same shard. This is why the shard key must appear in every table's primary key or composite key.
+Transaction-এ জড়িত সব table একই shard-এ থাকতে হবে। এই কারণেই shard key প্রতিটি table-এর primary key বা composite key-তে থাকতে হবে।
 
-## Cross-Shard Operations (Saga Pattern)
+## Cross-Shard Operation (Saga Pattern)
 
-When two customers on different shards need a coordinated operation (e.g., transferring balance):
+যখন ভিন্ন shard-এ থাকা দুই customer-এর একটি সমন্বিত operation দরকার (যেমন, balance স্থানান্তর):
 
 ```typescript
 async function transferCredits(
@@ -265,9 +273,9 @@ async function transferCredits(
 }
 ```
 
-A background job handles incomplete transfers (debit_complete but not complete) — these are retried or compensated.
+একটি background job অসম্পূর্ণ transfer সামলায় (debit_complete কিন্তু complete নয়) — এগুলো retry বা compensate করা হয়।
 
-## Schema Migrations Across Shards
+## Shard জুড়ে Schema Migration
 
 ```typescript
 import { Pool } from 'pg';
@@ -301,14 +309,14 @@ await runMigration(`
 `);
 ```
 
-**Safe migration practices for sharded systems:**
+**Sharded system-এর জন্য নিরাপদ migration অনুশীলন:**
 
-1. Always use `IF NOT EXISTS` / `IF EXISTS` — idempotent migrations
-2. Add columns before code reads them (columns appear empty until data is written)
-3. Remove columns only after code stops reading them (deploy the code change, wait, then drop)
-4. Never rename columns (add new + copy + remove old)
+1. সবসময় `IF NOT EXISTS` / `IF EXISTS` ব্যবহার করুন — idempotent migration
+2. Code column পড়ার আগে column যোগ করুন (data লেখার আগ পর্যন্ত column খালি দেখায়)
+3. Code পড়া বন্ধ করার পরেই column সরান (code পরিবর্তন deploy করুন, অপেক্ষা করুন, তারপর drop করুন)
+4. কখনও column rename করবেন না (নতুন যোগ + copy + পুরনো সরানো)
 
-## Adding a New Shard
+## নতুন Shard যোগ করা
 
 ```typescript
 // 1. Add the new shard to the ring (consistent hashing minimizes data movement)
@@ -355,11 +363,11 @@ async function migrateShard(fromShardId: string, toShardId: string) {
 }
 ```
 
-This is a live migration — data moves while the system is running. The dual-write period (before data migration completes) means some queries hit old location, some new. The router must handle both.
+এটি একটি live migration — data সরে যখন system চলছে। Dual-write সময়কাল (data migration সম্পূর্ণ হওয়ার আগে) মানে কিছু query পুরনো location-এ hit করে, কিছু নতুন-তে। Router-কে দুটোই সামলাতে হবে।
 
-## Read Replicas Per Shard
+## প্রতি Shard-এ Read Replica
 
-Each shard can have its own read replica:
+প্রতিটি shard-এর নিজস্ব read replica থাকতে পারে:
 
 ```typescript
 interface ShardConfig {
@@ -388,4 +396,4 @@ class ShardManager {
 }
 ```
 
-At this point, your setup is: N shards × (1 primary + 1 replica) = 2N Postgres servers. This is significant infrastructure — plan the operational overhead accordingly.
+এই পর্যায়ে, আপনার setup হলো: N shard × (1 primary + 1 replica) = 2N Postgres server। এটি উল্লেখযোগ্য infrastructure — সেই অনুযায়ী operational overhead-এর পরিকল্পনা করুন।

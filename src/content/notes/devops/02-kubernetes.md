@@ -1,9 +1,9 @@
 ---
-title: 'Kubernetes Essentials'
-subtitle: 'Pods, Deployments, Services — the core building blocks of container orchestration at scale.'
+title: 'Kubernetes-এর প্রয়োজনীয় বিষয়'
+subtitle: 'Pods, Deployments, Services — বড় স্কেলে container orchestration-এর মূল বিল্ডিং ব্লক।'
 chapter: 2
 level: 'beginner'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['Kubernetes', 'pods', 'deployments', 'services']
 ---
 
@@ -11,25 +11,33 @@ topics: ['Kubernetes', 'pods', 'deployments', 'services']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Kubernetes?
+## গল্পে বুঝি
 
-Docker runs containers on one machine. Kubernetes runs containers across a cluster of machines, handling:
+চট্টগ্রাম বন্দরের কন্ট্রোল টাওয়ারে বসে আছেন আল-খোয়ারিজমি। তার নিচে সারি সারি ইয়ার্ড, জেটিতে ভেড়া অসংখ্য জাহাজ, আর হাজার হাজার একই মাপের স্ট্যান্ডার্ড container। প্রতিটা container কোথায় নামবে, কোন ইয়ার্ডে জায়গা খালি আছে, কোন ইয়ার্ডে ক্রেন ফ্রি — সব হিসাব করে তিনিই ঠিক করেন কোন container কোন ইয়ার্ডে যাবে। একটা ইয়ার্ড হঠাৎ ভরে গেলে বাকিগুলো আরেক ইয়ার্ডে পাঠিয়ে দেন, যাতে কোথাও জট না লাগে।
 
-- **Scheduling**: which node should this container run on?
-- **Scaling**: run 10 copies when traffic spikes, scale down when it drops
-- **Self-healing**: if a container dies, restart it automatically
-- **Service discovery**: containers find each other by name, not IP
-- **Rolling updates**: deploy new versions with zero downtime
+দুপুরের দিকে হঠাৎ পাঁচটা বড় জাহাজ একসাথে এসে পড়ল, container-এর ঢল নামল। আল-খোয়ারিজমি সাথে সাথে ফাতিমা আল-ফিহরিকে বলে বাড়তি হ্যান্ডলার আর ক্রেন-অপারেটর ডেকে আনলেন; কাজের চাপ কমতেই তাদের আবার ছুটিতে পাঠিয়ে দিলেন। এর মধ্যে একটা container ক্রেন থেকে পিছলে পড়ে ফেটে গেল — টাওয়ার তা টের পাওয়ামাত্র ইবনে সিনাকে দিয়ে ঠিক ওই জায়গায় হুবহু আরেকটা container বসিয়ে দিলেন। টাওয়ারের হাতে দিনের একটা "পরিকল্পিত লেআউট" আছে — কোন ইয়ার্ডে কয়টা container থাকার কথা — আর সে সারাক্ষণ বাস্তব অবস্থাকে ওই পরিকল্পনার সাথে মিলিয়ে চলতে থাকে।
+
+এই কন্ট্রোল টাওয়ারই আসলে **Kubernetes**-এর control plane, প্রতিটা container হলো একটা container বা pod, আর ইয়ার্ড-জাহাজগুলো হলো worker **node**। কোন container কোন node-এ বসবে সেটা ঠিক করা হলো **scheduling**, চাপ বুঝে হ্যান্ডলার বাড়ানো-কমানো হলো **scaling** (auto-scaling), ফেটে যাওয়া container-এর জায়গায় সাথে সাথে নতুনটা বসানো হলো **self-healing**, আর "পরিকল্পিত লেআউট" ধরে রাখার নিরন্তর চেষ্টাটাই হলো **desired state** reconciliation। বাস্তবে Kubernetes ঠিক এভাবেই একগুচ্ছ মেশিনের cluster জুড়ে হাজারো container সামলায় — Google, Spotify থেকে শুরু করে অসংখ্য বড় প্রতিষ্ঠান production-এ এভাবেই চালায়।
+
+## Kubernetes কেন?
+
+Docker একটা মেশিনে container চালায়। Kubernetes একগুচ্ছ মেশিনের cluster জুড়ে container চালায়, আর এগুলো সামলায়:
+
+- **Scheduling**: এই container-টা কোন node-এ চলবে?
+- **Scaling**: traffic হঠাৎ বেড়ে গেলে ১০টা কপি চালানো, কমে গেলে scale down করা
+- **Self-healing**: কোনো container মারা গেলে সেটা আপনা-আপনি restart করা
+- **Service discovery**: container-রা একে অপরকে নাম দিয়ে খুঁজে পায়, IP দিয়ে নয়
+- **Rolling updates**: zero downtime-এ নতুন version deploy করা
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a warehouse floor manager — they decide which worker (pod) handles which task, replace workers who call in sick (restarts failed pods), and hire temps during busy season (auto-scaling).
+একটা warehouse-এর floor manager-এর মতো — তারা ঠিক করে কোন worker (pod) কোন কাজ সামলাবে, যারা অসুস্থ বলে ছুটি নেয় তাদের বদলি আনে (failed pod restart করে), আর ব্যস্ত মৌসুমে temp কর্মী নিয়োগ দেয় (auto-scaling)।
 
 </Callout>
 
-## Core Concepts
+## মূল ধারণাগুলো
 
 ```typescript
 // Mental model of Kubernetes objects
@@ -58,7 +66,7 @@ interface Service {
 }
 ```
 
-## A Complete Example
+## একটা সম্পূর্ণ উদাহরণ
 
 ```yaml
 # deployment.yaml
@@ -115,7 +123,7 @@ spec:
   type: ClusterIP
 ```
 
-## How Traffic Flows
+## Traffic কীভাবে প্রবাহিত হয়
 
 ```typescript
 // 1. External request hits an Ingress or LoadBalancer
@@ -130,7 +138,7 @@ spec:
 
 <Callout type="tip">
 
-**Always set resource requests AND limits.** Without them, a single pod can consume all resources on a node and starve other pods. Requests guarantee a minimum; limits set the ceiling.
+**সবসময় resource request আর limit — দুটোই সেট করুন।** এগুলো ছাড়া একটা মাত্র pod একটা node-এর সব resource খেয়ে ফেলে বাকি pod-গুলোকে না খাইয়ে রাখতে পারে। Request একটা minimum নিশ্চিত করে; limit সর্বোচ্চ সীমা বেঁধে দেয়।
 
 </Callout>
 
@@ -156,13 +164,13 @@ spec:
 
 <Callout type="info">
 
-**You don't always need Kubernetes.** For a single service or small team, a managed platform (Railway, Fly.io, Cloud Run) or even a single server with Docker Compose is simpler. Kubernetes shines at 10+ services with complex networking, scaling, and deployment requirements.
+**আপনার সবসময় Kubernetes লাগবে না।** একটা মাত্র service বা ছোট টিমের জন্য, একটা managed platform (Railway, Fly.io, Cloud Run) কিংবা Docker Compose সহ একটা মাত্র server-ই বেশি সহজ। Kubernetes তার আসল জৌলুস দেখায় যখন ১০+ service থাকে জটিল networking, scaling আর deployment-এর দরকার নিয়ে।
 
 </Callout>
 
-## Key Takeaways
+## মূল বিষয়গুলো
 
-1. **Pods are ephemeral** — design your app to handle restarts (stateless, externalize state)
-2. **Deployments manage replicas** and handle rolling updates with zero downtime
-3. **Services provide stable endpoints** — pods come and go, the service name stays the same
-4. **Set resource requests/limits** on every container to prevent resource starvation
+1. **Pod হলো ephemeral** — আপনার অ্যাপ এমনভাবে ডিজাইন করুন যাতে restart সামলাতে পারে (stateless থাকুন, state বাইরে রাখুন)
+2. **Deployment replica সামলায়** আর zero downtime-এ rolling update চালায়
+3. **Service স্থিতিশীল endpoint দেয়** — pod আসে-যায়, কিন্তু service-এর নাম একই থাকে
+4. প্রতিটা container-এ **resource request/limit সেট করুন** যাতে resource starvation না হয়

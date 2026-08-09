@@ -1,9 +1,9 @@
 ---
 title: 'Service Discovery'
-subtitle: 'How services find each other — DNS-based discovery, Consul, client-side vs server-side load balancing, and health-integrated routing.'
+subtitle: 'Service-রা কীভাবে একে অপরকে খুঁজে পায় — DNS-based discovery, Consul, client-side vs server-side load balancing, আর health-integrated routing।'
 chapter: 3
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['service discovery', 'Consul', 'DNS', 'health checks', 'service mesh', 'Envoy']
 ---
 
@@ -13,27 +13,35 @@ topics: ['service discovery', 'Consul', 'DNS', 'health checks', 'service mesh', 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A company directory vs a receptionist: the directory lists everyone's extension — you look it up and call directly (client-side discovery). The receptionist knows who's in today, routes your call to someone available, and handles transfers when someone's out (server-side discovery). The receptionist adds a step but shields you from needing to know who's at their desk.
+একটা company directory বনাম একজন receptionist: directory-তে সবার extension লেখা থাকে — আপনি খুঁজে বের করে সরাসরি call করেন (client-side discovery)। Receptionist জানেন আজ কে আছেন, আপনার call-টা কোনো available জনের কাছে route করেন, আর কেউ না থাকলে transfer সামলান (server-side discovery)। Receptionist একটা ধাপ যোগ করেন কিন্তু কে নিজের ডেস্কে আছেন সেটা জানার প্রয়োজন থেকে আপনাকে বাঁচান।
 
 </Callout>
 
-## The Problem
+## গল্পে বুঝি
 
-In a monolith, calling a function is just a pointer dereference. In microservices, calling a service requires:
+ফাতিমা আল-ফিহরি বাগদাদের এক বিশাল বাজারে মশলা খুঁজতে গেছেন। এই বাজারটা প্রকাণ্ড আর অস্থির — দোকানিরা প্রতিদিন জায়গা বদলায়, কেউ নতুন স্টল খোলে, কেউ পাট গুটিয়ে চলে যায়। গতমাসে যেখানে মশলার দোকান ছিল, আজ সেখানে কাপড়ের স্টল। তাই কোনো দোকানের জায়গা মুখস্থ রেখে লাভ নেই — একটু পরেই সেই তথ্য বাসি হয়ে যায়।
 
-1. Knowing its current IP and port
-2. Knowing which instances are healthy
-3. Deciding which instance to call (load balancing)
+এই ঝামেলা এড়াতে বাজারের মাঝখানে একটা তথ্যকেন্দ্র বসানো আছে। প্রতিটা দোকানি স্টল সাজিয়ে বসার সময় তথ্যকেন্দ্রে গিয়ে নিজের আজকের স্টল নম্বরটা লিখিয়ে দেয়। ইবনে সিনা মশলার দোকান খুঁজলে তিনি আর গোটা বাজার চষে বেড়ান না — সোজা তথ্যকেন্দ্রে গিয়ে জিজ্ঞেস করেন, "আল-খোয়ারিজমির মশলার দোকান আজ কোথায়?" আর কেন্দ্র তার এখনকার স্টল নম্বর বলে দেয়। কেন্দ্রের একজন লোক নিয়মিত বাজার ঘুরে দেখে কে আজও আছে, কে পাট গুটিয়ে চলে গেছে — যে চলে গেছে তার নাম তালিকা থেকে কেটে দেয়, যাতে কেউ ভুল করে খালি জায়গায় না পাঠানো হয়।
 
-These can't be hardcoded — containers restart with new IPs, instances scale in and out, deployments replace instances.
+এই গল্পটাই আসলে **service discovery**। দোকান খোলা-বন্ধ আর জায়গা বদলানো হলো **service instance**-দের আসা-যাওয়া আর বদলে যাওয়া address; তথ্যকেন্দ্রে স্টল নম্বর লিখিয়ে দেওয়াটাই একটা service নিজেকে **registry**-তে **register** করা; আর দোকানের জায়গা জিজ্ঞেস করাটাই address hardcode না করে **lookup** দিয়ে বর্তমান address জেনে নেওয়া। কেন্দ্রের লোকের চলে-যাওয়া দোকান তালিকা থেকে কেটে দেওয়াটাই **health check** করে dead instance বাদ দেওয়া। বাস্তবে Consul বা Kubernetes-এর built-in DNS ঠিক এভাবেই কাজ করে — instance-রা নিজেদের register করে, আর অন্যরা registry-কে জিজ্ঞেস করে শুধু healthy instance-দের খুঁজে নেয়।
+
+## সমস্যাটা
+
+একটা monolith-এ একটা function call করা মানে শুধু একটা pointer dereference। microservices-এ একটা service call করতে দরকার:
+
+1. এর বর্তমান IP আর port জানা
+2. কোন instance গুলো healthy জানা
+3. কোন instance call করবেন সিদ্ধান্ত নেওয়া (load balancing)
+
+এগুলো hardcode করা যায় না — container নতুন IP নিয়ে restart হয়, instance scale in ও out হয়, deployment instance replace করে।
 
 ## DNS-Based Discovery
 
-The simplest approach: each service has a stable DNS name that resolves to one or more IPs.
+সবচেয়ে সহজ পদ্ধতি: প্রতিটা service-এর একটা stable DNS name থাকে যা এক বা একাধিক IP-তে resolve হয়।
 
-**In Kubernetes:** every Service gets a stable DNS name automatically.
+**Kubernetes-এ:** প্রতিটা Service স্বয়ংক্রিয়ভাবে একটা stable DNS name পায়।
 
 ```yaml
 apiVersion: v1
@@ -49,7 +57,7 @@ spec:
       targetPort: 50051
 ```
 
-Within the cluster:
+Cluster-এর ভেতরে:
 
 ```
 order-service.production.svc.cluster.local:50051
@@ -57,9 +65,9 @@ order-service.production.svc.cluster.local:50051
 order-service:50051  (within same namespace)
 ```
 
-Kubernetes DNS resolves this to the ClusterIP, which routes to any healthy pod. No service registry needed — Kubernetes is the registry.
+Kubernetes DNS এটাকে ClusterIP-তে resolve করে, যা যেকোনো healthy pod-এ route করে। কোনো service registry দরকার নেই — Kubernetes-ই registry।
 
-**Outside Kubernetes:** use Route 53 or any DNS server with health checks.
+**Kubernetes-এর বাইরে:** health check সহ Route 53 বা যেকোনো DNS server ব্যবহার করুন।
 
 ```bash
 # Route 53 with health check
@@ -90,11 +98,11 @@ aws route53 change-resource-record-sets \
   }'
 ```
 
-**TTL matters:** short TTL (30s) means clients discover failures quickly. Long TTL (5min) means stale DNS after a deploy. Keep internal DNS TTL at 10-30s.
+**TTL গুরুত্বপূর্ণ:** ছোট TTL (30s) মানে client দ্রুত failure discover করে। বড় TTL (5min) মানে deploy-এর পর stale DNS। internal DNS TTL 10-30s-এ রাখুন।
 
 ## Consul
 
-Consul is a purpose-built service registry with health checks, KV store, and service mesh capabilities.
+Consul একটা purpose-built service registry, যাতে health check, KV store, আর service mesh সক্ষমতা আছে।
 
 ```bash
 # Start Consul agent (dev mode)
@@ -135,7 +143,7 @@ consul reload
 # Service is now registered and health-checked
 ```
 
-**Querying Consul:**
+**Consul-এ query করা:**
 
 ```bash
 # DNS interface (built-in)
@@ -184,7 +192,7 @@ const client = createClient(
 Client → Load Balancer → [picks instance] → Service instance
 ```
 
-The LB has all the knowledge. Clients just call a single stable address.
+LB-এর কাছে সব জ্ঞান থাকে। Client শুধু একটা single stable address-এ call করে।
 
 **Client-side:**
 
@@ -192,9 +200,9 @@ The LB has all the knowledge. Clients just call a single stable address.
 Client → Consul (get all instances) → Client picks one → Service instance
 ```
 
-The client does its own load balancing. More complex, but no LB bottleneck, and smarter routing (client can retry on a different instance automatically).
+Client নিজেই নিজের load balancing করে। বেশি জটিল, কিন্তু কোনো LB bottleneck নেই, আর smarter routing (client স্বয়ংক্রিয়ভাবে অন্য instance-এ retry করতে পারে)।
 
-gRPC with a service registry naturally uses client-side load balancing — the gRPC runtime resolves the name to multiple addresses and balances across them:
+একটা service registry সহ gRPC স্বাভাবিকভাবেই client-side load balancing ব্যবহার করে — gRPC runtime name-টাকে একাধিক address-এ resolve করে আর সেগুলোর মধ্যে balance করে:
 
 ```typescript
 // gRPC client-side LB with multiple addresses
@@ -205,9 +213,9 @@ const transport = createGrpcTransport({
 });
 ```
 
-## Service Mesh with Envoy/Istio
+## Envoy/Istio দিয়ে Service Mesh
 
-A service mesh moves all service discovery, load balancing, retries, circuit breaking, and mTLS into a sidecar proxy (Envoy). Application code just calls `localhost:50051` — the sidecar intercepts and handles everything.
+একটা service mesh সব service discovery, load balancing, retry, circuit breaking, আর mTLS-কে একটা sidecar proxy-তে (Envoy) সরিয়ে নেয়। Application code শুধু `localhost:50051`-এ call করে — sidecar intercept করে সব সামলায়।
 
 ```yaml
 # Kubernetes: Istio injects Envoy automatically
@@ -226,7 +234,7 @@ spec:
     # Istio injects envoy sidecar here automatically
 ```
 
-**Traffic policy with Istio:**
+**Istio দিয়ে traffic policy:**
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -272,11 +280,11 @@ spec:
         version: v2
 ```
 
-The application knows nothing about canary routing or circuit breaking — Envoy handles it.
+Application canary routing বা circuit breaking সম্পর্কে কিছুই জানে না — Envoy এটা সামলায়।
 
-## Health Check Conventions
+## Health Check Convention
 
-Services must expose health checks that discovery systems can query:
+Service-দের এমন health check expose করতে হবে যা discovery system query করতে পারে:
 
 **gRPC Health Check Protocol:**
 
@@ -301,7 +309,7 @@ async function checkDatabaseHealth() {
 setInterval(checkDatabaseHealth, 10_000);
 ```
 
-**HTTP health check (for non-gRPC services):**
+**HTTP health check (non-gRPC service-এর জন্য):**
 
 ```typescript
 app.get('/health/ready', async (req, res) => {
@@ -318,12 +326,12 @@ app.get('/health/live', (req, res) => {
 });
 ```
 
-`/health/live` — is the process running? Used by Kubernetes to restart crashed pods.
-`/health/ready` — can the service take traffic? Used by service discovery to route requests.
+`/health/live` — process কি চলছে? Crash হওয়া pod restart করতে Kubernetes এটা ব্যবহার করে।
+`/health/ready` — service কি traffic নিতে পারবে? request route করতে service discovery এটা ব্যবহার করে।
 
-## Zero-Downtime Deploys
+## Zero-Downtime Deploy
 
-The moment between "old instance stops" and "new instance is ready" is when discovery goes wrong.
+"পুরনো instance বন্ধ হয়" আর "নতুন instance ready হয়" — এর মাঝের মুহূর্তটাই যখন discovery ভুল হয়ে যায়।
 
 ```yaml
 # Kubernetes deployment with readiness gate
@@ -347,4 +355,4 @@ spec:
                 command: ['sleep', '5'] # wait for LB to deregister before SIGTERM
 ```
 
-The `preStop` sleep ensures Kubernetes has time to remove the pod from service endpoints before the process receives SIGTERM. Without it: a brief window where the LB still routes to a pod that's stopping.
+`preStop` sleep নিশ্চিত করে যে process SIGTERM পাওয়ার আগে Kubernetes-এর হাতে service endpoint থেকে pod সরানোর সময় থাকে। এটা ছাড়া: একটা সংক্ষিপ্ত window থাকে যখন LB এখনো একটা বন্ধ হতে থাকা pod-এ route করে।

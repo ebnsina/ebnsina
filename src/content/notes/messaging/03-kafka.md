@@ -1,9 +1,9 @@
 ---
 title: 'Kafka'
-subtitle: 'Topics, partitions, consumer groups, retention — the distributed log that makes replay and high-throughput event streaming possible.'
+subtitle: 'Topics, partitions, consumer groups, retention — সেই distributed log যেটা replay আর high-throughput event streaming সম্ভব করে।'
 chapter: 3
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['Kafka', 'topics', 'partitions', 'consumer groups', 'KafkaJS', 'retention', 'compaction']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Kafka', 'topics', 'partitions', 'consumer groups', 'KafkaJS', 'retenti
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-An immutable newspaper archive: every edition is published, stored, and numbered. Any reader can ask for any edition from any date. You can't remove an article after publication. Multiple readers read the same archive simultaneously and independently — one reader being slow doesn't block another. Kafka is that archive for events.
+একটা অপরিবর্তনীয় সংবাদপত্রের আর্কাইভ: প্রতিটা সংস্করণ প্রকাশিত হয়, জমা রাখা হয়, আর নম্বর দেওয়া হয়। যেকোনো পাঠক যেকোনো তারিখের যেকোনো সংস্করণ চাইতে পারেন। প্রকাশের পর কোনো লেখা সরানো যায় না। একাধিক পাঠক একই আর্কাইভ একসাথে এবং স্বাধীনভাবে পড়েন — একজন পাঠক স্লো হলে আরেকজন আটকে যান না। Kafka হলো event-এর জন্য সেই আর্কাইভ।
 
 </Callout>
 
-## The Core Model
+## গল্পে বুঝি
 
-Kafka is a distributed, persistent, ordered log. Events are written once and kept for a configurable retention period. Consumers read from any position in the log.
+ফাতিমা আল-ফিহরির বিশাল লাইব্রেরিতে একটা বাঁধাই করা মোটা event-খাতা আছে — নাম "ঘটনাপঞ্জি"। এই লাইব্রেরিতে যা কিছু ঘটে, প্রতিটা ঘটনা ঘটার সাথে সাথে খাতায় ক্রম অনুযায়ী লেখা হয়, প্রতিটা এন্ট্রিতে একটা করে নম্বর বসে। এক নিয়ম — লেখা একবার বসে গেলে আর কখনো মোছা যায় না, শুধু নিচে নতুন এন্ট্রি যোগ হয়। বছরের পর বছর পুরনো এন্ট্রিও খাতায় রয়েই যায়, কেউ পড়ে ফেললেও মোছে না।
+
+খাতাটা পড়েন অনেকজন — গবেষক ইবনে সিনা, হিসাবরক্ষক আল-খোয়ারিজমি, আরও অনেকে। মজার ব্যাপার, প্রত্যেকের হাতে নিজের একটা করে বুকমার্ক। ইবনে সিনা হয়তো ৯০ নম্বর এন্ট্রি পর্যন্ত পড়েছেন, আল-খোয়ারিজমি সবে ২০ নম্বরে — যে যার গতিতে এগোয়, একজন ধীর হলে আরেকজন আটকায় না। কেউ চাইলে নিজের বুকমার্ক পিছিয়ে দিয়ে পুরনো এন্ট্রি আবার পড়তে পারেন, কারণ কিছুই তো মোছেনি। আর একটামাত্র খাতা হলে সবাই এসে ভিড় করত, লেখাও আটকে যেত — তাই ঘটনাপঞ্জি বিষয় অনুযায়ী কয়েকটা আলাদা খণ্ডে ভাগ করা: কেনাকাটার খণ্ড, চিঠিপত্রের খণ্ড। ফলে অনেক লেখক আর পাঠক একসাথে সমান্তরালে কাজ করতে পারে।
+
+এই ঘটনাপঞ্জিই আসলে **Kafka**। কখনো না-মোছা, শুধু নিচে-যোগ-হওয়া খাতাটা হলো Kafka-র append-only durable **log** (একটা **topic**); প্রতিটা পাঠকের নিজের বুকমার্ক হলো একেকটা **consumer group**-এর **offset** — যে যার গতিতে স্বাধীনভাবে পড়ে; বুকমার্ক পিছিয়ে পুরনো এন্ট্রি আবার পড়াটাই **replay**; বিষয়-অনুযায়ী আলাদা খণ্ডগুলো হলো **partition**, যা সমান্তরাল throughput দেয়; আর পুরনো এন্ট্রি মোছে না — সেটাই **retention**। বাস্তবেও ঠিক এভাবেই: LinkedIn বা Uber-এ একটা order-event একবার Kafka-তে লেখা হলে billing, analytics, notification — প্রতিটা সিস্টেম নিজের offset ধরে স্বাধীনভাবে সেটা পড়ে, দরকারে গতকালের event replay করে।
+
+## মূল Model
+
+Kafka একটা distributed, persistent, ক্রমানুসারী log। Event একবার লেখা হয় আর একটা configurable retention period পর্যন্ত রাখা হয়। Consumer log-এর যেকোনো position থেকে পড়ে।
 
 ```
 Topic: "orders"
@@ -30,27 +38,27 @@ Topic: "orders"
   Partition 2: [event@0] [event@1] [event@2] ...
 ```
 
-Key properties:
+মূল বৈশিষ্ট্য:
 
-- **Partitions** — unit of parallelism. More partitions = more consumers processing in parallel.
-- **Offset** — position of a message within a partition. Monotonically increasing.
-- **Consumer group** — group of consumers that coordinate to process partitions. Each partition assigned to one consumer in the group.
-- **Retention** — messages kept for N days or N bytes. Not deleted on consumption.
+- **Partitions** — parallelism-এর একক। বেশি partition = বেশি consumer parallel-ভাবে process করছে।
+- **Offset** — একটা partition-এর ভেতরে একটা মেসেজের position। ক্রমাগত বাড়তে থাকে।
+- **Consumer group** — consumer-দের একটা group যারা partition process করতে coordinate করে। প্রতিটা partition group-এর একটা consumer-কে assign করা হয়।
+- **Retention** — মেসেজ N দিন বা N byte ধরে রাখা হয়। Consume করলেই মুছে যায় না।
 
-## Kafka vs RabbitMQ
+## Kafka বনাম RabbitMQ
 
-|                     | Kafka                         | RabbitMQ                 |
-| ------------------- | ----------------------------- | ------------------------ |
-| **Message removal** | Never (retention-based)       | On acknowledgement       |
-| **Replay**          | Yes — seek to any offset      | No                       |
-| **Ordering**        | Per-partition                 | Per-queue                |
-| **Push vs pull**    | Pull (consumer controls rate) | Push                     |
-| **Protocol**        | Custom binary                 | AMQP                     |
-| **Throughput**      | 1M+ msg/sec                   | 50k msg/sec              |
-| **Routing**         | Topic only                    | Exchange + binding rules |
-| **Use when**        | Event log, replay, auditing   | Task queues, RPC         |
+|                     | Kafka                               | RabbitMQ                |
+| ------------------- | ----------------------------------- | ----------------------- |
+| **Message removal** | কখনো না (retention-based)           | acknowledgement-এ       |
+| **Replay**          | হ্যাঁ — যেকোনো offset-এ seek        | না                      |
+| **Ordering**        | Per-partition                       | Per-queue               |
+| **Push vs pull**    | Pull (consumer rate নিয়ন্ত্রণ করে) | Push                    |
+| **Protocol**        | Custom binary                       | AMQP                    |
+| **Throughput**      | 1M+ msg/sec                         | 50k msg/sec             |
+| **Routing**         | শুধু Topic                          | Exchange + binding rule |
+| **Use when**        | Event log, replay, auditing         | Task queue, RPC         |
 
-## Running Kafka
+## Kafka চালানো
 
 ```bash
 # Docker Compose — Kafka with KRaft (no Zookeeper since 3.3)
@@ -82,7 +90,7 @@ kafka-topics.sh --create \
   --replication-factor 3   # for production cluster
 ```
 
-## Producing with KafkaJS
+## KafkaJS দিয়ে Produce করা
 
 ```typescript
 import { Kafka } from 'kafkajs';
@@ -128,9 +136,9 @@ await producer.send({
 });
 ```
 
-**Partition key matters:** messages with the same key always go to the same partition, preserving order for that key (e.g., all events for customer `42` in order).
+**Partition key গুরুত্বপূর্ণ:** একই key-এর মেসেজ সবসময় একই partition-এ যায়, ওই key-এর জন্য order ধরে রাখে (যেমন customer `42`-এর সব event ক্রমানুসারে)।
 
-## Consuming with KafkaJS
+## KafkaJS দিয়ে Consume করা
 
 ```typescript
 const consumer = kafka.consumer({
@@ -159,11 +167,11 @@ await consumer.run({
 });
 ```
 
-**Consumer group coordination:** if you run 3 instances of `payment-service` all with `groupId: 'payment-service'`, Kafka assigns partitions across the 3. With 6 partitions: each instance handles 2 partitions. Adding instances is your horizontal scaling — up to the partition count.
+**Consumer group coordination:** যদি আপনি `payment-service`-এর ৩টা instance চালান, সবগুলো `groupId: 'payment-service'` দিয়ে, Kafka partition-গুলো ৩টার মধ্যে ভাগ করে দেয়। ৬টা partition থাকলে: প্রতিটা instance ২টা করে partition সামলায়। Instance যোগ করাই আপনার horizontal scaling — partition সংখ্যা পর্যন্ত।
 
 ## Manual Offset Management
 
-By default KafkaJS auto-commits offsets. For exactly-once semantics (process + commit in one transaction), manage manually:
+Default-এ KafkaJS offset auto-commit করে। Exactly-once semantics-এর জন্য (এক transaction-এ process + commit), manually manage করুন:
 
 ```typescript
 await consumer.run({
@@ -197,7 +205,7 @@ await consumer.run({
 
 ## Consumer Lag Monitoring
 
-Consumer lag = how far behind the consumer is from the latest offset. Lag growing = consumer can't keep up.
+Consumer lag = consumer সর্বশেষ offset থেকে কতটা পিছিয়ে আছে। Lag বাড়ছে মানে consumer তাল মেলাতে পারছে না।
 
 ```bash
 # Check lag via CLI
@@ -212,9 +220,9 @@ kafka-consumer-groups.sh \
 # orders   1          98421           98500           79   payment-2
 ```
 
-Alert when lag grows beyond a threshold. Use `kafka_consumer_lag_seconds` in Prometheus (via `kafka_exporter`) — lag in time is more meaningful than lag in messages (a consumer processing 1000 msg/sec with 10k lag = 10 seconds behind, which may be fine).
+Lag একটা threshold ছাড়িয়ে গেলে alert দিন। Prometheus-এ `kafka_consumer_lag_seconds` ব্যবহার করুন (`kafka_exporter` দিয়ে) — সময়ের হিসেবে lag মেসেজ সংখ্যার lag-এর চেয়ে বেশি অর্থবহ (একটা consumer যেটা 1000 msg/sec process করে আর 10k lag আছে = 10 second পিছিয়ে, যেটা হয়তো ঠিকই আছে)।
 
-## Retention and Compaction
+## Retention আর Compaction
 
 **Time-based retention (default):**
 
@@ -232,7 +240,7 @@ kafka-configs.sh --alter \
 --add-config "retention.bytes=10737418240"  # 10GB per partition
 ```
 
-**Log compaction:** Keep only the latest message per key. Used for change data — a "users" topic where the latest message per user ID is the current state.
+**Log compaction:** প্রতিটা key-এর শুধু সর্বশেষ মেসেজ রাখা হয়। change data-র জন্য ব্যবহৃত — একটা "users" topic যেখানে প্রতি user ID-র সর্বশেষ মেসেজই বর্তমান state।
 
 ```bash
 kafka-configs.sh --alter \
@@ -242,9 +250,9 @@ kafka-configs.sh --alter \
   --add-config "cleanup.policy=compact"
 ```
 
-Compaction is lazy — Kafka runs compaction in the background. Old segments are compacted; recent data is not. Consumers still process in order; they just see fewer historical values.
+Compaction lazy — Kafka background-এ compaction চালায়। পুরনো segment compact হয়; সাম্প্রতিক ডেটা হয় না। Consumer এখনো ক্রমানুসারে process করে; তারা শুধু কম historical value দেখে।
 
-## Transactional Producers (Exactly-Once)
+## Transactional Producer (Exactly-Once)
 
 ```typescript
 const producer = kafka.producer({
@@ -274,7 +282,7 @@ try {
 }
 ```
 
-Transactional producers guarantee atomic multi-topic sends. Consumers must set `isolation.level: 'read_committed'` to only see committed transactions.
+Transactional producer atomic multi-topic send-এর নিশ্চয়তা দেয়। Consumer-কে শুধু committed transaction দেখতে `isolation.level: 'read_committed'` সেট করতে হবে।
 
 ## 3-Node Kafka Cluster
 
@@ -293,9 +301,9 @@ min.insync.replicas=2       # require 2 of 3 to ack writes
 # kafka2: same with broker.id=2, kafka3 with broker.id=3
 ```
 
-With `replication-factor=3` and `min.insync.replicas=2`:
+`replication-factor=3` আর `min.insync.replicas=2` দিয়ে:
 
-- 1 broker can fail without data loss or availability impact
-- Writes require 2 brokers to be up (otherwise producer gets `NotEnoughReplicasException`)
+- ডেটা হারানো বা availability-এ প্রভাব ছাড়াই ১টা broker fail করতে পারে
+- Write-এর জন্য ২টা broker আপ থাকা দরকার (নাহলে producer `NotEnoughReplicasException` পায়)
 
-This is the production baseline. Never run Kafka with replication factor &lt; 3 for data you care about.
+এটাই production baseline। যে ডেটা আপনার কাছে গুরুত্বপূর্ণ তার জন্য কখনো replication factor &lt; 3 দিয়ে Kafka চালাবেন না।

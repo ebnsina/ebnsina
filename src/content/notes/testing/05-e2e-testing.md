@@ -1,9 +1,9 @@
 ---
 title: 'End-to-End Testing'
-subtitle: 'Testing user journeys in a real browser — Playwright setup, selectors, auth, CI, and keeping e2e tests fast and reliable.'
+subtitle: 'একটা real browser-এ user journey টেস্ট করা — Playwright setup, selector, auth, CI, আর e2e test-কে দ্রুত ও নির্ভরযোগ্য রাখা।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   ['e2e testing', 'Playwright', 'browser automation', 'Cypress', 'test reliability', 'flakiness']
 ---
@@ -14,27 +14,35 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A mystery shopper visiting a store: they experience the complete customer journey — enter the store, find a product, bring it to the register, pay, leave with a receipt. They don't test the POS system's API or the inventory database directly — they test whether the whole thing works together from a customer's perspective.
+একজন mystery shopper একটা দোকানে যাচ্ছে: তারা সম্পূর্ণ customer journey অনুভব করে — দোকানে ঢোকে, একটা প্রোডাক্ট খুঁজে বের করে, সেটা register-এ নিয়ে যায়, দাম দেয়, receipt নিয়ে বেরিয়ে যায়। তারা POS system-এর API বা inventory database সরাসরি টেস্ট করে না — তারা একজন customer-এর দৃষ্টিকোণ থেকে টেস্ট করে গোটা ব্যাপারটা একসাথে কাজ করে কিনা।
 
 </Callout>
 
-## When to Write E2E Tests
+## গল্পে বুঝি
 
-E2E tests are expensive — slow to run, harder to debug, flakier than unit or integration tests. Use them for:
+ফাতিমা আল-ফিহরি বুখারার একটা বড় দোকানের মালিক। দোকানটা ঠিকঠাক চলছে কিনা যাচাই করতে তিনি একজন mystery shopper — আল-খোয়ারিজমি — কে ভাড়া করলেন। শর্ত একটাই: তুমি কোনো কর্মচারীকে বলবে না তুমি কে, আর একজন সাধারণ খদ্দেরের মতোই পুরো ব্যাপারটা করে দেখবে। আল-খোয়ারিজমি সদর দরজা দিয়ে ঢুকলেন, তাক থেকে জিনিস খুঁজে ঝুড়িতে ভরলেন, ক্যাশ কাউন্টারে গিয়ে দাম মেটালেন, receipt বুঝে নিলেন, আর শেষে বাসায় ডেলিভারিটাও ঠিকমতো এলো কিনা সেটাও দেখলেন।
 
-- **Critical user journeys**: signup, login, checkout, payment
-- **High-value workflows**: the 5–10 flows that must work for the business to function
-- **Regression protection**: flows that have broken in production before
+তিনি গুদামের হিসাব-খাতা বা ক্যাশ মেশিনের ভেতরটা আলাদা করে পরীক্ষা করেননি — শুরু থেকে শেষ পর্যন্ত গোটা journey-টা একজন খদ্দের যেভাবে অনুভব করে ঠিক সেভাবেই অনুভব করেছেন। এতে ফাতিমা সবচেয়ে বিশ্বস্ত প্রমাণটা পেলেন: আসল খদ্দেরের কাছে দোকানের অভিজ্ঞতা পুরোটা কাজ করে। কিন্তু এই যাচাই ধীর আর খরুচে — প্রতিটা ছোটখাটো জিনিস (একটা তাকের দাম ঠিক আছে কিনা) দেখতে তিনি বারবার mystery shopper পাঠান না, শুধু আসল গুরুত্বপূর্ণ যাত্রাপথগুলোর জন্যই পাঠান।
 
-Don't use for:
+এই গল্পটাই আসলে **end-to-end (e2e) test**। mystery shopper একজন আসল খদ্দেরের মতো আচরণ করাটাই হলো e2e test-এর গোটা system-কে সত্যিকারের UI দিয়ে, ঠিক user-এর মতো চালানো। ঢোকা থেকে ডেলিভারি পর্যন্ত পুরো পথটাই হলো সব layer জুড়ে একটা complete user journey — UI, backend, database সব একসাথে। আর "সবচেয়ে বাস্তব প্রমাণ, কিন্তু ধীর ও খরুচে, তাই কম ব্যবহার করো" কথাটাই e2e-র মূল tradeoff: testing pyramid-এর একদম উপরে অল্প কয়েকটা রাখুন। বাস্তবে Playwright বা Cypress দিয়ে ঠিক এভাবেই signup থেকে checkout পর্যন্ত critical flow টেস্ট করা হয় — শক্তিশালী, কিন্তু flaky হওয়ার ঝুঁকি বেশি বলে সাবধানে অল্প রাখা হয়।
 
-- Every feature (use integration tests instead)
-- Error states (better tested with integration tests — faster, more reliable)
-- Things that change frequently (high maintenance cost)
+## কখন E2E Test লিখবেন
 
-A healthy ratio: 5–15 e2e tests, not 200.
+E2E test ব্যয়বহুল — চালাতে ধীর, debug করা কঠিন, unit বা integration test-এর চেয়ে বেশি flaky। এগুলো ব্যবহার করুন:
+
+- **Critical user journey**-র জন্য: signup, login, checkout, payment
+- **High-value workflow**-র জন্য: ৫–১০টা flow যা business চলার জন্য অবশ্যই কাজ করতে হবে
+- **Regression protection**-এর জন্য: যেসব flow আগে production-এ ভেঙেছে
+
+যেসবে ব্যবহার করবেন না:
+
+- প্রতিটি feature (এর বদলে integration test ব্যবহার করুন)
+- Error state (integration test দিয়ে ভালো টেস্ট হয় — দ্রুত, বেশি নির্ভরযোগ্য)
+- যেসব জিনিস প্রায়ই বদলায় (বেশি maintenance খরচ)
+
+একটা স্বাস্থ্যকর অনুপাত: ৫–১৫টা e2e test, ২০০টা নয়।
 
 ## Playwright Setup
 
@@ -73,7 +81,7 @@ export default defineConfig({
 });
 ```
 
-## Writing E2E Tests
+## E2E Test লেখা
 
 ```typescript
 // e2e/auth.spec.ts
@@ -118,7 +126,7 @@ test.describe('Authentication', () => {
 });
 ```
 
-## Selectors: What to Use
+## Selector: কোনটা ব্যবহার করবেন
 
 ```typescript
 // BEST: role-based (accessible, resilient to UI changes)
@@ -142,7 +150,7 @@ await page.locator('.btn-primary.checkout'); // fragile
 await page.locator('//div[@class="cart"]//button[1]'); // avoid
 ```
 
-Add `data-testid` attributes to interactive elements in your app:
+আপনার app-এর interactive element-এ `data-testid` attribute যোগ করুন:
 
 ```tsx
 // In your component
@@ -151,9 +159,9 @@ Add `data-testid` attributes to interactive elements in your app:
 </button>
 ```
 
-## Handling Authentication
+## Authentication সামলানো
 
-Re-running login before every test is slow and a common source of flakiness. Save auth state once:
+প্রতিটি test-এর আগে আবার login চালানো ধীর আর flakiness-এর একটা সাধারণ উৎস। auth state একবার save করুন:
 
 ```typescript
 // e2e/auth.setup.ts — runs once, saves cookies/storage
@@ -200,7 +208,7 @@ export default defineConfig({
 
 ## Page Object Model
 
-For complex flows, extract selectors and actions into page objects:
+জটিল flow-এর জন্য, selector আর action-গুলো page object-এ বের করে আনুন:
 
 ```typescript
 // e2e/pages/checkout-page.ts
@@ -251,9 +259,9 @@ test('completes checkout', async ({ page }) => {
 });
 ```
 
-## Avoiding Flakiness
+## Flakiness এড়ানো
 
-The most common causes of flaky e2e tests:
+Flaky e2e test-এর সবচেয়ে সাধারণ কারণগুলো:
 
 ```typescript
 // WRONG: arbitrary sleep (race condition waiting to happen)
@@ -340,7 +348,7 @@ jobs:
           retention-days: 7
 ```
 
-## Debugging Failed Tests
+## Failed Test Debug করা
 
 ```bash
 # Run with UI mode — visual debugger
@@ -359,4 +367,4 @@ npx playwright show-trace test-results/trace.zip
 npx playwright test --debug e2e/checkout.spec.ts
 ```
 
-Playwright's trace viewer shows every action, network request, and console log — essential for debugging CI failures without reproducing locally.
+Playwright-এর trace viewer প্রতিটি action, network request, আর console log দেখায় — locally reproduce না করেই CI failure debug করার জন্য অপরিহার্য।

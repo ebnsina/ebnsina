@@ -1,9 +1,9 @@
 ---
-title: 'Distributed Systems — Roadmap'
-subtitle: 'From a single machine to many: failure, time, replication, consensus, and the trade-offs that define every distributed system.'
+title: 'Distributed Systems — রোডম্যাপ'
+subtitle: 'একটি মেশিন থেকে অনেকগুলোতে: failure, time, replication, consensus, এবং যে trade-off গুলো প্রতিটি distributed system-কে সংজ্ঞায়িত করে।'
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'distributed systems']
 ---
 
@@ -13,47 +13,47 @@ topics: ['roadmap', 'distributed systems']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উপমা**
 
-Coordinating one cook in one kitchen is easy: you see the whole counter at once. Coordinating a hundred cooks across a hundred kitchens in different cities — who can only talk by sending letters that sometimes get lost — is a different problem entirely. Distributed systems are the study of that second kitchen.
+একটা রান্নাঘরে একজন রাঁধুনিকে সমন্বয় করা সহজ: পুরো কাউন্টারটা এক নজরে দেখা যায়। কিন্তু বিভিন্ন শহরের একশোটা রান্নাঘরে ছড়িয়ে থাকা একশো রাঁধুনিকে সমন্বয় করা — যারা শুধু চিঠি পাঠিয়ে কথা বলতে পারে, আর সেই চিঠি মাঝেমধ্যে হারিয়ে যায় — সম্পূর্ণ ভিন্ন এক সমস্যা। Distributed systems হলো সেই দ্বিতীয় রান্নাঘরের চর্চা।
 
 </Callout>
 
-## What you will be able to do
+## যা তুমি করতে পারবে
 
-By the end of this track you will be able to reason precisely about systems that span multiple machines: predict how they fail, explain why they cannot agree instantly, and choose the right trade-offs for a given workload. Concretely, you will be able to:
+এই ট্র্যাক শেষে তুমি একাধিক মেশিন জুড়ে বিস্তৃত সিস্টেম নিয়ে সূক্ষ্মভাবে যুক্তি সাজাতে পারবে: কীভাবে সেগুলো fail করে তার পূর্বাভাস দেওয়া, কেন তারা তাৎক্ষণিকভাবে একমত হতে পারে না তা ব্যাখ্যা করা, এবং একটি নির্দিষ্ট workload-এর জন্য সঠিক trade-off বেছে নেওয়া। সুনির্দিষ্টভাবে, তুমি পারবে:
 
-- Explain why a network of computers behaves nothing like one big computer.
-- Classify failures (crash, omission, Byzantine) and design around partial failure.
-- Pick a replication strategy and reason about quorums and read-your-writes guarantees.
-- Place a system on the consistency spectrum from linearizable to eventual.
-- State the CAP and PACELC theorems precisely and apply them to real databases.
-- Walk through how Raft achieves consensus, and contrast it with Paxos.
-- Order events without a shared clock using Lamport and vector clocks.
-- Coordinate changes across services with sagas, the outbox pattern, and idempotency.
+- কেন কম্পিউটারের একটি network একটা বড় কম্পিউটারের মতো মোটেও আচরণ করে না তা ব্যাখ্যা করতে।
+- Failure (crash, omission, Byzantine) শ্রেণিবদ্ধ করতে এবং partial failure-কে ঘিরে ডিজাইন করতে।
+- একটি replication strategy বেছে নিতে এবং quorum ও read-your-writes গ্যারান্টি নিয়ে যুক্তি সাজাতে।
+- Linearizable থেকে eventual পর্যন্ত consistency spectrum-এ একটি সিস্টেমকে জায়গা দিতে।
+- CAP ও PACELC theorem সূক্ষ্মভাবে বর্ণনা করতে এবং বাস্তব database-এ প্রয়োগ করতে।
+- Raft কীভাবে consensus অর্জন করে তা ধাপে ধাপে বুঝতে, এবং Paxos-এর সাথে তুলনা করতে।
+- Lamport ও vector clock ব্যবহার করে shared clock ছাড়াই event order করতে।
+- Saga, outbox pattern, এবং idempotency দিয়ে service জুড়ে পরিবর্তন সমন্বয় করতে।
 
-## Prerequisites and related tracks
+## পূর্বশর্ত ও সম্পর্কিত ট্র্যাক
 
-This track assumes you can read pseudocode and have built at least one networked application. It pairs naturally with three other tracks:
+এই ট্র্যাক ধরে নেয় যে তুমি pseudocode পড়তে পারো এবং অন্তত একটি networked application বানিয়েছ। এটি আরও তিনটি ট্র্যাকের সাথে স্বাভাবিকভাবে মেলে:
 
-- **Networking** — packets, latency, TCP, and why the network is the source of most distributed-systems pain.
-- **Replication & Sharding** — the hands-on, database-specific counterpart to the replication theory here.
-- **Event-Driven Architecture** — pub/sub, change data capture, and event sourcing, which lean heavily on the ordering and delivery ideas in this track.
+- **Networking** — packet, latency, TCP, এবং কেন network বেশিরভাগ distributed-systems যন্ত্রণার উৎস।
+- **Replication & Sharding** — এখানকার replication theory-এর হাতে-কলমে, database-নির্দিষ্ট প্রতিরূপ।
+- **Event-Driven Architecture** — pub/sub, change data capture, এবং event sourcing, যেগুলো এই ট্র্যাকের ordering ও delivery ধারণার উপর অনেকখানি নির্ভর করে।
 
-You do not need any specific language. Code samples are pseudocode in `text`, `go`, or `python` to illustrate mechanics, not to be copy-pasted.
+তোমার কোনো নির্দিষ্ট language লাগবে না। Code sample গুলো `text`, `go`, বা `python`-এ pseudocode হিসেবে দেওয়া, mechanics বোঝানোর জন্য, copy-paste করার জন্য নয়।
 
-## Chapters in this track
+## এই ট্র্যাকের অধ্যায়সমূহ
 
-1. **What Makes a System Distributed** — why distribute, independent failure, the eight fallacies, and what changes versus one machine.
-2. **Failure Models &amp; Time** — crash vs omission vs Byzantine, partial failure, partitions, and why clocks and timeouts lie.
-3. **Replication** — single-leader, multi-leader, and leaderless designs; sync vs async; quorums and read-your-writes.
-4. **Consistency Models** — linearizable, sequential, causal, and eventual consistency, and the trade-offs along the spectrum.
-5. **CAP &amp; PACELC** — the CAP theorem stated precisely, CP vs AP under partition, and the latency dimension PACELC adds.
-6. **Consensus: Raft &amp; Paxos** — the consensus problem, leader election, log replication, and a full Raft walkthrough.
-7. **Ordering &amp; Logical Clocks** — happens-before, Lamport timestamps, vector clocks, and hybrid logical clocks.
-8. **Distributed Transactions** — two-phase commit, sagas, the outbox pattern, idempotency keys, and exactly-once myths.
-9. **Building Reliable Distributed Systems** — retries, backoff, jitter, deduplication, and durable execution.
+1. **What Makes a System Distributed** — কেন distribute করব, independent failure, আটটি fallacy, এবং একটি মেশিনের তুলনায় কী বদলায়।
+2. **Failure Models &amp; Time** — crash বনাম omission বনাম Byzantine, partial failure, partition, এবং কেন clock ও timeout মিথ্যা বলে।
+3. **Replication** — single-leader, multi-leader, এবং leaderless ডিজাইন; sync বনাম async; quorum ও read-your-writes।
+4. **Consistency Models** — linearizable, sequential, causal, এবং eventual consistency, আর spectrum জুড়ে trade-off গুলো।
+5. **CAP &amp; PACELC** — CAP theorem সূক্ষ্মভাবে বর্ণিত, partition-এর সময় CP বনাম AP, এবং PACELC যে latency মাত্রা যোগ করে।
+6. **Consensus: Raft &amp; Paxos** — consensus সমস্যা, leader election, log replication, এবং সম্পূর্ণ Raft walkthrough।
+7. **Ordering &amp; Logical Clocks** — happens-before, Lamport timestamp, vector clock, এবং hybrid logical clock।
+8. **Distributed Transactions** — two-phase commit, saga, outbox pattern, idempotency key, এবং exactly-once নিয়ে ভুল ধারণা।
+9. **Building Reliable Distributed Systems** — retry, backoff, jitter, deduplication, এবং durable execution।
 
-## How to read this track
+## এই ট্র্যাক কীভাবে পড়বে
 
-Read in order. Each chapter builds vocabulary the next one assumes. Chapters 1–3 are foundational; 4–7 are the theoretical core; 8–9 are about applying it all to build systems that survive the real world. Take the failure chapter seriously — almost every distributed bug traces back to an assumption that the network or a clock would behave.
+ক্রম অনুযায়ী পড়ো। প্রতিটি অধ্যায় এমন শব্দভাণ্ডার গড়ে তোলে যা পরেরটি ধরে নেয়। অধ্যায় ১–৩ ভিত্তিমূলক; ৪–৭ তাত্ত্বিক মূল অংশ; ৮–৯ হলো এই সবকিছু প্রয়োগ করে বাস্তব জগতে টিকে থাকা সিস্টেম বানানো নিয়ে। failure অধ্যায়টা গুরুত্বের সাথে নাও — প্রায় প্রতিটি distributed bug-ই এমন একটা ধারণায় ফিরে যায় যে network বা কোনো clock ঠিকঠাক আচরণ করবে।

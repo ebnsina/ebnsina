@@ -1,9 +1,9 @@
 ---
-title: 'Rate Limiting'
-subtitle: 'Implement token bucket and sliding window rate limiters with Redis for production API protection.'
+title: 'রেট লিমিটিং'
+subtitle: 'প্রোডাকশন API সুরক্ষার জন্য Redis দিয়ে token bucket আর sliding window rate limiter বানান।'
 chapter: 7
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'middleware']
 ---
 
@@ -13,15 +13,23 @@ topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'middleware
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Rate Limiting?
+## গল্পে বুঝি
 
-Without rate limiting, a single user or bot can overwhelm your API, deny service to everyone else, and rack up infrastructure costs. Rate limiting controls how many requests a client can make in a time window.
+রমজানে মহল্লার মসজিদের সামনে ইফতার বিতরণ। ভিড় সামলাতে ফাতিমা আল-ফিহরি একটা সহজ নিয়ম বের করেছেন — লাইনে দাঁড়ানো প্রতিজনের হাতে একটা কার্ডে কিছু টোকেন থাকে, আর একটা টোকেন খরচ করলে এক প্যাকেট খাবার মেলে। টোকেন আবার জমাও হয়, তবে ধীরে — প্রতি কয়েক মিনিটে একটা করে ফাতিমা আল-ফিহরি কার্ডে টোকেন বসিয়ে দেন। ইবনে সিনা দেরিতে এসেছিল বলে তার কার্ডে কয়েকটা টোকেন জমে গিয়েছিল, তাই সে একবারেই তিন প্যাকেট নিয়ে পরিবারের জন্য চলে গেল — এই burst-টুকু নিয়মে আটকায় না।
+
+কিন্তু আল-খোয়ারিজমি লোভী। প্যাকেট নিতে নিতে তার কার্ডের সব টোকেন শেষ, তবু সে বারবার লাইনে এসে হাত বাড়ায়। ফাতিমা আল-ফিহরি তখন শান্তভাবে বলেন — "তোমার টোকেন তো নেই, একটু দাঁড়াও, কার্ডে আবার টোকেন জমুক তারপর এসো।" ফাঁকা কার্ড মানেই তাকে অপেক্ষা করতে হবে, রিফিলের গতির চেয়ে বেশি জোরে সে কিছুতেই নিতে পারবে না। এভাবে একজন লোভী মানুষ পুরো ইফতার সাবাড় করে দিতে পারে না, বাকিদের ভাগও থাকে।
+
+এই গল্পটাই আসলে **token bucket** দিয়ে **rate limiting**। কার্ডের টোকেন হলো একটা ক্লায়েন্টের request allowance, ফাতিমা আল-ফিহরির ধীরে ধীরে টোকেন বসানো হলো নির্দিষ্ট rate limit (refill rate), জমানো টোকেন একবারে খরচ করা হলো অনুমোদিত burst, আর টোকেন ফুরিয়ে গেলে "দাঁড়াও" বলাটাই throttle করা — HTTP-তে যেটা **429 Too Many Requests**। বাস্তবে API gateway, login throttling বা পাবলিক API-র abuse ঠেকাতে ঠিক এভাবেই প্রতি ক্লায়েন্টকে একটা bucket দিয়ে তার request-এর হার নিয়ন্ত্রণ করা হয়।
+
+## রেট লিমিটিং কেন?
+
+রেট লিমিটিং ছাড়া একজন ইউজার বা একটা bot আপনার API-কে ভাসিয়ে দিতে পারে, বাকি সবার সেবা বন্ধ করে দিতে পারে আর ইনফ্রাস্ট্রাকচার খরচ বাড়িয়ে দিতে পারে। রেট লিমিটিং নিয়ন্ত্রণ করে একটা ক্লায়েন্ট একটা টাইম উইন্ডোতে কতগুলো রিকোয়েস্ট করতে পারবে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like an ATM daily withdrawal limit — you can only withdraw a fixed amount per day to prevent abuse. Hit the limit, and you're told to try again tomorrow.
+একটা ATM-এর দৈনিক উত্তোলন সীমার মতো — অপব্যবহার ঠেকাতে আপনি দিনে একটা নির্দিষ্ট পরিমাণই তুলতে পারেন। সীমায় পৌঁছালে আপনাকে আগামীকাল আবার চেষ্টা করতে বলা হয়।
 
 </Callout>
 
@@ -31,16 +39,16 @@ code={`graph LR
   C["Client"] --> RL["Rate Limiter<br/>Allow / Deny"] --> S["API Server"]`}
 />
 
-## Algorithms Compared
+## অ্যালগরিদমের তুলনা
 
-| Algorithm      | Pros                        | Cons                            |
-| -------------- | --------------------------- | ------------------------------- |
-| Token Bucket   | Smooth, allows bursts       | Complex to implement right      |
-| Sliding Window | Precise, no boundary issues | Higher memory usage             |
-| Fixed Window   | Simple                      | Allows 2x burst at window edges |
-| Leaky Bucket   | Smooth output rate          | Can't handle legitimate bursts  |
+| অ্যালগরিদম     | সুবিধা                      | অসুবিধা                        |
+| -------------- | --------------------------- | ------------------------------ |
+| Token Bucket   | মসৃণ, burst অনুমোদন করে     | ঠিকভাবে implement করা জটিল     |
+| Sliding Window | নিখুঁত, boundary সমস্যা নেই | বেশি মেমরি ব্যবহার             |
+| Fixed Window   | সহজ                         | উইন্ডোর প্রান্তে 2x burst দেয় |
+| Leaky Bucket   | মসৃণ output rate            | বৈধ burst সামলাতে পারে না      |
 
-## Production Rate Limiter with Redis
+## Redis দিয়ে প্রোডাকশন রেট লিমিটার
 
 <CodeTabs tsFile="ratelimit.ts" goFile="ratelimit.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -437,23 +445,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Sliding window is the most accurate algorithm — no boundary burst issues
-- Token bucket is best when you want to allow short bursts above the average rate
-- Use **Lua scripts** for atomic Redis operations — prevents race conditions between check and increment
-- Always return `X-RateLimit-*` and `Retry-After` headers so clients can self-throttle
-- **Fail open** on rate limiter errors — don't block all traffic because Redis is momentarily down
+- Sliding window সবচেয়ে নিখুঁত অ্যালগরিদম — কোনো boundary burst সমস্যা নেই
+- Token bucket সবচেয়ে ভালো যখন আপনি গড় rate-এর উপরে ছোট burst অনুমোদন করতে চান
+- atomic Redis অপারেশনের জন্য **Lua script** ব্যবহার করুন — check আর increment-এর মধ্যে race condition ঠেকায়
+- সবসময় `X-RateLimit-*` আর `Retry-After` হেডার ফেরত দিন যাতে ক্লায়েন্ট নিজেই throttle করতে পারে
+- rate limiter এরর হলে **fail open** করুন — Redis ক্ষণিকের জন্য ডাউন বলে সব ট্রাফিক আটকে দেবেন না
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **GitHub API** uses 5,000 requests/hour for authenticated users, returns `X-RateLimit-*` headers
-- **Stripe** rate limits per API key with tiered limits based on account type
-- **Cloudflare** processes rate limiting at their edge network to block abuse before it reaches origin servers
-- Every public API needs rate limiting — it's not optional in production
+- **GitHub API** অথেনটিকেটেড ইউজারদের জন্য 5,000 রিকোয়েস্ট/ঘণ্টা ব্যবহার করে, `X-RateLimit-*` হেডার ফেরত দেয়
+- **Stripe** অ্যাকাউন্ট টাইপের ভিত্তিতে tiered লিমিট সহ প্রতি API key-তে rate limit করে
+- **Cloudflare** তাদের edge network-এ rate limiting প্রসেস করে যাতে অপব্যবহার origin সার্ভারে পৌঁছানোর আগেই আটকানো যায়
+- প্রতিটা পাবলিক API-র rate limiting দরকার — প্রোডাকশনে এটা optional নয়
 
 </div>

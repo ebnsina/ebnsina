@@ -1,9 +1,9 @@
 ---
 title: 'Query Planning & Execution'
-subtitle: 'How the database turns your SQL into an execution plan — parsing, optimization, and why EXPLAIN is your best friend.'
+subtitle: 'ডেটাবেজ কীভাবে আপনার SQL-কে একটা execution plan-এ পরিণত করে — parsing, optimization, আর কেন EXPLAIN আপনার সবচেয়ে ভালো বন্ধু।'
 chapter: 5
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['query planner', 'EXPLAIN', 'optimization', 'execution plan']
 ---
 
@@ -11,9 +11,17 @@ topics: ['query planner', 'EXPLAIN', 'optimization', 'execution plan']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Query Pipeline
+## গল্পে বুঝি
 
-Your SQL query goes through several stages before returning results:
+আল-খোয়ারিজমির একটা ছোট কুরিয়ার কোম্পানি। সকালে ম্যানেজার ফাতিমা আল-ফিহরি তার হাতে একটা লিস্ট ধরিয়ে দেয় — আজ মিরপুর, ধানমন্ডি, উত্তরা আর গুলশানে দশটা প্যাকেট পৌঁছাতে হবে। এই একই লিস্ট, কিন্তু পৌঁছানোর রাস্তা তো অনেকগুলো। আল-খোয়ারিজমি চাইলে আগে উত্তরা গিয়ে ঘুরে আসতে পারে, আবার চাইলে ধানমন্ডি দিয়ে শুরু করতে পারে। প্রতিটা রুটের জন্য সময় আর তেল খরচ আলাদা।
+
+আল-খোয়ারিজমি হুট করে সামনের রাস্তা ধরে না। মনে মনে সে কয়েকটা রুট হিসাব করে — এই সময়ে মিরপুর রোডে জ্যাম থাকে, কিন্তু ভোরের দিকে বিমানবন্দর সড়ক ফাঁকা। এই যে "কোন রাস্তায় এখন জ্যাম, কোনটা ফাঁকা" — এই জানাশোনাটাই তার আসল হাতিয়ার। কয়েকটা সম্ভাব্য রুটের আন্দাজি সময় আর তেল খরচ তুলনা করে সে সবচেয়ে কম খরচেরটা বেছে নেয়, তারপর বের হয়।
+
+এই গল্পটাই আসলে **query planner** (বা optimizer)। ফাতিমা আল-ফিহরির দেওয়া প্যাকেটের লিস্ট হলো আপনার একটা SQL query — একই কাজ, কিন্তু সেটা চালানোর অনেকগুলো **execution plan** আছে (কোন index ধরে যাবে নাকি পুরো টেবিল **scan** করবে, কোন টেবিল আগে **join** করবে)। আল-খোয়ারিজমির জ্যামের জানাশোনা হলো database-এর **table statistics**, আর রুটের আন্দাজি খরচ তুলনা করাটাই **cost estimation**। planner প্রতিটা সম্ভাব্য plan-এর cost আন্দাজ করে সবচেয়ে সস্তাটা বেছে নেয় — ঠিক যেমন আল-খোয়ারিজমি কম খরচের রুট বাছে। বাস্তবে PostgreSQL বা MySQL-এ `EXPLAIN` চালালে আপনি এই বাছাই করা রুটটাই — মানে planner শেষমেশ কোন plan-টা বেছে নিয়েছে — চোখের সামনে দেখতে পান।
+
+## Query Pipeline
+
+আপনার SQL query রেজাল্ট ফেরত দেওয়ার আগে কয়েকটা ধাপের মধ্য দিয়ে যায়:
 
 ```typescript
 // SQL → Parse → Analyze → Rewrite → Plan → Execute
@@ -30,15 +38,15 @@ Your SQL query goes through several stages before returning results:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a GPS planning your route — it could go through downtown (full table scan) or take the highway (index scan). The query planner picks the fastest route based on real-time traffic data (table statistics).
+যেমন একটা GPS আপনার route পরিকল্পনা করে — এটা downtown দিয়ে যেতে পারে (full table scan) বা highway ধরতে পারে (index scan)। Query planner real-time traffic data (table statistics) অনুযায়ী দ্রুততম route বেছে নেয়।
 
 </Callout>
 
-## The Planner's Job
+## Planner-এর কাজ
 
-The planner evaluates different strategies and picks the cheapest one based on **cost estimation**:
+Planner ভিন্ন ভিন্ন strategy মূল্যায়ন করে আর **cost estimation**-এর ভিত্তিতে সবচেয়ে সস্তাটা বেছে নেয়:
 
 ```typescript
 interface PlanNode {
@@ -61,7 +69,7 @@ interface PlanNode {
 // Planner picks Option B
 ```
 
-## Reading EXPLAIN Output
+## EXPLAIN Output পড়া
 
 ```sql
 -- Always use EXPLAIN ANALYZE to see actual execution
@@ -93,13 +101,13 @@ GROUP BY u.name;
 
 <Callout type="tip">
 
-**Look for**: `Seq Scan` on large tables (missing index?), large gaps between estimated and actual rows (stale statistics?), `Sort` with high cost (can an index provide ordering?), and `Nested Loop` with large outer table (should be a Hash Join?).
+**এগুলো খুঁজুন**: বড় টেবিলে `Seq Scan` (index missing?), estimated আর actual row-এর মধ্যে বড় ফারাক (stale statistics?), high cost-সহ `Sort` (কোনো index কি ordering দিতে পারে?), আর বড় outer table-সহ `Nested Loop` (এটা কি Hash Join হওয়া উচিত?)।
 
 </Callout>
 
 ## Join Strategies
 
-The planner chooses between three join algorithms:
+Planner তিনটা join algorithm-এর মধ্যে বেছে নেয়:
 
 ```typescript
 // Nested Loop: for each row in A, scan B
@@ -115,9 +123,9 @@ The planner chooses between three join algorithms:
 // Cost: O(N log N + M log M) for sorting + O(N + M) for merge
 ```
 
-## Statistics and Cost Estimation
+## Statistics আর Cost Estimation
 
-The planner relies on **table statistics** to estimate costs:
+Planner cost estimate করতে **table statistics**-এর উপর নির্ভর করে:
 
 ```sql
 -- PostgreSQL collects statistics via ANALYZE
@@ -138,11 +146,11 @@ ANALYZE users;
 
 <Callout type="warning">
 
-**Run ANALYZE after bulk data changes** (large imports, deletes, schema changes). Autovacuum does this periodically, but it may lag behind. Stale statistics are the #1 cause of bad query plans.
+**Bulk data change-এর পর ANALYZE চালান** (বড় import, delete, schema change)। Autovacuum এটা পর্যায়ক্রমে করে, কিন্তু এটা পিছিয়ে থাকতে পারে। Stale statistics হলো bad query plan-এর #1 কারণ।
 
 </Callout>
 
-## Common Optimization Patterns
+## সাধারণ Optimization Pattern
 
 ```sql
 -- 1. Cover your queries with indexes
@@ -160,9 +168,9 @@ CREATE INDEX idx_active_users ON users (email) WHERE active = true;
 SELECT name, email FROM users WHERE ...  -- reads less data
 ```
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **The planner picks the cheapest plan** based on cost estimates from table statistics
-2. **EXPLAIN ANALYZE shows actual execution** — always use it for performance debugging
-3. **Stale statistics cause bad plans** — run ANALYZE after bulk changes
-4. **Join strategy matters** — nested loop for small/indexed, hash join for large unindexed, merge join for pre-sorted
+1. **Planner সবচেয়ে সস্তা plan বেছে নেয়** table statistics থেকে পাওয়া cost estimate-এর ভিত্তিতে
+2. **EXPLAIN ANALYZE আসল execution দেখায়** — performance debugging-এর জন্য সবসময় এটা ব্যবহার করুন
+3. **Stale statistics bad plan-এর কারণ** — bulk change-এর পর ANALYZE চালান
+4. **Join strategy গুরুত্বপূর্ণ** — ছোট/indexed-এর জন্য nested loop, বড় unindexed-এর জন্য hash join, আগে থেকে sorted-এর জন্য merge join

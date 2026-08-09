@@ -1,9 +1,9 @@
 ---
 title: 'Events vs Commands vs Queries'
-subtitle: 'Three distinct message types with different semantics — understanding the difference shapes how you design every integration.'
+subtitle: 'ভিন্ন semantics-সহ তিন ধরনের আলাদা message — এই পার্থক্য বোঝাটাই ঠিক করে দেয় আপনি প্রতিটি integration কীভাবে design করবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['events', 'commands', 'queries', 'CQRS', 'message semantics']
 ---
 
@@ -13,15 +13,23 @@ topics: ['events', 'commands', 'queries', 'CQRS', 'message semantics']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Three different ways to tell a colleague something: "Please send the report" is a command — directed, expects action. "The report has been sent" is an event — a fact that happened, broadcast to whoever cares. "Did you send the report?" is a query — expects a response with information. Mixing these up in code creates the same confusion it would in conversation.
+একজন সহকর্মীকে কিছু জানানোর তিনটা আলাদা উপায়: "রিপোর্টটা পাঠিয়ে দিন" হলো একটা command — নির্দিষ্ট কারও দিকে লক্ষ্য করা, কাজের প্রত্যাশা রাখে। "রিপোর্টটা পাঠানো হয়েছে" হলো একটা event — একটা ঘটে যাওয়া তথ্য, যাকে যার দরকার তার কাছে broadcast করা। "আপনি কি রিপোর্টটা পাঠিয়েছেন?" হলো একটা query — তথ্যসহ একটা উত্তর প্রত্যাশা করে। কোডে এগুলো গুলিয়ে ফেললে ঠিক ততটাই বিভ্রান্তি তৈরি হয় যতটা কথোপকথনে হতো।
 
 </Callout>
 
-## The Three Message Types
+## গল্পে বুঝি
 
-**Commands:** Tell a service to do something. Directed at a specific recipient. The sender cares whether it succeeds.
+ফাতিমা আল-ফিহরির রেস্টুরেন্টের ফ্লোরে দুপুরের ভিড়। ওয়েটার ইবনে সিনা একটা অর্ডার টিকিট রান্নাঘরে ধরিয়ে দিলেন — "একটা বিরিয়ানি বানাও।" এটা নির্দিষ্ট একজনের কাজ; রাঁধুনি আল-খোয়ারিজমি এটা রান্না করবেন। চাল ফুরিয়ে গেলে তিনি টিকিটটা ফেরতও পাঠাতে পারেন — "আজ আর বিরিয়ানি হবে না।" মানে এই নির্দেশটা প্রত্যাখ্যানও হতে পারে।
+
+কিছুক্ষণ পর কেউ একজন হাঁক দিলেন — "টেবিল ৫ খাওয়া শেষ করেছে!" এটা কাউকে নির্দিষ্ট করে বলা হয়নি, শুধু একটা ঘটে যাওয়া তথ্য ঘোষণা করা হলো। আর একই হাঁক শুনে কয়েকজন নিজের মতো করে সাড়া দিলেন — ইবনে সিনা গিয়ে টেবিল পরিষ্কার করলেন, ক্যাশিয়ার বিল তৈরি করলেন, আর হোস্ট পরের অতিথিকে বসতে দিলেন। এদিকে ম্যানেজার শুধু জানতে চাইলেন — "আর কয়টা বিরিয়ানি বাকি আছে?" এই প্রশ্নে কিছুই বদলায় না, শুধু একটা তথ্য জানা হয়।
+
+এখানেই তিনটা জিনিস আলাদা হয়ে যায়। অর্ডার টিকিট "বিরিয়ানি বানাও" হলো একটা **command** — নির্দিষ্ট একজন handler-এর দিকে লক্ষ্য করা একটা নির্দেশ, যা প্রয়োজনে প্রত্যাখ্যানও হতে পারে। "টেবিল ৫ খাওয়া শেষ করেছে!" হলো একটা **event** — অতীতে ঘটে যাওয়া একটা fact, যাতে অনেকজন স্বাধীনভাবে সাড়া দেয়, আর ঘোষণাকারী জানেও না কে কীভাবে react করবে। আর "আর কয়টা বাকি?" হলো একটা **query** — কেবল পড়া, কোনো কিছু পাল্টায় না। বাস্তবে event-driven সিস্টেমে ঠিক এই তিনটা message-এর semantics আলাদা রাখাটাই ঠিক করে দেয় আপনার service-গুলো কতটা coupled থাকবে আর failure-এ কী হবে।
+
+## তিন ধরনের Message
+
+**Commands:** কোনো service-কে কিছু করতে বলে। নির্দিষ্ট একজন প্রাপকের দিকে লক্ষ্য করা। প্রেরক জানতে চায় এটা সফল হলো কিনা।
 
 ```typescript
 // Command: imperative verb, directed, expects handling
@@ -40,7 +48,7 @@ interface ProcessPayment {
 }
 ```
 
-**Events:** Record that something happened. Broadcast to any interested party. The sender doesn't know or care who handles it.
+**Events:** কিছু একটা ঘটেছে তা রেকর্ড করে। আগ্রহী যেকোনো পক্ষের কাছে broadcast করা হয়। প্রেরক জানে না বা পরোয়াও করে না কে এটা handle করবে।
 
 ```typescript
 // Event: past tense, records a fact, no specific recipient
@@ -62,7 +70,7 @@ interface OrderPlaced {
 }
 ```
 
-**Queries:** Request information. Expect a response. Typically synchronous (request/response).
+**Queries:** তথ্য চায়। একটা response প্রত্যাশা করে। সাধারণত synchronous (request/response)।
 
 ```typescript
 // Query: asks a question, expects an answer
@@ -79,19 +87,19 @@ interface GetOrderHistory {
 }
 ```
 
-## Why the Distinction Matters
+## পার্থক্যটা কেন গুরুত্বপূর্ণ
 
-The difference isn't just naming convention — it changes the coupling, failure modes, and semantics of your system.
+পার্থক্যটা শুধু naming convention নয় — এটা আপনার সিস্টেমের coupling, failure mode আর semantics পাল্টে দেয়।
 
-**Commands create coupling:**
+**Commands coupling তৈরি করে:**
 
 ```
 Service A → sends command → Service B
 ```
 
-Service A knows about Service B. If B is down, the command fails. If B's interface changes, A breaks.
+Service A, Service B সম্পর্কে জানে। B যদি down থাকে, command fail করবে। B-এর interface পাল্টালে A ভেঙে যাবে।
 
-**Events decouple:**
+**Events decouple করে:**
 
 ```
 Service A → emits event → Event Bus
@@ -101,21 +109,21 @@ Service A → emits event → Event Bus
                          Service D (subscribes)
 ```
 
-Service A knows nothing about B, C, or D. New subscribers can be added without touching A. If B is down, the event waits in the queue; when B recovers, it processes it.
+Service A, B, C বা D সম্পর্কে কিছুই জানে না। A-কে না ছুঁয়েই নতুন subscriber যোগ করা যায়। B যদি down থাকে, event টা queue-তে অপেক্ষা করে; B ফিরে এলে সেটা process করে।
 
-**Operational consequences:**
+**অপারেশনাল ফলাফল:**
 
-|             | Command                          | Event                               |
-| ----------- | -------------------------------- | ----------------------------------- |
-| Coupling    | Tight — sender knows receiver    | Loose — sender knows only the event |
-| Failure     | Synchronous — both fail together | Asynchronous — sender unaffected    |
-| Recipients  | One                              | Many                                |
-| Expectation | Must succeed                     | Fire and forget                     |
-| Naming      | Imperative verb                  | Past tense                          |
+|             | Command                             | Event                                |
+| ----------- | ----------------------------------- | ------------------------------------ |
+| Coupling    | টাইট — প্রেরক প্রাপককে জানে         | লুজ — প্রেরক শুধু event-টাকে জানে    |
+| Failure     | Synchronous — দুজনই একসাথে fail করে | Asynchronous — প্রেরক অপ্রভাবিত থাকে |
+| Recipients  | একজন                                | অনেকজন                               |
+| Expectation | সফল হতেই হবে                        | Fire and forget                      |
+| Naming      | Imperative verb                     | Past tense                           |
 
-## Event Naming Conventions
+## Event Naming Convention
 
-Events are facts — name them as such:
+Events হলো তথ্য — সেভাবেই এদের নাম দিন:
 
 ```typescript
 // WRONG — sounds like a command, ambiguous
@@ -132,11 +140,11 @@ Events are facts — name them as such:
 'InventoryDepleted';
 ```
 
-A rule of thumb: if you can't use past tense, it's probably a command, not an event.
+একটা সহজ নিয়ম: যদি past tense ব্যবহার করতে না পারেন, তাহলে এটা সম্ভবত একটা command, event নয়।
 
 ## Event Envelope
 
-Wrap every event in a standard envelope with metadata:
+প্রতিটি event-কে metadata-সহ একটা standard envelope-এ মুড়ে দিন:
 
 ```typescript
 interface EventEnvelope<T = unknown> {
@@ -176,11 +184,11 @@ const event: EventEnvelope<UserRegistered> = {
 };
 ```
 
-The envelope lets any consumer understand where an event came from, when it happened, and relate it to other events — without parsing the payload.
+Envelope-টা যেকোনো consumer-কে বুঝতে দেয় একটা event কোথা থেকে এলো, কখন ঘটল, আর অন্য event-দের সাথে সম্পর্ক কী — payload parse না করেই।
 
-## CQRS: Separating Reads from Writes
+## CQRS: Read আর Write আলাদা করা
 
-Command Query Responsibility Segregation separates the models for writing data (command side) from reading data (query side). Events bridge the two.
+Command Query Responsibility Segregation ডেটা লেখার model (command side) আর ডেটা পড়ার model (query side) আলাদা করে। Events দুটোর মধ্যে সেতু হয়।
 
 ```typescript
 // Command side: handles writes, emits events
@@ -231,27 +239,27 @@ class OrderReadModelUpdater {
 }
 ```
 
-CQRS is not always necessary — don't add it to a simple CRUD app. It pays off when read and write patterns are genuinely different (high read volume with complex filtering, or write patterns that trigger many downstream effects).
+CQRS সবসময় দরকার হয় না — সাধারণ একটা CRUD app-এ এটা যোগ করবেন না। এটা তখনই কাজে দেয় যখন read আর write প্যাটার্ন সত্যিই আলাদা হয় (জটিল filtering-সহ বিশাল read volume, অথবা এমন write প্যাটার্ন যা অনেক downstream effect ট্রিগার করে)।
 
-## When to Use Each
+## কখন কোনটা ব্যবহার করবেন
 
-**Use commands when:**
+**Commands ব্যবহার করুন যখন:**
 
-- You need to know if the operation succeeded before continuing
-- The operation is directed at a specific service
-- The sender needs to handle failure (retry, compensate)
+- এগিয়ে যাওয়ার আগে জানতে হবে অপারেশনটা সফল হলো কিনা
+- অপারেশনটা নির্দিষ্ট একটা service-এর দিকে লক্ষ্য করা
+- প্রেরককে failure handle করতে হবে (retry, compensate)
 
-**Use events when:**
+**Events ব্যবহার করুন যখন:**
 
-- Multiple services care about what happened
-- The sender doesn't need to know the outcome
-- You want to decouple services so they evolve independently
-- You need an audit trail of what happened
+- কী ঘটল তা নিয়ে একাধিক service আগ্রহী
+- প্রেরকের ফলাফল জানার দরকার নেই
+- আপনি চান service-গুলো decouple থাকুক যাতে তারা স্বাধীনভাবে evolve করতে পারে
+- কী ঘটল তার একটা audit trail দরকার
 
-**Use queries when:**
+**Queries ব্যবহার করুন যখন:**
 
-- You need current state
-- The response is needed synchronously
-- The operation is read-only (no side effects)
+- আপনার current state দরকার
+- response synchronously দরকার
+- অপারেশনটা read-only (কোনো side effect নেই)
 
-Mixing them deliberately is fine — an HTTP request (query) that triggers a command that emits an event is a common and correct pattern. The naming and semantics just need to be clear.
+এগুলো ইচ্ছাকৃতভাবে মিশিয়ে ফেলা ঠিক আছে — একটা HTTP request (query) যা একটা command ট্রিগার করে যা একটা event emit করে, এটা একটা প্রচলিত ও সঠিক প্যাটার্ন। শুধু naming আর semantics পরিষ্কার হওয়া দরকার।

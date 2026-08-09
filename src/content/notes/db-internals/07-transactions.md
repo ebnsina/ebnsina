@@ -1,9 +1,9 @@
 ---
 title: 'Transactions & ACID'
-subtitle: "Atomicity, Consistency, Isolation, Durability — the guarantees that make databases reliable and how they're implemented."
+subtitle: 'Atomicity, Consistency, Isolation, Durability — যে গ্যারান্টিগুলো ডেটাবেজকে নির্ভরযোগ্য করে আর কীভাবে সেগুলো implement করা হয়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['ACID', 'transactions', 'atomicity', 'isolation']
 ---
 
@@ -11,9 +11,17 @@ topics: ['ACID', 'transactions', 'atomicity', 'isolation']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What ACID Means
+## গল্পে বুঝি
 
-ACID isn't a feature you turn on — it's four properties that together guarantee database reliability:
+বাজারের হুন্ডি কাউন্টারে ইবনে সিনা এসেছে — আল-খোয়ারিজমির কাছে টাকা পাঠাবে। কেরানি খাতা খুলে দুটো কাজ করে: ইবনে সিনার হিসাব থেকে টাকা কাটে, আর আল-খোয়ারিজমির হিসাবে সেই টাকা যোগ করে। এই দুটো কাজ একসাথেই হতে হবে। ধরুন ইবনে সিনার টাকা কাটার পর হঠাৎ দেখা গেল আল-খোয়ারিজমির লাইন ঠিক নেই বা যোগ করা গেল না — তখন কেরানি ইবনে সিনার কাটা টাকাটাও ফেরত বসিয়ে দেয়, যেন কিছুই হয়নি। হয় দুটোই হবে, নয়তো একটাও না। মাঝপথে টাকা কোথাও উবে যেতে পারে না।
+
+কাউন্টারে সেদিন ভিড়। একই সময়ে আরেক কেরানি ফাতিমা আল-ফিহরির আরেকটা লেনদেন সামলাচ্ছে। দুজন কেরানি পাশাপাশি কাজ করলেও একজনের অর্ধেক-লেখা হিসাব আরেকজনের খাতায় ঢুকে যায় না — প্রত্যেকের হিসাব আলাদা করে সামলানো হয়, তাই ব্যালেন্স গুলিয়ে যায় না। আর যেই মুহূর্তে কেরানি রসিদে "সম্পন্ন" সিল মেরে দেয়, লেনদেন পাকা — এরপর কারেন্ট চলে গেলেও, খাতা হারিয়ে গেলেও ওই সিল-মারা রসিদ প্রমাণ থেকে যায়।
+
+এই গল্পটাই আসলে **transaction** আর **ACID**। ইবনে সিনার কাটা আর আল-খোয়ারিজমির যোগ একসাথে হওয়া বা পুরোটা rollback হওয়া — এটাই **atomicity**। খাতায় কখনো টাকা উবে যাওয়া বা দ্বিগুণ হয়ে যাওয়া না দেখানো — **consistency**। দুই কেরানির লেনদেন একে অন্যকে ঘেঁটে না দেওয়া — **isolation**। সিল মারার পর কারেন্ট গেলেও রসিদ টিকে থাকা — **durability**। ব্যাংকের এক অ্যাকাউন্ট থেকে আরেক অ্যাকাউন্টে টাকা পাঠানো বা bKash-এ send money — সব ঠিক এই গ্যারান্টিগুলোর উপরেই দাঁড়িয়ে আছে।
+
+## ACID মানে কী
+
+ACID কোনো feature নয় যেটা আপনি on করেন — এটা চারটা property যা একসাথে ডেটাবেজের নির্ভরযোগ্যতা গ্যারান্টি করে:
 
 ```typescript
 // Atomicity: all or nothing
@@ -34,13 +42,13 @@ ACID isn't a feature you turn on — it's four properties that together guarante
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a bank wire transfer — when you send $500, either your balance decreases AND the receiver's balance increases, or neither happens. No in-between state where money disappears. That's ACID: all or nothing.
+যেমন একটা bank wire transfer — আপনি যখন $500 পাঠান, হয় আপনার balance কমে যায় এবং receiver-এর balance বাড়ে, নয়তো কোনোটাই ঘটে না। এমন কোনো মাঝামাঝি state নেই যেখানে টাকা উবে যায়। এটাই ACID: সব অথবা কিছুই না।
 
 </Callout>
 
-## Atomicity: How Rollback Works
+## Atomicity: Rollback কীভাবে কাজ করে
 
 ```typescript
 class Transaction {
@@ -81,7 +89,7 @@ class Transaction {
 
 ## Savepoints
 
-Savepoints let you partially roll back within a transaction:
+Savepoint আপনাকে একটা transaction-এর মধ্যেই আংশিকভাবে roll back করতে দেয়:
 
 ```sql
 BEGIN;
@@ -119,7 +127,7 @@ class Transaction {
 
 ## Distributed Transactions: Two-Phase Commit
 
-When a transaction spans multiple databases or services:
+যখন একটা transaction একাধিক ডেটাবেজ বা service জুড়ে বিস্তৃত হয়:
 
 ```typescript
 // Phase 1: PREPARE — ask all participants if they can commit
@@ -142,11 +150,11 @@ async function complete(participants: Database[], allReady: boolean): Promise<vo
 
 <Callout type="warning">
 
-**Two-phase commit is a blocking protocol.** If the coordinator crashes after PREPARE but before COMMIT/ABORT, all participants are stuck holding locks. This is why distributed transactions are avoided in microservices — use sagas or eventual consistency instead.
+**Two-phase commit একটা blocking protocol।** PREPARE-এর পর কিন্তু COMMIT/ABORT-এর আগে coordinator যদি crash করে, সব participant lock ধরে আটকে থাকে। এই কারণেই microservice-এ distributed transaction এড়িয়ে চলা হয় — এর বদলে saga বা eventual consistency ব্যবহার করুন।
 
 </Callout>
 
-## Common Transaction Pitfalls
+## সাধারণ Transaction Pitfall
 
 ```sql
 -- 1. Long-running transactions hold locks and block VACUUM
@@ -166,14 +174,14 @@ UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 
 <Callout type="tip">
 
-**Keep transactions short.** Long transactions hold locks, prevent VACUUM from cleaning dead rows, and increase the chance of conflicts. Do all your reads and computation outside the transaction, then use a short transaction for the actual writes.
+**Transaction ছোট রাখুন।** দীর্ঘ transaction lock ধরে রাখে, VACUUM-কে dead row পরিষ্কার করতে বাধা দেয়, আর conflict-এর সম্ভাবনা বাড়ায়। আপনার সব read আর computation transaction-এর বাইরে করুন, তারপর আসল write-এর জন্য একটা ছোট transaction ব্যবহার করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Atomicity uses undo logs** — on rollback, reverse all changes in order
-2. **Durability uses WAL** — COMMIT writes a durable log record before returning
-3. **Savepoints enable partial rollbacks** within a transaction
-4. **Distributed transactions (2PC) are blocking** — prefer sagas for cross-service operations
-5. **Keep transactions short** to minimize lock contention and VACUUM impact
+1. **Atomicity undo log ব্যবহার করে** — rollback-এ, সব change ক্রম অনুসারে উল্টে দেয়
+2. **Durability WAL ব্যবহার করে** — COMMIT return করার আগে একটা durable log record লেখে
+3. **Savepoint একটা transaction-এর মধ্যে আংশিক rollback করতে দেয়**
+4. **Distributed transaction (2PC) blocking** — cross-service operation-এর জন্য saga পছন্দ করুন
+5. **Transaction ছোট রাখুন** যাতে lock contention আর VACUUM-এর প্রভাব কমে

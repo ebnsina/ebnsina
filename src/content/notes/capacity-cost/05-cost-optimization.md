@@ -1,9 +1,9 @@
 ---
 title: 'Cost Optimization in Practice'
-subtitle: 'Finding waste, rightsizing, reserved commitments, and building a culture that treats cloud spend as engineering work.'
+subtitle: 'Waste খুঁজে বের করা, rightsizing, reserved commitment, আর এমন একটা culture গড়া যা cloud spend-কে engineering work হিসেবে দেখে।'
 chapter: 5
 level: 'advanced'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['cost optimization', 'rightsizing', 'reserved instances', 'FinOps', 'cloud cost']
 ---
 
@@ -13,15 +13,23 @@ topics: ['cost optimization', 'rightsizing', 'reserved instances', 'FinOps', 'cl
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Energy efficiency in a building: the easy wins are turning off lights in empty rooms (unused resources). The harder work is insulating the walls (architecture changes). Both matter, but the order is: quick wins first, structural improvements after you understand your actual usage patterns.
+একটা building-এ energy efficiency: সহজ জয় হলো খালি ঘরের light বন্ধ করা (unused resource)। কঠিন কাজ হলো দেয়াল insulate করা (architecture change)। দুটোই গুরুত্বপূর্ণ, কিন্তু ক্রম হলো: আগে quick win, আপনার আসল usage pattern বোঝার পরে structural improvement।
 
 </Callout>
 
-## Where the Money Actually Goes
+## গল্পে বুঝি
 
-Before optimizing, understand the breakdown. Most AWS bills cluster in a few categories:
+ফাতিমা আল-ফিহরির পরিবারে মাস শেষে টাকা কেন উবে যাচ্ছে কেউ ধরতে পারছিল না। এক শনিবার সে বসে পুরো মাসের খরচের হিসাব মেলাল, আর দেখল অনেক টাকা এমন জিনিসে যাচ্ছে যা কেউ ছুঁয়েও দেখে না। একটা জিমের মেম্বারশিপ ছয় মাস ধরে চলছে অথচ কেউ যায় না, একটা cable TV প্যাকেজের বিল কাটছে যেটা সবাই ভুলে গেছে — সে দুটোই সাথে সাথে বন্ধ করে দিল। পরিবারের মোবাইল ডেটা প্যাকটা ছিল বিশাল, যেন সবাই সারাদিন ভিডিও দেখে; আসলে খরচ হয় তার এক-তৃতীয়াংশ। ফাতিমা প্যাকটা নামিয়ে বাস্তব ব্যবহারের মাপে আনল।
+
+তারপর সে বিদ্যুতের দিকে তাকাল। যতটুকু বিদ্যুৎ প্রতি মাসে লাগবেই — ফ্যান, ফ্রিজ, বাতি — সেটুকুর জন্য সে বিদ্যুৎ কোম্পানির সস্তা বাৎসরিক চুক্তিতে সই করে দিল, কারণ এই খরচ নিশ্চিত। আর কাপড় ধোয়ার মতো যেসব কাজ যেকোনো সময় করা যায়, সেগুলো সে রাতের সস্তা off-peak রেটের জন্য জমিয়ে রাখল — বিদ্যুৎ মহার্ঘ্য হলে ওয়াশিং মেশিন থামিয়ে দিলেও ক্ষতি নেই। শেষে একটা নিয়ম করল: বাসায় কেউ না থাকলে বাতি আর গিজার বন্ধ।
+
+এই গল্পটাই আসলে **cost optimization**। না-ব্যবহৃত জিম আর cable বন্ধ করা হলো idle resource **delete** করা; বিশাল ডেটা প্যাক কমিয়ে বাস্তব ব্যবহারের মাপে আনা হলো over-provisioned resource **right-size** করা; নিশ্চিত বিদ্যুতের জন্য বাৎসরিক চুক্তি হলো steady load-এ **reserved instance**, আর থামানো-যায় এমন কাপড় ধোয়া off-peak-এ করা হলো interruptible কাজে **spot instance**; আর কেউ না থাকলে বাতি-গিজার বন্ধ করা হলো idle অবস্থায় **scale down** করা। বাস্তবে cloud bill-ও ঠিক এভাবেই কমে — আগে সহজ waste মোছেন, তারপর যা নিশ্চিত তার জন্য commit করে সস্তা রেট নেন, আর যা flexible তা সস্তা-কিন্তু-অনিশ্চিত capacity-তে চালান।
+
+## টাকা আসলে কোথায় যায়
+
+Optimize করার আগে breakdown বুঝুন। বেশিরভাগ AWS bill কয়েকটা category-তে জমা হয়:
 
 ```bash
 # AWS Cost Explorer: service breakdown
@@ -40,11 +48,11 @@ aws ce get-cost-and-usage \
 #  5% — other (WAF, CloudFront, load balancers)
 ```
 
-Optimize largest categories first. Shaving 30% off RDS has more impact than eliminating S3 entirely.
+সবচেয়ে বড় category আগে optimize করুন। RDS থেকে 30% কমানো পুরো S3 বাদ দেওয়ার চেয়ে বেশি impact ফেলে।
 
-## Quick Wins (Days of Effort)
+## Quick Win (কয়েক দিনের পরিশ্রম)
 
-**Identify and delete idle resources:**
+**Idle resource শনাক্ত করে delete করুন:**
 
 ```bash
 # EC2 instances with <5% CPU over 14 days
@@ -68,7 +76,7 @@ aws ec2 describe-snapshots --owner-ids self \
   --query 'Snapshots[?StartTime<=`2023-01-01`].[SnapshotId,VolumeSize,StartTime]'
 ```
 
-**S3 lifecycle policies:**
+**S3 lifecycle policy:**
 
 ```json
 {
@@ -86,11 +94,11 @@ aws ec2 describe-snapshots --owner-ids self \
 }
 ```
 
-**Enable S3 Intelligent-Tiering** for data with unpredictable access patterns — it automatically moves objects between tiers.
+Unpredictable access pattern-এর data-র জন্য **S3 Intelligent-Tiering enable করুন** — এটা automatically object-গুলোকে tier-এর মধ্যে সরিয়ে নেয়।
 
-## Rightsizing Compute
+## Compute Rightsizing
 
-The biggest sustained win: running the right instance size.
+সবচেয়ে বড় sustained জয়: সঠিক instance size চালানো।
 
 ```bash
 # Collect 30 days of CPU + memory data
@@ -107,12 +115,12 @@ aws cloudwatch get-metric-statistics \
 
 **Decision matrix:**
 
-| CPU avg | Mem avg | Action                                             |
-| ------- | ------- | -------------------------------------------------- |
-| &lt;20% | &lt;40% | Downsize — likely 2x overprovisioned               |
-| &lt;40% | &lt;60% | Acceptable — leave headroom for spikes             |
-| >60%    | >70%    | Size up or add instances                           |
-| &lt;20% | >80%    | Memory-constrained — rightsize to memory-optimized |
+| CPU avg | Mem avg | Action                                                 |
+| ------- | ------- | ------------------------------------------------------ |
+| &lt;20% | &lt;40% | Downsize — সম্ভবত 2x overprovisioned                   |
+| &lt;40% | &lt;60% | গ্রহণযোগ্য — spike-এর জন্য headroom রাখুন              |
+| >60%    | >70%    | Size up বা instance যোগ করুন                           |
+| &lt;20% | >80%    | Memory-constrained — memory-optimized-এ rightsize করুন |
 
 ```bash
 # AWS Compute Optimizer: automated rightsizing recommendations
@@ -125,7 +133,7 @@ aws support describe-trusted-advisor-checks --language en
 
 ## Reserved Instance Strategy
 
-Commit to 1 or 3 years on stable baseline workloads:
+Stable baseline workload-এ ১ বা ৩ বছরে commit করুন:
 
 ```
 Procedure:
@@ -147,11 +155,11 @@ Example:
     Total: ~$1,900/year on modest reservation
 ```
 
-**Convertible reserved instances** allow changing instance type within the same family — useful if you're still optimizing your stack and might downsize.
+**Convertible reserved instance** একই family-র মধ্যে instance type বদলাতে দেয় — যদি আপনি এখনো আপনার stack optimize করছেন আর downsize করতে পারেন তবে কাজের।
 
-## Spot Instances for Workers
+## Worker-এর জন্য Spot Instance
 
-Background job workers are the ideal spot workload:
+Background job worker হলো আদর্শ spot workload:
 
 ```typescript
 // Workers pull from queue — preemption just loses the current job (retried)
@@ -182,11 +190,11 @@ setInterval(async () => {
 }, 5_000);
 ```
 
-## Data Transfer Cost Reduction
+## Data Transfer খরচ কমানো
 
-Data transfer is often invisible until the bill arrives:
+Bill আসার আগ পর্যন্ত data transfer প্রায়ই অদৃশ্য থাকে:
 
-**CDN for static assets:**
+**Static asset-এর জন্য CDN:**
 
 ```
 Without CDN: every asset request hits your origin server
@@ -217,7 +225,7 @@ app.use(
 //   With compression:    20GB egress  = $1.80
 ```
 
-**Keep inter-service traffic in the same AZ:**
+**Inter-service traffic একই AZ-তে রাখুন:**
 
 ```
 Same AZ data transfer: free
@@ -230,9 +238,9 @@ Fix: deploy services that talk frequently in the same AZ,
      or use internal load balancers with AZ affinity
 ```
 
-## Building a Cost Culture
+## Cost Culture গড়া
 
-Technical optimization only works if the team actually does it. Process matters:
+Technical optimization তখনই কাজ করে যখন team আসলে সেটা করে। Process গুরুত্বপূর্ণ:
 
 **Weekly cost review:**
 
@@ -245,7 +253,7 @@ Technical optimization only works if the team actually does it. Process matters:
 ```
 
 **Cost per feature / per team:**
-Tag resources by team and feature. Then each team sees their own spend:
+Team আর feature অনুযায়ী resource tag করুন। তখন প্রতিটা team তাদের নিজের spend দেখতে পায়:
 
 ```bash
 # Tag everything at creation
@@ -257,7 +265,7 @@ aws ce get-cost-and-usage \
   --group-by Type=TAG,Key=team
 ```
 
-**Alerts before bills:**
+**Bill আসার আগে alert:**
 
 ```bash
 # Alert when spend exceeds threshold
@@ -279,7 +287,7 @@ aws budgets create-budget \
   }]'
 ```
 
-Alert at 80% of budget — time to investigate before going over, not after.
+Budget-এর 80%-এ alert দিন — সীমা পার হওয়ার পরে নয়, আগেই তদন্ত করার সময়।
 
 ## Optimization Priority Order
 
@@ -296,4 +304,4 @@ Alert at 80% of budget — time to investigate before going over, not after.
 10. Architecture changes (harder, higher ceiling)
 ```
 
-Don't jump to architecture changes before doing 1-7. Most teams have significant waste in the easy categories.
+1-7 করার আগে architecture change-এ ঝাঁপ দেবেন না। বেশিরভাগ team-এর সহজ category-গুলোতেই উল্লেখযোগ্য waste থাকে।

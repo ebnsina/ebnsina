@@ -1,9 +1,9 @@
 ---
-title: 'Advanced Concurrency Patterns'
-subtitle: 'Context, sync primitives, worker pools, and the patterns that power Go at scale — from Uber to Cloudflare.'
+title: 'Advanced Concurrency Pattern'
+subtitle: 'Context, sync primitive, worker pool, আর যেসব pattern স্কেলে Go চালায় — Uber থেকে Cloudflare পর্যন্ত।'
 chapter: 11
 level: 'intermediate'
-readingTime: '22 min'
+readingTime: '22 মিনিট'
 topics: ['context', 'sync', 'mutex', 'semaphore', 'pipeline', 'errgroup']
 ---
 
@@ -11,9 +11,17 @@ topics: ['context', 'sync', 'mutex', 'semaphore', 'pipeline', 'errgroup']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Context: The Cancellation Backbone
+## গল্পে বুঝি
 
-`context.Context` is Go's mechanism for managing request lifecycles — timeouts, cancellation, and request-scoped values. Every production Go function that does I/O should accept a context as its first argument.
+ধরুন ইবনে সিনার একটা বড় ক্যাটারিং অপারেশন — একসাথে হাজার লোকের বিয়ের অর্ডার সামলাতে হয়। রান্নাঘরে একটা বড় অর্ডার-বোর্ড টাঙানো, তাতে একের পর এক কাজের চিরকুট আটকানো থাকে। ইবনে সিনা যত খুশি বাবুর্চি রাখে না — গোনা দশজন বাবুর্চি, প্রত্যেকে বোর্ড থেকে একটা করে চিরকুট নেয়, রান্না শেষ করে আবার পরেরটা তোলে। বোর্ডে কাজ থাকলে কেউ বসে থাকে না, আবার একসাথে দশজনের বেশি চুলাও জ্বলে না। বিশাল একটা অর্ডার এলে ম্যানেজার আল-খোয়ারিজমি সেটাকে ভাগ করে কয়েকটা টিমকে বিলিয়ে দেয়, আর প্রত্যেক টিম শেষ করলে সব রান্না এক জায়গায় এনে একটা থালায় সাজায়।
+
+রান্নাঘরের সুপারভাইজার ফাতিমা আল-ফিহরি দাঁড়িয়ে থাকে কয়েকটা কাউন্টারের মাঝখানে — একদিকে ভাতের হাঁড়ি, একদিকে মাংসের কড়াই, একদিকে ডেজার্টের টেবিল। যেটা আগে "রেডি" বলে হাঁক দেয়, ফাতিমা আল-ফিহরি সাথে সাথে সেটাই তুলে পরিবেশনে পাঠায়; সব একসাথে হওয়ার জন্য অপেক্ষা করে না। আবার রান্নাঘরে একটাই বিশাল বিরিয়ানির ডেগ, একসাথে দুজন নাড়লে সব লেগে যাবে — তাই একটা কাঠের হাতা আছে, যার হাতে হাতা সে-ই কেবল নাড়তে পারে, বাকিরা হাতা হাতবদল না হওয়া পর্যন্ত অপেক্ষা করে।
+
+এই পুরোটাই আসলে advanced concurrency। বোর্ড থেকে চিরকুট তোলা গোনা দশজন বাবুর্চি হলো **worker pool** — নির্দিষ্ট সংখ্যক goroutine একটা shared queue থেকে কাজ তোলে (chapter-এ `errgroup`-এর `SetLimit` আর semaphore এই কাজটাই করে)। আল-খোয়ারিজমির বড় অর্ডার ভাগ করে টিমে বিলিয়ে দিয়ে শেষে এক থালায় সাজানো হলো **fan-out/fan-in** — এক কাজ অনেক goroutine-এ ছড়িয়ে, ফল আবার এক channel-এ জড়ো করা (`fetchAllData`-র errgroup ঠিক এটাই)। ফাতিমা আল-ফিহরির "যেটা আগে রেডি সেটাই তুলি" হলো **select** — একাধিক channel-এর মধ্যে যেটা আগে সাড়া দেয় সেটাই process করা। আর একটামাত্র হাতা দিয়ে ডেগ নাড়া হলো **mutex** — shared state একসাথে একজনই ছুঁতে পারে (`sync.Mutex`/`RWMutex`)। বাস্তবে Uber, Cloudflare-এর মতো সিস্টেম হাজারো request ঠিক এভাবেই সামলায় — গোনা worker, ছড়িয়ে-জড়ো করা কাজ, আর shared state-এ একটামাত্র লক।
+
+## Context: Cancellation-এর মেরুদণ্ড
+
+`context.Context` হলো request lifecycle ম্যানেজ করার Go-এর কৌশল — timeout, cancellation, আর request-scoped value। যেকোনো production Go function যা I/O করে, সেটার প্রথম argument হিসেবে একটা context নেওয়া উচিত।
 
 ```go
 // Context hierarchy: parent cancellation cascades to children
@@ -52,13 +60,13 @@ func fetchUser(ctx context.Context, id int) (*User, error) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Context is like a walkie-talkie for a construction crew. The foreman (parent context) can tell everyone to stop (cancel). If the foreman's boss (parent's parent) cancels the entire project, the foreman's cancel cascades to all workers too. Each worker checks their walkie-talkie before starting expensive work.
+Context অনেকটা একটা কনস্ট্রাকশন দলের walkie-talkie-র মতো। ফোরম্যান (parent context) সবাইকে থামতে বলতে পারে (cancel)। যদি ফোরম্যানের বস (parent-এর parent) পুরো প্রজেক্ট cancel করে, ফোরম্যানের cancel-ও সব worker-এ ছড়িয়ে পড়ে। প্রতিটা worker দামি কাজ শুরু করার আগে তার walkie-talkie চেক করে।
 
 </Callout>
 
-### Context Best Practices
+### Context-এর Best Practice
 
 ```go
 // 1. Always pass context as the first parameter
@@ -89,9 +97,9 @@ for _, item := range largeDataset {
 }
 ```
 
-## sync.Mutex: Protecting Shared State
+## sync.Mutex: Shared State রক্ষা করা
 
-When goroutines must share state (not communicable through channels), use a mutex:
+যখন goroutine-দের state শেয়ার করতেই হয় (channel দিয়ে যা communicate করা যায় না), তখন mutex ব্যবহার করুন:
 
 ```go
 type SafeCache struct {
@@ -129,11 +137,11 @@ func (c *SafeCache) Delete(key string) {
 
 <Callout type="tip">
 
-**Use `sync.RWMutex` when reads vastly outnumber writes** (like a cache). Multiple goroutines can read simultaneously with `RLock()`, but writing with `Lock()` is exclusive. For write-heavy workloads, a regular `sync.Mutex` has less overhead.
+**যখন read লেখার (write) চেয়ে বহুগুণ বেশি হয় তখন `sync.RWMutex` ব্যবহার করুন** (যেমন একটা cache)। একাধিক goroutine `RLock()` দিয়ে একসাথে read করতে পারে, কিন্তু `Lock()` দিয়ে write করা exclusive। write-heavy workload-এর জন্য সাধারণ `sync.Mutex`-এর overhead কম।
 
 </Callout>
 
-## sync.Once: One-Time Initialization
+## sync.Once: এক-বারের Initialization
 
 ```go
 type DBConnection struct {
@@ -154,9 +162,9 @@ func (c *DBConnection) Get() *sql.DB {
 }
 ```
 
-## errgroup: Goroutines with Error Handling
+## errgroup: Error Handling সহ Goroutine
 
-`golang.org/x/sync/errgroup` is the standard way to run goroutines that return errors:
+`golang.org/x/sync/errgroup` হলো error return করা goroutine চালানোর standard উপায়:
 
 ```go
 import "golang.org/x/sync/errgroup"
@@ -198,13 +206,13 @@ func fetchAllData(ctx context.Context) (*Dashboard, error) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-`errgroup` is like sending three employees to get different supplies. If any one of them reports a problem ("the store is closed"), you cancel the others and deal with the error. If all three succeed, you have everything you need.
+`errgroup` অনেকটা তিনজন কর্মচারীকে আলাদা আলাদা জিনিস আনতে পাঠানোর মতো। এদের যেকোনো একজন সমস্যা জানালে ("দোকান বন্ধ"), আপনি বাকিদের cancel করেন আর error-টা সামলান। তিনজনই সফল হলে, আপনার যা দরকার সব পেয়ে যান।
 
 </Callout>
 
-### errgroup with Concurrency Limit
+### Concurrency Limit সহ errgroup
 
 ```go
 func processImages(ctx context.Context, images []Image) error {
@@ -223,7 +231,7 @@ func processImages(ctx context.Context, images []Image) error {
 
 ## Semaphore Pattern
 
-Control the maximum number of concurrent operations:
+সর্বোচ্চ কতগুলো concurrent operation চলবে তা নিয়ন্ত্রণ করুন:
 
 ```go
 type Semaphore struct {
@@ -256,7 +264,7 @@ for _, url := range urls {
 
 ## Pipeline Pattern
 
-Chain stages where each stage is a goroutine processing a stream:
+এমন stage-গুলো চেইন করুন যেখানে প্রতিটা stage একটা goroutine যা একটা stream process করে:
 
 ```go
 // Stage 1: Generate numbers
@@ -325,13 +333,13 @@ func main() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A pipeline is like an assembly line in a factory. Station 1 cuts the metal, Station 2 bends it, Station 3 paints it. Each station works on a different piece at the same time. If the factory shuts down (context cancelled), every station stops.
+একটা pipeline অনেকটা কারখানার assembly line-এর মতো। Station 1 ধাতু কাটে, Station 2 বাঁকায়, Station 3 রং করে। প্রতিটা station একই সময়ে আলাদা আলাদা টুকরোর উপর কাজ করে। কারখানা বন্ধ হয়ে গেলে (context cancelled), প্রতিটা station থেমে যায়।
 
 </Callout>
 
-## Real-World: Rate-Limited API Client
+## বাস্তব উদাহরণ: Rate-Limited API Client
 
 ```go
 type APIClient struct {
@@ -395,12 +403,12 @@ func fetchAll(ctx context.Context, urls []string) []Result {
 }
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Context is mandatory for I/O** — always pass `context.Context` as the first parameter
-2. **`defer cancel()`** — always call cancel on contexts you create to prevent resource leaks
-3. **`sync.RWMutex`** for read-heavy shared state, `sync.Mutex` for write-heavy
-4. **`errgroup`** is the production standard for concurrent operations with error handling
-5. **Pipelines** compose stages as goroutine-driven channels — each stage runs concurrently
-6. **Rate limiting + concurrency limiting** are separate concerns — use both in production API clients
-7. **Check `ctx.Done()`** in long-running loops to support cancellation
+1. **I/O-এর জন্য Context বাধ্যতামূলক** — সবসময় প্রথম parameter হিসেবে `context.Context` পাঠান
+2. **`defer cancel()`** — resource leak ঠেকাতে আপনার তৈরি করা context-এ সবসময় cancel কল করুন
+3. **read-heavy shared state-এর জন্য `sync.RWMutex`**, write-heavy-র জন্য `sync.Mutex`
+4. **`errgroup`** হলো error handling সহ concurrent operation-এর production standard
+5. **Pipeline** stage-গুলোকে goroutine-চালিত channel হিসেবে গাঁথে — প্রতিটা stage concurrent-ভাবে চলে
+6. **Rate limiting + concurrency limiting** আলাদা বিষয় — production API client-এ দুটোই ব্যবহার করুন
+7. **long-running loop-এ `ctx.Done()` চেক করুন** যাতে cancellation সাপোর্ট করা যায়

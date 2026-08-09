@@ -1,9 +1,9 @@
 ---
 title: 'Prometheus & Grafana'
-subtitle: 'Instrumenting applications, writing PromQL, building dashboards, and alerting on what actually matters.'
+subtitle: 'Application instrument করা, PromQL লেখা, dashboard বানানো, আর যা সত্যিই গুরুত্বপূর্ণ তার উপর alert করা।'
 chapter: 3
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['Prometheus', 'Grafana', 'PromQL', 'metrics', 'alerting', 'instrumentation']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Prometheus', 'Grafana', 'PromQL', 'metrics', 'alerting', 'instrumentat
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A factory's monitoring system: sensors on every machine (instrumentation) send readings to a control room (Prometheus). The control room displays trends on screens (Grafana dashboards) and triggers alarms when readings go out of range (alerting). The factory manager doesn't watch every sensor — they watch the dashboard and respond to alarms.
+একটা কারখানার monitoring সিস্টেম: প্রতিটা মেশিনের সেন্সর (instrumentation) একটা কন্ট্রোল রুমে (Prometheus) রিডিং পাঠায়। কন্ট্রোল রুম স্ক্রিনে trend দেখায় (Grafana dashboard) আর রিডিং সীমার বাইরে গেলে অ্যালার্ম বাজায় (alerting)। কারখানার ম্যানেজার প্রতিটা সেন্সর দেখেন না — তিনি dashboard দেখেন আর অ্যালার্মে সাড়া দেন।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বিদ্যুৎ কোম্পানি চালান। শহরের প্রতিটা বাড়িতে একটা করে মিটার বসানো, আর ইবনে সিনা হলেন তাঁর মিটার-রিডার। ইবনে সিনার কাজ বাঁধা — প্রতি পনেরো মিনিট অন্তর সে একই রাউন্ডে হাঁটে, একটা একটা করে বাড়ির মিটারে গিয়ে সংখ্যাটা দেখে, আর সময়সহ সেই রিডিং একটা মোটা খাতায় টুকে রাখে। খেয়াল করুন — বাড়িগুলো ইবনে সিনার কাছে রিডিং পাঠায় না, ইবনে সিনা নিজেই গিয়ে প্রতিটা মিটার থেকে সংখ্যা টেনে আনে। খাতায় তাই এক-একটা বাড়ির জন্য সময়ে-সময়ে নেওয়া রিডিংয়ের একটা লম্বা সারি জমতে থাকে — সকাল ৯টায় এত, সোয়া ৯টায় এত, সাড়ে ৯টায় এত।
+
+এই খাতাটা কিন্তু নিজে থেকে কিছু বোঝায় না — শুধু সংখ্যা আর সময়ের স্তূপ। তাই কোম্পানিতে আল-খোয়ারিজমি নামে একজন ড্রাফটসম্যান আছেন। তিনি খাতা খুলে বসেন, আর ওই সময়ধরে-জমা রিডিংগুলো থেকে দেয়ালে টাঙানোর জন্য বড় বড় চার্ট আঁকেন — কোন এলাকায় সারা মাসে ব্যবহার কেমন উঠল-নামল, কোথায় হঠাৎ খরচ বেড়ে গেল। ম্যানেজার প্রতিটা মিটার নিজে দেখেন না; তিনি শুধু আল-খোয়ারিজমির চার্টের দিকে তাকান।
+
+এই গল্পটাই আসলে **Prometheus** আর **Grafana**। ইবনে সিনার বাঁধা রাউন্ডে গিয়ে প্রতিটা মিটার থেকে সংখ্যা টেনে আনাটাই Prometheus-এর **scrape** — নির্দিষ্ট সময় পরপর সে নিজে প্রতিটা service থেকে **metrics** টেনে আনে (এটাই **pull** model, service নিজে ঠেলে পাঠায় না)। সময়সহ রিডিং জমা মোটা খাতাটাই হলো Prometheus-এর **time-series** store, আর আল-খোয়ারিজমির খাতা থেকে আঁকা দেয়াল-চার্টগুলোই হলো **Grafana dashboard** — যা ওই time-series store-কে query করে গ্রাফ এঁকে দেখায়। বাস্তবে ঠিক এভাবেই প্রতিটা service একটা `/metrics` endpoint খুলে রাখে, Prometheus নির্দিষ্ট interval-এ সেখান থেকে scrape করে জমা রাখে, আর Grafana সেই ডেটা query করে টিমের দেয়ালের বড় স্ক্রিনে dashboard আঁকে।
+
 ## Prometheus Data Model
 
-Prometheus stores **time series** — sequences of (timestamp, value) pairs identified by a metric name and labels:
+Prometheus **time series** store করে — (timestamp, value) জোড়ার ধারাবাহিকতা যা একটা metric name আর labels দিয়ে চিহ্নিত:
 
 ```
 http_requests_total{method="POST", path="/orders", status="200"} 1827 @1705312200
@@ -31,10 +39,10 @@ http_request_duration_seconds{quantile="0.99"}                   0.847 @17053122
 
 **Metric types:**
 
-- **Counter** — monotonically increasing (requests, errors, bytes). Never decreases except on restart.
-- **Gauge** — current value (queue depth, active connections, memory). Can go up or down.
-- **Histogram** — distribution of observations (request duration, response size). Includes buckets and sum/count.
-- **Summary** — like histogram but calculates quantiles client-side (less flexible, use histogram instead).
+- **Counter** — একদিকে বাড়ে (requests, errors, bytes)। restart ছাড়া কখনো কমে না।
+- **Gauge** — বর্তমান value (queue depth, active connections, memory)। উপরে-নিচে দুই দিকেই যেতে পারে।
+- **Histogram** — observation-এর distribution (request duration, response size)। bucket আর sum/count অন্তর্ভুক্ত।
+- **Summary** — histogram-এর মতো কিন্তু quantile client-side-এ হিসাব করে (কম নমনীয়, বদলে histogram ব্যবহার করুন)।
 
 ## Instrumentation (Node.js)
 
@@ -94,7 +102,7 @@ app.get('/metrics', async (req, res) => {
 });
 ```
 
-**Label cardinality:** never use high-cardinality values as labels (user IDs, order IDs). Each unique label combination creates a new time series. 1M users × 5 paths × 3 methods = 15M time series → OOM.
+**Label cardinality:** কখনো high-cardinality value কে label হিসেবে ব্যবহার করবেন না (user ID, order ID)। প্রতিটা unique label combination একটা নতুন time series তৈরি করে। 1M users × 5 paths × 3 methods = 15M time series → OOM।
 
 ```typescript
 // BAD — high cardinality
@@ -136,7 +144,7 @@ scrape_configs:
       - targets: ['redis-exporter:9121']
 ```
 
-For Kubernetes, use service discovery instead of static configs:
+Kubernetes-এর জন্য static config-এর বদলে service discovery ব্যবহার করুন:
 
 ```yaml
 scrape_configs:
@@ -186,13 +194,13 @@ deriv(order_queue_depth[5m]) > 10
 node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100
 ```
 
-**Key PromQL functions:**
+**গুরুত্বপূর্ণ PromQL function:**
 
-- `rate()` — per-second rate of increase of a counter over a window
-- `irate()` — instant rate (last two data points) — more responsive, noisier
-- `increase()` — total increase over a window (rate × window)
-- `histogram_quantile()` — estimate quantile from histogram buckets
-- `sum()`, `avg()`, `max()` — aggregation across label dimensions
+- `rate()` — একটা window জুড়ে counter-এর প্রতি-সেকেন্ড বৃদ্ধির হার
+- `irate()` — instant rate (শেষ দুটো data point) — বেশি responsive, বেশি noisy
+- `increase()` — একটা window জুড়ে মোট বৃদ্ধি (rate × window)
+- `histogram_quantile()` — histogram bucket থেকে quantile আনুমানিক হিসাব করে
+- `sum()`, `avg()`, `max()` — label dimension জুড়ে aggregation
 
 ## Grafana Dashboards
 
@@ -211,7 +219,7 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards
 ```
 
-**Provision data sources and dashboards as code:**
+**Data source আর dashboard কোড হিসেবে provision করুন:**
 
 ```yaml
 # grafana/provisioning/datasources/prometheus.yml
@@ -232,15 +240,15 @@ providers:
       path: /var/lib/grafana/dashboards
 ```
 
-Dashboard JSON goes in `/var/lib/grafana/dashboards/` — committed to git, provisioned on startup.
+Dashboard JSON যায় `/var/lib/grafana/dashboards/`-এ — git-এ commit করা, startup-এ provision করা।
 
-**USE method panels for services:**
+**Service-এর জন্য USE method panel:**
 
-- Utilization (CPU, memory as % of limit)
+- Utilization (CPU, memory — limit-এর % হিসেবে)
 - Saturation (queue depth, connection pool usage)
 - Errors (error rate, 5xx rate)
 
-**RED method panels for requests:**
+**Request-এর জন্য RED method panel:**
 
 - Rate (requests/sec)
 - Errors (error rate)
@@ -303,7 +311,7 @@ groups:
 
 ## Alertmanager
 
-Routes alerts to the right channel:
+Alert গুলোকে সঠিক channel-এ route করে:
 
 ```yaml
 # alertmanager.yml
@@ -353,7 +361,7 @@ inhibit_rules:
 
 ## Recording Rules
 
-Pre-compute expensive queries for dashboards:
+Dashboard-এর জন্য ব্যয়বহুল query আগেভাগে হিসাব করে রাখুন:
 
 ```yaml
 groups:
@@ -375,4 +383,4 @@ groups:
           )
 ```
 
-Dashboard queries then use `job:http_errors:rate5m` — instant, no computation at query time.
+Dashboard query তখন `job:http_errors:rate5m` ব্যবহার করে — সাথে সাথে, query-র সময় কোনো হিসাব নেই।

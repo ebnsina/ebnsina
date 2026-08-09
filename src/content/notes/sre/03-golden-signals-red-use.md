@@ -1,9 +1,9 @@
 ---
 title: 'Golden Signals, RED, and USE'
-subtitle: 'The three monitoring frameworks that actually matter, when to use each, and the Prometheus + Grafana stack that exposes them all.'
+subtitle: 'যে তিনটা monitoring framework আসলে গুরুত্বপূর্ণ, কখন কোনটা ব্যবহার করবে, আর যে Prometheus + Grafana stack সেগুলো সব expose করে।'
 chapter: 3
 level: 'beginner'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['monitoring', 'golden signals', 'RED', 'USE', 'Prometheus', 'Grafana']
 ---
 
@@ -11,9 +11,17 @@ topics: ['monitoring', 'golden signals', 'RED', 'USE', 'Prometheus', 'Grafana']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Three frameworks, one decision tree
+## গল্পে বুঝি
 
-There are three competing acronyms for "what to monitor." They are not rivals — each fits a different layer of the stack.
+শহরের বড় হাসপাতালের এমার্জেন্সি রুমে (ER) রাতের ডিউটিতে ডাক্তার ইবনে সিনা। রোগীর ভিড়, ফাইলের স্তূপ, একের পর এক কল — সব একসাথে সামলানো অসম্ভব। তাই তিনি সরাসরি প্রতিটা রোগীর দিকে না তাকিয়ে দেয়ালের একটা বড় লাইভ বোর্ডে চোখ রাখেন। ওই বোর্ডে মাত্র চারটা সংখ্যা — ঘণ্টায় কতজন রোগী আসছে, ঢোকা থেকে চিকিৎসা শুরু পর্যন্ত গড়ে কত সময় লাগছে, কতগুলো চিকিৎসায় গণ্ডগোল হচ্ছে, আর বেড ও নার্স কতটা ভরে গেছে। এই চারটা সংখ্যা এক নজরে দেখলেই তিনি বুঝে যান পুরো ER-টা সুস্থ আছে নাকি বিপদের দিকে যাচ্ছে।
+
+আজ রাতে সংখ্যা আসার হার স্বাভাবিকই আছে, কিন্তু ইবনে সিনা লক্ষ করলেন — অপেক্ষার সময় হঠাৎ বেড়ে গেছে, আর বেড প্রায় সব ভরে গেছে। তখনই তিনি বুঝলেন cliff-টা কাছেই: এখন যদি আরেকটা অ্যাম্বুলেন্স আসে, তাহলে অপেক্ষা আরও লম্বা হবে আর ভুল চিকিৎসার সংখ্যাও লাফ দেবে। তাই ভিড় বাড়ার আগেই তিনি বাড়তি নার্স ডেকে নিলেন। রোগী একজন একজন করে গুনতে গেলে এই সিদ্ধান্ত নিতে দেরি হয়ে যেত — চারটা সংখ্যাই তাঁকে detail-এ ডুবে না গিয়ে গোটা ER-এর health একবারে দেখিয়ে দিল।
+
+এই চারটা সংখ্যাই আসলে **golden signals**। ঘণ্টায় কতজন রোগী আসছে = **traffic**, ঢোকা থেকে চিকিৎসা শুরুর অপেক্ষা = **latency**, ভুল চিকিৎসার সংখ্যা = **errors**, আর বেড-নার্স ভরে যাওয়া = **saturation** (cliff কতটা কাছে)। রোগী সামলানো সার্ভিসের মতো — কতগুলো request আসছে, কতগুলো ব্যর্থ হচ্ছে, কতক্ষণ লাগছে — এটাই **RED** (Rate/Errors/Duration)। আর বেড, নার্স, অক্সিজেন সিলিন্ডারের মতো সীমিত resource কতটা ভরেছে সেটা দেখা হলো **USE** (Utilization/Saturation/Errors)। বাস্তবে Prometheus + Grafana দিয়ে ঠিক এই লাইভ বোর্ডটাই বানানো হয় — Google-এর SRE টিম থেকে ছোট স্টার্টআপ পর্যন্ত সবাই এই চারটা signal দেখেই সার্ভিসের স্বাস্থ্য এক নজরে বোঝে।
+
+## তিনটা framework, একটা decision tree
+
+"কী monitor করব" নিয়ে তিনটা প্রতিদ্বন্দ্বী acronym আছে। এরা প্রতিদ্বন্দ্বী নয় — প্রতিটা stack-এর একটা আলাদা layer-এ ফিট করে।
 
 ```
 GOLDEN SIGNALS  → User-facing services (any service Google would pager-rotate on)
@@ -26,7 +34,7 @@ Decision tree:
   Are you defining the top-level SLI dashboard?           → GOLDEN SIGNALS
 ```
 
-Most production setups use all three layered: USE for the underlying infra, RED for each microservice, Golden Signals for the user journey.
+বেশিরভাগ production setup তিনটাই layered ব্যবহার করে: underlying infra-র জন্য USE, প্রতিটা microservice-এর জন্য RED, user journey-র জন্য Golden Signals।
 
 ## The Four Golden Signals (Google SRE)
 
@@ -37,19 +45,19 @@ Most production setups use all three layered: USE for the underlying infra, RED 
 4. Saturation   — how full is the system?    (queue depth, CPU, file descriptors)
 ```
 
-Saturation is the one teams forget. A service running at 95% CPU is healthy _until_ it isn't, and the inflection point is usually a cliff. Saturation tells you how close to the cliff you are.
+Saturation-টাই team-রা ভুলে যায়। 95% CPU-তে চলা একটা service ততক্ষণ healthy _যতক্ষণ না_ সেটা নয়, আর inflection point-টা সাধারণত একটা cliff। Saturation তোমাকে বলে তুমি cliff থেকে কত কাছে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A car dashboard shows speed (latency), RPM (traffic), check-engine light (errors), and fuel gauge (saturation). Each tells you a different question — none replaces the others. A car with a full tank can still die if the engine is overheating.
+একটা গাড়ির dashboard দেখায় speed (latency), RPM (traffic), check-engine light (errors), আর fuel gauge (saturation)। প্রতিটা তোমাকে একটা আলাদা প্রশ্ন বলে — কোনোটা অন্যটার বিকল্প নয়। full tank সহ একটা গাড়িও মরে যেতে পারে যদি engine overheat হয়।
 
 </Callout>
 
 ## RED method (Tom Wilkie / Weaveworks)
 
-For request-driven services. RED is essentially Golden Signals minus saturation, optimized for microservice dashboards.
+Request-driven service-এর জন্য। RED মূলত Golden Signals থেকে saturation বাদ, microservice dashboard-এর জন্য optimized।
 
 ```
 R — Rate       Requests per second
@@ -57,7 +65,7 @@ E — Errors     Failed requests per second
 D — Duration   Latency distribution
 ```
 
-A standard RED dashboard has three panels per service. Once you have RED for every microservice, you can navigate from a top-level SLO dashboard down to "which microservice is the source of error rate spike" in two clicks.
+একটা standard RED dashboard-এ প্রতি service-এ তিনটা panel থাকে। প্রতিটা microservice-এর জন্য RED পেয়ে গেলে, তুমি একটা top-level SLO dashboard থেকে দুই ক্লিকে "কোন microservice error rate spike-এর উৎস" পর্যন্ত navigate করতে পারো।
 
 ```promql
 # Rate (requests/sec, by service and status)
@@ -82,7 +90,7 @@ histogram_quantile(0.99, sum by (le, service) (rate(http_request_duration_second
 
 ## USE method (Brendan Gregg)
 
-For resources — anything finite that requests consume.
+Resource-এর জন্য — যেকোনো finite জিনিস যা request consume করে।
 
 ```
 U — Utilization   % of time the resource is busy
@@ -90,7 +98,7 @@ S — Saturation    Extra work that can't be serviced (queue depth, run-queue le
 E — Errors        Error events (failed I/O, dropped packets, retransmits)
 ```
 
-The trick is recognizing what counts as a "resource." Some non-obvious ones:
+কৌশলটা হচ্ছে কী "resource" হিসেবে গণ্য হয় তা চিনতে পারা। কিছু non-obvious ঃ
 
 ```
 CPU            → utilization, run-queue length, throttled time
@@ -103,11 +111,11 @@ Thread pools   → busy threads vs max
 Kafka topics   → consumer lag, broker disk pressure
 ```
 
-Every one of those will eventually be the bottleneck in some incident. Have USE metrics for all of them or you will be debugging blind.
+এদের প্রতিটাই শেষমেশ কোনো না কোনো incident-এ bottleneck হবে। এদের সবার জন্য USE metrics রাখো নয়তো তুমি অন্ধ হয়ে debug করবে।
 
-## Instrumenting a Go service end-to-end
+## একটা Go service end-to-end instrument করা
 
-Here is a complete, production-shape Go HTTP service with RED metrics, exposed for Prometheus scraping.
+এখানে একটা সম্পূর্ণ, production-shape Go HTTP service, RED metrics সহ, Prometheus scraping-এর জন্য expose করা।
 
 ```go
 package main
@@ -184,17 +192,17 @@ func main() {
 }
 ```
 
-The path label is hardcoded per route on purpose. **Never use `r.URL.Path` as a label** — high-cardinality labels (UUIDs, slugs) will explode Prometheus memory and bring it down.
+path label-টা ইচ্ছাকৃতভাবে প্রতি route-এ hardcode করা। **`r.URL.Path`-কে কখনো label হিসেবে ব্যবহার করো না** — high-cardinality labels (UUIDs, slugs) Prometheus memory উড়িয়ে দেবে আর সেটাকে ধসিয়ে দেবে।
 
 <Callout type="warning">
 
-**Cardinality is the silent killer.** A single mistake — labeling metrics with `user_id` — will create one time series per user, blow up Prometheus memory, and OOM the whole monitoring stack. Always label with a small, bounded set: `method`, `route_pattern`, `status_class`.
+**Cardinality হচ্ছে নীরব ঘাতক।** একটা মাত্র ভুল — metrics-কে `user_id` দিয়ে label করা — প্রতি user-এ একটা time series তৈরি করবে, Prometheus memory উড়িয়ে দেবে, আর পুরো monitoring stack-কে OOM করবে। সবসময় একটা ছোট, bounded set দিয়ে label করো: `method`, `route_pattern`, `status_class`।
 
 </Callout>
 
-## Histogram bucket selection
+## Histogram bucket নির্বাচন
 
-The default Prometheus buckets are wrong for most services. They cover 5ms to 10s linearly-ish, but your SLO threshold is probably one specific value.
+default Prometheus buckets বেশিরভাগ service-এর জন্য ভুল। এরা 5ms থেকে 10s পর্যন্ত মোটামুটি linearly cover করে, কিন্তু তোমার SLO threshold সম্ভবত একটা নির্দিষ্ট value।
 
 ```go
 // Rule of thumb: cluster buckets around your SLO threshold
@@ -211,7 +219,7 @@ Buckets: []float64{
 // quantile falls into. Sparse buckets near 300ms = inaccurate p99.
 ```
 
-## A real Grafana dashboard layout
+## একটা রিয়েল Grafana dashboard layout
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -230,11 +238,11 @@ Buckets: []float64{
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Rule: the dashboard should answer "is the service healthy?" in under 5 seconds. If you have to scroll, redesign it.
+নিয়ম: dashboard-টা 5 সেকেন্ডের কমে "service কি healthy?" প্রশ্নের উত্তর দিতে পারবে। scroll করতে হলে, redesign করো।
 
 ## Symptom-based alerting
 
-This is the rule that prevents alert fatigue:
+এই নিয়মটাই alert fatigue আটকায়:
 
 ```yaml
 # ✗ BAD: alerting on a cause
@@ -251,19 +259,19 @@ This is the rule that prevents alert fatigue:
   # This fires only when users are actually being hurt.
 ```
 
-USE metrics belong on dashboards (for diagnosis during incidents) but rarely on pagers (the symptom alert covers the user-facing impact).
+USE metrics dashboard-এ থাকে (incident-এর সময় diagnosis-এর জন্য) কিন্তু pager-এ কদাচিৎ (symptom alert-টাই user-facing impact cover করে)।
 
 ## Stay current
 
-- [Brendan Gregg — USE method](https://www.brendangregg.com/usemethod.html) — the source
+- [Brendan Gregg — USE method](https://www.brendangregg.com/usemethod.html) — source
 - [Tom Wilkie — RED method](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/) — original post
-- [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/) — keep your metric names portable
+- [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/) — তোমার metric name portable রাখো
 - [Prometheus best practices](https://prometheus.io/docs/practices/) — naming, labels, histograms
 
 ## Key Takeaways
 
-1. **Golden Signals at the top, RED per service, USE per resource** — three layers
-2. **Latency must be a quantile** (p99), never an average
-3. **Saturation is the cliff indicator** — utilization without saturation is misleading
-4. **Bucket your histograms around the SLO threshold** for accurate quantiles
-5. **Page on symptoms, dashboard on causes** — it's the only sustainable alerting
+1. **উপরে Golden Signals, প্রতি service-এ RED, প্রতি resource-এ USE** — তিনটা layer
+2. **Latency অবশ্যই একটা quantile হতে হবে** (p99), কখনো average নয়
+3. **Saturation হচ্ছে cliff indicator** — saturation ছাড়া utilization বিভ্রান্তিকর
+4. **তোমার histogram-গুলোকে SLO threshold-এর চারপাশে bucket করো** — accurate quantile-এর জন্য
+5. **Symptom-এ page, cause-এ dashboard** — এটাই একমাত্র sustainable alerting

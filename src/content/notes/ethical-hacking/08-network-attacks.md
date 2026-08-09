@@ -1,9 +1,9 @@
 ---
 title: 'Network Attacks'
-subtitle: 'ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — attacking the network layer.'
+subtitle: 'ARP spoofing, MITM, packet capture, credential sniffing, DNS poisoning — network লেয়ারে আক্রমণ।'
 chapter: 8
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   ['ARP spoofing', 'MITM', 'Wireshark', 'tcpdump', 'Bettercap', 'DNS poisoning', 'network attacks']
 ---
@@ -14,15 +14,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-ARP spoofing is like intercepting someone's mail by convincing their postal service you're their address — every packet to 192.168.1.1 goes through you first, giving you full visibility (and modification ability) over their traffic.
+ARP spoofing অনেকটা এমন — আপনি কারো পোস্টাল সার্ভিসকে বিশ্বাস করিয়ে দিলেন যে আপনিই তার ঠিকানা, এবং সেভাবে তার চিঠি মাঝপথে দখল করে নিলেন। 192.168.1.1-এ যাওয়া প্রতিটি packet আগে আপনার কাছে আসে, ফলে তার traffic-এর উপর আপনার পূর্ণ দৃশ্যমানতা (এবং পরিবর্তনের ক্ষমতা) থাকে।
 
 </Callout>
 
-## ARP and the Problem with Trust
+## গল্পে বুঝি
 
-ARP (Address Resolution Protocol) maps IP addresses to MAC addresses on a local network. It's stateless and unauthenticated — any machine can claim to be any IP.
+দুই গ্রামের কথা ভাবুন। ফাতিমা আল-ফিহরি এক গ্রামে থাকেন, আর ইবনে সিনা থাকেন দূরের আরেক গ্রামে। তাঁরা একে অন্যকে চিঠি পাঠান, কিন্তু চিঠিগুলো সরাসরি যায় না — কয়েকজন মেসেঞ্জারের একটা চেইনের হাত ঘুরে যায়। চিঠিগুলো খোলা, কোনো সিল-মোহর নেই। এই চেইনের ঠিক মাঝখানে বসে থাকা এক অসৎ মেসেঞ্জার, আল-খোয়ারিজমি, চুপচাপ প্রতিটি চিঠি পড়ে ফেলে যাওয়ার আগে — ফাতিমা আর ইবনে সিনা টেরও পান না যে তাঁদের প্রতিটা কথা তৃতীয় একজন জেনে যাচ্ছে।
+
+কিছুদিন পর আল-খোয়ারিজমি আরও এক ধাপ এগিয়ে যায়। শুধু পড়াই না — সে ফাতিমার আসল চিঠি সরিয়ে রেখে নিজের বানানো একটা নকল চিঠি চেইনে ঢুকিয়ে দেয়, যেন সেটা ফাতিমার হাতেই লেখা। ইবনে সিনা ভাবেন চিঠিটা ফাতিমার কাছ থেকেই এসেছে, অথচ পুরোটা মাঝের মেসেঞ্জারের সাজানো। দু'পক্ষই বিশ্বাস করে বসে থাকে যে তারা সরাসরি একে অন্যের সাথে কথা বলছে। শেষমেশ গ্রামের বুদ্ধিমান লোকেরা একটা উপায় বের করে — চিঠিগুলো এমন গলানো মোমের সিল আর নিজস্ব মোহর দিয়ে বন্ধ করা শুরু করে, যা মাঝের মেসেঞ্জার না পারে পড়তে, না পারে নকল বানাতে। সিল ভাঙা থাকলেই বোঝা যায় কেউ হাত দিয়েছে, আর মোহর দেখেই বোঝা যায় চিঠিটা আসলেই কার।
+
+এই গল্পটাই এই চ্যাপ্টারের মূল কথা। খোলা চিঠি চুপচাপ পড়ে ফেলা = unencrypted traffic-এর উপর eavesdropping; আর নকল চিঠি সেঁধিয়ে দিয়ে নিজেকে আসল প্রেরক সাজানো = spoofing / man-in-the-middle আক্রমণ। এর সমাধানও একই — মোমের সিল আর মোহরের মতো encryption দিয়ে ডেটা লুকিয়ে ফেলা এবং অপর পক্ষের পরিচয় verify করা, যেন মাঝখানে কেউ বসে থাকলেও পড়তে বা নকল করতে না পারে। বাস্তবে এটাই TLS-এর কাজ — তাই পাবলিক Wi-Fi (কফি শপ, এয়ারপোর্ট) ব্যবহার করার সময় সবসময় HTTPS/TLS আছে কিনা নিশ্চিত হয়ে নিন, কারণ সেই নেটওয়ার্কে ঠিক ওই মাঝের মেসেঞ্জারের মতো কেউ আপনার traffic শুনছে বা বদলে দিচ্ছে কিনা আপনি জানেন না।
+
+## ARP এবং Trust-এর সমস্যা
+
+ARP (Address Resolution Protocol) একটি লোকাল নেটওয়ার্কে IP অ্যাড্রেসকে MAC অ্যাড্রেসের সাথে ম্যাপ করে। এটি stateless এবং unauthenticated — যেকোনো মেশিন দাবি করতে পারে যে সে যেকোনো IP।
 
 ```
 Normal:
@@ -35,9 +43,9 @@ ARP Spoofing:
   All traffic to 192.168.1.1 now goes to attacker
 ```
 
-## Packet Capture with Wireshark and tcpdump
+## Wireshark এবং tcpdump দিয়ে Packet Capture
 
-Before active attacks, understand how to read traffic:
+সক্রিয় আক্রমণের আগে, traffic কীভাবে পড়তে হয় তা বুঝে নিন:
 
 ```bash
 # tcpdump — CLI packet capture
@@ -62,7 +70,7 @@ ftp-data                     # FTP data transfers
 dns                          # DNS queries
 ```
 
-## ARP Spoofing with Bettercap
+## Bettercap দিয়ে ARP Spoofing
 
 ```bash
 # Install
@@ -109,7 +117,7 @@ function onResponse(req, res) {
 }
 ```
 
-## Man-in-the-Middle with Ettercap
+## Ettercap দিয়ে Man-in-the-Middle
 
 ```bash
 # Classic MITM tool
@@ -130,7 +138,7 @@ ettercap -T -i eth0 -M arp -F inject.ef /192.168.1.100// /192.168.1.1//
 
 ## SSL Stripping
 
-HTTPS downgrades to HTTP when a victim types a URL without https://:
+কোনো victim যদি https:// ছাড়া একটি URL টাইপ করে, তখন HTTPS নেমে HTTP-তে চলে যায়:
 
 ```bash
 # SSLstrip — classic SSL stripping tool
@@ -152,7 +160,7 @@ bettercap or arpspoof
 tail -f sslstrip.log | grep -i "password\|pass\|pwd"
 ```
 
-**Defense:** HSTS (HTTP Strict Transport Security) with `includeSubDomains` prevents this completely. Also why Chrome marks HSTS-preloaded sites as permanently secure.
+**প্রতিরক্ষা:** `includeSubDomains` সহ HSTS (HTTP Strict Transport Security) এটি সম্পূর্ণভাবে প্রতিরোধ করে। এই কারণেই Chrome, HSTS-preloaded সাইটগুলোকে স্থায়ীভাবে secure হিসেবে চিহ্নিত করে।
 
 ## DNS Poisoning
 
@@ -166,7 +174,7 @@ dns.spoof on
 # Host a phishing page on port 80
 ```
 
-## Credential Sniffing on Cleartext Protocols
+## Cleartext Protocol-এ Credential Sniffing
 
 ```bash
 # Capture FTP credentials
@@ -188,9 +196,9 @@ sudo mailsnarf -i eth0 # capture email (SMTP, POP3, IMAP)
 # See entire conversation in cleartext (if not encrypted)
 ```
 
-## Network Scanning from MITM Position
+## MITM অবস্থান থেকে Network Scanning
 
-Once you're in the traffic path, you see all internal network addresses:
+একবার traffic-এর পথে চলে এলে, আপনি সব internal নেটওয়ার্ক অ্যাড্রেস দেখতে পান:
 
 ```bash
 # Passive host discovery from captured traffic
@@ -208,9 +216,9 @@ sudo responder -I eth0 -wrf
 hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt
 ```
 
-## Real Project: Internal Network Lab
+## বাস্তব প্রজেক্ট: Internal Network Lab
 
-Set up a lab simulating a corporate network:
+একটি কর্পোরেট নেটওয়ার্ক সিমুলেট করে এমন একটি lab সেট আপ করুন:
 
 ```bash
 # Network topology:
@@ -247,9 +255,9 @@ sudo responder -I eth0 -wrf
 hashcat -m 5600 captured.hash /usr/share/wordlists/rockyou.txt --show
 ```
 
-## Defense: How to Detect MITM
+## প্রতিরক্ষা: MITM কীভাবে শনাক্ত করবেন
 
-Understanding attacks enables detection:
+আক্রমণ বোঝা থাকলে শনাক্ত করা সহজ হয়:
 
 ```bash
 # ARP cache inspection (look for duplicate MACs)

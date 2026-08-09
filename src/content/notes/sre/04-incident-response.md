@@ -1,9 +1,9 @@
 ---
 title: 'Incident Response & On-Call'
-subtitle: "ICS roles, severity classification, comms cadence, and the on-call rotation that doesn't burn engineers out."
+subtitle: 'ICS roles, severity classification, comms cadence, আর যে on-call rotation engineer-দের burn out করে না।'
 chapter: 4
 level: 'intermediate'
-readingTime: '17 min'
+readingTime: '17 মিনিট'
 topics: ['incident response', 'on-call', 'ICS', 'PagerDuty', 'war room']
 ---
 
@@ -13,15 +13,23 @@ topics: ['incident response', 'on-call', 'ICS', 'PagerDuty', 'war room']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A fire drill — the procedures exist so that when the real fire happens, nobody is improvising.
+একটা fire drill — procedure গুলো থাকে যাতে আসল আগুন লাগলে কেউ improvise না করে।
 
 </Callout>
 
-## The five phases of an incident
+## গল্পে বুঝি
 
-Every incident, regardless of size, moves through the same five phases. Naming them out loud during the response keeps the team coordinated.
+হাসপাতালের ওয়ার্ডে হঠাৎ এক রোগীর হৃদস্পন্দন থেমে যায়, মনিটরে বিপ-বিপ অ্যালার্ম বেজে ওঠে। সঙ্গে সঙ্গে "CODE BLUE" ঘোষণা হয় আর রোস্টারে থাকা code team ছুটে আসে। ভিড়ের মধ্যে সবচেয়ে সিনিয়র ডাক্তার ইবনে সিনা এক পা এগিয়ে দাঁড়িয়ে দায়িত্ব নিয়ে নেন — তিনি নিজে হাতে কিছু করেন না, বরং কে বুকে চাপ দেবে, কে অক্সিজেন দেবে, কে ওষুধ টানবে, সব সিদ্ধান্ত তিনিই দেন। একজন নার্স, ফাতিমা আল-ফিহরি, শুধু একটা কাজেই লেগে থাকেন — কে কী করল, কখন করল, কোন ওষুধ কত ডোজে গেল, সব ঘড়ির সময় ধরে লিখে রাখা আর বাইরে অপেক্ষারত পরিবারকে খবর দেওয়া।
+
+সবচেয়ে জরুরি ব্যাপারটা হলো — এই মুহূর্তে কেউ জিজ্ঞেস করে না রোগীর হার্ট কেন থামল। আগে বুকে চাপ দিয়ে, শক দিয়ে হৃদস্পন্দন ফিরিয়ে আনা হয়, শ্বাস চালু করা হয়, রোগীকে স্থিতিশীল করা হয়। রোগী বিপদমুক্ত হওয়ার পরেই ধীরে-সুস্থে তদন্ত শুরু হয় — কেন এমন হলো, কোন ওষুধ বা কোন blockage দায়ী। আর এই দলটা কাকতালীয়ভাবে জড়ো হয় না; প্রতিদিন কেউ না কেউ রোস্টারে থাকে, তাই রাত ৩টায়ও একজন দক্ষ মানুষ তৈরি থাকে।
+
+এই গল্পটাই আসলে **incident response**। দায়িত্ব নেওয়া ইবনে সিনা হলেন **incident commander** — তিনি keyboard-এ হাত না দিয়ে coordinate আর decide করেন। লগ রাখা নার্স ফাতিমা হলেন communications/scribe role — timeline capture করা আর বাইরে update দেওয়াই তাঁর কাজ। "আগে রোগীকে স্থিতিশীল করো, পরে কারণ খোঁজো" — এটাই **mitigate-first**: root cause খোঁজার আগে service restore করো (rollback, failover)। আর রোস্টারে থাকা দল হলো **on-call rotation**। বাস্তবে ঠিক এভাবেই SEV1 outage সামলানো হয় — Google, PagerDuty থেকে শুরু করে সব বড় team-ই ICS-এর এই একই কাঠামো ব্যবহার করে।
+
+## একটা incident-এর পাঁচটা phase
+
+আকার নির্বিশেষে প্রতিটা incident একই পাঁচটা phase-এর মধ্য দিয়ে যায়। response-এর সময় এগুলো জোরে নাম ধরে বলা team-কে coordinated রাখে।
 
 ```
 1. DETECT      Alert fires (or human notices)
@@ -31,11 +39,11 @@ Every incident, regardless of size, moves through the same five phases. Naming t
 5. LEARN       Postmortem, action items, share learnings
 ```
 
-The biggest mistake junior responders make is conflating Mitigate and Resolve. **Mitigate first, debug later.** If a deploy is on fire, roll it back, then investigate the rolled-back code at leisure. Don't try to fix forward in the middle of an outage.
+junior responder-রা সবচেয়ে বড় ভুলটা করে Mitigate আর Resolve গুলিয়ে ফেলে। **আগে Mitigate করো, পরে debug করো।** একটা deploy জ্বলছে হলে, ওটাকে roll back করো, তারপর rolled-back code-টা নিরিবিলি তদন্ত করো। outage-এর মাঝখানে fix forward করার চেষ্টা করো না।
 
-## Severity classification (a real one)
+## Severity classification (একটা রিয়েল)
 
-Severity must be defined in writing, before the incident, and posted in the on-call runbook. Here is a battle-tested grid you can adapt:
+Severity অবশ্যই লিখিতভাবে, incident-এর আগে define করা থাকতে হবে, আর on-call runbook-এ post করা থাকতে হবে। এখানে একটা battle-tested grid যা তুমি adapt করতে পারো:
 
 ```
 SEV1  Customer-visible outage, data loss, security breach,
@@ -60,17 +68,17 @@ SEV4  Cosmetic, internal-only, or self-recovering
       → Log it; aggregate weekly
 ```
 
-The grid prevents the most common dispute in incident response: "is this a SEV1 or a SEV2?" Decide it before the adrenaline hits.
+grid-টা incident response-এর সবচেয়ে সাধারণ বিবাদ আটকায়: "এটা কি SEV1 নাকি SEV2?" adrenaline আঘাত করার আগেই এটা ঠিক করে নাও।
 
 <Callout type="warning">
 
-**Err toward higher severity at declaration time.** It is cheap to downgrade a SEV1 to SEV2 ten minutes in. It is expensive to realize at hour 2 that you understaffed the response.
+**Declaration-এর সময় বেশি severity-র দিকে ভুল করো।** 10 মিনিট পরে একটা SEV1-কে SEV2-তে downgrade করা সস্তা। hour 2-তে বুঝতে পারা যে তুমি response-টা understaff করেছ, সেটা ব্যয়বহুল।
 
 </Callout>
 
 ## Incident Command System (ICS) roles
 
-Borrowed from firefighting and FEMA, ICS gives every responder a clear lane.
+firefighting আর FEMA থেকে ধার করা, ICS প্রতিটা responder-কে একটা পরিষ্কার লেন দেয়।
 
 ```
 INCIDENT COMMANDER (IC)
@@ -96,9 +104,9 @@ SUBJECT MATTER EXPERTS (SMEs)
   They answer questions; they do not run the incident.
 ```
 
-For a SEV1 you fill all four named roles. For a SEV2, IC + OL + Scribe is enough. The IC must explicitly NOT touch the keyboard — their job is to think one level above the debugging.
+একটা SEV1-এর জন্য তুমি চারটা named role-ই পূরণ করো। একটা SEV2-এর জন্য IC + OL + Scribe যথেষ্ট। IC-কে অবশ্যই স্পষ্টভাবে keyboard-এ হাত দেওয়া থেকে বিরত থাকতে হবে — তার কাজ debugging-এর এক লেভেল উপরে চিন্তা করা।
 
-## The on-call rotation that doesn't break people
+## যে on-call rotation মানুষ ভাঙে না
 
 ```typescript
 // Anti-patterns that destroy on-call teams:
@@ -121,7 +129,7 @@ const sustainable = {
 };
 ```
 
-If your team only has 4 engineers, you do not have an on-call rotation. You have a death march. Hire more, narrow the on-call scope, or use a paid follow-the-sun service.
+তোমার team-এ যদি মাত্র 4 জন engineer থাকে, তোমার একটা on-call rotation নেই। তোমার একটা death march আছে। আরও hire করো, on-call scope সংকীর্ণ করো, বা একটা paid follow-the-sun service ব্যবহার করো।
 
 ### The handoff template
 
@@ -158,7 +166,7 @@ Time: 09:00 PT
 
 ## Status page communication
 
-External comms is its own discipline. The template that works for almost any incident:
+External comms নিজেই একটা discipline। যে template প্রায় যেকোনো incident-এর জন্য কাজ করে:
 
 ```
 [INVESTIGATING]   We are investigating reports of [symptom]. We will
@@ -175,16 +183,16 @@ External comms is its own discipline. The template that works for almost any inc
                   published within [N] business days.
 ```
 
-Rules:
+নিয়ম:
 
-1. **Update on a regular cadence** even if there's nothing new. "Still investigating, next update at 14:30" is better than 90 minutes of silence.
-2. **Plain language**. "Some users may be unable to check out" beats "the order pipeline experienced a partial degradation."
-3. **No internal jargon**. The reader does not know what "the canary" is.
-4. **No blame, no speculation**. Especially not on third parties — you'll be wrong half the time.
+1. **একটা নিয়মিত cadence-এ update দাও** নতুন কিছু না থাকলেও। "এখনো investigating, পরের update 14:30-এ" 90 মিনিটের নীরবতার চেয়ে ভালো।
+2. **সহজ ভাষা**। "কিছু user হয়তো checkout করতে পারছে না" — "the order pipeline experienced a partial degradation"-এর চেয়ে ভালো।
+3. **কোনো internal jargon নয়**। পাঠক জানে না "the canary" কী।
+4. **কোনো blame নয়, কোনো speculation নয়**। বিশেষত third party-দের নিয়ে নয় — তুমি অর্ধেক সময় ভুল হবে।
 
-## A complete incident channel template
+## একটা সম্পূর্ণ incident channel template
 
-Spin up a dedicated Slack/Teams channel for every SEV1/SEV2. Pin this template at the top:
+প্রতিটা SEV1/SEV2-এর জন্য একটা dedicated Slack/Teams channel দাঁড় করাও। উপরে এই template-টা pin করো:
 
 ```markdown
 # Incident: INC-2271 — Checkout returning 503s
@@ -217,11 +225,11 @@ Database connection pool exhaustion in EU region.
 ...
 ```
 
-Everything goes in this channel. Threads for side conversations. No DMs about the incident — the scribe needs to capture every decision.
+সবকিছু এই channel-এ যায়। পাশের আলাপের জন্য thread। incident নিয়ে কোনো DM নয় — scribe-কে প্রতিটা decision capture করতে হয়।
 
-## Drills (the part everyone skips)
+## Drills (যে অংশটা সবাই এড়িয়ে যায়)
 
-You cannot expect people to perform incident response correctly under pressure if they have never practiced. Run quarterly drills:
+তুমি আশা করতে পারো না যে মানুষ চাপের মধ্যে incident response ঠিকমতো করবে যদি তারা কখনো প্র্যাকটিস না করে থাকে। ত্রৈমাসিক drill চালাও:
 
 ```typescript
 // Quarterly incident drill template
@@ -244,19 +252,19 @@ const drill = {
 };
 ```
 
-The first drill always exposes that the runbook has a typo, the failover script needs a flag that nobody knows, and the IC role rotation is unclear. That's the point — better to discover it in staging on a Tuesday than in production at 3am.
+প্রথম drill-টা সবসময় ফাঁস করে দেয় যে runbook-এ একটা typo আছে, failover script-এ এমন একটা flag লাগে যা কেউ জানে না, আর IC role rotation অস্পষ্ট। ঐটাই মূল কথা — মঙ্গলবার staging-এ এটা আবিষ্কার করা রাত 3টায় production-এ করার চেয়ে ভালো।
 
 ## Stay current
 
-- [PagerDuty Incident Response docs](https://response.pagerduty.com/) — the public playbook
+- [PagerDuty Incident Response docs](https://response.pagerduty.com/) — public playbook
 - [Google SRE Book — Managing Incidents](https://sre.google/sre-book/managing-incidents/) — IC roles defined
-- [Grafana OnCall](https://grafana.com/oss/oncall/) — open-source rotation tool, free tier real
-- [Increment magazine — On-Call issue](https://increment.com/on-call/) — how mature orgs run pagers
+- [Grafana OnCall](https://grafana.com/oss/oncall/) — open-source rotation tool, free tier আসল
+- [Increment magazine — On-Call issue](https://increment.com/on-call/) — mature org-রা কীভাবে pager চালায়
 
 ## Key Takeaways
 
-1. **Mitigate first, debug later** — rollback before root cause
-2. **Severity grid is written before the incident**, not argued during one
-3. **ICS gives every responder a clear lane** — IC decides, OL debugs, CL communicates
-4. **8+ engineers, 1-week shifts, paid on-call** is the floor for sustainable rotation
-5. **Drill quarterly** — the first time you exercise a runbook should not be in a real outage
+1. **আগে Mitigate, পরে debug** — root cause-এর আগে rollback
+2. **Severity grid incident-এর আগে লেখা হয়**, তার সময় তর্ক নয়
+3. **ICS প্রতিটা responder-কে একটা পরিষ্কার লেন দেয়** — IC decide করে, OL debug করে, CL communicate করে
+4. **8+ engineers, 1-week shifts, paid on-call** হচ্ছে sustainable rotation-এর floor
+5. **ত্রৈমাসিক drill করো** — একটা runbook প্রথমবার exercise করার সময়টা যেন একটা রিয়েল outage না হয়

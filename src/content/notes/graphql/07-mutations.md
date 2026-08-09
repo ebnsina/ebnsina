@@ -1,9 +1,9 @@
 ---
 title: 'Mutations, input types, validation'
-subtitle: 'Writes are not just queries with side effects. They need input types, validation, transactions, idempotency, and a return shape that lets clients update their cache without a second fetch.'
+subtitle: 'Write শুধু side effect সহ query নয়। এদের input type, validation, transaction, idempotency, আর এমন একটা return shape লাগে যা client-কে দ্বিতীয়বার fetch না করেই তার cache update করতে দেয়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['graphql', 'mutations', 'input types', 'validation', 'transactions']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graphql', 'mutations', 'input types', 'validation', 'transactions']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A `Mutation` field is just a resolver that writes. The schema, the executor, the resolver signature — all the same as queries. What changes is everything around the resolver: input shape, validation, transactional scope, error reporting, and what you return so the client can refresh state.
+একটা `Mutation` field আসলে একটা resolver যা write করে। schema, executor, resolver signature — সব query-র মতোই। যা বদলায় সেটা হলো resolver-এর চারপাশের সবকিছু: input shape, validation, transactional scope, error reporting, আর তুমি কী ফেরত দাও যাতে client state refresh করতে পারে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A mutation is like a form submission versus a read-only search — mutations change state, queries observe it.
+একটা mutation হলো একটা form submission-এর মতো, বনাম একটা read-only search — mutation state বদলায়, query তা observe করে।
 
 </Callout>
 
-## Mutations vs queries — the actual difference
+## গল্পে বুঝি
 
-The GraphQL spec guarantees one thing: when a single request contains multiple top-level mutations, **they run sequentially, in order**. Queries fan out in parallel.
+পুরনো শহরের রেকর্ড অফিসে ইবনে সিনা তার ঠিকানা বদলাতে এসেছেন। বড় হলঘরের বাঁদিকের জানালাটা শুধু পড়ার জন্য — ওখানে গিয়ে কারো রেকর্ড দেখা যায়, কিন্তু কিছু বদলানো যায় না। ঠিকানা বদলাতে হলে যেতে হবে ডানদিকের "পরিবর্তন" জানালায়। সেখানে কেরানি আল-খোয়ারিজমি একটা নির্দিষ্ট ছাপানো ফর্ম এগিয়ে দিলেন — তাতে ঠিক যে ঘরগুলো লাগবে সেগুলোই আছে: পুরনো ঠিকানা, নতুন ঠিকানা, নাগরিক নম্বর। যেমন খুশি কাগজে লিখে আনলে চলবে না, এই ফর্মের ছকেই ভরতে হবে।
+
+ইবনে সিনা ফর্ম ভরে জমা দিতেই আল-খোয়ারিজমি সঙ্গে সঙ্গে লেজারে হাত দিলেন না। আগে তিনি প্রতিটা ঘর মিলিয়ে দেখলেন — নাগরিক নম্বরটা কি আসল, নতুন ঠিকানাটা কি ফাঁকা, বানানে কি গোলমাল আছে। ফাতিমা আল-ফিহরি একবার নাগরিক নম্বরের ঘর ফাঁকা রেখে ফর্ম দিয়েছিলেন — কেরানি লেজার একটুও না ছুঁয়ে ফর্মটা সোজা ফেরত দিয়েছিলেন। সব ঠিক থাকলে তবেই আল-খোয়ারিজমি মূল লেজারে নতুন ঠিকানা তুলে দেন, আর ইবনে সিনার হাতে ধরিয়ে দেন হালনাগাদ রেকর্ডের একটা টাটকা কপি — যেখানে বদলটা কালো অক্ষরে দেখা যাচ্ছে।
+
+এই "পরিবর্তন" জানালাটাই একটা **mutation** — data বদলানোর কাজ এখানেই হয়, পড়ার জানালা (query) আলাদা। ছাপানো নির্দিষ্ট ফর্মটা হলো **input type**: কোন ঘরগুলো লাগবে তার নির্দিষ্ট shape। কেরানির প্রতিটা ঘর মিলিয়ে দেখা আর ভুল ফর্ম ফেরত দেওয়াটা **validation** — লেজার ছোঁয়ার আগেই খারাপ input আটকানো। মূল লেজারে ঠিকানা তোলা হলো আসল write, আর হাতে ধরানো টাটকা কপিটাই mutation-এর **return** — client দ্বিতীয়বার query না করেই তার state update করতে পারে। বাস্তবে GraphQL resolver-ও ঠিক এভাবেই কাজ করে: input type-এ shape ঠিক করো, boundary-তে validate করো, তারপর write করে বদলে যাওয়া entity ফেরত দাও।
+
+## Mutation বনাম query — আসল পার্থক্য
+
+GraphQL spec একটা জিনিসের নিশ্চয়তা দেয়: যখন একটা single request-এ একাধিক top-level mutation থাকে, **তারা sequentially, order অনুযায়ী চলে**। query গুলো parallel-এ fan out করে।
 
 ```graphql
 mutation {
@@ -39,13 +47,13 @@ mutation {
 }
 ```
 
-A is fully resolved before B starts. That is the only execution-level difference. Everything else is convention — by convention, mutations are the place you put writes; nothing in the engine forces it.
+B শুরু হওয়ার আগে A পুরোপুরি resolve হয়। এটাই একমাত্র execution-level পার্থক্য। বাকি সব convention — convention অনুযায়ী, mutation হলো সেই জায়গা যেখানে তুমি write রাখো; engine-এর কিছুই এটা বাধ্য করে না।
 
-In practice, do not batch many mutations in one request. Make one mutation per write. Network round trips are cheap; concurrency-control bugs are not.
+বাস্তবে, এক request-এ অনেক mutation batch করো না। প্রতি write-এ একটা mutation করো। Network round trip সস্তা; concurrency-control bug সস্তা নয়।
 
-## Input types — verbose but worth it
+## Input type — verbose কিন্তু মূল্যবান
 
-Mutations should take a single `input: <Verb><Noun>Input!` argument, not a flat list of scalars.
+Mutation-এর একটা single `input: <Verb><Noun>Input!` argument নেওয়া উচিত, flat scalar-এর একটা list নয়।
 
 ```graphql
 # Don't do this
@@ -66,16 +74,16 @@ type Mutation {
 }
 ```
 
-Why bother:
+কেন এই কষ্ট:
 
-- **Adding fields is cheap.** Add `excerpt: String` to `CreatePostInput` and clients send it whenever they want. With flat args, you would add a positional argument and risk default mismatches.
-- **Inputs are typed.** Default values, validation directives, descriptions — all live on the input type definition. Tooling reads it.
-- **Reusable.** `UpdatePostInput` can extend `CreatePostInput` patterns. Variants stay disciplined.
-- **Reads in clients.** Form code that gathers fields into one object, then submits, is more natural than spreading args.
+- **Field যোগ করা সস্তা।** `CreatePostInput`-এ `excerpt: String` যোগ করো আর client যখন চায় তখন পাঠায়। flat arg দিয়ে তুমি একটা positional argument যোগ করতে আর default mismatch-এর risk নিতে।
+- **Input typed।** Default value, validation directive, description — সব input type definition-এ থাকে। Tooling এটা পড়ে।
+- **Reusable।** `UpdatePostInput`, `CreatePostInput`-এর pattern extend করতে পারে। Variant গুলো disciplined থাকে।
+- **Client-এ পড়তে সুবিধা।** যে form code field গুলো একটা object-এ জড়ো করে, তারপর submit করে, সেটা arg ছড়িয়ে দেওয়ার চেয়ে বেশি স্বাভাবিক।
 
-Apply universally. Even the simplest one-field mutation gets its own input.
+সর্বজনীনভাবে apply করো। এমনকি সবচেয়ে সহজ one-field mutation-ও নিজের input পায়।
 
-## A real mutation, end-to-end
+## একটা বাস্তব mutation, end-to-end
 
 Schema:
 
@@ -100,7 +108,7 @@ input UpdatePostInput {
 }
 ```
 
-Resolver, with transaction and validation:
+Resolver, transaction আর validation সহ:
 
 ```js
 import { z } from 'zod';
@@ -154,31 +162,31 @@ const Mutation = {
 };
 ```
 
-A few patterns worth flagging.
+কয়েকটা pattern উল্লেখ করার মতো।
 
-**Validate at the boundary.** Use Zod (or Yup, or ajv) on the input. Don't trust GraphQL's type system for business rules — it gives you "is a string", you also need "1–200 chars, not just whitespace, no HTML." Validation is your job.
+**Boundary-তে validate করো।** input-এ Zod (বা Yup, বা ajv) ব্যবহার করো। Business rule-এর জন্য GraphQL-এর type system-এ ভরসা করো না — এটা তোমাকে "একটা string কিনা" দেয়, তোমার আরও লাগে "1–200 char, শুধু whitespace নয়, কোনো HTML নেই।" Validation তোমার কাজ।
 
-**Transactions are not optional for multi-statement writes.** Pull a client off the pool, `BEGIN`, do everything, `COMMIT` or `ROLLBACK`. Without this, an error after step 2 leaves step 1 committed. Inconsistent state forever.
+**Multi-statement write-এর জন্য transaction optional নয়।** pool থেকে একটা client টেনে নাও, `BEGIN`, সব করো, `COMMIT` বা `ROLLBACK`। এটা ছাড়া, step 2-এর পরে একটা error step 1-কে committed রেখে দেয়। চিরকালের inconsistent state।
 
-**Acquire the client, do not use `pool.query` for the rollback path.** `pool.query` checks out a connection per call. For atomicity you need _one_ connection across the whole transaction.
+**Client acquire করো, rollback path-এর জন্য `pool.query` ব্যবহার করো না।** `pool.query` প্রতিটা call-এ একটা connection checkout করে। atomicity-র জন্য তোমার পুরো transaction জুড়ে _একটা_ connection লাগে।
 
-## Validation strategies
+## Validation-এর কৌশল
 
-Three places to validate:
+Validate করার তিনটা জায়গা:
 
-1. **Schema (free).** GraphQL enforces type, nullability, enum membership. `Boolean!` cannot be `"true"` — the executor rejects before your resolver runs.
-2. **Input shape (Zod).** Length, regex, range, conditional logic. Rejects with a usable error.
-3. **Business rules in the resolver.** "Cannot publish a post in a deleted org." Goes after the Zod parse, where you have the typed input.
+1. **Schema (free)।** GraphQL type, nullability, enum membership enforce করে। `Boolean!` কখনো `"true"` হতে পারে না — তোমার resolver চলার আগে executor reject করে।
+2. **Input shape (Zod)।** Length, regex, range, conditional logic। ব্যবহারযোগ্য একটা error দিয়ে reject করে।
+3. **Resolver-এ business rule।** "একটা deleted org-এ post publish করা যায় না।" Zod parse-এর পরে যায়, যেখানে তোমার typed input আছে।
 
-Don't put business rules in Zod. Don't put length checks in the resolver. Layer them where they belong.
+Zod-এ business rule রেখো না। Resolver-এ length check রেখো না। যেখানে যেটার জায়গা সেখানে layer করো।
 
-## Errors clients can act on
+## যেসব error-এ client কাজ করতে পারে
 
-A bare `throw new Error("not found")` becomes a generic message in `errors[]` with no structure. Clients cannot distinguish "validation failed" from "internal server error" from "unauthorized."
+একটা খালি `throw new Error("not found")` `errors[]`-এ কোনো structure ছাড়া একটা generic message হয়ে যায়। Client "validation failed"-কে "internal server error" থেকে বা "unauthorized" থেকে আলাদা করতে পারে না।
 
-Two options.
+দুটো option।
 
-**1. Typed errors via codes.** graphql-yoga supports `GraphQLError` with extensions:
+**1. code দিয়ে typed error।** graphql-yoga extension সহ `GraphQLError` support করে:
 
 ```js
 import { GraphQLError } from 'graphql';
@@ -188,9 +196,9 @@ throw new GraphQLError('Invalid title', {
 });
 ```
 
-Clients read `err.extensions.code` and branch on it.
+Client `err.extensions.code` পড়ে আর তার উপর branch করে।
 
-**2. Errors as data (the union pattern).** From chapter 2:
+**2. data হিসেবে error (union pattern)।** chapter 2 থেকে:
 
 ```graphql
 union CreatePostResult = Post | ValidationError | NotAuthorizedError
@@ -199,21 +207,21 @@ type Mutation {
 }
 ```
 
-Verbose but watertight. Clients write fragments per case and the schema documents every failure mode.
+Verbose কিন্তু watertight। Client প্রতিটা case-এর জন্য fragment লেখে আর schema প্রতিটা failure mode document করে।
 
-For a small graph, codes via extensions are fine. For a contract many teams consume, errors-as-data is worth it.
+ছোট graph-এর জন্য extension দিয়ে code ঠিক আছে। অনেক team যে contract consume করে, তার জন্য errors-as-data মূল্যবান।
 
 <Callout type="info">
 
-**Hide internals.** A Postgres unique-violation error includes the constraint name, table name, sometimes the offending value. Do not pass it through. Catch it in the resolver, map to a clean error: `throw new GraphQLError("Email already in use", { extensions: { code: "DUPLICATE", field: "email" } })`. Stack traces and SQL belong in your logs, not in client responses.
+**Internal জিনিস লুকাও।** একটা Postgres unique-violation error-এ constraint name, table name, কখনো offending value থাকে। এটা pass through করো না। resolver-এ catch করো, একটা clean error-এ map করো: `throw new GraphQLError("Email already in use", { extensions: { code: "DUPLICATE", field: "email" } })`। Stack trace আর SQL তোমার log-এ থাকে, client response-এ নয়।
 
 </Callout>
 
 ## Idempotency
 
-Mutations can fail mid-flight — network drops, client retries. Without idempotency, the user clicks "create post" twice and ends up with two posts.
+Mutation mid-flight fail করতে পারে — network drop, client retry। Idempotency ছাড়া, user "create post"-এ দুবার click করে আর দুটো post নিয়ে শেষ হয়।
 
-The cleanest fix: clients send a `clientMutationId` (UUID) and the server stores it.
+সবচেয়ে পরিষ্কার সমাধান: client একটা `clientMutationId` (UUID) পাঠায় আর server এটা store করে।
 
 ```graphql
 input CreatePostInput {
@@ -231,15 +239,15 @@ CREATE TABLE mutation_idempotency (
 );
 ```
 
-In the resolver, check the table first; if a row exists, return its stored result. If not, do the work, store the result, return.
+resolver-এ, প্রথমে table check করো; যদি একটা row থাকে, তার stored result ফেরত দাও। যদি না থাকে, কাজটা করো, result store করো, ফেরত দাও।
 
-For low-stakes writes (drafts, comments) this is overkill. For payments, account creation, anything customers care about — non-negotiable.
+কম গুরুত্বপূর্ণ write-এর জন্য (draft, comment) এটা অতিরিক্ত। Payment, account creation, যা কিছু customer-রা care করে — তার জন্য non-negotiable।
 
-## Returning enough for the client to update
+## Client-এর update করার মতো যথেষ্ট ফেরত দেওয়া
 
-If `createPost` returns `Boolean`, the client has to refetch `users` and `posts` to update the UI. Wasteful.
+যদি `createPost` `Boolean` ফেরত দেয়, client-কে UI update করতে `users` আর `posts` refetch করতে হয়। অপচয়।
 
-Return the new entity, with enough fields for the client to splice into its cache:
+নতুন entity ফেরত দাও, client-এর cache-এ splice করার মতো যথেষ্ট field সহ:
 
 ```graphql
 type Mutation {
@@ -247,9 +255,9 @@ type Mutation {
 }
 ```
 
-Apollo Client and urql will read the returned `Post`, find it by `id` in their normalized cache, and update affiliated lists if you also include them.
+Apollo Client আর urql ফেরত দেওয়া `Post` পড়বে, তাদের normalized cache-এ `id` দিয়ে খুঁজে বের করবে, আর তুমি যদি সেগুলোও include করো তবে সংশ্লিষ্ট list গুলো update করবে।
 
-For mutations that affect lists, return the parent too:
+যেসব mutation list-এ প্রভাব ফেলে, তাদের জন্য parent-ও ফেরত দাও:
 
 ```graphql
 type CreatePostPayload {
@@ -258,13 +266,13 @@ type CreatePostPayload {
 }
 ```
 
-Now one mutation request returns everything the client needs. Zero refetches.
+এখন একটা mutation request client-এর দরকারি সবকিছু ফেরত দেয়। শূন্য refetch।
 
-## Bulk mutations
+## Bulk mutation
 
-Need to create 50 posts? Don't expose `createPostBatch(inputs: [CreatePostInput!]!)`. Sequential top-level mutations work, but they are slow over network.
+50টা post তৈরি করা দরকার? `createPostBatch(inputs: [CreatePostInput!]!)` expose করো না। Sequential top-level mutation কাজ করে, কিন্তু network-এর উপর সেগুলো ধীর।
 
-Better: a single mutation that takes the array, runs in one transaction:
+আরও ভালো: একটা single mutation যা array নেয়, এক transaction-এ চলে:
 
 ```graphql
 type Mutation {
@@ -282,11 +290,11 @@ type ImportFailure {
 }
 ```
 
-One round trip, one transaction, partial-failure reporting. This is also where the union-typed error pattern earns its keep — each item can succeed or fail individually.
+এক round trip, এক transaction, partial-failure reporting। এখানেই union-typed error pattern তার মূল্য প্রমাণ করে — প্রতিটা item আলাদাভাবে succeed বা fail করতে পারে।
 
-## Mutations and DataLoader caches
+## Mutation আর DataLoader cache
 
-A mutation that writes to user `42` invalidates the loader cache of any concurrent or following request that loaded user `42`. Since loaders are per-request and short-lived, this is rarely a problem within a single request — but if your resolver mutates and then reads in the _same_ mutation, prime or clear the loader after the write:
+user `42`-তে write করা একটা mutation যেকোনো concurrent বা following request-এর loader cache invalidate করে যা user `42` load করেছিল। যেহেতু loader per-request আর short-lived, একটা single request-এর ভেতরে এটা খুব কমই সমস্যা — কিন্তু যদি তোমার resolver mutate করে তারপর _একই_ mutation-এ read করে, write-এর পরে loader prime বা clear করো:
 
 ```js
 ctx.loaders.user.clear(post.author_id);
@@ -294,17 +302,17 @@ ctx.loaders.user.clear(post.author_id);
 ctx.loaders.user.prime(String(updatedUser.id), updatedUser);
 ```
 
-Otherwise the post-mutation read returns the stale, pre-mutation row.
+নয়তো post-mutation read stale, pre-mutation row ফেরত দেয়।
 
-## Recap
+## রিক্যাপ
 
-- Mutations run sequentially when batched. That is the only engine-level difference from queries.
-- Always use `input <Verb><Noun>Input!` types. One arg, never flat scalars.
-- Validate at the boundary with Zod. Schema gives types, you give rules.
-- Wrap multi-statement writes in a real transaction with one connection.
-- Error codes via `extensions` for small graphs; errors-as-data unions for big ones.
-- Hide internal errors. Map DB constraint names to user-readable messages.
-- `clientMutationId` for anything important. Idempotency is a feature, not a fancy.
-- Return the changed entity, with enough scope for the client to update its cache.
+- Batch করা হলে mutation sequentially চলে। query থেকে এটাই একমাত্র engine-level পার্থক্য।
+- সবসময় `input <Verb><Noun>Input!` type ব্যবহার করো। এক arg, কখনো flat scalar নয়।
+- Zod দিয়ে boundary-তে validate করো। Schema type দেয়, তুমি rule দাও।
+- Multi-statement write একটা connection সহ একটা real transaction-এ wrap করো।
+- ছোট graph-এর জন্য `extensions` দিয়ে error code; বড় graph-এর জন্য errors-as-data union।
+- Internal error লুকাও। DB constraint name-কে user-readable message-এ map করো।
+- গুরুত্বপূর্ণ যেকোনো কিছুর জন্য `clientMutationId`। Idempotency একটা feature, শখ নয়।
+- বদলে যাওয়া entity ফেরত দাও, client-এর cache update করার মতো যথেষ্ট scope সহ।
 
-Next: [Authentication and authorization](/notes/graphql/08-auth) — context, field-level checks, and the directives pattern.
+পরবর্তী: [Authentication and authorization](/notes/graphql/08-auth) — context, field-level check, আর directives pattern।

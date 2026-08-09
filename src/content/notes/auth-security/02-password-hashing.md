@@ -1,9 +1,9 @@
 ---
 title: 'Password Hashing'
-subtitle: 'Why MD5 and SHA-256 fail for passwords, how bcrypt and Argon2 work, and what to do with the output.'
+subtitle: 'Password-এর জন্য MD5 আর SHA-256 কেন ব্যর্থ হয়, bcrypt আর Argon2 কীভাবে কাজ করে, আর output নিয়ে কী করবেন।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['bcrypt', 'argon2', 'hashing', 'salting', 'password storage']
 ---
 
@@ -13,25 +13,33 @@ topics: ['bcrypt', 'argon2', 'hashing', 'salting', 'password storage']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A safe with a time-lock mechanism: the point is not just to make it hard to open, but to make it slow — so even with the right combination, it takes a minute. A fast lock just delays an attacker by milliseconds. Password hashing works the same way: intentional slowness is the feature.
+time-lock mechanism সহ একটা safe: উদ্দেশ্য শুধু খোলা কঠিন করা নয়, বরং ধীর করা — যাতে সঠিক combination দিয়েও এক মিনিট লাগে। একটা fast lock attacker-কে শুধু কয়েক millisecond দেরি করায়। Password hashing একইভাবে কাজ করে: ইচ্ছাকৃত ধীরগতিই এর feature।
 
 </Callout>
 
-## Why General-Purpose Hash Functions Fail
+## গল্পে বুঝি
 
-MD5, SHA-1, SHA-256 — they're designed to be fast. A modern GPU can compute billions of SHA-256 hashes per second. If your database leaks, an attacker can try every common password in minutes.
+ইবনে সিনা একটা পুরনো ধাঁচের নিরাপত্তা অফিসে গিয়ে দেখল, সেখানে কারো ঘরের আসল চাবি জমা রাখা হয় না। বদলে ক্লার্ক চাবিটা একবার নরম প্লাস্টারে চেপে একটা ছাপ তুলে নেয়, তারপর আসল চাবি আপনাকে ফেরত দিয়ে দেয়। পরে ইবনে সিনা যখন আবার আসে আর চাবি বের করে দেখায়, ক্লার্ক সেই চাবি আবার প্লাস্টারে চেপে দেখে ছাপ দুটো মেলে কিনা — মিললে ঢুকতে দেয়। মজার ব্যাপার হলো, এই ছাপ দেখে কেউ চাবিটা আবার বানাতে পারবে না; ছাপ থেকে চাবির দিকে ফেরার কোনো পথ নেই। যাচাই করা যায়, কিন্তু আসল জিনিস উদ্ধার করা যায় না।
+
+ইবনে সিনার পাশের ফ্ল্যাটের আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরির চাবি প্রায় একই রকম দেখতে। এতে সমস্যা — দুজনের ছাপ একই হয়ে গেলে একজনের ছাপ চুরি হলে অন্যজনও ধরা পড়ে। তাই ক্লার্ক প্রতিটা ছাপ তোলার সময় আলাদা রঙের এক চিমটি গুঁড়ো মিশিয়ে দেয়, যেটা প্রতিজনের জন্য আলাদা। ফলে দুজনের চাবি এক রকম হলেও ফাইলে থাকা ছাপ দুটো একদম আলাদা দেখায়, আর আগে থেকে বানিয়ে রাখা কোনো ছাপের তালিকার সাথে মিলিয়ে ফেলা যায় না। আরও একটা ব্যাপার — এই ছাপ তোলার কাজটা ইচ্ছা করেই ধীর আর খাটুনির, একেকটা ছাপ তুলতে বেশ সময় লাগে, যাতে কোনো চোর গাদা গাদা আন্দাজি চাবির ছাপ চটপট বানিয়ে মিলিয়ে দেখতে না পারে।
+
+এই গল্পটাই আসলে **password hashing**। প্লাস্টারের এক-মুখী ছাপ হলো **one-way hash** — password থেকে hash বানানো যায়, কিন্তু hash থেকে password ফেরত পাওয়া যায় না, তাই আপনি কখনো plaintext password store করবেন না, শুধু hash-টাই রাখবেন। প্রতিটা ছাপে আলাদা রঙের গুঁড়ো মেশানোটা হলো **salt** — এতে একই password-এর hash-ও প্রতি user-এর জন্য আলাদা হয় আর **rainbow table** অকেজো হয়ে যায়। আর ছাপ তোলার ইচ্ছাকৃত ধীরগতিই হলো **slow hash** — বাস্তবে **bcrypt** বা **argon2** ঠিক এভাবেই কাজ করে, brute force-কে যন্ত্রণাদায়ক রকম ধীর করে দেয়।
+
+## General-Purpose Hash Function কেন ব্যর্থ হয়
+
+MD5, SHA-1, SHA-256 — এগুলো fast হওয়ার জন্য design করা। একটা আধুনিক GPU প্রতি সেকেন্ডে বিলিয়ন বিলিয়ন SHA-256 hash compute করতে পারে। আপনার database leak হলে, একজন attacker মিনিটের মধ্যে প্রতিটা common password try করতে পারে।
 
 ```
 SHA-256("password123") = ef92b778... (computed in ~0.000001ms)
 ```
 
-Speed is the enemy here. You want a function that's slow by design, tunable over time as hardware improves, and immune to parallelization via specialized hardware.
+এখানে speed-ই শত্রু। আপনি এমন একটা function চান যা design-এই ধীর, hardware উন্নত হওয়ার সাথে সাথে সময়ের সাথে tunable, এবং specialized hardware দিয়ে parallelization থেকে immune।
 
-## Salt: Defeating Rainbow Tables
+## Salt: Rainbow Table হারানো
 
-Before adaptive hashing, the main defense was salting. A **salt** is a random value prepended to the password before hashing, stored alongside the hash:
+Adaptive hashing-এর আগে, মূল defense ছিল salting। একটা **salt** হলো একটা random value যা hash করার আগে password-এর সাথে যোগ করা হয়, এবং hash-এর পাশে store করা হয়:
 
 ```typescript
 import crypto from 'crypto';
@@ -55,11 +63,11 @@ function verify(password: string, stored: string): boolean {
 }
 ```
 
-Salting defeats rainbow tables (precomputed hash→password lookups) — each user's hash is unique even for the same password. But SHA-256 is still fast. An attacker with the database just does per-user brute force.
+Salting rainbow table (precomputed hash→password lookup) হারায় — একই password-এর জন্যও প্রতিটা user-এর hash unique। কিন্তু SHA-256 এখনও fast। database হাতে থাকা একজন attacker শুধু per-user brute force করে।
 
 ## bcrypt
 
-bcrypt embeds the salt and iteration count into the hash output. The work factor (`rounds`) determines how slow each computation is:
+bcrypt salt আর iteration count hash output-এর মধ্যে embed করে। work factor (`rounds`) নির্ধারণ করে প্রতিটা computation কতটা ধীর:
 
 ```typescript
 import bcrypt from 'bcrypt';
@@ -79,9 +87,9 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 }
 ```
 
-At rounds=12, bcrypt takes ~250ms per hash on a typical server. That's slow enough to be painful for an attacker brute-forcing a leaked database, but fast enough that users don't notice during login.
+rounds=12-তে একটা সাধারণ server-এ bcrypt প্রতি hash-এ ~250ms নেয়। leak হওয়া database brute-force করা attacker-এর জন্য এটা যথেষ্ট ধীর যে যন্ত্রণাদায়ক, কিন্তু login-এর সময় user-রা টের পায় না এতটা fast।
 
-**Benchmark rounds:**
+**Round benchmark করা:**
 
 ```typescript
 import { performance } from 'perf_hooks';
@@ -101,9 +109,9 @@ async function benchmarkBcrypt(): Promise<void> {
 // rounds=14: ~1000ms
 ```
 
-Pick a round count where each hash takes 100–300ms. Re-benchmark yearly and increase as needed.
+এমন একটা round count বাছুন যেখানে প্রতিটা hash-এ 100–300ms লাগে। প্রতি বছর আবার benchmark করুন এবং প্রয়োজনমতো বাড়ান।
 
-**bcrypt limitation:** 72-byte input limit. Passwords longer than 72 bytes are silently truncated. For long passphrases, pre-hash with SHA-256 first:
+**bcrypt-এর সীমাবদ্ধতা:** 72-byte input limit। 72 byte-এর বেশি লম্বা password নীরবে truncate হয়ে যায়। লম্বা passphrase-এর জন্য, প্রথমে SHA-256 দিয়ে pre-hash করুন:
 
 ```typescript
 async function hashPasswordSafe(password: string): Promise<string> {
@@ -115,7 +123,7 @@ async function hashPasswordSafe(password: string): Promise<string> {
 
 ## Argon2
 
-The winner of the 2015 Password Hashing Competition. More tunable than bcrypt — you control time cost, memory cost, and parallelism:
+2015 সালের Password Hashing Competition-এর বিজয়ী। bcrypt-এর চেয়ে বেশি tunable — আপনি time cost, memory cost, আর parallelism নিয়ন্ত্রণ করেন:
 
 ```typescript
 import argon2 from 'argon2';
@@ -137,23 +145,23 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 }
 ```
 
-**Argon2 variants:**
+**Argon2 variant:**
 
-- `argon2d`: Resistant to GPU attacks (data-dependent memory access). Don't use for passwords — vulnerable to side-channel attacks.
-- `argon2i`: Data-independent memory access. Resistant to side-channels. Weaker against GPU attacks.
-- `argon2id`: Hybrid. Use this for passwords and KDFs.
+- `argon2d`: GPU attack-এ resistant (data-dependent memory access)। Password-এর জন্য ব্যবহার করবেন না — side-channel attack-এ vulnerable।
+- `argon2i`: Data-independent memory access। Side-channel-এ resistant। GPU attack-এর বিরুদ্ধে দুর্বল।
+- `argon2id`: Hybrid। Password আর KDF-এর জন্য এটাই ব্যবহার করুন।
 
-**Memory cost is the main differentiator from bcrypt.** Requiring 64MB per hash means an attacker needs 64MB GPU VRAM per parallel attempt. High-end GPUs have ~24GB — that's only ~375 parallel attempts, compared to millions for bcrypt at equivalent time cost.
+**bcrypt থেকে মূল পার্থক্য হলো memory cost।** প্রতি hash-এ 64MB দরকার হওয়া মানে একজন attacker-এর প্রতিটা parallel attempt-এর জন্য 64MB GPU VRAM লাগে। High-end GPU-তে ~24GB থাকে — সেটা মাত্র ~375টা parallel attempt, যেখানে সমতুল্য time cost-এ bcrypt-এর জন্য লাগত মিলিয়ন মিলিয়ন।
 
-**Minimum parameters (OWASP 2023):**
+**Minimum parameter (OWASP 2023):**
 
 - `argon2id` with m=47104 (46MB), t=1, p=1
-- or m=19456 (19MB), t=2, p=1
-- or bcrypt with cost=10
+- অথবা m=19456 (19MB), t=2, p=1
+- অথবা bcrypt with cost=10
 
-## Storing and Verifying
+## Store করা ও Verify করা
 
-Both bcrypt and argon2 produce self-contained strings that include algorithm, parameters, salt, and hash. Store the whole string — you don't need separate salt columns:
+bcrypt আর argon2 দুটোই self-contained string তৈরি করে যাতে algorithm, parameter, salt, আর hash থাকে। পুরো string-টা store করুন — আলাদা salt column-এর দরকার নেই:
 
 ```typescript
 // Database schema
@@ -193,9 +201,9 @@ async function dummyHash(): Promise<void> {
 }
 ```
 
-## Upgrading Hashes on Login
+## Login-এ Hash Upgrade করা
 
-If you have old MD5/SHA-1 hashes in the database, upgrade on successful login (you have the plaintext at that moment):
+আপনার database-এ পুরনো MD5/SHA-1 hash থাকলে, successful login-এ upgrade করুন (সেই মুহূর্তে আপনার কাছে plaintext আছে):
 
 ```typescript
 async function loginWithUpgrade(email: string, password: string): Promise<User | null> {
@@ -224,12 +232,12 @@ function isLegacyHash(hash: string): boolean {
 }
 ```
 
-Users who never log in keep their old hashes — that's acceptable. You can force a password reset for those accounts after a migration deadline.
+যে user কখনও log in করে না তারা তাদের পুরনো hash রেখে দেয় — সেটা গ্রহণযোগ্য। একটা migration deadline-এর পরে সেই account-গুলোর জন্য আপনি password reset বাধ্যতামূলক করতে পারেন।
 
-## What Not to Do
+## যা করবেন না
 
-- **Never store plaintext passwords.** Never. Not even "temporarily."
-- **Never use MD5, SHA-1, SHA-256, or SHA-512 alone for passwords.** They're too fast.
-- **Never roll your own algorithm.** Use bcrypt or argon2id.
-- **Never compare hashes with `===`.** Use `crypto.timingSafeEqual` or the library's `verify` function.
-- **Don't enforce arbitrary complexity rules.** Length matters more than symbols. Allow long passphrases. [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html) recommends at least 8 characters, no composition rules, no forced rotation.
+- **কখনও plaintext password store করবেন না।** কখনও না। "সাময়িকভাবে"ও না।
+- **Password-এর জন্য কখনও একা MD5, SHA-1, SHA-256, বা SHA-512 ব্যবহার করবেন না।** এগুলো অনেক fast।
+- **কখনও নিজের algorithm বানাবেন না।** bcrypt বা argon2id ব্যবহার করুন।
+- **কখনও `===` দিয়ে hash compare করবেন না।** `crypto.timingSafeEqual` বা library-র `verify` function ব্যবহার করুন।
+- **যা-খুশি complexity rule চাপাবেন না।** symbol-এর চেয়ে length বেশি গুরুত্বপূর্ণ। লম্বা passphrase-কে অনুমতি দিন। [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html) কমপক্ষে 8 character-এর সুপারিশ করে, কোনো composition rule নয়, কোনো forced rotation নয়।

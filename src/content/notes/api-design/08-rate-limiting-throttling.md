@@ -1,9 +1,9 @@
 ---
-title: 'Rate Limiting & Throttling'
-subtitle: 'Protect your APIs from abuse with token bucket, sliding window, distributed rate limiting, and retry-after patterns.'
+title: 'Rate Limiting ও Throttling'
+subtitle: 'token bucket, sliding window, distributed rate limiting, আর retry-after pattern দিয়ে আপনার API-কে অপব্যবহার থেকে রক্ষা করুন।'
 chapter: 8
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['rate limiting', 'throttling', 'token bucket', 'sliding window', 'distributed systems']
 ---
 
@@ -11,23 +11,31 @@ topics: ['rate limiting', 'throttling', 'token bucket', 'sliding window', 'distr
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Rate Limit?
+## গল্পে বুঝি
 
-Without rate limiting, a single client can consume all your server resources — intentionally (DDoS attack) or accidentally (buggy loop that fires 1000 requests/second). Rate limiting protects your API, ensures fair usage, and keeps costs under control.
+পাড়ার নামকরা ডাক্তার — ডাঃ আল-খোয়ারিজমির চেম্বার। রোগীর ভিড় এত বেশি যে সবাইকে একদিনে দেখা অসম্ভব, তাই চেম্বার থেকে প্রতিদিন একটা নির্দিষ্ট সংখ্যক সিরিয়াল টোকেন দেওয়া হয়। কিন্তু সবাই সমান টোকেন পায় না। ফাতিমা আল-ফিহরি নিয়মিত রোগী, তার একটা "মাসিক কার্ড" করা আছে — তাকে দিনে বেশি সিরিয়াল, এমনকি জরুরি হলে আগে দেখার সুযোগ দেওয়া হয়। আর ইবনে সিনা প্রথমবার এসেছে, ওয়াক-ইন রোগী — তার জন্য বরাদ্দ সিরিয়াল অল্প কয়েকটা।
+
+ইবনে সিনা দুপুরে গিয়ে দেখে আজকের সিরিয়াল সব শেষ। রিসেপশনের ভদ্রলোক নম্রভাবে বললেন, "আজকের কোটা শেষ, কাল সকালে আসুন।" ঠিক তখনই দেয়ালে টাঙানো একটা বোর্ডে চোখ পড়ল ইবনে সিনার — সেখানে লেখা আজকের মোট সিরিয়াল, কতগুলো দেওয়া হয়ে গেছে, আর কতগুলো বাকি আছে। বোর্ড দেখেই বোঝা যায় কখন গেলে সিরিয়াল পাওয়া যাবে, শুধু শুধু লাইনে দাঁড়িয়ে সময় নষ্ট করতে হয় না।
+
+এই গল্পটাই আসলে **rate limiting**। প্রতিটা রোগীর দৈনিক সিরিয়াল-বরাদ্দ হলো **per-client quota** — প্রতিটা API client-এর জন্য আলাদা করে বেঁধে দেওয়া সীমা। ফাতিমা আল-ফিহরির বেশি আর ইবনে সিনার কম সিরিয়াল পাওয়া হলো **plan/tier** — free ইউজার কম request পায়, paid ইউজার বেশি। "আজকের কোটা শেষ, কাল আসুন" মানে **429 (quota exceeded)** — সীমা পেরোলে বিনয়ের সাথে ফিরিয়ে দেওয়া, তবে কখন আবার আসতে হবে তা জানিয়ে। আর দেয়ালের বোর্ডটাই হলো **rate-limit header** (`X-RateLimit-Limit`, `X-RateLimit-Remaining`) — কত quota বাকি আছে তা client-কে আগে থেকে জানানো। বাস্তবে GitHub বা OpenAI-এর মতো public API ঠিক এভাবেই কাজ করে — free tier-এ কম, paid tier-এ বেশি quota, আর কোটা শেষ হলে 429।
+
+## Rate Limit কেন করবেন?
+
+rate limiting ছাড়া একটি single client আপনার সব সার্ভার রিসোর্স খেয়ে ফেলতে পারে — ইচ্ছাকৃতভাবে (DDoS attack) বা দুর্ঘটনাবশত (buggy loop যা সেকেন্ডে ১০০০ request পাঠায়)। Rate limiting আপনার API রক্ষা করে, ন্যায্য ব্যবহার নিশ্চিত করে, আর খরচ নিয়ন্ত্রণে রাখে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like an ATM daily withdrawal limit — you can only withdraw a fixed amount per day to prevent abuse. Hit the limit, and you wait until tomorrow.
+ATM-এর দৈনিক উত্তোলন লিমিটের মতো — অপব্যবহার ঠেকাতে আপনি প্রতিদিন একটা নির্দিষ্ট পরিমাণই তুলতে পারেন। লিমিটে পৌঁছলে আগামীকাল পর্যন্ত অপেক্ষা করতে হয়।
 
 </Callout>
 
-## Rate Limiting Algorithms
+## Rate Limiting অ্যালগরিদম
 
 ### 1. Fixed Window Counter
 
-The simplest approach. Count requests in fixed time windows (e.g., per minute).
+সবচেয়ে সহজ পদ্ধতি। নির্দিষ্ট সময়-উইন্ডোতে (যেমন প্রতি মিনিটে) request গণনা করুন।
 
 ```typescript
 import Redis from 'ioredis';
@@ -64,11 +72,11 @@ async function fixedWindowRateLimit(
 const result = await fixedWindowRateLimit('user_42', 100, 60);
 ```
 
-**Problem:** At the boundary between two windows, a client can make 2x the limit (100 at 0:59, 100 at 1:00).
+**সমস্যা:** দুই উইন্ডোর সীমানায় একটি client লিমিটের 2x request করতে পারে (0:59-তে 100, 1:00-তে 100)।
 
 ### 2. Sliding Window Log
 
-Track the timestamp of every request and count how many fall within the window:
+প্রতিটি request-এর timestamp ট্র্যাক করুন আর গুনুন কতগুলো উইন্ডোর মধ্যে পড়ে:
 
 ```typescript
 async function slidingWindowLog(
@@ -105,11 +113,11 @@ async function slidingWindowLog(
 }
 ```
 
-**Problem:** Memory-intensive — stores every request timestamp.
+**সমস্যা:** মেমরি-নিবিড় — প্রতিটি request-এর timestamp store করে।
 
 ### 3. Sliding Window Counter
 
-A hybrid that approximates the sliding window using two fixed windows:
+একটি হাইব্রিড যা দুটি fixed window ব্যবহার করে sliding window-এর কাছাকাছি হিসাব করে:
 
 ```typescript
 async function slidingWindowCounter(
@@ -158,7 +166,7 @@ async function slidingWindowCounter(
 
 ### 4. Token Bucket
 
-The most flexible algorithm. A bucket holds tokens, each request consumes one token, and tokens are refilled at a constant rate.
+সবচেয়ে নমনীয় অ্যালগরিদম। একটি bucket-এ token থাকে, প্রতিটি request একটি token খরচ করে, আর একটি ধ্রুব হারে token রিফিল হয়।
 
 ```typescript
 interface TokenBucket {
@@ -219,18 +227,18 @@ const result = await tokenBucketRateLimit('user_42', 100, 10);
 
 <Callout type="tip">
 
-**Choosing an Algorithm**
+**একটি অ্যালগরিদম বেছে নেওয়া**
 
-- **Fixed window** — Simplest, good enough for most APIs
-- **Sliding window counter** — Better accuracy than fixed window, minimal overhead
-- **Token bucket** — Best for allowing bursts while enforcing sustained rate
-- **Sliding window log** — Most accurate but highest memory usage
+- **Fixed window** — সবচেয়ে সহজ, বেশিরভাগ API-এর জন্য যথেষ্ট
+- **Sliding window counter** — fixed window-এর চেয়ে বেশি নির্ভুল, খুব কম overhead
+- **Token bucket** — sustained rate বজায় রেখে burst অনুমোদনের জন্য সেরা
+- **Sliding window log** — সবচেয়ে নির্ভুল কিন্তু সর্বোচ্চ মেমরি ব্যবহার
 
 </Callout>
 
-## Rate Limit Headers
+## Rate Limit Header
 
-Always communicate rate limit status in response headers:
+response header-এ সবসময় rate limit স্ট্যাটাস জানান:
 
 ```typescript
 function rateLimitMiddleware(limit: number, windowSeconds: number) {
@@ -264,9 +272,9 @@ app.use('/api/search', rateLimitMiddleware(30, 60)); // 30 req/min for search
 app.use('/api', rateLimitMiddleware(1000, 60)); // 1000 req/min default
 ```
 
-## Client-Side Retry with Backoff
+## Backoff-সহ Client-Side Retry
 
-Clients should respect rate limits and implement proper retry logic:
+client-এর rate limit মানা উচিত আর সঠিক retry লজিক ইমপ্লিমেন্ট করা উচিত:
 
 ```typescript
 async function fetchWithRetry(
@@ -312,9 +320,9 @@ const response = await fetchWithRetry('https://api.example.com/data', {
 });
 ```
 
-## Tiered Rate Limits
+## Tiered Rate Limit
 
-Different API plans get different limits:
+আলাদা আলাদা API plan আলাদা লিমিট পায়:
 
 ```typescript
 interface RateLimitTier {
@@ -371,19 +379,19 @@ async function tieredRateLimit(
 
 <Callout type="warning">
 
-**Rate Limiting Pitfalls**
+**Rate Limiting-এর ফাঁদ**
 
-- Do not rate limit by IP alone — many users share IPs (corporate NAT, mobile carriers)
-- Do not forget to rate limit authentication endpoints — brute force attacks target login
-- Do not use in-memory counters in a multi-server setup — use Redis or a shared store
-- Do not set limits too low initially — start generous and tighten based on data
-- Always include `Retry-After` in 429 responses — clients need to know when to try again
+- শুধু IP দিয়ে rate limit করবেন না — অনেক ইউজার IP শেয়ার করে (corporate NAT, mobile carrier)
+- authentication endpoint rate limit করতে ভুলবেন না — brute force attack login-কে লক্ষ্য করে
+- multi-server সেটআপে in-memory counter ব্যবহার করবেন না — Redis বা একটি shared store ব্যবহার করুন
+- শুরুতে লিমিট খুব কম রাখবেন না — উদার দিয়ে শুরু করুন আর ডেটার ভিত্তিতে টাইট করুন
+- 429 response-এ সবসময় `Retry-After` রাখুন — client-কে জানতে হবে কখন আবার চেষ্টা করবে
 
 </Callout>
 
 ## Distributed Rate Limiting
 
-In a multi-server environment, you need a shared counter:
+multi-server পরিবেশে আপনার একটি shared counter দরকার:
 
 ```typescript
 // Option 1: Centralized Redis (most common)
@@ -433,12 +441,12 @@ class LocalRateLimiter {
 }
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Rate limiting protects your API** from abuse, ensures fair usage, and controls costs
-2. **Token bucket** is the most flexible algorithm — allows bursts while enforcing sustained rates
-3. **Sliding window counter** balances accuracy and simplicity for most use cases
-4. **Always include rate limit headers** (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`)
-5. **Use Redis** for distributed rate limiting across multiple servers
-6. **Implement tiered limits** for different API plans to monetize your API fairly
-7. **Clients must implement exponential backoff** with jitter when rate limited
+1. **Rate limiting আপনার API রক্ষা করে** অপব্যবহার থেকে, ন্যায্য ব্যবহার নিশ্চিত করে, আর খরচ নিয়ন্ত্রণ করে
+2. **Token bucket** সবচেয়ে নমনীয় অ্যালগরিদম — sustained rate বজায় রেখে burst অনুমোদন করে
+3. **Sliding window counter** বেশিরভাগ use case-এ নির্ভুলতা আর সরলতার মধ্যে ভারসাম্য রাখে
+4. **সবসময় rate limit header রাখুন** (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`)
+5. একাধিক সার্ভার জুড়ে distributed rate limiting-এর জন্য **Redis ব্যবহার করুন**
+6. আপনার API ন্যায্যভাবে monetize করতে আলাদা API plan-এর জন্য **tiered limit ইমপ্লিমেন্ট করুন**
+7. rate limit হলে **client-কে অবশ্যই jitter-সহ exponential backoff ইমপ্লিমেন্ট করতে হবে**

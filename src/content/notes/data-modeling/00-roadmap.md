@@ -1,9 +1,9 @@
 ---
-title: 'Data Modeling — Roadmap'
-subtitle: "Ten chapters that take you from 'what's a primary key' to deliberate schema design under load — keys, normalization, denormalization, constraints, multi-tenancy, JSONB, and zero-downtime evolution."
+title: 'Data Modeling — রোডম্যাপ'
+subtitle: "দশটি অধ্যায় যা আপনাকে 'primary key জিনিসটা কী' থেকে load-এর নিচে ইচ্ছাকৃত schema design পর্যন্ত নিয়ে যাবে — keys, normalization, denormalization, constraints, multi-tenancy, JSONB, আর zero-downtime evolution।"
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'data-modeling', 'schemas', 'postgres']
 ---
 
@@ -11,39 +11,39 @@ topics: ['roadmap', 'data-modeling', 'schemas', 'postgres']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What you will be able to do at the end
+## শেষে গিয়ে আপনি কী করতে পারবেন
 
-You will be able to design Postgres schemas that match real query patterns, pick keys that age well, normalize where it helps and denormalize where it pays, encode invariants as constraints instead of application checks, model time and tenancy without painting yourself into a corner, decide when JSONB earns its keep, and run zero-downtime schema migrations on a live system.
+আপনি এমন Postgres schema design করতে পারবেন যা বাস্তব query pattern-এর সাথে মেলে, এমন keys বাছতে পারবেন যেগুলো সময়ের সাথে টিকে যায়, যেখানে normalize করলে উপকার সেখানে normalize আর যেখানে denormalize করলে লাভ সেখানে denormalize করতে পারবেন, application check-এর বদলে invariant-গুলোকে constraint হিসেবে encode করতে পারবেন, নিজেকে কোণঠাসা না করে time আর tenancy model করতে পারবেন, কখন JSONB তার জায়গা করে নেয় তা ঠিক করতে পারবেন, আর একটা live system-এ zero-downtime schema migration চালাতে পারবেন।
 
 <Callout type="info">
 
-**Prereqs:** finish **REST API building**. The path's **Databases self-hosted** and **Background jobs** tracks lean on this one — most schema mistakes show up as either slow queries or impossible migrations later. Postgres is the reference; concepts apply to any relational database.
+**Prereqs:** আগে **REST API building** শেষ করুন। এই path-এর **Databases self-hosted** আর **Background jobs** track এই অধ্যায়টার ওপর নির্ভর করে — বেশিরভাগ schema-ভুল পরে হয় slow query নয়তো অসম্ভব migration হিসেবে সামনে আসে। Postgres এখানে reference; concept যেকোনো relational database-এই খাটে।
 
 </Callout>
 
-## The 10 chapters, in order
+## ১০টি অধ্যায়, ক্রম অনুযায়ী
 
 **Foundations**
 
-1. **What data modeling is** — vs schema design, vs ORMs, vs "let's just make a table"
-2. **Entities, attributes, relationships** — ER thinking before SQL
-3. **Keys** — natural vs surrogate, ULID/UUID/serial, composite, when each fits
-4. **Normalization** — 1NF, 2NF, 3NF in plain English, with examples
+1. **What data modeling is** — schema design-এর সাথে, ORM-এর সাথে, আর "চলো একটা table বানাই"-এর তুলনায়
+2. **Entities, attributes, relationships** — SQL-এর আগে ER-চিন্তা
+3. **Keys** — natural vs surrogate, ULID/UUID/serial, composite, কোনটা কখন খাপ খায়
+4. **Normalization** — 1NF, 2NF, 3NF সহজ ভাষায়, উদাহরণ সহ
 
-**Real-world tradeoffs**
+**বাস্তব দুনিয়ার tradeoff**
 
-5. **Denormalization** — why, when, and the bookkeeping cost
+5. **Denormalization** — কেন, কখন, আর তার bookkeeping খরচ
 6. **Constraints** — NOT NULL, FK, CHECK, UNIQUE, exclusion, generated
-7. **Time and soft delete** — timestamps, time zones, history tables, the soft-delete trap
+7. **Time and soft delete** — timestamps, time zones, history tables, soft-delete-এর ফাঁদ
 8. **Multi-tenancy** — single-DB, schema-per-tenant, row-level security
 
 **Production**
 
-9. **JSONB and the schemaless trap** — when to use, when it bites
+9. **JSONB and the schemaless trap** — কখন ব্যবহার করবেন, কখন কামড় দেয়
 10. **Schema evolution** — expand/contract, zero-downtime migrations, backfills
 
-## How to use this track
+## এই track কীভাবে ব্যবহার করবেন
 
-Read in order. The first four chapters are conceptual; from chapter 5 you are weighing tradeoffs against real query patterns. The last two are operational. Total reading: ~3 hours. Hands-on, with a real Postgres database: a long weekend.
+ক্রম অনুযায়ী পড়ুন। প্রথম চারটি অধ্যায় conceptual; ৫ নম্বর থেকে আপনি বাস্তব query pattern-এর বিপরীতে tradeoff ওজন করছেন। শেষ দুটি operational। মোট পড়া: ~৩ ঘণ্টা। একটা আসল Postgres database নিয়ে হাতে-কলমে: একটা লম্বা weekend।
 
-You need Postgres 15+ and a SQL client (`psql`, DBeaver, TablePlus, or VS Code with the Postgres extension). Everything runs locally.
+আপনার লাগবে Postgres 15+ আর একটা SQL client (`psql`, DBeaver, TablePlus, নয়তো Postgres extension সহ VS Code)। সবকিছু locally চলে।

@@ -1,9 +1,9 @@
 ---
 title: 'Multi-Region Replication'
-subtitle: 'Streaming replication, logical replication, and the trade-offs of active-passive vs active-active across regions.'
+subtitle: 'Streaming replication, logical replication, আর region জুড়ে active-passive vs active-active-এর trade-off।'
 chapter: 4
 level: 'advanced'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics:
   ['streaming replication', 'logical replication', 'multi-region', 'failover', 'replication lag']
 ---
@@ -12,26 +12,34 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির কাপড়ের বড় ব্যবসা বুখারা শহরে। কিন্তু তিনি একটা ঝুঁকির কথা সবসময় মাথায় রাখেন — বুখারায় বন্যা হলে, বিদ্যুৎ চলে গেলে, বা পুরো শহর অচল হয়ে গেলে তার পুরো ব্যবসা এক দিনেই বসে যাবে। তাই তিনি বুখারা থেকে বহু দূরে সমরকন্দে হুবহু একই রকম আরেকটা শাখা খুললেন — একই স্টক, একই খাতা, একই দাম। শুধু খুলেই বসে থাকলেন না; প্রতিদিন প্রতিটা বিক্রি, প্রতিটা নতুন মাল বুখারার খাতা থেকে সমরকন্দের খাতায় সাথে সাথে তুলে রাখার ব্যবস্থা করলেন, যাতে দুই শহরের হিসাব সবসময় এক থাকে।
+
+একদিন সত্যিই বুখারায় ভয়াবহ বন্যা এল, মূল দোকান পানির নিচে। ফাতিমা এক মুহূর্ত দেরি না করে সব গ্রাহককে সমরকন্দের শাখায় পাঠিয়ে দিলেন — সেখানে তো ইতিমধ্যেই সবার হিসাব, সব মাল প্রস্তুত। ব্যবসা প্রায় না থেমেই চলতে থাকল। তবে এর দাম ছিল: দুই শহরে দুই সেট দোকান, দুই সেট কর্মী চালাতে হয়েছে, আর দূরত্বের কারণে দুই খাতা নিখুঁতভাবে এক রাখাটাই ছিল সবচেয়ে কঠিন কাজ — কোনো এক বিক্রি সমরকন্দে পৌঁছাতে একটু দেরি হলেই দুই হিসাবে সামান্য গরমিল হতো।
+
+দুই দূরের শহর মানে দুটো আলাদা region; সমরকন্দের সবসময়-sync করা ডুপ্লিকেট শাখাটাই হলো multi-region replication; বন্যার সময় গ্রাহকদের সমরকন্দে সরিয়ে দেওয়াটা হলো regional failover। আর দুই সেট সব কিছু চালানো ও দূরত্বজুড়ে হিসাব এক রাখার কষ্টটাই হলো cost আর cross-region latency/consistency-র trade-off। বাস্তবে AWS-এর মতো ক্লাউডে ঠিক এই কারণেই আলাদা region (যেমন us-east-1 আর us-west-2) জুড়ে replica রাখা হয় — একটা region পুরো ডুবে গেলেও অন্য region-এ failover করে সিস্টেম টিকে থাকে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Two branches of a bank: one is the main branch (primary), one is a backup branch (replica) that keeps its records synchronized with the main branch in near real-time. If the main branch burns down, the backup branch already has all the account data and can open for business immediately — no restore from tapes needed.
+একটা ব্যাংকের দুটো শাখা: একটা মূল শাখা (primary), একটা ব্যাকআপ শাখা (replica) যা প্রায় রিয়েল-টাইমে মূল শাখার সাথে তার রেকর্ড synchronized রাখে। মূল শাখা পুড়ে গেলে ব্যাকআপ শাখায় ইতিমধ্যেই সব অ্যাকাউন্ট ডেটা আছে আর সাথে সাথেই ব্যবসা শুরু করতে পারে — টেপ থেকে কোনো restore লাগে না।
 
 </Callout>
 
 ## Streaming Replication (Physical)
 
-PostgreSQL streaming replication sends WAL records from primary to standby in real time. The standby replays them continuously, staying within seconds of the primary.
+PostgreSQL streaming replication রিয়েল টাইমে primary থেকে standby-তে WAL record পাঠায়। standby সেগুলো continuous replay করে, primary-র কয়েক সেকেন্ডের মধ্যে থেকে।
 
-**How it works:**
+**এটা কীভাবে কাজ করে:**
 
 ```
 Primary:  Write transaction → WAL record → Send to replica
 Replica:  Receive WAL → Replay → State matches primary (with lag)
 ```
 
-**Setup on primary (`postgresql.conf`):**
+**primary-তে setup (`postgresql.conf`):**
 
 ```ini
 wal_level = replica
@@ -40,19 +48,19 @@ wal_keep_size = 1GB          # keep this much WAL for slow standbys
 synchronous_standby_names = '' # async replication (see sync section below)
 ```
 
-**Create replication user:**
+**replication user তৈরি করা:**
 
 ```sql
 CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD 'reppassword';
 ```
 
-**pg_hba.conf on primary:**
+**primary-তে pg_hba.conf:**
 
 ```
 host    replication  replicator  10.0.2.0/24  scram-sha-256
 ```
 
-**Set up standby:**
+**standby সেট আপ করা:**
 
 ```bash
 # On standby server: take base backup from primary
@@ -68,7 +76,7 @@ pg_basebackup \
 #   primary_conninfo = 'host=primary.db.internal user=replicator ...'
 ```
 
-**Start standby:**
+**standby চালু করা:**
 
 ```bash
 systemctl start postgresql
@@ -79,9 +87,9 @@ psql -c "SELECT client_addr, state, sent_lsn, replay_lsn,
          FROM pg_stat_replication;"
 ```
 
-## Replication Lag and What It Means for RPO
+## Replication Lag আর RPO-র জন্য এর মানে কী
 
-Async replication means the standby is always slightly behind:
+Async replication মানে standby সবসময় সামান্য পিছিয়ে:
 
 ```sql
 -- On primary: check how far behind each standby is
@@ -93,11 +101,11 @@ SELECT
 FROM pg_stat_replication;
 ```
 
-Under normal load, lag is milliseconds to a few seconds. Under heavy write load or network issues, lag can grow to minutes.
+সাধারণ লোডে lag মিলিসেকেন্ড থেকে কয়েক সেকেন্ড। ভারী write লোড বা নেটওয়ার্ক সমস্যায় lag কয়েক মিনিট পর্যন্ত বাড়তে পারে।
 
-**Your RPO = replication lag at the moment of disaster.**
+**আপনার RPO = disaster-এর মুহূর্তে replication lag।**
 
-If lag is 30 seconds when the primary fails, you lose 30 seconds of data after promoting the replica. Configure monitoring and alert on lag above your RPO threshold:
+যদি primary ফেল করার সময় lag ৩০ সেকেন্ড হয়, replica promote করার পর আপনি ৩০ সেকেন্ডের ডেটা হারান। monitoring কনফিগার করুন আর আপনার RPO threshold-এর উপরে lag হলে alert দিন:
 
 ```bash
 # Alert if replication lag > 60 seconds
@@ -110,7 +118,7 @@ END FROM pg_stat_replication;
 
 ## Synchronous Replication
 
-For zero-data-loss (RPO = 0), configure synchronous replication. The primary waits for at least one standby to confirm it has received and written the WAL before acknowledging the commit.
+zero-data-loss (RPO = 0)-এর জন্য synchronous replication কনফিগার করুন। commit acknowledge করার আগে primary অন্তত একটা standby-র WAL received আর written হওয়ার নিশ্চয়তার জন্য অপেক্ষা করে।
 
 ```ini
 # postgresql.conf on primary
@@ -119,7 +127,7 @@ synchronous_standby_names = 'FIRST 1 (standby1, standby2)'
 # (first one to respond)
 ```
 
-**The trade-off:**
+**trade-off:**
 
 ```
 Async replication:
@@ -133,7 +141,7 @@ Synchronous replication:
   Write throughput: limited by standby's write speed + network RTT
 ```
 
-Cross-region sync replication is expensive in latency. A common pattern: sync replication to an in-region standby (fast, low latency), async replication to a cross-region DR standby (no latency impact, some lag).
+Cross-region sync replication latency-তে ব্যয়বহুল। একটা কমন প্যাটার্ন: in-region standby-তে sync replication (দ্রুত, কম latency), cross-region DR standby-তে async replication (latency-তে প্রভাব নেই, কিছুটা lag)।
 
 ```ini
 # Sync to in-region standby, async to cross-region
@@ -143,14 +151,14 @@ synchronous_standby_names = 'FIRST 1 (standby-az2)'
 
 ## Logical Replication
 
-Physical replication copies WAL byte-for-byte — requires identical PostgreSQL versions and OS. Logical replication decodes WAL into logical changes (INSERT/UPDATE/DELETE) and replays them on the subscriber.
+Physical replication WAL byte-for-byte কপি করে — একই PostgreSQL ভার্সন আর OS দরকার। Logical replication WAL-কে logical পরিবর্তনে (INSERT/UPDATE/DELETE) decode করে আর subscriber-এ সেগুলো replay করে।
 
-Use cases:
+Use case:
 
-- Replicate to a different PostgreSQL major version (upgrade path)
-- Replicate specific tables, not the full database
-- Replicate to a different schema or transform data during replication
-- Zero-downtime major version upgrades
+- একটা ভিন্ন PostgreSQL major version-এ replicate করা (upgrade path)
+- নির্দিষ্ট table replicate করা, পুরো ডেটাবেস নয়
+- একটা ভিন্ন schema-তে replicate করা বা replication-এর সময় ডেটা transform করা
+- Zero-downtime major version upgrade
 
 ```sql
 -- On publisher (source)
@@ -170,16 +178,16 @@ SELECT subname, received_lsn, latest_end_lsn, latest_end_time
 FROM pg_stat_subscription;
 ```
 
-**Logical replication limitations:**
+**Logical replication-এর সীমাবদ্ধতা:**
 
-- DDL (schema changes) are not replicated — must apply manually on both sides
-- Sequences not replicated — subscriber starts at its own position
-- Large objects not replicated
-- Requires primary keys or replica identity on all replicated tables
+- DDL (schema পরিবর্তন) replicate হয় না — দুই দিকেই ম্যানুয়ালি প্রয়োগ করতে হয়
+- Sequence replicate হয় না — subscriber তার নিজের অবস্থান থেকে শুরু করে
+- Large object replicate হয় না
+- সব replicated table-এ primary key বা replica identity দরকার
 
-## Promoting a Standby
+## একটা Standby Promote করা
 
-When the primary fails, promote the standby to accept writes:
+primary ফেল করলে, write গ্রহণ করার জন্য standby-কে promote করুন:
 
 ```bash
 # Method 1: pg_ctl promote
@@ -196,7 +204,7 @@ psql -c "SELECT pg_is_in_recovery();"
 # f = primary (no longer in recovery)
 ```
 
-**After promotion — update connection strings:**
+**Promotion-এর পর — connection string আপডেট করা:**
 
 ```bash
 # Update application environment to point to new primary
@@ -210,9 +218,9 @@ aws ssm put-parameter \
 kubectl rollout restart deployment/api
 ```
 
-## Patroni: Automated Failover
+## Patroni: অটোমেটেড Failover
 
-Manual failover is slow and error-prone. [Patroni](https://github.com/zalando/patroni) automates it using etcd, Consul, or ZooKeeper as a distributed consensus store.
+ম্যানুয়াল failover ধীর আর ভুলপ্রবণ। [Patroni](https://github.com/zalando/patroni) distributed consensus store হিসেবে etcd, Consul, বা ZooKeeper ব্যবহার করে এটা অটোমেট করে।
 
 ```yaml
 # patroni.yml
@@ -242,9 +250,9 @@ postgresql:
     max_wal_senders: 5
 ```
 
-Patroni monitors primary health and automatically promotes the most up-to-date replica when the primary fails, typically within 30–60 seconds.
+Patroni primary-র health মনিটর করে আর primary ফেল করলে সবচেয়ে up-to-date replica-কে স্বয়ংক্রিয়ভাবে promote করে, সাধারণত ৩০–৬০ সেকেন্ডের মধ্যে।
 
-## Cross-Region Architecture
+## Cross-Region আর্কিটেকচার
 
 ```
 Region: us-east-1 (primary)
@@ -258,9 +266,9 @@ Region: us-west-2 (DR)
   WAL-G backups to S3 (cross-region backup)
 ```
 
-**Read traffic to cross-region replica** reduces query latency for west-coast users and keeps the DR replica warm (it's already serving production traffic, so promotion is less disruptive).
+**Cross-region replica-তে read traffic** west-coast ইউজারদের জন্য query latency কমায় আর DR replica-কে warm রাখে (এটা ইতিমধ্যেই production traffic serve করছে, তাই promotion কম বিঘ্নকর)।
 
-**Failover procedure for region failure:**
+**Region failure-এর জন্য failover প্রসিডিওর:**
 
 ```bash
 # 1. Confirm primary region is unavailable

@@ -1,23 +1,31 @@
 ---
-title: 'Reliability & SRE Practices'
-subtitle: 'SLOs, error budgets, incident response, and chaos engineering — keeping systems running when things go wrong.'
+title: 'Reliability ও SRE Practices'
+subtitle: 'SLOs, error budgets, incident response, এবং chaos engineering — কিছু ভুল হলেও সিস্টেম চালু রাখা।'
 chapter: 8
 level: 'advanced'
-readingTime: '16 min'
 topics: ['SRE', 'SLO', 'reliability', 'incident response', 'chaos engineering']
+readingTime: '16 মিনিট'
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## SLIs, SLOs, and Error Budgets
+## গল্পে বুঝি
+
+ঢাকার এক গলিতে ফাতিমা আল-ফিহরির টিফিন ডেলিভারি সার্ভিস। প্রতিদিন অফিসে অফিসে দুপুরের খাবার পৌঁছে দেয়। ফাতিমা সবার সামনে একটা প্রতিশ্রুতি টাঙিয়ে রেখেছেন — "মাসে ১০০টার মধ্যে ৯৯টা টিফিন দুপুর ১টার আগেই পৌঁছাবে।" এখন প্রতিদিন হিসাব রাখা হয়, আসলে কত পার্সেন্ট টিফিন সময়মতো পৌঁছাল — সেই মাপা সংখ্যাটাই ফাতিমার হাতে থাকা আসল স্কোরবোর্ড।
+
+ওই যে ১% দেরি করার ছাড় — সেটা ভুল নয়, বরং ইচ্ছাকৃত একটা বাজেট। যতক্ষণ ফাতিমা এই ১% বাজেটের ভেতরে আছেন, ততক্ষণ তিনি নতুন নতুন ঝুঁকির শর্টকাট চেষ্টা করতে পারেন — নতুন গলি দিয়ে বাইক পাঠানো, দুই এলাকা একসাথে জোড়া দেওয়া — দ্রুত ডেলিভারির জন্য। কিন্তু যেই মাসের দেরি করার ছাড়টা শেষ হয়ে যায়, তিনি সব নতুন পরীক্ষা থামিয়ে দেন, আর কেবল সময়মতো পৌঁছানোর স্থিতিশীলতায় মন দেন। আরেকটা জিনিসও ফাতিমা খেয়াল করলেন — কর্মীরা প্রতিদিন সকালে হাতে কাগজে রুট সাজাতে দুই ঘণ্টা নষ্ট করে। তিনি একটা ছোট প্রোগ্রাম দিয়ে রুট সাজানোটা automate করে দিলেন, যাতে এই পুনরাবৃত্তিমূলক কাজে আর সময় নষ্ট না হয়।
+
+এই গল্পটাই আসলে **reliability engineering**। "৯৯% টিফিন ১টার আগে" — এই প্রকাশ্য প্রতিশ্রুতিটাই **SLO** (আপনার লক্ষ্য), আর প্রতিদিন মাপা সময়মতো পৌঁছানোর হারটাই **SLI** (আসল পরিমাপ)। ওই ১% দেরির ছাড়টাই **error budget** — এটাই ঠিক করে দেয় আপনি কত দ্রুত ঝুঁকি নিতে পারবেন; বাজেট থাকলে সাহস করে নতুন পরিবর্তন আনুন, বাজেট শেষ হলে পরিবর্তন থামিয়ে stability-তে ফিরুন। আর রুট সাজানো automate করাটাই **toil কমানো** — বারবার হাতে করা ক্লান্তিকর কাজ মেশিনকে দিয়ে দেওয়া। বাস্তবে Google-এর SRE টিম ঠিক এভাবেই কাজ করে — তারা error budget দিয়ে ঠিক করে কখন নতুন feature ছাড়া হবে আর কখন থামতে হবে, আর toil স্বয়ংক্রিয় করে ইঞ্জিনিয়ারদের হাতে আসল কাজের সময় ফিরিয়ে দেয়।
+
+## SLIs, SLOs, এবং Error Budgets
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a hospital's backup power system — the main grid might fail, but the generator kicks in within seconds. Reliability engineering ensures your system keeps running through failures — just like hospitals can't afford downtime.
+একটা হাসপাতালের backup power system-এর মতো — main grid হয়তো fail করতে পারে, কিন্তু generator কয়েক সেকেন্ডের মধ্যে চালু হয়ে যায়। Reliability engineering নিশ্চিত করে যে আপনার সিস্টেম failure-এর মধ্যেও চালু থাকে — ঠিক যেমন হাসপাতাল downtime সহ্য করতে পারে না।
 
 </Callout>
 
@@ -41,7 +49,7 @@ const errorBudget = 1 - latencySLO; // 0.001
 // → Ship features faster, take more risks
 ```
 
-### Choosing SLOs
+### SLO বেছে নেওয়া
 
 ```typescript
 // Common SLOs:
@@ -72,7 +80,7 @@ const slos = {
 
 <Callout type="tip">
 
-**Don't aim for 100% uptime.** It's impossible and the cost grows exponentially. Choose an SLO that matches user expectations. An internal tool might be fine at 99.5%. A payment API needs 99.99%.
+**100% uptime-এর লক্ষ্য রাখবেন না।** এটা অসম্ভব এবং এর খরচ exponentially বাড়ে। user-দের প্রত্যাশার সাথে মেলে এমন একটা SLO বেছে নিন। একটা internal tool হয়তো 99.5%-এ ঠিক থাকবে। একটা payment API-এর 99.99% দরকার।
 
 </Callout>
 
@@ -134,7 +142,7 @@ interface Postmortem {
 
 ## Chaos Engineering
 
-Deliberately inject failures to discover weaknesses before they cause real outages.
+আসল outage ঘটানোর আগেই দুর্বলতা খুঁজে বের করতে ইচ্ছাকৃতভাবে failure inject করা।
 
 ```typescript
 // Start simple:
@@ -164,7 +172,7 @@ const chaosExperiments = [
 
 <Callout type="warning">
 
-**Start chaos experiments in staging.** Run in production only after you have confidence in your monitoring, alerting, and rollback mechanisms. Always have a kill switch to stop the experiment immediately.
+**Chaos experiments staging-এ শুরু করুন।** আপনার monitoring, alerting, এবং rollback mechanism-এর উপর আস্থা তৈরি হওয়ার পরেই কেবল production-এ চালান। experiment সঙ্গে সঙ্গে থামানোর জন্য সবসময় একটা kill switch রাখুন।
 
 </Callout>
 
@@ -191,9 +199,9 @@ interface Runbook {
 // 5. Escalate to: #team-platform in Slack
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Set SLOs based on user expectations** — then use error budgets to balance reliability and velocity
-2. **Mitigate first, debug later** — rollback/failover stops the bleeding while you investigate
-3. **Blameless postmortems improve systems** — blame the process, not the person
-4. **Chaos engineering finds weaknesses** before users do — start small, in staging
+1. **User-দের প্রত্যাশার ভিত্তিতে SLO সেট করুন** — তারপর reliability আর velocity-এর ভারসাম্য রাখতে error budgets ব্যবহার করুন
+2. **আগে mitigate করুন, পরে debug করুন** — আপনি তদন্ত করার সময় rollback/failover রক্তক্ষরণ থামায়
+3. **Blameless postmortems সিস্টেমকে উন্নত করে** — ব্যক্তিকে নয়, process-কে দোষ দিন
+4. **Chaos engineering user-দের আগেই দুর্বলতা খুঁজে বের করে** — ছোট থেকে শুরু করুন, staging-এ

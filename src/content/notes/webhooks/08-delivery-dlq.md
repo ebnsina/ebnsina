@@ -1,9 +1,9 @@
 ---
-title: 'Delivery guarantees and the dead-letter queue'
-subtitle: 'Some events never deliver. The dead-letter queue is where they go, the dashboard is where humans see them, and the manual replay is how you recover. None of these are optional.'
+title: 'Delivery guarantee ও dead-letter queue'
+subtitle: 'কিছু event কখনও deliver হয় না। dead-letter queue হলো সেখানে যেখানে তারা যায়, dashboard হলো যেখানে মানুষ তাদের দেখে, আর manual replay হলো আপনি কীভাবে recover করেন। এর কোনোটাই ঐচ্ছিক নয়।'
 chapter: 8
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['webhooks', 'dlq', 'delivery', 'alerts', 'replay']
 ---
 
@@ -11,19 +11,27 @@ topics: ['webhooks', 'dlq', 'delivery', 'alerts', 'replay']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-After the retries run out, what happens? The default in too many systems is "the event vanishes silently, the customer notices weeks later that their integration has gaps, the support ticket lands on you." That is the worst possible outcome for both sides.
+retry ফুরিয়ে গেলে, কী হয়? বহু সিস্টেমে default হলো "event নীরবে উধাও হয়, customer কয়েক সপ্তাহ পরে টের পায় তাদের integration-এ ফাঁক আছে, support ticket আপনার কাছে এসে পড়ে।" দুই পক্ষের জন্যই এটাই সবচেয়ে খারাপ সম্ভাব্য পরিণতি।
 
-This chapter is the recovery story. Dead-letter queue (DLQ), alerting, manual replay, customer visibility. Build it once, sleep at night.
+এই অধ্যায়টা হলো recovery-র গল্প। dead-letter queue (DLQ), alerting, manual replay, customer visibility। একবার বানান, রাতে শান্তিতে ঘুমান।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A dead-letter queue is like a post office dead-letter bin for mail that couldn't be delivered — held separately for inspection rather than lost forever.
+একটা dead-letter queue অনেকটা একটা post office-এর dead-letter bin-এর মতো — যে চিঠি deliver করা যায়নি তার জন্য, চিরতরে হারানোর বদলে আলাদা করে রাখা হয় পরীক্ষার জন্য।
 
 </Callout>
 
-## The delivery state machine
+## গল্পে বুঝি
+
+বাগদাদের ডাকঘরে ইবনে সিনা কাজ করেন slip delivery-র বিভাগে। এখানকার নিয়মটা সবাই জানে — প্রতিটা notification slip অন্তত একবার হলেও পৌঁছে দেওয়া হবেই, এটাই ডাকঘরের প্রতিশ্রুতি। কোনো বাড়িতে গিয়ে কেউ না পেলে slip ফেরত এনে আবার পাঠানো হয়, পরদিন আবার, তারপরের সময়সূচি অনুযায়ী আবার। একবারে না হলে বারবার চেষ্টা চলতেই থাকে।
+
+কিন্তু আল-খোয়ারিজমির পুরনো বাড়িটার ঠিকানায় গিয়ে পিয়ন দেখলেন দরজা পাকাপাকিভাবে বন্ধ, বাড়ি তালাবদ্ধ, কেউ থাকে না। নির্ধারিত সব ক'টা re-visit শেষ হয়ে গেল, তবু slip হাতে রইল। এখন ইবনে সিনা কিন্তু slip-টা ময়লার ঝুড়িতে ফেলে দেন না। তিনি সেটা রাখেন কাউন্টারের পাশে "ফেরত / পৌঁছানো যায়নি" লেখা আলাদা একটা বাক্সে। দিনশেষে সুপারভাইজার ফাতিমা আল-ফিহরি সেই বাক্সটা খুলে দেখেন, কারণটা বোঝেন, আর ঠিকানা ঠিক হয়ে গেলে নিজ হাতে slip-টা আবার পাঠানোর ব্যবস্থা করেন।
+
+গল্পটাই আসলে webhook-এর delivery guarantee। "অন্তত একবার পৌঁছাবেই, না হলে বারবার চেষ্টা" হলো **at-least-once delivery**, আর সব re-visit ফুরিয়ে যাওয়া মানে **retry exhausted**। যে slip তবু পৌঁছল না সেটা ঝুড়িতে না ফেলে "ফেরত" বাক্সে রাখা — এটাই **dead-letter queue (DLQ)**, event নীরবে হারিয়ে যায় না। আর সুপারভাইজারের বাক্স খুলে দেখা ও হাতে আবার পাঠানো হলো later inspection আর **manual replay**। বাস্তবে Stripe বা GitHub-এর মতো সিস্টেম ঠিক এভাবেই — retry শেষ হওয়ার পর undeliverable event DLQ-তে জমিয়ে রাখে, dashboard-এ দেখায়, endpoint ঠিক হলে operator manually replay করেন।
+
+## Delivery state machine
 
 ```
                   ┌─────────┐
@@ -56,17 +64,17 @@ A dead-letter queue is like a post office dead-letter bin for mail that couldn't
               └──────────────┘
 ```
 
-Three terminal states a delivery can reach:
+একটা delivery-র পৌঁছাতে পারা তিনটে terminal state:
 
-- **delivered** — receiver responded 2xx, work is done.
-- **failed (permanent)** — receiver returned a permanent-class error.
-- **expired** — retry deadline passed without a 2xx.
+- **delivered** — receiver 2xx দিয়ে response দিয়েছে, কাজ শেষ।
+- **failed (permanent)** — receiver একটা permanent-class error return করেছে।
+- **expired** — retry deadline একটা 2xx ছাড়াই পার হয়েছে।
 
-`failed` and `expired` both end in the dead-letter queue. They differ in _why_ — important for alerting, not for storage.
+`failed` আর `expired` দুটোই dead-letter queue-তে শেষ হয়। তারা _কেন_-তে ভিন্ন — alerting-এর জন্য গুরুত্বপূর্ণ, storage-এর জন্য নয়।
 
-## The DLQ as a table
+## DLQ একটা table হিসেবে
 
-Same table as your delivery queue, with a state column:
+একটা state column সহ আপনার delivery queue-র মতোই একই table:
 
 ```sql
 CREATE TABLE webhook_deliveries (
@@ -94,21 +102,21 @@ CREATE INDEX webhook_deliveries_dlq ON webhook_deliveries(updated_at DESC)
 WHERE state IN ('failed', 'expired');
 ```
 
-The DLQ is just `state IN ('failed', 'expired')`. No separate table — searching, listing, replaying are all queries on the same table.
+DLQ শুধু `state IN ('failed', 'expired')`। কোনো আলাদা table নেই — searching, listing, replaying সবই একই table-এ query।
 
-The partial index on pending rows keeps the queue scan fast even when the DLQ grows.
+pending row-এর ওপর partial index DLQ বাড়লেও queue scan দ্রুত রাখে।
 
-## What to store
+## কী store করবেন
 
-For dead-lettered deliveries, capture enough to debug and replay:
+dead-lettered delivery-র জন্য, debug আর replay করার মতো যথেষ্ট capture করুন:
 
-- **The full body** — re-deliverable as is.
-- **The full headers** — including the signature.
-- **The last response status and body snippet** — what the receiver actually said. ~512 bytes is usually enough; truncate longer responses.
-- **The last error** — the network error or status text.
-- **All attempt timestamps** — debug "when did this start failing."
+- **পুরো body** — যেমন আছে তেমন re-deliverable।
+- **পুরো header** — signature সহ।
+- **শেষ response status আর body snippet** — receiver আসলে কী বলল। ~512 byte সাধারণত যথেষ্ট; দীর্ঘ response truncate করুন।
+- **শেষ error** — network error বা status text।
+- **সব attempt timestamp** — "এটা কখন fail শুরু করল" debug করুন।
 
-A separate `webhook_attempts` table linked by delivery ID is worth it for high-traffic systems where each delivery may have many tries:
+high-traffic সিস্টেমের জন্য delivery ID দিয়ে linked একটা আলাদা `webhook_attempts` table মূল্যবান, যেখানে প্রতিটা delivery-র অনেক try থাকতে পারে:
 
 ```sql
 CREATE TABLE webhook_attempts (
@@ -123,15 +131,15 @@ CREATE TABLE webhook_attempts (
 );
 ```
 
-Now operators can see the timeline: 8 attempts at this URL, started at this time, ended at that time, last response was a 502 Bad Gateway with a Cloudflare error page.
+এখন operator-রা timeline দেখতে পারে: এই URL-এ ৮টা attempt, এই সময়ে শুরু, ওই সময়ে শেষ, শেষ response ছিল একটা Cloudflare error page সহ একটা 502 Bad Gateway।
 
-## When to alert
+## কখন alert দেবেন
 
-Three alerting tiers worth differentiating.
+তিনটে alerting tier আলাদা করার মতো।
 
-**1. Per-event alerts — almost never.** A single delivery hitting the DLQ is normal noise. Don't page on these.
+**১. Per-event alert — প্রায় কখনও না।** একটা delivery DLQ-তে যাওয়া স্বাভাবিক noise। এগুলোতে page করবেন না।
 
-**2. Per-subscription alerts — when failure is sustained.** If a subscription's deliveries have been DLQ'd for an hour, the customer's endpoint is down. Email the customer (and your support):
+**২. Per-subscription alert — failure টানা হলে।** একটা subscription-এর delivery এক ঘণ্টা ধরে DLQ'd হলে, customer-এর endpoint down। customer-কে (আর আপনার support-কে) email দিন:
 
 ```
 Your webhook endpoint https://customer.com/webhooks has been failing
@@ -141,9 +149,9 @@ retrying for 3 days. If your endpoint is down, please fix it.
 Last 5 events: [list]
 ```
 
-A first email at 1 hour, a second at 24 hours, a third before expiry. After expiry, a final summary of what was lost.
+১ ঘণ্টায় প্রথম email, ২৪ ঘণ্টায় দ্বিতীয়, expiry-র আগে তৃতীয়। expiry-র পরে, কী হারিয়েছে তার একটা final summary।
 
-**3. Producer-wide alerts — for systemic issues.** If the DLQ rate suddenly jumps across many subscriptions, you have a producer-side bug or a network issue. Page the on-call.
+**৩. Producer-wide alert — systemic issue-র জন্য।** DLQ rate হঠাৎ অনেক subscription জুড়ে লাফালে, আপনার একটা producer-side bug বা network issue আছে। on-call-কে page করুন।
 
 ```yaml
 - alert: WebhookDLQRateHigh
@@ -153,24 +161,24 @@ A first email at 1 hour, a second at 24 hours, a third before expiry. After expi
     summary: 'Webhook DLQ rate is {{ $value }} per second'
 ```
 
-Tuning these thresholds is per-environment. Start tight; relax based on noise.
+এই threshold tune করা per-environment। টাইট শুরু করুন; noise-এর ভিত্তিতে ঢিলে করুন।
 
-## The customer dashboard
+## Customer dashboard
 
-Customers cannot debug their integration without visibility into delivery attempts. Build a UI that shows:
+Customer-রা delivery attempt-এ visibility ছাড়া তাদের integration debug করতে পারে না। একটা UI বানান যা দেখায়:
 
-- **List of events** sent to a subscription, filterable by state.
-- **Per-event detail:** request body, headers, all attempts (timestamps, status, response snippet).
-- **Resend button** — manually replay a delivery.
-- **Endpoint health summary** — success rate, average latency, current state.
+- একটা subscription-এ পাঠানো **event-এর list**, state দিয়ে filterable।
+- **Per-event detail:** request body, header, সব attempt (timestamp, status, response snippet)।
+- **Resend button** — একটা delivery manually replay করুন।
+- **Endpoint health summary** — success rate, average latency, current state।
 
-Stripe's webhooks dashboard is the reference. You don't need the polish; you need the function. A bare-bones admin page with these features beats any amount of "view in CloudWatch" plumbing.
+Stripe-এর webhooks dashboard হলো reference। আপনার সেই মসৃণতা দরকার নেই; আপনার function দরকার। এই feature সহ একটা একেবারে সাদামাটা admin page যেকোনো পরিমাণ "view in CloudWatch" plumbing-কে হারায়।
 
-The schema supports it directly — these are queries on `webhook_deliveries` and `webhook_attempts`. No special data store.
+schema এটা সরাসরি সমর্থন করে — এগুলো `webhook_deliveries` আর `webhook_attempts`-এর ওপর query। কোনো special data store নেই।
 
 ## Manual replay
 
-Operators (and customers, with auth) need a "send this again" button. Implementation:
+Operator-দের (আর customer-দের, auth সহ) একটা "এটা আবার পাঠাও" button দরকার। Implementation:
 
 ```sql
 UPDATE webhook_deliveries
@@ -183,15 +191,15 @@ WHERE id = $1
   AND state IN ('failed', 'expired', 'delivered');
 ```
 
-Resetting the state and bumping the deadline puts the delivery back on the queue. Workers pick it up on the next scan.
+state reset করে deadline bump করলে delivery-টা queue-তে ফিরে যায়। Worker-রা পরের scan-এ এটা তুলে নেয়।
 
-Reset `attempts = 0` so the backoff starts fresh. Otherwise a manually-replayed delivery starts at "wait 1 hour" because the previous attempts count is preserved.
+`attempts = 0` reset করুন যাতে backoff নতুন করে শুরু হয়। নাহলে একটা manually-replayed delivery "wait 1 hour"-এ শুরু হয় কারণ আগের attempt count রয়ে গেছে।
 
-For customer-driven replay, also rate-limit the button: 100 replays per minute per subscription is plenty; without a limit, a customer could DDoS their own integration via your UI.
+customer-driven replay-এর জন্য, button-টাও rate-limit করুন: প্রতি subscription-এ প্রতি মিনিটে 100 replay যথেষ্ট; limit ছাড়া, একজন customer আপনার UI দিয়ে নিজের integration DDoS করতে পারে।
 
 ## Bulk replay
 
-For systemic failures (a deploy bug DLQ'd 50K events), individual replay is impractical. A bulk replay tool:
+systemic failure-এর জন্য (একটা deploy bug 50K event DLQ'd করেছে), individual replay অবাস্তব। একটা bulk replay tool:
 
 ```sql
 UPDATE webhook_deliveries
@@ -205,28 +213,28 @@ WHERE id IN (
 );
 ```
 
-Two important details:
+দুটো গুরুত্বপূর্ণ বিস্তারিত:
 
-- **Spread `next_attempt_at` randomly over 5 minutes.** Otherwise 50K replays hit the queue at the same instant and overwhelm workers.
-- **Set a fresh `give_up_at`.** Past deadlines are stale.
+- **`next_attempt_at` ৫ মিনিট জুড়ে random-ভাবে ছড়িয়ে দিন।** নাহলে 50K replay একই মুহূর্তে queue-তে আঘাত করে worker-দের কাবু করে ফেলে।
+- **একটা fresh `give_up_at` set করুন।** অতীতের deadline stale।
 
-Bulk replay should be a deliberate operator action, gated behind admin auth. Log every bulk replay (operator, count, criteria, time). It's the "rm -rf with one extra step" of webhook ops.
+Bulk replay একটা ইচ্ছাকৃত operator action হওয়া উচিত, admin auth-এর পেছনে gated। প্রতিটা bulk replay log করুন (operator, count, criteria, time)। এটা webhook ops-এর "এক extra step সহ rm -rf"।
 
 <Callout type="warn">
 
-**Replays are not free.** A bulk replay generates POSTs that customers receive again. Their dedup logic (chapter 7) handles correctness; their rate limits may not handle volume. Communicate before replaying — "we're going to redeliver yesterday's events, expect a spike" — especially for any replay over a few thousand events.
+**Replay বিনামূল্যে নয়।** একটা bulk replay এমন POST তৈরি করে যা customer-রা আবার পায়। তাদের dedup logic (অধ্যায় ৭) correctness সামলায়; তাদের rate limit volume নাও সামলাতে পারে। replay করার আগে জানান — "আমরা গতকালের event redeliver করছি, একটা spike আশা করুন" — বিশেষ করে কয়েক হাজারের বেশি event-এর যেকোনো replay-র জন্য।
 
 </Callout>
 
 ## Subscription-level pause
 
-When a subscription has been DLQ'ing constantly for a day, keep retrying is harmful — burning queue capacity, possibly the customer's bandwidth. Pause it:
+একটা subscription যখন একদিন ধরে টানা DLQ'ing করছে, retry করতে থাকা ক্ষতিকর — queue capacity পোড়াচ্ছে, সম্ভবত customer-এর bandwidth-ও। এটা pause করুন:
 
 ```sql
 UPDATE webhook_subscriptions SET state = 'paused' WHERE id = $1;
 ```
 
-Workers skip paused subscriptions:
+Worker-রা paused subscription skip করে:
 
 ```sql
 SELECT * FROM webhook_deliveries d
@@ -236,52 +244,52 @@ WHERE d.state = 'pending' AND s.state = 'active'
 ORDER BY d.next_attempt_at;
 ```
 
-The DLQ continues to grow with new events, but no more retries fire. The customer fixes the endpoint, hits "resume," and the queue drains.
+DLQ নতুন event সহ বাড়তেই থাকে, কিন্তু আর কোনো retry fire করে না। customer endpoint ঠিক করে, "resume"-এ চাপ দেয়, আর queue drain হয়।
 
-A safety: events emitted while paused should still be enqueued (so resume catches up). Don't skip enqueue based on subscription state — that's silent data loss.
+একটা safety: pause থাকাকালীন emit হওয়া event-ও এখনও enqueue হওয়া উচিত (যাতে resume ধরে ফেলতে পারে)। subscription state-এর ভিত্তিতে enqueue skip করবেন না — সেটা নীরব data loss।
 
 ## At-least-once vs exactly-once vs at-most-once
 
-Three delivery semantics, only two of which are achievable.
+তিনটে delivery semantics, যার মধ্যে কেবল দুটো অর্জনযোগ্য।
 
-- **At-most-once** — events delivered zero or one time. Easy: just don't retry. Useless: a network blip loses events.
-- **At-least-once** — events delivered one or more times. Webhooks are this by default. Receivers dedupe.
-- **Exactly-once** — events delivered exactly once. Impossible without a coordinated commit between producer and receiver, which webhooks (HTTP POST) don't have.
+- **At-most-once** — event শূন্য বা একবার deliver হয়। সহজ: শুধু retry করবেন না। অকেজো: একটা network blip event হারায়।
+- **At-least-once** — event এক বা একাধিকবার deliver হয়। Webhooks default-এ এটাই। Receiver dedupe করে।
+- **Exactly-once** — event ঠিক একবার deliver হয়। producer আর receiver-এর মধ্যে একটা coordinated commit ছাড়া অসম্ভব, যা webhooks (HTTP POST)-এর নেই।
 
-Some systems claim exactly-once; what they mean is "at-least-once with idempotent processing," which is the same thing dressed up. Don't fight it. Build at-least-once delivery, and idempotent receivers (chapter 7).
+কিছু সিস্টেম exactly-once দাবি করে; তারা মানে "idempotent processing সহ at-least-once," যা সাজিয়ে-গুছিয়ে একই জিনিস। এর বিরুদ্ধে লড়বেন না। at-least-once delivery, আর idempotent receiver (অধ্যায় ৭) বানান।
 
-## Long-term storage
+## দীর্ঘমেয়াদী storage
 
-DLQ entries should not live forever. Two retention strategies:
+DLQ entry চিরকাল বাঁচা উচিত নয়। দুটো retention strategy:
 
-**1. Time-based.** Delete after 30 or 90 days. Most operators only debug recent events.
+**১. Time-based।** ৩০ বা ৯০ দিন পরে delete করুন। বেশিরভাগ operator কেবল সাম্প্রতিক event debug করে।
 
-**2. Move to cold storage.** Export DLQ entries older than X days to a JSON file or S3. Free up Postgres space; preserve audit trail.
+**২. Cold storage-এ সরান।** X দিনের চেয়ে পুরনো DLQ entry একটা JSON file বা S3-তে export করুন। Postgres space খালি করুন; audit trail সংরক্ষণ করুন।
 
-Most teams use time-based with a shred at 90 days. Customer disputes about events from 6 months ago are exceptional and usually unsolvable anyway (their data is gone too).
+বেশিরভাগ টিম ৯০ দিনে একটা shred সহ time-based ব্যবহার করে। ৬ মাস আগের event নিয়ে customer dispute ব্যতিক্রম আর সাধারণত এমনিতেও অমীমাংসিত (তাদের data-ও চলে গেছে)।
 
-## Disclosing the contract
+## Contract প্রকাশ করা
 
-Document, on every webhook subscription:
+প্রতিটা webhook subscription-এ document করুন:
 
-- "We retry for up to 72 hours."
-- "We deliver at-least-once; please make your handlers idempotent on the `id` field."
-- "Permanent failures are dead-lettered and visible in your dashboard."
-- "After 72 hours, undelivered events are marked expired."
+- "আমরা ৭২ ঘণ্টা পর্যন্ত retry করি।"
+- "আমরা at-least-once deliver করি; দয়া করে আপনার handler-কে `id` field-এ idempotent করুন।"
+- "Permanent failure dead-lettered হয় আর আপনার dashboard-এ দৃশ্যমান।"
+- "৭২ ঘণ্টা পরে, undelivered event expired mark হয়।"
 
-Customers signed up to your webhooks based on a promise. The promise is the contract. Honour it; document it; let support point to it.
+Customer-রা একটা প্রতিশ্রুতির ভিত্তিতে আপনার webhook-এ sign up করেছে। প্রতিশ্রুতিই হলো contract। এটা মানুন; document করুন; support-কে সেটা দেখাতে দিন।
 
-## Recap
+## রিক্যাপ
 
-- Three terminal states: delivered, failed (permanent), expired (out of time).
-- DLQ is a state column, not a separate system.
-- Store full body + headers + last response + per-attempt history. Replay needs all of it.
-- Alert per-subscription on sustained failure, producer-wide on systemic issues. Never per-event.
-- Customer dashboard is mandatory: list, detail, resend button.
-- Bulk replay spreads `next_attempt_at` to avoid synchronised storms; gated behind admin auth.
-- Pause a subscription that's chronically failing; resume when fixed.
-- At-least-once is the achievable semantics. Receivers dedupe.
-- Retain DLQ for 30–90 days, then delete or archive.
-- Document the contract publicly.
+- তিনটে terminal state: delivered, failed (permanent), expired (সময় শেষ)।
+- DLQ একটা state column, একটা আলাদা system নয়।
+- পুরো body + header + শেষ response + per-attempt history store করুন। Replay-এর জন্য সবটা লাগে।
+- টানা failure-এ per-subscription, systemic issue-তে producer-wide alert দিন। কখনও per-event নয়।
+- Customer dashboard বাধ্যতামূলক: list, detail, resend button।
+- Bulk replay synchronised storm এড়াতে `next_attempt_at` ছড়ায়; admin auth-এর পেছনে gated।
+- চিরস্থায়ীভাবে fail করা subscription pause করুন; ঠিক হলে resume করুন।
+- At-least-once-ই অর্জনযোগ্য semantics। Receiver dedupe করে।
+- DLQ ৩০–৯০ দিন রাখুন, তারপর delete বা archive করুন।
+- Contract প্রকাশ্যে document করুন।
 
-Next: [Observability and replay](/notes/webhooks/09-observability) — dashboards, metrics, traces, and the full operator UI.
+পরবর্তী: [Observability ও replay](/notes/webhooks/09-observability) — dashboard, metric, trace, আর পূর্ণ operator UI।

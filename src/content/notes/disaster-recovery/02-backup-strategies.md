@@ -1,9 +1,9 @@
 ---
 title: 'Backup Strategies'
-subtitle: 'pg_dump for logical backups, WAL-G for continuous archival, S3 lifecycle for retention — the mechanics of actually keeping your data.'
+subtitle: 'logical backup-এর জন্য pg_dump, continuous archival-এর জন্য WAL-G, retention-এর জন্য S3 lifecycle — আসলে আপনার ডেটা রাখার মেকানিক্স।'
 chapter: 2
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['pg_dump', 'WAL-G', 'WAL archiving', 'backups', 'S3', 'retention']
 ---
 
@@ -13,15 +13,23 @@ topics: ['pg_dump', 'WAL-G', 'WAL archiving', 'backups', 'S3', 'retention']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-The difference between photographing a document and photocopying it page by page as each page is written: a snapshot (logical backup) captures a moment in time, but everything written after it is gone. Continuous archival (WAL streaming) captures every change as it happens — you can replay to any point in time, not just the last snapshot.
+একটা ডকুমেন্টের ছবি তোলা আর প্রতিটা পৃষ্ঠা লেখার সাথে সাথে সেটা ফটোকপি করার মধ্যে পার্থক্য: একটা snapshot (logical backup) একটা মুহূর্ত ধরে রাখে, কিন্তু তার পরে যা কিছু লেখা হয় সব চলে যায়। Continuous archival (WAL streaming) প্রতিটা পরিবর্তন ঘটার সাথে সাথে ধরে রাখে — আপনি শুধু শেষ snapshot নয়, যেকোনো point in time-এ replay করতে পারেন।
 
 </Callout>
 
-## Logical Backups: pg_dump
+## গল্পে বুঝি
 
-`pg_dump` exports a database to SQL or a custom binary format. Simple, portable, the right tool for smaller databases and for taking a consistent snapshot before risky migrations.
+ফাতিমা আল-ফিহরির পরিবারের একটা কাঠের বাক্স ভরা জরুরি কাগজ — জমির দলিল, জন্ম সনদ, পুরনো চিঠি। এসব হারালে আর ফেরত পাওয়ার উপায় নেই। তাই মাঝেমধ্যে, ধরুন বছরে একবার, ফাতিমা বসে গোটা বাক্সের প্রতিটা কাগজ ফটোকপি করেন — একটাও বাদ না দিয়ে পুরো জিনিসটা। এই কাজটা সময়সাপেক্ষ, তাই ঘনঘন করা যায় না।
+
+মাঝের সময়টায় নতুন যে কাগজ আসে — এই মাসের একটা রসিদ, নতুন একটা সার্টিফিকেট — শুধু সেগুলোর কপি বানিয়ে আগের কপির স্তূপে যোগ করেন। গোটা বাক্স আবার নতুন করে কপি করেন না, শুধু যেটুকু নতুন। আর কপিগুলো তিনি এক জায়গায় রাখেন না: এক সেট বাড়ির তালাবদ্ধ আলমারিতে, আরেক সেট একটা USB ড্রাইভে স্ক্যান করা, আর তৃতীয় একটা সেট অন্য শহরে ইবনে সিনার বাড়িতে। ফলে বাড়িতে আগুন লাগুক, চুরি হোক বা বন্যা হোক — সব কপি একসাথে কখনো হারায় না।
+
+এই গল্পটাই backup strategy। বছরে একবার গোটা বাক্স কপি করা হলো **full backup**, আর মাঝে শুধু নতুন কাগজ যোগ করা হলো **incremental backup** — কম খরচে, ঘনঘন। আর তিন সেট কপি (3), দুই রকম মাধ্যমে — কাগজ ও USB (2), একটা অন্য শহরে (1 offsite) — এটাই **3-2-1 রুল**, যাতে কোনো একটা দুর্ঘটনা সব কপি একসাথে মুছে দিতে না পারে। বাস্তবে ঠিক এভাবেই ডেটাবেসের full backup সপ্তাহে একবার নেওয়া হয়, মাঝে WAL/incremental দিয়ে নতুন পরিবর্তন ধরা হয়, আর কপিগুলো আলাদা media ও offsite (যেমন অন্য region-এর S3) তে রাখা হয় — আর অটোমেট করার পাশাপাশি মাঝেমধ্যে restore করে যাচাই করা হয় কপিগুলো সত্যিই কাজ করে কিনা।
+
+## Logical Backup: pg_dump
+
+`pg_dump` একটা ডেটাবেস SQL বা কাস্টম বাইনারি ফরম্যাটে export করে। সরল, portable, ছোট ডেটাবেসের জন্য আর ঝুঁকিপূর্ণ migration-এর আগে একটা consistent snapshot নেওয়ার জন্য সঠিক টুল।
 
 ```bash
 # Basic SQL dump
@@ -43,7 +51,7 @@ pg_dump -U postgres -t orders -t order_items mydb -Fc > orders_backup.dump
 pg_dumpall -U postgres > full_cluster.sql
 ```
 
-**Restore from pg_dump:**
+**pg_dump থেকে restore:**
 
 ```bash
 # SQL format
@@ -58,17 +66,17 @@ createdb -U postgres mydb_restored
 pg_restore -U postgres -d mydb_restored backup.dump
 ```
 
-**Limitations of pg_dump:**
+**pg_dump-এর সীমাবদ্ধতা:**
 
-- Point-in-time: captures state at dump start, misses everything written after
-- Duration: large databases take hours to dump, during which data keeps changing
-- RPO = time since last dump (if you dump nightly at 2am, RPO is up to 24 hours)
+- Point-in-time: dump শুরুর অবস্থা ধরে রাখে, তার পরে যা লেখা হয় সব বাদ দেয়
+- সময়কাল: বড় ডেটাবেস dump করতে ঘণ্টার পর ঘণ্টা লাগে, এই সময়ে ডেটা বদলাতেই থাকে
+- RPO = শেষ dump থেকে যতটুকু সময় গেছে (যদি প্রতি রাত ২টায় dump করেন, RPO ২৪ ঘণ্টা পর্যন্ত হতে পারে)
 
-For RPO below 1 hour, you need WAL archiving.
+RPO ১ ঘণ্টার নিচে চাইলে আপনার WAL archiving লাগবে।
 
 ## WAL Archiving: Continuous Backup
 
-PostgreSQL's Write-Ahead Log (WAL) records every change before it's applied. Archive the WAL continuously and you can restore to any point in time — not just the last snapshot.
+PostgreSQL-এর Write-Ahead Log (WAL) প্রতিটা পরিবর্তন প্রয়োগ করার আগে সেটা রেকর্ড করে। WAL continuous archive করলে আপনি যেকোনো point in time-এ restore করতে পারবেন — শুধু শেষ snapshot নয়।
 
 **WAL + base backup = PITR (Point-In-Time Recovery):**
 
@@ -78,7 +86,7 @@ Base backup (snapshot at T=0)
   = Ability to restore to any point between T=0 and T=now
 ```
 
-**Configure WAL archiving in postgresql.conf:**
+**postgresql.conf-এ WAL archiving কনফিগার করা:**
 
 ```ini
 wal_level = replica          # enable WAL content needed for replication/archiving
@@ -90,7 +98,7 @@ archive_timeout = 60         # archive incomplete WAL segments every 60s
                              # limits RPO even between full WAL segment fills
 ```
 
-For production, archive to S3 — not local disk:
+Production-এর জন্য S3-তে archive করুন — লোকাল ডিস্কে নয়:
 
 ```ini
 archive_command = 'aws s3 cp %p s3://my-wal-archive/%f'
@@ -98,7 +106,7 @@ archive_command = 'aws s3 cp %p s3://my-wal-archive/%f'
 
 ## WAL-G: Production WAL Archiving
 
-[WAL-G](https://github.com/wal-g/wal-g) is the standard tool for PostgreSQL continuous backup. It handles base backups, WAL archiving, compression, encryption, and restore — all in one binary.
+[WAL-G](https://github.com/wal-g/wal-g) হলো PostgreSQL continuous backup-এর স্ট্যান্ডার্ড টুল। এটা base backup, WAL archiving, compression, encryption, আর restore — সবকিছু একটা বাইনারিতে হ্যান্ডল করে।
 
 **Setup:**
 
@@ -117,7 +125,7 @@ export PGUSER=postgres
 export PGHOST=localhost
 ```
 
-**Configure postgresql.conf to use WAL-G:**
+**WAL-G ব্যবহার করতে postgresql.conf কনফিগার করা:**
 
 ```ini
 wal_level = replica
@@ -127,7 +135,7 @@ restore_command = 'wal-g wal-fetch %f %p'
 archive_timeout = 60
 ```
 
-**Take a base backup:**
+**একটা base backup নেওয়া:**
 
 ```bash
 # Full base backup — run initially and then periodically (weekly recommended)
@@ -142,7 +150,7 @@ wal-g backup-list
 # base_000000010000000000000018 2024-01-22T02:00:00Z 000000010000000000000018
 ```
 
-**Automate with cron:**
+**cron দিয়ে অটোমেট করা:**
 
 ```bash
 # /etc/cron.d/wal-g
@@ -152,7 +160,7 @@ wal-g backup-list
 # WAL archiving is continuous via archive_command — no cron needed
 ```
 
-## Restore with WAL-G (PITR)
+## WAL-G দিয়ে Restore (PITR)
 
 ```bash
 # Stop PostgreSQL
@@ -191,9 +199,9 @@ tail -f /var/log/postgresql/postgresql.log
 # LOG:  pausing at the end of recovery
 ```
 
-## Retention Policies
+## Retention Policy
 
-Backups without retention policies grow forever. Set policies before your S3 bucket costs more than your production database.
+retention policy ছাড়া ব্যাকআপ চিরকাল বাড়তে থাকে। আপনার S3 bucket production ডেটাবেসের চেয়ে বেশি খরচ করার আগেই policy সেট করুন।
 
 ```bash
 # WAL-G retention: keep last N base backups
@@ -207,7 +215,7 @@ wal-g delete --confirm before FIND_FULL 2024-01-01T00:00:00Z  # --confirm to act
 0 4 * * * postgres wal-g delete retain FULL 7 --confirm >> /var/log/wal-g-cleanup.log 2>&1
 ```
 
-**S3 lifecycle policy for WAL segments (belt and suspenders):**
+**WAL segment-এর জন্য S3 lifecycle policy (belt and suspenders):**
 
 ```json
 {
@@ -221,7 +229,7 @@ wal-g delete --confirm before FIND_FULL 2024-01-01T00:00:00Z  # --confirm to act
 }
 ```
 
-**Standard retention tiers:**
+**স্ট্যান্ডার্ড retention tier:**
 
 ```
 Daily backups: keep 7 days
@@ -233,11 +241,11 @@ WAL segments: keep as long as your oldest base backup + buffer
   If oldest base backup is 7 days old, keep 8+ days of WAL
 ```
 
-## Application-Level Backups
+## Application-Level Backup
 
-Beyond the database, back up:
+ডেটাবেসের বাইরেও ব্যাকআপ করুন:
 
-**Configuration and secrets:**
+**Configuration আর secrets:**
 
 ```bash
 # Export application config (not secrets — those live in secrets manager)
@@ -271,9 +279,9 @@ terraform state pull > terraform.tfstate.backup
 aws s3 cp terraform.tfstate.backup s3://my-tf-state-backup/
 ```
 
-## The 3-2-1 Rule
+## 3-2-1 রুল
 
-**3** copies of data, **2** different media types, **1** offsite:
+ডেটার **3** কপি, **2** ভিন্ন media type, **1** offsite:
 
 ```
 Copy 1: Live database (primary)
@@ -283,4 +291,4 @@ Copy 3: WAL-G backups in S3 (offsite — different storage medium + region)
 Meets 3-2-1: ✓
 ```
 
-For critical data, add a fourth copy in a different cloud provider or physically air-gapped storage.
+গুরুত্বপূর্ণ ডেটার জন্য একটা ভিন্ন cloud provider-এ বা ফিজিক্যালি air-gapped storage-এ চতুর্থ একটা কপি যোগ করুন।

@@ -1,9 +1,9 @@
 ---
 title: 'Building a Real HTTP/1.1 Parser'
-subtitle: 'Request bodies, Content-Length, chunked transfer encoding, and the dozen edge cases that turn a toy parser into one you would trust in production.'
+subtitle: 'Request body, Content-Length, chunked transfer encoding, আর ডজনখানেক edge case যা একটি খেলনা parser-কে এমন একটিতে পরিণত করে যাকে আপনি production-এ ভরসা করবেন।'
 chapter: 3
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['http', 'parser', 'chunked encoding', 'go', 'request body']
 ---
 
@@ -13,29 +13,37 @@ topics: ['http', 'parser', 'chunked encoding', 'go', 'request body']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Reading a letter but stopping after the envelope — the address tells you who it's for, but the contents are the point. A parser that ignores the body has read the envelope and thrown away the letter.
+একটি চিঠি পড়া কিন্তু খামের পরই থেমে যাওয়া — ঠিকানা বলে দেয় এটা কার জন্য, কিন্তু ভেতরের লেখাটাই আসল কথা। যে parser body উপেক্ষা করে সে খামটা পড়ে চিঠিটা ফেলে দিয়েছে।
 
 </Callout>
 
-## What our toy server can't do
+## গল্পে বুঝি
 
-The chapter-2 server only handles `GET`. If a client sends `POST /api HTTP/1.1` with a JSON body, we read the request line and headers, then ignore the body. The body sits in the kernel's receive buffer; the next read on this socket returns it as garbage; the server falls apart.
+বাগদাদের এক পুরনো দপ্তরে ফাতিমা আল-ফিহরি বসেন হিসাবরক্ষণের জানালার ওপাশে। সারাদিন লোকজন এসে হাতে-লেখা আবেদনপত্র জমা দেয় — কেউ চায় নতুন রেকর্ড খুলতে, কেউ পুরনো নথি দেখতে। ফাতিমা প্রতিটা ফর্ম হাতে নিয়ে উপর থেকে নিচে এক লাইন এক লাইন করে পড়েন। প্রথম লাইনটাই সবচেয়ে জরুরি: সেখানে লেখা থাকে কী করতে চায় (দেখা, না নতুন লেখা, না মুছে ফেলা) আর কোন রেকর্ড নিয়ে কাজ। এরপর কাগজের কিনারায় ছোট ছোট মার্জিন-নোট — "জরুরি", "অমুক তারিখের মধ্যে", "কত পৃষ্ঠা সংযুক্ত"। আর সবশেষে খামের ভেতরে মূল সংযুক্ত পাতাটা, যেটাতে আসল বিষয়বস্তু।
 
-To handle bodies correctly, the parser must:
+কিন্তু সব ফর্ম তো পরিপাটি আসে না। কোনোটার কালি লেপ্টে আছে, কোনোটা তাড়াহুড়োয় অর্ধেক লিখে জমা পড়েছে, কোনোটায় মার্জিনে "৫ পৃষ্ঠা সংযুক্ত" লেখা অথচ খামে কেবল দুই পাতা। ফাতিমা এসবে ঘাবড়ান না — যে ফর্মে সংযুক্ত পাতার সংখ্যা লেখা, তিনি ঠিক ততগুলোই গোনেন, বেশিও না কমও না; আর যেটা এলোমেলো বা অসম্পূর্ণ, সেটা তিনি ফিরিয়ে দিয়ে বলেন "এটা আবার ঠিক করে আনো", পুরো লাইন ভজঘট পাকিয়ে ফেলেন না।
 
-1. Recognize that there _is_ a body — by `Content-Length` or `Transfer-Encoding: chunked`.
-2. Read exactly the right number of bytes (no more, no less).
-3. Stop at the boundary so the next request on a keep-alive connection starts cleanly.
+এই গল্পটাই আসলে একটা **HTTP parser**। ফাতিমার এক লাইন এক লাইন করে ফর্ম পড়াটাই parser-এর কাঁচা request text পড়া; ফর্মকে চারটে অংশে ভাগ করাটাই **method** (কী করতে চায়), **path** (কোন রেকর্ড), **header** (মার্জিন-নোট) আর **body** (সংযুক্ত পাতা) আলাদা করা। মার্জিনে লেখা পৃষ্ঠাসংখ্যা মিলিয়ে ঠিক ততগুলো গোনাটাই `content-length` অনুযায়ী body পড়া; আর অর্ধেক-আসা বা লেপ্টে-যাওয়া ফর্ম ফিরিয়ে দেওয়াটাই parser-এর partial read আর malformed input সামলে `400` ফেরত দেওয়া। বাস্তবে Nginx বা Go-র `net/http` ঠিক এভাবেই প্রতিটা incoming request পড়ে টুকরো করে — একটা byte বেশি পড়লেই পরের request নষ্ট, তাই সীমানায় নিখুঁতভাবে থামাটা এখানে সবচেয়ে জরুরি।
 
-This is what real HTTP/1.1 parsers spend most of their lines on.
+## আমাদের খেলনা server যা পারে না
 
-## Three ways a body ends
+chapter-2-এর server শুধু `GET` সামলায়। যদি একটি client একটি JSON body সহ `POST /api HTTP/1.1` পাঠায়, আমরা request line আর headers পড়ি, তারপর body উপেক্ষা করি। body kernel-এর receive buffer-এ বসে থাকে; এই socket-এ পরের read সেটাকে আবর্জনা হিসেবে ফেরত দেয়; server ভেঙে পড়ে।
 
-HTTP/1.1 has exactly three valid signals for "the body is over":
+body সঠিকভাবে সামলাতে হলে parser-কে অবশ্যই:
 
-**1. Content-Length: N** — read exactly N bytes after the blank line.
+1. চিনতে হবে যে একটি body _আছে_ — `Content-Length` অথবা `Transfer-Encoding: chunked` দিয়ে।
+2. ঠিক সঠিক সংখ্যক bytes পড়তে হবে (বেশিও না, কমও না)।
+3. সীমানায় থামতে হবে যাতে একটি keep-alive connection-এ পরের request পরিষ্কারভাবে শুরু হয়।
+
+সত্যিকারের HTTP/1.1 parser তাদের বেশিরভাগ লাইন এই কাজেই ব্যয় করে।
+
+## একটি body তিনভাবে শেষ হয়
+
+HTTP/1.1-এ "body শেষ" বোঝানোর ঠিক তিনটি বৈধ সংকেত আছে:
+
+**1. Content-Length: N** — খালি লাইনের পর ঠিক N bytes পড়ুন।
 
 ```text
 POST /api HTTP/1.1
@@ -45,9 +53,9 @@ Content-Length: 18
 {"name":"Fatima"}
 ```
 
-After the blank line, read 18 bytes. Stop. Done.
+খালি লাইনের পর, 18 bytes পড়ুন। থামুন। শেষ।
 
-**2. Transfer-Encoding: chunked** — read chunks until a zero-length chunk arrives.
+**2. Transfer-Encoding: chunked** — একটি zero-length chunk না আসা পর্যন্ত chunk পড়ুন।
 
 ```text
 POST /upload HTTP/1.1
@@ -64,15 +72,15 @@ Network
 
 ```
 
-Each chunk is `<size in hex>\r\n<data>\r\n`. A `0\r\n\r\n` terminates the body.
+প্রতিটি chunk হলো `<size in hex>\r\n<data>\r\n`। একটি `0\r\n\r\n` body-কে terminate করে।
 
-**3. Connection: close** — the body runs to EOF. Server closes the socket, client reads until the read returns 0 bytes. Used by HTTP/1.0 and by responses without a known length.
+**3. Connection: close** — body EOF পর্যন্ত চলে। server socket বন্ধ করে দেয়, client পড়তে থাকে যতক্ষণ না read 0 bytes ফেরত দেয়। HTTP/1.0 আর অজানা length-এর response-এ ব্যবহৃত হয়।
 
-A correct parser handles all three. Anything else (a `POST` with neither `Content-Length` nor chunked) is malformed — return `400 Bad Request`.
+একটি সঠিক parser তিনটিই সামলায়। এর বাইরে কিছু (একটি `POST` যাতে `Content-Length`-ও নেই chunked-ও নেই) malformed — `400 Bad Request` ফেরত দিন।
 
-## Adding bodies to our Go server
+## আমাদের Go server-এ body যোগ করা
 
-Extending chapter 2's server. The new function reads the body once headers are parsed:
+chapter 2-এর server বাড়ানো হচ্ছে। headers parse হয়ে গেলে নতুন function body পড়ে:
 
 ```go
 func readBody(reader *bufio.Reader, headers map[string]string) ([]byte, error) {
@@ -95,9 +103,9 @@ func readBody(reader *bufio.Reader, headers map[string]string) ([]byte, error) {
 }
 ```
 
-`io.ReadFull` keeps reading until exactly `n` bytes are obtained, or it returns an error. Note we cap with `maxBodySize` (say 10MB) to prevent a malicious client from sending `Content-Length: 999999999999`.
+`io.ReadFull` পড়তে থাকে যতক্ষণ না ঠিক `n` bytes পাওয়া যায়, নয়তো একটি error ফেরত দেয়। খেয়াল করুন আমরা `maxBodySize` (ধরুন 10MB) দিয়ে সীমা বাঁধি যাতে একটি ক্ষতিকর client `Content-Length: 999999999999` পাঠাতে না পারে।
 
-## Implementing chunked decoding
+## chunked decoding বাস্তবায়ন
 
 ```go
 const maxChunkSize = 1 << 20 // 1MB per chunk
@@ -143,50 +151,50 @@ func readChunked(reader *bufio.Reader) ([]byte, error) {
 }
 ```
 
-Notes:
+লক্ষণীয়:
 
-- Chunk sizes are **hexadecimal** in the wire format (`7` is 7 bytes, `1F` is 31 bytes). Easy to forget — many homemade parsers fail silently on chunks of size 10–15.
-- Each chunk has a _trailing_ `\r\n` that you must consume.
-- The terminator is a chunk of size 0, optionally followed by trailers (more headers), then a final `\r\n`. Most clients omit trailers; your parser still has to swallow the extra `\r\n`.
-- Chunk extensions (after a `;`) exist in the spec but are essentially never used. Skip them.
+- Chunk size wire format-এ **hexadecimal** (`7` হলো 7 bytes, `1F` হলো 31 bytes)। সহজেই ভুলে যাওয়া যায় — অনেক homemade parser 10–15 size-এর chunk-এ নীরবে fail করে।
+- প্রতিটি chunk-এর একটি _trailing_ `\r\n` থাকে যা আপনাকে consume করতে হবে।
+- Terminator হলো 0 size-এর একটি chunk, ঐচ্ছিকভাবে তার পর trailers (আরও headers), তারপর একটি চূড়ান্ত `\r\n`। বেশিরভাগ client trailers বাদ দেয়; আপনার parser-কে তবু বাড়তি `\r\n`-টা গিলে ফেলতে হবে।
+- Chunk extension (`;`-এর পর) spec-এ আছে কিন্তু কার্যত কখনোই ব্যবহৃত হয় না। এগুলো এড়িয়ে যান।
 
-## The dozen edge cases real parsers handle
+## সত্যিকারের parser যে ডজনখানেক edge case সামলায়
 
-A homemade parser usually passes "happy path" tests immediately, then dies on adversarial inputs. The list below is the difference between a weekend project and `net/http`.
+একটি homemade parser সাধারণত "happy path" test সাথে সাথে পাস করে, তারপর adversarial input-এ মরে যায়। নিচের তালিকাটাই একটা weekend project আর `net/http`-এর মধ্যে পার্থক্য।
 
-**1. Header line folding.** Old HTTP allowed headers to wrap across multiple lines. `Host: \r\n example.com` is the same as `Host: example.com`. Modern HTTP/1.1 has deprecated this; reject it.
+**1. Header line folding.** পুরনো HTTP-তে headers একাধিক লাইন জুড়ে wrap করা যেত। `Host: \r\n example.com` আর `Host: example.com` একই। আধুনিক HTTP/1.1 এটা deprecated করেছে; reject করুন।
 
-**2. Duplicate headers.** `Set-Cookie: a=1\r\nSet-Cookie: b=2` is two cookies, not one overwriting the other. The parser must store the list. Most other headers (`Content-Length`, `Host`) appearing twice should be a `400`.
+**2. Duplicate headers.** `Set-Cookie: a=1\r\nSet-Cookie: b=2` হলো দুটো cookie, একটা আরেকটাকে overwrite করছে না। parser-কে list-টা store করতে হবে। বেশিরভাগ অন্য header (`Content-Length`, `Host`) দুবার এলে সেটা `400` হওয়া উচিত।
 
-**3. Header injection.** `User-Agent: evil\r\nX-Admin: true` — a client could try to smuggle an extra header by embedding `\r\n` in a value. Reject any header value containing CR or LF.
+**3. Header injection.** `User-Agent: evil\r\nX-Admin: true` — একটি client একটি value-তে `\r\n` embed করে একটি বাড়তি header পাচার করার চেষ্টা করতে পারে। CR বা LF আছে এমন যেকোনো header value reject করুন।
 
-**4. Case-insensitive header names.** `Content-Length`, `content-length`, `CONTENT-LENGTH` are all the same header. Always normalize to lowercase before lookups.
+**4. Case-insensitive header names.** `Content-Length`, `content-length`, `CONTENT-LENGTH` সবই একই header। lookup-এর আগে সবসময় lowercase-এ normalize করুন।
 
-**5. Whitespace tolerance.** `Content-Length: 18` and `Content-Length:18` are both valid; `Content-Length : 18` is not (space before the colon). Trim around the value, not around the name.
+**5. Whitespace tolerance.** `Content-Length: 18` আর `Content-Length:18` দুটোই বৈধ; `Content-Length : 18` নয় (colon-এর আগে space)। value-র চারপাশে trim করুন, name-এর চারপাশে নয়।
 
-**6. Request smuggling.** A request with both `Content-Length` and `Transfer-Encoding: chunked` is dangerous — different proxies along the path may interpret each differently, allowing an attacker to "smuggle" a hidden second request inside the first. The safe behavior: if both are present, reject with `400`. **Always.**
+**6. Request smuggling.** `Content-Length` আর `Transfer-Encoding: chunked` দুটোই আছে এমন একটি request বিপজ্জনক — পথের বিভিন্ন proxy প্রতিটাকে ভিন্নভাবে ব্যাখ্যা করতে পারে, যা একজন attacker-কে প্রথমটির ভেতরে একটি লুকানো দ্বিতীয় request "পাচার" করতে দেয়। নিরাপদ আচরণ: দুটোই থাকলে `400` দিয়ে reject করুন। **সবসময়।**
 
-**7. Massive headers.** Limit the total header section size (commonly 8KB or 16KB). Otherwise an attacker can send a 1GB header line and OOM you.
+**7. Massive headers.** মোট header section-এর size সীমাবদ্ধ করুন (সাধারণত 8KB বা 16KB)। নাহলে একজন attacker একটি 1GB header line পাঠিয়ে আপনাকে OOM করতে পারে।
 
-**8. Truncated input.** The client closes the socket halfway through sending. Read errors must close the connection cleanly without crashing.
+**8. Truncated input.** client পাঠানোর মাঝপথে socket বন্ধ করে দেয়। read error-কে crash না করে পরিষ্কারভাবে connection বন্ধ করতে হবে।
 
-**9. Slow clients (Slowloris).** A client sends one byte every 30 seconds. The connection is open but unproductive. Always set a `ReadHeaderTimeout` (e.g., 5–10 seconds) so the parser does not hang forever.
+**9. Slow clients (Slowloris).** একটি client প্রতি 30 সেকেন্ডে একটি byte পাঠায়। connection খোলা কিন্তু অনুৎপাদনশীল। সবসময় একটি `ReadHeaderTimeout` (যেমন, 5–10 সেকেন্ড) সেট করুন যাতে parser অনন্তকাল ঝুলে না থাকে।
 
-**10. Pipelined requests.** A client may have already sent the next request after this one's body. After the response, the parser must be ready for _another_ request without losing buffered bytes. `bufio.Reader` does this naturally — your `for` loop just continues.
+**10. Pipelined requests.** একটি client হয়তো এই request-এর body-র পরেই পরের request পাঠিয়ে ফেলেছে। response-এর পর, parser-কে buffered bytes না হারিয়ে _আরেকটি_ request-এর জন্য প্রস্তুত থাকতে হবে। `bufio.Reader` এটা স্বাভাবিকভাবেই করে — আপনার `for` loop শুধু চলতে থাকে।
 
-**11. CRLF vs LF.** Spec says CRLF; many clients send LF. Be lenient on input, strict on output (RFC 9110 actually still requires CRLF on input, but real parsers are forgiving).
+**11. CRLF vs LF.** Spec বলে CRLF; অনেক client LF পাঠায়। input-এ উদার হন, output-এ কঠোর (RFC 9110 আসলে input-এও এখনও CRLF দাবি করে, কিন্তু সত্যিকারের parser ক্ষমাশীল)।
 
-**12. Encoding.** Headers must be ASCII (or 7-bit). Non-ASCII characters in headers must be percent-encoded or rejected. The body can be anything; that is the application's problem.
+**12. Encoding.** Headers অবশ্যই ASCII (বা 7-bit) হতে হবে। header-এ non-ASCII অক্ষর percent-encode করতে হবে অথবা reject করতে হবে। body যেকোনো কিছু হতে পারে; সেটা application-এর সমস্যা।
 
 <Callout type="warn">
 
-**Header injection (#3) and request smuggling (#6) are classified vulnerabilities** that have produced real-world breaches at companies you have heard of. If you ship a homemade parser, you must defend against both.
+**Header injection (#3) আর request smuggling (#6) হলো শ্রেণীবদ্ধ vulnerability** যা আপনার শোনা কোম্পানিগুলোতে সত্যিকারের breach ঘটিয়েছে। আপনি যদি একটি homemade parser ship করেন, দুটোর বিরুদ্ধেই আপনাকে রক্ষা করতে হবে।
 
 </Callout>
 
-## A complete parser, with limits
+## একটি সম্পূর্ণ parser, limit সহ
 
-Here is the chapter-2 server, extended with body parsing and the most important limits:
+এই যে chapter-2-এর server, body parsing আর সবচেয়ে গুরুত্বপূর্ণ limit সহ বাড়ানো:
 
 ```go
 // main.go (excerpt)
@@ -264,11 +272,11 @@ func readLine(reader *bufio.Reader, max int) (string, error) {
 }
 ```
 
-This is now a respectable HTTP/1.1 parser. Pair it with the accept loop from chapter 2 and you have something you could put in front of a small app.
+এটা এখন একটি সম্মানজনক HTTP/1.1 parser। chapter 2-এর accept loop-এর সাথে জুড়ে দিন আর আপনার কাছে এমন কিছু হবে যা আপনি একটি ছোট app-এর সামনে বসাতে পারেন।
 
-## Stress-testing your parser
+## আপনার parser stress-test করা
 
-Once you have a parser, throw bad inputs at it. A simple script:
+parser হয়ে গেলে, তার দিকে খারাপ input ছুঁড়ে মারুন। একটি সরল script:
 
 ```bash
 # Truncated request
@@ -287,26 +295,26 @@ printf 'GET / HTTP/1.1\r\nHost: x\r\nX-Test: a\r\nX-Admin: yes\r\n\r\n' | nc loc
 yes 'X-Spam: AAAAAAAAAAAA' | head -10000 | { printf 'GET / HTTP/1.1\r\nHost: x\r\n'; cat; printf '\r\n'; } | nc localhost 8080
 ```
 
-A parser that does not crash, does not hang, and returns sane error responses to all of these is doing its job.
+একটি parser যা এসবের কোনোটাতেই crash করে না, ঝুলে থাকে না, আর সব ক্ষেত্রে সেনসিবল error response ফেরত দেয় — সেটা তার কাজ করছে।
 
-## When to stop and use a real library
+## কখন থেমে একটি সত্যিকারের library ব্যবহার করবেন
 
-Right about now. The point of writing your own parser is to understand what `net/http` does. Writing it correctly to production-grade — handling every edge case in RFC 9112, surviving every fuzzing input, hitting acceptable throughput — is months of work. Use the standard library.
+মোটামুটি এখনই। নিজের parser লেখার উদ্দেশ্য হলো `net/http` কী করে তা বোঝা। এটাকে সঠিকভাবে production-grade পর্যন্ত লেখা — RFC 9112-এর প্রতিটি edge case সামলানো, প্রতিটি fuzzing input থেকে বেঁচে যাওয়া, গ্রহণযোগ্য throughput-এ পৌঁছানো — কয়েক মাসের কাজ। standard library ব্যবহার করুন।
 
-The mental model you have built is what carries forward:
+আপনি যে mental model গড়ে তুলেছেন সেটাই সামনে বয়ে নিয়ে যায়:
 
-- A request is a line, headers, blank line, body.
-- The body length is signaled by `Content-Length` or chunked encoding.
-- Limits are not optional; they are the difference between a server and a denial-of-service vulnerability.
+- একটি request হলো একটি লাইন, headers, খালি লাইন, body।
+- body-র length সংকেত করে `Content-Length` অথবা chunked encoding।
+- Limit ঐচ্ছিক নয়; এগুলোই একটি server আর একটি denial-of-service vulnerability-র মধ্যে পার্থক্য।
 
-In chapter 4, we look at the _concurrency_ model — how a server with this parser scales to thousands of concurrent connections without spawning thousands of threads.
+chapter 4-এ আমরা _concurrency_ model দেখব — এই parser সহ একটি server কীভাবে হাজার হাজার thread spawn না করেই হাজার হাজার concurrent connection-এ scale করে।
 
-## Recap
+## রিক্যাপ
 
-- HTTP/1.1 bodies end via `Content-Length`, chunked encoding, or socket close.
-- Chunked encoding has a hex size, then bytes, then CRLF; a zero-size chunk terminates.
-- Real parsers handle a dozen edge cases: header injection, duplicate length headers, slow clients, large inputs, pipelining.
-- Always cap header and body sizes and set timeouts. Defaults are denial-of-service vectors.
-- Once you have written the parser by hand, switch to `net/http` (or your language's equivalent) for real work.
+- HTTP/1.1 body শেষ হয় `Content-Length`, chunked encoding, অথবা socket close-এর মাধ্যমে।
+- Chunked encoding-এ একটি hex size থাকে, তারপর bytes, তারপর CRLF; একটি zero-size chunk terminate করে।
+- সত্যিকারের parser ডজনখানেক edge case সামলায়: header injection, duplicate length headers, slow clients, বড় input, pipelining।
+- সবসময় header আর body size-এ সীমা বাঁধুন আর timeout সেট করুন। Default হলো denial-of-service vector।
+- একবার হাতে-কলমে parser লিখে ফেললে, সত্যিকারের কাজের জন্য `net/http`-এ (বা আপনার ভাষার সমতুল্যে) চলে যান।
 
-Next chapter: how the same parser scales to many connections — the threading and event-loop choices behind every web server.
+পরের অধ্যায়: এই একই parser কীভাবে অনেক connection-এ scale করে — প্রতিটি web server-এর পেছনের threading আর event-loop-এর পছন্দগুলো।

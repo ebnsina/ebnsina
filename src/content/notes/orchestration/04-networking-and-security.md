@@ -1,9 +1,9 @@
 ---
 title: 'Kubernetes Networking & Security'
-subtitle: 'NetworkPolicies, RBAC, Pod Security Standards, Secrets management, and the default-deny posture that keeps clusters hardened.'
+subtitle: 'NetworkPolicies, RBAC, Pod Security Standards, Secrets management, এবং যে default-deny posture ক্লাস্টারকে hardened রাখে।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['NetworkPolicy', 'RBAC', 'Pod Security', 'Secrets', 'mTLS', 'Kubernetes security']
 ---
 
@@ -11,19 +11,27 @@ topics: ['NetworkPolicy', 'RBAC', 'Pod Security', 'Secrets', 'mTLS', 'Kubernetes
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বিশাল দেয়ালঘেরা ক্যাম্পাসের ব্যবস্থাপক। ভেতরে অনেকগুলো বিল্ডিং — গবেষণাগার, লাইব্রেরি, হিসাবরক্ষণ। এক বিভাগ যখন অন্য বিভাগের কারো কাছে পৌঁছাতে চায়, তখন কে কোন ঘরে বসে সেটা মুখস্থ করতে হয় না — একটা অভ্যন্তরীণ ফোন ডিরেক্টরি আছে, শুধু বিভাগের নাম বললেই কল কানেক্ট হয়ে যায়। লোকজন ডেস্ক বদলালেও, নতুন কেউ যোগ দিলেও, নামটা এক থাকে বলে যোগাযোগ কখনো ভাঙে না। আর বাইরে থেকে যে অতিথিরা আসে, তারা সবাই ঢোকে একটাই মূল ফটক দিয়ে — সেখানে বসা রিসেপশনিস্ট আল-খোয়ারিজমি প্রত্যেক অতিথিকে জিজ্ঞেস করেন কোন বিল্ডিং খুঁজছেন, নাম শুনে তবেই সঠিক দিকে পাঠান।
+
+কিন্তু ভেতরে ঢুকলেই সব দরজা খোলা নয়। দেয়ালে সাঁটা নিয়ম বলে দেয় কোন বিল্ডিং কোন বিল্ডিংয়ে লোক পাঠাতে পারবে — হিসাবরক্ষণ থেকে লাইব্রেরিতে যাওয়া যায়, কিন্তু গবেষণাগারে ঢোকা বারণ। আর প্রত্যেকের গলায় ঝোলানো একটা রঙিন ব্যাজ, যা ঠিক করে দেয় সে কোন কোন ঘরে ঢুকতে পারবে আর সেখানে কী করতে পারবে — ইবনে সিনার নীল ব্যাজে শুধু আর্কাইভ পড়ার অনুমতি, ফাইল বদলানোর নয়।
+
+এই গল্পটাই আসলে Kubernetes-এর নেটওয়ার্কিং আর সিকিউরিটি। অভ্যন্তরীণ ফোন ডিরেক্টরি — যেখানে নাম দিয়ে ডাকলেই পৌঁছে যায়, ডেস্ক বদলালেও নয় — হলো **Service** আর তার স্থায়ী internal **DNS** নাম। মূল ফটকের রিসেপশনিস্ট যিনি অতিথির চাওয়া নাম শুনে সঠিক বিল্ডিংয়ে পাঠান, তিনি **Ingress** (host/path দেখে বাইরের traffic কে ভেতরের Service-এ রুট করা)। দেয়ালে সাঁটা "কে কার কাছে যেতে পারবে" নিয়ম হলো **NetworkPolicy** (pod-to-pod traffic নিয়ন্ত্রণ), আর রঙিন ব্যাজ যা প্রতিটা ভূমিকাকে শুধু নির্দিষ্ট ঘর ও কাজের অনুমতি দেয় সেটা **RBAC** (কে কোন resource-এ কী করতে পারবে)। বাস্তবে ঠিক এভাবেই একটা hardened ক্লাস্টার চলে — Service নাম দিয়ে খুঁজে পাওয়া যায়, Ingress বাইরের request রুট করে, NetworkPolicy default-deny posture বজায় রাখে, আর RBAC least-privilege নিশ্চিত করে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A secure office building: every employee has a badge (RBAC — controls who can do what), floors have access zones (NetworkPolicies — controls which pods can talk to which), sensitive files are locked in specific cabinets (Secrets management), and the building has security policies that apply to everyone (Pod Security Standards — no one bypasses the metal detector).
+একটা সিকিউর অফিস বিল্ডিং: প্রতিটা কর্মীর একটা ব্যাজ আছে (RBAC — কে কী করতে পারবে সেটা নিয়ন্ত্রণ করে), ফ্লোরগুলোর access zone আছে (NetworkPolicies — কোন pod কোন pod-এর সাথে কথা বলতে পারবে সেটা নিয়ন্ত্রণ করে), সংবেদনশীল ফাইল নির্দিষ্ট ক্যাবিনেটে তালাবদ্ধ (Secrets management), এবং বিল্ডিংয়ে এমন সিকিউরিটি পলিসি আছে যা সবার জন্য প্রযোজ্য (Pod Security Standards — কেউ মেটাল ডিটেক্টর এড়িয়ে যেতে পারে না)।
 
 </Callout>
 
 ## NetworkPolicies
 
-By default, all pods can communicate with all other pods in the cluster. NetworkPolicies restrict this.
+default-এ, ক্লাস্টারের সব pod অন্য সব pod-এর সাথে যোগাযোগ করতে পারে। NetworkPolicy এটা সীমিত করে।
 
-**Default-deny for a namespace:**
+**একটা namespace-এর জন্য default-deny:**
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -38,9 +46,9 @@ spec:
     - Egress
 ```
 
-Now no pod in `production` can receive or send any traffic. Add policies to allow what's needed.
+এখন `production`-এর কোনো pod কোনো traffic গ্রহণ বা পাঠাতে পারবে না। যা দরকার তা allow করতে policy যোগ করুন।
 
-**Allow specific ingress:**
+**নির্দিষ্ট ingress allow করা:**
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -67,7 +75,7 @@ spec:
           port: 3000
 ```
 
-**Allow egress to specific services:**
+**নির্দিষ্ট service-এ egress allow করা:**
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -105,7 +113,7 @@ spec:
           port: 53
 ```
 
-NetworkPolicies are enforced by the CNI plugin (Flannel alone doesn't support them — use Calico or Cilium).
+NetworkPolicy CNI plugin দিয়ে enforce হয় (একা Flannel এগুলো সাপোর্ট করে না — Calico বা Cilium ব্যবহার করুন)।
 
 ```bash
 # Install Cilium as CNI (supports NetworkPolicies and more)
@@ -117,13 +125,13 @@ helm install cilium cilium/cilium \
 
 ## RBAC
 
-Kubernetes RBAC controls who can do what to which resources.
+Kubernetes RBAC নিয়ন্ত্রণ করে কে কোন resource-এ কী করতে পারবে।
 
-**Three objects:**
+**তিনটা object:**
 
-- **Role/ClusterRole** — defines permissions (what verbs on what resources)
-- **ServiceAccount** — identity for a pod
-- **RoleBinding/ClusterRoleBinding** — binds a Role to a ServiceAccount (or user)
+- **Role/ClusterRole** — permission সংজ্ঞায়িত করে (কোন resource-এ কোন verb)
+- **ServiceAccount** — একটা pod-এর identity
+- **RoleBinding/ClusterRoleBinding** — একটা Role-কে একটা ServiceAccount-এর (বা user-এর) সাথে bind করে
 
 ```yaml
 # ServiceAccount for order-service
@@ -176,9 +184,9 @@ spec:
       serviceAccountName: order-service
 ```
 
-**Principle of least privilege:** each service account only has the permissions it actually needs.
+**Principle of least privilege:** প্রতিটা service account শুধু সেই permission পায় যা তার আসলেই দরকার।
 
-**For humans (kubectl access):**
+**মানুষের জন্য (kubectl access):**
 
 ```yaml
 # Grant a developer read-only access to production
@@ -206,13 +214,13 @@ kubectl auth can-i --list -n production
 
 ## Pod Security Standards
 
-Kubernetes has three built-in security profiles:
+Kubernetes-এ তিনটা built-in security profile আছে:
 
-- **Privileged** — unrestricted (don't use for workloads)
-- **Baseline** — prevents known privilege escalations
-- **Restricted** — hardened, follows security best practices
+- **Privileged** — unrestricted (workload-এর জন্য ব্যবহার করবেন না)
+- **Baseline** — পরিচিত privilege escalation ঠেকায়
+- **Restricted** — hardened, security best practice অনুসরণ করে
 
-Apply at the namespace level:
+namespace level-এ apply করুন:
 
 ```yaml
 apiVersion: v1
@@ -225,13 +233,13 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
 ```
 
-With `restricted`, pods must:
+`restricted`-এর ক্ষেত্রে, pod-কে অবশ্যই:
 
-- Run as non-root
-- Use `securityContext.runAsNonRoot: true`
-- Set `allowPrivilegeEscalation: false`
-- Drop `ALL` capabilities
-- Use `seccompProfile.type: RuntimeDefault` or `Localhost`
+- non-root হিসেবে চলতে হবে
+- `securityContext.runAsNonRoot: true` ব্যবহার করতে হবে
+- `allowPrivilegeEscalation: false` সেট করতে হবে
+- `ALL` capability drop করতে হবে
+- `seccompProfile.type: RuntimeDefault` বা `Localhost` ব্যবহার করতে হবে
 
 ```yaml
 spec:
@@ -257,7 +265,7 @@ spec:
 
 ## Secrets Management
 
-Kubernetes Secrets are base64-encoded, not encrypted. Anyone with RBAC access to Secrets can read them. Harden with:
+Kubernetes Secret base64-encoded, encrypted নয়। Secret-এ RBAC access আছে এমন যে কেউ সেগুলো পড়তে পারে। এভাবে harden করুন:
 
 **Encryption at rest:**
 
@@ -283,7 +291,7 @@ resources:
 
 **External Secrets Operator (preferred):**
 
-Syncs secrets from AWS Secrets Manager, HashiCorp Vault, or GCP Secret Manager into Kubernetes Secrets.
+AWS Secrets Manager, HashiCorp Vault, বা GCP Secret Manager থেকে secret sync করে Kubernetes Secret-এ নিয়ে আসে।
 
 ```yaml
 # ExternalSecret — pulls from AWS Secrets Manager
@@ -310,11 +318,11 @@ spec:
         property: jwt_secret
 ```
 
-The secret lives in AWS Secrets Manager; Kubernetes has a copy that's kept in sync. Rotation in AWS propagates to pods automatically.
+secret-টা থাকে AWS Secrets Manager-এ; Kubernetes-এ একটা কপি থাকে যা sync-এ রাখা হয়। AWS-এ rotation করলে সেটা অটোমেটিক pod পর্যন্ত propagate হয়।
 
 **Sealed Secrets (git-safe):**
 
-Encrypt secrets with a cluster-specific key so they can be committed to git:
+secret-কে cluster-specific key দিয়ে encrypt করুন যাতে সেগুলো git-এ commit করা যায়:
 
 ```bash
 # Install Sealed Secrets controller
@@ -331,11 +339,11 @@ git add sealed-secret.yaml
 git commit -m "add order-service sealed secrets"
 ```
 
-The controller decrypts on the cluster; the encrypted form is useless outside the cluster.
+controller ক্লাস্টারের উপর decrypt করে; encrypted রূপটা ক্লাস্টারের বাইরে কোনো কাজেরই নয়।
 
 ## mTLS with Cilium or Istio
 
-For zero-trust networking — every service-to-service call is mutually authenticated and encrypted:
+zero-trust networking-এর জন্য — প্রতিটা service-to-service কল mutually authenticated আর encrypted:
 
 **Cilium (simpler):**
 
@@ -372,4 +380,4 @@ spec:
     mode: STRICT # all traffic must use mTLS
 ```
 
-With mTLS in STRICT mode, no unencrypted or unauthenticated traffic is accepted. Services prove their identity via certificates managed by Istio's CA. No application code changes needed — the Envoy sidecar handles it.
+STRICT mode-এ mTLS থাকলে, কোনো unencrypted বা unauthenticated traffic গ্রহণ করা হয় না। Service-রা Istio-র CA দিয়ে ম্যানেজ করা সার্টিফিকেটের মাধ্যমে নিজেদের identity প্রমাণ করে। কোনো application code পরিবর্তন লাগে না — Envoy sidecar-ই সেটা সামলায়।

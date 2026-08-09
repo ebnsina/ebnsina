@@ -1,9 +1,9 @@
 ---
-title: 'Why Infrastructure as Code'
-subtitle: 'The problems with manual infrastructure — drift, undocumented state, unrepeatable environments — and how IaC solves them.'
+title: 'Infrastructure as Code কেন'
+subtitle: 'Manual infrastructure-এর সমস্যা — drift, undocumented state, unrepeatable environment — আর IaC কীভাবে সেগুলো সমাধান করে।'
 chapter: 1
 level: 'beginner'
-readingTime: '7 min'
+readingTime: '7 মিনিট'
 topics: ['IaC', 'infrastructure', 'Terraform', 'Ansible', 'drift', 'idempotency']
 ---
 
@@ -11,44 +11,52 @@ topics: ['IaC', 'infrastructure', 'Terraform', 'Ansible', 'drift', 'idempotency'
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একজন wedding planner, আর তার আয়োজন করা প্রতিটা বিয়ের অনুষ্ঠান হয় একদম নিখুঁত। তার রহস্য একটাই — প্রতিটা ইভেন্ট সে চালায় একটা লিখে রাখা বিস্তারিত checklist ধরে। ভেন্যুর সাজসজ্জা, খাবারের মেনু, অতিথিদের বসার বিন্যাস, সময়সূচি — প্রতিটা সিদ্ধান্ত কাগজে লেখা। ফলে তার টিমের যে কোনো সহকর্মী সেই checklist হাতে নিয়ে হুবহু একই অনুষ্ঠান আবার আয়োজন করতে পারে, ফাতিমা নিজে না থাকলেও। বিয়ের আগেই সবাই মিলে checklist পড়ে দেখে, ভুল ধরে, উন্নতির পরামর্শ দেয় — অনুষ্ঠানের দিন নয়, তার অনেক আগেই। আর যদি বিয়ের ঠিক আগমুহূর্তে ভেন্যু হাতছাড়া হয়ে যায়, ওই একই কাগজ দেখে সে অন্য কোথাও পুরো অনুষ্ঠান নতুন করে দাঁড় করিয়ে ফেলে।
+
+উল্টোদিকে আল-খোয়ারিজমি নামের আরেকজন planner সব কিছু করে স্মৃতি থেকে, মুখে মুখে সিদ্ধান্ত নিয়ে। একটা অনুষ্ঠানে সে ফুলের সাজ দেয় এক রকম, পরেরটায় ভুলে যায়। কোনো কিছু লেখা নেই বলে অন্য কেউ তার কাজ হাতে নিতে পারে না, আগে থেকে কেউ review-ও করতে পারে না। তার দুটো অনুষ্ঠান কখনো একরকম হয় না, আর ভেন্যু বদলে গেলে সে পুরো ব্যাপারটা মাথা চুলকে নতুন করে ভাবতে বসে।
+
+এই গল্পটাই আসলে **Infrastructure as Code**। ফাতিমার লিখে রাখা checklist হলো code-এ define করা infrastructure — যে কোনো সহকর্মীর হুবহু একই অনুষ্ঠান আবার বানানো মানে **reproducible** environment; আগে থেকে checklist পড়ে ভুল ধরা আর উন্নতি করা মানে **version control**-এ রাখা, **review**-যোগ্য পরিবর্তন; আর কাগজ দেখে অন্য জায়গায় পুরো অনুষ্ঠান দাঁড় করানো মানে infrastructure পুরোপুরি **rebuildable**। অন্যদিকে আল-খোয়ারিজমির স্মৃতি থেকে improvise করা হলো manual click-ops — server-এ SSH করে হাতে হাতে বদল, যা document হয় না, **drift** করে, আর দুটো environment কখনো এক হয় না। বাস্তবে Terraform বা Ansible দিয়ে ঠিক এভাবেই infrastructure একটা code file-এ লিখে রাখা হয়, যেন যে কোনো টিমমেট সেই file থেকে হুবহু একই environment বারবার তৈরি করতে পারে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A recipe vs cooking from memory: if you cook from memory, each time the dish comes out slightly different and nobody else can replicate it. A written recipe produces the same dish reliably, can be shared across a team, reviewed for improvements, and versioned when you change the ingredients. Infrastructure as Code is your recipe for servers.
+রেসিপি বনাম স্মৃতি থেকে রান্না: আপনি যদি স্মৃতি থেকে রান্না করেন, প্রতিবার খাবারটা একটু আলাদা হয় আর অন্য কেউ সেটা হুবহু বানাতে পারে না। লিখে রাখা রেসিপি প্রতিবার একই খাবার নির্ভরযোগ্যভাবে বানায়, টিমের সাথে share করা যায়, উন্নতির জন্য review করা যায়, আর উপকরণ বদলালে version করা যায়। Infrastructure as Code হলো server-এর জন্য আপনার রেসিপি।
 
 </Callout>
 
-## The Manual Infrastructure Problem
+## Manual Infrastructure-এর সমস্যা
 
-The traditional workflow: SSH into a server, run commands, hope you remember what you did. This creates several compounding problems.
+গতানুগতিক workflow: server-এ SSH করা, command চালানো, আর আশা করা যে আপনি কী করেছিলেন মনে থাকবে। এটা কয়েকটা জমতে থাকা সমস্যা তৈরি করে।
 
-**Snowflake servers:** Each server becomes unique over time — different package versions, config files modified in different ways, manual tweaks nobody documented. When it fails, you can't reproduce it. When you need a second one, you can't clone it exactly.
+**Snowflake server:** প্রতিটা server সময়ের সাথে আলাদা হয়ে যায় — ভিন্ন package version, ভিন্নভাবে modify করা config file, কেউ document না করা manual tweak। যখন এটা fail করে, আপনি সেটা reproduce করতে পারেন না। যখন আপনার আরেকটা লাগে, আপনি সেটা হুবহু clone করতে পারেন না।
 
-**Configuration drift:** Servers that were identical when provisioned diverge over weeks as different engineers apply different patches, change settings, or install tools. Production has packages that staging doesn't. Staging has config that dev doesn't. "Works on my machine" extends to "works in staging but not production."
+**Configuration drift:** যেসব server provision করার সময় একদম identical ছিল, সেগুলো সপ্তাহখানেকের মধ্যে আলাদা হয়ে যায় কারণ বিভিন্ন engineer বিভিন্ন patch apply করে, setting বদলায়, কিংবা tool install করে। Production-এ এমন package আছে যা staging-এ নেই। Staging-এ এমন config আছে যা dev-এ নেই। "Works on my machine" প্রসারিত হয়ে হয় "staging-এ কাজ করে কিন্তু production-এ না।"
 
-**No audit trail:** `apt install nginx`, `vim /etc/nginx/nginx.conf` — who did this, when, why? `git log` tells you nothing because the changes never went through version control.
+**কোনো audit trail নেই:** `apt install nginx`, `vim /etc/nginx/nginx.conf` — কে এটা করল, কখন, কেন? `git log` আপনাকে কিছুই বলে না কারণ পরিবর্তনগুলো কখনো version control-এর মধ্য দিয়ে যায়নি।
 
-**Fear of change:** If the current server state is fragile, undocumented, and hard to reproduce, nobody wants to touch it. Patches get delayed. Security updates are skipped. "If it ain't broke, don't fix it" becomes the policy because nobody knows what would break it.
+**পরিবর্তনের ভয়:** বর্তমান server state যদি ভঙ্গুর, undocumented, আর reproduce করা কঠিন হয়, তাহলে কেউ সেটাকে ছুঁতে চায় না। Patch পিছিয়ে যায়। Security update বাদ পড়ে। "If it ain't broke, don't fix it" নীতি হয়ে দাঁড়ায় কারণ কেউ জানে না কী করলে এটা ভেঙে পড়বে।
 
-## What IaC Provides
+## IaC যা দেয়
 
-**Declarative state:** You declare what you want (`database: postgres 15, users: [app, replica]`) rather than the steps to get there. The tool figures out what needs to change.
+**Declarative state:** কীভাবে সেখানে পৌঁছাবেন সেই ধাপগুলোর বদলে আপনি কী চান তা declare করেন (`database: postgres 15, users: [app, replica]`)। Tool বের করে কী পরিবর্তন করা দরকার।
 
-**Idempotency:** Run the same playbook or plan 10 times — the result is the same. No side effects from re-running. Safe to apply repeatedly.
+**Idempotency:** একই playbook বা plan ১০ বার চালান — ফলাফল একই থাকে। বারবার চালানোর কোনো side effect নেই। বারবার apply করা নিরাপদ।
 
-**Version control:** Infrastructure changes go through the same PR process as application code. Review, approve, audit, revert.
+**Version control:** Infrastructure পরিবর্তন application code-এর মতোই একই PR process-এর মধ্য দিয়ে যায়। Review, approve, audit, revert।
 
-**Repeatability:** The same code that built staging builds production. No manual differences. No "I did some extra steps on production that I forgot to document."
+**Repeatability:** যে code staging বানিয়েছে সেই code-ই production বানায়। কোনো manual পার্থক্য নেই। "production-এ কিছু বাড়তি ধাপ করেছিলাম যেটা document করতে ভুলে গেছি" — এমন কিছু নেই।
 
-**Self-documenting:** The current state of your infrastructure is defined in files you can read. No more SSH'ing around to understand what's installed.
+**Self-documenting:** আপনার infrastructure-এর বর্তমান state এমন file-এ define করা যা আপনি পড়তে পারেন। কী install করা আছে বুঝতে আর SSH করে ঘোরাঘুরি করতে হয় না।
 
-## The IaC Landscape
+## IaC-এর Landscape
 
-Three different levels of abstraction:
+তিনটা ভিন্ন level-এর abstraction:
 
 **Configuration Management (Ansible, Chef, Puppet):**
-Manage software and config _on existing servers_. SSH into a machine, ensure packages are installed, config files have the right content, services are running.
+_বিদ্যমান server-এ_ software আর config manage করে। একটা মেশিনে SSH করা, নিশ্চিত করা যে package install করা আছে, config file-এ সঠিক content আছে, service চলছে।
 
 ```yaml
 # Ansible: ensure nginx is installed and running
@@ -71,7 +79,7 @@ Manage software and config _on existing servers_. SSH into a machine, ensure pac
 ```
 
 **Infrastructure Provisioning (Terraform, Pulumi, CloudFormation):**
-Create and manage cloud resources — VMs, networks, databases, load balancers, DNS. Terraform talks to cloud APIs; it doesn't SSH into machines.
+Cloud resource তৈরি ও manage করা — VM, network, database, load balancer, DNS। Terraform cloud API-এর সাথে কথা বলে; এটা মেশিনে SSH করে না।
 
 ```hcl
 # Terraform: provision an EC2 instance
@@ -90,13 +98,13 @@ resource "aws_instance" "web" {
 ```
 
 **Container Orchestration (Kubernetes, ECS):**
-Define how containers run — replicas, resources, health checks, networking. Kubernetes manifests are also infrastructure as code.
+Container কীভাবে চলবে তা define করা — replica, resource, health check, networking। Kubernetes manifest-ও infrastructure as code।
 
-Most teams use a combination: Terraform to provision cloud infrastructure, Ansible or cloud-init to configure servers, Kubernetes or ECS for application workloads.
+বেশিরভাগ টিম একটা combination ব্যবহার করে: cloud infrastructure provision করতে Terraform, server configure করতে Ansible বা cloud-init, আর application workload-এর জন্য Kubernetes বা ECS।
 
-## Idempotency in Practice
+## বাস্তবে Idempotency
 
-An idempotent operation produces the same result regardless of how many times you run it. This is the core property that makes IaC safe.
+একটা idempotent operation যতবারই চালান একই ফলাফল দেয়। এই core property-ই IaC-কে নিরাপদ করে।
 
 ```yaml
 # Ansible: idempotent — checks state before acting
@@ -110,7 +118,7 @@ An idempotent operation produces the same result regardless of how many times yo
 # Run 3: user exists → does nothing
 ```
 
-Compare to a shell script:
+একটা shell script-এর সাথে তুলনা করুন:
 
 ```bash
 # NOT idempotent — fails on second run
@@ -118,11 +126,11 @@ useradd appuser     # Run 1: succeeds
 useradd appuser     # Run 2: "user already exists" error
 ```
 
-IaC tools check current state and only apply changes needed to reach the desired state.
+IaC tool বর্তমান state যাচাই করে আর কেবল desired state-এ পৌঁছাতে যে পরিবর্তন দরকার সেটুকুই apply করে।
 
 ## Drift Detection
 
-Even with IaC, someone might SSH in and make a manual change. Drift detection finds these:
+IaC থাকলেও কেউ হয়তো SSH করে একটা manual পরিবর্তন করে ফেলতে পারে। Drift detection এগুলো খুঁজে বের করে:
 
 ```bash
 # Terraform: show what would change if you applied now
@@ -135,7 +143,7 @@ terraform plan
 ansible-playbook site.yml --check --diff
 ```
 
-Schedule drift detection in CI:
+CI-তে drift detection schedule করুন:
 
 ```yaml
 # GitHub Actions: daily drift check
@@ -146,7 +154,7 @@ Schedule drift detection in CI:
   # Exit code 2: changes detected — alert
 ```
 
-## The Workflow
+## Workflow
 
 ```
 Change needed → Write code → PR review → Apply to staging → Verify → Apply to prod
@@ -154,14 +162,14 @@ Change needed → Write code → PR review → Apply to staging → Verify → A
      └──────────────────── Monitor, discover drift ────────────────────────┘
 ```
 
-Infrastructure changes should never go directly to production without going through staging. The IaC code is the single source of truth — if it's not in code, it shouldn't be on the server.
+Infrastructure পরিবর্তন staging-এর মধ্য দিয়ে না গিয়ে কখনোই সরাসরি production-এ যাওয়া উচিত না। IaC code হলো single source of truth — যদি এটা code-এ না থাকে, তাহলে সেটা server-এও থাকা উচিত না।
 
-## IaC Anti-Patterns
+## IaC Anti-Pattern
 
-**Manual fixes "just this once":** The most common path to drift. One SSH fix leads to another, and soon the IaC no longer reflects reality.
+**"just this once" বলে manual fix:** Drift-এর দিকে সবচেয়ে সাধারণ পথ। একটা SSH fix আরেকটার দিকে নিয়ে যায়, আর অল্প সময়েই IaC আর বাস্তবতাকে প্রতিফলিত করে না।
 
-**Storing state locally:** Terraform's state file tracks what it has created. If it's on a developer's laptop, the team can't collaborate. Use remote state (S3, Terraform Cloud).
+**State locally রাখা:** Terraform-এর state file track করে এটা কী কী তৈরি করেছে। এটা যদি কোনো developer-এর laptop-এ থাকে, তাহলে টিম collaborate করতে পারে না। Remote state ব্যবহার করুন (S3, Terraform Cloud)।
 
-**No testing:** Apply to prod without testing in staging. IaC needs the same discipline as application code.
+**কোনো testing নেই:** Staging-এ test না করেই prod-এ apply করা। IaC-এর application code-এর মতোই একই discipline দরকার।
 
-**Monolithic configs:** One massive Terraform file or one Ansible playbook for everything. Hard to understand, hard to change safely. Modularize.
+**Monolithic config:** সবকিছুর জন্য একটা বিশাল Terraform file বা একটা Ansible playbook। বোঝা কঠিন, নিরাপদে বদলানো কঠিন। Modularize করুন।

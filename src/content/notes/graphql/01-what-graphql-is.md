@@ -1,9 +1,9 @@
 ---
-title: 'What GraphQL is and when to use it'
-subtitle: 'GraphQL is not a database, not a transport, and not a replacement for HTTP. It is a query language and a typed contract — and that distinction shapes every decision you make from here on.'
+title: 'GraphQL কী আর কখন ব্যবহার করবেন'
+subtitle: 'GraphQL কোনো database নয়, কোনো transport নয়, আর HTTP-এর বিকল্পও নয়। এটা একটা query language আর একটা typed contract — আর এই পার্থক্যটাই এখান থেকে আপনার প্রতিটা সিদ্ধান্তকে আকার দেয়।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['graphql', 'rest', 'api design', 'schema']
 ---
 
@@ -11,21 +11,29 @@ topics: ['graphql', 'rest', 'api design', 'schema']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-You have used REST. You know what `GET /api/users/42` returns: whatever the server decides to return. If you wanted only the user's name, you got the whole object anyway. If you wanted the user _and_ their last five posts, you made two requests. If a mobile screen needed seven things, you made seven requests or built a custom `/api/mobile/dashboard` endpoint that nobody else used.
+## গল্পে বুঝি
 
-GraphQL is the answer to "what if the client could just ask for what it needs, in one round trip, over a typed contract." That is the entire pitch. Everything else — schemas, resolvers, federation — is plumbing in service of that idea.
+ইবনে সিনা পৌরসভা অফিসে গেছেন একটা কাজে। ভেতরে ঢুকে দেখেন একটাই বড় "তথ্য ডেস্ক" — সেখানে বসা কর্মী আল-খোয়ারিজমি। ইবনে সিনা একটা কাগজে গুছিয়ে লিখে দিলেন ঠিক কী কী দরকার: এক নাগরিকের নাম, তার বাবার নাম, আর তার শেষ দুটো বিল — ব্যস, এটুকুই। আল-খোয়ারিজমি কাগজটা পড়ে ঠিক সেই তথ্যগুলোই একটা স্লিপে লিখে ফেরত দিলেন। বেশিও না, কমও না, আর মাত্র একবার লাইনে দাঁড়িয়েই কাজ শেষ।
+
+পাশের ঘরের কথা ভাবুন, যেখানে ফাতিমা আল-ফিহরিকে ঠিক এই তথ্যগুলোর জন্যই ছুটতে হয়েছিল আলাদা পাঁচটা কাউন্টারে। এক কাউন্টারে নাম, আরেক কাউন্টারে বাবার নাম, বিলের জন্য আরেকটা — আর প্রতিটা কাউন্টার একটা করে বাঁধা-ধরা ছাপা ফর্ম ধরিয়ে দেয়, যেখানে তার দরকারি তথ্যের সাথে আরও দশটা অপ্রয়োজনীয় ঘর ভরা। কোনোটায় যা চেয়েছিলেন তার বেশি, কোনোটায় আবার আধখানা — আর পুরোটা জোগাড় করতে পাঁচবার লাইন।
+
+এই এক তথ্য ডেস্কই হলো **GraphQL**। আপনার লেখা ওই একটা গোছানো কাগজ = একটা GraphQL **query**; কাগজে ঠিক যে তথ্যগুলো লিখলেন = ঠিক যে **field** চান সেগুলো বেছে নেওয়া; একটাই ডেস্ক = একটাই **endpoint** (`/graphql`); আর এক লাইনেই সব পাওয়া = এক round trip, কোনো over-fetching নেই, বাড়তি ছোটাছুটিও নেই। উল্টোদিকে পাঁচ কাউন্টারে দৌড়ানো, প্রতিটা থেকে বাঁধা-ধরা ফর্ম পাওয়া — সেটাই **REST**-এর অনেক endpoint, over/under-fetching আর একগাদা round-trip। বাস্তবে GitHub-এর মতো সাইট তাদের API-তে ঠিক এই কারণেই GraphQL দেয় — মোবাইল, ওয়েব, থার্ড-পার্টি প্রত্যেকে নিজের দরকারি field-গুলো এক request-এ চেয়ে নিতে পারে।
+
+আপনি REST ব্যবহার করেছেন। আপনি জানেন `GET /api/users/42` কী রিটার্ন করে: server যা রিটার্ন করার সিদ্ধান্ত নেয়, তাই। আপনি যদি শুধু ইউজারের নাম চাইতেন, তবুও পুরো object পেয়ে যেতেন। আপনি যদি ইউজার _এবং_ তার শেষ পাঁচটা পোস্ট চাইতেন, তাহলে দুটো রিকোয়েস্ট করতেন। একটা মোবাইল স্ক্রিনের যদি সাতটা জিনিস দরকার হতো, তাহলে আপনি সাতটা রিকোয়েস্ট করতেন অথবা একটা কাস্টম `/api/mobile/dashboard` endpoint বানাতেন যা আর কেউ ব্যবহার করত না।
+
+GraphQL হলো "যদি ক্লায়েন্ট শুধু যা দরকার তা-ই চাইতে পারত, এক রাউন্ড ট্রিপে, একটা typed contract-এর উপর দিয়ে" — এই প্রশ্নের উত্তর। এটাই পুরো পিচ। বাকি সব কিছু — schema, resolver, federation — এই আইডিয়ার সেবায় নিয়োজিত plumbing।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-GraphQL is like ordering exactly what you want from a menu versus getting a fixed meal — you specify the shape of the data you need.
+GraphQL হলো একটা fixed meal পাওয়ার বদলে মেনু থেকে ঠিক যা চান তা-ই অর্ডার করার মতো — আপনার যে ডেটা দরকার তার আকারটা আপনি নিজেই নির্দিষ্ট করেন।
 
 </Callout>
 
-## A request worth looking at
+## দেখার মতো একটা রিকোয়েস্ট
 
-Here is a GraphQL request. It is just a `POST` to `/graphql` with a JSON body:
+এই যে একটা GraphQL রিকোয়েস্ট। এটা নিছক `/graphql`-এ একটা JSON body সহ `POST`:
 
 ```bash
 curl -X POST http://localhost:4000/graphql \
@@ -35,7 +43,7 @@ curl -X POST http://localhost:4000/graphql \
   }'
 ```
 
-The response:
+রেসপন্স:
 
 ```json
 {
@@ -51,64 +59,64 @@ The response:
 }
 ```
 
-One round trip. Exactly the fields asked for. The response shape mirrors the query shape — that is not an accident, that is the whole language.
+এক রাউন্ড ট্রিপ। ঠিক যে ফিল্ডগুলো চাওয়া হয়েছিল, ঠিক সেগুলোই। রেসপন্সের আকার query-র আকারকে অনুকরণ করে — এটা কোনো দুর্ঘটনা নয়, এটাই গোটা ভাষাটা।
 
-## What GraphQL is, technically
+## GraphQL টেকনিক্যালি কী
 
-A **query language** with a **type system**. That is it. The server publishes a schema (the contract), the client sends queries written against that schema, and an execution engine resolves each requested field by calling code you wrote.
+একটা **type system** সহ একটা **query language**। ব্যস এইটুকুই। server একটা schema প্রকাশ করে (contract), ক্লায়েন্ট সেই schema-র বিপরীতে লেখা query পাঠায়, আর একটা execution engine প্রতিটা চাওয়া ফিল্ড আপনার লেখা কোড কল করে resolve করে।
 
-GraphQL does **not** replace:
+GraphQL যা প্রতিস্থাপন **করে না**:
 
-- **HTTP** — it runs on top. Almost always `POST /graphql`. Sometimes `GET` for cacheable queries. Subscriptions ride on WebSockets.
-- **Your database** — GraphQL has no opinion about storage. Resolvers call whatever (Postgres, Redis, another HTTP API).
-- **Authentication** — there is no `auth` keyword. You wire it in via context, same as REST middleware.
-- **Caching** — no built-in HTTP caching layer. You add it (persisted queries, CDN, client cache).
+- **HTTP** — এটা উপরে চলে। প্রায় সবসময়ই `POST /graphql`। cacheable query-র জন্য মাঝেমধ্যে `GET`। Subscription WebSockets-এর উপর দিয়ে যায়।
+- **আপনার database** — storage নিয়ে GraphQL-এর কোনো মতামত নেই। Resolver যা খুশি কল করে (Postgres, Redis, আরেকটা HTTP API)।
+- **Authentication** — কোনো `auth` কীওয়ার্ড নেই। REST middleware-এর মতোই আপনি context-এর মাধ্যমে এটা যুক্ত করেন।
+- **Caching** — কোনো built-in HTTP caching layer নেই। আপনি এটা যোগ করেন (persisted queries, CDN, client cache)।
 
-It is a contract layer. Knowing what it is _not_ will save you a lot of arguments later.
+এটা একটা contract layer। এটা যা _নয়_ সেটা জানলে পরে অনেক তর্ক থেকে বাঁচবেন।
 
-## REST vs GraphQL — the honest comparison
+## REST বনাম GraphQL — সৎ তুলনা
 
-|               | REST                    | GraphQL                    |
-| ------------- | ----------------------- | -------------------------- |
-| Endpoints     | many, one per resource  | one (`/graphql`)           |
-| Over-fetching | common                  | impossible by design       |
-| Versioning    | `/v1` `/v2`             | additive schema evolution  |
-| Caching       | HTTP, free              | manual, harder             |
-| Tooling       | curl, browser dev tools | Apollo Studio, GraphiQL    |
-| Ramp-up       | one afternoon           | one weekend                |
-| Failure modes | 500s, 4xx               | always 200, errors in body |
+|               | REST                        | GraphQL                   |
+| ------------- | --------------------------- | ------------------------- |
+| Endpoints     | অনেক, প্রতি resource-এ একটা | একটা (`/graphql`)         |
+| Over-fetching | সাধারণ ব্যাপার              | ডিজাইনগতভাবেই অসম্ভব      |
+| Versioning    | `/v1` `/v2`                 | additive schema evolution |
+| Caching       | HTTP, ফ্রি                  | ম্যানুয়াল, কঠিন          |
+| Tooling       | curl, browser dev tools     | Apollo Studio, GraphiQL   |
+| Ramp-up       | এক দুপুর                    | এক উইকেন্ড                |
+| Failure modes | 500s, 4xx                   | সবসময় 200, error body-তে |
 
-That last row trips people. GraphQL almost always returns HTTP 200 even when the resolver threw — the actual error is inside `errors[]` in the JSON body. Your monitoring needs to know this.
+ওই শেষ সারিটা মানুষকে ফাঁদে ফেলে। Resolver থ্রো করলেও GraphQL প্রায় সবসময় HTTP 200 রিটার্ন করে — আসল error থাকে JSON body-র ভেতরে `errors[]`-এ। আপনার monitoring-এর এটা জানা দরকার।
 
-## When GraphQL is the right choice
+## কখন GraphQL সঠিক পছন্দ
 
-- **Multiple consumers with different shapes.** Web, iOS, Android, third parties — each wants slightly different fields. REST collapses into custom endpoints; GraphQL stays one schema.
-- **Deeply nested or related data.** A dashboard query that pulls user → org → projects → tasks → assignees in one shot, with each client picking depth.
-- **A frontend team that ships fast.** Schema is the contract; once the field exists, the client uses it without a backend change.
-- **Federation across services.** A unified graph stitched from many backends (more on this in chapter 10).
+- **আলাদা আলাদা আকার চায় এমন একাধিক consumer।** Web, iOS, Android, third party — প্রত্যেকে সামান্য আলাদা ফিল্ড চায়। REST কাস্টম endpoint-এ ভেঙে পড়ে; GraphQL একটাই schema হয়ে থাকে।
+- **গভীরভাবে nested বা সম্পর্কিত ডেটা।** একটা dashboard query যা এক ধাক্কায় user → org → projects → tasks → assignees টেনে আনে, প্রতিটা ক্লায়েন্ট নিজের depth বেছে নেয়।
+- **দ্রুত ship করে এমন একটা frontend team।** Schema-ই contract; একবার ফিল্ডটা থাকলে, backend পরিবর্তন ছাড়াই ক্লায়েন্ট সেটা ব্যবহার করে।
+- **একাধিক service জুড়ে Federation।** অনেক backend থেকে সেলাই করা একটা unified graph (এ নিয়ে আরও ১০ নম্বর অধ্যায়ে)।
 
-## When REST is the right choice
+## কখন REST সঠিক পছন্দ
 
-- **Public APIs.** Caching, rate limiting, CDN-friendliness, SDK generation — REST wins. GitHub, Stripe, AWS — all REST-first for a reason.
-- **File uploads and downloads.** Streaming binary through GraphQL is awkward; HTTP does it natively.
-- **Simple CRUD with one client.** Adding a query language to a five-endpoint admin panel is overkill.
-- **Aggressive caching needs.** HTTP cache semantics are 30 years of accumulated wisdom. GraphQL throws most of that away.
+- **Public API।** Caching, rate limiting, CDN-বান্ধবতা, SDK generation — এতে REST জেতে। GitHub, Stripe, AWS — সবাই REST-first, কারণ আছে।
+- **File upload আর download।** GraphQL দিয়ে binary stream করা বিদঘুটে; HTTP এটা native-ভাবেই করে।
+- **এক ক্লায়েন্ট সহ সাধারণ CRUD।** পাঁচ-endpoint-এর একটা admin panel-এ একটা query language যোগ করা বাড়াবাড়ি।
+- **আক্রমণাত্মক caching-এর দরকার।** HTTP cache semantics হলো ৩০ বছরের জমা হওয়া প্রজ্ঞা। GraphQL তার বেশিরভাগই ফেলে দেয়।
 
 <Callout type="warn">
 
-"GraphQL is faster than REST" is wrong. GraphQL trades round trips for resolver complexity. A naive GraphQL server will be slower than a tuned REST server on the same data. The win is _flexibility_, not raw speed. Performance comes from DataLoader, persisted queries, and smart resolvers — chapters 5, 6, and 10.
+"GraphQL REST-এর চেয়ে দ্রুত" — এটা ভুল। GraphQL round trip-কে resolver-এর জটিলতার বিনিময়ে দেয়। একই ডেটায় একটা naive GraphQL server একটা tuned REST server-এর চেয়ে ধীর হবে। জয়টা _নমনীয়তার_, খাঁটি গতির নয়। পারফরম্যান্স আসে DataLoader, persisted queries, আর স্মার্ট resolver থেকে — ৫, ৬, আর ১০ নম্বর অধ্যায়।
 
 </Callout>
 
-## The runtime you will use
+## আপনি যে runtime ব্যবহার করবেন
 
-For this track, the server is **graphql-yoga** running on Node. Three reasons:
+এই track-এর জন্য server হলো Node-এর উপর চলা **graphql-yoga**। তিনটা কারণ:
 
-1. The reference implementation (`graphql-js`) is JavaScript, so the ecosystem is deepest there.
-2. graphql-yoga is the modern, batteries-included runtime — handles HTTP, subscriptions, file uploads, plugins out of the box. Replaces older Apollo Server boilerplate.
-3. It is a couple of hundred kilobytes and runs anywhere Node runs. Self-hosting is one binary plus systemd.
+1. reference implementation (`graphql-js`) হলো JavaScript, তাই সেখানকার ecosystem সবচেয়ে গভীর।
+2. graphql-yoga হলো আধুনিক, ব্যাটারি-সহ runtime — HTTP, subscription, file upload, plugin বাক্সের বাইরে থেকেই সামলায়। পুরনো Apollo Server boilerplate-কে প্রতিস্থাপন করে।
+3. এটা কয়েকশো কিলোবাইট আর Node যেখানে চলে সেখানেই চলে। Self-hosting মানে একটা binary আর systemd।
 
-If you write Go, the equivalent is **gqlgen** — code generation from schema to Go structs, very fast. If you write Python, it is **Strawberry** — decorator-based, type-hint-driven. Same ideas, different syntax. Every concept in this track maps directly.
+আপনি Go লিখলে সমতুল্যটা হলো **gqlgen** — schema থেকে Go struct-এ code generation, খুব দ্রুত। আপনি Python লিখলে সেটা হলো **Strawberry** — decorator-ভিত্তিক, type-hint-চালিত। একই আইডিয়া, ভিন্ন syntax। এই track-এর প্রতিটা ধারণা সরাসরি map হয়।
 
 ```bash
 mkdir my-graphql && cd my-graphql
@@ -116,19 +124,19 @@ npm init -y
 npm install graphql graphql-yoga
 ```
 
-That is the whole setup. We start writing code in chapter 3.
+এটাই পুরো setup। আমরা ৩ নম্বর অধ্যায়ে কোড লেখা শুরু করি।
 
-## What "self-hosted" means here
+## এখানে "self-hosted" মানে কী
 
-The whole track stays vendor-neutral. No "use AWS AppSync" or "deploy to Apollo's hosted service." We will run graphql-yoga on a VPS behind nginx, with Postgres as the only data dependency. If you finish the track you will know how to ship a real production GraphQL service for ten dollars a month, with nothing managed.
+গোটা track-টা vendor-neutral থাকে। কোনো "AWS AppSync ব্যবহার করুন" বা "Apollo-র hosted service-এ deploy করুন" নেই। আমরা graphql-yoga একটা VPS-এ nginx-এর পিছনে চালাব, একমাত্র data dependency হিসেবে Postgres থাকবে। track শেষ করলে আপনি জানবেন মাসে দশ ডলারে, কিছু managed ছাড়াই, কীভাবে একটা সত্যিকারের production GraphQL service ship করতে হয়।
 
-## Recap
+## রিক্যাপ
 
-- GraphQL is a query language with a type system, not a transport or a database.
-- One endpoint, one round trip, exactly the fields you asked for.
-- It runs on top of HTTP, with WebSockets for subscriptions.
-- Right call for many consumers, deep relations, fast-iterating frontends.
-- Wrong call for public APIs, file streaming, simple CRUD, aggressive caching.
-- Returns HTTP 200 even on errors — your monitoring must read the body.
+- GraphQL হলো একটা type system সহ একটা query language, কোনো transport বা database নয়।
+- একটা endpoint, এক রাউন্ড ট্রিপ, ঠিক যে ফিল্ডগুলো চেয়েছেন সেগুলোই।
+- এটা HTTP-এর উপরে চলে, subscription-এর জন্য WebSockets সহ।
+- অনেক consumer, গভীর সম্পর্ক, দ্রুত-iterate করা frontend-এর জন্য সঠিক সিদ্ধান্ত।
+- Public API, file streaming, সাধারণ CRUD, আক্রমণাত্মক caching-এর জন্য ভুল সিদ্ধান্ত।
+- error-এর সময়েও HTTP 200 রিটার্ন করে — আপনার monitoring-কে body পড়তে হবে।
 
-Next: [Schema-first design](/notes/graphql/02-schema-first-design) — types, queries, mutations, and the nullability decisions that haunt you for years if you get them wrong.
+পরবর্তী: [Schema-first design](/notes/graphql/02-schema-first-design) — types, queries, mutations, আর সেই nullability সিদ্ধান্তগুলো যা ভুল করলে বছরের পর বছর আপনাকে তাড়া করে বেড়ায়।

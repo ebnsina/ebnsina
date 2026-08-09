@@ -1,9 +1,9 @@
 ---
-title: 'Cloud Security'
-subtitle: 'AWS, GCP, and Azure attack techniques — IAM misconfigs, S3 exposure, metadata service abuse, container escapes, and cloud-native threats.'
+title: 'ক্লাউড সিকিউরিটি'
+subtitle: 'AWS, GCP, এবং Azure অ্যাটাক টেকনিক — IAM মিসকনফিগ, S3 এক্সপোজার, মেটাডেটা সার্ভিস অ্যাবিউজ, কন্টেইনার এস্কেপ, আর ক্লাউড-নেটিভ থ্রেট।'
 chapter: 17
 level: 'advanced'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics:
   [
     'cloud security',
@@ -22,15 +22,23 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা শহরের সবচেয়ে বড় সেল্‌ফ-স্টোরেজ ফ্যাসিলিটিতে কয়েকটা স্টোরেজ ইউনিট ভাড়া নিয়েছেন। ফ্যাসিলিটির বাইরের সিকিউরিটি অসাধারণ — উঁচু দেয়াল, চব্বিশ ঘণ্টা গার্ড, প্রতিটা গেটে CCTV, ভেতরে ঢুকতে গেলে কার্ড লাগে। ইবনে সিনা নিশ্চিন্ত, এত পাহারার ভেতরে তাঁর জিনিস তো একদম নিরাপদ। কিন্তু নিশ্চিন্ততাই তাঁর বিপদ ডেকে আনল।
+
+জিনিস আনা-নেওয়ার সময় তাড়াহুড়ায় তিনি নিজের একটা ইউনিটের শাটার পুরো তুলে রেখে চলে গেলেন — এখন করিডোর দিয়ে হেঁটে যাওয়া যে কেউ সোজা ভেতরে ঢুকে জিনিস দেখতে বা নিতে পারে। এদিকে সুবিধার জন্য তিনি ইউনিটের বাড়তি চাবি বানিয়ে বহু চেনা-অচেনা লোককে বিলিয়ে দিলেন, কার হাতে চাবি আছে তারও হিসাব নেই। আর একদিন আরেকটা ইউনিটের চাবি, যেটার গায়ে ইউনিট নম্বর লেখা লেবেল লাগানো, সেটা পাবলিক করিডোরে পড়ে গেল, কেউ কুড়িয়ে নিলেই সরাসরি তালা খুলে ফেলবে। ফ্যাসিলিটির একটা গার্ডও ব্যর্থ হয়নি — বিল্ডিং ঠিকঠাক পাহারা দিয়েছে; ফাঁকটা তৈরি করেছে ইবনে সিনার নিজের অসাবধান config।
+
+এই গল্পটাই আসলে **cloud misconfiguration**। খোলা শাটার হলো পাবলিকলি-এক্সপোজড **storage bucket** (যেমন public S3 bucket) — বাইরের কেউ প্রোভাইডারকে হ্যাক না করেই আপনার ডেটা পড়ে ফেলে। বহু লোককে বাড়তি চাবি বিলানো হলো over-permissive **IAM** roles — দরকারের চেয়ে বেশি লোকের বেশি access। আর লেবেল-লাগানো পড়ে-থাকা চাবি হলো exposed **credential** (কোডে বা পাবলিক রিপোতে ফাঁস হওয়া key)। এটাই **shared responsibility** model: ফ্যাসিলিটি (cloud provider) বিল্ডিং পাহারা দেয়, কিন্তু আপনার নিজের ইউনিটে তালা দেওয়া, মানে নিজের configuration সিকিউর করা, পুরোপুরি আপনার দায়িত্ব। বাস্তবে বেশিরভাগ ক্লাউড breach প্রোভাইডার হ্যাক হয়ে নয় — খোলা রাখা S3 bucket থেকে ফাঁস হওয়া মিলিয়ন-রেকর্ড ডেটা লিকের মতো ঘটনাগুলো প্রায় সবই এমন misconfiguration থেকেই হয়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব-জীবনের উদাহরণ**
 
-The cloud is not "someone else's computer" — it's your computer with a thousand configuration options, each one a potential door left open. The shared responsibility model means AWS secures the hardware; you secure everything built on top of it.
+ক্লাউড মানে "অন্য কারো কম্পিউটার" নয় — এটা আপনারই কম্পিউটার, শুধু হাজারটা কনফিগারেশন অপশনসহ, যার প্রতিটাই একটা সম্ভাব্য খোলা দরজা। শেয়ারড রেসপনসিবিলিটি মডেল অনুযায়ী AWS হার্ডওয়্যার সিকিউর করে; বাকি সবকিছু, যা এর উপর বানানো, সেটা সিকিউর করার দায়িত্ব আপনার।
 
 </Callout>
 
-## Cloud Attack Surface
+## ক্লাউড অ্যাটাক সারফেস
 
 ```
 External (internet-facing):
@@ -50,7 +58,7 @@ Internal (after initial access):
   - Misconfigured resource policies
 ```
 
-## AWS Enumeration
+## AWS এনুমারেশন
 
 ```bash
 # Install AWS CLI
@@ -87,9 +95,9 @@ aws iam list-user-policies --user-name alice
 aws iam get-policy-version --policy-arn arn:aws:iam::123456789:policy/MyPolicy --version-id v1
 ```
 
-## S3 Bucket Attacks
+## S3 বাকেট অ্যাটাক
 
-S3 bucket misconfigurations are the most common cloud security finding.
+S3 বাকেট মিসকনফিগারেশন হলো সবচেয়ে কমন ক্লাউড সিকিউরিটি ফাইন্ডিং।
 
 ```bash
 # Check public bucket access (no credentials)
@@ -119,9 +127,9 @@ echo "test" > test.txt
 aws s3 cp test.txt s3://target-bucket/test.txt --no-sign-request
 ```
 
-## EC2 Metadata Service (IMDS) Abuse
+## EC2 মেটাডেটা সার্ভিস (IMDS) অ্যাবিউজ
 
-The most critical technique for cloud privilege escalation. From any RCE/SSRF on an EC2 instance:
+ক্লাউড প্রিভিলেজ এস্কেলেশনের সবচেয়ে ক্রিটিক্যাল টেকনিক। EC2 ইনস্ট্যান্সে যেকোনো RCE/SSRF থেকে শুরু করে:
 
 ```bash
 # IMDSv1 — no token required (dangerous)
@@ -152,11 +160,11 @@ aws sts get-caller-identity  # verify identity
 aws s3 ls                     # now using EC2's IAM role
 ```
 
-**Why this matters:** EC2 instances often have roles like `FullS3Access` or `AdminRole` attached. SSRF vulnerability + IMDS = cloud account takeover.
+**কেন এটা গুরুত্বপূর্ণ:** EC2 ইনস্ট্যান্সে প্রায়ই `FullS3Access` বা `AdminRole`-এর মতো রোল অ্যাটাচ করা থাকে। SSRF ভালনারেবিলিটি + IMDS = ক্লাউড অ্যাকাউন্ট টেকওভার।
 
-**Defense:** IMDSv2 requires a PUT request first (token-based) — prevents SSRF from reaching it because SSRF can't follow the two-step flow.
+**ডিফেন্স:** IMDSv2-তে আগে একটা PUT রিকোয়েস্ট লাগে (টোকেন-বেসড) — এটা SSRF-কে ঠেকিয়ে দেয়, কারণ SSRF এই দুই-ধাপের ফ্লো ফলো করতে পারে না।
 
-## SSRF → Cloud Metadata
+## SSRF → ক্লাউড মেটাডেটা
 
 ```bash
 # In a web app SSRF parameter:
@@ -173,7 +181,7 @@ curl "http://metadata.google.internal/computeMetadata/v1/instance/service-accoun
   -H "Metadata-Flavor: Google"
 ```
 
-## AWS Privilege Escalation
+## AWS প্রিভিলেজ এস্কেলেশন
 
 ```bash
 # If you have iam:CreatePolicyVersion — create a new version with AdministratorAccess
@@ -206,7 +214,7 @@ python3 pacu.py
 # run modules: iam__privesc_scan, ec2__enum, s3__bucket_finder
 ```
 
-## GCP Attack Techniques
+## GCP অ্যাটাক টেকনিক
 
 ```bash
 # Authenticate with stolen token
@@ -238,7 +246,7 @@ curl "http://metadata.google.internal/computeMetadata/v1/instance/service-accoun
   -H "Metadata-Flavor: Google"
 ```
 
-## Azure Attack Techniques
+## Azure অ্যাটাক টেকনিক
 
 ```bash
 # Install Azure CLI
@@ -268,7 +276,7 @@ curl -H "Metadata:true" "http://169.254.169.254/metadata/identity/oauth2/token?a
 # Import into BloodHound for attack path analysis
 ```
 
-## Cloud Security Tools
+## ক্লাউড সিকিউরিটি টুলস
 
 ```bash
 # ScoutSuite — multi-cloud security auditing
@@ -293,7 +301,7 @@ python3 cloud_enum.py -k targetcompany
 trufflehog s3 --bucket target-bucket
 ```
 
-## Secrets in Cloud Environments
+## ক্লাউড এনভায়রনমেন্টে সিক্রেটস
 
 ```bash
 # AWS Systems Manager Parameter Store
@@ -318,7 +326,7 @@ kubectl get secret db-secret -o jsonpath='{.data.password}' | base64 -d
 # .github/workflows often contain cloud credentials patterns
 ```
 
-## Cloud Incident Response Indicators
+## ক্লাউড ইনসিডেন্ট রেসপন্স ইন্ডিকেটর
 
 ```bash
 # CloudTrail — AWS audit log (what API calls were made, when, from where)
@@ -338,9 +346,9 @@ aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,Attribute
 # Exfiltration:S3/AnomalousBehavior
 ```
 
-## Real Project: CloudGoat
+## রিয়েল প্রজেক্ট: CloudGoat
 
-CloudGoat is Rhino Security's vulnerable-by-design AWS infrastructure:
+CloudGoat হলো Rhino Security-র ভালনারেবল-বাই-ডিজাইন AWS ইনফ্রাস্ট্রাকচার:
 
 ```bash
 git clone https://github.com/RhinoSecurityLabs/cloudgoat

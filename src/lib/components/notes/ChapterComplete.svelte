@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
-	import { nt, type Locale } from '$lib/i18n/notes';
+	import { t } from '$lib/data/notes-strings';
 
 	let {
 		category,
@@ -10,8 +10,7 @@
 		level,
 		trackSlugs = [],
 		trackLabel = '',
-		nextHref = null,
-		locale = 'en'
+		nextHref = null
 	}: {
 		category: string;
 		slug: string;
@@ -19,10 +18,8 @@
 		trackSlugs?: string[];
 		trackLabel?: string;
 		nextHref?: string | null;
-		locale?: Locale;
 	} = $props();
 
-	const t = $derived(nt(locale));
 	const done = $derived(progress.ready && progress.isDone(category, slug));
 	const xp = $derived(xpForLevel(level));
 	const rankName = $derived(t.ranks[progress.rank.name] ?? progress.rank.name);

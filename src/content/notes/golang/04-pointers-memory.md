@@ -1,9 +1,9 @@
 ---
-title: 'Pointers & Memory'
-subtitle: 'Pointers let you share data without copying it — understand them once and never be confused by & and * again.'
+title: 'Pointers ও Memory'
+subtitle: 'Pointer আপনাকে ডেটা কপি না করেই শেয়ার করতে দেয় — একবার বুঝে নিলে & আর * নিয়ে আর কখনো ধন্দে পড়বেন না।'
 chapter: 4
 level: 'beginner'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['pointers', 'memory', 'stack', 'heap', 'nil', 'pass by value']
 ---
 
@@ -11,9 +11,17 @@ topics: ['pointers', 'memory', 'stack', 'heap', 'nil', 'pass by value']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What Is a Pointer?
+## গল্পে বুঝি
 
-A pointer is a variable that holds the **memory address** of another variable. Instead of holding the value itself, it holds directions to where the value lives.
+ইবনে সিনা শহরের বাইরে থাকে, তার একটা বাড়ি আছে গ্রামে। বাড়ির রঙ চটে গেছে, তাই সে আল-খোয়ারিজমিকে বলল, "ভাই, আমার বাড়িটা একটু রং করিয়ে দে তো।" এখন আল-খোয়ারিজমিকে তো কাজটা করতে হলে জানতে হবে বাড়িটা ঠিক কোথায়। ইবনে সিনা একটা কাগজে বাড়ির পুরো ঠিকানা লিখে আল-খোয়ারিজমির হাতে দিল — গ্রামের নাম, রাস্তার নাম, বাড়ির নম্বর। আল-খোয়ারিজমি সেই ঠিকানা ধরে গ্রামে গেল, আসল বাড়িটা খুঁজে বের করল, আর দেয়ালে নতুন রং লাগিয়ে দিল। ইবনে সিনা পরে গিয়ে দেখল — বাহ, তার আসল বাড়িটাই সত্যিই ঝকঝকে হয়ে গেছে।
+
+এবার উল্টোটা ভাবুন। ইবনে সিনা যদি আল-খোয়ারিজমিকে ঠিকানা না দিয়ে বাড়ির একটা ছবির ফটোকপি হাতে দিত আর বলত "এটা রং কর"? আল-খোয়ারিজমি কাগজের ওই ছবিতে যত সুন্দর করেই রং বুলাক না কেন, গ্রামের আসল বাড়ির একটা ইটও বদলাবে না। কারণ সে তো শুধু একটা কপি নিয়ে কাজ করছে, আসল জিনিসটার নাগাল তার হাতে নেই।
+
+এই গল্পটাই আসলে **pointer**। বাড়ির ঠিকানা লেখা কাগজটাই হলো pointer — সে নিজে বাড়ি না, বাড়িটা কোথায় আছে সেই **address** ধরে রাখে। ঠিকানা (pointer) হাতে পেলে আল-খোয়ারিজমি আসল বাড়িটাই (original value) বদলাতে পারে। আর ফটোকপি দেওয়া মানে একটা **value copy** পাস করা — Go-তে ডিফল্টে ফাংশনে সবকিছু এভাবেই copy হয়ে যায়, তাই কপিতে করা পরিবর্তন আসলটায় লাগে না। বাস্তবে কোনো ফাংশনকে যখন আপনি আসল ডেটা বদলাতে দিতে চান — যেমন একটা struct-এর field আপডেট করা — তখন value পাঠানোর বদলে তার address, মানে pointer, পাঠান।
+
+## Pointer কী?
+
+একটা pointer হলো এমন একটা variable যা আরেকটা variable-এর **memory address** ধরে রাখে। মানটা নিজে ধরে রাখার বদলে, এটা মানটা যেখানে আছে সেখানকার দিকনির্দেশনা ধরে রাখে।
 
 ```go
 name := "Fatima"     // A string variable
@@ -26,15 +34,15 @@ fmt.Println(*ptr)   // "Fatima"  — dereferencing: follow the address to get th
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A pointer is like a house address written on a piece of paper. The paper doesn't contain the house — it contains the address where the house is. `&name` gives you the address. `*ptr` is like driving to the address and looking at the house. Multiple people can have the same address written down, and they'd all be looking at the same house.
+একটা pointer অনেকটা কাগজে লেখা একটা বাড়ির ঠিকানার মতো। কাগজটায় বাড়ি নেই — এতে বাড়িটা যেখানে আছে সেই ঠিকানা আছে। `&name` আপনাকে ঠিকানা দেয়। `*ptr` অনেকটা সেই ঠিকানায় গাড়ি চালিয়ে গিয়ে বাড়িটা দেখার মতো। একাধিক মানুষের কাছে একই ঠিকানা লেখা থাকতে পারে, আর তারা সবাই একই বাড়িটাই দেখবে।
 
 </Callout>
 
-## Why Pointers Exist
+## Pointer কেন আছে
 
-Go passes everything **by value** — function arguments are always copies. Without pointers, you can't modify the original data:
+Go সবকিছু **by value** পাস করে — function argument সবসময় copy। Pointer ছাড়া আপনি মূল ডেটা পরিবর্তন করতে পারবেন না:
 
 ```go
 // WITHOUT pointers — the original doesn't change
@@ -56,12 +64,12 @@ actuallyModify(&original)  // Pass the address
 fmt.Println(original)       // "Omar" — it changed!
 ```
 
-## The Two Operators
+## দুটি Operator
 
-| Operator | Name        | What It Does                           | Example         |
-| -------- | ----------- | -------------------------------------- | --------------- |
-| `&`      | Address-of  | Gets the memory address of a variable  | `ptr := &name`  |
-| `*`      | Dereference | Follows a pointer to get/set the value | `value := *ptr` |
+| Operator | নাম         | কী করে                                | উদাহরণ          |
+| -------- | ----------- | ------------------------------------- | --------------- |
+| `&`      | Address-of  | একটা variable-এর memory address নেয়  | `ptr := &name`  |
+| `*`      | Dereference | value পেতে/সেট করতে pointer ধরে এগোয় | `value := *ptr` |
 
 ```go
 x := 42
@@ -76,7 +84,7 @@ fmt.Println(x)   // 100 — x changed because p points to x
 
 ## Pointer Types
 
-The type `*T` means "pointer to a value of type T":
+`*T` type-এর মানে "T type-এর একটা value-র দিকে pointer":
 
 ```go
 var intPtr *int        // Pointer to int (zero value is nil)
@@ -94,7 +102,7 @@ intPtr = new(int)      // Points to a new int (value = 0)
 
 ## Nil Pointers
 
-A pointer's zero value is `nil`. Dereferencing a nil pointer causes a **panic** (crash):
+একটা pointer-এর zero value হলো `nil`। একটা nil pointer dereference করলে **panic** (crash) হয়:
 
 ```go
 var ptr *int          // nil
@@ -109,13 +117,13 @@ if ptr != nil {
 
 <Callout type="warning">
 
-**Nil pointer dereference is Go's most common runtime panic.** Always check if a pointer might be nil before using `*ptr`. This is especially important with struct fields, function returns, and interface values.
+**Nil pointer dereference হলো Go-র সবচেয়ে সাধারণ runtime panic।** `*ptr` ব্যবহারের আগে একটা pointer nil হতে পারে কিনা সবসময় চেক করুন। struct field, function return, আর interface value-র ক্ষেত্রে এটা বিশেষভাবে গুরুত্বপূর্ণ।
 
 </Callout>
 
-## Pointers and Structs
+## Pointer এবং Structs
 
-This is where pointers become essential in real Go code:
+এখানেই বাস্তব Go কোডে pointer অপরিহার্য হয়ে ওঠে:
 
 ```go
 type User struct {
@@ -142,15 +150,15 @@ fmt.Println(user.Age)  // 30
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Passing a struct by value is like photocopying a document and handing out the copy — edits to the copy don't affect the original. Passing a pointer is like sharing a Google Doc link — everyone with the link edits the same document.
+একটা struct-কে by value পাস করা অনেকটা একটা নথির ফটোকপি করে কপিটা হাতে দেওয়ার মতো — কপিতে করা এডিট মূলটায় প্রভাব ফেলে না। একটা pointer পাস করা অনেকটা একটা Google Doc-এর লিংক শেয়ার করার মতো — লিংক থাকা সবাই একই নথি এডিট করে।
 
 </Callout>
 
 ### Automatic Dereferencing
 
-Go simplifies struct pointer access — you don't need `(*ptr).Field`:
+Go struct pointer access সহজ করে দেয় — আপনার `(*ptr).Field` লাগে না:
 
 ```go
 user := &User{Name: "Fatima"}
@@ -160,9 +168,9 @@ fmt.Println((*user).Name)  // Explicit dereference
 fmt.Println(user.Name)     // Go does it automatically
 ```
 
-## Stack vs Heap
+## Stack বনাম Heap
 
-Go manages memory automatically, but understanding where data lives helps write faster code:
+Go automatically memory ম্যানেজ করে, কিন্তু ডেটা কোথায় থাকে সেটা বোঝা দ্রুততর কোড লিখতে সাহায্য করে:
 
 ```go
 // Stack allocation (fast — automatic cleanup)
@@ -180,15 +188,15 @@ func heapExample() *int {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-**Stack** = your desk at work. Fast to put things on and take off, but when you leave for the day (function returns), your desk is cleared. **Heap** = the company storage room. Things stay there as long as someone has the key (pointer). The janitor (garbage collector) periodically checks if any items have no keys pointing to them and cleans them up.
+**Stack** = অফিসে আপনার ডেস্ক। জিনিস রাখা আর তোলা দ্রুত, কিন্তু আপনি দিন শেষে চলে গেলে (function return) আপনার ডেস্ক পরিষ্কার হয়ে যায়। **Heap** = কোম্পানির স্টোরেজ রুম। কারো কাছে চাবি (pointer) থাকা পর্যন্ত জিনিস সেখানে থাকে। ঝাড়ুদার (garbage collector) মাঝেমধ্যে দেখে কোন জিনিসের দিকে আর কোনো চাবি তাক করা নেই আর সেগুলো পরিষ্কার করে।
 
 </Callout>
 
 ### Escape Analysis
 
-Go's compiler decides whether to allocate on stack or heap. You can see its decisions:
+Go-র compiler ঠিক করে stack-এ নাকি heap-এ allocate করবে। আপনি তার সিদ্ধান্তগুলো দেখতে পারেন:
 
 ```bash
 go build -gcflags="-m" ./...
@@ -196,18 +204,18 @@ go build -gcflags="-m" ./...
 # ./main.go:15:2: y does not escape
 ```
 
-**Rules of thumb:**
+**মূলনীতি:**
 
-- If you return a pointer to a local variable, it escapes to heap
-- If you store a pointer in a long-lived struct, it escapes
-- If a variable is too large for the stack, it goes to heap
-- Stack allocation is nearly free; heap allocation involves GC
+- আপনি যদি একটা local variable-এর দিকে pointer return করেন, তা heap-এ escape করে
+- আপনি যদি একটা দীর্ঘস্থায়ী struct-এ একটা pointer store করেন, তা escape করে
+- একটা variable যদি stack-এর জন্য বড্ড বড় হয়, তা heap-এ যায়
+- Stack allocation প্রায় ফ্রি; heap allocation-এ GC জড়িত
 
-## Common Patterns
+## সাধারণ Patterns
 
 ### Optional Values
 
-Go doesn't have `Optional` or `Maybe`. Pointers serve this purpose:
+Go-তে `Optional` বা `Maybe` নেই। Pointer এই উদ্দেশ্য পূরণ করে:
 
 ```go
 type SearchParams struct {
@@ -247,7 +255,7 @@ search(SearchParams{
 })
 ```
 
-### Avoiding Large Copies
+### বড় Copy এড়ানো
 
 ```go
 type Report struct {
@@ -263,28 +271,28 @@ func processReport(r Report) { ... }
 func processReport(r *Report) { ... }
 ```
 
-## When to Use Pointers vs Values
+## কখন Pointer বনাম Value ব্যবহার করবেন
 
-| Use a pointer `*T`                             | Use a value `T`                    |
-| ---------------------------------------------- | ---------------------------------- |
-| Need to modify the original                    | Read-only access                   |
-| Struct is large (>64 bytes)                    | Small structs (Point, Color, Time) |
-| Representing "optional" (nil = absent)         | Value is always required           |
-| Sharing data between goroutines                | Independent copies are fine        |
-| Satisfying an interface with pointer receivers | Immutable data types               |
+| Pointer `*T` ব্যবহার করুন                      | Value `T` ব্যবহার করুন          |
+| ---------------------------------------------- | ------------------------------- |
+| মূলটা পরিবর্তন করা দরকার                       | Read-only access                |
+| Struct বড় (>64 bytes)                         | ছোট struct (Point, Color, Time) |
+| "optional" প্রকাশ করা (nil = অনুপস্থিত)        | Value সবসময় দরকার              |
+| goroutine-এর মধ্যে ডেটা শেয়ার করা             | স্বাধীন copy ঠিক আছে            |
+| pointer receiver দিয়ে একটা interface পূরণ করা | Immutable data type             |
 
 <Callout type="tip">
 
-**When in doubt, use a pointer for structs.** The performance difference is negligible for small structs, but pointer semantics (modifiability, nil-ability) are usually what you want in application code. Use values for small, immutable types like `time.Time`, `netip.Addr`, or your own `Money` type.
+**সন্দেহ হলে, struct-এর জন্য pointer ব্যবহার করুন।** ছোট struct-এর জন্য performance-এর পার্থক্য নগণ্য, কিন্তু pointer semantics (পরিবর্তনযোগ্যতা, nil হওয়ার সম্ভাবনা) সাধারণত application কোডে আপনি যা চান তা-ই। ছোট, immutable type যেমন `time.Time`, `netip.Addr`, বা আপনার নিজের `Money` type-এর জন্য value ব্যবহার করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **`&` gets the address**, **`*` follows the address** — that's all there is to pointers
-2. **Go is pass-by-value** — without pointers, functions work on copies
-3. **Nil pointer dereference is the #1 panic** — always check before using `*ptr`
-4. **Go auto-dereferences struct pointers** — `user.Name` works whether `user` is `User` or `*User`
-5. **Stack is fast, heap needs GC** — returning pointers to locals moves them to the heap
-6. **Use pointers for optionality** — `*float64` where nil means "not specified"
-7. **Use pointers for large structs** — avoids copying kilobytes of data per function call
+1. **`&` address নেয়**, **`*` address ধরে এগোয়** — pointer-এর ব্যাপার এটুকুই
+2. **Go pass-by-value** — pointer ছাড়া function copy নিয়ে কাজ করে
+3. **Nil pointer dereference হলো #1 panic** — `*ptr` ব্যবহারের আগে সবসময় চেক করুন
+4. **Go struct pointer auto-dereference করে** — `user` `User` হোক বা `*User`, `user.Name` কাজ করে
+5. **Stack দ্রুত, heap-এ GC লাগে** — local-এর দিকে pointer return করলে সেগুলো heap-এ চলে যায়
+6. **Optionality-র জন্য pointer ব্যবহার করুন** — `*float64` যেখানে nil মানে "specified নয়"
+7. **বড় struct-এর জন্য pointer ব্যবহার করুন** — প্রতি function কল-এ কিলোবাইট ডেটা copy করা এড়ায়

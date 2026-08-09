@@ -1,9 +1,9 @@
 ---
 title: 'Reconnaissance'
-subtitle: 'OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — gathering intelligence without touching the target.'
+subtitle: 'OSINT, passive recon, Google dorks, Shodan, theHarvester, Maltego — টার্গেট না ছুঁয়েই ইন্টেলিজেন্স সংগ্রহ।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'OSINT',
@@ -22,11 +22,19 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A detective doesn't kick in doors before reading the case file. Recon is reading the case file — finding everything publicly available before you make a move that could be logged.
+একজন গোয়েন্দা কেস ফাইল না পড়ে দরজা ভেঙে ঢোকে না। Recon হলো কেস ফাইল পড়া — এমন কোনো পদক্ষেপ নেওয়ার আগে সব পাবলিকলি available তথ্য খুঁজে বের করা যা log হতে পারে।
 
 </Callout>
+
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একজন authorised security consultant। এক ক্লায়েন্ট তাকে ডেকেছে তাদের অফিস বিল্ডিংটা কতটা নিরাপদ সেটা যাচাই করতে। ফাতিমা প্রথম দিনই দরজা ঠেলে ভেতরে ঢোকেনি। সে উল্টো দিকের ফুটপাথে দাঁড়িয়ে চুপচাপ শুধু দেখেছে — সাইনবোর্ডে কোম্পানির নাম, দেয়ালের নোটিশ বোর্ডে টাঙানো স্টাফদের ছবি আর নাম, গেটে লেখা ডেলিভারির সময়সূচি, রাতে কোন কোন তলার আলো জ্বলে থাকে। একটাও দরজায় হাত না দিয়ে, কারও সাথে কথা না বলে, সে খাতায় অবাক করা এক তালিকা বানিয়ে ফেলল — কে ম্যানেজার, কোন ফ্লোরে সার্ভার রুম, কখন বিল্ডিং প্রায় ফাঁকা থাকে।
+
+এতটুকু জেনে নেওয়ার পরই কেবল সে ক্লায়েন্টের লিখিত অনুমতি নিয়ে সামনে এগোলো — এবার সে হেঁটে গিয়ে সত্যিই দরজাগুলো ধরে দেখল কোনটা খোলা, কোনটা লক করা, পেছনে আরেকটা গেট আছে কি না। শেষে ফাতিমা মালিককে বলল, "একজন অচেনা মানুষ রাস্তায় দাঁড়িয়েই এই এতগুলো জিনিস বিনা খরচে জেনে ফেলছে — এগুলোই আগে ঢেকে ফেলুন।"
+
+এই গল্পটাই আসলে **reconnaissance**। রাস্তায় দাঁড়িয়ে শুধু পাবলিক, দৃশ্যমান তথ্য দেখা — সাইনবোর্ড, নোটিশ বোর্ড, আলো — এটাই **passive recon**, যেখানে আপনি টার্গেটকে ছোঁন না, তাই ধরাও পড়েন না। আর অনুমতি নিয়ে হেঁটে গিয়ে দরজা ধরে ধরে টেস্ট করা হলো **active recon**, যেখানে আপনি সরাসরি probe করেন বলে টার্গেট টের পেতে পারে। আর "একজন অচেনা মানুষ ফ্রিতে কতটা জেনে ফেলল" — সেটাই আপনার **attack surface**, যা defensively কমানোই আসল কাজ: OSINT দিয়ে যা যা পাবলিকলি ফাঁস হচ্ছে সেটা যত ঢাকবেন, আক্রমণকারীর হাতে তত কম তথ্য থাকবে। বাস্তবেও একটা প্রতিষ্ঠানের WHOIS, DNS, GitHub আর LinkedIn থেকে ফাঁস হওয়া ছোট ছোট তথ্যই মিলিয়ে দিলে পুরো ইনফ্রাস্ট্রাকচারের ছবি ফুটে ওঠে — তাই ভালো ডিফেন্স মানে আগে দেখা, একজন বহিরাগত আপনার সম্পর্কে বিনামূল্যে কী কী জানতে পারে।
 
 ## Passive vs Active Recon
 
@@ -42,7 +50,7 @@ Active recon — you send packets to the target
   → Do after you've exhausted passive sources
 ```
 
-## WHOIS and Domain Intelligence
+## WHOIS এবং Domain Intelligence
 
 ```bash
 # Domain registration info
@@ -92,7 +100,7 @@ curl -s "https://crt.sh/?q=%.example.com&output=json" | jq '.[].name_value' | so
 
 ## Google Dorks
 
-Google's search operators as a recon weapon:
+Google-এর search operator-কে recon অস্ত্র হিসেবে ব্যবহার:
 
 ```
 site:example.com                         → all indexed pages
@@ -108,7 +116,7 @@ intitle:"index of" site:example.com      → open directories
 inurl:/wp-content/uploads filetype:txt   → WordPress upload dirs
 ```
 
-**Automate with GoogleDorker or DorkSearch:**
+**GoogleDorker বা DorkSearch দিয়ে অটোমেট করুন:**
 
 ```bash
 # Manual — just use Google, don't hammer it with automation
@@ -119,9 +127,9 @@ site:pastebin.com "example.com"           # pastes mentioning target
 site:github.com "example.com" password    # leaked creds in repos
 ```
 
-## Shodan — The Internet-Connected Device Search Engine
+## Shodan — ইন্টারনেট-সংযুক্ত ডিভাইস সার্চ ইঞ্জিন
 
-Shodan indexes banners from internet-exposed services. It knows what software version your target's servers run — without you ever sending a packet.
+Shodan ইন্টারনেট-উন্মুক্ত service-এর banner index করে। আপনি একটি প্যাকেটও না পাঠিয়ে এটি জানে আপনার টার্গেটের server-এ কোন সফটওয়্যার ভার্সন চলছে।
 
 ```bash
 # Install CLI
@@ -149,14 +157,14 @@ shodan host 93.184.216.34
 # product:elasticsearch
 ```
 
-**Common Shodan findings:**
+**সাধারণ Shodan finding:**
 
-- `port:6379` — Redis with no auth
-- `port:9200` — Elasticsearch with no auth
-- `port:27017` — MongoDB with no auth
-- `port:5432 postgresql` — exposed PostgreSQL
+- `port:6379` — auth ছাড়া Redis
+- `port:9200` — auth ছাড়া Elasticsearch
+- `port:27017` — auth ছাড়া MongoDB
+- `port:5432 postgresql` — উন্মুক্ত PostgreSQL
 
-## theHarvester — Email and Subdomain Intel
+## theHarvester — Email ও Subdomain Intel
 
 ```bash
 # Gather emails, subdomains, IPs from public sources
@@ -173,12 +181,12 @@ theHarvester -d example.com -b google,bing,linkedin,shodan -l 500 -f output.html
 
 ## LinkedIn / Social Media OSINT
 
-LinkedIn reveals:
+LinkedIn যা প্রকাশ করে:
 
-- Employee names → generate username lists (a.al-khwarizmi, ahmad.al-khwarizmi, aalkhwarizmi)
-- Job titles → understand tech stack ("Senior Kubernetes Engineer" = K8s in prod)
-- Recent job postings → "AWS Lambda experience required" = they use Lambda
-- Tech stack from profiles → Python, Go, React, Terraform
+- কর্মচারীদের নাম → username list বানান (a.al-khwarizmi, ahmad.al-khwarizmi, aalkhwarizmi)
+- জব টাইটেল → tech stack বোঝা ("Senior Kubernetes Engineer" = prod-এ K8s)
+- সাম্প্রতিক জব পোস্টিং → "AWS Lambda experience required" = তারা Lambda ব্যবহার করে
+- প্রোফাইল থেকে tech stack → Python, Go, React, Terraform
 
 ```python
 # Generate username variations from names
@@ -194,9 +202,9 @@ variants = [
 ]
 ```
 
-**Tools:** LinkedInt, linkedin2username, osintgram (Instagram)
+**টুল:** LinkedInt, linkedin2username, osintgram (Instagram)
 
-## Wayback Machine & Historical Data
+## Wayback Machine ও ঐতিহাসিক ডেটা
 
 ```bash
 # Archive.org API — what did the site look like before?
@@ -214,7 +222,7 @@ echo "example.com" | waybackurls
 
 ## GitHub / GitLab Recon
 
-Source code repositories are the richest recon target:
+সোর্স কোড রিপোজিটরি হলো সবচেয়ে সমৃদ্ধ recon টার্গেট:
 
 ```bash
 # Search GitHub for target
@@ -253,9 +261,9 @@ pip install verify-email
 python -c "from verify_email import verify_email; print(verify_email('user@example.com'))"
 ```
 
-## Building the Recon Report
+## Recon Report তৈরি
 
-After passive recon, document:
+Passive recon-এর পর, ডকুমেন্ট করুন:
 
 ```markdown
 ## Target: example.com
@@ -300,4 +308,4 @@ After passive recon, document:
   Key: AKIAIOSFODNN7EXAMPLE
 ```
 
-This document becomes the input for your scanning phase.
+এই ডকুমেন্টটি আপনার scanning ধাপের input হয়ে যায়।

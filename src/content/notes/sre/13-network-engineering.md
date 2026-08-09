@@ -1,9 +1,9 @@
 ---
 title: 'Network Engineering for SREs'
-subtitle: "BGP, anycast, ECMP, CDN internals, packet capture, and TCP at scale. The networking layer where 'random' production weirdness actually lives."
+subtitle: "BGP, anycast, ECMP, CDN internals, packet capture, আর scale-এ TCP। যে networking layer-এ 'random' production অদ্ভুততা আসলে বাস করে।"
 chapter: 13
 level: 'mastery'
-readingTime: '30 min'
+readingTime: '30 মিনিট'
 topics: ['networking', 'BGP', 'anycast', 'CDN', 'TCP', 'tcpdump', 'XDP', 'load balancing']
 ---
 
@@ -13,19 +13,27 @@ topics: ['networking', 'BGP', 'anycast', 'CDN', 'TCP', 'tcpdump', 'XDP', 'load b
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-The plumbing in a building — invisible when working, catastrophic when not, and requires a specialist to diagnose.
+একটা building-এর plumbing — কাজ করলে অদৃশ্য, না করলে সর্বনাশা, আর diagnose করতে একজন specialist লাগে।
 
 </Callout>
 
-## Why SREs need real networking
+## গল্পে বুঝি
 
-A frontend engineer can ship a feature without knowing what BGP is. A senior SRE cannot debug a regional latency spike, a DNS-related outage, or a CDN-edge failover without it. Networks fail in ways that look like application bugs — connection resets, partial 502s, "the API is slow but only from one office." This chapter is the layer that explains those.
+মারিয়াম আল-আসতুরলাবি একটা দেশের ডাক-নেটওয়ার্কের ইঞ্জিনিয়ার — তার কাজ পুরো দেশের sorting hub-গুলোর মধ্যে চিঠি দ্রুত চলাচল করানো। একদিন কর্ডোবার লোকেরা অভিযোগ করল, তাদের চিঠি পৌঁছাতে আগের চেয়ে অনেক দেরি হচ্ছে, আর মাঝেমধ্যে কিছু চিঠি একেবারে হারিয়েও যাচ্ছে। মারিয়াম প্রথমে প্রতিটা hub-থেকে-hub চিঠি পৌঁছাতে কত সময় লাগছে তা মাপল, আর দেখল দেরিটা কোনো একটা নির্দিষ্ট hub-এর কাছে গিয়ে জমছে — বাকি hub-গুলো ঠিকঠাক। তারপর সে একটা hub-এ পাঠানো ১০০টা চিঠির মধ্যে কতগুলো ওপারে পৌঁছাচ্ছে সেটা গুনল, আর ধরা পড়ল সেই সন্দেহভাজন hub চুপচাপ প্রতি শতে তিন-চারটা চিঠি ফেলে দিচ্ছে।
 
-## Layer model — what actually carries your packets
+খুঁজতে খুঁজতে মারিয়াম দুটো জিনিস পেল। এক, বুখারার একটা hub-এ কেউ ভুল করে একটা forwarding rule বসিয়ে রেখেছিল, যার ফলে সমরকন্দের চিঠি সোজা পথ ছেড়ে ঘুরপথে অনেক দূর দিয়ে যাচ্ছিল — তাই দেরি। দুই, প্রতিটা town-এর নাম যে কোড-এ বদলায় (যেমন "কর্ডোবা" → hub-৭), সেই কেন্দ্রীয় address DIRECTORY-তে একটা এন্ট্রি পুরোনো হয়ে গিয়েছিল, তাই কিছু চিঠি ভুল hub-এ চলে যাচ্ছিল। প্রতিটা চিঠির গায়ে tracking sticker লাগিয়ে সে পুরো পথটা ধাপে ধাপে দেখল, আর তখন গোটা সিস্টেমকে দোষ না দিয়ে ঠিক সেই একটা সমস্যাগ্রস্ত hub-কে আঙুল দিয়ে দেখাতে পারল।
 
-Forget the OSI seven-layer chart from textbooks. The model SREs use:
+এটাই এই chapter-এর পুরো ছবি। hub-থেকে-hub চিঠি পৌঁছানোর সময় হলো network **latency**; যে hub চুপচাপ চিঠি ফেলে দেয় সেটা **packet loss**; ভুল forwarding rule-এ চিঠি ঘুরপথে যাওয়া হলো একটা **routing** problem; town-নাম-থেকে-hub-কোড directory হলো **DNS**; আর চিঠির পথ ধরে ধরে খারাপ hub খুঁজে বের করা হলো packet-level tracing — বাস্তবে `traceroute`/`mtr` আর `tcpdump`। আসল কাজেও ঠিক এভাবেই একজন SRE ঢালাওভাবে "সিস্টেম slow" না বলে, hop-by-hop মেপে ঠিক কোন transit ISP বা কোন hop-এ delay বা loss হচ্ছে সেটা বের করে — তখন সমাধানটাও পুরো সিস্টেম না ঘেঁটে সেই নির্দিষ্ট জায়গাতেই হয়।
+
+## SRE-দের কেন আসল networking লাগে
+
+একজন frontend engineer BGP কী তা না জেনেই একটা feature ship করতে পারে। একজন senior SRE একটা regional latency spike, একটা DNS-সম্পর্কিত outage, বা একটা CDN-edge failover এটা ছাড়া debug করতে পারে না। Network এমনভাবে fail করে যা application bug-এর মতো দেখায় — connection reset, আংশিক 502, "API slow কিন্তু শুধু একটা office থেকে"। এই chapter সেই layer যা এগুলো ব্যাখ্যা করে।
+
+## Layer model — আসলে কী আপনার packet বহন করে
+
+textbook-এর OSI seven-layer chart ভুলে যান। SRE-রা যে model ব্যবহার করে:
 
 ```
 L7  Application      HTTP, gRPC, TLS handshake (treated as L7)
@@ -35,11 +43,11 @@ L2  Data link        Ethernet, MAC, ARP, VLANs.
 L1  Physical         Fiber, SFP, optics. (You will rarely touch this.)
 ```
 
-Every production outage maps to one of these. A useful heuristic: name the layer in the first 60 seconds of a network page. "TLS won't handshake" = L7. "Connect succeeds, packets dropped" = L4 or L3.
+প্রতিটা production outage এগুলোর একটাতে map করে। একটা কাজের heuristic: একটা network page-এর প্রথম 60 সেকেন্ডে layer-টার নাম বলুন। "TLS handshake করবে না" = L7। "Connect সফল, packet dropped" = L4 বা L3।
 
-## BGP — how the internet actually finds your servers
+## BGP — internet কীভাবে আসলে আপনার server খুঁজে পায়
 
-Border Gateway Protocol is the routing protocol of the public internet. Every ISP, every cloud provider, every CDN speaks BGP. As an SRE, you don't usually configure BGP routers, but you do see its consequences daily.
+Border Gateway Protocol হলো public internet-এর routing protocol। প্রতিটা ISP, প্রতিটা cloud provider, প্রতিটা CDN BGP বলে। একজন SRE হিসেবে, আপনি সাধারণত BGP router configure করেন না, কিন্তু এর পরিণতি আপনি প্রতিদিন দেখেন।
 
 ```
 Your ASN (AS64500) advertises 198.51.100.0/24 to peers.
@@ -52,15 +60,15 @@ When a peer mistakenly advertises your prefix as theirs (BGP hijack)
 or stops advertising it (BGP withdrawal), traffic vanishes.
 ```
 
-### Real-world BGP failures you should recognize
+### যে বাস্তব-জগতের BGP failure আপনার চেনা উচিত
 
-- **2021-10-04 Facebook outage.** A config push withdrew Facebook's BGP advertisements globally. Without routes, DNS for `facebook.com` couldn't resolve, and the engineers who could fix it couldn't badge into the building. ~6 hours dark.
-- **2008 Pakistan/YouTube hijack.** Pakistan Telecom advertised `208.65.153.0/24` (YouTube) to block access locally; their upstream propagated it globally. YouTube was unreachable for 2 hours.
-- **2024 routing leak via a small ISP.** A Tier-3 ISP leaked a major SaaS company's prefixes with a shorter AS-PATH; a chunk of global traffic went through one congested fiber for 40 minutes.
+- **2021-10-04 Facebook outage.** একটা config push বিশ্বব্যাপী Facebook-এর BGP advertisement withdraw করে দিয়েছিল। route ছাড়া, `facebook.com`-এর DNS resolve করতে পারছিল না, আর যে engineer-রা এটা ঠিক করতে পারত তারা building-এ badge দিয়ে ঢুকতে পারছিল না। ~6 ঘণ্টা অন্ধকার।
+- **2008 Pakistan/YouTube hijack.** Pakistan Telecom স্থানীয়ভাবে access block করতে `208.65.153.0/24` (YouTube) advertise করেছিল; তাদের upstream সেটা বিশ্বব্যাপী propagate করে দিল। YouTube 2 ঘণ্টা unreachable ছিল।
+- **2024 একটা ছোট ISP দিয়ে routing leak।** একটা Tier-3 ISP একটা বড় SaaS কোম্পানির prefix একটা ছোট AS-PATH দিয়ে leak করেছিল; global traffic-এর একটা অংশ 40 মিনিট ধরে একটা congested fiber দিয়ে গিয়েছিল।
 
-### What you actually do
+### আপনি আসলে কী করেন
 
-You won't run BGP unless you're at a CDN, a cloud, or a hyperscaler. You will:
+আপনি BGP চালাবেন না যদি না আপনি একটা CDN, একটা cloud, বা একটা hyperscaler-এ থাকেন। আপনি করবেন:
 
 ```bash
 # Validate route propagation with a looking glass
@@ -76,11 +84,11 @@ for region in iad sfo lhr nrt; do
 done
 ```
 
-If you are at a company with its own IP space, learning BGP enough to read MRT dumps and run a route monitor (e.g. `bgpmon.net`, `BGPalerter`) is worth a week.
+যদি আপনি নিজের IP space-সহ একটা কোম্পানিতে থাকেন, MRT dump পড়ার আর একটা route monitor (যেমন `bgpmon.net`, `BGPalerter`) চালানোর মতো যথেষ্ট BGP শেখা এক সপ্তাহের মূল্য রাখে।
 
-## Anycast — one IP, many cities
+## Anycast — একটা IP, অনেক শহর
 
-Anycast means multiple locations announce the same IP prefix. Routers naturally send each user to the _topologically nearest_ announcement (in BGP terms, fewest AS hops). This is how CDNs and DNS roots scale globally without DNS-level geo routing.
+Anycast মানে একাধিক location একই IP prefix announce করে। Router স্বাভাবিকভাবেই প্রতিটা user-কে _topologically নিকটতম_ announcement-এ পাঠায় (BGP-এর ভাষায়, সবচেয়ে কম AS hop)। এভাবেই CDN আর DNS root DNS-level geo routing ছাড়াই বিশ্বব্যাপী scale করে।
 
 ```
 Cloudflare 1.1.1.1 — anycast across ~300 cities.
@@ -89,30 +97,30 @@ A user in Frankfurt connects to 1.1.1.1 and lands in Frankfurt.
 Same IP. Different physical machine. ~1 ms RTT for both.
 ```
 
-### The catch: TCP and anycast don't always mix
+### গোলমাল: TCP আর anycast সবসময় মেলে না
 
-BGP can re-converge mid-connection. If a user's packets suddenly route to a different PoP, the new PoP has no socket state and resets the connection. Modern CDNs solve this by:
+BGP connection-এর মাঝখানে re-converge করতে পারে। যদি একজন user-এর packet হঠাৎ একটা ভিন্ন PoP-এ route হয়, নতুন PoP-এর কোনো socket state নেই আর connection reset করে দেয়। আধুনিক CDN এটা সমাধান করে:
 
-- Stable hashing on `(src IP, dst IP, src port, dst port)` so most TCP flows stick to one PoP.
-- Connection draining when a PoP withdraws — let existing flows finish before withdrawing the route.
-- Short-lived connections (HTTP/2 multiplexing) that can recover via retry transparently.
+- `(src IP, dst IP, src port, dst port)`-এ stable hashing দিয়ে যাতে বেশিরভাগ TCP flow একটা PoP-এ আটকে থাকে।
+- একটা PoP withdraw করলে connection draining — route withdraw করার আগে existing flow শেষ হতে দেওয়া।
+- Short-lived connection (HTTP/2 multiplexing) যা retry-এর মাধ্যমে স্বচ্ছভাবে recover করতে পারে।
 
-## ECMP — load balancing at L3
+## ECMP — L3-তে load balancing
 
-Equal-Cost Multi-Path is how routers split traffic across multiple equal-cost links. Inside a data center, every top-of-rack switch has 4–8 uplinks; ECMP hashes packets across them.
+Equal-Cost Multi-Path হলো router কীভাবে একাধিক equal-cost link জুড়ে traffic split করে। একটা data center-এর ভেতরে, প্রতিটা top-of-rack switch-এর 4–8টি uplink থাকে; ECMP তাদের জুড়ে packet hash করে।
 
 ```
 flow_hash = hash(src_ip, dst_ip, src_port, dst_port, protocol)
 output_link = links[flow_hash % len(links)]
 ```
 
-The hash is per-flow, not per-packet — otherwise TCP reorders and tanks. The implication: a single elephant flow (one giant TCP connection) cannot use more than one link. If you have a 100 Gb/s ECMP bundle and one client opens one connection, that client is capped at 25 Gb/s.
+hash-টা per-flow, per-packet নয় — নয়তো TCP reorder করে আর ধসে যায়। এর মানে: একটা single elephant flow (একটা বিশাল TCP connection) একের বেশি link ব্যবহার করতে পারে না। যদি আপনার একটা 100 Gb/s ECMP bundle থাকে আর একটা client একটা connection খোলে, সেই client 25 Gb/s-এ সীমিত।
 
-Practical fix: use HTTP/2 with many streams, or open N parallel connections so ECMP spreads them.
+ব্যবহারিক fix: অনেক stream সহ HTTP/2 ব্যবহার করুন, বা N টি সমান্তরাল connection খুলুন যাতে ECMP সেগুলো ছড়িয়ে দেয়।
 
 ## Layer-4 vs Layer-7 load balancing
 
-The single most common architecture decision. Both have failure modes you need to know.
+সবচেয়ে সাধারণ architecture সিদ্ধান্ত। দুটোরই failure mode আছে যা আপনার জানা দরকার।
 
 |                     | L4 (e.g. NLB, IPVS, Maglev) | L7 (e.g. Envoy, ALB, Nginx)      |
 | ------------------- | --------------------------- | -------------------------------- |
@@ -124,19 +132,19 @@ The single most common architecture decision. Both have failure modes you need t
 | Failure visibility  | "TCP connect failed"        | "503 with response headers"      |
 | Cost                | Cheap to scale              | More CPU per RPS                 |
 
-The pattern at scale: **L4 in front, L7 behind.** L4 spreads connections across L7 proxies; L7 does the smart routing. Google's GFE, Facebook's Katran (XDP-based L4), and Cloudflare's Unimog all follow this shape.
+scale-এ pattern: **সামনে L4, পেছনে L7।** L4 L7 proxy জুড়ে connection ছড়িয়ে দেয়; L7 স্মার্ট routing করে। Google-এর GFE, Facebook-এর Katran (XDP-based L4), আর Cloudflare-এর Unimog সবাই এই shape মেনে চলে।
 
-### Connection-affinity gotcha
+### Connection-affinity গোলমাল
 
-L4 hashing means if a client reconnects, it might land on a different backend than last time. For stateful protocols (websockets, long-poll, gRPC streaming) this surfaces as "session lost mid-conversation." Mitigations:
+L4 hashing মানে যদি একটা client reconnect করে, এটা গতবারের চেয়ে একটা ভিন্ন backend-এ পড়তে পারে। stateful protocol-এর জন্য (websocket, long-poll, gRPC streaming) এটা "কথোপকথনের মাঝখানে session হারিয়ে গেল" হিসেবে দেখা দেয়। প্রশমন:
 
-- Use stable client IDs and sticky sessions at the L7 layer.
-- For websockets, design the protocol to tolerate reconnection (re-subscribe on connect).
-- Drain connections when removing a backend; don't yank it.
+- L7 layer-এ stable client ID আর sticky session ব্যবহার করুন।
+- websocket-এর জন্য, reconnection সহ্য করার মতো protocol ডিজাইন করুন (connect-এ re-subscribe)।
+- একটা backend সরানোর সময় connection drain করুন; সেটাকে টান দিয়ে খুলে ফেলবেন না।
 
-## Maglev hashing — the right algorithm for L4 LB
+## Maglev hashing — L4 LB-এর জন্য সঠিক algorithm
 
-Round-robin breaks on backend changes (every flow re-shuffles). Consistent hashing is better but unevenly distributed. **Maglev hashing** (Google's L4 LB) gives both balance and minimal disruption.
+Round-robin backend পরিবর্তনে ভেঙে যায় (প্রতিটা flow re-shuffle হয়)। Consistent hashing ভালো কিন্তু অসমভাবে বণ্টিত। **Maglev hashing** (Google-এর L4 LB) দুটোই দেয় — balance আর ন্যূনতম disruption।
 
 ```
 Concept:
@@ -149,11 +157,11 @@ Implementation in production:
   Katran (Facebook), GLB (GitHub), all use Maglev or a variant.
 ```
 
-When evaluating an L4 LB, "what hashing algorithm" is the question. "Round-robin" is a yellow flag at scale.
+একটা L4 LB মূল্যায়ন করার সময়, "কোন hashing algorithm" হলো প্রশ্ন। "Round-robin" scale-এ একটা yellow flag।
 
-## XDP and kernel-bypass — when iptables isn't enough
+## XDP আর kernel-bypass — যখন iptables যথেষ্ট নয়
 
-XDP (eXpress Data Path) runs an eBPF program on the NIC's receive path _before_ the packet enters the kernel networking stack. It can drop, redirect, or modify packets at line rate.
+XDP (eXpress Data Path) packet kernel networking stack-এ ঢোকার _আগে_ NIC-এর receive path-এ একটা eBPF program চালায়। এটা line rate-এ packet drop, redirect, বা modify করতে পারে।
 
 ```
 Traditional path:  NIC → driver → kernel netfilter → conntrack → app
@@ -162,13 +170,13 @@ XDP path:          NIC → driver → eBPF program → (drop | redirect | xmit)
 Throughput:  > 10 Mpps per core, vs ~2 Mpps for iptables-based filtering.
 ```
 
-Production uses:
+Production use:
 
-- **DDoS mitigation.** Cloudflare drops 100M+ pps of attack traffic in XDP.
-- **L4 load balancing.** Katran is XDP. Drops bad packets, hashes good ones, redirects to the right backend, all in the NIC.
-- **Per-pod policy enforcement.** Cilium uses eBPF/XDP instead of iptables for NetworkPolicy at scale (iptables falls over past ~10k rules).
+- **DDoS mitigation.** Cloudflare XDP-তে 100M+ pps attack traffic drop করে।
+- **L4 load balancing.** Katran XDP। খারাপ packet drop করে, ভালোগুলো hash করে, সঠিক backend-এ redirect করে, সব NIC-এ।
+- **Per-pod policy enforcement.** Cilium scale-এ NetworkPolicy-র জন্য iptables-এর বদলে eBPF/XDP ব্যবহার করে (iptables ~10k rule পার হলে ভেঙে পড়ে)।
 
-You probably won't write XDP yourself, but you should know:
+আপনি সম্ভবত নিজে XDP লিখবেন না, কিন্তু আপনার জানা উচিত:
 
 ```bash
 # Check if your NIC supports XDP-native (zero-copy) mode
@@ -181,11 +189,11 @@ bpftool net show
 # Replace iptables with eBPF/Cilium past ~5k NetworkPolicies in K8s
 ```
 
-## CDN internals — why your origin gets hit anyway
+## CDN internals — কেন আপনার origin তবু hit হয়
 
-Engineers think "we have a CDN, the origin is safe." Then a deploy invalidates cache, the origin gets 100x traffic, and the database melts.
+Engineer-রা ভাবে "আমাদের একটা CDN আছে, origin নিরাপদ।" তারপর একটা deploy cache invalidate করে, origin 100x traffic পায়, আর database গলে যায়।
 
-### The cache layers
+### cache layer-গুলো
 
 ```
 Browser cache         (Cache-Control: max-age, etag)
@@ -197,13 +205,13 @@ Mid-tier / shield     (single PoP per region, shields the origin)
 Origin                (your servers)
 ```
 
-The two failure patterns at this layer:
+এই layer-এর দুটো failure pattern:
 
-1. **Cache stampede on invalidation.** A purge clears cached objects globally; the next request from each PoP misses, and N PoPs hit the origin simultaneously. Mitigations: stale-while-revalidate, request coalescing at the edge (Varnish's `req.hash_always_miss` + grace), origin shield.
+1. **invalidation-এ cache stampede।** একটা purge বিশ্বব্যাপী cached object clear করে; প্রতিটা PoP থেকে পরের request miss করে, আর N টি PoP একসাথে origin hit করে। প্রশমন: stale-while-revalidate, edge-এ request coalescing (Varnish-এর `req.hash_always_miss` + grace), origin shield।
 
-2. **Cache poisoning.** A request with an unusual header (e.g., `Vary: User-Agent`) creates an entry that another user receives. CDNs' `Vary` handling is subtle; test it.
+2. **Cache poisoning।** একটা অস্বাভাবিক header সহ একটা request (যেমন `Vary: User-Agent`) একটা entry তৈরি করে যা আরেকজন user পায়। CDN-এর `Vary` handling সূক্ষ্ম; test করুন।
 
-### Cache headers that matter
+### যে cache header-গুলো গুরুত্বপূর্ণ
 
 ```
 Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
@@ -215,17 +223,17 @@ Vary: Accept-Encoding             # NEVER add user-specific headers here
 Surrogate-Key: product-123        # purge granularly (Fastly, others)
 ```
 
-`stale-while-revalidate` alone has saved more origins than any caching tutorial.
+শুধু `stale-while-revalidate` যেকোনো caching tutorial-এর চেয়ে বেশি origin বাঁচিয়েছে।
 
-## DNS — your other single point of failure
+## DNS — আপনার আরেকটা single point of failure
 
-Half of "internet outages" are DNS. The patterns:
+"internet outage"-এর অর্ধেক DNS। pattern-গুলো:
 
-- **TTL too high.** You can't fail over within the TTL. Use 60 s for prod DNS records pointing at LBs that might move.
-- **TTL too low.** You hammer the recursor; if your authoritative goes down, _all_ queries break instantly.
-- **Authoritative outage.** If your DNS provider is the single source for `your.com`, a provider outage takes you off the internet (Dyn 2016).
+- **TTL খুব বেশি।** আপনি TTL-এর মধ্যে fail over করতে পারবেন না। এমন LB-এর দিকে point করা prod DNS record-এর জন্য 60 s ব্যবহার করুন যা সরে যেতে পারে।
+- **TTL খুব কম।** আপনি recursor-কে hammer করেন; যদি আপনার authoritative down হয়, _সব_ query সাথে সাথে ভাঙে।
+- **Authoritative outage।** যদি আপনার DNS provider `your.com`-এর একমাত্র source হয়, একটা provider outage আপনাকে internet থেকে সরিয়ে দেয় (Dyn 2016)।
 
-The architecture senior teams use:
+senior team যে architecture ব্যবহার করে:
 
 ```
 1. Use two unrelated DNS providers (NS1 + Route53, Cloudflare + Google).
@@ -235,7 +243,7 @@ The architecture senior teams use:
 5. Pre-test failover quarterly. (Many DNS failovers don't work the first time.)
 ```
 
-DNS-as-code in OctoDNS:
+OctoDNS-এ DNS-as-code:
 
 ```yaml
 # zones/example.com.yaml
@@ -249,11 +257,11 @@ www:
   value: app.cloudfront.net.
 ```
 
-Apply via `octodns-sync --doit`. Diff in CI; a typo never reaches prod.
+`octodns-sync --doit` দিয়ে apply করুন। CI-তে diff করুন; একটা typo কখনো prod-এ পৌঁছায় না।
 
-## TCP at scale — the one-page reference
+## scale-এ TCP — এক-পৃষ্ঠার reference
 
-The TCP fields and tunings that matter for production traffic.
+Production traffic-এর জন্য যে TCP field আর tuning গুরুত্বপূর্ণ।
 
 ### Buffer sizing
 
@@ -277,9 +285,9 @@ sysctl -w net.core.default_qdisc=fq
 sysctl -w net.ipv4.tcp_congestion_control=bbr
 ```
 
-For long-haul replication (e.g. cross-region DB sync), BBR can be 2–5x faster than CUBIC. Test on your actual paths.
+long-haul replication-এর জন্য (যেমন cross-region DB sync), BBR CUBIC-এর চেয়ে 2–5x দ্রুত হতে পারে। আপনার আসল path-এ test করুন।
 
-### TIME-WAIT and connection reuse
+### TIME-WAIT আর connection reuse
 
 ```bash
 # Server side: rely on TIME-WAIT, don't tune it. tcp_tw_reuse on the SERVER
@@ -300,12 +308,12 @@ sysctl -w net.ipv4.tcp_keepalive_intvl=10
 sysctl -w net.ipv4.tcp_keepalive_probes=6
 ```
 
-## Packet capture in production
+## production-এ packet capture
 
-When metrics aren't enough, capture packets. Two rules:
+যখন metric যথেষ্ট নয়, packet capture করুন। দুটো নিয়ম:
 
-1. **Filter aggressively.** Capturing every packet on a 10 Gb/s NIC fills disk in minutes.
-2. **Capture on the right host.** Capture on both ends if it's a "weird" interaction; you'll often see the packets are different.
+1. **আক্রমণাত্মকভাবে filter করুন।** একটা 10 Gb/s NIC-এ প্রতিটা packet capture করলে কয়েক মিনিটে disk ভরে যায়।
+2. **সঠিক host-এ capture করুন।** যদি এটা একটা "অদ্ভুত" interaction হয় তবে দুই প্রান্তেই capture করুন; আপনি প্রায়ই দেখবেন packet আলাদা।
 
 ```bash
 # Minimal-overhead capture, ring-buffered, last 100 MB
@@ -317,7 +325,7 @@ tcpdump -i eth0 -nn -s 0 -w /tmp/cap.pcap -W 1 -C 100 \
 tshark -r /tmp/cap.pcap -Y 'tcp.flags.reset == 1'   # find all RSTs
 ```
 
-For TLS issues, you'll need the SSLKEYLOGFILE trick:
+TLS issue-র জন্য, আপনার SSLKEYLOGFILE trick লাগবে:
 
 ```bash
 # Tell client (curl/Chrome) to dump TLS keys
@@ -328,9 +336,9 @@ curl https://api.example.com/
 # Now you can decrypt the captured TLS stream and see the application bytes.
 ```
 
-## A real network outage — walking through the layers
+## একটা বাস্তব network outage — layer-গুলোর মধ্য দিয়ে হাঁটা
 
-Symptom: 0.3% of API requests from one specific city return `ECONNRESET`. Other cities fine. Started 2 hours ago. No deploys.
+Symptom: একটা নির্দিষ্ট শহর থেকে 0.3% API request `ECONNRESET` ফেরত দেয়। অন্য শহরগুলো ঠিক আছে। 2 ঘণ্টা আগে শুরু হয়েছে। কোনো deploy নেই।
 
 ```
 L7? — App returns 200 for the responses it sends. So app didn't choose to RST.
@@ -353,7 +361,7 @@ Resolution:
        link card and replace it 6 hours later).
 ```
 
-The lesson: a 0.3% application error rate had a network root cause and zero fix at the application layer. A senior SRE who can read mtr + tcpdump + BGP path attributes finds this in 20 minutes. Without those, the team spends three days adding application retries that don't help.
+শিক্ষা: একটা 0.3% application error rate-এর একটা network root cause ছিল আর application layer-এ কোনো fix ছিল না। একজন senior SRE যে mtr + tcpdump + BGP path attribute পড়তে পারে সে এটা 20 মিনিটে খুঁজে পায়। এগুলো ছাড়া, team তিন দিন ব্যয় করে application retry যোগ করে যা কোনো কাজে আসে না।
 
 ## Tools tier list
 
@@ -375,18 +383,18 @@ Tier F
   Random sysctl tuning blog posts from 2012.
 ```
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Cloudflare blog](https://blog.cloudflare.com/) — best public source for TCP/QUIC/edge networking
+- [Cloudflare blog](https://blog.cloudflare.com/) — TCP/QUIC/edge networking-এর সেরা public source
 - [Linux networking docs](https://www.kernel.org/doc/html/latest/networking/index.html) — sysctl + stack reference
-- [High Performance Browser Networking (Ilya Grigorik)](https://hpbn.co/) — free book, still authoritative
+- [High Performance Browser Networking (Ilya Grigorik)](https://hpbn.co/) — free বই, এখনও authoritative
 - [QUIC working group docs](https://quicwg.org/) — HTTP/3 evolution
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Name the OSI layer in the first 60 seconds of a network page** — it bisects the search space.
-2. **Anycast + ECMP are why CDNs scale** — and the source of bizarre "session lost" bugs.
-3. **L4 in front, L7 behind** is the pattern at scale; learn Maglev hashing.
-4. **DNS, BGP, and TLS are the three "internet-level" failure modes** — every senior SRE has seen each at least once.
-5. **Capture packets on both ends** when behavior diverges from expectation.
-6. **TCP tuning matters mostly on long-distance links** — BBR + bigger buffers; otherwise let the kernel tune itself.
+1. **একটা network page-এর প্রথম 60 সেকেন্ডে OSI layer-টার নাম বলুন** — এটা search space অর্ধেক করে।
+2. **Anycast + ECMP-ই কারণ CDN scale করে** — আর অদ্ভুত "session lost" bug-এর উৎস।
+3. **সামনে L4, পেছনে L7** হলো scale-এ pattern; Maglev hashing শিখুন।
+4. **DNS, BGP, আর TLS হলো তিনটা "internet-level" failure mode** — প্রতিটা senior SRE প্রতিটা অন্তত একবার দেখেছে।
+5. **behaviour প্রত্যাশা থেকে বিচ্যুত হলে দুই প্রান্তেই packet capture করুন।**
+6. **TCP tuning বেশিরভাগ long-distance link-এ গুরুত্বপূর্ণ** — BBR + বড় buffer; নয়তো kernel-কে নিজেকে tune করতে দিন।

@@ -1,9 +1,9 @@
 ---
 title: 'Storage Engines'
-subtitle: 'How databases actually store data on disk — pages, heaps, and the tradeoffs between read and write optimization.'
+subtitle: 'ডেটাবেজ আসলে কীভাবে ডিস্কে ডেটা রাখে — pages, heaps, এবং read আর write অপটিমাইজেশনের মধ্যকার tradeoff।'
 chapter: 1
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['storage engine', 'pages', 'heap', 'disk I/O']
 ---
 
@@ -11,26 +11,34 @@ topics: ['storage engine', 'pages', 'heap', 'disk I/O']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What is a Storage Engine?
+## গল্পে বুঝি
 
-A storage engine is the component that handles how data is physically stored on disk and retrieved into memory. It's the layer between your SQL query and the actual bytes on an SSD.
+ইবনে সিনার একটা মুদির দোকান, পেছনে একটা গুদামঘর। মাল আসে ট্রাকে করে — চাল, ডাল, তেলের বস্তা-বোতল। এখন গুদামে মাল রাখার দুটো উপায় আছে। এক, যা আসছে তা-ই খালি একটা কোণে ঢেলে দেওয়া — কাজটা সেকেন্ডের ব্যাপার, ট্রাক দ্রুত খালি হয়ে যায়। কিন্তু কাস্টমার এসে যখন একটা নির্দিষ্ট ব্র্যান্ডের তেল চায়, ইবনে সিনাকে পুরো স্তূপ ঘেঁটে খুঁজতে হয়। রাখা সহজ, খোঁজা কঠিন।
 
-Different storage engines make different tradeoffs:
+দুই, প্রতিটা জিনিস তাকে তাকে নাম-অনুযায়ী সাজিয়ে, লেবেল সেঁটে রাখা — চাল এক তাকে, তেল আরেক তাকে, সব ক্রম মেনে। এতে মাল রাখতে সময় বেশি লাগে, ট্রাক দাঁড়িয়ে থাকে। কিন্তু কাস্টমার যা-ই চাক, ইবনে সিনা সোজা তাকের কাছে গিয়ে টুক করে বের করে দেয়। রাখা ধীর, খোঁজা বিদ্যুৎ-গতির। মজার ব্যাপার হলো — দোকানের সামনের কাউন্টার একই, কাস্টমার জানেও না পেছনে মাল কীভাবে সাজানো; শুধু সাজানোর পদ্ধতিটা বদলালেই দোকানের গতি বদলে যায়।
 
-- **Read-optimized**: Fast queries, slower writes (B-tree based — PostgreSQL, MySQL InnoDB)
-- **Write-optimized**: Fast writes, slower reads (LSM-tree based — RocksDB, Cassandra)
+এই গুদামে মাল সাজানোর পদ্ধতিটাই আসলে **storage engine** — ডেটাবেজের সেই নিচের স্তর যা ঠিক করে row-গুলো disk-এ ফিজিক্যালি কীভাবে বসবে। কোণে ঢেলে দেওয়াটা write-optimized layout (দ্রুত write, কিন্তু read-এ পুরো ঘাঁটতে হয় — যেমন LSM-tree, Cassandra/RocksDB), আর তাকে সাজিয়ে-লেবেল করে রাখাটা read-optimized layout (write-এ খরচ বেশি, কিন্তু lookup দ্রুত — যেমন B-tree, PostgreSQL বা MySQL InnoDB)। সামনের counter মানে আপনার SQL query একই থাকে; পেছনের storage engine বদলালেই read-vs-write tradeoff-টা বদলে যায়।
+
+## Storage Engine কী?
+
+Storage engine হলো সেই component যা নিয়ন্ত্রণ করে ডেটা কীভাবে ফিজিক্যালি ডিস্কে সংরক্ষিত হয় এবং মেমরিতে রিট্রিভ হয়। এটা আপনার SQL query আর SSD-র উপরের আসল bytes-এর মাঝখানের layer।
+
+ভিন্ন ভিন্ন storage engine ভিন্ন ভিন্ন tradeoff করে:
+
+- **Read-optimized**: দ্রুত query, ধীর write (B-tree based — PostgreSQL, MySQL InnoDB)
+- **Write-optimized**: দ্রুত write, ধীর read (LSM-tree based — RocksDB, Cassandra)
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like how different warehouses organize inventory — a fast-food kitchen (write-optimized) dumps ingredients in bins for speed, while a library (read-optimized) keeps everything sorted by category for quick browsing.
+যেমন ভিন্ন ভিন্ন warehouse তাদের inventory ভিন্নভাবে সাজায় — একটা fast-food kitchen (write-optimized) গতির জন্য উপকরণগুলো bin-এ ঢেলে দেয়, আর একটা library (read-optimized) সবকিছু category অনুযায়ী সাজিয়ে রাখে যাতে দ্রুত খুঁজে পাওয়া যায়।
 
 </Callout>
 
-## Pages: The Unit of Storage
+## Pages: Storage-এর একক
 
-Databases don't read individual rows — they read **pages** (typically 4KB, 8KB, or 16KB blocks). Every read from disk fetches an entire page, even if you only need one row.
+ডেটাবেজ আলাদা আলাদা row পড়ে না — তারা **pages** পড়ে (সাধারণত 4KB, 8KB, বা 16KB blocks)। ডিস্ক থেকে প্রতিটা read একটা পুরো page নিয়ে আসে, এমনকি আপনার যদি শুধু একটা row দরকার হয় তাহলেও।
 
 ```typescript
 // A database page (simplified)
@@ -55,9 +63,9 @@ const PAGE_SIZE = 8192; // bytes
 
 ## Heap vs. Clustered Storage
 
-**Heap storage** (PostgreSQL default): rows are stored in insertion order. The table is a pile of pages with no particular ordering.
+**Heap storage** (PostgreSQL default): row-গুলো insertion order-এ সংরক্ষিত হয়। টেবিলটা মূলত pages-এর একটা স্তূপ, কোনো নির্দিষ্ট ordering ছাড়াই।
 
-**Clustered storage** (MySQL InnoDB): rows are physically ordered by primary key. The table IS the primary key index (a B-tree).
+**Clustered storage** (MySQL InnoDB): row-গুলো primary key অনুযায়ী ফিজিক্যালি সাজানো থাকে। টেবিলটাই হলো primary key index (একটা B-tree)।
 
 ```typescript
 // Heap: rows stored wherever there's space
@@ -77,13 +85,13 @@ const PAGE_SIZE = 8192; // bytes
 
 <Callout type="info">
 
-**Why this matters**: In a heap, a sequential scan reads pages in order — fast. But finding a specific row requires an index. In clustered storage, the primary key IS the ordering, so PK lookups are always fast, but secondary indexes need an extra lookup.
+**কেন এটা গুরুত্বপূর্ণ**: একটা heap-এ, sequential scan pages-গুলো ক্রম অনুসারে পড়ে — দ্রুত। কিন্তু একটা নির্দিষ্ট row খুঁজে পেতে একটা index লাগে। Clustered storage-এ, primary key-ই হলো ordering, তাই PK lookup সবসময় দ্রুত হয়, কিন্তু secondary index-এর জন্য একটা extra lookup লাগে।
 
 </Callout>
 
 ## Buffer Pool
 
-Reading from disk is ~1000x slower than reading from memory. The **buffer pool** (or page cache) keeps frequently accessed pages in RAM.
+ডিস্ক থেকে পড়া মেমরি থেকে পড়ার চেয়ে ~1000x ধীর। **Buffer pool** (বা page cache) ঘন ঘন access করা pages-গুলো RAM-এ রাখে।
 
 ```typescript
 class BufferPool {
@@ -142,13 +150,13 @@ class BufferPool {
 
 <Callout type="tip">
 
-**Tune your buffer pool to fit your working set in memory.** If your active data is 10GB, set the buffer pool to at least 10GB. The goal: most reads should hit the cache, not disk. PostgreSQL's `shared_buffers` and MySQL's `innodb_buffer_pool_size` control this.
+**আপনার buffer pool এমনভাবে tune করুন যাতে working set মেমরিতে ধরে।** আপনার active data যদি 10GB হয়, buffer pool কমপক্ষে 10GB-তে সেট করুন। লক্ষ্য: বেশিরভাগ read যেন cache-এ hit করে, ডিস্কে নয়। PostgreSQL-এর `shared_buffers` আর MySQL-এর `innodb_buffer_pool_size` এটা নিয়ন্ত্রণ করে।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Pages are the unit of I/O** — databases read/write in page-sized chunks, not individual rows
-2. **Heap storage** stores rows in insertion order; **clustered storage** orders by primary key
-3. **The buffer pool** is critical — keeping hot pages in RAM avoids disk I/O
-4. **Storage engine choice** determines your read/write tradeoff profile
+1. **Pages হলো I/O-র একক** — ডেটাবেজ page-আকারের chunk-এ read/write করে, আলাদা আলাদা row-তে নয়
+2. **Heap storage** row-গুলো insertion order-এ রাখে; **clustered storage** primary key অনুযায়ী সাজায়
+3. **Buffer pool** অত্যন্ত গুরুত্বপূর্ণ — hot pages-গুলো RAM-এ রাখলে disk I/O এড়ানো যায়
+4. **Storage engine-এর পছন্দ** আপনার read/write tradeoff প্রোফাইল নির্ধারণ করে

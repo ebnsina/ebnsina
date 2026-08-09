@@ -1,9 +1,9 @@
 ---
 title: 'Logs & journalctl'
-subtitle: 'Where every line of output goes on a modern Linux box, how to query it, how to keep the disk from filling up, and when to ship logs off the host.'
+subtitle: 'আধুনিক একটা Linux বক্সে আউটপুটের প্রতিটা লাইন কোথায় যায়, কীভাবে সেটা query করবেন, কীভাবে ডিস্ক ভরে যাওয়া ঠেকাবেন, আর কখন লগ হোস্টের বাইরে পাঠাবেন।'
 chapter: 9
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['logs', 'journalctl', 'journald', 'logrotate', 'syslog', 'linux']
 ---
 
@@ -13,35 +13,43 @@ topics: ['logs', 'journalctl', 'journald', 'logrotate', 'syslog', 'linux']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-The system log is like a ship's log — every event is recorded in sequence, so you can reconstruct exactly what happened and when, even long after the fact.
+সিস্টেম লগ অনেকটা জাহাজের লগবুকের মতো — প্রতিটা ঘটনা ক্রম অনুযায়ী রেকর্ড হয়, তাই অনেক পরেও আপনি ঠিক ঠিক পুনর্গঠন করতে পারেন কী ঘটেছিল আর কখন।
 
 </Callout>
 
-## Two log worlds, one system
+## গল্পে বুঝি
 
-Modern Linux has two parallel log destinations:
+ফাতিমা আল-ফিহরির একটা বিশাল বহুতল ভবন — লিফট, জেনারেটর, নিরাপত্তা, পানি সরবরাহ, প্রতিটা বিভাগ আলাদা। আগে প্রতিটা বিভাগ নিজের নিজের খাতায় ঘটনা টুকে রাখত, তাই কোনো গণ্ডগোল হলে আল-খোয়ারিজমিকে ছুটে ছুটে ডজনখানেক আলাদা খাতা ঘেঁটে দেখতে হতো — কোনটা আগে ঘটল, কোনটা পরে, বোঝাই যেত না। তাই ফাতিমা নিয়ম করে দিলেন: এখন থেকে প্রতিটা বিভাগ যা-ই ঘটুক, সব একটাই কেন্দ্রীয় সময়-ক্রম-সাজানো ইভেন্ট রেজিস্টারে লিখবে — সময়সহ, বিভাগের নামসহ, ঘটনার গুরুত্বসহ।
 
-1. **journald** — systemd's binary, structured, queryable journal. Every service supervised by systemd writes here automatically.
-2. **Plain text files in `/var/log/`** — the traditional approach. Apache writes `/var/log/apache2/access.log`. Postgres writes `/var/log/postgresql/postgresql-15-main.log`. Custom apps log wherever you tell them to.
+আর সেই রেজিস্টারের দায়িত্বে বসল একজন রেকর্ড-ক্লার্ক, ইবনে সিনা। তার কাজ হলো যেকোনো নির্দিষ্ট প্রশ্নের তাৎক্ষণিক উত্তর দেওয়া। কেউ বলল, "শুধু লিফট বিভাগের এন্ট্রিগুলো দেখাও" — সে গোটা রেজিস্টার থেকে ঠিক সেই লাইনগুলোই তুলে দেয়। কেউ বলল, "আজ দুপুর দুটোর পর যা যা হয়েছে" — সে সময় ধরে কেটে দেখায়। কেউ বলল, "নতুন এন্ট্রি আসতে থাকুক, তুমি লাইভ পড়ে শোনাও" — সে খোলা রেজিস্টারের পাশে বসে যায়। আর ব্যস্ত দিনে কেউ বলল, "সব বাদ, শুধু গুরুতর দুর্ঘটনাগুলো বলো" — সে ছোটখাটো এন্ট্রি এড়িয়ে শুধু বড় ঘটনাগুলো পড়ে দেয়।
 
-A well-organized server uses both: services that respect `stdout`/`stderr` flow into journald (zero config), and services that insist on log files write to `/var/log/<servicename>/`. Both are queryable with the same mental model.
+এই গল্পটাই আসলে journald আর journalctl। ঐ একটাই কেন্দ্রীয় সময়-ক্রম-সাজানো ইভেন্ট রেজিস্টার হলো systemd-এর **journal** — সব service-এর log এক জায়গায়, কেন্দ্রীভূত। আর ক্লার্ক ইবনে সিনা হলো `journalctl`, যে নির্দিষ্ট query-র উত্তর দেয়: "শুধু লিফট বিভাগ" হলো `-u service` দিয়ে filter, "দুপুর দুটোর পর" হলো `--since` দিয়ে সময় filter, "লাইভ পড়ে শোনাও" হলো `-f` দিয়ে follow, আর "শুধু গুরুতর" হলো priority filter। বাস্তবে ঠিক এই কারণেই কোনো সার্ভার সমস্যায় পড়লে আপনি scattered খাতা ঘাঁটার বদলে এক জায়গা থেকে দ্রুত কারণ খুঁজে বের করতে পারেন — এটাই কেন্দ্রীভূত, structured logging-এর আসল লাভ।
 
-## journald — what it actually does
+## দুটো লগের জগৎ, একটাই সিস্টেম
 
-When a systemd service writes to stdout or stderr, journald captures it, attaches metadata (PID, UID, unit name, hostname, timestamp, priority), and stores it in a binary file under `/var/log/journal/`. Querying it later produces the _exact same fields back_, including the metadata.
+আধুনিক Linux-এ লগের দুটো সমান্তরাল গন্তব্য আছে:
 
-This is genuinely better than text logs because:
+1. **journald** — systemd-এর বাইনারি, স্ট্রাকচার্ড, query-যোগ্য journal। systemd-এর সুপারভাইজ করা প্রতিটা সার্ভিস স্বয়ংক্রিয়ভাবে এখানে লেখে।
+2. **`/var/log/`-এ প্লেইন টেক্সট ফাইল** — প্রথাগত পদ্ধতি। Apache লেখে `/var/log/apache2/access.log`-এ। Postgres লেখে `/var/log/postgresql/postgresql-15-main.log`-এ। কাস্টম অ্যাপ যেখানে বলবেন সেখানে লগ করে।
 
-- You can filter by structured field, not just regex.
-- You can render in many formats (plain, JSON, JSON pretty, exporter-friendly).
-- It is one tool with one query language for everything systemd touches.
-- It auto-rotates. Old logs are deleted when the journal hits a size cap.
+একটা সুবিন্যস্ত সার্ভার দুটোই ব্যবহার করে: যেসব সার্ভিস `stdout`/`stderr`-কে সম্মান করে সেগুলো journald-তে প্রবাহিত হয় (শূন্য কনফিগ), আর যেসব সার্ভিস লগ ফাইলে জোর দেয় সেগুলো `/var/log/<servicename>/`-তে লেখে। দুটোই একই মানসিক মডেল দিয়ে query করা যায়।
 
-You can keep the journal forever or volatile-only. Default depends on the distro.
+## journald — এটা আসলে কী করে
 
-## journalctl — the only command you need
+একটা systemd সার্ভিস যখন stdout বা stderr-এ লেখে, journald সেটা ধরে ফেলে, metadata যোগ করে (PID, UID, unit name, hostname, timestamp, priority), আর সেটাকে `/var/log/journal/`-এর নিচে একটা বাইনারি ফাইলে জমা রাখে। পরে সেটা query করলে _ঠিক একই ফিল্ডগুলো ফেরত_ আসে, metadata সহ।
+
+এটা টেক্সট লগের চেয়ে সত্যিকার অর্থে ভালো কারণ:
+
+- আপনি শুধু regex দিয়ে নয়, স্ট্রাকচার্ড ফিল্ড দিয়ে ফিল্টার করতে পারেন।
+- আপনি অনেক ফরম্যাটে render করতে পারেন (plain, JSON, JSON pretty, exporter-বান্ধব)।
+- systemd যা স্পর্শ করে তার সবকিছুর জন্য একটাই টুল, একটাই query language।
+- এটা auto-rotate করে। journal একটা size cap-এ পৌঁছালে পুরনো লগ মুছে ফেলা হয়।
+
+আপনি journal চিরকাল রাখতে পারেন বা শুধু volatile রাখতে পারেন। ডিফল্ট distro-ভেদে আলাদা।
+
+## journalctl — একমাত্র কমান্ড যেটা আপনার দরকার
 
 ```bash
 journalctl                            # everything, oldest first
@@ -54,7 +62,7 @@ journalctl --since "2026-05-04 09:00" --until "2026-05-04 10:00"
 journalctl --since today --until "10 minutes ago"
 ```
 
-By **service**:
+**সার্ভিস** অনুযায়ী:
 
 ```bash
 journalctl -u myapp                   # one service, all time
@@ -64,7 +72,7 @@ journalctl -u myapp -u nginx          # multiple services, merged
 journalctl -u myapp --since today
 ```
 
-By **process or executable**:
+**প্রসেস বা executable** অনুযায়ী:
 
 ```bash
 journalctl _PID=1234
@@ -72,20 +80,20 @@ journalctl _COMM=nginx                # all processes named nginx
 journalctl /usr/sbin/nginx            # by binary path
 ```
 
-By **priority**:
+**priority** অনুযায়ী:
 
 ```bash
 journalctl -p err                     # err and above
 journalctl -p warning..err            # warning, err, only
 ```
 
-Priority values from least to most severe:
+সবচেয়ে কম থেকে সবচেয়ে গুরুতর priority মান:
 
 ```text
 debug, info, notice, warning, err, crit, alert, emerg
 ```
 
-By **boot**:
+**boot** অনুযায়ী:
 
 ```bash
 journalctl -b                         # current boot
@@ -93,7 +101,7 @@ journalctl -b -1                      # previous boot
 journalctl --list-boots               # all known boots
 ```
 
-## Output formats
+## আউটপুট ফরম্যাট
 
 ```bash
 journalctl -u myapp -o short           # default
@@ -103,33 +111,33 @@ journalctl -u myapp -o json-pretty     # multi-line JSON
 journalctl -u myapp -o cat             # message field only, no metadata
 ```
 
-`-o json` is the cheat code for shipping logs elsewhere — pipe it to whatever processor you like:
+লগ অন্যত্র পাঠানোর জন্য `-o json` হলো চিট কোড — সেটা আপনার পছন্দের যেকোনো প্রসেসরে pipe করুন:
 
 ```bash
 journalctl -u myapp -o json --since today | jq '. | select(.PRIORITY <= "3")'
 ```
 
-## Searching
+## সার্চ করা
 
 ```bash
 journalctl -u myapp -g "connection refused"
 journalctl -u myapp -g "ERROR" --case-sensitive
 ```
 
-`-g` (grep) is built in. For structured fields, the equality form is faster:
+`-g` (grep) বিল্ট-ইন। স্ট্রাকচার্ড ফিল্ডের জন্য, সমতার ফর্মটা দ্রুততর:
 
 ```bash
 journalctl PRIORITY=3                 # all error-priority messages from any service
 journalctl _SYSTEMD_UNIT=myapp.service _COMM=worker
 ```
 
-## What metadata is available
+## কী কী metadata পাওয়া যায়
 
 ```bash
 journalctl -u myapp -o verbose -n 1
 ```
 
-Output:
+আউটপুট:
 
 ```text
 Mon 2026-05-04 10:42:11.123456 UTC [s=abc...]
@@ -149,16 +157,16 @@ Mon 2026-05-04 10:42:11.123456 UTC [s=abc...]
     MESSAGE=starting on :8080
 ```
 
-Every one of those underscore-prefixed fields is filterable. That is the structured-logging payoff.
+আন্ডারস্কোর দিয়ে শুরু হওয়া এই প্রতিটা ফিল্ড ফিল্টারযোগ্য। এটাই স্ট্রাকচার্ড-লগিংয়ের লাভ।
 
-## Disk usage and retention
+## ডিস্ক ব্যবহার আর retention
 
 ```bash
 journalctl --disk-usage
 # Archived and active journals take up 264.5M in the file system.
 ```
 
-Configure retention in `/etc/systemd/journald.conf`:
+`/etc/systemd/journald.conf`-এ retention কনফিগার করুন:
 
 ```ini
 [Journal]
@@ -168,13 +176,13 @@ MaxRetentionSec=2week
 ForwardToSyslog=no
 ```
 
-After editing:
+এডিট করার পরে:
 
 ```bash
 sudo systemctl restart systemd-journald
 ```
 
-Manually purge:
+হাতে-হাতে purge করা:
 
 ```bash
 sudo journalctl --vacuum-size=500M    # keep the last 500MB
@@ -182,18 +190,18 @@ sudo journalctl --vacuum-time=7d      # keep the last 7 days
 sudo journalctl --vacuum-files=10     # keep the last 10 archived files
 ```
 
-If you have ever filled `/var` with logs and crashed your box, this is the chapter you skipped.
+আপনি যদি কখনও লগ দিয়ে `/var` ভরিয়ে বক্স ক্র্যাশ করিয়ে থাকেন, তাহলে এটাই সেই অধ্যায় যেটা আপনি বাদ দিয়েছিলেন।
 
-## Plain-text logs — `/var/log`
+## প্লেইন-টেক্সট লগ — `/var/log`
 
-Some services still write text files because they predate journald or because their authors prefer it. Common ones:
+কিছু সার্ভিস এখনও টেক্সট ফাইলে লেখে কারণ সেগুলো journald-এর আগের যুগের, বা তাদের লেখকরা সেটাই পছন্দ করেন। সাধারণ কিছু:
 
 ```bash
 ls /var/log
 # auth.log, syslog, kern.log, daemon.log, dpkg.log, apt/, nginx/, postgresql/, ...
 ```
 
-Read them like any text file:
+যেকোনো টেক্সট ফাইলের মতোই পড়ুন:
 
 ```bash
 sudo less /var/log/auth.log
@@ -201,11 +209,11 @@ sudo tail -f /var/log/nginx/access.log
 sudo grep -E "FAIL|ERROR" /var/log/syslog
 ```
 
-`grep -E` for extended regex; `grep -F` for plain string (faster); `grep -c` to count matches; `grep -A 3 -B 3` for context lines.
+extended regex-এর জন্য `grep -E`; প্লেইন স্ট্রিংয়ের জন্য `grep -F` (দ্রুততর); ম্যাচ গোনার জন্য `grep -c`; context লাইনের জন্য `grep -A 3 -B 3`।
 
-## logrotate — rotating text logs
+## logrotate — টেক্সট লগ ঘোরানো
 
-A 50GB nginx access.log will eat your disk. `logrotate` runs daily (via cron or a systemd timer) and rotates files:
+একটা 50GB nginx access.log আপনার ডিস্ক খেয়ে ফেলবে। `logrotate` প্রতিদিন চলে (cron বা একটা systemd timer-এর মাধ্যমে) আর ফাইল rotate করে:
 
 ```text
 /var/log/nginx/access.log
@@ -215,7 +223,7 @@ A 50GB nginx access.log will eat your disk. `logrotate` runs daily (via cron or 
 ...
 ```
 
-Config lives in `/etc/logrotate.d/`. nginx's looks like:
+কনফিগ থাকে `/etc/logrotate.d/`-তে। nginx-এরটা দেখতে এমন:
 
 ```text
 /var/log/nginx/*.log {
@@ -238,48 +246,48 @@ Config lives in `/etc/logrotate.d/`. nginx's looks like:
 }
 ```
 
-Translation: rotate daily, keep 14 days, gzip everything but the most recent rotation, only rotate non-empty logs, and tell nginx to reopen its file descriptors after rotation (so it does not keep writing to the renamed file).
+মানে দাঁড়ায়: প্রতিদিন rotate করো, 14 দিন রাখো, সবচেয়ে সাম্প্রতিক rotation ছাড়া বাকি সব gzip করো, শুধু non-empty লগ rotate করো, আর rotation-এর পরে nginx-কে তার file descriptor আবার খুলতে বলো (যেন সে rename হয়ে যাওয়া ফাইলে লিখতে না থাকে)।
 
-Test a rotation without waiting:
+অপেক্ষা না করেই একটা rotation টেস্ট করা:
 
 ```bash
 sudo logrotate -fv /etc/logrotate.d/nginx
 ```
 
-## syslog and rsyslog
+## syslog আর rsyslog
 
-A third path: syslog. Older daemons send messages via the syslog protocol to a local syslog daemon (rsyslog on Debian/Ubuntu), which writes them to `/var/log/syslog`, `/var/log/auth.log`, `/var/log/kern.log`, etc.
+তৃতীয় একটা পথ: syslog। পুরনো daemon-গুলো syslog প্রোটোকলের মাধ্যমে একটা লোকাল syslog daemon-এ (Debian/Ubuntu-তে rsyslog) মেসেজ পাঠায়, যেটা সেগুলো `/var/log/syslog`, `/var/log/auth.log`, `/var/log/kern.log` ইত্যাদিতে লেখে।
 
-In modern systems, journald and rsyslog both run, journald forwards to rsyslog, and rsyslog writes to text files. You can disable rsyslog if you only want journald:
+আধুনিক সিস্টেমে journald আর rsyslog দুটোই চলে, journald rsyslog-এ ফরোয়ার্ড করে, আর rsyslog টেক্সট ফাইলে লেখে। আপনি যদি শুধু journald চান, তাহলে rsyslog disable করতে পারেন:
 
 ```bash
 sudo systemctl disable --now rsyslog
 sudo apt remove rsyslog
 ```
 
-Journal-only is fine for small fleets. Keep rsyslog if you want to ship logs off-host using its forwarding rules.
+ছোট fleet-এর জন্য journal-only ঠিক আছে। লগ হোস্টের বাইরে পাঠাতে চাইলে rsyslog-এর forwarding রুল ব্যবহার করে রেখে দিন।
 
-## Shipping logs elsewhere
+## লগ অন্যত্র পাঠানো
 
-A single VPS holding all its own logs is fine until the VPS dies and takes the logs with it. For real systems:
+একটা VPS তার নিজের সব লগ ধরে রাখা ঠিক আছে, যতক্ষণ না VPS-টা মরে গিয়ে লগগুলোও নিয়ে যায়। সত্যিকারের সিস্টেমের জন্য:
 
-- **Lightweight:** `journalctl -u myapp -o json | <some forwarder>` running as a systemd timer or sidecar.
-- **Standard:** Vector, Fluent Bit, Promtail, or rsyslog forwarding via TCP/TLS to a central log server.
-- **Bigger:** Loki for structured search; ClickHouse + a parser for serious volume.
+- **হালকা:** `journalctl -u myapp -o json | <some forwarder>` একটা systemd timer বা sidecar হিসেবে চালানো।
+- **স্ট্যান্ডার্ড:** Vector, Fluent Bit, Promtail, বা rsyslog TCP/TLS-এর মাধ্যমে একটা কেন্দ্রীয় লগ সার্ভারে ফরোয়ার্ড করা।
+- **আরও বড়:** স্ট্রাকচার্ড সার্চের জন্য Loki; গুরুতর ভলিউমের জন্য ClickHouse + একটা parser।
 
-For this chapter, the rule is: know how to query the local journal cold. Once you can do that, exporting it is a five-line config.
+এই অধ্যায়ের জন্য নিয়মটা হলো: লোকাল journal ঠান্ডা মাথায় query করা শিখে ফেলুন। একবার সেটা পারলে, সেটা export করা পাঁচ লাইনের কনফিগ মাত্র।
 
-## Application logging — what to write
+## অ্যাপ্লিকেশন লগিং — কী লিখবেন
 
-Best practices for the logs _your app_ emits:
+_আপনার অ্যাপ_ যে লগ emit করে তার জন্য best practice:
 
-- **Write to stdout/stderr.** journald captures it. Do not invent your own log file.
-- **One event per line.** Multi-line stack traces are okay; multi-line "human" log messages are not.
-- **Structured fields where possible.** Use a logger that emits JSON in production: `logger.info("connection accepted", peer=addr, request_id=rid)`.
-- **Log priorities deliberately.** Reserve `error` for things that need attention. If everything is an error, nothing is.
-- **Include a request ID** that flows through the whole request. You will thank yourself.
+- **stdout/stderr-এ লিখুন।** journald সেটা ধরে ফেলে। নিজের লগ ফাইল বানাবেন না।
+- **প্রতি লাইনে একটা ইভেন্ট।** মাল্টি-লাইন stack trace ঠিক আছে; মাল্টি-লাইন "মানবিক" লগ মেসেজ নয়।
+- **যেখানে সম্ভব স্ট্রাকচার্ড ফিল্ড।** এমন একটা logger ব্যবহার করুন যা production-এ JSON emit করে: `logger.info("connection accepted", peer=addr, request_id=rid)`।
+- **priority ইচ্ছাকৃতভাবে লগ করুন।** `error` শুধু সেসব জিনিসের জন্য রাখুন যেগুলোর মনোযোগ দরকার। সবকিছুই যদি error হয়, তাহলে কিছুই না।
+- **একটা request ID রাখুন** যা পুরো রিকোয়েস্টের মধ্য দিয়ে বয়ে যায়। আপনি নিজেই নিজেকে ধন্যবাদ দেবেন।
 
-## Common queries you will use over and over
+## যেসব query বারবার ব্যবহার করবেন
 
 ```bash
 # What did myapp do in the last 5 minutes?
@@ -301,13 +309,13 @@ journalctl --list-boots
 journalctl --since "03:10" --until "03:20"
 ```
 
-## Recap
+## রিক্যাপ
 
-- journald captures stdout/stderr from every systemd service automatically. `journalctl` is the universal log viewer.
-- Filter by `-u <unit>`, `-p <priority>`, `--since`, `--until`. Use `-f` to follow.
-- Configure retention in `journald.conf` to keep `/var` from filling up.
-- Plain-text logs in `/var/log/` are the older path; rotate them with logrotate.
-- Apps should log JSON to stdout, not a file. Let journald handle the rest.
-- Ship logs off-host before relying on a single VPS to remember anything important.
+- journald প্রতিটা systemd সার্ভিসের stdout/stderr স্বয়ংক্রিয়ভাবে ধরে ফেলে। `journalctl` হলো সর্বজনীন লগ ভিউয়ার।
+- `-u <unit>`, `-p <priority>`, `--since`, `--until` দিয়ে ফিল্টার করুন। follow করতে `-f` ব্যবহার করুন।
+- `/var` ভরে যাওয়া ঠেকাতে `journald.conf`-এ retention কনফিগার করুন।
+- `/var/log/`-এ প্লেইন-টেক্সট লগ হলো পুরনো পথ; logrotate দিয়ে সেগুলো rotate করুন।
+- অ্যাপের উচিত ফাইলে নয়, stdout-এ JSON লগ করা। বাকিটা journald সামলাক।
+- একটা VPS-এর ওপর গুরুত্বপূর্ণ কিছু মনে রাখার ভরসা করার আগে লগ হোস্টের বাইরে পাঠান।
 
-Next chapter: limits — the kernel knobs that decide how much your services are allowed to consume.
+পরের অধ্যায়: limits — সেই কার্নেল নব যা ঠিক করে আপনার সার্ভিসগুলো কতটুকু ব্যবহার করার অনুমতি পাবে।

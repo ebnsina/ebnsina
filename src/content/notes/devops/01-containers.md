@@ -1,9 +1,9 @@
 ---
-title: 'Containers & Docker'
-subtitle: 'What containers actually are — namespaces, cgroups, layers — and how Docker packages your app to run anywhere.'
+title: 'Containers ও Docker'
+subtitle: 'Container আসলে কী — namespaces, cgroups, layers — আর Docker কীভাবে আপনার অ্যাপকে প্যাকেজ করে যাতে সেটা যেকোনো জায়গায় চলে।'
 chapter: 1
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['Docker', 'containers', 'images', 'Dockerfile']
 ---
 
@@ -11,22 +11,30 @@ topics: ['Docker', 'containers', 'images', 'Dockerfile']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What is a Container?
+## গল্পে বুঝি
 
-A container is a process (or group of processes) that runs in isolation from the rest of the system. It has its own filesystem, network, and process tree — but shares the host's kernel. Unlike VMs, containers don't need a separate OS, so they start in milliseconds and use minimal overhead.
+বন্দরের ধারে ইবনে সিনার একটা ছোট ব্যবসা — জাহাজে করে মাল পাঠানো। আগে জিনিসটা ছিল ভয়ানক ঝামেলার। কারও বস্তা, কারও কাঠের বাক্স, কারও আলগা লোহার রড — প্রতিটা জাহাজের জন্য শ্রমিকরা আলাদাভাবে মাল বাঁধত, ফাঁক ভরাট করত, দড়ি দিয়ে টানত। এক জাহাজে যেভাবে সাজানো হতো, পরের জাহাজে আবার পুরোটা খুলে নতুন করে সাজাতে হতো। এক বন্দরে ঠিকঠাক ওঠা মাল আরেক বন্দরের ক্রেনে গিয়ে ফেঁসে যেত, ভেঙে যেত, নাহয় ধরনটাই মিলত না।
+
+তারপর এল standardized স্টিলের container। ইবনে সিনা এখন মালটা তার সাথে দরকারি সব কিছু — প্যাকিং, কুশন, বাঁধুনি — একসাথে একটা সিল করা বাক্সে ভরে দেয়। বাক্সের ভেতরে কী আছে সেটা জাহাজ, ক্রেন বা ট্রাকের জানার দরকার নেই; সবাই ঠিক একই মাপের একই বাক্সকে একইভাবে ধরে, তোলে, রাখে। ফাতিমা আল-ফিহরির বন্দর হোক বা আল-খোয়ারিজমির — বাক্সটা কোথাও না খুলে, নতুন করে না বেঁধে, হুবহু একইরকম চলে যায়।
+
+এই সিল করা container-টাই আসলে একটা **Docker container/image** — অ্যাপ আর তার সব **dependency** একসাথে এক বাক্সে বাঁধা। "সব বন্দরে একইভাবে হ্যান্ডল হয়" মানে অ্যাপটা যেকোনো মেশিনে হুবহু একই রকম চলে — আর কোনো "আমার মেশিনে তো চলছিল" নেই, কারণ প্রতি জাহাজে নতুন করে প্যাক করার দরকারই নেই। আর গোটা একটা গুদাম জাহাজে তোলার বদলে শুধু দরকারি বাক্সটা পাঠানো যেমন হালকা, তেমনি container একটা full **VM**-এর চেয়ে অনেক হালকা — নিজের আলাদা OS বয়ে বেড়াতে হয় না। বাস্তবে **Docker** ঠিক এই কাজটাই করে।
+
+## Container কী?
+
+Container হলো এমন একটা process (বা process-এর গ্রুপ) যেটা সিস্টেমের বাকি অংশ থেকে আলাদা হয়ে (isolation-এ) চলে। এর নিজের filesystem, network আর process tree থাকে — কিন্তু এটা host-এর kernel শেয়ার করে। VM-এর মতো নয়, container-এর আলাদা কোনো OS লাগে না, তাই এটা মিলিসেকেন্ডেই চালু হয় আর খুব সামান্য overhead নেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a shipping container at a port — it doesn't matter what's inside (electronics, food, clothes), the container is standardized. Any ship can carry it, any crane can lift it. Docker containers work the same way — your app runs the same everywhere.
+বন্দরের একটা shipping container-এর কথা ভাবুন — ভেতরে কী আছে (ইলেকট্রনিকস, খাবার, কাপড়) তাতে কিছু যায়-আসে না, container-টা standardized। যেকোনো জাহাজ সেটা বহন করতে পারে, যেকোনো crane সেটা তুলতে পারে। Docker container ঠিক একইভাবে কাজ করে — আপনার অ্যাপ সব জায়গায় একইরকম চলে।
 
 </Callout>
 
-Under the hood, containers use two Linux kernel features:
+ভেতরের দিকে দেখলে, container দুটো Linux kernel feature ব্যবহার করে:
 
-- **Namespaces**: isolate what a process can see (PIDs, network, filesystems, users)
-- **Cgroups**: limit what a process can use (CPU, memory, I/O)
+- **Namespaces**: একটা process কী দেখতে পাবে সেটা isolate করে (PIDs, network, filesystems, users)
+- **Cgroups**: একটা process কতটুকু ব্যবহার করতে পারবে সেটা limit করে (CPU, memory, I/O)
 
 ```typescript
 // Conceptual model — a container is just a confined process
@@ -49,7 +57,7 @@ interface Container {
 
 ## Docker Images
 
-An image is a read-only filesystem snapshot. Images are built in **layers** — each instruction in a Dockerfile creates a new layer on top of the previous one.
+Image হলো একটা read-only filesystem snapshot। Image তৈরি হয় **layer**-এ — Dockerfile-এর প্রতিটা instruction আগের layer-এর ওপর একটা নতুন layer তৈরি করে।
 
 ```dockerfile
 # Each line creates a layer
@@ -76,7 +84,7 @@ CMD ["node", "dist/server.js"]
 
 <Callout type="tip">
 
-**Multi-stage builds** keep images small. Use one stage to build (with dev dependencies), another to run (only production files). A Node.js app image can go from 1GB to 100MB.
+**Multi-stage build** image ছোট রাখে। একটা stage ব্যবহার করুন build করার জন্য (dev dependency সহ), আরেকটা run করার জন্য (শুধু production file)। একটা Node.js অ্যাপ image 1GB থেকে 100MB-তে নেমে আসতে পারে।
 
 </Callout>
 
@@ -104,7 +112,7 @@ CMD ["node", "dist/server.js"]
 
 ## Docker Compose
 
-For local development with multiple services:
+একাধিক service নিয়ে local development-এর জন্য:
 
 ```yaml
 # docker-compose.yml
@@ -141,13 +149,13 @@ volumes:
 
 <Callout type="info">
 
-**Containers vs VMs**: Containers share the host kernel (lightweight, fast start, less isolation). VMs have their own kernel (heavier, slower start, stronger isolation). Use containers for microservices; use VMs when you need full OS isolation or different kernels.
+**Containers vs VMs**: Container host-এর kernel শেয়ার করে (হালকা, দ্রুত চালু হয়, isolation কম)। VM-এর নিজের kernel থাকে (ভারী, চালু হতে ধীর, isolation শক্তিশালী)। Microservice-এর জন্য container ব্যবহার করুন; পুরো OS isolation বা আলাদা kernel দরকার হলে VM ব্যবহার করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল বিষয়গুলো
 
-1. **Containers are isolated processes**, not lightweight VMs — they share the host kernel
-2. **Images are layered filesystems** — order your Dockerfile for maximum cache hits
-3. **Multi-stage builds** dramatically reduce image size
-4. **Docker Compose** orchestrates multi-container development environments
+1. **Container হলো isolated process**, হালকা VM নয় — এরা host-এর kernel শেয়ার করে
+2. **Image হলো layered filesystem** — সর্বোচ্চ cache hit পেতে Dockerfile-এর ক্রম ঠিক করুন
+3. **Multi-stage build** image-এর সাইজ নাটকীয়ভাবে কমায়
+4. **Docker Compose** একাধিক container-এর development environment orchestrate করে

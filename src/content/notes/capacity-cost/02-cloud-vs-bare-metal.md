@@ -1,9 +1,9 @@
 ---
 title: 'Cloud vs Bare Metal vs VPS'
-subtitle: "Unit economics for each deployment model — when managed convenience costs more than it saves, and when it doesn't."
+subtitle: 'প্রতিটা deployment model-এর unit economics — কখন managed সুবিধা যা বাঁচায় তার চেয়ে বেশি খরচ করায়, আর কখন করায় না।'
 chapter: 2
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['cloud', 'bare metal', 'VPS', 'unit economics', 'TCO']
 ---
 
@@ -13,53 +13,61 @@ topics: ['cloud', 'bare metal', 'VPS', 'unit economics', 'TCO']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Renting vs buying a car: renting (cloud) costs more per mile but you can return it when you don't need it, get a bigger one for a road trip, and never worry about maintenance. Buying (bare metal) is cheaper per mile if you drive a lot, but you're on the hook for repairs, and it sits depreciating when unused.
+গাড়ি ভাড়া করা vs কেনা: ভাড়া করা (cloud) প্রতি মাইলে বেশি খরচ, কিন্তু দরকার না থাকলে ফেরত দিতে পারেন, road trip-এর জন্য বড়টা নিতে পারেন, আর maintenance নিয়ে কখনো ভাবতে হয় না। কেনা (bare metal) প্রতি মাইলে সস্তা যদি অনেক চালান, কিন্তু repair-এর দায় আপনার, আর অব্যবহৃত থাকলে depreciate হতে থাকে।
 
 </Callout>
 
-## The Three Models
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি রোজ শহরের এ-মাথা ও-মাথা ঘোরেন — কখনো বাজারে, কখনো লাইব্রেরিতে, কখনো ছাত্রদের ক্লাসে। শুরুতে তিনি যখনই বের হন তখনই রাস্তা থেকে একটা রিকশা ডেকে নেন — হাত তুললেই সামনে হাজির, কোনো ঝামেলা নেই, দরকার শেষে ছেড়ে দিলেই হলো। কিন্তু যেদিন সারাদিন এখানে-ওখানে দৌড়াতে হয়, দিনশেষে ভাড়ার হিসাব করে তাঁর মাথায় হাত — প্রতিটা ট্রিপ আলাদা করে গুনলে খরচ চড়া হয়ে যায়।
+
+তাই তিনি ভাবতে বসেন। একদিকে ইবনে সিনা তাঁকে বলেন নিজের একটা গাড়ি কিনে নিতে — অনেক চললে প্রতি কিলোমিটারে খরচ সবচেয়ে কম পড়ে, কিন্তু একবারে মোটা টাকা গুনতে হয়, আর তেল-মেরামত-পার্কিং সব ফাতিমার নিজেকেই সামলাতে হবে। অন্যদিকে আল-খোয়ারিজমি বলেন মাঝামাঝি পথ ধরতে — মাসিক ভাড়ায় একটা গাড়ি নিয়ে নাও, খরচ ফিক্সড ও আগে থেকে জানা, কিছুটা স্বাধীনতাও থাকে, অথচ মালিকানার মাথাব্যথা নেই।
+
+গল্পের এই তিন পথই আসলে তিন deployment model। যখন-তখন রিকশা ডাকা হলো **cloud** — pay-as-you-go, ভীষণ flexible, তাৎক্ষণিক provisioning, কিন্তু প্রতি unit-এ দামি, আর সারাদিন চড়লে বিল আকাশছোঁয়া। নিজের গাড়ি কেনা হলো **bare metal** — scale-এ প্রতি unit-এ সবচেয়ে সস্তা, তবে বড় upfront খরচ আর পুরো maintenance নিজের কাঁধে। মাসিক ভাড়ার গাড়িটা হলো **VPS** — মাঝের predictable পথ, fixed খরচে কিছুটা flexibility, মালিকানার ঝক্কি ছাড়া। বাস্তবেও ঠিক তাই: startup যখন ছোট আর traffic অনিশ্চিত, তখন cloud-এ শুরু করাই বুদ্ধিমানের; load যখন steady আর predictable হয়ে আসে, VPS-এ গেলে খরচ অনেকটা কমে; আর সত্যিই বিশাল, টানা compute (যেমন ML training বা video transcoding) লাগলে bare metal-ই সবচেয়ে সাশ্রয়ী।
+
+## তিনটি Model
 
 **Cloud (AWS, GCP, Azure):**
 
-- Pay per hour of use — no upfront cost
-- Provision in minutes, deprovision immediately
-- Managed services for everything (RDS, ElastiCache, S3)
-- Premium pricing: 3-5x the cost of equivalent bare metal
+- ব্যবহারের প্রতি ঘণ্টায় pay — কোনো upfront cost নেই
+- মিনিটে provision, সাথে সাথে deprovision
+- সবকিছুর জন্য managed service (RDS, ElastiCache, S3)
+- Premium pricing: সমতুল্য bare metal-এর খরচের 3-5x
 
 **VPS (Hetzner, Linode, DigitalOcean, Vultr):**
 
-- Fixed monthly cost for a virtual machine
-- Good managed add-ons (managed Postgres, load balancers)
-- 60-80% cheaper than AWS for equivalent specs
-- No spot instances, limited auto-scaling
+- একটা virtual machine-এর জন্য fixed monthly cost
+- ভালো managed add-on (managed Postgres, load balancer)
+- সমতুল্য spec-এ AWS-এর চেয়ে 60-80% সস্তা
+- কোনো spot instance নেই, সীমিত auto-scaling
 
 **Bare Metal (Hetzner Dedicated, OVH, Equinix):**
 
-- Physical server, rented or owned
-- Cheapest per-core and per-GB-RAM at scale
-- No virtualization overhead
-- Lead time to provision: days to weeks
-- You manage everything at the OS level
+- Physical server, ভাড়া করা বা মালিকানার
+- Scale-এ per-core আর per-GB-RAM সবচেয়ে সস্তা
+- কোনো virtualization overhead নেই
+- Provision করতে lead time: কয়েক দিন থেকে সপ্তাহ
+- OS level-এ সবকিছু আপনাকেই manage করতে হয়
 
-## Unit Cost Comparison
+## Unit Cost তুলনা
 
-Comparing a roughly equivalent 8-core / 32GB RAM setup (2024 pricing):
+মোটামুটি সমতুল্য 8-core / 32GB RAM setup-এর তুলনা (2024 pricing):
 
-| Provider          | Type         | Monthly Cost    | Notes                        |
-| ----------------- | ------------ | --------------- | ---------------------------- |
-| AWS (m7g.2xlarge) | Cloud        | ~$230 on-demand | More with data transfer      |
-| AWS (m7g.2xlarge) | Reserved 1yr | ~$140           | Commit upfront               |
-| Hetzner CX52      | VPS          | ~$55            | ARM-based, EU/US regions     |
-| DigitalOcean      | VPS          | ~$96            | More regions, better support |
-| Hetzner AX102     | Bare Metal   | ~$90            | 14-core, 64GB, NVMe          |
+| Provider          | Type         | Monthly Cost    | Notes                     |
+| ----------------- | ------------ | --------------- | ------------------------- |
+| AWS (m7g.2xlarge) | Cloud        | ~$230 on-demand | data transfer সহ আরও বেশি |
+| AWS (m7g.2xlarge) | Reserved 1yr | ~$140           | upfront commit            |
+| Hetzner CX52      | VPS          | ~$55            | ARM-based, EU/US region   |
+| DigitalOcean      | VPS          | ~$96            | বেশি region, ভালো support |
+| Hetzner AX102     | Bare Metal   | ~$90            | 14-core, 64GB, NVMe       |
 
-The same workload that costs $2,000/month on AWS on-demand runs for $500-600/month on Hetzner. The gap grows with data transfer and managed service costs.
+যে একই workload AWS on-demand-এ মাসে $2,000 খরচ করে, সেটা Hetzner-এ চলে মাসে $500-600-তে। data transfer আর managed service-এর খরচ যোগ হলে ফারাক আরও বাড়ে।
 
-## True Cost of Cloud
+## Cloud-এর আসল খরচ
 
-Cloud bills have multipliers that the headline instance price hides:
+Cloud bill-এ কিছু multiplier থাকে যা headline instance price লুকিয়ে রাখে:
 
 **Data transfer (egress):**
 
@@ -71,7 +79,7 @@ Hetzner: 20TB included in VPS plans, $1/TB after
 Cloudflare (for static): free egress
 ```
 
-**Managed services premium:**
+**Managed service premium:**
 
 ```
 RDS db.t3.medium (2 vCPU, 4GB):
@@ -83,7 +91,7 @@ ElastiCache cache.t3.micro (1 vCPU, 0.5GB):
   Self-hosted Redis on shared VPS: ~$5/month amortized
 ```
 
-**Operational overhead of self-hosting:**
+**Self-hosting-এর operational overhead:**
 
 ```
 Self-hosted Postgres:
@@ -94,45 +102,45 @@ Self-hosted Postgres:
 RDS buys back this time — worth it until you're large enough to hire DBAs
 ```
 
-## The Real Decision Framework
+## আসল Decision Framework
 
-**Use cloud when:**
+**Cloud ব্যবহার করুন যখন:**
 
-- Team is small and ops bandwidth is limited — managed services are worth the premium
-- Traffic is spiky or unpredictable — auto-scaling and pay-per-use matter
-- You need global regions quickly
-- You're early and burning runway — time-to-market beats cost optimization
-- You need specific managed services (ML, analytics, compliance tools)
+- Team ছোট এবং ops bandwidth সীমিত — managed service premium-এর যোগ্য
+- Traffic spiky বা unpredictable — auto-scaling আর pay-per-use গুরুত্বপূর্ণ
+- আপনার দ্রুত global region দরকার
+- আপনি early stage-এ আছেন আর runway পুড়ছে — time-to-market cost optimization-এর চেয়ে বড়
+- আপনার নির্দিষ্ট managed service দরকার (ML, analytics, compliance tool)
 
-**Use VPS when:**
+**VPS ব্যবহার করুন যখন:**
 
 - Steady, predictable load
-- You have ops bandwidth to manage your own infra
-- Cost matters — common at Series A and beyond
-- You want simplicity without the complexity of cloud primitives
+- নিজের infra manage করার ops bandwidth আছে
+- Cost গুরুত্বপূর্ণ — Series A এবং তার পরে সাধারণ
+- Cloud primitive-এর জটিলতা ছাড়া simplicity চান
 
-**Use bare metal when:**
+**Bare metal ব্যবহার করুন যখন:**
 
-- High, sustained compute need (ML training, video transcoding, large databases)
-- Your team has infrastructure engineering capacity
-- You've verified the workload — no over-provisioning on unused capacity
-- Per-core performance matters (no virtualization overhead)
+- High, sustained compute দরকার (ML training, video transcoding, বড় database)
+- আপনার team-এর infrastructure engineering capacity আছে
+- Workload যাচাই করেছেন — অব্যবহৃত capacity-তে over-provisioning নেই
+- Per-core performance গুরুত্বপূর্ণ (কোনো virtualization overhead নেই)
 
-## Spot / Preemptible Instances
+## Spot / Preemptible Instance
 
-Cloud providers sell excess capacity at 70-90% discount as spot (AWS) or preemptible (GCP) instances — but they can be terminated with 2 minutes warning.
+Cloud provider-রা তাদের বাড়তি capacity 70-90% discount-এ spot (AWS) বা preemptible (GCP) instance হিসেবে বিক্রি করে — কিন্তু ২ মিনিটের warning দিয়ে এগুলো terminate করে দেওয়া হতে পারে।
 
-**Good uses:**
+**ভালো ব্যবহার:**
 
-- Stateless workers pulling from a queue (a terminated worker just loses its current job, which retries)
-- Batch processing jobs that checkpoint progress
-- CI/CD runners
+- Queue থেকে টানা stateless worker (terminate হওয়া worker শুধু তার বর্তমান job হারায়, যা retry হয়)
+- Progress checkpoint করে এমন batch processing job
+- CI/CD runner
 
-**Bad uses:**
+**খারাপ ব্যবহার:**
 
-- Primary database — termination mid-write causes corruption
-- Stateful services with no fast failover
-- Jobs longer than 2 minutes without checkpointing
+- Primary database — write-এর মাঝে termination corruption ঘটায়
+- দ্রুত failover ছাড়া stateful service
+- Checkpointing ছাড়া ২ মিনিটের বেশি লম্বা job
 
 ```yaml
 # Kubernetes: mix of on-demand and spot
@@ -152,9 +160,9 @@ nodeGroups:
         effect: NoSchedule
 ```
 
-## Rightsizing in Practice
+## বাস্তবে Rightsizing
 
-Most teams overprovision by 2-4x. Measure first:
+বেশিরভাগ team 2-4x overprovision করে। আগে measure করুন:
 
 ```bash
 # AWS Cost Explorer: rightsizing recommendations
@@ -171,9 +179,9 @@ aws cloudwatch get-metric-statistics \
   --dimensions Name=InstanceId,Value=i-xxxx
 ```
 
-If your instances run at 10-15% CPU, you're massively overprovisioned. Downsize or pack more workloads per instance.
+যদি আপনার instance-গুলো 10-15% CPU-তে চলে, আপনি বিশাল overprovision করেছেন। Downsize করুন বা প্রতি instance-এ আরও বেশি workload pack করুন।
 
-**Packing workloads (multi-tenancy on a single host):**
+**Workload packing (একই host-এ multi-tenancy):**
 
 ```
 Instead of: 4 × m5.xlarge (4 vCPU, 16GB each) for 4 services at 20% CPU
@@ -183,9 +191,9 @@ Cost: ~4x cheaper, same total resources
 Trade-off: one noisy neighbor affects all, less blast radius isolation
 ```
 
-## Reserved Instance Math
+## Reserved Instance-এর হিসাব
 
-If you can predict your baseline compute need, commit to 1 or 3-year reserved instances:
+যদি আপনার baseline compute দরকার predict করতে পারেন, ১ বা ৩ বছরের reserved instance-এ commit করুন:
 
 ```
 On-demand m5.xlarge: $0.192/hr = $140/month
@@ -196,11 +204,11 @@ Annual savings on a single instance: $612 (1yr) or $1,008 (3yr)
 For 10 instances: $6,120 or $10,080/year
 ```
 
-Buy reserved instances for your steady-state baseline. Use on-demand or spot for burst above baseline.
+আপনার steady-state baseline-এর জন্য reserved instance কিনুন। Baseline-এর উপরের burst-এর জন্য on-demand বা spot ব্যবহার করুন।
 
-## Cost Per Request as a North Star
+## North Star হিসেবে Cost Per Request
 
-Instead of tracking raw cloud spend, track **cost per 1000 requests** (CPR):
+Raw cloud spend track করার বদলে **cost per 1000 requests** (CPR) track করুন:
 
 ```
 Monthly spend: $5,000
@@ -209,11 +217,11 @@ Monthly requests: 50,000,000
 CPR = $5,000 / 50,000 (thousands) = $0.10 per 1000 requests
 ```
 
-As you scale, CPR should decrease (economies of scale). If CPR is flat or rising, your architecture isn't scaling efficiently — investigate query costs, caching, or instance types.
+আপনি যত scale করবেন, CPR তত কমা উচিত (economies of scale)। যদি CPR flat বা বাড়তে থাকে, আপনার architecture efficiently scale করছে না — query cost, caching, বা instance type খতিয়ে দেখুন।
 
 ```typescript
 // Dashboard metric
 const costPerThousandRequests = totalMonthlyCostUsd / (totalMonthlyRequests / 1000);
 ```
 
-Track this weekly. It tells you whether your infrastructure spend is growing proportionally to usage (expected) or faster (a problem).
+এটা সাপ্তাহিক track করুন। এটা বলে দেয় আপনার infrastructure spend usage-এর সাথে সমানুপাতিকভাবে বাড়ছে (প্রত্যাশিত) নাকি তার চেয়ে দ্রুত (একটা সমস্যা)।

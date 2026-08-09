@@ -1,9 +1,9 @@
 ---
 title: 'SLIs, SLOs & Error Budgets'
-subtitle: "Pick the right SLI, set an SLO that survives lawyer review, and burn the budget the way Google's CRE team does it."
+subtitle: 'সঠিক SLI বেছে নাও, এমন একটা SLO সেট করো যা lawyer review-তে টেকে, আর Google-এর CRE team যেভাবে করে সেভাবে budget burn করো।'
 chapter: 2
 level: 'beginner'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['SLI', 'SLO', 'SLA', 'error budget', 'burn rate', 'Prometheus']
 ---
 
@@ -13,13 +13,21 @@ topics: ['SLI', 'SLO', 'SLA', 'error budget', 'burn rate', 'Prometheus']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A service contract with a penalty clause — you agree upfront on what "good enough" means, and the budget is how much slack you have before penalties kick in.
+penalty clause সহ একটা service contract — "যথেষ্ট ভালো" মানে কী তা তুমি আগেভাগেই একমত হও, আর budget হচ্ছে penalty শুরু হওয়ার আগে তোমার হাতে কতটা ঢিল আছে।
 
 </Callout>
 
-## SLI, SLO, SLA — they are not the same word
+## গল্পে বুঝি
+
+শহরের সিটি বাস কোম্পানির অফিসে বড় একটা পাবলিক বোর্ড ঝুলছে — "পাংচুয়ালিটি বোর্ড"। রোজ শেষে হিসাব বসানো হয়: আজ কতগুলো বাস শিডিউলের ৫ মিনিটের মধ্যে স্টপে পৌঁছেছে। কেউ আন্দাজে বলে না, প্রতিটা ট্রিপের আসল সময় মেপে শতকরা হিসাব করা হয় — এটাই বোর্ডের আসল সংখ্যা। ম্যানেজার আল-খোয়ারিজমি এই সংখ্যাটার দিকেই সবার আগে তাকায়।
+
+কোম্পানি যাত্রীদের কাছে প্রকাশ্যে ওয়াদা করেছে — মাসে অন্তত ৯৫% বাস সময়মতো চলবে। মানে বাকি ৫% দেরি করার ছাড় তাদের হাতে আছে, এটা একটা খরচ করার মতো ভাতা। এই ভাতা যতক্ষণ হাতে থাকে, রুট প্ল্যানার ইবনে সিনা নতুন ঝুঁকির এক্সপেরিমেন্ট চালাতে পারে — নতুন এক্সপ্রেস রুট, কম স্টপে দ্রুত সার্ভিস। কিন্তু কোনো মাসে যদি দেরি হওয়া বাসগুলো পুরো ৫% ভাতা খেয়ে ফেলে, অপারেশন হেড ফাতিমা আল-ফিহরি সঙ্গে সঙ্গে সব এক্সপেরিমেন্ট ফ্রিজ করে দেয় — তখন একটাই কাজ, বাস সময়মতো চালানো, যতক্ষণ না ভাতা আবার জমে।
+
+এই গল্পটাই আসলে এই চ্যাপ্টারের তিনটা টার্ম। বোর্ডে মাপা "সময়মতো পৌঁছানো বাসের শতকরা হার" হলো **SLI** — বাস্তবে মাপা indicator। প্রকাশ্যে ওয়াদা করা **৯৫%** হলো **SLO** — সেই indicator-এর উপর বসানো target। আর দেরির জন্য রাখা **৫% ভাতা**, যা ফুরিয়ে গেলে ঝুঁকি নেওয়া বন্ধ করে স্থিতিশীলতায় ফিরতে হয়, সেটাই **error budget** — এটাই ঠিক করে দেয় তুমি কত দ্রুত পরিবর্তন বা এক্সপেরিমেন্ট চালাতে পারবে। বাস্তবেও ঠিক তাই: তোমার service-এর সফল request-এর হার হলো SLI, 99.9% target হলো SLO, আর বাকি 0.1% error budget ফুরিয়ে গেলেই feature freeze — নতুন deploy থামিয়ে reliability-তে মন দিতে হয়।
+
+## SLI, SLO, SLA — এরা একই শব্দ নয়
 
 ```
 SLI — Indicator    A measurement.            "% of HTTP requests succeeding."
@@ -30,17 +38,17 @@ SLO < SLA always.  Internal target is stricter than the contractual one.
 You must hit the SLO well before you risk the SLA.
 ```
 
-If you confuse these terms in a customer meeting, your finance team will eventually find out the expensive way.
+একটা customer meeting-এ এই টার্মগুলো গুলিয়ে ফেললে, তোমার finance team শেষমেশ সেটা ব্যয়বহুলভাবে জানতে পারবে।
 
-## Picking the right SLI
+## সঠিক SLI বেছে নেওয়া
 
-The wrong SLI is worse than no SLI. It anchors the team on the wrong thing for years.
+ভুল SLI, কোনো SLI না থাকার চেয়ে খারাপ। এটা team-কে বছরের পর বছর ভুল জিনিসের উপর anchor করে রাখে।
 
-A good SLI is:
+একটা ভালো SLI:
 
-1. **A ratio of good events to total events** (so it composes cleanly)
-2. **Measured at the user-perceived layer** (not deep in the stack)
-3. **Aggregatable across instances** without lying about tail behavior
+1. **good event আর total event-এর একটা ratio** (যাতে এটা পরিষ্কারভাবে compose হয়)
+2. **user-perceived layer-এ measured** (stack-এর গভীরে নয়)
+3. **instance জুড়ে aggregatable** — tail behavior নিয়ে মিথ্যা না বলে
 
 ```promql
 # ✓ Good SLI: availability for the checkout API
@@ -64,11 +72,11 @@ sum(rate(http_request_duration_seconds_count{service="checkout"}[5m]))
 
 <Callout type="warning">
 
-**Never use averages for latency SLIs.** A service with p50 = 50ms and p99 = 5s has a glorious average and a terrible user experience. Always express latency as "fraction of requests faster than X."
+**Latency SLI-এর জন্য কখনো average ব্যবহার করো না।** p50 = 50ms আর p99 = 5s সহ একটা service-এর average চমৎকার আর user experience ভয়ঙ্কর। Latency সবসময় "X-এর চেয়ে দ্রুত request-এর ভগ্নাংশ" হিসেবে প্রকাশ করো।
 
 </Callout>
 
-## The SLI menu by service type
+## Service type অনুযায়ী SLI menu
 
 ```typescript
 // Reference table: what SLI fits which service shape
@@ -100,9 +108,9 @@ const sliMenu = {
 };
 ```
 
-## Setting the SLO number
+## SLO সংখ্যাটা সেট করা
 
-SLO target is not chosen by the SRE team alone. The process:
+SLO target শুধু SLE team একা বেছে নেয় না। process-টা:
 
 ```
 1. Measure current performance for 4 weeks (be honest).
@@ -117,7 +125,7 @@ SLO target is not chosen by the SRE team alone. The process:
 
 ### The cost of nines
 
-Each additional 9 costs roughly **10x more engineering effort** than the previous one.
+প্রতিটা অতিরিক্ত 9-এর দাম আগেরটার চেয়ে মোটামুটি **10x বেশি engineering effort**।
 
 ```
 99%      = 7.2 hours of badness/month   (cheap; a tutorial site)
@@ -130,13 +138,13 @@ Each additional 9 costs roughly **10x more engineering effort** than the previou
 
 <Callout type="tip">
 
-**Aim lower than you think.** A team with a 99.99% SLO and a 99.95% need has just signed up for unnecessary suffering. Reliability over user expectation is wasted; users do not perceive it, but you pay for it in feature velocity.
+**যতটা ভাবছ তার চেয়ে নিচে aim করো।** 99.99% SLO আর 99.95% প্রয়োজন থাকা একটা team শুধু অপ্রয়োজনীয় ভোগান্তির জন্য সাইন আপ করেছে। user expectation-এর বেশি reliability অপচয়; user সেটা টের পায় না, কিন্তু তুমি feature velocity দিয়ে তার দাম দাও।
 
 </Callout>
 
-## Recording the SLO in Prometheus
+## Prometheus-এ SLO রেকর্ড করা
 
-Production-grade SLO tracking using recording rules and burn-rate alerts. This is the same shape `sloth` generates. `sloth` is one option; many teams now codify SLI rules directly in IaC, or use the [OpenSLO](https://github.com/OpenSLO/OpenSLO) spec to stay portable.
+recording rules আর burn-rate alerts ব্যবহার করে production-grade SLO tracking। এটা ঠিক সেই shape যা `sloth` generate করে। `sloth` একটা option; অনেক team এখন SLI rules সরাসরি IaC-তে codify করে, বা portable থাকতে [OpenSLO](https://github.com/OpenSLO/OpenSLO) spec ব্যবহার করে।
 
 ```yaml
 # prometheus/rules/checkout-slo.yml
@@ -180,7 +188,7 @@ groups:
 
 ## Burn-rate alerts (the modern way)
 
-The naive approach — "alert when last 5 min are below 99.9%" — fires constantly during minor blips. The correct approach uses **multi-window, multi-burn-rate** alerts, the technique published in the SRE Workbook.
+সরল approach — "শেষ 5 মিনিট 99.9%-এর নিচে গেলে alert দাও" — ছোটখাটো blip-এর সময়ও অনবরত fire করে। সঠিক approach ব্যবহার করে **multi-window, multi-burn-rate** alerts, যে technique SRE Workbook-এ publish হয়েছে।
 
 ```yaml
 # Two windows + two burn rates = catch fast outages and slow leaks
@@ -220,17 +228,17 @@ groups:
           slo: checkout_availability
 ```
 
-The double-window `and` is the key trick: the long window detects the trend, the short window confirms the badness is still ongoing (so the alert resolves the moment the issue is fixed, not 6 hours later).
+double-window `and`-টাই মূল কৌশল: লম্বা window trend শনাক্ত করে, ছোট window নিশ্চিত করে যে badness এখনো চলছে (যাতে issue ঠিক হওয়ার মুহূর্তেই alert resolve হয়, 6 ঘণ্টা পরে নয়)।
 
 <Callout type="info">
 
-**Why 14.4 and 6?** These are derived to ensure the alert fires before you've burned more than X% of your monthly budget. The full derivation is in the Google SRE Workbook chapter "Alerting on SLOs." Use these constants directly — they are battle-tested.
+**14.4 আর 6 কেন?** এগুলো এমনভাবে derive করা যাতে তুমি তোমার monthly budget-এর X%-এর বেশি burn করার আগেই alert fire করে। পুরো derivation আছে Google SRE Workbook-এর "Alerting on SLOs" chapter-এ। এই constants সরাসরি ব্যবহার করো — এরা battle-tested।
 
 </Callout>
 
 ## Error budget policy (the document)
 
-The numbers are useless without a written policy. Real teams publish a one-page document that says exactly what happens at each budget state.
+লেখা policy ছাড়া সংখ্যাগুলো অকেজো। রিয়েল team-রা এক পাতার একটা document publish করে যা প্রতিটা budget state-এ ঠিক কী হবে তা বলে দেয়।
 
 ```markdown
 # Checkout Service — Error Budget Policy
@@ -258,9 +266,9 @@ Engineering Manager → Director → VP Eng. Decision recorded in writing.
 Checkout SRE (rotation: see PagerDuty schedule "checkout-primary")
 ```
 
-This document is signed off by the engineering manager AND the product manager. It exists so you do not have to argue at 2am about whether a deploy is allowed.
+এই document-এ engineering manager আর product manager দুজনেই sign off করে। এটা এই কারণে থাকে যাতে একটা deploy allowed কিনা তা নিয়ে তোমাকে রাত 2টায় তর্ক করতে না হয়।
 
-## Common SLO mistakes (from real outages)
+## সাধারণ SLO ভুল (রিয়েল outage থেকে)
 
 ```typescript
 // Mistake 1: SLI measured at the wrong layer
@@ -286,15 +294,15 @@ This document is signed off by the engineering manager AND the product manager. 
 
 ## Stay current
 
-- [Google SRE Workbook — Implementing SLOs](https://sre.google/workbook/implementing-slos/) — the source material
+- [Google SRE Workbook — Implementing SLOs](https://sre.google/workbook/implementing-slos/) — source material
 - [OpenSLO spec](https://github.com/OpenSLO/OpenSLO) — vendor-neutral SLO definitions
-- [Sloth](https://sloth.dev) — Prometheus SLO generator, still actively maintained
+- [Sloth](https://sloth.dev) — Prometheus SLO generator, এখনো actively maintained
 - [Alex Hidalgo — Implementing SLOs (book)](https://www.alex-hidalgo.com/the-art-of-slos) — practical depth
 
 ## Key Takeaways
 
-1. **SLI = ratio of good to total**, measured close to the user
-2. **SLO = target on the SLI**, set lower than what perfection wants
-3. **Each 9 costs ~10x more** — pick the lowest defensible target
-4. **Multi-window multi-burn alerting** is the right way to page on SLO violation
-5. **Error budget policy document** is what makes the budget actually enforceable
+1. **SLI = good আর total-এর ratio**, user-এর কাছাকাছি measured
+2. **SLO = SLI-এর উপর একটা target**, perfection যা চায় তার চেয়ে নিচে সেট করা
+3. **প্রতিটা 9-এর দাম ~10x বেশি** — সবচেয়ে নিচু defensible target বেছে নাও
+4. **Multi-window multi-burn alerting** হচ্ছে SLO violation-এ page করার সঠিক উপায়
+5. **Error budget policy document** হচ্ছে যা budget-কে আসলে enforceable করে

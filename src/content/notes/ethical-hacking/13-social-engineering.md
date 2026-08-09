@@ -1,9 +1,9 @@
 ---
 title: 'Social Engineering'
-subtitle: 'Phishing campaigns, pretexting, vishing, physical intrusion — and the defenses that actually work.'
+subtitle: 'Phishing campaign, pretexting, vishing, physical intrusion — এবং যেসব প্রতিরক্ষা আসলেই কাজ করে।'
 chapter: 13
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics:
   ['social engineering', 'phishing', 'pretexting', 'vishing', 'spear phishing', 'GoPhish', 'SET']
 ---
@@ -14,15 +14,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-The best locks in the world don't protect against a convincing phone call: "Hi, this is IT support — we detected unusual activity on your account. I just need you to confirm your password to restore access." Humans are the most exploitable attack surface.
+দুনিয়ার সেরা তালাও একটা বিশ্বাসযোগ্য ফোন কলের বিরুদ্ধে কাজ করে না: "হ্যালো, আমি IT support থেকে বলছি — আপনার account-এ অস্বাভাবিক কার্যকলাপ ধরা পড়েছে। access পুনরুদ্ধারের জন্য আমার শুধু আপনার password-টা confirm করা দরকার।" মানুষই সবচেয়ে সহজে exploit করা যায় এমন attack surface।
 
 </Callout>
 
-## Why Social Engineering Works
+## গল্পে বুঝি
 
-Technical defenses stop technical attacks. But no firewall blocks a convincing email.
+একটা কর্পোরেট বিল্ডিংয়ের গেটে ফাতিমা আল-ফিহরি সিকিউরিটি গার্ড হিসেবে বসে আছেন। গেটে কার্ড লক, CCTV, ভিজিটর রেজিস্টার — কারিগরি দিক থেকে সব ঠিকঠাক। এমন সময় একজন লোক আত্মবিশ্বাসী পায়ে হেঁটে এলো, গায়ে ইলেকট্রিশিয়ানের ঝকঝকে ইউনিফর্ম, হাতে ক্লিপবোর্ড। মুখে চটপটে কথা: "হেড অফিস থেকে আমাকে জরুরি ভিত্তিতে পাঠিয়েছে — তিনতলার প্যানেলে শর্ট সার্কিট হয়েছে, এক্ষুনি না ঠিক করলে আগুন লেগে যেতে পারে। তাড়াতাড়ি ভেতরে যেতে দিন।"
+
+লোকটা কোনো তালা ভাঙেনি, দেয়াল টপকায়নি, কোনো তার কাটেনি। সে শুধু একটা বিশ্বাসযোগ্য গল্প আর কৃত্রিম তাড়াহুড়ো তৈরি করেছে। ফাতিমা ঘাবড়ে গেলেন — আগুনের ভয়, "হেড অফিস" নামের কর্তৃত্ব, আর হাতে সময় নেই — এই তিনটা মিলে তাঁকে চিন্তা করার ফুরসত দিল না। তিনি গেট খুলে দিলেন। মুহূর্তেই বিল্ডিংয়ের সব কারিগরি নিরাপত্তা অকেজো হয়ে গেল, কারণ একজন মানুষকে ম্যানিপুলেট করেই সব পার হয়ে গেল। যদি ফাতিমা এক সেকেন্ড থেমে হেড অফিসে ফোন করে যাচাই করতেন — "আপনারা কি সত্যিই কাউকে পাঠিয়েছেন?" — গল্পটা ওখানেই ভেঙে পড়ত।
+
+এই গল্পটাই আসলে **social engineering**। ভুয়া ইউনিফর্ম আর "হেড অফিস পাঠিয়েছে" গল্প হলো **pretexting** ও **impersonation**, আর "এক্ষুনি না হলে আগুন" হলো manufactured urgency; ঘাবড়ে যাওয়া গার্ডের গেট খুলে দেওয়া মানে একজন মানুষকে বোকা বানিয়ে access আদায় করা — মেশিন হ্যাক না করে সরাসরি মানুষকে ম্যানিপুলেট করে প্রতিটা কারিগরি control বাইপাস করা। আর যাচাই করা আর তাড়াহুড়োয় গা না ভাসানোই হলো প্রতিরক্ষা: awareness আর **verification**। বাস্তবেও ঠিক এভাবেই **phishing** কাজ করে — জরুরি সুরের একটা email বা কল ("আপনার account লক হয়ে যাচ্ছে, এখনই confirm করুন") আপনাকে চিন্তা করার আগেই password দিয়ে দিতে চাপ দেয়; থেমে গিয়ে আসল সোর্সে যাচাই করাটাই একমাত্র বাঁচার উপায়।
+
+## Social Engineering কেন কাজ করে
+
+কারিগরি প্রতিরক্ষা কারিগরি আক্রমণ থামায়। কিন্তু কোনো firewall একটা বিশ্বাসযোগ্য email আটকায় না।
 
 ```
 Key psychological triggers attackers exploit:
@@ -56,7 +64,7 @@ unzip gophish-linux-64bit.zip
 # 5. Campaigns → launch, track clicks, credential captures
 ```
 
-### Email Template Craft
+### Email Template তৈরি
 
 ```html
 <!-- Example: IT helpdesk credential phishing -->
@@ -66,12 +74,12 @@ your identity within 24 hours. Verify Now: {{.URL}} If you don't verify, your ac
 temporarily suspended. IT Security Team
 ```
 
-**GoPhish variables:** `{{.FirstName}}`, `{{.LastName}}`, `{{.Email}}`, `{{.URL}}` (unique tracking link per user)
+**GoPhish variables:** `{{.FirstName}}`, `{{.LastName}}`, `{{.Email}}`, `{{.URL}}` (প্রতি ইউজারের জন্য আলাদা tracking link)
 
-### Spear Phishing (Targeted)
+### Spear Phishing (টার্গেটেড)
 
-Generic phishing: 1% click rate.
-Spear phishing (personalized): 30%+ click rate.
+সাধারণ phishing: 1% click rate।
+Spear phishing (ব্যক্তিগতকৃত): 30%+ click rate।
 
 ```
 Personalization from OSINT:
@@ -114,7 +122,7 @@ sudo setoolkit
 
 ## Pretexting
 
-Creating a fabricated scenario to establish credibility:
+বিশ্বাসযোগ্যতা তৈরির জন্য একটি বানানো পরিস্থিতি সাজানো:
 
 ```
 Scenario: "IT Audit" pretext for physical access
@@ -177,7 +185,7 @@ USB Drop payload (authorized testing only):
 - In 2016 study: 48% of dropped USB drives were plugged in
 ```
 
-## Building a Phishing Campaign (Authorized Red Team)
+## একটি Phishing Campaign তৈরি (Authorized Red Team)
 
 ```bash
 # Phase 1: OSINT (see Recon chapter)
@@ -210,7 +218,7 @@ USB Drop payload (authorized testing only):
 # Never shame individuals — system failed, not the person
 ```
 
-## Defenses That Actually Work
+## যেসব প্রতিরক্ষা আসলেই কাজ করে
 
 ```
 Technical:

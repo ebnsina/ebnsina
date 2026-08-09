@@ -1,9 +1,9 @@
 ---
 title: 'Request & Response Transformation'
-subtitle: 'Header manipulation, payload reshaping, protocol translation — adapting what clients send to what backends expect.'
+subtitle: 'Header manipulation, payload reshaping, protocol translation — client যা পাঠায় তা backend যা আশা করে তার সাথে মানিয়ে নেওয়া।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['transformation', 'headers', 'payload', 'versioning', 'protocol translation']
 ---
 
@@ -11,17 +11,25 @@ topics: ['transformation', 'headers', 'payload', 'versioning', 'protocol transla
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+একটা আন্তর্জাতিক অফিসের কাউন্টারে বসেন অনুবাদক-কেরানি ফাতিমা আল-ফিহরি। বিদেশি ভিজিটররা আসেন নিজেদের মতো করে লেখা দরখাস্ত নিয়ে — কেউ ইংরেজিতে, কেউ নিজের ছকে, সাথে আঁকিবুঁকি নোট আর অপ্রয়োজনীয় কাগজপত্র। ভেতরের ডিপার্টমেন্ট কিন্তু ঠিক নিজেদের ফর্ম্যাট ছাড়া কিছু গ্রহণ করে না — তাদের লাগে নির্দিষ্ট রেফারেন্স কোড, নির্দিষ্ট ঘরে বসানো তথ্য। ফাতিমা ভিজিটরের দরখাস্তটা নিয়ে নতুন করে লিখে দেন — যে রেফারেন্স কোডগুলো ভেতরের দপ্তরের দরকার সেগুলো বসিয়ে দেন, আর ভিজিটরের বাড়তি আঁকিবুঁকি ছেঁটে ফেলে দেন। ডিপার্টমেন্ট বুঝেই না যে ভিজিটর অন্য ভাষায় এসেছিল।
+
+কিছুক্ষণ পর ভেতর থেকে জবাব আসে — কিন্তু সেটা ঠাসা অভ্যন্তরীণ পরিভাষা আর গোপন কোডে ভরা, যা ভিজিটরের বোঝার কথা না, বোঝানোও উচিত না। ফাতিমা আবার সেটা নতুন করে সাজিয়ে দেন — অভ্যন্তরীণ কোডগুলো লুকিয়ে ফেলেন, পরিভাষা সরল করেন, আর ভিজিটরের হাতে একটা পরিষ্কার-সহজ উত্তর তুলে দেন। ভিজিটর জানেই না ভেতরে কতগুলো আলাদা দপ্তর, কতরকম ছক — তার কাছে অভিজ্ঞতাটা শুরু থেকে শেষ পর্যন্ত ঝকঝকে।
+
+এই ফাতিমাই হলো **API gateway**-র transformation স্তর। ভিজিটরের দরখাস্তকে ভেতরের ফর্মে লিখে দেওয়া — মানে **request transformation**: দরকারি header যোগ করা, অদরকারি header/field ছেঁটে ফেলা, body-র structure বদলে backend যা চায় সেই আকারে সাজানো। আর ভেতরের জবাবকে সরল করে, অভ্যন্তরীণ কোড লুকিয়ে ভিজিটরকে দেওয়া — মানে **response transformation** ও internal field hide করা। ভেতরের দপ্তরগুলো যতই আলাদা হোক, ভিজিটরের কাছে একটাই পরিষ্কার public API থাকে। বাস্তবে gateway ঠিক এটাই করে — client পাঠায় snake_case, backend চায় camelCase; client বলে REST, backend বলে gRPC; response থেকে `internalFlags` বা `x-powered-by`-র মতো জিনিস বাদ যায় — মাঝের স্তরটাই সব রূপান্তর সামলায়, দুই পাশের কেউ নিজের ধরন বদলায় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A translator at a diplomatic meeting — both parties speak fluently in their own language, the translator converts between them in real time. Neither side changes how they work; the middle layer handles the conversion.
+একটা কূটনৈতিক মিটিংয়ের অনুবাদক — দুই পক্ষই নিজের ভাষায় সাবলীলভাবে কথা বলে, অনুবাদক রিয়েল টাইমে তাদের মধ্যে রূপান্তর করে দেয়। কোনো পক্ষই নিজের কাজের ধরন বদলায় না; মাঝের স্তরটাই রূপান্তর সামলায়।
 
 </Callout>
 
 ## Header Manipulation
 
-The most common transformation. Add, remove, or rename headers before forwarding:
+সবচেয়ে সাধারণ transformation। forward করার আগে header যোগ, বাদ, বা নাম বদল করা:
 
 ```nginx
 location /api/ {
@@ -45,7 +53,7 @@ location /api/ {
 }
 ```
 
-**In Node.js middleware:**
+**Node.js middleware-এ:**
 
 ```typescript
 function transformRequest(req: Request, _res: Response, next: NextFunction): void {
@@ -72,7 +80,7 @@ function transformResponse(req: Request, res: Response, next: NextFunction): voi
 
 ## Path Rewriting
 
-Map external paths to internal paths. Clients use clean URLs; backends use whatever they want:
+external path-কে internal path-এ ম্যাপ করা। client পরিষ্কার URL ব্যবহার করে; backend যা খুশি ব্যবহার করে:
 
 ```nginx
 # Strip /api/v1 prefix before forwarding
@@ -94,7 +102,7 @@ app.use('/api/v1/users', (req, res, next) => {
 
 ## Payload Transformation
 
-Reshape request or response bodies. Useful when migrating API versions or integrating third-party services with mismatched schemas:
+request বা response body নতুন করে সাজানো। API version migrate করার সময় বা অমিল schema-র third-party service integrate করার সময় কাজে লাগে:
 
 ```typescript
 // v1 clients send snake_case; new backend expects camelCase
@@ -116,7 +124,7 @@ app.use('/api/v1/', async (req, res, next) => {
 });
 ```
 
-**Response transformation** — adapt backend response before returning to client:
+**Response transformation** — client-এ ফেরত দেওয়ার আগে backend response মানিয়ে নেওয়া:
 
 ```typescript
 function transformUserResponse(backendResponse: BackendUser): ClientUser {
@@ -131,9 +139,9 @@ function transformUserResponse(backendResponse: BackendUser): ClientUser {
 }
 ```
 
-## API Versioning at the Gateway
+## Gateway-তে API Versioning
 
-Keep old API versions alive without maintaining old code in services:
+সার্ভিসে পুরনো code না রেখেই পুরনো API version চালু রাখা:
 
 ```typescript
 // Route v1 and v2 to different backends
@@ -161,7 +169,7 @@ app.use('/api/', (req, res) => {
 });
 ```
 
-**Deprecation notices:**
+**Deprecation notice:**
 
 ```typescript
 function addDeprecationHeaders(req: Request, res: Response, next: NextFunction): void {
@@ -176,7 +184,7 @@ function addDeprecationHeaders(req: Request, res: Response, next: NextFunction):
 
 ## Protocol Translation
 
-Convert between protocols at the gateway — clients speak REST, backends speak gRPC:
+gateway-তে protocol-এর মধ্যে রূপান্তর করা — client REST বলে, backend gRPC বলে:
 
 ```typescript
 import * as grpc from '@grpc/grpc-js';
@@ -201,9 +209,9 @@ app.get('/api/users/:id', async (req, res) => {
 });
 ```
 
-This lets you migrate backends to gRPC incrementally while clients keep using REST.
+এতে আপনি client-দের REST ব্যবহার চালু রাখতে দিয়ে backend-গুলোকে ধাপে ধাপে gRPC-তে migrate করতে পারেন।
 
-## Kong Transformation Plugins
+## Kong Transformation Plugin
 
 ```yaml
 plugins:

@@ -1,9 +1,9 @@
 ---
-title: 'Database Fundamentals'
-subtitle: 'Connect to PostgreSQL, design schemas, write safe queries with prepared statements, and manage connection pools.'
+title: 'ডেটাবেস ফান্ডামেন্টালস'
+subtitle: 'PostgreSQL-এ কানেক্ট করুন, স্কিমা ডিজাইন করুন, prepared statement দিয়ে নিরাপদ কোয়েরি লিখুন আর connection pool ম্যানেজ করুন।'
 chapter: 3
 level: 'beginner'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['PostgreSQL', 'SQL', 'connection pooling', 'prepared statements', 'migrations']
 ---
 
@@ -13,21 +13,29 @@ topics: ['PostgreSQL', 'SQL', 'connection pooling', 'prepared statements', 'migr
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Databases Matter in System Design
+## গল্পে বুঝি
 
-Every system that stores state needs a database. Choosing the right database and using it correctly is the difference between a system that scales and one that falls over at 100 concurrent users.
+পাড়ার লাইব্রেরিতে আল-খোয়ারিজমি চাচা লাইব্রেরিয়ান। তার একটা মোটা রেজিস্টার খাতা আছে — প্রতিটা লাইনে একজন সদস্যের তথ্য: নাম, ঠিকানা, ফোন। কিন্তু দুজন সদস্যের নাম যদি একই হয়, বা একজন ঠিকানা বদলায়, তখন কোন লাইনটা কার সেটা গুলিয়ে যায়। তাই আল-খোয়ারিজমি চাচা প্রতিটা সদস্যকে একটা নিজস্ব মেম্বারশিপ নম্বর দেন — ইবনে সিনার নম্বর ১০৪২, ফাতিমা আল-ফিহরির নম্বর ১০৪৩। এই নম্বর কখনো দুজনের এক হয় না, তাই এটা দিয়ে ঠিক এক সদস্যকেই আলাদা করে চেনা যায়।
 
-Think of a database like a filing cabinet with a very smart secretary.
+বইয়ের হিসাব আবার আলাদা একটা খাতায় রাখা — কোন বই কে ধার নিয়েছে। সেই খাতায় সদস্যের পুরো নাম-ঠিকানা আবার লেখেন না, শুধু মেম্বারশিপ নম্বরটা লেখেন — "বই: সিন্দবাদের গল্প, সদস্য: ১০৪২"। কেউ জানতে চাইলে এই বই কে নিয়েছে, নম্বর ১০৪২ ধরে সদস্য-খাতায় গিয়ে ইবনে সিনার নাম বেরিয়ে আসে। আর হাজার সদস্যের খাতা প্রতিবার পাতা উল্টে খোঁজার বদলে চাচার আছে একটা আলফাবেটিক্যাল কার্ড বাক্স — নাম ধরে ঠেলা দিলেই কার্ডে সদস্যের নম্বর, সঙ্গে সঙ্গে সোজা সেই লাইনে।
+
+এই গল্পটাই আসলে একটা **database**। সদস্য-রেজিস্টার হলো একটা **table**, তার প্রতিটা লাইন একটা **row** (রেকর্ড), মেম্বারশিপ নম্বর হলো **primary key** যা প্রতিটা row-কে অনন্যভাবে চেনায়। বই-খাতায় ওই নম্বর দিয়ে সদস্য-খাতাকে জোড়া লাগানোটাই **foreign key** দিয়ে relationship, আর কার্ড বাক্সটা হলো **index** — পুরো table স্ক্যান না করে সঙ্গে সঙ্গে রেকর্ড খুঁজে দেয়। বাস্তবে PostgreSQL বা MySQL-এ ঠিক এভাবেই একটা **query** লিখে এই জোড়া-লাগানো, index-নির্ভর খোঁজাখুঁজি সেকেন্ডে সেরে ফেলা হয়।
+
+## সিস্টেম ডিজাইনে ডেটাবেস কেন গুরুত্বপূর্ণ
+
+স্টেট সংরক্ষণ করে এমন প্রতিটা সিস্টেমের একটা ডেটাবেস দরকার। সঠিক ডেটাবেস বেছে নেওয়া আর সেটা ঠিকভাবে ব্যবহার করাই একটা স্কেল করা সিস্টেম আর 100 concurrent ইউজারে ভেঙে পড়া সিস্টেমের মধ্যে পার্থক্য গড়ে দেয়।
+
+একটা ডেটাবেসকে খুব চালাক সেক্রেটারি সহ একটা ফাইলিং ক্যাবিনেটের মতো ভাবুন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a filing cabinet with a smart secretary — you describe what you want (query), and they find it. If the cabinet is well-organized (indexed), lookups are fast. More secretaries (connection pool) means more people served simultaneously.
+একটা চালাক সেক্রেটারি সহ ফাইলিং ক্যাবিনেটের মতো — আপনি কী চান বলেন (query), আর সে সেটা খুঁজে দেয়। ক্যাবিনেট যদি সুসংগঠিত হয় (indexed), lookup দ্রুত হয়। বেশি সেক্রেটারি (connection pool) মানে একসাথে বেশি লোককে সেবা দেওয়া।
 
 </Callout>
 
-You tell the secretary what you want (query), and they find it for you. If the filing cabinet is well-organized (indexed), lookups are fast. If you hire multiple secretaries (connection pool), you can serve more people simultaneously.
+আপনি সেক্রেটারিকে বলেন আপনি কী চান (query), আর সে আপনার জন্য সেটা খুঁজে দেয়। ফাইলিং ক্যাবিনেট যদি সুসংগঠিত হয় (indexed), lookup দ্রুত হয়। আপনি যদি একাধিক সেক্রেটারি রাখেন (connection pool), আপনি একসাথে বেশি লোককে সেবা দিতে পারবেন।
 
 <Mermaid
 title="Application to Database Flow"
@@ -35,9 +43,9 @@ code={`graph LR
   A["App Server"] --> B["Connection Pool<br/>Max: 20 conns"] --> C["PostgreSQL<br/>Primary"]`}
 />
 
-## Schema Design
+## স্কিমা ডিজাইন
 
-A well-designed schema prevents data anomalies and makes queries efficient. Here's a real schema for a blog platform:
+একটা ভালোভাবে ডিজাইন করা স্কিমা ডেটা অ্যানোমালি ঠেকায় আর কোয়েরিকে efficient বানায়। এখানে একটা ব্লগ প্ল্যাটফর্মের জন্য একটা রিয়েল স্কিমা:
 
 ```sql
 -- migrations/001_initial.sql
@@ -81,11 +89,11 @@ CREATE INDEX idx_comments_created ON comments(created_at DESC);
 
 <Callout type="info" title="Partial Indexes">
 
-The `WHERE published = TRUE` on `idx_posts_published` is a partial index — it only indexes published posts. Since most queries filter by `published = TRUE`, this index is smaller and faster than indexing all rows.
+`idx_posts_published`-এর উপর থাকা `WHERE published = TRUE` একটা partial index — এটা শুধু published পোস্টগুলোকে index করে। যেহেতু বেশিরভাগ কোয়েরি `published = TRUE` দিয়ে filter করে, এই index সব row index করার চেয়ে ছোট আর দ্রুত।
 
 </Callout>
 
-## Complete Database Layer
+## সম্পূর্ণ ডেটাবেস লেয়ার
 
 <CodeTabs tsFile="database.ts" goFile="database.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -548,23 +556,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Always use **prepared statements** (`$1`, `$2`) — never concatenate user input into SQL strings
-- **Connection pooling** is essential — creating a new TCP connection per query is 100x slower
-- Use **transactions** when multiple queries must succeed or fail together
-- Design **indexes** for your actual query patterns, not just primary keys
-- **Cursor-based pagination** at the database level uses `WHERE created_at &lt; ?` — much faster than `OFFSET`
+- সবসময় **prepared statement** ব্যবহার করুন (`$1`, `$2`) — ইউজার ইনপুট কখনো SQL স্ট্রিংয়ে জোড়া লাগাবেন না
+- **Connection pooling** অপরিহার্য — প্রতি কোয়েরিতে নতুন TCP কানেকশন বানানো 100 গুণ ধীর
+- একাধিক কোয়েরি একসাথে সফল বা ফেল করতে হলে **transaction** ব্যবহার করুন
+- আপনার আসল কোয়েরি প্যাটার্নের জন্য **index** ডিজাইন করুন, শুধু primary key-এর জন্য নয়
+- ডেটাবেস লেভেলে **cursor-based pagination** `WHERE created_at &lt; ?` ব্যবহার করে — `OFFSET`-এর চেয়ে অনেক দ্রুত
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Instagram** stores over 2 billion rows in PostgreSQL using connection pooling with PgBouncer
-- **Notion** uses PostgreSQL for all structured data with careful index design for their query patterns
-- **Discord** initially used PostgreSQL before migrating hot data to ScyllaDB at extreme scale
-- Start with PostgreSQL — it handles more scale than most companies will ever need
+- **Instagram** PgBouncer দিয়ে connection pooling ব্যবহার করে PostgreSQL-এ 2 বিলিয়নের বেশি row সংরক্ষণ করে
+- **Notion** সব স্ট্রাকচার্ড ডেটার জন্য PostgreSQL ব্যবহার করে, তাদের কোয়েরি প্যাটার্নের জন্য যত্ন করে index ডিজাইন করা
+- **Discord** প্রথমে PostgreSQL ব্যবহার করত, পরে extreme scale-এ hot ডেটা ScyllaDB-তে migrate করে
+- PostgreSQL দিয়ে শুরু করুন — বেশিরভাগ কোম্পানির যতটা দরকার হবে, তার চেয়ে বেশি scale এটা সামলাতে পারে
 
 </div>

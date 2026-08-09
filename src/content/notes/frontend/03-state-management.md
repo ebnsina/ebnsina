@@ -1,9 +1,9 @@
 ---
-title: 'State Management'
-subtitle: 'Local state, lifted state, context, global stores, and signals — managing data flow in complex UIs.'
+title: 'স্টেট ম্যানেজমেন্ট'
+subtitle: 'Local state, lifted state, context, global stores, আর signals — জটিল UI-তে ডেটা ফ্লো ম্যানেজ করা।'
 chapter: 3
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['state', 'context', 'zustand', 'redux', 'signals', 'state machines']
 ---
 
@@ -11,21 +11,29 @@ topics: ['state', 'context', 'zustand', 'redux', 'signals', 'state machines']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The State Problem
+## গল্পে বুঝি
 
-Every interactive UI has state — the current value of a form field, whether a modal is open, the list of items in a cart, the authenticated user. The challenge is not storing state but deciding where it lives and how it flows. Wrong decisions lead to components re-rendering unnecessarily, data getting out of sync, and bugs that are nearly impossible to trace.
+ফাতিমা আল-ফিহরির কাপড়ের দোকানে চারজন কর্মচারী। শুরুর দিকে প্রত্যেকে নিজের পকেটে এক টুকরো কাগজে স্টকের হিসাব রাখত — কার কাছে কয় থান লাল সিল্ক আছে, কয়টা চাদর বিক্রি হয়েছে। ইবনে সিনা কাউন্টার থেকে একটা চাদর বিক্রি করে নিজের কাগজে কাটল, কিন্তু গুদামে দাঁড়ানো আল-খোয়ারিজমি সেটা জানল না। ফলে একজন কাস্টমারকে বলা হলো "স্টকে আছে", আরেকজনকে বলা হলো "শেষ" — একই জিনিসের হিসাব চারটা কাগজে চার রকম। দিনশেষে মিলাতে বসলে কোনটা সঠিক কেউ বলতে পারে না, কাস্টমাররাও বিভ্রান্ত।
+
+শেষমেশ ফাতিমা দেয়ালে একটা বড় হিসাব-বোর্ড টাঙিয়ে দিলেন। এখন কারও পকেটে আর আলাদা কাগজ নেই — যেকোনো বিক্রি বা নতুন মাল এলে সবাই ওই একটাই বোর্ডে লিখবে, আর হিসাব দরকার হলে ওই বোর্ড দেখেই বলবে। ইবনে সিনা একটা চাদর বেচে বোর্ডের সংখ্যা কমিয়ে দিলে গুদামের আল-খোয়ারিজমিও সঙ্গে সঙ্গে একই সংখ্যা দেখে। দোকানের প্রতিটা কোণা এখন সবসময় একই সত্যি দেখায়।
+
+এই গল্পটাই আসলে **state management**। প্রত্যেকের পকেটের আলাদা কাগজ হলো scattered **local state** — একেক জায়গায় একেক মান, যেটা sync-এর বাইরে চলে গিয়ে UI ভেঙে দেয়। দেয়ালের একটাই বোর্ড হলো **single source of truth** বা shared **store** — এক জায়গায় সত্যিটা রাখা। সবাই বোর্ড পড়া আর তাতে লেখা হলো কম্পোনেন্টদের ওই shared state-এ subscribe করা আর update করা, আর দোকান একই হিসাব দেখানো মানে পুরো UI sync-এ থাকা। বাস্তবেও ঠিক এটাই — যে ডেটা অনেক কম্পোনেন্টে লাগে (লগইন করা user, cart) সেটা local-এ ছড়িয়ে না রেখে একটা global store-এ রাখলে সব জায়গা সবসময় একই ডেটা দেখায়, আর "কোন কম্পোনেন্ট পুরনো মান দেখাচ্ছে" জাতীয় bug আর হয় না।
+
+## State-এর সমস্যাটা
+
+প্রতিটা ইন্টারঅ্যাক্টিভ UI-এর কিছু না কিছু state থাকে — একটা ফর্ম ফিল্ডের বর্তমান মান, একটা modal খোলা আছে কিনা, কার্টে থাকা আইটেমের লিস্ট, লগইন করা ইউজার। আসল চ্যালেঞ্জটা state স্টোর করা নয়, বরং সিদ্ধান্ত নেওয়া যে সেটা কোথায় থাকবে আর কীভাবে ফ্লো করবে। ভুল সিদ্ধান্ত নিলে কম্পোনেন্ট অকারণে re-render হয়, ডেটা sync-এর বাইরে চলে যায়, আর এমন bug তৈরি হয় যেগুলো ট্রেস করা প্রায় অসম্ভব।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like managing inventory in a warehouse system — local state is what's on a single delivery truck, context is the zone warehouse, and the global store is the central distribution center that all zones read from.
+একটা ওয়্যারহাউস সিস্টেমে inventory ম্যানেজ করার মতো — local state হলো একটামাত্র ডেলিভারি ট্রাকে যা আছে, context হলো জোন ওয়্যারহাউস, আর global store হলো কেন্দ্রীয় ডিস্ট্রিবিউশন সেন্টার যেখান থেকে সব জোন পড়ে।
 
 </Callout>
 
 ## Level 1: Local State
 
-State that belongs to a single component. Use `useState` for simple values, `useReducer` for complex state transitions.
+যে state একটামাত্র কম্পোনেন্টের অন্তর্গত। সাধারণ মানের জন্য `useState` ব্যবহার করো, আর জটিল state ট্রানজিশনের জন্য `useReducer`।
 
 ```typescript
 import { useState, useReducer } from "react";
@@ -124,7 +132,7 @@ function RegistrationForm() {
 
 ## Level 2: Lifted State
 
-When two sibling components need the same data, lift it to their closest common parent.
+যখন দুটো sibling কম্পোনেন্টের একই ডেটা দরকার হয়, তখন সেটাকে তাদের সবচেয়ে কাছের কমন parent-এ তুলে (lift) দাও।
 
 ```typescript
 // Parent owns the state, children receive it via props
@@ -173,7 +181,7 @@ function ProductOptions({
 
 ## Level 3: Context
 
-When lifted state needs to pass through many levels, Context avoids prop drilling. But use it wisely — every context change re-renders all consumers.
+যখন lifted state-কে অনেক লেভেল পার হয়ে যেতে হয়, তখন Context prop drilling এড়াতে সাহায্য করে। তবে বুদ্ধি করে ব্যবহার করো — প্রতিটা context পরিবর্তনে সব consumer re-render হয়।
 
 ```typescript
 import { createContext, useContext, useState, useMemo } from "react";
@@ -246,15 +254,15 @@ function CartIcon() {
 
 <Callout type="warning">
 
-**Context performance trap**
+**Context-এর performance ফাঁদ**
 
-Context re-renders ALL consumers when the value object changes. If you put `{ user, theme, locale, cart }` in a single context, changing the theme re-renders every component that reads the cart. Split contexts by update frequency — `ThemeContext`, `AuthContext`, `CartContext` as separate providers.
+value object পরিবর্তন হলে Context তার সব consumer-কে re-render করে। যদি তুমি `{ user, theme, locale, cart }` একটা context-এ রাখো, তাহলে theme বদলালে cart পড়ে এমন প্রতিটা কম্পোনেন্টও re-render হবে। update-এর ফ্রিকোয়েন্সি অনুযায়ী context ভাগ করো — `ThemeContext`, `AuthContext`, `CartContext` আলাদা আলাদা provider হিসেবে।
 
 </Callout>
 
 ## Level 4: Global Stores (Zustand)
 
-When context becomes unwieldy, a dedicated store library gives you fine-grained subscriptions and simpler APIs.
+যখন context সামলানো কঠিন হয়ে যায়, তখন একটা ডেডিকেটেড store লাইব্রেরি তোমাকে fine-grained subscription আর সহজ API দেয়।
 
 ```typescript
 import { create } from "zustand";
@@ -316,19 +324,19 @@ function CartTotal() {
 
 <Callout type="tip">
 
-**State management decision tree:**
+**State management সিদ্ধান্তের গাছ (decision tree):**
 
-1. Does only one component need it? → `useState` / `useReducer`
-2. Do a parent and its direct children need it? → Lift state up
-3. Do many components across a subtree need it? → Context
-4. Is it app-wide, persisted, or updated from many places? → Zustand / global store
-5. Is the state transition logic complex with many edge cases? → State machine (XState)
+1. শুধু একটা কম্পোনেন্টের কি এটা দরকার? → `useState` / `useReducer`
+2. একটা parent আর তার সরাসরি children-এর কি দরকার? → State উপরে তুলে দাও (Lift)
+3. একটা subtree জুড়ে অনেক কম্পোনেন্টের কি দরকার? → Context
+4. এটা কি app-wide, persisted, নাকি অনেক জায়গা থেকে update হয়? → Zustand / global store
+5. State ট্রানজিশনের লজিক কি অনেক edge case নিয়ে জটিল? → State machine (XState)
 
 </Callout>
 
 ## Level 5: Signals (Fine-Grained Reactivity)
 
-Signals are a newer primitive that provide reactive state without re-rendering entire component trees. Used in Solid, Preact, Angular, and Qwik.
+Signals হলো একটা নতুন primitive যা পুরো কম্পোনেন্ট tree re-render না করেই reactive state দেয়। Solid, Preact, Angular, আর Qwik-এ ব্যবহৃত হয়।
 
 ```typescript
 // Preact Signals example
@@ -349,11 +357,11 @@ function Counter() {
 }
 ```
 
-## Key Takeaways
+## মূল শেখার বিষয়
 
-1. **Start local** — `useState` is your default. Only escalate when you have a real problem.
-2. **Lift state** to the nearest common ancestor when siblings share data.
-3. **Context** avoids prop drilling but re-renders all consumers — split by update frequency.
-4. **Zustand** gives you global state with selector-based subscriptions and zero boilerplate.
-5. **Signals** offer fine-grained reactivity without the virtual DOM diffing cost.
-6. **Never put everything in global state** — most state is local. Global stores are for truly shared, app-wide data.
+1. **Local দিয়ে শুরু করো** — `useState` হলো তোমার ডিফল্ট। বাস্তব সমস্যা হলে তবেই বড় সমাধানে যাও।
+2. sibling-রা ডেটা শেয়ার করলে state-কে সবচেয়ে কাছের কমন ancestor-এ **lift** করো।
+3. **Context** prop drilling এড়ায় কিন্তু সব consumer re-render করে — update ফ্রিকোয়েন্সি অনুযায়ী ভাগ করো।
+4. **Zustand** তোমাকে selector-ভিত্তিক subscription আর শূন্য boilerplate সহ global state দেয়।
+5. **Signals** virtual DOM diffing-এর খরচ ছাড়াই fine-grained reactivity দেয়।
+6. **সবকিছু global state-এ রেখো না** — বেশিরভাগ state আসলে local। Global store শুধু সত্যিকারের শেয়ার করা, app-wide ডেটার জন্য।

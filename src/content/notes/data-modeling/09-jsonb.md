@@ -1,9 +1,9 @@
 ---
-title: 'JSONB and the schemaless trap'
-subtitle: "JSONB is one of Postgres's best features. Used well, it's how you stop fighting your schema. Used badly, it's how you end up with a schemaless mess inside a relational database."
+title: 'JSONB আর schemaless ফাঁদ'
+subtitle: 'JSONB হলো Postgres-এর অন্যতম সেরা ফিচার। ঠিকভাবে ব্যবহার করলে এটাই যেভাবে আপনি নিজের schema-র সাথে লড়াই বন্ধ করেন। ভুলভাবে ব্যবহার করলে এটাই যেভাবে relational database-এর ভেতরে আপনি একটা schemaless জঞ্জাল বানিয়ে ফেলেন।'
 chapter: 9
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'jsonb', 'postgres', 'schemaless']
 ---
 
@@ -11,21 +11,29 @@ topics: ['data-modeling', 'jsonb', 'postgres', 'schemaless']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-JSONB lets you store arbitrary JSON inside a column. It's tempting — you skip the schema design, you ship faster, you never have to migrate. Most teams reach for it once or twice and learn the same lesson: JSONB is a powerful tool that becomes a permanent disaster if used as a substitute for thinking.
+JSONB আপনাকে একটা column-এর ভেতরে যেকোনো JSON রাখতে দেয়। এটা লোভনীয় — আপনি schema design এড়িয়ে যান, দ্রুত ship করেন, কখনো migrate করতে হয় না। বেশিরভাগ টিম এক-দুইবার এর দিকে হাত বাড়ায় আর একই শিক্ষা পায়: JSONB একটা শক্তিশালী টুল যা চিন্তা করার বিকল্প হিসেবে ব্যবহার করলে স্থায়ী দুর্যোগে পরিণত হয়।
 
-This chapter is the legitimate uses, the anti-uses, the indexing patterns that make JSONB queries fast, and the migration plan when JSONB grows up into real columns.
+এই চ্যাপ্টারে থাকছে এর বৈধ ব্যবহার, অ্যান্টি-ব্যবহার, যে indexing pattern-গুলো JSONB query দ্রুত করে, আর JSONB যখন বড় হয়ে আসল column হয়ে ওঠে তখনকার migration plan।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A filing cabinet drawer that accepts both structured folders and loose papers — rigid and flexible storage in the same place.
+একটা ফাইলিং ক্যাবিনেটের ড্রয়ার যা একইসাথে structured ফোল্ডার আর ছড়ানো-ছিটানো কাগজ — দুটোই গ্রহণ করে; একই জায়গায় rigid আর flexible storage।
 
 </Callout>
 
-## What JSONB is
+## গল্পে বুঝি
 
-`JSONB` (Postgres-specific) is binary JSON storage. Insert any valid JSON; query with operators like `->`, `->>`, `@>`. Indexed with GIN (Generalized Inverted Index) for membership-style queries.
+ফাতিমা আল-ফিহরির দোকানের সাজানো তাকগুলো ছিল দেখার মতো — চাল আলাদা, চিনি আলাদা, তেল আলাদা, প্রতিটা তাকে পরিষ্কার লেবেল সাঁটা, দাম লেখা, বিক্রির রসিদ তারিখ ধরে গোছানো। কেউ "গত মাসে ৫০০ টাকার উপরে কয়টা বিক্রি হয়েছে?" জিজ্ঞেস করলে তিনি এক পলকেই বলে দিতে পারতেন। এর পাশাপাশি তাঁর একটা "বিবিধ / অন্যান্য" ড্রয়ার ছিল — কোনো খদ্দের ফেলে যাওয়া অদ্ভুত এক টুকরো তার, একটা নমুনা বোতাম, বিদেশি এক কয়েন — এমন খাপছাড়া জিনিস লেবেল ছাড়াই টুক করে ওখানে রেখে দিতেন। কালেভদ্রে দরকারি এসব একটা-দুটো জিনিসের জন্য এই ড্রয়ারটা ছিল দারুণ সুবিধাজনক।
+
+সমস্যা শুরু হলো যখন ফাতিমা অলস হয়ে গেলেন। তাকে গোছানোর ঝামেলা এড়াতে তিনি সব কিছুই — এমনকি রোজকার দরকারি রসিদ আর দামের কাগজও — ওই লেবেলবিহীন বিবিধ ড্রয়ারে ছুঁড়ে ফেলতে লাগলেন। কয়েক মাসেই বিশৃঙ্খলা। কেউ কিছু খুঁজে পায় না; কোনো নিয়ম নেই যে ভুল জিনিস ঢুকতে পারবে না বলে আটকাবে; আর "৫০০ টাকার উপরে কয়টা বিক্রি?" জানতে হলে গোটা ড্রয়ার উপুড় করে হাতে গুনতে হয়। যে তথ্য সাজানো তাকে থাকলে এক নিমেষে মিলত, সেটাই এখন সারা দিনের কাজ।
+
+এই বিবিধ ড্রয়ার হলো JSONB — সত্যিকারের পরিবর্তনশীল, একবারই আসা খাপছাড়া extra data রাখার জন্য অসাধারণ সুবিধাজনক। কিন্তু সব দরকারি জিনিস ওতে ঢেলে দেওয়াই হলো schemaless ফাঁদ: findability হারায় (query কঠিন হয়), কোন জিনিস ঢুকবে তার উপর কোনো constraint থাকে না, আর কিছুরই টাইপ ঠিক থাকে না — মানে typing হারায়। উল্টোদিকে ফাতিমার লেবেল সাঁটা, সাজানো তাক হলো real typed column: গুরুত্বপূর্ণ, নিয়মিত query হওয়া field-গুলো — email, plan, price, created_at — আলাদা typed column-এ রাখুন, যাতে constraint, typing আর দ্রুত query সবই পান। বাস্তবেও নিয়মটা এক: JSONB রাখুন সত্যিকারের variable extra-র জন্য, আর "column ঠিক করার আলসেমি" থেকে গুরুত্বপূর্ণ data ওতে ঢালবেন না।
+
+## JSONB কী
+
+`JSONB` (Postgres-নির্দিষ্ট) হলো binary JSON storage। যেকোনো valid JSON insert করুন; `->`, `->>`, `@>` এর মতো operator দিয়ে query করুন। membership-ধরনের query-র জন্য GIN (Generalized Inverted Index) দিয়ে index করা হয়।
 
 ```sql
 CREATE TABLE events (
@@ -42,13 +50,13 @@ SELECT data->>'user_id' AS uid FROM events WHERE type = 'user.signup';
 SELECT * FROM events WHERE data @> '{"plan": "pro"}';
 ```
 
-The `JSONB` type vs `JSON`: `JSON` stores the text as-is (including whitespace and key order); `JSONB` stores a parsed binary representation. Always use `JSONB` for new code — operators are faster, indexing only works on JSONB.
+`JSONB` টাইপ বনাম `JSON`: `JSON` টেক্সটটাকে যেমন-আছে-তেমন (whitespace আর key order সহ) সংরক্ষণ করে; `JSONB` একটা parsed binary representation সংরক্ষণ করে। নতুন কোডে সবসময় `JSONB` ব্যবহার করুন — operator দ্রুততর, আর indexing কেবল JSONB-তেই কাজ করে।
 
-## Three legitimate uses
+## তিনটি বৈধ ব্যবহার
 
-### 1. Genuinely variable shape per row
+### 1. প্রতিটি row-তে সত্যিকারের পরিবর্তনশীল shape
 
-When the data structure is fundamentally different across rows, columns can't represent it. Webhook event payloads are the canonical case:
+যখন data structure row-ভেদে মৌলিকভাবে আলাদা, তখন column সেটা represent করতে পারে না। Webhook event payload-ই এর ক্লাসিক উদাহরণ:
 
 ```sql
 CREATE TABLE webhook_events (
@@ -59,13 +67,13 @@ CREATE TABLE webhook_events (
 );
 ```
 
-A `payment.succeeded` event has different fields than a `user.created`. Modeling each event type as its own table would mean dozens of tables; modeling as one wide table would mean dozens of mostly-NULL columns. JSONB is right.
+একটা `payment.succeeded` event-এর field আর একটা `user.created`-এর field আলাদা। প্রতিটি event type-কে আলাদা table হিসেবে model করা মানে হবে কয়েক ডজন table; আর এক wide table হিসেবে model করা মানে কয়েক ডজন প্রায়-NULL column। এখানে JSONB-ই ঠিক।
 
-The keys of `data` are stable per `type`. You can document each type's payload separately, and consumers know what to expect.
+`data`-র key-গুলো প্রতি `type`-এ স্থিতিশীল। আপনি প্রতিটি type-এর payload আলাদাভাবে document করতে পারেন, আর consumer-রা জানে কী আশা করতে হবে।
 
-### 2. Genuinely user-defined shape
+### 2. সত্যিকারের user-defined shape
 
-Custom fields on a CRM record, form responses, key-value preferences:
+একটা CRM record-এর custom field, form-এর response, key-value preference:
 
 ```sql
 CREATE TABLE form_submissions (
@@ -76,11 +84,11 @@ CREATE TABLE form_submissions (
 );
 ```
 
-Every form has different fields. The customer designs the form; the schema can't know in advance. JSONB is right.
+প্রতিটি form-এর field আলাদা। কাস্টমার form ডিজাইন করে; schema আগে থেকে জানতে পারে না। এখানে JSONB-ই ঠিক।
 
 ### 3. Sparse, opaque metadata
 
-Tag-like or label-like data that the application sometimes sets, sometimes reads, but the database mostly stores:
+Tag-জাতীয় বা label-জাতীয় data যা application কখনো set করে, কখনো read করে, কিন্তু database বেশিরভাগ সময় শুধু সংরক্ষণ করে:
 
 ```sql
 CREATE TABLE products (
@@ -91,13 +99,13 @@ CREATE TABLE products (
 );
 ```
 
-The `metadata` column holds anything the app or integrations want to attach. It's not queried often; it's not indexed; it's not validated. Treat it as opaque storage.
+`metadata` column-এ app বা integration যা কিছু attach করতে চায় তাই থাকে। এটা প্রায়ই query হয় না; index হয় না; validate হয় না। একে opaque storage হিসেবে ধরুন।
 
-This is exactly the role Stripe's `metadata` field plays — a place customers can stash bookkeeping IDs without you needing to model them.
+Stripe-এর `metadata` field ঠিক এই ভূমিকাটাই পালন করে — একটা জায়গা যেখানে কাস্টমার তাদের bookkeeping ID রেখে দিতে পারে, আপনার সেগুলো model করার দরকার ছাড়াই।
 
-## The anti-pattern: JSONB as schema
+## অ্যান্টি-প্যাটার্ন: JSONB-কে schema হিসেবে ব্যবহার
 
-The trap: putting structured, queryable data inside JSONB to "skip schema design."
+ফাঁদটা হলো: "schema design এড়াতে" structured, queryable data-কে JSONB-এর ভেতরে ঢুকিয়ে দেওয়া।
 
 ```sql
 -- BAD
@@ -107,35 +115,35 @@ CREATE TABLE users (
 );
 ```
 
-Now:
+এখন:
 
-- **No type safety.** `email` could be an int. `plan` could be missing. The DB doesn't care.
-- **No NOT NULL.** Even if you "always set" a field, nothing stops a buggy insert from omitting it.
-- **No FK to other tables.** `data->>'org_id'` references `orgs.id`? Maybe. The DB has no idea.
-- **No clean indexes.** GIN indexes work for some queries, not for `ORDER BY data->>'created_at'` style scans.
-- **Hard to reason about.** "What fields does a user have?" Look at the code, hope it's complete.
+- **কোনো type safety নেই।** `email` একটা int হতে পারে। `plan` অনুপস্থিত থাকতে পারে। DB-র তাতে কিছু যায়-আসে না।
+- **কোনো NOT NULL নেই।** আপনি একটা field "সবসময় set করলেও", একটা buggy insert যে সেটা বাদ দিয়ে দেবে না—তা ঠেকানোর কিছু নেই।
+- **অন্য table-এর সাথে কোনো FK নেই।** `data->>'org_id'` কি `orgs.id` reference করে? হয়তো। DB-র কোনো ধারণাই নেই।
+- **পরিষ্কার index নেই।** GIN index কিছু query-র জন্য কাজ করে, কিন্তু `ORDER BY data->>'created_at'` ধরনের scan-এর জন্য নয়।
+- **যুক্তি বোঝা কঠিন।** "একটা user-এর কী কী field আছে?" কোড দেখুন, আর আশা করুন সেটা সম্পূর্ণ।
 
-You've reinvented MongoDB inside Postgres, with the worst of both — Mongo's lack of structure and Postgres's reluctance to be schemaless.
+আপনি Postgres-এর ভেতরে MongoDB-কে নতুন করে বানিয়ে ফেলেছেন, দুটোরই সবচেয়ে খারাপ দিক নিয়ে — Mongo-র structure-এর অভাব আর Postgres-এর schemaless হতে অনীহা।
 
-The shape of the rule: **if the data has a known, common structure across rows, use columns**. JSONB is for genuinely variable, opaque, or dynamic data — not for "I haven't decided the columns yet."
+নিয়মটার আকার: **যদি data-র row জুড়ে একটা পরিচিত, সাধারণ structure থাকে, তবে column ব্যবহার করুন**। JSONB হলো সত্যিকারের পরিবর্তনশীল, opaque, বা dynamic data-র জন্য — "আমি এখনো column ঠিক করিনি" এর জন্য নয়।
 
 <Callout type="warn">
 
-**The JSONB-as-schema bug compounds.** Every new feature reads from `data->>'something'`. Every new feature could be reading the wrong type. Two years in, the JSONB column is the schema, and a "real" migration is impossible without rewriting the world.
+**JSONB-as-schema বাগটা জমা হয়ে বাড়তে থাকে।** প্রতিটা নতুন feature `data->>'something'` থেকে read করে। প্রতিটা নতুন feature ভুল type read করে থাকতে পারে। দুই বছর পর, JSONB column-টাই হয়ে যায় schema, আর গোটা দুনিয়া নতুন করে না লিখে একটা "আসল" migration করা অসম্ভব।
 
 </Callout>
 
-## Indexing JSONB
+## JSONB index করা
 
-Three index types for JSONB, in order of common use.
+JSONB-র জন্য তিন ধরনের index, সাধারণ ব্যবহারের ক্রম অনুসারে।
 
-### GIN on the whole column
+### পুরো column-এর উপর GIN
 
 ```sql
 CREATE INDEX events_data_gin ON events USING GIN (data);
 ```
 
-Supports membership queries:
+Membership query সাপোর্ট করে:
 
 ```sql
 -- "events whose data contains this object"
@@ -148,21 +156,21 @@ SELECT * FROM events WHERE data ? 'plan';
 SELECT * FROM events WHERE data ?| ARRAY['plan', 'tier'];
 ```
 
-The index is large (often 2-3× the data) but versatile. Right when you don't know in advance which paths you'll filter on.
+index-টা বড় (প্রায়ই data-র 2-3× আকারের) কিন্তু বহুমুখী। ঠিক তখন উপযোগী যখন আপনি আগে থেকে জানেন না কোন path-এ filter করবেন।
 
-### GIN with `jsonb_path_ops`
+### `jsonb_path_ops` সহ GIN
 
-A more compact but more limited variant:
+আরও কমপ্যাক্ট কিন্তু আরও সীমিত একটা variant:
 
 ```sql
 CREATE INDEX events_data_gin_path ON events USING GIN (data jsonb_path_ops);
 ```
 
-Smaller index; only supports the `@>` containment operator. If `@>` is the only operator you use, this is faster and lighter than the default GIN.
+ছোট index; কেবল `@>` containment operator সাপোর্ট করে। আপনি যদি শুধু `@>` operator ব্যবহার করেন, তবে এটা default GIN-এর চেয়ে দ্রুততর ও হালকা।
 
-### B-tree on a specific path
+### নির্দিষ্ট path-এর উপর B-tree
 
-For one specific field that's queried by equality or range:
+একটা নির্দিষ্ট field-এর জন্য যেটা equality বা range দিয়ে query হয়:
 
 ```sql
 CREATE INDEX events_user_id ON events ((data->>'user_id'));
@@ -171,13 +179,13 @@ CREATE INDEX events_user_id ON events ((data->>'user_id'));
 SELECT * FROM events WHERE data->>'user_id' = '42';
 ```
 
-You can also create indexes on expressions that cast — `((data->>'user_id')::bigint)` — for proper integer comparisons.
+আপনি cast করে এমন expression-এর উপরও index বানাতে পারেন — `((data->>'user_id')::bigint)` — সঠিক integer comparison-এর জন্য।
 
-For most apps with structured-but-flexible JSONB columns, **two indexes work well:** a GIN for general queries, plus B-tree expression indexes on the most-filtered fields.
+Structured-অথচ-flexible JSONB column-ওয়ালা বেশিরভাগ app-এর জন্য **দুটো index ভালো কাজ করে:** সাধারণ query-র জন্য একটা GIN, আর সবচেয়ে বেশি-filter হওয়া field-গুলোর উপর B-tree expression index।
 
-## Generated columns from JSONB
+## JSONB থেকে generated column
 
-A pattern that gives you the best of both worlds:
+একটা pattern যা আপনাকে দুই দুনিয়ার সেরাটা দেয়:
 
 ```sql
 CREATE TABLE events (
@@ -191,17 +199,17 @@ CREATE TABLE events (
 CREATE INDEX events_user_id ON events(user_id);
 ```
 
-`user_id` is automatically derived from JSONB at write time, stored as a real column, indexed normally. Application code can use `WHERE user_id = $1` cleanly. The JSONB stays the source of truth; the column is a fast access path.
+`user_id` write-time-এ JSONB থেকে স্বয়ংক্রিয়ভাবে বের করা হয়, একটা আসল column হিসেবে সংরক্ষিত হয়, স্বাভাবিকভাবে index হয়। Application code পরিষ্কারভাবে `WHERE user_id = $1` ব্যবহার করতে পারে। JSONB-ই source of truth থাকে; column-টা একটা দ্রুত access path।
 
-Use this when a JSONB field is queried often enough to deserve its own index, but you don't want to extract it to a fully separate column.
+এটা তখন ব্যবহার করুন যখন একটা JSONB field যথেষ্ট বেশি query হয় যে তার নিজের index পাওয়ার যোগ্য, কিন্তু আপনি সেটাকে সম্পূর্ণ আলাদা একটা column-এ extract করতে চান না।
 
 ## Validation
 
-JSONB itself doesn't validate structure. Two layers:
+JSONB নিজে structure validate করে না। দুটো স্তর:
 
-**Application-level**: parse the JSONB into a typed struct and validate on the way in. Standard practice; the only line of defense in many apps.
+**Application-level**: JSONB-কে একটা typed struct-এ parse করুন আর ঢোকার পথে validate করুন। প্রচলিত রীতি; অনেক app-এ এটাই একমাত্র প্রতিরক্ষার লাইন।
 
-**Schema-level CHECK constraints**: surprisingly powerful.
+**Schema-level CHECK constraint**: অবাক করার মতো শক্তিশালী।
 
 ```sql
 ALTER TABLE webhook_events
@@ -213,13 +221,13 @@ ALTER TABLE webhook_events
   CHECK (jsonb_typeof(data->'event_id') = 'string');
 ```
 
-For critical structure (every row must have these keys, of these types), CHECK constraints catch the bug at insert time. Don't try to validate every nested field — keep it to the top-level invariants.
+গুরুত্বপূর্ণ structure-এর জন্য (প্রতিটি row-তে এই key-গুলো, এই type-এর থাকতেই হবে), CHECK constraint insert-time-এ বাগটা ধরে ফেলে। প্রতিটি nested field validate করার চেষ্টা করবেন না — এটাকে top-level invariant-এর মধ্যে সীমাবদ্ধ রাখুন।
 
-For richer validation, **JSON Schema** can be applied via the `pg_jsonschema` extension (or app-side validators). Worth it for high-stakes data.
+আরও সমৃদ্ধ validation-এর জন্য, **JSON Schema** `pg_jsonschema` extension দিয়ে (বা app-side validator দিয়ে) প্রয়োগ করা যায়। উচ্চ-ঝুঁকির data-র জন্য এটা করার মতো।
 
-## Migrating out of JSONB
+## JSONB থেকে বেরিয়ে migrate করা
 
-Eventually a JSONB field becomes a "real" field. The migration:
+শেষ পর্যন্ত একটা JSONB field একটা "আসল" field হয়ে ওঠে। migration-টা:
 
 ```sql
 -- 1. add the new column
@@ -239,30 +247,30 @@ CREATE INDEX events_user_id ON events(user_id);
 -- 6. optionally, drop JSONB or keep for legacy data
 ```
 
-Plan for this from the start. The JSONB is your prototyping ground; the columns are the production schema. The migration is normal. Painful only if the JSONB has been growing organically for years without anyone watching.
+শুরু থেকেই এর পরিকল্পনা করুন। JSONB আপনার prototyping-এর জায়গা; column-গুলো production schema। migration-টা স্বাভাবিক। কষ্টকর কেবল তখনই যখন কেউ নজর না রাখতে রাখতে বছরের পর বছর ধরে JSONB organic-ভাবে বাড়তে থাকে।
 
-## Storage and performance notes
+## Storage আর performance নোট
 
-- **JSONB is parsed.** `INSERT` parses and re-encodes; `SELECT data->>'k'` is a fast lookup.
-- **TOAST.** Large JSONB blobs (>2KB) get TOAST-ed (compressed and stored out-of-line). Reading the whole row pulls them back in; reading a specific path can avoid it for some queries.
-- **Comparing JSONB equality is exact.** Whitespace doesn't matter (it was normalized), but key order is preserved on read.
-- **No partial updates by default.** `UPDATE events SET data = jsonb_set(data, '{k}', '"v"')` reads, modifies, writes the whole JSONB. For a 100KB blob, this rewrites 100KB.
+- **JSONB parse হয়।** `INSERT` parse ও re-encode করে; `SELECT data->>'k'` একটা দ্রুত lookup।
+- **TOAST।** বড় JSONB blob (>2KB) TOAST হয়ে যায় (compress হয়ে out-of-line সংরক্ষিত হয়)। পুরো row read করলে সেগুলো টেনে ফিরিয়ে আনা হয়; একটা নির্দিষ্ট path read করলে কিছু query-তে সেটা এড়ানো যায়।
+- **JSONB equality তুলনা exact।** Whitespace-এ কিছু যায়-আসে না (সেটা normalize হয়ে গেছে), কিন্তু read-এ key order সংরক্ষিত থাকে।
+- **Default-এ কোনো partial update নেই।** `UPDATE events SET data = jsonb_set(data, '{k}', '"v"')` পুরো JSONB read করে, modify করে, আবার write করে। একটা 100KB blob-এর জন্য, এটা 100KB আবার লিখে ফেলে।
 
-## When NOT to use JSONB at all
+## কখন JSONB একেবারেই ব্যবহার করবেন না
 
-- **For relational data.** Joining JSONB fields against other tables is awkward. If the data has FKs to other tables, columns are right.
-- **For numeric data you'll aggregate.** `SUM(data->>'amount'::numeric)` is slow and ugly.
-- **For data subject to type-driven query optimization.** The optimizer is much better with typed columns.
-- **For data you'll constantly migrate.** Each `jsonb_set` rewrites the column; columns are atomic updates.
+- **Relational data-র জন্য।** JSONB field-কে অন্য table-এর সাথে join করা বিদঘুটে। data-র যদি অন্য table-এ FK থাকে, column-ই ঠিক।
+- **যে numeric data আপনি aggregate করবেন তার জন্য।** `SUM(data->>'amount'::numeric)` ধীর ও কুৎসিত।
+- **type-চালিত query optimization-এর অধীন data-র জন্য।** typed column নিয়ে optimizer অনেক ভালো কাজ করে।
+- **যে data আপনি নিয়ত migrate করবেন তার জন্য।** প্রতিটা `jsonb_set` column-টা আবার লিখে ফেলে; column-এর update atomic।
 
 ## Recap
 
-- JSONB is great for genuinely variable shape (webhook payloads), user-defined fields (forms), and opaque metadata.
-- Anti-pattern: using JSONB as a substitute for schema design.
-- Indexes: GIN for general; `jsonb_path_ops` for `@>`-only; B-tree expression indexes for specific paths.
-- Generated columns let you derive a real column from JSONB at write time.
-- Validate at the application layer always; CHECK constraints for top-level invariants.
-- Plan the migration from JSONB to columns. It's normal — JSONB is the prototyping ground.
-- Don't use for: relational data with FKs, numeric aggregations, hot updates of small fields.
+- সত্যিকারের পরিবর্তনশীল shape (webhook payload), user-defined field (form), আর opaque metadata-র জন্য JSONB দারুণ।
+- অ্যান্টি-প্যাটার্ন: schema design-এর বিকল্প হিসেবে JSONB ব্যবহার করা।
+- Index: সাধারণ কাজের জন্য GIN; শুধু `@>`-এর জন্য `jsonb_path_ops`; নির্দিষ্ট path-এর জন্য B-tree expression index।
+- Generated column আপনাকে write-time-এ JSONB থেকে একটা আসল column derive করতে দেয়।
+- সবসময় application layer-এ validate করুন; top-level invariant-এর জন্য CHECK constraint।
+- JSONB থেকে column-এ migration-এর পরিকল্পনা করুন। এটা স্বাভাবিক — JSONB হলো prototyping-এর জায়গা।
+- এগুলোর জন্য ব্যবহার করবেন না: FK-ওয়ালা relational data, numeric aggregation, ছোট field-এর hot update।
 
-Next: [Schema evolution](/notes/data-modeling/10-schema-evolution) — expand/contract migrations, zero-downtime changes, backfills.
+পরবর্তী: [Schema evolution](/notes/data-modeling/10-schema-evolution) — expand/contract migration, zero-downtime পরিবর্তন, backfill।

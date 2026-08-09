@@ -1,9 +1,9 @@
 ---
 title: 'Auth at the Gateway'
-subtitle: "JWT verification, API key validation, OAuth token introspection — handle identity once so your services don't have to."
+subtitle: 'JWT verification, API key validation, OAuth token introspection — identity একবারই সামলান যাতে আপনার সার্ভিসগুলোকে না করতে হয়।'
 chapter: 3
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['JWT', 'API keys', 'OAuth', 'authentication', 'authorization']
 ---
 
@@ -13,21 +13,29 @@ topics: ['JWT', 'API keys', 'OAuth', 'authentication', 'authorization']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A building security desk — every visitor shows ID once at the front door. The guard checks it, issues a visitor badge (enriched request headers), and lets them through. Individual offices trust the badge; they don't re-verify identity for every meeting.
+একটা বিল্ডিংয়ের security ডেস্ক — প্রতিটা visitor সামনের দরজায় একবার ID দেখায়। গার্ড সেটা যাচাই করে, একটা visitor badge দেয় (enriched request header), আর তাকে ভেতরে ঢুকতে দেয়। আলাদা আলাদা অফিস সেই badge-কে বিশ্বাস করে; প্রতিটা মিটিংয়ের জন্য তারা আবার identity যাচাই করে না।
 
 </Callout>
 
-## Why Auth Belongs at the Gateway
+## গল্পে বুঝি
 
-Implementing auth in every service creates drift. Service A uses HS256 JWTs, Service B uses RS256, Service C forgot to check token expiry. The gateway centralizes this:
+ইবনে সিনা একটা বিশাল গবেষণাকেন্দ্রের নিরাপত্তার দায়িত্বে। ভেতরে অসংখ্য ল্যাব, অফিস আর স্টোররুম — সবগুলোই সংরক্ষিত। শুরুতে প্রতিটা ঘরের দরজায় আলাদা আলাদা গার্ড বসানো ছিল, প্রত্যেকে নিজের মতো করে সবার ID কার্ড, ছবি আর অনুমতিপত্র মিলিয়ে দেখত। ফল হলো — একই লোককে দিনে বিশবার থামতে হতো, কোনো গার্ড আবার যাচাই করতে ভুলে যেত, আর নিয়ম বদলালে প্রত্যেক গার্ডকে আলাদা করে শেখাতে হতো।
 
-- One place to update signing keys
-- One place to change token format
-- Services receive pre-verified identity in headers — `X-User-Id`, `X-User-Role`
+ইবনে সিনা পুরোটা বদলে দিলেন। এখন পুরো ভবনে ঢোকার একটাই মূল ফটক, আর সেখানে একটাই নিরাপত্তা চেকপয়েন্ট। ফাতিমা আল-ফিহরি সেখানে একবারই সবার ID পুঙ্খানুপুঙ্খ যাচাই করেন, তারপর হাতে পরিয়ে দেন একটা বিশ্বস্ত ভেতরের রিস্টব্যান্ড — যাতে লেখা থাকে ব্যক্তিটি কে আর কোন কোন এলাকায় সে যেতে পারবে। ভেতরের ল্যাব বা অফিস এবার শুধু রিস্টব্যান্ডটায় একনজর তাকায়, নতুন করে আর ID যাচাই করে না। আর গোটা ভবনটা এমনভাবে বানানো যে ওই একটা চেকপয়েন্ট ছাড়া ভেতরে ঢোকার আর কোনো ফাঁক নেই — জানালা দিয়ে বা পেছনের দরজা দিয়ে কেউ ঢুকে পড়তে পারে না।
 
-Services can still do **authorization** (can this user access this resource?) but **authentication** (is this a valid user?) lives at the edge.
+এই গল্পটাই gateway-তে centralised auth। মূল ফটকের চেকপয়েন্ট হলো API gateway, যে edge-এ একবারই token যাচাই (authentication) করে। রিস্টব্যান্ডটা হলো সেই verified identity, যেটা gateway header-এ করে backend-এর কাছে পাঠায়। ভেতরের ঘরগুলো আবার ID না দেখা মানে backend service-গুলোকে নিজে নিজে auth reimplement করতে হয় না। আর চেকপয়েন্ট ছাড়া ঢোকার পথ না থাকা মানে backend শুধু gateway থেকে আসা traffic-কেই বিশ্বাস করে — বাইরের কেউ যেন সরাসরি identity header বসিয়ে ঢুকে না পড়ে। বাস্তবেও ঠিক এ কারণেই backend-কে publicly reachable রাখলে mTLS বা shared secret দিয়ে নিশ্চিত করতে হয় যে header-টা সত্যিই gateway থেকেই এসেছে।
+
+## Auth কেন Gateway-তে থাকে
+
+প্রতিটা সার্ভিসে auth বানালে drift তৈরি হয়। Service A HS256 JWT ব্যবহার করে, Service B RS256, Service C token expiry যাচাই করতে ভুলে গেছে। gateway এটা এক জায়গায় নিয়ে আসে:
+
+- signing key আপডেট করার একটাই জায়গা
+- token format বদলানোর একটাই জায়গা
+- সার্ভিসগুলো header-এ আগেই যাচাই-করা identity পায় — `X-User-Id`, `X-User-Role`
+
+সার্ভিসগুলো এখনো **authorization** করতে পারে (এই user কি এই resource ব্যবহার করতে পারবে?) কিন্তু **authentication** (এটা কি একটা valid user?) থাকে edge-এ।
 
 ## JWT Verification
 
@@ -68,7 +76,7 @@ async function verifyJWT(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
-**Backend service** — just reads headers, no crypto:
+**Backend service** — শুধু header পড়ে, কোনো crypto নেই:
 
 ```typescript
 app.get('/api/orders', (req, res) => {
@@ -83,7 +91,7 @@ app.get('/api/orders', (req, res) => {
 
 ## API Key Auth
 
-For machine-to-machine or developer API access:
+machine-to-machine বা developer API access-এর জন্য:
 
 ```typescript
 interface ApiKey {
@@ -127,7 +135,7 @@ function hashApiKey(key: string): string {
 
 ## OAuth Token Introspection
 
-When tokens are opaque (not self-contained JWTs), the gateway calls the auth server to validate them:
+যখন token opaque হয় (self-contained JWT নয়), তখন gateway সেগুলো validate করতে auth server-কে কল করে:
 
 ```typescript
 async function introspectToken(token: string): Promise<TokenInfo | null> {
@@ -157,9 +165,9 @@ const introspectCached = memoize(introspectToken, {
 });
 ```
 
-## Route-Level Auth Policies
+## Route-Level Auth Policy
 
-Different routes have different requirements:
+আলাদা আলাদা route-এর আলাদা আলাদা requirement থাকে:
 
 ```typescript
 type AuthPolicy =
@@ -184,9 +192,9 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
-## Forwarding Identity Securely
+## Identity নিরাপদে Forward করা
 
-Backend services must only trust these headers from the gateway — not from external clients. Ensure your internal network topology prevents external clients from setting these headers directly:
+Backend সার্ভিসগুলোর উচিত এই header-গুলো শুধু gateway থেকেই বিশ্বাস করা — external client থেকে নয়। আপনার internal network topology নিশ্চিত করুক যাতে external client সরাসরি এই header সেট করতে না পারে:
 
 ```typescript
 // Strip any x-user-* headers from the original request
@@ -203,4 +211,4 @@ app.use(sanitizeInternalHeaders);
 app.use(verifyJWT);
 ```
 
-If your services are publicly reachable (not just via gateway), they must still verify these headers came from a trusted source — use mTLS or a shared internal secret to sign gateway requests.
+আপনার সার্ভিসগুলো যদি publicly reachable হয় (শুধু gateway দিয়ে নয়), তবুও তাদের যাচাই করতে হবে এই header-গুলো একটা trusted source থেকে এসেছে কিনা — gateway request sign করতে mTLS বা একটা shared internal secret ব্যবহার করুন।

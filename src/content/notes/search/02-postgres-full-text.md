@@ -1,9 +1,9 @@
 ---
 title: 'Postgres Full-Text Search'
-subtitle: 'tsvector, GIN indexes, ranking, highlighting, and when Postgres search is all you need.'
+subtitle: 'tsvector, GIN index, ranking, highlighting, এবং কখন Postgres search-ই আপনার প্রয়োজনের সব।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['PostgreSQL', 'full-text search', 'tsvector', 'GIN', 'ts_rank', 'ts_headline']
 ---
 
@@ -11,34 +11,42 @@ topics: ['PostgreSQL', 'full-text search', 'tsvector', 'GIN', 'ts_rank', 'ts_hea
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+কর্ডোবার পুরনো লাইব্রেরিতে ফাতিমা আল-ফিহরি নতুন বই তাকে তোলার আগে একটা কাজ করেন — বইয়ের প্রতিটা শব্দ তিনি তার মূল রূপে নামিয়ে আনেন। "দৌড়াচ্ছে", "দৌড়াল", "দৌড়ায়" — তিনটাই তিনি এক জায়গায়, "দৌড়" শব্দের নিচে লিখে রাখেন। আর "এর", "ও", "একটা" — এই ভরাট শব্দগুলো তিনি একদম বাদ দিয়ে দেন, কারণ ওগুলো দিয়ে তো কেউ বই খোঁজে না। শেষমেশ তার হাতে থাকে একটা পরিষ্কার তালিকা: প্রতিটা শব্দ-মূলের পাশে ঠিক কোন কোন বইয়ে সেটা আছে তার লিস্ট।
+
+কেউ এসে যখন কিছু খোঁজেন, ফাতিমা পুরো লাইব্রেরি হাঁটেন না। তিনি খোঁজার শব্দটাকেও মূলে নামান, তারপর তার তালিকা থেকে সোজা সেই বইগুলো বের করেন — আর যে বইয়ে শব্দটা যত বেশিবার, যত বেশি গুরুত্বপূর্ণ জায়গায় আছে, সেটাকেই সবার উপরে সাজিয়ে দেন। মজার ব্যাপার, এই পুরো কাজটা তিনি করেন লাইব্রেরির নিজের পুরনো ক্যাটালগ ঘরেই — খোঁজার জন্য আলাদা নতুন কোনো বিশেষ ভবন তোলার দরকার তার হয় না।
+
+এই গল্পটাই আসলে Postgres full-text search। শব্দকে মূল রূপে নামানোটাই **stemming** (আর মূল রূপগুলোই **lexeme**), ভরাট শব্দ বাদ দেওয়াটাই **stop-word** removal, শব্দ-মূল → বইয়ের সেই তালিকাটাই **tsvector** inverted index, আর সেরা ম্যাচ আগে সাজানোটাই relevance **ranking**। আর সবচেয়ে বড় কথা — ফাতিমা যেমন নিজের ক্যাটালগ ঘরেই সব করেন, তেমনি এই পুরো search আপনার existing **Postgres**-এর ভেতরেই হয়, আলাদা কোনো search engine লাগে না। বাস্তবে GitHub-এর issue search বা অসংখ্য SaaS প্রোডাক্ট ঠিক এভাবেই Elasticsearch ছাড়াই কেবল Postgres দিয়ে "আমার ডেটা সার্চ করো" চাহিদাটা মেটায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A reference librarian who also manages the card catalogue: they know the collection inside out, can search it intelligently, and you don't need a separate specialist. Postgres full-text search is that librarian — already in your stack, no extra service to run, no sync to maintain. Good enough for most applications.
+একজন reference লাইব্রেরিয়ান যিনি কার্ড ক্যাটালগও সামলান: তিনি কালেকশন খুঁটিনাটি চেনেন, বুদ্ধিমত্তার সাথে সার্চ করতে পারেন, আর আপনার আলাদা কোনো বিশেষজ্ঞ লাগে না। Postgres full-text search হলো সেই লাইব্রেরিয়ান — ইতিমধ্যেই আপনার স্ট্যাকে আছে, চালানোর জন্য বাড়তি কোনো সার্ভিস নেই, মেইনটেইন করার কোনো সিঙ্ক নেই। বেশিরভাগ অ্যাপ্লিকেশনের জন্য যথেষ্ট ভালো।
 
 </Callout>
 
-## When Postgres FTS Is Enough
+## কখন Postgres FTS যথেষ্ট
 
-Use Postgres full-text search when:
+Postgres full-text search ব্যবহার করুন যখন:
 
-- Your searchable data is already in Postgres
-- You need basic keyword search (not typo tolerance, not ML-based ranking)
-- You don't need faceted search with real-time facet counts
-- Your document corpus is &lt; 10M rows
-- Operational simplicity matters more than search feature richness
+- আপনার সার্চযোগ্য ডেটা ইতিমধ্যেই Postgres-এ আছে
+- আপনার বেসিক keyword search দরকার (typo tolerance না, ML-ভিত্তিক ranking না)
+- আপনার real-time facet count-সহ faceted search দরকার নেই
+- আপনার document corpus &lt; 10M row
+- feature richness-এর চেয়ে অপারেশনাল সরলতা বেশি গুরুত্বপূর্ণ
 
-Use a dedicated search engine (Meilisearch, Elasticsearch) when:
+একটা ডেডিকেটেড search engine (Meilisearch, Elasticsearch) ব্যবহার করুন যখন:
 
-- You need typo tolerance out of the box
-- You need facets with counts and filtering
-- You need sub-100ms search at high QPS on large corpora
-- You need relevance tuning, synonyms, or personalization
+- আপনার আউট-অফ-দ্য-বক্স typo tolerance দরকার
+- আপনার count আর filtering-সহ facet দরকার
+- বড় corpus-এ high QPS-এ আপনার sub-100ms search দরকার
+- আপনার relevance tuning, synonym বা personalization দরকার
 
-For most SaaS products, Postgres FTS handles the "search my data" use case adequately.
+বেশিরভাগ SaaS প্রোডাক্টের জন্য Postgres FTS "আমার ডেটা সার্চ করো" ইউজ-কেসটা যথেষ্ট ভালোভাবে হ্যান্ডল করে।
 
-## Schema Design for Search
+## Search-এর জন্য Schema ডিজাইন
 
 ```sql
 -- Articles table with generated search vector
@@ -61,9 +69,9 @@ CREATE TABLE articles (
 CREATE INDEX articles_search_idx ON articles USING GIN(search_vector);
 ```
 
-`setweight` assigns importance: 'A' > 'B' > 'C' > 'D'. A match in the title (weight A) scores higher than the same match in the body (weight C). This is how you implement "title matches matter more."
+`setweight` গুরুত্ব বরাদ্দ করে: 'A' > 'B' > 'C' > 'D'। title-এ একটা ম্যাচ (weight A) body-তে একই ম্যাচের (weight C) চেয়ে বেশি score পায়। এভাবেই আপনি "title-এর ম্যাচ বেশি গুরুত্বপূর্ণ" ইমপ্লিমেন্ট করেন।
 
-## Basic Search Queries
+## বেসিক Search Query
 
 ```sql
 -- Simple keyword search
@@ -97,9 +105,9 @@ WHERE search_vector @@ to_tsquery('english', 'datab:*');
 -- Matches: database, databases, databas
 ```
 
-## Handling User Input Safely
+## User Input নিরাপদে হ্যান্ডল করা
 
-User input can't be fed directly into `to_tsquery` — it'll throw on special characters:
+User input সরাসরি `to_tsquery`-তে দেওয়া যায় না — special character-এ এটা throw করবে:
 
 ```sql
 -- WRONG — crashes on "database & !"
@@ -157,11 +165,11 @@ ORDER BY boosted_rank DESC
 LIMIT 20;
 ```
 
-The recency boost: `1 / (1 + days_old)` gives a recent article a multiplier > 1, an old one &lt; 1. Adjust the denominator to tune decay speed.
+Recency boost: `1 / (1 + days_old)` একটা সাম্প্রতিক আর্টিকেলকে একটা multiplier > 1 দেয়, একটা পুরনোটাকে &lt; 1। decay-এর গতি tune করতে denominator অ্যাডজাস্ট করুন।
 
-## Highlighting (Snippets)
+## Highlighting (Snippet)
 
-Show users which part of the document matched:
+ইউজারদের দেখান ডকুমেন্টের কোন অংশ ম্যাচ করল:
 
 ```sql
 SELECT
@@ -184,11 +192,11 @@ snippet:
  how queries are executed and which indexes..."
 ```
 
-`ts_headline` finds the most relevant excerpt and wraps matched terms in your chosen HTML tags.
+`ts_headline` সবচেয়ে relevant অংশটা খুঁজে বের করে আর ম্যাচ করা term-গুলোকে আপনার বেছে নেওয়া HTML tag-এ মুড়ে দেয়।
 
 ## Autocomplete
 
-Prefix search for "search as you type":
+"টাইপ করার সাথে সাথে সার্চ"-এর জন্য prefix search:
 
 ```sql
 -- Index for prefix search
@@ -209,7 +217,7 @@ WHERE search_vector @@ to_tsquery('english', $1 || ':*')
 LIMIT 10;
 ```
 
-For better autocomplete (typo-tolerant), maintain a separate terms table:
+আরও ভালো autocomplete-এর জন্য (typo-tolerant), একটা আলাদা terms table রাখুন:
 
 ```sql
 CREATE TABLE search_terms (
@@ -252,9 +260,9 @@ ALTER TABLE articles ADD COLUMN search_vector TSVECTOR
   ) STORED;
 ```
 
-## Combining with Filters
+## Filter-এর সাথে সমন্বয়
 
-FTS integrates naturally with SQL filters:
+FTS স্বাভাবিকভাবেই SQL filter-এর সাথে ইন্টিগ্রেট হয়:
 
 ```sql
 -- Search within a category and date range
@@ -267,7 +275,7 @@ ORDER BY rank DESC
 LIMIT 20;
 ```
 
-Postgres uses the GIN index for text search and the regular indexes for category/date — the query planner combines them efficiently.
+Postgres টেক্সট search-এর জন্য GIN index আর category/date-এর জন্য নিয়মিত index ব্যবহার করে — query planner এগুলোকে দক্ষতার সাথে সমন্বয় করে।
 
 ## Performance
 
@@ -286,7 +294,7 @@ WHERE search_vector @@ to_tsquery('english', 'database');
 -- Use GIN for most search workloads (reads >> writes)
 ```
 
-For tables with > 1M rows and high query rates, consider using a materialized view with pre-computed search vectors across joined tables, refreshed periodically.
+> 1M row আর high query rate-এর table-এর জন্য, joined table জুড়ে pre-computed search vector-সহ একটা materialized view ব্যবহারের কথা ভাবুন, যা পর্যায়ক্রমে refresh করা হয়।
 
 ```sql
 -- Materialized view for complex multi-table search

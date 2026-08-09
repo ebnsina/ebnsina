@@ -1,9 +1,9 @@
 ---
-title: 'Cache Strategies'
-subtitle: "Cache-aside, read-through, write-through, write-behind — when to use each and what breaks when you don't."
+title: 'ক্যাশ স্ট্র্যাটেজি'
+subtitle: 'Cache-aside, read-through, write-through, write-behind — কোনটা কখন ব্যবহার করবেন আর ভুল করলে কী ভাঙে।'
 chapter: 2
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['cache-aside', 'read-through', 'write-through', 'write-behind', 'patterns']
 ---
 
@@ -13,26 +13,34 @@ topics: ['cache-aside', 'read-through', 'write-through', 'write-behind', 'patter
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A cook who preps ingredients before service (write-through) versus one who grabs from the pantry only when needed (cache-aside) — same kitchen, different rhythm.
+একজন বাবুর্চি যিনি রান্নার আগেই সব উপকরণ প্রস্তুত করে রাখেন (write-through) বনাম আরেকজন যিনি প্রয়োজন হলেই কেবল প্যান্ট্রি থেকে জিনিস নেন (cache-aside) — একই রান্নাঘর, ভিন্ন ছন্দ।
 
 </Callout>
 
-## The Four Strategies
+## গল্পে বুঝি
 
-Every caching system is built on one of four patterns — or a combination. The choice determines who owns cache population, how stale data appears, and what happens on writes.
+আল-খোয়ারিজমির একটা মুদি-হার্ডওয়্যারের দোকান, পেছনে একটা ছোট গুদাম যেখানে বস্তা-বাক্সে আসল স্টক থাকে আর একটা মোটা খাতায় সব হিসাব লেখা। সামনের কাউন্টারের তাকে সে ঘনঘন লাগা জিনিস সাজিয়ে রাখে। কেউ পেরেক চাইলে কাউন্টারে থাকলে সাথে সাথে দেয়; না থাকলে আল-খোয়ারিজমি নিজেই উঠে গুদামে হেঁটে যায়, এক প্যাকেট এনে দেয়, আর কয়েক প্যাকেট কাউন্টারের তাকে রেখে দেয় — পরেরবার যেন আর হাঁটতে না হয়। এই যে সে নিজেই খুঁজে না পেলে গুদামে যায়, এটাই cache-aside। পাশের দোকানে ইবনে সিনার আবার একটা কাজের ছেলে ফাতিমা আল-ফিহরির ভাই আছে — ইবনে সিনা কাউন্টারে জিনিস না পেলে নিজে যায় না, ছেলেটাকে বলে দেয়, ছেলেটাই গুদাম থেকে এনে তাকে সাজিয়ে দেয়। ইবনে সিনা শুধু তাকের দিকেই তাকায়, গুদামের ব্যাপারটা ছেলেটা সামলায় — এটাই read-through, যেখানে ক্যাশ লেয়ার নিজেই DB থেকে এনে দেয়।
 
-| Strategy      | Who reads from DB | Who writes to DB    | Consistency |
-| ------------- | ----------------- | ------------------- | ----------- |
-| Cache-aside   | Application       | Application         | Eventual    |
-| Read-through  | Cache layer       | Application         | Eventual    |
-| Write-through | Application       | Cache layer → DB    | Strong      |
-| Write-behind  | Application       | Cache layer (async) | Eventual    |
+এবার হিসাব লেখার পালা। বিক্রি হলে আল-খোয়ারিজমি প্রতিবার একসাথে দুটো কাজ করে — কাউন্টারের স্টক কমায় আর সাথে সাথেই গুদামের মোটা খাতায় এন্ট্রি তোলে। ফলে তার কাউন্টার আর খাতা সবসময় মিলে থাকে, কিন্তু প্রতিটা বিক্রিতে দুই জায়গায় লেখায় একটু সময় বেশি লাগে — এটাই write-through। ভিড়ের সময় ইবনে সিনার আবার এত ধৈর্য নেই; সে ঝটপট শুধু কাউন্টারে হিসাব রাখে, খদ্দের বিদায় করে দেয়, আর ভাবে রাতে দোকান বন্ধ করার আগে একবারে সব খাতায় তুলে দেবে। এতে বিক্রি দ্রুত হয়, কিন্তু যদি সে ভুলে যায় বা রাতে দোকানে আগুন লাগে, তাহলে দিনের যেসব বিক্রি খাতায় ওঠেনি সেগুলো চিরতরে হারিয়ে যায় — এটাই write-behind, দ্রুত কিন্তু ঝুঁকিপূর্ণ।
+
+মিলিয়ে নিই: কাউন্টারে না পেলে আল-খোয়ারিজমির নিজে গুদামে যাওয়া হলো **cache-aside**, কাজের ছেলের হয়ে এনে দেওয়া হলো **read-through**, বিক্রির সাথে সাথেই কাউন্টার আর খাতা দুটোই আপডেট করা হলো **write-through**, আর রাতে একবারে খাতায় তোলা হলো **write-behind**। বাস্তবে cache-aside আর read-through দিয়ে পড়ার চাপ কমানো হয়, write-through দিয়ে যেখানে ডেটা সবসময় মিলতে হবে (যেমন প্রোফাইল আপডেট), আর write-behind দিয়ে কাউন্টার, ভিউ কাউন্ট বা অ্যানালিটিক্সের মতো জায়গায় গতি বাড়ানো হয় — যেখানে কয়েক সেকেন্ডের হিসাব হারালেও বিশাল ক্ষতি নেই।
+
+## চারটি স্ট্র্যাটেজি
+
+প্রতিটি ক্যাশিং সিস্টেম এই চারটি প্যাটার্নের কোনো একটির উপর — বা এগুলোর সংমিশ্রণে — তৈরি। এই পছন্দটাই ঠিক করে দেয় ক্যাশ পপুলেট করার দায়িত্ব কার, স্টেল ডেটা কীভাবে দেখা দেয়, এবং write-এর সময় কী ঘটে।
+
+| স্ট্র্যাটেজি  | DB থেকে কে পড়ে | DB-তে কে লেখে        | কনসিস্টেন্সি |
+| ------------- | --------------- | -------------------- | ------------ |
+| Cache-aside   | অ্যাপ্লিকেশন    | অ্যাপ্লিকেশন         | Eventual     |
+| Read-through  | ক্যাশ লেয়ার    | অ্যাপ্লিকেশন         | Eventual     |
+| Write-through | অ্যাপ্লিকেশন    | ক্যাশ লেয়ার → DB    | Strong       |
+| Write-behind  | অ্যাপ্লিকেশন    | ক্যাশ লেয়ার (async) | Eventual     |
 
 ## Cache-Aside (Lazy Loading)
 
-The most common pattern. The application owns all the logic: check cache, miss → fetch from DB, populate cache.
+সবচেয়ে প্রচলিত প্যাটার্ন। সব লজিকের মালিক অ্যাপ্লিকেশন নিজেই: ক্যাশ চেক করো, miss হলে → DB থেকে ফেচ করো, ক্যাশ পপুলেট করো।
 
 ```typescript
 class UserService {
@@ -69,19 +77,19 @@ class UserService {
 }
 ```
 
-**Pros:** Simple. Only caches what's actually requested. Cache survives Redis restarts (just repopulates from DB on next request).
+**সুবিধা:** সরল। শুধু যা আসলেই চাওয়া হয় তাই ক্যাশ করে। Redis রিস্টার্ট হলেও ক্যাশ টিকে থাকে (পরের রিকোয়েস্টে DB থেকে আবার পপুলেট হয়ে যায়)।
 
-**Cons:** First request after a miss is slow. Can serve stale data if you forget to invalidate on write.
+**অসুবিধা:** miss-এর পরের প্রথম রিকোয়েস্ট ধীর। write-এর সময় invalidate করতে ভুলে গেলে স্টেল ডেটা সার্ভ হতে পারে।
 
 <Callout type="tip">
 
-Cache-aside is the right default. Use it until you have a specific reason not to.
+Cache-aside হলো সঠিক ডিফল্ট। যতক্ষণ না নির্দিষ্ট কোনো কারণ থাকে অন্য কিছু ব্যবহার করার, ততক্ষণ এটাই ব্যবহার করুন।
 
 </Callout>
 
 ## Read-Through
 
-The cache layer itself fetches from the database on a miss, transparently to the application. The application only talks to the cache.
+miss হলে ক্যাশ লেয়ার নিজেই ডেটাবেস থেকে ফেচ করে, অ্যাপ্লিকেশনের কাছে ব্যাপারটা অদৃশ্য থাকে। অ্যাপ্লিকেশন শুধু ক্যাশের সাথে কথা বলে।
 
 ```typescript
 // The cache wraps the data source
@@ -109,13 +117,13 @@ const userCache = new ReadThroughCache<User>((id) => db.users.findById(id));
 const user = await userCache.get('user:123');
 ```
 
-**Pros:** Simpler application code — one place handles all cache population logic.
+**সুবিধা:** অ্যাপ্লিকেশন কোড আরও সরল — সব ক্যাশ পপুলেশন লজিক এক জায়গায় হ্যান্ডল হয়।
 
-**Cons:** Cold start still has latency. Harder to handle cache misses differently (e.g., returning null vs throwing). Libraries like `node-cache-manager` implement this pattern.
+**অসুবিধা:** cold start-এ এখনও latency থাকে। cache miss ভিন্নভাবে হ্যান্ডল করা কঠিন (যেমন, null রিটার্ন করা বনাম throw করা)। `node-cache-manager`-এর মতো লাইব্রেরিগুলো এই প্যাটার্ন বাস্তবায়ন করে।
 
 ## Write-Through
 
-Every write goes through the cache to the database. Cache and DB are always in sync.
+প্রতিটি write ক্যাশের মধ্য দিয়ে ডেটাবেসে যায়। ক্যাশ ও DB সবসময় সিঙ্কে থাকে।
 
 ```typescript
 class WriteThroughUserCache {
@@ -141,19 +149,19 @@ class WriteThroughUserCache {
 }
 ```
 
-**Pros:** Cache is always fresh — no stale reads. No invalidation logic needed.
+**সুবিধা:** ক্যাশ সবসময় ফ্রেশ — কোনো স্টেল read নেই। কোনো invalidation লজিকের দরকার নেই।
 
-**Cons:** Write latency increases (two writes). Cache fills with data that may never be read. Works best with read-through to handle initial loads.
+**অসুবিধা:** write latency বাড়ে (দুটো write)। ক্যাশ এমন ডেটায় ভরে যায় যা হয়তো কখনো পড়াই হবে না। প্রাথমিক লোডগুলো হ্যান্ডল করতে read-through-এর সাথে মিলিয়ে সবচেয়ে ভালো কাজ করে।
 
 <Callout type="info">
 
-Write-through is often combined with read-through. Together they guarantee the cache is always consistent — but at the cost of write performance and potentially caching rarely-read data.
+Write-through প্রায়ই read-through-এর সাথে মিলিয়ে ব্যবহার হয়। একসাথে এরা নিশ্চিত করে ক্যাশ সবসময় কনসিস্টেন্ট থাকে — তবে তার মূল্য হিসেবে write পারফরম্যান্স কমে এবং সম্ভবত খুব কম-পড়া ডেটাও ক্যাশ হয়।
 
 </Callout>
 
 ## Write-Behind (Write-Back)
 
-Writes go to cache immediately, then the cache asynchronously flushes to the database. The application gets fast write acknowledgment.
+write সাথে সাথে ক্যাশে চলে যায়, তারপর ক্যাশ অ্যাসিনক্রোনাসভাবে ডেটাবেসে ফ্লাশ করে। অ্যাপ্লিকেশন দ্রুত write অ্যাকনলেজমেন্ট পায়।
 
 ```typescript
 class WriteBehindCache {
@@ -195,19 +203,19 @@ class WriteBehindCache {
 }
 ```
 
-**Pros:** Lowest write latency. Can batch multiple writes into one DB operation. Great for counters, view counts, analytics.
+**সুবিধা:** সবচেয়ে কম write latency। একাধিক write-কে একটা DB অপারেশনে ব্যাচ করা যায়। কাউন্টার, ভিউ কাউন্ট, অ্যানালিটিক্সের জন্য চমৎকার।
 
-**Cons:** Data loss risk if cache crashes before flushing. Complex failure handling. Not appropriate for financial or critical data.
+**অসুবিধা:** ফ্লাশ হওয়ার আগেই ক্যাশ ক্র্যাশ করলে ডেটা হারানোর ঝুঁকি। ফেইলিওর হ্যান্ডলিং জটিল। আর্থিক বা ক্রিটিক্যাল ডেটার জন্য উপযুক্ত নয়।
 
 <Callout type="warning">
 
-**Never use write-behind for anything where losing a few seconds of writes is unacceptable** — payments, inventory changes, user-generated content. The performance gain isn't worth the data loss risk.
+**যেখানে কয়েক সেকেন্ডের write হারানো মেনে নেওয়া যায় না, সেখানে কখনোই write-behind ব্যবহার করবেন না** — পেমেন্ট, ইনভেন্টরি পরিবর্তন, ইউজার-জেনারেটেড কন্টেন্ট। পারফরম্যান্সের লাভটা ডেটা হারানোর ঝুঁকির তুলনায় মূল্যহীন।
 
 </Callout>
 
 ## Refresh-Ahead
 
-Proactively refresh cache before entries expire, based on access patterns.
+অ্যাক্সেস প্যাটার্নের ভিত্তিতে, এন্ট্রি এক্সপায়ার হওয়ার আগেই আগেভাগে ক্যাশ রিফ্রেশ করা।
 
 ```typescript
 class RefreshAheadCache<T> {
@@ -255,11 +263,11 @@ class RefreshAheadCache<T> {
 }
 ```
 
-**Pros:** Eliminates most cache misses. Popular keys are never cold.
+**সুবিধা:** বেশিরভাগ cache miss দূর করে। জনপ্রিয় key কখনো cold থাকে না।
 
-**Cons:** Wastes work refreshing keys that won't be read again. Complex to implement correctly. Overkill for most applications.
+**অসুবিধা:** যেসব key আর পড়া হবে না সেগুলো রিফ্রেশ করে কাজ নষ্ট করে। সঠিকভাবে বাস্তবায়ন করা জটিল। বেশিরভাগ অ্যাপ্লিকেশনের জন্য অতিরিক্ত।
 
-## Choosing a Strategy
+## একটি স্ট্র্যাটেজি বেছে নেওয়া
 
 ```
 Start here:
@@ -278,15 +286,15 @@ Multiple services sharing the same data?
   No  → In-process cache, don't bother with Redis
 ```
 
-## Key Design Rules
+## মূল ডিজাইন নিয়ম
 
-**Always expire entries.** A cache with no TTL is a memory leak with extra steps. Even a 24-hour TTL is better than never expiring.
+**সবসময় এন্ট্রি এক্সপায়ার করান।** TTL ছাড়া ক্যাশ হলো বাড়তি ধাপসহ একটা মেমরি লিক। এমনকি ২৪-ঘণ্টার TTL-ও কখনো এক্সপায়ার না হওয়ার চেয়ে ভালো।
 
-**Make cache keys deterministic.** `user:${id}` not `user_${Date.now()}`. If the same inputs don't produce the same key, you'll never hit.
+**ক্যাশ key ডিটারমিনিস্টিক রাখুন।** `user:${id}`, `user_${Date.now()}` নয়। একই ইনপুট যদি একই key না বানায়, তাহলে আপনি কখনো hit পাবেন না।
 
-**Namespace your keys.** Prefix by service or entity type: `auth:session:abc123`, `catalog:product:456`. Prevents collisions when sharing Redis across services.
+**আপনার key namespace করুন।** সার্ভিস বা এন্টিটি টাইপ দিয়ে prefix দিন: `auth:session:abc123`, `catalog:product:456`। একাধিক সার্ভিসে Redis শেয়ার করার সময় collision ঠেকায়।
 
-**Serialize consistently.** `JSON.stringify` produces different output depending on key order in some environments. Use a canonical serializer or be aware of this.
+**একইভাবে সিরিয়ালাইজ করুন।** কিছু পরিবেশে `JSON.stringify` key-এর ক্রম অনুযায়ী ভিন্ন আউটপুট দেয়। একটা ক্যানোনিকাল সিরিয়ালাইজার ব্যবহার করুন বা অন্তত এ ব্যাপারে সচেতন থাকুন।
 
 ```typescript
 // Good: deterministic key

@@ -1,9 +1,9 @@
 ---
 title: 'Kubernetes Fundamentals'
-subtitle: 'Pods, deployments, services, and the control loop — what Kubernetes actually does and the primitives that everything else is built on.'
+subtitle: 'Pods, deployments, services, আর control loop — Kubernetes আসলে কী করে এবং যে primitive-গুলোর উপর বাকি সবকিছু দাঁড়িয়ে।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['Kubernetes', 'pods', 'deployments', 'services', 'control loop', 'kubectl']
 ---
 
@@ -11,17 +11,25 @@ topics: ['Kubernetes', 'pods', 'deployments', 'services', 'control loop', 'kubec
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা নাচের প্রোডাকশনের ডিরেক্টর। তার হাতে একটা বাঁধা স্ক্রিপ্ট, আর সেই স্ক্রিপ্টে লেখা একটাই কড়া নিয়ম — "মঞ্চে সবসময় ঠিক তিনজন নাচিয়ে থাকবে, একটাও কম নয়।" ফাতিমা কখনো নিজে দৌড়ে গিয়ে কাকে মঞ্চে পাঠাবে সেটা ঠিক করে না; সে শুধু স্ক্রিপ্টটা মঞ্চের সামনে ধরে রাখে আর ক্রমাগত মিলিয়ে দেখে — মঞ্চের বাস্তব অবস্থা স্ক্রিপ্টের সাথে মিলছে তো? এক শো-তে এক নাচিয়ে হঠাৎ অজ্ঞান হয়ে পড়ে গেল, মঞ্চে রইল দুজন। মুহূর্তের মধ্যে উইংসে দাঁড়িয়ে থাকা একজন আন্ডারস্টাডি ছুটে এসে জায়গা নিয়ে নিল, আবার তিনজন। ফাতিমাকে কিছুই আলাদা করে বলতে হয়নি — স্ক্রিপ্ট আর বাস্তবের ফাঁকটা সে নিজেই মিটিয়ে দিয়েছে।
+
+এই প্রোডাকশনে পারফর্মাররা একা নড়াচড়া করে না। প্রতিটা নাচিয়ের সাথে বাঁধা থাকে তার নিজের একজন আলো-ধরা সহকারী আর একজন মেকআপ আর্টিস্ট — এই ছোট দলটা সবসময় একসাথে মঞ্চে ঢোকে, একসাথে বেরোয়। আর দর্শকদের কথা ভাবুন: হলের সামনে একজন আশার (usher) দাঁড়িয়ে আছে। কোন নাচিয়ে আজ রাতে পারফর্ম করছে সেটা কোনো দর্শককে জানতে হয় না — তারা শুধু আশারকে বলে "নাচিয়েদের কাছে যাব", আর আশার তাদের ঠিক জায়গায় পাঠিয়ে দেয়। কাল যদি পুরো তিনজন বদলে যায়, দর্শকের কিছুই বদলায় না; আশার একই ঠিকানা।
+
+গল্পটা হুবহু Kubernetes। স্ক্রিপ্টের "তিনজন নাচিয়ে" হলো আপনার **desired state**, আর ফাতিমার বারবার মিলিয়ে দেখে ফাঁক মেটানোটাই controller-এর **reconciliation** (control loop)। নাচিয়ে + তার সহকারী + মেকআপ আর্টিস্ট — একসাথে ঢোকা এই ছোট দলটা একটা **pod** (একসাথে চলা container-দের গুচ্ছ)। "সবসময় ঠিক তিনজন" নিয়মটা ধরে রাখা, আর অজ্ঞান হওয়া নাচিয়ের জায়গায় আন্ডারস্টাডি বসানো — এটাই একটা **deployment**, যা নির্দিষ্ট সংখ্যক **replica** বজায় রাখে আর নিজে থেকে **self-healing** করে। আর আশার হলো **service** — বদলাতে থাকা pod-দের সামনে একটা স্থিতিশীল ঠিকানা, যাতে ক্লায়েন্টকে কখনো জানতে না হয় ঠিক কোন pod এখন সাড়া দিচ্ছে। বাস্তবে ঠিক এভাবেই একটা pod ক্র্যাশ করলে deployment নতুন pod তুলে দেয় আর service-এর IP অপরিবর্তিত থাকে — তাই আপনার অ্যাপ চলতেই থাকে, কেউ টেরও পায় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A self-correcting factory floor: you tell the factory manager "I need 3 welding robots running at all times." You don't specify which robots or how to restart them when they break — the manager handles that. If a robot fails, it's replaced automatically. If you need 5, you update the number and the manager figures out the rest. Kubernetes is that factory manager for containers.
+একটা সেল্‌ফ-কারেক্টিং ফ্যাক্টরি ফ্লোর: আপনি ফ্যাক্টরি ম্যানেজারকে বলেন "সবসময় ৩টা welding robot চালু থাকা চাই।" কোন রোবটগুলো বা ভাঙলে কীভাবে রিস্টার্ট করতে হবে সেটা আপনি বলে দেন না — ম্যানেজার সেটা সামলায়। কোনো রোবট ফেইল করলে সেটা অটোমেটিক রিপ্লেস হয়ে যায়। ৫টা লাগলে আপনি সংখ্যাটা আপডেট করেন, বাকিটা ম্যানেজার বুঝে নেয়। container-এর জন্য Kubernetes হলো সেই ফ্যাক্টরি ম্যানেজার।
 
 </Callout>
 
 ## The Control Loop
 
-Everything in Kubernetes follows the same pattern:
+Kubernetes-এর সবকিছু একই প্যাটার্ন অনুসরণ করে:
 
 ```
 Desired state (what you declared) → Controller watches → Actual state
@@ -29,13 +37,13 @@ Desired state (what you declared) → Controller watches → Actual state
                     └── Controller reconciles ←────────────────┘
 ```
 
-You declare what you want (3 replicas of order-service). Controllers continuously compare desired state to actual state and make changes to close the gap. A pod crashes → actual state drops to 2 → controller creates a new pod → actual state returns to 3.
+আপনি যা চান সেটা declare করেন (order-service-এর ৩টা replica)। Controller-রা ক্রমাগত desired state আর actual state তুলনা করে এবং ফাঁকটা মিটিয়ে দিতে পরিবর্তন আনে। একটা pod ক্র্যাশ করলো → actual state নেমে ২ হলো → controller নতুন একটা pod তৈরি করলো → actual state আবার ৩-এ ফিরে এলো।
 
-This is declarative: you describe the outcome, not the steps.
+এটাই declarative: আপনি ফলাফল বর্ণনা করেন, ধাপগুলো নয়।
 
 ## Core Objects
 
-**Pod:** the smallest deployable unit. One or more containers sharing network and storage. Containers in a pod communicate via `localhost`.
+**Pod:** সবচেয়ে ছোট deployable unit। এক বা একাধিক container যারা network আর storage শেয়ার করে। একটা pod-এর ভেতরের container-রা `localhost` দিয়ে যোগাযোগ করে।
 
 ```yaml
 # Pods are rarely created directly — use Deployments
@@ -66,7 +74,7 @@ spec:
           cpu: '500m'
 ```
 
-**Deployment:** manages a ReplicaSet which manages Pods. Handles rolling updates and rollbacks.
+**Deployment:** একটা ReplicaSet ম্যানেজ করে যা আবার Pod-গুলো ম্যানেজ করে। rolling update আর rollback সামলায়।
 
 ```yaml
 apiVersion: apps/v1
@@ -122,7 +130,7 @@ spec:
       terminationGracePeriodSeconds: 35
 ```
 
-**Service:** stable network endpoint for a set of pods. Pods come and go with new IPs; the Service IP stays constant.
+**Service:** একদল pod-এর জন্য একটা স্থিতিশীল network endpoint। Pod আসে-যায় নতুন IP নিয়ে; কিন্তু Service IP অপরিবর্তিত থাকে।
 
 ```yaml
 apiVersion: v1
@@ -139,15 +147,15 @@ spec:
   type: ClusterIP # internal only
 ```
 
-Service types:
+Service type-গুলো:
 
-- `ClusterIP` — internal cluster IP only (default)
-- `NodePort` — exposes on a static port on every node
-- `LoadBalancer` — provisions cloud load balancer (AWS ALB, GCP LB)
+- `ClusterIP` — শুধু cluster-এর ভেতরের IP (default)
+- `NodePort` — প্রতিটা node-এ একটা static port-এ expose করে
+- `LoadBalancer` — cloud load balancer provision করে (AWS ALB, GCP LB)
 
 ## Namespaces
 
-Namespaces partition the cluster into virtual sub-clusters. Resources in different namespaces are isolated (different RBAC, resource quotas, network policies).
+Namespace ক্লাস্টারকে ভার্চুয়াল সাব-ক্লাস্টারে ভাগ করে। ভিন্ন namespace-এর resource-গুলো একে অপর থেকে isolated (আলাদা RBAC, resource quota, network policy)।
 
 ```bash
 kubectl create namespace production
@@ -219,7 +227,7 @@ data:
   jwt_secret: c2VjcmV0...
 ```
 
-Reference in pods:
+pod-এ reference করা:
 
 ```yaml
 spec:
@@ -236,12 +244,12 @@ spec:
               key: database_url
 ```
 
-**Don't commit Secrets to git.** Use Sealed Secrets, External Secrets Operator, or Vault to manage them. Base64 is not encryption.
+**Secret কখনো git-এ commit করবেন না।** এগুলো ম্যানেজ করতে Sealed Secrets, External Secrets Operator, বা Vault ব্যবহার করুন। Base64 কোনো encryption নয়।
 
 ## Resource Requests and Limits
 
-`requests` — what the pod is guaranteed. Scheduler uses this to find a node with enough capacity.
-`limits` — the maximum a pod can use. Container is OOMKilled if it exceeds memory limit.
+`requests` — pod-কে যা guaranteed দেওয়া হয়। Scheduler এটা দিয়ে যথেষ্ট capacity আছে এমন একটা node খুঁজে নেয়।
+`limits` — একটা pod সর্বোচ্চ যতটা ব্যবহার করতে পারবে। memory limit ছাড়িয়ে গেলে container OOMKilled হয়।
 
 ```yaml
 resources:
@@ -253,13 +261,13 @@ resources:
     cpu: '1000m' # 1 full core
 ```
 
-**Memory:** always set limits. An OOM-killed pod restarts; an OOM node evicts everything.
+**Memory:** সবসময় limit সেট করুন। OOM-killed pod রিস্টার্ট হয়; কিন্তু OOM node সবকিছু evict করে দেয়।
 
-**CPU:** limits throttle the container if it exceeds the limit (it doesn't get killed). Setting CPU limits too low causes latency. Many teams set CPU requests but not limits — lets the pod burst while still scheduling correctly.
+**CPU:** limit ছাড়িয়ে গেলে container throttle হয় (kill হয় না)। CPU limit বেশি নিচে রাখলে latency বাড়ে। অনেক টিম CPU request সেট করে কিন্তু limit করে না — এতে pod সঠিকভাবে schedule হওয়ার পরও burst করতে পারে।
 
 ## Ingress
 
-Routes external traffic to services:
+external traffic-কে service-এর দিকে route করে:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -296,11 +304,11 @@ spec:
                   number: 80
 ```
 
-Requires an ingress controller (nginx-ingress) installed on the cluster. cert-manager automatically provisions and renews Let's Encrypt certificates.
+ক্লাস্টারে একটা ingress controller (nginx-ingress) ইনস্টল থাকা লাগে। cert-manager অটোমেটিক Let's Encrypt সার্টিফিকেট provision আর renew করে।
 
 ## Labels and Selectors
 
-Labels are key-value pairs on any resource. Selectors filter resources by labels. The entire Kubernetes scheduling and routing model depends on labels.
+Label হলো যেকোনো resource-এর উপর key-value pair। Selector label দিয়ে resource ফিল্টার করে। Kubernetes-এর পুরো scheduling আর routing মডেল label-এর উপর নির্ভরশীল।
 
 ```bash
 # Find pods by label

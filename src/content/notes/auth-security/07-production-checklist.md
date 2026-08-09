@@ -1,9 +1,9 @@
 ---
 title: 'Auth in Production'
-subtitle: 'The operational checklist: what to verify before shipping auth to real users, and what to monitor after.'
+subtitle: 'অপারেশনাল checklist: আসল user-দের কাছে auth ship করার আগে কী verify করবেন, আর পরে কী monitor করবেন।'
 chapter: 7
 level: 'advanced'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['production', 'checklist', 'monitoring', 'incident response', 'hardening']
 ---
 
@@ -13,15 +13,23 @@ topics: ['production', 'checklist', 'monitoring', 'incident response', 'hardenin
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A pre-flight checklist: pilots don't skip it because they're experienced — they run it every time because the cost of missing one item is catastrophic. Auth is the same. The checklist exists because the consequence of getting it wrong is your users' data in someone else's hands.
+একটা pre-flight checklist: pilot-রা অভিজ্ঞ বলে এটা এড়িয়ে যায় না — তারা প্রতিবার এটা চালায় কারণ একটা item মিস করার মূল্য বিপর্যয়কর। Auth একই রকম। checklist-টা আছে কারণ এটা ভুল করার পরিণতি হলো আপনার user-দের data অন্য কারো হাতে।
 
 </Callout>
 
+## গল্পে বুঝি
+
+রাতের শিফটে ব্যাংকের শাখায় ম্যানেজার ইবনে সিনা। সকালে গ্রাহকদের জন্য শাখা খোলার আগে তার হাতে একটা কড়া checklist — এবং অভিজ্ঞ বলে সে একটাও লাইন এড়িয়ে যায় না। প্রথমেই সামনের লোহার গ্রিল তালাবন্ধ রেখে সে নিশ্চিত করে, কেউ যেন শুধু নিরাপত্তা-দেওয়া মূল ফটক দিয়েই ভেতরে ঢোকে — পেছনের ফাঁকফোকর দিয়ে নয়। ভল্টের কম্বিনেশন সে কয়েক দিন পরপর বদলায়, আর কিছুতেই সেটা কোনো sticky note-এ লিখে মনিটরে সেঁটে রাখে না — সংখ্যাটা থাকে শুধু তার মাথায়।
+
+ভল্ট খুলতে ইবনে সিনার কাছে চাবি থাকলেই হয় না, আল-খোয়ারিজমির কাছ থেকে আলাদা একটা কোডও লাগে — দুটো এক না হলে দরজা খোলে না। কোনো গ্রাহক ATM-এ পরপর ভুল PIN দিলে কার্ড কয়েকবার পরেই সাময়িক লক হয়ে যায়, যেন কেউ অনুমান করে করে ঢুকতে না পারে। দিনের ভিজিটরদের যে অস্থায়ী পাস দেওয়া হয় সেগুলো বিকেলে নিজে থেকেই অকেজো হয়ে যায় — পুরনো পাস দিয়ে পরদিন কেউ ঢুকতে পারে না। আর পুরো শাখা জুড়ে CCTV আর একটা entry-খাতা চলে, কে কখন কোন দরজা দিয়ে ঢুকল-বেরোল সব লেখা থাকে।
+
+ইবনে সিনার এই checklist-ই আসলে **auth in production**। মূল ফটক দিয়ে ঢোকানো মানে সব ট্রাফিক **HTTPS/TLS**-এ বাধ্য করা, নিয়মিত ভল্টের কম্বিনেশন বদলানো মানে **secret rotation** (আর কোথাও plaintext-এ না রাখা), চাবি-আর-কোড দুটো লাগা মানে **MFA**, ভুল PIN-এ কার্ড লক মানে login-এ **rate limiting**, বিকেলে পাস অকেজো হওয়া মানে **token expiry** (short-lived access token), আর CCTV আর entry-খাতা মানে **audit log**। প্রত্যেকে যতটুকু দরকার ঠিক ততটুকুই অ্যাক্সেস পায় — এটাই **least privilege**। বাস্তবেও ব্যাংক, হাসপাতাল বা যেকোনো serious অ্যাপ ঠিক এভাবেই ship-এর আগে লাইন ধরে ধরে verify করে — কারণ pilot-দের pre-flight checklist-এর মতো, একটা item মিস হওয়ার মানে user-দের data অন্য কারো হাতে।
+
 ## Implementation Checklist
 
-**Passwords**
+**Password**
 
 ```
 □ Passwords hashed with argon2id (m≥19MB, t≥2) or bcrypt (cost≥12)
@@ -32,7 +40,7 @@ A pre-flight checklist: pilots don't skip it because they're experienced — the
 □ Check against HaveIBeenPwned on registration and login
 ```
 
-**Sessions & Tokens**
+**Session ও Token**
 
 ```
 □ Session IDs regenerated on login and privilege escalation
@@ -45,7 +53,7 @@ A pre-flight checklist: pilots don't skip it because they're experienced — the
 □ Refresh token revocation on logout and password change
 ```
 
-**API Keys**
+**API Key**
 
 ```
 □ Keys hashed (SHA-256) before storage
@@ -82,9 +90,9 @@ A pre-flight checklist: pilots don't skip it because they're experienced — the
 □ Privilege escalation requires re-authentication
 ```
 
-## Rate Limiting for Auth Endpoints
+## Auth Endpoint-এর জন্য Rate Limiting
 
-Auth endpoints are attack targets. Apply stricter limits than your general API:
+Auth endpoint হলো attack-এর target। আপনার general API-র চেয়ে কড়া limit প্রয়োগ করুন:
 
 ```typescript
 import rateLimit from 'express-rate-limit';
@@ -120,7 +128,7 @@ const resetLimiter = rateLimit({
 });
 ```
 
-Lock accounts temporarily after repeated failures — but do it carefully. A full lockout enables denial-of-service against legitimate users. Prefer progressive delays:
+বারবার fail হওয়ার পরে account সাময়িকভাবে lock করুন — কিন্তু সাবধানে করুন। একটা full lockout বৈধ user-দের বিরুদ্ধে denial-of-service সম্ভব করে। progressive delay prefer করুন:
 
 ```typescript
 async function recordFailedLogin(userId: string): Promise<number> {
@@ -138,9 +146,9 @@ function getBackoffMs(failures: number): number {
 }
 ```
 
-## What to Log
+## কী Log করবেন
 
-Every auth event should be logged with enough context to investigate incidents:
+প্রতিটা auth event incident তদন্ত করার মতো যথেষ্ট context সহ log করা উচিত:
 
 ```typescript
 interface AuthEvent {
@@ -171,18 +179,18 @@ async function logAuthEvent(event: AuthEvent): Promise<void> {
 }
 ```
 
-**What to alert on:**
+**কীসের উপর alert দেবেন:**
 
-- Multiple failed logins for a single account (credential stuffing)
-- Successful login from new country/IP not seen in past 30 days
-- Token used after revocation
-- API key used 10x normal rate in a short window
-- Password change or email change (notify user immediately)
-- Admin account login at unusual hours
+- একটা single account-এর জন্য একাধিক failed login (credential stuffing)
+- গত 30 দিনে না-দেখা নতুন country/IP থেকে successful login
+- Revocation-এর পরে token ব্যবহার
+- API key একটা সংক্ষিপ্ত window-তে স্বাভাবিকের 10x rate-এ ব্যবহার
+- Password change বা email change (user-কে সাথে সাথে notify করুন)
+- অস্বাভাবিক সময়ে admin account login
 
 ## Password Reset Flow
 
-Common mistakes here lead to account takeover:
+এখানকার সাধারণ ভুলগুলো account takeover-এর দিকে নিয়ে যায়:
 
 ```typescript
 // Step 1: Request reset
@@ -242,17 +250,17 @@ app.post('/auth/reset-password/confirm', async (req, res) => {
 });
 ```
 
-**Critical rules:**
+**গুরুত্বপূর্ণ নিয়ম:**
 
-- Token is single-use (mark `usedAt` on redemption)
-- Token expires quickly (15 minutes)
-- Reset invalidates all existing sessions
-- User gets notified about the change (lets them detect account takeover)
-- Response timing doesn't reveal if email exists
+- Token single-use (redemption-এ `usedAt` mark করুন)
+- Token দ্রুত expire হয় (15 minute)
+- Reset সমস্ত বিদ্যমান session invalidate করে
+- User পরিবর্তন সম্পর্কে notify হয় (তাদের account takeover detect করতে দেয়)
+- Response timing email আছে কিনা তা প্রকাশ করে না
 
 ## Incident Response
 
-When you detect a compromise:
+যখন আপনি একটা compromise detect করেন:
 
 ```typescript
 async function lockAccount(userId: string, reason: string): Promise<void> {
@@ -278,8 +286,8 @@ async function lockAccount(userId: string, reason: string): Promise<void> {
 
 Playbook:
 
-1. Detect anomaly → lock account
-2. Notify user via verified channel (email, SMS)
-3. Audit logs for scope of compromise
-4. Require password reset + MFA re-enrollment on unlock
-5. Post-mortem: how did the attacker get in?
+1. Anomaly detect → account lock
+2. verified channel-এ (email, SMS) user-কে notify করুন
+3. compromise-এর scope-এর জন্য log audit করুন
+4. unlock-এ password reset + MFA re-enrollment বাধ্যতামূলক করুন
+5. Post-mortem: attacker কীভাবে ঢুকল?

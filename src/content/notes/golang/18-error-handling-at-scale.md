@@ -1,9 +1,9 @@
 ---
-title: 'Error Handling at Scale'
-subtitle: "Beyond 'if err != nil' — error wrapping strategies, domain errors, error budgets, and patterns from large Go codebases."
+title: 'Scale-এ Error Handling'
+subtitle: "'if err != nil'-এর বাইরে — error wrapping strategy, domain error, error budget, আর বড় Go codebase থেকে শেখা pattern।"
 chapter: 18
 level: 'advanced'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['error handling', 'error wrapping', 'domain errors', 'error types', 'observability']
 ---
 
@@ -11,25 +11,33 @@ topics: ['error handling', 'error wrapping', 'domain errors', 'error types', 'ob
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Problem with Naive Error Handling
+## গল্পে বুঝি
 
-In small projects, `if err != nil { return err }` works fine. In large codebases with dozens of services, you need:
+ইবনে সিনা একটা টেলিকম কোম্পানির অভিযোগ সেলে বসে। এক গ্রাহক এসে লিখিত অভিযোগ জমা দিলেন — "গত তিন দিন ধরে আমার লাইনে নেট নেই।" ইবনে সিনা নিজে এটা ঠিক করতে পারে না, তাই কাগজটা পাঠায় টেকনিক্যাল ডেস্কে আল-খোয়ারিজমির কাছে। কিন্তু কাগজটা পাঠানোর আগে ইবনে সিনা একটা ছোট নোট স্ট্যাপল করে দেয় — "গ্রাহক থেকে এসেছে আমার কাছে, বিলিং ঠিক আছে দেখলাম, কিন্তু লাইন টেস্ট করার যন্ত্র আমার কাছে নেই বলে সমাধান করতে পারিনি।" মূল অভিযোগের কাগজটা কিন্তু সে ফেলে দেয় না, নোটটা তার উপরেই আটকানো থাকে।
 
-- **Context**: Where did this error originate?
-- **Classification**: Is this a user error, a bug, or a transient failure?
-- **Actionability**: Should we retry, alert, or return a 400?
+আল-খোয়ারিজমি কাগজটা পেয়ে লাইন টেস্ট করে, দেখে এলাকার একটা তার কাটা। এটা তার হাতের বাইরে, তাই সে পুরো স্ট্যাক পাঠায় ফাতিমা আল-ফিহরির ফিল্ড টিমে — এবং নিজেও উপরে আরেকটা নোট স্ট্যাপল করে — "আল-খোয়ারিজমির কাছে এসেছে, এলাকা-৪ এ তার কাটা পেলাম, কিন্তু মেরামত করার লোক এখন আমার নেই।" ফাতিমা আল-ফিহরির ডেস্কে এখন যে বান্ডিলটা পৌঁছায়, তার সবচেয়ে উপরে আল-খোয়ারিজমির নোট, তার নিচে ইবনে সিনার নোট, আর একদম তলায় গ্রাহকের আসল অভিযোগ। এক পলক দেখেই ফাতিমা আল-ফিহরি গোটা যাত্রাপথ বুঝে ফেলে — কোথায় শুরু, কোন ডেস্কে কেন আটকেছে।
+
+এই গল্পটাই আসলে **error wrapping with context**। গ্রাহকের মূল অভিযোগ হলো root error, প্রতিটা ডেস্কে স্ট্যাপল করা নোট হলো `fmt.Errorf("...: %w", err)` দিয়ে context যোগ করা — "কার কাছ থেকে এলো, কেন সমাধান হলো না" — আর আসল কাগজটা ফেলে না দেওয়াটাই হলো `%w` দিয়ে original error preserve করা। পুরো স্ট্যাকটা হলো error chain, যেটা ফাতিমা আল-ফিহরি (মানে boundary-র handler) `errors.Is`/`errors.As` দিয়ে ঘেঁটে দেখতে পারে কোন layer-এ কী হয়েছিল। বাস্তবে একটা `connection refused` যখন repository থেকে service হয়ে handler পর্যন্ত ওঠে, প্রতিটা layer এভাবেই তার নিজের context স্ট্যাপল করে দেয় — তাই log-এ শেষমেশ `"getting profile: querying user 42: connection refused"` পুরো trail-টাই পাওয়া যায়, মূল কারণটা হারিয়ে যায় না।
+
+## Naive Error Handling-এর সমস্যা
+
+ছোট project-এ `if err != nil { return err }` দিব্যি কাজ করে। কিন্তু ডজন ডজন service-ওয়ালা বড় codebase-এ আপনার দরকার:
+
+- **Context**: এই error-টা আসলে কোথা থেকে এলো?
+- **Classification**: এটা কি user error, একটা bug, নাকি একটা transient failure?
+- **Actionability**: আমরা কি retry করব, alert দেব, নাকি একটা 400 return করব?
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Naive error handling is like a fire alarm that just says "FIRE!" A good alarm system says "Fire detected in Building B, Floor 3, Server Room, Sensor #7 — smoke detected at 2:34 PM." Same event, but the second one tells you exactly where to go and what to expect.
+Naive error handling হলো এমন একটা fire alarm-এর মতো যেটা শুধু বলে "আগুন!"। একটা ভালো alarm system বলে "Building B, Floor 3, Server Room, Sensor #7-এ আগুন detect হয়েছে — দুপুর 2:34-এ ধোঁয়া পাওয়া গেছে।" একই ঘটনা, কিন্তু দ্বিতীয়টা আপনাকে ঠিক কোথায় যেতে হবে আর কী আশা করতে হবে সেটা বলে দেয়।
 
 </Callout>
 
 ## Error Wrapping Strategy
 
-Every function adds context as the error propagates up the call stack:
+error যখন call stack বেয়ে উপরে উঠতে থাকে, প্রতিটা function তখন context যোগ করে:
 
 ```go
 // Layer 1: Repository
@@ -73,13 +81,13 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 <Callout type="tip">
 
-**Wrap for developers, respond for users.** The full error chain (`"getting profile: querying user 42: connection refused"`) goes to logs. The user gets `"user not found"` or `"internal error"`. Never expose internal error details to clients.
+**Wrap করুন developer-দের জন্য, respond করুন user-দের জন্য।** পুরো error chain (`"getting profile: querying user 42: connection refused"`) log-এ যায়। User পায় `"user not found"` বা `"internal error"`। কখনো client-কে internal error-এর detail দেখাবেন না।
 
 </Callout>
 
-## Domain Error Types
+## Domain Error Type
 
-Go beyond string errors — encode error semantics in types:
+string error-এর বাইরে যান — error-এর semantics টাইপে encode করুন:
 
 ```go
 type ErrorCode string
@@ -144,9 +152,9 @@ func NewInternalError(message string, cause error) *AppError {
 }
 ```
 
-## Error-to-HTTP Mapping
+## Error-থেকে-HTTP Mapping
 
-Automatically map domain errors to HTTP responses:
+domain error-গুলো automatically HTTP response-এ map করুন:
 
 ```go
 func handleError(w http.ResponseWriter, err error) {
@@ -195,9 +203,9 @@ func errorCodeToHTTP(code ErrorCode) int {
 }
 ```
 
-## Retry-Aware Errors
+## Retry-Aware Error
 
-Some errors are transient (network blip) and some are permanent (invalid input). Your retry logic needs to know the difference:
+কিছু error transient (network-এ ক্ষণিকের সমস্যা) আর কিছু permanent (invalid input)। আপনার retry logic-এর এই পার্থক্যটা জানা দরকার:
 
 ```go
 type RetryableError struct {
@@ -245,7 +253,7 @@ func fetchWithRetry(ctx context.Context, url string, maxRetries int) ([]byte, er
 }
 ```
 
-## Error Logging Best Practices
+## Error Logging-এর Best Practice
 
 ```go
 // BAD: logs at every layer — same error logged 3 times
@@ -288,15 +296,15 @@ func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 <Callout type="warning">
 
-**Log errors once, at the boundary.** Inner layers wrap errors with context. The outermost layer (handler, middleware, or main loop) logs the full chain. Multiple layers logging the same error creates noise and makes debugging harder.
+**error একবারই log করুন, boundary-তে।** ভেতরের layer-গুলো error-এ context wrap করে। সবচেয়ে বাইরের layer (handler, middleware, বা main loop) পুরো chain-টা log করে। একাধিক layer একই error log করলে noise তৈরি হয় আর debugging কঠিন হয়ে যায়।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Wrap with `%w` at every layer** — builds a traceable error chain
-2. **Use domain error types** — `AppError` with codes enables automatic HTTP mapping
-3. **Log once at the boundary** — inner layers wrap, outer layers log and respond
-4. **Separate user errors from developer errors** — users see "not found", logs show the full chain
-5. **Distinguish retryable vs permanent errors** — retry logic needs to know the difference
-6. **`errors.Is` for sentinel values**, **`errors.As` for typed errors** — both traverse the wrapped chain
+1. **প্রতিটা layer-এ `%w` দিয়ে wrap করুন** — এটা একটা traceable error chain তৈরি করে
+2. **domain error type ব্যবহার করুন** — code সহ `AppError` automatic HTTP mapping সম্ভব করে
+3. **একবারই log করুন boundary-তে** — ভেতরের layer wrap করে, বাইরের layer log করে ও respond করে
+4. **user error আর developer error আলাদা রাখুন** — user দেখে "not found", log-এ থাকে পুরো chain
+5. **retryable বনাম permanent error আলাদা করুন** — retry logic-এর পার্থক্যটা জানা দরকার
+6. **sentinel value-এর জন্য `errors.Is`**, **typed error-এর জন্য `errors.As`** — দুটোই wrapped chain traverse করে

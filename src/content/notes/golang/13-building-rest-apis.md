@@ -1,9 +1,9 @@
 ---
-title: 'Building REST APIs'
-subtitle: 'A complete, production-grade REST API from scratch — routing, validation, error responses, and the project structure used at real companies.'
+title: 'REST API বানানো'
+subtitle: 'শূন্য থেকে একটা সম্পূর্ণ, production-grade REST API — routing, validation, error response, আর বাস্তব কোম্পানিতে ব্যবহৃত project structure।'
 chapter: 13
 level: 'intermediate'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['REST API', 'HTTP', 'routing', 'validation', 'project structure', 'CRUD']
 ---
 
@@ -11,9 +11,17 @@ topics: ['REST API', 'HTTP', 'routing', 'validation', 'project structure', 'CRUD
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমি নতুন একটা সরকারি সেবাকেন্দ্র চালু করছে। সামনে একটা ফ্রন্ট ডেস্ক, আর পেছনে কয়েকটা আলাদা স্পেশালিস্ট জানালা — একটা জন্মনিবন্ধনের, একটা ট্রেড লাইসেন্সের, একটা নাগরিক সনদের। ভিজিটর এসে ঢুকলেই প্রথমে রিসেপশনিস্ট ফাতিমা আল-ফিহরির কাছে যায়। ফাতিমা আল-ফিহরি প্রত্যেকের হাতের স্লিপটা দেখে — কোন সেবা লাগবে আর সেটা নতুন করা, দেখা, নাকি বাতিল করা — আর সেই অনুযায়ী তাকে ঠিক জানালাটার দিকে পাঠিয়ে দেয়। ফাতিমা আল-ফিহরি নিজে কোনো কাগজ বানায় না, সে শুধু বিলি-বণ্টন করে।
+
+প্রতিটা জানালার পেছনে আলাদা লোক বসা, একেকজন একেক কাজে দক্ষ। জন্মনিবন্ধনের জানালার লোকটা স্লিপের তথ্য পড়ে, নাম-তারিখ ঠিক আছে কিনা যাচাই করে, কাজটা সেরে তারপর একটা বাঁধা-ধরা ছকের ফর্মে উত্তর লিখে ভিজিটরের হাতে ধরিয়ে দেয়। প্রতিটা জানালা একই ছকের ফর্ম ব্যবহার করে, তাই ভিজিটর যে জানালাতেই যাক, উত্তরটা একই চেনা ফরম্যাটে পায়। ভুল স্লিপ এলে জানালার লোক ওই ফর্মেই "দুঃখিত, তথ্য ঠিক নেই" লিখে ফেরত দেয়।
+
+এই পুরো ডেস্কটাই আসলে একটা **REST API**। কেন্দ্রের দরজা খোলা রাখা মানে **HTTP server** চালু করা; রিসেপশনিস্ট ফাতিমা আল-ফিহরি হলো **router**, যে প্রতিটা **request**-এর URL path আর method (GET/POST/DELETE) দেখে ঠিক জায়গায় পাঠায়; প্রতিটা স্পেশালিস্ট জানালা হলো এক-একটা **route**-এর **handler**, যে ইনপুট পড়ে, যাচাই করে, কাজ সারে; আর সেই বাঁধা-ধরা ছকের ফর্মটাই হলো সবার জন্য একই আকৃতির **JSON response**। বাস্তবে Go-তে ঠিক এভাবেই `mux`-এ route বসিয়ে, প্রতিটা path-কে একটা handler-এ ম্যাপ করে, শেষে JSON ফেরত দিয়ে একটা API দাঁড় করানো হয় — ঠিক নিচের bookstore উদাহরণটার মতো।
+
 ## Production API Structure
 
-Here's how real Go teams structure API projects. Not a toy — the actual layout used at companies like Uber, Stripe, and Cloudflare:
+বাস্তব Go দলগুলো কীভাবে API project সাজায় তা এখানে দেওয়া হলো। খেলনা নয় — Uber, Stripe, আর Cloudflare-এর মতো কোম্পানিতে ব্যবহৃত আসল layout:
 
 ```
 bookstore/
@@ -37,15 +45,15 @@ bookstore/
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-This is the restaurant model. **Handlers** = waiters (take the request, deliver the response). **Service** = kitchen (business logic, where the actual work happens). **Repository** = pantry (data storage and retrieval). The waiter never cooks, the kitchen never talks to customers, and the pantry just stores ingredients.
+এটাই রেস্তোরাঁ মডেল। **Handler** = ওয়েটার (request নেয়, response দেয়)। **Service** = রান্নাঘর (business logic, যেখানে আসল কাজ হয়)। **Repository** = ভাঁড়ার ঘর (data সংরক্ষণ আর উদ্ধার)। ওয়েটার কখনো রাঁধে না, রান্নাঘর কখনো কাস্টমারের সাথে কথা বলে না, আর ভাঁড়ার ঘর শুধু উপকরণ জমিয়ে রাখে।
 
 </Callout>
 
 ## Domain Model
 
-Start with your core types:
+আপনার core type দিয়ে শুরু করুন:
 
 ```go
 // internal/model/book.go
@@ -88,7 +96,7 @@ type ListBooksParams struct {
 
 ## Input Validation
 
-Never trust user input:
+কখনো user input-কে বিশ্বাস করবেন না:
 
 ```go
 // internal/model/book.go
@@ -122,9 +130,9 @@ func isValidISBN(isbn string) bool {
 }
 ```
 
-## Response Helpers
+## Response Helper
 
-Consistent API responses across all endpoints:
+সব endpoint জুড়ে সামঞ্জস্যপূর্ণ API response:
 
 ```go
 // internal/handler/response.go
@@ -175,7 +183,7 @@ func respondValidationError(w http.ResponseWriter, errors map[string]string) {
 }
 ```
 
-## HTTP Handlers
+## HTTP Handler
 
 ```go
 // internal/handler/book.go
@@ -430,11 +438,11 @@ func (s *BookService) Delete(ctx context.Context, id int) error {
 
 <Callout type="tip">
 
-**The service layer depends on an interface (`BookRepository`), not a concrete implementation.** This means you can swap PostgreSQL for MySQL, or use a mock in tests, without changing any business logic. This is Go's version of dependency injection — no frameworks needed.
+**service layer একটা interface-এর উপর নির্ভর করে (`BookRepository`), কোনো concrete implementation-এর উপর নয়।** এর মানে আপনি কোনো business logic না বদলে PostgreSQL-কে MySQL দিয়ে বদলাতে পারেন, বা test-এ mock ব্যবহার করতে পারেন। এটাই Go-এর dependency injection সংস্করণ — কোনো framework লাগে না।
 
 </Callout>
 
-## Wiring It All Together
+## সব একসাথে জোড়া দেওয়া
 
 ```go
 // cmd/server/main.go
@@ -486,11 +494,11 @@ func main() {
 }
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Separate handlers, services, and repositories** — each layer has one job
-2. **Validate input at the handler layer** — never trust user data
-3. **Return consistent API responses** — same shape for success, errors, and validation failures
-4. **Services depend on interfaces** — enables testing and swapping implementations
-5. **Use Go 1.22+ routing** — `mux.HandleFunc("GET /api/books/{id}", handler)` needs no framework
-6. **Wire dependencies in `main()`** — explicit, no magic, easy to understand
+1. **handler, service, আর repository আলাদা রাখুন** — প্রতিটা layer-এর একটা করে কাজ
+2. **handler layer-এ input validate করুন** — কখনো user data-কে বিশ্বাস করবেন না
+3. **সামঞ্জস্যপূর্ণ API response দিন** — success, error, আর validation failure-এর জন্য একই আকৃতি
+4. **service interface-এর উপর নির্ভর করে** — testing আর implementation বদলানো সহজ হয়
+5. **Go 1.22+ routing ব্যবহার করুন** — `mux.HandleFunc("GET /api/books/{id}", handler)`-এ কোনো framework লাগে না
+6. **`main()`-এ dependency জোড়া দিন** — explicit, কোনো জাদু নেই, বোঝা সহজ

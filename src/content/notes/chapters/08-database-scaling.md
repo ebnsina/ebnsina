@@ -1,9 +1,9 @@
 ---
-title: 'Database Sharding & Replication'
-subtitle: 'Implement read replicas, consistent hashing for sharding, and shard-aware query routing.'
+title: 'ডেটাবেস শার্ডিং ও রেপ্লিকেশন'
+subtitle: 'read replica, শার্ডিংয়ের জন্য consistent hashing আর shard-aware query routing implement করুন।'
 chapter: 8
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['sharding', 'replication', 'consistent hashing', 'read replicas']
 ---
 
@@ -13,18 +13,26 @@ topics: ['sharding', 'replication', 'consistent hashing', 'read replicas']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## When One Database Isn't Enough
+## গল্পে বুঝি
 
-A single PostgreSQL instance handles thousands of queries per second. But eventually you hit limits: too many reads, too many writes, or too much data for one machine. Two strategies solve this:
+ইবনে সিনা কাজ করে দেশের জাতীয় ভূমি ও জন্মনিবন্ধন রেজিস্ট্রিতে। শুরুতে গোটা দেশের সব রেকর্ড এক প্রধান অফিসেই রাখা হতো, কিন্তু ফাইল বাড়তে বাড়তে একটা অফিসের আলমারিতে আর জায়গা হচ্ছিল না, খুঁজতেও ঘণ্টার পর ঘণ্টা লাগত। তাই সিদ্ধান্ত হলো — রেকর্ডগুলো এলাকা ধরে ভাগ করে দেওয়া হবে। ঢাকা জেলার ফাইল থাকবে ঢাকার জেলা অফিসে, চট্টগ্রামের ফাইল চট্টগ্রামের অফিসে, রংপুরেরটা রংপুরে। এখন প্রতিটা জেলা অফিস শুধু তার নিজের এলাকার ফাইলটুকুই সামলায়, পুরো দেশের বোঝা একা কাউকে টানতে হয় না।
 
-- **Replication** — copy data to read replicas for read scaling
-- **Sharding** — split data across multiple databases for write scaling
+কিন্তু আরেকটা সমস্যা রয়ে গেল। আল-খোয়ারিজমি বা ফাতিমা আল-ফিহরির মতো সাধারণ মানুষ প্রতিদিন এসে নিজের জমির দলিল বা জন্মসনদ দেখতে চায় — একসাথে এত মানুষ যদি একটাই মূল ফাইল ঘাঁটতে চায়, লাইন লেগে যায়। তাই প্রতিটা জেলা অফিস তার ফাইলগুলোর ফটোকপি বানিয়ে আশপাশের কয়েকটা শাখার পাঠকক্ষে রেখে দেয়। যাদের শুধু দেখতে হবে, তারা ভিড় না করে যেকোনো শাখার পাঠকক্ষে গিয়ে কপি পড়ে নেয়। কিন্তু কোনো তথ্য বদলাতে হলে — নতুন মালিকের নাম তোলা, জন্মতারিখ সংশোধন — সেটা শুধু মূল অফিসেই করা যায়, তারপর সেই বদল আবার সব পাঠকক্ষের কপিতে ছড়িয়ে দেওয়া হয়।
+
+এই পুরো ব্যবস্থাটাই আসলে ডেটাবেস স্কেল করার দুই কৌশল। এলাকা ধরে ফাইল আলাদা অফিসে ভাগ করাটাই **sharding** — এখানে এলাকা হলো **shard key**, আর প্রতিটা জেলা অফিস একেকটা shard যেটা পুরো ডেটার একটা টুকরো ধরে রাখে। আর পাঠকক্ষের ফটোকপিগুলো হলো **read replica**, যেখান থেকে অনেকে একসাথে পড়তে পারে, আর যেখানে মূল বদল হয় সেই মূল অফিসটাই **primary** — বদল primary-তে হয়ে replica-তে ছড়ায়। বাস্তবে Instagram user ID দিয়ে এভাবে shard করে আর read replica দিয়ে পড়ার চাপ সামলায়, যাতে বিলিয়ন বিলিয়ন রেকর্ডেও সিস্টেম দ্রুত থাকে।
+
+## যখন একটা ডেটাবেস যথেষ্ট নয়
+
+একটা মাত্র PostgreSQL ইনস্ট্যান্স প্রতি সেকেন্ডে হাজার হাজার কোয়েরি হ্যান্ডল করে। কিন্তু একসময় আপনি সীমায় পৌঁছান: খুব বেশি read, খুব বেশি write, বা এক মেশিনের জন্য খুব বেশি ডেটা। দুটো স্ট্র্যাটেজি এটা সমাধান করে:
+
+- **Replication** — read scaling-এর জন্য ডেটা read replica-তে কপি করা
+- **Sharding** — write scaling-এর জন্য ডেটা একাধিক ডেটাবেসে ভাগ করা
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a post office sorting mail by zip code — 90210 goes to Beverly Hills, 10001 goes to Manhattan. Each office handles only its zone's mail. That's sharding.
+জিপ কোড দিয়ে চিঠি সাজানো একটা পোস্ট অফিসের মতো — 90210 যায় Beverly Hills-এ, 10001 যায় Manhattan-এ। প্রতিটা অফিস শুধু তার জোনের চিঠি সামলায়। সেটাই sharding।
 
 </Callout>
 
@@ -37,9 +45,9 @@ code={`graph TD
   P -- replicates to --> R2["Replica 2"]`}
 />
 
-## Consistent Hashing for Sharding
+## শার্ডিংয়ের জন্য Consistent Hashing
 
-When you shard data across N databases, you need to consistently route `user_123` to the same shard. Simple modulo (`hash(key) % N`) breaks when you add or remove shards — it reassigns almost every key. Consistent hashing minimizes this: adding a shard only moves ~1/N of the keys.
+আপনি যখন N-টা ডেটাবেসে ডেটা শার্ড করেন, তখন আপনাকে `user_123`-কে ধারাবাহিকভাবে একই শার্ডে route করতে হবে। সাধারণ modulo (`hash(key) % N`) ভেঙে পড়ে যখন আপনি শার্ড যোগ বা সরান — এটা প্রায় প্রতিটা key পুনরায় assign করে ফেলে। Consistent hashing এটা কমিয়ে দেয়: একটা শার্ড যোগ করলে শুধু ~1/N key সরে।
 
 <CodeTabs tsFile="sharding.ts" goFile="sharding.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -501,29 +509,29 @@ func main() {
 
 <Callout type="warning" title="Cross-Shard Queries Are Expensive">
 
-Once data is sharded, JOINs across shards become scatter-gather operations. They're slower and more complex. Choose your shard key carefully — it should be the dimension you query by most often (usually `user_id` or `tenant_id`).
+একবার ডেটা শার্ড হয়ে গেলে, শার্ড জুড়ে JOIN করা scatter-gather অপারেশনে পরিণত হয়। এগুলো ধীর আর বেশি জটিল। আপনার শার্ড key যত্ন করে বেছে নিন — এটা হওয়া উচিত সেই dimension যেটা দিয়ে আপনি সবচেয়ে বেশি কোয়েরি করেন (সাধারণত `user_id` বা `tenant_id`)।
 
 </Callout>
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Start with **read replicas** before sharding — they're simpler and solve most read-scaling problems
-- Use **consistent hashing** with virtual nodes for even distribution and minimal disruption when adding shards
-- The **shard key** determines everything — pick the key you query by most frequently (typically user or tenant ID)
-- Cross-shard queries (scatter-gather) are expensive — design your data model to minimize them
-- **Replication lag** means reads from replicas may return slightly stale data — this is fine for most reads but critical writes should read from primary
+- শার্ডিংয়ের আগে **read replica** দিয়ে শুরু করুন — এগুলো সহজ আর বেশিরভাগ read-scaling সমস্যা সমাধান করে
+- সমান distribution আর শার্ড যোগ করার সময় ন্যূনতম disruption-এর জন্য virtual node সহ **consistent hashing** ব্যবহার করুন
+- **শার্ড key** সবকিছু নির্ধারণ করে — যে key দিয়ে সবচেয়ে বেশি কোয়েরি করেন সেটা বেছে নিন (সাধারণত user বা tenant ID)
+- Cross-shard কোয়েরি (scatter-gather) খরুচে — এগুলো কমাতে আপনার ডেটা মডেল ডিজাইন করুন
+- **Replication lag** মানে replica থেকে read কিছুটা বাসি ডেটা ফেরত দিতে পারে — বেশিরভাগ read-এর জন্য এটা ঠিক আছে, কিন্তু গুরুত্বপূর্ণ write-এর পর primary থেকে read করা উচিত
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Instagram** shards PostgreSQL by user ID — each user's data lives on one shard
-- **Vitess** (YouTube's sharding framework) adds transparent sharding to MySQL, now used by Slack, Square, and GitHub
-- **Discord** moved from one PostgreSQL to Cassandra when they hit billions of messages, sharded by channel ID
-- You probably don't need sharding until you have hundreds of millions of rows. Start with read replicas and better indexing.
+- **Instagram** user ID দিয়ে PostgreSQL শার্ড করে — প্রতিটা ইউজারের ডেটা একটা শার্ডে থাকে
+- **Vitess** (YouTube-এর শার্ডিং framework) MySQL-এ স্বচ্ছ শার্ডিং যোগ করে, এখন Slack, Square আর GitHub ব্যবহার করে
+- **Discord** বিলিয়ন বিলিয়ন মেসেজে পৌঁছালে এক PostgreSQL থেকে Cassandra-তে সরে যায়, channel ID দিয়ে শার্ড করা
+- কয়েকশ মিলিয়ন row না হওয়া পর্যন্ত আপনার সম্ভবত শার্ডিং লাগবে না। read replica আর ভালো indexing দিয়ে শুরু করুন।
 
 </div>

@@ -1,9 +1,9 @@
 ---
-title: 'Auth & Security — Roadmap'
-subtitle: 'Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, and production hardening.'
+title: 'Auth ও Security — রোডম্যাপ'
+subtitle: 'Sessions, password hashing, OAuth flows, JWT internals, API keys, common vulnerabilities, এবং production hardening।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,24 +13,24 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A security audit: you don't just check whether the front door is locked — you check every window, the back door, the loading dock, and whether the guard is actually watching the cameras. Auth security is layered. One strong mechanism doesn't make up for a weak one elsewhere.
+একটা security audit: আপনি শুধু সামনের দরজা লক আছে কিনা তা দেখেন না — প্রতিটা জানালা, পেছনের দরজা, লোডিং ডক, আর গার্ড আসলে ক্যামেরা দেখছে কিনা সবই যাচাই করেন। Auth security হলো layered। একটা শক্ত mechanism অন্য জায়গার একটা দুর্বল mechanism-এর ঘাটতি পূরণ করে না।
 
 </Callout>
 
-## What you will learn
+## আপনি যা শিখবেন
 
-Authentication and authorization are different problems that need different solutions. This track covers both — from the fundamentals of who can prove their identity, to the production details of rate limiting login endpoints and responding to incidents.
+Authentication আর authorization আলাদা সমস্যা যাদের আলাদা সমাধান দরকার। এই track দুটোই কভার করে — কে নিজের identity প্রমাণ করতে পারে তার fundamentals থেকে শুরু করে login endpoint-এ rate limiting আর incident-এ response করার production ডিটেইল পর্যন্ত।
 
-You'll implement real code: password hashing with argon2, JWT verification with JWKS rotation, OAuth 2.0 with PKCE, API key generation with scoped permissions, CSRF protection, and the full password reset flow with single-use tokens.
+আপনি আসল code লিখবেন: argon2 দিয়ে password hashing, JWKS rotation সহ JWT verification, PKCE সহ OAuth 2.0, scoped permission সহ API key generation, CSRF protection, এবং single-use token সহ পুরো password reset flow।
 
-## Chapters in this track
+## এই track-এর chapter-গুলো
 
-1. **Authentication vs Authorization** — two different questions, two different systems, common mistakes mixing them
-2. **Password Hashing** — why bcrypt and argon2 exist, how to tune work factors, upgrading legacy hashes
-3. **JWT Deep Dive** — structure, signing algorithms (HS256 vs RS256 vs ES256), JWKS, the common attacks
-4. **OAuth 2.0 & OpenID Connect** — delegation vs federation, authorization code flow, PKCE for public clients
+1. **Authentication vs Authorization** — দুটো আলাদা প্রশ্ন, দুটো আলাদা system, এদের মিশিয়ে ফেলার সাধারণ ভুল
+2. **Password Hashing** — bcrypt আর argon2 কেন আছে, work factor কীভাবে tune করবেন, legacy hash upgrade করা
+3. **JWT Deep Dive** — structure, signing algorithm (HS256 vs RS256 vs ES256), JWKS, সাধারণ attack-গুলো
+4. **OAuth 2.0 ও OpenID Connect** — delegation vs federation, authorization code flow, public client-এর জন্য PKCE
 5. **API Key Management** — generation, storage, scoping, rotation, revocation, abuse detection
-6. **Common Vulnerabilities** — CSRF, session fixation, timing attacks, IDOR, mass assignment, security headers
-7. **Auth in Production** — rate limiting auth endpoints, what to log, password reset flow, incident response
+6. **Common Vulnerabilities** — CSRF, session fixation, timing attack, IDOR, mass assignment, security header
+7. **Auth in Production** — auth endpoint-এ rate limiting, কী log করবেন, password reset flow, incident response

@@ -1,9 +1,9 @@
 ---
 title: 'CTF Strategy'
-subtitle: 'How to approach Capture the Flag competitions, category breakdowns, platforms, and a methodology for each challenge type.'
+subtitle: 'Capture the Flag প্রতিযোগিতায় কীভাবে এগোবেন, ক্যাটাগরি ভাঙা, প্ল্যাটফর্ম এবং প্রতিটি চ্যালেঞ্জ টাইপের জন্য একটি methodology।'
 chapter: 14
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'CTF',
@@ -23,11 +23,19 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-CTF is sparring — structured, safe, with known bounds. You build reflexes, tooling muscle memory, and problem-solving patterns in a controlled environment so that real engagements feel familiar.
+CTF হলো স্প্যারিং — কাঠামোবদ্ধ, নিরাপদ, জানা সীমানার মধ্যে। আপনি একটি নিয়ন্ত্রিত পরিবেশে reflex, tooling-এর muscle memory এবং সমস্যা-সমাধানের প্যাটার্ন গড়ে তোলেন, যাতে আসল engagement পরিচিত মনে হয়।
 
 </Callout>
+
+## গল্পে বুঝি
+
+মেলার মাঠে একটা গোছানো ট্রেজার-হান্ট প্রতিযোগিতা বসেছে। একটা বড় বোর্ডে সারি সারি ধাঁধা টাঙানো — প্রতিটা ধাঁধার পেছনে লুকানো একটা টোকেন, আর যে টিম যত বেশি টোকেন জোগাড় করবে সে-ই জিতবে। ফাতিমা আল-ফিহরির টিম শুরুতেই হুড়মুড় করে ঝাঁপিয়ে পড়ল না। ফাতিমা আগে পুরো বোর্ডটা একবার চোখ বুলিয়ে নিল — কোন ধাঁধা সহজ অথচ পয়েন্ট বেশি, কোনটা দেখতেই মনে হচ্ছে সময় খেয়ে ফেলবে।
+
+তারপর সে কাজ ভাগ করে দিল। ইবনে সিনা সংখ্যা আর সংকেত ভালো বোঝে, তাই গণিতের ধাঁধাগুলো তার; আল-খোয়ারিজমি ছবি-ধাঁধায় পাকা, ওগুলো তার। সহজ অথচ বেশি-পয়েন্টের টোকেনগুলো তারা আগে তুলে নিল, আর মাঝের যে একটা ধাঁধা কেউ-ই কূল পাচ্ছিল না, ফাতিমা সেটা ছেড়ে দিয়ে বলল "এতে আটকে থেকে সময় নষ্ট করা যাবে না, শেষে সময় থাকলে দেখব।" সব কিছুই মেলার নিয়মের ভেতরে — এটা বুদ্ধি শানানোর খেলা, কারও গুদামে সিঁধ কাটা নয়।
+
+এই গল্পটাই আসলে **CTF (Capture The Flag)**। ধাঁধার বোর্ড হলো একটা CTF, প্রতিটা টোকেন-লুকানো ধাঁধা হলো একেকটা **challenge**, আর লুকানো টোকেন হলো **flag**। পুরো বোর্ড আগে স্ক্যান করা, সহজ-বেশি-পয়েন্ট আগে তোলা, সময় খেয়ে ফেলা ধাঁধা বাদ দেওয়া, আর যে যেটায় সেরা তাকে সেটা দেওয়া — এই পুরোটাই **CTF strategy**: triage, time management আর team specialisation। আর মেলার নিয়মের ভেতরে থাকাটাই মূল কথা — CTF হলো নিরাপদ, বৈধ practice, বাস্তবে কারও সিস্টেমে আক্রমণ নয়। বাস্তবে picoCTF বা HackTheBox-এর মতো প্ল্যাটফর্মে ঠিক এভাবেই লোকে দক্ষতা গড়ে, যাতে আসল অনুমতি-নেওয়া pentest engagement পরিচিত মনে হয়।
 
 ## CTF Categories
 
@@ -41,7 +49,7 @@ OSINT        → find information about a person/organization from public source
 Misc         → encoding challenges, trivia, anything that doesn't fit
 ```
 
-## General CTF Methodology
+## সাধারণ CTF Methodology
 
 ```
 1. Read the description carefully — it usually contains a hint
@@ -259,7 +267,7 @@ sherlock username   # searches 400+ platforms
 # Wayback Machine for deleted posts
 ```
 
-## Top CTF Platforms
+## শীর্ষ CTF Platform
 
 ```
 TryHackMe    (tryhackme.com)    → guided, beginner-friendly rooms
@@ -271,7 +279,7 @@ OverTheWire  (overthewire.org)  → wargames for Linux, networking, binary
 pwn.college  (pwn.college)      → binary exploitation, academic quality
 ```
 
-## Starting a CTF: First 30 Minutes
+## একটি CTF শুরু করা: প্রথম 30 মিনিট
 
 ```bash
 # 1. Download all challenge files
@@ -309,7 +317,7 @@ EOF
 # VulnHub: /root/proof.txt or /home/user/local.txt
 ```
 
-## Building Your CTF Toolkit
+## আপনার CTF Toolkit গড়া
 
 ```bash
 # Create a VM snapshot with all tools installed

@@ -1,9 +1,9 @@
 ---
-title: 'Load Balancing'
-subtitle: 'Build a reverse proxy with round-robin distribution, health checks, and sticky sessions.'
+title: 'লোড ব্যালান্সিং'
+subtitle: 'round-robin distribution, health check আর sticky session সহ একটি reverse proxy বানান।'
 chapter: 5
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['load balancer', 'reverse proxy', 'health checks', 'round-robin']
 ---
 
@@ -13,15 +13,23 @@ topics: ['load balancer', 'reverse proxy', 'health checks', 'round-robin']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Load Balancing?
+## গল্পে বুঝি
 
-One server can handle a few thousand requests per second. When you need more, you add more servers. A load balancer sits in front and distributes traffic across them. If one server dies, the load balancer stops sending traffic to it — no downtime for users.
+শহরের বড় সুপারমার্কেটে ঈদের আগের ভিড়। সামনে দশটা চেকআউট কাউন্টার, প্রতিটায় একজন করে ক্যাশিয়ার। কাস্টমাররা যদি নিজেরাই যে কোনো একটা কাউন্টারে গিয়ে দাঁড়াত, কেউ একটা কাউন্টারে হুমড়ি খেয়ে পড়ত আর বাকিগুলো ফাঁকা থাকত। তাই দরজার কাছে দাঁড়িয়ে থাকেন ফ্লোর ম্যানেজার আল-খোয়ারিজমি — প্রতিটা কাস্টমার ঢুকলেই তিনি বলে দেন কোন কাউন্টারে যেতে হবে। কখনো তিনি স্রেফ পালা করে পাঠান — এক নম্বর, দুই নম্বর, তিন নম্বর, এভাবে ঘুরিয়ে ঘুরিয়ে; আবার ভিড় বাড়লে তিনি চোখ বুলিয়ে দেখেন কোন কাউন্টারের লাইন সবচেয়ে ছোট, আর নতুন কাস্টমারকে সেখানেই পাঠিয়ে দেন।
+
+দুপুরের দিকে সাত নম্বর কাউন্টারের ক্যাশিয়ার ইবনে সিনার শরীর খারাপ, সে ছুটি নিয়ে বাড়ি চলে গেল। আল-খোয়ারিজমি কিছুক্ষণ পরপর কাউন্টারগুলোর দিকে তাকিয়ে খেয়াল রাখেন কোনটা এখনো চালু আছে — সাত নম্বর ফাঁকা দেখে তিনি সেখানে আর কাউকে পাঠানো বন্ধ করে দেন, নাহলে কাস্টমার গিয়ে দাঁড়িয়ে থাকত অথচ বিল করার কেউ নেই। ইবনে সিনা আবার ফিরে এলে আল-খোয়ারিজমি আবার সেই কাউন্টারে কাস্টমার পাঠানো শুরু করেন।
+
+এই গল্পটাই আসলে **load balancing**। ফ্লোর ম্যানেজার আল-খোয়ারিজমি হলো **load balancer**, কাউন্টারগুলো হলো একেকটা **server**, আর আল-খোয়ারিজমির কাস্টমার পাঠানোর নিয়মটাই হলো **algorithm** — পালা করে পাঠানো মানে **round-robin**, সবচেয়ে ছোট লাইনে পাঠানো মানে **least-connections**। বন্ধ কাউন্টারে কাউকে না পাঠানোটাই **health check** — কাউন্টার চালু আছে কিনা বারবার দেখে নিয়ে বসে থাকা server সরিয়ে ফেলা। বাস্তবে Nginx বা HAProxy ঠিক এভাবেই সামনে বসে ট্রাফিক অনেকগুলো server-এ ভাগ করে দেয় আর মরে যাওয়া server-এ রিকোয়েস্ট পাঠানো বন্ধ রাখে।
+
+## লোড ব্যালান্সিং কেন?
+
+একটা সার্ভার প্রতি সেকেন্ডে কয়েক হাজার রিকোয়েস্ট হ্যান্ডল করতে পারে। যখন আরো বেশি দরকার হয়, আপনি আরো সার্ভার যোগ করেন। একটা load balancer সামনে বসে ট্রাফিক সেগুলোর মধ্যে ভাগ করে দেয়। যদি একটা সার্ভার মারা যায়, load balancer সেটাতে ট্রাফিক পাঠানো বন্ধ করে দেয় — ইউজারদের জন্য কোনো ডাউনটাইম নেই।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a bank with multiple teller windows — instead of everyone lining up at one window, a queue manager distributes customers evenly across all open windows.
+একাধিক টেলার উইন্ডো সহ একটা ব্যাংকের মতো — সবাই এক উইন্ডোতে লাইন দেওয়ার বদলে একজন queue manager কাস্টমারদের সব খোলা উইন্ডোতে সমানভাবে ভাগ করে দেয়।
 
 </Callout>
 
@@ -34,16 +42,16 @@ code={`graph LR
   LB --> S3["Server 3"]`}
 />
 
-## Algorithms
+## অ্যালগরিদম
 
-| Algorithm            | How It Works                            | Best For                         |
-| -------------------- | --------------------------------------- | -------------------------------- |
-| Round Robin          | Rotate through servers sequentially     | Equal-capacity servers           |
-| Weighted Round Robin | More traffic to stronger servers        | Mixed-capacity servers           |
-| Least Connections    | Send to server with fewest active conns | Varying request durations        |
-| IP Hash              | Same client IP always hits same server  | Session affinity without cookies |
+| অ্যালগরিদম           | কীভাবে কাজ করে                              | কীসের জন্য সেরা                |
+| -------------------- | ------------------------------------------- | ------------------------------ |
+| Round Robin          | ধারাবাহিকভাবে সার্ভারগুলোর মধ্যে ঘোরে       | সমান-ক্ষমতার সার্ভার           |
+| Weighted Round Robin | শক্তিশালী সার্ভারে বেশি ট্রাফিক             | মিশ্র-ক্ষমতার সার্ভার          |
+| Least Connections    | সবচেয়ে কম active conn থাকা সার্ভারে পাঠায় | পরিবর্তনশীল রিকোয়েস্ট সময়কাল |
+| IP Hash              | একই ক্লায়েন্ট IP সবসময় একই সার্ভারে যায়  | cookie ছাড়া session affinity  |
 
-## Building a Load Balancer
+## একটি লোড ব্যালান্সার বানানো
 
 <CodeTabs tsFile="loadbalancer.ts" goFile="loadbalancer.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -526,23 +534,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Load balancers distribute traffic and remove unhealthy servers automatically
-- Round-robin is the simplest and works well when servers have equal capacity
-- Least-connections is better when request durations vary significantly
-- IP-hash provides sticky sessions without cookies but causes uneven distribution
-- Always implement health checks — without them, the LB sends traffic to dead servers
+- Load balancer ট্রাফিক ভাগ করে দেয় আর unhealthy সার্ভার স্বয়ংক্রিয়ভাবে সরিয়ে দেয়
+- Round-robin সবচেয়ে সহজ আর সার্ভারগুলোর ক্ষমতা সমান হলে ভালো কাজ করে
+- রিকোয়েস্টের সময়কাল অনেক ভিন্ন হলে least-connections বেশি ভালো
+- IP-hash cookie ছাড়াই sticky session দেয় কিন্তু distribution অসম করে ফেলে
+- সবসময় health check বসান — এগুলো ছাড়া LB মৃত সার্ভারে ট্রাফিক পাঠায়
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Netflix** uses multiple layers of load balancing: DNS-level, then AWS ELB, then Zuul (custom proxy)
-- **Cloudflare** processes 50M+ HTTP requests per second across their load-balanced edge network
-- **AWS ALB** (Application Load Balancer) supports path-based routing, WebSockets, and gRPC
-- Start with your cloud provider's LB (ALB, Cloud Load Balancing). Build custom only if you need routing logic they don't support.
+- **Netflix** একাধিক লেয়ারে load balancing ব্যবহার করে: DNS-লেভেল, তারপর AWS ELB, তারপর Zuul (কাস্টম proxy)
+- **Cloudflare** তাদের load-balanced edge network জুড়ে প্রতি সেকেন্ডে 50M+ HTTP রিকোয়েস্ট প্রসেস করে
+- **AWS ALB** (Application Load Balancer) path-based routing, WebSockets আর gRPC সাপোর্ট করে
+- আপনার cloud provider-এর LB (ALB, Cloud Load Balancing) দিয়ে শুরু করুন। কাস্টম বানান শুধু তখনই, যদি এমন routing logic দরকার হয় যা তারা সাপোর্ট করে না।
 
 </div>

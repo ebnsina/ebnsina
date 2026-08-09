@@ -1,9 +1,9 @@
 ---
-title: 'Authentication and authorization'
-subtitle: 'Auth in GraphQL is the same as in REST — JWTs or sessions on HTTP, identity on context — except every field is its own little endpoint that needs an authorization check. Get the layering right or it will haunt you.'
+title: 'Authentication এবং authorization'
+subtitle: 'GraphQL-এ auth মূলত REST-এর মতোই — HTTP-তে JWT বা session, context-এ identity — শুধু পার্থক্য এই যে প্রতিটি field নিজেই একটা ছোট endpoint যার authorization check দরকার। layering-টা ঠিকমতো করো, নাহলে এটা তোমাকে ভোগাবে।'
 chapter: 8
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['graphql', 'authentication', 'authorization', 'jwt', 'directives']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graphql', 'authentication', 'authorization', 'jwt', 'directives']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-GraphQL has no built-in `auth` keyword. There is no `requiresLogin: true` in SDL. Every approach you have seen — JWTs, session cookies, OAuth — works the same way as in REST. What changes is that GraphQL has many "endpoints" (every queryable field) and you must decide which require auth and which expose data.
+GraphQL-এ কোনো built-in `auth` keyword নেই। SDL-এ `requiresLogin: true` বলে কিছু নেই। তুমি যত approach দেখেছ — JWT, session cookie, OAuth — সব REST-এর মতোই কাজ করে। যা বদলায় তা হলো GraphQL-এ অনেক "endpoint" থাকে (প্রতিটি queryable field) এবং তোমাকে ঠিক করতে হয় কোনগুলোর auth লাগবে আর কোনগুলো data উন্মুক্ত রাখবে।
 
-This chapter goes from the network layer up to field-level authorization. The two halves are **authentication** (who is the caller?) and **authorization** (what may they do?). Different problems, different code.
+এই chapter network layer থেকে শুরু করে field-level authorization পর্যন্ত যায়। দুটো অংশ হলো **authentication** (caller কে?) এবং **authorization** (সে কী করতে পারবে?)। আলাদা সমস্যা, আলাদা code।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-GraphQL auth is like a keycard that opens different doors depending on your access level — the same credential, different permissions per resource.
+GraphQL auth অনেকটা এমন একটা keycard-এর মতো যা তোমার access level অনুযায়ী ভিন্ন ভিন্ন দরজা খোলে — একই credential, resource-ভেদে ভিন্ন permission।
 
 </Callout>
 
-## The shape of the solution
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি বাগদাদের এক পুরনো লাইব্রেরির দরজায় দাঁড়িয়ে আছেন। ভেতরে ঢোকার আগেই কার্ড দেখাতে হয় — পাবলিক ক্যাটালগ যে কেউ দেখতে পারে, কিন্তু কোনো বই হাতে নিতে হলে মেম্বার কার্ড লাগবে। দরজার প্রহরী আল-খোয়ারিজমি এক নজরে কার্ডটা যাচাই করে নিলেন: কে এই মানুষটা, তার কার্ডে কী কী ক্লিয়ারেন্স লেখা আছে। এই যাচাই একবারই হয়, ঢোকার মুখে। তারপর থেকে ফাতিমা কে, সেটা সবাই জানে।
+
+ভেতরে একটাই বড় রিডিং রুম, কিন্তু সব তাক এক রকম নয়। সাধারণ তাকগুলো যেকোনো মেম্বারের জন্য খোলা — ফাতিমা যা খুশি নামিয়ে পড়তে পারেন। কিন্তু কোণের দুর্লভ পাণ্ডুলিপির তাকটা আলাদা। ফাতিমা ওখানে হাত বাড়াতেই লাইব্রেরিয়ান ইবনে সিনা আবার এসে কার্ডটা দেখলেন — শুধু মেম্বার হলেই হবে না, এই তাকের জন্য বিশেষ ক্লিয়ারেন্স চাই। একই রুম, একই মানুষ, কিন্তু প্রতিটা তাকে ইবনে সিনা আলাদা করে অনুমতি মিলিয়ে দেখেন।
+
+এই দরজায় কার্ড দেখানোটাই হলো **authentication** — request আসার মুহূর্তে token যাচাই করে `currentUser` বানিয়ে context-এ রেখে দেওয়া, একবারই। আর প্রতিটা তাকে ইবনে সিনার আলাদা ক্লিয়ারেন্স-চেকটাই হলো resolver-এ enforce করা **authorization** — দরজা পার হওয়া মানেই সব field খোলা নয়। দুর্লভ তাক বনাম খোলা তাক একই রুমে থাকাটাই GraphQL-এর **per-field authorization**: একই type-এর দুটো field ভিন্ন permission চাইতে পারে, যেমন `User.email` মালিক বা admin দেখবে কিন্তু বাকিরা `null`। বাস্তবে ঠিক এভাবেই কাজ করে — context authentication ধরে রাখে, আর প্রতিটা field-এর resolver নিজের authorization নিজে যাচাই করে, একটা global gate সব সামলায় না।
+
+## সমাধানের রূপরেখা
 
 ```
 HTTP request                  → graphql-yoga
@@ -35,19 +43,19 @@ Build per-request context     → { userId, roles, db, loaders }
 Resolvers consult context     → check before reading or writing
 ```
 
-Token verification happens **once per request**, before any resolver runs. Authorization happens **per field**, where the resolver knows the data and the user.
+Token verification হয় **প্রতি request-এ একবার**, কোনো resolver চলার আগে। Authorization হয় **প্রতি field-এ**, যেখানে resolver data আর user দুটোই জানে।
 
-## Authentication — verifying the caller
+## Authentication — caller যাচাই করা
 
-Two common approaches in self-hosted backends.
+self-hosted backend-এ দুটো common approach।
 
-**1. Session cookies.** A session ID stored server-side (Postgres or Redis), set as an HTTP-only cookie after login, looked up on every request. Best for first-party web clients — same-origin, automatic browser handling, easy to revoke server-side.
+**1. Session cookies.** server-side (Postgres বা Redis) সংরক্ষিত একটা session ID, login-এর পর HTTP-only cookie হিসেবে সেট হয়, প্রতি request-এ lookup হয়। first-party web client-এর জন্য সেরা — same-origin, browser নিজেই handle করে, server-side থেকে revoke করা সহজ।
 
-**2. JWTs (JSON Web Tokens).** A signed token containing claims (`userId`, `expiresAt`, `roles`). Stateless — server only verifies the signature, no DB lookup needed. Best for cross-origin, mobile, machine-to-machine.
+**2. JWTs (JSON Web Tokens).** claim (`userId`, `expiresAt`, `roles`) ধারণ করা একটা signed token। Stateless — server শুধু signature verify করে, কোনো DB lookup লাগে না। cross-origin, mobile, machine-to-machine-এর জন্য সেরা।
 
-Both end at the same place: a verified `userId`. From here on the rest of the chapter is identical.
+দুটোই একই জায়গায় শেষ হয়: একটা verified `userId`। এখান থেকে chapter-এর বাকিটা একদম অভিন্ন।
 
-A JWT-style middleware in graphql-yoga:
+graphql-yoga-তে একটা JWT-style middleware:
 
 ```js
 import jwt from 'jsonwebtoken';
@@ -80,11 +88,11 @@ const yoga = createYoga({
 });
 ```
 
-`currentUser` is now on context for every resolver. Anonymous users see `null`. Logged-in users see `{ id, roles }`.
+`currentUser` এখন প্রতিটি resolver-এর জন্য context-এ আছে। Anonymous user-রা `null` দেখে। Logged-in user-রা `{ id, roles }` দেখে।
 
-## Login as a mutation
+## Login একটা mutation হিসেবে
 
-Login is just another mutation:
+Login আসলে আরেকটা mutation মাত্র:
 
 ```graphql
 type Mutation {
@@ -121,21 +129,21 @@ login: async (_, { email, password }, ctx) => {
 },
 ```
 
-For session-cookie flavors, set a cookie in the response instead of returning a token. graphql-yoga lets you mutate the response in plugins.
+session-cookie ধরনের flow-এর জন্য token return করার বদলে response-এ একটা cookie সেট করো। graphql-yoga তোমাকে plugin-এ response mutate করতে দেয়।
 
 <Callout type="warn">
 
-**Never echo bad-credentials reasons.** "Email not found" tells an attacker which emails are registered. "Invalid credentials" for both wrong-email and wrong-password is the only acceptable message. Same for password reset: "if an account exists, we sent an email" — never confirm or deny.
+**bad-credentials-এর কারণ কখনো ফাঁস কোরো না।** "Email not found" একজন attacker-কে বলে দেয় কোন email-গুলো registered। wrong-email আর wrong-password দুটোর জন্যই "Invalid credentials" — এটাই একমাত্র গ্রহণযোগ্য message। password reset-এও একই: "if an account exists, we sent an email" — কখনো নিশ্চিত বা অস্বীকার কোরো না।
 
 </Callout>
 
-## Authorization — what may they do
+## Authorization — সে কী করতে পারবে
 
-Now the harder half. You have `ctx.currentUser`. Every resolver that reads or writes sensitive data needs a check. Three layers, increasing strictness.
+এবার কঠিন অর্ধেকটা। তোমার কাছে `ctx.currentUser` আছে। sensitive data read বা write করা প্রতিটি resolver-এর একটা check দরকার। তিনটা layer, ক্রমশ বাড়ছে কড়াকড়ি।
 
-### Layer 1: require-login at the resolver
+### Layer 1: resolver-এ require-login
 
-The simplest check. If a query needs a logged-in user, fail loudly when there is none:
+সবচেয়ে সহজ check। যদি কোনো query-র logged-in user দরকার হয়, না থাকলে জোরালোভাবে fail করাও:
 
 ```js
 function requireUser(ctx) {
@@ -155,11 +163,11 @@ Mutation: {
 }
 ```
 
-The naive version is one `requireUser` call at the top of each resolver that needs auth.
+সবচেয়ে সরল version হলো auth লাগে এমন প্রতিটি resolver-এর শুরুতে একটা `requireUser` call।
 
-### Layer 2: check ownership and roles
+### Layer 2: ownership আর role check করা
 
-Not every authenticated user can do every action. Check ownership at the data:
+প্রতিটি authenticated user প্রতিটি action করতে পারে না। data-র কাছে গিয়ে ownership check করো:
 
 ```js
 deletePost: async (_, { id }, ctx) => {
@@ -184,11 +192,11 @@ deletePost: async (_, { id }, ctx) => {
 },
 ```
 
-**Order matters:** load → check existence → check authorization → act. Reversing leaks information ("you don't own this thing that may or may not exist").
+**ক্রম গুরুত্বপূর্ণ:** load → existence check → authorization check → act। উল্টো করলে information ফাঁস হয় ("তুমি এই জিনিসটার মালিক নও যেটা থাকতে পারে বা নাও থাকতে পারে")।
 
 ### Layer 3: per-field authorization
 
-Sometimes a field is sensitive even when the parent is not. `User.email` should be visible to the user themselves, admins, and maybe peers in the same org — not the public.
+কখনো কখনো parent sensitive না হলেও একটা field sensitive হয়। `User.email` user নিজে, admin, আর হয়তো একই org-এর peer-দের দেখা উচিত — public-কে নয়।
 
 ```js
 User: {
@@ -202,11 +210,11 @@ User: {
 }
 ```
 
-Returning `null` for unauthorized access is gentle — clients can show "—" without crashing. Throwing an error is loud — but on a non-null field it nukes the parent (chapter 4). For sensitive fields, mark them nullable in the schema and return `null` on auth failure.
+unauthorized access-এর জন্য `null` return করা নরম উপায় — client crash না করেই "—" দেখাতে পারে। error throw করা জোরালো — কিন্তু non-null field-এ এটা parent-কে ধ্বংস করে (chapter 4)। sensitive field-গুলোর জন্য schema-তে nullable করো এবং auth failure-এ `null` return করো।
 
-## Schema directives — auth as decoration
+## Schema directives — auth সাজসজ্জা হিসেবে
 
-Repeating `requireUser` in every resolver is tedious and error-prone (one missed check is a bug). Schema directives make auth declarative.
+প্রতিটি resolver-এ `requireUser` পুনরাবৃত্তি করা ক্লান্তিকর এবং ভুল হওয়ার ঝুঁকিপূর্ণ (একটা check বাদ পড়লেই bug)। Schema directive auth-কে declarative করে তোলে।
 
 ```graphql
 directive @auth(requires: Role = MEMBER) on FIELD_DEFINITION
@@ -228,7 +236,7 @@ type Query {
 }
 ```
 
-A directive transformer (the `@graphql-tools/utils` utility `mapSchema` is the standard) wraps each annotated field's resolver:
+একটা directive transformer (`@graphql-tools/utils`-এর `mapSchema` utility-টাই standard) প্রতিটি annotated field-এর resolver-কে wrap করে:
 
 ```js
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
@@ -262,13 +270,13 @@ function authDirectiveTransformer(schema) {
 }
 ```
 
-Now adding `@auth` to a field is the entire change. The transformer runs at boot — zero per-request overhead.
+এখন একটা field-এ `@auth` যোগ করাই পুরো পরিবর্তন। transformer boot-এ চলে — per-request কোনো overhead নেই।
 
-This pattern scales. Real production graphs add `@orgScoped`, `@featureFlag`, `@rateLimit` as directives, all transforming resolvers at boot.
+এই pattern scale করে। বাস্তব production graph-গুলো `@orgScoped`, `@featureFlag`, `@rateLimit` directive হিসেবে যোগ করে, সবকটাই boot-এ resolver transform করে।
 
-## Alternative: graphql-shield
+## বিকল্প: graphql-shield
 
-If you do not want to write transformers, `graphql-shield` is a permissions middleware library. You define a rules tree mapping fields to permissions:
+তুমি যদি transformer লিখতে না চাও, `graphql-shield` একটা permissions middleware library। তুমি field-কে permission-এ map করা একটা rules tree define করো:
 
 ```js
 import { rule, shield, allow, and } from 'graphql-shield';
@@ -288,27 +296,27 @@ const permissions = shield({
 });
 ```
 
-Apply as middleware on the schema. Same idea, different ergonomics.
+schema-তে middleware হিসেবে apply করো। একই ধারণা, ভিন্ন ergonomics।
 
-## Auth and DataLoader — be careful
+## Auth আর DataLoader — সাবধান
 
-Loaders cache without consulting auth. If you `userLoader.load(42)` from one resolver that already authorized the request, then another resolver loads the same user — both get the row. That is correct behavior _for that request_, since auth was already checked once.
+Loader auth-কে না জিজ্ঞেস করেই cache করে। যদি তুমি একটা resolver থেকে `userLoader.load(42)` করো যেটা ইতিমধ্যে request-কে authorize করেছে, তারপর আরেকটা resolver একই user load করে — দুটোই row পায়। এটা _ওই request-এর জন্য_ সঠিক আচরণ, কারণ auth ইতিমধ্যে একবার check হয়ে গেছে।
 
-But: if your auth check is per-field (the email visibility example), do not put the auth check inside the loader. The loader returns the raw row. Resolvers that read sensitive fields off the row do their own auth.
+কিন্তু: যদি তোমার auth check per-field হয় (email visibility-র উদাহরণ), auth check-টা loader-এর ভেতরে রেখো না। loader raw row return করে। row থেকে sensitive field পড়া resolver-গুলো নিজেদের auth নিজেরা করে।
 
 ## Multi-tenancy
 
-If your app has organizations or workspaces, every query must be scoped to a tenant. Two ways:
+তোমার app-এ যদি organization বা workspace থাকে, প্রতিটি query একটা tenant-এ scoped হতে হবে। দুই উপায়:
 
-**1. Pass orgId in arguments.** Every query takes `orgId: ID!`. Validates that `currentUser` is a member of that org.
+**1. argument-এ orgId পাস করা।** প্রতিটি query `orgId: ID!` নেয়। যাচাই করে যে `currentUser` ওই org-এর member।
 
-**2. Implicit current org on context.** Login establishes a "current org," stored in the JWT or session. Every query is scoped to it.
+**2. context-এ implicit current org।** Login একটা "current org" প্রতিষ্ঠা করে, JWT বা session-এ সংরক্ষিত। প্রতিটি query তাতে scoped।
 
-The implicit version is cleaner for users (less boilerplate) but riskier (a missed scope check leaks data). I recommend the explicit version with an `@orgMember` directive that checks `args.orgId` against `ctx.currentUser.orgs`. Easy to audit; one directive on every field is a clear contract.
+implicit version user-দের জন্য পরিচ্ছন্ন (কম boilerplate) কিন্তু ঝুঁকিপূর্ণ (একটা scope check বাদ পড়লেই data ফাঁস)। আমি explicit version-এর পরামর্শ দিই, একটা `@orgMember` directive দিয়ে যা `args.orgId`-কে `ctx.currentUser.orgs`-এর সাথে মিলিয়ে দেখে। audit করা সহজ; প্রতিটি field-এ একটা directive একটা স্পষ্ট contract।
 
 ## Rate limiting
 
-Auth and rate limiting are different problems but live next to each other. graphql-yoga has a `rate-limiter-flexible` plugin or you can write a directive:
+Auth আর rate limiting আলাদা সমস্যা কিন্তু পাশাপাশি থাকে। graphql-yoga-তে একটা `rate-limiter-flexible` plugin আছে বা তুমি একটা directive লিখতে পারো:
 
 ```graphql
 directive @rateLimit(window: String = "1m", max: Int = 60) on FIELD_DEFINITION
@@ -318,17 +326,17 @@ type Mutation {
 }
 ```
 
-Throttle login by IP, expensive queries by user, public fields globally. Chapter 10 has more on production hardening.
+login IP অনুযায়ী throttle করো, expensive query user অনুযায়ী, public field globally। production hardening নিয়ে আরও আছে chapter 10-তে।
 
-## Recap
+## সারসংক্ষেপ
 
-- Auth lives on HTTP. Verify token once in middleware, put `currentUser` on context.
-- Login is a mutation that returns a token (or sets a cookie).
-- Authorization is per resolver. Three layers: require-login, ownership/role, per-field.
-- Order: load → check existence → check auth → act. Never leak existence.
-- Schema directives (`@auth`, `@rateLimit`) move checks from imperative to declarative.
-- Return `null` for hidden fields, throw for forbidden actions.
-- Multi-tenancy: prefer explicit `orgId` arguments with a `@orgMember` directive.
-- DataLoader does not enforce auth. Auth gates the resolver, the loader fetches data.
+- Auth থাকে HTTP-তে। middleware-এ token একবার verify করো, context-এ `currentUser` রাখো।
+- Login একটা mutation যা token return করে (বা cookie সেট করে)।
+- Authorization per resolver। তিনটা layer: require-login, ownership/role, per-field।
+- ক্রম: load → existence check → auth check → act। কখনো existence ফাঁস কোরো না।
+- Schema directive (`@auth`, `@rateLimit`) check-কে imperative থেকে declarative-এ নিয়ে যায়।
+- hidden field-এর জন্য `null` return করো, forbidden action-এর জন্য throw করো।
+- Multi-tenancy: একটা `@orgMember` directive সহ explicit `orgId` argument-কে অগ্রাধিকার দাও।
+- DataLoader auth enforce করে না। Auth resolver-কে gate করে, loader data fetch করে।
 
-Next: [Subscriptions over WebSockets](/notes/graphql/09-subscriptions) — realtime done right, on graphql-ws.
+পরবর্তী: [Subscriptions over WebSockets](/notes/graphql/09-subscriptions) — realtime ঠিকভাবে, graphql-ws-এ।

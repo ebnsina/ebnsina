@@ -1,9 +1,9 @@
 ---
-title: 'RTO, RPO, and What They Actually Mean'
-subtitle: 'Two numbers that define your recovery requirements — and why getting them wrong makes your DR plan useless.'
+title: 'RTO, RPO, এবং এরা আসলে কী বোঝায়'
+subtitle: 'দুটো সংখ্যা যা আপনার recovery requirement সংজ্ঞায়িত করে — আর কেন এগুলো ভুল করলে আপনার DR প্ল্যান অকেজো হয়ে যায়।'
 chapter: 1
 level: 'beginner'
-readingTime: '7 min'
+readingTime: '7 মিনিট'
 topics: ['RTO', 'RPO', 'disaster recovery', 'SLA', 'business continuity']
 ---
 
@@ -13,17 +13,25 @@ topics: ['RTO', 'RPO', 'disaster recovery', 'SLA', 'business continuity']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Two questions after a house fire: "How long until we're back in a home?" (RTO — Recovery Time Objective) and "How much stuff did we lose?" (RPO — Recovery Point Objective). A family that backs up photos to the cloud daily has a 24-hour RPO for photos. A family with a hotel booked in 2 hours has a 2-hour RTO. Disaster recovery planning is answering both questions before the fire.
+বাড়িতে আগুন লাগার পর দুটো প্রশ্ন: "আবার একটা বাড়িতে ফিরতে কতক্ষণ লাগবে?" (RTO — Recovery Time Objective) আর "কতটা জিনিস আমরা হারালাম?" (RPO — Recovery Point Objective)। যে পরিবার প্রতিদিন ছবি ক্লাউডে ব্যাকআপ করে তাদের ছবির জন্য RPO ২৪ ঘণ্টা। যে পরিবার ২ ঘণ্টার মধ্যে হোটেল বুক করে ফেলেছে তাদের RTO ২ ঘণ্টা। Disaster recovery প্ল্যানিং হলো আগুন লাগার আগেই এই দুটো প্রশ্নের উত্তর দিয়ে রাখা।
 
 </Callout>
 
-## The Two Numbers
+## গল্পে বুঝি
 
-**RTO (Recovery Time Objective):** How long can your system be down before the business suffers unacceptable harm? The maximum allowable downtime from incident to recovery.
+সমরকন্দের বাজারে ফাতিমা আল-ফিহরির একটা কাপড়ের দোকান। একদিন রাতে পাশের দোকানের চুলা থেকে আগুন ছড়িয়ে তার দোকানের অর্ধেক পুড়ে যায়। পরদিন সকালে ছাই ঘেঁটে দাঁড়িয়ে দুটো আলাদা দুশ্চিন্তা তার মাথায় ঘোরে, আর দুটো দুশ্চিন্তা একে অন্যের সাথে মেলে না।
 
-**RPO (Recovery Point Objective):** How much data can you lose? The maximum acceptable data loss measured in time — if your RPO is 1 hour, you can afford to lose at most 1 hour of transactions.
+প্রথম দুশ্চিন্তা — কত তাড়াতাড়ি দোকান আবার খুলতে হবে? বাজারের নিয়ম হলো, তিন-চার দিন দোকান বন্ধ থাকলে পুরনো খদ্দেররা পাশের দোকানে অভ্যস্ত হয়ে যায়, তারপর আর ফিরে আসে না। তাই ফাতিমা ঠিক করেন, যতটুকুই ক্ষতি হোক, দুই দিনের মধ্যে অন্তত একটা অস্থায়ী কাউন্টার খুলে বসতেই হবে। দ্বিতীয় দুশ্চিন্তা — হিসাবের খাতা। কে কত বাকি নিয়েছে, গুদামে কী পরিমাণ কাপড় ছিল, এসব লেখা থাকত মূল খাতায়, আর আগুনে সেটা পুড়ে ছাই। ভাগ্য ভালো, ফাতিমা প্রতি শনিবার খাতাটা টুকে আরেকটা কপি বাড়িতে রেখে দিতেন। কিন্তু আগুন লাগল বৃহস্পতিবার — মানে শেষ কপির পর গোটা ছয় দিনের নতুন বিক্রি আর বাকির হিসাব একেবারে হারিয়ে গেছে।
+
+এই গল্পের দুটো দুশ্চিন্তাই আসলে DR-এর দুটো আলাদা সংখ্যা। "কত তাড়াতাড়ি দোকান খুলতে হবে" — এই downtime সহ্য করার সীমাটাই **RTO (recovery time)**; ফাতিমার RTO দুই দিন। আর "শেষ কপি কত পুরনো ছিল, ফলে কতটুকু হিসাব হারালাম" — এই data loss-এর সীমাটাই **RPO (recovery point)**; সাপ্তাহিক কপি রাখায় ফাতিমার RPO কার্যত এক সপ্তাহ, তাই ছয় দিনের ডেটা গেছে। বাস্তবে সিস্টেমেও ঠিক এভাবেই দুটো আলাদা প্রশ্ন — কত দ্রুত সার্ভিস ফিরিয়ে আনতে হবে (RTO) আর শেষ backup কত পুরনো, ফলে কতটুকু transaction হারানো মেনে নেওয়া যায় (RPO)। ফাতিমা যদি প্রতিদিন খাতা টুকতেন, তার RPO নেমে আসত এক দিনে — ঠিক যেমন ঘনঘন backup নিলে data loss কমে।
+
+## দুটো সংখ্যা
+
+**RTO (Recovery Time Objective):** বিজনেসের অগ্রহণযোগ্য ক্ষতি হওয়ার আগে আপনার সিস্টেম কতক্ষণ ডাউন থাকতে পারে? incident থেকে recovery পর্যন্ত সর্বোচ্চ যতটুকু downtime মেনে নেওয়া যায়।
+
+**RPO (Recovery Point Objective):** আপনি কতটা ডেটা হারাতে পারেন? সময়ে মাপা সর্বোচ্চ গ্রহণযোগ্য ডেটা ক্ষতি — যদি আপনার RPO ১ ঘণ্টা হয়, তাহলে আপনি বড়জোর ১ ঘণ্টার ট্রানজ্যাকশন হারানোর ঝুঁকি নিতে পারেন।
 
 ```
 Timeline of a disaster:
@@ -40,13 +48,13 @@ Timeline of a disaster:
          RTO: 1 hour of downtime
 ```
 
-These are objectives — targets you design your system to meet. They're not automatic guarantees.
+এগুলো হলো objective — টার্গেট, যেগুলো পূরণ করার জন্য আপনি আপনার সিস্টেম ডিজাইন করেন। এগুলো স্বয়ংক্রিয় গ্যারান্টি নয়।
 
-## Deriving RTO and RPO from Business Requirements
+## বিজনেস requirement থেকে RTO আর RPO বের করা
 
-Don't pick numbers arbitrarily. Work backwards from business impact:
+সংখ্যাগুলো এলোমেলোভাবে বাছবেন না। বিজনেস ইমপ্যাক্ট থেকে উল্টো দিকে হিসাব করুন:
 
-**RTO calculation:**
+**RTO হিসাব:**
 
 ```
 What is the hourly cost of downtime?
@@ -65,7 +73,7 @@ At what point does the cumulative loss justify the cost of faster recovery?
   → 1-hour RTO is probably not justified unless contractually required
 ```
 
-**RPO calculation:**
+**RPO হিসাব:**
 
 ```
 What is the cost of losing N hours of data?
@@ -76,56 +84,56 @@ What is the cost of losing N hours of data?
   → 5-minute RPO clearly justified; 1-hour RPO is unacceptable for orders
 ```
 
-Different parts of your system have different RTO/RPO requirements:
+আপনার সিস্টেমের বিভিন্ন অংশের বিভিন্ন RTO/RPO requirement থাকে:
 
-| System         | RTO                    | RPO             | Reason              |
-| -------------- | ---------------------- | --------------- | ------------------- |
-| Order database | 1 hour                 | 5 minutes       | Revenue impact      |
-| User accounts  | 4 hours                | 1 hour          | Login disruption    |
-| Analytics DB   | 24 hours               | 24 hours        | Non-operational     |
-| Email logs     | 72 hours               | 24 hours        | Compliance, not ops |
-| CDN assets     | Minutes (CDN failover) | N/A (no writes) | —                   |
+| System         | RTO                    | RPO             | কারণ                  |
+| -------------- | ---------------------- | --------------- | --------------------- |
+| Order database | 1 hour                 | 5 minutes       | রেভিনিউ ইমপ্যাক্ট     |
+| User accounts  | 4 hours                | 1 hour          | লগইন বিঘ্ন            |
+| Analytics DB   | 24 hours               | 24 hours        | নন-অপারেশনাল          |
+| Email logs     | 72 hours               | 24 hours        | কমপ্লায়েন্স, ops নয় |
+| CDN assets     | Minutes (CDN failover) | N/A (no writes) | —                     |
 
-Design and budget per system. Don't apply the tightest requirement uniformly.
+প্রতিটা সিস্টেমের জন্য আলাদা করে ডিজাইন আর বাজেট করুন। সবচেয়ে কঠিন requirement সবার উপর সমানভাবে চাপিয়ে দেবেন না।
 
-## Recovery Tiers
+## Recovery Tier
 
-RTO/RPO targets map to infrastructure tiers with different costs:
+RTO/RPO টার্গেটগুলো বিভিন্ন খরচের infrastructure tier-এর সাথে ম্যাপ করে:
 
-**Tier 1: Cold Standby (RTO: hours–days, RPO: hours)**
+**Tier 1: Cold Standby (RTO: ঘণ্টা–দিন, RPO: ঘণ্টা)**
 
-- Backups stored in S3/object storage
-- No hot infrastructure waiting
-- Recovery: provision new server, restore from backup, catch up
-- Cost: storage only (~$20/month for 100GB of daily backups)
+- ব্যাকআপ S3/object storage-এ রাখা
+- কোনো hot infrastructure অপেক্ষা করছে না
+- Recovery: নতুন সার্ভার provision করা, ব্যাকআপ থেকে restore, catch up করা
+- খরচ: শুধু storage (১০০GB দৈনিক ব্যাকআপের জন্য ~$20/month)
 
-**Tier 2: Warm Standby (RTO: 15 min–1 hour, RPO: minutes)**
+**Tier 2: Warm Standby (RTO: ১৫ মিনিট–১ ঘণ্টা, RPO: মিনিট)**
 
-- Backup infrastructure running at reduced scale
-- Replication keeping it near-current
-- Recovery: scale up + promote replica + redirect traffic
-- Cost: 30-50% of full production cost
+- ব্যাকআপ infrastructure কমানো স্কেলে চলছে
+- Replication এটাকে প্রায় current রাখছে
+- Recovery: scale up + replica promote + traffic redirect
+- খরচ: পূর্ণ production খরচের 30-50%
 
-**Tier 3: Hot Standby (RTO: seconds–minutes, RPO: seconds)**
+**Tier 3: Hot Standby (RTO: সেকেন্ড–মিনিট, RPO: সেকেন্ড)**
 
-- Full duplicate production environment
+- পূর্ণ ডুপ্লিকেট production environment
 - Synchronous replication
-- Recovery: DNS failover or load balancer redirect
-- Cost: ~100% additional (2x total infrastructure cost)
+- Recovery: DNS failover বা load balancer redirect
+- খরচ: ~100% অতিরিক্ত (মোট 2x infrastructure খরচ)
 
 **Tier 4: Active-Active (RTO: ~0, RPO: ~0)**
 
-- Traffic distributed across multiple sites simultaneously
-- Automatic failover with no human intervention
-- Cost: 2x+ infrastructure + significant engineering complexity
+- একাধিক সাইট জুড়ে একসাথে traffic বণ্টন করা
+- মানুষের হস্তক্ষেপ ছাড়াই স্বয়ংক্রিয় failover
+- খরচ: 2x+ infrastructure + উল্লেখযোগ্য engineering জটিলতা
 
-Most applications live at Tier 1–2. Only systems where any downtime is catastrophic (financial trading, healthcare systems, payment processing) justify Tier 3–4.
+বেশিরভাগ অ্যাপ্লিকেশন Tier 1–2-তে থাকে। শুধু যেসব সিস্টেমে যেকোনো downtime বিপর্যয়কর (financial trading, healthcare সিস্টেম, payment processing) সেগুলোই Tier 3–4 justify করে।
 
-## The Plan Is Worthless Without Testing
+## টেস্ট ছাড়া প্ল্যান মূল্যহীন
 
-RTO is a commitment, not a hope. The only way to know if you can actually recover in 1 hour is to practice recovering in 1 hour — regularly, under realistic conditions.
+RTO একটা প্রতিশ্রুতি, আশা নয়। আপনি সত্যিই ১ ঘণ্টায় recover করতে পারবেন কি না তা জানার একমাত্র উপায় হলো ১ ঘণ্টায় recover করার প্র্যাকটিস করা — নিয়মিত, বাস্তবসম্মত পরিস্থিতিতে।
 
-**Types of recovery tests:**
+**Recovery টেস্টের ধরন:**
 
 ```
 Tabletop exercise:
@@ -149,18 +157,18 @@ Full DR drill:
   Frequency: twice yearly
 ```
 
-If you've never actually restored from backup, your RPO is theoretical. If you've never timed a full recovery, your RTO is a guess.
+আপনি যদি কখনো সত্যিই ব্যাকআপ থেকে restore না করে থাকেন, আপনার RPO তাত্ত্বিক। আপনি যদি কখনো পূর্ণ recovery-র সময় না মেপে থাকেন, আপনার RTO একটা আন্দাজ।
 
-## Common Failure Modes in DR Plans
+## DR প্ল্যানে সাধারণ failure mode
 
-**Backup exists, restore never tested:** Backups are corrupt, incomplete, or require software that's no longer installed. Discovered during actual disaster.
+**ব্যাকআপ আছে, restore কখনো টেস্ট করা হয়নি:** ব্যাকআপ corrupt, অসম্পূর্ণ, বা এমন সফটওয়্যার লাগে যা আর ইনস্টল করা নেই। বাস্তব disaster-এর সময় ধরা পড়ে।
 
-**RTO set by wishful thinking:** "We can restore in 1 hour" because that sounds good, not because anyone has measured it. Actual restore time: 6 hours.
+**RTO কল্পনা দিয়ে ঠিক করা:** "আমরা ১ ঘণ্টায় restore করতে পারব" কারণ শুনতে ভালো লাগে, কেউ মেপে দেখেছে বলে নয়। আসল restore সময়: ৬ ঘণ্টা।
 
-**RPO mismatch with backup schedule:** Claiming 4-hour RPO with daily backups. If disaster strikes at 11pm, you've lost 23 hours of data.
+**RPO আর ব্যাকআপ শিডিউলের মিল নেই:** দৈনিক ব্যাকআপ দিয়ে ৪ ঘণ্টার RPO দাবি করা। যদি রাত ১১টায় disaster হয়, আপনি ২৩ ঘণ্টার ডেটা হারিয়েছেন।
 
-**Single region, single AZ backups:** Backups stored in the same location as the primary. A region failure destroys both.
+**একটা region, একটা AZ-এ ব্যাকআপ:** ব্যাকআপ primary-র একই জায়গায় রাখা। একটা region failure দুটোই ধ্বংস করে দেয়।
 
-**No runbook, knowledge in one person's head:** The person who knows the restore procedure is on vacation. Or left the company.
+**কোনো runbook নেই, জ্ঞান একজনের মাথায়:** যে restore প্রসিডিওর জানে সে ছুটিতে। অথবা কোম্পানি ছেড়ে দিয়েছে।
 
-**Document the actual measured RTO from your last drill.** If it was 4 hours and your SLA says 2 hours, you have a gap to close — not a plan to point to.
+**আপনার শেষ drill থেকে আসল মাপা RTO ডকুমেন্ট করুন।** যদি সেটা ৪ ঘণ্টা হয় আর আপনার SLA বলে ২ ঘণ্টা, তাহলে আপনার একটা gap আছে বন্ধ করার জন্য — দেখানোর মতো কোনো প্ল্যান নয়।

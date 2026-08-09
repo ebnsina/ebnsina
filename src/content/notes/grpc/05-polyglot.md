@@ -1,9 +1,9 @@
 ---
-title: 'Polyglot — Node and Python clients'
-subtitle: 'The same `.proto`, three languages. The whole pitch of gRPC is that the wire is shared and the codegen is free. Once you have done it once it stops feeling like magic.'
+title: 'Polyglot — Node আর Python client'
+subtitle: 'একই `.proto`, তিন ভাষা। gRPC-এর পুরো বক্তব্যই হলো wire শেয়ার্ড আর codegen ফ্রি। একবার করে ফেললে এটা আর জাদু মনে হয় না।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['grpc', 'node', 'python', 'codegen', 'polyglot']
 ---
 
@@ -11,31 +11,39 @@ topics: ['grpc', 'node', 'python', 'codegen', 'polyglot']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The Go server from chapter 4 does not care who is calling it. The wire is HTTP/2 and protobuf — both language-neutral. This chapter generates clients in Node and Python from the same `.proto` and calls the running Go server.
+## গল্পে বুঝি
 
-The point is not that Node and Python are special. It is that **adding a new language to a gRPC service is a code-generation step, not a rewrite**. That changes what kinds of services you can build with mixed teams.
+বাগদাদের পাসপোর্ট অফিসে একটাই কাউন্টার, একজন কেরানি — আল-খোয়ারিজমি। সারাদিন লাইনে দাঁড়ায় নানা দেশের মানুষ। ইবনে সিনার মাতৃভাষা বাংলা, ফাতিমা আল-ফিহরি বলেন আরবি, আর আল-বিরুনি বলেন ফারসি। কেরানি এদের কারও ভাষাই জানেন না। তবু অফিসে ঝামেলা হয় না, কারণ সবার হাতে একই স্ট্যান্ডার্ড ফর্ম — একই টেমপ্লেট থেকে ছাপা, ঘর নম্বর ১ নাম, ২ জন্মতারিখ, ৩ ঠিকানা। কেরানি শুধু ঘর নম্বর দেখেই কাজ সারেন, কে কোন ভাষায় ভাবছে তাতে তাঁর কিছু যায়-আসে না।
+
+কিন্তু বাংলা-জানা ইবনে সিনা তো আরবি ফর্মের ঘরগুলো নিজে বুঝবেন না। তাই অফিস প্রত্যেক ভাষার জন্য একজন করে দোভাষী বসিয়ে রেখেছে — ইবনে সিনার জন্য বাংলা দোভাষী, ফাতিমার জন্য আরবি, আল-বিরুনির জন্য ফারসি। প্রত্যেক দোভাষীকে বানানো হয়েছে ওই একই স্ট্যান্ডার্ড ফর্মের টেমপ্লেট দেখে। যে যার মাতৃভাষায় কথা বলে, দোভাষী সেই কথা তুলে দেয় ঠিক ওই একই নম্বরওয়ালা ঘরে। ফলে তিনজন তিন ভাষার মানুষ একই কেরানির কাছে গিয়ে হুবহু একই সেবা পান।
+
+গল্পটাই polyglot gRPC। ওই একটা স্ট্যান্ডার্ড ফর্মের টেমপ্লেট হলো শেয়ার্ড `.proto` contract — সত্যের একমাত্র উৎস। প্রত্যেক ভাষার আলাদা দোভাষী হলো সেই ভাষার জন্য generate করা stub (Node, Python, Go client নিজ নিজ ভাষায় stub বানায়)। আর একজন কেরানি হলো একটাই gRPC service, যে সব client-কে একইভাবে সামলায়। বাস্তবে ঠিক এভাবেই একটা Go service-এর সামনে Node আর Python team আলাদা SDK না লিখে, একই `.proto` থেকে যার যার ভাষার stub generate করে নেয় — নতুন ভাষা যোগ করা তাই rewrite নয়, স্রেফ একটা code-generation ধাপ।
+
+অধ্যায় 4-এর Go server-এর কে কল করছে তা নিয়ে কোনো মাথাব্যথা নেই। wire হলো HTTP/2 আর protobuf — দুটোই ভাষা-নিরপেক্ষ। এই অধ্যায় একই `.proto` থেকে Node আর Python-এ client generate করে আর চালু Go server-কে কল করে।
+
+আসল কথা এই নয় যে Node আর Python বিশেষ কিছু। আসল কথা হলো **একটা gRPC service-এ নতুন ভাষা যোগ করা একটা code-generation ধাপ, rewrite নয়**। এটা মিশ্র দল নিয়ে আপনি কী ধরনের service বানাতে পারেন সেটাই বদলে দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Polyglot gRPC is like a UN interpreter — both sides speak different languages but communicate perfectly through a shared standard.
+Polyglot gRPC হলো জাতিসংঘের দোভাষীর মতো — দুই পক্ষ ভিন্ন ভাষায় কথা বলে কিন্তু একটা শেয়ার্ড standard-এর মাধ্যমে নিখুঁতভাবে যোগাযোগ করে।
 
 </Callout>
 
-## What "polyglot" actually buys you
+## "polyglot" আসলে আপনাকে কী এনে দেয়
 
-Three things:
+তিনটা জিনিস:
 
-1. **No hand-written client SDKs.** A Python data team needs to call your Go service? They `protoc` your `.proto` and call methods. You do not maintain a Python SDK.
-2. **Type safety across the wire.** Both ends know the schema. Renaming a field on the server breaks codegen on the client at build time, not at runtime under load.
-3. **Schema is the source of truth.** Documentation, tests, code, and the wire all derive from the same `.proto`. Drift between languages is impossible by construction.
+1. **কোনো হাতে-লেখা client SDK নেই।** একটা Python data team-এর আপনার Go service কল করা দরকার? তারা আপনার `.proto` `protoc` করে আর method কল করে। আপনি কোনো Python SDK maintain করেন না।
+2. **wire জুড়ে type safety।** দুই পক্ষই schema জানে। server-এ একটা field-এর নাম বদলালে client-এ codegen build time-এ ভেঙে যায়, load-এর নিচে runtime-এ নয়।
+3. **schema-ই source of truth।** documentation, test, code, আর wire — সবই একই `.proto` থেকে আসে। ভাষাগুলোর মধ্যে drift গঠনগতভাবেই অসম্ভব।
 
-The flip side: every team must keep up with the proto repo. A team that copies the `.proto` once and never updates it is back to a manual SDK with no warning system.
+উল্টো দিক: প্রতিটা দলকে proto repo-র সঙ্গে তাল মিলিয়ে চলতে হবে। যে দল একবার `.proto` কপি করে আর কখনো আপডেট করে না, তারা কোনো সতর্কতা-ব্যবস্থা ছাড়া একটা manual SDK-তে ফিরে গেছে।
 
-## The proto repo pattern
+## proto repo প্যাটার্ন
 
-The cleanest setup: one git repo for `.proto` files, every language consumes it.
+সবচেয়ে পরিচ্ছন্ন সেটআপ: `.proto` ফাইলের জন্য একটা git repo, প্রতিটা ভাষা সেটা consume করে।
 
 ```
 protos/
@@ -45,17 +53,17 @@ protos/
     └── user/v1/user.proto
 ```
 
-The proto repo's CI generates and publishes language artefacts:
+proto repo-র CI ভাষা-ভিত্তিক artefact generate আর publish করে:
 
-- **Go module** — `go.mod` in the repo, consumers `go get example.com/protos/gen/go/user/v1`.
-- **npm package** — published to a private registry or installed via `git+ssh`.
-- **Python wheel** — same idea.
+- **Go module** — repo-তে `go.mod`, consumer-রা `go get example.com/protos/gen/go/user/v1`।
+- **npm package** — একটা private registry-তে publish করা বা `git+ssh` দিয়ে install করা।
+- **Python wheel** — একই ধারণা।
 
-This is what `buf` was made for. Skip the publishing step for this chapter; we will generate locally and call the Go server from chapter 4.
+`buf` এটার জন্যই বানানো হয়েছিল। এই অধ্যায়ের জন্য publish করার ধাপটা বাদ দিন; আমরা লোকালি generate করব আর অধ্যায় 4-এর Go server-কে কল করব।
 
 ## Node client
 
-Node uses **`@grpc/grpc-js`** (pure JS, no native deps) plus `@grpc/proto-loader` (parses `.proto` at runtime — no codegen step) or `protoc-gen-grpc-web` (compiles `.proto` to TypeScript). The first approach is fastest to get started.
+Node **`@grpc/grpc-js`** (pure JS, কোনো native dep নেই) সঙ্গে `@grpc/proto-loader` (runtime-এ `.proto` parse করে — কোনো codegen ধাপ নেই) বা `protoc-gen-grpc-web` (`.proto`-কে TypeScript-এ compile করে) ব্যবহার করে। প্রথম পদ্ধতিটা শুরু করতে সবচেয়ে দ্রুত।
 
 ```bash
 mkdir node-client && cd node-client
@@ -110,17 +118,17 @@ node client.js
 # count: 4
 ```
 
-Two things worth knowing about the Node client:
+Node client সম্পর্কে দুটো জিনিস জানার মতো:
 
-**1. `keepCase: false` is the default and you almost always want it.** Proto fields are `snake_case`; idiomatic JS is `camelCase`. The loader converts. Without this flag, you write `client.GetUser({id: 1, page_token: ""})` instead of the natural `pageToken`.
+**1. `keepCase: false` হলো ডিফল্ট আর আপনি প্রায় সবসময়ই এটা চান।** proto field-গুলো `snake_case`; idiomatic JS হলো `camelCase`। loader রূপান্তর করে। এই flag ছাড়া আপনি স্বাভাবিক `pageToken`-এর বদলে `client.GetUser({id: 1, page_token: ""})` লেখেন।
 
-**2. Callbacks are the native API.** Promisify them with `util.promisify` or a wrapper like `rpc` above. Don't fight it.
+**2. Callback-ই native API।** `util.promisify` বা উপরের `rpc`-এর মতো একটা wrapper দিয়ে সেগুলোকে promisify করুন। এর সঙ্গে লড়বেন না।
 
-For TypeScript, switch to **`buf` + `protoc-gen-es` + `connect-es`** (or `ts-proto` for plain gRPC). You get strict types. `@grpc/proto-loader` is dynamic; types are loose.
+TypeScript-এর জন্য **`buf` + `protoc-gen-es` + `connect-es`**-এ যান (বা plain gRPC-এর জন্য `ts-proto`)। আপনি strict type পান। `@grpc/proto-loader` dynamic; type-গুলো ঢিলেঢালা।
 
 ## Python client
 
-Python uses **`grpcio`** plus **`grpcio-tools`** for codegen.
+Python codegen-এর জন্য **`grpcio`** সঙ্গে **`grpcio-tools`** ব্যবহার করে।
 
 ```bash
 mkdir py-client && cd py-client
@@ -130,7 +138,7 @@ mkdir -p proto/user/v1
 # copy user.proto into proto/user/v1/user.proto
 ```
 
-Generate Python code:
+Python কোড generate করুন:
 
 ```bash
 python -m grpc_tools.protoc \
@@ -140,7 +148,7 @@ python -m grpc_tools.protoc \
   proto/user/v1/user.proto
 ```
 
-This emits `proto/user/v1/user_pb2.py` (messages) and `proto/user/v1/user_pb2_grpc.py` (service stubs).
+এটা `proto/user/v1/user_pb2.py` (messages) আর `proto/user/v1/user_pb2_grpc.py` (service stubs) বের করে।
 
 ```python
 # client.py
@@ -171,27 +179,27 @@ python client.py
 # count: 5
 ```
 
-The Python codegen has a quirk: imports are absolute paths from the proto root, so the generated `user_pb2_grpc.py` does `import user_pb2`. If your proto lives in a sub-package, you need to adjust the import path or use relative imports manually. The cleanest fix in 2025+ is **`buf generate`** with the `python` plugin set to `paths=source_relative`-equivalent settings, or `protoc-gen-mypy` for type stubs.
+Python codegen-এর একটা খুঁত আছে: import-গুলো proto root থেকে absolute path, তাই generated `user_pb2_grpc.py` করে `import user_pb2`। আপনার proto যদি একটা sub-package-এ থাকে, তাহলে আপনাকে import path adjust করতে হবে বা হাতে relative import ব্যবহার করতে হবে। 2025+-এ সবচেয়ে পরিচ্ছন্ন fix হলো `python` plugin-কে `paths=source_relative`-সমতুল্য setting-এ সেট করে **`buf generate`**, বা type stub-এর জন্য `protoc-gen-mypy`।
 
-For type safety in Python: `pip install protobuf-mypy-plugin` or use **`betterproto`**, a third-party generator that emits dataclass-style messages instead of protobuf's classic API. Cleaner if you can adopt it.
+Python-এ type safety-র জন্য: `pip install protobuf-mypy-plugin` বা **`betterproto`** ব্যবহার করুন, একটা third-party generator যা protobuf-এর ক্লাসিক API-এর বদলে dataclass-ধাঁচের message বের করে। adopt করতে পারলে পরিচ্ছন্নতর।
 
-## Calling all three at once
+## তিনটাকেই একসঙ্গে কল করা
 
-Run the Go server (chapter 4). In one terminal:
+Go server চালান (অধ্যায় 4)। এক terminal-এ:
 
 ```bash
 cd mygrpc
 go run ./cmd/server
 ```
 
-In a second terminal, the Go client:
+দ্বিতীয় terminal-এ, Go client:
 
 ```bash
 go run ./cmd/client
 # got user: Sumayya <sumayya@example.com>
 ```
 
-Third terminal, Node:
+তৃতীয় terminal, Node:
 
 ```bash
 cd ../node-client
@@ -199,7 +207,7 @@ node client.js
 # got user: { id: '1', ... }
 ```
 
-Fourth terminal, Python:
+চতুর্থ terminal, Python:
 
 ```bash
 cd ../py-client
@@ -207,56 +215,56 @@ python client.py
 # got user: Sumayya sumayya@example.com
 ```
 
-All three hit the same server, get the same data. Because protobuf is on the wire, IDs come through as strings in Node (JS numbers can't safely represent int64), strings in Python (where they parse to ints because the language has bignums), and `int64` in Go.
+তিনটাই একই server-এ পৌঁছায়, একই ডেটা পায়। যেহেতু wire-এ protobuf আছে, তাই ID-গুলো Node-এ string হিসেবে আসে (JS number নিরাপদে int64 প্রকাশ করতে পারে না), Python-এ string (যেখানে সেগুলো int-এ parse হয় কারণ ভাষাটায় bignum আছে), আর Go-তে `int64`।
 
 <Callout type="warn">
 
-**int64 + JavaScript = footgun.** Numbers in JS are 64-bit floats; integers above 2^53 lose precision. The Node loader option `longs: String` makes int64 fields come through as strings — handle them with care or your IDs will silently corrupt at scale. For new APIs that have JS clients, prefer `string` for IDs and avoid the issue entirely.
+**int64 + JavaScript = footgun।** JS-এ number হলো 64-bit float; 2^53-এর ওপরের integer precision হারায়। Node loader option `longs: String` int64 field-কে string হিসেবে আসতে দেয় — সাবধানে সামলান নয়তো আপনার ID scale-এ গিয়ে নিঃশব্দে corrupt হবে। যেসব নতুন API-তে JS client আছে, তাদের জন্য ID-এর জন্য `string` পছন্দ করুন আর সমস্যাটা পুরোপুরি এড়িয়ে যান।
 
 </Callout>
 
-## Server reflection — language-agnostic discovery
+## Server reflection — ভাষা-নিরপেক্ষ discovery
 
-In chapter 4 we enabled server reflection. That works the same way for any client. From Node:
+অধ্যায় 4-এ আমরা server reflection enable করেছিলাম। সেটা যেকোনো client-এর জন্য একইভাবে কাজ করে। Node থেকে:
 
 ```js
 const reflection = await rpc("__file_descriptor", ...); // not standard; needs a reflection client lib
 ```
 
-Practically, the easiest reflection client is `grpcurl`. For programmatic use, libraries like `nice-grpc-reflection` (Node) or `grpcio-reflection` (Python) handle it.
+বাস্তবে সবচেয়ে সহজ reflection client হলো `grpcurl`। programmatic ব্যবহারের জন্য `nice-grpc-reflection` (Node) বা `grpcio-reflection` (Python)-এর মতো library সেটা সামলায়।
 
-In a polyglot setup, reflection means a Node client can discover and call new RPCs without any code regen — convenient for tooling, scripts, and admin UIs.
+একটা polyglot সেটআপে reflection মানে একটা Node client কোনো code regen ছাড়াই নতুন RPC আবিষ্কার আর কল করতে পারে — tooling, script, আর admin UI-এর জন্য সুবিধাজনক।
 
-## When languages disagree
+## ভাষারা যখন একমত হয় না
 
-Three real differences to know:
+জানার মতো তিনটা সত্যিকারের পার্থক্য:
 
-**1. Default values.** proto3's "no defaults on the wire" works for all three. But Node returns `0` for unset int fields and `""` for unset strings — same as Go. Python (`grpcio`) does the same. `optional` fields (proto3.15+) get explicit `HasField()` everywhere.
+**1. Default value।** proto3-এর "wire-এ কোনো default নেই" তিনটার জন্যই কাজ করে। কিন্তু Node unset int field-এর জন্য `0` আর unset string-এর জন্য `""` return করে — Go-এর মতোই। Python (`grpcio`) একই করে। `optional` field (proto3.15+) সব জায়গায় explicit `HasField()` পায়।
 
-**2. Streaming.** All three support all four call shapes. Async iteration patterns differ — Node uses `for await (const msg of stream)`, Python uses `for msg in stream:` (synchronous) or `async for` with `grpc.aio`. Go uses `stream.Recv()` in a loop. Same wire, different ergonomics.
+**2. Streaming।** তিনটাই চার রকমের call shape সাপোর্ট করে। async iteration প্যাটার্ন ভিন্ন — Node ব্যবহার করে `for await (const msg of stream)`, Python ব্যবহার করে `for msg in stream:` (synchronous) বা `grpc.aio` সহ `async for`। Go একটা loop-এ `stream.Recv()` ব্যবহার করে। একই wire, ভিন্ন ergonomics।
 
-**3. Error codes.** Every language exposes the same `codes.NotFound`, `codes.InvalidArgument`, etc. mapping. Whatever the server throws (chapter 7), all clients see the same code.
+**3. Error code।** প্রতিটা ভাষা একই `codes.NotFound`, `codes.InvalidArgument` ইত্যাদি mapping প্রকাশ করে। server যা-ই throw করুক (অধ্যায় 7), সব client একই code দেখে।
 
-## Versioning across languages
+## ভাষা জুড়ে versioning
 
-The proto repo holds the source of truth. Languages consume specific tagged versions:
+proto repo-ই source of truth ধরে রাখে। ভাষারা নির্দিষ্ট tagged version consume করে:
 
 - Go: `go get example.com/protos@v1.4.2`
 - Node: `npm install @example/protos@1.4.2`
 - Python: `pip install example-protos==1.4.2`
 
-Bumping the proto repo is a release event. CI publishes new artefacts. Each language team consumes when ready. Backward-compatible changes (adding fields) mean old client versions still work against new servers.
+proto repo bump করা একটা release event। CI নতুন artefact publish করে। প্রতিটা ভাষা দল প্রস্তুত হলে consume করে। Backward-compatible পরিবর্তন (field যোগ করা) মানে পুরনো client version এখনও নতুন server-এর বিরুদ্ধে কাজ করে।
 
-When you must break compatibility, use a new package (`user.v2`). Both are deployed; clients migrate over time. Chapter 2's evolution rules are the contract.
+যখন আপনাকে compatibility ভাঙতেই হবে, একটা নতুন package (`user.v2`) ব্যবহার করুন। দুটোই deploy করা থাকে; client-রা সময়ের সঙ্গে migrate করে। অধ্যায় 2-এর evolution rule-গুলোই contract।
 
-## Recap
+## রিক্যাপ
 
-- One `.proto`, three languages — codegen is the connective tissue.
-- Node: `@grpc/grpc-js` + `@grpc/proto-loader` for dynamic, or `connect-es`/`ts-proto` for typed.
-- Python: `grpcio` + `grpcio-tools` for canonical codegen, or `betterproto` for cleaner ergonomics.
-- A proto repo with `buf` is the production pattern; CI publishes per-language artefacts.
-- All three speak the same wire. int64 + JS needs care; everything else just works.
-- Reflection lets clients in any language discover services without rebuilds.
-- Versioning by tag — language packages consume specific proto-repo tags.
+- একটা `.proto`, তিন ভাষা — codegen-ই সংযোগকারী কলা।
+- Node: dynamic-এর জন্য `@grpc/grpc-js` + `@grpc/proto-loader`, বা typed-এর জন্য `connect-es`/`ts-proto`।
+- Python: ক্যানোনিকাল codegen-এর জন্য `grpcio` + `grpcio-tools`, বা পরিচ্ছন্নতর ergonomics-এর জন্য `betterproto`।
+- `buf` সহ একটা proto repo হলো প্রোডাকশন প্যাটার্ন; CI প্রতি-ভাষা artefact publish করে।
+- তিনটাই একই wire-এ কথা বলে। int64 + JS-এর যত্ন লাগে; বাকি সব কেবল কাজ করে যায়।
+- Reflection যেকোনো ভাষার client-কে rebuild ছাড়া service আবিষ্কার করতে দেয়।
+- tag দিয়ে versioning — ভাষার package নির্দিষ্ট proto-repo tag consume করে।
 
-Next: [Streaming RPCs](/notes/grpc/06-streaming) — server, client, and bidirectional streams, where gRPC stops looking like REST.
+পরবর্তী: [Streaming RPC](/notes/grpc/06-streaming) — server, client, আর bidirectional stream, যেখানে gRPC আর REST-এর মতো দেখতে থাকে না।

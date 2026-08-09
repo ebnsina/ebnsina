@@ -1,9 +1,9 @@
 ---
 title: 'Filtering, Grouping & Aggregation'
-subtitle: 'Collapse many rows into summary answers with COUNT, SUM, GROUP BY, and HAVING.'
+subtitle: 'COUNT, SUM, GROUP BY আর HAVING দিয়ে অনেকগুলো row-কে সারসংক্ষেপ উত্তরে গুটিয়ে আনুন।'
 chapter: 2
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['group by', 'aggregate', 'having']
 ---
 
@@ -11,11 +11,19 @@ topics: ['group by', 'aggregate', 'having']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## From Rows to Summaries
+## গল্পে বুঝি
 
-So far every query returned individual rows. Often you want a _summary_ instead: how many orders did we ship? What's the average order value per customer? Aggregation answers these by collapsing many rows into one.
+দিন শেষে দোকান বন্ধ করার সময় ইবনে সিনা গল্লার সামনে বসে সারাদিনের বিক্রির স্লিপগুলো নিয়ে হিসাব মেলাতে বসে। প্রথমেই সে গাদার মধ্য থেকে বাতিল স্লিপগুলো আলাদা করে সরিয়ে রাখে — যে বিক্রিগুলো ক্যান্সেল হয়ে গিয়েছিল, কাস্টমার জিনিস ফেরত দিয়েছিল, ওগুলো হিসাবে ঢুকলে দিনের অঙ্ক ভুল হবে। শুধু আসল, টিকে থাকা বিক্রির স্লিপগুলোই সে রাখে।
 
-We'll use an `orders` table:
+এবার সে বাকি স্লিপগুলোকে পণ্যের ধরন অনুযায়ী আলাদা আলাদা স্তূপে সাজায় — চাল-ডালের এক স্তূপ, সাবান-শ্যাম্পুর আরেক স্তূপ, বিস্কুট-চানাচুরের আরেকটা। প্রতিটা স্তূপ ধরে সে গোনে কয়টা স্লিপ, আর যোগ করে মোট কত টাকা বিক্রি হলো, চাইলে গড়ে প্রতি স্লিপে কত টাকা তা-ও বের করে। শেষে সে শুধু সেই স্তূপগুলোই আলাদা করে মার্ক করে রাখে যেগুলোতে দিনে ৫০০০ টাকার বেশি বিক্রি হয়েছে — কোন ধরনের পণ্য আসলে দোকান চালাচ্ছে, সেটা এভাবেই সে বুঝে ফেলে।
+
+ইবনে সিনার এই হিসাবটাই হুবহু একটা aggregation query। বাতিল স্লিপ সরিয়ে দেওয়াটা `WHERE` — group করার আগেই row ধরে ধরে filter। পণ্যের ধরন অনুযায়ী স্তূপে ভাগ করাটা `GROUP BY`। প্রতি স্তূপে স্লিপ গোনা, টাকা যোগ করা আর গড় বের করা হলো aggregate function — `COUNT`, `SUM`, `AVG`। আর শেষে শুধু ৫০০০ টাকার বেশি বিক্রি হওয়া স্তূপগুলো রাখাটা `HAVING` — যেটা group তৈরি হওয়ার পরে পুরো group ধরে filter করে। বাস্তবেও ঠিক এভাবেই sales dashboard বানানো হয়: বাতিল order বাদ, category ধরে group, প্রতি category-র revenue, তারপর শুধু ভালো-চলা category-গুলো দেখানো।
+
+## Row থেকে সারসংক্ষেপে
+
+এতক্ষণ প্রতিটা query আলাদা আলাদা row ফেরত দিয়েছে। প্রায়ই আপনি বদলে একটা _সারসংক্ষেপ_ চান: আমরা কতগুলো order শিপ করেছি? প্রতি customer-এ গড় order value কত? Aggregation অনেকগুলো row-কে একটায় গুটিয়ে এনে এসব উত্তর দেয়।
+
+আমরা একটা `orders` table ব্যবহার করব:
 
 | id  | customer_id | status    | amount | created_at |
 | --- | ----------- | --------- | ------ | ---------- |
@@ -24,17 +32,17 @@ We'll use an `orders` table:
 | 3   | 20          | cancelled | 80.00  | 2026-05-04 |
 | 4   | 20          | shipped   | 99.99  | 2026-05-06 |
 
-## Aggregate Functions
+## Aggregate Function
 
-An aggregate function takes a set of values and returns a single value:
+একটা aggregate function কতগুলো value-এর একটা set নেয় আর একটা মাত্র value ফেরত দেয়:
 
-| Function                | Returns                                |
-| ----------------------- | -------------------------------------- |
-| `COUNT(*)`              | Number of rows                         |
-| `COUNT(col)`            | Number of rows where `col` is not null |
-| `SUM(col)`              | Total of all values                    |
-| `AVG(col)`              | Mean                                   |
-| `MIN(col)` / `MAX(col)` | Smallest / largest value               |
+| Function                | যা ফেরত দেয়                          |
+| ----------------------- | ------------------------------------- |
+| `COUNT(*)`              | row-এর সংখ্যা                         |
+| `COUNT(col)`            | যেসব row-তে `col` null নয় তার সংখ্যা |
+| `SUM(col)`              | সব value-এর যোগফল                     |
+| `AVG(col)`              | গড়                                   |
+| `MIN(col)` / `MAX(col)` | সবচেয়ে ছোট / সবচেয়ে বড় value       |
 
 ```sql
 SELECT
@@ -45,17 +53,17 @@ SELECT
 FROM orders;
 ```
 
-This returns exactly one row summarizing the whole table.
+এটা পুরো table-এর সারসংক্ষেপ করা ঠিক একটা row ফেরত দেয়।
 
 <Callout type="info">
 
-**`COUNT(*)` vs `COUNT(col)`.** `COUNT(*)` counts rows regardless of nulls. `COUNT(col)` counts only rows where `col` is non-null — handy for "how many orders have a discount code". And `COUNT(DISTINCT col)` counts distinct non-null values, e.g. `COUNT(DISTINCT customer_id)` gives the number of unique customers.
+**`COUNT(*)` বনাম `COUNT(col)`।** `COUNT(*)` null-এর তোয়াক্কা না করে row গোনে। `COUNT(col)` শুধু সেসব row গোনে যেখানে `col` non-null — "কতগুলো order-এ discount code আছে" জাতীয় কাজের জন্য সুবিধাজনক। আর `COUNT(DISTINCT col)` আলাদা non-null value গোনে, যেমন `COUNT(DISTINCT customer_id)` unique customer-এর সংখ্যা দেয়।
 
 </Callout>
 
-## GROUP BY: Aggregating Per Category
+## GROUP BY: প্রতি Category-তে Aggregate করা
 
-A single grand total is rarely enough — you usually want one summary _per group_. `GROUP BY` splits rows into buckets and runs the aggregate within each:
+একটা মাত্র সর্বমোট যোগফল খুব কমই যথেষ্ট — আপনি সাধারণত _প্রতি group-এ_ একটা করে সারসংক্ষেপ চান। `GROUP BY` row-গুলোকে bucket-এ ভাগ করে আর প্রতিটার ভেতরে aggregate চালায়:
 
 ```sql
 SELECT
@@ -66,14 +74,14 @@ FROM orders
 GROUP BY customer_id;
 ```
 
-Result:
+ফলাফল:
 
 | customer_id | order_count | total_spent |
 | ----------- | ----------- | ----------- |
 | 10          | 2           | 61.50       |
 | 20          | 2           | 179.99      |
 
-The rule that catches everyone: **every column in the `SELECT` list must either be inside an aggregate function or named in the `GROUP BY`.** Otherwise the database can't decide which value to show, since a group has many rows. This fails:
+যে নিয়মটা সবাইকে ধরে ফেলে: **`SELECT` তালিকার প্রতিটা column হয় কোনো aggregate function-এর ভেতরে থাকতে হবে, নয়তো `GROUP BY`-তে নাম থাকতে হবে।** নাহলে database ঠিক করতে পারে না কোন value দেখাবে, কারণ একটা group-এ অনেক row থাকে। এটা fail করে:
 
 ```sql
 SELECT customer_id, status, SUM(amount)
@@ -81,7 +89,7 @@ FROM orders
 GROUP BY customer_id;   -- ERROR: status must appear in GROUP BY
 ```
 
-You can group by multiple columns to make finer buckets:
+আরও সূক্ষ্ম bucket বানাতে আপনি একাধিক column দিয়ে group করতে পারেন:
 
 ```sql
 SELECT customer_id, status, SUM(amount) AS total
@@ -89,9 +97,9 @@ FROM orders
 GROUP BY customer_id, status;
 ```
 
-## HAVING vs WHERE
+## HAVING বনাম WHERE
 
-You can't filter on an aggregate with `WHERE`, because `WHERE` runs _before_ grouping happens — at that point the aggregate doesn't exist yet. `HAVING` is the filter that applies _after_ grouping:
+আপনি `WHERE` দিয়ে কোনো aggregate-এর ওপর filter করতে পারবেন না, কারণ `WHERE` grouping হওয়ার _আগে_ চলে — ওই মুহূর্তে aggregate-টা এখনো অস্তিত্বেই নেই। `HAVING` হলো সেই filter যা grouping-এর _পরে_ প্রযোজ্য হয়:
 
 ```sql
 SELECT customer_id, SUM(amount) AS total
@@ -101,21 +109,21 @@ GROUP BY customer_id
 HAVING SUM(amount) > 50;        -- filter groups AFTER aggregating
 ```
 
-Read it as a pipeline:
+এটাকে একটা pipeline হিসেবে পড়ুন:
 
-1. `WHERE status = 'shipped'` throws away cancelled orders, row by row.
-2. `GROUP BY customer_id` buckets the survivors.
-3. `HAVING SUM(amount) > 50` discards whole groups whose total is too small.
+1. `WHERE status = 'shipped'` cancelled order-গুলোকে row ধরে ধরে বাদ দেয়।
+2. `GROUP BY customer_id` বেঁচে যাওয়াগুলোকে bucket-এ ভাগ করে।
+3. `HAVING SUM(amount) > 50` যেসব group-এর total খুব ছোট সেগুলো পুরো বাদ দেয়।
 
 <Callout type="tip">
 
-**Put the cheap filter in `WHERE`.** Filtering rows early (in `WHERE`) means fewer rows to group and aggregate, which is faster. Reserve `HAVING` for conditions that genuinely depend on an aggregate value. Writing `WHERE amount > 50` and `HAVING amount > 50` mean very different things.
+**সস্তা filter-টা `WHERE`-এ রাখুন।** আগেভাগে row filter করা (`WHERE`-এ) মানে group ও aggregate করার জন্য কম row, যা দ্রুততর। `HAVING` রাখুন সেসব শর্তের জন্য যেগুলো সত্যিই কোনো aggregate value-এর ওপর নির্ভর করে। `WHERE amount > 50` আর `HAVING amount > 50` লেখা একেবারেই আলাদা জিনিস বোঝায়।
 
 </Callout>
 
-## The Logical Order of Execution
+## Execution-এর Logical ক্রম
 
-SQL clauses are _written_ in one order but _evaluated_ in another. Understanding the logical order explains nearly every "why can't I reference that alias here?" question. The engine conceptually processes a query like this:
+SQL-এর clause-গুলো এক ক্রমে _লেখা_ হয় কিন্তু আরেক ক্রমে _মূল্যায়ন_ হয়। এই logical ক্রম বোঝাটা "এখানে ওই alias কেন রেফার করতে পারছি না?" জাতীয় প্রায় প্রতিটা প্রশ্নের ব্যাখ্যা দেয়। engine ধারণাগতভাবে একটা query-কে এভাবে process করে:
 
 ```text
 1. FROM      — pick the source tables, resolve joins
@@ -128,27 +136,27 @@ SQL clauses are _written_ in one order but _evaluated_ in another. Understanding
 8. LIMIT     — keep only the first N rows
 ```
 
-Two consequences fall out of this:
+এর থেকে দুটো ফলাফল বেরিয়ে আসে:
 
-- **You can't use a `SELECT` alias in `WHERE` or `GROUP BY`**, because `SELECT` runs _after_ them. The alias doesn't exist yet.
+- **আপনি `WHERE` বা `GROUP BY`-তে কোনো `SELECT` alias ব্যবহার করতে পারবেন না**, কারণ `SELECT` সেগুলোর _পরে_ চলে। alias-টা তখনো অস্তিত্বেই নেই।
 
   ```sql
   SELECT amount * 0.9 AS discounted FROM orders
   WHERE discounted > 40;   -- ERROR: "discounted" unknown here
   ```
 
-- **You _can_ use a `SELECT` alias in `ORDER BY`**, since sorting happens last:
+- **আপনি `ORDER BY`-তে একটা `SELECT` alias ব্যবহার _করতে পারেন_**, যেহেতু sort করা সবার শেষে হয়:
 
   ```sql
   SELECT amount * 0.9 AS discounted FROM orders
   ORDER BY discounted DESC;   -- works fine
   ```
 
-(PostgreSQL is lenient and also allows aliases in `GROUP BY` as a convenience, but the logical model above is the portable mental picture.)
+(PostgreSQL সহনশীল আর সুবিধার্থে `GROUP BY`-তেও alias ব্যবহার করতে দেয়, তবে ওপরের logical মডেলটাই হলো পোর্টেবল মানসিক ছবি।)
 
-## Putting It Together
+## সব একসাথে জোড়া লাগানো
 
-A realistic aggregation query touches most of these clauses at once:
+একটা বাস্তবসম্মত aggregation query একসাথে এই clause-গুলোর প্রায় সবগুলোকেই ছুঁয়ে যায়:
 
 ```sql
 SELECT
@@ -164,8 +172,8 @@ ORDER BY revenue DESC
 LIMIT 10;
 ```
 
-This reads as: of the shipped orders, group by customer, keep customers who spent more than 50, and show the top 10 by revenue. That single statement replaces what would be dozens of lines of imperative code — the declarative payoff of SQL.
+এটা পড়া যায় এভাবে: shipped order-গুলোর মধ্যে, customer ধরে group করো, যারা 50-এর বেশি খরচ করেছে তাদের রাখো, আর revenue অনুযায়ী শীর্ষ 10 দেখাও। ওই একটা statement যা প্রতিস্থাপন করে তা হবে কয়েক ডজন লাইনের imperative code — এটাই SQL-এর declarative প্রতিদান।
 
 ## Recap
 
-Aggregates collapse rows; `GROUP BY` does it per category; `HAVING` filters the resulting groups while `WHERE` filters the input rows. Internalize the logical execution order and most surprising errors stop being surprising. Next we connect multiple tables together with joins.
+Aggregate row গুটিয়ে আনে; `GROUP BY` সেটা প্রতি category-তে করে; `HAVING` ফলাফলের group-গুলো filter করে আর `WHERE` input row filter করে। logical execution ক্রমটা আত্মস্থ করে নিন, তাহলে বেশিরভাগ চমকপ্রদ error আর চমক থাকবে না। এরপর আমরা join দিয়ে একাধিক table একসাথে জুড়ব।

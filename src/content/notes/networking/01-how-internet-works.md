@@ -1,9 +1,9 @@
 ---
-title: 'How the Internet Works'
-subtitle: 'Packets, routers, and the physical infrastructure that connects billions of devices — the big picture before diving into protocols.'
+title: 'ইন্টারনেট কীভাবে কাজ করে'
+subtitle: 'প্যাকেট, রাউটার, আর যে ফিজিক্যাল ইনফ্রাস্ট্রাকচার কোটি কোটি ডিভাইসকে যুক্ত করে — প্রোটোকলে ঢোকার আগে বড় ছবিটা।'
 chapter: 1
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['internet', 'packets', 'routers', 'ISP']
 ---
 
@@ -11,23 +11,31 @@ topics: ['internet', 'packets', 'routers', 'ISP']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Internet is a Network of Networks
+## গল্পে বুঝি
 
-The internet isn't one thing — it's thousands of independent networks (ISPs, universities, companies, data centers) that agree to pass traffic between each other. When you load a webpage, your request might cross 10-20 different networks before reaching the server.
+ঢাকার আল-খোয়ারিজমি কুরিয়ারে করে চট্টগ্রামে ফাতিমা আল-ফিহরির দোকানে একগাদা মালামাল পাঠাবে — এক কার্টনে ধরে না। তাই কুরিয়ার অফিস মালটা ভেঙে অনেকগুলো আলাদা প্যাকেটে ভরে, আর প্রতিটা প্যাকেটের গায়ে একই ঠিকানা সেঁটে দেয়: প্রেরক আল-খোয়ারিজমি, ঢাকা; প্রাপক ফাতিমা আল-ফিহরি, চট্টগ্রাম। এক ট্রাকে সব যায় না, তাই প্যাকেটগুলো আলাদা আলাদাভাবে রওনা দেয়।
+
+প্রতিটা প্যাকেট প্রথমে ঢাকার লোকাল হাবে যায়। সেখানকার লোক পুরো রাস্তা চেনে না — সে শুধু ঠিকানা দেখে ঠিক করে পরের হাব কোনটা হবে, আর সেদিকে ঠেলে দেয়। এভাবে কুমিল্লা হাব, ফেনী হাব — হাব থেকে হাবে হাত বদল হতে হতে প্যাকেট চট্টগ্রামের দিকে এগোয়। রাস্তায় জ্যাম থাকলে কোনো প্যাকেট হয়তো অন্য রুটে ঘুরে যায়, তাই সবগুলো একই পথে বা একই সময়ে পৌঁছায় না। শেষে ফাতিমা আল-ফিহরির দোকানে সব প্যাকেট জমা হলে সে ঠিকানার আর সিরিয়াল নম্বর মিলিয়ে আবার পুরো মালটা সাজিয়ে নেয়।
+
+এই গল্পটাই আসলে ইন্টারনেট। বড় ডেটাটা ভেঙে ছোট ছোট **packet** বানানো হয়, প্রতিটার হেডারে থাকে সোর্স আর ডেস্টিনেশন **IP address** (আল-খোয়ারিজমি-ফাতিমা আল-ফিহরির ঠিকানার মতো)। কুরিয়ার হাবগুলোই হলো **router** — প্রতিটা শুধু পরের হপ ঠিক করে, পুরো পথ কেউ জানে না, এটাই hop-by-hop **routing**। আলাদা আলাদা **network** পার হয়ে প্যাকেট ভিন্ন রুটে, এলোমেলো ক্রমে পৌঁছাতে পারে, আর গন্তব্যে গিয়ে sequence number মিলিয়ে আবার **reassemble** হয়। বাস্তবে আপনি যখন একটা ভিডিও লোড করেন, সেটাও এভাবেই হাজারো প্যাকেটে ভেঙে ১০-২০টা নেটওয়ার্ক পেরিয়ে আপনার ফোনে এসে আবার জোড়া লাগে।
+
+## ইন্টারনেট হলো নেটওয়ার্কের নেটওয়ার্ক
+
+ইন্টারনেট একটা কোনো একক জিনিস নয় — এটা হাজার হাজার স্বাধীন নেটওয়ার্ক (ISP, বিশ্ববিদ্যালয়, কোম্পানি, ডেটা সেন্টার) যারা নিজেদের মধ্যে ট্রাফিক পাস করতে রাজি হয়। আপনি যখন একটা ওয়েবপেজ লোড করেন, তখন সার্ভারে পৌঁছানোর আগে আপনার রিকোয়েস্ট হয়তো ১০-২০টা আলাদা নেটওয়ার্ক পার হয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like the postal system — your letter (packet) goes from your local post office (ISP) through regional sorting centers (routers) to the destination. Each sorting center only knows the next stop, not the full route.
+অনেকটা ডাক ব্যবস্থার মতো — আপনার চিঠি (প্যাকেট) আপনার লোকাল পোস্ট অফিস (ISP) থেকে রিজিওনাল সর্টিং সেন্টার (রাউটার) হয়ে গন্তব্যে যায়। প্রতিটা সর্টিং সেন্টার শুধু পরের গন্তব্যটা জানে, পুরো রুট নয়।
 
 </Callout>
 
-## Packets: The Fundamental Unit
+## প্যাকেট: মৌলিক একক
 
-Data on the internet travels as **packets** — small chunks (typically 1,500 bytes max) with a header containing source/destination addresses and a payload containing your actual data.
+ইন্টারনেটে ডেটা **প্যাকেট** হিসেবে চলে — ছোট ছোট টুকরো (সাধারণত সর্বোচ্চ 1,500 বাইট) যার একটা হেডারে থাকে সোর্স/ডেস্টিনেশন অ্যাড্রেস আর একটা পেলোডে থাকে আপনার আসল ডেটা।
 
-Why packets instead of a continuous stream? Because sharing is efficient. A single wire can carry packets from millions of conversations simultaneously — each packet finds its own way to the destination.
+অবিচ্ছিন্ন স্ট্রিমের বদলে প্যাকেট কেন? কারণ শেয়ার করাটা এফিশিয়েন্ট। একটা তারই একসাথে লক্ষ লক্ষ কথোপকথনের প্যাকেট বহন করতে পারে — প্রতিটা প্যাকেট নিজের পথ ধরে গন্তব্যে পৌঁছায়।
 
 ```typescript
 // Conceptual model of a packet
@@ -43,20 +51,20 @@ interface Packet {
 }
 ```
 
-## How a Request Travels
+## একটা রিকোয়েস্ট কীভাবে ভ্রমণ করে
 
-When you type `example.com` in your browser, here's what happens at the network level:
+আপনি যখন ব্রাউজারে `example.com` টাইপ করেন, নেটওয়ার্ক লেভেলে যা ঘটে:
 
-1. **DNS resolution** — your browser asks "what IP address is example.com?" (covered in Chapter 2)
-2. **TCP handshake** — your machine and the server exchange 3 packets to establish a connection (Chapter 3)
-3. **TLS handshake** — if HTTPS, another few packets to negotiate encryption (Chapter 5)
-4. **HTTP request** — your browser sends the actual request
-5. **Routing** — each packet hops through routers, each one deciding the next hop
-6. **Response** — the server sends back data, potentially as many packets
+1. **DNS resolution** — আপনার ব্রাউজার জিজ্ঞেস করে "example.com-এর IP address কী?" (অধ্যায় ২-এ আলোচনা করা হয়েছে)
+2. **TCP handshake** — কানেকশন প্রতিষ্ঠা করতে আপনার মেশিন আর সার্ভার ৩টা প্যাকেট আদান-প্রদান করে (অধ্যায় ৩)
+3. **TLS handshake** — HTTPS হলে, এনক্রিপশন ঠিক করতে আরও কয়েকটা প্যাকেট (অধ্যায় ৫)
+4. **HTTP request** — আপনার ব্রাউজার আসল রিকোয়েস্টটা পাঠায়
+5. **Routing** — প্রতিটা প্যাকেট রাউটার হয়ে হপ করে, প্রতিটা রাউটার পরের হপ ঠিক করে
+6. **Response** — সার্ভার ডেটা ফেরত পাঠায়, সম্ভবত অনেকগুলো প্যাকেট হিসেবে
 
-## Routers and Routing
+## রাউটার আর রাউটিং
 
-Each router has a **routing table** — a lookup table that maps destination IP ranges to the next router to forward to. Routers don't know the full path, they just know the best next hop.
+প্রতিটা রাউটারের একটা **routing table** থাকে — একটা লুকআপ টেবিল যা ডেস্টিনেশন IP রেঞ্জকে পরের যে রাউটারে ফরওয়ার্ড করতে হবে তার সাথে ম্যাপ করে। রাউটার পুরো পথ জানে না, শুধু সেরা পরের হপটা জানে।
 
 ```typescript
 // Simplified routing table
@@ -80,18 +88,18 @@ function route(destinationIP: string): string {
 
 <Callout type="info">
 
-**Traceroute** shows you the actual path packets take. Run `traceroute google.com` in your terminal to see every router hop between you and Google's servers.
+**Traceroute** আপনাকে দেখায় প্যাকেট আসলে কোন পথ নেয়। আপনার আর Google-এর সার্ভারের মধ্যে প্রতিটা রাউটার হপ দেখতে টার্মিনালে `traceroute google.com` চালান।
 
 </Callout>
 
-## IP Addresses
+## IP অ্যাড্রেস
 
-Every device on the internet needs an address. IPv4 addresses are 32-bit numbers written as four octets: `192.168.1.1`. There are only ~4.3 billion possible IPv4 addresses — not enough for every device on earth.
+ইন্টারনেটের প্রতিটা ডিভাইসের একটা অ্যাড্রেস দরকার। IPv4 অ্যাড্রেস হলো 32-bit সংখ্যা, চারটা অক্টেট হিসেবে লেখা: `192.168.1.1`। সম্ভাব্য IPv4 অ্যাড্রেস আছে মাত্র ~4.3 বিলিয়ন — পৃথিবীর প্রতিটা ডিভাইসের জন্য যথেষ্ট নয়।
 
-Solutions:
+সমাধান:
 
-- **NAT (Network Address Translation)** — many devices share one public IP, using port numbers to distinguish them
-- **IPv6** — 128-bit addresses (`2001:0db8:85a3::8a2e:0370:7334`), enough for trillions of devices
+- **NAT (Network Address Translation)** — অনেক ডিভাইস একটা পাবলিক IP শেয়ার করে, তাদের আলাদা করতে port নম্বর ব্যবহার করে
+- **IPv6** — 128-bit অ্যাড্রেস (`2001:0db8:85a3::8a2e:0370:7334`), ট্রিলিয়ন ট্রিলিয়ন ডিভাইসের জন্য যথেষ্ট
 
 ```typescript
 // IPv4 is just a 32-bit number
@@ -103,23 +111,23 @@ function ipToNumber(ip: string): number {
 console.log(ipToNumber('192.168.1.1'));
 ```
 
-## The OSI Model (Simplified)
+## OSI মডেল (সরলীকৃত)
 
-Networking is built in layers. Each layer handles one concern:
+নেটওয়ার্কিং লেয়ারে লেয়ারে তৈরি। প্রতিটা লেয়ার একটা করে বিষয় সামলায়:
 
-| Layer | Name        | What it does         | Example            |
-| ----- | ----------- | -------------------- | ------------------ |
-| 7     | Application | Your app's protocol  | HTTP, WebSocket    |
-| 4     | Transport   | Reliable delivery    | TCP, UDP           |
-| 3     | Network     | Addressing & routing | IP                 |
-| 2     | Data Link   | Local network frames | Ethernet, WiFi     |
-| 1     | Physical    | Bits on a wire       | Fiber optic, radio |
+| Layer | Name        | কী করে                 | উদাহরণ             |
+| ----- | ----------- | ---------------------- | ------------------ |
+| 7     | Application | আপনার অ্যাপের প্রোটোকল | HTTP, WebSocket    |
+| 4     | Transport   | নির্ভরযোগ্য ডেলিভারি   | TCP, UDP           |
+| 3     | Network     | অ্যাড্রেসিং ও রাউটিং   | IP                 |
+| 2     | Data Link   | লোকাল নেটওয়ার্ক ফ্রেম | Ethernet, WiFi     |
+| 1     | Physical    | তারের উপর bit          | Fiber optic, radio |
 
-Each layer wraps the layer above it. An HTTP message goes inside a TCP segment, inside an IP packet, inside an Ethernet frame, onto a wire.
+প্রতিটা লেয়ার তার উপরের লেয়ারটাকে মুড়ে রাখে। একটা HTTP মেসেজ ঢোকে একটা TCP segment-এর ভেতর, সেটা ঢোকে একটা IP প্যাকেটের ভেতর, সেটা ঢোকে একটা Ethernet frame-এর ভেতর, তারপর তারে।
 
-## Key Takeaways
+## মূল বিষয়গুলো
 
-1. **The internet is a network of networks** — packets hop through routers across independent networks
-2. **Packets are small, independent units** — they can take different paths and arrive out of order
-3. **Routers only know the next hop** — no single device knows the full path
-4. **Layers separate concerns** — each protocol handles one job and builds on the layer below
+1. **ইন্টারনেট হলো নেটওয়ার্কের নেটওয়ার্ক** — প্যাকেট স্বাধীন নেটওয়ার্কজুড়ে রাউটার হয়ে হপ করে
+2. **প্যাকেট ছোট, স্বাধীন একক** — তারা আলাদা আলাদা পথ নিতে পারে আর এলোমেলো ক্রমে পৌঁছাতে পারে
+3. **রাউটার শুধু পরের হপ জানে** — কোনো একক ডিভাইস পুরো পথ জানে না
+4. **লেয়ার বিষয়গুলো আলাদা করে** — প্রতিটা প্রোটোকল একটা কাজ সামলায় আর নিচের লেয়ারের উপর তৈরি হয়

@@ -1,9 +1,9 @@
 ---
 title: 'RabbitMQ'
-subtitle: 'Exchanges, queues, bindings, dead letter exchanges — the AMQP model and how to use it for reliable task processing.'
+subtitle: 'Exchanges, queues, bindings, dead letter exchange — AMQP model আর নির্ভরযোগ্য task processing-এ এটা কীভাবে ব্যবহার করবেন।'
 chapter: 2
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['RabbitMQ', 'AMQP', 'exchanges', 'queues', 'dead letter', 'acknowledgements']
 ---
 
@@ -11,55 +11,63 @@ topics: ['RabbitMQ', 'AMQP', 'exchanges', 'queues', 'dead letter', 'acknowledgem
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বাগদাদের বড় ডাকঘরে সকাল থেকেই মানুষজন চিঠি জমা দিতে ভিড় করে। কেউ সরাসরি কোনো পিয়নের হাতে চিঠি গুঁজে দেয় না — সব চিঠি গিয়ে জমা হয় প্রধান সর্টার আল-খোয়ারিজমির টেবিলে। তিনি প্রতিটি চিঠির খামের ঠিকানার লেবেল পড়েন, আর তার সামনের দেয়ালে সাজানো অনেকগুলো পিজিয়ন-হোলের মধ্যে ঠিক কোনটায় সেটা ফেলতে হবে তা নিয়ম দেখে বুঝে নেন। "কর্ডোভা" লেবেল দেখলে চিঠি যায় একটা নির্দিষ্ট হোলে; আবার "সবাইকে জানাও" লেবেলের নোটিশ পেলে তিনি সেটার কয়েকটা কপি বানিয়ে একসাথে অনেকগুলো হোলে ফেলে দেন।
+
+প্রাপকরা — ইবনে সিনা, ফাতিমা আল-ফিহরি — নিজেদের হোল থেকে চিঠি তোলেন, কিন্তু এখানে একটা নিয়ম আছে: চিঠি তোলার সময় খাতায় সই না করা পর্যন্ত সেটা "বিতরণ হয়ে গেছে" বলে গণ্য হয় না। কেউ চিঠি হাতে নিয়েও যদি সই না করে হুট করে চলে যায়, চিঠিটা হোলেই থেকে যায় — পরে আরেকজন এসে সেটা তুলতে পারে। কোনো চিঠিই সইয়ের আগে হারিয়ে যায় না।
+
+এই গল্পটাই RabbitMQ। প্রধান সর্টার আল-খোয়ারিজমি হলো **exchange** — producer সরাসরি queue-তে না দিয়ে সবকিছু এখানেই জমা দেয়। খামের ঠিকানার লেবেল হলো **routing key**, আর "কোন লেবেল কোন হোলে যাবে" সেই নিয়মটা হলো **binding**। প্রতিটা পিজিয়ন-হোল একেকটা **queue**। আর সই না করা পর্যন্ত চিঠি বিতরণ-সম্পূর্ণ না ধরাটাই **ack** (acknowledgement) — consumer কাজ শেষ করে ack না দিলে RabbitMQ মেসেজটা মুছে ফেলে না, বরং আবার আরেক consumer-কে দেয়। বাস্তবে ঠিক এভাবেই একটা মেসেজ processing-এর মাঝপথে consumer ক্র্যাশ করলেও কাজটা হারিয়ে যায় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A post office with sorting departments: mail arrives at the post office (exchange), is sorted by type or destination (routing key), and placed in the right mailbox (queue) for the recipient (consumer) to collect. The DLX is the unclaimed mail department — messages that couldn't be delivered sit there until someone deals with them.
+সর্টিং বিভাগসহ একটা পোস্ট অফিস: চিঠি পোস্ট অফিসে (exchange) এসে পৌঁছায়, ধরন বা গন্তব্য অনুযায়ী সর্ট করা হয় (routing key), আর প্রাপকের (consumer) তুলে নেওয়ার জন্য সঠিক মেইলবক্সে (queue) রাখা হয়। DLX হলো অবিতরণকৃত ডাক বিভাগ — যেসব মেসেজ deliver করা যায়নি সেগুলো ওখানে পড়ে থাকে যতক্ষণ না কেউ সেগুলো সামলায়।
 
 </Callout>
 
-## The AMQP Model
+## AMQP Model
 
-RabbitMQ's routing model has three layers:
+RabbitMQ-এর routing model-এ তিনটা স্তর আছে:
 
 ```
 Producer → Exchange → Binding → Queue → Consumer
 ```
 
-- **Exchange:** Receives messages from producers. Decides which queues to route to.
-- **Binding:** Rule connecting an exchange to a queue (with optional routing key).
-- **Queue:** Buffer where messages wait for consumers.
+- **Exchange:** Producer-দের কাছ থেকে মেসেজ পায়। কোন queue-তে route করবে তা ঠিক করে।
+- **Binding:** একটা exchange-কে একটা queue-এর সাথে যুক্ত করার নিয়ম (ঐচ্ছিক routing key সহ)।
+- **Queue:** buffer যেখানে মেসেজ consumer-এর জন্য অপেক্ষা করে।
 
-Producers never publish directly to queues — they publish to exchanges.
+Producer কখনো সরাসরি queue-তে publish করে না — তারা exchange-এ publish করে।
 
-## Exchange Types
+## Exchange Type
 
-**Direct:** Routes to queues where the binding key exactly matches the routing key.
+**Direct:** সেসব queue-তে route করে যেখানে binding key ঠিক routing key-এর সাথে মেলে।
 
 ```
 Exchange (direct) → binding key "orders" → orders-queue
                   → binding key "emails" → email-queue
 ```
 
-**Fanout:** Routes to all bound queues, ignoring the routing key.
+**Fanout:** routing key উপেক্ষা করে সব bound queue-তে route করে।
 
 ```
 Exchange (fanout) → all bound queues get a copy
 ```
 
-**Topic:** Routes using wildcard patterns.
+**Topic:** wildcard pattern দিয়ে route করে।
 
 ```
 Exchange (topic) → binding "orders.#" → matches orders.created, orders.cancelled
                  → binding "*.created" → matches orders.created, users.created
 ```
 
-`*` matches one word. `#` matches zero or more words.
+`*` একটা word মেলায়। `#` শূন্য বা একাধিক word মেলায়।
 
-**Headers:** Routes based on message headers instead of routing key (rarely used).
+**Headers:** routing key-এর বদলে message header-এর ভিত্তিতে route করে (কদাচিৎ ব্যবহৃত)।
 
-## Setting Up RabbitMQ
+## RabbitMQ Setup করা
 
 ```bash
 # Docker for local dev
@@ -74,7 +82,7 @@ docker run -d \
 # Management UI: http://localhost:15672
 ```
 
-Production setup (self-hosted):
+Production setup (সেলফ-হোস্টেড):
 
 ```bash
 # Install on Ubuntu
@@ -89,7 +97,7 @@ rabbitmqctl set_user_tags myapp administrator
 rabbitmqctl set_permissions -p / myapp ".*" ".*" ".*"
 ```
 
-## Publishing and Consuming (amqplib)
+## Publish আর Consume করা (amqplib)
 
 ```typescript
 import amqp from 'amqplib';
@@ -156,13 +164,13 @@ async function startConsumer() {
 }
 ```
 
-## Dead Letter Exchanges
+## Dead Letter Exchange
 
-Messages move to a DLX when:
+মেসেজ DLX-এ চলে যায় যখন:
 
-- `nack`'d with `requeue=false`
-- TTL expires
-- Queue length limit exceeded
+- `requeue=false` সহ `nack` করা হয়
+- TTL শেষ হয়
+- Queue length limit ছাড়িয়ে যায়
 
 ```typescript
 // Setup DLX
@@ -180,9 +188,9 @@ await ch.assertQueue('order-processing', {
 });
 ```
 
-Dead letter queue is where you investigate failures — inspect messages, fix the bug, replay.
+Dead letter queue হলো যেখানে আপনি failure তদন্ত করেন — মেসেজ পরীক্ষা করেন, bug ঠিক করেন, replay করেন।
 
-**Replay from DLX:**
+**DLX থেকে Replay:**
 
 ```typescript
 // Move DLX messages back to main queue (after fixing the bug)
@@ -197,9 +205,9 @@ ch.consume('orders.dead', async (msg) => {
 });
 ```
 
-## Retry with Exponential Backoff
+## Exponential Backoff সহ Retry
 
-Use per-attempt queues with TTL to implement delays:
+delay বানানোর জন্য TTL সহ per-attempt queue ব্যবহার করুন:
 
 ```typescript
 async function setupRetryQueues(ch: Channel) {
@@ -245,7 +253,7 @@ async function retryWithDelay(ch: Channel, msg: Message, attempt: number) {
 
 ## RPC Pattern
 
-Request-reply over RabbitMQ:
+RabbitMQ-এর উপর request-reply:
 
 ```typescript
 // Client
@@ -290,11 +298,11 @@ ch.consume('rpc-queue', async (msg) => {
 });
 ```
 
-Use this pattern sparingly — HTTP is simpler for synchronous request-reply. RPC over messaging is useful when the server is behind a firewall or you need load balancing across multiple server instances for free.
+এই pattern মিতব্যয়ীভাবে ব্যবহার করুন — synchronous request-reply-এর জন্য HTTP সহজতর। Messaging-এর উপর RPC তখন কাজে লাগে যখন server একটা firewall-এর পেছনে থাকে বা আপনার একাধিক server instance-এ বিনামূল্যে load balancing দরকার।
 
-## Clustering for HA
+## HA-র জন্য Clustering
 
-Single-node RabbitMQ is a single point of failure. Cluster with 3 nodes:
+Single-node RabbitMQ একটা single point of failure। ৩টা node দিয়ে cluster করুন:
 
 ```bash
 # On node2 and node3, join node1
@@ -303,7 +311,7 @@ rabbitmqctl join_cluster rabbit@node1
 rabbitmqctl start_app
 ```
 
-**Quorum queues** (RabbitMQ 3.8+) — replicated across nodes, survive node failure:
+**Quorum queue** (RabbitMQ 3.8+) — node জুড়ে replicated, node failure-এও টিকে থাকে:
 
 ```typescript
 await ch.assertQueue('orders', {
@@ -314,12 +322,12 @@ await ch.assertQueue('orders', {
 });
 ```
 
-Classic queues (default) don't replicate — a node failure loses messages in that queue. Use quorum queues for any queue that matters.
+Classic queue (default) replicate করে না — একটা node fail করলে সেই queue-এর মেসেজ হারায়। যেকোনো গুরুত্বপূর্ণ queue-এর জন্য quorum queue ব্যবহার করুন।
 
-**Mirror policy** for classic queues (legacy):
+Classic queue-এর জন্য **Mirror policy** (legacy):
 
 ```bash
 rabbitmqctl set_policy ha-all ".*" '{"ha-mode":"all"}' --priority 0 --apply-to queues
 ```
 
-With 3 nodes and quorum queues: the cluster tolerates 1 node failure without data loss. For HA beyond that, you need 5 nodes.
+৩টা node আর quorum queue দিয়ে: cluster ডেটা হারানো ছাড়াই ১টা node failure সহ্য করে। এর বেশি HA-র জন্য আপনার ৫টা node লাগবে।

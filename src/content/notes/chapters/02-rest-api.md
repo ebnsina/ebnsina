@@ -1,9 +1,9 @@
 ---
-title: 'REST API Design'
-subtitle: 'Design and build a complete REST API with proper HTTP semantics, validation, pagination, and filtering.'
+title: 'REST API ডিজাইন'
+subtitle: 'সঠিক HTTP semantics, ভ্যালিডেশন, pagination আর filtering সহ একটি সম্পূর্ণ REST API ডিজাইন আর বানান।'
 chapter: 2
 level: 'beginner'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['REST', 'HTTP methods', 'pagination', 'validation', 'status codes']
 ---
 
@@ -13,21 +13,29 @@ topics: ['REST', 'HTTP methods', 'pagination', 'validation', 'status codes']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What is REST?
+## গল্পে বুঝি
 
-REST (Representational State Transfer) is an architectural style for designing APIs. It maps CRUD operations to HTTP methods and uses URLs to represent resources. The key constraint: every request must contain all information needed to process it — the server stores no client session state.
+আল-খোয়ারিজমির একটা ভাতের হোটেল, দেয়ালে ঝোলানো একটা ছাপানো মেনু — কী কী পদ আছে, প্রতিটার দাম, সব ফিক্সড। ইবনে সিনা গিয়ে বসল। প্রথমে জানতে চাইল আজ কাচ্চি আছে কিনা, ওয়েটার মেনু দেখিয়ে দিল — এটা নিছক দেখা, কিছু বদলায় না। তারপর ইবনে সিনা এক প্লেট কাচ্চির অর্ডার দিল, ওয়েটার নতুন একটা অর্ডার স্লিপ কাটল। খানিক পরে সে মত বদলে বলল, প্লেটটা দুই থেকে বাড়িয়ে তিন করে দাও — পুরনো অর্ডারটাই সে বদলে দিল, নতুন করে কিছু শুরু হলো না। শেষে ফাতিমা আল-ফিহরি ফোন করে বলল দেরি হবে, তখন ইবনে সিনা একটা অর্ডার একেবারে বাতিল করে দিল।
 
-Think of it like a library catalog system.
+ওয়েটার প্রতিবার পরিষ্কার জবাব দেয়। খাবার টেবিলে চলে এলে বলে "স্যার, সার্ভ করা হয়েছে"। মেনুতে নেই এমন পদ চাইলে বলে "দুঃখিত, এই আইটেম আমাদের নেই"। আর রান্নাঘরে গ্যাস শেষ বা বাবুর্চি নেই — এমন গোলমাল হলে বলে "ভেতরে একটু সমস্যা, একটু পরে আসুন"। গুরুত্বপূর্ণ ব্যাপার হলো, মেনুটা সবার সামনে টাঙানো — ইবনে সিনা, আল-খোয়ারিজমি, ওয়েটার সবাই জানে কী চাওয়া যায় আর কীভাবে চাইতে হয়। মেনু নিয়ে কারো আলাদা করে তর্ক করতে হয় না।
+
+গল্পটাই আসলে **REST API**। মেনুর পদগুলো হলো resource, আর তার সাথে কথা বলার নিয়মগুলোই হলো standard HTTP verb — পদ দেখা মানে **GET**, নতুন অর্ডার দেওয়া **POST**, অর্ডার বদলানো **PUT/PATCH**, বাতিল করা **DELETE**। ওয়েটারের জবাবগুলোই status code — "সার্ভ করা হয়েছে" মানে **200**, "এই আইটেম নেই" মানে **404**, "ভেতরে সমস্যা" মানে **500**। আর টাঙানো মেনুটাই হলো API contract — সবার মেনে নেওয়া একটা স্থির চুক্তি, যেটা দেখেই মোবাইল অ্যাপ বা ফ্রন্টএন্ড জানে কোন endpoint-এ কী verb পাঠালে কী রেসপন্স পাবে।
+
+## REST কী?
+
+REST (Representational State Transfer) হলো API ডিজাইনের একটা আর্কিটেকচারাল স্টাইল। এটা CRUD অপারেশনগুলোকে HTTP মেথডের সাথে ম্যাপ করে আর রিসোর্স রিপ্রেজেন্ট করতে URL ব্যবহার করে। মূল শর্ত: প্রতিটা রিকোয়েস্টে সেটা প্রসেস করার জন্য প্রয়োজনীয় সব তথ্য থাকতে হবে — সার্ভার কোনো ক্লায়েন্ট সেশন স্টেট রাখে না।
+
+এটাকে একটা লাইব্রেরি ক্যাটালগ সিস্টেমের মতো ভাবুন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a library catalog — each book (resource) has a unique call number (URL). You can check out (GET), donate (POST), update info (PUT), or remove (DELETE). The catalog doesn't remember you between visits — bring your card each time.
+একটা লাইব্রেরি ক্যাটালগের মতো — প্রতিটা বই (রিসোর্স)-এর একটা ইউনিক কল নাম্বার (URL) আছে। আপনি বই নিতে পারেন (GET), দান করতে পারেন (POST), তথ্য আপডেট করতে পারেন (PUT), বা সরাতে পারেন (DELETE)। ক্যাটালগ দুই ভিজিটের মাঝে আপনাকে মনে রাখে না — প্রতিবার আপনার কার্ড নিয়ে আসুন।
 
 </Callout>
 
-Each book (resource) has a unique call number (URL). You can check books out (GET), add new ones (POST), update information (PUT), or remove them (DELETE). The catalog doesn't remember who you are between visits — you bring your library card (auth token) each time.
+প্রতিটা বই (রিসোর্স)-এর একটা ইউনিক কল নাম্বার (URL) আছে। আপনি বই নিতে পারেন (GET), নতুন যোগ করতে পারেন (POST), তথ্য আপডেট করতে পারেন (PUT), বা সরাতে পারেন (DELETE)। ক্যাটালগ দুই ভিজিটের মাঝে আপনি কে সেটা মনে রাখে না — প্রতিবার আপনার লাইব্রেরি কার্ড (auth token) নিয়ে আসেন।
 
 <Mermaid
 title="REST Resource Mapping"
@@ -39,25 +47,25 @@ code={`graph LR
   E["DELETE /users/42"] --> E2["Delete user 42"]`}
 />
 
-## HTTP Status Codes That Matter
+## যে HTTP স্ট্যাটাস কোডগুলো গুরুত্বপূর্ণ
 
-| Code | Meaning           | When to Use                             |
-| ---- | ----------------- | --------------------------------------- |
-| 200  | OK                | Successful GET, PUT                     |
-| 201  | Created           | Successful POST that creates a resource |
-| 204  | No Content        | Successful DELETE                       |
-| 400  | Bad Request       | Invalid input, missing required fields  |
-| 401  | Unauthorized      | Missing or invalid auth                 |
-| 403  | Forbidden         | Valid auth but insufficient permissions |
-| 404  | Not Found         | Resource doesn't exist                  |
-| 409  | Conflict          | Duplicate resource, version conflict    |
-| 422  | Unprocessable     | Valid JSON but fails business rules     |
-| 429  | Too Many Requests | Rate limited                            |
-| 500  | Internal Error    | Unhandled server error                  |
+| কোড | অর্থ              | কখন ব্যবহার করবেন                           |
+| --- | ----------------- | ------------------------------------------- |
+| 200 | OK                | সফল GET, PUT                                |
+| 201 | Created           | সফল POST যা একটা রিসোর্স তৈরি করে           |
+| 204 | No Content        | সফল DELETE                                  |
+| 400 | Bad Request       | ভুল ইনপুট, প্রয়োজনীয় ফিল্ড মিসিং          |
+| 401 | Unauthorized      | auth মিসিং বা ভুল                           |
+| 403 | Forbidden         | auth ঠিক আছে কিন্তু পর্যাপ্ত permission নেই |
+| 404 | Not Found         | রিসোর্স নেই                                 |
+| 409 | Conflict          | ডুপ্লিকেট রিসোর্স, ভার্সন কনফ্লিক্ট         |
+| 422 | Unprocessable     | JSON ঠিক আছে কিন্তু বিজনেস রুল ফেল করে      |
+| 429 | Too Many Requests | রেট লিমিট করা হয়েছে                        |
+| 500 | Internal Error    | হ্যান্ডল না করা সার্ভার এরর                 |
 
-## Complete REST API with Pagination and Filtering
+## Pagination আর Filtering সহ সম্পূর্ণ REST API
 
-This is a production-grade REST API for a blog platform. It includes cursor-based pagination, field filtering, input validation, and proper error formatting.
+এটা একটা ব্লগ প্ল্যাটফর্মের জন্য প্রোডাকশন-গ্রেড REST API। এতে cursor-based pagination, field filtering, ইনপুট ভ্যালিডেশন আর সঠিক এরর ফরম্যাটিং আছে।
 
 <CodeTabs tsFile="api.ts" goFile="api.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -670,29 +678,29 @@ func main() {
 
 <Callout type="tip" title="Cursor vs Offset Pagination">
 
-Offset pagination (`?page=5&limit=20`) breaks when items are inserted or deleted between requests — users see duplicates or miss items. Cursor-based pagination (`?cursor=abc123&limit=20`) uses the last item's ID as a bookmark, making it stable even with concurrent writes. This is why Twitter, Slack, and Facebook all use cursor-based pagination.
+Offset pagination (`?page=5&limit=20`) ভেঙে পড়ে যখন রিকোয়েস্টের মাঝে আইটেম যোগ বা মুছে ফেলা হয় — ইউজাররা ডুপ্লিকেট দেখে বা আইটেম মিস করে। Cursor-based pagination (`?cursor=abc123&limit=20`) শেষ আইটেমের ID কে একটা বুকমার্ক হিসেবে ব্যবহার করে, ফলে কনকারেন্ট রাইটের সময়েও এটা স্থির থাকে। এই কারণেই Twitter, Slack আর Facebook সবাই cursor-based pagination ব্যবহার করে।
 
 </Callout>
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Use nouns for URLs (`/posts`), not verbs (`/getPosts`) — let HTTP methods convey the action
-- Return proper status codes — `201` for created, `422` for validation failures, `204` for deletes
-- Cursor-based pagination is more reliable than offset pagination for mutable datasets
-- Always validate at the API boundary and return structured error messages with field names
-- Support both ID and slug lookups — IDs for internal use, slugs for human-readable URLs
+- URL-এর জন্য noun ব্যবহার করুন (`/posts`), verb নয় (`/getPosts`) — অ্যাকশন বোঝানোর কাজটা HTTP মেথডের হাতে ছেড়ে দিন
+- সঠিক স্ট্যাটাস কোড ফেরত দিন — তৈরির জন্য `201`, ভ্যালিডেশন ফেলের জন্য `422`, ডিলিটের জন্য `204`
+- পরিবর্তনশীল ডেটাসেটের জন্য cursor-based pagination offset pagination-এর চেয়ে বেশি নির্ভরযোগ্য
+- সবসময় API সীমানায় ভ্যালিডেট করুন আর ফিল্ড নাম সহ স্ট্রাকচার্ড এরর মেসেজ ফেরত দিন
+- ID আর slug — দুটো দিয়েই lookup সাপোর্ট করুন — ID অভ্যন্তরীণ ব্যবহারের জন্য, slug মানুষের পড়ার উপযোগী URL-এর জন্য
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **GitHub REST API** uses cursor-based pagination with `Link` headers for navigation
-- **Stripe** returns structured validation errors with field-level detail, exactly like our implementation
-- **Shopify** uses both ID and slug for resource lookups, enabling clean URLs for merchants
-- REST works best for CRUD-heavy apps. For real-time or graph-shaped data, consider GraphQL or WebSockets
+- **GitHub REST API** নেভিগেশনের জন্য `Link` হেডার সহ cursor-based pagination ব্যবহার করে
+- **Stripe** ফিল্ড-লেভেল ডিটেইল সহ স্ট্রাকচার্ড ভ্যালিডেশন এরর ফেরত দেয়, ঠিক আমাদের implementation-এর মতো
+- **Shopify** রিসোর্স lookup-এর জন্য ID আর slug দুটোই ব্যবহার করে, যা মার্চেন্টদের জন্য পরিষ্কার URL দেয়
+- REST CRUD-নির্ভর অ্যাপের জন্য সবচেয়ে ভালো কাজ করে। রিয়েল-টাইম বা graph-আকৃতির ডেটার জন্য GraphQL বা WebSockets বিবেচনা করুন
 
 </div>

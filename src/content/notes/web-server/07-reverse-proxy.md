@@ -1,9 +1,9 @@
 ---
 title: 'Reverse Proxy'
-subtitle: 'nginx in front of your application server. The headers that matter, the timeouts that save you, and the upstream pool that handles failure.'
+subtitle: 'আপনার application server-এর সামনে nginx। যে header-গুলো গুরুত্বপূর্ণ, যে timeout আপনাকে বাঁচায়, আর যে upstream pool failure সামলায়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['reverse proxy', 'nginx', 'proxy_pass', 'upstream', 'headers']
 ---
 
@@ -11,9 +11,17 @@ topics: ['reverse proxy', 'nginx', 'proxy_pass', 'upstream', 'headers']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What a reverse proxy is
+## গল্পে বুঝি
 
-A reverse proxy is a server that accepts a client's request, forwards it to one of several backend servers, and returns the backend's response to the client. The client never knows the backend exists — from its point of view, nginx _is_ the server.
+ফাতিমা আল-ফিহরি একটা ব্যস্ত consultancy চালান, যেখানে পেছনের অফিসে বসেন কয়েকজন specialist — কেউ আইনের, কেউ হিসাবের, কেউ প্রকৌশলের। বাইরের কেউ কখনো সরাসরি তাঁদের কাছে পৌঁছাতে পারেন না। সব ফোন, সব চিঠি প্রথমে যায় ফাতিমার personal secretary ইবনে সিনার কাছে। কেউ ফোন করলে ইবনে সিনা শোনেন, তারপর নিজে থেকে সেই প্রশ্ন ভেতরে সঠিক specialist-এর কাছে পৌঁছে দেন, উত্তরটা নিয়ে ফিরে এসে কলকারীকে জানান। বাইরের লোকটা কখনো জানেই না ভেতরে আসলে কে কাজটা করল — তার কাছে ইবনে সিনাই যেন গোটা প্রতিষ্ঠান।
+
+ইবনে সিনা শুধু চিঠি এদিক-ওদিক করেন না। সন্দেহজনক কল হলে তিনি আগেই ছেঁকে বাদ দেন, ভেতরের কাউকে বিরক্ত করেন না। আর যে প্রশ্নগুলো রোজ ঘুরেফিরে আসে — "অফিস কখন খোলে", "ফি কত" — সেগুলোর তৈরি উত্তর তিনি নিজের ডেস্কেই রেখে দেন, ভেতরে গিয়ে জিজ্ঞেস করার দরকারই পড়ে না। কেউ আবার গোপন কথা বলতে চাইলে ইবনে সিনা লাইনটা নিরাপদে সামলান, তারপরই ভেতরে পাঠান।
+
+এই ইবনে সিনাই হলো **reverse proxy**। পেছনের হার্ড-টু-রিচ specialist-রা হলো আপনার **backend server** (upstream) — বাইরে থেকে কেউ সরাসরি তাদের ছুঁতে পারে না, secretary-র আড়ালেই তারা লুকানো ও সুরক্ষিত। প্রশ্ন ভেতরে **forward** করে উত্তর নিয়ে ফেরাটাই request/response proxy করা। নিরাপদ লাইনে কথা সামলানোটা **TLS termination**, আর রোজকার প্রশ্নের তৈরি উত্তর ডেস্কে রাখাটা **caching**। বাস্তবে ঠিক এভাবেই আপনার app server-গুলোর সামনে nginx বসে — client শুধু nginx-এর সাথে কথা বলে, nginx ভেতরের backend-এ request পৌঁছে দেয়, response ফেরত দেয়, আর backend-গুলোকে সরাসরি ইন্টারনেট থেকে আড়াল করে রাখে।
+
+## reverse proxy কী
+
+একটি reverse proxy হলো এমন একটি server যা একটি client-এর request গ্রহণ করে, সেটাকে একাধিক backend server-এর একটিতে forward করে, এবং backend-এর response client-কে ফেরত দেয়। client কখনো জানে না যে backend-এর অস্তিত্ব আছে — তার দৃষ্টিকোণ থেকে, nginx-ই _হলো_ server।
 
 ```text
    client  ──► nginx (:443) ──► your-app (:8080)
@@ -25,25 +33,25 @@ A reverse proxy is a server that accepts a client's request, forwards it to one 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A reverse proxy is like a receptionist who takes all incoming calls and routes them to the right department — callers never dial the engineers directly.
+একটি reverse proxy অনেকটা একজন রিসেপশনিস্টের মতো যে সমস্ত incoming call নেয় আর সেগুলোকে সঠিক ডিপার্টমেন্টে পাঠায় — কলকারীরা কখনো সরাসরি ইঞ্জিনিয়ারদের ডায়াল করে না।
 
 </Callout>
 
-You almost always want one. Reasons:
+আপনি প্রায় সবসময়ই একটা চান। কারণগুলো:
 
-- **TLS termination** — nginx handles HTTPS; your app speaks plain HTTP. Your app does not need to know about certificates.
-- **HTTP/2 and HTTP/3** — nginx exposes modern protocols to the client and translates down to HTTP/1.1 for the backend.
-- **Static asset offload** — nginx serves images, JS, CSS directly without bothering the backend.
-- **Caching** — nginx can cache backend responses (chapter 9) and serve them from RAM.
-- **Rate limiting and connection limits** — protect the backend from abuse.
-- **Multiple backends** — load-balance across multiple app servers, take one out of rotation when it fails.
-- **Single hostname for many services** — `/api/*` to one backend, `/admin/*` to another, static files served by nginx itself.
+- **TLS termination** — nginx HTTPS সামলায়; আপনার app সাধারণ HTTP বলে। আপনার app-এর certificate সম্পর্কে জানার দরকার নেই।
+- **HTTP/2 আর HTTP/3** — nginx client-এর কাছে আধুনিক protocol উন্মুক্ত করে আর backend-এর জন্য HTTP/1.1-এ নামিয়ে দেয়।
+- **Static asset offload** — nginx backend-কে বিরক্ত না করেই সরাসরি image, JS, CSS serve করে।
+- **Caching** — nginx backend response cache করতে পারে (chapter 9) আর RAM থেকে serve করতে পারে।
+- **Rate limiting আর connection limit** — backend-কে অপব্যবহার থেকে রক্ষা করা।
+- **একাধিক backend** — একাধিক app server-এর মধ্যে load-balance করা, একটা fail করলে rotation থেকে সরিয়ে নেওয়া।
+- **অনেক service-এর জন্য একটি hostname** — `/api/*` এক backend-এ, `/admin/*` আরেকটায়, static file nginx নিজেই serve করে।
 
-This chapter covers the simplest case: one nginx in front of one Go (or Node, or whatever) backend on the same machine.
+এই অধ্যায় সবচেয়ে সরল কেসটা কভার করে: একই মেশিনে একটা Go (বা Node, বা যা-ই হোক) backend-এর সামনে একটা nginx।
 
-## The simplest reverse proxy
+## সবচেয়ে সরল reverse proxy
 
 ```nginx
 server {
@@ -56,9 +64,9 @@ server {
 }
 ```
 
-That is the entire proxy. Every request to nginx is forwarded to `http://127.0.0.1:8080`. The backend's response goes back to the client.
+এটাই পুরো proxy। nginx-এ আসা প্রতিটি request `http://127.0.0.1:8080`-এ forward হয়। backend-এর response client-এর কাছে ফিরে যায়।
 
-Test:
+টেস্ট:
 
 ```bash
 # Start your app on :8080
@@ -69,11 +77,11 @@ curl -i http://example.com/
 # Should see your app's response
 ```
 
-This works, but it is missing the four important headers and the timeouts. Real configs add about ten more lines.
+এটা কাজ করে, কিন্তু এতে চারটি গুরুত্বপূর্ণ header আর timeout নেই। আসল config আরও প্রায় দশ লাইন যোগ করে।
 
-## The headers your backend actually needs
+## আপনার backend-এর আসলে যে header দরকার
 
-When nginx forwards a request, the backend sees nginx as the client — `127.0.0.1` as the source address, no idea what hostname the user typed, no idea whether the original was HTTP or HTTPS. To preserve that information, set headers explicitly:
+nginx যখন একটা request forward করে, backend nginx-কে client হিসেবে দেখে — source address হিসেবে `127.0.0.1`, ইউজার কোন hostname টাইপ করেছিল তার ধারণা নেই, মূলটা HTTP নাকি HTTPS ছিল তারও ধারণা নেই। সেই তথ্য সংরক্ষণ করতে, header-গুলো স্পষ্টভাবে সেট করুন:
 
 ```nginx
 proxy_set_header Host              $host;
@@ -84,25 +92,25 @@ proxy_set_header X-Forwarded-Host  $host;
 proxy_set_header X-Forwarded-Port  $server_port;
 ```
 
-What each does:
+প্রতিটা যা করে:
 
-- **Host** — the original `Host` header, so the backend knows which domain the user requested. Critical for multi-tenant apps.
-- **X-Real-IP** — the client's actual IP, so the backend can log it, rate-limit on it, geolocate it.
-- **X-Forwarded-For** — a chain of all proxies the request has traversed. nginx appends to whatever was already there.
-- **X-Forwarded-Proto** — `http` or `https`. Lets the backend know the original scheme even though the connection from nginx is HTTP.
-- **X-Forwarded-Host / Port** — original hostname and port if differing from `Host` (rare).
+- **Host** — মূল `Host` header, যাতে backend জানে ইউজার কোন domain request করেছিল। multi-tenant app-এর জন্য অত্যন্ত গুরুত্বপূর্ণ।
+- **X-Real-IP** — client-এর আসল IP, যাতে backend সেটা log করতে, তার ওপর rate-limit করতে, geolocate করতে পারে।
+- **X-Forwarded-For** — request যত proxy পার হয়েছে তার একটা chain। আগে যা ছিল তার সাথে nginx যোগ করে।
+- **X-Forwarded-Proto** — `http` বা `https`। nginx থেকে connection HTTP হলেও backend-কে মূল scheme জানায়।
+- **X-Forwarded-Host / Port** — মূল hostname আর port যদি `Host` থেকে ভিন্ন হয় (বিরল)।
 
-Most app frameworks have a "trust the proxy" mode that reads these headers — `app.set('trust proxy', 1)` in Express, `ProxyFix` in Flask, the `httputil.ReverseProxy` in Go.
+বেশিরভাগ app framework-এর একটা "trust the proxy" mode আছে যা এই header পড়ে — Express-এ `app.set('trust proxy', 1)`, Flask-এ `ProxyFix`, Go-তে `httputil.ReverseProxy`।
 
 <Callout type="warn">
 
-**Only trust these headers from your own proxy.**
+**এই header-গুলো কেবল আপনার নিজের proxy থেকে বিশ্বাস করুন।**
 
-A request arriving directly from the internet with a forged `X-Real-IP: 1.2.3.4` would let the attacker pretend to be that address. Either make sure the backend is not directly reachable (firewall it; bind to localhost) or configure the backend to only trust forwarded headers from known proxy IPs.
+সরাসরি ইন্টারনেট থেকে আসা একটা request যদি জাল করা `X-Real-IP: 1.2.3.4` নিয়ে আসে, তাহলে attacker সেই address হওয়ার ভান করতে পারবে। হয় নিশ্চিত করুন যে backend সরাসরি পৌঁছানো যায় না (firewall দিন; localhost-এ bind করুন), নয়তো backend-কে কনফিগার করুন যাতে সে কেবল পরিচিত proxy IP থেকে আসা forwarded header বিশ্বাস করে।
 
 </Callout>
 
-## A complete proxy server block
+## একটি সম্পূর্ণ proxy server block
 
 ```nginx
 upstream app_backend {
@@ -148,9 +156,9 @@ server {
 }
 ```
 
-That is everything you need for a production-ready single-backend proxy.
+একটা production-ready single-backend proxy-র জন্য যা যা দরকার সবই এটুকু।
 
-## upstream — pool of backends
+## upstream — backend-এর pool
 
 ```nginx
 upstream app_backend {
@@ -162,9 +170,9 @@ upstream app_backend {
 }
 ```
 
-Three workers on the same box, all running your app. nginx round-robins between them. `keepalive 64` keeps up to 64 idle connections to backends ready for reuse, avoiding the cost of new TCP connections per request.
+একই box-এ তিনটি worker, সবগুলোই আপনার app চালাচ্ছে। nginx এগুলোর মধ্যে round-robin করে। `keepalive 64` backend-এর সাথে 64টি পর্যন্ত idle connection পুনরায় ব্যবহারের জন্য প্রস্তুত রাখে, প্রতি request-এ নতুন TCP connection-এর খরচ এড়িয়ে।
 
-Other distribution methods:
+অন্যান্য distribution method:
 
 ```nginx
 upstream app_backend {
@@ -180,9 +188,9 @@ upstream app_backend {
 }
 ```
 
-`least_conn` is usually right for variable-duration requests. `ip_hash` is for sticky sessions (rare and usually a smell — make your app stateless instead).
+variable-duration request-এর জন্য `least_conn` সাধারণত সঠিক। `ip_hash` sticky session-এর জন্য (বিরল আর সাধারণত একটা smell — বরং আপনার app-কে stateless বানান)।
 
-## Health checks and failover
+## Health check আর failover
 
 ```nginx
 upstream app_backend {
@@ -192,15 +200,15 @@ upstream app_backend {
 }
 ```
 
-- **`max_fails=3`** — if 3 requests in a row fail to a backend, mark it down.
-- **`fail_timeout=30s`** — keep it down for 30 seconds, then try again.
-- **`backup`** — only used if all primaries are down.
+- **`max_fails=3`** — একটা backend-এ পরপর 3টা request fail করলে, সেটাকে down হিসেবে চিহ্নিত করো।
+- **`fail_timeout=30s`** — 30 সেকেন্ড down রাখো, তারপর আবার চেষ্টা করো।
+- **`backup`** — কেবল তখনই ব্যবহৃত হয় যখন সব primary down।
 
-Note: open-source nginx uses _passive_ health checks — it learns a backend is down only by trying to use it and failing. Active health checks (probing `/health` periodically) are an nginx Plus feature, or you bolt it on with a separate process. Most teams accept passive checks.
+লক্ষ করুন: open-source nginx _passive_ health check ব্যবহার করে — এটা একটা backend down কিনা জানে কেবল সেটা ব্যবহার করার চেষ্টা করে ব্যর্থ হয়ে। Active health check (পর্যায়ক্রমে `/health` প্রোব করা) nginx Plus-এর একটা feature, নয়তো আপনি একটা আলাদা process দিয়ে সেটা জুড়ে দেন। বেশিরভাগ টিম passive check মেনে নেয়।
 
-## Timeouts — the difference between slow and dead
+## Timeouts — slow আর dead-এর মধ্যে পার্থক্য
 
-Timeouts are the most underused tool in a proxy config. Default values are too generous. Set them to match your application's actual SLOs.
+Timeout একটা proxy config-এর সবচেয়ে কম-ব্যবহৃত টুল। ডিফল্ট value খুব উদার। সেগুলোকে আপনার application-এর আসল SLO-র সাথে মেলান।
 
 ```nginx
 proxy_connect_timeout 5s;    # max time to establish TCP connection to backend
@@ -208,16 +216,16 @@ proxy_send_timeout    60s;   # max time between bytes sent to backend
 proxy_read_timeout    60s;   # max time between bytes received from backend
 ```
 
-For typical APIs:
+সাধারণ API-এর জন্য:
 
-- `proxy_connect_timeout` — 1–5 seconds. If you cannot reach the backend in 5s, it is down.
-- `proxy_read_timeout` — match your slowest expected response. APIs: 30–60s. Long-running uploads: more.
+- `proxy_connect_timeout` — 1–5 সেকেন্ড। 5s-এ backend-এ পৌঁছাতে না পারলে, সেটা down।
+- `proxy_read_timeout` — আপনার প্রত্যাশিত সবচেয়ে ধীর response-এর সাথে মেলান। API: 30–60s। দীর্ঘ upload: আরও বেশি।
 
-When a timeout expires, nginx returns `504 Gateway Timeout` to the client. The backend's request, if still in flight, continues — the backend has no idea nginx gave up. Long-running backend work that needs to outlive the client should be triggered as a job, not handled in-band.
+একটা timeout শেষ হলে, nginx client-কে `504 Gateway Timeout` ফেরত দেয়। backend-এর request, এখনো চলমান থাকলে, চলতেই থাকে — backend জানে না nginx হাল ছেড়ে দিয়েছে। যে দীর্ঘ backend কাজ client-এর চেয়ে বেশি বাঁচা দরকার, সেটা in-band না সামলে একটা job হিসেবে trigger করা উচিত।
 
-Send-timeout matters for large uploads. If a client uploads slowly, `proxy_send_timeout` controls how long nginx waits for the next byte from the _client_. Too short and slow uploads fail; too long and Slowloris attacks tie up workers.
+Send-timeout বড় upload-এর জন্য গুরুত্বপূর্ণ। একটা client যদি ধীরে upload করে, `proxy_send_timeout` নিয়ন্ত্রণ করে nginx _client_-এর কাছ থেকে পরের byte-এর জন্য কতক্ষণ অপেক্ষা করবে। খুব ছোট হলে ধীর upload fail করে; খুব বড় হলে Slowloris attack worker আটকে রাখে।
 
-## Buffering — what nginx does with the response
+## Buffering — nginx response নিয়ে যা করে
 
 ```nginx
 proxy_buffering on;
@@ -225,9 +233,9 @@ proxy_buffer_size 16k;
 proxy_buffers 8 16k;
 ```
 
-By default, nginx buffers the backend's entire response in memory (or to disk if it is large), then sends it to the client at the client's pace. This protects the backend from slow clients — your Go server does not have a goroutine waiting on a 3G mobile reader.
+ডিফল্টভাবে, nginx backend-এর পুরো response memory-তে (বা বড় হলে disk-এ) buffer করে, তারপর client-এর গতিতে client-কে পাঠায়। এটা backend-কে ধীর client থেকে রক্ষা করে — একটা 3G মোবাইল reader-এর জন্য আপনার Go server-এ কোনো goroutine অপেক্ষা করে না।
 
-Disable buffering for streaming endpoints:
+streaming endpoint-এর জন্য buffering বন্ধ করুন:
 
 ```nginx
 location /events {
@@ -240,7 +248,7 @@ location /events {
 }
 ```
 
-For Server-Sent Events, WebSockets, or gRPC streaming, buffering ruins the streaming behavior — turn it off.
+Server-Sent Events, WebSocket, বা gRPC streaming-এর জন্য buffering streaming আচরণ নষ্ট করে দেয় — সেটা বন্ধ করুন।
 
 ## WebSocket proxying
 
@@ -255,13 +263,13 @@ location /ws {
 }
 ```
 
-The `Upgrade: websocket` and `Connection: upgrade` headers are essential — without them, nginx tries to handle the response as plain HTTP. The 24-hour read timeout handles idle WebSocket connections without dropping them.
+`Upgrade: websocket` আর `Connection: upgrade` header অত্যাবশ্যক — এগুলো ছাড়া, nginx response-কে সাধারণ HTTP হিসেবে সামলানোর চেষ্টা করে। 24-ঘণ্টার read timeout idle WebSocket connection-কে drop না করেই সামলায়।
 
 ## Path rewriting
 
-Two common patterns:
+দুটি সাধারণ প্যাটার্ন:
 
-**Strip a prefix before forwarding:**
+**forward করার আগে একটা prefix সরিয়ে ফেলা:**
 
 ```nginx
 location /api/ {
@@ -269,9 +277,9 @@ location /api/ {
 }
 ```
 
-A request to `/api/users` is forwarded to `/users`. The trailing slash on `proxy_pass` says "rewrite the matched location prefix to this." Without the trailing slash, the full original path is kept.
+`/api/users`-এ একটা request `/users`-এ forward হয়। `proxy_pass`-এর trailing slash বলে "match হওয়া location prefix-কে এতে rewrite করো।" trailing slash ছাড়া, পুরো মূল path রাখা হয়।
 
-**Keep the path, but proxy to a sub-path:**
+**path রাখো, কিন্তু একটা sub-path-এ proxy করো:**
 
 ```nginx
 location /api/ {
@@ -279,13 +287,13 @@ location /api/ {
 }
 ```
 
-Request `/api/users` becomes `http://notes/api/users`. The backend sees the full path.
+Request `/api/users` হয়ে যায় `http://notes/api/users`। backend পুরো path দেখে।
 
-This is the single most common nginx footgun. Trailing-slash rules in `proxy_pass` change behavior. When in doubt, write a small test.
+এটা nginx-এর সবচেয়ে সাধারণ footgun। `proxy_pass`-এ trailing-slash নিয়ম আচরণ বদলে দেয়। সন্দেহ হলে, একটা ছোট test লিখুন।
 
-## Setting upstream-related variables
+## upstream-সম্পর্কিত variable সেট করা
 
-A frequently useful pattern: tell the backend what request ID it is handling, so logs across nginx and the app can be correlated.
+প্রায়ই কাজে লাগে এমন একটা প্যাটার্ন: backend-কে বলুন সে কোন request ID সামলাচ্ছে, যাতে nginx আর app-এর log একে অপরের সাথে মেলানো যায়।
 
 ```nginx
 http {
@@ -307,9 +315,9 @@ http {
 }
 ```
 
-Now every log line, both nginx access log and your app's logs, has a shared `$req_id` you can grep on.
+এখন প্রতিটি log line-এ, nginx access log আর আপনার app-এর log দুটোতেই, একটা শেয়ার্ড `$req_id` আছে যার ওপর আপনি grep করতে পারেন।
 
-## Testing the whole thing
+## পুরো জিনিসটা টেস্ট করা
 
 ```bash
 # 1. Start backend
@@ -330,23 +338,23 @@ curl -i -H 'Host: example.com' http://localhost/
 # Should get 502 Bad Gateway from nginx
 ```
 
-If you get the 502 cleanly when the backend is down, your timeouts and upstream are correct.
+backend down থাকলে যদি আপনি পরিষ্কারভাবে 502 পান, তাহলে আপনার timeout আর upstream ঠিক আছে।
 
-## Common mistakes
+## সাধারণ ভুল
 
-- **Missing `proxy_set_header Host $host`.** Backend serves the wrong virtual host (or the default).
-- **Default `proxy_read_timeout` of 60s on long-running APIs.** Reports of "the page just hangs and then errors" trace back here.
-- **Buffering on for streaming endpoints.** SSE clients see no events until the response ends.
-- **Trailing-slash confusion in `proxy_pass`.** Manifests as 404s from the backend with weird paths.
-- **Backend reachable directly from the internet.** Always firewall it (or bind to `127.0.0.1`) so headers cannot be forged.
+- **`proxy_set_header Host $host` বাদ পড়া।** Backend ভুল virtual host serve করে (বা default)।
+- **দীর্ঘ চলা API-তে ডিফল্ট 60s-এর `proxy_read_timeout`।** "পেজটা শুধু ঝুলে থাকে তারপর error দেয়" — এমন রিপোর্ট এখানেই এসে ঠেকে।
+- **streaming endpoint-এ buffering চালু।** SSE client response শেষ না হওয়া পর্যন্ত কোনো event দেখে না।
+- **`proxy_pass`-এ trailing-slash-এর গোলমাল।** অদ্ভুত path নিয়ে backend থেকে 404 হিসেবে প্রকাশ পায়।
+- **backend সরাসরি ইন্টারনেট থেকে পৌঁছানো যায়।** সবসময় firewall দিন (বা `127.0.0.1`-এ bind করুন) যাতে header জাল করা না যায়।
 
-## Recap
+## রিক্যাপ
 
-- A reverse proxy fronts your application server with TLS, HTTP/2, caching, and routing.
-- Always set `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`. Lock the backend so these can be trusted.
-- Use `upstream` blocks even for one backend — gives you keepalive and health checks for free.
-- Set explicit timeouts (`connect`, `read`, `send`). Defaults are too generous.
-- Disable buffering for streaming and WebSocket endpoints. Add `Upgrade` and `Connection` headers for WebSockets.
-- Trailing slashes in `proxy_pass` change behavior — test before deploying.
+- একটি reverse proxy আপনার application server-এর সামনে TLS, HTTP/2, caching, আর routing নিয়ে বসে।
+- সবসময় `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto` সেট করুন। backend লক করুন যাতে এগুলো বিশ্বাস করা যায়।
+- একটা backend-এর জন্যও `upstream` block ব্যবহার করুন — বিনামূল্যে keepalive আর health check দেয়।
+- explicit timeout সেট করুন (`connect`, `read`, `send`)। ডিফল্ট খুব উদার।
+- streaming আর WebSocket endpoint-এর জন্য buffering বন্ধ করুন। WebSocket-এর জন্য `Upgrade` আর `Connection` header যোগ করুন।
+- `proxy_pass`-এ trailing slash আচরণ বদলায় — deploy করার আগে test করুন।
 
-Next chapter: making sense of the logs both nginx and your app produce — formats, fields, and the queries you will run a thousand times.
+পরের অধ্যায়: nginx আর আপনার app দুটোই যে log তৈরি করে তার অর্থ বোঝা — format, field, আর যে query আপনি হাজার বার চালাবেন।

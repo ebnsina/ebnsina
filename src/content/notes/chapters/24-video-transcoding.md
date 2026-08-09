@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Video Transcoding Service'
-subtitle: 'Design and build a production video transcoding pipeline with VOD processing, adaptive bitrate encoding, job scheduling, and distributed workers.'
+title: 'কেস স্টাডি: ভিডিও ট্রান্সকোডিং সার্ভিস'
+subtitle: 'VOD প্রসেসিং, adaptive bitrate encoding, job scheduling এবং distributed workers সহ একটি প্রোডাকশন ভিডিও ট্রান্সকোডিং পাইপলাইন ডিজাইন ও তৈরি করুন।'
 chapter: 24
 level: 'advanced'
-readingTime: '34 min'
+readingTime: '34 মিনিট'
 topics: ['video transcoding', 'VOD', 'adaptive bitrate', 'job queue', 'distributed processing']
 ---
 
@@ -13,21 +13,29 @@ topics: ['video transcoding', 'VOD', 'adaptive bitrate', 'job queue', 'distribut
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Video Transcoding Is a Distributed Systems Problem
+## গল্পে বুঝি
 
-Every video uploaded to YouTube, Netflix, or TikTok must be transcoded before a single viewer can watch it. A raw upload is useless on its own — it needs to be converted into **multiple resolutions** (1080p, 720p, 480p, 360p), encoded with **multiple codecs** (H.264, H.265/HEVC, VP9, AV1), and packaged for **adaptive bitrate streaming** (HLS/DASH). A single 4K video upload can easily generate **20+ output files**: four resolutions times three codecs, plus thumbnail sprites, preview clips, and manifest files.
+আল-খোয়ারিজমির একটা দর্জির দোকান। এক সকালে ফাতিমা আল-ফিহরি একটা master design নিয়ে এলো — একটাই নকশা, কিন্তু সে চায় দোকানের সব খদ্দেরের জন্য এই একই ডিজাইন যেন তৈরি থাকে। কেউ চিকন, কেউ মোটা — তাই একটা মাপে সেলাই করলে চলবে না। আল-খোয়ারিজমি তাই একই design থেকে small, medium, large আর XL — চারটা আলাদা মাপে জামা বানানোর সিদ্ধান্ত নেয়, যাতে ছিপছিপে খদ্দের হোক বা চওড়া গড়নের, প্রত্যেকে ঠিক তার শরীরে ফিট হওয়া একটা ভার্সন পায়।
 
-This work is extraordinarily CPU-intensive. Transcoding a single minute of 4K video to H.265 can take 5-15 minutes on a modern CPU core. A 2-hour movie would take days on a single machine. The only practical solution is to **split the video into segments** and distribute the work across a pool of workers that process segments in parallel. This is a classic distributed systems problem: job scheduling, work distribution, failure detection, progress aggregation, and result assembly.
+কিন্তু একজন দর্জি সব মাপ একা সেলাই করতে গেলে সারাদিন লেগে যাবে। তাই আল-খোয়ারিজমি master নকশাটা কেটে কয়েকটা panel-এ ভাগ করে, আর ইবনে সিনা সহ কয়েকজন দর্জিকে বসিয়ে দেয় — একজন small, একজন medium, একজন large, সবাই parallel-এ যার যার মাপ সেলাই করে। কোনো দর্জি অসুস্থ হয়ে পড়লে তার কাটা panel অন্য দর্জিকে দিয়ে দেওয়া হয়, কাজ থেমে থাকে না। সব জামা তৈরি হলে সেগুলো একই মাপের standard প্যাকেটে ভাঁজ করে রাখা হয়, যাতে যে খদ্দেরই আসুক, তার মাপের প্যাকেটটা সাথে সাথে বের করে দেওয়া যায়।
+
+এই গল্পটাই আসলে **video transcoding**। ফাতিমা আল-ফিহরির master design হলো আপলোড করা একটাই ভিডিও, আর small/medium/large/XL মাপগুলো হলো একাধিক resolution ও bitrate — অর্থাৎ **adaptive-bitrate ladder**, যেখানে খদ্দেরের শরীরের মাপ মানে দর্শকের bandwidth আর device। parallel-এ সেলাই করা দর্জিরা হলো একটা worker queue-এর transcoding job, আর standard প্যাকেটগুলো হলো streaming-এর জন্য কাটা segment। YouTube বা Netflix ঠিক এভাবেই একটা আপলোড থেকে অনেক quality বানিয়ে রাখে, যাতে ধীর ইন্টারনেটে 360p আর দ্রুত Wi-Fi-তে 1080p — প্রত্যেকে নিজের জন্য ফিট হওয়া ভার্সনটা পায়।
+
+## ভিডিও ট্রান্সকোডিং কেন একটি Distributed Systems সমস্যা
+
+YouTube, Netflix বা TikTok-এ আপলোড হওয়া প্রতিটি ভিডিও একজন দর্শকের দেখার আগেই ট্রান্সকোড করতে হয়। একটি raw আপলোড নিজে থেকে অকেজো — এটিকে **একাধিক resolution**-এ (1080p, 720p, 480p, 360p) কনভার্ট করতে হয়, **একাধিক codec**-এ (H.264, H.265/HEVC, VP9, AV1) encode করতে হয়, এবং **adaptive bitrate streaming**-এর (HLS/DASH) জন্য package করতে হয়। একটি মাত্র 4K ভিডিও আপলোড সহজেই **20+ output ফাইল** তৈরি করতে পারে: চারটি resolution গুণ তিনটি codec, সেই সাথে thumbnail sprite, preview clip এবং manifest ফাইল।
+
+এই কাজটি অসাধারণ রকমের CPU-intensive। এক মিনিট 4K ভিডিওকে H.265-এ ট্রান্সকোড করতে একটি আধুনিক CPU core-এ 5-15 মিনিট লাগতে পারে। একটি 2-ঘণ্টার সিনেমা একটি মেশিনে করতে গেলে কয়েক দিন লেগে যাবে। একমাত্র বাস্তবসম্মত সমাধান হলো **ভিডিওকে segment-এ ভাগ করা** এবং কাজটিকে একটি worker pool-এর মধ্যে ছড়িয়ে দেওয়া যারা segment গুলো parallel-এ process করে। এটি একটি ক্লাসিক distributed systems সমস্যা: job scheduling, work distribution, failure detection, progress aggregation এবং result assembly।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উপমা**
 
-Like a factory assembly line — raw footage enters, gets processed through multiple stages (resize, compress, format), and comes out as multiple versions (HD, SD, mobile) simultaneously.
+একটি factory assembly line-এর মতো — raw footage ঢোকে, একাধিক ধাপের মধ্য দিয়ে process হয় (resize, compress, format), এবং একসাথে একাধিক ভার্সন হিসেবে বেরিয়ে আসে (HD, SD, mobile)।
 
 </Callout>
 
-Think of it like a printing press that takes one manuscript and simultaneously produces a paperback edition, a hardcover edition, an audiobook, and an e-book — each optimized for its medium. The manuscript must be split into chapters, each chapter sent to a different production line, and the finished chapters reassembled into complete books. If one production line breaks down, its chapters must be reassigned to another line without losing progress or producing duplicates. The printing press must also handle a queue of manuscripts fairly, so one author's 1000-page novel does not block everyone else's short stories.
+এটিকে একটি printing press-এর মতো ভাবুন যা একটি manuscript নিয়ে একইসাথে একটি paperback সংস্করণ, একটি hardcover সংস্করণ, একটি audiobook এবং একটি e-book তৈরি করে — প্রতিটি তার নিজ medium-এর জন্য optimized। manuscript-কে chapter-এ ভাগ করতে হবে, প্রতিটি chapter আলাদা production line-এ পাঠাতে হবে, এবং শেষ হওয়া chapter গুলো আবার সম্পূর্ণ বইতে জোড়া লাগাতে হবে। যদি একটি production line নষ্ট হয়ে যায়, progress না হারিয়ে বা duplicate তৈরি না করে তার chapter গুলো আরেকটি line-এ reassign করতে হবে। printing press-কে একটি manuscript-এর queue-ও ন্যায্যভাবে সামলাতে হবে, যাতে এক লেখকের 1000-পৃষ্ঠার novel বাকি সবার short story-কে ব্লক না করে।
 
 <Mermaid
 title="Video Transcoding Architecture"
@@ -38,61 +46,61 @@ code={`graph TD
 
 ## Requirements
 
-- **Functional**: Upload video files, transcode to multiple resolutions and codecs, generate HLS/DASH manifests, extract thumbnails at configurable intervals, track per-segment progress with ETA, send webhook notifications on job completion or failure
-- **Non-functional**: Process 1000+ videos per hour, support source files up to 10GB, achieve 99.9% job completion rate, autoscale workers based on queue depth, graceful shutdown without losing in-progress work
-- **Output**: Adaptive bitrate streaming via HLS with `.m3u8` master and variant playlists, `.ts` video segments at multiple quality levels (1080p at 5Mbps, 720p at 2.8Mbps, 480p at 1.4Mbps, 360p at 800Kbps)
+- **Functional**: ভিডিও ফাইল আপলোড করা, একাধিক resolution ও codec-এ ট্রান্সকোড করা, HLS/DASH manifest তৈরি করা, configurable interval-এ thumbnail বের করা, ETA সহ per-segment progress ট্র্যাক করা, job সম্পন্ন বা ব্যর্থ হলে webhook notification পাঠানো
+- **Non-functional**: প্রতি ঘণ্টায় 1000+ ভিডিও process করা, 10GB পর্যন্ত source ফাইল সাপোর্ট করা, 99.9% job completion rate অর্জন করা, queue depth-এর ভিত্তিতে worker autoscale করা, in-progress কাজ না হারিয়ে graceful shutdown
+- **Output**: HLS-এর মাধ্যমে adaptive bitrate streaming — `.m3u8` master ও variant playlist, একাধিক quality level-এ `.ts` ভিডিও segment (1080p at 5Mbps, 720p at 2.8Mbps, 480p at 1.4Mbps, 360p at 800Kbps)
 
-## VOD vs Live: Two Different Worlds
+## VOD বনাম Live: দুটি ভিন্ন জগৎ
 
-Video transcoding splits into two fundamentally different pipelines depending on whether the source material is **complete** or **arriving in real-time**. The architecture, latency requirements, and failure handling differ dramatically between the two.
+source material **সম্পূর্ণ** নাকি **real-time-এ আসছে** তার উপর নির্ভর করে ভিডিও ট্রান্সকোডিং দুটি মৌলিকভাবে ভিন্ন পাইপলাইনে ভাগ হয়ে যায়। দুটির মধ্যে architecture, latency requirement এবং failure handling নাটকীয়ভাবে আলাদা।
 
-**VOD (Video on Demand)** processing starts after the entire file has been uploaded. Because the full video is available, the system can analyze the content first — probe the video for metadata (resolution, codec, duration, bitrate), plan an optimal encoding strategy, and split the file into segments that can be transcoded independently and in parallel. A 2-hour movie split into 2-second segments produces 3600 segments. With a pool of 100 workers, the entire movie can be transcoded in roughly the time it takes to process 36 segments sequentially. Latency is measured in minutes to hours depending on queue depth and video length. YouTube, Netflix, and Vimeo all use VOD pipelines.
+**VOD (Video on Demand)** প্রসেসিং শুরু হয় পুরো ফাইল আপলোড হয়ে যাওয়ার পর। যেহেতু পুরো ভিডিও পাওয়া যায়, সিস্টেম আগে content বিশ্লেষণ করতে পারে — metadata (resolution, codec, duration, bitrate)-এর জন্য ভিডিও probe করে, একটি optimal encoding strategy পরিকল্পনা করে, এবং ফাইলকে এমন segment-এ ভাগ করে যেগুলো স্বাধীনভাবে ও parallel-এ ট্রান্সকোড করা যায়। একটি 2-ঘণ্টার সিনেমাকে 2-সেকেন্ডের segment-এ ভাগ করলে 3600টি segment তৈরি হয়। 100টি worker-এর একটি pool দিয়ে, পুরো সিনেমাটি প্রায় ততটুকু সময়েই ট্রান্সকোড করা যায় যতটুকু 36টি segment ক্রমানুসারে process করতে লাগে। Latency মিনিট থেকে ঘণ্টায় মাপা হয়, queue depth ও ভিডিওর দৈর্ঘ্যের উপর নির্ভর করে। YouTube, Netflix এবং Vimeo সবাই VOD পাইপলাইন ব্যবহার করে।
 
-**Live Streaming** is a completely different beast. Video arrives as a continuous stream of chunks from an encoder (OBS, hardware encoder, mobile app). Each chunk must be transcoded and packaged into streaming segments **as it arrives**, because viewers are watching in near-real-time. There is no opportunity to analyze the full content upfront or retry failed segments without introducing visible gaps. The latency target is 2-10 seconds from camera to screen (glass-to-glass latency). Twitch, YouTube Live, and Facebook Live operate live pipelines. Live transcoding typically uses fewer quality levels (3-4 vs 6-8 for VOD) to keep processing time under the segment duration.
+**Live Streaming** সম্পূর্ণ ভিন্ন জিনিস। ভিডিও একটি encoder (OBS, hardware encoder, mobile app) থেকে chunk-এর একটি continuous stream হিসেবে আসে। প্রতিটি chunk **আসার সাথে সাথে** ট্রান্সকোড করে streaming segment-এ package করতে হয়, কারণ দর্শকরা প্রায় real-time-এ দেখছে। পুরো content আগে থেকে বিশ্লেষণ করার বা দৃশ্যমান gap তৈরি না করে ব্যর্থ segment retry করার সুযোগ নেই। Latency target হলো camera থেকে screen পর্যন্ত 2-10 সেকেন্ড (glass-to-glass latency)। Twitch, YouTube Live এবং Facebook Live live পাইপলাইন চালায়। Live ট্রান্সকোডিং সাধারণত কম quality level ব্যবহার করে (3-4টি, VOD-এর 6-8টির বিপরীতে) যাতে processing time segment duration-এর নিচে থাকে।
 
-The key architectural difference: VOD pipelines optimize for **throughput and quality** (process as many videos as possible with the best possible encoding), while live pipelines optimize for **latency and reliability** (never let the stream buffer, never drop a segment). This chapter focuses on the VOD pipeline, which is the more complex system design problem due to its job scheduling, parallelism, and assembly requirements.
+মূল architecture-গত পার্থক্য: VOD পাইপলাইন **throughput এবং quality**-এর জন্য optimize করে (সম্ভাব্য সেরা encoding দিয়ে যত বেশি সম্ভব ভিডিও process করা), আর live পাইপলাইন **latency এবং reliability**-এর জন্য optimize করে (stream-কে কখনো buffer করতে না দেওয়া, কখনো একটি segment drop না করা)। এই chapter-টি VOD পাইপলাইনের উপর ফোকাস করে, যা এর job scheduling, parallelism এবং assembly requirement-এর কারণে বেশি জটিল system design সমস্যা।
 
-## Adaptive Bitrate Streaming Explained
+## Adaptive Bitrate Streaming ব্যাখ্যা
 
-Adaptive bitrate streaming (ABR) is the technique that makes video playback smooth across varying network conditions. Instead of serving a single video file at a fixed quality, the server provides the **same video at multiple quality levels**, and the player dynamically switches between them based on available bandwidth.
+Adaptive bitrate streaming (ABR) হলো সেই কৌশল যা ভিন্ন ভিন্ন network condition জুড়ে ভিডিও playback মসৃণ করে তোলে। একটি নির্দিষ্ট quality-তে একটি মাত্র ভিডিও ফাইল serve করার বদলে, server **একই ভিডিও একাধিক quality level-এ** সরবরাহ করে, এবং player available bandwidth-এর ভিত্তিতে ডায়নামিকভাবে সেগুলোর মধ্যে সুইচ করে।
 
-**Why ABR matters**: A user on a fast Wi-Fi connection should see crisp 1080p video. The same user switching to a cellular connection in a tunnel should seamlessly drop to 360p rather than stalling with a buffering spinner. ABR makes this automatic and invisible to the viewer.
+**ABR কেন গুরুত্বপূর্ণ**: দ্রুত Wi-Fi connection-এ থাকা একজন user-এর ঝকঝকে 1080p ভিডিও দেখা উচিত। সেই একই user টানেলের ভেতর cellular connection-এ সুইচ করলে buffering spinner নিয়ে আটকে না গিয়ে নির্বিঘ্নে 360p-তে নেমে আসা উচিত। ABR এটিকে automatic এবং দর্শকের কাছে অদৃশ্য করে তোলে।
 
-**HLS (HTTP Live Streaming)** is the dominant ABR format, supported by every major browser and device. The structure is hierarchical:
+**HLS (HTTP Live Streaming)** হলো প্রভাবশালী ABR format, যা প্রতিটি বড় browser ও device সাপোর্ট করে। গঠনটি hierarchical:
 
-1. **Master playlist** (`.m3u8`): A text file listing all available quality variants with their bandwidth and resolution. The player reads this first to discover what quality levels exist.
-2. **Variant playlists** (`.m3u8`): One per quality level. Each lists the individual video segment files in playback order with their durations.
-3. **Segments** (`.ts`): The actual video data, typically 2-10 seconds each. These are standard MPEG-TS files that can be served by any HTTP server or CDN.
+1. **Master playlist** (`.m3u8`): একটি text ফাইল যা সব available quality variant-কে তাদের bandwidth ও resolution সহ তালিকাভুক্ত করে। কোন কোন quality level আছে তা জানতে player প্রথমে এটি পড়ে।
+2. **Variant playlists** (`.m3u8`): প্রতিটি quality level-এর জন্য একটি করে। প্রতিটি playback order-এ পৃথক ভিডিও segment ফাইলগুলো তাদের duration সহ তালিকাভুক্ত করে।
+3. **Segments** (`.ts`): আসল ভিডিও data, সাধারণত প্রতিটি 2-10 সেকেন্ডের। এগুলো standard MPEG-TS ফাইল যা যেকোনো HTTP server বা CDN serve করতে পারে।
 
-The player starts by downloading the master playlist, estimates the current bandwidth, picks the highest quality variant that fits within the available bandwidth, and starts downloading segments from that variant playlist. Every few segments, it re-estimates bandwidth and can switch to a higher or lower quality variant. The switch happens at segment boundaries, so it is seamless.
+Player শুরু করে master playlist ডাউনলোড করে, বর্তমান bandwidth অনুমান করে, available bandwidth-এর মধ্যে যায় এমন সর্বোচ্চ quality variant বেছে নেয়, এবং সেই variant playlist থেকে segment ডাউনলোড করা শুরু করে। প্রতি কয়েকটি segment পর, এটি আবার bandwidth অনুমান করে এবং উচ্চতর বা নিম্নতর quality variant-এ সুইচ করতে পারে। সুইচটি segment boundary-তে ঘটে, তাই এটি নির্বিঘ্ন।
 
-**Segment duration trade-offs**: Shorter segments (2 seconds) enable faster quality switching and lower startup latency, but create more HTTP requests and slightly worse compression efficiency. Longer segments (10 seconds) compress better and reduce request overhead, but make quality switching sluggish and increase the minimum startup buffer. The industry standard is **6 seconds** as a balanced default, with 2-4 seconds preferred for live streaming where latency matters more.
+**Segment duration trade-offs**: ছোট segment (2 সেকেন্ড) দ্রুত quality switching ও কম startup latency সম্ভব করে, কিন্তু বেশি HTTP request তৈরি করে এবং সামান্য খারাপ compression efficiency দেয়। বড় segment (10 সেকেন্ড) ভালো compress হয় এবং request overhead কমায়, কিন্তু quality switching-কে ধীর করে দেয় এবং minimum startup buffer বাড়ায়। ইন্ডাস্ট্রি স্ট্যান্ডার্ড হলো একটি ভারসাম্যপূর্ণ default হিসেবে **6 সেকেন্ড**, live streaming-এর জন্য 2-4 সেকেন্ড বেশি পছন্দনীয় যেখানে latency বেশি গুরুত্বপূর্ণ।
 
-## Step-by-Step: How a Video Gets Transcoded
+## ধাপে ধাপে: একটি ভিডিও কীভাবে ট্রান্সকোড হয়
 
-Here is the complete lifecycle of a video from upload to playback, showing every stage of the pipeline:
+আপলোড থেকে playback পর্যন্ত একটি ভিডিওর সম্পূর্ণ lifecycle এখানে দেওয়া হলো, পাইপলাইনের প্রতিটি ধাপ দেখিয়ে:
 
-1. **Upload**: The client uploads a raw video file (MP4, MOV, MKV, AVI) to the Upload API via multipart upload or resumable upload for large files. The file is written directly to object storage (S3, GCS, MinIO).
+1. **Upload**: ক্লায়েন্ট একটি raw ভিডিও ফাইল (MP4, MOV, MKV, AVI) Upload API-তে multipart upload অথবা বড় ফাইলের জন্য resumable upload-এর মাধ্যমে আপলোড করে। ফাইলটি সরাসরি object storage-এ (S3, GCS, MinIO) লেখা হয়।
 
-2. **Probe**: The system runs a metadata probe (equivalent to `ffprobe`) on the uploaded file to extract: resolution, codec, frame rate, bitrate, duration, audio channels, and container format. This metadata determines which transcoding profiles to apply.
+2. **Probe**: সিস্টেম আপলোড করা ফাইলে একটি metadata probe (`ffprobe`-এর সমতুল্য) চালায় বের করার জন্য: resolution, codec, frame rate, bitrate, duration, audio channel এবং container format। এই metadata নির্ধারণ করে কোন কোন transcoding profile প্রয়োগ করতে হবে।
 
-3. **Create Transcoding Profile**: Based on the source video properties, the system selects output profiles. A 1080p source gets 1080p, 720p, 480p, and 360p outputs. A 720p source skips the 1080p output (upscaling wastes bandwidth and looks worse). Each profile specifies target resolution, bitrate, codec, and encoding preset.
+3. **Create Transcoding Profile**: source ভিডিওর property-র ভিত্তিতে, সিস্টেম output profile বেছে নেয়। একটি 1080p source পায় 1080p, 720p, 480p এবং 360p output। একটি 720p source 1080p output বাদ দেয় (upscaling bandwidth নষ্ট করে এবং খারাপ দেখায়)। প্রতিটি profile target resolution, bitrate, codec এবং encoding preset নির্দিষ্ট করে।
 
-4. **Split into Segments**: The source video is logically split into N-second chunks (default 6 seconds). For a 10-minute video at 6-second segments, this produces 100 segments. Each segment is an independent unit of work.
+4. **Split into Segments**: source ভিডিওকে যৌক্তিকভাবে N-সেকেন্ডের chunk-এ ভাগ করা হয় (default 6 সেকেন্ড)। 6-সেকেন্ড segment-এ একটি 10-মিনিটের ভিডিওর জন্য এটি 100টি segment তৈরি করে। প্রতিটি segment একটি স্বাধীন কাজের একক।
 
-5. **Distribute to Workers**: For each segment and each quality level, a transcoding task is created and added to the job queue. 100 segments times 4 quality levels equals 400 individual transcoding tasks. The job scheduler assigns tasks to available workers from the pool, respecting priority and fair scheduling.
+5. **Distribute to Workers**: প্রতিটি segment ও প্রতিটি quality level-এর জন্য, একটি transcoding task তৈরি করে job queue-তে যোগ করা হয়। 100টি segment গুণ 4টি quality level সমান 400টি পৃথক transcoding task। job scheduler priority ও fair scheduling মেনে pool থেকে available worker-দের task assign করে।
 
-6. **Transcode Each Segment**: Each worker picks up a task, downloads the relevant portion of the source video from object storage, transcodes it to the target resolution and bitrate, and uploads the output segment back to object storage. The worker reports progress and completion back to the progress tracker.
+6. **Transcode Each Segment**: প্রতিটি worker একটি task নেয়, object storage থেকে source ভিডিওর প্রাসঙ্গিক অংশ ডাউনলোড করে, target resolution ও bitrate-এ ট্রান্সকোড করে, এবং output segment আবার object storage-এ আপলোড করে। worker progress tracker-এর কাছে progress ও completion রিপোর্ট করে।
 
-7. **Merge and Package**: Once all segments for a given quality level are complete, the system verifies segment integrity (correct duration, no gaps) and generates the variant playlist for that quality level.
+7. **Merge and Package**: একটি নির্দিষ্ট quality level-এর সব segment সম্পন্ন হলে, সিস্টেম segment integrity যাচাই করে (সঠিক duration, কোনো gap নেই) এবং সেই quality level-এর জন্য variant playlist তৈরি করে।
 
-8. **Generate HLS Manifest**: When all quality levels are complete, the system generates the master `.m3u8` playlist referencing all variant playlists. The video is now ready for playback.
+8. **Generate HLS Manifest**: সব quality level সম্পন্ন হলে, সিস্টেম সব variant playlist-কে reference করে master `.m3u8` playlist তৈরি করে। ভিডিওটি এখন playback-এর জন্য প্রস্তুত।
 
-9. **Notify Completion**: The system fires a webhook to the configured callback URL with the job status, output URLs, and manifest location. The client application can now make the video available to viewers.
+9. **Notify Completion**: সিস্টেম configured callback URL-এ job status, output URL এবং manifest location সহ একটি webhook fire করে। ক্লায়েন্ট অ্যাপ্লিকেশন এখন ভিডিওটি দর্শকদের জন্য উপলব্ধ করতে পারে।
 
-## Building the Transcoding Service
+## Transcoding Service তৈরি করা
 
-Here is the complete transcoding service with job scheduling, worker pool, progress tracking, HLS manifest generation, and an HTTP API. Both implementations include priority queues with fair scheduling, worker heartbeats, segment-level progress, and graceful shutdown.
+এখানে job scheduling, worker pool, progress tracking, HLS manifest generation এবং একটি HTTP API সহ সম্পূর্ণ transcoding service দেওয়া হলো। দুটি implementation-ই fair scheduling সহ priority queue, worker heartbeat, segment-level progress এবং graceful shutdown অন্তর্ভুক্ত করে।
 
 <CodeTabs tsFile="video-transcoding.ts" goFile="video-transcoding.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -2040,55 +2048,55 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## Design Decisions ব্যাখ্যা
 
-### Why Split Videos Into Segments?
+### ভিডিওকে Segment-এ কেন ভাগ করা হয়?
 
-Segment-based transcoding is the key to making video processing parallel. A monolithic approach — feeding a 2-hour file into a single FFmpeg process — means one CPU core works for hours while hundreds of other cores sit idle. By splitting the video into 6-second segments, a 2-hour movie produces 1200 independent transcoding tasks. With 100 workers, the total wall-clock time drops from hours to minutes.
+Segment-based ট্রান্সকোডিং হলো ভিডিও প্রসেসিংকে parallel করার মূল চাবিকাঠি। একটি monolithic পদ্ধতি — একটি 2-ঘণ্টার ফাইল একটি মাত্র FFmpeg প্রসেসে দেওয়া — মানে একটি CPU core ঘণ্টার পর ঘণ্টা কাজ করে আর বাকি শত শত core অলস বসে থাকে। ভিডিওকে 6-সেকেন্ডের segment-এ ভাগ করে, একটি 2-ঘণ্টার সিনেমা 1200টি স্বাধীন transcoding task তৈরি করে। 100টি worker দিয়ে, মোট wall-clock time ঘণ্টা থেকে মিনিটে নেমে আসে।
 
-Segments also provide natural failure boundaries. If a worker crashes while transcoding segment 847, only that one segment needs to be retried — not the entire video. The completed segments remain valid and do not need to be reprocessed. This property is essential for achieving 99.9% job completion rates at scale.
+Segment স্বাভাবিক failure boundary-ও দেয়। যদি একটি worker segment 847 ট্রান্সকোড করার সময় ক্র্যাশ করে, শুধু সেই একটি segment retry করতে হয় — পুরো ভিডিও নয়। সম্পন্ন হওয়া segment গুলো valid থাকে এবং পুনরায় process করার দরকার নেই। এই বৈশিষ্ট্যটি scale-এ 99.9% job completion rate অর্জনের জন্য অপরিহার্য।
 
-Finally, segments map directly to the HLS streaming format. Each `.ts` file in an HLS stream is exactly one segment, so the transcoding output requires no post-processing to be served to players. The segment boundaries created during splitting become the seek points in the final stream.
+সবশেষে, segment গুলো সরাসরি HLS streaming format-এ ম্যাপ করে। একটি HLS stream-এর প্রতিটি `.ts` ফাইল ঠিক একটি segment, তাই transcoding output player-দের কাছে serve করতে কোনো post-processing দরকার হয় না। splitting-এর সময় তৈরি হওয়া segment boundary গুলো চূড়ান্ত stream-এ seek point হয়ে যায়।
 
-### Why Priority Queues with Fair Scheduling?
+### Fair Scheduling সহ Priority Queue কেন?
 
-A naive FIFO queue creates a starvation problem. If one user uploads 50 videos, those 50 jobs occupy the queue for hours while other users wait. Fair scheduling uses **round-robin across users** combined with **priority ordering within each user's queue**. This means every user gets their next job processed before any user gets their second job processed, regardless of submission order.
+একটি naive FIFO queue একটি starvation সমস্যা তৈরি করে। যদি একজন user 50টি ভিডিও আপলোড করে, সেই 50টি job ঘণ্টার পর ঘণ্টা queue দখল করে রাখে আর অন্য user-রা অপেক্ষা করে। Fair scheduling **user জুড়ে round-robin**-এর সাথে **প্রতিটি user-এর queue-এর ভেতরে priority ordering** একত্রিত করে ব্যবহার করে। এর মানে submission order নির্বিশেষে, কোনো user তার দ্বিতীয় job process হওয়ার আগেই প্রতিটি user তার পরবর্তী job process পায়।
 
-Priority within a user's queue allows the system to distinguish between urgent and background work. A live event recording that needs to be available in 30 minutes gets priority 1, while a batch re-encode of an old archive gets priority 9. Both get fair access relative to other users, but within each user's jobs the priorities are respected.
+একটি user-এর queue-এর ভেতরে priority সিস্টেমকে জরুরি ও background কাজের মধ্যে পার্থক্য করতে দেয়। একটি live event recording যা 30 মিনিটের মধ্যে উপলব্ধ হওয়া দরকার সেটি priority 1 পায়, আর একটি পুরনো archive-এর batch re-encode priority 9 পায়। দুটোই অন্য user-দের তুলনায় fair access পায়, কিন্তু প্রতিটি user-এর job-এর ভেতরে priority সম্মান করা হয়।
 
-### Why HLS Over DASH?
+### DASH-এর বদলে HLS কেন?
 
-HLS (HTTP Live Streaming) and DASH (Dynamic Adaptive Streaming over HTTP) solve the same problem with nearly identical architectures. HLS uses `.m3u8` text playlists and `.ts` segments; DASH uses XML manifests (`.mpd`) and fragmented MP4 (`.m4s`) segments. Both support adaptive bitrate switching.
+HLS (HTTP Live Streaming) এবং DASH (Dynamic Adaptive Streaming over HTTP) প্রায় অভিন্ন architecture দিয়ে একই সমস্যা সমাধান করে। HLS `.m3u8` text playlist ও `.ts` segment ব্যবহার করে; DASH XML manifest (`.mpd`) ও fragmented MP4 (`.m4s`) segment ব্যবহার করে। দুটোই adaptive bitrate switching সাপোর্ট করে।
 
-HLS wins in practice for three reasons. First, it is the **only format supported natively by iOS and Safari** — Apple devices represent a significant portion of video viewers. DASH requires a JavaScript player library on Apple devices. Second, HLS manifests are simple text files that are trivial to generate, parse, debug, and cache. Third, CDN support for HLS is universal, while DASH support varies. Most production systems generate HLS as the primary format and optionally add DASH for specific clients.
+তিনটি কারণে বাস্তবে HLS জেতে। প্রথমত, এটি **iOS ও Safari দ্বারা natively সাপোর্টেড একমাত্র format** — Apple device গুলো ভিডিও দর্শকদের একটি উল্লেখযোগ্য অংশ। DASH-এর জন্য Apple device-এ একটি JavaScript player library দরকার। দ্বিতীয়ত, HLS manifest হলো সরল text ফাইল যা তৈরি, parse, debug ও cache করা খুবই সহজ। তৃতীয়ত, HLS-এর জন্য CDN সাপোর্ট সর্বজনীন, আর DASH সাপোর্ট ভিন্ন ভিন্ন। বেশিরভাগ production সিস্টেম প্রাথমিক format হিসেবে HLS তৈরি করে এবং নির্দিষ্ট client-এর জন্য ঐচ্ছিকভাবে DASH যোগ করে।
 
-### Why Worker Heartbeats?
+### Worker Heartbeat কেন?
 
-In a distributed worker pool, silence is ambiguous. A worker that stops reporting could be: (a) processing a particularly large segment, (b) experiencing a network partition, (c) crashed, or (d) stuck in an infinite loop. Without heartbeats, the system cannot distinguish between these cases and must wait indefinitely.
+একটি distributed worker pool-এ, নীরবতা অস্পষ্ট। একটি worker যা রিপোর্ট করা বন্ধ করে দিয়েছে সেটি হতে পারে: (a) একটি বিশেষভাবে বড় segment process করছে, (b) একটি network partition-এ পড়েছে, (c) ক্র্যাশ করেছে, অথবা (d) একটি infinite loop-এ আটকে গেছে। heartbeat ছাড়া, সিস্টেম এই ক্ষেত্রগুলোর মধ্যে পার্থক্য করতে পারে না এবং অনির্দিষ্টকাল অপেক্ষা করতে হয়।
 
-Heartbeats solve this by requiring each worker to send a periodic signal (every 10 seconds) while processing. If the orchestrator receives no heartbeat for 30 seconds, it assumes the worker is dead and reassigns its segments to healthy workers. The timeout must be long enough to tolerate network jitter but short enough to detect failures before they impact overall job completion time. A stale segment that sits assigned but unprocessed for minutes directly impacts the user's wait time.
+Heartbeat এটি সমাধান করে প্রতিটি worker-কে process করার সময় একটি periodic signal পাঠাতে বাধ্য করে (প্রতি 10 সেকেন্ডে)। যদি orchestrator 30 সেকেন্ড ধরে কোনো heartbeat না পায়, এটি ধরে নেয় worker টি মৃত এবং তার segment গুলো সুস্থ worker-দের reassign করে। timeout টি network jitter সহ্য করার মতো যথেষ্ট বড় হতে হবে কিন্তু overall job completion time-এ প্রভাব ফেলার আগে failure সনাক্ত করার মতো যথেষ্ট ছোট হতে হবে। একটি stale segment যা assigned অথচ unprocessed অবস্থায় মিনিটের পর মিনিট বসে থাকে সেটি সরাসরি user-এর অপেক্ষার সময়ে প্রভাব ফেলে।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল টেকঅ্যাওয়ে
 
-- Segment-based transcoding enables massive parallelism — a 2-hour movie split into 720 two-second segments can be transcoded by 720 workers simultaneously
-- Adaptive bitrate streaming lets players switch quality seamlessly based on network conditions — the key to buffer-free video
-- HLS manifests are just text files pointing to video segments — simple to generate, cache, and serve through CDNs
-- Worker heartbeats detect stalled jobs — if a worker goes silent for 30 seconds, its segments get reassigned
-- Fair scheduling prevents one user's 4K movie from blocking everyone else's uploads
-- Progress tracking with ETA gives users confidence their upload is being processed, not lost
+- Segment-based ট্রান্সকোডিং বিশাল parallelism সম্ভব করে — একটি 2-ঘণ্টার সিনেমা 720টি two-second segment-এ ভাগ করলে 720টি worker একসাথে সেটি ট্রান্সকোড করতে পারে
+- Adaptive bitrate streaming player-দের network condition-এর ভিত্তিতে নির্বিঘ্নে quality সুইচ করতে দেয় — buffer-free ভিডিওর মূল চাবিকাঠি
+- HLS manifest নেহাত text ফাইল যা ভিডিও segment-এর দিকে ইঙ্গিত করে — তৈরি, cache এবং CDN-এর মাধ্যমে serve করা সহজ
+- Worker heartbeat আটকে যাওয়া job সনাক্ত করে — একটি worker 30 সেকেন্ড নীরব থাকলে, তার segment গুলো reassign হয়ে যায়
+- Fair scheduling একজন user-এর 4K সিনেমাকে বাকি সবার আপলোড ব্লক করা থেকে আটকায়
+- ETA সহ progress tracking user-দের আশ্বস্ত করে যে তাদের আপলোড process হচ্ছে, হারিয়ে যায়নি
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জগতে ব্যবহার
 
-- **YouTube** transcodes 500+ hours of video uploaded every minute into 8+ quality levels with VP9 and AV1 codecs
-- **Netflix** pre-computes per-title encoding profiles — dark scenes get fewer bits, action scenes get more
-- **Twitch** transcodes live streams in real-time to 3-4 quality levels with sub-3-second glass-to-glass latency
-- **TikTok** uses hardware-accelerated transcoding (NVENC) to process millions of short videos per day
-- This architecture handles 1000+ concurrent transcoding jobs with segment-level parallelism and fair scheduling
+- **YouTube** প্রতি মিনিটে আপলোড হওয়া 500+ ঘণ্টার ভিডিও VP9 ও AV1 codec দিয়ে 8+ quality level-এ ট্রান্সকোড করে
+- **Netflix** per-title encoding profile আগে থেকে গণনা করে — অন্ধকার দৃশ্য কম bit পায়, action দৃশ্য বেশি পায়
+- **Twitch** live stream real-time-এ 3-4টি quality level-এ sub-3-second glass-to-glass latency সহ ট্রান্সকোড করে
+- **TikTok** প্রতিদিন লক্ষ লক্ষ ছোট ভিডিও process করতে hardware-accelerated ট্রান্সকোডিং (NVENC) ব্যবহার করে
+- এই architecture segment-level parallelism ও fair scheduling সহ 1000+ concurrent transcoding job সামলায়
 
 </div>

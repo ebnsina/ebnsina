@@ -1,9 +1,9 @@
 ---
-title: 'Client-Server Architecture'
-subtitle: 'Build a real HTTP server that handles JSON API requests with proper routing, parsing, and error handling.'
+title: 'ক্লায়েন্ট-সার্ভার আর্কিটেকচার'
+subtitle: 'একটি রিয়েল HTTP সার্ভার বানান যা সঠিক রাউটিং, পার্সিং আর এরর হ্যান্ডলিং সহ JSON API রিকোয়েস্ট হ্যান্ডল করে।'
 chapter: 1
 level: 'beginner'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['HTTP', 'request routing', 'JSON', 'error handling']
 ---
 
@@ -13,11 +13,19 @@ topics: ['HTTP', 'request routing', 'JSON', 'error handling']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What is Client-Server Architecture?
+## গল্পে বুঝি
 
-Every web application you've ever used follows this pattern: a **client** (browser, mobile app, CLI) sends a request to a **server**, which processes it and sends back a response. This is the most fundamental building block of distributed systems.
+আল-খোয়ারিজমি একটা রেস্টুরেন্টে ঢুকে টেবিলে বসল। সে নিজে কিন্তু কিচেনে গিয়ে রান্না করতে যায় না — খাবার কীভাবে বানানো হচ্ছে সেটা নিয়েও তার মাথাব্যথা নেই। সে শুধু ওয়েটার ইবনে সিনাকে ডেকে বলল, "একটা কাচ্চি বিরিয়ানি দেন।" ইবনে সিনা অর্ডারটা লিখে নিয়ে কিচেনে গিয়ে শেফ ফাতিমা আল-ফিহরিকে দিয়ে এল। ফাতিমা আল-ফিহরি কিচেনে বসে বিরিয়ানিটা রান্না করল, প্লেটে সাজাল, আর ইবনে সিনার হাতে তুলে দিল। ইবনে সিনা প্লেটটা নিয়ে আল-খোয়ারিজমির টেবিলে পৌঁছে দিল।
 
-Think of it like a restaurant. The customer (client) places an order (request) with the waiter (HTTP protocol), who takes it to the kitchen (server). The kitchen processes the order and sends back the food (response).
+মজার ব্যাপার হলো, আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরি কেউ কারো সাথে সরাসরি কথা বলল না — সব যাওয়া-আসা হলো ইবনে সিনার মাধ্যমে। আল-খোয়ারিজমি শুধু জানে কী চাইতে হবে; ফাতিমা আল-ফিহরি শুধু জানে কীভাবে বানাতে হবে। দুজনের কাজ আলাদা, আর ইবনে সিনা মাঝখানে থেকে অর্ডার আর প্লেট এদিক-ওদিক করে দিল।
+
+এই গল্পটাই আসলে **client-server আর্কিটেকচার**। আল-খোয়ারিজমি হলো client — সে request (অর্ডার) পাঠায় কিন্তু নিজে কাজটা করে না। ফাতিমা আল-ফিহরির কিচেন হলো server — সে request প্রসেস করে response (খাবার) ফেরত দেয়। আর ওয়েটার ইবনে সিনা হলো network, যে request আর response দুই দিকেই বয়ে নিয়ে যায়। এই আলাদা-আলাদা roles-এর কারণেই আপনার ব্রাউজার (client) জানে না Facebook-এর server ভেতরে কীভাবে ডেটা খোঁজে — সে শুধু request পাঠায় আর response পায়।
+
+## ক্লায়েন্ট-সার্ভার আর্কিটেকচার কী?
+
+আপনি যত ওয়েব অ্যাপ্লিকেশন ব্যবহার করেছেন, সবগুলোই এই প্যাটার্ন মেনে চলে: একটি **ক্লায়েন্ট** (ব্রাউজার, মোবাইল অ্যাপ, CLI) একটি **সার্ভার**-এ রিকোয়েস্ট পাঠায়, সার্ভার সেটা প্রসেস করে রেসপন্স ফেরত পাঠায়। এটাই ডিস্ট্রিবিউটেড সিস্টেমের সবচেয়ে মৌলিক বিল্ডিং ব্লক।
+
+এটাকে একটা রেস্টুরেন্টের মতো ভাবুন। কাস্টমার (ক্লায়েন্ট) ওয়েটারের (HTTP প্রোটোকল) কাছে অর্ডার (রিকোয়েস্ট) দেয়, ওয়েটার সেটা কিচেনে (সার্ভার) নিয়ে যায়। কিচেন অর্ডারটা প্রসেস করে খাবার (রেসপন্স) ফেরত পাঠায়।
 
 <Mermaid
 title="Client-Server Request Flow"
@@ -25,21 +33,21 @@ code={`graph LR
   C["Browser<br/>Client"] --> H["HTTP<br/>Protocol"] --> S["API Server<br/>Process & Respond"] --> D["Database<br/>Storage"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উপমা
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like ordering at a restaurant — you (client) tell the waiter your order (request), the kitchen (server) prepares it, and the waiter brings back your food (response).
+রেস্টুরেন্টে অর্ডার দেওয়ার মতো — আপনি (ক্লায়েন্ট) ওয়েটারকে আপনার অর্ডার (রিকোয়েস্ট) বলেন, কিচেন (সার্ভার) সেটা বানায়, আর ওয়েটার আপনার খাবার (রেসপন্স) নিয়ে আসে।
 
 </Callout>
 
-When you open twitter.com, your browser sends an HTTP GET request to Twitter's servers. The server authenticates you, queries databases for your timeline, assembles the response, and sends back JSON data. Your browser renders it. Every single interaction — liking a tweet, posting, scrolling — is a client-server request/response cycle.
+আপনি যখন twitter.com খোলেন, তখন আপনার ব্রাউজার Twitter-এর সার্ভারে একটা HTTP GET রিকোয়েস্ট পাঠায়। সার্ভার আপনাকে অথেনটিকেট করে, আপনার টাইমলাইনের জন্য ডেটাবেস কোয়েরি করে, রেসপন্স তৈরি করে, আর JSON ডেটা ফেরত পাঠায়। আপনার ব্রাউজার সেটা রেন্ডার করে। প্রতিটা ইন্টারঅ্যাকশন — একটা টুইট লাইক করা, পোস্ট করা, স্ক্রল করা — একেকটা ক্লায়েন্ট-সার্ভার রিকোয়েস্ট/রেসপন্স সাইকেল।
 
-## Building a Production HTTP Server
+## একটি প্রোডাকশন HTTP সার্ভার বানানো
 
-Here's a complete HTTP server with JSON API routing, request validation, structured error handling, and graceful shutdown. This is production-ready code — not a tutorial snippet.
+এখানে একটি সম্পূর্ণ HTTP সার্ভার আছে — JSON API রাউটিং, রিকোয়েস্ট ভ্যালিডেশন, স্ট্রাকচার্ড এরর হ্যান্ডলিং আর graceful shutdown সহ। এটা প্রোডাকশন-রেডি কোড — কোনো টিউটোরিয়াল স্নিপেট নয়।
 
 <CodeTabs tsFile="server.ts" goFile="server.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -482,34 +490,34 @@ func main() {
 </div>
 </CodeTabs>
 
-## What Makes This Production-Ready
+## এটাকে প্রোডাকশন-রেডি বানায় কী কী
 
-- **Request body size limits** — prevents memory exhaustion attacks (1MB cap)
-- **Graceful shutdown** — handles SIGTERM/SIGINT, drains in-flight requests before exiting
-- **Structured error responses** — consistent JSON error format for clients
-- **Input validation** — rejects malformed or missing data with clear messages
-- **Timeout configuration** (Go) — read/write/idle timeouts prevent slow-client attacks
-- **Thread safety** (Go) — `sync.RWMutex` protects concurrent map access
+- **রিকোয়েস্ট বডির সাইজ লিমিট** — মেমরি নিঃশেষ করে দেওয়ার অ্যাটাক ঠেকায় (1MB সীমা)
+- **Graceful shutdown** — SIGTERM/SIGINT হ্যান্ডল করে, বের হওয়ার আগে চলমান রিকোয়েস্টগুলো শেষ করে দেয়
+- **স্ট্রাকচার্ড এরর রেসপন্স** — ক্লায়েন্টের জন্য একই রকম JSON এরর ফরম্যাট
+- **ইনপুট ভ্যালিডেশন** — ভাঙা বা মিসিং ডেটা স্পষ্ট মেসেজ দিয়ে reject করে
+- **টাইমআউট কনফিগারেশন** (Go) — read/write/idle টাইমআউট স্লো-ক্লায়েন্ট অ্যাটাক ঠেকায়
+- **Thread safety** (Go) — `sync.RWMutex` কনকারেন্ট map অ্যাক্সেস রক্ষা করে
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Client-server is a request/response model — the client initiates, the server responds
-- Always validate input at the server boundary — never trust client data
-- Graceful shutdown prevents dropped requests during deployments
-- Use structured error responses so clients can programmatically handle errors
-- Set timeouts and body size limits to protect against abuse
+- ক্লায়েন্ট-সার্ভার একটা request/response মডেল — ক্লায়েন্ট শুরু করে, সার্ভার রেসপন্স দেয়
+- সার্ভার সীমানায় সবসময় ইনপুট ভ্যালিডেট করুন — ক্লায়েন্টের ডেটাকে কখনো বিশ্বাস করবেন না
+- Graceful shutdown ডিপ্লয়মেন্টের সময় রিকোয়েস্ট হারিয়ে যাওয়া ঠেকায়
+- স্ট্রাকচার্ড এরর রেসপন্স ব্যবহার করুন যাতে ক্লায়েন্ট প্রোগ্রাম্যাটিক্যালি এরর হ্যান্ডল করতে পারে
+- অপব্যবহার থেকে বাঁচতে টাইমআউট আর বডি সাইজ লিমিট সেট করুন
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Every web company** uses this pattern — it's the foundation of all web services
-- **Stripe** handles millions of API requests per second using this exact request/response model
-- **GitHub's API** follows these same patterns: JSON responses, proper HTTP status codes, request validation
-- When your traffic grows beyond what one server can handle, you'll add a load balancer in front (Chapter 5)
+- **প্রতিটা ওয়েব কোম্পানি** এই প্যাটার্ন ব্যবহার করে — এটাই সব ওয়েব সার্ভিসের ভিত্তি
+- **Stripe** এই একই request/response মডেল ব্যবহার করে প্রতি সেকেন্ডে লাখ লাখ API রিকোয়েস্ট হ্যান্ডল করে
+- **GitHub-এর API** এই একই প্যাটার্ন মেনে চলে: JSON রেসপন্স, সঠিক HTTP স্ট্যাটাস কোড, রিকোয়েস্ট ভ্যালিডেশন
+- যখন আপনার ট্রাফিক এক সার্ভারের সামর্থ্যের চেয়ে বেশি হয়ে যাবে, তখন সামনে একটা load balancer যোগ করবেন (Chapter 5)
 
 </div>

@@ -1,9 +1,9 @@
 ---
 title: 'Postgres Table Partitioning'
-subtitle: 'Range, list, and hash partitioning — the single-server answer to large tables that buys you most of what sharding promises without the operational cost.'
+subtitle: 'Range, list, এবং hash partitioning — বড় table-এর single-server উত্তর, যা sharding-এর প্রতিশ্রুত বেশিরভাগ সুবিধা operational খরচ ছাড়াই এনে দেয়।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   [
     'PostgreSQL',
@@ -19,26 +19,34 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বাগদাদের বাজারে ইবনে সিনার একটা কাপড়ের দোকান। প্রতিদিন যা কিছু বিক্রি হয়, সব এন্ট্রি সে একটাই মোটা বিক্রির খাতায় লিখে রাখে। বছর গড়াতে গড়াতে খাতাটা এত মোটা হয়ে গেছে যে কোনো একটা পুরোনো এন্ট্রি খুঁজতে গেলে পাতার পর পাতা উল্টাতে হয় — মার্চ মাসে কী বিক্রি হয়েছিল জানতে চাইলে পুরো খাতা ঘেঁটে বেড়াতে হয়, ভয়ানক ধীর আর ঝামেলার কাজ।
+
+তাই ইবনে সিনা বুদ্ধি করে একটা কাজ করল। হিসাবগুলো একই রইল, কিন্তু সে একটা মোটা খাতার বদলে প্রতি মাসের জন্য আলাদা একটা করে পাতলা খণ্ড বানাল — জানুয়ারির খণ্ড, ফেব্রুয়ারির খণ্ড, মার্চের খণ্ড। এখন কেউ জিজ্ঞেস করলে "মার্চে কী বিক্রি হলো", সে সোজা শুধু মার্চের খণ্ডটা টেনে নেয়, বাকিগুলো ছুঁয়েও দেখে না। আর বছরের শেষে পুরোনো মাসগুলোর খণ্ড আলাদা করে গুদামে তুলে রাখে বা ফেলে দেয় — বাকি খণ্ডগুলোতে হাত না দিয়েই।
+
+এই গল্পটাই আসলে Postgres **table partitioning**। একটা বিশাল খাতা হলো একটা big **table**, আর সেটাকে প্রতি মাসের এক-একটা খণ্ডে ভাগ করা হলো একই database-এর ভেতরে **range partitioning** (তারিখ ধরে ভাগ) — table বদলায় না, শুধু ভেতরে ছোট ছোট partition-এ ভাগ হয়। "মার্চের খণ্ডটাই শুধু টানা" হলো **partition pruning** — query শুধু প্রাসঙ্গিক partition scan করে, পুরো table নয়। আর পুরোনো খণ্ড ফেলে দেওয়া হলো পুরোনো partition সস্তায় drop বা archive করা — লক্ষ লক্ষ row মুছতে না গিয়ে একটা partition-ই তুলে ফেলা। বাস্তবে time-series ডেটা (orders, logs, events) এভাবেই একই server-এ মাস ধরে partition করা হয়, যাতে বড় table-ও দ্রুত থাকে আর পুরোনো ডেটা সরানো তাৎক্ষণিক হয়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A filing cabinet with labeled drawers: all files are in the same cabinet (one database server), but divided into drawers by year. When you need a file from 2023, you only open that drawer — not all of them. Partition pruning is Postgres automatically knowing which drawer to open based on your query.
+লেবেলযুক্ত ড্রয়ারসহ একটি ফাইলিং কেবিনেট: সব ফাইল একই কেবিনেটে (একটি database server), কিন্তু বছর অনুযায়ী ড্রয়ারে ভাগ করা। 2023-এর কোনো ফাইল দরকার হলে, আপনি শুধু সেই ড্রয়ারটাই খোলেন — সবগুলো নয়। Partition pruning হলো Postgres স্বয়ংক্রিয়ভাবে আপনার query-র ভিত্তিতে জানা কোন ড্রয়ার খুলতে হবে।
 
 </Callout>
 
-## Why Partition Before Sharding
+## Shard করার আগে কেন Partition করবেন
 
-Postgres table partitioning gives you:
+Postgres table partitioning আপনাকে দেয়:
 
-- **Partition pruning** — queries only scan relevant partitions, not the whole table
-- **Faster bulk deletes** — `DROP TABLE partition_name` is instant vs deleting millions of rows
-- **Index size** — indexes on each partition are smaller and fit in memory better
-- **Vacuum efficiency** — autovacuum works on one partition at a time, less contention
+- **Partition pruning** — query শুধু প্রাসঙ্গিক partition scan করে, পুরো table নয়
+- **দ্রুত bulk delete** — `DROP TABLE partition_name` তাৎক্ষণিক, লক্ষ লক্ষ row delete করার তুলনায়
+- **Index size** — প্রতিটি partition-এর index ছোট এবং memory-তে ভালো fit করে
+- **Vacuum efficiency** — autovacuum একবারে একটি partition-এ কাজ করে, কম contention
 
-All on one server, with no application changes. The same `INSERT INTO orders` and `SELECT FROM orders` SQL works — Postgres routes internally.
+সবকিছু এক server-এ, কোনো application পরিবর্তন ছাড়াই। একই `INSERT INTO orders` এবং `SELECT FROM orders` SQL কাজ করে — Postgres internally route করে।
 
-## Range Partitioning (by date)
+## Range Partitioning (তারিখ অনুযায়ী)
 
 ```sql
 -- Create partitioned table
@@ -77,17 +85,17 @@ INSERT INTO orders (customer_id, total_cents) VALUES ('...', 1999);
 
 ## Default Partition
 
-Catch-all for values that don't fit any defined range:
+কোনো defined range-এ fit না করা value গুলোর জন্য catch-all:
 
 ```sql
 CREATE TABLE orders_default PARTITION OF orders DEFAULT;
 ```
 
-Without a default partition, inserting a row with a `created_at` outside any defined range raises an error. With it, the row lands in `orders_default` — useful during schema evolution.
+Default partition ছাড়া, কোনো defined range-এর বাইরে `created_at` সহ একটি row insert করলে error হয়। এটি থাকলে, row-টি `orders_default`-এ নামে — schema evolution-এর সময় কাজে লাগে।
 
-## Automating Partition Creation (pg_partman)
+## Partition তৈরি স্বয়ংক্রিয় করা (pg_partman)
 
-Creating monthly partitions manually doesn't scale. `pg_partman` automates it:
+মাসিক partition manually তৈরি করা scale করে না। `pg_partman` এটি স্বয়ংক্রিয় করে:
 
 ```sql
 -- Install pg_partman
@@ -112,15 +120,15 @@ SELECT partman.run_maintenance();
 0 * * * * psql -c "SELECT partman.run_maintenance();"
 ```
 
-pg_partman handles:
+pg_partman যা সামলায়:
 
-- Creating the next N months of partitions before they're needed
-- Dropping old partitions based on retention policy
-- Managing the `partman.part_config` table
+- দরকার হওয়ার আগেই পরবর্তী N মাসের partition তৈরি করা
+- retention policy অনুযায়ী পুরনো partition drop করা
+- `partman.part_config` table পরিচালনা করা
 
 ## Hash Partitioning
 
-Distribute rows evenly across a fixed number of partitions:
+একটি নির্দিষ্ট সংখ্যক partition জুড়ে row গুলো সমানভাবে distribute করুন:
 
 ```sql
 CREATE TABLE user_events (
@@ -138,13 +146,13 @@ CREATE TABLE user_events_2 PARTITION OF user_events FOR VALUES WITH (MODULUS 8, 
 -- ... up to user_events_7
 ```
 
-Queries with `WHERE user_id = $1` prune to one partition. Queries without `user_id` scan all 8.
+`WHERE user_id = $1` সহ query এক partition-এ prune হয়। `user_id` ছাড়া query সব 8টি scan করে।
 
-Hash partitioning can't be added to an existing table — must be designed upfront.
+Hash partitioning একটি existing table-এ যোগ করা যায় না — শুরুতেই design করতে হবে।
 
 ## List Partitioning
 
-Partition by discrete values (region, status, tenant):
+Discrete value (region, status, tenant) অনুযায়ী partition:
 
 ```sql
 CREATE TABLE orders (
@@ -159,11 +167,11 @@ CREATE TABLE orders_apac PARTITION OF orders FOR VALUES IN ('ap-south', 'ap-east
 CREATE TABLE orders_default PARTITION OF orders DEFAULT;
 ```
 
-Useful for: multi-tenant data (partition by `tenant_id` for large tenants), regional data (co-locate EU data for GDPR), data with natural groupings.
+কাজে লাগে: multi-tenant data (বড় tenant-এর জন্য `tenant_id` অনুযায়ী partition), regional data (GDPR-এর জন্য EU data একসাথে রাখা), স্বাভাবিক grouping সহ data।
 
 ## Partition Pruning
 
-Check that Postgres actually prunes:
+Postgres আসলেই prune করছে কিনা যাচাই করুন:
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
@@ -181,15 +189,15 @@ WHERE created_at >= '2024-03-01' AND created_at < '2024-04-01';
 --   Seq Scan on orders_2024_03
 ```
 
-Pruning doesn't work when:
+Pruning কাজ করে না যখন:
 
-- Using a function on the partition column: `WHERE DATE(created_at) = '2024-03-01'`
-- Partition column used in a cast: `WHERE created_at::date = '2024-03-01'`
-- `enable_partition_pruning = off` (check with `SHOW enable_partition_pruning`)
+- Partition column-এ একটি function ব্যবহার করা হয়: `WHERE DATE(created_at) = '2024-03-01'`
+- Partition column একটি cast-এ ব্যবহার করা হয়: `WHERE created_at::date = '2024-03-01'`
+- `enable_partition_pruning = off` (`SHOW enable_partition_pruning` দিয়ে যাচাই করুন)
 
-## Dropping Old Partitions
+## পুরনো Partition Drop করা
 
-The huge advantage over deleting rows:
+Row delete করার তুলনায় বিশাল সুবিধা:
 
 ```sql
 -- Delete 1 million old rows: slow, generates WAL, causes bloat
@@ -205,9 +213,9 @@ ALTER TABLE orders DETACH PARTITION orders_2023_01;
 ALTER TABLE orders_2023_01 RENAME TO orders_2023_01_archived;
 ```
 
-## Partition-wise Joins
+## Partition-wise Join
 
-When joining two partitioned tables on their partition keys, Postgres can join matching partitions directly:
+দুটি partitioned table-কে তাদের partition key-এর উপর join করার সময়, Postgres মিলে যাওয়া partition গুলো সরাসরি join করতে পারে:
 
 ```sql
 -- Both tables partitioned by customer_id
@@ -225,12 +233,12 @@ JOIN order_items oi ON oi.order_id = o.id AND oi.customer_id = o.customer_id;
 -- Massively reduces the join space
 ```
 
-## Limitations
+## সীমাবদ্ধতা
 
-- **No global unique constraints** across partitions (only within a partition). Primary keys must include the partition column.
-- **Foreign keys** from non-partitioned tables to partitioned tables: not supported in older Postgres. Supported from Postgres 12+.
-- **Adding partitions** doesn't move existing data — `DEFAULT` partition must be split manually.
-- **Partition key can't be updated** — you can't `UPDATE orders SET created_at = new_date` across partition boundaries. Must DELETE + INSERT.
+- **Partition জুড়ে global unique constraint নেই** (শুধু একটি partition-এর মধ্যে)। Primary key-তে partition column থাকতে হবে।
+- **Non-partitioned table থেকে partitioned table-এ Foreign key**: পুরনো Postgres-এ supported নয়। Postgres 12+ থেকে supported।
+- **Partition যোগ করলে** existing data সরে না — `DEFAULT` partition manually split করতে হবে।
+- **Partition key আপডেট করা যায় না** — আপনি partition boundary জুড়ে `UPDATE orders SET created_at = new_date` করতে পারবেন না। DELETE + INSERT করতে হবে।
 
 ```sql
 -- Primary key must include the partition column for uniqueness
@@ -238,4 +246,4 @@ ALTER TABLE orders ADD PRIMARY KEY (id, created_at);
 -- (just 'id' would fail — Postgres can't enforce uniqueness across partitions without it)
 ```
 
-For most applications that think they need sharding, Postgres partitioning on the right column — plus a larger server and read replicas — will handle the load with a fraction of the operational complexity.
+যেসব application মনে করে তাদের sharding দরকার, তাদের বেশিরভাগের জন্য সঠিক column-এ Postgres partitioning — সাথে একটি বড় server এবং read replica — operational জটিলতার একটি ভগ্নাংশ দিয়ে load সামলে নেবে।

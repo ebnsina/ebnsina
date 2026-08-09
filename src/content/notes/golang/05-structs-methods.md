@@ -1,9 +1,9 @@
 ---
-title: 'Structs & Methods'
-subtitle: "Go doesn't have classes — it has structs with methods. Simpler, more explicit, and surprisingly powerful."
+title: 'Structs ও Methods'
+subtitle: 'Go-তে class নেই — আছে struct আর method। সহজ, বেশি explicit, আর অবাক করার মতো শক্তিশালী।'
 chapter: 5
 level: 'beginner'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['structs', 'methods', 'receivers', 'embedding', 'constructors']
 ---
 
@@ -11,9 +11,17 @@ topics: ['structs', 'methods', 'receivers', 'embedding', 'constructors']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Structs: Go's Building Blocks
+## গল্পে বুঝি
 
-A struct is a collection of fields. It's Go's primary way to group related data together — like a class without inheritance, without constructors, and without the ceremony.
+স্কুলের অফিসে ফাতিমা আল-ফিহরি আপা নতুন সেশনের ID কার্ড বানাচ্ছেন। কার্ডের একটা ছাপানো টেমপ্লেট আছে — একটা কার্ডেই পাশাপাশি বসানো নাম, রোল, ছবি আর ব্লাড গ্রুপের ঘর। ইবনে সিনার কার্ড হোক বা আল-খোয়ারিজমির, প্রত্যেকের এলোমেলো কাগজে আলাদা করে নাম-রোল লেখা লাগে না; একই ছকের একটা কার্ডেই সম্পর্কিত সব তথ্য এক জায়গায় গোছানো থাকে। নামের ঘরে কেউ ব্লাড গ্রুপ বসিয়ে দেবে, সেই সুযোগও নেই — প্রতিটা ঘরের নির্দিষ্ট জায়গা, নির্দিষ্ট ধরন।
+
+আবার এই কার্ডের সাথেই কয়েকটা কাজ বাঁধা থাকে, যেগুলো কার্ডের নিজের তথ্য নিয়েই চলে। "প্রিন্ট" বললে কার্ডটা তার নিজের নাম-রোল-ছবি দিয়েই ছাপা হয়; "সারাংশ দেখাও" বললে সে তার নিজের নাম আর রোল জুড়ে এক লাইনে বলে দেয়। কাজগুলো বাইরের কোনো কাগজ থেকে নয়, ঠিক ওই কার্ডটার নিজের ঘরগুলো থেকেই তথ্য নেয়।
+
+এই কার্ড টেমপ্লেটটাই আসলে একটা **struct** — সম্পর্কিত কয়েকটা **field** (নাম, রোল, ছবি, ব্লাড গ্রুপ) এক নতুন **type**-এ একসাথে বেঁধে ফেলা। আর কার্ডের সাথে বাঁধা "প্রিন্ট" বা "সারাংশ দেখাও" কাজগুলোই হলো **method** — যে function সরাসরি ওই struct-এর সাথে যুক্ত থাকে আর তার নিজের data নিয়েই কাজ করে (সেই struct-টাই method-এর **receiver**)। বাস্তবে একটা `User`-এর নাম-ইমেইল একসাথে রাখা struct আর তার উপর বসানো `FullName()`-এর মতো method ঠিক এভাবেই ডেটা আর সেই ডেটার আচরণকে একই জায়গায় গুছিয়ে রাখে।
+
+## Structs: Go-র বিল্ডিং ব্লক
+
+একটা struct হলো field-এর একটা সংগ্রহ। সম্পর্কিত ডেটা একসাথে গোছানোর এটাই Go-র প্রধান উপায় — inheritance ছাড়া, constructor ছাড়া, আর কোনো আড়ম্বর ছাড়া একটা class-এর মতো।
 
 ```go
 type User struct {
@@ -28,13 +36,13 @@ type User struct {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A struct is like a form you fill out at a doctor's office. It has specific fields (Name, Date of Birth, Insurance), each with a specific type. You can't put your age in the Name field. And every form starts blank (zero values) until you fill it in.
+একটা struct অনেকটা ডাক্তারের চেম্বারে পূরণ করা একটা ফর্মের মতো। এতে নির্দিষ্ট field আছে (Name, Date of Birth, Insurance), প্রতিটার নির্দিষ্ট type সহ। আপনি Name field-এ আপনার বয়স বসাতে পারবেন না। আর প্রতিটা ফর্ম শুরু হয় ফাঁকা অবস্থায় (zero value), যতক্ষণ না আপনি এটা পূরণ করেন।
 
 </Callout>
 
-## Creating Structs
+## Struct তৈরি করা
 
 ```go
 // Method 1: Named fields (preferred — order doesn't matter, self-documenting)
@@ -62,13 +70,13 @@ user := &User{
 
 <Callout type="warning">
 
-**Always use named fields** when creating structs. Positional initialization breaks when you add or reorder fields. The Go vet tool will warn you about this.
+**Struct তৈরি করার সময় সবসময় named field ব্যবহার করুন।** Positional initialization তখনই ভেঙে পড়ে যখন আপনি field যোগ করেন বা তাদের ক্রম বদলান। Go vet টুল এই নিয়ে আপনাকে সতর্ক করবে।
 
 </Callout>
 
 ## Constructor Functions
 
-Go has no constructors. Instead, use factory functions — a convention, not a language feature:
+Go-তে কোনো constructor নেই। এর বদলে factory function ব্যবহার করুন — এটা একটা convention, ভাষার কোনো feature নয়:
 
 ```go
 // Convention: NewXxx returns a pointer to a new instance
@@ -101,9 +109,9 @@ func NewUser(email, first, last string) (*User, error) {
 user, err := NewUser("fatima@example.com", "Fatima", "al-Khwarizmi")
 ```
 
-## Methods: Functions Attached to Types
+## Methods: Type-এর সাথে যুক্ত Function
 
-A method is a function with a **receiver** — the type it's attached to:
+একটা method হলো একটা **receiver** সহ একটা function — যে type-এর সাথে এটা যুক্ত:
 
 ```go
 type Rectangle struct {
@@ -126,9 +134,9 @@ fmt.Println(rect.Area())       // 50
 fmt.Println(rect.Perimeter())  // 30
 ```
 
-## Value vs Pointer Receivers
+## Value বনাম Pointer Receivers
 
-This is the most important decision when writing methods:
+Method লেখার সময় এটাই সবচেয়ে গুরুত্বপূর্ণ সিদ্ধান্ত:
 
 ```go
 type Account struct {
@@ -160,32 +168,32 @@ fmt.Println(acc.Balance)  // 150
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-**Value receiver** = taking a photocopy of a document and writing on the copy. The original stays unchanged. Use for read-only operations.
+**Value receiver** = একটা নথির ফটোকপি নিয়ে কপিটায় লেখা। মূলটা অপরিবর্তিত থাকে। Read-only operation-এর জন্য ব্যবহার করুন।
 
-**Pointer receiver** = being given the original document. Any changes you make affect the real thing. Use when you need to modify state.
+**Pointer receiver** = আপনাকে মূল নথিটাই দেওয়া হলো। আপনি যা পরিবর্তন করেন তা আসল জিনিসেই প্রভাব ফেলে। State পরিবর্তন করা দরকার হলে ব্যবহার করুন।
 
 </Callout>
 
-### When to Use Which?
+### কখন কোনটা ব্যবহার করবেন?
 
-| Use pointer receiver `*T` when...                                | Use value receiver `T` when...      |
-| ---------------------------------------------------------------- | ----------------------------------- |
-| The method modifies the struct                                   | The method only reads fields        |
-| The struct is large (avoids copying)                             | The struct is small (a few fields)  |
-| Consistency — if any method needs a pointer, use pointer for all | The type is immutable by design     |
-| The struct contains a `sync.Mutex` or similar                    | Primitive-like types (Point, Color) |
+| Pointer receiver `*T` ব্যবহার করুন যখন...                        | Value receiver `T` ব্যবহার করুন যখন... |
+| ---------------------------------------------------------------- | -------------------------------------- |
+| Method struct পরিবর্তন করে                                       | Method শুধু field পড়ে                 |
+| Struct বড় (copy এড়ায়)                                         | Struct ছোট (কয়েকটা field)             |
+| Consistency — কোনো একটা method-এ pointer লাগলে, সবগুলোতে pointer | Type ডিজাইনগতভাবে immutable            |
+| Struct-এ একটা `sync.Mutex` বা তেমন কিছু আছে                      | Primitive-সদৃশ type (Point, Color)     |
 
 <Callout type="tip">
 
-**Industry rule:** If in doubt, use a pointer receiver. If any method on a type uses a pointer receiver, all methods should use pointer receivers for consistency.
+**Industry নিয়ম:** সন্দেহ হলে, pointer receiver ব্যবহার করুন। একটা type-এর কোনো একটা method যদি pointer receiver ব্যবহার করে, তাহলে consistency-র জন্য সব method-এই pointer receiver ব্যবহার করা উচিত।
 
 </Callout>
 
-## Struct Tags: Metadata for Serialization
+## Struct Tags: Serialization-এর জন্য Metadata
 
-Tags are string metadata attached to struct fields. Libraries use them via reflection.
+Tag হলো struct field-এর সাথে যুক্ত string metadata। Library-গুলো reflection-এর মাধ্যমে এগুলো ব্যবহার করে।
 
 ```go
 type User struct {
@@ -203,16 +211,16 @@ data, _ := json.Marshal(user)
 // Note: Password is excluded because of json:"-"
 ```
 
-Common tag formats:
+সাধারণ tag ফরম্যাট:
 
 - `json:"field_name"` — JSON encoding/decoding
-- `json:"field_name,omitempty"` — skip if zero value
+- `json:"field_name,omitempty"` — zero value হলে বাদ দাও
 - `db:"column_name"` — database column mapping (sqlx, gorm)
-- `validate:"required,min=1"` — validation rules
+- `validate:"required,min=1"` — validation নিয়ম
 
-## Struct Embedding: Composition Over Inheritance
+## Struct Embedding: Inheritance-এর বদলে Composition
 
-Go doesn't have inheritance. Instead, it uses **embedding** — placing one struct inside another:
+Go-তে inheritance নেই। এর বদলে এটা **embedding** ব্যবহার করে — একটা struct-কে আরেকটার ভেতরে বসানো:
 
 ```go
 type Address struct {
@@ -256,15 +264,15 @@ fmt.Println(emp.FullName()) // If User has a FullName() method
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Embedding is like a manager's badge that includes all the info from a regular employee badge, plus extra fields like "Department Head" and "Budget Authority." The manager doesn't re-enter their name and employee ID — those fields are promoted from the embedded employee badge.
+Embedding অনেকটা একজন ম্যানেজারের ব্যাজের মতো, যাতে একজন সাধারণ কর্মচারীর ব্যাজের সব তথ্য থাকে, সাথে "Department Head" আর "Budget Authority"-র মতো অতিরিক্ত field থাকে। ম্যানেজার তাঁর নাম আর employee ID আবার লেখেন না — সেই field-গুলো embedded employee ব্যাজ থেকে promote হয়ে আসে।
 
 </Callout>
 
-## Real-World Example: HTTP Service
+## বাস্তব জীবনের উদাহরণ: HTTP Service
 
-Putting it all together — a typical Go service structure:
+সবকিছু একসাথে করলে — একটা সাধারণ Go service স্ট্রাকচার:
 
 ```go
 type UserService struct {
@@ -335,11 +343,11 @@ func (s *UserService) Create(ctx context.Context, input CreateUserInput) (*User,
 }
 ```
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Structs group related data** — no classes, no inheritance, no constructors
-2. **`NewXxx` factory functions** are the convention for constructors with validation
-3. **Pointer receivers modify**, value receivers read — when in doubt, use pointer
-4. **Struct tags** control serialization (`json`, `db`, `validate`)
-5. **Embedding provides composition** — fields and methods are promoted, not inherited
-6. **Keep structs focused** — a `UserService` holds its dependencies and provides methods. This is the core pattern for all Go services
+1. **Struct সম্পর্কিত ডেটা গোছায়** — কোনো class নেই, inheritance নেই, constructor নেই
+2. **`NewXxx` factory function** হলো validation সহ constructor-এর convention
+3. **Pointer receiver পরিবর্তন করে**, value receiver পড়ে — সন্দেহ হলে pointer ব্যবহার করুন
+4. **Struct tag** serialization নিয়ন্ত্রণ করে (`json`, `db`, `validate`)
+5. **Embedding composition দেয়** — field আর method promote হয়, inherit হয় না
+6. **Struct-কে focused রাখুন** — একটা `UserService` তার dependency ধরে রাখে আর method দেয়। এটাই সব Go service-এর মূল প্যাটার্ন

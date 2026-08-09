@@ -1,9 +1,9 @@
 ---
-title: 'Horizontal Scaling — Roadmap'
-subtitle: 'Stateless services, load balancers, auto-scaling, database bottlenecks, and WebSocket fan-out across instances.'
+title: 'Horizontal Scaling — রোডম্যাপ'
+subtitle: 'Stateless সার্ভিস, load balancer, auto-scaling, ডেটাবেস bottleneck, এবং একাধিক instance জুড়ে WebSocket fan-out।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,20 +13,20 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Adding checkout lanes at a grocery store: one lane works fine until the queue gets long, then you open more. Horizontal scaling does the same for software — add more instances behind a load balancer. The prerequisite is that each lane (instance) can serve any customer independently, with no hidden state that ties a customer to a specific lane.
+মুদি দোকানে checkout lane যোগ করা: একটা lane দিয়ে ঠিকঠাক চলে যতক্ষণ না লাইন লম্বা হয়, তারপর আপনি আরও lane খোলেন। Horizontal scaling সফটওয়্যারের ক্ষেত্রে ঠিক এটাই করে — একটা load balancer-এর পেছনে আরও instance যোগ করে। শর্ত হলো প্রতিটা lane (instance) যেন যেকোনো গ্রাহককে স্বাধীনভাবে সেবা দিতে পারে, এমন কোনো লুকানো state ছাড়াই যা একজন গ্রাহককে নির্দিষ্ট একটা lane-এর সাথে বেঁধে রাখে।
 
 </Callout>
 
-## What you will learn
+## আপনি যা শিখবেন
 
-Vertical scaling (bigger server) has a ceiling. Horizontal scaling (more servers) doesn't — but it requires your application to be designed for it. This track covers the full picture: making services truly stateless, load balancing traffic across instances, auto-scaling based on real demand, handling the database bottleneck that emerges when app servers scale, and keeping WebSocket connections working across a multi-instance fleet.
+Vertical scaling (আরও বড় সার্ভার) একটা সীমায় গিয়ে আটকে যায়। Horizontal scaling (আরও সার্ভার) আটকায় না — কিন্তু এর জন্য আপনার অ্যাপ্লিকেশনকে সেভাবে ডিজাইন করতে হয়। এই ট্র্যাকে পুরো ছবিটা তুলে ধরা হয়েছে: সার্ভিসগুলোকে সত্যিকারের stateless বানানো, একাধিক instance জুড়ে ট্রাফিক load balance করা, বাস্তব চাহিদার ভিত্তিতে auto-scaling করা, অ্যাপ সার্ভার scale হওয়ার সময় যে ডেটাবেস bottleneck তৈরি হয় তা সামলানো, এবং multi-instance fleet জুড়ে WebSocket connection চালু রাখা।
 
-## Chapters in this track
+## এই ট্র্যাকের চ্যাপ্টারগুলো
 
-1. **Stateless Services** — the twelve-factor prerequisite, extracting sessions and files, testing statelessness
-2. **Load Balancers** — L4 vs L7, algorithms, health checks, connection draining, SSL termination
-3. **Auto-Scaling** — target tracking, scheduled scaling, HPA, KEDA for queue-driven workers
-4. **Scaling the Database Layer** — PgBouncer, read replicas, caching, when to shard
-5. **WebSockets & Shared State** — Redis adapter, presence tracking, sticky sessions, SSE as an alternative
+1. **Stateless Services** — twelve-factor-এর পূর্বশর্ত, session ও file আলাদা করা, statelessness পরীক্ষা করা
+2. **Load Balancers** — L4 বনাম L7, algorithm, health check, connection draining, SSL termination
+3. **Auto-Scaling** — target tracking, scheduled scaling, HPA, queue-driven worker-এর জন্য KEDA
+4. **Scaling the Database Layer** — PgBouncer, read replica, caching, কখন shard করবেন
+5. **WebSockets & Shared State** — Redis adapter, presence tracking, sticky session, বিকল্প হিসেবে SSE

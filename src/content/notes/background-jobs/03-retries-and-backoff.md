@@ -1,9 +1,9 @@
 ---
 title: 'Retries & Backoff'
-subtitle: 'Exponential backoff, jitter, max attempts, and knowing when to stop retrying and give up.'
+subtitle: 'Exponential backoff, jitter, max attempts, এবং কখন retry বন্ধ করে হাল ছেড়ে দিতে হবে তা জানা।'
 chapter: 3
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['retries', 'exponential backoff', 'jitter', 'dead-letter queue', 'error handling']
 ---
 
@@ -13,35 +13,43 @@ topics: ['retries', 'exponential backoff', 'jitter', 'dead-letter queue', 'error
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Redailing a busy phone number: you don't call back every second — you wait a bit, then a bit longer, then longer still. And if someone else calls at the same millisecond, your calls are spaced randomly enough that you don't collide repeatedly. Exponential backoff with jitter does exactly this for job retries.
+একটি ব্যস্ত ফোন নম্বরে বারবার ডায়াল করা: আপনি প্রতি সেকেন্ডে কল করেন না — একটু অপেক্ষা করেন, তারপর আরেকটু বেশি, তারপর আরও বেশি। আর অন্য কেউ ঠিক একই মিলিসেকেন্ডে কল করলেও, আপনার কলগুলো এলোমেলোভাবে যথেষ্ট ব্যবধানে থাকে যাতে বারবার সংঘর্ষ না হয়। Jitter সহ exponential backoff job retry-র জন্য ঠিক এটাই করে।
 
 </Callout>
 
-## Why Jobs Fail
+## গল্পে বুঝি
 
-Jobs fail for two reasons — and your retry strategy should differ:
+ফাতিমা আল-ফিহরি তার বন্ধু ইবনে সিনাকে ল্যান্ডলাইন ফোনে ধরার চেষ্টা করছেন — কিন্তু লাইন engaged, বারবার সেই খ্যাঁচ-খ্যাঁচ ব্যস্ত টোন। তিনি জানেন ইবনে সিনা বাসাতেই আছেন, একটু পরেই ফোন রেখে দেবেন, তাই এটা সাময়িক সমস্যা। এখন ফাতিমা যদি প্রতি সেকেন্ডে পাগলের মতো রিডায়াল করতে থাকেন, তাতে লাইন আরও জ্যাম হয়ে থাকবে, ইবনে সিনার কল শেষ করাটাও কঠিন হবে। তাই তিনি বুদ্ধি করে অন্যভাবে চেষ্টা করেন।
 
-**Transient failures** (worth retrying):
+প্রথমবার engaged পেয়ে তিনি দশ সেকেন্ড অপেক্ষা করেন, তারপর আবার ডায়াল — এখনও engaged। এবার তিনি প্রায় আধা মিনিট থামেন, তারপর আরও বেশি, প্রতিবার আগের চেয়ে লম্বা বিরতি নিয়ে। আবার তিনি ঘড়ির কাঁটা ধরে ঠিক গোল সময়ে ডায়াল করেন না — একটু এদিক-ওদিক করে সময় বদলে দেন, যাতে ওই একই লাইনে চেষ্টা করা আর সবার সঙ্গে ঠিক একই মুহূর্তে তার কলটা গিয়ে না লাগে। এভাবে কয়েকবার চেষ্টার পরও লাইন না খুললে ফাতিমা হাল ছেড়ে দেন — আজ আর নয়, কাল আবার দেখা যাবে।
 
-- Network timeout calling an external API
+এই গল্পটাই আসলে **retries with exponential backoff**। engaged লাইনটা হলো একটা transient-ভাবে fail করা job বা service, প্রতিটা রিডায়াল হলো একটা retry। প্রতিবার আগের চেয়ে বেশি সময় অপেক্ষা করাটা হলো **exponential backoff**, আর ডায়ালের ঠিক মুহূর্তটা একটু এলোমেলো করে দেওয়াটা হলো **jitter** — যাতে সবাই একসাথে হুমড়ি খেয়ে না পড়ে। প্রতি সেকেন্ডে রিডায়াল না করাটাই হলো একটা ধুঁকতে থাকা service-কে বারবার আঘাত না করা, আর কয়েকবার পর থেমে যাওয়াটা হলো **max attempts** limit (তারপর job চলে যায় dead-letter queue-তে)। বাস্তবেও ঠিক এভাবেই — একটা webhook বা external API 429/500 ফেরত দিলে সিস্টেম সঙ্গে সঙ্গে হাল ছাড়ে না, আবার অন্ধভাবে চেষ্টাও করতে থাকে না।
+
+## Job কেন Fail করে
+
+Job দুটো কারণে fail করে — এবং আপনার retry strategy আলাদা হওয়া উচিত:
+
+**Transient failure** (retry করা মূল্যবান):
+
+- একটি external API call করার সময় network timeout
 - Database connection error
 - Third-party rate limit (429)
-- Temporary resource unavailability
+- অস্থায়ীভাবে resource না পাওয়া
 
-**Permanent failures** (not worth retrying):
+**Permanent failure** (retry করা অর্থহীন):
 
-- Invalid job data (missing required field)
-- Business logic violation (user deleted before job ran)
-- External API returns 400 (bad request — same input will fail again)
+- Invalid job data (required field নেই)
+- Business logic violation (job চলার আগেই user মুছে গেছে)
+- External API 400 রিটার্ন করে (bad request — একই input আবার fail করবে)
 - Code bug
 
-A naive retry retries everything, wasting attempts on permanent failures and never giving up on transient ones.
+একটি naive retry সবকিছু retry করে, permanent failure-এ attempt নষ্ট করে আর transient-গুলোতে কখনো হাল ছাড়ে না।
 
 ## Exponential Backoff
 
-Wait longer after each failure. The delay grows exponentially to avoid hammering a struggling dependency:
+প্রতিটি failure-এর পরে বেশি সময় অপেক্ষা করুন। একটি ধুঁকতে থাকা dependency-কে বারবার আঘাত না করার জন্য delay exponentially বাড়ে:
 
 ```typescript
 function calculateDelay(attempt: number, baseDelayMs = 1000): number {
@@ -53,7 +61,7 @@ function calculateDelay(attempt: number, baseDelayMs = 1000): number {
 }
 ```
 
-**The thundering herd problem:** If 1000 jobs all fail at the same time and retry after exactly 2 seconds, they all hit your dependency simultaneously again — causing the same failure. Add jitter to spread them out:
+**Thundering herd সমস্যা:** যদি 1000টি job একই সময়ে fail করে এবং ঠিক 2 সেকেন্ড পরে retry করে, তবে তারা সবাই একসাথে আবার আপনার dependency-তে আঘাত করে — একই failure ঘটিয়ে। এদের ছড়িয়ে দিতে jitter যোগ করুন:
 
 ```typescript
 function calculateDelayWithJitter(
@@ -75,7 +83,7 @@ function decorrelatedJitter(attempt: number, baseMs = 1000, maxMs = 30_000): num
 }
 ```
 
-## Configuring Retries in BullMQ
+## BullMQ-তে Retry কনফিগার করা
 
 ```typescript
 await queue.add(
@@ -114,9 +122,9 @@ await queue.add('call-api', data, {
 });
 ```
 
-## Distinguishing Transient from Permanent Errors
+## Transient থেকে Permanent Error আলাদা করা
 
-Throw different error types to signal retry behavior:
+retry behavior সংকেত দিতে ভিন্ন error type throw করুন:
 
 ```typescript
 class PermanentError extends Error {
@@ -174,9 +182,9 @@ const worker = new Worker('webhooks', async (job) => {
 });
 ```
 
-## Dead-Letter Queues
+## Dead-Letter Queue
 
-When a job exhausts all attempts, it goes to the dead-letter queue (DLQ). The DLQ is not a trash can — it's a holding area for human investigation and manual reprocessing.
+একটি job যখন সব attempt শেষ করে ফেলে, তখন সেটা dead-letter queue-তে (DLQ) চলে যায়। DLQ কোনো ময়লার ঝুড়ি নয় — এটি মানুষের তদন্ত ও manual reprocessing-এর জন্য একটি হোল্ডিং এরিয়া।
 
 ```typescript
 // Set up a separate DLQ queue
@@ -200,11 +208,11 @@ worker.on('failed', async (job, err) => {
 });
 ```
 
-**DLQ operations you need:**
+**যেসব DLQ অপারেশন আপনার দরকার:**
 
-1. **Inspect**: browse failed jobs, see error messages and payloads
-2. **Replay**: fix the underlying issue, then reprocess the job
-3. **Discard**: some jobs are genuinely expired and should be dropped
+1. **Inspect**: failed job ব্রাউজ করা, error message ও payload দেখা
+2. **Replay**: মূল সমস্যা ঠিক করা, তারপর job আবার প্রসেস করা
+3. **Discard**: কিছু job সত্যিই expired এবং drop করে দেওয়া উচিত
 
 ```typescript
 // Replay all DLQ jobs for a specific error type
@@ -222,9 +230,9 @@ for (const job of dlqJobs) {
 }
 ```
 
-## Idempotency During Retries
+## Retry-র সময় Idempotency
 
-If a job is retried, it might execute partially-completed work again. Design handlers to be safe to run multiple times:
+একটি job retry হলে, সেটা আংশিক-সম্পূর্ণ কাজ আবার execute করতে পারে। Handler-কে একাধিকবার চালানোর জন্য নিরাপদ করে ডিজাইন করুন:
 
 ```typescript
 // NOT idempotent — charges customer twice on retry
@@ -244,7 +252,7 @@ async function processPayment(job: Job): Promise<void> {
 }
 ```
 
-Use the job ID as an idempotency key — it's stable across retries. For database operations, use `INSERT ... ON CONFLICT DO NOTHING` or check existence before inserting:
+idempotency key হিসেবে job ID ব্যবহার করুন — এটি retry জুড়ে stable থাকে। Database অপারেশনের জন্য `INSERT ... ON CONFLICT DO NOTHING` ব্যবহার করুন অথবা insert করার আগে existence চেক করুন:
 
 ```typescript
 async function createInvoice(job: Job): Promise<void> {
@@ -256,9 +264,9 @@ async function createInvoice(job: Job): Promise<void> {
 }
 ```
 
-## Alerting on Retry Patterns
+## Retry Pattern-এ Alerting
 
-Retrying is normal. Retrying at scale or indefinitely is a signal:
+Retry করা স্বাভাবিক। বড় পরিসরে বা অনির্দিষ্টকাল ধরে retry করা একটি সংকেত:
 
 ```typescript
 worker.on('failed', async (job, err) => {

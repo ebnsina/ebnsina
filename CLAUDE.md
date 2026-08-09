@@ -39,11 +39,17 @@ Markdown content lives in `src/content/blog/*.md` and `src/content/notes/<catego
 - **`src/lib/content-manifest.json`** — a committed, metadata-only index (frontmatter for every post/chapter). Used for all listing/sorting/counting so the client never bundles full content. **Regenerate it with `node scripts/build-manifest.mjs` after adding/editing/removing note files** — it scans `src/content/notes/`, parses frontmatter, and preserves the existing `blog` entries.
 - **Lazy `import.meta.glob`** — one chunk per file, loaded on demand in `loadPost`/`loadChapter`. Do not eagerly import content; it produces a multi-MB client chunk.
 
-Note frontmatter schema: `title, subtitle, chapter (number), level ("beginner"|"intermediate"|"advanced"|"mastery"), readingTime, topics[]`. Categories are declared in `src/lib/data/categories.ts` (`CATEGORIES` map → `label`/`description`/`group`; `GROUP_ORDER` orders the groups). A new track needs: the markdown files, a `CATEGORIES` entry, and a manifest rebuild — it then flows automatically into the notes roadmap, folders, and badges.
+Note frontmatter schema: `title, subtitle, chapter (number), level ("beginner"|"intermediate"|"advanced"|"mastery"), readingTime, topics[]`. Categories are declared in `src/lib/data/categories.ts` (`CATEGORIES` map → `label`/`description`/`group`; `GROUP_ORDER` orders the groups), with their Bangla display strings in `src/lib/data/notes-labels.ts`. A new track needs: the markdown files, a `CATEGORIES` entry (plus a `NOTES_CATEGORIES` entry), and a manifest rebuild — it then flows automatically into the notes roadmap, folders, and badges.
+
+### Notes are Bangla-only
+
+The notes prose is **Bangla**, served at `/notes` — there is no English catalog and no locale switcher. `src/content/notes/` held English chapters until they were removed in favour of the Bangla ones; a backup of that English tree lives outside the repo. The notes UI chrome resolves through the single string table exported as `t` from `src/lib/data/notes-strings.ts` — there is no i18n/locale layer left. Old `/bn/notes/*` URLs 308-redirect to `/notes/*` via `src/routes/bn/[...rest]/+page.ts` — keep that route while those links are still out there.
+
+The rest of the site (home, blog chrome, projects, `/directory`, footer) stays **English**, and `/directory` uses the English track labels from `categories.ts`.
 
 ### Every notes chapter needs a story section (non-negotiable)
 
-**Each chapter carries one substantial narrative section that teaches the core idea through a concrete, everyday scene before any code or diagram.** In Bangla chapters the heading is `## গল্পে বুঝি`; in English chapters use an equivalent narrative section. This is the house style — a chapter without it does not match the rest of the notes.
+**Each chapter carries one substantial narrative section that teaches the core idea through a concrete, everyday scene before any code or diagram.** The heading is `## গল্পে বুঝি`. This is the house style — a chapter without it does not match the rest of the notes.
 
 Requirements:
 
@@ -52,11 +58,11 @@ Requirements:
 - **Close with an explicit mapping** from each story element back to the technical term, with the terms in bold — "the counter shelf is the **cache**, the warehouse walk is the **DB query**".
 - **The harder the concept, the more the story matters.** Consensus, backpressure and CRDTs need it more than caching does.
 
-The canonical example to match for length, rhythm and mapping style is `src/content/notes-bn/caching/02-cache-strategies.md`.
+The canonical example to match for length, rhythm and mapping style is `src/content/notes/caching/02-cache-strategies.md`.
 
 ### Bangla writing rule — NEVER over-translate (applies everywhere)
 
-This governs **all** Bangla output: notes content (`src/content/notes-bn/`), blog posts, and UI strings (`src/lib/i18n/notes.ts`, `src/lib/data/categories.bn.ts`).
+This governs **all** Bangla output: notes content (`src/content/notes/`), blog posts, and UI strings (`src/lib/data/notes-strings.ts`, `src/lib/data/notes-labels.ts`).
 
 **Keep technical and product terms in English, written in Bangla script (transliterated). Do not invent or reach for a "pure Bangla" equivalent.** A Bangla developer says these words in English — translating them makes the text _harder_ to read, not more native. Bangla supplies the grammar and connective tissue; the terminology stays recognisable.
 

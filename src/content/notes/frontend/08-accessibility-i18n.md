@@ -1,9 +1,9 @@
 ---
-title: 'Accessibility & i18n'
-subtitle: 'ARIA, semantic HTML, keyboard navigation, screen readers, RTL support, and internationalization patterns.'
+title: 'Accessibility ও i18n'
+subtitle: 'ARIA, সেমান্টিক HTML, কীবোর্ড নেভিগেশন, স্ক্রিন রিডার, RTL সাপোর্ট এবং ইন্টারন্যাশনালাইজেশন প্যাটার্ন।'
 chapter: 8
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['accessibility', 'a11y', 'ARIA', 'keyboard navigation', 'i18n', 'RTL', 'screen readers']
 ---
 
@@ -11,21 +11,29 @@ topics: ['accessibility', 'a11y', 'ARIA', 'keyboard navigation', 'i18n', 'RTL', 
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Accessibility and i18n Matter
+## গল্পে বুঝি
 
-Accessibility (a11y) means building interfaces that everyone can use — including people with visual, motor, auditory, or cognitive disabilities. Internationalization (i18n) means building interfaces that work across languages, scripts, and cultures. Both are often treated as afterthoughts, but retrofitting them is far more expensive than building them in from the start. In many jurisdictions, web accessibility is a legal requirement.
+ফাতিমা আল-ফিহরিকে শহরের নতুন পাবলিক লাইব্রেরি ভবনের নকশা করতে দেওয়া হলো। প্রথম খসড়ায় সে শুধু সুন্দর সিঁড়ি, ছাপা সাইনবোর্ড আর এক ভাষার লেখা রাখল। উদ্বোধনের দিন দেখা গেল — হুইলচেয়ারে আসা একজন সিঁড়ির নিচেই আটকে গেলেন, একজন অন্ধ পাঠক কোন তলায় কী আছে বুঝতেই পারলেন না, আর ভিন্ন ভাষার এক দল অতিথি সাইনবোর্ডের একটা অক্ষরও পড়তে পারলেন না। ভবনটা সুন্দর ছিল, কিন্তু সেবা দিচ্ছিল শুধু কিছু মানুষকে।
+
+ফাতিমা তখন নতুন করে ভাবল। প্রতিটা সিঁড়ির পাশে বসাল র‍্যাম্প আর লিফট — যেন হাঁটতে না পারা মানুষও ঠিক একই জায়গায় পৌঁছাতে পারে। ছাপা সাইনের পাশে যোগ করল ব্রেইল লেখা আর স্পষ্ট মুখের ঘোষণা — "আপনি এখন দোতলায়, ইতিহাস বিভাগ" — যেন চোখে না দেখেও পথ বোঝা যায়। সাইনবোর্ডগুলো করল গাঢ় রঙে, বড় হরফে, পেছনের সাথে স্পষ্ট বৈসাদৃশ্যে — যেন কম আলোতেও, দুর্বল চোখেও পড়া যায়। আর প্রতিটা সাইন লিখল একাধিক ভাষায়, স্থানীয় তারিখ-সংখ্যার ফরম্যাটে, আর আরবি-উর্দুভাষী অতিথিদের জন্য ডান-থেকে-বাম লিপিতে সাজিয়ে।
+
+এই ভবনটাই আসলে একটা ভালো ইন্টারফেস। সিঁড়ির পাশের র‍্যাম্প আর লিফট হলো **keyboard navigation** আর assistive access — শুধু মাউস নয়, কীবোর্ড দিয়েও সবখানে পৌঁছানো যায়। ব্রেইল আর মুখের ঘোষণা হলো **screen reader**-এর জন্য semantic HTML আর ARIA label — মেশিন যেন চোখ ছাড়াই স্ট্রাকচার বুঝতে পারে। গাঢ়, বড় হরফের সাইন হলো যথেষ্ট **color contrast**। আর বহুভাষিক সাইন, স্থানীয় locale অনুযায়ী তারিখ-সংখ্যা আর RTL সাপোর্ট হলো **i18n**। বাস্তবেও ঠিক এভাবেই — যে UI শুধু চোখে-দেখা, হাত-চলা, এক-ভাষার ব্যবহারকারীর জন্য বানানো, সেটা সবাইকে সেবা দেয় না; আর তাই অনেক দেশে ওয়েব অ্যাক্সেসিবিলিটি এখন আইনি বাধ্যবাধকতা।
+
+## Accessibility আর i18n কেন গুরুত্বপূর্ণ
+
+Accessibility (a11y) মানে এমন ইন্টারফেস তৈরি করা যা সবাই ব্যবহার করতে পারে — দৃষ্টি, চলাচল, শ্রবণ বা জ্ঞানগত প্রতিবন্ধকতাসম্পন্ন মানুষসহ। Internationalization (i18n) মানে এমন ইন্টারফেস তৈরি করা যা বিভিন্ন ভাষা, লিপি আর সংস্কৃতিতে কাজ করে। দুটোকেই প্রায়ই পরে করার মতো কাজ হিসেবে দেখা হয়, কিন্তু পরে জোড়া লাগানো শুরু থেকে বানানোর চেয়ে অনেক বেশি খরচসাপেক্ষ। অনেক দেশেই ওয়েব অ্যাক্সেসিবিলিটি একটা আইনি বাধ্যবাধকতা।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like making public buildings accessible — ramps for wheelchair users (keyboard navigation), Braille signs (screen readers), multilingual signs (i18n), and right-to-left support for different languages.
+পাবলিক ভবন সবার জন্য অ্যাক্সেসযোগ্য করার মতো — হুইলচেয়ার ব্যবহারকারীদের জন্য র‍্যাম্প (কীবোর্ড নেভিগেশন), ব্রেইল সাইন (স্ক্রিন রিডার), বহুভাষিক সাইন (i18n) আর বিভিন্ন ভাষার জন্য ডান-থেকে-বাম সাপোর্ট।
 
 </Callout>
 
-## Semantic HTML: The Foundation
+## সেমান্টিক HTML: ভিত্তি
 
-The single most impactful thing you can do for accessibility is use the correct HTML elements. Screen readers, keyboard navigation, and browser features all depend on semantic structure.
+অ্যাক্সেসিবিলিটির জন্য আপনি সবচেয়ে প্রভাবশালী যে কাজটা করতে পারেন তা হলো সঠিক HTML এলিমেন্ট ব্যবহার করা। স্ক্রিন রিডার, কীবোর্ড নেভিগেশন আর ব্রাউজার ফিচার — সবই সেমান্টিক স্ট্রাকচারের উপর নির্ভর করে।
 
 ```html
 <!-- BAD: div soup — screen readers see nothing meaningful -->
@@ -57,7 +65,7 @@ The single most impactful thing you can do for accessibility is use the correct 
 </main>
 ```
 
-Key semantic elements and their purposes:
+গুরুত্বপূর্ণ সেমান্টিক এলিমেন্ট আর তাদের কাজ:
 
 ```html
 <header>
@@ -98,9 +106,9 @@ Key semantic elements and their purposes:
 </header>
 ```
 
-## ARIA: When HTML Is Not Enough
+## ARIA: HTML যখন যথেষ্ট নয়
 
-ARIA (Accessible Rich Internet Applications) attributes add semantics to custom widgets that HTML elements alone cannot express. But the first rule of ARIA is: do not use ARIA if a native HTML element does the job.
+ARIA (Accessible Rich Internet Applications) অ্যাট্রিবিউট কাস্টম উইজেটে এমন সেমান্টিক যোগ করে যা শুধু HTML এলিমেন্ট দিয়ে প্রকাশ করা যায় না। তবে ARIA-র প্রথম নিয়ম হলো: কোনো নেটিভ HTML এলিমেন্ট কাজটা করতে পারলে ARIA ব্যবহার করবেন না।
 
 ```typescript
 // Custom dropdown — needs ARIA because there is no native equivalent
@@ -164,18 +172,18 @@ function SearchResults({ count }: { count: number }) {
 
 <Callout type="warning">
 
-**Common ARIA mistakes:**
+**ARIA-র সাধারণ ভুল:**
 
-- **`role="button"` on a div** — just use `<button>`. You would also need to add `tabindex`, `onKeyDown` for Enter and Space, and focus styles. The `<button>` element gives you all of that for free.
-- **Missing label on icon-only buttons** — `<button aria-label="Close modal"><XIcon /></button>` is required for screen readers.
-- **`aria-hidden="true"` on interactive elements** — this removes them from the accessibility tree. Users relying on screen readers cannot interact with them.
-- **Redundant ARIA** — `<button role="button">` adds nothing. The implicit role is already button.
+- **একটা div-এ `role="button"`** — শুধু `<button>` ব্যবহার করুন। ওই div-এ আপনাকে `tabindex`, Enter আর Space-এর জন্য `onKeyDown`, আর ফোকাস স্টাইলও যোগ করতে হবে। `<button>` এলিমেন্ট এসব বিনামূল্যে দিয়ে দেয়।
+- **আইকন-অনলি বাটনে label না থাকা** — স্ক্রিন রিডারের জন্য `<button aria-label="Close modal"><XIcon /></button>` দরকার।
+- **ইন্টারঅ্যাকটিভ এলিমেন্টে `aria-hidden="true"`** — এটা তাদের অ্যাক্সেসিবিলিটি ট্রি থেকে সরিয়ে দেয়। স্ক্রিন রিডারের উপর নির্ভরশীল ব্যবহারকারীরা তখন সেগুলোর সাথে ইন্টারঅ্যাক্ট করতে পারে না।
+- **অপ্রয়োজনীয় ARIA** — `<button role="button">` কিছুই যোগ করে না। এর implicit role এমনিতেই button।
 
 </Callout>
 
-## Keyboard Navigation
+## কীবোর্ড নেভিগেশন
 
-Every interactive element must be operable with a keyboard. Many users cannot use a mouse — those with motor disabilities, power keyboard users, and screen reader users all navigate with Tab, Enter, Space, and arrow keys.
+প্রতিটা ইন্টারঅ্যাকটিভ এলিমেন্ট কীবোর্ড দিয়ে চালানো যেতে হবে। অনেক ব্যবহারকারীই মাউস ব্যবহার করতে পারে না — চলাচলে প্রতিবন্ধকতাসম্পন্ন মানুষ, দক্ষ কীবোর্ড ব্যবহারকারী আর স্ক্রিন রিডার ব্যবহারকারী সবাই Tab, Enter, Space আর অ্যারো কী দিয়ে নেভিগেট করে।
 
 ```typescript
 // Focus management for modals
@@ -278,20 +286,20 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
 
 <Callout type="tip">
 
-**Accessibility testing checklist:**
+**অ্যাক্সেসিবিলিটি টেস্টিং চেকলিস্ট:**
 
-1. **Keyboard**: Can you Tab to every interactive element and activate it with Enter/Space?
-2. **Screen reader**: Does VoiceOver (Mac) or NVDA (Windows) announce content meaningfully?
-3. **Zoom**: Does the layout work at 200% zoom?
-4. **Color contrast**: Do text and backgrounds meet WCAG AA (4.5:1 for normal text, 3:1 for large text)?
-5. **Motion**: Is `prefers-reduced-motion` respected for animations?
-6. **Forms**: Does every input have a visible label? Are errors announced?
+1. **কীবোর্ড**: আপনি কি Tab দিয়ে প্রতিটা ইন্টারঅ্যাকটিভ এলিমেন্টে পৌঁছে Enter/Space দিয়ে সেটা অ্যাক্টিভেট করতে পারেন?
+2. **স্ক্রিন রিডার**: VoiceOver (Mac) বা NVDA (Windows) কি কনটেন্ট অর্থপূর্ণভাবে ঘোষণা করে?
+3. **জুম**: 200% জুমে লেআউট কি কাজ করে?
+4. **কালার কনট্রাস্ট**: টেক্সট আর ব্যাকগ্রাউন্ড কি WCAG AA মেনে চলে (সাধারণ টেক্সটের জন্য 4.5:1, বড় টেক্সটের জন্য 3:1)?
+5. **মোশন**: অ্যানিমেশনের ক্ষেত্রে কি `prefers-reduced-motion` মানা হয়?
+6. **ফর্ম**: প্রতিটা ইনপুটের কি দৃশ্যমান label আছে? এরর কি ঘোষণা করা হয়?
 
 </Callout>
 
 ## Internationalization (i18n)
 
-i18n is the process of designing your app so it can be adapted to different languages and regions without code changes. Localization (l10n) is the actual translation work.
+i18n হলো আপনার অ্যাপকে এমনভাবে ডিজাইন করার প্রক্রিয়া যাতে কোড পরিবর্তন ছাড়াই সেটা বিভিন্ন ভাষা আর অঞ্চলের জন্য মানিয়ে নেওয়া যায়। Localization (l10n) হলো আসল অনুবাদের কাজ।
 
 ```typescript
 // Using next-intl for type-safe i18n in Next.js
@@ -359,9 +367,9 @@ function FormattedCurrency({ amount }: { amount: number }) {
 }
 ```
 
-## RTL (Right-to-Left) Support
+## RTL (ডান-থেকে-বাম) সাপোর্ট
 
-If your app supports Arabic, Hebrew, Urdu, or other RTL languages, your layout must flip.
+আপনার অ্যাপ যদি আরবি, হিব্রু, উর্দু বা অন্যান্য RTL ভাষা সাপোর্ট করে, তাহলে আপনার লেআউটকে উল্টে যেতে হবে।
 
 ```css
 /* Use logical properties instead of physical ones */
@@ -395,11 +403,11 @@ function RootLayout({ locale, children }: { locale: string; children: React.Reac
 }
 ```
 
-## Key Takeaways
+## মূল বিষয়সমূহ
 
-1. **Semantic HTML** is the single biggest accessibility win — use `<button>`, `<nav>`, `<main>`, `<label>` before reaching for ARIA
-2. **ARIA** fills the gaps for custom widgets — but never use it as a substitute for native elements
-3. **Keyboard navigation** is essential — trap focus in modals, make all interactive elements tabbable, show visible focus indicators
-4. **i18n** should be built in from the start — externalize strings, use ICU message format for plurals and formatting, leverage the Intl API
-5. **RTL support** comes from using CSS logical properties (`inline-start` instead of `left`)
-6. **Test with real tools** — VoiceOver, NVDA, Lighthouse accessibility audit, axe DevTools
+1. **সেমান্টিক HTML** হলো সবচেয়ে বড় অ্যাক্সেসিবিলিটি অর্জন — ARIA-র দিকে হাত বাড়ানোর আগে `<button>`, `<nav>`, `<main>`, `<label>` ব্যবহার করুন
+2. **ARIA** কাস্টম উইজেটের ফাঁকগুলো পূরণ করে — কিন্তু কখনো নেটিভ এলিমেন্টের বিকল্প হিসেবে এটা ব্যবহার করবেন না
+3. **কীবোর্ড নেভিগেশন** অপরিহার্য — মোডালে ফোকাস আটকে রাখুন, সব ইন্টারঅ্যাকটিভ এলিমেন্ট Tab-যোগ্য করুন, দৃশ্যমান ফোকাস ইন্ডিকেটর দেখান
+4. **i18n** শুরু থেকেই বানানো উচিত — স্ট্রিং বাইরে রাখুন, plural আর ফরম্যাটিংয়ের জন্য ICU message format ব্যবহার করুন, Intl API কাজে লাগান
+5. **RTL সাপোর্ট** আসে CSS logical properties ব্যবহার থেকে (`left`-এর বদলে `inline-start`)
+6. **আসল টুল দিয়ে টেস্ট করুন** — VoiceOver, NVDA, Lighthouse accessibility audit, axe DevTools

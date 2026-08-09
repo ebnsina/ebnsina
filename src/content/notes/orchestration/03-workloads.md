@@ -1,9 +1,9 @@
 ---
 title: 'Kubernetes Workloads'
-subtitle: "StatefulSets, DaemonSets, Jobs, CronJobs — the right object for each class of workload and when Deployments aren't enough."
+subtitle: 'StatefulSets, DaemonSets, Jobs, CronJobs — প্রতি শ্রেণির workload-এর জন্য সঠিক object এবং কখন Deployment যথেষ্ট নয়।'
 chapter: 3
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['StatefulSet', 'DaemonSet', 'Job', 'CronJob', 'Kubernetes', 'workloads']
 ---
 
@@ -13,15 +13,23 @@ topics: ['StatefulSet', 'DaemonSet', 'Job', 'CronJob', 'Kubernetes', 'workloads'
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A business's staffing model: a Deployment is like a pool of identical customer service reps — any one can handle any call. A StatefulSet is like the accounting department — each person has a specific desk, their own files, and can't be arbitrarily replaced. A DaemonSet is like building security — exactly one guard per floor. A Job is like a contractor hired for one specific task, then let go.
+একটা ব্যবসার staffing মডেল: একটা Deployment হলো অনেকটা এক পুল identical customer service rep-এর মতো — যেকেউ যেকোনো কল সামলাতে পারে। একটা StatefulSet হলো accounting ডিপার্টমেন্টের মতো — প্রত্যেকের একটা নির্দিষ্ট ডেস্ক, নিজের ফাইল আছে, এবং যাকে-তাকে দিয়ে বদলানো যায় না। একটা DaemonSet হলো বিল্ডিং সিকিউরিটির মতো — প্রতি ফ্লোরে ঠিক একজন গার্ড। একটা Job হলো একটা নির্দিষ্ট কাজের জন্য ভাড়া করা contractor-এর মতো, কাজ শেষে বিদায়।
 
 </Callout>
 
+## গল্পে বুঝি
+
+সমরকন্দের এক বিশাল হোটেল চালান ফাতিমা আল-ফিহরি। ঘর পরিষ্কারের জন্য তাঁর একটা দল আছে — সবাই একই রকম প্রশিক্ষিত, যেকেউ যেকোনো ঘর সাফ করতে পারে। ফাতিমা কারও নাম মনে রাখেন না, শুধু নিয়ম একটাই — "প্রতি শিফটে দশজন হাজির থাকবে।" কেউ ছুটি নিলে আরেকজন এসে জায়গা নেয়, কোনো তফাত পড়ে না। কিন্তু লবিতে কনসিয়ার্জ ডেস্কগুলো আলাদা ব্যাপার — ডেস্ক-১, ডেস্ক-২, ডেস্ক-৩, প্রত্যেকের নির্দিষ্ট নাম, নির্দিষ্ট ক্রম, আর প্রত্যেকের নিজের একটা অতিথি-খাতা। ডেস্ক-২-এর কর্মী ছুটিতে গেলে নতুন যে আসে সে-ও "ডেস্ক-২" নামেই বসে আর ঠিক সেই একই অতিথি-খাতা হাতে নেয় — ক্রম আর পরিচয় বদলায় না।
+
+এদিকে নিরাপত্তার জন্য প্রতি তলায় ঠিক একজন করে ফ্লোর-গার্ড — যত তলা, তত গার্ড, একটাও কম নয় বেশি নয়। আবার আল-খোয়ারিজমির মেয়ের বিয়ের অনুষ্ঠানে ফাতিমা একজন ক্যাটারার ভাড়া করলেন শুধু সেই একটা দিনের জন্য — খাবার পরিবেশন শেষ, কাজ শেষ, বিদায়, আর ফিরে আসার দরকার নেই। আর হোটেলের করিডোর ঝকঝকে রাখতে প্রতি রাত দুটোয় নিয়ম করে আসেন এক রাত-পরিষ্কারক — প্রতিদিন একই সময়ে, ঘড়ি ধরে।
+
+এই হোটেলই আসলে Kubernetes-এর workload-এর গল্প। বদলে-ফেলা-যায় এমন ঘর-পরিষ্কারের দল হলো **Deployment** — নাম-পরিচয়হীন একগাদা replica, শুধু "কতজন চাই" সেটাই আসল। নাম-ক্রম-নিজের খাতাওয়ালা কনসিয়ার্জ ডেস্কগুলো হলো **StatefulSet** — স্থিতিশীল identity আর প্রতি pod-এর নিজস্ব storage (যেমন database, Kafka)। প্রতি তলায় একজন গার্ড হলো **DaemonSet** — প্রতি node-এ ঠিক একটা pod (যেমন log shipper, monitoring agent)। একবারের ক্যাটারার হলো **Job** — কাজ শেষ হলেই থেমে যায়, রিস্টার্ট হয় না (যেমন database migration)। আর প্রতি রাত দুটোর রাত-পরিষ্কারক হলো **CronJob** — schedule মেনে বারবার চলা Job (যেমন nightly backup)।
+
 ## Deployment (Stateless)
 
-The standard workload for stateless services. Any pod can replace any other pod — no identity, no persistent storage required.
+stateless service-এর জন্য স্ট্যান্ডার্ড workload। যেকোনো pod অন্য যেকোনো pod-কে রিপ্লেস করতে পারে — কোনো identity লাগে না, persistent storage লাগে না।
 
 ```yaml
 # Use for: web servers, API services, workers that process from a queue
@@ -34,11 +42,11 @@ spec:
   # ...
 ```
 
-Pods in a Deployment get random names: `order-service-7d4b5-abc`, `order-service-7d4b5-xyz`. Names change on restart.
+Deployment-এর pod-গুলো এলোমেলো নাম পায়: `order-service-7d4b5-abc`, `order-service-7d4b5-xyz`। রিস্টার্ট হলে নাম বদলে যায়।
 
 ## StatefulSet (Stateful Workloads)
 
-StatefulSets give pods stable identity — predictable names, stable network IDs, and dedicated persistent storage per pod.
+StatefulSet pod-গুলোকে স্থিতিশীল identity দেয় — অনুমেয় নাম, স্থিতিশীল network ID, এবং প্রতি pod-এর জন্য ডেডিকেটেড persistent storage।
 
 ```
 postgres-0   → /data/postgres-0  (its own PVC, always)
@@ -46,7 +54,7 @@ postgres-1   → /data/postgres-1
 postgres-2   → /data/postgres-2
 ```
 
-If `postgres-1` is deleted, Kubernetes recreates it as `postgres-1` with the same PVC attached. The pod's identity is stable.
+`postgres-1` ডিলিট হলে Kubernetes সেটাকে আবার `postgres-1` হিসেবেই তৈরি করে, একই PVC অ্যাটাচ করে। pod-এর identity স্থিতিশীল থাকে।
 
 ```yaml
 apiVersion: apps/v1
@@ -90,7 +98,7 @@ spec:
             storage: 50Gi
 ```
 
-Headless Service for stable DNS per pod:
+প্রতি pod-এ স্থিতিশীল DNS-এর জন্য Headless Service:
 
 ```yaml
 apiVersion: v1
@@ -106,7 +114,7 @@ spec:
     - port: 5432
 ```
 
-With this, pods are reachable by DNS:
+এর সাথে, pod-গুলো DNS দিয়ে reachable হয়:
 
 ```
 postgres-0.postgres.production.svc.cluster.local
@@ -114,11 +122,11 @@ postgres-1.postgres.production.svc.cluster.local
 postgres-2.postgres.production.svc.cluster.local
 ```
 
-Use StatefulSets for: databases, Kafka brokers, ZooKeeper, Redis Cluster, Elasticsearch nodes.
+StatefulSet ব্যবহার করুন এসবের জন্য: database, Kafka broker, ZooKeeper, Redis Cluster, Elasticsearch node।
 
 ## DaemonSet
 
-Ensures exactly one pod runs on every node (or every node matching a selector). Used for node-level services.
+নিশ্চিত করে যে প্রতিটা node-এ (বা selector-এর সাথে মেলে এমন প্রতিটা node-এ) ঠিক একটা pod চলছে। node-level service-এর জন্য ব্যবহৃত হয়।
 
 ```yaml
 apiVersion: apps/v1
@@ -158,11 +166,11 @@ spec:
             name: promtail-config
 ```
 
-Use DaemonSets for: log shippers (Promtail, Fluentd), monitoring agents (node-exporter), network plugins, storage daemons (Longhorn engine).
+DaemonSet ব্যবহার করুন এসবের জন্য: log shipper (Promtail, Fluentd), monitoring agent (node-exporter), network plugin, storage daemon (Longhorn engine)।
 
 ## Job
 
-Runs a task to completion. Unlike a Deployment, when the pod finishes successfully, it stays done — it doesn't restart.
+একটা task সম্পূর্ণ হওয়া পর্যন্ত চালায়। Deployment-এর বিপরীতে, pod সফলভাবে শেষ হলে সেটা শেষ হয়েই থাকে — রিস্টার্ট হয় না।
 
 ```yaml
 apiVersion: batch/v1
@@ -202,7 +210,7 @@ kubectl logs -l job-name=db-migration -n production
 kubectl delete job db-migration -n production
 ```
 
-**Parallel Jobs** — process a workload in parallel:
+**Parallel Jobs** — একটা workload parallel-ভাবে প্রসেস করুন:
 
 ```yaml
 spec:
@@ -210,11 +218,11 @@ spec:
   parallelism: 10 # run 10 at a time
 ```
 
-Use Jobs for: database migrations, batch processing, one-time data imports, backups.
+Job ব্যবহার করুন এসবের জন্য: database migration, batch processing, একবারের data import, backup।
 
 ## CronJob
 
-Runs a Job on a schedule:
+একটা schedule অনুযায়ী একটা Job চালায়:
 
 ```yaml
 apiVersion: batch/v1
@@ -245,15 +253,15 @@ spec:
 
 `concurrencyPolicy`:
 
-- `Allow` — start a new run even if previous is still running
-- `Forbid` — skip the new run if previous is still running
-- `Replace` — stop the previous run and start a new one
+- `Allow` — আগেরটা এখনো চললেও নতুন একটা রান শুরু করে
+- `Forbid` — আগেরটা এখনো চললে নতুন রান স্কিপ করে
+- `Replace` — আগের রান থামিয়ে নতুন একটা শুরু করে
 
-Use CronJobs for: daily reports, scheduled cleanup, periodic health checks, nightly backups.
+CronJob ব্যবহার করুন এসবের জন্য: daily report, scheduled cleanup, periodic health check, nightly backup।
 
 ## Init Containers
 
-Run before the main container starts. Useful for: waiting for dependencies, running migrations before the app starts, copying config files.
+main container শুরু হওয়ার আগে চলে। উপযোগী এসবের জন্য: dependency-র জন্য অপেক্ষা করা, app শুরুর আগে migration চালানো, config ফাইল কপি করা।
 
 ```yaml
 spec:
@@ -278,11 +286,11 @@ spec:
       # starts only after both init containers succeed
 ```
 
-Init containers run in order. If one fails, Kubernetes retries (subject to the pod's `restartPolicy`). The main container doesn't start until all init containers complete successfully.
+Init container-গুলো ক্রম অনুযায়ী চলে। একটা ফেইল করলে Kubernetes আবার চেষ্টা করে (pod-এর `restartPolicy` অনুযায়ী)। সব init container সফলভাবে শেষ না হওয়া পর্যন্ত main container শুরু হয় না।
 
 ## Horizontal Pod Autoscaler
 
-Scale Deployments automatically based on metrics:
+metric-এর উপর ভিত্তি করে Deployment অটোমেটিক স্কেল করুন:
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -312,11 +320,11 @@ spec:
           averageUtilization: 80
 ```
 
-HPA requires `requests` set on containers — it can't calculate utilization without knowing the baseline.
+HPA-র জন্য container-এ `requests` সেট থাকা লাগে — baseline না জানলে সে utilization হিসাব করতে পারে না।
 
 ## Pod Disruption Budget
 
-Ensures a minimum number of pods stay available during voluntary disruptions (node drains, cluster upgrades):
+voluntary disruption-এর সময় (node drain, cluster upgrade) একটা ন্যূনতম সংখ্যক pod available রাখা নিশ্চিত করে:
 
 ```yaml
 apiVersion: policy/v1
@@ -333,4 +341,4 @@ spec:
       app: order-service
 ```
 
-With PDB: `kubectl drain` will not evict pods if doing so would violate the budget. It waits until replacements are ready.
+PDB থাকলে: `kubectl drain` এমন pod evict করবে না যদি তাতে budget লঙ্ঘিত হয়। replacement তৈরি না হওয়া পর্যন্ত সে অপেক্ষা করে।

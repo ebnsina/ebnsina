@@ -1,9 +1,9 @@
 ---
 title: 'What is a Web Server'
-subtitle: 'Anatomy of an HTTP request from socket to response. The four stages every web server runs through, and the names for the parts.'
+subtitle: 'socket থেকে response পর্যন্ত একটি HTTP request-এর গঠন। প্রতিটি web server যে চারটি স্টেজ দিয়ে যায়, আর অংশগুলোর নাম।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['http', 'web server', 'tcp', 'request lifecycle']
 ---
 
@@ -11,59 +11,67 @@ topics: ['http', 'web server', 'tcp', 'request lifecycle']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## A web server is a TCP listener that speaks HTTP
+## গল্পে বুঝি
 
-Strip away the frameworks, the documentation, the marketing. A web server is:
+পুরনো বাগদাদ শহরের দলিল-দস্তাবেজের অফিস। সামনের দেয়ালে একটা জানালা, আর সেই জানালা সারাদিন খোলা থাকে — সকাল থেকে রাত পর্যন্ত একজন কেরানি সেখানে বসে থাকেন, কে এলো তার অপেক্ষায়। একজন লোক জানালার সামনে এসে দাঁড়ায়, একটা ছোট স্লিপ এগিয়ে দেয় যেখানে লেখা সে ঠিক কোন দলিলটা চায়। কেরানি স্লিপটা পড়েন, ভেতরের তাক থেকে ঠিক সেই দলিলটা খুঁজে বের করেন, আর জানালা দিয়ে লোকটার হাতে তুলে দেন।
 
-1. A process that owns a TCP port (typically 80 or 443).
-2. When a connection arrives, it reads bytes off the socket.
-3. It interprets those bytes as HTTP — request line, headers, body.
-4. It produces an HTTP response (status line, headers, body) and writes it back.
-5. It closes the connection or keeps it open for another request.
+ইবনে সিনা এসে একটা স্লিপ দিলেন — জমির খতিয়ান চাই; কেরানি সেটা এনে দিলেন। পরের জন আল-খোয়ারিজমি এসে জানালায় স্লিপ দিলেন — জন্মনিবন্ধনের নকল চাই; কেরানি ঠিক সেটাই এনে দিলেন। এরপর ফাতিমা আল-ফিহরি। একজনের কাজ শেষ হলেই জানালা আবার খালি, পরের জনের জন্য প্রস্তুত। কেরানি কখনো জানালা ছেড়ে যান না, কেউ এলে সঙ্গে সঙ্গে সাড়া দেন।
 
-That is it. nginx is this. Apache is this. Your Express app is this. The 200-line Go program at the end of this chapter is this. Once you internalize the loop, every web server you ever encounter is just a different polish on the same five steps.
+এই সবসময়-খোলা, সবসময়-বসা-কেরানির জানালাটাই হলো একটা **web server**, যেটা একটা **port**-এ বসে থেকে **client**-এর জন্য listen করছে। প্রতিটা লোক যে জানালায় আসে, সে একেকটা **client**; তার হাতের স্লিপ — কী চাই তার নাম লেখা — হলো একটা **HTTP request**; আর কেরানির এনে দেওয়া দলিলটা হলো **HTTP response**। বাস্তবেও nginx বা আপনার Express app ঠিক এই কেরানির মতোই — একটা port-এ listen করে, request নেয়, ঠিক জিনিসটা (file, page বা data) খুঁজে response হিসেবে ফেরত পাঠায়, তারপর পরের request-এর জন্য প্রস্তুত হয়।
+
+## একটি web server হলো একটি TCP listener যা HTTP বলে
+
+framework, documentation, marketing — এসব সরিয়ে ফেলুন। একটি web server হলো:
+
+1. একটি process যা একটি TCP port দখল করে থাকে (সাধারণত 80 বা 443)।
+2. যখন একটা connection আসে, এটি socket থেকে bytes পড়ে।
+3. সেই bytes-কে এটি HTTP হিসেবে ব্যাখ্যা করে — request line, headers, body।
+4. এটি একটি HTTP response তৈরি করে (status line, headers, body) এবং সেটা ফেরত লিখে দেয়।
+5. এটি connection বন্ধ করে দেয়, অথবা আরেকটি request-এর জন্য খোলা রাখে।
+
+এটুকুই। nginx এটাই। Apache এটাই। আপনার Express app এটাই। এই অধ্যায়ের শেষের 200-লাইনের Go প্রোগ্রামও এটাই। একবার এই loop-টা মনের ভেতরে গেঁথে গেলে, আপনি জীবনে যত web server দেখবেন সবই এই একই পাঁচ ধাপের ভিন্ন ভিন্ন পালিশ মাত্র।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A web server is like a librarian who takes your book request, finds it on the shelf, and hands it to you — the protocol is how you ask, and the server is the one who fetches.
+একটি web server অনেকটা লাইব্রেরিয়ানের মতো, যে আপনার বইয়ের অনুরোধ নেয়, তাকে থেকে সেটা খুঁজে বের করে, আর আপনার হাতে তুলে দেয় — protocol হলো আপনি কীভাবে চান তা জানানোর পদ্ধতি, আর server হলো সেই লোক যে জিনিসটা এনে দেয়।
 
 </Callout>
 
-## The four stages of a request
+## একটি request-এর চারটি স্টেজ
 
-Every HTTP request, no matter the language or framework, passes through four stages:
+প্রতিটি HTTP request, ভাষা বা framework যা-ই হোক না কেন, চারটি স্টেজ দিয়ে যায়:
 
 ```text
             [ ACCEPT ] → [ PARSE ] → [ ROUTE/HANDLE ] → [ RESPOND ]
 ```
 
-**1. ACCEPT.** The kernel hands the server a new socket — a TCP connection that has just completed its three-way handshake with a client. The server's job: take it off the listen queue and start reading.
+**1. ACCEPT.** kernel server-কে একটি নতুন socket দেয় — একটি TCP connection যা মাত্রই একটি client-এর সাথে তার three-way handshake সম্পন্ন করেছে। server-এর কাজ: সেটাকে listen queue থেকে তুলে নিয়ে পড়া শুরু করা।
 
-**2. PARSE.** The server reads bytes off the socket and interprets them. It expects HTTP — a method line (`GET /index.html HTTP/1.1`), a block of headers (`Host: example.com`, `Accept: text/html`, ...), an empty line, and optionally a body. If anything is malformed, send back a `400 Bad Request` and move on.
+**2. PARSE.** server socket থেকে bytes পড়ে এবং তা ব্যাখ্যা করে। এটি HTTP আশা করে — একটি method line (`GET /index.html HTTP/1.1`), হেডারের একটি ব্লক (`Host: example.com`, `Accept: text/html`, ...), একটি খালি লাইন, এবং ঐচ্ছিকভাবে একটি body। যদি কিছু malformed হয়, তাহলে একটা `400 Bad Request` ফেরত পাঠিয়ে এগিয়ে যান।
 
-**3. ROUTE/HANDLE.** The server looks at the method and path, decides what to do: serve a static file, run application code, proxy to another server, redirect, return cached content. This is where "your code" runs.
+**3. ROUTE/HANDLE.** server method আর path দেখে সিদ্ধান্ত নেয় কী করবে: একটি static file serve করবে, application code চালাবে, অন্য একটি server-এ proxy করবে, redirect করবে, নাকি cached content ফেরত দেবে। এখানেই "আপনার কোড" রান হয়।
 
-**4. RESPOND.** The server writes back the response — a status line (`HTTP/1.1 200 OK`), headers (`Content-Type: text/html`, `Content-Length: 1234`), an empty line, and the body. Either close the connection (`Connection: close`) or keep it open for the next request on the same socket.
+**4. RESPOND.** server response ফেরত লিখে দেয় — একটি status line (`HTTP/1.1 200 OK`), headers (`Content-Type: text/html`, `Content-Length: 1234`), একটি খালি লাইন, এবং body। হয় connection বন্ধ করে দেয় (`Connection: close`), নয়তো একই socket-এ পরের request-এর জন্য খোলা রাখে।
 
-Then it goes back to ACCEPT.
+তারপর এটি আবার ACCEPT-এ ফিরে যায়।
 
-## What HTTP actually looks like on the wire
+## তারে (wire-এ) HTTP আসলে দেখতে কেমন
 
-Open two terminals. In the first, listen on port 8080:
+দুটো terminal খুলুন। প্রথমটায় port 8080-এ listen করুন:
 
 ```bash
 nc -l -p 8080
 ```
 
-In the second, connect to it:
+দ্বিতীয়টায় এর সাথে connect করুন:
 
 ```bash
 curl http://localhost:8080/test
 ```
 
-In the first terminal, you will see:
+প্রথম terminal-এ আপনি দেখবেন:
 
 ```text
 GET /test HTTP/1.1
@@ -73,14 +81,14 @@ Accept: */*
 
 ```
 
-That is the entire request. Plain text, line-terminated by `\r\n`. Three parts:
+এটাই পুরো request। plain text, `\r\n` দিয়ে লাইন-টার্মিনেটেড। তিনটি অংশ:
 
-- **Request line** — `GET /test HTTP/1.1`. Method, path, version.
-- **Headers** — `Host`, `User-Agent`, `Accept`. Each is `Name: Value` with `\r\n` between.
-- **Empty line** — `\r\n` alone, signaling end of headers. Always present.
-- **Body** — would come after the empty line, for `POST` and `PUT`. None here.
+- **Request line** — `GET /test HTTP/1.1`। Method, path, version।
+- **Headers** — `Host`, `User-Agent`, `Accept`। প্রতিটি `Name: Value`, মাঝে `\r\n`।
+- **Empty line** — একা `\r\n`, headers শেষ হওয়ার সংকেত। সবসময় থাকে।
+- **Body** — খালি লাইনের পরে আসত, `POST` আর `PUT`-এর জন্য। এখানে নেই।
 
-Now type a response in the listener and press Ctrl+D:
+এবার listener-এ একটা response টাইপ করে Ctrl+D চাপুন:
 
 ```text
 HTTP/1.1 200 OK
@@ -90,41 +98,41 @@ Content-Length: 13
 hello, world
 ```
 
-`curl` prints `hello, world` and exits. Congratulations — you just _were_ a web server, by hand, with `nc`.
+`curl` `hello, world` প্রিন্ট করে বেরিয়ে যায়। অভিনন্দন — আপনি এইমাত্র হাতে-কলমে, `nc` দিয়ে, নিজেই একটা web server _হয়ে গেলেন_।
 
 <Callout type="info">
 
-**`\r\n`, not `\n`.**
+**`\r\n`, `\n` নয়।**
 
-HTTP/1.x line endings are always carriage-return + line-feed (`\r\n`). Most modern parsers tolerate plain `\n`, but the spec is explicit. When you write a server, emit `\r\n`. When you debug with `nc`, your terminal handles it.
+HTTP/1.x-এর line ending সবসময় carriage-return + line-feed (`\r\n`)। বেশিরভাগ আধুনিক parser শুধু `\n` সহ্য করে নেয়, কিন্তু spec-এ স্পষ্ট করে বলা আছে। যখন server লিখবেন, `\r\n` emit করুন। যখন `nc` দিয়ে debug করবেন, আপনার terminal সেটা সামলে নেয়।
 
 </Callout>
 
-## The reqest line — methods and paths
+## request line — methods আর paths
 
 ```text
 GET /index.html HTTP/1.1
 ```
 
-Three fields, separated by single spaces:
+তিনটি ফিল্ড, single space দিয়ে আলাদা:
 
-**Method** — what to do.
+**Method** — কী করতে হবে।
 
-| Method    | Idempotent? | Has body? | Typical use                                         |
-| --------- | ----------- | --------- | --------------------------------------------------- |
-| `GET`     | Yes         | No        | Read a resource.                                    |
-| `POST`    | No          | Yes       | Create something.                                   |
-| `PUT`     | Yes         | Yes       | Replace a resource.                                 |
-| `PATCH`   | No          | Yes       | Modify a resource.                                  |
-| `DELETE`  | Yes         | No        | Remove a resource.                                  |
-| `HEAD`    | Yes         | No        | Like `GET` but response has no body — for metadata. |
-| `OPTIONS` | Yes         | No        | What methods are supported? CORS preflight.         |
+| Method    | Idempotent? | Body আছে? | সাধারণ ব্যবহার                                             |
+| --------- | ----------- | --------- | ---------------------------------------------------------- |
+| `GET`     | হ্যাঁ       | না        | একটি resource পড়া।                                        |
+| `POST`    | না          | হ্যাঁ     | কিছু তৈরি করা।                                             |
+| `PUT`     | হ্যাঁ       | হ্যাঁ     | একটি resource প্রতিস্থাপন করা।                             |
+| `PATCH`   | না          | হ্যাঁ     | একটি resource পরিবর্তন করা।                                |
+| `DELETE`  | হ্যাঁ       | না        | একটি resource সরিয়ে ফেলা।                                 |
+| `HEAD`    | হ্যাঁ       | না        | `GET`-এর মতো কিন্তু response-এ body নেই — metadata-র জন্য। |
+| `OPTIONS` | হ্যাঁ       | না        | কোন কোন method সাপোর্ট করে? CORS preflight।                |
 
-Idempotent means "doing it twice has the same effect as doing it once." Important for retries — `GET` and `PUT` are safe to retry; `POST` may not be.
+Idempotent মানে "দুবার করলেও যা হয়, একবার করলেও তাই।" retry-র জন্য গুরুত্বপূর্ণ — `GET` আর `PUT` নিরাপদে retry করা যায়; `POST` হয়তো যায় না।
 
-**Path** — `/index.html`, `/api/users/42`, `/?q=hello`. Always starts with `/`. May include a query string after `?`. URL-encoded for non-ASCII.
+**Path** — `/index.html`, `/api/users/42`, `/?q=hello`। সবসময় `/` দিয়ে শুরু হয়। `?`-এর পরে একটি query string থাকতে পারে। non-ASCII-এর জন্য URL-encoded।
 
-**Version** — `HTTP/1.0`, `HTTP/1.1`, `HTTP/2`, `HTTP/3`. Practically every server you write speaks HTTP/1.1; HTTP/2 and HTTP/3 are typically handled by a reverse proxy that translates back down to 1.1 for your application.
+**Version** — `HTTP/1.0`, `HTTP/1.1`, `HTTP/2`, `HTTP/3`। কার্যত আপনি যত server লিখবেন প্রায় সবই HTTP/1.1 বলে; HTTP/2 আর HTTP/3 সাধারণত একটি reverse proxy সামলায়, যা আপনার application-এর জন্য সেটাকে আবার 1.1-এ নামিয়ে দেয়।
 
 ## Headers
 
@@ -137,20 +145,20 @@ Content-Length: 42
 Cookie: session=abc123
 ```
 
-Headers are `Name: Value` pairs. Names are case-insensitive (`Host` and `host` are the same header). Order generally does not matter, except `Set-Cookie` (server) and `Cookie` (client) where multiple values exist.
+Headers হলো `Name: Value` জোড়া। Name case-insensitive (`Host` আর `host` একই header)। ক্রম সাধারণত গুরুত্বপূর্ণ নয়, শুধু `Set-Cookie` (server) আর `Cookie` (client) ছাড়া, যেখানে একাধিক value থাকে।
 
-Six headers worth memorizing:
+মুখস্থ রাখার মতো ছয়টি header:
 
-- **Host** — _which_ virtual host on this server. Required in HTTP/1.1. The same IP can serve many domains via the `Host` header.
-- **Content-Type** — the MIME type of the body (`text/html`, `application/json`, `image/png`, ...).
-- **Content-Length** — body length in bytes. Required for non-chunked bodies.
-- **Transfer-Encoding: chunked** — alternative to Content-Length, for streaming.
-- **Connection** — `keep-alive` (reuse this socket for the next request) or `close`.
-- **Authorization** — credentials. `Bearer <token>` or `Basic <base64>`.
+- **Host** — এই server-এর _কোন_ virtual host। HTTP/1.1-এ আবশ্যক। একই IP `Host` header-এর মাধ্যমে অনেক domain serve করতে পারে।
+- **Content-Type** — body-র MIME type (`text/html`, `application/json`, `image/png`, ...)।
+- **Content-Length** — body-র দৈর্ঘ্য bytes-এ। non-chunked body-র জন্য আবশ্যক।
+- **Transfer-Encoding: chunked** — Content-Length-এর বিকল্প, streaming-এর জন্য।
+- **Connection** — `keep-alive` (পরের request-এর জন্য এই socket পুনরায় ব্যবহার) অথবা `close`।
+- **Authorization** — credentials। `Bearer <token>` অথবা `Basic <base64>`।
 
-## Status codes — the response in three digits
+## Status codes — তিন অঙ্কে response
 
-A response always starts with a status line:
+একটি response সবসময় একটি status line দিয়ে শুরু হয়:
 
 ```text
 HTTP/1.1 200 OK
@@ -158,9 +166,9 @@ HTTP/1.1 404 Not Found
 HTTP/1.1 503 Service Unavailable
 ```
 
-Five categories, by first digit:
+প্রথম অঙ্ক অনুযায়ী পাঁচটি ভাগ:
 
-| Range   | Meaning       | Common codes                                                                                     |
+| Range   | মানে          | সাধারণ codes                                                                                     |
 | ------- | ------------- | ------------------------------------------------------------------------------------------------ |
 | **1xx** | Informational | `100 Continue`                                                                                   |
 | **2xx** | Success       | `200 OK`, `201 Created`, `204 No Content`                                                        |
@@ -168,36 +176,36 @@ Five categories, by first digit:
 | **4xx** | Client error  | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `429 Too Many Requests` |
 | **5xx** | Server error  | `500 Internal Server Error`, `502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout` |
 
-`4xx` means _the client did something wrong_. `5xx` means _the server did something wrong_. Knowing which side broke is the first question in any debugging session.
+`4xx` মানে _client কিছু ভুল করেছে_। `5xx` মানে _server কিছু ভুল করেছে_। কোন পক্ষ ভাঙল সেটা জানা যেকোনো debugging session-এর প্রথম প্রশ্ন।
 
 ## Connection lifecycle — keep-alive
 
-In HTTP/1.0, every request opened a new TCP connection: connect, request, response, close. Slow.
+HTTP/1.0-তে প্রতিটি request একটি নতুন TCP connection খুলত: connect, request, response, close। ধীর।
 
-HTTP/1.1 introduced **persistent connections**: by default the server keeps the socket open after the response, ready for another request. The client signals "I am done" with `Connection: close` or stops sending requests. Massive speedup — TCP handshake plus TLS handshake costs hundreds of milliseconds per RTT.
+HTTP/1.1 নিয়ে এলো **persistent connections**: ডিফল্টভাবে server response-এর পরও socket খোলা রাখে, আরেকটি request-এর জন্য প্রস্তুত। client "আমি শেষ" সংকেত দেয় `Connection: close` দিয়ে অথবা request পাঠানো বন্ধ করে। বিশাল speedup — TCP handshake আর TLS handshake মিলিয়ে প্রতি RTT-তে শত শত millisecond খরচ হয়।
 
 ```text
 [client → server]    GET /a HTTP/1.1
                      Host: x.com
 [server → client]    HTTP/1.1 200 OK ...
-[client → server]    GET /b HTTP/1.1     ← same socket, no new handshake
+[client → server]    GET /b HTTP/1.1     ← একই socket, নতুন handshake নেই
                      Host: x.com
 [server → client]    HTTP/1.1 200 OK ...
 ```
 
-Servers cap how long they hold an idle keep-alive socket (`keepalive_timeout`, typically 60–75 seconds in nginx) to avoid running out of file descriptors.
+server একটি idle keep-alive socket কতক্ষণ ধরে রাখবে তার একটা সীমা রাখে (`keepalive_timeout`, nginx-এ সাধারণত 60–75 সেকেন্ড) যাতে file descriptor ফুরিয়ে না যায়।
 
-## Pipelining and HTTP/2
+## Pipelining আর HTTP/2
 
-Even with keep-alive, HTTP/1.1 is _serial_ per connection — you must finish reading response A before you can send request B. **Pipelining** allowed sending B before A's response, but it was poorly supported and head-of-line blocking made it fragile. Most clients never used it.
+keep-alive থাকা সত্ত্বেও, HTTP/1.1 প্রতিটি connection-এ _serial_ — request B পাঠানোর আগে আপনাকে response A পড়া শেষ করতে হবে। **Pipelining** A-এর response আসার আগেই B পাঠানোর সুযোগ দিত, কিন্তু এটি ভালোভাবে সাপোর্টেড ছিল না আর head-of-line blocking একে ভঙ্গুর করে তুলত। বেশিরভাগ client কখনো এটা ব্যবহার করেনি।
 
-HTTP/2 fixed this with **multiplexing** — multiple logical streams over one TCP connection, interleaved frame by frame. This is one of the main reasons to put nginx (or a similar proxy) in front of your application: you get HTTP/2 termination for free, while your backend speaks plain HTTP/1.1.
+HTTP/2 এটা ঠিক করল **multiplexing** দিয়ে — একটি TCP connection-এর ওপর একাধিক logical stream, frame ধরে ধরে interleave করা। আপনার application-এর সামনে nginx (বা এমন একটি proxy) বসানোর অন্যতম প্রধান কারণ এটাই: আপনি বিনামূল্যে HTTP/2 termination পান, আর আপনার backend সাধারণ HTTP/1.1 বলে।
 
-HTTP/3 takes it further by replacing TCP with QUIC (UDP-based) to eliminate head-of-line blocking at the _transport_ layer. Same multiplexed-streams model.
+HTTP/3 এটাকে আরও এগিয়ে নেয় TCP-র বদলে QUIC (UDP-ভিত্তিক) ব্যবহার করে, যাতে _transport_ layer-এ head-of-line blocking দূর হয়। একই multiplexed-streams মডেল।
 
-## What "running on port 80" actually means
+## "port 80-এ চলা" আসলে কী মানে
 
-The server process calls:
+server process কল করে:
 
 ```python
 import socket
@@ -209,36 +217,36 @@ while True:
     handle(conn)
 ```
 
-A few things going on:
+কয়েকটা জিনিস ঘটছে:
 
-- `0.0.0.0` means "any interface." `127.0.0.1` would be loopback only.
-- Ports below 1024 require root or `CAP_NET_BIND_SERVICE` (chapter 8 of Linux & VPS).
-- `listen(128)` sets the _backlog_ — how many fully-handshaked connections can queue up waiting for `accept()`. Too low, and bursts get dropped at the kernel.
-- Each `accept()` returns a new socket for that one connection. The original listening socket keeps accepting new ones.
+- `0.0.0.0` মানে "যেকোনো interface"। `127.0.0.1` হলে শুধু loopback হতো।
+- 1024-এর নিচের port-এর জন্য root বা `CAP_NET_BIND_SERVICE` দরকার (Linux & VPS-এর chapter 8)।
+- `listen(128)` _backlog_ সেট করে — কতগুলো সম্পূর্ণ handshake হওয়া connection `accept()`-এর অপেক্ষায় queue-তে জমতে পারে। খুব কম হলে burst-এ kernel-এই connection drop হয়ে যায়।
+- প্রতিটি `accept()` সেই একটি connection-এর জন্য একটি নতুন socket ফেরত দেয়। মূল listening socket নতুন connection accept করতেই থাকে।
 
-Whether the server then handles `conn` in the same thread, hands it to a worker pool, or registers it with an event loop is a design choice — chapter 4 covers it.
+server তারপর `conn`-কে একই thread-এ সামলাবে, worker pool-এ দেবে, নাকি event loop-এ register করবে — এটা একটা design সিদ্ধান্ত; chapter 4-এ আছে।
 
-## Static vs dynamic, framework vs raw
+## Static বনাম dynamic, framework বনাম raw
 
-A web server can serve two kinds of content:
+একটি web server দুই ধরনের content serve করতে পারে:
 
-- **Static** — files on disk (`/var/www/html/index.html`). The server reads the file and writes it to the socket. nginx is fantastic at this.
-- **Dynamic** — content generated by code at request time. The server runs your function, which may query a database, call other services, render a template, and produce the response.
+- **Static** — disk-এ থাকা file (`/var/www/html/index.html`)। server file-টা পড়ে socket-এ লিখে দেয়। nginx এতে দুর্দান্ত।
+- **Dynamic** — request-এর সময় কোড দিয়ে তৈরি করা content। server আপনার function চালায়, যা হয়তো একটি database query করে, অন্য service কল করে, একটি template render করে, আর response তৈরি করে।
 
-For dynamic content, "the server" is often two processes:
+dynamic content-এর জন্য, "server" প্রায়ই দুটি process:
 
-1. A _reverse proxy_ (nginx) accepting raw HTTP, handling TLS, applying rate limits, serving static assets directly.
-2. An _application server_ (your Go binary, Node process, Python WSGI/ASGI app) handling the dynamic routes, fronted by the proxy.
+1. একটি _reverse proxy_ (nginx) যা raw HTTP নেয়, TLS সামলায়, rate limit প্রয়োগ করে, static asset সরাসরি serve করে।
+2. একটি _application server_ (আপনার Go binary, Node process, Python WSGI/ASGI app) যা dynamic route সামলায়, proxy-র পেছনে বসে।
 
-Most production setups look like this. Chapters 6 and 7 cover the proxy half.
+বেশিরভাগ production setup এমনই দেখতে। Chapter 6 আর 7 proxy অংশটা কভার করে।
 
-## Recap
+## রিক্যাপ
 
-- A web server accepts TCP connections, parses HTTP, routes the request, writes a response.
-- HTTP/1.x is plain text. Request line, headers, blank line, body. `\r\n` line endings.
-- Methods carry intent (read, create, replace). Status codes carry result. 4xx is the client; 5xx is the server.
-- Keep-alive reuses connections to skip TCP/TLS handshake cost.
-- HTTP/2 multiplexes streams over one connection. nginx terminates it for you.
-- Static content comes from disk. Dynamic content comes from your application server, usually behind a reverse proxy.
+- একটি web server TCP connection accept করে, HTTP parse করে, request route করে, একটি response লেখে।
+- HTTP/1.x plain text। Request line, headers, খালি লাইন, body। `\r\n` line ending।
+- Method বহন করে উদ্দেশ্য (read, create, replace)। Status code বহন করে ফলাফল। 4xx হলো client; 5xx হলো server।
+- Keep-alive TCP/TLS handshake-এর খরচ এড়াতে connection পুনরায় ব্যবহার করে।
+- HTTP/2 একটি connection-এর ওপর stream multiplex করে। nginx আপনার জন্য সেটা terminate করে।
+- Static content আসে disk থেকে। Dynamic content আসে আপনার application server থেকে, সাধারণত একটি reverse proxy-র পেছনে।
 
-Next chapter: speak HTTP yourself with `nc` and a few hundred lines of Go.
+পরের অধ্যায়: `nc` আর কয়েকশো লাইন Go দিয়ে নিজেই HTTP বলুন।

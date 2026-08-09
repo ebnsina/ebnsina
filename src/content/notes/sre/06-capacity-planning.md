@@ -1,9 +1,9 @@
 ---
 title: 'Capacity Planning & Load Testing'
-subtitle: "Little's Law, Universal Scalability Law, headroom, and a real k6 + Locust load test you can run today."
+subtitle: "Little's Law, Universal Scalability Law, headroom, আর একটা রিয়েল k6 + Locust load test যা তুমি আজই চালাতে পারো।"
 chapter: 6
 level: 'intermediate'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['capacity planning', 'load testing', 'k6', 'queueing theory', "Little's Law"]
 ---
 
@@ -11,13 +11,21 @@ topics: ['capacity planning', 'load testing', 'k6', 'queueing theory', "Little's
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why capacity planning, not autoscaling
+## গল্পে বুঝি
 
-Autoscaling is reactive. By the time it kicks in, your users have felt the latency spike. Capacity planning is proactive: you know your system will handle the launch _before_ the traffic arrives.
+ফাতিমা আল-ফিহরি একটা দ্রুত বেড়ে ওঠা শহরের পানি সরবরাহ বিভাগের ইঞ্জিনিয়ার। তার কাজ একটাই — গরমকালে যেন কোনোদিন কল খুললে পানি না আসে, এমনটা না হয়। কিন্তু শহরটা প্রতি বছর ফুলেফেঁপে উঠছে, নতুন এলাকা, নতুন বাড়িঘর। তাই সে প্রতিদিন কল খুলে বসে থাকে না; বরং সে গত কয়েক বছরের জনসংখ্যা বাড়ার curve-টা মন দিয়ে দেখে, আর সেখান থেকে হিসাব কষে বের করে — আগামী গরমে দুপুরবেলা সবচেয়ে বেশি পানি টানার সময় ঠিক কতটা চাহিদা হবে।
 
-The core question: **at what point does my system stop meeting its SLO?** Find that number, then keep load comfortably below it.
+সেই হিসাবটা হাতে নিয়ে ফাতিমা কল শুকিয়ে যাওয়ার দিনের জন্য বসে থাকে না। সে আগেভাগেই বাড়তি reservoir বানায়, মোটা পাইপ বসায় — আর সেটাও ঠিক যতটুকু লাগবে ততটুকু নয়, একটু বেশি রেখে, যাতে হঠাৎ তাপপ্রবাহে চাহিদা লাফিয়ে বাড়লেও কুলিয়ে যায়। আর সবচেয়ে চালাক কাজটা হলো — নতুন পাইপলাইন চালু করার আগে সে ইচ্ছে করে খুব জোরে পানি ঠেলে দিয়ে দেখে কোন জোড়টা কত চাপে ফেটে যায়, কোথায় আসল সীমা। এতে সে দুর্ঘটনার দিন নয়, নিয়ন্ত্রিত পরীক্ষায় দুর্বল জায়গাটা খুঁজে বের করে ফেলে।
 
-## Little's Law (the one formula you must know)
+এই গল্পটাই আসলে **capacity planning**। জনসংখ্যা বাড়ার curve দেখে আগামী গরমের peak চাহিদা বের করাটা হলো growth trend থেকে demand **forecast** করা; সীমার ঠিক গায়ে না বসে একটু বেশি reservoir আর পাইপ আগেভাগে বানানোটা হলো **headroom** রেখে আগেভাগে **provision** করা; আর জোরে পানি ঠেলে পাইপ কোথায় ফাটে দেখাটা হলো **load testing** দিয়ে সিস্টেমের আসল সীমা খুঁজে বের করা। বাস্তবে ঠিক এভাবেই — Prometheus-এর পুরনো ডেটা থেকে peak RPS forecast করে, headroom সহ replica আগে থেকে provision করে, আর k6 দিয়ে stress test চালিয়ে — টিমরা নিশ্চিত করে সিস্টেম যেন spike-এ ধসে না পড়ে, আবার ফাঁকা বসে থাকা সার্ভারের পেছনে অযথা টাকাও না যায়।
+
+## Capacity planning কেন, autoscaling নয়
+
+Autoscaling reactive। এটা যখন kick in করে, ততক্ষণে তোমার user latency spike টের পেয়ে গেছে। Capacity planning proactive: তুমি জানো তোমার সিস্টেম launch সামলাবে _traffic আসার আগেই_।
+
+মূল প্রশ্ন: **কোন point-এ আমার সিস্টেম তার SLO মেটানো বন্ধ করে?** ঐ সংখ্যাটা খুঁজে বের করো, তারপর load-কে তার আরামদায়কভাবে নিচে রাখো।
+
+## Little's Law (যে একটা formula তোমাকে জানতেই হবে)
 
 ```
 L = λ × W
@@ -27,7 +35,7 @@ L = average number of items in the system (concurrency)
 W = average time each item spends in the system (latency)
 ```
 
-That is it. From three measurable quantities, derive the fourth.
+এটুকুই। তিনটা measurable পরিমাণ থেকে চতুর্থটা derive করো।
 
 ```typescript
 // Worked example: how many app server replicas do I need?
@@ -51,19 +59,19 @@ const provisionedReplicas = Math.ceil(replicas * 1.5);
 // = 12 replicas
 ```
 
-Memorize the formula. You will use it in interviews, capacity reviews, and every real planning exercise for the rest of your career.
+formula-টা মুখস্থ করো। তুমি এটা interview-এ, capacity review-তে, আর তোমার ক্যারিয়ারের বাকি সময়ের প্রতিটা রিয়েল planning exercise-এ ব্যবহার করবে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A coffee shop with 1 barista who takes 60 seconds per drink can serve 1 customer per minute. If 5 customers/min arrive, queue grows by 4/min — service collapses. Capacity = throughput / per-unit-cost. Little's Law tells you the queue length.
+একটা coffee shop-এ 1 জন barista যে প্রতি drink-এ 60 সেকেন্ড নেয়, প্রতি মিনিটে 1 জন customer serve করতে পারে। যদি প্রতি মিনিটে 5 জন customer আসে, queue প্রতি মিনিটে 4 করে বাড়ে — service ধসে যায়। Capacity = throughput / per-unit-cost। Little's Law তোমাকে queue length বলে।
 
 </Callout>
 
-## Universal Scalability Law (when adding servers stops helping)
+## Universal Scalability Law (কখন server যোগ করা আর সাহায্য করে না)
 
-Linear scaling is a lie. Real systems suffer from contention (locks, shared state) and coherence (cache sync, consensus). Neil Gunther's USL captures both:
+Linear scaling একটা মিথ্যা। রিয়েল সিস্টেম contention (locks, shared state) আর coherence (cache sync, consensus)-এ ভোগে। Neil Gunther-এর USL দুটোই ধরে:
 
 ```
               N
@@ -96,11 +104,11 @@ console.log(uslThroughput(64, 0.05, 0.005)); // 13.48 — peak!
 console.log(uslThroughput(128, 0.05, 0.005)); // 12.21 — going DOWN
 ```
 
-The output is the punchline: there is a peak. Beyond it, adding servers makes the system _slower_. If you do not know your USL curve, you will scale past the peak in a panic and make the outage worse.
+output-টাই punchline: একটা peak আছে। এর পরে, server যোগ করলে সিস্টেম _আরও slow_ হয়। তুমি যদি তোমার USL curve না জানো, তাহলে আতঙ্কে তুমি peak পেরিয়ে scale করবে আর outage-টা আরও খারাপ করবে।
 
-## A real k6 load test
+## একটা রিয়েল k6 load test
 
-k6 is the standard. Scriptable in JavaScript, runs anywhere, integrates with Prometheus.
+k6 হচ্ছে standard। JavaScript-এ scriptable, যেকোনো জায়গায় চলে, Prometheus-এর সাথে integrate করে।
 
 ```javascript
 // load-test/checkout.js
@@ -153,7 +161,7 @@ export default function () {
 }
 ```
 
-Run it:
+চালাও:
 
 ```bash
 # Local run with Grafana Cloud output
@@ -167,17 +175,17 @@ k6 run \
   checkout.js
 ```
 
-The thresholds block is the magic. The test exits non-zero if SLO assertions fail, so you can run it in CI as a gate.
+thresholds block-টাই magic। SLO assertion ফেল করলে test non-zero exit করে, তাই তুমি এটা CI-তে একটা gate হিসেবে চালাতে পারো।
 
 <Callout type="tip">
 
-**Run load tests against staging that mirrors production scale.** Testing at 1/10th the scale gives 1/10th the accuracy. If you cannot afford a full-scale staging, run shadow traffic against production canaries with `k6 --vus 1 --duration 1h` to find weird endpoints.
+**production scale mirror করে এমন staging-এর বিরুদ্ধে load test চালাও।** 1/10th scale-এ test করলে 1/10th accuracy পাবে। full-scale staging afford করতে না পারলে, weird endpoint খুঁজতে production canary-র বিরুদ্ধে `k6 --vus 1 --duration 1h` দিয়ে shadow traffic চালাও।
 
 </Callout>
 
 ## Headroom: the rule of thumb
 
-The single most-asked planning question: "how much spare capacity do I need?"
+সবচেয়ে বেশি জিজ্ঞেস করা planning প্রশ্ন: "আমার কত spare capacity লাগবে?"
 
 ```
 Service type             Headroom    Rationale
@@ -190,11 +198,11 @@ Network bandwidth       |   100%    | Asymmetric (egress matters more)
 DB connection pool      |   2x avg  | Slow queries spike pool usage
 ```
 
-The DB rule is critical. If your primary runs at 60% CPU and you have a single read replica, a primary failover puts 100% of write load on a server that was already at 60% read load. You will rapidly discover what 160% CPU feels like.
+DB নিয়মটা critical। তোমার primary যদি 60% CPU-তে চলে আর তোমার একটা মাত্র read replica থাকে, একটা primary failover সেই server-এ 100% write load ফেলবে যেটা আগেই 60% read load-এ ছিল। তুমি দ্রুত আবিষ্কার করবে 160% CPU কেমন লাগে।
 
-## Capacity planning spreadsheet (the actual one)
+## Capacity planning spreadsheet (আসলটা)
 
-Real teams maintain a quarterly capacity plan as a spreadsheet or notebook. Here's the schema:
+রিয়েল team-রা একটা ত্রৈমাসিক capacity plan একটা spreadsheet বা notebook হিসেবে maintain করে। এখানে schema:
 
 ```
 Service    | RPS  | p99   | Replicas | CPU/replica | Mem/replica | Cost/mo  | 90d trend | Action
@@ -205,11 +213,11 @@ search     | 9k   | 50ms  |    18    |    0.8      |   1GB       | $1,200   | +3
 inventory  | 200  | 200ms |     3    |    1.0      |   2GB       | $600     | -2%       | Right-sized
 ```
 
-The 90d trend column is the early-warning signal. A 35% growth rate against a service running at 70% utilization will saturate in roughly 8 weeks. Plan now, not at the saturation cliff.
+90d trend column-টা early-warning signal। 70% utilization-এ চলা একটা service-এর বিরুদ্ধে 35% growth rate মোটামুটি 8 সপ্তাহে saturate করবে। এখনই plan করো, saturation cliff-এ নয়।
 
-## Load testing patterns (beyond just "more RPS")
+## Load testing patterns ("শুধু আরও RPS"-এর বাইরে)
 
-Different test shapes find different bugs:
+আলাদা test shape আলাদা bug খুঁজে পায়:
 
 ```typescript
 // 1. Smoke test — does it work at all?
@@ -246,9 +254,9 @@ const spike = {
 };
 ```
 
-Each shape exposes a different class of bug. A service that passes load tests but fails soak is leaking something. A service that passes load but fails spike has an autoscaler that is too slow.
+প্রতিটা shape একটা আলাদা শ্রেণীর bug ফাঁস করে। যে service load test পাস করে কিন্তু soak ফেল করে সেটা কিছু একটা leak করছে। যে service load পাস করে কিন্তু spike ফেল করে তার একটা autoscaler আছে যেটা বড্ড slow।
 
-## Forecasting (the underrated skill)
+## Forecasting (underrated skill)
 
 ```python
 # Seasonal forecast for capacity planning
@@ -278,7 +286,7 @@ peak_forecast = forecast["yhat_upper"].max()
 print(f"Forecasted 90-day peak RPS: {peak_forecast:.0f}")
 ```
 
-The bound matters more than the point estimate. You are sizing for the worst case in the planning window, not the average.
+point estimate-এর চেয়ে bound-টা বেশি গুরুত্বপূর্ণ। তুমি planning window-এর worst case-এর জন্য size করছ, average-এর জন্য নয়।
 
 ## Stay current
 
@@ -289,8 +297,8 @@ The bound matters more than the point estimate. You are sizing for the worst cas
 
 ## Key Takeaways
 
-1. **Little's Law**: L = λW. Three out of four; derive the fourth.
-2. **USL says scaling has a peak** — measure α and β so you know where it is
-3. **k6 with thresholds** turns load tests into pass/fail SLO gates in CI
-4. **Headroom rules of thumb** vary by service type — DB needs 100%+, web 30-50%
-5. **Forecast with seasonality + use upper-bound** — capacity for the worst case in the window
+1. **Little's Law**: L = λW। চারটার তিনটা; চতুর্থটা derive করো।
+2. **USL বলে scaling-এর একটা peak আছে** — α আর β মাপো যাতে জানো সেটা কোথায়
+3. **thresholds সহ k6** load test-কে CI-তে pass/fail SLO gate-এ পরিণত করে
+4. **Headroom rules of thumb** service type অনুযায়ী বদলায় — DB-র 100%+ লাগে, web-এর 30-50%
+5. **seasonality সহ forecast করো + upper-bound ব্যবহার করো** — window-এর worst case-এর জন্য capacity

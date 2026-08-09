@@ -1,9 +1,9 @@
 ---
-title: 'The Linux Filesystem'
-subtitle: 'Where everything lives, why it lives there, and the permissions model that decides what your processes can touch.'
+title: 'Linux ফাইলসিস্টেম'
+subtitle: 'সবকিছু কোথায় থাকে, কেন সেখানে থাকে, আর যে পারমিশন মডেল ঠিক করে আপনার প্রসেস কী ছুঁতে পারবে।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['filesystem', 'permissions', 'fhs', 'linux']
 ---
 
@@ -11,49 +11,57 @@ topics: ['filesystem', 'permissions', 'fhs', 'linux']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বিশাল, কড়া নিয়মে সাজানো অফিস বিল্ডিং চালান। পুরো বিল্ডিংয়ে ঢোকার একটাই মেইন গেট, আর সেই গেট থেকেই প্রতিটা করিডোর শাখা হয়ে ভেতরে চলে গেছে — কোনো ঘরে যেতে হলে গেট থেকে করিডোরের পুরো রুট ধরে হাঁটতেই হবে। ঘরগুলোর কাজ একদম বাঁধা: একটা ঘর হলো নিয়ম-ও-সেটিংস অফিস, যেখানে বিল্ডিংয়ের সব পলিসি আর নিয়মকানুন গোছানো থাকে। আরেকটা হলো স্টোর-ও-লগবই ঘর, যেটা কাজ চলার সাথে সাথে ভরতে থাকে — প্রতিদিনের হিসাব, জমা মাল, লগবই।
+
+নতুন কর্মচারী ইবনে সিনা প্রথম দিন হারিয়ে যাচ্ছিলেন। আল-খোয়ারিজমি তাঁকে বুঝিয়ে দিলেন — "গেট থেকে শুরু করো, সবকিছু ওখান থেকেই বেরিয়েছে।" স্টাফদের থাকার জন্য আলাদা লিভিং কোয়ার্টার আছে, যেখানে প্রত্যেকের নিজের ঘর। আর টুল রুমে সাজানো আছে রেডি যন্ত্রপাতি — যেকোনো কাজ শুরু করতে ওখান থেকেই টুল নিতে হয়। কাউকে ঠিকানা বলতে হলে ইবনে সিনা এখন গেট থেকে করিডোরের পুরো রুটটা বলে দেন, তাহলে যে কেউ ঠিক ঘরটা খুঁজে পায়।
+
+এই অফিস বিল্ডিংটাই আসলে Linux **filesystem**। একটাই মেইন গেট যেখান থেকে সব শাখা হয় সেটাই **root** (`/`)। নিয়ম-ও-সেটিংস অফিস হলো `/etc` (সব config), স্টোর-ও-লগবই ঘর হলো `/var` (variable data আর logs), স্টাফদের লিভিং কোয়ার্টার হলো `/home` (ইউজার ডিরেক্টরি), আর টুল রুম হলো `/bin` (প্রোগ্রাম)। কোনো ঘরের গেট-থেকে-পুরো-করিডোর রুটটাই একটা absolute **path**। বাস্তবে এই কনভেনশন এত কড়া বলেই যেকোনো Linux সার্ভারে nginx-এর config যে `/etc`-এ আর লগ যে `/var/log`-এ থাকবে, সেটা না দেখেও যেকোনো ইঞ্জিনিয়ার জানে — জায়গাটা মুখস্থ থাকলেই যেকোনো কিছু সেকেন্ডে খুঁজে পাওয়া যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-The Linux filesystem is like a filing cabinet with labeled drawers — everything has a designated place, and knowing the layout is the only way to find anything quickly.
+Linux ফাইলসিস্টেম অনেকটা লেবেল লাগানো ড্রয়ারওয়ালা একটা ফাইলিং ক্যাবিনেটের মতো — সবকিছুর একটা নির্ধারিত জায়গা আছে, আর লেআউটটা জানাই হলো যেকোনো কিছু দ্রুত খুঁজে পাওয়ার একমাত্র উপায়।
 
 </Callout>
 
-## Everything is a file
+## সবকিছুই একটা ফাইল
 
-This is the slogan, and it is mostly true. Open files are files. Directories are files. Devices like `/dev/null` and `/dev/sda` are files. Even running processes show up as files under `/proc`. Sockets, pipes, the kernel's view of memory — all addressable via paths.
+এটাই স্লোগান, আর এটা বেশিরভাগ ক্ষেত্রেই সত্যি। খোলা ফাইলগুলো ফাইল। ডিরেক্টরিগুলো ফাইল। `/dev/null` আর `/dev/sda`-এর মতো ডিভাইসগুলো ফাইল। এমনকি চলমান প্রসেসগুলোও `/proc`-এর নিচে ফাইল হিসেবে দেখা যায়। সকেট, পাইপ, মেমরির উপর কার্নেলের দৃষ্টি — সবই পাথের মাধ্যমে অ্যাড্রেসযোগ্য।
 
-This matters because the same tools (`cat`, `ls`, `cp`, `>`, `<`) work everywhere. Once you understand paths and permissions, ninety percent of "how do I do X on Linux" answers itself.
+এটা গুরুত্বপূর্ণ কারণ একই টুল (`cat`, `ls`, `cp`, `>`, `<`) সব জায়গায় কাজ করে। একবার আপনি পাথ আর পারমিশন বুঝলে, "Linux-এ কীভাবে X করব" এর নব্বই শতাংশ উত্তর নিজেই বেরিয়ে আসে।
 
-## The Filesystem Hierarchy Standard (FHS)
+## Filesystem Hierarchy Standard (FHS)
 
-Every mainstream distribution lays things out the same way. Memorize this map — it pays back forever.
+প্রতিটা মেইনস্ট্রিম ডিস্ট্রিবিউশন জিনিসপত্র একইভাবে সাজায়। এই ম্যাপটা মুখস্থ করুন — এটা চিরকাল সুদ দেয়।
 
-| Path                    | What lives there                                                                                |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| `/`                     | The root of everything. Mount point for the root filesystem.                                    |
-| `/bin`, `/sbin`         | Essential commands. `ls`, `cp`, `mount`, `ip`. (On modern distros these symlink to `/usr/bin`.) |
-| `/usr/bin`, `/usr/sbin` | Most commands installed by the package manager.                                                 |
-| `/usr/local/bin`        | Stuff _you_ install by hand, outside the package manager.                                       |
-| `/etc`                  | All system configuration. Editable text files.                                                  |
-| `/var`                  | Variable data: logs (`/var/log`), spool, mail, package caches.                                  |
-| `/var/log`              | Where log files go. `journald` keeps its own binary log here.                                   |
-| `/home`                 | User home directories. `/home/deploy` is yours.                                                 |
-| `/root`                 | Root's home. Yes, separate from `/home`.                                                        |
-| `/tmp`                  | Wiped at every reboot. Use for scratch only.                                                    |
-| `/opt`                  | Vendor-installed software, often self-contained.                                                |
-| `/srv`                  | Data served by the system (web roots, samba shares).                                            |
-| `/dev`                  | Device files. Disks, terminals, random sources.                                                 |
-| `/proc`                 | Live kernel state. Each process has a directory `/proc/<pid>`.                                  |
-| `/sys`                  | Like `/proc` but for hardware and kernel objects.                                               |
-| `/run`                  | Runtime state since boot. Sockets, PID files. Wiped on reboot.                                  |
-| `/boot`                 | Kernel and bootloader. Touch with extreme care.                                                 |
-| `/mnt`, `/media`        | Manual mount points and removable media.                                                        |
-| `/lib`, `/lib64`        | Shared libraries. Symlinked to `/usr/lib` on modern systems.                                    |
+| Path                    | সেখানে যা থাকে                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| `/`                     | সবকিছুর মূল। রুট ফাইলসিস্টেমের মাউন্ট পয়েন্ট।                                                    |
+| `/bin`, `/sbin`         | অত্যাবশ্যক কমান্ড। `ls`, `cp`, `mount`, `ip`. (আধুনিক ডিস্ট্রোতে এগুলো `/usr/bin`-এ symlink করা।) |
+| `/usr/bin`, `/usr/sbin` | প্যাকেজ ম্যানেজার দিয়ে ইনস্টল করা বেশিরভাগ কমান্ড।                                               |
+| `/usr/local/bin`        | _আপনি_ প্যাকেজ ম্যানেজারের বাইরে হাতে ইনস্টল করা জিনিস।                                           |
+| `/etc`                  | সব সিস্টেম কনফিগারেশন। এডিটযোগ্য টেক্সট ফাইল।                                                     |
+| `/var`                  | ভ্যারিয়েবল ডেটা: লগ (`/var/log`), spool, mail, প্যাকেজ ক্যাশ।                                    |
+| `/var/log`              | লগ ফাইল যেখানে যায়। `journald` এখানে নিজের বাইনারি লগ রাখে।                                      |
+| `/home`                 | ইউজার হোম ডিরেক্টরি। `/home/deploy` আপনার।                                                        |
+| `/root`                 | Root-এর হোম। হ্যাঁ, `/home` থেকে আলাদা।                                                           |
+| `/tmp`                  | প্রতিটা রিবুটে মুছে যায়। শুধু স্ক্র্যাচের জন্য ব্যবহার করুন।                                     |
+| `/opt`                  | ভেন্ডর-ইনস্টল করা সফটওয়্যার, প্রায়ই স্বয়ংসম্পূর্ণ।                                             |
+| `/srv`                  | সিস্টেম যে ডেটা সার্ভ করে (web root, samba share)।                                                |
+| `/dev`                  | ডিভাইস ফাইল। ডিস্ক, টার্মিনাল, র‍্যান্ডম সোর্স।                                                   |
+| `/proc`                 | লাইভ কার্নেল স্টেট। প্রতিটা প্রসেসের একটা ডিরেক্টরি `/proc/<pid>` আছে।                            |
+| `/sys`                  | `/proc`-এর মতোই কিন্তু হার্ডওয়্যার আর কার্নেল অবজেক্টের জন্য।                                    |
+| `/run`                  | বুট থেকে রানটাইম স্টেট। সকেট, PID ফাইল। রিবুটে মুছে যায়।                                         |
+| `/boot`                 | কার্নেল আর বুটলোডার। খুব সাবধানে ছুঁবেন।                                                          |
+| `/mnt`, `/media`        | ম্যানুয়াল মাউন্ট পয়েন্ট আর রিমুভেবল মিডিয়া।                                                    |
+| `/lib`, `/lib64`        | শেয়ার্ড লাইব্রেরি। আধুনিক সিস্টেমে `/usr/lib`-এ symlink করা।                                     |
 
-If you put your application in `/opt/myapp` and its data in `/var/lib/myapp`, every other Linux engineer who has ever lived knows where to look. Follow the convention.
+আপনি যদি আপনার অ্যাপ্লিকেশন `/opt/myapp`-এ আর এর ডেটা `/var/lib/myapp`-এ রাখেন, এ পর্যন্ত বেঁচে থাকা প্রতিটা Linux ইঞ্জিনিয়ার জানে কোথায় খুঁজতে হবে। কনভেনশন মেনে চলুন।
 
-## Paths
+## পাথ
 
 ```text
 /etc/nginx/nginx.conf      # absolute — starts with /
@@ -63,20 +71,20 @@ If you put your application in `/opt/myapp` and its data in `/var/lib/myapp`, ev
 ~/notes                    # /home/deploy/notes
 ```
 
-`pwd` prints where you are. `cd -` jumps back to where you came from. `cd` with no argument goes home.
+`pwd` আপনি কোথায় আছেন তা প্রিন্ট করে। `cd -` আপনি যেখান থেকে এসেছিলেন সেখানে ফিরে যায়। আর্গুমেন্ট ছাড়া `cd` হোমে যায়।
 
-## Inodes — what a file _really_ is
+## Inode — একটা ফাইল _আসলে_ কী
 
-A file on disk is two things: the **inode** (metadata + pointer to data blocks) and the **directory entry** (the name pointing at the inode).
+ডিস্কে একটা ফাইল দুটো জিনিস: **inode** (মেটাডেটা + ডেটা ব্লকের দিকে পয়েন্টার) আর **ডিরেক্টরি এন্ট্রি** (inode-এর দিকে ইশারা করা নাম)।
 
-Run `ls -li`:
+`ls -li` চালান:
 
 ```bash
 $ ls -li /etc/passwd
 2097284 -rw-r--r-- 1 root root 1789 Mar 15 10:42 /etc/passwd
 ```
 
-The first number, `2097284`, is the inode. Multiple names can point at the same inode — that is what a **hard link** is.
+প্রথম সংখ্যাটা, `2097284`, হলো inode। একাধিক নাম একই inode-এর দিকে ইশারা করতে পারে — একটা **hard link** ঠিক তাই।
 
 ```bash
 ln /etc/passwd /tmp/passwd-copy
@@ -84,7 +92,7 @@ ls -li /etc/passwd /tmp/passwd-copy
 # Both show the same inode number — same file, two names.
 ```
 
-A **symbolic link** is different — a tiny file that just contains a path string:
+একটা **symbolic link** আলাদা — একটা ছোট্ট ফাইল যা শুধু একটা পাথ স্ট্রিং ধারণ করে:
 
 ```bash
 ln -s /etc/passwd /tmp/passwd-symlink
@@ -92,23 +100,23 @@ ls -l /tmp/passwd-symlink
 # lrwxrwxrwx ... /tmp/passwd-symlink -> /etc/passwd
 ```
 
-When the target moves, the symlink breaks. Hard links cannot break — they are the file.
+টার্গেট সরে গেলে, symlink ভেঙে যায়। Hard link ভাঙতে পারে না — সেগুলোই ফাইল।
 
-## Permissions — the nine-character mode
+## পারমিশন — নয়-অক্ষরের মোড
 
 ```text
 -rw-r--r--  1 deploy deploy   235 Mar 15 10:42 notes.txt
 drwxr-xr-x  2 deploy deploy  4096 Mar 15 10:42 projects/
 ```
 
-Read it as four parts:
+এটা চার অংশে পড়ুন:
 
-1. **First character**: file type. `-` regular, `d` directory, `l` symlink, `c` character device, `b` block device, `s` socket, `p` named pipe.
-2. **Owner permissions** (chars 2–4): `rwx` — read, write, execute.
-3. **Group permissions** (chars 5–7).
-4. **Other permissions** (chars 8–10) — everyone else on the box.
+1. **প্রথম অক্ষর**: ফাইল টাইপ। `-` regular, `d` directory, `l` symlink, `c` character device, `b` block device, `s` socket, `p` named pipe।
+2. **Owner permissions** (অক্ষর 2–4): `rwx` — read, write, execute।
+3. **Group permissions** (অক্ষর 5–7)।
+4. **Other permissions** (অক্ষর 8–10) — বক্সের বাকি সবাই।
 
-In octal:
+octal-এ:
 
 | Octal | Binary | Permissions |
 | ----- | ------ | ----------- |
@@ -118,14 +126,14 @@ In octal:
 | 4     | 100    | r--         |
 | 0     | 000    | ---         |
 
-Common modes you will use:
+আপনি যেসব সাধারণ মোড ব্যবহার করবেন:
 
-- `644` — readable by everyone, writable only by owner. (Most config files.)
-- `600` — only owner can read/write. (SSH private keys, `.env`.)
-- `755` — directory or executable, world-readable, only owner-writable.
-- `700` — directory only owner can enter. (`~/.ssh`.)
+- `644` — সবার জন্য readable, শুধু owner-এর জন্য writable। (বেশিরভাগ config ফাইল।)
+- `600` — শুধু owner read/write করতে পারে। (SSH private key, `.env`।)
+- `755` — ডিরেক্টরি বা এক্সিকিউটেবল, world-readable, শুধু owner-writable।
+- `700` — ডিরেক্টরি যেখানে শুধু owner ঢুকতে পারে। (`~/.ssh`।)
 
-Set them:
+এগুলো সেট করুন:
 
 ```bash
 chmod 600 ~/.ssh/id_ed25519
@@ -133,7 +141,7 @@ chmod 755 /opt/myapp/bin/run
 chmod -R 750 /opt/myapp        # recursive
 ```
 
-Symbolic syntax also works:
+symbolic সিনট্যাক্সও কাজ করে:
 
 ```bash
 chmod u+x script.sh             # add execute for owner
@@ -141,18 +149,18 @@ chmod g-w shared.txt            # remove write for group
 chmod o=r public.txt            # set other to read only
 ```
 
-## What "execute" means on a directory
+## একটা ডিরেক্টরিতে "execute" মানে কী
 
-For a _file_, `x` means "you can run this." For a _directory_, `x` means "you can `cd` into this and access files inside it." `r` on a directory means "you can `ls` its contents." That is why `chmod 700 ~/.ssh` works — you can enter and read it, others cannot even `ls` it.
+একটা _ফাইলের_ জন্য, `x` মানে "আপনি এটা চালাতে পারবেন।" একটা _ডিরেক্টরির_ জন্য, `x` মানে "আপনি এতে `cd` করতে আর ভেতরের ফাইল অ্যাক্সেস করতে পারবেন।" একটা ডিরেক্টরিতে `r` মানে "আপনি এর কনটেন্ট `ls` করতে পারবেন।" এজন্যই `chmod 700 ~/.ssh` কাজ করে — আপনি ঢুকতে আর পড়তে পারেন, অন্যরা এমনকি এটা `ls`-ও করতে পারে না।
 
-## Ownership
+## ওনারশিপ
 
 ```bash
 ls -l /etc/nginx/nginx.conf
 # -rw-r--r-- 1 root root 1234 Mar 15 10:42 /etc/nginx/nginx.conf
 ```
 
-Two names: **owner** (`root`) and **group** (`root`). Change them:
+দুটো নাম: **owner** (`root`) আর **group** (`root`)। এগুলো বদলান:
 
 ```bash
 sudo chown deploy /opt/myapp/data.json
@@ -161,28 +169,28 @@ sudo chgrp www-data /var/www/site               # group only
 sudo chown -R deploy:deploy /opt/myapp          # recursive
 ```
 
-A common pattern: a service runs as a dedicated user (e.g., `nginx`, `postgres`), and your app's files are owned by that user so the service can read them but other users on the box cannot.
+একটা সাধারণ প্যাটার্ন: একটা সার্ভিস একটা ডেডিকেটেড ইউজার হিসেবে চলে (যেমন, `nginx`, `postgres`), আর আপনার অ্যাপের ফাইলগুলো সেই ইউজারের মালিকানায় থাকে যাতে সার্ভিস সেগুলো পড়তে পারে কিন্তু বক্সের অন্য ইউজাররা পারে না।
 
-## Special bits — setuid, setgid, sticky
+## স্পেশাল বিট — setuid, setgid, sticky
 
 ```bash
 ls -l /usr/bin/passwd
 # -rwsr-xr-x 1 root root 68208 ... /usr/bin/passwd
 ```
 
-The `s` in place of `x` is **setuid** — when this binary runs, it runs as the _owner_ (root) regardless of who launched it. That is how an unprivileged user can change their password (which requires writing to `/etc/shadow`, owned by root).
+`x`-এর জায়গায় `s` হলো **setuid** — এই বাইনারিটা চললে, যে চালিয়েছে তা নির্বিশেষে এটা _owner_ (root) হিসেবে চলে। এভাবেই একজন unprivileged ইউজার তার পাসওয়ার্ড বদলাতে পারে (যার জন্য root-এর মালিকানার `/etc/shadow`-এ লেখা দরকার)।
 
-`setuid` is dangerous — every setuid binary on the system is a privilege escalation surface. Audit them with:
+`setuid` বিপজ্জনক — সিস্টেমের প্রতিটা setuid বাইনারি একটা privilege escalation সারফেস। এদের অডিট করুন:
 
 ```bash
 find / -perm -4000 -type f 2>/dev/null
 ```
 
-The **sticky bit** on a directory (e.g., `/tmp` is `drwxrwxrwt`) means "anyone can write here, but you can only delete files you own." That is why `/tmp` works as a shared scratch space.
+একটা ডিরেক্টরিতে **sticky bit** (যেমন, `/tmp` হলো `drwxrwxrwt`) মানে "যে কেউ এখানে লিখতে পারে, কিন্তু আপনি শুধু নিজের মালিকানার ফাইল ডিলিট করতে পারবেন।" এজন্যই `/tmp` একটা শেয়ার্ড স্ক্র্যাচ স্পেস হিসেবে কাজ করে।
 
-## Mount points and disks
+## মাউন্ট পয়েন্ট আর ডিস্ক
 
-A filesystem is a tree, but the tree may span multiple disks. `mount` shows the splice points:
+একটা ফাইলসিস্টেম একটা ট্রি, কিন্তু ট্রিটা একাধিক ডিস্কজুড়ে বিস্তৃত হতে পারে। `mount` জোড়ার পয়েন্টগুলো দেখায়:
 
 ```bash
 $ mount | column -t
@@ -191,7 +199,7 @@ tmpfs      on  /run      type tmpfs  (rw,nosuid,nodev,size=399768k)
 /dev/sda2  on  /var      type ext4   (rw,relatime)
 ```
 
-Or more readably:
+অথবা আরও পাঠযোগ্যভাবে:
 
 ```bash
 df -h
@@ -200,22 +208,22 @@ df -h
 # tmpfs           390M  1.2M  389M   1% /run
 ```
 
-When `df` says you are out of space, you are out of space on a _specific filesystem_. `/` being full does not necessarily mean `/var` is.
+যখন `df` বলে আপনার স্পেস শেষ, তখন আপনার স্পেস শেষ একটা _নির্দিষ্ট ফাইলসিস্টেমে_। `/` ভর্তি থাকার মানে এই নয় যে `/var`-ও ভর্তি।
 
-## Hidden files
+## হিডেন ফাইল
 
-Anything starting with `.` is hidden by `ls`. `ls -a` shows them.
+`.` দিয়ে শুরু হওয়া যেকোনো কিছু `ls` লুকিয়ে রাখে। `ls -a` সেগুলো দেখায়।
 
 ```bash
 ls -la ~
 # .bashrc, .ssh/, .config/ — all hidden by convention.
 ```
 
-Convention only. The kernel does not care. The shell's `ls` and globs ignore them so you do not see your dotfiles in every directory listing.
+শুধু কনভেনশন। কার্নেল পরোয়া করে না। শেলের `ls` আর glob সেগুলো উপেক্ষা করে যাতে প্রতিটা ডিরেক্টরি লিস্টিংয়ে আপনি আপনার dotfile না দেখেন।
 
-## Practical: locate a config file fast
+## প্র্যাকটিক্যাল: একটা config ফাইল দ্রুত খুঁজে বের করা
 
-You know nginx is installed but cannot remember where its config lives:
+আপনি জানেন nginx ইনস্টল করা কিন্তু মনে করতে পারছেন না এর config কোথায় থাকে:
 
 ```bash
 which nginx                    # /usr/sbin/nginx
@@ -224,15 +232,15 @@ dpkg -L nginx | grep '\.conf'  # all conf files the package shipped
 ls -la /etc/nginx/             # the standard place
 ```
 
-Three or four commands and you have a complete map.
+তিন-চারটা কমান্ড আর আপনার কাছে একটা সম্পূর্ণ ম্যাপ আছে।
 
-## Recap
+## রিক্যাপ
 
-- The FHS is the same on every distro. Learn it once.
-- Files are inodes; names are pointers. Hard links share an inode, symlinks point at a path.
-- Permissions are owner/group/other × read/write/execute. Octal is faster to read than `rwx`.
-- Ownership pairs an owner and a group. Services run as dedicated users.
-- `setuid` is rare and risky. The sticky bit on a directory means "your files only."
-- `df` and `mount` show what is mounted where; out-of-space is per-filesystem.
+- FHS প্রতিটা ডিস্ট্রোতে একই। একবার শিখুন।
+- ফাইল হলো inode; নাম হলো পয়েন্টার। Hard link একটা inode শেয়ার করে, symlink একটা পাথের দিকে ইশারা করে।
+- পারমিশন হলো owner/group/other × read/write/execute। `rwx`-এর চেয়ে octal পড়া দ্রুত।
+- ওনারশিপ একটা owner আর একটা group জোড়া বাঁধে। সার্ভিস ডেডিকেটেড ইউজার হিসেবে চলে।
+- `setuid` বিরল আর ঝুঁকিপূর্ণ। একটা ডিরেক্টরিতে sticky bit মানে "শুধু আপনার ফাইল।"
+- `df` আর `mount` দেখায় কোথায় কী মাউন্ট করা; স্পেস-শেষ হওয়াটা per-filesystem।
 
-Next chapter: what a "process" actually is on Linux, and why your app is not special.
+পরের চ্যাপ্টার: Linux-এ একটা "প্রসেস" আসলে কী, আর কেন আপনার অ্যাপ বিশেষ কিছু নয়।

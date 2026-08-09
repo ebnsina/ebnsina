@@ -1,9 +1,9 @@
 ---
 title: 'Graphs'
-subtitle: 'Represent relationships between entities — social networks, maps, dependencies — with BFS, DFS, and adjacency lists.'
+subtitle: 'এনটিটিগুলোর মধ্যে সম্পর্ক প্রকাশ করুন — সোশ্যাল নেটওয়ার্ক, ম্যাপ, ডিপেন্ডেন্সি — BFS, DFS আর adjacency list দিয়ে।'
 chapter: 6
 level: 'intermediate'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['graph', 'adjacency list', 'BFS', 'DFS', 'topological sort']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graph', 'adjacency list', 'BFS', 'DFS', 'topological sort']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Graphs?
+## গল্পে বুঝি
 
-Graphs model relationships. Social networks (who follows whom), maps (roads between cities), dependency trees (build order), web pages (links) — all graphs. If your problem involves connections between things, you're dealing with a graph.
+ইবনে সিনা থাকে মিরপুরে, আর তার বন্ধু ফাতিমা আল-ফিহরি থাকে ধানমন্ডিতে। ইবনে সিনা একদিন বাসে করে ফাতিমা আল-ফিহরির বাসায় যাবে ঠিক করল। শহরের বাস-ম্যাপটা খুলে দেখল — প্রতিটা বাস স্টপ যেন একেকটা বিন্দু, আর দুই স্টপের মধ্যে বাস রুট থাকলে সেই দুটো বিন্দু একটা লাইন দিয়ে জোড়া। কিছু রুট আবার একমুখী — এক স্টপ থেকে আরেক স্টপে বাস যায়, কিন্তু ওই একই রুটে ফেরত আসে না। আবার কিছু রুট ছোট, কয়েক মিনিটেই পার হয়ে যায়; কিছু রুট লম্বা, ভাড়াও বেশি, সময়ও বেশি।
+
+ইবনে সিনা দুইভাবে রাস্তা খুঁজতে পারে। এক — নিজের স্টপ থেকে শুরু করে আগে সবচেয়ে কাছের স্টপগুলো দেখবে, তারপর তার পরের রিং, তারপর তার পরের রিং — এভাবে ঢেউয়ের মতো ছড়িয়ে ছড়িয়ে ফাতিমা আল-ফিহরির স্টপ খুঁজবে। এতে সবচেয়ে কম স্টপ পার হওয়া রাস্তাটা আগে পাওয়া যায়। দুই — যেকোনো একটা রুট ধরে সেটার শেষ মাথা পর্যন্ত টানা যাবে, ওখানে ফাতিমা আল-ফিহরির স্টপ না পেলে পিছিয়ে এসে পরের রুট ধরবে। প্রথমটায় দ্রুত কাছের রাস্তা মেলে, দ্বিতীয়টায় ম্যাপের প্রতিটা কোনা একে একে চষে ফেলা যায়।
+
+এই গল্পটাই আসলে **graph**। প্রতিটা বাস স্টপ হলো একটা **node** (বা **vertex**), আর দুই স্টপের মধ্যেকার রুট হলো একটা **edge**। একমুখী রুটগুলো **directed** edge, আর যে রুটে ভাড়া/সময় হিসাব করা হয় সেগুলো **weighted** edge। ইবনে সিনার প্রথম কৌশল — রিং বাই রিং কাছের স্টপ আগে দেখা — হলো **BFS**, যেটা সবচেয়ে কম স্টপের (shortest) রাস্তা আগে বের করে। দ্বিতীয় কৌশল — এক রুট শেষ পর্যন্ত ধরে তারপর backtrack — হলো **DFS**। আর সবচেয়ে কম ভাড়া বা সবচেয়ে ছোট রাস্তাটা বের করাই **shortest path**। বাস্তবে Google Maps ঠিক এভাবেই দুই জায়গার মধ্যে রাস্তা বের করে, আর Facebook-এর মতো social network-এ "আপনার বন্ধুর বন্ধু" খুঁজে বের করাও একই graph সমস্যা।
+
+## Graphs কেন?
+
+Graph দিয়ে সম্পর্ক মডেল করা হয়। সোশ্যাল নেটওয়ার্ক (কে কাকে ফলো করে), ম্যাপ (শহরগুলোর মধ্যে রাস্তা), ডিপেন্ডেন্সি ট্রি (build order), ওয়েব পেজ (লিংক) — সবই graph। আপনার সমস্যায় যদি জিনিসগুলোর মধ্যে কানেকশন থাকে, তাহলে আপনি আসলে একটা graph নিয়েই কাজ করছেন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like an airline route map — cities are nodes, flight routes are edges. Some routes are direct, some require layovers. Finding the cheapest path from New York to Tokyo is a classic graph problem.
+একটা এয়ারলাইন রুট ম্যাপের মতো — শহরগুলো হলো node, ফ্লাইট রুটগুলো হলো edge। কিছু রুট direct, কিছুতে layover লাগে। New York থেকে Tokyo পর্যন্ত সবচেয়ে সস্তা path বের করা হলো একটা ক্লাসিক graph সমস্যা।
 
 </Callout>
 
-## Representing Graphs
+## Graph রিপ্রেজেন্ট করা
 
 ```typescript
 // Adjacency list — most common, space-efficient
@@ -42,7 +50,7 @@ function buildGraph(edges: [string, string][]): Graph {
 }
 ```
 
-## DFS and BFS on Graphs
+## Graph-এ DFS আর BFS
 
 ```typescript
 // DFS — go deep, then backtrack
@@ -86,7 +94,7 @@ function bfs(graph: Graph, start: string): string[] {
 
 ## Topological Sort
 
-Order nodes so that every directed edge goes from earlier to later. Used for build systems, course prerequisites, task scheduling.
+Node-গুলোকে এমনভাবে সাজান যাতে প্রতিটা directed edge আগের থেকে পরের দিকে যায়। এটা build system, কোর্সের prerequisite, task scheduling-এ ব্যবহার হয়।
 
 ```typescript
 function topologicalSort(graph: Map<string, string[]>): string[] {
@@ -112,13 +120,13 @@ function topologicalSort(graph: Map<string, string[]>): string[] {
 
 <Callout type="info">
 
-**BFS vs DFS**: Use BFS when you need shortest path (unweighted) or level-by-level exploration. Use DFS when you need to explore all paths, detect cycles, or do topological sorting.
+**BFS vs DFS**: যখন shortest path (unweighted) বা লেভেল-বাই-লেভেল exploration দরকার তখন BFS ব্যবহার করুন। যখন সব path explore করা, cycle detect করা, বা topological sorting দরকার তখন DFS ব্যবহার করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Adjacency lists** are the go-to representation — space-efficient and easy to traverse
-2. **Always track visited nodes** to avoid infinite loops in graphs with cycles
-3. **BFS finds shortest paths** in unweighted graphs; **DFS explores all paths**
-4. **Topological sort** is essential for dependency resolution
+1. **Adjacency list** হলো সবচেয়ে বেশি ব্যবহৃত রিপ্রেজেন্টেশন — space-efficient আর traverse করা সহজ
+2. **সবসময় visited node track করুন** — cycle থাকা graph-এ infinite loop এড়াতে
+3. **BFS unweighted graph-এ shortest path বের করে**; **DFS সব path explore করে**
+4. **Topological sort** ডিপেন্ডেন্সি resolution-এর জন্য অপরিহার্য

@@ -1,9 +1,9 @@
 ---
 title: 'Errors, deadlines, metadata'
-subtitle: "Status codes are a fixed set, deadlines flow with context, metadata rides every call. The three together turn a working gRPC service into one that's debuggable and survivable."
+subtitle: 'স্ট্যাটাস কোড একটা নির্দিষ্ট সেট, deadline context-এর সাথে বয়ে চলে, metadata প্রতিটা কলে সওয়ার হয়। তিনটা একসাথে একটা কাজ-করা gRPC সার্ভিসকে debuggable আর survivable বানিয়ে দেয়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['grpc', 'errors', 'deadlines', 'metadata', 'status codes']
 ---
 
@@ -11,19 +11,27 @@ topics: ['grpc', 'errors', 'deadlines', 'metadata', 'status codes']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A gRPC call carries three things you cannot avoid thinking about: a **status** (the result code), a **deadline** (when the call expires), and **metadata** (headers and trailers). Each has a strict shape and clear semantics. Get them right and your service is observable, recoverable, and well-behaved across teams.
+একটা gRPC কল তিনটা জিনিস বহন করে যা নিয়ে না ভেবে আপনার উপায় নেই: একটা **status** (রেজাল্ট কোড), একটা **deadline** (কল কখন expire করবে), আর **metadata** (হেডার আর trailer)। প্রতিটার একটা কড়া শেপ আর স্পষ্ট semantics আছে। এগুলো ঠিকঠাক করলে আপনার সার্ভিস observable, recoverable, আর টিম জুড়ে ভালো আচরণের হয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Errors and deadlines in gRPC are like a restaurant kitchen with a ticket expiry — if the food isn't ready before the customer leaves, discard the order rather than delivering cold food to an empty table.
+gRPC-তে error আর deadline অনেকটা টিকেট-এক্সপায়ারিওয়ালা একটা রেস্টুরেন্ট রান্নাঘরের মতো — কাস্টমার চলে যাওয়ার আগে খাবার তৈরি না হলে, ফাঁকা টেবিলে ঠান্ডা খাবার দেওয়ার চেয়ে অর্ডারটা বাদ দিন।
 
 </Callout>
 
-## Status codes — the fixed set
+## গল্পে বুঝি
 
-gRPC has 17 status codes. Memorize the common ones; do not invent new ones.
+ইবনে সিনা একটা কুরিয়ার অফিসে গিয়ে একটা পার্সেল পাঠাতে দিলেন — সাথে তিনটে কড়া নির্দেশ। এক, স্লিপে বড় করে লেখা: "আজ বিকেল ৫টার মধ্যে হাতে না পৌঁছালে আর চেষ্টা কোরো না, আমাকে জানিয়ে দাও।" পার্সেলটা এক শহর থেকে আরেক শহরে যাবে, মাঝে কয়েকটা হাব বদলাবে — কিন্তু প্রতিটা লেগেই ওই একই ৫টার সময়সীমা মানতে হবে। শেষ হাব যদি দেখে হাতে আছে আর দশ মিনিট অথচ ডেলিভারিতে লাগবে আধঘণ্টা, সে যেন তখনই থেমে যায়, অযথা ছুটে সময় নষ্ট না করে।
+
+দুই, ব্যর্থ হলে ইবনে সিনা চান একটা স্পষ্ট স্ট্যাম্প-মারা স্লিপ — "প্রত্যাখ্যাত: ঠিকানা ভুল" নাকি "পথে হারিয়ে গেছে" নাকি "প্রাপক নেই", ঠিকঠাক কারণসহ; শুধু "হয়নি" বললে তো তিনি বুঝবেনই না পরে কী করবেন। আর তিন, পার্সেলের গায়ে একটা ছোট চিরকুট সেঁটে দিলেন — তাতে প্রেরকের নাম আল-খোয়ারিজমি, একটা রেফারেন্স কোড আর হ্যান্ডলিং হিন্ট। এই চিরকুট পার্সেলের ভেতরের জিনিসের অংশ নয়, কিন্তু গোটা পথ ধরে পার্সেলের সাথেই সওয়ার হয়ে চলে, যাতে যে হাবই ধরুক সে প্রেরক আর রেফারেন্স চিনে নিতে পারে।
+
+এই গল্পটাই আসলে একটা gRPC কল। ৫টার-মধ্যে-নয়তো-থেমে-যাও নিয়মটা হলো **deadline**, আর সেটা যে প্রতিটা লেগে একই থাকে — মাঝপথের হাব নিজের বলে নতুন সময় দেয় না — সেটাই deadline **প্রপাগেট** হওয়া (inbound `ctx` নিচের কলে পাস করা, `Background()` নয়)। স্ট্যাম্প-মারা কারণ-স্লিপটা হলো টাইপড **status code** — `DEADLINE_EXCEEDED`, `NOT_FOUND`, `PERMISSION_DENIED` — যা "ঠিক কী ঘটেছে" জানায়, ভাসা-ভাসা "failed" নয়। আর গায়ে সাঁটা চিরকুটটা হলো **metadata** — auth token, request ID, trace context — মূল payload-এর বাইরের তথ্য যা প্রতিটা কলের সাথে হেডার হয়ে বয়ে চলে। বাস্তবেও ঠিক এভাবেই একটা ভালো সার্ভিস timeout-এ আটকে না থেকে হাল ছাড়ে, ক্লায়েন্টকে সঠিক কোড দিয়ে বলে কী করতে হবে, আর পরিচয়-তথ্য payload নোংরা না করে আলাদা চ্যানেলে পাঠায়।
+
+## স্ট্যাটাস কোড — নির্দিষ্ট সেট
+
+gRPC-তে ১৭টা স্ট্যাটাস কোড আছে। কমনগুলো মুখস্থ রাখুন; নতুন বানাবেন না।
 
 | Code                  | Use for                                                   |
 | --------------------- | --------------------------------------------------------- |
@@ -44,14 +52,14 @@ gRPC has 17 status codes. Memorize the common ones; do not invent new ones.
 | `UNAVAILABLE`         | transient failure, retryable                              |
 | `DATA_LOSS`           | unrecoverable data corruption                             |
 
-Two pairs to never confuse:
+দুই জোড়া কখনো গুলিয়ে ফেলবেন না:
 
-- **`UNAUTHENTICATED` vs `PERMISSION_DENIED`** — authentication failed (no/bad credentials) vs authorization failed (you are who you say, but you cannot do this). Mixing them up leaks information to attackers.
-- **`FAILED_PRECONDITION` vs `ABORTED`** — wrong state, retry after you fix it (precondition) vs wrong state, retry as-is once contention clears (aborted). The retry semantics differ.
+- **`UNAUTHENTICATED` বনাম `PERMISSION_DENIED`** — authentication ফেল (কোনো/খারাপ credential) বনাম authorization ফেল (আপনি যা বলছেন তা-ই, কিন্তু এটা করতে পারবেন না)। এদের গুলিয়ে ফেললে attacker-দের কাছে তথ্য ফাঁস হয়।
+- **`FAILED_PRECONDITION` বনাম `ABORTED`** — ভুল state, ঠিক করে তারপর retry (precondition) বনাম ভুল state, contention কেটে গেলে যেমন আছে তেমনই retry (aborted)। retry semantics আলাদা।
 
-## Returning errors in Go
+## Go-তে error রিটার্ন করা
 
-`status` is the canonical wrapper:
+`status` হলো canonical wrapper:
 
 ```go
 import (
@@ -63,9 +71,9 @@ return nil, status.Error(codes.NotFound, "user not found")
 return nil, status.Errorf(codes.InvalidArgument, "id must be positive, got %d", req.GetId())
 ```
 
-A plain `return nil, errors.New("oops")` becomes `codes.Unknown` on the wire — the client cannot tell anything useful. **Always wrap with `status`**.
+একটা সাদামাটা `return nil, errors.New("oops")` wire-এ `codes.Unknown` হয়ে যায় — ক্লায়েন্ট কাজের কিছুই বলতে পারে না। **সবসময় `status` দিয়ে wrap করুন**।
 
-## Reading errors on the client
+## ক্লায়েন্টে error পড়া
 
 ```go
 resp, err := client.GetUser(ctx, req)
@@ -88,11 +96,11 @@ if err != nil {
 }
 ```
 
-The `switch` on `st.Code()` is the bread and butter of gRPC client code. Branch on it; do not parse error messages.
+`st.Code()`-এর উপর `switch` হলো gRPC ক্লায়েন্ট কোডের রুটিরুজি। এটার উপর branch করুন; error মেসেজ parse করবেন না।
 
 ## Rich error details
 
-Sometimes a status code plus a message is not enough — you want machine-readable details (validation field paths, retry hints). gRPC supports it via `status.WithDetails`:
+কখনো কখনো একটা স্ট্যাটাস কোড আর একটা মেসেজ যথেষ্ট নয় — আপনি machine-readable details চান (validation ফিল্ড path, retry hint)। gRPC এটা `status.WithDetails` দিয়ে সাপোর্ট করে:
 
 ```go
 import "google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -107,7 +115,7 @@ st, _ = st.WithDetails(&errdetails.BadRequest{
 return nil, st.Err()
 ```
 
-The client reads them:
+ক্লায়েন্ট সেগুলো পড়ে:
 
 ```go
 if st, ok := status.FromError(err); ok {
@@ -124,11 +132,11 @@ if st, ok := status.FromError(err); ok {
 }
 ```
 
-The well-known error details in `google.rpc.errdetails` cover most needs: `BadRequest`, `RetryInfo`, `QuotaFailure`, `PreconditionFailure`, `ResourceInfo`, `Help`. Use them — they are typed, language-neutral, and supported everywhere.
+`google.rpc.errdetails`-এর well-known error details বেশিরভাগ দরকার সামলায়: `BadRequest`, `RetryInfo`, `QuotaFailure`, `PreconditionFailure`, `ResourceInfo`, `Help`। এগুলো ব্যবহার করুন — এরা typed, language-neutral, আর সব জায়গায় সাপোর্টেড।
 
-## Deadlines — the most important client habit
+## Deadline — সবচেয়ে গুরুত্বপূর্ণ ক্লায়েন্ট অভ্যাস
 
-Every RPC needs a deadline. **Every one.** A call without a deadline is a request that can hang forever.
+প্রতিটা RPC-র একটা deadline দরকার। **প্রতিটার।** deadline ছাড়া একটা কল হলো এমন একটা রিকোয়েস্ট যা চিরকাল hang করে থাকতে পারে।
 
 ```go
 ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
@@ -137,9 +145,9 @@ defer cancel()
 resp, err := client.GetUser(ctx, &pb.GetUserRequest{Id: 1})
 ```
 
-200 ms means: if the call has not returned in 200 ms, the framework cancels it, the server's context fires, the call ends with `DEADLINE_EXCEEDED`. Your code never blocks longer than 200 ms.
+200 ms মানে: কল যদি 200 ms-এ return না করে, framework সেটা cancel করে, সার্ভারের context fire করে, কল `DEADLINE_EXCEEDED` দিয়ে শেষ হয়। আপনার কোড কখনো 200 ms-এর বেশি ব্লক থাকে না।
 
-The pattern: **deadlines descend, never ascend**. A handler that takes an inbound RPC and calls a downstream RPC must pass the inbound `ctx` (or a tighter derived deadline) to the downstream call:
+প্যাটার্ন: **deadline নিচে নামে, উপরে ওঠে না**। যে হ্যান্ডলার একটা inbound RPC নেয় আর একটা downstream RPC কল করে, তাকে inbound `ctx` (বা একটা টাইট derived deadline) ওই downstream কলে পাস করতে হবে:
 
 ```go
 func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
@@ -149,33 +157,33 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 }
 ```
 
-If the inbound caller had 100 ms left and the downstream takes 110 ms, the downstream is canceled at 100 ms — exactly right. If you used `Background()`, the downstream keeps running after the original caller gave up. Wasted work and harder bugs.
+inbound caller-এর হাতে যদি 100 ms বাকি থাকে আর downstream-এ 110 ms লাগে, downstream 100 ms-এ cancel হয়ে যায় — একদম ঠিক। আপনি `Background()` ব্যবহার করলে, মূল caller হাল ছেড়ে দেওয়ার পরও downstream চলতেই থাকে। অপচয়ী কাজ আর কঠিন বাগ।
 
 <Callout type="warn">
 
-**A handler that ignores `ctx` is a bug.** Long-running work in handlers must select on `ctx.Done()`. DB queries should accept `ctx`. Loops should poll `ctx.Done()`. If you skip this, deadlines do not work — clients give up but the server keeps grinding.
+**যে হ্যান্ডলার `ctx` উপেক্ষা করে সেটা একটা বাগ।** হ্যান্ডলারে দীর্ঘ কাজ অবশ্যই `ctx.Done()`-এর উপর select করবে। DB কোয়েরি `ctx` গ্রহণ করা উচিত। লুপ `ctx.Done()` poll করা উচিত। এটা এড়িয়ে গেলে deadline কাজ করে না — ক্লায়েন্ট হাল ছাড়ে কিন্তু সার্ভার ঘষতেই থাকে।
 
 </Callout>
 
-## Deadline budgets across services
+## সার্ভিস জুড়ে deadline budget
 
-A frontend gets a request with a 1-second budget. It calls service A (target 200 ms), then B (target 300 ms), then C. The naive code passes 1 second to all three. If A is slow, B and C inherit a tight budget anyway — no problem. But if B is slow, you may have time left for C, but A already burned half the budget.
+একটা frontend একটা রিকোয়েস্ট পায় ১ সেকেন্ডের budget সহ। এটা service A (target 200 ms) কল করে, তারপর B (target 300 ms), তারপর C। naive কোড তিনটার সবাইকে ১ সেকেন্ড পাস করে। A স্লো হলে, B আর C যাই হোক একটা টাইট budget পায় — কোনো সমস্যা নেই। কিন্তু B স্লো হলে, C-র জন্য সময় বাকি থাকতে পারে, কিন্তু A ইতিমধ্যে budget-এর অর্ধেক পুড়িয়ে ফেলেছে।
 
-The safe pattern: set per-service tight deadlines based on what each is supposed to do, but never exceed the inbound deadline. `context.WithTimeout(ctx, smaller)` returns a context with the _smaller_ of the existing deadline and the new one. Always pass through.
+নিরাপদ প্যাটার্ন: প্রতিটা সার্ভিস কী করার কথা তার ভিত্তিতে per-service টাইট deadline সেট করুন, কিন্তু কখনো inbound deadline ছাড়িয়ে যাবেন না। `context.WithTimeout(ctx, smaller)` বিদ্যমান deadline আর নতুনটার মধ্যে _ছোটটা_ দিয়ে একটা context রিটার্ন করে। সবসময় পাস-থ্রু করুন।
 
-Some teams encode budgets in metadata:
+কিছু টিম budget metadata-তে encode করে:
 
 ```
 grpc-budget-ms: 1000
 ```
 
-Each service subtracts its expected work from the budget and forwards the rest. Heavy machinery, used in big graphs of services. For a small architecture, derive per-service deadlines and let `context.WithTimeout` enforce them.
+প্রতিটা সার্ভিস budget থেকে নিজের প্রত্যাশিত কাজ বাদ দিয়ে বাকিটা forward করে। ভারী যন্ত্রপাতি, সার্ভিসের বড় গ্রাফে ব্যবহৃত। ছোট architecture-এর জন্য, per-service deadline derive করুন আর `context.WithTimeout`-কে সেগুলো enforce করতে দিন।
 
-## Metadata — the headers and trailers
+## Metadata — হেডার আর trailer
 
-Metadata is gRPC's name for HTTP/2 headers (sent at the start of a call) and trailers (sent at the end). It carries auth tokens, trace IDs, custom hints — anything not in the request body.
+Metadata হলো HTTP/2 হেডার (কলের শুরুতে পাঠানো) আর trailer (শেষে পাঠানো)-এর জন্য gRPC-র নাম। এটা auth টোকেন, trace ID, custom hint বহন করে — রিকোয়েস্ট বডিতে নেই এমন যেকোনো কিছু।
 
-Outgoing on the client:
+ক্লায়েন্টে outgoing:
 
 ```go
 md := metadata.New(map[string]string{
@@ -187,7 +195,7 @@ ctx = metadata.NewOutgoingContext(ctx, md)
 resp, err := client.GetUser(ctx, req)
 ```
 
-Incoming on the server:
+সার্ভারে incoming:
 
 ```go
 func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
@@ -198,7 +206,7 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 }
 ```
 
-To send response headers/trailers from the server:
+সার্ভার থেকে রেসপন্স হেডার/trailer পাঠাতে:
 
 ```go
 func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
@@ -209,17 +217,17 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 }
 ```
 
-Headers go on the wire before the response data; trailers after. Most production traffic uses headers for trace context (`traceparent`, `tracestate`) and auth, trailers rarely.
+হেডার wire-এ যায় রেসপন্স ডেটার আগে; trailer পরে। বেশিরভাগ প্রোডাকশন ট্রাফিক trace context (`traceparent`, `tracestate`) আর auth-এর জন্য হেডার ব্যবহার করে, trailer কদাচিৎ।
 
-## Reserved metadata keys
+## Reserved metadata key
 
-A handful of keys are reserved by the framework and you must not set them yourself:
+হাতেগোনা কিছু key framework দ্বারা reserved আর আপনি নিজে সেগুলো সেট করবেন না:
 
-- `grpc-*` — framework keys (`grpc-status`, `grpc-message`, `grpc-encoding`, `grpc-timeout`).
-- `:path`, `:method`, `:status` — HTTP/2 pseudo-headers.
-- `content-type` — set by the framework to `application/grpc`.
+- `grpc-*` — framework key (`grpc-status`, `grpc-message`, `grpc-encoding`, `grpc-timeout`)।
+- `:path`, `:method`, `:status` — HTTP/2 pseudo-header।
+- `content-type` — framework দ্বারা `application/grpc`-এ সেট।
 
-Lowercase by convention. Binary metadata uses keys ending in `-bin` and is base64-encoded on the wire:
+কনভেনশন অনুযায়ী lowercase। Binary metadata `-bin`-এ শেষ হওয়া key ব্যবহার করে আর wire-এ base64-encoded থাকে:
 
 ```go
 md := metadata.New(map[string]string{
@@ -227,11 +235,11 @@ md := metadata.New(map[string]string{
 })
 ```
 
-This is the way to ship raw bytes that should not be UTF-8 escaped (e.g., a binary trace context).
+UTF-8 escape হওয়া উচিত নয় এমন raw বাইট (যেমন একটা binary trace context) পাঠানোর এটাই উপায়।
 
-## Retry policies — declarative
+## Retry policy — declarative
 
-gRPC supports declarative retries via service config. The client config:
+gRPC service config দিয়ে declarative retry সাপোর্ট করে। ক্লায়েন্ট config:
 
 ```json
 {
@@ -250,7 +258,7 @@ gRPC supports declarative retries via service config. The client config:
 }
 ```
 
-Hand it to the client:
+এটা ক্লায়েন্টকে দিন:
 
 ```go
 conn, _ := grpc.NewClient(addr,
@@ -259,51 +267,51 @@ conn, _ := grpc.NewClient(addr,
 )
 ```
 
-Retries respect the deadline — if the deadline expires, no more attempts. The framework also respects "don't retry mutating ops" semantics indirectly: only retry idempotent RPCs, or your `CreatePost` ends up creating two posts on a flaky network.
+Retry deadline মেনে চলে — deadline expire করলে, আর কোনো attempt নয়। framework "mutating op retry করো না" semantics-ও পরোক্ষভাবে মানে: শুধু idempotent RPC retry করুন, নাহলে flaky নেটওয়ার্কে আপনার `CreatePost` দুটো post বানিয়ে ফেলবে।
 
-A safer pattern: use **idempotency keys** (chapter 7 of the GraphQL track has the same pattern) for non-idempotent mutations and let retry policy handle the rest.
+একটা নিরাপদ প্যাটার্ন: non-idempotent mutation-এর জন্য **idempotency key** ব্যবহার করুন (GraphQL track-এর চ্যাপ্টার ৭-এ একই প্যাটার্ন আছে) আর বাকিটা retry policy-কে সামলাতে দিন।
 
-## Cancellation paths
+## Cancellation path
 
-Five ways a call can end:
+একটা কল পাঁচভাবে শেষ হতে পারে:
 
-1. **OK + response** — happy path.
-2. **Server returns error** — status code, optional details.
-3. **Client cancels** — `cancel()` or context done. Server sees `Canceled`.
-4. **Deadline exceeded** — framework cancels, both sides see `DeadlineExceeded`.
-5. **Network died** — eventually surfaces as `Unavailable` or transport error.
+1. **OK + response** — happy path।
+2. **সার্ভার error রিটার্ন করে** — স্ট্যাটাস কোড, ঐচ্ছিক details।
+3. **ক্লায়েন্ট cancel করে** — `cancel()` বা context done। সার্ভার `Canceled` দেখে।
+4. **Deadline exceeded** — framework cancel করে, দুই পক্ষই `DeadlineExceeded` দেখে।
+5. **নেটওয়ার্ক মরে গেছে** — একসময় `Unavailable` বা transport error হিসেবে দেখা দেয়।
 
-Test all five paths in load tests. The "happy path works, errors are nightmares" gRPC service has not done this.
+load test-এ পাঁচটা path-ই টেস্ট করুন। "happy path কাজ করে, error দুঃস্বপ্ন" — এমন gRPC সার্ভিস এটা করেনি।
 
-## What to log
+## কী লগ করবেন
 
-For every call, on the server:
+প্রতিটা কলের জন্য, সার্ভারে:
 
 ```
 grpc method=user.v1.UserService/GetUser dur=12ms code=OK peer=10.0.0.5 user=42 req_id=a1b2
 ```
 
-The fields:
+ফিল্ডগুলো:
 
-- **method** — full RPC name. Prometheus-friendly label.
-- **dur** — wall time of the handler.
-- **code** — gRPC status code.
-- **peer** — caller IP.
-- **user** — your auth identity (from interceptor; chapter 8).
-- **req_id** — request ID metadata (forwarded from client).
+- **method** — পুরো RPC নাম। Prometheus-friendly label।
+- **dur** — হ্যান্ডলারের wall time।
+- **code** — gRPC স্ট্যাটাস কোড।
+- **peer** — caller IP।
+- **user** — আপনার auth identity (interceptor থেকে; চ্যাপ্টার ৮)।
+- **req_id** — request ID metadata (ক্লায়েন্ট থেকে forward করা)।
 
-This is one line per call. Aggregate it and you have RPS, error rate, p99 latency per method, and per-caller breakdown — the four numbers you need to operate the service.
+এটা per call একটা লাইন। এটা aggregate করুন আর আপনি পাবেন RPS, error rate, per method p99 latency, আর per-caller breakdown — সার্ভিস চালাতে যে চারটা সংখ্যা দরকার।
 
-## Recap
+## রিক্যাপ
 
-- 17 status codes, fixed set. Use them; do not invent new ones.
-- Always wrap errors with `status.Error` or `status.Errorf`. Plain errors lose the code.
-- `status.WithDetails` for machine-readable error details (validation, retry hints).
-- Every RPC has a deadline. Pass the inbound `ctx` to downstream calls — never `Background()`.
-- Handlers must select on `ctx.Done()` for long work; ignore it and deadlines do not enforce.
-- Metadata = HTTP/2 headers and trailers. Auth, trace context, request IDs ride here.
-- `grpc-*` and `:method`/`:path` are reserved. `-bin` suffix means base64-encoded binary.
-- Retries are declarative via service config. Use them only on idempotent calls or with idempotency keys.
-- Log every call: method, duration, code, peer, identity, request ID.
+- ১৭টা স্ট্যাটাস কোড, নির্দিষ্ট সেট। এগুলো ব্যবহার করুন; নতুন বানাবেন না।
+- সবসময় error-কে `status.Error` বা `status.Errorf` দিয়ে wrap করুন। সাদামাটা error কোড হারায়।
+- machine-readable error details-এর (validation, retry hint) জন্য `status.WithDetails`।
+- প্রতিটা RPC-র একটা deadline আছে। inbound `ctx` downstream কলে পাস করুন — কখনো `Background()` নয়।
+- দীর্ঘ কাজের জন্য হ্যান্ডলার অবশ্যই `ctx.Done()`-এর উপর select করবে; উপেক্ষা করলে deadline enforce হয় না।
+- Metadata = HTTP/2 হেডার আর trailer। Auth, trace context, request ID এখানে সওয়ার হয়।
+- `grpc-*` আর `:method`/`:path` reserved। `-bin` suffix মানে base64-encoded binary।
+- Retry service config দিয়ে declarative। শুধু idempotent কলে বা idempotency key সহ ব্যবহার করুন।
+- প্রতিটা কল লগ করুন: method, duration, code, peer, identity, request ID।
 
-Next: [Interceptors](/notes/grpc/08-interceptors) — the middleware pattern for auth, logging, retries, and recovery.
+পরবর্তী: [Interceptors](/notes/grpc/08-interceptors) — auth, logging, retry, আর recovery-র জন্য middleware প্যাটার্ন।

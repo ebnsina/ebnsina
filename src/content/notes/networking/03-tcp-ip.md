@@ -1,9 +1,9 @@
 ---
-title: 'TCP/IP — Reliable Delivery'
-subtitle: 'The three-way handshake, flow control, congestion avoidance — how TCP guarantees every byte arrives in order.'
+title: 'TCP/IP — নির্ভরযোগ্য ডেলিভারি'
+subtitle: 'Three-way handshake, flow control, congestion avoidance — কীভাবে TCP প্রতিটি byte সঠিক ক্রমে পৌঁছানোর গ্যারান্টি দেয়।'
 chapter: 3
 level: 'beginner'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['TCP', 'IP', 'handshake', 'flow control', 'congestion']
 ---
 
@@ -11,30 +11,38 @@ topics: ['TCP', 'IP', 'handshake', 'flow control', 'congestion']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনাকে একটা জরুরি দলিল — ধরুন ৫০ পাতার — ডাকযোগে ফাতিমা আল-ফিহরির কাছে পাঠাতে হবে, একটা পাতাও হারানো চলবে না, আর ফাতিমা আল-ফিহরিকে ঠিক ১ থেকে ৫০ ক্রমেই পড়তে হবে। ইবনে সিনা প্রতিটা পাতায় নম্বর বসায় আর প্রত্যেকটা আলাদা রেজিস্টার্ড চিঠি হিসেবে পাঠায়, যেগুলোর প্রতিটার জন্য ফাতিমা আল-ফিহরিকে সই করা একটা "পেয়েছি" রসিদ ফেরত পাঠাতে হয়। শুরু করার আগে ইবনে সিনা একটা ছোট চিঠি দেয় "তুমি কি নেওয়ার জন্য রেডি?", ফাতিমা আল-ফিহরি জবাব দেয় "রেডি, তুমিও কনফার্ম করো", ইবনে সিনা শেষ কনফার্মেশন পাঠায় — তারপরই আসল পাতাগুলো যাওয়া শুরু হয়।
+
+ইবনে সিনা প্রতিটা পাঠানো পাতার একটা কপি নিজের কাছে রেখে দেয়। কোনো একটা পাতার সই করা রসিদ যদি নির্দিষ্ট সময়ের মধ্যে ফেরত না আসে, ইবনে সিনা ধরে নেয় ওটা পথে হারিয়েছে আর কপি থেকে ওই একই নম্বরের পাতা আবার পাঠায়। ওদিকে ডাক ব্যবস্থার এলোমেলো পথের কারণে পাতাগুলো ফাতিমা আল-ফিহরির কাছে উল্টাপাল্টা ক্রমে পৌঁছাতে পারে — ৩ নম্বর হয়তো ৫ নম্বরের পরে আসে। ফাতিমা আল-ফিহরি তাড়াহুড়ো করে না; নম্বর দেখে পাতাগুলো সাজিয়ে রাখে আর ঠিক ক্রম অনুযায়ীই দলিলটা জোড়া দেয়।
+
+এই পুরো ব্যাপারটাই আসলে **TCP**। শুরুর সেই তিন-চিঠির কনফার্মেশন হলো **handshake**, প্রতিটা নম্বরওয়ালা পাতা হলো একটা **segment**, সই করা রসিদ হলো **acknowledgement (ACK)**, রসিদ না এলে কপি থেকে আবার পাঠানো হলো **retransmission**, আর নম্বর ধরে ঠিক ক্রমে জোড়া দেওয়া হলো **ordered delivery** — সব মিলিয়ে TCP-র নির্ভরযোগ্য, ক্রমানুসারী ডেলিভারির গ্যারান্টি। বাস্তবে ওয়েব পেজ লোড হওয়া (HTTP) কিংবা একটা বড় ফাইল ডাউনলোড — যেখানে একটা byte-ও হারালে বা এলোমেলো হলে চলবে না — সেখানে TCP ঠিক এভাবেই কাজ করে।
+
 ## TCP vs UDP
 
-The transport layer has two main protocols:
+Transport layer-এ দুটি প্রধান protocol আছে:
 
-|             | TCP                             | UDP                           |
-| ----------- | ------------------------------- | ----------------------------- |
-| Reliability | Guaranteed delivery, in order   | Best effort, may lose packets |
-| Connection  | Connection-oriented (handshake) | Connectionless                |
-| Speed       | Slower (overhead)               | Faster (minimal overhead)     |
-| Use cases   | HTTP, email, file transfer      | Video streaming, gaming, DNS  |
+|             | TCP                                 | UDP                             |
+| ----------- | ----------------------------------- | ------------------------------- |
+| Reliability | গ্যারান্টিড ডেলিভারি, ক্রম অনুযায়ী | Best effort, packet হারাতে পারে |
+| Connection  | Connection-oriented (handshake)     | Connectionless                  |
+| Speed       | ধীর (overhead বেশি)                 | দ্রুত (overhead সামান্য)        |
+| Use cases   | HTTP, email, file transfer          | Video streaming, gaming, DNS    |
 
-TCP sacrifices speed for reliability. UDP sacrifices reliability for speed. Choose based on what matters more for your application.
+TCP reliability-র জন্য speed ছেড়ে দেয়। UDP speed-এর জন্য reliability ছেড়ে দেয়। আপনার application-এর জন্য কোনটা বেশি গুরুত্বপূর্ণ, তার ভিত্তিতে বেছে নিন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like sending a package via tracked shipping — they give you a tracking number (sequence number), confirm delivery (ACK), and if a package is lost, they resend it. Reliable, ordered delivery guaranteed.
+অনেকটা tracked shipping-এ package পাঠানোর মতো — তারা আপনাকে একটা tracking number (sequence number) দেয়, delivery নিশ্চিত করে (ACK), আর কোনো package হারিয়ে গেলে সেটা আবার পাঠায়। নির্ভরযোগ্য, ক্রম অনুযায়ী delivery-র গ্যারান্টি।
 
 </Callout>
 
 ## The Three-Way Handshake
 
-Before sending any data, TCP establishes a connection with three packets:
+কোনো data পাঠানোর আগে TCP তিনটি packet দিয়ে একটি connection তৈরি করে:
 
 ```typescript
 // The TCP three-way handshake
@@ -73,11 +81,11 @@ type TCPState =
 	| 'TIME_WAIT';
 ```
 
-This handshake adds one round-trip of latency before any data flows. For short-lived connections (like HTTP/1.1 requests), this overhead is significant — which is why connection reuse (keep-alive) and HTTP/2 exist.
+এই handshake কোনো data প্রবাহিত হওয়ার আগেই এক round-trip পরিমাণ latency যোগ করে। স্বল্পস্থায়ী connection-এর ক্ষেত্রে (যেমন HTTP/1.1 request), এই overhead উল্লেখযোগ্য — এ কারণেই connection reuse (keep-alive) আর HTTP/2-এর অস্তিত্ব আছে।
 
 ## Sequence Numbers and Acknowledgments
 
-TCP tracks every byte with sequence numbers. The receiver sends ACKs to confirm receipt:
+TCP প্রতিটি byte-কে sequence number দিয়ে track করে। Receiver receipt নিশ্চিত করতে ACK পাঠায়:
 
 ```typescript
 // Sender sends 3 segments
@@ -96,13 +104,13 @@ TCP tracks every byte with sequence numbers. The receiver sends ACKs to confirm 
 
 <Callout type="info">
 
-**Fast retransmit**: When the sender receives 3 duplicate ACKs, it retransmits the missing segment immediately — without waiting for a timeout. This makes TCP recover from packet loss much faster.
+**Fast retransmit**: Sender যখন ৩টি duplicate ACK পায়, তখন সে timeout-এর অপেক্ষা না করেই সাথে সাথে missing segment retransmit করে। এতে TCP packet loss থেকে অনেক দ্রুত recover করতে পারে।
 
 </Callout>
 
 ## Flow Control
 
-The receiver tells the sender how much data it can handle using the **window size**. This prevents a fast sender from overwhelming a slow receiver.
+Receiver **window size** ব্যবহার করে sender-কে জানায় সে কতটুকু data সামলাতে পারবে। এটি একটি fast sender-কে slow receiver-এর ওপর চাপ সৃষ্টি করা থেকে আটকায়।
 
 ```typescript
 // Sliding window flow control
@@ -142,11 +150,11 @@ class TCPReceiver {
 
 ## Congestion Control
 
-Flow control prevents overwhelming the _receiver_. Congestion control prevents overwhelming the _network_. TCP starts slow and ramps up:
+Flow control _receiver_-এর ওপর অতিরিক্ত চাপ আটকায়। Congestion control _network_-এর ওপর অতিরিক্ত চাপ আটকায়। TCP ধীরে শুরু করে এবং ধীরে ধীরে গতি বাড়ায়:
 
-1. **Slow start** — begin with a small window (typically 10 segments), double each round-trip
-2. **Congestion avoidance** — once past a threshold, increase linearly (1 segment per RTT)
-3. **On packet loss** — cut the window in half and enter congestion avoidance
+1. **Slow start** — ছোট window দিয়ে শুরু করে (সাধারণত 10 segments), প্রতি round-trip-এ দ্বিগুণ করে
+2. **Congestion avoidance** — একটা threshold পেরোলে, linear-ভাবে বাড়ায় (প্রতি RTT-তে 1 segment)
+3. **Packet loss হলে** — window অর্ধেক কমিয়ে দেয় এবং congestion avoidance-এ প্রবেশ করে
 
 ```typescript
 class CongestionControl {
@@ -175,18 +183,18 @@ class CongestionControl {
 
 <Callout type="tip">
 
-**Why new TCP connections are slow**: Because of slow start, a fresh TCP connection can only send 10 segments (~14KB) in the first round-trip. This is why HTTP/2 multiplexing over a single connection is faster than HTTP/1.1's multiple connections.
+**নতুন TCP connection ধীর কেন**: Slow start-এর কারণে, একটা নতুন TCP connection প্রথম round-trip-এ মাত্র 10 segments (~14KB) পাঠাতে পারে। এ কারণেই একটি single connection-এর ওপর HTTP/2 multiplexing, HTTP/1.1-এর multiple connection-এর চেয়ে দ্রুত।
 
 </Callout>
 
 ## Connection Termination
 
-Closing a TCP connection requires a four-way handshake (FIN → ACK → FIN → ACK). The `TIME_WAIT` state keeps the connection around for 2× the maximum segment lifetime to handle any delayed packets.
+একটি TCP connection বন্ধ করতে four-way handshake লাগে (FIN → ACK → FIN → ACK)। `TIME_WAIT` state যেকোনো delayed packet সামলানোর জন্য maximum segment lifetime-এর 2× সময় ধরে connection-টিকে টিকিয়ে রাখে।
 
 ## Key Takeaways
 
-1. **TCP guarantees reliable, ordered delivery** at the cost of latency (handshake + retransmission)
-2. **Sequence numbers + ACKs** track every byte and detect loss
-3. **Flow control** (window size) prevents overwhelming the receiver
-4. **Congestion control** (slow start → congestion avoidance) prevents overwhelming the network
-5. **Connection setup adds latency** — reuse connections when possible
+1. **TCP নির্ভরযোগ্য, ক্রম অনুযায়ী delivery-র গ্যারান্টি দেয়** — latency-র বিনিময়ে (handshake + retransmission)
+2. **Sequence number + ACK** প্রতিটি byte track করে এবং loss শনাক্ত করে
+3. **Flow control** (window size) receiver-এর ওপর অতিরিক্ত চাপ আটকায়
+4. **Congestion control** (slow start → congestion avoidance) network-এর ওপর অতিরিক্ত চাপ আটকায়
+5. **Connection setup latency যোগ করে** — সম্ভব হলে connection reuse করুন

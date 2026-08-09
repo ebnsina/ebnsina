@@ -1,9 +1,9 @@
 ---
-title: 'Why Caching Exists'
-subtitle: 'The latency gap between memory, disk, and network — and why every fast system exploits it.'
+title: 'ক্যাশিং কেন দরকার'
+subtitle: 'মেমরি, ডিস্ক আর নেটওয়ার্কের মধ্যকার latency-র ফারাক — আর কেন প্রতিটি দ্রুত সিস্টেম সেটাকে কাজে লাগায়।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['latency', 'memory hierarchy', 'cache fundamentals', 'performance']
 ---
 
@@ -11,13 +11,21 @@ topics: ['latency', 'memory hierarchy', 'cache fundamentals', 'performance']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Speed Gap
+## গল্পে বুঝি
 
-Your CPU can read from L1 cache in **0.5 nanoseconds**. Reading from RAM takes ~100ns. Hitting a local SSD is ~100 microseconds. A network round-trip to a database server in the same datacenter? ~500 microseconds to a few milliseconds. Crossing a continent: 100ms+.
+আল-খোয়ারিজমি বাসায় বসে কাজ করছে। কলমটা তার শার্টের পকেটেই — হাত বাড়ালেই, চোখের পলকে পাওয়া যায়। একটু বেশি দরকারি জিনিস, যেমন স্ট্যাপলার বা কাঁচি, ওগুলো টেবিলের পাশের ড্রয়ারে; সেগুলো নিতে হলে ড্রয়ার টেনে খুঁজতে দু-এক সেকেন্ড লাগে। এবার যদি পুরনো একটা ফাইল লাগে, যেটা পাশের ঘরের আলমারিতে, তাহলে চেয়ার ছেড়ে উঠে হেঁটে গিয়ে আলমারি খুলে আনতে হয় — মিনিটখানেক তো যাবেই।
 
-That's a six-order-of-magnitude difference between L1 cache and a transatlantic request.
+আর যদি এমন কিছু লাগে যা বাসায় নেই, ধরুন একটা নতুন প্রিন্টার কার্তুজ, তখন তো আল-খোয়ারিজমিকে রিকশা নিয়ে বাজারে যেতে হবে, দোকান খুঁজতে হবে, আবার ফিরে আসতে হবে — আধা ঘণ্টা, এক ঘণ্টা লেগে যায়। তাই আল-খোয়ারিজমি বুদ্ধি করে যেটা বারবার লাগে সেটা পকেটে রাখে, মাঝেমধ্যে লাগেরটা ড্রয়ারে; বাজার পর্যন্ত সে যত কম যেতে হয় ততই তার কাজ দ্রুত এগোয়।
 
-| Storage                | Latency | Relative     |
+এই দূরত্বগুলোই আসলে একটা কম্পিউটারের **memory hierarchy**। পকেট হলো CPU cache আর RAM (ন্যানোসেকেন্ড — একদম হাতের নাগালে), পাশের ড্রয়ার-আর-আলমারি হলো disk/SSD (মাইক্রোসেকেন্ড — উঠে গিয়ে আনতে হয়), আর বাজারে যাওয়াটা হলো একটা **network** কল (মিলিসেকেন্ড — সবচেয়ে ধীর)। **caching** মানেই বারবার-লাগা জিনিসটাকে সবচেয়ে কাছের জায়গায় রাখা, যাতে দূরে যেতে না হয় — Redis, CDN থেকে শুরু করে ব্রাউজারের cache পর্যন্ত সব দ্রুত সিস্টেম ঠিক এই দূরত্বের ফারাকটাকেই কাজে লাগায়।
+
+## স্পিডের ফারাক
+
+আপনার CPU L1 cache থেকে পড়তে পারে মাত্র **0.5 ন্যানোসেকেন্ডে**। RAM থেকে পড়তে লাগে ~100ns। লোকাল SSD-তে হিট করতে ~100 মাইক্রোসেকেন্ড। একই ডেটাসেন্টারের ডেটাবেস সার্ভারে একটা নেটওয়ার্ক রাউন্ড-ট্রিপ? ~500 মাইক্রোসেকেন্ড থেকে কয়েক মিলিসেকেন্ড। এক মহাদেশ পেরিয়ে গেলে: 100ms+।
+
+মানে L1 cache আর একটা ট্রান্সআটলান্টিক রিকোয়েস্টের মধ্যে ছয় অর্ডার অফ ম্যাগনিটিউডের ফারাক।
+
+| স্টোরেজ                | Latency | আপেক্ষিক     |
 | ---------------------- | ------- | ------------ |
 | L1 CPU cache           | 0.5 ns  | 1x           |
 | L2 CPU cache           | 5 ns    | 10x          |
@@ -26,34 +34,34 @@ That's a six-order-of-magnitude difference between L1 cache and a transatlantic 
 | Network (same DC)      | 500 µs  | 1,000,000x   |
 | Network (cross-region) | 100 ms  | 200,000,000x |
 
-Caching is the art of **storing results closer to where they're needed**, trading memory space for time.
+ক্যাশিং হলো **যেখানে দরকার তার কাছাকাছি ফলাফল জমা রাখার** শিল্প — সময়ের বিনিময়ে মেমরি স্পেস খরচ করা।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A chef who walks to the warehouse every time they need salt will be slow. One who keeps a small container on the counter is fast. The pantry is RAM, the warehouse is the database, the counter is cache. You don't store everything on the counter — just what you reach for constantly.
+যে শেফ প্রতিবার লবণ দরকার হলেই গুদামঘরে হেঁটে যায়, সে ধীর হবে। যে একটা ছোট কৌটা কাউন্টারে রেখে দেয়, সে দ্রুত। প্যান্ট্রি হলো RAM, গুদামঘর হলো ডেটাবেস, কাউন্টার হলো cache। আপনি সব কিছু কাউন্টারে রাখেন না — শুধু যেটা বারবার হাতে নিতে হয়।
 
 </Callout>
 
-## What Makes Something Cacheable
+## কোন জিনিস cache করার যোগ্য
 
-Not everything should be cached. Good cache candidates are:
+সব কিছু cache করা উচিত নয়। ভালো cache প্রার্থী হলো:
 
-- **Expensive to compute** — database aggregations, ML inference, rendering
-- **Read frequently** — user profiles, product catalog, configuration
-- **Rarely changes** — or changes in predictable ways you can invalidate
-- **Tolerable when slightly stale** — most reads can accept 1s, 1m, or even 1h of staleness
+- **কম্পিউট করা ব্যয়বহুল** — ডেটাবেস অ্যাগ্রিগেশন, ML inference, রেন্ডারিং
+- **ঘন ঘন পড়া হয়** — ইউজার প্রোফাইল, প্রোডাক্ট ক্যাটালগ, কনফিগারেশন
+- **কদাচিৎ পরিবর্তন হয়** — বা এমনভাবে বদলায় যা আগে থেকে ধারণা করে invalidate করা যায়
+- **সামান্য পুরনো হলেও চলে** — বেশিরভাগ read 1s, 1m, এমনকি 1h পুরনো ডেটাও মেনে নিতে পারে
 
-Bad cache candidates:
+খারাপ cache প্রার্থী:
 
-- Data that must be real-time (stock prices, live inventory counts)
-- Data unique per request with no repetition
-- Data that changes every write and is read once
+- যে ডেটা রিয়েল-টাইম হতেই হবে (স্টকের দাম, লাইভ ইনভেন্টরি কাউন্ট)
+- প্রতি রিকোয়েস্টে ইউনিক, পুনরাবৃত্তি নেই এমন ডেটা
+- যে ডেটা প্রতি write-এ বদলায় আর একবারই পড়া হয়
 
-## The Cache Hit Ratio
+## Cache Hit Ratio
 
-The fundamental metric. If 95 out of 100 requests are served from cache, your hit ratio is 95%. The higher the ratio, the less work your database does.
+মৌলিক মেট্রিক। 100টা রিকোয়েস্টের মধ্যে 95টা যদি cache থেকে দেওয়া হয়, তাহলে আপনার hit ratio 95%। ratio যত বেশি, আপনার ডেটাবেসের কাজ তত কম।
 
 ```typescript
 class CacheMetrics {
@@ -80,11 +88,11 @@ class CacheMetrics {
 }
 ```
 
-A 95% hit ratio sounds good. Moving from 95% to 99% cuts database load by another 80%. The last few percentage points matter enormously at scale.
+95% hit ratio শুনতে ভালোই লাগে। 95% থেকে 99%-এ গেলে ডেটাবেস লোড আরও 80% কমে যায়। স্কেলে শেষ কয়েক শতাংশ পয়েন্টও দারুণ গুরুত্বপূর্ণ।
 
-## Cache Miss Anatomy
+## Cache Miss-এর গঠন
 
-Every cache miss has a cost: the time to fetch from the origin plus the time to populate the cache.
+প্রতিটি cache miss-এর একটা খরচ আছে: origin থেকে fetch করার সময় প্লাস cache পপুলেট করার সময়।
 
 ```typescript
 async function getUser(id: string): Promise<User> {
@@ -102,21 +110,21 @@ async function getUser(id: string): Promise<User> {
 }
 ```
 
-The first caller pays the full cost. Subsequent callers pay almost nothing.
+প্রথম কলার পুরো খরচটা দেয়। পরের কলাররা প্রায় কিছুই দেয় না।
 
-## Where Caches Live
+## Cache কোথায় থাকে
 
-Caches exist at every layer of a system:
+একটা সিস্টেমের প্রতিটি স্তরে cache থাকে:
 
-**Browser** — HTTP cache (`Cache-Control`, `ETag`). Zero server cost for repeat visits.
+**Browser** — HTTP cache (`Cache-Control`, `ETag`)। বারবার ভিজিটে সার্ভারে শূন্য খরচ।
 
-**CDN** — Cloudflare, Fastly, Akamai. Assets and API responses cached at the network edge, close to users.
+**CDN** — Cloudflare, Fastly, Akamai। অ্যাসেট আর API রেসপন্স নেটওয়ার্ক এজে, ইউজারের কাছাকাছি cache করা হয়।
 
-**Application** — In-process dictionary/LRU (`Map`, `lru-cache`). Zero network hop. Lost on restart.
+**Application** — ইন-প্রসেস ডিকশনারি/LRU (`Map`, `lru-cache`)। কোনো নেটওয়ার্ক হপ নেই। রিস্টার্টে হারিয়ে যায়।
 
-**Distributed cache** — Redis, Memcached. Shared across all app instances. Survives restarts. Slightly slower than in-process.
+**Distributed cache** — Redis, Memcached। সব অ্যাপ ইনস্ট্যান্সে শেয়ার করা। রিস্টার্টেও টিকে থাকে। ইন-প্রসেসের চেয়ে সামান্য ধীর।
 
-**Database query cache** — Some databases cache query results internally. Postgres dropped this in v16; MySQL has it. Generally unreliable — usually better to cache at the application layer.
+**Database query cache** — কিছু ডেটাবেস কোয়েরির ফলাফল ভেতরে ভেতরে cache করে। Postgres v16-তে এটা বাদ দিয়েছে; MySQL-এ আছে। সাধারণত অনির্ভরযোগ্য — সাধারণত অ্যাপ্লিকেশন স্তরে cache করাই ভালো।
 
 ```
 User → Browser cache
@@ -129,11 +137,11 @@ User → Browser cache
 
 <Callout type="tip">
 
-**Start with in-process caching.** A simple `Map` with a TTL is often enough to eliminate 80% of database load for read-heavy workloads. Add Redis only when you need the cache to be shared across multiple app instances.
+**ইন-প্রসেস ক্যাশিং দিয়ে শুরু করুন।** একটা TTL সহ সাধারণ `Map`-ই read-ভারী ওয়ার্কলোডে ডেটাবেস লোডের 80% দূর করতে প্রায়ই যথেষ্ট। Redis শুধু তখনই যোগ করুন যখন cache-টা একাধিক অ্যাপ ইনস্ট্যান্সে শেয়ার করা দরকার।
 
 </Callout>
 
-## The Simplest Cache
+## সবচেয়ে সহজ Cache
 
 ```typescript
 interface CacheEntry<T> {
@@ -179,28 +187,28 @@ async function getUser(id: string): Promise<User> {
 }
 ```
 
-This is where most applications should start. No dependencies, no ops burden, immediate impact.
+বেশিরভাগ অ্যাপ্লিকেশনের এখান থেকেই শুরু করা উচিত। কোনো ডিপেন্ডেন্সি নেই, কোনো ops-এর ঝামেলা নেই, সঙ্গে সঙ্গে প্রভাব।
 
-## When Caching Goes Wrong
+## যখন ক্যাশিং ভুল পথে যায়
 
-Caching introduces complexity. The two failure modes that bite everyone:
+ক্যাশিং জটিলতা নিয়ে আসে। যে দুটো failure mode সবাইকেই কামড়ায়:
 
-**Stale data** — you serve a cached value after the underlying data changed. The user sees their old username for a minute after updating it.
+**Stale data** — অন্তর্নিহিত ডেটা বদলে যাওয়ার পরও আপনি একটা cache করা মান পরিবেশন করেন। ইউজার তার ইউজারনেম আপডেট করার পরেও এক মিনিট ধরে পুরনোটাই দেখে।
 
-**Cache stampede** — the cache expires for a popular key, and 1000 concurrent requests all miss and hit the database simultaneously, bringing it to its knees.
+**Cache stampede** — একটা জনপ্রিয় key-এর cache expire হয়ে যায়, আর 1000টা একসাথে আসা রিকোয়েস্ট সবগুলো miss করে একই সঙ্গে ডেটাবেসে হিট করে, সেটাকে নাকানিচুবানি খাইয়ে ছাড়ে।
 
-Both are solvable. Later chapters cover them in depth. For now, know that caching is not free — it trades consistency for performance, and you need to manage that trade deliberately.
+দুটোই সমাধানযোগ্য। পরের অধ্যায়গুলো এগুলো গভীরভাবে আলোচনা করে। আপাতত জেনে রাখুন, ক্যাশিং বিনামূল্যে নয় — এটা consistency-র বিনিময়ে performance দেয়, আর সেই বিনিময়টা আপনাকে সচেতনভাবে সামলাতে হবে।
 
 <Callout type="warning">
 
-**Cache is not a backup for a slow database.** If your queries are slow because they're missing indexes or doing full table scans, fix the queries first. Cache can hide the problem, but it won't survive a cache flush or a traffic spike that misses the cache.
+**Cache হলো ধীর ডেটাবেসের বিকল্প নয়।** আপনার কোয়েরি যদি index না থাকার কারণে বা full table scan করার কারণে ধীর হয়, আগে কোয়েরিগুলো ঠিক করুন। Cache সমস্যাটা ঢেকে রাখতে পারে, কিন্তু একটা cache flush কিংবা cache miss করা ট্রাফিক স্পাইকে টিকবে না।
 
 </Callout>
 
-## Summary
+## সারসংক্ষেপ
 
-- The latency gap between RAM and network is enormous — caching exploits it
-- Good cache candidates: expensive, read-heavy, tolerably stale
-- Hit ratio is the key metric — even 99% is meaningfully better than 95%
-- Caches exist at every layer: browser, CDN, application, distributed, database
-- Start simple (in-process Map), add Redis when you need shared state
+- RAM আর নেটওয়ার্কের মধ্যে latency-র ফারাক বিশাল — ক্যাশিং সেটাকে কাজে লাগায়
+- ভালো cache প্রার্থী: ব্যয়বহুল, read-ভারী, সামান্য পুরনো হলেও গ্রহণযোগ্য
+- Hit ratio হলো মূল মেট্রিক — এমনকি 99%-ও 95%-এর চেয়ে অর্থপূর্ণভাবে ভালো
+- প্রতিটি স্তরে cache থাকে: browser, CDN, application, distributed, database
+- সহজ দিয়ে শুরু করুন (ইন-প্রসেস Map), শেয়ার করা state দরকার হলে Redis যোগ করুন

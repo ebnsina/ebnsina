@@ -1,9 +1,9 @@
 ---
-title: 'Signing payloads'
-subtitle: 'An unsigned webhook is a public POST endpoint. Anyone who guesses the URL can forge events. HMAC over a canonical string with a timestamp is the simple, correct fix.'
+title: 'Payload signing'
+subtitle: 'একটা unsigned webhook হলো একটা public POST endpoint। URL আন্দাজ করা যে কেউ event জাল করতে পারে। একটা timestamp সহ canonical string-এর ওপর HMAC-ই হলো সরল, সঠিক সমাধান।'
 chapter: 4
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['webhooks', 'hmac', 'signatures', 'security', 'replay']
 ---
 
@@ -11,94 +11,102 @@ topics: ['webhooks', 'hmac', 'signatures', 'security', 'replay']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A webhook URL is, by necessity, on the open internet. The receiver must accept POSTs from your IPs without a per-request handshake. Without signing, anyone who knows the URL — leaked from a logfile, a stack trace, a bug bounty disclosure — can send fake events that look real.
+একটা webhook URL, প্রয়োজনের খাতিরেই, খোলা internet-এ থাকে। receiver-কে প্রতি request-এ handshake ছাড়াই আপনার IP থেকে POST accept করতে হয়। signing ছাড়া, URL জানা যে কেউ — logfile থেকে ফাঁস, একটা stack trace, একটা bug bounty disclosure — এমন জাল event পাঠাতে পারে যা আসল দেখায়।
 
-The fix is **HMAC**: a shared secret, plus a hash, plus a timestamp. This chapter is the spec; chapter 5 is the receiver code.
+সমাধান হলো **HMAC**: একটা shared secret, প্লাস একটা hash, প্লাস একটা timestamp। এই অধ্যায়টা হলো spec; অধ্যায় ৫ হলো receiver-এর কোড।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-An HMAC signature is like a wax seal on an envelope — it proves the letter came from you and wasn't opened in transit.
+একটা HMAC signature অনেকটা একটা খামের ওপর মোমের সিলের মতো — এটা প্রমাণ করে চিঠিটা আপনার কাছ থেকে এসেছে আর পথে খোলা হয়নি।
 
 </Callout>
 
-## The threat model
+## গল্পে বুঝি
 
-Three attacks signing defends against:
+বুখারার এক বণিক ইবনে সিনার কাছে প্রতিদিন একটা করে খবরের চিরকুট পাঠান — কোন মাল এসে পৌঁছাল, কত দাম। চিরকুট বয়ে নিয়ে যায় শহরের কুরিয়ার। কিন্তু পথে অনেক হাত ঘোরে, আর যে কেউ একটা নকল চিরকুট বানিয়ে বলতে পারে "এটা বণিকের কাছ থেকেই এসেছে", কিংবা আসল চিরকুটের দামের অঙ্কটা কেটে বদলে দিতে পারে। ইবনে সিনা কী করে বুঝবেন কোনটা সত্যি?
 
-1. **Forgery.** Attacker POSTs to your URL pretending to be the producer.
-2. **Tampering.** Producer's POST is intercepted and the body modified in transit.
-3. **Replay.** Attacker captures a real signed POST and resends it later, possibly many times.
+তাই তাঁরা আগেভাগে গোপনে একটা বিশেষ মোমের সিলের নকশা ঠিক করে রাখেন — এই নকশা শুধু বণিক আর ইবনে সিনা, এই দুজনই জানেন। কুরিয়ার প্রতিটা চিরকুটের গায়ে এই গোপন সিল মেরে দেয়, আর সিলের ছাপটা বানানো হয় চিরকুটের লেখা অনুযায়ীই — লেখা বদলালে ছাপও আর মেলে না। ইবনে সিনা চিরকুট পেয়ে নিজের জানা নকশা দিয়ে সিলটা যাচাই করেন। মিললে তিনি নিশ্চিত — এটা সত্যিই বণিকের পাঠানো, আর পথে একটা অক্ষরও কেউ বদলায়নি।
 
-HMAC plus a timestamped canonical string defeats all three. Nothing else needed for typical webhook traffic.
+এই গল্পটাই আসলে **payload signing**। দুজনের গোপনে ঠিক করা সিলের নকশা হলো **shared secret** দিয়ে করা **HMAC**; চিরকুটের লেখা থেকে সিলের ছাপ বানানোটাই হলো payload-এর ওপর **signature** গণনা; আর চিরকুটের গায়ে সিল মেরে দেওয়াটা হলো request-এ signature **header** জুড়ে দেওয়া। সিল মিলে যাওয়া একসাথে দুটো জিনিস প্রমাণ করে — খবরটা সত্যিই আসল sender-এর (**authenticity**) আর পথে কিচ্ছু বদলায়নি (**integrity**)। বাস্তবে Stripe ঠিক এভাবেই প্রতিটা webhook-এর সাথে `Stripe-Signature` header পাঠায়, যাতে আপনার receiver যাচাই করতে পারে event-টা সত্যিই Stripe-এর, জাল নয়।
 
-What signing does **not** defend against:
+## Threat model
 
-- An attacker who has your shared secret. (That is a compromise; rotate the secret.)
-- Bugs in the receiver's verification code. (Chapter 5.)
-- Receivers that accept every signed payload regardless of `type` or `data`. (Receivers must still validate semantically.)
+Signing তিনটে আক্রমণের বিরুদ্ধে রক্ষা করে:
 
-## The shape — Stripe's pattern
+1. **Forgery।** attacker producer সেজে আপনার URL-এ POST করে।
+2. **Tampering।** producer-এর POST intercept করে পথে body পরিবর্তন করা হয়।
+3. **Replay।** attacker একটা আসল signed POST capture করে পরে আবার পাঠায়, সম্ভবত বহুবার।
 
-Stripe's signature header looks like:
+HMAC প্লাস একটা timestamped canonical string তিনটেকেই হারায়। সাধারণ webhook traffic-এর জন্য আর কিছু লাগে না।
+
+Signing যা **করে না**:
+
+- আপনার shared secret আছে এমন attacker-কে রক্ষা করে না। (সেটা একটা compromise; secret rotate করুন।)
+- receiver-এর verification কোডের bug ঠেকায় না। (অধ্যায় ৫।)
+- যেসব receiver `type` বা `data` নির্বিশেষে প্রতিটা signed payload accept করে তাদের রক্ষা করে না। (receiver-দের এখনও semantic-ভাবে validate করতে হবে।)
+
+## গড়ন — Stripe-এর pattern
+
+Stripe-এর signature header দেখতে এমন:
 
 ```
 Stripe-Signature: t=1714831200,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
 ```
 
-Three parts:
+তিনটে অংশ:
 
-- `t=1714831200` — Unix timestamp (seconds) when the producer signed.
-- `v1=...` — version 1 signature, hex-encoded HMAC-SHA256.
-- (Optional `v0=...` for legacy versions during rotation.)
+- `t=1714831200` — producer কখন sign করল তার Unix timestamp (second)।
+- `v1=...` — version 1 signature, hex-encoded HMAC-SHA256।
+- (rotation-এর সময় legacy version-এর জন্য optional `v0=...`।)
 
-The signature is computed over a **canonical string**:
+signature গণনা করা হয় একটা **canonical string**-এর ওপর:
 
 ```
 canonical_string = timestamp + "." + raw_body
 signature = hex(hmac_sha256(secret, canonical_string))
 ```
 
-The receiver concatenates the timestamp from the header with the raw body bytes, computes the same HMAC, and compares to the `v1=` value. Match → authentic.
+receiver header-এর timestamp আর raw body byte concatenate করে, একই HMAC গণনা করে, আর `v1=` value-এর সাথে মেলায়। মিলল → authentic।
 
-## Why prepend the timestamp
+## timestamp আগে জুড়ে দেওয়া কেন
 
-Without the timestamp in the canonical string, an attacker who captures a signed POST can resend it forever — same body, same signature, always valid.
+canonical string-এ timestamp না থাকলে, একটা signed POST capture করা attacker সেটা চিরকাল আবার পাঠাতে পারে — একই body, একই signature, সবসময় valid।
 
-Putting the timestamp inside the signed string makes each signature unique to a moment in time. The receiver checks: "Is this timestamp recent enough?" (5 minutes typically). If too old, reject — even if the signature itself is mathematically valid.
+signed string-এর ভেতরে timestamp রাখলে প্রতিটা signature সময়ের একটা মুহূর্তের সাথে unique হয়ে যায়। receiver check করে: "এই timestamp কি যথেষ্ট সাম্প্রতিক?" (সাধারণত ৫ মিনিট)। খুব পুরনো হলে, reject — signature নিজে গণিতগতভাবে valid হলেও।
 
 ```
-Without timestamp:  POST body: {"id":"evt_a"} signature: abc123
-                    Replay tomorrow with same body and signature — server has no way to tell.
+timestamp ছাড়া:  POST body: {"id":"evt_a"} signature: abc123
+                    কাল একই body আর signature দিয়ে replay — server-এর বলার উপায় নেই।
 
-With timestamp:     POST body: {"id":"evt_a"} timestamp: 1714831200  signature: abc123
-                    Replay tomorrow — receiver sees old timestamp, rejects.
+timestamp সহ:     POST body: {"id":"evt_a"} timestamp: 1714831200  signature: abc123
+                    কাল replay — receiver পুরনো timestamp দেখে, reject করে।
 ```
 
-The timestamp must be in **both** the header (so the receiver reads it) and the canonical string (so altering it invalidates the signature). Without putting it in the signed string, the attacker just rewrites the header.
+timestamp-কে **দুই জায়গায়ই** থাকতে হবে — header-এ (যাতে receiver পড়ে) আর canonical string-এ (যাতে বদলালে signature invalid হয়)। signed string-এ না রাখলে, attacker কেবল header-টা আবার লিখে দেয়।
 
-## The canonical string — get it exactly right
+## Canonical string — একদম ঠিকঠাক করুন
 
-The hardest signing bug is **disagreement on what the producer signed and the receiver verifies**. Two implementations that look identical can produce different bytes for "the canonical string."
+সবচেয়ে কঠিন signing bug হলো **producer কী sign করল আর receiver কী verify করল, তা নিয়ে অমিল**। দেখতে একই এমন দুটো implementation "canonical string"-এর জন্য ভিন্ন byte তৈরি করতে পারে।
 
-Lock the format down:
+format-টা লক করুন:
 
 ```
 canonical_string = <timestamp_seconds> + "." + <raw_request_body_bytes>
 ```
 
-Where:
+যেখানে:
 
-- `timestamp_seconds` is a decimal integer string (no leading zeros, no fractional part).
-- `.` is a literal period.
-- `raw_request_body_bytes` is the **exact bytes** of the POST body — no JSON re-encoding, no whitespace normalization.
+- `timestamp_seconds` হলো একটা decimal integer string (leading zero নেই, fractional অংশ নেই)।
+- `.` একটা literal period।
+- `raw_request_body_bytes` হলো POST body-র **হুবহু byte** — কোনো JSON re-encoding নেই, কোনো whitespace normalization নেই।
 
-The "no re-encoding" rule is critical. If your producer signs `{"a":1,"b":2}` (the bytes you POST), the receiver must verify against those exact bytes. If the receiver parses to a JSON object and re-encodes (which may produce `{"b":2,"a":1}` or differ in whitespace), the HMAC of the re-encoded version will not match. **Sign and verify the raw body bytes.**
+"no re-encoding" নিয়মটা critical। আপনার producer `{"a":1,"b":2}` (যে byte আপনি POST করেন) sign করলে, receiver-কে ঠিক ওই byte-এর বিপরীতে verify করতে হবে। receiver একটা JSON object-এ parse করে re-encode করলে (যা `{"b":2,"a":1}` তৈরি করতে পারে বা whitespace-এ ভিন্ন হতে পারে), re-encoded version-এর HMAC মিলবে না। **raw body byte sign আর verify করুন।**
 
-Most web frameworks parse the body before your handler sees it. You have to opt out — read the raw body, then parse separately for processing.
+বেশিরভাগ web framework আপনার handler দেখার আগেই body parse করে ফেলে। আপনাকে opt out করতে হবে — raw body পড়ুন, তারপর process করার জন্য আলাদা করে parse করুন।
 
-## Producer code
+## Producer কোড
 
 ```go
 package webhooks
@@ -124,18 +132,18 @@ func sign(body []byte, secret []byte, ts time.Time) string {
 }
 ```
 
-In the sender from chapter 3, set the header:
+অধ্যায় ৩-এর sender-এ, header set করুন:
 
 ```go
 sigHeader := sign(body, []byte(subscription.Secret), time.Now())
 req.Header.Set("X-Webhook-Signature", sigHeader)
 ```
 
-That is the entire producer-side change. ~10 lines.
+producer-এর দিকের পুরো পরিবর্তন এটুকুই। ~১০ লাইন।
 
-## The shared secret
+## Shared secret
 
-Each subscription has its own secret. Generate it on subscription creation, store it in the producer's database (encrypted at rest), display it to the customer **once**:
+প্রতিটা subscription-এর নিজস্ব secret আছে। subscription তৈরির সময় এটা generate করুন, producer-এর database-এ store করুন (rest-এ encrypted), customer-কে **একবার** দেখান:
 
 ```
 Your webhook signing secret is:
@@ -144,13 +152,13 @@ whsec_AbC123dEf456...
 Save this securely. We will not show it again.
 ```
 
-Customers paste the secret into their receiver code. If they lose it, they regenerate (which invalidates the old secret).
+Customer-রা secret-টা তাদের receiver কোডে paste করে। হারালে, তারা regenerate করে (যা পুরনো secret invalid করে)।
 
-Format conventions:
+Format convention:
 
-- 32+ random bytes (256+ bits of entropy).
-- Encoded as base64 or hex; a `whsec_` prefix makes the role obvious in logs.
-- One secret per subscription. Never share secrets across receivers.
+- 32+ random byte (256+ bit entropy)।
+- base64 বা hex হিসেবে encoded; একটা `whsec_` prefix log-এ role স্পষ্ট করে।
+- প্রতি subscription-এ একটা secret। receiver জুড়ে secret কখনও share করবেন না।
 
 ```go
 import "crypto/rand"
@@ -164,51 +172,51 @@ func generateSecret() (string, error) {
 }
 ```
 
-## Key rotation — the v0/v1 pattern
+## Key rotation — v0/v1 pattern
 
-Eventually you need to rotate a customer's secret. The naive approach (replace the secret, force them to update) breaks active receivers in flight. Better: support **two valid secrets** during rotation.
+একসময় আপনার একটা customer-এর secret rotate করতে হবে। naive উপায় (secret বদলে দিয়ে তাদের update করতে বাধ্য করা) চলমান receiver-দের মাঝপথে ভাঙে। ভালো: rotation-এর সময় **দুটো valid secret** সমর্থন করুন।
 
-The producer signs with the new secret while emitting **two** signature versions in the header:
+producer নতুন secret দিয়ে sign করে, header-এ **দুটো** signature version emit করে:
 
 ```
 X-Webhook-Signature: t=1714831200,v1=<sig with new secret>,v0=<sig with old secret>
 ```
 
-The receiver tries each version; if any matches, accepts. After all customers have updated to the new secret, retire `v0`. This is exactly Stripe's pattern; the version numbers are just labels for "primary" and "rolling-out."
+receiver প্রতিটা version চেষ্টা করে; কোনো একটা মিললে, accept করে। সব customer নতুন secret-এ update করার পরে, `v0` retire করুন। এটা হুবহু Stripe-এর pattern; version number-গুলো শুধু "primary" আর "rolling-out"-এর label।
 
-For algorithm rotation (SHA-256 → SHA-512), do the same: emit both `v1=...` (legacy) and `v2=...` (new), let receivers prefer the strongest, retire the old after migration.
+algorithm rotation-এর জন্য (SHA-256 → SHA-512), একই কাজ করুন: `v1=...` (legacy) আর `v2=...` (new) দুটোই emit করুন, receiver-দের সবচেয়ে শক্তটা prefer করতে দিন, migration-এর পরে পুরনোটা retire করুন।
 
-## Algorithm choice — HMAC-SHA256
+## Algorithm পছন্দ — HMAC-SHA256
 
-HMAC over SHA-256 is the right default. Notes:
+SHA-256-এর ওপর HMAC হলো সঠিক default। কিছু নোট:
 
-- **Don't use plain SHA-256 of `secret + body`.** That's vulnerable to length-extension attacks. HMAC was designed to avoid this; use HMAC.
-- **Don't use SHA-1.** Cryptographically weakened. SHA-256 or stronger.
-- **Don't use MD5.** Broken.
-- **Asymmetric signatures (Ed25519, ECDSA)** are an option for high-security cases — the receiver verifies with a public key, no shared secret. Slower to compute, more complex; HMAC-SHA256 covers 99% of needs.
+- **plain SHA-256 of `secret + body` ব্যবহার করবেন না।** সেটা length-extension attack-এর কাছে vulnerable। HMAC এটা এড়াতেই ডিজাইন করা; HMAC ব্যবহার করুন।
+- **SHA-1 ব্যবহার করবেন না।** Cryptographically দুর্বল। SHA-256 বা তার চেয়ে শক্ত।
+- **MD5 ব্যবহার করবেন না।** ভাঙা।
+- **Asymmetric signature (Ed25519, ECDSA)** high-security ক্ষেত্রের জন্য একটা option — receiver একটা public key দিয়ে verify করে, কোনো shared secret নেই। গণনায় ধীর, বেশি জটিল; HMAC-SHA256 ৯৯% প্রয়োজন কভার করে।
 
-The `crypto/hmac` package in Go uses constant-time comparison for `hmac.Equal` — important on the _receiver_ side (chapter 5) to avoid timing attacks. The producer just computes; only the receiver compares.
+Go-র `crypto/hmac` package `hmac.Equal`-এর জন্য constant-time comparison ব্যবহার করে — _receiver_-এর দিকে (অধ্যায় ৫) timing attack এড়াতে গুরুত্বপূর্ণ। producer শুধু গণনা করে; কেবল receiver compare করে।
 
 <Callout type="info">
 
-**Why not TLS client certificates?** Client certs (mTLS) are stronger than HMAC: per-call cryptographic identity, no shared secret. Some webhook systems offer them as an option. The downside: customers must set up TLS infrastructure, manage certs, configure their reverse proxy. For most webhooks, HMAC's complexity-per-customer is much lower. Use mTLS for high-security B2B integrations where customers can handle it.
+**TLS client certificate কেন নয়?** Client cert (mTLS) HMAC-এর চেয়ে শক্তিশালী: per-call cryptographic identity, কোনো shared secret নেই। কিছু webhook সিস্টেম সেগুলো option হিসেবে দেয়। খারাপ দিক: customer-দের TLS infrastructure সেট আপ করতে হয়, cert manage করতে হয়, তাদের reverse proxy configure করতে হয়। বেশিরভাগ webhook-এর জন্য, HMAC-এর per-customer জটিলতা অনেক কম। যেসব high-security B2B integration-এ customer সামলাতে পারে সেখানে mTLS ব্যবহার করুন।
 
 </Callout>
 
-## What to sign
+## কী sign করবেন
 
-Sign **the raw body**. Optionally include selected headers in the canonical string, but only if you have a strong reason — every header you sign becomes a thing the receiver must reproduce exactly.
+**raw body** sign করুন। ঐচ্ছিকভাবে canonical string-এ নির্বাচিত header অন্তর্ভুক্ত করুন, কিন্তু কেবল যদি জোরালো কারণ থাকে — আপনি যত header sign করেন, প্রতিটা receiver-কে হুবহু reproduce করতে হয়।
 
-Things you might also sign:
+যা আপনি অতিরিক্ত sign করতে পারেন:
 
-- The **destination URL path**, if you're worried about an attacker swapping endpoints between subscriptions on the same domain. Rare.
-- A **subscription ID** in a header, signed, so the receiver can pick the right secret. But the URL itself usually identifies the subscription, so this is redundant.
+- **destination URL path**, যদি একই domain-এ subscription-এর মধ্যে endpoint অদলবদল করা attacker নিয়ে চিন্তিত থাকেন। বিরল।
+- একটা header-এ signed একটা **subscription ID**, যাতে receiver সঠিক secret বাছতে পারে। কিন্তু URL নিজেই সাধারণত subscription চিহ্নিত করে, তাই এটা অপ্রয়োজনীয়।
 
-Adding fields to the canonical string is a breaking change. Do it via a new signature version (`v2`), not by mutating `v1`.
+canonical string-এ field যোগ করা একটা breaking change। এটা একটা নতুন signature version (`v2`) দিয়ে করুন, `v1` পরিবর্তন করে নয়।
 
 ## Replay protection — timestamp window
 
-Receivers reject any event whose `t=` timestamp differs from "now" by more than ~5 minutes. This caps how long an attacker can wait between capturing and replaying a signed payload.
+receiver যেকোনো event reject করে যার `t=` timestamp "এখন" থেকে ~৫ মিনিটের বেশি আলাদা। এটা attacker capture আর replay-এর মধ্যে কতক্ষণ অপেক্ষা করতে পারে তা cap করে।
 
 ```go
 const replayWindow = 5 * time.Minute
@@ -218,39 +226,39 @@ func tooOld(t time.Time) bool {
 }
 ```
 
-The window is a tradeoff:
+window একটা tradeoff:
 
-- **Tight (1 minute):** strong replay protection; tolerates very small clock skew.
-- **Loose (1 hour):** weak protection but tolerates terrible clocks. Avoid.
+- **টাইট (১ মিনিট):** শক্ত replay protection; খুব ছোট clock skew সহ্য করে।
+- **ঢিলে (১ ঘণ্টা):** দুর্বল protection কিন্তু ভয়ানক clock সহ্য করে। এড়িয়ে চলুন।
 
-5 minutes is the standard. Tighten to 1–2 minutes if your producer and all receivers use NTP. Loosen only if you have evidence of clock issues.
+৫ মিনিট হলো standard। আপনার producer আর সব receiver NTP ব্যবহার করলে ১–২ মিনিটে টাইট করুন। কেবল clock সমস্যার প্রমাণ থাকলে ঢিলে করুন।
 
-## Producer clock matters
+## Producer-এর clock গুরুত্বপূর্ণ
 
-If the producer's clock drifts by 6 minutes, every receiver rejects every event. Run NTP on the producer; alert if the clock is more than a few seconds off.
+producer-এর clock ৬ মিনিট drift করলে, প্রতিটা receiver প্রতিটা event reject করে। producer-এ NTP চালান; clock কয়েক সেকেন্ডের বেশি off হলে alert দিন।
 
-For receivers, the clock matters even more — they decide acceptance based on how recent the timestamp is. A receiver running 10 minutes ahead rejects current events; a receiver 10 minutes behind accepts replays.
+receiver-দের জন্য clock আরও বেশি গুরুত্বপূর্ণ — timestamp কতটা সাম্প্রতিক তার ভিত্তিতে তারা acceptance ঠিক করে। ১০ মিনিট এগিয়ে থাকা receiver current event reject করে; ১০ মিনিট পিছিয়ে থাকা receiver replay accept করে।
 
-## Anti-pattern: signing with the URL secret
+## Anti-pattern: URL-এ secret দিয়ে signing
 
-Don't make the signing secret part of the URL itself (`POST /webhooks/secret-here`). The URL ends up in:
+signing secret-কে URL-এর অংশ করবেন না (`POST /webhooks/secret-here`)। URL শেষমেশ এখানে চলে যায়:
 
-- Producer logs.
-- HTTPS access logs at intermediaries (CDN, WAF).
-- Browser history if anyone tested the URL by hand.
-- HTTP referer headers if the receiver redirects.
+- Producer log।
+- Intermediary-তে (CDN, WAF) HTTPS access log।
+- কেউ হাত দিয়ে URL টেস্ট করলে browser history।
+- receiver redirect করলে HTTP referer header।
 
-Secrets must travel in the body or headers, never the path. The URL is for identifying _which_ subscription; the secret is for proving authenticity.
+Secret অবশ্যই body বা header-এ যাবে, কখনও path-এ নয়। URL হলো _কোন_ subscription চিহ্নিত করার জন্য; secret হলো authenticity প্রমাণের জন্য।
 
-## Anti-pattern: sending the secret in the request
+## Anti-pattern: request-এ secret পাঠানো
 
-Some early webhook systems put the secret in a header (`X-Auth-Token: secret-here`). The receiver compares to the expected secret. This is what HMAC was designed to replace — sending the secret on every request means a single intercepted request leaks it.
+কিছু আদি webhook সিস্টেম secret-টা একটা header-এ রাখত (`X-Auth-Token: secret-here`)। receiver সেটাকে প্রত্যাশিত secret-এর সাথে মেলায়। HMAC ঠিক এটাকে প্রতিস্থাপন করতেই ডিজাইন করা হয়েছিল — প্রতিটা request-এ secret পাঠানো মানে একটা intercept করা request-ই সেটা ফাঁস করে দেয়।
 
-HMAC sends a _signature_ derived from the secret, not the secret itself. The secret never crosses the wire after subscription creation.
+HMAC secret থেকে derive করা একটা _signature_ পাঠায়, secret নিজে নয়। subscription তৈরির পরে secret আর কখনও তারের ওপর দিয়ে যায় না।
 
-## Sample full POST
+## নমুনা পূর্ণ POST
 
-The chapter-3 sender, signed:
+অধ্যায় ৩-এর sender, signed:
 
 ```
 POST /webhooks HTTP/1.1
@@ -266,18 +274,18 @@ Content-Length: 234
 {"id":"evt_01HF5J7XK4TG6N2VRT9P0M3DZ4","type":"payment.succeeded","created":"2026-05-04T12:00:00.123Z","api_version":"2026-05-01","data":{"object":{"id":"py_...","amount":4200,"currency":"usd","customer":"cus_42"}}}
 ```
 
-The body bytes are the input to HMAC alongside the timestamp. Any byte changes during transit — JSON whitespace, character escapes — invalidate the signature.
+timestamp-এর পাশাপাশি body byte-ই HMAC-এর input। পথে যেকোনো byte পরিবর্তন — JSON whitespace, character escape — signature invalid করে।
 
-## Recap
+## রিক্যাপ
 
-- Signing defends against forgery, tampering, and replay. Three attacks, one mechanism.
-- HMAC-SHA256 over `<timestamp>.<raw_body>`. Hex-encode. Header is `t=<ts>,v1=<sig>`.
-- The timestamp **must** be inside the canonical string, not just in the header.
-- Sign the **raw bytes** of the body. No re-encoding.
-- One secret per subscription. 32 random bytes, base64url, `whsec_` prefix.
-- Rotate by emitting both `v0` and `v1` signatures, retiring `v0` after migration.
-- HMAC, not plain hash. SHA-256, not SHA-1.
-- Replay window 5 minutes. NTP on every host.
-- Never put the secret in the URL or send it as a header.
+- Signing forgery, tampering, আর replay-এর বিরুদ্ধে রক্ষা করে। তিন আক্রমণ, এক mechanism।
+- `<timestamp>.<raw_body>`-এর ওপর HMAC-SHA256। Hex-encode। header হলো `t=<ts>,v1=<sig>`।
+- timestamp canonical string-এর ভেতরে থাকতে **হবে**, শুধু header-এ নয়।
+- body-র **raw byte** sign করুন। কোনো re-encoding নেই।
+- প্রতি subscription-এ একটা secret। 32 random byte, base64url, `whsec_` prefix।
+- `v0` আর `v1` দুটো signature emit করে rotate করুন, migration-এর পরে `v0` retire করুন।
+- HMAC, plain hash নয়। SHA-256, SHA-1 নয়।
+- Replay window ৫ মিনিট। প্রতিটা host-এ NTP।
+- URL-এ কখনও secret রাখবেন না বা header হিসেবে পাঠাবেন না।
 
-Next: [Verifying signatures](/notes/webhooks/05-verifying) — the receiver side, with timing-safe compare and the framework body-parsing trap.
+পরবর্তী: [Signature verify করা](/notes/webhooks/05-verifying) — receiver-এর দিক, timing-safe compare আর framework body-parsing ফাঁদ সহ।

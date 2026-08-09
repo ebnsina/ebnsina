@@ -1,9 +1,9 @@
 ---
-title: 'TLS and mTLS'
-subtitle: "Server TLS encrypts the wire and proves the server's identity. Mutual TLS adds the same proof for clients. Both ride on the same handshake — and once you have a small CA, both are a few lines of Go."
+title: 'TLS ও mTLS'
+subtitle: 'Server TLS ওয়্যার এনক্রিপ্ট করে এবং server-এর identity প্রমাণ করে। Mutual TLS ক্লায়েন্টদের জন্য একই প্রমাণ যোগ করে। দুটোই একই handshake-এর উপর চড়ে — আর একবার ছোট একটা CA থাকলে, দুটোই কয়েক লাইনের Go।'
 chapter: 9
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['grpc', 'tls', 'mtls', 'certificates', 'security']
 ---
 
@@ -11,34 +11,42 @@ topics: ['grpc', 'tls', 'mtls', 'certificates', 'security']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The chapter-4 server runs plaintext. That is fine on `localhost`. The moment traffic crosses a network boundary — even inside a private VPC — you want **server TLS**. The moment you want to authenticate clients without bearer tokens (service-to-service), you want **mutual TLS**.
+## গল্পে বুঝি
 
-Both are the same TLS handshake; mTLS just adds a client certificate to it. Get the cert plumbing right once and the rest is one-liner config.
+ইবনে সিনা একটা হাই-সিকিউরিটি প্রাইভেট মিটিং-এ যাচ্ছেন। বিল্ডিং-এর দরজায় দাঁড়িয়ে তিনি একটু সন্দিহান — ভেতরের অফিসটা কি আসলেই আসল, নাকি কেউ অফিস সেজে বসে আছে? তাই হোস্ট আল-খোয়ারিজমি প্রথমেই নিজের ভেরিফায়েড ID কার্ড বের করে দেখান — সরকারি সিল, ছবি, সব মিলিয়ে প্রমাণ যে এই অফিস আর এই মানুষটাই আসল। ইবনে সিনা নিশ্চিন্ত হয়ে ভেতরে ঢোকেন। এরপর দুজন একটা সাউন্ডপ্রুফ ঘরে বসে কথা বলেন — বাইরের করিডর থেকে কেউ এক শব্দও শুনতে পায় না।
 
-This chapter assumes you read the **TLS & Certificates** track of the path. If "ECDHE", "ALPN", "chain of trust" sound unfamiliar, go finish that track first.
+এবার আরও কড়া একটা মিটিং। এখানে গার্ড ফাতিমা আল-ফিহরি শুধু হোস্টের ID দেখেই থামেন না — দরজায় ঢোকার আগে তিনি ইবনে সিনার কাছ থেকেও একটা ভেরিফায়েড ব্যাজ দাবি করেন। অর্থাৎ শুধু ভিজিটর জানবে অফিস আসল তা নয়, অফিসও নিশ্চিত হবে ভিজিটরটা আসলে কে। দুই পক্ষ একে অপরকে পরিচয় প্রমাণ করার পরেই কেবল সাউন্ডপ্রুফ ঘরের দরজা খোলে — একজনও প্রমাণ দিতে না পারলে মিটিং বাতিল, কোনো ছাড় নেই।
+
+গল্পের প্রথম কেসটাই **TLS**: হোস্টের ভেরিফায়েড ID দেখানো হলো server-এর certificate — server নিজের identity ক্লায়েন্টের কাছে প্রমাণ করছে, আর সাউন্ডপ্রুফ ঘর হলো encryption যাতে মাঝপথে কেউ ট্রাফিক পড়তে না পারে। দ্বিতীয় কেসটা **mTLS (mutual TLS)**: ভিজিটরের ভেরিফায়েড ব্যাজ হলো client certificate, তাই এখন client আর server দুই পক্ষই একে অপরের কাছে identity প্রমাণ করে — এটাই mutual authentication। বাস্তবে এই দুই পক্ষের প্রমাণ সবচেয়ে বেশি কাজে লাগে service-to-service যোগাযোগে: bearer token ছাড়াই এক service আরেক service-কে cryptographically চিনতে পারে, আর বড় সিস্টেমে service mesh (যেমন Istio, Linkerd) প্রতিটা service-এর মধ্যে এই mTLS নিজে থেকেই বসিয়ে দেয়।
+
+চ্যাপ্টার ৪-এর server plaintext-এ চলে। `localhost`-এ এটা ঠিক আছে। কিন্তু যেই মুহূর্তে ট্রাফিক কোনো নেটওয়ার্ক বাউন্ডারি পার হয় — এমনকি একটা প্রাইভেট VPC-এর ভেতরেও — তখন আপনি **server TLS** চাইবেন। আর যেই মুহূর্তে আপনি bearer token ছাড়াই ক্লায়েন্টদের authenticate করতে চাইবেন (service-to-service), তখন আপনি **mutual TLS** চাইবেন।
+
+দুটোই একই TLS handshake; mTLS শুধু এর সাথে একটা client certificate যোগ করে। cert-এর plumbing একবার ঠিকঠাক করে নিন, বাকিটা এক-লাইনের config।
+
+এই চ্যাপ্টার ধরে নিচ্ছে যে আপনি path-এর **TLS & Certificates** track পড়েছেন। "ECDHE", "ALPN", "chain of trust" যদি অচেনা লাগে, তাহলে আগে সেই track শেষ করে আসুন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-mTLS is two people showing ID to each other before shaking hands — not just the server proving itself to the client.
+mTLS হলো দুইজন মানুষ handshake করার আগে একে অপরকে ID দেখানো — শুধু server নিজেকে client-এর কাছে প্রমাণ করছে তা নয়।
 
 </Callout>
 
-## Why mTLS instead of bearer tokens?
+## bearer token-এর বদলে mTLS কেন?
 
-For service-to-service identity inside your own infrastructure, mTLS gives you:
+নিজের infrastructure-এর ভেতরে service-to-service identity-র জন্য mTLS আপনাকে দেয়:
 
-- **Identity baked into the connection.** No token to lose, no header to leak, no expiry to refresh. The cert _is_ the identity.
-- **Verified at handshake.** Every connection proves both sides; bearer tokens only get checked when handlers run.
-- **Fine-grained ACLs.** Each service has its own cert; ACLs match Common Names or SANs. Easy to audit.
-- **No shared secrets.** Each service has a private key it never sends; tokens get sent on every request.
+- **connection-এর মধ্যেই বেক করা identity।** হারানোর মতো কোনো token নেই, leak হওয়ার মতো কোনো header নেই, refresh করার মতো কোনো expiry নেই। cert নিজেই identity।
+- **handshake-এই verified।** প্রতিটা connection দুই পক্ষকেই প্রমাণ করে; bearer token শুধু handler চলার সময় চেক হয়।
+- **fine-grained ACL।** প্রতিটা service-এর নিজের cert থাকে; ACL Common Name বা SAN-এর সাথে ম্যাচ করে। audit করা সহজ।
+- **কোনো shared secret নেই।** প্রতিটা service-এর একটা private key থাকে যা সে কখনো পাঠায় না; token প্রতিটা request-এ পাঠানো হয়।
 
-The cost is a small CA you operate. For a self-hosted setup, that is a few `openssl` commands and a script.
+খরচ হলো একটা ছোট CA যেটা আপনি চালাবেন। self-hosted setup-এর জন্য এটা কয়েকটা `openssl` command আর একটা script।
 
-## Building a tiny CA
+## একটা ছোট্ট CA বানানো
 
-You need three things: a CA cert + key, a server cert signed by the CA, and (for mTLS) a client cert signed by the CA.
+আপনার তিনটা জিনিস দরকার: একটা CA cert + key, CA দিয়ে signed একটা server cert, এবং (mTLS-এর জন্য) CA দিয়ে signed একটা client cert।
 
 ```bash
 # 1. CA root
@@ -70,23 +78,23 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
   -out client.crt -days 365 -sha256 -extfile client.ext
 ```
 
-After that you have:
+এরপর আপনার হাতে থাকবে:
 
-- `ca.crt`, `ca.key` — the CA. Distribute `ca.crt` everywhere; keep `ca.key` very safe.
-- `server.crt`, `server.key` — server identity for `user-service`.
-- `client.crt`, `client.key` — client identity for `billing-service`.
+- `ca.crt`, `ca.key` — CA। `ca.crt` সব জায়গায় বিতরণ করুন; `ca.key` খুব নিরাপদে রাখুন।
+- `server.crt`, `server.key` — `user-service`-এর server identity।
+- `client.crt`, `client.key` — `billing-service`-এর client identity।
 
-The `subjectAltName` (SAN) on the server cert is the part Go's verifier actually checks — clients connecting to `user-service` (or `localhost`, or `127.0.0.1`) get the cert validated by name. CN is informational; SANs are authoritative.
+server cert-এর উপর থাকা `subjectAltName` (SAN)-ই হলো সেই অংশ যা Go-র verifier আসলে চেক করে — `user-service`-এ (বা `localhost`, বা `127.0.0.1`-এ) connect করা ক্লায়েন্টরা cert-টা নাম দিয়ে validate পায়। CN informational; SAN-ই authoritative।
 
 <Callout type="warn">
 
-**Never check `*.key` files into git.** Private keys are credentials. A leaked CA key means the entire trust chain is compromised — every client and server cert ever issued by it is suspect. Operate the CA on an offline-capable workstation or with a dedicated secrets manager.
+**কখনো `*.key` ফাইল git-এ commit করবেন না।** private key হলো credential। একটা leak হওয়া CA key মানে গোটা trust chain compromised — এটা দিয়ে ইস্যু করা প্রতিটা client আর server cert-ই সন্দেহজনক হয়ে যায়। CA-টা একটা offline-capable workstation-এ, নয়তো একটা dedicated secrets manager দিয়ে চালান।
 
 </Callout>
 
-## Server TLS — single-direction
+## Server TLS — একমুখী
 
-Server proves its identity to clients. Clients verify against the CA cert. That is enough for "encrypted in transit, server authenticity guaranteed."
+server ক্লায়েন্টদের কাছে নিজের identity প্রমাণ করে। ক্লায়েন্টরা CA cert-এর বিপরীতে verify করে। "in transit-এ encrypted, server authenticity guaranteed"-এর জন্য এটুকুই যথেষ্ট।
 
 Server:
 
@@ -129,13 +137,13 @@ conn, err := grpc.NewClient("user-service:9000",
     grpc.WithTransportCredentials(creds))
 ```
 
-That is server-only TLS. Wire is encrypted, server identity is verified by SAN match against the dial target (`user-service`).
+এটাই server-only TLS। ওয়্যার encrypted, dial target (`user-service`)-এর সাথে SAN match করে server identity verified।
 
-## Mutual TLS — both sides authenticated
+## Mutual TLS — দুই পক্ষই authenticated
 
-The server demands a client cert; the client provides one. Both are verified by the CA.
+server একটা client cert দাবি করে; client একটা দেয়। দুটোই CA দিয়ে verify হয়।
 
-Server side, two changes:
+server-এর দিকে, দুটো পরিবর্তন:
 
 ```go
 caCert, _ := os.ReadFile("ca.crt")
@@ -150,7 +158,7 @@ creds := credentials.NewTLS(&tls.Config{
 })
 ```
 
-Client side, two changes:
+client-এর দিকে, দুটো পরিবর্তন:
 
 ```go
 clientCert, _ := tls.LoadX509KeyPair("client.crt", "client.key")
@@ -162,11 +170,11 @@ creds := credentials.NewTLS(&tls.Config{
 })
 ```
 
-That is the whole mTLS setup. Both sides hand each other a cert, both verify against the shared CA, the handshake either succeeds (both authenticated) or fails (no plaintext fallback).
+এটাই গোটা mTLS setup। দুই পক্ষ একে অপরকে একটা cert দেয়, দুই পক্ষই shared CA-র বিপরীতে verify করে, handshake হয় সফল হয় (দুই পক্ষই authenticated) নয়তো ব্যর্থ হয় (কোনো plaintext fallback নেই)।
 
-## Reading the peer's identity
+## peer-এর identity পড়া
 
-In the server, an interceptor pulls the client's cert info:
+server-এ একটা interceptor client-এর cert তথ্য টেনে আনে:
 
 ```go
 import "google.golang.org/grpc/peer"
@@ -188,9 +196,9 @@ func clientCN(ctx context.Context) string {
 }
 ```
 
-Now `clientCN(ctx)` is `"billing-service"`. That is the cryptographically-verified identity of the caller — far stronger than a self-asserted header.
+এখন `clientCN(ctx)` হলো `"billing-service"`। এটাই caller-এর cryptographically-verified identity — একটা self-asserted header-এর চেয়ে অনেক বেশি শক্তিশালী।
 
-ACL pattern:
+ACL প্যাটার্ন:
 
 ```go
 func authMTLS(allowed map[string]bool) grpc.UnaryServerInterceptor {
@@ -205,15 +213,15 @@ func authMTLS(allowed map[string]bool) grpc.UnaryServerInterceptor {
 }
 ```
 
-Configure per-method ACLs as a map: which CNs may call `CreateUser`, which may call `DeleteUser`. Auditable, declarative, hard to mis-configure.
+per-method ACL একটা map হিসেবে configure করুন: কোন CN `CreateUser` কল করতে পারবে, কোনটা `DeleteUser` কল করতে পারবে। auditable, declarative, ভুল configure করা কঠিন।
 
 ## Cert rotation
 
-Certs expire. The chapter-4 ones expire in 365 days; you would rotate well before that. Two strategies:
+cert expire হয়। চ্যাপ্টার ৪-এর গুলো ৩৬৫ দিনে expire হয়; আপনি তার অনেক আগেই rotate করবেন। দুটো strategy:
 
-**1. Stop the world.** Issue new cert, restart the service. Brutal but simple. Acceptable for short outages on internal services.
+**1. Stop the world।** নতুন cert ইস্যু করুন, service restart করুন। কড়া কিন্তু সহজ। internal service-এ ছোট outage-এর জন্য গ্রহণযোগ্য।
 
-**2. Hot reload.** Watch the cert file; when it changes, swap the `*tls.Certificate` in memory. Go's `tls.Config.GetCertificate` is the standard hook:
+**2. Hot reload।** cert ফাইল watch করুন; যখন সেটা বদলায়, মেমরিতে `*tls.Certificate` swap করে দিন। Go-র `tls.Config.GetCertificate` হলো standard hook:
 
 ```go
 var current atomic.Value // stores *tls.Certificate
@@ -233,39 +241,39 @@ creds := credentials.NewTLS(&tls.Config{
 })
 ```
 
-Now writing new `server.crt`/`server.key` and triggering a reload swaps the cert with no restart. Production setups use this with a tool that re-issues certs (smallstep, Vault, cert-manager).
+এখন নতুন `server.crt`/`server.key` লিখে একটা reload trigger করলেই কোনো restart ছাড়া cert swap হয়ে যায়। production setup-গুলো এটা এমন একটা tool-এর সাথে ব্যবহার করে যেটা cert পুনরায় ইস্যু করে (smallstep, Vault, cert-manager)।
 
-## How long to make certs
+## cert কতদিনের বানাবেন
 
-Operational tradeoff:
+operational tradeoff:
 
-- **Long-lived (1 year):** less work, more risk. A leaked cert is valid for a year.
-- **Short-lived (24 hours):** automatic re-issue every day, leak is contained. Needs a working PKI automation.
-- **Mediums (7–30 days):** common for internal services. Rotation is muscle memory; leaks are short-lived.
+- **Long-lived (1 বছর):** কম কাজ, বেশি ঝুঁকি। একটা leak হওয়া cert এক বছর valid থাকে।
+- **Short-lived (24 ঘণ্টা):** প্রতিদিন automatic পুনরায় ইস্যু, leak সীমিত থাকে। একটা কার্যকর PKI automation দরকার।
+- **Medium (7–30 দিন):** internal service-এর জন্য সাধারণ। rotation-টা muscle memory হয়ে যায়; leak short-lived হয়।
 
-For mTLS at scale, **smallstep CA** is excellent. Open-source ACME-compatible CA you self-host. Issues short-lived certs to services on demand. Or **HashiCorp Vault** with the PKI engine. Either replaces the manual `openssl` ceremony with API-driven issuance.
+স্কেলে mTLS-এর জন্য **smallstep CA** চমৎকার। open-source ACME-compatible CA যা আপনি self-host করেন। চাহিদামতো service-গুলোকে short-lived cert ইস্যু করে। অথবা PKI engine সহ **HashiCorp Vault**। যেকোনোটাই manual `openssl` আচার-অনুষ্ঠানকে API-driven issuance দিয়ে বদলে দেয়।
 
-## SPIFFE — when you need a real identity framework
+## SPIFFE — যখন আপনার একটা আসল identity framework দরকার
 
-For larger architectures, **SPIFFE** (and its implementation **SPIRE**) is the standard. Each workload gets a **SPIFFE ID** like `spiffe://example.com/billing` baked into a SAN. Workloads attest their identity to SPIRE (via Kubernetes service account, AWS IAM, etc.) and SPIRE issues short-lived certs.
+বড় architecture-এর জন্য **SPIFFE** (এবং এর implementation **SPIRE**) হলো standard। প্রতিটা workload একটা **SPIFFE ID** পায় যেমন `spiffe://example.com/billing`, যা একটা SAN-এ বেক করা থাকে। workload-গুলো SPIRE-এর কাছে তাদের identity attest করে (Kubernetes service account, AWS IAM, ইত্যাদির মাধ্যমে) এবং SPIRE short-lived cert ইস্যু করে।
 
-For self-hosted, SPIRE works with bare-metal nodes via a node attestor (e.g., systemd unit hash). Not lightweight, but right when you have many services and want strong, automated identity.
+self-hosted-এর জন্য, SPIRE একটা node attestor (যেমন systemd unit hash)-এর মাধ্যমে bare-metal node-এর সাথে কাজ করে। lightweight নয়, কিন্তু যখন আপনার অনেক service থাকে এবং আপনি শক্তিশালী, automated identity চান তখন এটাই ঠিক।
 
-For the small case (a few services on a VPS), the manual CA + smallstep is plenty.
+ছোট কেসের জন্য (একটা VPS-এ কয়েকটা service), manual CA + smallstep-ই যথেষ্ট।
 
 ## TLS performance
 
-Three numbers worth knowing:
+জানার মতো তিনটা সংখ্যা:
 
-- **Handshake:** ~5–20 ms RTT depending on geography, plus key derivation. With HTTP/2 multiplexing (one connection, many streams) the handshake amortizes to nothing.
-- **Bulk transfer:** AES-GCM with hardware acceleration (every modern x86/ARM CPU) is ~5 GB/s per core. TLS is rarely the bottleneck.
-- **Memory per connection:** a few KB for crypto state. Negligible for hundreds of connections.
+- **Handshake:** ভৌগোলিক অবস্থানভেদে ~5–20 ms RTT, সাথে key derivation। HTTP/2 multiplexing (একটা connection, অনেক stream) দিয়ে handshake-টা amortize হয়ে প্রায় শূন্যে নেমে আসে।
+- **Bulk transfer:** hardware acceleration সহ AES-GCM (প্রতিটা আধুনিক x86/ARM CPU-তে) প্রতি core-এ ~5 GB/s। TLS খুব কমই bottleneck হয়।
+- **প্রতি connection-এ memory:** crypto state-এর জন্য কয়েক KB। শত শত connection-এর জন্য নগণ্য।
 
-The performance worry is misconfigured clients that handshake per call (chapter 3's "one conn per backend" rule). Done correctly, TLS is invisible.
+performance-এর চিন্তা হলো ভুল-configure করা ক্লায়েন্ট যারা প্রতি call-এ handshake করে (চ্যাপ্টার ৩-এর "প্রতি backend-এ এক conn" নিয়ম)। ঠিকমতো করা হলে, TLS অদৃশ্য।
 
-## Plaintext escape hatches
+## Plaintext escape hatch
 
-Sometimes you want plaintext for local dev. The pattern:
+কখনো কখনো local dev-এর জন্য আপনি plaintext চান। প্যাটার্নটা:
 
 ```go
 useTLS := os.Getenv("TLS_DISABLED") != "1"
@@ -279,21 +287,21 @@ if useTLS {
 s := grpc.NewServer(grpc.Creds(creds))
 ```
 
-Default to secure; opt out for local dev. Reverse the default and you ship plaintext to prod by accident.
+ডিফল্ট থাকুক secure; local dev-এর জন্য opt out করুন। ডিফল্টটা উল্টে দিলে আপনি ভুলবশত prod-এ plaintext ship করে ফেলবেন।
 
 ## TLS-only firewalling
 
-A common production pattern: bind gRPC to a Unix socket or `127.0.0.1` only. nginx (or an ingress controller) terminates TLS facing the public network and reverse-proxies plaintext to the local gRPC. Chapter 10 covers this — gRPC over Unix socket is fast and skips per-handshake TLS work for internal traffic.
+একটা সাধারণ production প্যাটার্ন: gRPC-কে শুধু একটা Unix socket বা `127.0.0.1`-এ bind করুন। nginx (বা একটা ingress controller) public network-মুখী TLS terminate করে এবং local gRPC-তে plaintext reverse-proxy করে। চ্যাপ্টার ১০ এটা কভার করে — Unix socket-এর উপর gRPC দ্রুত এবং internal traffic-এর জন্য per-handshake TLS-এর কাজ এড়িয়ে যায়।
 
 ## Recap
 
-- Server TLS: encryption + server identity. mTLS: also client identity.
-- Mint a small CA with `openssl`. Sign per-service certs with SAN that matches the dial name.
-- Server: `Certificates`, `ClientAuth: RequireAndVerifyClientCert`, `ClientCAs`. Client: `Certificates`, `RootCAs`. Both: `MinVersion: TLS13`.
-- Read peer identity via `peer.FromContext` → `TLSInfo.State.PeerCertificates[0].Subject.CommonName`.
-- Build an ACL interceptor keyed on CN. Cryptographically verified, auditable.
-- Rotate via `GetCertificate` hot reload. Automate with smallstep / Vault / SPIRE.
-- TLS is fast under HTTP/2 multiplexing — the handshake amortizes across many calls.
-- Default to secure; an env-var escape hatch for local dev only.
+- Server TLS: encryption + server identity। mTLS: client identity-ও।
+- `openssl` দিয়ে একটা ছোট CA mint করুন। dial name-এর সাথে match করা SAN দিয়ে per-service cert sign করুন।
+- Server: `Certificates`, `ClientAuth: RequireAndVerifyClientCert`, `ClientCAs`। Client: `Certificates`, `RootCAs`। দুই পক্ষ: `MinVersion: TLS13`।
+- `peer.FromContext` → `TLSInfo.State.PeerCertificates[0].Subject.CommonName` দিয়ে peer identity পড়ুন।
+- CN-এর উপর keyed একটা ACL interceptor বানান। cryptographically verified, auditable।
+- `GetCertificate` hot reload দিয়ে rotate করুন। smallstep / Vault / SPIRE দিয়ে automate করুন।
+- HTTP/2 multiplexing-এর অধীনে TLS দ্রুত — handshake অনেক call-এ amortize হয়।
+- ডিফল্ট থাকুক secure; শুধু local dev-এর জন্য একটা env-var escape hatch।
 
-Next: [Production self-host](/notes/grpc/10-production) — load balancing, observability, and putting it all behind nginx on a VPS.
+পরবর্তী: [Production self-host](/notes/grpc/10-production) — load balancing, observability, এবং একটা VPS-এ সবকিছু nginx-এর পেছনে বসানো।

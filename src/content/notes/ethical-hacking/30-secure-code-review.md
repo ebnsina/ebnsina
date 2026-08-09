@@ -1,9 +1,9 @@
 ---
 title: 'Secure Code Review'
-subtitle: 'SAST tools, manual code auditing, threat modeling, finding vulnerabilities in real codebases, and building security into the SDLC.'
+subtitle: 'SAST tools, manual code auditing, threat modeling, বাস্তব codebase-এ vulnerability খুঁজে বের করা, এবং SDLC-তে security যুক্ত করা।'
 chapter: 30
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'secure code review',
@@ -24,15 +24,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-It's 100x cheaper to fix a vulnerability in code review than in production. Code review is the quality control station before the factory ships the product — the right place to catch defects is before customers see them.
+production-এর চেয়ে code review-তে একটা vulnerability ঠিক করা 100 গুণ সস্তা। Code review হলো factory পণ্য পাঠানোর আগের quality control station — ত্রুটি ধরার সঠিক জায়গা হলো ক্রেতা সেটা দেখার আগেই।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একজন blueprint inspector — শহরের নতুন বড় বাড়িগুলোর নকশা ইট গাঁথা শুরুর আগে লাইন ধরে ধরে পড়া তার কাজ। একদিন একটা টাওয়ারের নকশা টেবিলে খুলে বসলেন। বাইরে থেকে সব ঠিকঠাক দেখাচ্ছে, কিন্তু ফাতিমা প্রতিটা দাগ ধরে এগোন — "এই দরজাটা কি এভাবেই খোলা উচিত? এই দেয়ালটা কি এখানেই থাকার কথা?" খুঁটিয়ে দেখতে দেখতে তিনটে বিপজ্জনক ভুল বেরিয়ে এল। ফায়ার এক্সিটটা ভেতরের দিকে খোলে — আগুন লাগলে ভিড়ের চাপে ওটা কোনোদিন খুলবে না। একটা load-bearing দেয়ালে দরজা কাটা হয়েছে, অথচ ওখানে কোনো ফাঁক থাকার কথাই নয়, যে কেউ চাইলে দুর্বল জায়গা দিয়ে ঢুকে পড়বে। আর সবচেয়ে বাজে — নকশার গায়েই লেখা, master-key কোথায় লুকিয়ে রাখা হবে, সবার চোখের সামনে।
+
+ফাতিমা পেন্সিল দিয়ে তিনটে জায়গা দাগিয়ে ঠিক করিয়ে দিলেন — কাগজে। খরচ? একটা ইরেজার আর কয়েক মিনিট। তিনি জানেন, এই একই ভুল যদি বাড়ি তৈরি হয়ে, মানুষজন উঠে যাওয়ার পর ধরা পড়ত, তাহলে দেয়াল ভাঙা, দরজা সরানো, তালা বদলানো — বা আরও খারাপ, একটা দুর্ঘটনা। কাগজে ভুল ধরা যত সস্তা, ইট-পাথরে ধরা তত ভয়ংকর ব্যয়বহুল।
+
+এই গল্পটাই আসলে **secure code review**। নকশা লাইন ধরে পড়ে construction শুরুর আগেই ভুল বের করা মানে হলো source code ship করার আগেই সেটা পড়ে security flaw খুঁজে বের করা। ভেতরে খোলা ফায়ার এক্সিট হলো missing **authorization** (দরজা খুলে দিলে যে কেউ ঢুকে যায়), load-bearing দেয়ালে কাটা দরজা হলো unvalidated user input যেখানে থাকার কথা নয় (**input validation** নেই), আর নকশায় লেখা master-key হলো **hardcoded secret**। আর কাগজে পেন্সিলে ঠিক করা বনাম বাড়ি ভরে যাওয়ার পর ঠিক করা — এটাই হলো **vulnerability** production-এ যাওয়ার আগে ধরা কতটা সস্তা, আর breach-এর পরে ধরা কতটা ব্যয়বহুল। বাস্তবে ঠিক এই কারণেই টিমগুলো merge-এর আগে PR review করে আর Semgrep/CodeQL দিয়ে scan চালায় — একটা flaw কোডে থাকা অবস্থায় ঠিক করা 100 গুণ সস্তা, breach হয়ে গেলে সেটা সংবাদপত্রের শিরোনাম।
+
 ## The Security Code Review Mindset
 
-Don't ask "is this correct?" Ask "how can an attacker abuse this?"
+"এটা কি ঠিক আছে?" জিজ্ঞেস করবেন না। জিজ্ঞেস করুন "একজন attacker এটাকে কীভাবে অপব্যবহার করতে পারে?"
 
 ```
 Key questions per function:

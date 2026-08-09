@@ -1,9 +1,9 @@
 ---
 title: 'Search in Practice'
-subtitle: 'Relevance tuning, synonyms, personalization, analytics, and the operational patterns that keep search working well over time.'
+subtitle: 'Relevance tuning, synonym, personalization, analytics, এবং সময়ের সাথে search-কে ভালোভাবে চালু রাখার অপারেশনাল প্যাটার্ন।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   [
     'relevance tuning',
@@ -21,17 +21,25 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A new reference librarian vs a seasoned one: both can answer "where is the book on databases?" but the seasoned one knows that when people ask for "databases," they usually want relational databases, not data warehouses — and automatically guides them there. Search relevance tuning is teaching the search engine what your seasoned librarian already knows.
+একজন নতুন reference লাইব্রেরিয়ান বনাম একজন অভিজ্ঞ লাইব্রেরিয়ান: দুজনেই "database-এর উপর বইটা কোথায়?" উত্তর দিতে পারেন, কিন্তু অভিজ্ঞজন জানেন যে মানুষ যখন "database" চায়, তারা সাধারণত relational database চায়, data warehouse না — আর স্বয়ংক্রিয়ভাবে তাদের সেদিকে গাইড করেন। Search relevance tuning হলো search engine-কে সেটাই শেখানো যা আপনার অভিজ্ঞ লাইব্রেরিয়ান আগে থেকেই জানেন।
 
 </Callout>
 
-## Measuring Search Quality
+## গল্পে বুঝি
 
-You can't improve what you don't measure. Track:
+কর্ডোবার এক বড় লাইব্রেরির ক্যাটালগার ফাতিমা আল-ফিহরি। তার কাজটা কখনো শেষ হয় না — প্রতিদিন নতুন বই আসে, পুরনো বই বাতিল হয়ে তাক থেকে সরে যায়, কোনো বইয়ের শিরোনামে ভুল ধরা পড়লে সেটা শুধরে দিতে হয়। আর প্রতিবার এমন কিছু হলেই ফাতিমা সঙ্গে সঙ্গে ছুটে যান কার্ড-ক্যাটালগের ড্রয়ারের কাছে — নতুন কার্ড ঢোকান, বাতিল বইয়ের কার্ড ফেলে দেন, ভুল কার্ডটা টেনে নতুন করে লেখেন। এক মুহূর্তও দেরি করেন না, কারণ ক্যাটালগ যদি আসল তাকের সাথে একটুও বেমিল হয়ে যায়, পাঠক কার্ড দেখে যে বই খুঁজতে যাবে সেটা তাকে থাকবেই না।
 
-**Click-through rate (CTR):** what percentage of searches result in a click?
+কিন্তু ফাতিমার কাজ শুধু কার্ড হালনাগাদ রাখাতেই থামে না। কেউ যখন "চিকিৎসাশাস্ত্র" খুঁজতে আসে, তিনি জানেন ইবনে সিনার "আল-কানুন" বা আল-খোয়ারিজমির লেখা সবচেয়ে বেশি চাওয়া হয় — তাই সেগুলোর কার্ড তিনি সামনে, সবার আগে সাজিয়ে রাখেন, নিছক তাকের সিরিয়াল অনুযায়ী নয়। কোন বই কে কতবার নেয়, কোনটা ফেরত দেয় না পড়েই — এসব খেয়াল রেখে তিনি বারবার সাজানোটা ঘষে-মেজে ঠিক করেন, যাতে পাঠক প্রথম কার্ডেই তার আসল দরকারি বইটা পায়।
+
+এই গল্পটাই আসলে **search in practice**। আসল তাক হলো আপনার **source database**, আর কার্ড-ক্যাটালগ হলো **search index** — দুটো এক পলকের জন্যও বেমিল হওয়া চলবে না। প্রতিবার বই যোগ/বাদ/সংশোধনের সাথে সাথে ফাতিমার কার্ড আপডেট করাটাই **indexing pipeline** দিয়ে index-কে source data-র সাথে **sync**-এ রাখা। আর কোন কার্ড আগে দেখাবে সেটা জনপ্রিয়তা আর প্রাসঙ্গিকতা বুঝে সাজানোটাই **relevance tuning**। বাস্তবে Meilisearch বা Elasticsearch-এ ঠিক এভাবেই ডেটা বদলালে index হালনাগাদ করা হয়, আর CTR-এর মতো analytics দেখে ranking rules টিউন করা হয় — যাতে সেরা result সবার উপরে থাকে।
+
+## Search Quality মাপা
+
+যা মাপেন না তা উন্নত করতে পারবেন না। ট্র্যাক করুন:
+
+**Click-through rate (CTR):** কত শতাংশ search একটা click-এ পরিণত হয়?
 
 ```typescript
 // Log search events
@@ -72,9 +80,9 @@ const ctr = await db.query(`
 `);
 ```
 
-Low CTR queries are your worst performers — users search, see results, click nothing. These are the highest-value queries to fix.
+কম CTR-এর query-গুলো আপনার সবচেয়ে খারাপ পারফর্মার — ইউজার সার্চ করে, result দেখে, কিছুতেই click করে না। এগুলোই ফিক্স করার সবচেয়ে বেশি মূল্যবান query।
 
-**Mean Reciprocal Rank (MRR):** how high is the clicked result?
+**Mean Reciprocal Rank (MRR):** click করা result কতটা উপরে?
 
 ```typescript
 // MRR = average of (1 / position of first click)
@@ -88,7 +96,7 @@ const mrr = await db.query(`
 // MRR of 0.5 = average first click at position 2
 ```
 
-**Zero-results rate:** what percentage of searches return no results?
+**Zero-results rate:** কত শতাংশ search কোনো result দেয় না?
 
 ```typescript
 const zeroResults = await db.query(`
@@ -104,11 +112,11 @@ const zeroResults = await db.query(`
 `);
 ```
 
-Zero-results queries reveal gaps: missing products, missing synonyms, or very specific queries that need fuzzy matching.
+Zero-results query-গুলো ফাঁক প্রকাশ করে: অনুপস্থিত প্রোডাক্ট, অনুপস্থিত synonym, অথবা খুব নির্দিষ্ট query যেগুলোর fuzzy matching দরকার।
 
-## Synonyms
+## Synonym
 
-Users say "couch," you have "sofa." Users say "laptop," you have "notebook computer."
+ইউজার বলে "couch," আপনার আছে "sofa।" ইউজার বলে "laptop," আপনার আছে "notebook computer।"
 
 ```typescript
 // Meilisearch synonyms
@@ -135,11 +143,11 @@ filter: {
 },
 ```
 
-Build synonyms from analytics — if users frequently search for X and click a result for Y, X and Y might be synonyms.
+Analytics থেকে synonym বানান — ইউজাররা যদি ঘন ঘন X সার্চ করে আর Y-এর একটা result-এ click করে, তাহলে X আর Y synonym হতে পারে।
 
-## Query Rules (Curated Results)
+## Query Rules (Curated Result)
 
-Business-curated results that override relevance for specific queries:
+ব্যবসায়িকভাবে curate করা result যা নির্দিষ্ট query-এর জন্য relevance override করে:
 
 ```typescript
 // Meilisearch query rules
@@ -163,7 +171,7 @@ const results = await es.search({
 });
 ```
 
-Implement query rules in a database table:
+একটা database table-এ query rule ইমপ্লিমেন্ট করুন:
 
 ```sql
 CREATE TABLE search_rules (
@@ -182,7 +190,7 @@ VALUES ('macbook', 'pin', ARRAY['prod-123']);
 
 ## Personalization
 
-Boost results based on user behavior:
+ইউজারের আচরণের উপর ভিত্তি করে result boost করুন:
 
 ```typescript
 async function personalizedSearch(userId: string, query: string) {
@@ -232,11 +240,11 @@ async function personalizedSearch(userId: string, query: string) {
 }
 ```
 
-Personalization is powerful but adds latency (extra DB query per search). Cache user preferences for a few minutes.
+Personalization শক্তিশালী কিন্তু latency যোগ করে (প্রতি search-এ বাড়তি DB query)। ইউজার preference কয়েক মিনিটের জন্য cache করুন।
 
 ## A/B Testing Relevance
 
-Don't guess which ranking is better — measure it:
+কোন ranking ভালো তা অনুমান করবেন না — মাপুন:
 
 ```typescript
 // Assign users to variants
@@ -276,9 +284,9 @@ const comparison = await db.query(`
 `);
 ```
 
-## Handling "No Results"
+## "No Results" হ্যান্ডল করা
 
-Never show a blank "no results" page:
+কখনো একটা ফাঁকা "no results" পেজ দেখাবেন না:
 
 ```typescript
 async function searchWithFallback(query: string) {

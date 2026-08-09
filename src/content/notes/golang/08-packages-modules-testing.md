@@ -1,9 +1,9 @@
 ---
-title: 'Packages, Modules & Testing'
-subtitle: 'How to organize Go code for real projects — dependency management, package design, and writing tests that catch real bugs.'
+title: 'Packages, Modules ও Testing'
+subtitle: 'বাস্তব প্রজেক্টের জন্য কীভাবে Go কোড গোছাবেন — dependency management, package design, আর সত্যিকারের bug ধরা test লেখা।'
 chapter: 8
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['packages', 'modules', 'testing', 'benchmarks', 'table-driven tests']
 ---
 
@@ -11,9 +11,17 @@ topics: ['packages', 'modules', 'testing', 'benchmarks', 'table-driven tests']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির একটা ফার্নিচার ওয়ার্কশপ। শুরুর দিকে সব যন্ত্রপাতি এক জায়গায় ডাঁই করা থাকত — কেউ একটা স্ক্রু-ড্রাইভার খুঁজতে গিয়ে আধা ঘণ্টা নষ্ট করত। পরে আল-খোয়ারিজমি সব গুছিয়ে আলাদা আলাদা লেবেল-করা টুলবক্সে রাখল — একটায় "মাপজোখ", একটায় "কাটাকাটি", একটায় "জোড়া লাগানো"। যে কারিগরের ছেনি দরকার, সে সোজা "কাটাকাটি" বাক্সে হাত দেয়, বাকি বাক্স নিয়ে মাথা ঘামাতে হয় না। প্রতিটা বাক্সের ভেতরে কিছু নিজস্ব টুকিটাকিও থাকে যা শুধু ঐ বাক্সের কাজেই লাগে, বাইরের কেউ ছোঁয় না।
+
+আল-খোয়ারিজমি নিজে সব পার্টস বানায় না — কব্জা, হাতল, রঙ বাইরের সাপ্লায়ার থেকে আসে। তাই সে একটা খাতা রাখে যেখানে প্রতিটা বাইরের পার্টসের ঠিক কোন সাপ্লায়ার আর কোন ভার্সনের মাল, সেটা লেখা — "ঢাকা হার্ডওয়্যারের কব্জা, মডেল v2.1"। এই খাতা থাকায় ছ'মাস পরে একই আলমারি বানাতে গেলে হুবহু একই জিনিস পাওয়া যায়, ভুল ভার্সন এসে জোড়া না-লাগার ঝামেলা হয় না। আর গুরুত্বপূর্ণ ব্যাপার — প্রতিটা পার্টস কাজে লাগানোর আগে আল-খোয়ারিজমি আলাদা করে পরখ করে নেয়: কব্জাটা ঠিকঠাক খোলে-বন্ধ হয় কি না, রঙটা ঠিক শেডের কি না। খারাপ পার্টস আগেভাগে বাদ পড়ে, পুরো আলমারি বানানোর পর ধরা পড়ে না।
+
+এই গল্পটাই আসলে এই চ্যাপ্টার। লেবেল-করা টুলবক্স হলো **package** — সম্পর্কিত কোড এক জায়গায় গোছানো, ভেতরের কিছু জিনিস বাইরে লুকানো (unexported)। বাইরের পার্টসের ঠিকানা-ভার্সন লেখা খাতাটাই **module** আর তার **versioned dependency** — `go.mod`/`go.sum` ঠিক এভাবেই প্রতিটা dependency-র exact version আটকে রাখে যাতে build reproducible হয়। আর কাজে লাগানোর আগে প্রতিটা পার্টস পরখ করাটাই **testing** — `go test` দিয়ে প্রতিটা unit আলাদা করে যাচাই করা, বাগ যেন প্রোডাকশনে নয়, আগেই ধরা পড়ে। বাস্তবেও বড় Go প্রজেক্ট ঠিক এভাবেই টেকে — গোছানো package, version-locked dependency, আর প্রতিটা commit-এ চলা test।
+
 ## Package Design
 
-Every Go file belongs to a package. Packages are Go's unit of code organization, visibility, and compilation.
+প্রতিটা Go ফাইল একটা package-এর অন্তর্ভুক্ত। Package হলো Go-র কোড organization, visibility, আর compilation-এর একক।
 
 ```
 myapp/
@@ -36,13 +44,13 @@ myapp/
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Packages are like departments in a company. The Engineering department (package) has its own internal processes (unexported functions) that other departments can't see. But it publishes APIs (exported functions) that Sales or Marketing can use. The `internal/` directory is like classified projects — only your own company can access them.
+Package অনেকটা একটা কোম্পানির বিভাগের মতো। Engineering বিভাগের (package) নিজস্ব internal প্রক্রিয়া আছে (unexported function) যা অন্য বিভাগ দেখতে পায় না। কিন্তু এটা API প্রকাশ করে (exported function) যা Sales বা Marketing ব্যবহার করতে পারে। `internal/` directory অনেকটা গোপন প্রজেক্টের মতো — শুধু আপনার নিজের কোম্পানিই সেগুলো access করতে পারে।
 
 </Callout>
 
-### Naming Conventions
+### Naming Convention
 
 ```go
 // Package names should be short, lowercase, singular
@@ -64,13 +72,13 @@ http.NewRequest() // Fine — http is the package, Request is the type
 
 <Callout type="tip">
 
-**The `internal/` directory is compiler-enforced.** Code in `myapp/internal/auth` can only be imported by code under `myapp/`. External projects cannot import it. Use this for code that's not part of your public API.
+**`internal/` directory compiler-enforced।** `myapp/internal/auth`-এর কোড শুধু `myapp/`-এর অধীনের কোড থেকেই import করা যায়। বাইরের প্রজেক্ট এটা import করতে পারে না। এমন কোডের জন্য এটা ব্যবহার করুন যা আপনার public API-এর অংশ নয়।
 
 </Callout>
 
 ## Go Modules
 
-Modules are Go's dependency management system. Every project starts with `go mod init`.
+Module হলো Go-র dependency management সিস্টেম। প্রতিটা প্রজেক্ট `go mod init` দিয়ে শুরু হয়।
 
 ```bash
 # Initialize a new module
@@ -107,7 +115,7 @@ require (
 
 ### go.sum File
 
-The `go.sum` file contains cryptographic checksums of every dependency. It ensures that builds are **reproducible** — the same code runs everywhere.
+`go.sum` ফাইলে প্রতিটা dependency-র cryptographic checksum থাকে। এটা নিশ্চিত করে যে build **reproducible** — একই কোড সব জায়গায় চলে।
 
 ```
 github.com/gorilla/mux v1.8.1 h1:TuMoUvkRETdXqEx+iyz...
@@ -116,13 +124,13 @@ github.com/gorilla/mux v1.8.1/go.mod h1:DVbg23sWSpFR...
 
 <Callout type="warning">
 
-**Always commit `go.sum` to version control.** It protects against supply chain attacks — if a dependency is tampered with, the checksum won't match and the build fails.
+**`go.sum` সবসময় version control-এ commit করুন।** এটা supply chain attack থেকে রক্ষা করে — কোনো dependency টেম্পার করা হলে, checksum মিলবে না আর build fail করবে।
 
 </Callout>
 
-## Testing in Go
+## Go-তে Testing
 
-Go has testing built into the language. No framework needed — just the `testing` package and `go test`.
+Go-তে testing ভাষার মধ্যেই built-in। কোনো framework লাগে না — শুধু `testing` package আর `go test`।
 
 ```go
 // math.go
@@ -193,7 +201,7 @@ go tool cover -html=coverage.out  # Open in browser
 
 ## Table-Driven Tests
 
-The idiomatic Go testing pattern. Used extensively at Google, Uber, and throughout the standard library:
+Idiomatic Go testing প্যাটার্ন। Google, Uber, আর পুরো standard library জুড়ে ব্যাপকভাবে ব্যবহৃত:
 
 ```go
 func TestAdd(t *testing.T) {
@@ -222,13 +230,13 @@ func TestAdd(t *testing.T) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Table-driven tests are like a QA checklist. Instead of writing separate test procedures for each scenario, you have one procedure and a table of inputs and expected outputs. Run down the checklist — if any row fails, you know exactly which scenario broke.
+Table-driven test অনেকটা একটা QA চেকলিস্টের মতো। প্রতিটা scenario-র জন্য আলাদা test procedure লেখার বদলে, আপনার একটা procedure আর input ও expected output-এর একটা টেবিল থাকে। চেকলিস্ট ধরে নিচে নামুন — কোনো row fail করলে, আপনি ঠিক জানেন কোন scenario ভেঙেছে।
 
 </Callout>
 
-## Testing HTTP Handlers
+## HTTP Handler Testing
 
 ```go
 func TestGetUserHandler(t *testing.T) {
@@ -283,7 +291,7 @@ func TestGetUserHandler(t *testing.T) {
 
 ## Benchmarks
 
-Go has built-in benchmarking. Essential for performance-critical code:
+Go-তে benchmarking built-in। Performance-critical কোডের জন্য অপরিহার্য:
 
 ```go
 func BenchmarkAdd(b *testing.B) {
@@ -368,7 +376,7 @@ func TestSomething(t *testing.T) {
 }
 ```
 
-## TestMain: Setup and Teardown
+## TestMain: Setup এবং Teardown
 
 ```go
 func TestMain(m *testing.M) {
@@ -384,12 +392,12 @@ func TestMain(m *testing.M) {
 }
 ```
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Package names are short and singular** — `user`, not `users` or `userPackage`
-2. **`internal/` is compiler-enforced privacy** — external code cannot import from it
-3. **Always commit `go.sum`** — it prevents supply chain attacks with checksum verification
-4. **Table-driven tests** are the Go standard — one test function, many cases
-5. **`t.Helper()`** in test utilities — shows the caller's line number on failure
-6. **Benchmarks are built in** — `go test -bench=. -benchmem` for performance analysis
-7. **`go test -race`** — always run the race detector in CI
+1. **Package name ছোট আর singular** — `user`, `users` বা `userPackage` নয়
+2. **`internal/` compiler-enforced privacy** — বাইরের কোড এটা থেকে import করতে পারে না
+3. **`go.sum` সবসময় commit করুন** — এটা checksum verification দিয়ে supply chain attack ঠেকায়
+4. **Table-driven test** হলো Go স্ট্যান্ডার্ড — একটা test function, অনেক case
+5. **test utility-তে `t.Helper()`** — fail হলে caller-এর line number দেখায়
+6. **Benchmark built-in** — performance analysis-এর জন্য `go test -bench=. -benchmem`
+7. **`go test -race`** — CI-তে সবসময় race detector চালান

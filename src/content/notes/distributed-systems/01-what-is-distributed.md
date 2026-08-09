@@ -1,9 +1,9 @@
 ---
 title: 'What Makes a System Distributed'
-subtitle: 'Why we distribute at all, why independent failure changes everything, and the eight fallacies that trip up every newcomer.'
+subtitle: 'কেন আমরা আদৌ distribute করি, কেন independent failure সবকিছু বদলে দেয়, এবং আটটি fallacy যা প্রতিটি নতুন মানুষকে হোঁচট খাওয়ায়।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['distributed', 'fallacies']
 ---
 
@@ -11,66 +11,74 @@ topics: ['distributed', 'fallacies']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A distributed system is a collection of independent computers that cooperate to appear, to their users, as a single coherent system. The key word is **independent**: each machine has its own memory, its own clock, and its own ability to fail without taking the others down. That independence is both the whole point and the whole problem.
+একটি distributed system হলো স্বাধীন কম্পিউটারের একটি সংগ্রহ যারা সহযোগিতা করে তাদের ব্যবহারকারীদের কাছে একটি একক সুসংগত সিস্টেম হিসেবে দেখা দেয়। মূল শব্দটি হলো **independent**: প্রতিটি মেশিনের নিজস্ব memory, নিজস্ব clock, এবং অন্যদের সাথে না টেনে নিজে fail হওয়ার নিজস্ব ক্ষমতা আছে। সেই স্বাধীনতাই একইসাথে পুরো উদ্দেশ্য এবং পুরো সমস্যা।
 
-## Why distribute at all
+## গল্পে বুঝি
 
-Running everything on one machine is simpler in every way, so you should only distribute when you must. Three forces push you across that line.
+আল-খোয়ারিজমির একটা কাপড়ের ব্যবসা, কিন্তু দোকান একটা নয় — ঢাকা, চট্টগ্রাম আর সিলেটে আলাদা আলাদা তিনটা শাখা। বাইরে থেকে দেখলে মনে হয় একটাই ব্যবসা: সব শাখায় একই দাম, আর গুদামের মোট থান কাপড় সবাই মিলে ভাগ করে বিক্রি করে। কিন্তু আসলে প্রতিটা শাখা নিজের মতো চলে — নিজের ক্যাশবাক্স, নিজের হিসাবের খাতা, নিজের ঘড়ি। মাথার ওপর এমন কোনো একজন বড় কর্তা নেই যে একসাথে তিন শহরে বসে সব দেখছে। শাখাগুলো নিজেদের মধ্যে মেলাতে পারে কেবল টেলিফোনে — আর সেই ফোন লাইন প্রায়ই কেটে যায়, লাইন ব্যস্ত থাকে, কথা মাঝপথে হারিয়ে যায়।
 
-**Scale.** A single server has a ceiling: finite CPU, memory, disk, and network. Vertical scaling (a bigger box) gets expensive fast and still has a ceiling. Horizontal scaling — adding more machines — has effectively no ceiling, but only works if the work can be split across them.
+এখন ধরো, সিলেটের ফাতিমা আল-ফিহরি ঢাকায় ফোন করলেন — "একটা নীল থান আছে কিনা দেখো, বিক্রি করে দিচ্ছি।" ঢাকার আল-বিরুনি "হ্যাঁ আছে" বলার পরপরই লাইন কেটে গেল। এখন সিলেট জানে না ঢাকা কি সত্যিই কাপড়টা আলাদা করে রাখল, নাকি কথাটাই পৌঁছায়নি, নাকি ঢাকার লোক এখনো গুদামে খুঁজছে। এদিকে চট্টগ্রামের দোকান দিব্যি খোলা, খদ্দের সামলাচ্ছে — সিলেট-ঢাকার এই গোলমাল নিয়ে তার কোনো মাথাব্যথাই নেই। একটা শাখা বন্ধ থাকলে বা একটা লাইন কাটা থাকলেও বাকিরা থেমে থাকে না।
 
-**Fault tolerance.** One machine is one point of failure. If it dies, your service dies. Spreading work and data across many machines lets the system survive the loss of any one of them — but only if you design for it.
+এই তিন শহরের ব্যবসাটাই আসলে একটা **distributed system**। প্রতিটা শাখা এক-একটা স্বাধীন **node**, টেলিফোন লাইনগুলো হলো **network**, আর সবার ওপরে কোনো একক কর্তা বা একটাই দেয়ালঘড়ি না থাকাটাই হলো shared memory বা global clock না থাকা — কে আগে কী করল তা কেউ নিশ্চিত করে বলতে পারে না। একটা শাখা বা একটা লাইন বসে গেলেও বাকি সব চালু থাকা — এটাই **partial failure**, যা একটামাত্র দোকান হলে কখনো ঘটত না (দোকান বন্ধ মানে পুরো ব্যবসাই বন্ধ)। বাস্তবে Google বা Amazon-এর মতো সিস্টেম ঠিক এভাবেই দুনিয়াজুড়ে হাজার হাজার সার্ভারে ছড়িয়ে থাকে — একটা সার্ভার বা একটা network link মরে গেলেও সেবা চালু থাকে, কারণ শুরু থেকেই ধরে নেওয়া হয় যে কোনো একটা অংশ যেকোনো সময় বসে যেতে পারে।
 
-**Latency.** The speed of light is a hard limit. A user in Tokyo querying a server in Virginia pays roughly 150ms round-trip no matter how fast the server is. Placing machines near users removes that distance.
+## কেন আদৌ distribute করব
 
-## Independent failure: the defining property
+সবকিছু একটা মেশিনে চালানো সব দিক থেকেই সহজ, তাই তোমার শুধু তখনই distribute করা উচিত যখন করতেই হবে। তিনটি শক্তি তোমাকে সেই সীমা পার করায়।
 
-On a single machine, components fail together. If the process crashes, everything in it stops at once — there is no awkward in-between state where half the program is alive and half is dead.
+**Scale.** একটি একক server-এর একটি সীমা আছে: সীমিত CPU, memory, disk, এবং network। Vertical scaling (একটি বড় বক্স) দ্রুত ব্যয়বহুল হয়ে ওঠে আর তারপরও একটা ছাদ থাকে। Horizontal scaling — আরও মেশিন যোগ করা — কার্যত কোনো ছাদ নেই, কিন্তু তা তখনই কাজ করে যখন কাজটা সেগুলোর মধ্যে ভাগ করা যায়।
 
-In a distributed system, **parts fail independently**. Machine A can crash while machine B keeps running. The network link between them can drop while both machines are perfectly healthy. This creates a category of problem that simply does not exist on one machine: **partial failure**.
+**Fault tolerance.** একটি মেশিন মানে একটি single point of failure। এটি মরে গেলে তোমার service মরে যায়। অনেক মেশিন জুড়ে কাজ ও data ছড়িয়ে দিলে সিস্টেম তাদের যেকোনো একটির ক্ষতি সহ্য করে টিকে থাকতে পারে — কিন্তু শুধু তখনই যদি তুমি সেভাবে ডিজাইন করো।
 
-Worse, when machine A sends a request to machine B and gets no reply, A cannot tell which of these happened:
+**Latency.** আলোর গতি একটি কঠিন সীমা। Virginia-র একটি server-এ query করা Tokyo-র একজন ব্যবহারকারী প্রায় 150ms round-trip গোনে, server যত দ্রুতই হোক না কেন। ব্যবহারকারীদের কাছাকাছি মেশিন রাখলে সেই দূরত্ব দূর হয়।
 
-- B never received the request.
-- B received it, did the work, and the reply was lost on the way back.
-- B is just slow and the reply is still coming.
+## Independent failure: সংজ্ঞায়ক বৈশিষ্ট্য
 
-All three look identical from A's side. Most of the difficulty in distributed systems flows from this single ambiguity.
+একটি একক মেশিনে component গুলো একসাথে fail করে। process crash করলে তার ভেতরের সবকিছু একসাথে থেমে যায় — এমন কোনো অস্বস্তিকর মধ্যবর্তী অবস্থা নেই যেখানে অর্ধেক প্রোগ্রাম জীবিত আর অর্ধেক মৃত।
+
+একটি distributed system-এ **অংশগুলো স্বাধীনভাবে fail করে**। মেশিন A crash করতে পারে যখন মেশিন B চলতেই থাকে। তাদের মধ্যকার network link drop করতে পারে যখন দুটো মেশিনই একদম সুস্থ। এটি এমন এক শ্রেণির সমস্যা তৈরি করে যা একটা মেশিনে একেবারেই থাকে না: **partial failure**।
+
+আরও খারাপ, যখন মেশিন A মেশিন B-কে একটা request পাঠায় এবং কোনো উত্তর পায় না, A বলতে পারে না এর মধ্যে কোনটা ঘটেছে:
+
+- B কখনো request-টাই পায়নি।
+- B এটি পেয়েছে, কাজ করেছে, এবং উত্তরটা ফেরার পথে হারিয়ে গেছে।
+- B শুধু ধীর আর উত্তর এখনো আসছে।
+
+A-এর দিক থেকে তিনটাই একরকম দেখায়। distributed systems-এর বেশিরভাগ কাঠিন্য এই একটি অস্পষ্টতা থেকেই প্রবাহিত হয়।
 
 <Callout type="warning">
 
-**The central hard truth:** in a distributed system you can never be certain whether a remote operation succeeded, failed, or is still in progress. Every design decision downstream is shaped by living with that uncertainty.
+**কেন্দ্রীয় কঠিন সত্য:** একটি distributed system-এ তুমি কখনোই নিশ্চিত হতে পারো না যে একটি remote operation সফল হয়েছে, fail করেছে, নাকি এখনো চলছে। এর পরের প্রতিটি ডিজাইন সিদ্ধান্ত সেই অনিশ্চয়তার সাথে বাঁচার দ্বারা গঠিত।
 
 </Callout>
 
-## The eight fallacies of distributed computing
+## distributed computing-এর আটটি fallacy
 
-In the 1990s, engineers at Sun Microsystems catalogued the false assumptions newcomers repeatedly make. They are worth memorizing, because every one of them will eventually bite you.
+১৯৯০-এর দশকে Sun Microsystems-এর engineer-রা নতুনদের বারবার করা মিথ্যা ধারণাগুলো তালিকাভুক্ত করেছিলেন। এগুলো মুখস্থ করার মতো, কারণ এদের প্রত্যেকটিই একসময় তোমাকে কামড় দেবে।
 
-1. **The network is reliable.** Packets are lost, links go down, and messages arrive out of order. Plan for it.
-2. **Latency is zero.** A remote call is thousands to millions of times slower than a local one. Chatty designs that make many small calls feel fine on `localhost` and collapse in production.
-3. **Bandwidth is infinite.** Large payloads and high request rates saturate links. Data has a size and a cost to move.
-4. **The network is secure.** Anything on the wire can be read or tampered with unless you encrypt and authenticate it.
-5. **Topology doesn't change.** Machines are added, removed, and relocated constantly. Hard-coding addresses and routes guarantees future pain.
-6. **There is one administrator.** Real systems span teams, vendors, and clouds, each with different policies and change windows.
-7. **Transport cost is zero.** Serializing, sending, and deserializing data costs CPU and money, not just time.
-8. **The network is homogeneous.** Different machines run different hardware, operating systems, and protocol versions. Assume diversity.
+1. **Network নির্ভরযোগ্য।** Packet হারায়, link down হয়, আর message ভুল ক্রমে পৌঁছায়। এর জন্য পরিকল্পনা করো।
+2. **Latency শূন্য।** একটি remote call একটি local call-এর চেয়ে হাজার থেকে লক্ষগুণ ধীর। যেসব chatty ডিজাইন অনেক ছোট ছোট call করে, সেগুলো `localhost`-এ ঠিকঠাক লাগে আর production-এ ভেঙে পড়ে।
+3. **Bandwidth অসীম।** বড় payload আর উচ্চ request rate link গুলোকে saturate করে। Data-র একটা আকার আছে আর সরানোর খরচ আছে।
+4. **Network নিরাপদ।** তুমি encrypt ও authenticate না করলে wire-এর উপরের যেকোনো কিছু পড়া বা বিকৃত করা যায়।
+5. **Topology বদলায় না।** মেশিন ক্রমাগত যোগ, বাদ, ও স্থানান্তরিত হয়। address আর route hard-code করা মানে ভবিষ্যতের যন্ত্রণা নিশ্চিত করা।
+6. **একজন administrator আছে।** বাস্তব সিস্টেম দল, vendor, ও cloud জুড়ে বিস্তৃত, প্রত্যেকের ভিন্ন policy আর change window।
+7. **Transport cost শূন্য।** Data serialize, send, ও deserialize করতে CPU ও টাকা খরচ হয়, শুধু সময় নয়।
+8. **Network সমসত্ত্ব।** ভিন্ন মেশিন ভিন্ন hardware, operating system, ও protocol version চালায়। বৈচিত্র্য ধরে নাও।
 
-Each fallacy is a comfortable assumption from single-machine programming that quietly becomes false the moment a network is involved.
+প্রতিটি fallacy হলো single-machine প্রোগ্রামিং থেকে আসা একটি আরামদায়ক ধারণা যা network জড়িত হওয়া মাত্রই নীরবে মিথ্যা হয়ে যায়।
 
-## What changes versus a single machine
+## একটি একক মেশিনের তুলনায় কী বদলায়
 
-It helps to see the shift concretely. The same concept behaves very differently once it crosses a network.
+শিফটটা সুনির্দিষ্টভাবে দেখা সাহায্য করে। একই ধারণা network পার করার পর খুব ভিন্ন আচরণ করে।
 
-| Concept       | Single machine               | Distributed system                         |
-| ------------- | ---------------------------- | ------------------------------------------ |
-| Function call | Always returns or throws     | May time out with unknown outcome          |
-| Clock         | One clock, monotonic         | Many clocks, all drifting                  |
-| Failure       | All-or-nothing               | Partial; some nodes up, some down          |
-| Memory        | Shared, instantly consistent | No shared memory; state is copied and lags |
-| Ordering      | Program order is obvious     | No global order without extra machinery    |
+| ধারণা         | একক মেশিন                    | Distributed system                                   |
+| ------------- | ---------------------------- | ---------------------------------------------------- |
+| Function call | সবসময় return বা throw করে   | অজানা ফলাফল নিয়ে time out করতে পারে                 |
+| Clock         | একটি clock, monotonic        | অনেক clock, সবই drift করছে                           |
+| Failure       | সব-বা-কিছুই-না               | Partial; কিছু node up, কিছু down                     |
+| Memory        | Shared, তাৎক্ষণিক consistent | কোনো shared memory নেই; state কপি হয় ও পিছিয়ে থাকে |
+| Ordering      | Program order স্পষ্ট         | অতিরিক্ত যন্ত্রপাতি ছাড়া কোনো global order নেই      |
 
-Consider a simple example. On one machine, incrementing a counter is a single instruction and is automatically consistent. Across two machines, "increment the counter" becomes: read the current value over the network, add one locally, and write it back. If two machines do this at once, they can both read 5, both write 6, and you have lost an update — a bug that the single-machine version made impossible.
+একটি সরল উদাহরণ ভাবো। একটি মেশিনে একটি counter বাড়ানো একটি একক instruction এবং স্বয়ংক্রিয়ভাবে consistent। দুটি মেশিন জুড়ে "counter বাড়াও" হয়ে যায়: network-এর উপর দিয়ে বর্তমান মান পড়ো, local-এ এক যোগ করো, এবং তা আবার লিখে দাও। দুটি মেশিন যদি একসাথে এটা করে, তারা দুজনেই 5 পড়তে পারে, দুজনেই 6 লিখতে পারে, আর তুমি একটি update হারালে — একটি bug যা single-machine version অসম্ভব করে রেখেছিল।
 
 ```text
 Machine A: read counter -> 5
@@ -81,10 +89,10 @@ Machine B: write 6        # the increment from A is gone
 
 <Callout type="tip">
 
-**Design heuristic:** before adding a network hop, ask whether the work truly needs to live on another machine. The simplest distributed system is the one you didn't build. Distribute for a concrete reason — scale, fault tolerance, or latency — not by default.
+**ডিজাইন heuristic:** একটি network hop যোগ করার আগে জিজ্ঞেস করো কাজটা সত্যিই অন্য মেশিনে থাকার দরকার আছে কিনা। সবচেয়ে সরল distributed system হলো সেটা যেটা তুমি বানাওনি। একটি সুনির্দিষ্ট কারণে distribute করো — scale, fault tolerance, বা latency — default হিসেবে নয়।
 
 </Callout>
 
-## Where this leaves us
+## এখান থেকে আমরা কোথায়
 
-Distribution buys scale, resilience, and locality, but it charges in a currency of uncertainty: partial failure, untrustworthy clocks, and no free global ordering. The rest of this track is about paying that bill deliberately. The next chapter looks hard at the two things you can least trust — failure and time.
+Distribution scale, resilience, ও locality কিনে দেয়, কিন্তু এর মূল্য নেয় অনিশ্চয়তার মুদ্রায়: partial failure, অবিশ্বাস্য clock, এবং বিনামূল্যে কোনো global ordering নেই। এই ট্র্যাকের বাকিটা হলো সেই বিলটা ইচ্ছাকৃতভাবে পরিশোধ করা নিয়ে। পরের অধ্যায়ে সবচেয়ে কম বিশ্বাসযোগ্য দুটো জিনিসের দিকে কঠোরভাবে তাকানো হবে — failure ও time।

@@ -6,5 +6,5 @@ export function entries() {
 }
 
 export function load({ params }) {
-	return loadCategoryData(params.category, 'en');
+	return loadCategoryData(params.category);
 }

@@ -1,9 +1,9 @@
 ---
 title: 'Structured Logging'
-subtitle: 'JSON logs, log levels, correlation IDs, log aggregation with Loki — building logs you can actually search in production.'
+subtitle: 'JSON logs, log levels, correlation IDs, Loki দিয়ে log aggregation — এমন logs বানানো যা আপনি সত্যিই প্রোডাকশনে search করতে পারবেন।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['logging', 'pino', 'Loki', 'Promtail', 'correlation ID', 'structured logs', 'journald']
 ---
 
@@ -11,15 +11,23 @@ topics: ['logging', 'pino', 'Loki', 'Promtail', 'correlation ID', 'structured lo
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বাগদাদের এক ক্লিনিকে দুজন রেকর্ড-কিপার বসেন। একজন, আল-খোয়ারিজমি, প্রতিটা রোগীর কথা নিজের খাতায় গল্পের মতো লিখে রাখেন — "আজ সকালে একটা অল্পবয়সী লোক কাশতে কাশতে এসেছিল, কিছুক্ষণ বসে ওষুধ নিয়ে চলে গেল।" পড়তে দিব্যি সুন্দর, কিন্তু তিন মাস পর যখন কেউ জানতে চায় "জুলাই মাসে চল্লিশের বেশি বয়সী কতজন কাশির রোগী এসেছিল", তখন আল-খোয়ারিজমিকে খাতার প্রতিটা পৃষ্ঠা এক এক করে পড়তে হয় — কোথাও "অল্পবয়সী", কোথাও "মাঝবয়সী", বয়স কোথাও লেখাই নেই। বের করা কার্যত অসম্ভব।
+
+পাশের টেবিলে ইবনে সিনা একটা বাঁধা ফর্ম ভরেন — আলাদা আলাদা ঘরে নাম, বয়স, উপসর্গ, সময়। প্রতিটা ঘরের একটা নির্দিষ্ট লেবেল আছে, প্রতিটা তথ্য তার নিজের ঘরে বসে। মাস পেরিয়ে গেলেও ফাতিমা আল-ফিহরি এসে শুধু "উপসর্গ = কাশি আর বয়স &gt; ৪০ আর মাস = জুলাই" বললেই সব মিলে যাওয়া রেকর্ড সঙ্গে সঙ্গে বেরিয়ে আসে — কোনো পৃষ্ঠা হাতড়াতে হয় না।
+
+এই ফর্ম-ভরার কাজটাই আসলে **structured logging**। আল-খোয়ারিজমির গল্পের বাক্য হলো একটা unstructured log line — মানুষ পড়তে পারে, কিন্তু মেশিন খুঁজতে পারে না। আর ইবনে সিনার লেবেল করা ঘরগুলো হলো নামওয়ালা **field** — মানে প্রতিটা তথ্য key-value pair হয়ে **JSON** রেকর্ডে বসে (`age`, `symptom`, `time`)। ফাতিমার "সব মিলে যাওয়া রেকর্ড টেনে আনা" ঠিক তাই — field ধরে log **filter**, search আর **aggregate** করা। বাস্তবেও তাই: `log.info('a user paid')` লিখলে পরে কিছুই বের করা যায় না, কিন্তু `log.info({ userId, amount, status }, 'payment')` লিখলে Loki বা Elasticsearch-এ সেকেন্ডে সব failed payment গুনে ফেলা যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A well-organized filing cabinet vs a pile of papers: unstructured logs are a pile — you know the information is in there somewhere, but finding it requires reading every page. Structured logs are the filing cabinet: every document has labeled fields, filed in a consistent location, retrievable in seconds. Same information; radically different searchability.
+একটা গোছানো ফাইলিং ক্যাবিনেট বনাম কাগজের স্তূপ: unstructured logs হলো স্তূপ — আপনি জানেন তথ্যটা ওখানে কোথাও আছে, কিন্তু খুঁজে পেতে প্রতিটা পৃষ্ঠা পড়তে হবে। Structured logs হলো ফাইলিং ক্যাবিনেট: প্রতিটা document-এর লেবেল করা field আছে, একটা নির্দিষ্ট জায়গায় গোছানো, সেকেন্ডের মধ্যে বের করে আনা যায়। তথ্য একই; কিন্তু searchability আকাশ-পাতাল আলাদা।
 
 </Callout>
 
-## Why Structured Logging
+## কেন Structured Logging
 
 Unstructured log:
 
@@ -27,7 +35,7 @@ Unstructured log:
 [2024-01-15 10:23:41] ERROR: Payment failed for order ord-123 (user usr-456): card declined
 ```
 
-To extract `order_id` from this, you write regex. Multiply by 10k log lines per second. Now count how many different developers wrote how many different formats.
+এটা থেকে `order_id` বের করতে আপনি regex লেখেন। সেকেন্ডে 10k log line দিয়ে গুণ করুন। এবার হিসাব করুন কতজন আলাদা developer কত আলাদা ফরম্যাটে লিখেছে।
 
 Structured log (JSON):
 
@@ -44,11 +52,11 @@ Structured log (JSON):
 }
 ```
 
-Every field is a key-value pair. Query: `{service="order-service"} | json | reason="card_declined" | order_id != ""` — instant, no regex.
+প্রতিটা field একটা key-value pair। Query: `{service="order-service"} | json | reason="card_declined" | order_id != ""` — সাথে সাথে, কোনো regex নেই।
 
 ## Pino (Node.js)
 
-Pino is the fastest Node.js logger — synchronous JSON output with minimal allocation:
+Pino হলো সবচেয়ে দ্রুত Node.js logger — কম allocation-এ synchronous JSON output:
 
 ```typescript
 import pino from 'pino';
@@ -84,7 +92,7 @@ reqLog.info({ orderId }, 'Processing order');
 
 ## Correlation IDs
 
-A request passes through multiple services. To follow it across all logs, generate one ID at ingress and propagate it everywhere.
+একটা request একাধিক service-এর মধ্য দিয়ে যায়। সব log জুড়ে সেটাকে অনুসরণ করতে ingress-এ একটা ID তৈরি করুন আর সেটা সব জায়গায় propagate করুন।
 
 ```typescript
 // Express middleware — generate or propagate correlation ID
@@ -115,7 +123,7 @@ app.post('/orders', async (req, res) => {
 });
 ```
 
-Pass the correlation ID to downstream services:
+correlation ID টা downstream service-গুলোতে পাঠান:
 
 ```typescript
 async function callPaymentService(order: Order, log: Logger) {
@@ -130,11 +138,11 @@ async function callPaymentService(order: Order, log: Logger) {
 }
 ```
 
-Now a single query `{correlationId="abc-123"}` across all services shows the complete request journey.
+এখন সব service জুড়ে একটা একক query `{correlationId="abc-123"}` সম্পূর্ণ request journey দেখায়।
 
 ## Log Levels
 
-Use levels consistently — they determine what gets stored and what triggers alerts:
+level গুলো ধারাবাহিকভাবে ব্যবহার করুন — এরাই ঠিক করে কী store হবে আর কী alert trigger করবে:
 
 ```
 ERROR  — unexpected failure requiring investigation; fires an alert
@@ -156,7 +164,7 @@ log.error('Order not found'); // NOT_FOUND is normal — use warn or info
 log.info({ orderId }, 'Order not found, returning 404'); // correct
 ```
 
-**Dynamic log levels in production:**
+**প্রোডাকশনে Dynamic log levels:**
 
 ```typescript
 // Change level at runtime without restart
@@ -171,9 +179,9 @@ process.on('SIGUSR1', () => {
 });
 ```
 
-## Log Aggregation with Loki
+## Loki দিয়ে Log Aggregation
 
-Loki stores logs indexed by labels (like Prometheus, but for logs). Promtail ships logs from files or journald to Loki.
+Loki labels দিয়ে index করে logs store করে (Prometheus-এর মতো, কিন্তু logs-এর জন্য)। Promtail ফাইল বা journald থেকে Loki-তে logs পাঠায়।
 
 ```yaml
 # docker-compose.yml
@@ -225,7 +233,7 @@ scrape_configs:
 
 ## journald (systemd services)
 
-For bare-metal or VM deployments (not Docker), logs go to journald:
+Bare-metal বা VM deployment-এর জন্য (Docker নয়), logs journald-এ যায়:
 
 ```bash
 # All logs from a service
@@ -241,7 +249,7 @@ journalctl -u order-service -o json | jq '.MESSAGE | fromjson | select(.level ==
 journalctl -u order-service --since "2024-01-15 10:00:00" --until "2024-01-15 11:00:00"
 ```
 
-Forward journald to Loki:
+journald কে Loki-তে forward করুন:
 
 ```yaml
 # promtail.yml — journald source
@@ -280,22 +288,22 @@ rate({service="order-service"} | json | level="error" [5m])
   | topk(10, count_over_time[1h])
 ```
 
-## What to Log
+## কী Log করবেন
 
-**Log these:**
+**এগুলো log করুন:**
 
 - Business events (order created, payment charged, user registered)
-- All errors with full context (user, resource ID, error code, message)
+- সব error সম্পূর্ণ context সহ (user, resource ID, error code, message)
 - Slow operations (requests > 1s, queries > 100ms)
-- Security events (failed auth, permission denied, unusual access patterns)
-- Service startup and shutdown
+- Security events (failed auth, permission denied, অস্বাভাবিক access pattern)
+- Service startup আর shutdown
 
-**Don't log these:**
+**এগুলো log করবেন না:**
 
-- Passwords, tokens, card numbers (PCI), personal data (GDPR)
-- Successful health checks (100% noise)
-- Debug-level SQL in production (volume)
-- Stacktraces on expected errors (404, 401)
+- Password, token, card number (PCI), personal data (GDPR)
+- সফল health check (100% noise)
+- প্রোডাকশনে debug-level SQL (volume)
+- Expected error-এ stacktrace (404, 401)
 
 ```typescript
 // Sanitize sensitive data before logging

@@ -1,9 +1,9 @@
 ---
-title: 'Load Balancing Algorithms'
-subtitle: "Round-robin, least connections, IP hash, weighted routing — when each algorithm fits and what happens when backends aren't equal."
+title: 'Load Balancing Algorithm'
+subtitle: 'Round-robin, least connections, IP hash, weighted routing — কোন algorithm কখন মানানসই আর backend সমান না হলে কী ঘটে।'
 chapter: 2
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['load balancing', 'round-robin', 'least connections', 'consistent hashing', 'weighted']
 ---
 
@@ -13,15 +13,23 @@ topics: ['load balancing', 'round-robin', 'least connections', 'consistent hashi
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A host seating guests at restaurant tables: round-robin seats at the next available table in rotation. Least connections seats at the table with fewest people. IP hash always sends the same guest to the same section. Weighted routing sends more guests to the bigger tables. Same problem, different rules — the right one depends on whether your tables are equal, and whether seating the same guest together matters.
+রেস্টুরেন্টে অতিথিদের টেবিলে বসানো একজন host: round-robin পরের খালি টেবিলে rotation করে বসায়। Least connections সবচেয়ে কম লোক বসা টেবিলে বসায়। IP hash সবসময় একই অতিথিকে একই section-এ পাঠায়। Weighted routing বড় টেবিলগুলোতে বেশি অতিথি পাঠায়। একই সমস্যা, ভিন্ন নিয়ম — সঠিকটা নির্ভর করে আপনার টেবিলগুলো সমান কিনা আর একই অতিথিকে একসাথে বসানো জরুরি কিনা তার উপর।
 
 </Callout>
 
+## গল্পে বুঝি
+
+সকালবেলা একটা ব্যস্ত ক্লিনিকের সামনের ডেস্ক সামলান ফাতিমা আল-ফিহরি। ভেতরে তিনজন ডাক্তার — সিনিয়র ইবনে সিনা, আল-রাজি, আর নতুন ট্রেইনি আল-খোয়ারিজমি। রোগী আসতেই থাকে, আর ফাতিমাকে ঠিক করতে হয় কাকে কোন ডাক্তারের ঘরে পাঠাবেন। সবচেয়ে সহজ দিনে তিনি শুধু পালা করে পাঠান — প্রথম রোগী ইবনে সিনার কাছে, পরেরজন আল-রাজির কাছে, তার পরেরজন আল-খোয়ারিজমির কাছে, আবার ইবনে সিনা থেকে শুরু। কিন্তু কোনো রোগীর চেকআপ দীর্ঘ হয়ে গেলে সেই ঘরের সামনে লাইন জমে যায়, তাই ফাতিমা মাঝে মাঝে চোখ বুলিয়ে দেখেন কোন ডাক্তারের সামনে এই মুহূর্তে সবচেয়ে ছোট লাইন, নতুন রোগীকে সোজা সেখানেই পাঠিয়ে দেন।
+
+আরেকটা ব্যাপারও ফাতিমা মাথায় রাখেন। ইবনে সিনা অভিজ্ঞ আর দ্রুত, তাই তাঁকে তিনি ট্রেইনি আল-খোয়ারিজমির চেয়ে অনেক বেশি রোগী পাঠান — প্রতি পাঁচজনে চারজন সিনিয়রের কাছে, একজন ট্রেইনির কাছে। আর যেসব রোগী আগেও এসেছেন, যাঁদের ফাইল আর আগের চিকিৎসার ইতিহাস যে ডাক্তার জানেন, তাঁদের ফাতিমা সবসময় সেই একই ডাক্তারের কাছেই ফেরত পাঠান — নতুন করে সব বোঝানোর ঝামেলা এড়াতে।
+
+ফাতিমার এই চারটা নিয়মই আসলে চারটা load-balancing algorithm। পালা করে একজন-একজন করে পাঠানো হলো **round-robin**; যার সামনে সবচেয়ে ছোট লাইন সেখানে পাঠানো হলো **least-connections**; সিনিয়রকে বড় ভাগ দেওয়া হলো **weighted**; আর পুরোনো রোগীকে সবসময় একই ডাক্তারের কাছে ফেরত পাঠানো হলো **IP-hash** বা **sticky** routing। বাস্তবে nginx বা HAProxy-র মতো load balancer এই একই নিয়মে ঠিক করে কোন request কোন backend server-এ যাবে — আপনার server-গুলো সমান শক্তির কিনা, আর একই client-কে একই server-এ রাখা জরুরি কিনা, তার উপর নির্ভর করে কোন নিয়মটা মানানসই।
+
 ## Round Robin
 
-Send each request to the next server in rotation. Simple, no state required.
+প্রতিটা request rotation করে পরের server-এ পাঠান। সহজ, কোনো state দরকার নেই।
 
 ```
 Request 1 → server1
@@ -40,7 +48,7 @@ upstream backend {
 }
 ```
 
-Round robin is the nginx default — no directive needed.
+Round robin হলো nginx-এর default — কোনো directive লাগে না।
 
 **HAProxy:**
 
@@ -52,11 +60,11 @@ backend api_servers
     server s3 10.0.0.12:3000 check
 ```
 
-**When it works:** homogeneous servers with similar request cost. **When it fails:** if requests have wildly different processing times, a slow request blocks a server while others sit idle.
+**কখন কাজ করে:** একই রকম request cost-এর homogeneous server। **কখন ব্যর্থ হয়:** যদি request-গুলোর processing time খুব ভিন্ন হয়, একটা ধীর request একটা server-কে আটকে রাখে যখন বাকিগুলো বসে থাকে।
 
 ## Least Connections
 
-Send to the server with the fewest active connections.
+সবচেয়ে কম active connection আছে এমন server-এ পাঠান।
 
 ```
 server1: 10 connections
@@ -84,11 +92,11 @@ backend api_servers
     server s2 10.0.0.11:3000 check
 ```
 
-**When it works:** workloads with variable request duration — long-running requests (uploads, streaming, websockets). Naturally routes away from overloaded servers. **When round-robin is better:** short, uniform requests where connection tracking overhead isn't worth it.
+**কখন কাজ করে:** পরিবর্তনশীল request duration-এর workload — দীর্ঘ চলা request (upload, streaming, websocket)। স্বাভাবিকভাবেই overloaded server থেকে দূরে route করে। **কখন round-robin ভালো:** ছোট, একরকম request যেখানে connection tracking-এর overhead-এর দাম নেই।
 
 ## IP Hash (Source Affinity)
 
-Hash the client IP to always route the same client to the same server.
+Client IP hash করে সবসময় একই client-কে একই server-এ route করা।
 
 ```
 client 1.2.3.4 → hash → always server2
@@ -105,7 +113,7 @@ upstream backend {
 }
 ```
 
-**HAProxy:** use `balance source`:
+**HAProxy:** `balance source` ব্যবহার করুন:
 
 ```
 backend api_servers
@@ -114,13 +122,13 @@ backend api_servers
     server s2 10.0.0.11:3000 check
 ```
 
-**When it works:** stateful applications where in-memory state is tied to a specific server (session data, WebSocket connections that can't be migrated). **The problem:** it's a crutch. If a server goes down, all clients that hashed to it lose their state. The right fix is to extract state to Redis and use any stateless algorithm.
+**কখন কাজ করে:** stateful application যেখানে in-memory state একটা নির্দিষ্ট server-এর সাথে বাঁধা (session data, WebSocket connection যেগুলো migrate করা যায় না)। **সমস্যাটা:** এটা একটা ঠেকনা। কোনো server down হলে, তার সাথে hash হওয়া সব client তাদের state হারায়। সঠিক সমাধান হলো state-টা Redis-এ বের করে আনা আর যেকোনো stateless algorithm ব্যবহার করা।
 
-Also: clients behind NAT appear as one IP, overloading one server.
+আরও: NAT-এর পেছনে থাকা client-রা একটা IP হিসেবে দেখায়, একটা server-কে overload করে।
 
 ## Weighted Round Robin
 
-Some servers are more powerful. Send them proportionally more traffic.
+কিছু server বেশি শক্তিশালী। তাদের অনুপাত অনুযায়ী বেশি traffic পাঠান।
 
 **nginx:**
 
@@ -131,7 +139,7 @@ upstream backend {
 }
 ```
 
-With these weights: 5 out of 6 requests go to `s1`, 1 out of 6 to `s2`.
+এই weight দিয়ে: 6-টার মধ্যে 5-টা request `s1`-এ যায়, 6-টার মধ্যে 1-টা `s2`-তে।
 
 **HAProxy:**
 
@@ -142,28 +150,28 @@ backend api_servers
     server s2 10.0.0.11:3000 check weight 10
 ```
 
-**Use cases:**
+**ব্যবহারের ক্ষেত্র:**
 
-- Mixed instance types (c5.4xlarge + c5.xlarge together)
-- Gradual traffic shifts (canary deployments — new server starts at weight=1, increases)
-- Warming up a new server after cold start
+- মিশ্র instance type (c5.4xlarge + c5.xlarge একসাথে)
+- ধীরে ধীরে traffic shift (canary deployment — নতুন server weight=1-এ শুরু হয়, বাড়ে)
+- cold start-এর পর নতুন server warm up করা
 
 ## Random with Two Choices (Power of Two)
 
-Pick 2 servers at random, send to the one with fewer connections. Better than pure random, nearly as good as global least-connections without the coordination overhead.
+দুটো server randomly বেছে নিন, যেটার connection কম তাতে পাঠান। খাঁটি random-এর চেয়ে ভালো, coordination overhead ছাড়াই প্রায় global least-connections-এর মতোই ভালো।
 
-HAProxy supports this in newer versions:
+HAProxy নতুন version-গুলোতে এটা support করে:
 
 ```
 backend api_servers
     balance random 2
 ```
 
-For large, distributed load balancer fleets (like Nginx Plus or Envoy in service mesh), this is preferred over global least-connections because it doesn't require shared state between LB instances.
+বড়, distributed load balancer fleet-এর জন্য (যেমন service mesh-এ Nginx Plus বা Envoy), এটা global least-connections-এর চেয়ে বেশি পছন্দনীয় কারণ এটার জন্য LB instance-গুলোর মধ্যে shared state লাগে না।
 
 ## Consistent Hashing
 
-Hash the request on a stable key (URL, user ID) and route to the same backend consistently. Unlike IP hash, handles server additions/removals gracefully — only `1/n` requests reroute when a server is added.
+একটা stable key-তে (URL, user ID) request hash করুন আর সবসময় একই backend-এ route করুন। IP hash-এর বিপরীতে, এটা server যোগ/অপসারণ সুন্দরভাবে handle করে — একটা server যোগ করলে শুধু `1/n` request reroute হয়।
 
 **nginx Plus** (commercial):
 
@@ -175,9 +183,9 @@ upstream backend {
 }
 ```
 
-**Use case:** cache servers where you want the same URL to hit the same backend (maximizes cache hit rate). If backend 1 caches `/api/users/123`, consistent hashing ensures that URL always goes to backend 1.
+**ব্যবহারের ক্ষেত্র:** cache server যেখানে আপনি চান একই URL একই backend-এ hit করুক (cache hit rate সর্বোচ্চ করে)। যদি backend 1 `/api/users/123` cache করে, consistent hashing নিশ্চিত করে সেই URL সবসময় backend 1-এ যাবে।
 
-## Algorithm Selection Guide
+## Algorithm বাছাইয়ের গাইড
 
 ```
 Is request duration uniform?
@@ -200,7 +208,7 @@ Is this a distributed LB fleet (many LB instances)?
 
 ## Slow Start
 
-New servers or servers recovering from failure shouldn't immediately receive full traffic — they may still be warming up (cold JVM, cache warming, connection pool filling).
+নতুন server বা failure থেকে recover হওয়া server-এর সঙ্গে সঙ্গে full traffic পাওয়া উচিত না — তারা এখনো warm up হচ্ছে হয়তো (cold JVM, cache warming, connection pool ভরা)।
 
 **nginx Plus:**
 
@@ -208,7 +216,7 @@ New servers or servers recovering from failure shouldn't immediately receive ful
 server 10.0.0.10:3000 slow_start=30s;
 ```
 
-**HAProxy:** use `weight` manipulation:
+**HAProxy:** `weight` manipulation ব্যবহার করুন:
 
 ```bash
 # Start the server at weight 10, gradually increase via runtime API
@@ -217,4 +225,4 @@ echo "set server backend/s1 weight 10" | socat stdio /var/run/haproxy/admin.sock
 echo "set server backend/s1 weight 100" | socat stdio /var/run/haproxy/admin.sock
 ```
 
-This prevents a "thundering herd" problem where a newly added server immediately gets 33% of traffic and falls over under the sudden load.
+এটা একটা "thundering herd" সমস্যা প্রতিরোধ করে যেখানে নতুন যোগ হওয়া একটা server সঙ্গে সঙ্গে 33% traffic পেয়ে হঠাৎ load-এ ভেঙে পড়ে।

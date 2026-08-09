@@ -1,9 +1,9 @@
 ---
 title: 'Stateless Services'
-subtitle: 'Why stateless is the prerequisite for horizontal scaling — and how to extract state from your application so any instance can handle any request.'
+subtitle: 'Horizontal scaling-এর জন্য stateless কেন পূর্বশর্ত — এবং কীভাবে আপনার অ্যাপ্লিকেশন থেকে state বের করে আনবেন যাতে যেকোনো instance যেকোনো request সামলাতে পারে।'
 chapter: 1
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['stateless', 'horizontal scaling', 'sessions', 'shared state', 'twelve-factor']
 ---
 
@@ -13,15 +13,23 @@ topics: ['stateless', 'horizontal scaling', 'sessions', 'shared state', 'twelve-
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A fast food chain vs a personal chef: the personal chef remembers your preferences — but you can only have one. A fast food chain works because any location, any employee, can serve any customer using the same menu and systems. Stateless services are your fast food chain — any instance can handle any request.
+একটা ফাস্ট ফুড চেইন বনাম ব্যক্তিগত শেফ: ব্যক্তিগত শেফ আপনার পছন্দ মনে রাখে — কিন্তু আপনি শুধু একজনকেই পেতে পারেন। একটা ফাস্ট ফুড চেইন কাজ করে কারণ যেকোনো শাখা, যেকোনো কর্মী, একই মেনু ও সিস্টেম ব্যবহার করে যেকোনো গ্রাহককে সেবা দিতে পারে। Stateless সার্ভিস হলো আপনার ফাস্ট ফুড চেইন — যেকোনো instance যেকোনো request সামলাতে পারে।
 
 </Callout>
 
-## What Makes a Service Stateful
+## গল্পে বুঝি
 
-A service is stateful when it stores data that's required to handle future requests — and that data lives in the process memory or local disk of a specific instance.
+ফাতিমা আল-ফিহরি একটা বড় ব্যাংকের শাখায় ঢুকলেন টাকা তুলতে। কাউন্টারে সারি সারি ক্লার্ক বসা — কেউই তাঁকে আগে থেকে "চেনে" না, কারও ব্যক্তিগত খাতায় তাঁর হিসাব লেখা নেই। তাতে কোনো সমস্যা হলো না, কারণ ফাতিমার সবকিছু — ব্যালেন্স, অ্যাকাউন্টের স্ট্যাটাস — লেখা আছে তাঁর হাতের পাসবুকে আর ব্যাংকের কেন্দ্রীয় রেজিস্টারে। যে ক্লার্ক ফাঁকা আছেন, তিনিই পাসবুক আর রেজিস্টার দেখে পুরো কাজ সেরে দিলেন। সকালে ভিড় বেড়ে গেলে ম্যানেজার আল-খোয়ারিজমি চট করে আরও দশজন নতুন ক্লার্ক বসিয়ে দিতে পারেন — তাঁদের কাউকেই ফাতিমাকে "আগে থেকে চেনার" দরকার নেই, রেজিস্টার তো সবার জন্যই খোলা।
+
+এবার উল্টো ছবিটা ভাবুন। একজন ক্লার্ক ছিলেন যিনি সব গ্রাহকের খুঁটিনাটি নিজের ব্যক্তিগত ড্রয়ারে লিখে রাখতেন — কেন্দ্রীয় রেজিস্টারে কিছুই তুলতেন না। এখন সেই ক্লার্ক একদিন ছুটিতে থাকলে ফাতিমা আটকে গেলেন, কারণ তাঁর তথ্য শুধু ওই একটা তালাবন্ধ ড্রয়ারেই। নতুন কোনো ক্লার্ক বসিয়েও লাভ নেই, তিনি তো ড্রয়ারের ভেতরটা জানেন না। ভিড় সামলাতে ক্লার্ক বাড়ানোর উপায়ই বন্ধ হয়ে গেল।
+
+এই গল্পটাই আসলে **stateless service**। যে ক্লার্ক নিজের কাছে কোনো ব্যক্তিগত নোট রাখেন না, তিনিই একটা **stateless server** — কোনো per-user session নিজের মেমরিতে ধরে রাখেন না। পাসবুক আর কেন্দ্রীয় রেজিস্টার হলো **shared state store** (যেমন Redis বা database), যেখানে সব state থাকে। বলেই যেকোনো ফাঁকা ক্লার্ক যেকোনো গ্রাহককে সেবা দিতে পারেন — মানে any server can handle any request। আর এতেই ম্যানেজার নিশ্চিন্তে দরকারমতো নতুন ক্লার্ক যোগ করতে পারেন, যা হলো **horizontal scaling**। ব্যক্তিগত ড্রয়ারওয়ালা ক্লার্কই stateful server — যিনি একা সব state আঁকড়ে ধরে scaling আটকে দেন। বাস্তবে ঠিক এ কারণেই AWS বা Kubernetes-এ auto-scaling কাজ করে: server-গুলো stateless থাকে বলে load বাড়লে নতুন instance যোগ করা যায়, load কমলে সরিয়ে ফেলা যায় — কোনো ইউজার টেরও পান না।
+
+## একটা সার্ভিসকে কী Stateful বানায়
+
+একটা সার্ভিস তখন stateful হয় যখন এটি এমন ডেটা জমা রাখে যা ভবিষ্যতের request সামলাতে দরকার হয় — এবং সেই ডেটা থাকে একটা নির্দিষ্ট instance-এর process memory বা local disk-এ।
 
 ```typescript
 // STATEFUL — breaks horizontal scaling
@@ -43,11 +51,11 @@ app.get('/me', (req, res) => {
 });
 ```
 
-With two instances behind a load balancer: login hits instance A (session stored there), next request hits instance B (no session → 401). Users get logged out randomly.
+একটা load balancer-এর পেছনে দুইটা instance থাকলে: login যায় instance A-তে (session সেখানে জমা হয়), পরের request যায় instance B-তে (কোনো session নেই → 401)। ব্যবহারকারীরা এলোমেলোভাবে logged out হয়ে যায়।
 
-## Making It Stateless
+## এটাকে Stateless বানানো
 
-Move state out of the process. Every instance reads and writes from a shared store.
+State-কে process-এর বাইরে সরান। প্রতিটা instance একটা shared store থেকে পড়ে এবং সেখানে লেখে।
 
 ```typescript
 // STATELESS — works with any number of instances
@@ -77,19 +85,19 @@ app.get('/me', async (req, res) => {
 });
 ```
 
-Now any instance can handle any request — they all read from the same Redis.
+এখন যেকোনো instance যেকোনো request সামলাতে পারে — তারা সবাই একই Redis থেকে পড়ে।
 
-## The Twelve-Factor App and State
+## Twelve-Factor App এবং State
 
-The [twelve-factor app](https://12factor.net) methodology codifies stateless services as a core principle. Factor VI: **Processes — execute the app as one or more stateless processes.**
+[twelve-factor app](https://12factor.net) পদ্ধতি stateless সার্ভিসকে একটা মূল নীতি হিসেবে নির্ধারণ করে। Factor VI: **Processes — অ্যাপটিকে এক বা একাধিক stateless process হিসেবে চালান।**
 
-The rules:
+নিয়মগুলো:
 
-- Never store session state in process memory between requests
-- Never store data on the local filesystem that another instance needs
-- Store persistent data in a backing service (database, Redis, S3)
+- Request-এর মাঝে কখনো process memory-তে session state জমা রাখবেন না
+- Local filesystem-এ এমন ডেটা কখনো জমা রাখবেন না যা অন্য একটা instance-এর দরকার হয়
+- Persistent ডেটা একটা backing service-এ (database, Redis, S3) জমা রাখুন
 
-**Local disk is also state:**
+**Local disk-ও state:**
 
 ```typescript
 // WRONG — file written on instance A, not readable on instance B
@@ -106,7 +114,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 });
 ```
 
-**In-memory cache is also state — but acceptable if it's a cache (not primary source of truth):**
+**In-memory cache-ও state — কিন্তু গ্রহণযোগ্য যদি এটা একটা cache হয় (primary source of truth না হয়):**
 
 ```typescript
 // OK — cache miss just causes a DB hit, not a wrong answer
@@ -120,13 +128,13 @@ async function getUser(userId: string): Promise<User> {
 }
 ```
 
-Different instances having different cache contents is fine — they'll all return correct data, just at different cache hit rates. This is tolerable.
+আলাদা আলাদা instance-এর আলাদা cache content থাকা ঠিক আছে — তারা সবাই সঠিক ডেটাই ফেরত দেবে, শুধু আলাদা আলাদা cache hit rate-এ। এটা সহনীয়।
 
-## What Requires Shared State
+## কীসের জন্য Shared State দরকার
 
-Extract these to external services before scaling:
+Scale করার আগে এগুলোকে external service-এ বের করে আনুন:
 
-| State                         | Extract to                             |
+| State                         | যেখানে বের করবেন                       |
 | ----------------------------- | -------------------------------------- |
 | Sessions                      | Redis, database                        |
 | File uploads                  | S3, GCS, Azure Blob                    |
@@ -138,7 +146,7 @@ Extract these to external services before scaling:
 
 ## Twelve-Factor Config: Environment Variables
 
-Config that varies by environment (dev/staging/prod) goes in environment variables — not in code or config files committed to the repo.
+যে config পরিবেশভেদে (dev/staging/prod) বদলায় তা environment variable-এ রাখুন — code-এ বা repo-তে commit করা config file-এ নয়।
 
 ```typescript
 // WRONG — config baked into code
@@ -161,11 +169,11 @@ function validateConfig(): void {
 validateConfig(); // called at startup before server starts listening
 ```
 
-Every instance reads the same environment variables — no per-instance config divergence.
+প্রতিটা instance একই environment variable পড়ে — কোনো per-instance config বিচ্যুতি নেই।
 
-## Sticky Sessions: The Wrong Fix
+## Sticky Sessions: ভুল সমাধান
 
-Sticky sessions (session affinity) tell the load balancer to always route a user to the same instance. This "solves" in-memory session state without requiring Redis.
+Sticky session (session affinity) load balancer-কে বলে দেয় যেন একজন ব্যবহারকারীকে সবসময় একই instance-এ পাঠায়। এটা Redis ছাড়াই in-memory session state-এর সমস্যা "সমাধান" করে।
 
 ```nginx
 upstream backend {
@@ -175,18 +183,18 @@ upstream backend {
 }
 ```
 
-Don't do this. It:
+এটা করবেন না। এটা:
 
-- Makes instance failures user-visible (their "sticky" instance goes down → session lost)
-- Prevents even load distribution (users cluster on specific instances)
-- Makes deployments dangerous (rolling restart breaks all sticky users)
-- Is a workaround for a design problem, not a solution
+- Instance failure-কে ব্যবহারকারীর কাছে দৃশ্যমান করে (তাদের "sticky" instance বন্ধ হলে → session হারায়)
+- সমান load distribution আটকায় (ব্যবহারকারীরা নির্দিষ্ট instance-এ জমা হয়)
+- Deployment-কে বিপজ্জনক করে (rolling restart সব sticky ব্যবহারকারীকে ভাঙে)
+- এটা একটা design সমস্যার workaround, সমাধান নয়
 
-Extract state to Redis instead. Sticky sessions delay the problem and make your system harder to reason about.
+তার বদলে state-কে Redis-এ বের করে আনুন। Sticky session সমস্যাটাকে পিছিয়ে দেয় আর আপনার সিস্টেমকে বোঝা কঠিন করে তোলে।
 
-## Testing Statelessness
+## Statelessness পরীক্ষা করা
 
-Verify that your app is genuinely stateless before scaling:
+Scale করার আগে যাচাই করুন যে আপনার অ্যাপ সত্যিই stateless:
 
 ```bash
 # Start two instances on different ports
@@ -203,4 +211,4 @@ curl -b cookies.txt http://localhost:3002/me
 # If this returns 401: stateful ✗
 ```
 
-If your app passes this test, it can scale horizontally. Instances can be added, removed, or restarted without affecting users.
+আপনার অ্যাপ যদি এই পরীক্ষায় পাশ করে, তাহলে এটা horizontal scale করতে পারবে। ব্যবহারকারীদের প্রভাবিত না করেই instance যোগ করা, সরানো, বা restart করা যাবে।

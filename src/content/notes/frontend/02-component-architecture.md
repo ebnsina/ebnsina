@@ -1,9 +1,9 @@
 ---
-title: 'Component Architecture'
-subtitle: 'Composition, props, slots, compound components, and atomic design — building reusable UI that scales.'
+title: 'কম্পোনেন্ট আর্কিটেকচার'
+subtitle: 'Composition, props, slots, compound components, এবং atomic design — এমন reusable UI তৈরি করা যা scale করে।'
 chapter: 2
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['components', 'composition', 'atomic design', 'props', 'slots', 'compound components']
 ---
 
@@ -11,21 +11,29 @@ topics: ['components', 'composition', 'atomic design', 'props', 'slots', 'compou
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Component Architecture Matters
+## গল্পে বুঝি
 
-Every modern frontend framework is built on the idea of components — self-contained, reusable pieces of UI. But knowing what a component is and knowing how to architect a component system are very different skills. Poor component design leads to prop drilling, duplicated logic, and components that are impossible to reuse.
+আল-খোয়ারিজমির একটা প্রিফ্যাব কারখানা আছে, যেখানে আস্ত ঘর বানানো হয় না — বানানো হয় আলাদা আলাদা স্ট্যান্ডার্ড রুম-ইউনিট। একটা বাথরুম পড, একটা কিচেন পড, একটা জানালার ইউনিট — প্রতিটা নিজে থেকেই সম্পূর্ণ, প্লাম্বিং-টাইলস-ফিটিং সব লাগানো, বাক্সবন্দি হয়ে বেরিয়ে আসে। মজার ব্যাপার হলো, একই বাথরুম পড কারখানা থেকে বেরিয়ে কখনো শহরের এই টাওয়ারে বসে, কখনো নদীর ওপারের ওই অ্যাপার্টমেন্টে — একবার ডিজাইন করা পড বারবার নানা বিল্ডিংয়ে ব্যবহার হয়।
+
+সাইটে গিয়ে ফাতিমা আল-ফিহরি এই পডগুলো জোড়া দেন — একটা কিচেন পড, একটা বাথরুম পড আর দুটো ঘর মিলে একটা ফ্ল্যাট, আর ফ্ল্যাটের ওপর ফ্ল্যাট বসিয়ে গোটা টাওয়ার। কোন ফ্ল্যাটে বাথরুমের কল পিতলের হবে, কোনটায় ইস্পাতের — এটা পড নিজে ঠিক করে না; বাইরে থেকে, অর্থাৎ যিনি বসাচ্ছেন তিনি, প্রতিটা পডকে তার ফিটিং হাতে ধরিয়ে দেন। পড শুধু যা হাতে পায় তাই বসিয়ে দেয়।
+
+গল্পটা আসলে **component architecture**-এর — প্রতিটা প্রিফ্যাব পড হলো একটা **component** (নিজে থেকে সম্পূর্ণ, self-contained), একই পড নানা বিল্ডিংয়ে বসানোই **reuse**, পড জোড়া দিয়ে ফ্ল্যাট আর ফ্ল্যাট দিয়ে টাওয়ার বানানোটাই **composition** বা nesting, আর বাইরে থেকে পডকে ফিটিং ধরিয়ে দেওয়াই parent থেকে **props** পাঠানো। বাস্তবে ঠিক এভাবেই একটা `Button` বা `Card` component একবার লিখে পুরো অ্যাপে বারবার ব্যবহার হয়, ছোট component জুড়ে বড় UI বানানো হয়, আর প্রতিটা component তার কাজের ডেটা props হিসেবে বাইরে থেকে পায়।
+
+## কেন Component Architecture গুরুত্বপূর্ণ
+
+প্রতিটি আধুনিক frontend framework component-এর ধারণার উপর গড়ে উঠেছে — self-contained, reusable UI-এর টুকরো। কিন্তু একটা component কী তা জানা আর একটা component system কীভাবে architect করতে হয় তা জানা খুবই আলাদা দক্ষতা। খারাপ component design prop drilling, ডুপ্লিকেট করা logic, এবং এমন component-এর দিকে নিয়ে যায় যেগুলো reuse করা অসম্ভব।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like building with LEGO — small reusable pieces (atoms) combine into molecules (a card), organisms (a product grid), templates (a page layout). Each piece works independently.
+LEGO দিয়ে তৈরির মতো — ছোট reusable টুকরো (atom) মিলে molecule (একটা card), organism (একটা product grid), template (একটা page layout) তৈরি হয়। প্রতিটি টুকরো স্বাধীনভাবে কাজ করে।
 
 </Callout>
 
-## The Component Spectrum
+## Component-এর Spectrum
 
-Components range from purely presentational to highly stateful. Understanding where a component falls on this spectrum determines how you design it.
+Component বিশুদ্ধভাবে presentational থেকে অত্যন্ত stateful পর্যন্ত হতে পারে। এই spectrum-এ একটা component কোথায় পড়ে তা বোঝা নির্ধারণ করে আপনি কীভাবে সেটা design করবেন।
 
 ```typescript
 // 1. Presentational — pure UI, no logic
@@ -64,9 +72,9 @@ function ProductListContainer() {
 </Select>
 ```
 
-## Props: The Component API
+## Props: Component-এর API
 
-Props are the public API of your component. Design them carefully — changing props is a breaking change for every consumer.
+Props হলো আপনার component-এর public API। এগুলো সাবধানে design করুন — props পরিবর্তন করা প্রতিটি consumer-এর জন্য একটা breaking change।
 
 ```typescript
 // Bad: too many unrelated props crammed together
@@ -117,18 +125,18 @@ interface CardImageProps {
 
 <Callout type="tip">
 
-**Props design rules:**
+**Props design-এর নিয়ম:**
 
-- Fewer props = easier to use. Aim for 3-5 required props max.
-- Use `children` or slots for flexible content injection.
-- Prefer composition (`<Card><CardHeader />`) over configuration (`<Card headerTitle="..." headerSubtitle="...">`).
-- Type your props strictly — use union types instead of `string` where possible.
+- কম props = ব্যবহার করা সহজ। সর্বোচ্চ ৩-৫টা required props লক্ষ্য রাখুন।
+- flexible content injection-এর জন্য `children` বা slot ব্যবহার করুন।
+- configuration (`<Card headerTitle="..." headerSubtitle="...">`)-এর চেয়ে composition (`<Card><CardHeader />`) পছন্দ করুন।
+- আপনার props কঠোরভাবে type করুন — যেখানে সম্ভব `string`-এর বদলে union type ব্যবহার করুন।
 
 </Callout>
 
 ## Compound Components
 
-Compound components share implicit state through React Context, giving users full control over structure while the parent manages coordination.
+Compound component React Context-এর মাধ্যমে implicit state শেয়ার করে, যা user-কে structure-এর উপর পূর্ণ নিয়ন্ত্রণ দেয় যখন parent সমন্বয় সামলায়।
 
 ```typescript
 import { createContext, useContext, useState } from "react";
@@ -195,7 +203,7 @@ Accordion.Item = AccordionItem;
 
 ## Atomic Design Hierarchy
 
-Brad Frost's Atomic Design gives you a mental model for organizing components into layers.
+Brad Frost-এর Atomic Design আপনাকে component-গুলোকে layer-এ সংগঠিত করার একটা mental model দেয়।
 
 ```
 atoms/          → Button, Input, Badge, Avatar, Icon
@@ -259,17 +267,17 @@ function Navbar() {
 
 <Callout type="warning">
 
-**Common mistakes in component architecture:**
+**Component architecture-এ সাধারণ ভুল:**
 
-- **God components**: A single component that does everything. If a component is over 200 lines, it probably needs to be split.
-- **Premature abstraction**: Do not create a generic `<DataDisplay>` before you have three concrete use cases. Start specific, then generalize.
-- **Prop drilling 5+ levels deep**: If you are passing props through multiple intermediary components, use Context or a state manager instead.
+- **God component**: একটা মাত্র component যা সবকিছু করে। একটা component যদি ২০০ লাইনের বেশি হয়, সম্ভবত সেটাকে ভাগ করা দরকার।
+- **অকাল abstraction**: তিনটা concrete use case না হওয়া পর্যন্ত একটা generic `<DataDisplay>` তৈরি করবেন না। নির্দিষ্ট দিয়ে শুরু করুন, তারপর generalize করুন।
+- **৫+ level গভীর Prop drilling**: আপনি যদি একাধিক মধ্যবর্তী component-এর মধ্য দিয়ে props পাঠাচ্ছেন, তার বদলে Context বা একটা state manager ব্যবহার করুন।
 
 </Callout>
 
 ## Slots Pattern (Framework-Agnostic)
 
-Slots let parent components inject content into specific regions of a child component. React uses `children` and named props. Astro and Vue have explicit slots.
+Slot parent component-কে একটা child component-এর নির্দিষ্ট region-এ content inject করতে দেয়। React `children` এবং named props ব্যবহার করে। Astro এবং Vue-তে explicit slot আছে।
 
 ```typescript
 // React: named slots via props
@@ -301,10 +309,10 @@ function DashboardLayout({ header, sidebar, children, footer }: LayoutProps) {
 </DashboardLayout>
 ```
 
-## Key Takeaways
+## মূল টেকঅ্যাওয়ে
 
-1. **Composition over configuration** — use `children` and sub-components instead of giant prop objects
-2. **Compound components** share state via Context for flexible, readable APIs
-3. **Atomic Design** gives you a shared vocabulary — atoms, molecules, organisms, templates, pages
-4. **Props are your public API** — keep them minimal, typed, and stable
-5. **Slots/named content** enable flexible layouts without tight coupling between parent and child
+1. **Configuration-এর চেয়ে composition** — বিশাল prop object-এর বদলে `children` এবং sub-component ব্যবহার করুন
+2. **Compound component** flexible, readable API-র জন্য Context-এর মাধ্যমে state শেয়ার করে
+3. **Atomic Design** আপনাকে একটা শেয়ার্ড শব্দভাণ্ডার দেয় — atom, molecule, organism, template, page
+4. **Props হলো আপনার public API** — এগুলো minimal, typed এবং stable রাখুন
+5. **Slot/named content** parent আর child-এর মধ্যে tight coupling ছাড়াই flexible layout সম্ভব করে

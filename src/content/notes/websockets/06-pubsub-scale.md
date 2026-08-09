@@ -1,9 +1,9 @@
 ---
 title: 'Pub/sub at scale'
-subtitle: 'One process can hold thousands of connections; production needs many. The piece that makes that work is a pub/sub bus that fans events from any process to every connection on every other process.'
+subtitle: 'একটা process হাজার হাজার connection ধরে রাখতে পারে; production-এ অনেকগুলো দরকার। যে অংশটা সেটা কাজ করায় তা হলো একটা pub/sub bus যা যেকোনো process থেকে অন্য প্রতিটা process-এর প্রতিটা connection-এ event fan করে।'
 chapter: 6
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['websockets', 'pubsub', 'redis', 'nats', 'scaling']
 ---
 
@@ -11,19 +11,27 @@ topics: ['websockets', 'pubsub', 'redis', 'nats', 'scaling']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The chat server in chapter 3 broadcasts to clients connected to one process. That works until you spin up two. Connections to process A do not see messages broadcast on process B. The fix is a shared **pub/sub bus** — every process publishes to it, every process subscribes from it, the bus fans out.
+## গল্পে বুঝি
 
-This chapter wires Redis pub/sub into the chapter-3 server, then discusses NATS as the alternative when Redis runs out of headroom. Same patterns work for SSE — the broker is protocol-agnostic.
+ঢাকা শহরে তখন প্রতিটা এলাকায় আলাদা টেলিফোন এক্সচেঞ্জ — মিরপুর এক্সচেঞ্জ, উত্তরা এক্সচেঞ্জ, ধানমন্ডি এক্সচেঞ্জ। যার বাড়ি যে এলাকায়, তার ফোনের তার গিয়ে ওঠে সেই এলাকার এক্সচেঞ্জে। ইবনে সিনা থাকেন মিরপুরে, তাই তাঁর লাইন মিরপুর এক্সচেঞ্জের সাথে জোড়া। একদিন তিনি তাঁর পুরনো ছাত্রদের একটা গ্রুপে একসাথে একটা ঘোষণা পৌঁছে দিতে চাইলেন। সমস্যা হলো — গ্রুপের আল-খোয়ারিজমি থাকেন উত্তরায়, তাঁর লাইন উত্তরা এক্সচেঞ্জে; ফাতিমা আল-ফিহরি ধানমন্ডিতে। মিরপুর এক্সচেঞ্জ একা শুধু নিজের এলাকার লোকদের কাছেই কথা পৌঁছাতে পারে, উত্তরা বা ধানমন্ডির কাউকে নয়।
+
+এই ঝামেলা মেটাতে শহর কর্তৃপক্ষ প্রতিটা এক্সচেঞ্জকে একটা কেন্দ্রীয় রিলে হাবের সাথে তার দিয়ে জুড়ে দিল। এখন মিরপুর এক্সচেঞ্জ ইবনে সিনার ঘোষণাটা শুনে সেটা সোজা কেন্দ্রীয় হাবে পাঠিয়ে দেয়, আর হাব সাথে সাথে সেই ঘোষণা প্রতিটা এক্সচেঞ্জে — উত্তরা, ধানমন্ডি, সব জায়গায় — ফরওয়ার্ড করে দেয়। প্রতিটা এক্সচেঞ্জ তখন নিজের এলাকার গ্রুপ-সদস্যদের কানে কথাটা তুলে দেয়। কে কোন এক্সচেঞ্জে আছে, সেটা আর কোনো ব্যাপারই না — সবাই একই ঘোষণা পায়।
+
+গল্পের প্রতিটা এলাকার এক্সচেঞ্জ হলো একেকটা WebSocket server instance, আর আলাদা এলাকার লোকজন হলো আলাদা server-এ connect করা client। একটা মাত্র process হাজারো connection ধরে রাখতে পারে, কিন্তু production-এ একাধিক instance লাগে, আর এক instance-এর client অন্য instance-এর broadcast দেখে না। কেন্দ্রীয় রিলে হাব হলো **Redis pub/sub backplane** — যেকোনো এক server একটা channel-এ message publish করে, backplane সেটা প্রতিটা server-এ relay করে, আর প্রতিটা server তার নিজের local client-দের কাছে সেটা লিখে দেয়। বাস্তবে ঠিক এভাবেই Slack বা বড় chat অ্যাপ অনেক WebSocket server-এর মধ্যে message ছড়ায় — server কোনটা, তা নিয়ে client-এর মাথা ঘামাতে হয় না।
+
+চ্যাপ্টার 3-এর chat server একটা process-এ connected client-দের broadcast করে। দুটো spin up না করা পর্যন্ত সেটা কাজ করে। process A-র connection process B-তে broadcast করা message দেখে না। ঠিক করার উপায় হলো একটা shared **pub/sub bus** — প্রতিটা process এতে publish করে, প্রতিটা process এটা থেকে subscribe করে, bus fan out করে।
+
+এই চ্যাপ্টার চ্যাপ্টার-3 server-এ Redis pub/sub wire করে, তারপর Redis-এর জায়গা ফুরিয়ে গেলে বিকল্প হিসেবে NATS নিয়ে আলোচনা করে। একই প্যাটার্ন SSE-তে কাজ করে — broker protocol-agnostic।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A pub/sub bus is like a radio tower broadcasting to many receivers — one transmitter sends the signal, unlimited listeners receive it, and no direct connection between them is required.
+একটা pub/sub bus হলো অনেক receiver-এ broadcast করা একটা রেডিও টাওয়ারের মতো — একটা transmitter signal পাঠায়, অসীম শ্রোতা receive করে, আর তাদের মধ্যে কোনো সরাসরি connection দরকার নেই।
 
 </Callout>
 
-## The architecture
+## architecture
 
 ```
    Browser A ─── ws ──→ Process 1 ─┐
@@ -33,33 +41,33 @@ A pub/sub bus is like a radio tower broadcasting to many receivers — one trans
    Browser D ─── ws ──→ Process 3 ─┘
 ```
 
-Browser A sends a message. Process 1 receives it on the WebSocket, publishes to `room:general` on Redis. All three processes are subscribed to `room:general` — they each receive the message and write it to every browser connected to them. Browsers A through D all see the message.
+Browser A একটা message পাঠায়। Process 1 এটা WebSocket-এ receive করে, Redis-এ `room:general`-এ publish করে। তিনটা process-ই `room:general`-এ subscribed — তারা প্রত্যেকে message receive করে আর তাদের সাথে connected প্রতিটা browser-এ লেখে। Browser A থেকে D সবাই message দেখে।
 
-Two qualities of this setup:
+এই setup-এর দুটো গুণ:
 
-1. **Horizontally scalable.** Add a fourth process; it subscribes to channels on Redis and starts serving connections immediately.
-2. **Stateless processes.** Any process can take any client. Connection state (which client is in which room) lives in the process; the bus carries the events.
+1. **Horizontally scalable.** একটা চতুর্থ process যোগ করুন; এটা Redis-এ channel subscribe করে আর সাথে সাথে connection serve করা শুরু করে।
+2. **Stateless process.** যেকোনো process যেকোনো client নিতে পারে। Connection state (কোন client কোন room-এ) process-এ থাকে; bus event বহন করে।
 
-## Why Redis pub/sub
+## Redis pub/sub কেন
 
-Redis pub/sub is:
+Redis pub/sub:
 
-- **Free** (open-source, easy to self-host).
-- **Fast** — sub-millisecond fanout on a single Redis instance.
-- **Simple** — one binary, no configuration, no clustering required for small deployments.
-- **Universally supported** — every language has a Redis client.
+- **Free** (open-source, self-host করা সহজ)।
+- **Fast** — একটা single Redis instance-এ sub-millisecond fanout।
+- **Simple** — একটা binary, কোনো configuration নেই, ছোট deployment-এর জন্য clustering লাগে না।
+- **Universally supported** — প্রতিটা ভাষায় একটা Redis client আছে।
 
-The trade-off: **fire-and-forget**. Subscribers that are offline when a message is published do not get it. No replay, no buffering, no acknowledgements. For ephemeral events (chat messages, presence updates, live cursors), this is the right model. For durable events (orders, audit logs), use a queue (chapter on **Background jobs** or **Messaging & queues** later in the path).
+trade-off: **fire-and-forget**। message publish হওয়ার সময় যে subscriber offline ছিল তারা এটা পায় না। কোনো replay নেই, কোনো buffering নেই, কোনো acknowledgement নেই। ephemeral event-এর (chat message, presence update, live cursor) জন্য, এটাই সঠিক model। durable event-এর (order, audit log) জন্য, একটা queue ব্যবহার করুন (path-এ পরে **Background jobs** বা **Messaging & queues** চ্যাপ্টার)।
 
-## Wiring Redis into the chat server
+## chat server-এ Redis wire করা
 
-Install Redis (`apt install redis` or `brew install redis`), start it (`redis-server`), confirm with `redis-cli ping` → `PONG`.
+Redis install করুন (`apt install redis` বা `brew install redis`), শুরু করুন (`redis-server`), `redis-cli ping` → `PONG` দিয়ে নিশ্চিত করুন।
 
 ```bash
 go get github.com/redis/go-redis/v9
 ```
 
-Refactored server (cuts to the new parts):
+Refactored server (নতুন অংশে কাটা):
 
 ```go
 package main
@@ -208,50 +216,50 @@ func main() {
 }
 ```
 
-The shape:
+shape:
 
-- **`subscribeLoop`** is a single goroutine per process, reading from Redis and dispatching to local connections.
-- **`PSubscribe("room:*")`** uses pattern subscription so one Redis subscription handles all rooms. Alternative: subscribe per-room as clients join, unsubscribe as they leave. The pattern subscription is simpler if you do not have thousands of distinct rooms.
-- **`publish`** writes to Redis from the WebSocket reader. It returns immediately; fan-out is async.
-- **`rooms`** map per-process tracks which local clients are in each room. The Redis bus does not know about clients.
+- **`subscribeLoop`** হলো প্রতি process-এ একটা single goroutine, Redis থেকে পড়ে আর local connection-এ dispatch করে।
+- **`PSubscribe("room:*")`** pattern subscription ব্যবহার করে যাতে একটা Redis subscription সব room সামলায়। বিকল্প: client join করার সাথে সাথে per-room subscribe, তারা leave করার সাথে সাথে unsubscribe। হাজার হাজার আলাদা room না থাকলে pattern subscription সহজতর।
+- **`publish`** WebSocket reader থেকে Redis-এ লেখে। এটা সাথে সাথে return করে; fan-out async।
+- **`rooms`** map per-process track করে কোন local client কোন room-এ। Redis bus client সম্পর্কে জানে না।
 
-Run two copies on different ports (`PORT=8080 go run .` and `PORT=8081 go run .`). Connect a browser to each. Send from one — both see it. Horizontal scale, achieved.
+আলাদা port-এ দুটো copy চালান (`PORT=8080 go run .` আর `PORT=8081 go run .`)। প্রতিটায় একটা করে browser connect করুন। একটা থেকে পাঠান — দুটোই দেখে। Horizontal scale, অর্জিত।
 
-## Backpressure across the bus
+## bus জুড়ে backpressure
 
-Redis pub/sub is fast but not magic. If publishers vastly outpace consumers, the consumer's TCP buffer fills, Redis disconnects the consumer, and you lose messages.
+Redis pub/sub fast কিন্তু জাদু নয়। publisher যদি consumer-কে বিপুলভাবে ছাড়িয়ে যায়, consumer-এর TCP buffer ভরে যায়, Redis consumer-কে disconnect করে, আর আপনি message হারান।
 
-Things to consider:
+বিবেচনার বিষয়:
 
-- **Consumer side latency matters.** A subscribe loop that does heavy work per message creates lag. Keep `subscribeLoop` thin — just dispatch to per-client channels.
-- **Per-client channel size.** The chapter's `out` chan is `make(chan []byte, 64)`. For high-throughput rooms, raise it. But buffers cost memory per connection times every connection — tens of thousands of clients × 64 messages × 1 KiB is gigabytes. Pick a number that bounds memory.
-- **Drop policy.** The `select { ... default: drop }` pattern from chapter 3. With many connections, dropping is the right move.
+- **Consumer side latency গুরুত্বপূর্ণ।** একটা subscribe loop যা প্রতি message-এ ভারী কাজ করে সেটা lag তৈরি করে। `subscribeLoop` পাতলা রাখুন — শুধু per-client channel-এ dispatch করুন।
+- **Per-client channel size.** চ্যাপ্টারের `out` chan হলো `make(chan []byte, 64)`। high-throughput room-এর জন্য, এটা বাড়ান। কিন্তু buffer প্রতি connection গুণ প্রতিটা connection memory খরচ করে — হাজার হাজার client × 64 message × 1 KiB হলো গিগাবাইট। এমন একটা সংখ্যা বাছুন যা memory bound করে।
+- **Drop policy.** চ্যাপ্টার 3-এর `select { ... default: drop }` প্যাটার্ন। অনেক connection-এ, dropping-ই সঠিক পদক্ষেপ।
 
-For mission-critical "must-deliver" messages, pub/sub is the wrong primitive. Use a queue with acknowledgements (Redis Streams, NATS JetStream, RabbitMQ, Kafka). Chapter from **Messaging & queues** later in the path is the right place for that.
+mission-critical "must-deliver" message-এর জন্য, pub/sub ভুল primitive। acknowledgement সহ একটা queue ব্যবহার করুন (Redis Streams, NATS JetStream, RabbitMQ, Kafka)। path-এ পরে **Messaging & queues** চ্যাপ্টার তার সঠিক জায়গা।
 
 ## Channel design
 
-Three patterns for naming Redis channels.
+Redis channel naming-এর তিনটা প্যাটার্ন।
 
-**1. Per-room.** `room:general`, `room:engineering`. Pattern subscribe `room:*`. Simple. Right when rooms are the only fan-out unit.
+**1. Per-room.** `room:general`, `room:engineering`। Pattern subscribe `room:*`। সহজ। room-ই একমাত্র fan-out unit হলে সঠিক।
 
-**2. Per-user.** `user:42`. For DMs and per-user notifications. Channel cardinality scales with users — fine, Redis handles millions.
+**2. Per-user.** `user:42`। DM আর per-user notification-এর জন্য। Channel cardinality user-এর সাথে scale করে — ঠিক আছে, Redis লক্ষ লক্ষ সামলায়।
 
-**3. Per-event-type.** `event:order.created`, `event:user.joined`. For broadcast events, all connections care about all events of a type. Lower cardinality, simpler subscription.
+**3. Per-event-type.** `event:order.created`, `event:user.joined`। broadcast event-এর জন্য, সব connection একটা type-এর সব event নিয়ে চিন্তিত। কম cardinality, সহজতর subscription।
 
-Many apps mix all three. A user opens a connection; the process subscribes to `user:42` (DMs), `room:general` (currently active room), and a global `notifications` channel. As the user navigates between rooms, the subscriptions change.
+অনেক app তিনটাই মেশায়। একটা user একটা connection খোলে; process `user:42` (DM), `room:general` (বর্তমানে active room), আর একটা global `notifications` channel subscribe করে। user room-এর মধ্যে navigate করার সাথে সাথে, subscription বদলায়।
 
-## NATS — when Redis is the bottleneck
+## NATS — যখন Redis bottleneck
 
-Redis pub/sub on a single instance handles ~1M messages/second on commodity hardware. Beyond that, scale paths are limited (Redis cluster pub/sub is awkward).
+একটা single instance-এ Redis pub/sub commodity hardware-এ ~1M message/second সামলায়। এর বাইরে, scale path সীমিত (Redis cluster pub/sub আনাড়ি)।
 
-**NATS** is a different broker built specifically for high-throughput messaging. Drop-in for the pub/sub use case, with three additional capabilities:
+**NATS** হলো একটা আলাদা broker যা বিশেষভাবে high-throughput messaging-এর জন্য বানানো। pub/sub use case-এর জন্য drop-in, তিনটা অতিরিক্ত capability সহ:
 
-- **Subjects with wildcards.** `room.*.message` matches `room.general.message`, `room.engineering.message`. Cleaner than Redis patterns.
-- **Queue groups.** `room.general` with queue group `workers` distributes messages across workers (each message goes to one worker). Useful when you want one of many backend workers to process an event.
-- **JetStream.** A persistent log layer for at-least-once delivery — replaces Redis pub/sub + a queue with one system.
+- **Wildcard সহ subject।** `room.*.message` `room.general.message`, `room.engineering.message`-এর সাথে match করে। Redis pattern-এর চেয়ে পরিষ্কার।
+- **Queue group।** `workers` queue group সহ `room.general` worker জুড়ে message বিতরণ করে (প্রতিটা message একটা worker-এ যায়)। যখন আপনি চান অনেক backend worker-এর একটা একটা event process করুক তখন কাজে লাগে।
+- **JetStream.** at-least-once delivery-র জন্য একটা persistent log layer — Redis pub/sub + একটা queue-কে একটা system দিয়ে replace করে।
 
-NATS in Go:
+Go-তে NATS:
 
 ```go
 nc, _ := nats.Connect("nats://localhost:4222")
@@ -261,53 +269,53 @@ sub, _ := nc.Subscribe("room.*", func(m *nats.Msg) {
 nc.Publish("room.general", payload)
 ```
 
-Same shape, different broker. For most apps, Redis is enough. NATS becomes the right call when you have:
+একই shape, আলাদা broker। বেশিরভাগ app-এর জন্য, Redis যথেষ্ট। NATS সঠিক পছন্দ হয় যখন আপনার আছে:
 
-- More than ~100K messages/second sustained.
-- A need for message persistence and replay (JetStream).
-- Many services where the pub/sub bus is a primary architecture component.
+- ~100K message/second-এর বেশি sustained।
+- message persistence আর replay-র প্রয়োজন (JetStream)।
+- অনেক service যেখানে pub/sub bus একটা primary architecture component।
 
 <Callout type="info">
 
-**Don't switch brokers prematurely.** The right time to move from Redis pub/sub to NATS or Kafka is when you have measurements showing the bottleneck. Migrating brokers is real work; doing it before you need to is wasted effort.
+**অকালে broker switch করবেন না।** Redis pub/sub থেকে NATS বা Kafka-তে যাওয়ার সঠিক সময় হলো যখন আপনার কাছে bottleneck দেখানো measurement আছে। broker migrate করা বাস্তব কাজ; দরকার হওয়ার আগে করা অপচয়।
 
 </Callout>
 
-## Sticky sessions — why you might not need them
+## Sticky session — কেন আপনার লাগতে নাও পারে
 
-A common myth: WebSocket clients need sticky sessions (the load balancer routes a client to the same process on reconnect). With pub/sub fan-out, you do not.
+একটা সাধারণ মিথ: WebSocket client-এর sticky session দরকার (load balancer reconnect-এ একটা client-কে একই process-এ route করে)। pub/sub fan-out সহ, আপনার লাগে না।
 
-A client reconnects, lands on any process, subscribes to its rooms, starts receiving fan-out from the bus. The previous process forgot about it; the new process treats it as fresh. Connection state is local; routing is global.
+একটা client reconnect করে, যেকোনো process-এ ল্যান্ড করে, তার room subscribe করে, bus থেকে fan-out পাওয়া শুরু করে। আগের process এটার কথা ভুলে গেছে; নতুন process এটাকে fresh হিসেবে দেখে। Connection state local; routing global।
 
-Sticky sessions become necessary if you cache per-client state in process memory (recent messages, derived views) and need that state to survive the same client's reconnects. Avoid that pattern; put per-client state in Redis or Postgres so any process can serve any client.
+Sticky session তখনই দরকার হয় যদি আপনি per-client state process memory-তে cache করেন (recent message, derived view) আর একই client-এর reconnect-এ সেই state টিকে থাকা দরকার। ওই প্যাটার্ন এড়িয়ে চলুন; per-client state Redis বা Postgres-এ রাখুন যাতে যেকোনো process যেকোনো client serve করতে পারে।
 
-## Replay on reconnect
+## Reconnect-এ replay
 
-What about messages sent while a client was disconnected? Pub/sub does not have them.
+একটা client disconnected থাকার সময় পাঠানো message-এর কী হবে? pub/sub-এ সেগুলো নেই।
 
-For ephemeral data (live chat), most apps accept the gap — clients see messages from the moment they reconnect. Chat history comes from a database query the client makes separately on connect.
+ephemeral data-র (live chat) জন্য, বেশিরভাগ app gap মেনে নেয় — client reconnect করার মুহূর্ত থেকে message দেখে। Chat history connect-এ client-এর আলাদা করা একটা database query থেকে আসে।
 
-For at-least-once semantics (notifications you must not miss):
+at-least-once semantics-এর (যে notification miss করা যাবে না) জন্য:
 
-1. Persist events to Postgres (or Redis Streams, or any append-only store) as well as publishing.
-2. On client connect, query the persistent store for events since the client's last seen ID.
-3. Continue with live pub/sub from there.
+1. publish করার পাশাপাশি Postgres-এও (বা Redis Streams, বা যেকোনো append-only store) event persist করুন।
+2. client connect-এ, client-এর last seen ID থেকে event-এর জন্য persistent store query করুন।
+3. সেখান থেকে live pub/sub সহ চালিয়ে যান।
 
-Same pattern as SSE's `Last-Event-ID`. Build it once, reuse it. Chapter 9 covers reconnection in more detail.
+SSE-র `Last-Event-ID`-র মতোই একই প্যাটার্ন। একবার বানান, পুনরায় ব্যবহার করুন। চ্যাপ্টার 9 reconnection আরও বিস্তারিত cover করে।
 
-## Operating Redis
+## Redis operate করা
 
-Three things to do:
+তিনটা জিনিস করতে হবে:
 
-1. **Pin a version, run as systemd.** `apt install redis-server` and let systemd manage it. Restart on failure.
-2. **Enable AOF persistence** if any state matters (it doesn't for pub/sub, but if you also use Redis for caching, presence, or rate limiting, yes).
-3. **Monitor with `redis-cli info`** — connected clients, keyspace stats, memory. Hook into Prometheus via `redis_exporter`.
+1. **একটা version pin করুন, systemd হিসেবে চালান।** `apt install redis-server` আর systemd-কে এটা manage করতে দিন। failure-এ restart।
+2. যদি কোনো state গুরুত্বপূর্ণ হয় **AOF persistence enable করুন** (pub/sub-এর জন্য নয়, কিন্তু আপনি যদি caching, presence বা rate limiting-এর জন্যও Redis ব্যবহার করেন, হ্যাঁ)।
+3. **`redis-cli info` দিয়ে monitor করুন** — connected client, keyspace stats, memory। `redis_exporter`-এর মাধ্যমে Prometheus-এ hook করুন।
 
-For pub/sub specifically, `redis-cli monitor` shows the live message stream — invaluable for debugging "is my publisher actually firing."
+pub/sub-এর জন্য বিশেষভাবে, `redis-cli monitor` live message stream দেখায় — "আমার publisher কি আসলে fire করছে" debug করার জন্য অমূল্য।
 
-## Testing pub/sub locally
+## locally pub/sub test করা
 
-The cheapest test is `redis-cli`:
+সবচেয়ে সস্তা test হলো `redis-cli`:
 
 ```bash
 redis-cli subscribe room:general
@@ -315,18 +323,18 @@ redis-cli subscribe room:general
 redis-cli publish room:general 'hi'
 ```
 
-Confirms the bus is healthy without any of your code involved. If your service publishes but `redis-cli subscribe` sees nothing, your service is misconfigured. If `redis-cli` works but your service does not see messages, your subscriber loop is wrong.
+আপনার কোনো code জড়িত না করে bus healthy কিনা নিশ্চিত করে। আপনার service যদি publish করে কিন্তু `redis-cli subscribe` কিছু না দেখে, আপনার service misconfigured। `redis-cli` কাজ করলে কিন্তু আপনার service message না দেখলে, আপনার subscriber loop ভুল।
 
 ## Recap
 
-- One process can hold many connections; many processes need a shared pub/sub bus.
-- Redis pub/sub: simple, fast, fire-and-forget. Right for ephemeral events.
-- One subscribe goroutine per process, fanning out to per-client channels with a drop policy.
-- Channel design: per-room, per-user, per-event-type. Mix them.
-- NATS for higher throughput, queue groups, or JetStream's persistent log.
-- Sticky sessions usually unnecessary if all per-client state is local or in Redis.
-- Replay on reconnect: not built in. Use a persistent store + last-seen-ID.
-- Operate Redis with systemd, AOF (if other features need it), Prometheus exporter.
-- Test fan-out with `redis-cli` before blaming your code.
+- একটা process অনেক connection ধরতে পারে; অনেক process-এর একটা shared pub/sub bus দরকার।
+- Redis pub/sub: সহজ, fast, fire-and-forget। ephemeral event-এর জন্য সঠিক।
+- প্রতি process-এ একটা subscribe goroutine, drop policy সহ per-client channel-এ fan out করছে।
+- Channel design: per-room, per-user, per-event-type। মেশান।
+- higher throughput, queue group, বা JetStream-এর persistent log-এর জন্য NATS।
+- সব per-client state local বা Redis-এ থাকলে sticky session সাধারণত অপ্রয়োজনীয়।
+- Reconnect-এ replay: built in নয়। একটা persistent store + last-seen-ID ব্যবহার করুন।
+- systemd, AOF (অন্য feature দরকার হলে), Prometheus exporter দিয়ে Redis operate করুন।
+- নিজের code-কে দোষ দেওয়ার আগে `redis-cli` দিয়ে fan-out test করুন।
 
-Next: [Presence and rooms](/notes/websockets/07-presence-rooms) — tracking who is online, joining and leaving channels, and the operational patterns that work.
+পরবর্তী: [Presence আর rooms](/notes/websockets/07-presence-rooms) — কে online তা track করা, channel-এ join আর leave করা, আর যে operational প্যাটার্নগুলো কাজ করে।

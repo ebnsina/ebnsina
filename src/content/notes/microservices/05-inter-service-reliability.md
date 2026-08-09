@@ -1,9 +1,9 @@
 ---
 title: 'Inter-Service Reliability'
-subtitle: 'Timeouts, retries, circuit breakers, and bulkheads — the patterns that prevent one slow service from cascading into a full outage.'
+subtitle: 'Timeouts, retries, circuit breakers, আর bulkheads — যে pattern গুলো একটা slow service-কে পুরো outage-এ cascade হওয়া থেকে ঠেকায়।'
 chapter: 5
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['circuit breaker', 'retry', 'timeout', 'bulkhead', 'resilience', 'cascading failure']
 ---
 
@@ -11,23 +11,31 @@ topics: ['circuit breaker', 'retry', 'timeout', 'bulkhead', 'resilience', 'casca
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা রেস্টুরেন্ট, আর তার সিগনেচার ডিশটার জন্য একটা বিশেষ পনির দরকার — যেটা আসে বাইরের একটা supplier থেকে। এক সন্ধ্যায় সেই supplier-এর ডেলিভারি দেরি করতে শুরু করল। ফাতিমা কিন্তু হাঁ করে সারা রাত বসে থাকে না; সে ঠিক করে রেখেছে ডেলিভারির জন্য বড়জোর দশ মিনিট অপেক্ষা করবে, এর বেশি নয়। সময় পেরিয়ে গেলে সে ধরে নেয় এবারের অর্ডার আসেনি, আর আবার ফোন করে অর্ডার দেয়। প্রথমবার না হলে সে সঙ্গে সঙ্গে হুড়মুড় করে দশবার ফোন করে না — একবার দিয়ে একটু অপেক্ষা করে, না হলে আর একটু বেশি অপেক্ষা করে, ধীরে ধীরে ধৈর্যের সময় বাড়িয়ে আবার চেষ্টা করে।
+
+কিন্তু কয়েকবার চেষ্টার পর যখন বোঝা গেল supplier-টার গুদাম আজ পুরোপুরি বন্ধ, ফাতিমা প্রতিটা অর্ডারের সময় ওদের ফোন করে করে সময় নষ্ট করা বন্ধ করে দিল — কিছুক্ষণের জন্য ওই supplier-কে সে তালিকা থেকেই বাদ রাখল, মাঝেমধ্যে শুধু একবার দেখে নেয় ওরা আবার চালু হয়েছে কিনা। এদিকে রান্নাঘর তো থেমে থাকতে পারে না — তাই সে একটা backup supplier-এর কাছ থেকে আনা বিকল্প পনির দিয়ে কাছাকাছি একটা ডিশ বানিয়ে খদ্দেরদের খাওয়াতে থাকল। খদ্দেররা টেবিলে খাবার পেল, রেস্টুরেন্ট চলতে থাকল।
+
+এই গল্পটাই inter-service reliability। ডেলিভারির জন্য শুধু দশ মিনিট অপেক্ষা করাটা হলো request **timeout**; প্রথমবার না হলে ধৈর্যের সময় বাড়িয়ে আবার অর্ডার দেওয়াটা হলো **retry with backoff**; স্পষ্টতই বন্ধ supplier-কে বারবার ফোন করা থামিয়ে দেওয়াটা হলো **circuit breaker** open হয়ে যাওয়া; আর backup supplier-এর বিকল্প ডিশটাই হলো **fallback** — যা খদ্দেরদের খাওয়ানো চালু রাখে, মানে একটা supplier-এর ব্যর্থতাকে পুরো রেস্টুরেন্টের বন্ধ হয়ে যাওয়ায়, অর্থাৎ **cascading failure**-এ পরিণত হতে দেয় না। বাস্তবেও ঠিক এভাবেই একটা service অন্য service-কে call করার সময় timeout, retry, circuit breaker আর fallback দিয়ে নিজেকে বাঁচায় — যাতে একটা slow বা down হওয়া service গোটা system-কে টেনে না নামায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Circuit breakers in a building's electrical panel: when one circuit overloads, the breaker trips — cutting power to that circuit only, protecting the rest of the building. Without breakers, one faulty appliance could blow the entire system. The breaker "opens" to protect, then "closes" again once the fault is cleared.
+একটা বাড়ির electrical panel-এর circuit breaker: যখন একটা circuit overload হয়, breaker trip করে — শুধু ওই circuit-এর power কেটে দেয়, বাকি বাড়িটাকে রক্ষা করে। breaker ছাড়া, একটা ত্রুটিপূর্ণ appliance পুরো system উড়িয়ে দিতে পারত। fault দূর হওয়ার পর breaker রক্ষা করতে "open" হয়, তারপর আবার "close" হয়।
 
 </Callout>
 
-## The Cascading Failure Problem
+## Cascading Failure-এর সমস্যা
 
-Service A calls Service B. Service B gets slow (database issue). Service A's request threads pile up waiting for B to respond. Service A's thread pool exhausts. Service A starts returning 503 to clients. Service C (which calls A) starts failing. The database issue in Service B has taken down Service A and C.
+Service A, Service B-কে call করে। Service B slow হয়ে যায় (database সমস্যা)। Service A-র request thread গুলো B-এর জবাবের অপেক্ষায় জমতে থাকে। Service A-র thread pool নিঃশেষ হয়ে যায়। Service A client-দের 503 ফেরত দিতে শুরু করে। Service C (যা A-কে call করে) fail করতে শুরু করে। Service B-এর database সমস্যা Service A আর C-কে নামিয়ে ফেলেছে।
 
-This is a cascading failure — the most common failure mode in microservices. It happens because slow is worse than down: a down service gets connection refused immediately; a slow service holds connections open until they time out.
+এটা একটা cascading failure — microservices-এ সবচেয়ে সাধারণ failure mode। এটা ঘটে কারণ slow হওয়া down হওয়ার চেয়ে খারাপ: একটা down service সাথে সাথে connection refused দেয়; একটা slow service connection গুলো time out না হওয়া পর্যন্ত খোলা রাখে।
 
-## Timeouts — the First Defense
+## Timeouts — প্রথম প্রতিরক্ষা
 
-Every external call must have a timeout. No exceptions.
+প্রতিটা external call-এর একটা timeout থাকতেই হবে। কোনো ব্যতিক্রম নেই।
 
 ```typescript
 // Without timeout — hangs indefinitely
@@ -46,18 +54,18 @@ const response = await fetch('http://payment-service/charge', {
 const { order } = await client.createOrder({ customerId, items }, { timeoutMs: 10_000 });
 ```
 
-gRPC propagates deadlines downstream — if Order calls Payment with a 10s deadline, Payment knows it only has (10s - time_elapsed) to complete. It can give up early rather than doing work that won't be used.
+gRPC deadline গুলো downstream-এ propagate করে — যদি Order 10s deadline সহ Payment-কে call করে, Payment জানে এর হাতে complete করতে শুধু (10s - time_elapsed) আছে। যে কাজ ব্যবহার হবে না তা করার বদলে এটা আগেই হাল ছেড়ে দিতে পারে।
 
-**Timeout budget:** set the upstream timeout longer than the downstream timeout chain. If Order → Payment → Stripe, set:
+**Timeout budget:** upstream timeout-টা downstream timeout chain-এর চেয়ে দীর্ঘ করে সেট করুন। যদি Order → Payment → Stripe, তাহলে সেট করুন:
 
 - Stripe: 5s
-- Payment service timeout: 6s (Stripe + small buffer)
+- Payment service timeout: 6s (Stripe + সামান্য buffer)
 - Order service timeout: 8s (Payment + buffer)
 - Client timeout: 10s
 
-## Retries — Only Where Safe
+## Retries — শুধু যেখানে নিরাপদ
 
-Retry only on idempotent operations, and only on specific error codes.
+শুধু idempotent operation-এ retry করুন, আর শুধু নির্দিষ্ট error code-এ।
 
 ```typescript
 async function withRetry<T>(
@@ -97,16 +105,16 @@ const order = await withRetry(() => client.getOrder({ orderId }), {
 });
 ```
 
-**Never retry:**
+**কখনো retry করবেন না:**
 
-- Non-idempotent operations (charging a card — retry = double charge)
-- `INVALID_ARGUMENT` — retrying won't fix bad input
-- `PERMISSION_DENIED` — retrying won't grant permissions
-- When you've already exceeded the deadline — retrying burns more budget
+- Non-idempotent operation (একটা card charge করা — retry = double charge)
+- `INVALID_ARGUMENT` — retry করলে খারাপ input ঠিক হবে না
+- `PERMISSION_DENIED` — retry করলে permission মিলবে না
+- যখন আপনি ইতিমধ্যে deadline ছাড়িয়ে গেছেন — retry আরও budget পোড়ায়
 
 ## Circuit Breaker
 
-After N failures, stop trying and fail fast. Periodically probe to see if the service recovered.
+N বার failure-এর পর, চেষ্টা বন্ধ করুন আর দ্রুত fail করুন। Service recover করেছে কিনা দেখতে পর্যায়ক্রমে probe করুন।
 
 ```typescript
 type CircuitState = 'closed' | 'open' | 'half-open';
@@ -167,7 +175,7 @@ async function chargePayment(order: Order) {
 }
 ```
 
-In production, use `opossum` (Node.js) or `Resilience4j` (JVM) — they add metrics, events, and fallback support:
+Production-এ, `opossum` (Node.js) বা `Resilience4j` (JVM) ব্যবহার করুন — এগুলো metrics, event, আর fallback support যোগ করে:
 
 ```typescript
 import CircuitBreaker from 'opossum';
@@ -188,7 +196,7 @@ const result = await breaker.fire(order);
 
 ## Bulkheads
 
-Limit how many concurrent calls you make to each downstream service. If the payment service slows down, it can only exhaust its own connection pool — not the entire application's.
+প্রতিটা downstream service-এ আপনি কতগুলো concurrent call করবেন সীমিত করুন। payment service যদি slow হয়ে যায়, এটা শুধু নিজের connection pool নিঃশেষ করতে পারবে — পুরো application-এরটা নয়।
 
 ```typescript
 import pLimit from 'p-limit';
@@ -207,11 +215,11 @@ async function processOrder(order: Order) {
 }
 ```
 
-Without bulkheads: if payment service is slow and 1000 orders arrive, 1000 threads/promises are waiting on payment. The application has no capacity for any other requests.
+Bulkhead ছাড়া: payment service slow হলে আর 1000টা order এলে, 1000টা thread/promise payment-এর জন্য অপেক্ষা করছে। Application-এর অন্য কোনো request-এর জন্য কোনো capacity নেই।
 
-With bulkheads: only 20 requests are waiting on payment. The other 980 fail fast (queue full). The rest of the application continues working.
+Bulkhead সহ: শুধু 20টা request payment-এর জন্য অপেক্ষা করছে। বাকি 980টা দ্রুত fail করে (queue full)। Application-এর বাকি অংশ কাজ করতে থাকে।
 
-**Connection pool as bulkhead:**
+**Bulkhead হিসেবে connection pool:**
 
 ```typescript
 // pg (postgres) — built-in pool
@@ -225,7 +233,7 @@ const db = new Pool({
 
 ## Hedged Requests
 
-For latency-critical paths: send the same request to two instances in parallel, use whichever responds first.
+Latency-critical path-এর জন্য: একই request দুটো instance-এ সমান্তরালে পাঠান, যেটা আগে জবাব দেয় সেটা ব্যবহার করুন।
 
 ```typescript
 async function hedgedRequest<T>(
@@ -271,11 +279,11 @@ const order = await hedgedRequest(
 );
 ```
 
-Hedging trades extra load (up to 2x) for lower tail latency. Use only for reads.
+Hedging কম tail latency-র বিনিময়ে বাড়তি load (2x পর্যন্ত) নেয়। শুধু read-এর জন্য ব্যবহার করুন।
 
-## Putting It Together
+## সব একসাথে জোড়া
 
-A production inter-service call has all layers:
+একটা production inter-service call-এ সব layer থাকে:
 
 ```typescript
 const paymentBreaker = new CircuitBreaker(5, 30_000);
@@ -300,9 +308,9 @@ async function chargePayment(order: Order): Promise<Payment> {
 }
 ```
 
-Each layer addresses a different failure mode:
+প্রতিটা layer একটা ভিন্ন failure mode সামলায়:
 
-- **Timeout:** prevents indefinite blocking
-- **Retry:** handles transient failures
-- **Circuit breaker:** prevents hammering a failed service
-- **Bulkhead:** limits blast radius of a slow service
+- **Timeout:** অনির্দিষ্টকালের blocking ঠেকায়
+- **Retry:** transient failure সামলায়
+- **Circuit breaker:** একটা fail হওয়া service-কে বারবার আঘাত করা ঠেকায়
+- **Bulkhead:** একটা slow service-এর blast radius সীমিত করে

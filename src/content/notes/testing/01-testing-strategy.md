@@ -1,9 +1,9 @@
 ---
 title: 'Testing Strategy'
-subtitle: 'The testing pyramid, what each layer tests, and how to avoid the traps that make test suites slow and fragile.'
+subtitle: 'Testing pyramid, প্রতিটি layer কী টেস্ট করে, আর যেসব ফাঁদ test suite-কে ধীর ও ভঙ্গুর করে তা কীভাবে এড়াবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '7 min'
+readingTime: '7 মিনিট'
 topics: ['testing pyramid', 'unit tests', 'integration tests', 'e2e tests', 'test strategy', 'TDD']
 ---
 
@@ -13,13 +13,21 @@ topics: ['testing pyramid', 'unit tests', 'integration tests', 'e2e tests', 'tes
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Quality control in a car factory: inspectors check individual bolts (unit tests), then assembled subcomponents like the engine block (integration tests), then drive the finished car around the test track (e2e tests). The bolt inspectors are fast and cheap — you run them on every part. You don't drive every car through a full road course for every weld you make.
+একটা গাড়ির কারখানায় quality control: ইন্সপেক্টররা আলাদা আলাদা bolt চেক করে (unit tests), তারপর assemble করা subcomponent যেমন engine block (integration tests), তারপর তৈরি হওয়া গাড়িটা test track-এ চালিয়ে দেখে (e2e tests)। Bolt ইন্সপেক্টররা দ্রুত ও সস্তা — আপনি প্রতিটি পার্টসের ওপর এগুলো চালান। প্রতিটা weld করার জন্য আপনি প্রতিটা গাড়িকে পুরো road course-এ চালিয়ে দেখেন না।
 
 </Callout>
 
-## The Testing Pyramid
+## গল্পে বুঝি
+
+ইবনে সিনার একটা রেস্তোরাঁ, রান্নাঘরে খাবারের নিরাপত্তার একটা পুরো প্ল্যান আছে। সারাদিন ধরে শেফরা অসংখ্য ছোট ছোট চেক করে — যে ডিমটা ভাঙা হচ্ছে সেটার গন্ধ শোঁকা, যে দুধ ঢালা হচ্ছে সেটা এক চুমুক চেখে দেখা, সবজিটা টাটকা কিনা তাকিয়ে দেখা। এগুলো সেকেন্ডের কাজ, প্রায় বিনা খরচে, তাই প্রতিটা উপকরণ ব্যবহারের ঠিক আগে করে ফেলা যায়। এভাবেই বেশিরভাগ সমস্যা একদম শুরুতেই ধরা পড়ে যায়।
+
+তার চেয়ে একটু কম ঘন ঘন, রান্না শেষ হওয়া প্রতিটা ডিশ পাস থেকে বেরোনোর আগে হেড শেফ আল-খোয়ারিজমি একবার চেখে দেখেন — নুন ঠিক আছে তো, উপকরণগুলো একসাথে মিলে ঠিকঠাক স্বাদ হয়েছে তো। এটা একটা উপকরণের চেয়ে বড় পরীক্ষা, একটু বেশি সময় নেয়, কিন্তু পুরো ডিশ ঠিকঠাক জোড়া লেগেছে কিনা তা এটাই বলে দেয়। আর কালেভদ্রে — কয়েক মাসে একবার — ফাতিমা আল-ফিহরি পুরো রান্নাঘরের একটা সম্পূর্ণ হেলথ ইন্সপেকশন করান: ফ্রিজের তাপমাত্রা, স্টোরেজ, পরিষ্কার-পরিচ্ছন্নতা, সবকিছু আগাগোড়া। এটা ধীর আর খরুচে, তাই প্রতিদিন করা হয় না — শুধু বড় নিশ্চয়তার দরকারে মাঝেমধ্যে।
+
+এই পুরো প্ল্যানটাই হলো **test pyramid**। অসংখ্য দ্রুত সস্তা উপকরণ-চেক হলো আপনার **unit test** — অনেক, দ্রুত, প্রতিবার চালানোর মতো। তার চেয়ে কম সংখ্যক ডিশ-চেখে-দেখা হলো **integration test** — আপনার আলাদা অংশগুলো একসাথে ঠিকঠাক কাজ করছে কিনা যাচাই। আর কালেভদ্রের সেই পূর্ণ ইন্সপেকশন হলো ধীর, খরুচে **e2e test** — কম সংখ্যায়, শুধু জরুরি নিশ্চয়তার জন্য। বাস্তবেও ঠিক এভাবেই test suite সাজানো উচিত: প্রচুর unit test দিয়ে বেশিরভাগ bug সস্তায় ও আগেভাগে ধরে ফেলুন, কম integration test দিয়ে boundary যাচাই করুন, আর মুষ্টিমেয় e2e test জমিয়ে রাখুন সেই দামি, ধীর অথচ গুরুত্বপূর্ণ full-stack নিশ্চয়তার জন্য।
+
+## Testing Pyramid
 
 ```
         ┌─────────────┐
@@ -31,11 +39,11 @@ Quality control in a car factory: inspectors check individual bolts (unit tests)
         └─────────────┘
 ```
 
-Most projects have this inverted — many slow e2e tests, few unit tests. This is a trap: e2e tests break for the wrong reasons, don't tell you what failed, and take 20 minutes per CI run.
+বেশিরভাগ প্রজেক্টে এটা উল্টে থাকে — অনেক ধীর e2e test, কম unit test। এটা একটা ফাঁদ: e2e test ভুল কারণে ভাঙে, কী fail করেছে তা বলে না, আর প্রতি CI run-এ ২০ মিনিট নেয়।
 
-## What Each Layer Tests
+## প্রতিটি Layer কী টেস্ট করে
 
-**Unit tests** — pure functions, domain logic, transformations, edge cases. No I/O, no network, no database. Fast enough to run on every file save.
+**Unit tests** — pure function, domain logic, transformation, edge case। কোনো I/O নেই, network নেই, database নেই। প্রতিবার file save-এ চালানোর মতো যথেষ্ট দ্রুত।
 
 ```typescript
 // Good unit test: tests logic, no I/O
@@ -54,7 +62,7 @@ test('never discounts below zero', () => {
 });
 ```
 
-**Integration tests** — test the boundary between your code and something real: a database, a third-party API, a message queue. Run against a real (test) instance, not mocks.
+**Integration tests** — আপনার কোড আর কোনো সত্যিকারের জিনিসের মধ্যকার boundary টেস্ট করে: একটা database, একটা third-party API, একটা message queue। Mock-এর বিপরীতে নয়, একটা real (test) instance-এর বিপরীতে চালান।
 
 ```typescript
 // Integration test: hits a real test database
@@ -82,7 +90,7 @@ test('creates order with correct total', async () => {
 });
 ```
 
-**E2e tests** — simulate a real user in a real browser against a fully deployed app. Use sparingly: 5–15 critical user journeys, not every feature.
+**E2e tests** — একটা পুরোপুরি deploy করা app-এর বিপরীতে একটা real browser-এ একজন সত্যিকারের user-কে simulate করে। সংযমী হয়ে ব্যবহার করুন: প্রতিটি feature নয়, ৫–১৫টি critical user journey।
 
 ```typescript
 // E2e test: Playwright, tests the full stack
@@ -102,9 +110,9 @@ test('user can sign up and place an order', async ({ page }) => {
 });
 ```
 
-## The Mock Trap
+## Mock Trap
 
-Mocking everything is fast to write and slow to trust. When everything is mocked, your tests pass but your system is broken:
+সবকিছু mock করা লিখতে দ্রুত কিন্তু ভরসা করতে ধীর। যখন সবকিছুই mock করা, তখন আপনার test pass করে কিন্তু আপনার system ভাঙা:
 
 ```typescript
 // BAD: mocking the database — tests the mock, not the code
@@ -116,18 +124,18 @@ const result = await createUser(mockDb, { email: 'test@example.com' });
 // Tests actually verify the query works, constraints fire, triggers run
 ```
 
-Mocks are appropriate for:
+Mock যেসব ক্ষেত্রে উপযুক্ত:
 
-- External third-party APIs (Stripe, SendGrid) — you don't control them
-- Time (`Date.now()`, `new Date()`) — for deterministic tests
-- Random values — for reproducibility
-- System calls you can't run in CI (GPU, hardware interfaces)
+- External third-party API (Stripe, SendGrid) — এগুলো আপনার নিয়ন্ত্রণে নেই
+- Time (`Date.now()`, `new Date()`) — deterministic test-এর জন্য
+- Random value — reproducibility-র জন্য
+- যেসব system call আপনি CI-তে চালাতে পারবেন না (GPU, hardware interface)
 
-Not appropriate for:
+উপযুক্ত নয়:
 
-- Your own database (use a test DB with real migrations)
-- Your own internal services (use a test instance or contract tests)
-- External HTTP APIs you control (use a test environment)
+- আপনার নিজের database (real migration সহ একটা test DB ব্যবহার করুন)
+- আপনার নিজের internal service (test instance বা contract test ব্যবহার করুন)
+- আপনার নিয়ন্ত্রণে থাকা external HTTP API (একটা test environment ব্যবহার করুন)
 
 ## Test Data
 
@@ -148,7 +156,7 @@ const premiumUser = buildUser({ role: 'premium' });
 const adminUser = buildUser({ role: 'admin', email: 'admin@example.com' });
 ```
 
-For database tests: seed only what the test needs, clean up after:
+Database test-এর জন্য: test-এর যতটুকু দরকার শুধু ততটুকু seed করুন, পরে পরিষ্কার করুন:
 
 ```typescript
 // Global test setup — run migrations once
@@ -158,30 +166,30 @@ For database tests: seed only what the test needs, clean up after:
 // afterAll: drop test data, close connections
 ```
 
-## Coverage as a Tool, Not a Goal
+## Coverage একটা Tool, Goal নয়
 
-100% coverage doesn't mean the code works. Coverage tells you which lines ran, not whether the behavior is correct.
+100% coverage মানে এই নয় যে কোড কাজ করে। Coverage আপনাকে বলে কোন line গুলো চলেছে, behavior সঠিক কিনা তা নয়।
 
-Useful coverage signals:
+কাজের coverage signal:
 
-- **Low coverage on a module** → probably missing tests for a complex area
-- **100% coverage everywhere** → probably testing implementation instead of behavior
+- **কোনো module-এ কম coverage** → সম্ভবত কোনো জটিল অংশের test মিসিং
+- **সব জায়গায় 100% coverage** → সম্ভবত behavior-এর বদলে implementation টেস্ট করা হচ্ছে
 
-Ignore coverage on: generated code, migrations, config files, CLI entry points.
+এসবের coverage উপেক্ষা করুন: generated code, migration, config file, CLI entry point।
 
-Set a floor (e.g., 70%) to prevent regressions, not a ceiling to chase.
+Regression ঠেকাতে একটা floor (যেমন 70%) সেট করুন, তাড়া করার জন্য কোনো ceiling নয়।
 
-## What to Test First
+## প্রথমে কী টেস্ট করবেন
 
-When joining an existing codebase with no tests, add tests in this order:
+test নেই এমন কোনো বিদ্যমান codebase-এ যোগ দিলে, এই ক্রমে test যোগ করুন:
 
-1. **Bugs you fix** — write a test that reproduces the bug before fixing it
-2. **Critical paths** — checkout flow, auth, payment, anything money-related
-3. **Complex domain logic** — pricing, discounts, business rules
-4. **Integration boundaries** — places where your code meets the database or external APIs
-5. **E2e for happy paths** — signup, login, core user journeys
+1. **যেসব bug আপনি fix করেন** — fix করার আগে bug-টা reproduce করে এমন একটা test লিখুন
+2. **Critical path** — checkout flow, auth, payment, টাকা-সংক্রান্ত যেকোনো কিছু
+3. **জটিল domain logic** — pricing, discount, business rule
+4. **Integration boundary** — যেখানে আপনার কোড database বা external API-র সাথে মেলে
+5. **Happy path-এর জন্য E2e** — signup, login, core user journey
 
-Don't try to retrofit coverage everywhere. Test the things that hurt when they break.
+সব জায়গায় coverage retrofit করার চেষ্টা করবেন না। যেসব জিনিস ভাঙলে ব্যথা লাগে সেগুলো টেস্ট করুন।
 
 ## CI Configuration
 
@@ -223,4 +231,4 @@ jobs:
         if: github.ref == 'refs/heads/main' # e2e only on main
 ```
 
-Run unit + integration tests on every push. Run e2e only before deploy or on main — they're too slow for every PR branch.
+প্রতিটি push-এ unit + integration test চালান। e2e শুধু deploy-এর আগে বা main-এ চালান — প্রতিটি PR branch-এর জন্য এগুলো বড্ড ধীর।

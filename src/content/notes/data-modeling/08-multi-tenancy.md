@@ -1,9 +1,9 @@
 ---
 title: 'Multi-tenancy'
-subtitle: 'Three architectures for serving many customers from one app: single database with a tenant column, schema per tenant, or a database per tenant. Each has a different cost curve.'
+subtitle: 'একটা অ্যাপ থেকে অনেক কাস্টমারকে সার্ভ করার তিনটা আর্কিটেকচার: tenant কলামসহ single database, tenant-প্রতি schema, নাকি tenant-প্রতি database। প্রতিটার cost curve আলাদা।'
 chapter: 8
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'multi-tenancy', 'rls', 'isolation']
 ---
 
@@ -11,34 +11,42 @@ topics: ['data-modeling', 'multi-tenancy', 'rls', 'isolation']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A multi-tenant app is one where many customers (tenants) share the same application code, but each customer's data is isolated from others. Slack, Notion, Linear, GitHub Organisations — all multi-tenant. The decision of _how_ to isolate happens at the data layer, and it's hard to reverse later.
+## গল্পে বুঝি
 
-This chapter is the three architectures, when each fits, and the gotchas that haunt every one.
+আল-খোয়ারিজমি একটা অ্যাপার্টমেন্ট বিল্ডিং চালান, যেখানে অনেকগুলো আলাদা পরিবার থাকে। সবারই দরকার নিজের জিনিস নিরাপদে রাখা, আর কেউ যেন অন্যের জিনিসে হাত না দেয়। তিনভাবে সাজানো যায়। প্রথম উপায় সবচেয়ে সস্তা — একটাই বড় হল, সবাই একসাথে সেখানে থাকে, তবে প্রতিটা পরিবারের জিনিসে তাদের ফ্ল্যাট নম্বরের ট্যাগ লাগানো, আর নিয়ম হলো নিজের ট্যাগের বাইরে কেউ কারো জিনিস ছোঁবে না। জায়গা কম লাগে, খরচও কম — কিন্তু গোটা নিরাপত্তা ওই একটা নিয়মের উপরই দাঁড়িয়ে। কেউ ভুল করে অন্যের ট্যাগ ধরে ফেললেই গোলমাল।
+
+তাই ইবনে সিনার পরিবার চাইল আরেকটু আলাদা থাকা — বিল্ডিংয়ের ভেতরেই তাদের নিজস্ব একটা তালাবন্ধ ফ্ল্যাট, চাবি শুধু তাদের কাছে। এখন আর ট্যাগের নিয়মের ভরসায় থাকতে হয় না, দেয়ালই আলাদা করে দেয়। আবার ফাতিমা আল-ফিহরির পরিবার আরও কড়াকড়ি চাইল — তারা নিল একদম আলাদা একটা বাড়ি, নিজের গেট, নিজের সবকিছু। সবচেয়ে নিরাপদ, কিন্তু আলাদা বাড়ির ভাড়া আর দেখভালের খরচও সবচেয়ে বেশি।
+
+এই গল্পটাই আসলে **multi-tenancy**। ট্যাগ লাগানো এক হল = একটা shared table যেখানে `tenant_id` কলাম দিয়ে প্রতিটা tenant-এর ডেটা আলাদা করা হয় (সস্তা, কিন্তু query-র নিয়মের উপর নির্ভরশীল)। প্রতি পরিবারের তালাবন্ধ ফ্ল্যাট = schema-per-tenant, যেখানে দেয়ালই strong isolation দেয়। আর আলাদা বাড়ি = database-per-tenant, সবচেয়ে শক্ত isolation কিন্তু সবচেয়ে খরুচে। যত কড়া আলাদা করা, তত নিরাপদ কিন্তু তত দামি — এটাই isolation-বনাম-cost tradeoff। বাস্তবে Slack, Notion, GitHub-এর মতো SaaS প্রোডাক্ট ঠিক এভাবেই এক কোডবেস থেকে হাজারো কাস্টমারকে সার্ভ করে, আর প্রতিটা কাস্টমার কত বড় তার উপর ভিত্তি করে এই তিনটার একটা বেছে নেয়।
+
+একটা multi-tenant অ্যাপ হলো যেখানে অনেক কাস্টমার (tenant) একই application কোড শেয়ার করে, কিন্তু প্রতিটা কাস্টমারের ডেটা অন্যদের থেকে isolated। Slack, Notion, Linear, GitHub Organisations — সবই multi-tenant। _কীভাবে_ isolate করবেন সেই সিদ্ধান্তটা ডেটা লেয়ারে হয়, আর পরে সেটা রিভার্স করা কঠিন।
+
+এই চ্যাপ্টারটা হলো তিনটা আর্কিটেকচার, কখন কোনটা মানানসই, আর যে gotcha-গুলো প্রতিটাকে তাড়া করে বেড়ায়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-An apartment building where each tenant has their own space but shares the same plumbing and electricity.
+একটা অ্যাপার্টমেন্ট বিল্ডিং যেখানে প্রতিটা tenant-এর নিজের জায়গা আছে কিন্তু একই plumbing আর বিদ্যুৎ শেয়ার করে।
 
 </Callout>
 
-## The three architectures
+## তিনটা আর্কিটেকচার
 
-|                       | Single DB, tenant column            | Schema-per-tenant               | DB-per-tenant                |
-| --------------------- | ----------------------------------- | ------------------------------- | ---------------------------- |
-| Tenants share         | one table                           | one database, separate schemas  | nothing                      |
-| Isolation             | row-level                           | schema-level                    | physical                     |
-| Onboarding cost       | INSERT                              | CREATE SCHEMA + tables          | provision DB                 |
-| Backup granularity    | all tenants together                | per schema (pg_dump)            | per database                 |
-| Query complexity      | every query needs `WHERE tenant_id` | search_path or schema-qualified | none (each DB is one tenant) |
-| Per-tenant migrations | impossible — all on same shape      | possible                        | trivial                      |
-| Scale ceiling (rows)  | tens of millions per tenant ok      | a few hundred tenants           | thousands of tenants         |
-| Cost per tenant       | $0                                  | small                           | large                        |
+|                      | Single DB, tenant কলাম                | Schema-per-tenant               | DB-per-tenant            |
+| -------------------- | ------------------------------------- | ------------------------------- | ------------------------ |
+| Tenant যা শেয়ার করে | একটা টেবিল                            | একটা database, আলাদা schema     | কিছুই না                 |
+| Isolation            | row-level                             | schema-level                    | physical                 |
+| Onboarding খরচ       | INSERT                                | CREATE SCHEMA + টেবিল           | DB provision             |
+| Backup granularity   | সব tenant একসাথে                      | schema-প্রতি (pg_dump)          | database-প্রতি           |
+| Query complexity     | প্রতি query-তে `WHERE tenant_id` লাগে | search_path বা schema-qualified | নেই (প্রতি DB এক tenant) |
+| Per-tenant migration | অসম্ভব — সবাই একই আকৃতিতে             | সম্ভব                           | তুচ্ছ                    |
+| Scale সীমা (রো)      | tenant-প্রতি কয়েক কোটি ঠিক আছে       | কয়েকশো tenant                  | হাজার হাজার tenant       |
+| Tenant-প্রতি খরচ     | $0                                    | কম                              | বেশি                     |
 
-Most modern SaaS uses single-DB with a tenant column. It's the cheapest, simplest, and scales remarkably far. The other two are special cases.
+বেশিরভাগ আধুনিক SaaS একটা tenant কলামসহ single-DB ব্যবহার করে। এটাই সবচেয়ে সস্তা, সবচেয়ে সহজ, আর অসাধারণ দূর পর্যন্ত scale করে। বাকি দুটো special case।
 
-## Pattern 1: single DB, `tenant_id` column
+## Pattern 1: single DB, `tenant_id` কলাম
 
 ```sql
 CREATE TABLE projects (
@@ -56,23 +64,23 @@ CREATE TABLE issues (
 );
 ```
 
-Every tenant-scoped table has a `tenant_id`. Every query filters by it:
+প্রতিটা tenant-scoped টেবিলে একটা `tenant_id` থাকে। প্রতিটা query সেটা দিয়ে filter করে:
 
 ```sql
 SELECT * FROM issues WHERE tenant_id = $1 AND project_id = $2;
 ```
 
-### Why include `tenant_id` on every child table
+### প্রতিটা child টেবিলে `tenant_id` রাখেন কেন
 
-You might think: "issues already join through `projects.tenant_id`. Why duplicate?"
+আপনি ভাবতে পারেন: "issues তো ইতিমধ্যে `projects.tenant_id` দিয়ে join হয়। ডুপ্লিকেট করবেন কেন?"
 
-Three reasons:
+তিনটা কারণ:
 
-1. **Indexing.** A `(tenant_id, created_at)` index supports "list this tenant's recent issues" without joining.
-2. **Sharding readiness.** If you ever shard by tenant, every row needs the tenant marker on it.
-3. **Defense in depth.** A bug that joins wrong is a data leak. `WHERE tenant_id = $1` repeated everywhere is a redundancy that catches mistakes.
+1. **Indexing.** একটা `(tenant_id, created_at)` index join না করেই "এই tenant-এর সাম্প্রতিক issue দেখাও" সাপোর্ট করে।
+2. **Sharding readiness.** আপনি কখনও tenant দিয়ে shard করলে প্রতিটা row-এ tenant মার্কার লাগবে।
+3. **Defense in depth.** যে বাগ ভুল join করে সেটা একটা data leak। সবখানে বারবার `WHERE tenant_id = $1` একটা redundancy যা ভুল ধরে ফেলে।
 
-The cost: every INSERT must set it. A FK constraint helps:
+খরচটা: প্রতিটা INSERT-এ এটা সেট করতে হয়। একটা FK constraint সাহায্য করে:
 
 ```sql
 CREATE TABLE issues (
@@ -83,13 +91,13 @@ CREATE TABLE issues (
 );
 ```
 
-Composite FK ensures `issues.tenant_id` matches the parent project's `tenant_id`. Now you can't insert a tenant-mismatched issue even by accident.
+Composite FK নিশ্চিত করে যে `issues.tenant_id` প্যারেন্ট project-এর `tenant_id`-এর সাথে মেলে। এখন আপনি ভুলেও একটা tenant-mismatched issue insert করতে পারবেন না।
 
-### Querying every tenant scope
+### প্রতিটা tenant scope query করা
 
-The repeating `WHERE tenant_id = $1` is the boring-but-critical part. Two strategies for not forgetting it:
+বারবার `WHERE tenant_id = $1` লেখাটা বিরক্তিকর-কিন্তু-critical অংশ। এটা না-ভোলার দুটো কৌশল:
 
-**A. Repository / data-access layer.** Every query goes through a function that takes `tenantID` as the first argument:
+**A. Repository / data-access লেয়ার।** প্রতিটা query এমন একটা function দিয়ে যায় যা প্রথম আর্গুমেন্ট হিসেবে `tenantID` নেয়:
 
 ```go
 func (r *IssueRepo) List(ctx context.Context, tenantID int64) ([]*Issue, error) {
@@ -101,9 +109,9 @@ func (r *IssueRepo) List(ctx context.Context, tenantID int64) ([]*Issue, error) 
 }
 ```
 
-If `tenantID` is the first arg of every method, code review catches anything that doesn't have it.
+`tenantID` যদি প্রতিটা method-এর প্রথম আর্গুমেন্ট হয়, তাহলে code review যেটাতে সেটা নেই সেটা ধরে ফেলে।
 
-**B. Row-Level Security (Postgres-specific).** Postgres can enforce the filter automatically.
+**B. Row-Level Security (Postgres-specific)।** Postgres filter-টা অটোমেটিক enforce করতে পারে।
 
 ```sql
 ALTER TABLE issues ENABLE ROW LEVEL SECURITY;
@@ -112,34 +120,34 @@ CREATE POLICY tenant_isolation ON issues
   USING (tenant_id = current_setting('app.tenant_id')::bigint);
 ```
 
-Set `app.tenant_id` per request:
+প্রতি request-এ `app.tenant_id` সেট করুন:
 
 ```go
 db.Exec("SET LOCAL app.tenant_id = $1", tenantID)
 ```
 
-Now `SELECT * FROM issues` automatically filters to that tenant. Forget the WHERE clause and you still only see your tenant's data.
+এখন `SELECT * FROM issues` অটোমেটিক সেই tenant-এ filter করে। WHERE clause ভুলে গেলেও আপনি শুধু আপনার tenant-এর ডেটাই দেখবেন।
 
-**RLS is the strongest guarantee but adds operational complexity:** you need to set the GUC at the start of every connection, plus ensure superuser/admin paths bypass it correctly. For most teams, repository discipline is enough; reach for RLS when stakes are high (HIPAA, financial data) or you can't trust every SQL writer.
+**RLS হলো সবচেয়ে শক্ত গ্যারান্টি কিন্তু operational জটিলতা যোগ করে:** প্রতিটা connection-এর শুরুতে GUC সেট করতে হয়, প্লাস superuser/admin path যাতে সঠিকভাবে এটা bypass করে সেটা নিশ্চিত করতে হয়। বেশিরভাগ টিমের জন্য repository discipline যথেষ্ট; stake বেশি হলে (HIPAA, financial ডেটা) বা প্রতিটা SQL writer-কে বিশ্বাস করতে না পারলে RLS-এর দিকে যান।
 
 <Callout type="warn">
 
-**The biggest single-DB risk is cross-tenant leaks via JOIN.** A query that joins on `project_id` without including `tenant_id` can return another tenant's rows if the IDs collide (which they will if you use `BIGSERIAL`). Always include `tenant_id` in JOIN conditions, or wrap them in RLS.
+**single-DB-র সবচেয়ে বড় ঝুঁকি হলো JOIN দিয়ে cross-tenant leak।** যে query `tenant_id` না রেখে `project_id`-এ join করে সেটা অন্য tenant-এর row রিটার্ন করতে পারে যদি ID collide করে (যা করবেই যদি আপনি `BIGSERIAL` ব্যবহার করেন)। JOIN condition-এ সবসময় `tenant_id` রাখুন, বা RLS দিয়ে মুড়ে দিন।
 
 </Callout>
 
-### Per-tenant indexes
+### Per-tenant index
 
-A common pattern: indexes prefixed with `tenant_id`.
+একটা কমন প্যাটার্ন: `tenant_id` দিয়ে prefix করা index।
 
 ```sql
 CREATE INDEX issues_tenant_created ON issues(tenant_id, created_at DESC);
 CREATE INDEX issues_tenant_status ON issues(tenant_id, status);
 ```
 
-This lets queries like `WHERE tenant_id = X ORDER BY created_at` use index ordering. Without the prefix, the index covers the whole table; with it, you get fast per-tenant scans.
+এটা `WHERE tenant_id = X ORDER BY created_at`-এর মতো query-কে index ordering ব্যবহার করতে দেয়। prefix ছাড়া index পুরো টেবিল cover করে; এর সাথে আপনি দ্রুত per-tenant scan পান।
 
-For very large multi-tenant tables, consider **partitioning by tenant range** or by hash:
+খুব বড় multi-tenant টেবিলের জন্য **tenant range** বা hash দিয়ে **partitioning** ভাবুন:
 
 ```sql
 CREATE TABLE issues (..., tenant_id BIGINT NOT NULL, ...) PARTITION BY HASH (tenant_id);
@@ -149,11 +157,11 @@ CREATE TABLE issues_p1 PARTITION OF issues FOR VALUES WITH (MODULUS 8, REMAINDER
 -- ... up to p7
 ```
 
-Postgres splits the data across partitions. Queries with `WHERE tenant_id = X` only scan one partition. Helps when one big table holds ~100M+ rows.
+Postgres ডেটা partition-এ ভাগ করে দেয়। `WHERE tenant_id = X` সহ query শুধু একটা partition scan করে। যখন একটা বড় টেবিলে ~100M+ row থাকে তখন সাহায্য করে।
 
 ## Pattern 2: schema-per-tenant
 
-Each tenant has their own Postgres _schema_ (namespace) inside the same database.
+প্রতিটা tenant-এর একই database-এর ভেতরে নিজের Postgres _schema_ (namespace) থাকে।
 
 ```sql
 CREATE SCHEMA tenant_cordoba;
@@ -163,65 +171,65 @@ CREATE SCHEMA tenant_globex;
 CREATE TABLE tenant_globex.issues (id BIGSERIAL PRIMARY KEY, ...);
 ```
 
-To query the right one, set the search path per request:
+ঠিকটা query করতে প্রতি request-এ search path সেট করুন:
 
 ```go
 db.Exec(`SET search_path TO tenant_cordoba, public`)
 db.Query(`SELECT * FROM issues`) // hits tenant_cordoba.issues
 ```
 
-Pros:
+সুবিধা:
 
-- Strong isolation. SQL queries can't accidentally reach another tenant.
-- Per-schema `pg_dump` for backups, exports, GDPR-style data extraction.
-- Per-tenant data shapes (rare but possible — feature-flagged columns).
+- শক্তিশালী isolation। SQL query ভুলেও অন্য tenant-এ পৌঁছাতে পারে না।
+- backup, export, GDPR-স্টাইল ডেটা extraction-এর জন্য schema-প্রতি `pg_dump`।
+- Per-tenant ডেটা shape (বিরল কিন্তু সম্ভব — feature-flagged কলাম)।
 
-Cons:
+অসুবিধা:
 
-- **Schema migrations are N times the work.** Adding a column means iterating every schema. Tooling helps; complexity grows.
-- **Connection pool considerations.** Search path is a session setting; pools need careful handling.
-- **Hard limit on tenant count.** Postgres handles thousands of schemas, but at some point catalog overhead bites.
-- **Cross-tenant analytics get harder.** "Total issues across all tenants" needs UNION ALL across schemas.
+- **Schema migration N গুণ কাজ।** একটা কলাম যোগ করা মানে প্রতিটা schema-তে iterate করা। tooling সাহায্য করে; জটিলতা বাড়ে।
+- **Connection pool বিবেচনা।** Search path একটা session সেটিং; pool-এর সতর্ক হ্যান্ডলিং লাগে।
+- **Tenant সংখ্যায় শক্ত সীমা।** Postgres হাজার হাজার schema সামলায়, কিন্তু কোনো এক পর্যায়ে catalog overhead কামড় দেয়।
+- **Cross-tenant analytics কঠিন হয়ে যায়।** "সব tenant মিলিয়ে মোট issue"-র জন্য schema জুড়ে UNION ALL লাগে।
 
-Used by some Postgres-heavy products (Supabase, Citus). Right when:
+কিছু Postgres-heavy প্রোডাক্ট (Supabase, Citus) এটা ব্যবহার করে। ঠিক যখন:
 
-- Each tenant is large (mid-market B2B, not consumer SaaS).
-- Compliance requires demonstrable per-tenant isolation.
-- Tenant count is &lt; ~1000.
+- প্রতিটা tenant বড় (mid-market B2B, consumer SaaS নয়)।
+- Compliance-এর জন্য প্রমাণযোগ্য per-tenant isolation দরকার।
+- Tenant সংখ্যা ~1000-এর &lt; কম।
 
 ## Pattern 3: database-per-tenant
 
-Each tenant gets a separate Postgres database (or even a separate cluster).
+প্রতিটা tenant একটা আলাদা Postgres database (বা এমনকি আলাদা cluster) পায়।
 
-Pros:
+সুবিধা:
 
-- Hardest possible isolation. No SQL can cross databases without explicit FDW (foreign data wrapper).
-- Per-tenant scaling. Big tenant gets a bigger DB; small tenants share a small one.
-- Per-tenant restore from backup is trivial.
-- Compliance and data residency: customer can host their own DB; your app connects.
+- সম্ভাব্য সবচেয়ে শক্ত isolation। explicit FDW (foreign data wrapper) ছাড়া কোনো SQL database পার হতে পারে না।
+- Per-tenant scaling। বড় tenant বড় DB পায়; ছোট tenant-রা একটা ছোট DB শেয়ার করে।
+- backup থেকে per-tenant restore তুচ্ছ।
+- Compliance আর data residency: কাস্টমার নিজের DB host করতে পারে; আপনার অ্যাপ connect করে।
 
-Cons:
+অসুবিধা:
 
-- **Operational cost is high.** Provisioning, monitoring, backing up, upgrading N databases.
-- **Migrations are even more work** than schema-per-tenant.
-- **Cross-tenant queries are essentially impossible.** Analytics need a separate aggregation layer.
-- **Cost per tenant is real.** Postgres has overhead per database (memory, file descriptors). Free tier customers + DB-per-tenant doesn't work economically.
+- **Operational খরচ বেশি।** N-টা database provision, monitor, backup, upgrade করা।
+- **Migration schema-per-tenant-এর চেয়েও বেশি কাজ।**
+- **Cross-tenant query মূলত অসম্ভব।** Analytics-এর জন্য আলাদা aggregation লেয়ার লাগে।
+- **Tenant-প্রতি খরচ বাস্তব।** Postgres-এর প্রতিটা database-এ overhead আছে (memory, file descriptor)। Free tier কাস্টমার + DB-per-tenant অর্থনৈতিকভাবে কাজ করে না।
 
-Right when:
+ঠিক যখন:
 
-- B2B with very large customers (each tenant is a meaningful enterprise account).
-- Strict isolation requirements (banking, healthcare for some jurisdictions).
-- Tenants pay enough to cover the per-tenant DB cost.
+- খুব বড় কাস্টমারসহ B2B (প্রতিটা tenant একটা অর্থবহ enterprise account)।
+- কঠোর isolation প্রয়োজন (banking, কিছু এখতিয়ারে healthcare)।
+- Tenant-রা per-tenant DB খরচ পোষানোর মতো যথেষ্ট টাকা দেয়।
 
-## Hybrid patterns
+## Hybrid প্যাটার্ন
 
-Real systems often mix:
+বাস্তব সিস্টেম প্রায়ই মেশায়:
 
-- **Single DB by default; DB-per-tenant for premium customers.** Free and pro tiers share; enterprise tier gets isolation. Stripe, Auth0 do variants of this.
-- **Single DB sharded by tenant range.** Tenants 1–10000 on cluster A; 10001–20000 on cluster B. Looks like single-DB but scales horizontally.
-- **Schema-per-tenant for hot data; single-DB for cold data.** Rare, complicated.
+- **ডিফল্টে single DB; premium কাস্টমারের জন্য DB-per-tenant।** Free আর pro tier শেয়ার করে; enterprise tier isolation পায়। Stripe, Auth0 এর ভ্যারিয়েন্ট করে।
+- **Tenant range দিয়ে sharded single DB।** Tenant 1–10000 cluster A-তে; 10001–20000 cluster B-তে। দেখতে single-DB-র মতো কিন্তু horizontally scale করে।
+- **Hot ডেটার জন্য schema-per-tenant; cold ডেটার জন্য single-DB।** বিরল, জটিল।
 
-If you are starting fresh, start single-DB with `tenant_id`. Migrate up if and when scale or compliance demands.
+আপনি নতুন শুরু করলে `tenant_id` সহ single-DB দিয়ে শুরু করুন। scale বা compliance দাবি করলে তখন উপরে migrate করুন।
 
 ## Tenant onboarding flow
 
@@ -249,43 +257,43 @@ psql tenant_cordoba < schema.sql
 # update tenant routing service
 ```
 
-The first is one row. The second is a few hundred milliseconds. The third can be minutes. The cost compounds at signup volume.
+প্রথমটা একটা row। দ্বিতীয়টা কয়েকশো মিলিসেকেন্ড। তৃতীয়টা মিনিট হতে পারে। signup ভলিউমে খরচটা জমতে থাকে।
 
-## The biggest design pitfall: forgetting `tenant_id` early
+## সবচেয়ে বড় ডিজাইন ফাঁদ: শুরুতে `tenant_id` ভুলে যাওয়া
 
-Adding `tenant_id` to a table that already has data is painful:
+ইতিমধ্যেই ডেটা আছে এমন টেবিলে `tenant_id` যোগ করা যন্ত্রণাদায়ক:
 
-1. Add nullable column.
-2. Backfill — for existing data, _what tenant does it belong to?_
-3. NOT NULL constraint.
-4. Update every query.
-5. Add indexes.
+1. Nullable কলাম যোগ করুন।
+2. Backfill — বিদ্যমান ডেটার জন্য, _এটা কোন tenant-এর?_
+3. NOT NULL constraint।
+4. প্রতিটা query আপডেট করুন।
+5. Index যোগ করুন।
 
-Step 2 is the killer. If you started single-tenant and converted, every existing row has to be assigned to a tenant. That's a project, not a migration.
+Step 2-ই killer। আপনি single-tenant দিয়ে শুরু করে convert করে থাকলে প্রতিটা বিদ্যমান row-কে একটা tenant-এ assign করতে হবে। সেটা একটা project, migration নয়।
 
-The lesson: **if there's any chance you'll be multi-tenant, design for it from day one.** Even if there's only one tenant for the first year, having `tenant_id` everywhere means converting to multi-tenant is just code (add new tenant rows, route requests). Without it, the conversion is a database transformation.
+শিক্ষাটা: **আপনি multi-tenant হবেন এমন সামান্য সম্ভাবনা থাকলেও প্রথম দিন থেকেই সেটার জন্য ডিজাইন করুন।** প্রথম বছর একটাই tenant থাকলেও, সবখানে `tenant_id` থাকা মানে multi-tenant-এ convert করা নিছক কোড (নতুন tenant row যোগ করা, request route করা)। এটা ছাড়া conversion একটা database transformation।
 
 ## Tenant deletion (right to be forgotten)
 
-Single-DB: a series of DELETEs scoped to `tenant_id`. Mild.
+Single-DB: `tenant_id`-এ scoped কয়েকটা DELETE। মৃদু।
 
-Schema-per-tenant: `DROP SCHEMA tenant_cordoba CASCADE`. Clean.
+Schema-per-tenant: `DROP SCHEMA tenant_cordoba CASCADE`। পরিচ্ছন্ন।
 
-DB-per-tenant: `DROP DATABASE tenant_cordoba`. Cleanest.
+DB-per-tenant: `DROP DATABASE tenant_cordoba`। সবচেয়ে পরিচ্ছন্ন।
 
-For compliance-heavy industries, the "drop the whole schema/db" cleanup story is a real selling point.
+Compliance-heavy শিল্পের জন্য "পুরো schema/db drop করে দাও" cleanup গল্পটা একটা আসল selling point।
 
-## Recap
+## রিক্যাপ
 
-- Three architectures: single DB with `tenant_id`, schema-per-tenant, DB-per-tenant.
-- Default: single DB with `tenant_id`. Cheapest, simplest, scales surprisingly far.
-- Always include `tenant_id` on every tenant-scoped table — even children. Defense in depth, sharding-ready.
-- Use composite FKs to prevent tenant mismatch.
-- RLS for the strongest single-DB guarantee; repository discipline is usually enough.
-- Prefix indexes with `tenant_id` for fast per-tenant scans.
-- Schema-per-tenant for isolation and per-tenant exports; expect migration complexity.
-- DB-per-tenant for enterprise-only or strict compliance; expect ops overhead.
-- Hybrid (single + DB-per-tenant for top tier) is real and common.
-- Design for multi-tenancy from day one. Adding `tenant_id` later is a project.
+- তিনটা আর্কিটেকচার: `tenant_id` সহ single DB, schema-per-tenant, DB-per-tenant।
+- ডিফল্ট: `tenant_id` সহ single DB। সবচেয়ে সস্তা, সবচেয়ে সহজ, অবাক করা দূর পর্যন্ত scale করে।
+- প্রতিটা tenant-scoped টেবিলে সবসময় `tenant_id` রাখুন — এমনকি child-এও। Defense in depth, sharding-ready।
+- Tenant mismatch ঠেকাতে composite FK ব্যবহার করুন।
+- সবচেয়ে শক্ত single-DB গ্যারান্টির জন্য RLS; সাধারণত repository discipline-ই যথেষ্ট।
+- দ্রুত per-tenant scan-এর জন্য index-কে `tenant_id` দিয়ে prefix করুন।
+- Isolation আর per-tenant export-এর জন্য schema-per-tenant; migration জটিলতা আশা করুন।
+- Enterprise-only বা কঠোর compliance-এর জন্য DB-per-tenant; ops overhead আশা করুন।
+- Hybrid (top tier-এর জন্য single + DB-per-tenant) বাস্তব আর কমন।
+- প্রথম দিন থেকে multi-tenancy-র জন্য ডিজাইন করুন। পরে `tenant_id` যোগ করা একটা project।
 
-Next: [JSONB and the schemaless trap](/notes/data-modeling/09-jsonb) — when to use JSONB and when it bites.
+পরবর্তী: [JSONB আর schemaless ফাঁদ](/notes/data-modeling/09-jsonb) — কখন JSONB ব্যবহার করবেন আর কখন এটা কামড় দেয়।

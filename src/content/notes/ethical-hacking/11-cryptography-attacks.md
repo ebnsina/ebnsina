@@ -1,9 +1,9 @@
 ---
 title: 'Cryptography Attacks'
-subtitle: 'Hash cracking, weak cipher exploitation, PKI weaknesses, JWT attacks, and password analysis.'
+subtitle: 'Hash cracking, দুর্বল cipher exploitation, PKI দুর্বলতা, JWT আক্রমণ এবং password বিশ্লেষণ।'
 chapter: 11
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'hash cracking',
@@ -20,11 +20,19 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির ঘরে একটা মজবুত combination সিন্দুক। পুরু ইস্পাতের দেয়াল, ভারী দরজা — জোর খাটিয়ে কেটে খোলা প্রায় অসম্ভব। কিন্তু একদিন এক চোর ড্রিল ছাড়াই, একটা আঁচড়ও না কেটে সিন্দুক খুলে ফেলল। কীভাবে? আল-খোয়ারিজমি code হিসেবে বসিয়েছিলেন 0000 — সবচেয়ে অনুমানযোগ্য সংখ্যা। চোরকে ইস্পাত ভাঙতে হয়নি, শুধু সহজ code-টা আন্দাজ করলেই হয়েছে।
+
+তার প্রতিবেশী ইবনে সিনার সমস্যা আরেকটু গভীর। তার তিনটে সিন্দুক, কিন্তু তিনটেতেই এক code — একটা ফাঁস হতেই তিনটেই খুলে যায়। আর ফাতিমা আল-ফিহরি কিনেছিলেন সস্তা এক পুরনো মডেলের সিন্দুক, যার তালার নকশাই বাজারে সবার জানা, ত্রুটিটা প্রকাশ্য — নতুন কেউ চাইলে ঘরে বসেই মেকানিজম বুঝে খুলে ফেলতে পারে। তিনজনের সিন্দুকই মজবুত ছিল, তবু হেরে গেল ইস্পাতের দুর্বলতায় নয় — মালিকের দুর্বল পছন্দে।
+
+এই গল্পটাই আসলে **cryptography attack**। সিন্দুকের ইস্পাত হলো cryptography-র গণিত — সেটা কেউ ভাঙে না। যেটা ভাঙে সেটা হলো আশপাশের দুর্বল পছন্দ: 0000 code হলো দুর্বল key (weak password), সব সিন্দুকে এক code হলো key reuse (একই key বা nonce বারবার ব্যবহার), আর সস্তা পুরনো ত্রুটিপূর্ণ মডেল হলো outdated/broken algorithm বা খারাপ implementation। crypto ভাঙে গণিত ভুল বলে নয়, ভাঙে দুর্বল আর পুনর্ব্যবহৃত key আর সেকেলে algorithm-এর কারণে। সমাধান তাই মজবুত সিন্দুকের মতোই — প্রতিটার জন্য একটা strong, unique code, আর একটা modern, বিশ্বস্ত নকশা। বাস্তবে এর মানে: strong unique key, প্রতিবার নতুন nonce, আর AES-GCM বা Argon2id-এর মতো modern vetted crypto ব্যবহার করুন — কখনও নিজের হাতে crypto বানাবেন না (never roll your own)।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Cryptography is the lock. Cryptography attacks don't break math — they exploit bad keys (weak passwords), wrong locks (deprecated algorithms), or unlocked doors (logic flaws). Most password "encryption" in the wild is crackable hashing with dictionary words.
+Cryptography হলো তালা। Cryptography attack গণিত ভাঙে না — এটি খারাপ key (দুর্বল password), ভুল তালা (deprecated অ্যালগরিদম), বা খোলা দরজা (logic flaw) কাজে লাগায়। বাস্তবে বেশিরভাগ password "encryption" আসলে dictionary word সহ crackable hashing।
 
 </Callout>
 
@@ -127,7 +135,7 @@ pdf2john document.pdf > pdf_hash.txt
 john pdf_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
 ```
 
-## Password Analysis and Custom Wordlists
+## Password বিশ্লেষণ ও Custom Wordlist
 
 ```bash
 # CeWL — generate wordlist from website content
@@ -160,7 +168,7 @@ cat cracked.txt | cut -d: -f2 | sort | uniq -c | sort -rn | head -20
 
 ## JWT Attacks
 
-JSON Web Tokens are widely used for authentication. They have several attack vectors.
+JSON Web Token authentication-এর জন্য ব্যাপকভাবে ব্যবহৃত হয়। এদের বেশ কয়েকটি attack vector আছে।
 
 ```bash
 # JWT structure: header.payload.signature (base64url encoded)
@@ -249,7 +257,7 @@ openssl s_client -connect target.com:443
 curl -s "https://crt.sh/?q=%.target.com&output=json" | jq '.[].name_value' | sort -u
 ```
 
-## Password Storage Anti-Patterns (What Defenders Should Know)
+## Password Storage Anti-Pattern (Defender-দের যা জানা উচিত)
 
 ```
 Bad (crackable instantly):
@@ -275,7 +283,7 @@ At 400ms/hash:
   → strong master passwords become the last line of defense
 ```
 
-## Real Project: Crack a Shadow File
+## বাস্তব প্রজেক্ট: একটি Shadow File Crack করা
 
 ```bash
 # Set up the lab

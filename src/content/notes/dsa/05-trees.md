@@ -1,9 +1,9 @@
 ---
-title: 'Binary Trees & BSTs'
-subtitle: 'Recursive thinking, tree traversals, and binary search trees — the gateway to hierarchical data.'
+title: 'Binary Trees ও BST'
+subtitle: 'Recursive চিন্তা, tree traversal, আর binary search tree — hierarchical data-র প্রবেশদ্বার।'
 chapter: 5
 level: 'intermediate'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['binary tree', 'BST', 'DFS', 'BFS', 'recursion']
 ---
 
@@ -11,19 +11,27 @@ topics: ['binary tree', 'BST', 'DFS', 'BFS', 'recursion']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Trees?
+## গল্পে বুঝি
 
-Trees represent hierarchical relationships: file systems, DOM elements, organization charts, database indices. Binary trees — where each node has at most two children — are the most common variant and the foundation for heaps, tries, and balanced search trees.
+ফাতিমা আল-ফিহরি আর তার ছোট ভাই আল-খোয়ারিজমি একটা খেলা খেলছে — "নাম্বার গেস করো"। ফাতিমা আল-ফিহরি মনে মনে ১ থেকে ১০০০-এর মধ্যে একটা সংখ্যা ঠিক করে রাখে, আল-খোয়ারিজমিকে সেটা খুঁজে বের করতে হবে। আল-খোয়ারিজমি যদি এক এক করে ১, ২, ৩ বলে যেত, তাহলে খারাপ সময়ে ১০০০ বার বলতে হতো। কিন্তু আল-খোয়ারিজমি চালাক — সে প্রথমে বলে "৫০০?"। ফাতিমা আল-ফিহরি বলে "বড়"। আল-খোয়ারিজমি সাথে সাথে বুঝে যায় নিচের ৫০০টা সংখ্যা বাদ, উত্তরটা ৫০১ থেকে ১০০০-এর মধ্যে। এবার সে বলে "৭৫০?" — ফাতিমা আল-ফিহরি বলে "ছোট"। প্রতিটা প্রশ্নে বাকি সম্ভাবনার অর্ধেক কেটে যাচ্ছে।
+
+ঠিক এভাবেই একটা মোটা ছাপা অভিধানে শব্দ খুঁজি — মাঝখানে খুলি, যে শব্দ খুঁজছি সেটা এই পাতার আগে না পরে দেখি, তারপর বাঁ দিকের অর্ধেক বা ডান দিকের অর্ধেক নিয়ে আবার মাঝখানে খুলি। হাজার পাতার অভিধানেও দশ-বারো বার পাতা উল্টেই কাঙ্ক্ষিত শব্দে পৌঁছে যাই, প্রতিটা পাতা এক এক করে দেখতে হয় না। ফাতিমা আল-ফিহরির নাম্বারটা ধরো tree-র root node, তার ছোট মানগুলো এক পাশে, বড় মানগুলো আরেক পাশে — অনেকটা পরিবারের বংশতালিকার মতো, প্রতিটা parent-এর নিচে দুটো করে child।
+
+এই "মাঝখানে গিয়ে ছোট হলে বাঁয়ে, বড় হলে ডানে" যাওয়াটাই **binary search tree**-র মূল কথা। প্রতিটা **node**-এর একটা মান থাকে, তার left subtree-র সব মান ছোট আর right subtree-র সব মান বড়। খুঁজতে গিয়ে প্রতি ধাপে একটা তুলনা করে অর্ধেক বাদ দিই, তাই n-টা মানের মধ্যেও মাত্র **O(log n)** ধাপে target পাওয়া যায় — সব node এক এক করে দেখতে হয় না। বাস্তবে database index ঠিক এই কাঠামোতেই লক্ষ লক্ষ row-র মধ্যে চোখের পলকে একটা রেকর্ড খুঁজে বের করে; যেকোনো দ্রুত lookup-এর পেছনে এই left-right halving-এর জাদু কাজ করে।
+
+## Tree কেন?
+
+Tree hierarchical সম্পর্ক প্রকাশ করে: file system, DOM element, organization chart, database index। Binary tree — যেখানে প্রতিটি node-এর সর্বোচ্চ দুটি child থাকে — সবচেয়ে সাধারণ ধরন এবং heap, trie ও balanced search tree-র ভিত্তি।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a company org chart — CEO at the top, VPs below, directors under them, then managers, then employees. A tree structure where each node has children, and you traverse down to find specific people.
+একটা কোম্পানির org chart-এর মতো — উপরে CEO, তার নিচে VP-রা, তাদের অধীনে director, তারপর manager, তারপর employee। এমন একটা tree structure যেখানে প্রতিটি node-এর child থাকে, আর নির্দিষ্ট মানুষ খুঁজতে আপনি নিচের দিকে traverse করেন।
 
 </Callout>
 
-## Binary Tree Basics
+## Binary Tree-র মূল কথা
 
 ```typescript
 class TreeNode {
@@ -37,9 +45,9 @@ class TreeNode {
 }
 ```
 
-## Tree Traversals
+## Tree Traversal
 
-There are four ways to visit every node. The order matters for different problems.
+প্রতিটি node ভিজিট করার চারটি উপায় আছে। বিভিন্ন সমস্যার জন্য order-টা গুরুত্বপূর্ণ।
 
 ```typescript
 // In-order: left → root → right (gives sorted order for BST)
@@ -81,7 +89,7 @@ function levelOrder(root: TreeNode | null): number[][] {
 }
 ```
 
-## Common Tree Problems
+## সাধারণ Tree সমস্যা
 
 ### Max Depth
 
@@ -92,7 +100,7 @@ function maxDepth(root: TreeNode | null): number {
 }
 ```
 
-### Invert a Binary Tree
+### Binary Tree Invert করা
 
 ```typescript
 function invertTree(root: TreeNode | null): TreeNode | null {
@@ -116,9 +124,9 @@ function lowestCommonAncestor(root: TreeNode | null, p: TreeNode, q: TreeNode): 
 }
 ```
 
-## Binary Search Trees
+## Binary Search Tree
 
-A BST maintains the invariant: left child &lt; parent &lt; right child. This gives O(log n) search, insert, and delete — if the tree is balanced.
+একটা BST এই invariant বজায় রাখে: left child &lt; parent &lt; right child। এতে search, insert ও delete-এ O(log n) পাওয়া যায় — যদি tree-টা balanced থাকে।
 
 ```typescript
 class BST {
@@ -148,13 +156,13 @@ class BST {
 
 <Callout type="tip">
 
-**The tree recursion pattern**: Most tree problems follow the same template — handle the base case (null node), recurse on left and right, combine results. Once you internalize this, tree problems become mechanical.
+**Tree recursion pattern**: বেশিরভাগ tree সমস্যা একই template অনুসরণ করে — base case (null node) সামলান, left ও right-এ recurse করুন, result গুলো একসাথে combine করুন। একবার এটা মজ্জাগত হয়ে গেলে tree সমস্যাগুলো যান্ত্রিক হয়ে যায়।
 
 </Callout>
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Think recursively** — trees are naturally recursive structures
-2. **Know all four traversals** and when to use each
-3. **BSTs give O(log n) operations** but degrade to O(n) if unbalanced
-4. **DFS** (pre/in/post-order) uses a stack; **BFS** (level-order) uses a queue
+1. **Recursively চিন্তা করুন** — tree স্বভাবতই recursive structure
+2. **চারটি traversal-ই জানুন** এবং কখন কোনটা ব্যবহার করবেন
+3. **BST O(log n) operation দেয়** কিন্তু unbalanced হলে O(n)-এ নেমে যায়
+4. **DFS** (pre/in/post-order) stack ব্যবহার করে; **BFS** (level-order) queue ব্যবহার করে

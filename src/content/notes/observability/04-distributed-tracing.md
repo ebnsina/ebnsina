@@ -1,9 +1,9 @@
 ---
 title: 'Distributed Tracing'
-subtitle: "OpenTelemetry instrumentation, trace propagation across services, Jaeger, and using traces to find what logs and metrics can't."
+subtitle: 'OpenTelemetry instrumentation, service জুড়ে trace propagation, Jaeger, আর logs ও metrics যা পারে না তা খুঁজে বের করতে traces ব্যবহার করা।'
 chapter: 4
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['OpenTelemetry', 'Jaeger', 'traces', 'spans', 'context propagation', 'sampling']
 ---
 
@@ -11,19 +11,27 @@ topics: ['OpenTelemetry', 'Jaeger', 'traces', 'spans', 'context propagation', 's
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা একটা পার্সেল কুরিয়ার করেছেন — বুখারা থেকে কর্ডোবা। বুকিং করার সময় কাউন্টার থেকে তাকে একটা ট্র্যাকিং নম্বর দেওয়া হলো, ধরুন `BK-4736`। এই একটাই নম্বর গোটা যাত্রায় পার্সেলের গায়ে সেঁটে থাকবে। পার্সেল যতগুলো হাত ঘুরবে, প্রতিটা জায়গায় একটা করে সিল পড়বে — আর প্রতিটা সিলে লেখা থাকবে ওই স্টপে পার্সেল কখন ঢুকল আর কখন বেরোল, ঠিক টাইম ধরে।
+
+পিকআপ এজেন্ট বাসা থেকে তুলে সিল দিল: ঢুকল ৯:০০, বেরোল ৯:১০। বুখারা সর্টিং হাব: ঢুকল ১০:০০, বেরোল ১০:৩০। এরপর সমরকন্দ ট্রানজিট হাব, বাগদাদ হাব, শেষে কর্ডোবার লোকাল অফিস, তারপর out-for-delivery, শেষে delivered। পার্সেলটা তিন দিন দেরিতে পৌঁছাল। ফাতিমা আল-ফিহরি অভিযোগ করলে অপারেটর কী করল? ওই একটা ট্র্যাকিং নম্বর `BK-4736` দিয়ে খুঁজে সব সিল পরপর সাজিয়ে বসাল। সঙ্গে সঙ্গে চোখে পড়ল — বাগদাদ হাবে পার্সেল ঢুকেছিল সোমবার, বেরিয়েছে বুধবার। বাকি প্রতিটা স্টপে মিনিট দশেক, কিন্তু এই এক হাবেই সে দু'দিন পড়ে ছিল। দোষী স্টপ ধরা পড়ে গেল।
+
+এই গল্পটাই **distributed tracing**। ইবনে সিনার সেই একটা ট্র্যাকিং নম্বর যা প্রতিটা স্টপে বয়ে নিয়ে যাওয়া হলো — সেটাই **trace ID**, যা header-এর মাধ্যমে এক service থেকে আরেক service-এ propagate হয়। প্রতিটা হাবের সেই timed ঢোকা-বেরোনোর সিল — সেটাই এক একটা **span**, প্রতিটা service-এ আলাদা করে রেকর্ড হওয়া কাজের timing। আর সব সিল পরপর সাজিয়ে গোটা যাত্রা আবার গড়ে তোলা — সেটাই assembled trace, যা দিয়ে request-টা কোন কোন service-এর মধ্য দিয়ে গেল তার পুরো path আপনি দেখতে পান। যে হাবে পার্সেল দু'দিন পড়ে ছিল — সেটাই slow span, মানে ঠিক কোন hop-এ latency লেগেছে সেটা এক নজরে বেরিয়ে আসে। বাস্তবে OpenTelemetry দিয়ে এই span গুলো তৈরি হয় আর Jaeger-এ গিয়ে পুরো trace-টা ঠিক এভাবেই — টাইমলাইন ধরে সাজানো সিলের মতো — দেখা যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A GPS breadcrumb trail for a package: every handoff — origin depot, regional hub, local office, delivery van — is timestamped and recorded. When the package is late, you see exactly where it stopped moving and for how long. A distributed trace does the same for a request passing through microservices: every service records when it received and sent the request, with the timing down to the millisecond.
+একটা পার্সেলের GPS breadcrumb trail: প্রতিটা হাতবদল — origin depot, regional hub, local office, delivery van — timestamp সহ রেকর্ড করা। পার্সেল দেরি হলে আপনি ঠিক দেখতে পান কোথায় সেটা থেমে গিয়েছিল আর কতক্ষণের জন্য। একটা distributed trace microservices-এর মধ্য দিয়ে যাওয়া একটা request-এর জন্য একই কাজ করে: প্রতিটা service রেকর্ড করে কখন সে request পেল আর পাঠাল, timing মিলিসেকেন্ড পর্যন্ত।
 
 </Callout>
 
-## Concepts
+## ধারণা
 
-**Trace:** the complete journey of one request through the system. Has a globally unique trace ID.
+**Trace:** সিস্টেমের মধ্য দিয়ে একটা request-এর সম্পূর্ণ যাত্রা। এর একটা globally unique trace ID আছে।
 
-**Span:** a single unit of work within a trace. Has a start time, duration, status, and attributes. Spans form a tree — each span has a parent (except the root span).
+**Span:** একটা trace-এর মধ্যে একটা একক unit of work। এর একটা start time, duration, status, আর attributes আছে। Span গুলো একটা tree গঠন করে — প্রতিটা span-এর একটা parent থাকে (root span বাদে)।
 
 ```
 Trace abc123
@@ -36,7 +44,7 @@ Trace abc123
     [Child]   Publish order.created     770ms–790ms
 ```
 
-**Context propagation:** trace ID and span ID flow from service to service via headers, so all spans from one request share the same trace ID.
+**Context propagation:** trace ID আর span ID header-এর মাধ্যমে service থেকে service-এ যায়, তাই একটা request-এর সব span একই trace ID শেয়ার করে।
 
 ## OpenTelemetry SDK Setup
 
@@ -95,11 +103,11 @@ process.on('SIGTERM', () => sdk.shutdown());
 // "start": "node --require ./instrumentation.js dist/index.js"
 ```
 
-Auto-instrumentation handles HTTP, Express, Postgres, Redis, gRPC — spans created automatically with timing and status.
+Auto-instrumentation HTTP, Express, Postgres, Redis, gRPC সামলায় — timing আর status সহ span আপনাআপনি তৈরি হয়।
 
 ## Manual Spans
 
-Auto-instrumentation doesn't know your business logic. Add spans for meaningful operations:
+Auto-instrumentation আপনার business logic জানে না। অর্থপূর্ণ operation-এর জন্য span যোগ করুন:
 
 ```typescript
 import { trace, SpanStatusCode, context } from '@opentelemetry/api';
@@ -136,14 +144,14 @@ async function createOrder(data: CreateOrderInput): Promise<Order> {
 
 ## Context Propagation
 
-Trace context (trace ID + span ID) must flow between services. OTel uses W3C `traceparent` header automatically:
+Trace context (trace ID + span ID) service-এর মধ্যে প্রবাহিত হতে হবে। OTel আপনাআপনি W3C `traceparent` header ব্যবহার করে:
 
 ```
 traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
              vv-trace_id(32)-parent_span_id(16)-flags
 ```
 
-Auto-instrumentation handles this for HTTP and gRPC. For message queues, propagate manually:
+Auto-instrumentation HTTP আর gRPC-র জন্য এটা সামলায়। message queue-র জন্য নিজে হাতে propagate করুন:
 
 ```typescript
 import { propagation, context } from '@opentelemetry/api';
@@ -182,11 +190,11 @@ async function handleOrderMessage(msg: KafkaMessage) {
 }
 ```
 
-Now a trace from an HTTP request that publishes to Kafka and is consumed by another service shows as one continuous trace.
+এখন একটা HTTP request থেকে শুরু হওয়া trace যা Kafka-তে publish করে আর অন্য একটা service consume করে, সেটা একটা একটানা trace হিসেবে দেখায়।
 
 ## OTel Collector
 
-The collector decouples instrumentation from backends. Apps export to the collector; the collector fans out to Jaeger, Prometheus, Loki:
+Collector instrumentation কে backend থেকে আলাদা করে। App গুলো collector-এ export করে; collector Jaeger, Prometheus, Loki-তে fan out করে:
 
 ```yaml
 # otel-collector-config.yml
@@ -251,13 +259,13 @@ services:
       - jaeger-data:/badger
 ```
 
-In production, use Elasticsearch or Cassandra as the backend — badger is single-node and not suitable for long retention or high volume.
+প্রোডাকশনে backend হিসেবে Elasticsearch বা Cassandra ব্যবহার করুন — badger single-node আর দীর্ঘ retention বা high volume-এর জন্য উপযুক্ত নয়।
 
 ## Sampling
 
-Collecting 100% of traces at high throughput is expensive. Sampling strategies:
+High throughput-এ 100% trace সংগ্রহ করা ব্যয়বহুল। Sampling strategy:
 
-**Head-based (at trace start):**
+**Head-based (trace শুরুতে):**
 
 ```typescript
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
@@ -268,10 +276,10 @@ const sdk = new NodeSDK({
 });
 ```
 
-Downside: you sample at random — an error trace might not be captured.
+অসুবিধা: আপনি এলোমেলোভাবে sample করেন — একটা error trace হয়তো ধরাই পড়ল না।
 
-**Tail-based (after trace completion):**
-Configure in the OTel collector — buffer spans, then decide based on outcome:
+**Tail-based (trace সম্পূর্ণ হওয়ার পরে):**
+OTel collector-এ configure করুন — span বাফার করুন, তারপর outcome-এর ভিত্তিতে সিদ্ধান্ত নিন:
 
 ```yaml
 processors:
@@ -292,11 +300,11 @@ processors:
         probabilistic: { sampling_percentage: 5 } # sample 5% of the rest
 ```
 
-Tail-based sampling ensures you always capture errors and slow traces — the interesting ones. Random fast traces are sampled at 5%.
+Tail-based sampling নিশ্চিত করে আপনি সবসময় error আর slow trace ধরবেন — যেগুলো আকর্ষণীয়। এলোমেলো fast trace 5%-এ sample হয়।
 
-## Connecting Traces to Logs
+## Traces আর Logs জুড়ে দেওয়া
 
-Add trace ID to log output — enables jumping from a trace to its logs:
+log output-এ trace ID যোগ করুন — একটা trace থেকে তার logs-এ ঝাঁপ দেওয়া সম্ভব করে:
 
 ```typescript
 import { trace, context } from '@opentelemetry/api';
@@ -315,4 +323,4 @@ const log = pino({
 // {"traceId":"4bf92f...","spanId":"00f067...","msg":"Order created"}
 ```
 
-In Grafana: click "View traces" on a log line → opens the trace in Jaeger. Or from a Jaeger trace, click "View logs" → opens Loki filtered by trace ID. This jump-from-trace-to-logs (and back) is what makes incidents debuggable in minutes instead of hours.
+Grafana-তে: একটা log line-এ "View traces" ক্লিক করুন → Jaeger-এ trace খোলে। অথবা একটা Jaeger trace থেকে "View logs" ক্লিক করুন → trace ID দিয়ে filter করা Loki খোলে। trace-থেকে-logs (আর ফিরে আসা) এই ঝাঁপটাই incident গুলোকে ঘণ্টার বদলে মিনিটে debug করার যোগ্য বানায়।

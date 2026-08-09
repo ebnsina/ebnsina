@@ -1,9 +1,9 @@
 ---
 title: 'Linux for Hackers'
-subtitle: 'Terminal mastery, file permissions, bash scripting, and the tools that ship on Kali Linux.'
+subtitle: 'টার্মিনাল দক্ষতা, ফাইল পারমিশন, bash স্ক্রিপ্টিং, এবং Kali Linux-এ যেসব টুল আসে।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['linux', 'bash', 'kali', 'terminal', 'file permissions', 'processes']
 ---
 
@@ -13,13 +13,21 @@ topics: ['linux', 'bash', 'kali', 'terminal', 'file permissions', 'processes']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A surgeon who doesn't know anatomy can't operate. Linux is the anatomy of hacking — every tool, every exploit script, every automated scanner runs on it. You don't need to be a Linux admin, but you need reflexive command-line fluency.
+যে সার্জন অ্যানাটমি জানেন না, তিনি অপারেশন করতে পারেন না। Linux হলো হ্যাকিং-এর অ্যানাটমি — প্রতিটি টুল, প্রতিটি exploit স্ক্রিপ্ট, প্রতিটি automated scanner এর ওপরেই চলে। আপনাকে Linux অ্যাডমিন হতে হবে না, কিন্তু রিফ্লেক্সিভ command-line দক্ষতা থাকতে হবে।
 
 </Callout>
 
-## Essential Commands
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একজন ওস্তাদ কাঠমিস্ত্রি। কোনো জটিল কাজ — নকশাদার দরজা হোক বা পুরো একটা মিম্বর — হাতে নেওয়ার আগে সে কখনো তার কোর টুলবক্স নিয়ে ভাবে না, কারণ ওটা তার শরীরের অংশ হয়ে গেছে। চোখ বন্ধ করেও সে ছেনি, বাটালি, র‍্যান্দা, হাতুড়ি ঠিক জায়গা থেকে তুলে নিতে পারে; কোন কাঠে কোন টুল, কতটুকু চাপে চালাতে হবে — সব রিফ্লেক্সে চলে আসে। টুল নিয়ে তাকে আর ভাবতে হয় না বলেই তার পুরো মনোযোগ আসল সমস্যাটার দিকে যায়।
+
+তার শাগরেদ ইবনে সিনা কিন্তু ভীষণ চালাক, নকশার আইডিয়াও দারুণ। কিন্তু কাজে বসলেই বাধে বিপত্তি — বাটালিটা কোথায় খুঁজতে গিয়ে সময় যায়, র‍্যান্দা ভুলভাবে ধরে কাঠ নষ্ট করে, প্রতিটা সাধারণ কাটেই তাকে থামতে-ভাবতে হয়। যত বুদ্ধিই থাকুক, বেসিক টুলগুলোই যেহেতু তার হাতে বসেনি, জটিল কাজটা সে কখনো শেষ করে উঠতে পারে না। টুলই এখানে কারিগরির ভাষা — ভাষাটা না জানলে বড় বাক্য বানানো যায় না।
+
+এই গল্পটাই আসলে **Linux আর command line**-এর দক্ষতা। ফাতিমার কোর টুলবক্সে রিফ্লেক্সিভ দক্ষতা = shell, OS আর `ls`, `grep`, `find`, `chmod`-এর মতো core utilities চোখ বন্ধ করে চালাতে পারা; আর ফাতিমার প্রতিটা টুল রিফ্লেক্সে তুলে নেওয়া = terminal-এ চিন্তা না করে কমান্ড টাইপ করতে পারা। ইবনে সিনার মতো বেসিক টুলে ফাম্বল করা শাগরেদ হলো ঠিক সেই কারণ, যার জন্য এই ভিত্তি ছাড়া কোনো real security work করা যায় না — প্রতিটা exploit script, scanner আর tool এই OS-এর উপরেই চলে। বাস্তবে যত বড় পেন্টেস্টারই হোন, লক্ষ্য করবেন তার হাত command line-এ থামে না; টুল নিয়ে ভাবতে হয় না বলেই আসল টার্গেটে পুরো মনোযোগ দিতে পারেন।
+
+## অপরিহার্য কমান্ড
 
 ```bash
 # Navigation
@@ -44,7 +52,7 @@ kill 1234              # kill process by PID
 kill -9 1234           # force kill
 ```
 
-## File Permissions — The Security Foundation
+## ফাইল পারমিশন — সিকিউরিটির ভিত্তি
 
 ```bash
 ls -la /etc/shadow
@@ -56,7 +64,7 @@ ls -la /etc/shadow
 #  └└└──────── owner (root): rw- (read+write)
 ```
 
-**Octal shorthand:**
+**Octal শর্টহ্যান্ড:**
 
 ```
 r = 4, w = 2, x = 1
@@ -69,7 +77,7 @@ chmod 644 file   → rw-r--r--  (owner: read+write, rest: read)
 chmod 600 file   → rw-------  (owner only)
 ```
 
-**SUID bit — a common privilege escalation vector:**
+**SUID bit — একটি সাধারণ privilege escalation vector:**
 
 ```bash
 # SUID: file runs as owner (often root) regardless of who executes it
@@ -81,9 +89,9 @@ ls -la /usr/bin/somebinary
 find / -perm -4000 -type f 2>/dev/null
 ```
 
-If a SUID binary is writable, misconfigured, or has a known vulnerability, it's a privesc path.
+যদি কোনো SUID binary writable, misconfigured, বা এর কোনো known vulnerability থাকে, তবে এটি একটি privesc path।
 
-## Users, Groups, and /etc/passwd
+## Users, Groups, এবং /etc/passwd
 
 ```bash
 cat /etc/passwd
@@ -102,9 +110,9 @@ sudo cat /etc/shadow
 #      ↑ $6$ = SHA-512 (modern), $1$ = MD5 (old, weak)
 ```
 
-When you get read access to `/etc/shadow`, extract and crack the hashes offline.
+যখন আপনি `/etc/shadow`-এ read access পাবেন, hash গুলো বের করে অফলাইনে crack করুন।
 
-## Networking Commands
+## Networking কমান্ড
 
 ```bash
 # Interface info
@@ -131,7 +139,7 @@ curl -I https://example.com   # HTTP headers only
 wget -O - https://example.com/file  # download to stdout
 ```
 
-## Bash Scripting for Recon
+## রিকনের জন্য Bash স্ক্রিপ্টিং
 
 ```bash
 #!/bin/bash
@@ -167,7 +175,7 @@ URL=$1
 curl -s "$URL" | grep -oP 'href="[^"]*"' | sed 's/href="//;s/"//' | sort -u
 ```
 
-## Kali Linux Tool Locations
+## Kali Linux টুলের অবস্থান
 
 ```bash
 /usr/share/wordlists/           # password lists
@@ -181,7 +189,7 @@ sudo apt update && sudo apt upgrade
 sudo apt install gobuster feroxbuster  # install additional tools
 ```
 
-## Text Processing (grep, awk, sed)
+## টেক্সট প্রসেসিং (grep, awk, sed)
 
 ```bash
 # Extract IP addresses from a log file
@@ -203,9 +211,9 @@ cut -d, -f1,3 users.csv
 cat access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -20
 ```
 
-## tmux — Multi-Window Terminal
+## tmux — মাল্টি-উইন্ডো টার্মিনাল
 
-Running multiple simultaneous tools (scanner in one pane, exploit in another, notes in a third) requires tmux:
+একসাথে একাধিক টুল চালানোর (এক pane-এ scanner, আরেকটায় exploit, তৃতীয়টায় notes) জন্য tmux দরকার:
 
 ```bash
 # Start session
@@ -226,9 +234,9 @@ Ctrl+B :
 pipe-pane -o "cat >> ~/pentest-session.log"
 ```
 
-## File Transfer Techniques
+## ফাইল ট্রান্সফার টেকনিক
 
-Getting files between attacker and target machines:
+অ্যাটাকার ও টার্গেট মেশিনের মধ্যে ফাইল আনা-নেওয়া:
 
 ```bash
 # Python HTTP server (serve files from current dir)
@@ -254,7 +262,7 @@ cat file.b64 | base64 -d > file.bin
 
 ## Environment Variables
 
-Attackers abuse misconfigured environment variables frequently:
+অ্যাটাকাররা প্রায়ই misconfigured environment variable-এর অপব্যবহার করে:
 
 ```bash
 # View all env vars
@@ -267,9 +275,9 @@ echo $PATH
 # /home/user/bin:/usr/local/bin:/usr/bin   ← /home/user/bin is writable!
 ```
 
-## Practical Lab: Enumerate a Linux System
+## প্র্যাকটিক্যাল ল্যাব: একটি Linux সিস্টেম Enumerate করুন
 
-Run this on any Linux VM to simulate what an attacker does after initial access:
+Initial access পাওয়ার পর অ্যাটাকার যা করে তা সিমুলেট করতে যেকোনো Linux VM-এ এটি চালান:
 
 ```bash
 #!/bin/bash

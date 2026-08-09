@@ -10,5 +10,5 @@ export function entries() {
 }
 
 export function load({ params }) {
-	return loadChapterData(params.category, params.slug, 'en');
+	return loadChapterData(params.category, params.slug);
 }

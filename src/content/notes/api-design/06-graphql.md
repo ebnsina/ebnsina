@@ -1,9 +1,9 @@
 ---
 title: 'GraphQL'
-subtitle: 'Query exactly the data you need with GraphQL — schemas, queries, mutations, subscriptions, and solving the N+1 problem.'
+subtitle: 'GraphQL দিয়ে ঠিক যতটুকু ডেটা দরকার ততটুকুই query করুন — schema, query, mutation, subscription, আর N+1 সমস্যার সমাধান।'
 chapter: 6
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['GraphQL', 'schema design', 'queries', 'mutations', 'subscriptions', 'N+1 problem']
 ---
 
@@ -11,21 +11,29 @@ topics: ['GraphQL', 'schema design', 'queries', 'mutations', 'subscriptions', 'N
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What is GraphQL?
+## গল্পে বুঝি
 
-GraphQL is a query language for APIs created by Facebook in 2012 (open-sourced in 2015). Unlike REST, where each endpoint returns a fixed structure, GraphQL lets clients request exactly the fields they need.
+আল-খোয়ারিজমি নতুন শহরে এসে দুপুরে খেতে ঢুকল এক ভাতের হোটেলে। সেখানে বাঁধা থালি — একদাম, প্লেটে যা আসার তা-ই আসে: ভাত, ডাল, একটা মাছ, একটা সবজি, সালাদ। আল-খোয়ারিজমি মাছ খায় না, কিন্তু থালিতে মাছ আসবেই, সেটা প্লেটে পড়েই থাকে — এই যে না-চাওয়া জিনিস জোর করে চলে আসা, এটাই over-fetching। আবার ওর ডাল বেশি লাগে, কিন্তু থালিতে এক বাটির বেশি নেই। বাড়তি ডালের জন্য ওকে আবার ওয়েটার ডাকতে হয়, আবার অর্ডার দিতে হয়, আরেকবার রান্নাঘর ঘুরে জিনিস আসে — একটা প্লেট পূরণ করতে বারবার ট্রিপ, এটাই under-fetching।
+
+পাশেই আরেকটা দোকান, কাস্টম টিফিন কাউন্টার। সামনে বড় বোর্ডে লেখা কী কী পাওয়া যায় — ভাত, তিন রকম ডাল, মুরগি, ডিম, পাঁচ রকম সবজি। আল-খোয়ারিজমি একটাই লিস্ট বলে দেয়: "দুই স্কুপ ভাত, ডাবল ডাল, মুরগি এক পিস, মাছ লাগবে না।" এক ফরমায়েশেই ঠিক ততটুকু, ঠিক সেই আইটেমগুলোই প্লেটে আসে — বেশিও না, কমও না, বাড়তি ট্রিপও নেই।
+
+এই কাস্টম কাউন্টারটাই GraphQL। আপনি এক query-তেই ঠিক যে field গুলো চান তার লিস্ট পাঠান, আর server ঠিক ততটুকুই ফেরত দেয় — না-চাওয়া field আসে না (over-fetching নেই), আর নেস্টেড ডেটাও এক request-এই পাওয়া যায় বলে বারবার ঘুরতে হয় না (under-fetching নেই)। সামনের সেই বোর্ড, মানে কী কী চাওয়া যাবে তার তালিকা, সেটাই schema। আর পুরো ব্যাপারটা চলে একটাই কাউন্টারে — GraphQL-এ একটাই endpoint, প্রতি জিনিসের আলাদা লাইন নেই। এর উল্টোদিকে বাঁধা থালি হলো REST: প্রতিটা endpoint একটা fixed response দেয়, চান বা না-চান পুরো প্লেটই আসে। বাস্তবে মোবাইল অ্যাপ যখন শুধু ইউজারের নাম আর ছবি দেখাবে, GitHub বা Shopify-র মতো GraphQL API-তে সে ঠিক ওই দুটো field-ই query করে — বাকি ভারী ডেটা নেটওয়ার্কে টেনে আনে না।
+
+## GraphQL কী?
+
+GraphQL হলো API-এর জন্য একটি query language, যা Facebook ২০১২ সালে তৈরি করে (২০১৫-তে open-source করা হয়)। REST-এ যেখানে প্রতিটি endpoint একটি fixed স্ট্রাকচার রিটার্ন করে, GraphQL-এ সেখানে client ঠিক যে ফিল্ডগুলো দরকার সেগুলোই চাইতে পারে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like ordering at a made-to-order salad bar — you pick exactly which ingredients you want instead of choosing a pre-made salad. You get exactly what you asked for, nothing more, nothing less.
+একটা made-to-order সালাদ বার-এ অর্ডার করার মতো — আগে থেকে বানানো সালাদ বেছে নেওয়ার বদলে আপনি ঠিক কোন উপকরণগুলো চান তা বেছে নেন। ঠিক যা চেয়েছেন তা-ই পান, বেশিও না, কমও না।
 
 </Callout>
 
 ## Schema Definition
 
-Everything in GraphQL starts with the schema. It defines your data types and available operations.
+GraphQL-এ সবকিছু শুরু হয় schema দিয়ে। এটা আপনার ডেটা টাইপ আর উপলব্ধ operation সংজ্ঞায়িত করে।
 
 ```typescript
 // schema.graphql
@@ -67,7 +75,7 @@ enum Role {
 scalar DateTime
 ```
 
-### Root Types
+### Root Type
 
 ```typescript
 type Query {
@@ -125,9 +133,9 @@ type PageInfo {
 }
 ```
 
-## Queries
+## Query
 
-Clients query exactly the fields they need:
+client ঠিক যে ফিল্ডগুলো দরকার সেগুলোই query করে:
 
 ```typescript
 // Minimal query — only name and email
@@ -235,9 +243,9 @@ const server = new ApolloServer({ typeDefs, resolvers });
 const { url } = await startStandaloneServer(server, { listen: { port: 4000 } });
 ```
 
-## Mutations
+## Mutation
 
-Mutations modify data. Always use input types for complex arguments:
+Mutation ডেটা পরিবর্তন করে। জটিল argument-এর জন্য সবসময় input type ব্যবহার করুন:
 
 ```typescript
 // Input types
@@ -309,9 +317,9 @@ const resolvers = {
 };
 ```
 
-## Subscriptions
+## Subscription
 
-Real-time updates over WebSocket:
+WebSocket-এর ওপর real-time আপডেট:
 
 ```typescript
 import { PubSub } from 'graphql-subscriptions';
@@ -340,9 +348,9 @@ const resolvers = {
 // }
 ```
 
-## The N+1 Problem
+## N+1 সমস্যা
 
-The most common performance trap in GraphQL:
+GraphQL-এ সবচেয়ে প্রচলিত performance ফাঁদ:
 
 ```typescript
 // This query triggers N+1 database calls:
@@ -364,9 +372,9 @@ query {
 // = 21 queries total (the "N+1" problem)
 ```
 
-### Solution: DataLoader
+### সমাধান: DataLoader
 
-DataLoader batches multiple individual loads into a single query:
+DataLoader একাধিক আলাদা load-কে একটি single query-তে batch করে:
 
 ```typescript
 import DataLoader from 'dataloader';
@@ -408,50 +416,50 @@ const resolvers = {
 
 <Callout type="warning">
 
-**DataLoader Rules**
+**DataLoader-এর নিয়ম**
 
-- Create a **new DataLoader instance per request** — they cache within a request
-- The batch function must return results in the **same order** as the input keys
-- Always handle missing entities (return `null` for unknown IDs)
-- DataLoader only works for batching by ID — complex queries need different strategies
+- **প্রতি request-এ একটি নতুন DataLoader instance তৈরি করুন** — এরা একটি request-এর মধ্যেই cache করে
+- batch function-কে input key-এর **একই order-এ** রেজাল্ট রিটার্ন করতে হবে
+- না-থাকা entity সবসময় সামলান (অজানা ID-এর জন্য `null` রিটার্ন করুন)
+- DataLoader শুধু ID দিয়ে batch করার জন্য কাজ করে — জটিল query-এর জন্য আলাদা strategy দরকার
 
 </Callout>
 
-## GraphQL vs REST
+## GraphQL বনাম REST
 
-| Feature        | REST                     | GraphQL                    |
-| -------------- | ------------------------ | -------------------------- |
-| Data fetching  | Fixed per endpoint       | Client specifies           |
-| Over-fetching  | Common                   | Eliminated                 |
-| Under-fetching | Multiple requests needed | Single request             |
-| Caching        | HTTP caching built-in    | Requires custom caching    |
-| File uploads   | Native                   | Needs workarounds          |
-| Error handling | HTTP status codes        | Always 200, errors in body |
-| Learning curve | Low                      | Moderate                   |
-| Tooling        | Mature                   | Growing                    |
+| বৈশিষ্ট্য      | REST                   | GraphQL                   |
+| -------------- | ---------------------- | ------------------------- |
+| ডেটা fetching  | প্রতি endpoint-এ fixed | client নির্ধারণ করে       |
+| Over-fetching  | প্রচলিত                | দূর হয়ে যায়             |
+| Under-fetching | একাধিক request লাগে    | একটি request              |
+| Caching        | HTTP caching বিল্ট-ইন  | custom caching দরকার      |
+| File upload    | Native                 | workaround দরকার          |
+| Error handling | HTTP status code       | সবসময় 200, error body-তে |
+| শেখার বক্ররেখা | কম                     | মাঝারি                    |
+| Tooling        | পরিপক্ব                | বাড়ছে                    |
 
 <Callout type="tip">
 
-**When to Use GraphQL**
+**কখন GraphQL ব্যবহার করবেন**
 
-- Multiple clients need different data shapes (mobile vs web)
-- Your UI requires deeply nested, related data in one request
-- You are tired of creating one-off REST endpoints for each view
+- একাধিক client-এর আলাদা আলাদা ডেটা শেপ দরকার (mobile বনাম web)
+- আপনার UI-তে একটি request-এ গভীরভাবে nested, সম্পর্কিত ডেটা দরকার
+- প্রতিটি view-এর জন্য একবার-ব্যবহারযোগ্য REST endpoint বানাতে বানাতে ক্লান্ত
 
-**When to Stick with REST**
+**কখন REST-এই থাকবেন**
 
-- Simple CRUD APIs
-- File upload/download heavy APIs
-- You need HTTP caching without extra infrastructure
-- Your team is small and REST is sufficient
+- সাধারণ CRUD API
+- file upload/download-ভারী API
+- অতিরিক্ত অবকাঠামো ছাড়া HTTP caching দরকার
+- আপনার টিম ছোট আর REST-ই যথেষ্ট
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **GraphQL lets clients query exactly what they need** — no over-fetching or under-fetching
-2. **Schema is the contract** — define types, queries, mutations, and subscriptions upfront
-3. **Resolvers execute field by field** — each field can have its own data-fetching logic
-4. **The N+1 problem is real** — always use DataLoader for related entities
-5. **Subscriptions** provide real-time updates over WebSocket
-6. **GraphQL is not a REST replacement** — choose based on your use case
+1. **GraphQL client-কে ঠিক যতটুকু দরকার ততটুকুই query করতে দেয়** — over-fetching বা under-fetching নেই
+2. **Schema-ই contract** — টাইপ, query, mutation, আর subscription আগেভাগে সংজ্ঞায়িত করুন
+3. **Resolver ফিল্ড ধরে ধরে চলে** — প্রতিটি ফিল্ডের নিজস্ব ডেটা-fetching লজিক থাকতে পারে
+4. **N+1 সমস্যা বাস্তব** — সম্পর্কিত entity-এর জন্য সবসময় DataLoader ব্যবহার করুন
+5. **Subscription** WebSocket-এর ওপর real-time আপডেট দেয়
+6. **GraphQL REST-এর বিকল্প নয়** — আপনার use case অনুযায়ী বেছে নিন

@@ -1,9 +1,9 @@
 ---
 title: 'Production Go'
-subtitle: "Logging, configuration, graceful shutdown, profiling, and deployment — everything between 'it works on my machine' and running at scale."
+subtitle: "Logging, configuration, graceful shutdown, profiling, আর deployment — 'আমার মেশিনে তো কাজ করে' থেকে scale-এ চালানোর মাঝের সবকিছু।"
 chapter: 21
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics:
   ['logging', 'configuration', 'graceful shutdown', 'profiling', 'deployment', 'observability']
 ---
@@ -12,9 +12,17 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Structured Logging with slog
+## গল্পে বুঝি
 
-Go 1.21 introduced `log/slog` — structured, leveled logging in the standard library. No more `log.Println` in production.
+ইবনে সিনার মুদি দোকানের বন্ধ করার একটা নিয়ম আছে। সকালে খোলার সময় দরজায় একটা সাইনবোর্ড ঝুলিয়ে দেয় — আজ কয়টায় খুলছে, কী কী দর, কোন কোন জিনিস আজ পাওয়া যাবে। দোকানের বাইরে আরেকটা ছোট বোর্ড, "খোলা আছে, সব ঠিকঠাক" — পথচারী বা সাপ্লায়ার দূর থেকে দেখেই বুঝে যায় ভেতরে ঢোকা যাবে কিনা। আর একটা অলিখিত নিয়ম, একজন খদ্দের কাউন্টার আঁকড়ে সারাদিন দাঁড়িয়ে থাকতে পারবে না — মালপত্র বাছাই আর দাম মেটানোর একটা মোটামুটি সময়সীমা আছে, নইলে পেছনের লাইন আটকে যায়।
+
+বন্ধ করার সময়টাই আসল। ঠিক বন্ধের মুহূর্তে ইবনে সিনা হুট করে সবাইকে ধাক্কা দিয়ে বের করে দেয় না। সে নতুন খদ্দের ঢোকানো বন্ধ করে দেয় — দরজায় দাঁড়িয়ে যায়, নতুন কেউ এলে বলে "আজকের মতো শেষ"। কিন্তু ভেতরে যারা ইতিমধ্যে কাউন্টারে মাল নিয়ে দাঁড়িয়ে আছে, তাদের কেনাকাটা পুরো শেষ করতে দেয়, দাম নেয়, তারপর শাটার নামায়। কেউ যদি অস্বাভাবিক দেরি করে ফেলে, তখন অবশ্য সে বাধ্য হয়ে তালা দিয়ে দেয়।
+
+এটাই আসলে production-এ Go চালানোর গল্প। নতুন খদ্দের ঢোকানো বন্ধ করেও চলমান কেনাকাটা শেষ করতে দেওয়াটা হলো **graceful shutdown** — নতুন request নেওয়া বন্ধ, কিন্তু in-flight request-গুলো শেষ হওয়ার সুযোগ। সকালের সাইনবোর্ডের দর-নিয়ম হলো **configuration** (port, log level, timeout — বাইরে থেকে দেওয়া)। বাইরের "খোলা আছে, সব ঠিকঠাক" বোর্ডটা হলো **health check**, যা দেখে load balancer ঠিক করে traffic পাঠাবে কিনা। আর একজন খদ্দের কাউন্টার আঁকড়ে থাকতে না পারার নিয়মটা হলো **timeout ও resource limit**। বাস্তবে Kubernetes যখন rolling deploy করে, পুরনো pod-কে সে একটা **SIGTERM** পাঠায় — ঠিক ইবনে সিনার "আজকের মতো শেষ" বলার মতো সংকেত — আর আপনার Go program-এর কাজ হলো সেটা শুনে চলমান request শেষ করে তবেই বন্ধ হওয়া।
+
+## slog দিয়ে Structured Logging
+
+Go 1.21 এনেছে `log/slog` — standard library-তে structured, leveled logging। Production-এ আর `log.Println` নয়।
 
 ```go
 import "log/slog"
@@ -53,15 +61,15 @@ func main() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Structured logging is like filling out a police report vs. writing a diary entry. A diary says "Something bad happened today at the store." A report has fields: incident_type=theft, location=Main_St, time=14:30, suspect_description=... Machines (log aggregators like Datadog, Splunk) can search, filter, and alert on structured fields.
+Structured logging হলো ডায়েরি লেখার বদলে একটা পুলিশ রিপোর্ট পূরণ করার মতো। ডায়েরি বলে "আজ দোকানে খারাপ কিছু একটা ঘটেছে।" রিপোর্টে থাকে ফিল্ড: incident_type=theft, location=Main_St, time=14:30, suspect_description=...। মেশিন (Datadog, Splunk-এর মতো log aggregator) এই structured field-গুলোতে search, filter, আর alert করতে পারে।
 
 </Callout>
 
 ## Configuration Management
 
-Production services need configuration from environment variables, files, and flags:
+Production service-এর configuration লাগে environment variable, file, আর flag থেকে:
 
 ```go
 type Config struct {
@@ -134,7 +142,7 @@ func (c *Config) validate() error {
 
 ## Graceful Shutdown
 
-When you deploy new code, existing requests should finish before the old process dies:
+আপনি যখন নতুন code deploy করেন, পুরনো process মরার আগে চলমান request-গুলোর শেষ হওয়া উচিত:
 
 ```go
 func main() {
@@ -195,15 +203,15 @@ func main() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Graceful shutdown is like a restaurant's "last call." The kitchen stops taking new orders (stop accepting connections), but finishes cooking everything that's already been ordered (in-flight requests). After 30 minutes (timeout), they turn off the lights even if someone is still eating (force close).
+Graceful shutdown হলো একটা রেস্তোরাঁর "last call"-এর মতো। রান্নাঘর নতুন অর্ডার নেওয়া বন্ধ করে (নতুন connection নেওয়া বন্ধ), কিন্তু যা অর্ডার হয়ে গেছে সেসব রান্না শেষ করে (in-flight request)। 30 মিনিট পরে (timeout) কেউ এখনো খেতে থাকলেও তারা বাতি নিভিয়ে দেয় (force close)।
 
 </Callout>
 
-## Health Checks and Readiness Probes
+## Health Check ও Readiness Probe
 
-Essential for Kubernetes and load balancer deployments:
+Kubernetes আর load balancer deployment-এর জন্য অপরিহার্য:
 
 ```go
 type HealthChecker struct {
@@ -253,9 +261,9 @@ func (h *HealthChecker) ReadinessHandler(w http.ResponseWriter, r *http.Request)
 }
 ```
 
-## Profiling with pprof
+## pprof দিয়ে Profiling
 
-Go has built-in profiling. Add one import to expose profiling endpoints:
+Go-তে built-in profiling আছে। profiling endpoint expose করতে একটা import যোগ করুন:
 
 ```go
 import _ "net/http/pprof"
@@ -289,11 +297,11 @@ go tool pprof http://localhost:6060/debug/pprof/goroutine
 
 <Callout type="warning">
 
-**Never expose pprof on your public port.** It reveals internal details about your application. Run it on a separate port (`:6060`) that's only accessible internally, behind your firewall.
+**কখনো আপনার public port-এ pprof expose করবেন না।** এটা আপনার application-এর internal detail প্রকাশ করে দেয়। এটা একটা আলাদা port-এ (`:6060`) চালান যেটা শুধু internally, আপনার firewall-এর পেছনে accessible।
 
 </Callout>
 
-## Building and Deploying
+## Build ও Deploy করা
 
 ### Multi-stage Docker Build
 
@@ -314,7 +322,7 @@ EXPOSE 8080
 CMD ["/server"]
 ```
 
-### Build with Version Info
+### Version Info সহ Build
 
 ```go
 // Injected at build time via ldflags
@@ -340,7 +348,7 @@ go build -ldflags="-X main.version=1.2.3 -X main.commit=$(git rev-parse --short 
 
 ## Production Checklist
 
-Here's what separates a toy Go project from a production service:
+একটা toy Go project থেকে একটা production service-কে যা আলাদা করে:
 
 ```go
 func main() {
@@ -478,13 +486,13 @@ func getKeys(m map[string]int) []string {
 }
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Use `slog` for structured logging** — JSON in production, text in development
-2. **Load config from environment variables** — validate at startup, fail fast
-3. **Graceful shutdown is mandatory** — `signal.Notify` + `server.Shutdown(ctx)` + timeout
-4. **Health checks**: liveness (is the process alive?) and readiness (can it serve traffic?)
-5. **pprof on a separate port** — profile CPU, memory, and goroutines in production
-6. **Multi-stage Docker builds** — final image is ~10MB with just the binary
-7. **Connection retry with exponential backoff** — databases and caches aren't always ready instantly
-8. **Pre-allocate slices, use `sync.Pool`, avoid `fmt.Sprintf` in hot paths** — small optimizations compound at scale
+1. **structured logging-এর জন্য `slog` ব্যবহার করুন** — production-এ JSON, development-এ text
+2. **environment variable থেকে config load করুন** — startup-এ validate করুন, fail fast
+3. **Graceful shutdown বাধ্যতামূলক** — `signal.Notify` + `server.Shutdown(ctx)` + timeout
+4. **Health check**: liveness (process কি alive?) আর readiness (এটা কি traffic serve করতে পারে?)
+5. **আলাদা port-এ pprof** — production-এ CPU, memory, আর goroutine profile করুন
+6. **Multi-stage Docker build** — final image শুধু binary নিয়ে ~10MB
+7. **exponential backoff সহ connection retry** — database আর cache সবসময় সঙ্গে সঙ্গে ready থাকে না
+8. **slice pre-allocate করুন, `sync.Pool` ব্যবহার করুন, hot path-এ `fmt.Sprintf` এড়ান** — ছোট optimization scale-এ জমে বড় হয়

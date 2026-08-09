@@ -1,9 +1,9 @@
 ---
 title: 'GameDays'
-subtitle: 'How to run a structured chaos experiment with a team — planning, execution, post-mortem, and building a resilience culture.'
+subtitle: 'একটা দলের সাথে কীভাবে একটা কাঠামোবদ্ধ chaos experiment চালাবেন — planning, execution, post-mortem, এবং resilience culture গড়া।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['GameDay', 'incident simulation', 'post-mortem', 'runbooks', 'team exercises']
 ---
 
@@ -13,26 +13,34 @@ topics: ['GameDay', 'incident simulation', 'post-mortem', 'runbooks', 'team exer
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A fire drill: not a surprise — everyone knows it's happening, exits are reviewed in advance, and afterwards you note what took too long. The point isn't to scare people; it's to ensure that when the real fire happens, the response is practiced muscle memory, not first-time chaos.
+একটা fire drill: চমক নয় — সবাই জানে এটা হচ্ছে, exit-গুলো আগে থেকে দেখে নেওয়া হয়, আর পরে আপনি লক্ষ করেন কী করতে বেশি সময় লাগল। উদ্দেশ্য মানুষকে ভয় দেখানো নয়; বরং নিশ্চিত করা যে আসল আগুন লাগলে প্রতিক্রিয়াটা অনুশীলন করা muscle memory হবে, প্রথমবারের chaos নয়।
 
 </Callout>
 
-## What Is a GameDay
+## গল্পে বুঝি
 
-A GameDay is a scheduled chaos engineering exercise where a team intentionally breaks something and practices the response. Unlike ad-hoc experiments, a GameDay is a structured team event:
+সমুদ্রের ধারের একটা ছোট শহর। প্রতি বছর ঘূর্ণিঝড়ের মৌসুম আসার আগে ইবনে সিনা, শহরের দুর্যোগ-প্রস্তুতি কমিটির প্রধান, একটা দিন আগে থেকেই ঠিক করে রাখেন — আজ পুরো শহর মিলে একটা full-scale ঘূর্ণিঝড় মহড়া হবে। এটা কোনো চমক নয়; সবাই জানে দিনটা কবে। নির্দিষ্ট সময়ে সাইরেন বাজে, পরিবারগুলো তাদের জিনিসপত্র গুছিয়ে নির্ধারিত আশ্রয়কেন্দ্রের দিকে হাঁটতে শুরু করে, স্বেচ্ছাসেবকরা যে যার দায়িত্বে চলে যায় — কেউ গেট সামলায়, কেউ নামের তালিকা মিলিয়ে দেখে সবাই এসে পৌঁছেছে কিনা, কেউ নৌকা প্রস্তুত রাখে।
 
-- Defined scope and hypothesis before the exercise
-- Team members in designated roles (chaos engineer, observer, on-call)
-- Real-time communication during the experiment
-- Formal post-mortem after
+মহড়া শেষ হওয়ার পর ইবনে সিনা সবাইকে নিয়ে বসেন। আল-খোয়ারিজমি জানায় আশ্রয়কেন্দ্রের একটা গেটের তালা আটকে গিয়েছিল, খুলতে দশ মিনিট লেগেছে। ফাতিমা আল-ফিহরি ধরিয়ে দেন যে বয়স্কদের নামের তালিকাটা কারো কাছেই ছিল না, তাই কে বাকি আছে বোঝা যাচ্ছিল না। কেউ কাউকে দোষ দেয় না — সবাই মিলে নোট করে রাখে কোন জিনিসটা ঠিক করতে হবে, যাতে আসল ঝড় যেদিন আসবে সেদিন এই ভুলগুলো আর না হয়।
 
-GameDays build two things: technical resilience (you find and fix real weaknesses) and team resilience (people practice incident response in a safe context).
+এই পরিকল্পিত মহড়াই আসলে একটা **GameDay**। আগে থেকে দিন ঠিক করা মহড়া = নির্ধারিত GameDay; পুরো শহরের একসাথে অনুশীলন = পুরো দলের মিলে incident response চর্চা করা; পরে বসে কী কী ভুল হলো তার পর্যালোচনা = আপনার process আর tooling-এর ফাঁকফোকর খুঁজে বের করা; আর বারবার মহড়া দিয়ে সবার কাজটা মুখস্থ হয়ে যাওয়া = দলের মধ্যে muscle memory গড়ে তোলা। বাস্তবে দমকল বিভাগ, হাসপাতাল আর উপকূলীয় শহরগুলো ঠিক এভাবেই নিয়মিত drill চালায় — কারণ আসল বিপর্যয়ের মুহূর্তটা নতুন কিছু শেখার সময় নয়, চর্চা করা প্রতিক্রিয়া প্রয়োগ করার সময়।
 
-## Planning a GameDay
+## GameDay কী
 
-**4-6 weeks before:**
+একটা GameDay হলো একটা নির্ধারিত chaos engineering exercise যেখানে একটা দল ইচ্ছাকৃতভাবে কিছু ভাঙে আর প্রতিক্রিয়া অনুশীলন করে। ad-hoc experiment-এর বিপরীতে, একটা GameDay হলো একটা কাঠামোবদ্ধ team event:
+
+- Exercise-এর আগে নির্ধারিত scope এবং hypothesis
+- নির্দিষ্ট role-এ দলের সদস্যরা (chaos engineer, observer, on-call)
+- Experiment চলাকালীন রিয়েল-টাইম যোগাযোগ
+- পরে একটা আনুষ্ঠানিক post-mortem
+
+GameDay দুটো জিনিস গড়ে তোলে: টেকনিক্যাল resilience (আপনি আসল দুর্বলতা খুঁজে বের করে fix করেন) এবং team resilience (মানুষ নিরাপদ পরিবেশে incident response অনুশীলন করে)।
+
+## একটা GameDay পরিকল্পনা
+
+**৪-৬ সপ্তাহ আগে:**
 
 ```
 □ Choose the scenario (what failure are you simulating?)
@@ -43,7 +51,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 □ Prepare rollback procedures
 ```
 
-**1 week before:**
+**১ সপ্তাহ আগে:**
 
 ```
 □ Review runbooks for the scenario
@@ -53,26 +61,26 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 □ Prepare communication templates (status page messages, Slack updates)
 ```
 
-**Choosing a scenario:** Pick failure modes that are realistic but that you haven't fully validated your resilience for:
+**একটা scenario বেছে নেওয়া:** এমন failure mode বাছুন যা বাস্তবসম্মত কিন্তু যার জন্য আপনি এখনো পুরোপুরি আপনার resilience validate করেননি:
 
-- "What happens when our primary database is unavailable?"
-- "What happens when our payment provider returns 500 for 5 minutes?"
-- "What happens when one of three app servers goes down during peak traffic?"
-- "What happens when Redis (our session store) is unreachable?"
+- "আমাদের primary database অনুপলব্ধ হলে কী হয়?"
+- "আমাদের payment provider ৫ মিনিট ধরে 500 রিটার্ন করলে কী হয়?"
+- "peak traffic-এর সময় তিনটার একটা app server নেমে গেলে কী হয়?"
+- "Redis (আমাদের session store) unreachable হলে কী হয়?"
 
-## Roles During a GameDay
+## একটা GameDay-এর সময় Role-গুলো
 
-**Chaos Engineer:** Executes the fault injection. Knows exactly what commands to run and how to stop them. Only one person does this — avoids confusion.
+**Chaos Engineer:** Fault injection চালায়। ঠিক কোন command চালাতে হবে আর কীভাবে থামাতে হবে জানে। শুধু একজন এটা করে — বিভ্রান্তি এড়ায়।
 
-**Incident Commander:** Coordinates the team's response. Makes decisions about escalation and termination. Ideally the on-call rotation lead.
+**Incident Commander:** দলের প্রতিক্রিয়া সমন্বয় করে। Escalation আর termination সম্পর্কে সিদ্ধান্ত নেয়। আদর্শভাবে on-call rotation-এর lead।
 
-**Observer(s):** Watch metrics, dashboards, and logs. Document what they see in real time. Don't intervene — observe and report.
+**Observer(s):** Metrics, dashboard, আর log দেখে। রিয়েল-টাইমে যা দেখে ডকুমেন্ট করে। হস্তক্ষেপ করে না — observe করে আর রিপোর্ট করে।
 
-**Communicator:** Handles external communication during the exercise (status page, Slack, stakeholder updates). Even in a drill, practice the communication flow.
+**Communicator:** Exercise চলাকালীন বাহ্যিক যোগাযোগ সামলায় (status page, Slack, stakeholder update)। একটা drill-এও, যোগাযোগের flow অনুশীলন করুন।
 
-## Running the Experiment
+## Experiment চালানো
 
-**30 minutes before:**
+**৩০ মিনিট আগে:**
 
 ```bash
 # Verify baseline
@@ -83,7 +91,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 # Team in #gameday-2024-01 Slack channel? ✓
 ```
 
-**Start the experiment:**
+**Experiment শুরু করুন:**
 
 ```
 [10:00] Chaos Engineer: "Starting experiment. Injecting 500ms latency on payment-service."
@@ -92,7 +100,7 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 [10:00] Incident Commander: "Confirmed. Abort condition: error rate > 2% sustained for 2+ minutes"
 ```
 
-**During the experiment — real-time logging:**
+**Experiment চলাকালীন — রিয়েল-টাইম logging:**
 
 ```
 [10:01] Observer 1: "Payment p99 climbing: 120ms → 680ms"
@@ -108,11 +116,11 @@ GameDays build two things: technical resilience (you find and fix real weaknesse
 [10:07] Incident Commander: "System recovered. Steady state restored."
 ```
 
-**What you learned:** Circuit breaker opened as designed, but checkout error rate spiked too high before it opened. The threshold (50% failure rate before opening) is too permissive. Action: lower threshold to 30%.
+**আপনি যা শিখলেন:** Circuit breaker যেমন ডিজাইন করা হয়েছিল তেমনভাবেই open হলো, কিন্তু open হওয়ার আগে checkout error rate অনেক বেশি spike করল। Threshold (open হওয়ার আগে 50% failure rate) খুব বেশি উদার। Action: threshold 30%-এ নামান।
 
 ## Abort Conditions
 
-Define these before you start. The moment any condition is hit, stop everything:
+শুরুর আগেই এগুলো সংজ্ঞায়িত করুন। যে মুহূর্তে কোনো condition পূরণ হয়, সব থামান:
 
 ```
 Abort conditions for this GameDay:
@@ -128,13 +136,13 @@ Abort procedure:
 4. Normal incident response begins if system doesn't recover in 5 minutes
 ```
 
-No shame in aborting. You've learned something: your safety margins were tighter than expected.
+Abort করায় কোনো লজ্জা নেই। আপনি কিছু শিখেছেন: আপনার safety margin আশার চেয়ে টাইট ছিল।
 
-## The Post-Mortem
+## Post-Mortem
 
-Run within 48 hours while memory is fresh. Blameless — the goal is system improvement, not assigning fault.
+স্মৃতি তাজা থাকতে ৪৮ ঘণ্টার মধ্যে চালান। Blameless — লক্ষ্য সিস্টেমের উন্নতি, দোষ চাপানো নয়।
 
-**Structure:**
+**গঠন:**
 
 ```markdown
 ## GameDay Post-Mortem: Payment Latency — 2024-01-15
@@ -173,9 +181,9 @@ Error rate would remain < 0.5% due to circuit breaker protection
 4. Add GameDay for "payment fully down" scenario [Owner: @alice, Due: Feb 15]
 ```
 
-## Building a Chaos Calendar
+## একটা Chaos Calendar গড়া
 
-Run GameDays regularly — quarterly is a good cadence for mature teams, monthly for teams early in their chaos journey.
+GameDay নিয়মিত চালান — পরিণত দলের জন্য quarterly একটা ভালো cadence, chaos journey-র শুরুর দিকের দলের জন্য monthly।
 
 ```
 Q1: App server failure (kill N-1 instances)
@@ -188,21 +196,21 @@ Between GameDays:
   Weekly: review chaos metrics (circuit breaker open counts, retry rates)
 ```
 
-Rotate who plays each role — everyone should experience being the chaos engineer, incident commander, and observer.
+কে কোন role নেবে তা ঘুরিয়ে দিন — সবার chaos engineer, incident commander, আর observer হওয়ার অভিজ্ঞতা থাকা উচিত।
 
-## Chaos as a Hiring Signal
+## Hiring Signal হিসেবে Chaos
 
-Teams that run regular GameDays attract engineers who want to work on robust systems. It signals:
+যেসব দল নিয়মিত GameDay চালায় তারা এমন ইঞ্জিনিয়ারদের আকর্ষণ করে যারা robust সিস্টেমে কাজ করতে চায়। এটা ইঙ্গিত দেয়:
 
-- The team takes reliability seriously
-- Learning from failure is safe and expected
-- There's space to be curious about how the system actually works
+- দল reliability-কে গুরুত্ব সহকারে নেয়
+- Failure থেকে শেখা নিরাপদ এবং প্রত্যাশিত
+- সিস্টেম আসলে কীভাবে কাজ করে সে সম্পর্কে কৌতূহলী হওয়ার জায়গা আছে
 
-Include GameDay experience in engineering blog posts and job descriptions. "We run monthly chaos exercises" is a strong signal to experienced reliability engineers.
+Engineering blog post আর job description-এ GameDay অভিজ্ঞতা অন্তর্ভুক্ত করুন। "আমরা মাসিক chaos exercise চালাই" অভিজ্ঞ reliability engineer-দের কাছে একটা শক্তিশালী signal।
 
-## Automated Chaos in CI/CD
+## CI/CD-তে Automated Chaos
 
-For mature teams, run chaos experiments automatically against staging on every deployment:
+পরিণত দলের জন্য, প্রতিটা deployment-এ staging-এর বিপরীতে স্বয়ংক্রিয়ভাবে chaos experiment চালান:
 
 ```yaml
 # GitHub Actions: chaos test on deployment
@@ -229,4 +237,4 @@ For mature teams, run chaos experiments automatically against staging on every d
   run: ./promote.sh staging production
 ```
 
-This ensures every release is validated against your known failure modes before reaching users.
+এটা নিশ্চিত করে যে প্রতিটা release ইউজারদের কাছে পৌঁছানোর আগে আপনার পরিচিত failure mode-এর বিপরীতে validate হয়।

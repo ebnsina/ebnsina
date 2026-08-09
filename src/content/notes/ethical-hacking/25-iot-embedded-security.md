@@ -1,9 +1,9 @@
 ---
 title: 'IoT & Embedded Security'
-subtitle: 'Firmware extraction and analysis, UART/JTAG debugging, default credentials, protocol attacks, and hardware hacking fundamentals.'
+subtitle: 'Firmware এক্সট্রাকশন ও অ্যানালাইসিস, UART/JTAG ডিবাগিং, default credentials, protocol attack, এবং hardware hacking-এর মূল বিষয়।'
 chapter: 25
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'IoT security',
@@ -21,11 +21,19 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+একটা নতুন আবাসিক এলাকায় সবাই হুমড়ি খেয়ে সস্তা স্মার্ট দরজার লক কিনল। লকগুলো সুন্দর, ফোন দিয়ে খোলা যায়, দামও কম। কিন্তু একটা ঝামেলা আছে — প্রতিটা লক কারখানা থেকে একই ফ্যাক্টরি কোড "1234" নিয়ে আসে, আর সেই কোডটা প্রতিটা বাক্সের ভেতরের ম্যানুয়ালেই ছাপা থাকে। এলাকার প্রায় কেউই কোডটা বদলানোর কথা ভাবল না — "কে আর কষ্ট করে সেটিংসে গিয়ে বদলাবে?" আবার লকের কোম্পানিটাও একবার বিক্রি করেই খালাস, কোনো নিরাপত্তা আপডেট আর পাঠায় না।
+
+এখন আল-খোয়ারিজমি নামের এক সুযোগসন্ধানী লোক ম্যানুয়াল খুলে সেই "1234" কোডটা দেখে নিল। এই একটামাত্র কোড দিয়েই সে এলাকার হাজার হাজার দরজা একসাথে খুলে ফেলতে পারে — একটা বাড়ি নয়, পুরো পাড়া তার হাতের মুঠোয়। সে চাইলে সব ক'টা লককে একসাথে হুকুম দিয়ে দুষ্টুমিতে নামাতে পারে। কিন্তু ইবনে সিনা আর ফাতিমা আল-ফিহরি — এলাকার এই দুই সচেতন বাসিন্দা — প্রথম দিনেই ফ্যাক্টরি কোড বদলে নিজেদের গোপন কোড বসিয়েছেন আর লকের নতুন আপডেট এলেই বসিয়ে নেন। আল-খোয়ারিজমির "1234" তাঁদের দরজায় কাজ করে না, তাই তাঁরা নিরাপদ।
+
+এই গল্পটাই আসলে **IoT ও embedded security**। হাজার হাজার লকে একই না-বদলানো ফ্যাক্টরি "1234" কোড = IoT ডিভাইসের **default password** যা সবাই জানে; কোম্পানির আপডেট না পাঠানো = ডিভাইস যেগুলো কদাচিৎ **firmware update** বা security patch পায়; আর একটা কোডে হাজার বাড়ি খুলে ফেলা = mass compromise, ঠিক যেভাবে **botnet** একসাথে অসংখ্য ডিভাইস দখল করে। উল্টোদিকে ইবনে সিনা আর ফাতিমার সতর্কতাই হলো আসল প্রতিরক্ষা — default বদলাও, নিয়মিত patch/update করো, আর ডিভাইসকে সরাসরি ইন্টারনেটে খোলা রেখো না। বাস্তবেও ২০১৬ সালে **Mirai botnet** ঠিক এই কাজটাই করেছিল — লাখ লাখ IP camera আর router-এর অপরিবর্তিত default password দিয়ে দখল নিয়ে ইতিহাসের অন্যতম বড় DDoS হামলা চালিয়েছিল।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-IoT devices are computers that were designed by hardware engineers who had one job: make it cheap. Security was afterthought. The default password is "admin". The firmware is downloadable. The UART port is exposed. The device is on your network.
+IoT ডিভাইসগুলো হলো এমন কম্পিউটার যেগুলো ডিজাইন করেছেন এমন hardware engineer-রা যাদের একটাই কাজ ছিল: এটাকে সস্তা বানানো। Security ছিল পরের চিন্তা। Default password হলো "admin"। Firmware ডাউনলোড করা যায়। UART port খোলা পড়ে আছে। আর ডিভাইসটা আপনার নেটওয়ার্কেই আছে।
 
 </Callout>
 
@@ -154,7 +162,7 @@ strings httpd | grep "system\|popen\|execve\|sprintf"
 
 ## UART — Serial Console Access
 
-UART is a serial debug port found on most embedded devices. Getting access = interactive shell.
+UART হলো একটা serial debug port যা বেশিরভাগ embedded ডিভাইসে থাকে। এতে access পাওয়া মানে = interactive shell পাওয়া।
 
 ```bash
 # Equipment needed:
@@ -233,7 +241,7 @@ qemu-mipsel -L _firmware.bin.extracted/ _firmware.bin.extracted/usr/sbin/httpd
 
 ## MQTT Protocol Attacks
 
-MQTT is the most common IoT messaging protocol — often unauthenticated.
+MQTT হলো সবচেয়ে প্রচলিত IoT messaging protocol — প্রায়ই unauthenticated।
 
 ```bash
 # Discover MQTT brokers

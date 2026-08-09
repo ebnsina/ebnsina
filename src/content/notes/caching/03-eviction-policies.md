@@ -1,9 +1,9 @@
 ---
 title: 'Eviction Policies'
-subtitle: 'LRU, LFU, TTL, and friends — how caches decide what to throw away when memory fills up.'
+subtitle: 'LRU, LFU, TTL এবং তাদের সঙ্গীরা — মেমরি ভরে গেলে cache কীভাবে ঠিক করে কোনটা ফেলে দেবে।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['LRU', 'LFU', 'TTL', 'eviction', 'memory management']
 ---
 
@@ -13,26 +13,34 @@ topics: ['LRU', 'LFU', 'TTL', 'eviction', 'memory management']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A whiteboard that's running out of space — you erase something to write something new, and the question is what to erase.
+একটা হোয়াইটবোর্ড যেটার জায়গা ফুরিয়ে আসছে — নতুন কিছু লিখতে হলে পুরনো কিছু মুছতে হয়, আর প্রশ্নটা হলো কোনটা মুছবেন।
 
 </Callout>
 
-## Why Eviction Matters
+## গল্পে বুঝি
 
-Caches are bounded. When a cache fills up, it must evict something to make room for new entries. The wrong eviction policy throws away hot data and keeps cold data — defeating the purpose.
+আল-খোয়ারিজমির মুদি দোকানের তাক ভরে গেছে, আর আজ পাইকারের কাছ থেকে নতুন মাল এসেছে। জায়গা করতে হলে তাক থেকে কিছু একটা নামাতেই হবে — কিন্তু কোনটা? আল-খোয়ারিজমি প্রথমে তাকিয়ে দেখল কোন প্যাকেটটায় সবচেয়ে বেশিদিন ধরে কেউ হাতই দেয়নি — পেছনের কোণে পড়ে থাকা একটা মশলার কৌটা, মাস দুয়েক কেউ ছোঁয়নি — সেটাই সে নামিয়ে দিল। তার যুক্তি সহজ: যেটা এত দিন কেউ চায়নি, সেটা কালকেও কেউ চাইবে না।
 
-The right policy depends on your access pattern:
+পাশের দোকানের ইবনে সিনা আবার অন্যভাবে ভাবে। ও দেখে কোন জিনিসটা মোটের উপর সবচেয়ে কম বিক্রি হয় — হোক না সেটা কালকেই একবার বিক্রি হয়েছে, কিন্তু সারা মাসে যদি মাত্র দু-তিনটা যায়, সেই কম-চলা আইটেমটাই তাক থেকে সরায়। আর ফাতিমা আল-ফিহরির দোকানে নিয়ম আরও আলাদা — ও ঘনঘন কিছু চলছে কি চলছে না তা দেখেই না, ও শুধু গায়ের মেয়াদের তারিখ দেখে; দই-পাউরুটির মতো যেগুলোর expiry পেরিয়ে গেছে, বিক্রি বেশি হোক কি কম, সেগুলো আগে ফেলে দেয়।
 
-- **Uniform random access** — any policy works, LRU is fine
-- **Temporal locality** — recently used items are likely to be used again → LRU
-- **Frequency skew** — a small set of items is accessed far more often → LFU
-- **Time-bounded freshness** — data expires after a period regardless of use → TTL
+গল্পের তাকটাই cache, আর নতুন মাল ঢোকাতে পুরনো নামানোই eviction। আল-খোয়ারিজমির "সবচেয়ে বেশিদিন কেউ ছোঁয়নি" নিয়মটা হলো LRU, ইবনে সিনার "সবচেয়ে কম বিক্রি হয়" নিয়মটা LFU, আর ফাতিমা আল-ফিহরির "মেয়াদ পেরোলেই বিদায়" নিয়মটা TTL। বাস্তবে Redis-এ এই সিদ্ধান্তটাই `maxmemory-policy` দিয়ে ঠিক করে দেওয়া হয় — সাধারণ cache-এ `allkeys-lru`, আর কিছু আইটেম বেশি জনপ্রিয় হলে `allkeys-lfu` — যাতে মেমরি ভরে গেলে ঠিক জিনিসটাই বেরিয়ে যায়, hot data নয়।
+
+## Eviction কেন গুরুত্বপূর্ণ
+
+Cache-এর একটা সীমা থাকে। Cache ভরে গেলে নতুন এন্ট্রির জায়গা করে দিতে তাকে কিছু একটা evict করতেই হয়। ভুল eviction policy hot data ফেলে দিয়ে cold data রেখে দেয় — যা পুরো উদ্দেশ্যটাকেই ব্যর্থ করে দেয়।
+
+সঠিক policy নির্ভর করে আপনার access pattern-এর উপর:
+
+- **Uniform random access** — যেকোনো policy কাজ করে, LRU ঠিক আছে
+- **Temporal locality** — সম্প্রতি ব্যবহৃত আইটেমগুলো আবার ব্যবহৃত হওয়ার সম্ভাবনা বেশি → LRU
+- **Frequency skew** — অল্প কিছু আইটেম অনেক বেশিবার অ্যাক্সেস হয় → LFU
+- **Time-bounded freshness** — ব্যবহার যা-ই হোক, নির্দিষ্ট সময় পর ডেটা মেয়াদোত্তীর্ণ হয় → TTL
 
 ## TTL — Time to Live
 
-The simplest and most important mechanism. Every cache entry has an expiration time. After it, the entry is treated as a miss regardless of whether it's been accessed.
+সবচেয়ে সহজ এবং সবচেয়ে গুরুত্বপূর্ণ কৌশল। প্রতিটি cache এন্ট্রির একটা expiration time থাকে। সেই সময়ের পর এন্ট্রিটা অ্যাক্সেস হয়েছে কিনা তা নির্বিশেষে একটা miss হিসেবে গণ্য হয়।
 
 ```typescript
 interface CacheEntry<T> {
@@ -64,17 +72,17 @@ class TTLCache<T> {
 }
 ```
 
-**Lazy vs eager expiration:** Most caches expire lazily — they check TTL on access and clean up then. Redis uses a hybrid: lazy on access plus a background job that periodically samples and deletes expired keys.
+**Lazy vs eager expiration:** বেশিরভাগ cache lazily expire করে — অ্যাক্সেসের সময় TTL চেক করে তখনই পরিষ্কার করে। Redis একটা হাইব্রিড পদ্ধতি ব্যবহার করে: অ্যাক্সেসে lazy, তার সাথে একটা background job যা নিয়মিত স্যাম্পল নিয়ে মেয়াদোত্তীর্ণ key মুছে ফেলে।
 
 <Callout type="tip">
 
-**Choose TTL based on tolerable staleness, not gut feel.** Product catalog: 5 minutes is fine. User profile: 60 seconds. Session token: match session lifetime. Config values: 30 seconds. Price data: depends on your SLA.
+**গাট ফিলিং দিয়ে নয়, সহনীয় staleness-এর ভিত্তিতে TTL বেছে নিন।** Product catalog: 5 মিনিট ঠিক আছে। User profile: 60 সেকেন্ড। Session token: session-এর আয়ুর সাথে মিলিয়ে নিন। Config value: 30 সেকেন্ড। Price data: আপনার SLA-এর উপর নির্ভর করে।
 
 </Callout>
 
 ## LRU — Least Recently Used
 
-Evicts the entry that hasn't been accessed for the longest time. Works on the assumption that what you used recently, you'll use again soon.
+যে এন্ট্রিটা সবচেয়ে বেশি সময় ধরে অ্যাক্সেস হয়নি সেটাকে evict করে। এই ধারণার উপর কাজ করে যে আপনি সম্প্রতি যা ব্যবহার করেছেন তা শিগগিরই আবার ব্যবহার করবেন।
 
 ```typescript
 class LRUCache<K, V> {
@@ -113,11 +121,11 @@ class LRUCache<K, V> {
 const cache = new LRUCache<string, User>(1000);
 ```
 
-**When LRU fails:** A full table scan or batch job that reads many unique keys will evict your hot working set, causing a cache miss storm for normal traffic. This is called **cache pollution**.
+**LRU কখন ব্যর্থ হয়:** একটা full table scan বা batch job যা অনেক unique key পড়ে, সেটা আপনার hot working set-কে evict করে দেবে, ফলে সাধারণ traffic-এর জন্য cache miss-এর ঝড় তৈরি হবে। একে বলে **cache pollution**।
 
 ## LFU — Least Frequently Used
 
-Evicts the entry accessed the fewest times. Protects genuinely popular items from eviction by batch jobs that access many unique keys once.
+যে এন্ট্রিটা সবচেয়ে কমবার অ্যাক্সেস হয়েছে সেটাকে evict করে। যেসব batch job একবার করে অনেক unique key অ্যাক্সেস করে, তাদের হাত থেকে সত্যিকারের জনপ্রিয় আইটেমগুলোকে রক্ষা করে।
 
 ```typescript
 class LFUCache<K, V> {
@@ -184,21 +192,21 @@ class LFUCache<K, V> {
 }
 ```
 
-LFU is more complex and has a **cache pollution problem in reverse**: newly popular items start with frequency 1 and can be evicted before they prove their worth. The fix is **LFU with aging** — periodically decay all frequencies, preventing old-but-formerly-popular items from dominating.
+LFU বেশি জটিল এবং এর একটা **উল্টো cache pollution সমস্যা** আছে: নতুন জনপ্রিয় হওয়া আইটেমগুলো frequency 1 দিয়ে শুরু করে এবং নিজেদের যোগ্যতা প্রমাণ করার আগেই evict হয়ে যেতে পারে। এর সমাধান হলো **aging সহ LFU** — নিয়মিতভাবে সব frequency-কে decay করানো, যাতে পুরনো-কিন্তু-একসময়-জনপ্রিয় আইটেমগুলো আধিপত্য বিস্তার করতে না পারে।
 
 ## FIFO — First In, First Out
 
-Evicts the oldest entry regardless of access frequency. Simple but usually not optimal — an item added 10 minutes ago and accessed every second should not be evicted over one added 9 minutes ago and never accessed.
+Access frequency নির্বিশেষে সবচেয়ে পুরনো এন্ট্রিটা evict করে। সহজ কিন্তু সাধারণত optimal নয় — 10 মিনিট আগে যোগ হওয়া এবং প্রতি সেকেন্ডে অ্যাক্সেস হওয়া একটা আইটেম, 9 মিনিট আগে যোগ হওয়া এবং কখনও অ্যাক্সেস না হওয়া আইটেমের চেয়ে আগে evict হওয়া উচিত নয়।
 
-Used when you genuinely want to keep only the most recent N items, like an event log.
+যখন আপনি সত্যিই শুধু সাম্প্রতিকতম N-টা আইটেম রাখতে চান, যেমন একটা event log, তখন এটা ব্যবহৃত হয়।
 
 ## Random Replacement
 
-Evicts a random entry. Surprisingly competitive with LRU in practice because it has zero overhead — no need to track access order. Used internally in some CPU caches.
+একটা random এন্ট্রি evict করে। বাস্তবে LRU-এর সাথে অবাক করার মতো প্রতিযোগিতামূলক, কারণ এর কোনো overhead নেই — access order ট্র্যাক করার দরকার নেই। কিছু CPU cache-এ অভ্যন্তরীণভাবে ব্যবহৃত হয়।
 
 ## Redis Eviction Policies
 
-Redis offers eight eviction policies, configured via `maxmemory-policy`:
+Redis আটটি eviction policy দেয়, যা `maxmemory-policy` দিয়ে কনফিগার করা হয়:
 
 ```
 noeviction        — return error when memory limit reached (default)
@@ -217,22 +225,22 @@ redis-cli CONFIG SET maxmemory 2gb
 redis-cli CONFIG SET maxmemory-policy allkeys-lru
 ```
 
-**Which to choose:**
+**কোনটা বেছে নেবেন:**
 
-- **Session store / general cache:** `allkeys-lru` — evict any key by LRU, safe default
-- **Skewed access (Pareto traffic):** `allkeys-lfu` — protects your top 1% of keys
-- **Mix of persistent + cached data:** `volatile-lru` — only evict entries with TTL set, keep persistent keys
-- **Never lose data:** `noeviction` + set maxmemory high enough, alert before it fills
+- **Session store / general cache:** `allkeys-lru` — LRU দিয়ে যেকোনো key evict করে, নিরাপদ ডিফল্ট
+- **Skewed access (Pareto traffic):** `allkeys-lfu` — আপনার শীর্ষ 1% key-কে রক্ষা করে
+- **Persistent + cached data-এর মিশ্রণ:** `volatile-lru` — শুধু TTL সেট করা এন্ট্রি evict করে, persistent key রেখে দেয়
+- **কখনও ডেটা হারাবেন না:** `noeviction` + maxmemory যথেষ্ট বেশি সেট করুন, ভরে যাওয়ার আগে alert দিন
 
 <Callout type="warning">
 
-`noeviction` does not mean "no data loss" — it means Redis returns errors on writes when full. Your application must handle those errors. For a cache, this is usually worse than eviction.
+`noeviction`-এর মানে "কোনো ডেটা হারানো নয়" নয় — এর মানে ভরে গেলে Redis লেখার সময় error রিটার্ন করে। আপনার অ্যাপ্লিকেশনকে সেই error সামলাতে হবে। একটা cache-এর জন্য এটা সাধারণত eviction-এর চেয়েও খারাপ।
 
 </Callout>
 
-## Sizing Your Cache
+## আপনার Cache-এর আকার নির্ধারণ
 
-A cache too small misses constantly. Too large wastes memory. The right size depends on your working set — the set of keys your application actually accesses regularly.
+খুব ছোট cache সারাক্ষণ miss করে। খুব বড়টা মেমরি নষ্ট করে। সঠিক আকার নির্ভর করে আপনার working set-এর উপর — যেসব key আপনার অ্যাপ্লিকেশন আসলে নিয়মিত অ্যাক্সেস করে।
 
 ```typescript
 // Instrument your cache to find the right size
@@ -267,11 +275,11 @@ class InstrumentedCache<K, V> {
 }
 ```
 
-A good starting heuristic: **cache your working set, not your entire dataset**. If 20% of your keys account for 80% of reads (Pareto distribution — very common), caching that 20% gives you ~80% hit ratio. You rarely need to cache everything.
+একটা ভালো শুরুর হিউরিস্টিক: **আপনার পুরো dataset নয়, আপনার working set cache করুন**। যদি আপনার 20% key মোট read-এর 80% হয় (Pareto distribution — খুবই সাধারণ), তাহলে সেই 20% cache করলে আপনি প্রায় 80% hit ratio পাবেন। সবকিছু cache করার দরকার আপনার খুব কমই পড়ে।
 
-## Combining TTL and LRU
+## TTL এবং LRU একসাথে ব্যবহার
 
-Production caches combine both: entries expire after their TTL (for freshness) and the LRU policy handles memory pressure. Redis does exactly this.
+Production cache দুটোই একসাথে ব্যবহার করে: এন্ট্রি তাদের TTL-এর পর expire হয় (freshness-এর জন্য) এবং LRU policy মেমরির চাপ সামলায়। Redis ঠিক এটাই করে।
 
 ```typescript
 class TTLLRUCache<K, V> {
@@ -297,4 +305,4 @@ class TTLLRUCache<K, V> {
 }
 ```
 
-TTL handles correctness (stale data). LRU handles memory (eviction under pressure). Neither alone is enough in production.
+TTL correctness সামলায় (stale data)। LRU মেমরি সামলায় (চাপের মধ্যে eviction)। Production-এ একা কোনোটাই যথেষ্ট নয়।

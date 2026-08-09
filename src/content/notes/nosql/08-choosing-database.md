@@ -1,9 +1,9 @@
 ---
-title: 'Choosing the Right Database'
-subtitle: 'A decision framework, polyglot persistence, SQL vs each NoSQL family, the common mistakes, and how to match a workload to a store.'
+title: 'সঠিক Database বেছে নেওয়া'
+subtitle: 'একটা decision framework, polyglot persistence, SQL vs প্রতিটা NoSQL পরিবার, সাধারণ ভুলগুলো, আর কীভাবে একটা workload-কে একটা store-এর সাথে মেলাবেন।'
 chapter: 8
 level: 'mastery'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['polyglot', 'decision', 'tradeoffs']
 ---
 
@@ -13,28 +13,36 @@ topics: ['polyglot', 'decision', 'tradeoffs']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-You don't own one vehicle for every trip. A bicycle for the corner shop, a sedan for the commute, a van for moving house, a truck for freight. Each is "best" only relative to a journey. Picking a database is the same: there is no universally best store, only the best fit for _this_ workload's shape, scale, and consistency needs. The expert's skill is reading the journey before choosing the vehicle.
+প্রতিটা ভ্রমণের জন্য আপনি একটাই বাহন রাখেন না। মোড়ের দোকানে যেতে সাইকেল, অফিস যাতায়াতে সেডান, বাসা বদলাতে ভ্যান, মালামাল পরিবহনে ট্রাক। প্রতিটা শুধু একটা যাত্রার সাপেক্ষেই "সেরা"। Database বেছে নেওয়াও একই: সর্বজনীনভাবে সেরা কোনো store নেই, শুধু _এই_ workload-এর আকার, স্কেল আর consistency-র চাহিদার জন্য সবচেয়ে মানানসই store আছে। বিশেষজ্ঞের দক্ষতা হলো বাহন বেছে নেওয়ার আগে যাত্রাটা পড়ে ফেলা।
 
 </Callout>
 
-## Start With the Workload, Not the Database
+## গল্পে বুঝি
 
-Every database conversation that begins "should we use MongoDB / Cassandra / Postgres?" is starting in the wrong place. The right first questions are about the **workload**:
+ইবনে সিনার একটা ছোট ট্রাভেল এজেন্সি। একদিন এক খদ্দের এসে বলল, "ভাই, মোড়ের ফার্মেসিতে একটা ওষুধ আনতে হবে, দুই মিনিটের পথ।" ইবনে সিনা তার জন্য রিকশা ডেকে দিল — সস্তা, কাছেই, লাইনও নেই। পরের খদ্দের এল আসবাবপত্রসহ বাসা বদলাবে, ভারী মালামাল; ইবনে সিনা এবার ট্রাক ঠিক করল। এরপর এল চল্লিশজনের একটা স্কুল পিকনিক দল — তাদের জন্য একটা বাস, কারণ চল্লিশজনকে রিকশায় তোলা যায় না। আর যখন আল-খোয়ারিজমি নদীর ওপারে জরুরি পৌঁছাতে চাইল, ইবনে সিনা স্পিডবোট ঠিক করল, কারণ ওখানে বাস-ট্রাক কোনোটাই চলে না।
 
-- **Access patterns** — do you query by known keys, or do you need ad-hoc filtering across arbitrary fields?
-- **Relationships** — flat records, nested entities, or a densely connected graph?
-- **Scale** — gigabytes and thousands of operations per second, or petabytes and millions?
-- **Consistency** — must reads always be exact, or is brief staleness acceptable?
-- **Read/write mix** — read-heavy, write-heavy, or append-only?
-- **Query flexibility** — are the queries known in advance, or will analysts slice the data in unpredictable ways?
+ইবনে সিনা কখনো "সবচেয়ে ভালো বাহন কোনটা?" নিয়ে মাথা ঘামায় না — কারণ এমন কিছু নেই। রিকশায় ভারী আলমারি তোলা যায় না, আর দুই মিনিটের পথে ট্রাক ডাকলে টাকা আর সময় দুটোই নষ্ট। এমনকি ফাতিমা আল-ফিহরি যখন সপরিবারে হজে গেল, এক বাহনে হলো না — বাসা থেকে স্টেশন রিকশায়, শহর থেকে শহর বাসে, তারপর সাগর পেরোতে প্লেন। এক যাত্রার আলাদা আলাদা অংশের জন্য আলাদা আলাদা বাহন।
 
-Only after answering these does a store suggest itself. The database is the _conclusion_ of the analysis, never its premise.
+এই গল্পটাই আসলে **সঠিক database বেছে নেওয়া**। প্রতিটা বাহন যেমন একটা নির্দিষ্ট যাত্রার সাপেক্ষে সেরা, প্রতিটা store তেমন একটা নির্দিষ্ট **workload আর access pattern**-এর সাপেক্ষে সেরা — transaction আর integrity চাইলে relational, জানা key দিয়ে দ্রুত lookup চাইলে key-value, nested entity চাইলে document, বিশাল write volume-এ wide-column, আর relationship-প্রথম প্রশ্নে graph। সর্বজনীনভাবে সেরা কোনো database নেই; বাহন বেছে নেওয়ার আগে যাত্রাটা পড়ে ফেলতে হয়। আর ফাতিমা আল-ফিহরির হজযাত্রার মতো, বড় সিস্টেমে প্রায়ই এক store-এ কুলোয় না — বাস্তবে একটা e-commerce সাইট একসাথেই transaction-এর জন্য SQL (PostgreSQL), cache আর session-এর জন্য Redis, আর পণ্য খুঁজতে একটা search engine (Elasticsearch) চালায়। এই ইচ্ছাকৃত মেলবন্ধনটাই **polyglot persistence**।
 
-## A Decision Framework
+## Database দিয়ে নয়, Workload দিয়ে শুরু করুন
 
-Walk the workload through these gates:
+"আমরা কি MongoDB / Cassandra / Postgres ব্যবহার করব?" দিয়ে শুরু হওয়া প্রতিটা database আলোচনাই ভুল জায়গা থেকে শুরু হচ্ছে। সঠিক প্রথম প্রশ্নগুলো **workload** নিয়ে:
+
+- **Access pattern** — আপনি কি জানা key দিয়ে query করেন, নাকি যেকোনো field জুড়ে ad-hoc filtering দরকার?
+- **Relationship** — flat record, nested entity, নাকি একটা ঘনভাবে সংযুক্ত graph?
+- **Scale** — গিগাবাইট আর সেকেন্ডে হাজার হাজার operation, নাকি পেটাবাইট আর লাখ লাখ?
+- **Consistency** — read কি সবসময় নিখুঁত হতেই হবে, নাকি একটু staleness চলে?
+- **Read/write mix** — read-heavy, write-heavy, নাকি append-only?
+- **Query flexibility** — query গুলো কি আগে থেকে জানা, নাকি analyst-রা ডেটাকে অননুমেয় উপায়ে কেটেছিঁড়ে দেখবে?
+
+এগুলোর উত্তর দেওয়ার পরেই কেবল একটা store নিজে থেকে হাজির হয়। Database হলো বিশ্লেষণের _উপসংহার_, কখনোই এর ভিত্তি নয়।
+
+## একটা Decision Framework
+
+Workload-টাকে এই gate গুলোর মধ্য দিয়ে হাঁটান:
 
 ```text
 1. Do you need ad-hoc queries, multi-record ACID transactions,
@@ -58,9 +66,9 @@ Walk the workload through these gates:
        → Key-value (Redis / DynamoDB).
 ```
 
-The ordering is deliberate: **start at relational and move away only when a concrete requirement forces you.** "We might need scale someday" is not a requirement; "we ingest 500k writes per second of telemetry today" is.
+ক্রমটা ইচ্ছাকৃত: **relational থেকে শুরু করুন আর তখনই সরে যান যখন একটা সুনির্দিষ্ট requirement আপনাকে বাধ্য করে।** "একদিন হয়তো scale লাগবে" কোনো requirement নয়; "আজ আমরা সেকেন্ডে 500k telemetry write ingest করছি" — এটা requirement।
 
-## SQL vs Each NoSQL Family
+## SQL vs প্রতিটা NoSQL পরিবার
 
 | Need                       | Relational              | Key-value          | Document           | Wide-column          | Graph                 |
 | -------------------------- | ----------------------- | ------------------ | ------------------ | -------------------- | --------------------- |
@@ -72,11 +80,11 @@ The ordering is deliberate: **start at relational and move away only when a conc
 | Lookup latency by key      | Good                    | Excellent          | Good               | Good                 | N/A                   |
 | Best at                    | Integrity + flexibility | Speed + simplicity | Whole-entity reads | Write volume + scale | Connectedness         |
 
-No row is all "Excellent" — every store trades something. Reading this table the right way means noticing which weaknesses your workload _doesn't care about_. A telemetry pipeline shrugs at "no ad-hoc queries"; a graph store's shaky horizontal scaling is irrelevant if your graph fits comfortably on a few nodes.
+কোনো row-ই পুরোপুরি "Excellent" নয় — প্রতিটা store কিছু না কিছুর বিনিময় করে। এই টেবিলটা সঠিকভাবে পড়া মানে খেয়াল করা কোন দুর্বলতাগুলো নিয়ে আপনার workload _মাথা ঘামায় না_। একটা telemetry pipeline "no ad-hoc queries"-কে পাত্তাই দেয় না; একটা graph store-এর নড়বড়ে horizontal scaling অপ্রাসঙ্গিক যদি আপনার graph কয়েকটা node-এই আরামসে এঁটে যায়।
 
 ## Polyglot Persistence
 
-Mature systems rarely use one database. **Polyglot persistence** means deliberately using several stores, each for the part of the workload it fits. A single e-commerce platform might run:
+পরিণত সিস্টেম কদাচিৎ একটাই database ব্যবহার করে। **Polyglot persistence** মানে ইচ্ছা করে কয়েকটা store ব্যবহার করা, প্রতিটা workload-এর যে অংশে মানায় তার জন্য। একটা e-commerce platform হয়তো চালাতে পারে:
 
 ```text
 PostgreSQL    → orders, payments, inventory   (ACID, integrity)
@@ -87,41 +95,41 @@ Cassandra     → clickstream / event log        (write volume, scale)
 Neo4j         → "customers also bought"        (recommendation graph)
 ```
 
-The benefit is using the best tool for each job; the cost is real **operational complexity** — more systems to run, monitor, back up, and keep in sync — plus the hard problem of consistency _across_ stores (often solved with event streaming or change-data-capture rather than distributed transactions).
+লাভটা হলো প্রতিটা কাজের জন্য সেরা টুল ব্যবহার করা; খরচটা হলো বাস্তব **operational complexity** — চালানো, monitor করা, back up করা আর sync-এ রাখার মতো আরও সিস্টেম — সাথে store-গুলোর _মধ্যে_ consistency-র কঠিন সমস্যা (প্রায়ই distributed transaction-এর বদলে event streaming বা change-data-capture দিয়ে সমাধান করা হয়)।
 
 <Callout type="tip">
 
-**Note:** Polyglot persistence is a destination, not a starting point. A new product should usually launch on a single, well-understood database (almost always PostgreSQL) and adopt a second store only when a specific workload demonstrably outgrows the first. Every additional database is permanent operational weight — add it because a real pain forces you to, not because the architecture diagram looks impressive.
+**নোট:** Polyglot persistence একটা গন্তব্য, শুরুর বিন্দু নয়। একটা নতুন product-এর সাধারণত একটা একক, ভালোভাবে-বোঝা database দিয়েই (প্রায় সবসময় PostgreSQL) launch করা উচিত এবং দ্বিতীয় একটা store তখনই নেওয়া উচিত যখন একটা নির্দিষ্ট workload স্পষ্টভাবে প্রথমটাকে ছাড়িয়ে যায়। প্রতিটা বাড়তি database স্থায়ী operational ভার — এটা যোগ করুন কারণ একটা বাস্তব যন্ত্রণা আপনাকে বাধ্য করছে বলে, architecture diagram দেখতে চমৎকার লাগছে বলে নয়।
 
 </Callout>
 
-## Common Mistakes
+## সাধারণ ভুলগুলো
 
-**Choosing NoSQL for scale you don't have.** A tuned PostgreSQL instance handles enormous load. Most products never approach its limits, yet adopt NoSQL "to be ready" and inherit operational pain and modeling constraints for a problem they never had.
+**যে scale আপনার নেই তার জন্য NoSQL বেছে নেওয়া।** একটা ভালোভাবে-tune করা PostgreSQL instance বিশাল load সামলায়। বেশিরভাগ product কখনো এর সীমার কাছেও পৌঁছায় না, তবু "তৈরি থাকার জন্য" NoSQL নিয়ে ফেলে আর যে সমস্যা তাদের কখনো ছিল না তার জন্য operational যন্ত্রণা ও modeling সীমাবদ্ধতা টেনে আনে।
 
-**Using a NoSQL store like a relational one.** Normalizing into many collections and emulating joins in application code throws away the NoSQL advantage and pays distributed-join costs SQL engines handle far better. If you want joins, you wanted SQL.
+**একটা NoSQL store-কে relational-এর মতো ব্যবহার করা।** অনেক collection-এ normalize করা আর application code-এ join এমুলেট করা NoSQL-এর সুবিধাটাকেই ছুড়ে ফেলে আর distributed-join-এর যে খরচ SQL engine অনেক ভালোভাবে সামলায় তা দেয়। আপনি যদি join চান, আপনি আসলে SQL চেয়েছিলেন।
 
-**Modeling before knowing access patterns.** NoSQL demands access-pattern-first design. Picking a document or wide-column store without knowing your queries leads to data you physically cannot query efficiently later.
+**Access pattern জানার আগে modeling করা।** NoSQL access-pattern-first design দাবি করে। আপনার query না জেনে একটা document বা wide-column store বেছে নিলে এমন ডেটা তৈরি হয় যা পরে আপনি ফিজিক্যালিই কার্যকরভাবে query করতে পারবেন না।
 
-**Ignoring consistency implications.** Reaching for an eventually-consistent store and then writing logic that assumes read-your-writes produces intermittent, maddening bugs. Match each operation's consistency level to what it actually needs.
+**Consistency-র প্রভাব উপেক্ষা করা।** একটা eventually-consistent store হাতে নিয়ে তারপর এমন logic লেখা যা read-your-writes ধরে নেয় — এতে মাঝেমধ্যে দেখা দেওয়া, পাগল-করা বাগ তৈরি হয়। প্রতিটা operation-এর consistency level-কে তার আসল যা দরকার তার সাথে মেলান।
 
-**Over-fragmenting too early.** Six databases for a product with a thousand users is not sophistication; it is six things that can break at 3 a.m.
+**খুব তাড়াতাড়ি অতিরিক্ত ভাগ করে ফেলা।** হাজার user-এর একটা product-এর জন্য ছয়টা database কোনো পরিপক্বতা নয়; এটা ছয়টা জিনিস যা রাত ৩টায় ভেঙে পড়তে পারে।
 
 <Callout type="warning">
 
-**Warning:** "We chose NoSQL because it's web-scale / modern / what the big companies use" is not an engineering reason. The big companies adopted these stores to solve specific, extreme problems — and they kept relational databases for everything else. Cargo-culting their database choices without their workloads gives you their complexity without their problems. Choose for _your_ workload.
+**সতর্কতা:** "আমরা NoSQL বেছেছি কারণ এটা web-scale / modern / বড় কোম্পানিগুলো যা ব্যবহার করে" — এটা কোনো engineering কারণ নয়। বড় কোম্পানিগুলো এই store গুলো নিয়েছিল নির্দিষ্ট, চরম সমস্যা সমাধান করতে — আর বাকি সবকিছুর জন্য তারা relational database রেখে দিয়েছিল। তাদের workload ছাড়া তাদের database পছন্দকে cargo-cult করলে আপনি তাদের complexity পাবেন কিন্তু তাদের সমস্যা ছাড়া। _আপনার_ workload-এর জন্য বেছে নিন।
 
 </Callout>
 
-## Matching Workload to Store: Quick Cases
+## Workload-কে Store-এর সাথে মেলানো: দ্রুত কিছু কেস
 
-- **User accounts, billing, orders** — relational. Integrity and transactions are the whole point.
-- **Session and cache layer** — key-value (Redis). Fast, ephemeral, TTL-driven.
-- **Product catalog / CMS** — document (MongoDB). Nested, evolving, read by id.
-- **IoT / metrics / event logs** — wide-column (Cassandra) or a time-series database. Append-heavy at scale.
-- **Recommendations / fraud / social graph** — graph (Neo4j). Relationship-first questions.
-- **Full-text search** — a search engine (Elasticsearch / OpenSearch). Relevance ranking, not a general database.
+- **User account, billing, order** — relational। Integrity আর transaction-ই এখানে পুরো ব্যাপার।
+- **Session আর cache layer** — key-value (Redis)। দ্রুত, ephemeral, TTL-চালিত।
+- **Product catalog / CMS** — document (MongoDB)। Nested, বদলাতে থাকা, id দিয়ে read।
+- **IoT / metrics / event log** — wide-column (Cassandra) বা একটা time-series database। স্কেলে append-heavy।
+- **Recommendation / fraud / social graph** — graph (Neo4j)। Relationship-প্রথম প্রশ্ন।
+- **Full-text search** — একটা search engine (Elasticsearch / OpenSearch)। Relevance ranking, কোনো general database নয়।
 
-## The Mastery Mindset
+## Mastery-র মানসিকতা
 
-You have come full circle from chapter 1. The question was never "is NoSQL better than SQL?" — it was always "**what does this specific workload need, and which store delivers it with the fewest trade-offs?**" Default to relational, reach for a NoSQL family when a concrete requirement forces the move, model around your access patterns, set consistency per operation, and combine stores only when the workload truly demands it. Do that, and you will choose databases like an engineer instead of a follower of trends.
+আপনি chapter 1 থেকে একটা পূর্ণ বৃত্ত ঘুরে এসেছেন। প্রশ্নটা কখনোই ছিল না "NoSQL কি SQL-এর চেয়ে ভালো?" — এটা সবসময়ই ছিল "**এই নির্দিষ্ট workload-টার কী দরকার, আর কোন store সবচেয়ে কম trade-off দিয়ে সেটা দেয়?**" default হিসেবে relational ধরুন, কোনো সুনির্দিষ্ট requirement যখন বাধ্য করে তখনই একটা NoSQL পরিবারের দিকে হাত বাড়ান, আপনার access pattern-এর চারপাশে মডেল করুন, প্রতিটা operation-এ consistency সেট করুন, আর store গুলো তখনই একসাথে জোড়েন যখন workload সত্যিই তা দাবি করে। এটা করুন, তাহলে আপনি trend-এর অনুসারী নয়, একজন engineer-এর মতো database বেছে নেবেন।

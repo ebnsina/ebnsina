@@ -1,9 +1,9 @@
 ---
 title: 'Profiling'
-subtitle: 'Node.js --prof, Go pprof, Linux perf, and flamegraphs — finding where the time actually goes before guessing at optimizations.'
+subtitle: 'Node.js --prof, Go pprof, Linux perf, আর flamegraph — optimization নিয়ে অনুমান করার আগে সময়টা আসলে কোথায় যাচ্ছে সেটা খুঁজে বের করা।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['profiling', 'flamegraph', 'pprof', 'perf', 'Node.js', 'Go', 'CPU', 'memory']
 ---
 
@@ -13,21 +13,29 @@ topics: ['profiling', 'flamegraph', 'pprof', 'perf', 'Node.js', 'Go', 'CPU', 'me
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A doctor ordering tests before prescribing: you don't prescribe antibiotics before knowing whether the infection is bacterial. You don't optimize a function before knowing it's the bottleneck. Profiling is the test. "I think the problem is in the database layer" is a hypothesis; a flamegraph is evidence.
+একজন ডাক্তার prescribe করার আগে টেস্ট দেন: infection টা bacterial কিনা না জেনে তুমি antibiotic prescribe করো না। একটা function bottleneck কিনা না জেনে তুমি সেটা optimize করো না। Profiling হলো সেই টেস্ট। "আমার মনে হয় সমস্যাটা database layer-এ" হলো একটা hypothesis; একটা flamegraph হলো প্রমাণ।
 
 </Callout>
 
-## The Rule: Profile Before Optimizing
+## গল্পে বুঝি
 
-Guessing is expensive. The bottleneck is almost never where you expect:
+আল-খোয়ারিজমির একটা পুরনো গাড়ি হঠাৎ ভয়ানক ধীর হয়ে গেছে — চাপ দিলেও টানছে না। তার শিক্ষানবিশ ইবনে সিনা মাথা চুলকে বলল, "নিশ্চয়ই ফুয়েল পাম্প নষ্ট," আর পুরনো পাম্প খুলে নতুন লাগিয়ে দিল। কিছু বদলাল না। এরপর সে অনুমানে স্পার্ক প্লাগ বদলাল, তারপর ফুয়েল ফিল্টার — তিনটে ভালো পার্ট খুলে ফেলল, একগাদা টাকা আর গোটা দিন গেল, অথচ গাড়ি সেই আগের মতোই ধীর।
 
-- The function you think is slow is often called once; the real bottleneck is called 10,000 times
-- The slow path is often in a library you didn't write
-- The problem is often memory pressure causing GC pauses, not the actual computation
+ওস্তাদ আল-খোয়ারিজমি এসে হাসলেন। একটা পার্টেও হাত না দিয়ে আগে তিনি ইঞ্জিনে ডায়াগনস্টিক মিটার লাগালেন। মিটার সেকেন্ডে দেখিয়ে দিল আসল দোষী — একটা চোক হয়ে যাওয়া ক্যাটালিটিক কনভার্টার নিষ্কাশন আটকে সব শক্তি খেয়ে ফেলছে। তিনি শুধু ওই একটা জিনিস সারালেন, আর গাড়ি উড়তে শুরু করল। বাকি যেসব পার্ট ইবনে সিনা বদলেছিল, তার একটাও আসল সমস্যা ছিল না।
 
-Profile first. Always.
+এই গল্পটাই আসলে **profiling**। ইবনে সিনার অনুমানে ভালো পার্ট বদলানো হলো guesswork দিয়ে premature optimization — টাকা আর সময় দুটোই নষ্ট। ডায়াগনস্টিক মিটার হলো **profiler**, আর চোক হওয়া কনভার্টারটাই আসল **bottleneck** বা hotspot। মিটার দিয়ে সেটা pinpoint করে শুধু ওই এক জায়গা সারানোটাই হলো প্রমাণিত hotspot-টা optimize করা — অনুমান নয়। বাস্তবেও ঠিক এভাবেই কাজ হয়: কোন function ধীর সেটা আন্দাজ না করে আগে profiler চালিয়ে দেখো CPU/memory-টা আসলে কোথায় খরচ হচ্ছে, flamegraph-এর চওড়া bar-টা খুঁজে বের করো, তারপর শুধু সেটাই ঠিক করো — Google, Netflix থেকে শুরু করে সবাই production-এ Pyroscope-এর মতো continuous profiler দিয়ে ঠিক এটাই করে।
+
+## নিয়ম: Optimize করার আগে Profile করো
+
+অনুমান করা ব্যয়বহুল। Bottleneck প্রায় কখনোই সেখানে থাকে না যেখানে তুমি আশা করো:
+
+- যে function-কে তুমি ধীর মনে করো সেটা প্রায়ই একবার কল হয়; আসল bottleneck 10,000 বার কল হয়
+- ধীর path প্রায়ই এমন একটা library-তে থাকে যেটা তুমি লেখোনি
+- সমস্যাটা প্রায়ই GC pause ঘটানো memory pressure, আসল computation না
+
+আগে profile করো। সবসময়।
 
 ## Node.js CPU Profiling
 
@@ -57,9 +65,9 @@ Output:
    3421   12.5%  node:crypto
 ```
 
-48% of CPU time in buffer operations → look at serialization code.
+buffer operation-এ 48% CPU time → serialization code দেখো।
 
-### Flamegraph from V8
+### V8 থেকে Flamegraph
 
 ```bash
 # 0x — better than raw --prof-process
@@ -75,7 +83,7 @@ npm install -g 0x
 open flamegraph.html
 ```
 
-The flamegraph shows call stacks. Wide bars = more CPU time. Tall stacks = deep call chains. You want to find the wide bars at the top — those are the actual CPU consumers.
+Flamegraph call stack দেখায়। চওড়া bar = বেশি CPU time। লম্বা stack = গভীর call chain। তুমি উপরের চওড়া bar-গুলো খুঁজতে চাও — সেগুলোই আসল CPU consumer।
 
 ### Node.js Memory Profiling
 
@@ -92,9 +100,9 @@ app.get('/debug/heap-snapshot', (req, res) => {
 });
 ```
 
-Load in Chrome DevTools → Memory → Load snapshot. Look for objects that shouldn't be alive, or that accumulate over time.
+Chrome DevTools-এ load করো → Memory → Load snapshot। এমন object খোঁজো যেগুলোর জীবিত থাকার কথা না, অথবা যেগুলো সময়ের সাথে জমতে থাকে।
 
-**Detecting memory leaks in production:**
+**Production-এ memory leak শনাক্ত করা:**
 
 ```typescript
 import { setInterval } from 'timers';
@@ -114,11 +122,11 @@ setInterval(() => {
 }, 30_000);
 ```
 
-If `heapUsed` grows monotonically over hours without plateauing: memory leak.
+`heapUsed` যদি ঘণ্টার পর ঘণ্টা plateau না করে একটানা বাড়তে থাকে: memory leak।
 
 ## Go pprof
 
-Go has profiling built into the standard library:
+Go-তে profiling standard library-তেই built-in:
 
 ```go
 import (
@@ -170,9 +178,9 @@ go tool pprof -http=:8080 http://localhost:6060/debug/pprof/profile?seconds=30
 # Opens browser with flamegraph, call tree, top functions
 ```
 
-### Benchmarks
+### Benchmark
 
-Benchmarks in Go are first-class:
+Go-তে benchmark first-class:
 
 ```go
 // order_test.go
@@ -204,11 +212,11 @@ go test -bench=BenchmarkProcessOrder -benchmem \
 go tool pprof cpu.prof
 ```
 
-`allocs/op` is critical — allocations trigger GC. Reduce allocations to reduce GC pressure.
+`allocs/op` গুরুত্বপূর্ণ — allocation GC trigger করে। GC pressure কমাতে allocation কমাও।
 
 ## Linux perf
 
-For system-level profiling (C extensions, JVM internals, kernel calls):
+System-level profiling-এর জন্য (C extension, JVM internals, kernel call):
 
 ```bash
 # CPU profile for 30 seconds
@@ -222,9 +230,9 @@ perf script | \
   flamegraph.pl > flamegraph.svg
 ```
 
-`-g` enables call graph (stack traces). `-F 99` = 99 samples/sec (avoids interference with 100Hz timer).
+`-g` call graph (stack trace) সক্ষম করে। `-F 99` = 99 samples/sec (100Hz timer-এর সাথে interference এড়ায়)।
 
-**Useful perf commands:**
+**উপকারী perf command:**
 
 ```bash
 # What system calls is the process making?
@@ -240,9 +248,9 @@ perf stat -e cache-misses,cache-references,instructions,cycles -p <pid>
 perf top
 ```
 
-## Async Performance in Node.js
+## Node.js-এ Async Performance
 
-The event loop is single-threaded. Blocking the event loop blocks all requests.
+Event loop single-threaded। Event loop block করা মানে সব request block করা।
 
 ```bash
 # Measure event loop lag (blocked = slow I/O or CPU)
@@ -270,14 +278,14 @@ setInterval(() => {
 }, 10_000);
 ```
 
-P99 event loop delay > 100ms = something is blocking the loop. Common culprits:
+P99 event loop delay > 100ms = কিছু একটা loop block করছে। সাধারণ দোষী:
 
-- JSON.parse on large payloads (synchronous, blocking)
-- Crypto operations (use `crypto.subtle` async or worker threads)
-- Large array sorts or regex on big strings
-- Synchronous file system calls (`fs.readFileSync`)
+- বড় payload-এ JSON.parse (synchronous, blocking)
+- Crypto operation (`crypto.subtle` async অথবা worker thread ব্যবহার করো)
+- বড় array sort অথবা বড় string-এ regex
+- Synchronous file system call (`fs.readFileSync`)
 
-**Offload CPU work:**
+**CPU-র কাজ offload করা:**
 
 ```typescript
 import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
@@ -298,9 +306,9 @@ function runInWorker(input: any): Promise<any> {
 }
 ```
 
-## Profiling in Production
+## Production-এ Profiling
 
-Profiling in production is different from dev — you need low overhead:
+Production-এ profiling dev থেকে আলাদা — তোমার low overhead দরকার:
 
 ```bash
 # Node.js: continuous profiling with 0% overhead using V8's sampling profiler
@@ -321,4 +329,4 @@ Pyroscope.init({
 Pyroscope.start();
 ```
 
-Pyroscope samples CPU at 100Hz continuously, aggregates, and lets you query "what was the CPU doing between 14:00 and 14:05 yesterday?" — invaluable for post-incident analysis.
+Pyroscope একটানা 100Hz-এ CPU sample করে, aggregate করে, আর তোমাকে query করতে দেয় "গতকাল 14:00 আর 14:05-এর মধ্যে CPU কী করছিল?" — post-incident বিশ্লেষণের জন্য অমূল্য।

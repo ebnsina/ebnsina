@@ -1,9 +1,9 @@
 ---
 title: 'Production self-host'
-subtitle: 'Load balancing that respects HTTP/2, observability you actually use, health checks the framework supports, and the full systemd + nginx deploy on a VPS.'
+subtitle: 'এমন load balancing যা HTTP/2-কে সম্মান করে, এমন observability যা আপনি আসলেই কাজে লাগান, framework-সমর্থিত health check, এবং একটা VPS-এ পূর্ণ systemd + nginx deploy।'
 chapter: 10
 level: 'advanced'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['grpc', 'load balancing', 'observability', 'nginx', 'deployment']
 ---
 
@@ -11,25 +11,33 @@ topics: ['grpc', 'load balancing', 'observability', 'nginx', 'deployment']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-By chapter 9 you have a working, mTLS-secured gRPC service with interceptors for auth and logging. This chapter takes it to production. Self-hosted, on a VPS, behind nginx, with metrics on a dashboard and alerts that page someone if it dies.
+চ্যাপ্টার ৯ নাগাদ আপনার হাতে auth ও logging-এর interceptor সহ একটা কার্যকর, mTLS-secured gRPC service আছে। এই চ্যাপ্টার সেটাকে production-এ নিয়ে যায়। self-hosted, একটা VPS-এ, nginx-এর পেছনে, একটা dashboard-এ metrics সহ এবং এমন alert সহ যা service মরে গেলে কাউকে page করে।
 
-The shape mirrors the GraphQL track's chapter 10 — same operational discipline, different protocol. If you already deployed the GraphQL service from that track, much of this will feel familiar.
+আকৃতিটা GraphQL track-এর চ্যাপ্টার ১০-এর প্রতিফলন — একই operational discipline, ভিন্ন protocol। সেই track থেকে GraphQL service ইতিমধ্যে deploy করে থাকলে, এর অনেকটাই পরিচিত লাগবে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Running gRPC in production is like a car's dashboard — the engine runs fine, but you need gauges to know when something is about to go wrong.
+production-এ gRPC চালানো হলো একটা গাড়ির dashboard-এর মতো — engine ঠিকঠাক চলে, কিন্তু কখন কিছু একটা ভুল হতে যাচ্ছে তা জানতে আপনার gauge দরকার।
 
 </Callout>
 
-## Load balancing — the right way for gRPC
+## গল্পে বুঝি
 
-Chapter 3 covered why naïve L4 load balancers ruin gRPC: they balance connections, but multiplexing means one connection takes all the traffic. Here are the three correct shapes, each appropriate in different settings.
+ফাতিমা আল-ফিহরি একটা বড় কোম্পানির ভেতরের department-to-department হটলাইন নেটওয়ার্ক চালান — এক department-এর কেউ ফোন তুললেই অন্য department-এর কোনো agent-এর সাথে সরাসরি লাইন লেগে যায়। শুরুতে সব কল একজন agent-এর কাছেই যেত, ফলে সে হাঁপিয়ে উঠত আর বাকিরা বসে থাকত। ফাতিমা তাই একজন অপারেটর বসালেন — ইবনে সিনা। এখন কল এলে ইবনে সিনা দেখেন কোন কোন agent এই মুহূর্তে ফ্রি, আর কলগুলো তাদের মধ্যে ভাগ করে দেন, যাতে একজনের ঘাড়ে সব চাপ না পড়ে।
+
+কিন্তু কিছু agent মাঝেমধ্যে ডেস্ক ছেড়ে চলে যায়, বা তাদের লাইন কেটে যায়। ইবনে সিনা তাই প্রতি কয়েক সেকেন্ড পরপর প্রতিটা লাইনে একটা ছোট "আছেন তো?" পিং পাঠান — সাড়া না পেলে সেই লাইন তালিকা থেকে বাদ, কল আর ওদিকে যায় না। আবার প্রতিবার নতুন করে ডায়াল করতে সময় লাগে বলে তিনি ব্যস্ত agent-দের লাইনগুলো খোলা-গরম রেখে দেন, যাতে পরের কলেই সঙ্গে সঙ্গে কথা শুরু করা যায়। আর পাশে আল-খোয়ারিজমি একটা খাতায় প্রতিটা কলের হিসাব টুকে রাখেন — কে কতক্ষণ কথা বলল, কোথায় লাইন কাটল — যাতে কোথাও সমস্যা হলে সেটা আগেভাগে ধরা যায়।
+
+এই গল্পটাই production-এ gRPC চালানো। ইবনে সিনার ফ্রি agent-দের মধ্যে কল ভাগ করা হলো একাধিক backend-এর উপর **load balancing**; প্রতি কয়েক সেকেন্ডের "আছেন তো?" পিং হলো **health check** (`grpc.health.v1.Health`, `livez`/`readyz`); লাইন খোলা-গরম রাখা হলো **keepalive** আর persistent **connection**; আর আল-খোয়ারিজমির কলের খাতাই **observability** — log, metrics, trace। বাস্তবে এই কাজগুলো করে nginx/Envoy বা client-side round-robin (load balancing), gRPC health protocol (health check), `KeepaliveParams` (keepalive), এবং Prometheus + Loki + Tempo (observability) — যেগুলো এই চ্যাপ্টারে একে একে দেখব।
+
+## Load balancing — gRPC-র জন্য সঠিক পথ
+
+চ্যাপ্টার ৩ কভার করেছে কেন naïve L4 load balancer gRPC-কে নষ্ট করে দেয়: এরা connection balance করে, কিন্তু multiplexing মানে একটা connection-ই পুরো traffic নিয়ে নেয়। এখানে তিনটা সঠিক আকৃতি, প্রতিটাই ভিন্ন ভিন্ন পরিস্থিতিতে উপযুক্ত।
 
 ### Client-side load balancing
 
-The gRPC client opens connections to all backends and round-robins streams across them. Built into the Go client.
+gRPC client সব backend-এর সাথে connection খোলে এবং এদের জুড়ে stream-গুলোকে round-robin করে। Go client-এ বিল্ট-ইন।
 
 ```go
 import _ "google.golang.org/grpc/balancer/roundrobin"
@@ -45,19 +53,19 @@ conn, err := grpc.NewClient(
 )
 ```
 
-The `dns:///` prefix tells the gRPC name resolver to use DNS (returning multiple A records). The client opens a connection to each, round-robins streams. New backends get picked up on DNS refresh.
+`dns:///` prefix gRPC name resolver-কে বলে DNS ব্যবহার করতে (একাধিক A record ফেরত দেয়)। client প্রতিটার সাথে একটা connection খোলে, stream round-robin করে। DNS refresh-এ নতুন backend তুলে নেওয়া হয়।
 
-Best for service-to-service inside your trust boundary. The client knows about every backend; no proxy in the path.
+আপনার trust boundary-র ভেতরে service-to-service-এর জন্য সেরা। client প্রতিটা backend সম্পর্কে জানে; path-এ কোনো proxy নেই।
 
 ### L7 (HTTP/2-aware) proxy
 
-When the caller is outside your trust boundary or you want central control of routing, put a proxy in front. Three popular options:
+যখন caller আপনার trust boundary-র বাইরে অথবা আপনি routing-এর কেন্দ্রীয় নিয়ন্ত্রণ চান, তখন সামনে একটা proxy বসান। তিনটা জনপ্রিয় অপশন:
 
-**Envoy** — most powerful. Used widely. Heavyweight to operate but the canonical choice for sophisticated routing.
+**Envoy** — সবচেয়ে শক্তিশালী। ব্যাপকভাবে ব্যবহৃত। চালানো heavyweight কিন্তু sophisticated routing-এর জন্য canonical পছন্দ।
 
-**Linkerd** — service mesh, polished UX, built around mTLS by default. Great if you're going all-in on mesh.
+**Linkerd** — service mesh, পরিশীলিত UX, ডিফল্টে mTLS-এর চারপাশে তৈরি। mesh-এ পুরোপুরি ঝাঁপ দিলে দারুণ।
 
-**nginx 1.13+** — has gRPC support (`grpc_pass`). Not as feature-rich as Envoy but you may already run it.
+**nginx 1.13+** — gRPC support আছে (`grpc_pass`)। Envoy-র মতো feature-rich নয় কিন্তু আপনি হয়তো এটা আগে থেকেই চালান।
 
 ```nginx
 upstream user_service {
@@ -84,25 +92,25 @@ server {
 }
 ```
 
-`grpc_pass grpc://...` tells nginx to forward as gRPC (HTTP/2 to the upstream). `grpcs://...` if upstream is TLS. nginx does proper per-stream load balancing — different streams from one client connection can land on different backends.
+`grpc_pass grpc://...` nginx-কে বলে gRPC হিসেবে forward করতে (upstream-এ HTTP/2)। upstream TLS হলে `grpcs://...`। nginx যথাযথ per-stream load balancing করে — একটা client connection থেকে আসা ভিন্ন ভিন্ন stream ভিন্ন ভিন্ন backend-এ যেতে পারে।
 
-For the **TLS & Certificates** chapter's snippets (`tls-strong.conf`), reuse them here.
+**TLS & Certificates** চ্যাপ্টারের snippet-গুলোর (`tls-strong.conf`) জন্য, সেগুলো এখানেও পুনরায় ব্যবহার করুন।
 
 <Callout type="info">
 
-**Mesh vs no mesh.** A service mesh (Linkerd, Istio, Cilium) gives you mTLS, retries, observability, and traffic policy in one package. Worth it once you have many services. For five services on three boxes, plain nginx + per-service mTLS is simpler and not meaningfully worse. Don't deploy a mesh because the docs are pretty.
+**Mesh বনাম no mesh।** একটা service mesh (Linkerd, Istio, Cilium) আপনাকে এক প্যাকেজে mTLS, retry, observability, এবং traffic policy দেয়। অনেক service থাকলে এটা মূল্যবান। তিনটা box-এ পাঁচটা service-এর জন্য, সাদামাটা nginx + per-service mTLS সহজতর এবং অর্থপূর্ণভাবে খারাপ নয়। docs সুন্দর বলেই একটা mesh deploy করবেন না।
 
 </Callout>
 
-### DNS round-robin (last resort)
+### DNS round-robin (শেষ উপায়)
 
-Multiple A records, clients pick. Good only when clients are HTTP/2-aware and reconnect periodically. The gRPC client's DNS resolver does this for you when you use `dns:///`.
+একাধিক A record, client বেছে নেয়। শুধু তখনই ভালো যখন client HTTP/2-aware এবং পর্যায়ক্রমে reconnect করে। `dns:///` ব্যবহার করলে gRPC client-এর DNS resolver এটা আপনার জন্য করে দেয়।
 
-## Health checks
+## Health check
 
-The gRPC ecosystem has a standard health protocol — `grpc.health.v1.Health` — that load balancers, orchestrators, and probes can call.
+gRPC ecosystem-এ একটা standard health protocol আছে — `grpc.health.v1.Health` — যা load balancer, orchestrator, এবং probe কল করতে পারে।
 
-Server side, register the service:
+server-এর দিকে, service register করুন:
 
 ```go
 import (
@@ -116,27 +124,27 @@ healthpb.RegisterHealthServer(s, healthSvc)
 healthSvc.SetServingStatus("user.v1.UserService", healthpb.HealthCheckResponse_SERVING)
 ```
 
-Now anyone can probe:
+এখন যে কেউ probe করতে পারে:
 
 ```bash
 grpcurl -plaintext localhost:9000 grpc.health.v1.Health/Check
 # {"status":"SERVING"}
 ```
 
-For shutdown, set status to `NOT_SERVING` first, wait a few seconds, then exit. Load balancers see the change and stop sending new traffic; in-flight calls complete.
+shutdown-এর জন্য, আগে status `NOT_SERVING` সেট করুন, কয়েক সেকেন্ড অপেক্ষা করুন, তারপর exit করুন। load balancer পরিবর্তনটা দেখে এবং নতুন traffic পাঠানো বন্ধ করে; চলমান call-গুলো সম্পন্ন হয়।
 
-### Liveness vs readiness
+### Liveness বনাম readiness
 
-Two different signals:
+দুটো ভিন্ন signal:
 
-- **Liveness** — am I alive? If no, restart me. Should always be `SERVING` unless the process is wedged. Don't fail liveness on transient external dependencies (DB unreachable for 30s) — a restart won't help.
-- **Readiness** — should I get traffic? If no, take me out of the LB. Fail readiness when DB is down, when caches are cold, during graceful shutdown.
+- **Liveness** — আমি কি জীবিত? না হলে, আমাকে restart করো। process আটকে না গেলে সবসময় `SERVING` থাকা উচিত। ক্ষণস্থায়ী external dependency-তে liveness fail করবেন না (DB ৩০s ধরে unreachable) — restart কাজে দেবে না।
+- **Readiness** — আমার কি traffic পাওয়া উচিত? না হলে, আমাকে LB থেকে সরিয়ে নাও। DB down থাকলে, cache ঠান্ডা থাকলে, graceful shutdown-এর সময় readiness fail করুন।
 
-The `Health` service can serve both — give them different service names (`livez`, `readyz`) and probe each separately.
+`Health` service দুটোই serve করতে পারে — এদের ভিন্ন service name দিন (`livez`, `readyz`) এবং প্রতিটা আলাদাভাবে probe করুন।
 
 ## Graceful shutdown
 
-`grpc.Server.GracefulStop()` is the right move on `SIGTERM`. It refuses new RPCs but lets in-flight calls finish.
+`SIGTERM`-এ `grpc.Server.GracefulStop()`-ই সঠিক পদক্ষেপ। এটা নতুন RPC প্রত্যাখ্যান করে কিন্তু চলমান call-গুলোকে শেষ হতে দেয়।
 
 ```go
 sigs := make(chan os.Signal, 1)
@@ -155,15 +163,15 @@ if err := s.Serve(lis); err != nil {
 }
 ```
 
-The two-second sleep is to let the LB observe the readiness flip before draining. Without it, you race the LB and some clients see "connection refused."
+দুই-সেকেন্ডের sleep-টা drain করার আগে LB-কে readiness flip দেখতে দেওয়ার জন্য। এটা ছাড়া, আপনি LB-র সাথে race করেন এবং কিছু client "connection refused" দেখে।
 
 ## Observability
 
-Three pillars: logs, metrics, traces. Each from chapter 7's logging interceptor and chapter 8's tracing interceptor. In production:
+তিনটা স্তম্ভ: log, metrics, trace। প্রতিটাই চ্যাপ্টার ৭-এর logging interceptor আর চ্যাপ্টার ৮-এর tracing interceptor থেকে। production-এ:
 
-**Logs** — structured JSON to stdout. Captured by `journalctl` (systemd), forwarded to **Loki** (free, self-hosted), queried in Grafana. One log line per RPC plus errors.
+**Log** — stdout-এ structured JSON। `journalctl` (systemd) দিয়ে captured, **Loki** (free, self-hosted)-তে forwarded, Grafana-তে queried। প্রতি RPC-তে একটা log line প্লাস error।
 
-**Metrics** — Prometheus on `/metrics`. Scraped by a Prometheus server. Visualised in Grafana.
+**Metrics** — `/metrics`-এ Prometheus। একটা Prometheus server দিয়ে scraped। Grafana-তে visualise করা।
 
 ```go
 import "github.com/prometheus/client_golang/prometheus/promhttp"
@@ -174,17 +182,17 @@ go func() {
 }()
 ```
 
-The four golden signals (RPS, error rate, latency, saturation) come for free from the `promprovider` interceptor (chapter 8). Add custom business metrics as needed (`users_created_total`, `posts_published_total`).
+চারটা golden signal (RPS, error rate, latency, saturation) `promprovider` interceptor (চ্যাপ্টার ৮) থেকে free পাওয়া যায়। প্রয়োজনমতো custom business metrics যোগ করুন (`users_created_total`, `posts_published_total`)।
 
-**Traces** — OpenTelemetry SDK + `otelgrpc` interceptors. Export to **Tempo** (or Jaeger). End-to-end traces across services let you see exactly where a slow call spent time.
+**Trace** — OpenTelemetry SDK + `otelgrpc` interceptor। **Tempo** (বা Jaeger)-তে export করুন। service-জুড়ে end-to-end trace আপনাকে ঠিক কোথায় একটা slow call সময় কাটিয়েছে তা দেখতে দেয়।
 
-The full Loki + Prometheus + Tempo stack runs in three containers. For a small VPS deployment that is fine; for a cluster, dedicate a host. The path's **Observability** chapter has the full setup.
+পূর্ণ Loki + Prometheus + Tempo stack তিনটা container-এ চলে। একটা ছোট VPS deployment-এর জন্য এটা ঠিক আছে; একটা cluster-এর জন্য, একটা host আলাদা করে দিন। path-এর **Observability** চ্যাপ্টারে পূর্ণ setup আছে।
 
-## Resource limits
+## Resource limit
 
-A gRPC server with no limits is a denial-of-service waiting to happen.
+কোনো limit ছাড়া একটা gRPC server হলো ঘটতে যাওয়া একটা denial-of-service।
 
-**Max message size** (default 4 MiB):
+**Max message size** (ডিফল্ট 4 MiB):
 
 ```go
 s := grpc.NewServer(
@@ -193,7 +201,7 @@ s := grpc.NewServer(
 )
 ```
 
-**Max concurrent streams per connection** (default unlimited; tune for protection):
+**প্রতি connection-এ max concurrent stream** (ডিফল্ট unlimited; সুরক্ষার জন্য tune করুন):
 
 ```go
 s := grpc.NewServer(
@@ -201,7 +209,7 @@ s := grpc.NewServer(
 )
 ```
 
-**Connection timeouts** (chapter 3's keepalive):
+**Connection timeout** (চ্যাপ্টার ৩-এর keepalive):
 
 ```go
 s := grpc.NewServer(
@@ -219,11 +227,11 @@ s := grpc.NewServer(
 )
 ```
 
-**Per-RPC rate limiting** — interceptor with `golang.org/x/time/rate` keyed on caller identity (CN from mTLS, or from auth context). Per-method limits for expensive RPCs.
+**Per-RPC rate limiting** — caller identity (mTLS থেকে CN, বা auth context থেকে)-এর উপর keyed `golang.org/x/time/rate` সহ একটা interceptor। ব্যয়বহুল RPC-র জন্য per-method limit।
 
-## Reflection — off in production (or gated)
+## Reflection — production-এ বন্ধ (বা gated)
 
-`reflection.Register(s)` from chapter 4 is helpful in dev. In production, gate it:
+চ্যাপ্টার ৪-এর `reflection.Register(s)` dev-এ সহায়ক। production-এ, এটা gate করুন:
 
 ```go
 if os.Getenv("ENABLE_REFLECTION") == "1" {
@@ -231,11 +239,11 @@ if os.Getenv("ENABLE_REFLECTION") == "1" {
 }
 ```
 
-For internal services where the proto is the published contract, leaving it on is fine. For public-facing services where you want to limit information leakage, off.
+যেসব internal service-এ proto-ই published contract, সেখানে এটা চালু রাখা ঠিক আছে। যেসব public-facing service-এ আপনি information leakage সীমিত রাখতে চান, সেখানে বন্ধ।
 
-## Behind nginx — the operational shape
+## nginx-এর পেছনে — operational আকৃতি
 
-For most self-hosted deployments, this is the layout:
+বেশিরভাগ self-hosted deployment-এর জন্য, এটাই layout:
 
 ```
 Internet
@@ -247,15 +255,15 @@ Internet
   Postgres :5432 (private network)
 ```
 
-nginx terminates the public TLS, forwards as gRPC (TLS or plaintext) to the local service. The service does mTLS to other internal services. Postgres is on the private network only.
+nginx public TLS terminate করে, local service-এ gRPC (TLS বা plaintext) হিসেবে forward করে। service অন্য internal service-গুলোতে mTLS করে। Postgres শুধু private network-এ।
 
-Pros: one place to manage public certs, central logging access, can host gRPC and REST on the same domain (different paths).
+সুবিধা: public cert manage করার একটা জায়গা, কেন্দ্রীয় logging access, একই domain-এ (ভিন্ন path-এ) gRPC এবং REST host করা যায়।
 
-Cons: another hop, another moving piece. If you only have one service, skipping nginx and exposing the service directly with TLS is fine.
+অসুবিধা: আরেকটা hop, আরেকটা moving piece। শুধু একটা service থাকলে, nginx এড়িয়ে TLS দিয়ে service সরাসরি expose করা ঠিক আছে।
 
 ### Unix socket variant
 
-For nginx → local gRPC, a Unix socket is faster than TCP loopback:
+nginx → local gRPC-র জন্য, একটা Unix socket TCP loopback-এর চেয়ে দ্রুত:
 
 ```go
 lis, err := net.Listen("unix", "/run/grpc/user.sock")
@@ -267,11 +275,11 @@ upstream user_service {
 }
 ```
 
-Skips TCP handshakes entirely, no port conflicts, file permissions become the access control. Production Go services on a single box often use this.
+TCP handshake পুরোপুরি এড়িয়ে যায়, কোনো port conflict নেই, file permission-ই access control হয়ে যায়। একটা single box-এ production Go service প্রায়ই এটা ব্যবহার করে।
 
 ## systemd unit
 
-Same shape as the GraphQL chapter:
+GraphQL চ্যাপ্টারের মতোই আকৃতি:
 
 ```ini
 # /etc/systemd/system/user-service.service
@@ -308,13 +316,13 @@ sudo systemctl enable --now user-service
 journalctl -u user-service -f
 ```
 
-The hardening directives are worth keeping — they limit damage if the process is exploited. `ProtectSystem=strict` makes the filesystem read-only except for `/run/grpc` (where the socket lives).
+hardening directive-গুলো রাখার মতো — process exploit হলে এগুলো ক্ষতি সীমিত করে। `ProtectSystem=strict` filesystem-কে read-only করে দেয়, শুধু `/run/grpc` (যেখানে socket থাকে) ছাড়া।
 
-## Connecting REST and gRPC — the gateway
+## REST আর gRPC জোড়া লাগানো — gateway
 
-If you need browsers or external HTTP clients to call your gRPC service, you have three options:
+আপনার gRPC service কল করতে browser বা external HTTP client-এর দরকার হলে, আপনার তিনটা অপশন আছে:
 
-**1. grpc-gateway** — generates a REST proxy from your `.proto` (`google.api.http` annotations). One binary serves both gRPC and REST.
+**1. grpc-gateway** — আপনার `.proto` থেকে একটা REST proxy generate করে (`google.api.http` annotation)। একটা binary gRPC আর REST দুটোই serve করে।
 
 ```proto
 import "google/api/annotations.proto";
@@ -326,63 +334,63 @@ service UserService {
 }
 ```
 
-The generated gateway translates `GET /v1/users/42` → `GetUser{Id: 42}`. JSON in, JSON out. Best when you want both protocols cleanly mapped.
+generated gateway `GET /v1/users/42` → `GetUser{Id: 42}` অনুবাদ করে। JSON in, JSON out। যখন আপনি দুটো protocol-ই পরিষ্কারভাবে map করতে চান তখন সেরা।
 
-**2. Connect** — by Buf. A unified protocol that supports gRPC, gRPC-Web, and a Connect protocol that's HTTP/1.1 + JSON-friendly. One server, multiple wire formats. Increasingly popular.
+**2. Connect** — Buf-এর। একটা unified protocol যা gRPC, gRPC-Web, এবং একটা Connect protocol সমর্থন করে যা HTTP/1.1 + JSON-friendly। একটা server, একাধিক wire format। ক্রমশ জনপ্রিয়।
 
-**3. Twirp** — a simpler RPC system on HTTP/1.1 + JSON or protobuf, no streaming. Different family but worth knowing as an alternative when streaming is not needed.
+**3. Twirp** — HTTP/1.1 + JSON বা protobuf-এর উপর একটা সহজতর RPC system, কোনো streaming নেই। ভিন্ন পরিবার কিন্তু streaming দরকার না হলে একটা বিকল্প হিসেবে জানার মতো।
 
-For most self-hosted services, **Connect** is the modern choice — supports browser clients (gRPC-Web), supports curl-friendly JSON, and supports native gRPC, all from one binary.
+বেশিরভাগ self-hosted service-এর জন্য, **Connect** হলো আধুনিক পছন্দ — browser client (gRPC-Web) সমর্থন করে, curl-friendly JSON সমর্থন করে, এবং native gRPC সমর্থন করে, সবই একটা binary থেকে।
 
 ## Pre-launch checklist
 
-Before pointing a domain at it:
+এতে একটা domain point করার আগে:
 
-- [ ] mTLS configured for service-to-service; public TLS at the edge.
-- [ ] Reflection off (or auth-gated).
-- [ ] All deadlines flow from inbound to outbound calls.
-- [ ] Recovery interceptor outermost.
-- [ ] Logging, metrics, tracing interceptors registered.
-- [ ] Health service registered with separate `livez`/`readyz`.
-- [ ] Graceful shutdown on SIGTERM with readiness drain.
-- [ ] Max message size, max concurrent streams, keepalive policy set.
-- [ ] Rate limiting on expensive RPCs.
-- [ ] systemd unit with `Restart=on-failure`, hardening directives.
-- [ ] nginx reverse-proxy or direct TLS, with HTTP/2 enabled.
-- [ ] Backups, migration runner, and Postgres on a private network.
-- [ ] Prometheus scraping `/metrics`; alerts for error rate, p99 latency, saturation.
-- [ ] One log line per RPC reaching Loki or your log aggregator.
-- [ ] Trace pipeline ending in Tempo / Jaeger / Honeycomb.
+- [ ] service-to-service-এর জন্য mTLS configured; edge-এ public TLS।
+- [ ] Reflection বন্ধ (বা auth-gated)।
+- [ ] সব deadline inbound থেকে outbound call-এ প্রবাহিত হয়।
+- [ ] Recovery interceptor সবচেয়ে বাইরে।
+- [ ] Logging, metrics, tracing interceptor registered।
+- [ ] আলাদা `livez`/`readyz` সহ Health service registered।
+- [ ] readiness drain সহ SIGTERM-এ graceful shutdown।
+- [ ] Max message size, max concurrent stream, keepalive policy সেট।
+- [ ] ব্যয়বহুল RPC-তে rate limiting।
+- [ ] `Restart=on-failure`, hardening directive সহ systemd unit।
+- [ ] HTTP/2 enabled সহ nginx reverse-proxy বা direct TLS।
+- [ ] Backup, migration runner, এবং একটা private network-এ Postgres।
+- [ ] `/metrics` scrape করছে Prometheus; error rate, p99 latency, saturation-এর জন্য alert।
+- [ ] প্রতি RPC-তে একটা log line Loki বা আপনার log aggregator-এ পৌঁছাচ্ছে।
+- [ ] Tempo / Jaeger / Honeycomb-এ শেষ হওয়া একটা trace pipeline।
 
-If half the boxes are unchecked, do not point a domain. The internet is patient about giving you traffic and impatient about everything else.
+অর্ধেক box unchecked থাকলে, কোনো domain point করবেন না। internet আপনাকে traffic দেওয়ার ব্যাপারে ধৈর্যশীল আর বাকি সবকিছুর ব্যাপারে অধৈর্য।
 
-## When to reach for a service mesh
+## কখন একটা service mesh-এর দিকে হাত বাড়াবেন
 
-Signals you should:
+যেসব signal-এ আপনার উচিত:
 
-- More than ~10 services.
-- mTLS rotation is becoming a chore.
-- You want canary deployments, circuit breaking, or traffic mirroring centrally.
-- Multiple teams each own a service.
+- ~10-এর বেশি service।
+- mTLS rotation একটা ঝক্কি হয়ে উঠছে।
+- আপনি কেন্দ্রীয়ভাবে canary deployment, circuit breaking, বা traffic mirroring চান।
+- একাধিক team প্রতিটা একটা করে service মালিকানা করে।
 
-Signals you should not:
+যেসব signal-এ আপনার উচিত নয়:
 
-- Two services and a static client.
-- One operator (you).
-- A budget that doesn't tolerate the operational complexity.
+- দুটো service আর একটা static client।
+- একজন operator (আপনি)।
+- এমন একটা budget যা operational জটিলতা সহ্য করে না।
 
-A mesh is a useful tool that you only need when you actually need it. Linkerd is the easiest to start with; Istio the most powerful and most complex; Cilium the most performant if you have eBPF-friendly hosts.
+একটা mesh একটা কাজের tool যা আপনার শুধু তখনই দরকার যখন আসলেই দরকার। Linkerd দিয়ে শুরু করা সবচেয়ে সহজ; Istio সবচেয়ে শক্তিশালী ও সবচেয়ে জটিল; eBPF-friendly host থাকলে Cilium সবচেয়ে performant।
 
 ## Recap
 
-- gRPC needs HTTP/2-aware load balancing. Client-side LB inside trust, L7 proxy at the edge.
-- Health service is standard — register it, serve `livez` and `readyz` separately.
-- Graceful shutdown: flip readiness, sleep for LB drain, `GracefulStop`.
-- Observability: structured logs (Loki), Prometheus metrics, OpenTelemetry traces.
-- Set message size, concurrent stream, keepalive, and rate limits. Defaults are not safe.
-- nginx in front terminates public TLS; service handles internal mTLS. Unix socket for fastest local hop.
-- systemd unit with hardening directives. `Restart=on-failure`. journalctl for logs.
-- For browsers: grpc-gateway, Connect, or gRPC-Web. Connect is the modern default.
-- Pre-launch checklist or it bites. Service mesh only when you have the scale to need it.
+- gRPC-র HTTP/2-aware load balancing দরকার। trust-এর ভেতরে client-side LB, edge-এ L7 proxy।
+- Health service standard — এটা register করুন, `livez` আর `readyz` আলাদাভাবে serve করুন।
+- Graceful shutdown: readiness flip করুন, LB drain-এর জন্য sleep করুন, `GracefulStop`।
+- Observability: structured log (Loki), Prometheus metrics, OpenTelemetry trace।
+- message size, concurrent stream, keepalive, এবং rate limit সেট করুন। ডিফল্ট নিরাপদ নয়।
+- সামনে nginx public TLS terminate করে; service internal mTLS সামলায়। দ্রুততম local hop-এর জন্য Unix socket।
+- hardening directive সহ systemd unit। `Restart=on-failure`। log-এর জন্য journalctl।
+- browser-এর জন্য: grpc-gateway, Connect, বা gRPC-Web। Connect হলো আধুনিক ডিফল্ট।
+- Pre-launch checklist নয়তো এটা কামড় বসাবে। প্রয়োজনীয় স্কেল থাকলে তবেই service mesh।
 
-That is the full Backend Engineering Path's gRPC track. Next topic in the path: [WebSockets and realtime](/notes/websockets) — when neither REST nor RPC is the right shape and bidirectional streaming over plain HTTP is what you need.
+এই হলো পূর্ণ Backend Engineering Path-এর gRPC track। path-এর পরবর্তী topic: [WebSockets and realtime](/notes/websockets) — যখন REST বা RPC কোনোটাই সঠিক আকৃতি নয় এবং সাদামাটা HTTP-র উপর bidirectional streaming-ই আপনার দরকার।

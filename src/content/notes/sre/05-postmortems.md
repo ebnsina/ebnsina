@@ -1,9 +1,9 @@
 ---
 title: 'Blameless Postmortems'
-subtitle: 'The full template Google, Etsy, and Stripe use, with action-item discipline that prevents the same incident twice.'
+subtitle: 'Google, Etsy, আর Stripe যে full template ব্যবহার করে, সাথে action-item discipline যা একই incident দ্বিতীয়বার আটকায়।'
 chapter: 5
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['postmortem', 'blameless', 'root cause', 'five whys', 'action items']
 ---
 
@@ -11,17 +11,25 @@ topics: ['postmortem', 'blameless', 'root cause', 'five whys', 'action items']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why blameless
+## গল্পে বুঝি
 
-The single most important rule: **the postmortem investigates the system, not the person.**
+একটা যাত্রীবাহী বিমান রানওয়েতে নামার মুহূর্তে অল্পের জন্য বড় দুর্ঘটনা থেকে বেঁচে যায়। তদন্ত বোর্ডের প্রধান ফাতিমা আল-ফিহরি প্রথমেই একটা সিদ্ধান্ত জানিয়ে দেন — এই তদন্ত পাইলটকে শাস্তি দেওয়ার জন্য নয়। পাইলট ইবনে সিনাকে ডেকে বলা হয়, "আপনি কী দেখেছেন, কী ভেবেছেন, ঠিক যেমনটা ঘটেছে হুবহু বলুন, কোনো ভয় নেই।" ভয় নেই বলেই ইবনে সিনা লুকান না — তিনি স্বীকার করেন যে চাপের মুখে তিনি ভুল একটা ডায়ালে চোখ রেখেছিলেন, উচ্চতার বদলে অন্য একটা মিটার পড়ে ফেলেছিলেন।
 
-If engineers fear that incidents will be used against them, they will:
+বোর্ড সেই কথাটাকে "পাইলটের অমনোযোগ" বলে ফাইল বন্ধ করে দিতে পারত। কিন্তু ফাতিমা আরও গভীরে খোঁড়েন — আর ককপিটে গিয়ে দেখেন, দুটো জরুরি ডায়াল দেখতে প্রায় একরকম, পাশাপাশি বসানো, চাপের মুহূর্তে যে কোনো পাইলটই গুলিয়ে ফেলতে পারে। মানে সমস্যাটা ইবনে সিনার মাথায় নয়, সমস্যাটা ককপিটের ডিজাইনে। বোর্ড নির্দেশ দেয় — এই দুই ডায়াল আলাদা রঙে, আলাদা জায়গায় বসাতে হবে, যাতে ভবিষ্যতে কোনো পাইলট আর কখনো এই ভুল করতেই না পারে।
 
-- Hide near-misses (so you never learn from cheap failures)
-- Minimize the timeline (so you misunderstand what happened)
-- Avoid risky-but-needed work (so velocity dies)
+এই গল্পটাই আসলে **blameless postmortem**। পাইলটকে শাস্তি না দেওয়া হলো blameless নীতি; একরকম দেখতে ডায়ালের মতো systemic cause খুঁজে বের করা হলো ব্যক্তিকে দোষ না দিয়ে সিস্টেমের root cause ধরা; ককপিট রিডিজাইন করা হলো action items বা systemic fix। আর সবচেয়ে জরুরি — ইবনে সিনা ভয় পাননি বলেই পুরো সত্যিটা বলেছেন, আর সেই সত্যি ছাড়া আসল fix-টাই কখনো বের হতো না। বাস্তবে aviation safety board ঠিক এভাবেই চলে (report anonymous, prosecution থেকে immune), আর SRE-র postmortem হুবহু একই যুক্তি ধার করে — মানুষ নয়, সিস্টেম তদন্ত করো, তাহলেই একই incident দ্বিতীয়বার আটকানো যায়।
 
-Blame culture turns a $10k learning opportunity into a $1M outage in the future, every time.
+## Blameless কেন
+
+সবচেয়ে গুরুত্বপূর্ণ নিয়ম: **postmortem সিস্টেম তদন্ত করে, মানুষ নয়।**
+
+engineer-রা যদি ভয় পায় যে incident তাদের বিরুদ্ধে ব্যবহার হবে, তারা:
+
+- near-miss লুকাবে (তাই তুমি কখনো সস্তা failure থেকে শিখবে না)
+- timeline ছোট করবে (তাই তুমি কী হয়েছে সেটা ভুল বুঝবে)
+- risky-but-needed কাজ এড়াবে (তাই velocity মরে যায়)
+
+Blame culture একটা $10k-এর শেখার সুযোগকে ভবিষ্যতে একটা $1M outage-এ পরিণত করে, প্রতিবার।
 
 ```
 ✗ "Fatima deployed bad code at 14:00 and broke checkout."
@@ -30,19 +38,19 @@ Blame culture turns a $10k learning opportunity into a $1M outage in the future,
    alert. Fatima was the deployer, but the system permitted the failure."
 ```
 
-Same incident. The first version produces a fired engineer. The second version produces three durable fixes that prevent the next one.
+একই incident। প্রথম version একজন বরখাস্ত engineer তৈরি করে। দ্বিতীয় version তিনটা durable fix তৈরি করে যা পরেরটা আটকায়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Aviation safety reports are anonymous and immune from prosecution by FAA design. Pilots report near-misses freely, the system gets safer, and the airline industry has a fatality rate that decreases every decade. SRE postmortems use the same logic.
+Aviation safety report গুলো anonymous আর FAA-র ডিজাইন অনুযায়ী prosecution থেকে immune। Pilot-রা near-miss অবাধে report করে, সিস্টেম নিরাপদ হয়, আর airline industry-র একটা fatality rate আছে যা প্রতি দশকে কমে। SRE postmortem একই logic ব্যবহার করে।
 
 </Callout>
 
 ## The full postmortem template
 
-This is the structure used (with minor variations) at Google, Stripe, GitHub, Etsy, and Shopify. Copy it verbatim — every field exists for a reason.
+এটা সেই structure যা (সামান্য variation সহ) Google, Stripe, GitHub, Etsy, আর Shopify-তে ব্যবহার হয়। হুবহু copy করো — প্রতিটা field একটা কারণে আছে।
 
 ```markdown
 # Postmortem: [Service] [What broke] — [Date]
@@ -161,9 +169,9 @@ timeouts cascaded into 503 responses.
 - Runbook links should be deep links, not "look at Grafana."
 ```
 
-## Action item discipline (the part that actually matters)
+## Action item discipline (যে অংশটা আসলে গুরুত্বপূর্ণ)
 
-A postmortem with action items that never ship is worse than no postmortem — it teaches the team that postmortems are theater.
+এমন action item সহ একটা postmortem যা কখনো ship হয় না, সেটা কোনো postmortem না থাকার চেয়ে খারাপ — এটা team-কে শেখায় যে postmortem হচ্ছে থিয়েটার।
 
 ```typescript
 // The action item rule set, enforced by tooling
@@ -184,17 +192,17 @@ const actionItemRules = {
 };
 ```
 
-Track AI completion rate as an SRE team metric. Healthy teams ship 80%+ of P0/P1 action items within their stated due date. Below 50% means postmortems are decorative.
+AI completion rate-কে একটা SRE team metric হিসেবে track করো। Healthy team তাদের বলা due date-এর মধ্যে P0/P1 action item-এর 80%+ ship করে। 50%-এর নিচে মানে postmortem decorative।
 
 <Callout type="warning">
 
-**Beware the "improve documentation" action item.** It is the most common AI and the least useful. If the only fix is "write better docs," the actual root cause is probably "we relied on humans to remember a thing the system should enforce." Push for code/config/policy fixes instead.
+**"improve documentation" action item থেকে সাবধান।** এটা সবচেয়ে সাধারণ AI আর সবচেয়ে কম কাজের। যদি একমাত্র fix হয় "ভালো docs লেখো," তাহলে আসল root cause সম্ভবত "আমরা মানুষের উপর নির্ভর করেছি এমন একটা জিনিস মনে রাখতে যা সিস্টেমের enforce করা উচিত।" এর বদলে code/config/policy fix-এর জন্য push করো।
 
 </Callout>
 
 ## The postmortem review meeting
 
-A 60-minute meeting, scheduled within 2 weeks of the incident, attendees:
+একটা 60-মিনিটের meeting, incident-এর 2 সপ্তাহের মধ্যে scheduled, attendees:
 
 ```
 - Author (presents)
@@ -204,17 +212,17 @@ A 60-minute meeting, scheduled within 2 weeks of the incident, attendees:
 - SRE team lead (to ensure rigor)
 ```
 
-The fresh-eyes critic is the secret ingredient. They ask "wait, why does that even exist?" questions that the team is too close to the problem to ask themselves.
+fresh-eyes critic হচ্ছে গোপন উপাদান। তারা "দাঁড়াও, এটা আদৌ কেন আছে?" ধরনের প্রশ্ন করে যা team সমস্যার এত কাছে থাকে যে নিজেরা জিজ্ঞেস করতে পারে না।
 
-The meeting is NOT for re-litigating the incident. It is for:
+meeting-টা incident নিয়ে আবার তর্ক করার জন্য নয়। এটা এর জন্য:
 
-1. Validating the timeline and root cause
-2. Approving the action items (sizing, owners, dates)
-3. Identifying any patterns across recent postmortems
+1. timeline আর root cause validate করা
+2. action items approve করা (sizing, owners, dates)
+3. সাম্প্রতিক postmortem জুড়ে কোনো pattern শনাক্ত করা
 
-## Aggregating learning across postmortems
+## Postmortem জুড়ে learning aggregate করা
 
-Individual postmortems prevent specific incidents. Aggregated postmortems prevent classes of incidents.
+আলাদা postmortem নির্দিষ্ট incident আটকায়। Aggregated postmortem incident-এর শ্রেণী আটকায়।
 
 ```typescript
 // Quarterly postmortem aggregation
@@ -244,11 +252,11 @@ interface PostmortemSummary {
 //  We need a config-management initiative, not 7 individual fixes."
 ```
 
-This is how you spot that, e.g., 40% of your incidents come from third-party DNS provider failures and you need to invest in DNS resilience as a project, not as another runbook entry.
+এভাবেই তুমি ধরতে পারো যে, যেমন, তোমার 40% incident আসে একটা third-party DNS provider failure থেকে আর তোমার DNS resilience-এ একটা project হিসেবে বিনিয়োগ করা দরকার, আরেকটা runbook entry হিসেবে নয়।
 
 ## Public vs internal postmortems
 
-A public postmortem (published on your blog or status page) is a powerful trust-building tool, but it is a different document.
+একটা public postmortem (তোমার ব্লগ বা status page-এ প্রকাশিত) একটা শক্তিশালী trust-building tool, কিন্তু এটা একটা আলাদা document।
 
 ```
 INTERNAL                          PUBLIC
@@ -260,19 +268,19 @@ INTERNAL                          PUBLIC
 - Full action items               - "We are addressing X, Y, Z"
 ```
 
-Cloudflare's public postmortems are the gold standard — read 2-3 of them before publishing your first one.
+Cloudflare-এর public postmortem গুলো gold standard — তোমার প্রথমটা publish করার আগে 2-3টা পড়ো।
 
 ## Stay current
 
 - [Google SRE Book — Postmortem Culture](https://sre.google/sre-book/postmortem-culture/) — blameless framing
-- [Google's postmortem template](https://sre.google/workbook/postmortem-culture/#example-postmortem) — copy this
+- [Google's postmortem template](https://sre.google/workbook/postmortem-culture/#example-postmortem) — এটা copy করো
 - [danluu/post-mortems](https://github.com/danluu/post-mortems) — public postmortem reading library
-- [Etsy debriefing facilitation guide](https://extfiles.etsy.com/DebriefingFacilitationGuide.pdf) — how to run the meeting
+- [Etsy debriefing facilitation guide](https://extfiles.etsy.com/DebriefingFacilitationGuide.pdf) — meeting কীভাবে চালাবে
 
 ## Key Takeaways
 
-1. **Blameless or worthless** — fear destroys the data you need to prevent the next incident
-2. **The template is non-optional** — it captures the same fields every time so they aggregate
-3. **Action items must be sized, owned, dated, and tracked** — or the postmortem was decorative
-4. **A fresh-eyes critic in the review meeting** finds what the team is too close to see
-5. **Aggregate quarterly** to spot incident classes that need a project, not a patch
+1. **Blameless নয়তো worthless** — ভয়, পরের incident আটকাতে দরকারি data ধ্বংস করে
+2. **Template non-optional** — এটা প্রতিবার একই field capture করে যাতে সেগুলো aggregate হয়
+3. **Action items অবশ্যই sized, owned, dated, আর tracked** — নয়তো postmortem decorative ছিল
+4. **Review meeting-এ একজন fresh-eyes critic** যা খুঁজে পায় team তার এত কাছে থাকে যে দেখতে পায় না
+5. **ত্রৈমাসিকভাবে aggregate করো** — যেসব incident-শ্রেণীর একটা project দরকার, patch নয়, সেগুলো ধরতে

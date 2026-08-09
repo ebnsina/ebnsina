@@ -1,9 +1,9 @@
 ---
 title: 'Terraform Patterns & Production'
-subtitle: 'Module composition, environments, secrets, drift detection, and the practices that keep large Terraform codebases manageable.'
+subtitle: 'Module composition, environment, secrets, drift detection, আর যেসব practice বড় Terraform codebase-কে সামলানোর মতো রাখে।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['Terraform', 'modules', 'environments', 'secrets', 'drift', 'refactoring']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Terraform', 'modules', 'environments', 'secrets', 'drift', 'refactorin
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-An engineering firm with standard building components: they don't design a new elevator from scratch for each project — they use a certified, tested design and compose it with other standard components. Terraform module composition works the same way: reliable, tested modules composed into environment-specific configurations.
+standard building component সহ একটা engineering firm: তারা প্রতিটা প্রজেক্টের জন্য নতুন করে একটা elevator design করে না — তারা একটা certified, tested design ব্যবহার করে আর অন্য standard component-এর সাথে সেটা compose করে। Terraform module composition একইভাবে কাজ করে: নির্ভরযোগ্য, tested module environment-নির্দিষ্ট configuration-এ compose করা।
 
 </Callout>
 
-## Repository Structure for Scale
+## গল্পে বুঝি
 
-Single flat config works for small projects. For multiple services and environments:
+আল-খোয়ারিজমির একটা architecture firm। শুরুর দিকে প্রতিটা নতুন প্রজেক্টে তারা সবকিছু শূন্য থেকে আঁকত — গেস্ট হাউস, বাউন্ডারি ওয়াল, পানির ট্যাংক, সব নতুন করে। ভুল হতো, সময় নষ্ট হতো। তাই ফাতিমা আল-ফিহরি একদিন বলল, "প্রতিবার নতুন করে আঁকা বন্ধ। আমরা কিছু prefab blueprint বানিয়ে ফেলি।" এখন তাদের একটা library আছে — যেমন "standard guest house" নামের একটা তৈরি নকশা, যেটাতে শুধু সাইজ আর রঙ বসিয়ে দিলেই যেকোনো প্লটে ফিট হয়ে যায়। একই কাজ বারবার আঁকতে হয় না, শুধু parameter পাল্টে দিলেই হয়।
+
+কিন্তু একটা ঝামেলা ছিল — পুরো এস্টেটের master build-register, মানে কোথায় কী তৈরি হয়েছে তার একটাই খাতা, সবাই একসাথে হাত দিত। দুইজন আর্কিটেক্ট একই সময়ে লিখতে গিয়ে দুইরকম এন্ট্রি ঢুকিয়ে দিত, খাতা এলোমেলো হয়ে যেত। তাই তারা খাতাটা একটা shared central safe-এ রাখল, আর নিয়ম করল — একবারে একজনই safe খুলে লিখতে পারবে, লেখা শেষ হলে তবেই পরের জন হাত দেবে। আবার একই "standard guest house" নকশা দিয়েই তারা তিন জায়গায় আলাদা আলাদা কপি বানায়: trial plot-এ ছোট করে টেস্ট, show plot-এ ক্লায়েন্টকে দেখানোর জন্য, আর final estate-এ আসল বসবাসের জন্য — নকশা এক, কিন্তু তিনটা আলাদা বিল্ড।
+
+এই গল্পটাই আসলে production Terraform। prefab blueprint যেটাতে শুধু সাইজ-রঙ বসিয়ে দিলেই হয় সেটাই **module** — parameterised, reusable building block। shared central safe-এ রাখা master build-register যেখানে একবারে একজন লিখতে পারে সেটাই central-এ রাখা **remote state** আর **state locking** — team-এ দুইজনের একসাথে apply করে state নষ্ট করা আটকায়। আর একই নকশা থেকে trial/show/final-এর আলাদা কপি বানানোটাই **workspaces/environments** — এক codebase থেকে dev, staging আর production আলাদা করে চালানো। বাস্তবে এভাবেই বড় infra টিম চলে: reusable module, S3 + DynamoDB দিয়ে locked remote state, আর environment প্রতি আলাদা directory/state — যাতে একজনের dev-এর experiment কখনো production-কে ছুঁয়ে না ফেলে।
+
+## Scale-এর জন্য Repository Structure
+
+ছোট প্রজেক্টে একটা flat config কাজ করে। একাধিক service আর environment-এর জন্য:
 
 ```
 infrastructure/
@@ -77,7 +85,7 @@ module "db" {
 
 ## Secrets Management
 
-Never put secrets in `.tfvars` files or Terraform state in plaintext.
+`.tfvars` file বা Terraform state-এ কখনো plaintext-এ secret রাখবেন না।
 
 **AWS SSM Parameter Store:**
 
@@ -119,7 +127,7 @@ resource "aws_db_instance" "main" {
 }
 ```
 
-**Mark outputs as sensitive** to prevent them appearing in logs:
+**Output-কে sensitive হিসেবে mark করুন** যাতে সেগুলো log-এ না আসে:
 
 ```hcl
 output "db_endpoint" {
@@ -128,9 +136,9 @@ output "db_endpoint" {
 }
 ```
 
-## Preventing Accidental Destruction
+## দুর্ঘটনাবশত Destruction প্রতিরোধ
 
-`lifecycle` blocks protect critical resources:
+`lifecycle` block গুরুত্বপূর্ণ resource-কে রক্ষা করে:
 
 ```hcl
 resource "aws_db_instance" "main" {
@@ -152,7 +160,7 @@ resource "aws_s3_bucket" "uploads" {
 }
 ```
 
-**Targeted applies for risky changes:**
+**ঝুঁকিপূর্ণ পরিবর্তনের জন্য targeted apply:**
 
 ```bash
 # Only apply changes to specific resources — don't touch everything
@@ -162,9 +170,9 @@ terraform apply -target=aws_instance.web -target=aws_security_group.web
 terraform plan -destroy
 ```
 
-## Refactoring Without Destroying
+## Destroy না করেই Refactoring
 
-Renaming a resource in HCL would destroy and recreate it — unless you move it in state first:
+HCL-এ একটা resource rename করলে সেটা destroy হয়ে আবার নতুন করে তৈরি হবে — যদি না আপনি আগে state-এ সেটা move করেন:
 
 ```hcl
 # Before: resource "aws_instance" "app"
@@ -177,7 +185,7 @@ terraform state mv aws_instance.app aws_instance.web
 # Now: terraform plan shows 0 to add, 0 to destroy
 ```
 
-**`moved` block (Terraform 1.1+) — the declarative way:**
+**`moved` block (Terraform 1.1+) — declarative উপায়:**
 
 ```hcl
 # main.tf — document the rename in code
@@ -187,9 +195,9 @@ moved {
 }
 ```
 
-The `moved` block is committed to the repo — other team members get the state move automatically when they apply, rather than having to run `terraform state mv` manually.
+`moved` block repo-তে commit করা হয় — অন্য team member-রা apply করার সময় state move স্বয়ংক্রিয়ভাবে পেয়ে যায়, manually `terraform state mv` চালাতে হয় না।
 
-## Drift Detection in CI
+## CI-তে Drift Detection
 
 ```yaml
 # .github/workflows/drift.yml
@@ -225,15 +233,15 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 ```
 
-Exit codes: `0` = no changes, `1` = error, `2` = changes detected (drift).
+Exit code: `0` = কোনো পরিবর্তন নেই, `1` = error, `2` = পরিবর্তন detected (drift)।
 
-## Testing Infrastructure Code
+## Infrastructure Code Testing
 
-**`terraform validate`:** Syntax and type checking. Fast, no API calls.
+**`terraform validate`:** Syntax আর type checking। দ্রুত, কোনো API call নেই।
 
-**`terraform plan`:** Actual diff against current state. Requires credentials.
+**`terraform plan`:** বর্তমান state-এর বিপরীতে আসল diff। Credential দরকার।
 
-**Terratest** (Go-based integration testing):
+**Terratest** (Go-ভিত্তিক integration testing):
 
 ```go
 // test/web_server_test.go
@@ -258,9 +266,9 @@ func TestWebServer(t *testing.T) {
 }
 ```
 
-Run integration tests in CI against an isolated test environment (separate account or namespace). Tear down after test completes.
+CI-তে একটা isolated test environment-এর (আলাদা account বা namespace) বিপরীতে integration test চালান। Test শেষ হলে সেটা tear down করুন।
 
-## The 10 Rules for Maintainable Terraform
+## Maintainable Terraform-এর জন্য ১০টি নিয়ম
 
 ```
 1. Remote state — never local state in a team
@@ -275,7 +283,7 @@ Run integration tests in CI against an isolated test environment (separate accou
 10. Plan before every apply — especially in production, always with review
 ```
 
-**Cross-stack data sources:**
+**Cross-stack data source:**
 
 ```hcl
 # networking stack outputs VPC ID
@@ -297,4 +305,4 @@ resource "aws_instance" "web" {
 }
 ```
 
-This gives you decoupled stacks that reference each other without being in the same state file — so a networking change doesn't require touching the app stack at all.
+এটা আপনাকে decoupled stack দেয় যেগুলো একই state file-এ না থেকেও একে অপরকে reference করে — ফলে একটা networking পরিবর্তনের জন্য app stack ছুঁতে হয় না।

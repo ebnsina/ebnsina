@@ -1,9 +1,9 @@
 ---
 title: 'Caching'
-subtitle: 'Cache levels, eviction policies, cache stampede, cache invalidation — and why caching is the most over-applied and under-thought optimization.'
+subtitle: 'Cache level, eviction policy, cache stampede, cache invalidation — আর কেন caching হলো সবচেয়ে বেশি প্রয়োগ করা আর সবচেয়ে কম ভাবা optimization।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['caching', 'Redis', 'CDN', 'cache invalidation', 'cache stampede', 'LRU', 'TTL']
 ---
 
@@ -13,15 +13,23 @@ topics: ['caching', 'Redis', 'CDN', 'cache invalidation', 'cache stampede', 'LRU
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A chef's mise en place: ingredients for tonight's dishes are prepped and placed within arm's reach (cache). The pantry (database) has everything, but fetching from it mid-service takes time. The mise en place is fast but limited — it only holds what was prepped, goes stale over time, and needs to be refreshed when the menu changes.
+একজন শেফের mise en place: আজ রাতের খাবারের উপকরণ প্রস্তুত করে হাতের নাগালে রাখা হয় (cache)। প্যান্ট্রিতে (database) সবকিছু আছে, কিন্তু service-এর মাঝে সেখান থেকে আনতে সময় লাগে। mise en place দ্রুত কিন্তু সীমিত — এটা শুধু সেটাই ধরে রাখে যা প্রস্তুত করা হয়েছিল, সময়ের সাথে বাসি হয়ে যায়, আর menu বদলালে সেটা নতুন করে করতে হয়।
 
 </Callout>
 
-## Cache Levels
+## গল্পে বুঝি
 
-From fastest to slowest:
+ইবনে সিনার রেস্তোরাঁয় সন্ধ্যার service শুরু হওয়ার আগে হেড শেফ আল-খোয়ারিজমি একটা রুটিন মেনে চলেন — যে ডিশগুলোর অর্ডার সবচেয়ে বেশি আসে, সেগুলোর উপকরণ আগেভাগেই কেটেকুটে, মেপে, বাটিতে সাজিয়ে চুলার ঠিক পাশে হাতের নাগালে রেখে দেন। এটাই তাঁর mise en place। কাবাবের অর্ডার এলে তিনি আর পেছনের প্যান্ট্রি পর্যন্ত হাঁটেন না, স্টোর থেকে পেঁয়াজ এনে খোসা ছাড়ান না — প্রস্তুত উপকরণ তুলে সরাসরি চুলায়। অর্ডার সেকেন্ডে বেরিয়ে যায়, রান্নাঘরে লাইন জমে না।
+
+কিন্তু চুলার পাশের জায়গা তো সীমিত, সব ডিশের প্রস্তুতি তো আর রাখা যায় না। তাই শুধু সবচেয়ে বেশি অর্ডার হওয়া ডিশগুলোর উপকরণই সেখানে থাকে। কেউ যদি হঠাৎ এমন একটা ডিশ চায় যেটা কালেভদ্রে অর্ডার হয়, আল-খোয়ারিজমিকে তখন পুরো পথ প্যান্ট্রি পর্যন্ত হেঁটে গিয়ে গোড়া থেকে সব কাটাকুটি-প্রস্তুতি করতে হয় — সময় লাগে অনেক বেশি। আবার কেটে রাখা উপকরণও তো কয়েক ঘণ্টা পর শুকিয়ে বা নেতিয়ে বাসি হয়ে যায়, তখন পুরনোটা ফেলে টাটকা করে প্রস্তুতি ঢেলে সাজাতে হয়।
+
+এই mise en place-ই আসলে **caching**। চুলার পাশে রেখে দেওয়া প্রস্তুত উপকরণ হলো cached result, আর সবচেয়ে বেশি অর্ডার হওয়া ডিশগুলো হলো hot/frequent request — প্রস্তুত জিনিস তুলে সরাসরি রান্না করা মানে **cache hit**, খরুচে কাজটা (গোড়া থেকে কাটাকুটি) পুরোপুরি এড়িয়ে যাওয়া। কালেভদ্রে অর্ডার হওয়া ডিশের জন্য প্যান্ট্রি পর্যন্ত হেঁটে গোড়া থেকে প্রস্তুতিই হলো **cache miss** — পুরো expensive কাজটা তখন আবার করতে হয়। প্রস্তুত জিনিস কতবার সরাসরি কাজে লাগল, সেটাই **hit rate** — যত বেশি, রান্নাঘর তত দ্রুত। আর কেটে রাখা উপকরণ বাসি হওয়ার আগেই টাটকা করে ঢেলে সাজানোটাই **TTL** দিয়ে stale ডেটা refresh করার tradeoff। বাস্তবে Redis বা CDN ঠিক এভাবেই ঘনঘন লাগা, খরুচে-হিসাবের ডেটা মেমরিতে ready রেখে database-এর উপর চাপ কমায় — Stack Overflow থেকে Twitter পর্যন্ত সবাই এই কৌশলেই sub-10ms রেসপন্স দেয়।
+
+## Cache Level
+
+দ্রুততম থেকে ধীরতম:
 
 ```
 L1/L2/L3 CPU cache     ~1-10ns   — managed by CPU
@@ -31,11 +39,11 @@ Database                ~5-50ms   — disk or buffer cache
 CDN edge                ~10-50ms  — geographically close edge node
 ```
 
-Pick the right level for the data's characteristics:
+ডেটার বৈশিষ্ট্য অনুযায়ী সঠিক level বেছে নাও:
 
-- **In-process:** fastest, no network, but lost on restart, not shared across instances
-- **Redis:** shared across all instances, survives restart, slightly slower
-- **CDN:** for public static content — offloads origin entirely
+- **In-process:** দ্রুততম, কোনো network নেই, কিন্তু restart-এ হারিয়ে যায়, instance-এর মধ্যে share হয় না
+- **Redis:** সব instance-এর মধ্যে share হয়, restart survive করে, সামান্য ধীর
+- **CDN:** পাবলিক static content-এর জন্য — origin-কে পুরোপুরি offload করে
 
 ## In-Process LRU Cache
 
@@ -58,9 +66,9 @@ async function getUser(userId: string): Promise<User> {
 }
 ```
 
-**When to use:** reference data that changes rarely (user roles, feature flags, config). Data that's expensive to fetch but small enough to fit in memory.
+**কখন ব্যবহার করবে:** reference data যা কদাচিৎ বদলায় (user role, feature flag, config)। যে ডেটা fetch করা ব্যয়বহুল কিন্তু memory-তে ধরার মতো যথেষ্ট ছোট।
 
-**When NOT to use:** data that changes frequently, data where stale reads are unacceptable, data shared between requests in a stateless service (will be inconsistent across instances).
+**কখন ব্যবহার করবে না:** যে ডেটা ঘন ঘন বদলায়, যে ডেটার stale read গ্রহণযোগ্য না, একটা stateless service-এ request-এর মধ্যে share হওয়া ডেটা (instance-এর মধ্যে inconsistent হবে)।
 
 ## Redis Caching
 
@@ -93,7 +101,7 @@ async function updateOrder(orderId: string, data: Partial<Order>): Promise<Order
 }
 ```
 
-**Cache warming:** pre-populate cache before traffic hits:
+**Cache warming:** traffic আসার আগে cache pre-populate করো:
 
 ```typescript
 async function warmCache() {
@@ -109,7 +117,7 @@ async function warmCache() {
 
 ## Cache Stampede (Thundering Herd)
 
-Cache expires. 1000 concurrent requests all see a cache miss and all hit the database simultaneously.
+Cache expire হয়। 1000টা concurrent request সবাই cache miss দেখে আর সবাই একসাথে database-এ আঘাত করে।
 
 ```
 Time T:   cache expires
@@ -119,11 +127,11 @@ T+0ms:    request 1000 sees miss, starts DB query
 T+50ms:   1000 DB queries complete, all populate cache
 ```
 
-1000 DB queries instead of 1.
+1টার বদলে 1000টা DB query।
 
 ### Fix 1: Mutex (Single Flight)
 
-Only one request fetches, others wait:
+শুধু একটা request fetch করে, বাকিরা অপেক্ষা করে:
 
 ```typescript
 import pLimit from 'p-limit';
@@ -155,7 +163,7 @@ async function getWithLock<T>(key: string, fetcher: () => Promise<T>, ttl: numbe
 
 ### Fix 2: Probabilistic Early Expiration
 
-Randomly refresh the cache before it expires, based on remaining TTL:
+বাকি TTL-এর ভিত্তিতে expire হওয়ার আগে randomly cache refresh করো:
 
 ```typescript
 async function getWithEarlyExpiry<T>(
@@ -215,11 +223,11 @@ async function getWithRedisLock<T>(
 
 ## Cache Invalidation
 
-"There are only two hard things in computer science: cache invalidation and naming things."
+"computer science-এ কঠিন জিনিস মাত্র দুটো: cache invalidation আর জিনিসের নামকরণ।"
 
-**Time-based (TTL):** simplest. Stale for up to TTL seconds. Fine for most cases.
+**Time-based (TTL):** সবচেয়ে সহজ। TTL সেকেন্ড পর্যন্ত stale। বেশিরভাগ ক্ষেত্রে ঠিক আছে।
 
-**Event-based:** invalidate on write. No staleness, but requires coordinating cache with every write path.
+**Event-based:** write-এ invalidate করো। কোনো staleness নেই, কিন্তু প্রতিটা write path-এর সাথে cache coordinate করতে হয়।
 
 ```typescript
 // Pattern: write-through cache
@@ -267,7 +275,7 @@ await invalidateTag('products'); // invalidates both cache keys
 
 ## CDN Caching
 
-For public content (product pages, images, static assets):
+পাবলিক content-এর জন্য (product page, image, static asset):
 
 ```typescript
 // Express — set cache headers
@@ -289,9 +297,9 @@ app.get('/products/:id', async (req, res) => {
 });
 ```
 
-`stale-while-revalidate=60`: serve stale content for 60 seconds while refreshing in background. Zero latency on refresh.
+`stale-while-revalidate=60`: background-এ refresh করার সময় 60 সেকেন্ডের জন্য stale content সার্ভ করো। refresh-এ zero latency।
 
-**Purge on update:**
+**Update-এ purge করা:**
 
 ```typescript
 async function updateProduct(productId: string, data: Partial<Product>) {
@@ -308,7 +316,7 @@ async function updateProduct(productId: string, data: Partial<Product>) {
 }
 ```
 
-## What Not to Cache
+## যা Cache করবে না
 
 ```
 ✗ Data that changes faster than your TTL (real-time prices, live inventory)
@@ -321,4 +329,4 @@ async function updateProduct(productId: string, data: Partial<Product>) {
 ✓ Session data (already in Redis anyway)
 ```
 
-Cache hit rate below 80% often means you're caching the wrong things, or TTLs are too short. Profile cache misses before adding more cache.
+Cache hit rate 80%-এর নিচে হলে প্রায়ই মানে তুমি ভুল জিনিস cache করছ, অথবা TTL খুব ছোট। আরও cache যোগ করার আগে cache miss profile করো।

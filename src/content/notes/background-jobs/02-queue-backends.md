@@ -1,9 +1,9 @@
 ---
 title: 'Queue Backends'
-subtitle: 'Redis-backed queues with BullMQ, Postgres-backed with pg-boss — internals, trade-offs, and when each fits.'
+subtitle: 'BullMQ দিয়ে Redis-backed queue, pg-boss দিয়ে Postgres-backed — internals, trade-off, এবং কোনটা কখন মানানসই।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['BullMQ', 'pg-boss', 'Redis', 'PostgreSQL', 'queue internals']
 ---
 
@@ -13,17 +13,25 @@ topics: ['BullMQ', 'pg-boss', 'Redis', 'PostgreSQL', 'queue internals']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A ticketing system: Redis queues are the fast-moving line at a concert venue where a bouncer pulls tickets rapidly from a bin. Postgres queues are the methodical DMV counter — slower, but every transaction is recorded, auditable, and never lost even if the building loses power.
+একটি ticketing system: Redis queue হলো কনসার্ট ভেন্যুর দ্রুত-এগোনো লাইন, যেখানে একজন বাউন্সার একটা বিন থেকে দ্রুত টিকিট টেনে নেয়। Postgres queue হলো ধীরস্থির DMV কাউন্টার — ধীর, কিন্তু প্রতিটি transaction রেকর্ড হয়, auditable, আর বিল্ডিংয়ের বিদ্যুৎ চলে গেলেও কখনো হারায় না।
 
 </Callout>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির কাঠের কারখানায় সারাদিন অর্ডার আসে — এই টেবিলটা বানাও, ওই দরজাটা মেরামত করো। প্রতিটা অর্ডার এক টুকরো কাগজে লেখা স্লিপ। সমস্যা একটাই: কাজ যতক্ষণ শুরু না হচ্ছে, ততক্ষণ এই জমতে থাকা স্লিপগুলো কোথায় রাখা হবে? আল-খোয়ারিজমি প্রথমে কাউন্টারের ওপর একটা লোহার শিক গেঁথে রাখল — নতুন স্লিপ এলেই টুক করে শিকে গেঁথে দাও, কারিগর এসে ওপরেরটা টেনে নিয়ে কাজে লেগে যায়। ঝামেলা নেই, বিদ্যুৎগতির কাজ। কিন্তু একদিন জানালা দিয়ে দমকা বাতাস এসে অর্ধেক স্লিপ উড়িয়ে নিয়ে গেল — কোন অর্ডার হারালো, কেউ আর বলতে পারে না।
+
+তখন কারখানার হিসাবরক্ষক ইবনে সিনা বলল, "শিক দিয়ে হবে না, প্রতিটা অর্ডার বাঁধাই খাতায় কালি দিয়ে লিখি — দোকানের হিসাবের পাশেই।" এতে একটা অর্ডারও আর হারায় না, চাইলে ছয় মাস আগের অর্ডারও খুঁজে বের করা যায়। কিন্তু প্রতিবার খাতা খুলে, লাইন টেনে, কালিতে লেখা — শিকের চেয়ে ধীর, আর অর্ডার বেশি বেড়ে গেলে খাতা সামলানো কঠিন। শেষে যখন কাজের চাপ আকাশছোঁয়া হলো, ফাতিমা আল-ফিহরি আলাদা একটা ডিসপ্যাচ অফিস খুলে বসল — একদল কর্মী শুধু অর্ডার লগ করে, ঠিক কারিগরের কাছে রুট করে, একটা অর্ডারও কখনো হারায় না। নিখুঁত, কিন্তু আলাদা অফিস চালানোর খরচ আর লোকবল আছে।
+
+গল্পের শিকটাই হলো **Redis-backed queue** (BullMQ) — দ্রুত আর সহজ, কিন্তু durability কম, মেমরি উড়ে গেলে জমে থাকা job হারাতে পারে। বাঁধাই খাতা হলো **database-backed queue** (pg-boss) — প্রতিটা job একটা row, transactional আর টেকসই, "record লেখা + job enqueue" একসাথে atomic করা যায়, বিনিময়ে একটু ধীর। আর ডিসপ্যাচ অফিস হলো **dedicated broker** — RabbitMQ বা Kafka-র মতো আলাদা সিস্টেম, বিপুল throughput আর শক্ত delivery guarantee দেয়, কিন্তু চালানোর operational complexity বেশি। তিনটার বাছাই আসলে একই তিন-অক্ষের হিসাব: durability বনাম speed বনাম operational complexity। বাস্তবে বেশিরভাগ টিম Redis বা database দিয়েই শুরু করে, আর স্কেল সত্যিই বিশাল হলে তবেই Kafka/RabbitMQ-র মতো broker-এ যায়।
+
 ## BullMQ (Redis-backed)
 
-BullMQ is the most popular Node.js queue library. It uses Redis sorted sets and lists to track job state transitions.
+BullMQ হলো সবচেয়ে জনপ্রিয় Node.js queue library। এটি job-এর state transition track করতে Redis sorted set ও list ব্যবহার করে।
 
-**Job states in BullMQ:**
+**BullMQ-তে job state:**
 
 ```
 waiting → active → completed
@@ -76,17 +84,17 @@ worker.on('failed', (job, err) => {
 });
 ```
 
-**Redis data structures BullMQ uses:**
+**BullMQ যেসব Redis data structure ব্যবহার করে:**
 
-- `bull:emails:wait` — sorted set of waiting jobs (score = priority)
-- `bull:emails:active` — set of jobs currently being processed
-- `bull:emails:completed` — sorted set of completed jobs
-- `bull:emails:failed` — sorted set of failed jobs
-- `bull:emails:delayed` — sorted set of future jobs (score = run timestamp)
+- `bull:emails:wait` — waiting job-দের sorted set (score = priority)
+- `bull:emails:active` — এই মুহূর্তে প্রসেস হচ্ছে এমন job-দের set
+- `bull:emails:completed` — completed job-দের sorted set
+- `bull:emails:failed` — failed job-দের sorted set
+- `bull:emails:delayed` — ভবিষ্যতের job-দের sorted set (score = run timestamp)
 
 ## pg-boss (PostgreSQL-backed)
 
-No Redis needed. Jobs are rows in a Postgres table. You get ACID transactions — perfect for "enqueue job as part of the same transaction that creates the record":
+Redis-এর দরকার নেই। Job হলো একটি Postgres টেবিলের row। আপনি ACID transaction পান — "যে transaction record তৈরি করে সেই একই transaction-এর অংশ হিসেবে job enqueue করা"-র জন্য নিখুঁত:
 
 ```typescript
 import PgBoss from 'pg-boss';
@@ -113,7 +121,7 @@ await boss.work('send-welcome-email', { teamSize: 5 }, async (job) => {
 });
 ```
 
-**The schema pg-boss creates:**
+**pg-boss যে schema তৈরি করে:**
 
 ```sql
 CREATE TABLE pgboss.job (
@@ -133,7 +141,7 @@ CREATE TABLE pgboss.job (
 );
 ```
 
-Workers poll this table with `SELECT ... FOR UPDATE SKIP LOCKED` — a Postgres pattern that lets multiple workers safely claim jobs without conflicts:
+Worker এই টেবিলটি `SELECT ... FOR UPDATE SKIP LOCKED` দিয়ে poll করে — এটি একটি Postgres প্যাটার্ন যা একাধিক worker-কে conflict ছাড়াই নিরাপদে job claim করতে দেয়:
 
 ```sql
 -- What pg-boss does internally on each poll
@@ -151,26 +159,26 @@ WHERE id IN (
 RETURNING *;
 ```
 
-`FOR UPDATE SKIP LOCKED` is the key — multiple workers can poll simultaneously without blocking each other or claiming the same job.
+`FOR UPDATE SKIP LOCKED` হলো মূল ব্যাপার — একাধিক worker একসাথে poll করতে পারে একে অপরকে block না করে বা একই job claim না করে।
 
-## Choosing Between Them
+## দুটোর মধ্যে বাছাই
 
-**Use BullMQ (Redis) when:**
+**BullMQ (Redis) ব্যবহার করুন যখন:**
 
-- You need real-time job pickup (sub-second)
-- High throughput (thousands of jobs/second)
-- You need built-in job progress tracking, rate limiting per queue, or priority queues
-- You already run Redis
+- real-time job pickup দরকার (sub-second)
+- High throughput (সেকেন্ডে হাজার হাজার job)
+- আপনার built-in job progress tracking, প্রতি queue-তে rate limiting, বা priority queue দরকার
+- আপনি আগে থেকেই Redis চালাচ্ছেন
 
-**Use pg-boss (Postgres) when:**
+**pg-boss (Postgres) ব্যবহার করুন যখন:**
 
-- You want to enqueue atomically with a DB write (no chance of job lost if enqueue fails)
-- You don't want to run Redis
-- You need full auditability of job history
-- Your throughput is modest (&lt;100 jobs/second)
-- You want simpler ops (one fewer infra component)
+- আপনি একটি DB write-এর সাথে atomically enqueue করতে চান (enqueue fail করলে job হারানোর ঝুঁকি নেই)
+- আপনি Redis চালাতে চান না
+- আপনার job history-র পূর্ণ auditability দরকার
+- আপনার throughput মাঝারি (&lt;100 job/সেকেন্ড)
+- আপনি সহজতর ops চান (একটা কম infra component)
 
-**The transactional enqueueing advantage:**
+**Transactional enqueueing-এর সুবিধা:**
 
 ```typescript
 // BullMQ — NOT transactional
@@ -186,11 +194,11 @@ await db.transaction(async (trx) => {
 });
 ```
 
-This is a significant advantage for operations where "write record + enqueue job" must be atomic.
+যেসব অপারেশনে "record লেখা + job enqueue করা" atomic হতেই হবে, তাদের জন্য এটি একটি বড় সুবিধা।
 
-## Delayed and Scheduled Jobs
+## Delayed ও Scheduled Job
 
-**Delayed (run once, in the future):**
+**Delayed (একবার চলবে, ভবিষ্যতে):**
 
 ```typescript
 // BullMQ
@@ -212,7 +220,7 @@ await boss.send(
 );
 ```
 
-**Recurring (cron-like):**
+**Recurring (cron-এর মতো):**
 
 ```typescript
 // BullMQ — repeatable jobs
@@ -231,9 +239,9 @@ await boss.work('cleanup-expired-sessions', async () => {
 });
 ```
 
-## Monitoring Queue Health
+## Queue Health মনিটর করা
 
-Key metrics to track:
+track করার মূল metric:
 
 ```typescript
 // BullMQ counts
@@ -247,14 +255,14 @@ const [waiting, active, completed, failed] = await Promise.all([
 console.log({ waiting, active, completed, failed });
 ```
 
-**Alert thresholds:**
+**Alert threshold:**
 
-- `waiting > 1000`: queue is backing up, add workers
-- `failed > 0 and growing`: job type has a bug or dependency is down
-- `active == workerCount and waiting > 0`: at worker capacity, scale out
-- `oldest waiting job > 5 minutes`: job pickup SLA is broken
+- `waiting > 1000`: queue জমছে, worker যোগ করুন
+- `failed > 0 and growing`: job type-এ bug আছে অথবা dependency down
+- `active == workerCount and waiting > 0`: worker capacity-তে পৌঁছেছে, scale out করুন
+- `oldest waiting job > 5 minutes`: job pickup SLA ভেঙে গেছে
 
-**Bull Board** — visual UI for BullMQ:
+**Bull Board** — BullMQ-র জন্য visual UI:
 
 ```typescript
 import { createBullBoard } from '@bull-board/api';
@@ -272,4 +280,4 @@ createBullBoard({
 app.use('/admin/queues', serverAdapter.getRouter());
 ```
 
-Mount behind auth — this shows job payloads which may contain sensitive data.
+auth-এর পেছনে mount করুন — এটি job payload দেখায় যাতে sensitive data থাকতে পারে।

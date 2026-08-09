@@ -1,9 +1,9 @@
 ---
-title: 'The handshake and frame protocol'
-subtitle: 'RFC 6455 in the parts that matter for shipping a server. Upgrade headers, frame layout, masking, opcodes, close codes, and the rules a library follows so you do not have to.'
+title: 'handshake আর frame protocol'
+subtitle: 'একটা server ship করার জন্য যে অংশগুলো গুরুত্বপূর্ণ সেই অংশে RFC 6455। Upgrade header, frame layout, masking, opcodes, close code, আর library যে নিয়মগুলো মেনে চলে যাতে আপনাকে না চলতে হয়।'
 chapter: 2
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['websockets', 'rfc6455', 'frames', 'handshake']
 ---
 
@@ -11,21 +11,29 @@ topics: ['websockets', 'rfc6455', 'frames', 'handshake']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-You will almost never write a WebSocket parser by hand — every language has a battle-tested library. But you will read tcpdump, debug stuck connections, and decide whether to use compression. Knowing what is on the wire keeps those moments short.
+## গল্পে বুঝি
 
-This chapter is RFC 6455 in the parts you need. We skip the parts you do not.
+বাগদাদের বাণিজ্যিক এলাকায় আল-খোয়ারিজমির অফিস আর ইবনে সিনার অফিস — দুই ঘর দিনভর একে অপরকে লম্বা আনুষ্ঠানিক চিঠি পাঠায়। প্রতিটা চিঠির শুরুতে পুরো ঠিকানা, সম্বোধন, ভূমিকা — তারপর আসল কথা। এতে সময় যায়, কাগজ যায়, আর ছোট একটা খবর জানাতেও গোটা একটা খাম লাগে। একদিন কাজের চাপ বাড়ল, আর দুই অফিসের মাঝে দ্রুত আদান-প্রদান দরকার হয়ে পড়ল।
+
+তখন আল-খোয়ারিজমি একটাই আনুষ্ঠানিক অনুরোধ-চিঠি পাঠাল ইবনে সিনাকে: "আসুন, আমরা দুই ঘরের মাঝে খোলা টেলিগ্রাফ তার চালু করি।" ইবনে সিনা সেই একই চিঠিতে সম্মতি সই করে ফেরত পাঠাল — এই এক দফা অনুরোধ-ও-সম্মতিই যথেষ্ট। ঠিক সেই মুহূর্ত থেকে দুই ঘর চিঠি লেখা বন্ধ করে দিল। এখন তারা ওই একই তারের ওপর দিয়ে ছোট ছোট প্রমিত টেলিগ্রাম স্লিপ ছুঁড়ে দেয় — কোনো ঠিকানা নেই, ভূমিকা নেই, শুধু দরকারি লাইনটুকু। খবর যায় সেকেন্ডে।
+
+এই গল্পটাই আসলে **WebSocket**। শুরুর ওই আনুষ্ঠানিক অনুরোধ-ও-সম্মতি চিঠিটাই হলো **HTTP Upgrade handshake** — একটা সাধারণ HTTP request যেখানে `Upgrade` header দিয়ে বলা হয় "চলো protocol বদলাই।" যে মুহূর্তে দুই পক্ষ সম্মত হয় (server-এর `101 Switching Protocols`), সেটাই connection upgrade হওয়ার মুহূর্ত। আর তারপর ওই একই তার — মানে একই connection — এর ওপর দিয়ে বয়ে যাওয়া ছোট প্রমিত টেলিগ্রাম স্লিপগুলোই হলো **WebSocket frame**: হালকা, header-এ কম খরচ, দুই দিকেই ছুটতে পারে। বাস্তবে ব্রাউজার আর chat বা live-dashboard server ঠিক এভাবেই একবার handshake করে, তারপর একই connection-এ frame-এর পর frame বিনিময় করে যায় — নতুন করে HTTP request খোলার ঝামেলা ছাড়াই।
+
+আপনি প্রায় কখনোই হাতে একটা WebSocket parser লিখবেন না — প্রতিটা ভাষায় একটা battle-tested library আছে। কিন্তু আপনি tcpdump পড়বেন, আটকে থাকা connection debug করবেন, আর compression ব্যবহার করবেন কিনা তা ঠিক করবেন। wire-এ কী আছে তা জানলে সেই মুহূর্তগুলো ছোট থাকে।
+
+এই চ্যাপ্টার আপনার যে অংশগুলো দরকার সেই অংশে RFC 6455। যে অংশগুলো দরকার নেই সেগুলো বাদ দিই।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-The WebSocket handshake is like a secret handshake that upgrades a formal meeting into a private channel — once the ritual is complete, the rules of ordinary conversation no longer apply.
+WebSocket handshake হলো একটা গোপন handshake-এর মতো যা একটা আনুষ্ঠানিক মিটিংকে একটা private channel-এ upgrade করে — একবার আচারটা সম্পন্ন হলে, সাধারণ কথোপকথনের নিয়ম আর খাটে না।
 
 </Callout>
 
-## The handshake
+## handshake
 
-A client opens a normal TCP connection (or TLS, for `wss://`) to the server, then sends an HTTP/1.1 GET request with a few special headers:
+একটা client server-এ একটা সাধারণ TCP connection (বা `wss://`-এর জন্য TLS) খোলে, তারপর কয়েকটা special header সহ একটা HTTP/1.1 GET request পাঠায়:
 
 ```
 GET /ws HTTP/1.1
@@ -37,15 +45,15 @@ Sec-WebSocket-Version: 13
 Origin: https://example.com
 ```
 
-Three things to notice.
+তিনটা জিনিস খেয়াল করুন।
 
-**1. `Upgrade: websocket` and `Connection: Upgrade`.** Both are required. They tell HTTP middleboxes "this is going to switch protocols, please do not buffer or close it."
+**1. `Upgrade: websocket` আর `Connection: Upgrade`।** দুটোই দরকার। এগুলো HTTP middlebox-দের বলে "এটা protocol switch করতে যাচ্ছে, দয়া করে buffer বা close করবেন না।"
 
-**2. `Sec-WebSocket-Key` is a 16-byte random base64 value.** The server proves it understood the protocol by computing `Sec-WebSocket-Accept = base64(sha1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))`. The magic GUID is fixed by the spec.
+**2. `Sec-WebSocket-Key` হলো একটা 16-byte random base64 value।** server প্রমাণ করে যে সে protocol বুঝেছে, `Sec-WebSocket-Accept = base64(sha1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))` compute করে। magic GUID-টা spec দিয়ে নির্ধারিত।
 
-**3. `Origin` matters.** Browsers send their origin automatically. Servers should check it. Without an origin check, _any_ website a logged-in user visits can open a WebSocket to your server using their cookies. Chapter 8 has the full pattern; for now, know the header is there for a reason.
+**3. `Origin` গুরুত্বপূর্ণ।** Browser স্বয়ংক্রিয়ভাবে তাদের origin পাঠায়। server-এর এটা check করা উচিত। origin check ছাড়া, একজন logged-in user যে _যেকোনো_ website visit করে সেটা তাদের cookie ব্যবহার করে আপনার server-এ একটা WebSocket খুলতে পারে। চ্যাপ্টার 8-এ পুরো প্যাটার্ন আছে; আপাতত, জানুন header-টা একটা কারণে আছে।
 
-The server response if it accepts:
+server accept করলে তার response:
 
 ```
 HTTP/1.1 101 Switching Protocols
@@ -54,41 +62,41 @@ Connection: Upgrade
 Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 ```
 
-Status `101 Switching Protocols`. From here on, the bytes on the connection are not HTTP — they are WebSocket frames.
+Status `101 Switching Protocols`। এখান থেকে, connection-এর byte-গুলো HTTP নয় — এগুলো WebSocket frame।
 
-If the server says no (bad origin, missing auth, busy), it returns a normal HTTP error and the connection closes. Nothing exotic.
+server যদি না বলে (খারাপ origin, missing auth, busy), সে একটা সাধারণ HTTP error return করে আর connection বন্ধ হয়। কোনো অদ্ভুত কিছু নয়।
 
-## Subprotocols
+## Subprotocol
 
-The handshake can negotiate a **subprotocol** — a name for the application-layer protocol the two sides will use. Useful when one server speaks several:
+handshake একটা **subprotocol** negotiate করতে পারে — দুই পক্ষ যে application-layer protocol ব্যবহার করবে তার একটা নাম। যখন একটা server কয়েকটা বলে তখন কাজে লাগে:
 
 ```
 Sec-WebSocket-Protocol: chat.v2, chat.v1
 ```
 
-Server picks one and echoes it back:
+server একটা বাছে আর সেটা ফেরত echo করে:
 
 ```
 Sec-WebSocket-Protocol: chat.v2
 ```
 
-Now both sides agree they are speaking `chat.v2`. The framework reads this — your handshake handler can branch on it. Most apps ignore subprotocols and version inside the message envelope instead. Chapter 4 covers both choices.
+এখন দুই পক্ষ একমত যে তারা `chat.v2` বলছে। framework এটা পড়ে — আপনার handshake handler এর উপর branch করতে পারে। বেশিরভাগ app subprotocol উপেক্ষা করে আর message envelope-এর ভেতরে version করে। চ্যাপ্টার 4 দুটো পছন্দই cover করে।
 
-## Extensions — `permessage-deflate`
+## Extension — `permessage-deflate`
 
-There is one extension you will see in practice: **per-message deflate** compression. Both sides advertise support during the handshake:
+একটা extension আপনি বাস্তবে দেখবেন: **per-message deflate** compression। handshake-এর সময় দুই পক্ষই support advertise করে:
 
 ```
 Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
 ```
 
-If the server agrees, both sides compress message payloads with deflate. For text-heavy traffic (JSON), this halves bandwidth. For already-compressed binary (images, video), it is a CPU tax.
+server রাজি হলে, দুই পক্ষই deflate দিয়ে message payload compress করে। Text-heavy traffic-এর (JSON) জন্য, এটা bandwidth অর্ধেক করে। আগে থেকেই compressed binary-র (image, video) জন্য, এটা একটা CPU tax।
 
-Library defaults vary. `coder/websocket` enables it; `gorilla/websocket` requires opting in. If your traffic is small JSON messages, leave it on; if it is large binary, turn it off.
+Library default ভিন্ন হয়। `coder/websocket` এটা enable করে; `gorilla/websocket`-এ opt-in করতে হয়। আপনার traffic যদি ছোট JSON message হয়, এটা on রাখুন; বড় binary হলে, off করুন।
 
 ## Frame layout
 
-After the handshake, the wire is a sequence of frames. A frame is at minimum 2 bytes; up to 14 bytes of header plus the payload.
+handshake-এর পর, wire হলো frame-এর একটা sequence। একটা frame সর্বনিম্ন 2 byte; header-এর জন্য 14 byte পর্যন্ত plus payload।
 
 ```
  0                   1                   2                   3
@@ -109,19 +117,19 @@ After the handshake, the wire is a sequence of frames. A frame is at minimum 2 b
 +---------------------------------------------------------------+
 ```
 
-Read the parts that matter:
+যে অংশগুলো গুরুত্বপূর্ণ সেগুলো পড়ুন:
 
-- **FIN (1 bit)** — last fragment? `1` means this is the whole message (or the last piece of a fragmented one).
-- **RSV1/2/3** — reserved; `permessage-deflate` uses RSV1 to flag compressed payloads.
-- **opcode (4 bits)** — what kind of frame this is.
-- **MASK (1 bit)** — does this frame have a masking key? Client-to-server frames must be masked; server-to-client frames must not. Spec rule, not optional.
-- **Payload len (7 bits)** — 0–125 inline, 126 means "next 16 bits are the real length", 127 means "next 64 bits are the real length".
-- **Masking-key (4 bytes)** — only present if MASK is 1.
-- **Payload Data** — the actual bytes. If masked, XORed with the key (4-byte cycle).
+- **FIN (1 bit)** — শেষ fragment? `1` মানে এটাই পুরো message (বা একটা fragmented message-এর শেষ টুকরো)।
+- **RSV1/2/3** — reserved; `permessage-deflate` compressed payload flag করতে RSV1 ব্যবহার করে।
+- **opcode (4 bits)** — এটা কী ধরনের frame।
+- **MASK (1 bit)** — এই frame-এ কি একটা masking key আছে? Client-to-server frame অবশ্যই masked হতে হবে; server-to-client frame অবশ্যই নয়। Spec-এর নিয়ম, optional নয়।
+- **Payload len (7 bits)** — 0–125 inline, 126 মানে "পরের 16 bit-ই আসল length", 127 মানে "পরের 64 bit-ই আসল length"।
+- **Masking-key (4 bytes)** — শুধু MASK 1 হলে present।
+- **Payload Data** — আসল byte। masked হলে, key দিয়ে XOR করা (4-byte cycle)।
 
-A 5-byte text payload from a client looks like 11 bytes on the wire (header + key + masked payload). A 5-byte text payload from a server looks like 7 bytes (header + payload). The protocol pays a small per-message tax for very small messages — irrelevant for chat-like traffic, painful for high-frequency tiny updates (use a binary message format that batches in that case).
+একটা client থেকে 5-byte text payload wire-এ 11 byte-এর মতো দেখায় (header + key + masked payload)। একটা server থেকে 5-byte text payload 7 byte-এর মতো দেখায় (header + payload)। protocol খুব ছোট message-এর জন্য একটা ছোট per-message tax দেয় — chat-জাতীয় traffic-এর জন্য অপ্রাসঙ্গিক, high-frequency tiny update-এর জন্য কষ্টকর (সেক্ষেত্রে এমন একটা binary message format ব্যবহার করুন যা batch করে)।
 
-## Opcodes
+## Opcode
 
 ```
 0x0  continuation     (more data for an in-progress fragmented message)
@@ -134,25 +142,25 @@ A 5-byte text payload from a client looks like 11 bytes on the wire (header + ke
 0xB-0xF  reserved
 ```
 
-Three categories.
+তিনটা ক্যাটাগরি।
 
-**Data frames** (`text`, `binary`, `continuation`) carry your payload. Opcodes `text` (`0x1`) and `binary` (`0x2`) start a message; `continuation` (`0x0`) continues a fragmented one. FIN=1 marks the last frame.
+**Data frame** (`text`, `binary`, `continuation`) আপনার payload বহন করে। opcode `text` (`0x1`) আর `binary` (`0x2`) একটা message শুরু করে; `continuation` (`0x0`) একটা fragmented message চালিয়ে নেয়। FIN=1 শেষ frame mark করে।
 
-**Control frames** (`close`, `ping`, `pong`) are short messages used for connection management. Max payload: 125 bytes. Cannot be fragmented. Take precedence over data frames.
+**Control frame** (`close`, `ping`, `pong`) হলো connection management-এর জন্য ব্যবহৃত ছোট message। সর্বোচ্চ payload: 125 byte। Fragment করা যায় না। Data frame-এর উপর precedence পায়।
 
-**Reserved** opcodes are for future use and must not appear on the wire.
+**Reserved** opcode ভবিষ্যৎ ব্যবহারের জন্য আর wire-এ থাকা উচিত নয়।
 
-## Masking — and why it exists
+## Masking — আর এটা কেন আছে
 
-Every client-to-server frame is XOR-masked with a random 4-byte key. The server unmasks before reading. Why bother?
+প্রতিটা client-to-server frame একটা random 4-byte key দিয়ে XOR-masked হয়। server পড়ার আগে unmask করে। এত ঝামেলা কেন?
 
-The reason is historical and security-flavored. Without masking, an attacker on the same network could trick a browser into sending data that, when read by an HTTP proxy, looked like a forged HTTP request — confused the proxy into "cache poisoning" attacks. Masking makes the bytes look random to a non-WebSocket-aware proxy, blocking that class of attack.
+কারণটা ঐতিহাসিক আর security-flavored। masking ছাড়া, একই network-এ থাকা একজন attacker একটা browser-কে এমন data পাঠাতে ফাঁকি দিতে পারত যা, একটা HTTP proxy পড়লে, একটা জাল HTTP request-এর মতো দেখাত — proxy-কে "cache poisoning" আক্রমণে বিভ্রান্ত করত। masking byte-গুলোকে একটা non-WebSocket-aware proxy-র কাছে random দেখায়, ওই ধরনের আক্রমণ আটকায়।
 
-A consequence: every WebSocket library masks client-side automatically and unmasks server-side automatically. You never write masking code. You will see it once if you ever stare at tcpdump.
+একটা পরিণতি: প্রতিটা WebSocket library স্বয়ংক্রিয়ভাবে client-side mask আর server-side unmask করে। আপনি কখনো masking code লেখেন না। tcpdump-এর দিকে তাকালে একবার দেখবেন।
 
 ## Fragmentation
 
-A message can be split across multiple frames:
+একটা message একাধিক frame জুড়ে ভাগ করা যায়:
 
 ```
 [FIN=0, opcode=text]    "Hello, "
@@ -160,16 +168,16 @@ A message can be split across multiple frames:
 [FIN=1, opcode=cont]    "Sockets!"
 ```
 
-The receiver buffers all three and presents one logical message: `"Hello, WebSockets!"`. Useful when sending big payloads where the sender doesn't know the full length up front.
+receiver তিনটাই buffer করে আর একটা logical message উপস্থাপন করে: `"Hello, WebSockets!"`। বড় payload পাঠানোর সময় কাজে লাগে যেখানে sender আগে থেকে পুরো length জানে না।
 
-In practice, libraries hide fragmentation. Most apps send and receive whole messages in single frames. You need to know fragmentation exists when:
+বাস্তবে, library fragmentation লুকায়। বেশিরভাগ app single frame-এ পুরো message পাঠায় আর receive করে। fragmentation যে আছে তা আপনার জানা দরকার যখন:
 
-- A client mixes a control frame _between_ fragments — that is fine, control frames can interleave.
-- You see partial UTF-8 in a debug log — the library may have shown one fragment.
+- একটা client fragment-এর _মাঝে_ একটা control frame মেশায় — সেটা ঠিক আছে, control frame interleave করতে পারে।
+- আপনি একটা debug log-এ partial UTF-8 দেখেন — library হয়তো একটা fragment দেখিয়েছে।
 
-## Close frames
+## Close frame
 
-Closing is a short handshake. Either side sends a close frame; the other replies with one; both sides close the TCP connection.
+Close করা একটা ছোট handshake। দুই পক্ষের যেকোনোটা একটা close frame পাঠায়; অন্যটা একটা দিয়ে reply করে; দুই পক্ষ TCP connection বন্ধ করে।
 
 ```
 Sender:    [opcode=close] [code=1000][reason=normal]
@@ -177,79 +185,79 @@ Receiver:  [opcode=close] [code=1000][reason=normal]
 Both close TCP.
 ```
 
-The close frame's payload is a 2-byte status code plus optional UTF-8 reason. Common codes:
+close frame-এর payload হলো একটা 2-byte status code plus optional UTF-8 reason। সাধারণ code:
 
-| Code      | Meaning                                                 |
-| --------- | ------------------------------------------------------- |
-| 1000      | Normal closure                                          |
-| 1001      | Going away (server shutdown, client navigation)         |
-| 1002      | Protocol error                                          |
-| 1003      | Cannot accept the data type (e.g. binary not supported) |
-| 1006      | Abnormal closure (no close frame seen — TCP died)       |
-| 1008      | Policy violation (auth failed, bad input)               |
-| 1009      | Message too big                                         |
-| 1011      | Internal server error                                   |
-| 4000–4999 | Application-defined                                     |
+| Code      | অর্থ                                                            |
+| --------- | --------------------------------------------------------------- |
+| 1000      | Normal closure                                                  |
+| 1001      | Going away (server shutdown, client navigation)                 |
+| 1002      | Protocol error                                                  |
+| 1003      | data type accept করা যায় না (যেমন binary supported নয়)        |
+| 1006      | Abnormal closure (কোনো close frame দেখা যায়নি — TCP মারা গেছে) |
+| 1008      | Policy violation (auth ব্যর্থ, খারাপ input)                     |
+| 1009      | Message too big                                                 |
+| 1011      | Internal server error                                           |
+| 4000–4999 | Application-defined                                             |
 
-`1006` is the one you see most often in production: the connection dropped without a close handshake, library reports it. Network glitch, NAT timeout, force-quit client — all become 1006.
+`1006` হলো সেটা যা production-এ সবচেয়ে বেশি দেখেন: connection একটা close handshake ছাড়াই ড্রপ করেছে, library সেটা report করে। Network glitch, NAT timeout, force-quit client — সব 1006 হয়ে যায়।
 
-For application-level "the user got banned" or "auth expired", use 4xxx codes. They are reserved for app use; pick a scheme and document it.
+application-level "user ব্যান হয়েছে" বা "auth expire হয়েছে"-এর জন্য, 4xxx code ব্যবহার করুন। এগুলো app ব্যবহারের জন্য reserved; একটা scheme বেছে নিন আর document করুন।
 
-## Ping and pong
+## Ping আর pong
 
-Heartbeats. Either side sends a `ping` frame at any time; the other must reply with `pong` carrying the same payload. Used to:
+Heartbeat। দুই পক্ষের যেকোনোটা যেকোনো সময় একটা `ping` frame পাঠায়; অন্যটাকে অবশ্যই একই payload বহন করা `pong` দিয়ে reply করতে হবে। ব্যবহার করা হয়:
 
-- Keep middleboxes from dropping idle connections.
-- Detect dead peers earlier than TCP keepalive.
+- middlebox-দের idle connection ড্রপ করা থেকে বিরত রাখতে।
+- TCP keepalive-এর চেয়ে আগে dead peer detect করতে।
 
-Most servers send a ping every 30 seconds and disconnect if no pong arrives within 10 seconds. Library configurable. The default `coder/websocket` setting is good.
+বেশিরভাগ server প্রতি 30 সেকেন্ডে একটা ping পাঠায় আর 10 সেকেন্ডের মধ্যে কোনো pong না এলে disconnect করে। Library configurable। default `coder/websocket` setting ভালো।
 
-A common production bug: nginx (or some other proxy) drops the connection after 60 seconds of idle traffic. Pings prevent that. Chapter 10 covers nginx config; chapter 9 covers the heartbeat patterns in detail.
+একটা সাধারণ production bug: nginx (বা অন্য কোনো proxy) 60 সেকেন্ড idle traffic-এর পর connection ড্রপ করে। Ping সেটা আটকায়। চ্যাপ্টার 10 nginx config cover করে; চ্যাপ্টার 9 heartbeat প্যাটার্ন বিস্তারিত cover করে।
 
 <Callout type="warn">
 
-**A ping frame is a control frame, not your application heartbeat.** Many WebSocket apps build their own heartbeat at the message layer ("ping" / "pong" JSON envelopes) without using the protocol-level frames. Both work. Protocol-level pings are more efficient and don't need application code; library defaults usually handle them. App-level pings are easier to debug and let you carry custom payloads (timestamps, sequence numbers).
+**একটা ping frame একটা control frame, আপনার application heartbeat নয়।** অনেক WebSocket app protocol-level frame ব্যবহার না করে message layer-এ নিজেদের heartbeat বানায় ("ping" / "pong" JSON envelope)। দুটোই কাজ করে। Protocol-level ping আরও efficient আর application code দরকার নেই; library default সাধারণত এগুলো সামলায়। App-level ping debug করা সহজ আর আপনাকে custom payload (timestamp, sequence number) বহন করতে দেয়।
 
 </Callout>
 
 ## TLS — `wss://`
 
-For browsers, TLS is mandatory in any non-toy environment. `wss://` is exactly `ws://` with TLS in front, on port 443.
+Browser-এর জন্য, যেকোনো non-toy environment-এ TLS বাধ্যতামূলক। `wss://` ঠিক `ws://`-ই, সামনে TLS সহ, port 443-এ।
 
-The handshake:
+handshake:
 
-1. TCP connect to port 443.
-2. TLS handshake (chapter from the **TLS & Certificates** track).
-3. Send the HTTP Upgrade request inside the TLS tunnel.
-4. Server responds 101 inside the same tunnel.
-5. Frames flow encrypted.
+1. port 443-এ TCP connect।
+2. TLS handshake (**TLS & Certificates** ট্র্যাকের চ্যাপ্টার থেকে)।
+3. TLS tunnel-এর ভেতরে HTTP Upgrade request পাঠান।
+4. server একই tunnel-এর ভেতরে 101 দিয়ে respond করে।
+5. frame encrypted হয়ে বইতে থাকে।
 
-ALPN negotiates `http/1.1` (WebSockets do not run on HTTP/2 the same way; some libraries support `RFC 8441` for HTTP/2 WebSockets but adoption is partial). For the foreseeable future, WebSockets means HTTP/1.1.
+ALPN `http/1.1` negotiate করে (WebSockets HTTP/2-তে ঠিক একইভাবে চলে না; কিছু library HTTP/2 WebSocket-এর জন্য `RFC 8441` support করে কিন্তু adoption আংশিক)। ভবিষ্যতের জন্য, WebSockets মানে HTTP/1.1।
 
-## What you will not implement yourself
+## যা আপনি নিজে implement করবেন না
 
-A full WebSocket server has to:
+একটা full WebSocket server-কে করতে হয়:
 
-- Parse the handshake, validate `Sec-WebSocket-Key`, compute `Sec-WebSocket-Accept`.
-- Read frames, handle masking, reassemble fragments.
-- Enforce control-frame size limits.
-- Send pings, reply to pings with pongs.
-- Handle close handshake, including unsolicited closes.
-- Optionally compress with `permessage-deflate`.
+- handshake parse করা, `Sec-WebSocket-Key` validate করা, `Sec-WebSocket-Accept` compute করা।
+- frame পড়া, masking সামলানো, fragment reassemble করা।
+- control-frame size limit enforce করা।
+- ping পাঠানো, ping-এর জবাবে pong দেওয়া।
+- unsolicited close সহ close handshake সামলানো।
+- ঐচ্ছিকভাবে `permessage-deflate` দিয়ে compress করা।
 
-The library does all of this. Your job is to implement the **application protocol** on top — the JSON shapes, the auth, the rooms, the rate limits. The next chapter starts there.
+library এই সব করে। আপনার কাজ হলো উপরে **application protocol** implement করা — JSON shape, auth, room, rate limit। পরের চ্যাপ্টার সেখানে শুরু হয়।
 
 ## Recap
 
-- Handshake = HTTP/1.1 GET with `Upgrade: websocket`, server responds 101.
-- `Sec-WebSocket-Key`/`Accept` proves both sides understand the protocol.
-- `Origin` and `Sec-WebSocket-Protocol` are tools you should use.
-- Frames have FIN, opcode, mask flag, length, optional masking key, payload.
-- Opcodes: text, binary, continuation; close, ping, pong.
-- Client→server frames must be masked; server→client must not be.
-- Fragmentation lets large messages span frames; libraries hide it.
-- Close frames carry a status code; 1006 is "TCP died." 4xxx is app-defined.
-- Pings keep middleboxes happy. Library handles them by default.
-- TLS via `wss://` on port 443. HTTP/1.1 only in practice.
+- Handshake = `Upgrade: websocket` সহ HTTP/1.1 GET, server 101 দিয়ে respond করে।
+- `Sec-WebSocket-Key`/`Accept` প্রমাণ করে দুই পক্ষ protocol বোঝে।
+- `Origin` আর `Sec-WebSocket-Protocol` এমন tool যা আপনার ব্যবহার করা উচিত।
+- Frame-এ FIN, opcode, mask flag, length, optional masking key, payload থাকে।
+- Opcode: text, binary, continuation; close, ping, pong।
+- Client→server frame অবশ্যই masked; server→client অবশ্যই নয়।
+- Fragmentation বড় message-কে frame জুড়ে ছড়াতে দেয়; library এটা লুকায়।
+- Close frame একটা status code বহন করে; 1006 হলো "TCP মারা গেছে।" 4xxx app-defined।
+- Ping middlebox-দের খুশি রাখে। Library default অনুযায়ী সামলায়।
+- `wss://`-এর মাধ্যমে TLS, port 443-এ। বাস্তবে শুধু HTTP/1.1।
 
-Next: [Your first server](/notes/websockets/03-first-server) — Go, end-to-end, in 80 lines. Browser client included.
+পরবর্তী: [আপনার প্রথম server](/notes/websockets/03-first-server) — Go, end-to-end, ৮০ লাইনে। Browser client সহ।

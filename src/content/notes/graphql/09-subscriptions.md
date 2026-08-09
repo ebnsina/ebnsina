@@ -1,9 +1,9 @@
 ---
-title: 'Subscriptions over WebSockets'
-subtitle: 'Subscriptions are realtime queries — clients open a long-lived connection and the server pushes events as they happen. Different transport, different lifecycle, different failure modes than queries and mutations.'
+title: 'WebSockets-এর উপর Subscriptions'
+subtitle: 'Subscription হলো realtime query — client একটা long-lived connection খোলে আর server ঘটনা ঘটার সাথে সাথে event push করে। query আর mutation-এর তুলনায় ভিন্ন transport, ভিন্ন lifecycle, ভিন্ন failure mode।'
 chapter: 9
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['graphql', 'subscriptions', 'websockets', 'realtime', 'pubsub']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graphql', 'subscriptions', 'websockets', 'realtime', 'pubsub']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Queries and mutations are request-response over HTTP. Subscriptions are an open pipe — the client says "I care about post-published events for this org" and the server delivers them whenever they happen. The transport is **WebSockets**, the protocol is **graphql-ws**, and the lifecycle is much longer than a regular request.
+Query আর mutation হলো HTTP-এর উপর request-response। Subscription হলো একটা খোলা pipe — client বলে "আমি এই org-এর post-published event নিয়ে আগ্রহী" আর server সেগুলো ঘটার সাথে সাথে পৌঁছে দেয়। transport হলো **WebSockets**, protocol হলো **graphql-ws**, আর lifecycle একটা সাধারণ request-এর চেয়ে অনেক দীর্ঘ।
 
-This chapter ships subscriptions on graphql-yoga end-to-end, from schema to nginx, with a real PubSub system. By the end you have a notification feature that updates connected clients instantly.
+এই chapter graphql-yoga-তে subscription end-to-end ship করে, schema থেকে nginx পর্যন্ত, একটা বাস্তব PubSub system সহ। শেষে তোমার কাছে একটা notification feature থাকবে যা connected client-দের তাৎক্ষণিকভাবে update করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A GraphQL subscription is like subscribing to a newspaper — it arrives when printed, not when you ask for it.
+একটা GraphQL subscription অনেকটা খবরের কাগজ subscribe করার মতো — এটা যখন ছাপা হয় তখন আসে, তুমি যখন চাও তখন নয়।
 
 </Callout>
 
-## What a subscription looks like
+## গল্পে বুঝি
+
+আল-বিরুনি ক্রিকেট-পাগল মানুষ। আগে যা করত — খেলার দিন প্রতি আধ ঘণ্টা পর পর শহরের খবরের কাগজের অফিসে হেঁটে গিয়ে জিজ্ঞেস করত, "নতুন কোনো স্কোর এসেছে?" বেশিরভাগ সময় উত্তর, "না, এখনো কিছু আসেনি।" ফিরে আসত, আবার একটু পর গিয়ে আবার জিজ্ঞেস করত। সারাদিন এই আসা-যাওয়াতেই শেষ, তবু প্রতিবার জিজ্ঞেস করা ছাড়া সে জানতে পারত না কিছু বদলেছে কি না।
+
+একদিন অফিসের কেরানি ইবনে সিনা তাকে বুদ্ধি দিল — "এভাবে বারবার এসো না। একবার এখানে তোমার নাম লিখিয়ে দাও, শুধু ক্রিকেটের স্কোরের জন্য। তারপর যতবার নতুন বুলেটিন আসবে, আমার রানার সঙ্গে সঙ্গে তোমার দরজায় সেটা পৌঁছে দিয়ে আসবে। তোমাকে আর একবারও হাঁটতে হবে না।" আল-বিরুনি একবার নাম লিখিয়ে দিল, আর সেদিন থেকে প্রতিটা নতুন স্কোর — যখনই ঘটছে তখনই — রানার তার দরজায় দিয়ে যেতে লাগল। খেলা শেষ হলে সে শুধু বলে দিল, "আর দরকার নেই," আর ব্যবস্থাটা বন্ধ হয়ে গেল।
+
+এই গল্পটাই আসলে একটা GraphQL **subscription**। বারবার অফিসে গিয়ে "নতুন খবর আছে?" জিজ্ঞেস করাটা হলো সাধারণ **query** — এক-একবারের request-response, প্রতিবার নিজে থেকে জিজ্ঞেস করতে হয়। একবার নাম লিখিয়ে দেওয়াটা হলো একটা **topic**-এ subscribe করা (এখানে "ক্রিকেটের স্কোর"), অফিসের সঙ্গে ওই স্থায়ী ব্যবস্থাটা হলো **persistent WebSocket connection**, আর রানারের প্রতিটা বুলেটিন ঘটামাত্র দিয়ে যাওয়াটাই server-এর **real-time push**। "আর দরকার নেই" বলাটা subscription বন্ধ করা। বাস্তবে ঠিক এভাবেই live cricket score, chat message, বা notification client-এর কাছে পৌঁছে — client একবার subscribe করে, তারপর server নিজে থেকে update push করতে থাকে, বারবার query করার দরকার হয় না।
+
+## একটা subscription দেখতে কেমন
 
 ```graphql
 type Subscription {
@@ -31,9 +39,9 @@ type Subscription {
 }
 ```
 
-A subscription field is a generator: it yields zero or more values over time. Each yielded value is a single GraphQL execution — same selection set, same resolver tree, but with the event payload as the root.
+একটা subscription field একটা generator: এটা সময়ের সাথে শূন্য বা একাধিক value yield করে। প্রতিটি yield করা value একটা single GraphQL execution — একই selection set, একই resolver tree, কিন্তু event payload-টা root হিসেবে।
 
-A client subscribes with the same query syntax:
+একটা client একই query syntax দিয়ে subscribe করে:
 
 ```graphql
 subscription WatchPosts($orgId: ID!) {
@@ -47,13 +55,13 @@ subscription WatchPosts($orgId: ID!) {
 }
 ```
 
-It opens a WebSocket, sends the subscription message, receives a stream of events as JSON over the socket. When the WebSocket closes (client navigated away, network died, server restarted), the subscription ends.
+এটা একটা WebSocket খোলে, subscription message পাঠায়, socket-এর উপর JSON হিসেবে event-এর একটা stream পায়। WebSocket বন্ধ হলে (client অন্য জায়গায় গেছে, network মরে গেছে, server restart হয়েছে), subscription শেষ হয়।
 
-## The graphql-ws protocol
+## graphql-ws protocol
 
-There are two WebSocket protocols for GraphQL: `subscriptions-transport-ws` (legacy, deprecated) and `graphql-ws` (current). Use **graphql-ws**. Both clients and servers support it; graphql-yoga ships with it.
+GraphQL-এর জন্য দুটো WebSocket protocol আছে: `subscriptions-transport-ws` (legacy, deprecated) আর `graphql-ws` (current)। **graphql-ws** ব্যবহার করো। client আর server দুটোই এটা support করে; graphql-yoga এটা সহ আসে।
 
-The wire protocol, simplified:
+wire protocol, সরল করে:
 
 ```
 Client → Server: { type: "connection_init", payload: { authToken: "..." } }
@@ -66,11 +74,11 @@ Server → Client: { type: "next", id: "1", payload: { data: { ... } } }
 Client → Server: { type: "complete", id: "1" }
 ```
 
-`connection_init` is where you send auth (token, session cookie). The server validates it once per connection and stores the result for the lifetime of the WebSocket. `subscribe` registers a stream; `next` is each delivery; `complete` ends it. Errors are explicit messages too.
+`connection_init` হলো যেখানে তুমি auth (token, session cookie) পাঠাও। server এটা প্রতি connection-এ একবার validate করে এবং WebSocket-এর সারা জীবনের জন্য ফলাফলটা রাখে। `subscribe` একটা stream register করে; `next` প্রতিটি delivery; `complete` এটা শেষ করে। Error-ও explicit message।
 
-## Server-side: the resolver is an async iterator
+## Server-side: resolver একটা async iterator
 
-Subscription resolvers don't return a value — they return an **async iterator** that the executor consumes:
+Subscription resolver কোনো value return করে না — এটা একটা **async iterator** return করে যা executor consume করে:
 
 ```js
 import { createPubSub } from 'graphql-yoga';
@@ -90,9 +98,9 @@ const resolvers = {
 };
 ```
 
-The pattern is `{ subscribe, resolve }`. `subscribe` returns the async iterator; `resolve` runs once per emitted event to shape the payload before the response is built (most of the time you return the payload as-is).
+pattern-টা হলো `{ subscribe, resolve }`। `subscribe` async iterator return করে; `resolve` প্রতিটি emit হওয়া event-এ একবার চলে response build হওয়ার আগে payload-কে রূপ দিতে (বেশিরভাগ সময় তুমি payload যেমন আছে তেমনই return করো)।
 
-Then anywhere in your code (a mutation, a webhook handler, a background job):
+তারপর তোমার code-এর যেকোনো জায়গায় (একটা mutation, একটা webhook handler, একটা background job):
 
 ```js
 publishPost: async (_, { id }, ctx) => {
@@ -102,11 +110,11 @@ publishPost: async (_, { id }, ctx) => {
 },
 ```
 
-That `pubsub.publish` fans out the post to every active subscriber on that channel. The executor runs the subscription's selection set with the post as root, returns the data over the WebSocket.
+ওই `pubsub.publish` post-টাকে ওই channel-এর প্রতিটি active subscriber-এ fan out করে। executor post-টাকে root হিসেবে নিয়ে subscription-এর selection set চালায়, WebSocket-এর উপর data return করে।
 
-## Wiring graphql-yoga for WebSockets
+## WebSockets-এর জন্য graphql-yoga wiring
 
-graphql-yoga handles HTTP. WebSockets need the `graphql-ws` server bound to the same HTTP server:
+graphql-yoga HTTP handle করে। WebSockets-এর জন্য `graphql-ws` server-টাকে একই HTTP server-এ bind করতে হয়:
 
 ```js
 import { createServer } from 'node:http';
@@ -163,13 +171,13 @@ useServer(
 httpServer.listen(4000);
 ```
 
-Verbose but boilerplate. Once it is in place you never touch it again.
+লম্বা কিন্তু boilerplate। একবার বসিয়ে দিলে আর কখনো ছুঁতে হয় না।
 
 ## PubSub backends
 
-graphql-yoga's built-in `createPubSub` is in-memory. That is fine for one process. It breaks the moment you have two — a subscription registered on instance A misses a publish from instance B.
+graphql-yoga-র built-in `createPubSub` in-memory। এক process-এর জন্য সেটা ঠিক আছে। কিন্তু দুটো হওয়ার মুহূর্তেই ভেঙে পড়ে — instance A-তে register হওয়া একটা subscription instance B থেকে আসা একটা publish মিস করে।
 
-For multi-process, use **Redis pub/sub**:
+Multi-process-এর জন্য **Redis pub/sub** ব্যবহার করো:
 
 ```bash
 npm install graphql-redis-subscriptions ioredis
@@ -185,21 +193,21 @@ const pubsub = new RedisPubSub({
 });
 ```
 
-Same `pubsub.publish(channel, payload)` API. Redis handles the fan-out across nodes.
+একই `pubsub.publish(channel, payload)` API। Redis node-গুলোর মধ্যে fan-out সামলায়।
 
-For higher volume or replay needs, **NATS** or **Kafka** are options. Most apps never need them — Redis pub/sub handles tens of thousands of messages per second on commodity hardware.
+আরও বেশি volume বা replay দরকার হলে **NATS** বা **Kafka** option। বেশিরভাগ app-এর এগুলো কখনো লাগে না — Redis pub/sub commodity hardware-এ প্রতি সেকেন্ডে হাজার হাজার message সামলায়।
 
 <Callout type="warn">
 
-**Redis pub/sub is fire-and-forget — no replay.** A subscriber that disconnected at 12:00 and reconnected at 12:05 sees nothing that happened in between. If your subscription needs at-least-once delivery, layer a queue (Redis Streams, NATS JetStream, Kafka) or have clients reconcile via a query on reconnect.
+**Redis pub/sub fire-and-forget — কোনো replay নেই।** যে subscriber 12:00-এ disconnect হয়ে 12:05-এ reconnect হলো সে এর মাঝে যা ঘটেছিল কিছুই দেখে না। তোমার subscription-এর at-least-once delivery দরকার হলে একটা queue (Redis Streams, NATS JetStream, Kafka) layer করো বা reconnect-এ client-দের একটা query দিয়ে reconcile করাও।
 
 </Callout>
 
-## Filtering subscriptions per subscriber
+## প্রতি subscriber-এ subscription filter করা
 
-A common need: "notify only when the new post matches the subscriber's filter."
+একটা common প্রয়োজন: "নতুন post subscriber-এর filter-এর সাথে মিললে তবেই notify করো।"
 
-The dumb approach — one channel per filter combo — explodes fast. Better: one broad channel, filter at delivery:
+বোকা approach — প্রতিটি filter combo-র জন্য একটা channel — দ্রুত বিস্ফোরিত হয়। ভালো: একটা broad channel, delivery-তে filter করো:
 
 ```js
 postPublished: {
@@ -212,11 +220,11 @@ postPublished: {
 },
 ```
 
-Or use the publish-time payload to address subscribers — `post-published:tag:javascript`, `post-published:tag:graphql`, and the publisher fans out to every relevant tag. Fewer filters but more channels. Pick whichever is cheaper for your cardinality.
+অথবা subscriber-দের address করতে publish-time payload ব্যবহার করো — `post-published:tag:javascript`, `post-published:tag:graphql`, আর publisher প্রতিটি প্রাসঙ্গিক tag-এ fan out করে। কম filter কিন্তু বেশি channel। তোমার cardinality-র জন্য যেটা সস্তা সেটা বেছে নাও।
 
-## Auth, again, at the connection layer
+## Auth, আবার, connection layer-এ
 
-Sub-protocol auth: the `connectionParams` from `connection_init` is the _only_ time clients hand you credentials. Check there:
+Sub-protocol auth: `connection_init` থেকে আসা `connectionParams` হলো _একমাত্র_ সময় যখন client তোমাকে credential দেয়। সেখানেই check করো:
 
 ```js
 context: async ({ connectionParams }) => {
@@ -226,31 +234,31 @@ context: async ({ connectionParams }) => {
 },
 ```
 
-If verification fails, the WebSocket connection is closed with an error. Subscribers without valid auth never get connected. That is far cleaner than per-message auth checks.
+verification fail করলে WebSocket connection একটা error সহ বন্ধ হয়ে যায়। valid auth ছাড়া subscriber কখনো connect হয় না। এটা per-message auth check-এর চেয়ে অনেক পরিচ্ছন্ন।
 
-For long-lived connections you also need to handle **token expiry mid-session**. Two strategies: (1) close the connection at expiry, force the client to reconnect with a fresh token; (2) accept refresh tokens over a special message and rotate. Option 1 is simpler. Most clients reconnect transparently.
+long-lived connection-এর জন্য তোমাকে **token expiry mid-session**-ও handle করতে হয়। দুটো strategy: (1) expiry-তে connection বন্ধ করে দাও, client-কে fresh token দিয়ে reconnect করতে বাধ্য করো; (2) একটা special message-এর উপর refresh token গ্রহণ করে rotate করো। Option 1 সরল। বেশিরভাগ client স্বচ্ছভাবে reconnect করে।
 
-## Subscriptions and DataLoader
+## Subscriptions আর DataLoader
 
-Each emitted event runs a fresh execution — fresh resolvers, fresh DataLoader instances. So per-event the loader cache is fine.
+প্রতিটি emit হওয়া event একটা fresh execution চালায় — fresh resolver, fresh DataLoader instance। তাই per-event loader cache ঠিক আছে।
 
-What is _not_ fine: opening a transaction or holding a DB client across the lifetime of a subscription. The connection is open for hours; do not hold a Postgres connection. Pull from the pool only inside resolvers, release immediately.
+যা _ঠিক নয়_: একটা subscription-এর সারা জীবন ধরে একটা transaction খোলা রাখা বা একটা DB client ধরে রাখা। connection ঘণ্টার পর ঘণ্টা খোলা থাকে; একটা Postgres connection ধরে রেখো না। শুধু resolver-এর ভেতরে pool থেকে টেনে নাও, সঙ্গে সঙ্গে release করো।
 
-## Heartbeats, reconnects, and dropped sockets
+## Heartbeat, reconnect, আর ঝরে যাওয়া socket
 
-WebSockets get half-closed. The TCP connection is gone but neither side knows because no traffic flows. Without heartbeats, the server thinks the subscription is alive and burns memory; the client thinks it is connected and shows stale data.
+WebSocket half-closed হয়ে যায়। TCP connection চলে গেছে কিন্তু কোনো পক্ষ জানে না কারণ কোনো traffic চলছে না। heartbeat ছাড়া server ভাবে subscription জীবিত আর memory পোড়ায়; client ভাবে সে connected আর বাসি data দেখায়।
 
-`graphql-ws` server supports `keepAlive` — periodic pings every N seconds. Set it to 30s or less. Clients ack; if no ack, the server drops the connection.
+`graphql-ws` server `keepAlive` support করে — প্রতি N সেকেন্ডে periodic ping। এটা 30s বা তার কম সেট করো। client ack দেয়; ack না এলে server connection ফেলে দেয়।
 
 ```js
 useServer({ ... }, wsServer, /* keepAlive */ 12_000);
 ```
 
-Reconnects are the client's job. The `graphql-ws` client library supports `retryAttempts` and exponential backoff; most apps need this configured.
+Reconnect client-এর কাজ। `graphql-ws` client library `retryAttempts` আর exponential backoff support করে; বেশিরভাগ app-এর এটা configure করা দরকার।
 
-## nginx in front of WebSockets
+## WebSockets-এর সামনে nginx
 
-nginx must be configured for WebSocket upgrade — without it, the protocol switch fails:
+nginx-কে WebSocket upgrade-এর জন্য configure করতে হবে — এটা ছাড়া protocol switch fail করে:
 
 ```nginx
 location /graphql {
@@ -264,32 +272,32 @@ location /graphql {
 }
 ```
 
-Default nginx timeouts (60s) close subscriptions after a minute. The two long timeouts here are essential. Heartbeats also keep the connection looking active to nginx.
+default nginx timeout (60s) এক মিনিট পর subscription বন্ধ করে দেয়। এখানকার দুটো long timeout অপরিহার্য। heartbeat-ও connection-টাকে nginx-এর কাছে active দেখায়।
 
-## When to use subscriptions — and when not to
+## Subscription কখন ব্যবহার করবে — আর কখন নয়
 
-**Use them when:**
+**যখন ব্যবহার করবে:**
 
-- A small set of users (single-digit thousands) need realtime updates on a small set of channels.
-- Latency matters — sub-second push is the requirement.
-- The data is read-mostly: subscriptions deliver, no client-side commands flow back.
+- অল্প কিছু user (single-digit হাজার) অল্প কিছু channel-এ realtime update চায়।
+- Latency গুরুত্বপূর্ণ — sub-second push-ই প্রয়োজন।
+- data read-mostly: subscription deliver করে, কোনো client-side command ফিরে আসে না।
 
-**Don't use them for:**
+**যেসবে ব্যবহার কোরো না:**
 
-- Mass broadcast to millions. Use a CDN or push notifications.
-- Heavy bidirectional control flow. Use plain WebSockets or gRPC streaming.
-- Eventual consistency where polling every 5s is fine. Polling is simpler, debuggable, and cacheable.
+- লক্ষ লক্ষ-এ mass broadcast। একটা CDN বা push notification ব্যবহার করো।
+- ভারী bidirectional control flow। plain WebSocket বা gRPC streaming ব্যবহার করো।
+- eventual consistency যেখানে প্রতি 5s-এ polling ঠিক আছে। Polling সরল, debuggable, আর cacheable।
 
-A subscription is a feature, not a default. Many teams ship beautiful realtime UIs without ever opening a WebSocket — they poll. If your data changes once a minute, polling is correct.
+Subscription একটা feature, default নয়। অনেক team WebSocket না খুলেই সুন্দর realtime UI ship করে — তারা poll করে। তোমার data মিনিটে একবার বদলালে, polling-ই সঠিক।
 
-## Recap
+## সারসংক্ষেপ
 
-- Subscriptions are async iterators over a pub/sub channel, exposed as a GraphQL field.
-- Transport is `graphql-ws` over a WebSocket. Auth in `connection_init`, once per connection.
-- In-memory `createPubSub` for one process; Redis pub/sub for many. No replay — layer a queue if you need it.
-- Filter at delivery time for fine-grained subscriptions; fan-out by channel for coarse ones.
-- Heartbeats are mandatory. nginx needs `proxy_read_timeout` raised and Upgrade headers set.
-- Don't hold a DB connection across a subscription's lifetime. Fetch inside resolvers, release fast.
-- Subscriptions are not a replacement for polling. Use them when realtime is a real requirement.
+- Subscription একটা pub/sub channel-এর উপর async iterator, একটা GraphQL field হিসেবে exposed।
+- Transport হলো WebSocket-এর উপর `graphql-ws`। Auth `connection_init`-এ, প্রতি connection-এ একবার।
+- এক process-এর জন্য in-memory `createPubSub`; অনেকের জন্য Redis pub/sub। কোনো replay নেই — দরকার হলে একটা queue layer করো।
+- fine-grained subscription-এর জন্য delivery-time-এ filter করো; coarse-এর জন্য channel অনুযায়ী fan-out।
+- Heartbeat বাধ্যতামূলক। nginx-এর `proxy_read_timeout` বাড়ানো আর Upgrade header সেট করা দরকার।
+- একটা subscription-এর সারা জীবন ধরে DB connection ধরে রেখো না। resolver-এর ভেতরে fetch করো, দ্রুত release করো।
+- Subscription polling-এর বিকল্প নয়। realtime সত্যিকারের প্রয়োজন হলে তবেই ব্যবহার করো।
 
-Next: [Production hardening and self-host](/notes/graphql/10-production) — depth and complexity limits, persisted queries, federation overview, and the full deploy behind nginx.
+পরবর্তী: [Production hardening এবং self-host](/notes/graphql/10-production) — depth ও complexity limit, persisted query, federation overview, আর nginx-এর পেছনে পুরো deploy।

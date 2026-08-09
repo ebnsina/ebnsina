@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Notification System at Scale'
-subtitle: 'Design and build a production notification system with multi-channel delivery, fan-out, priority queues, rate limiting, and user preferences.'
+title: 'Case Study: স্কেলে Notification System'
+subtitle: 'multi-channel delivery, fan-out, priority queue, rate limiting, এবং user preferences সহ একটি production notification system ডিজাইন ও তৈরি করা।'
 chapter: 19
 level: 'advanced'
-readingTime: '30 min'
+readingTime: '30 মিনিট'
 topics:
   ['notification system', 'fan-out', 'priority queue', 'multi-channel delivery', 'user preferences']
 ---
@@ -14,11 +14,19 @@ topics:
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What Does a Notification System at Scale Look Like?
+## গল্পে বুঝি
 
-A notification system is the backbone of user engagement in every modern application. When your Uber driver arrives, you get a push notification. When someone comments on your Facebook post, you see an in-app alert. When your credit card is charged, you receive an email and SMS. Behind these seemingly simple messages is a system that must handle **multiple delivery channels** (push, email, SMS, in-app), **user preferences** (what to send and when), **priority routing** (fraud alerts before marketing), **rate limiting** (no notification fatigue), and **delivery tracking** (did it actually arrive?).
+গ্রামের একটা ঘোষণা অফিস — আগামীকাল কমিউনিটির বার্ষিক অনুষ্ঠান, আর এই একটা খবর গ্রামের সবার কাছে পৌঁছাতে হবে। কিন্তু সবাই একইভাবে খবর পেতে চায় না। ইবনে সিনা চাচা বলে রেখেছেন তাকে মসজিদের মাইকে ডাক দিলেই হবে, আল-খোয়ারিজমি ভাই চান তার মোবাইলে একটা SMS আসুক, আর ফাতিমা আল-ফিহরি খালা বধির বলে তার দরজায় গিয়ে কেউ কড়া নাড়ুক। তাই অফিস একটাই খবর, কিন্তু প্রতিজনের পছন্দমতো আলাদা আলাদা মাধ্যমে পাঠায় — কাউকে মাইকে, কাউকে SMS-এ, কারো দরজায় কড়া নেড়ে।
 
-Think of it like a post office that handles express mail, standard mail, and bulk marketing simultaneously. Express packages (critical alerts like security warnings) skip the line and get delivered immediately. Standard mail (transactional notifications like order confirmations) follows normal processing. Bulk marketing (weekly digests, promotional offers) gets batched and delivered during low-traffic hours. Every package has a tracking number, and if delivery fails, the system retries with escalating delays.
+অফিসের একটা খাতাও আছে। সেখানে লেখা কে কোন মাধ্যমে খবর চায়, আর কার বাড়িতে "বিরক্ত কোরো না" লেখা — যেমন হালিমা খালা সদ্য অসুস্থ, তাকে এবার বাদ দিতে হবে। অফিসের ছেলেরা খাতা মিলিয়ে কাজ করে, তাই একই লোককে দুবার খবর দিয়ে বসে না। আর আল-খোয়ারিজমি ভাইয়ের ফোন যখন বন্ধ পাওয়া গেল, অফিস হাল ছাড়ে না — একটু পরে আবার চেষ্টা করে, ফোন খোলা পেলে তবেই SMS পৌঁছায়।
+
+এই ঘোষণা অফিসটাই আসলে একটা **notification system**। একটা খবর সবার কাছে ভিন্ন ভিন্ন মাধ্যমে ছড়িয়ে দেওয়াটাই multi-channel fan-out, আর মাইক-SMS-দরজায় কড়া নাড়াগুলো হলো push, SMS, email-এর মতো আলাদা **channel**। "বিরক্ত কোরো না" খাতাটাই user **preferences** আর opt-out, একই লোককে দুবার খবর না দেওয়াটা **dedup**, আর ফোন বন্ধ পেলে পরে আবার চেষ্টা করাটাই **retry**। বাস্তবে Facebook, Uber-এর মতো সিস্টেম ঠিক এভাবেই কোটি কোটি মানুষকে যার যার পছন্দের channel-এ খবর পৌঁছায়।
+
+## স্কেলে একটা Notification System দেখতে কেমন?
+
+প্রতিটি আধুনিক অ্যাপ্লিকেশনে user engagement-এর মূল ভিত্তি হলো notification system। আপনার Uber ড্রাইভার পৌঁছালে আপনি একটা push notification পান। কেউ আপনার Facebook পোস্টে কমেন্ট করলে আপনি একটা in-app alert দেখেন। আপনার ক্রেডিট কার্ডে চার্জ হলে আপনি একটা email আর SMS পান। এই আপাত-সরল মেসেজগুলোর পেছনে থাকে এমন একটা system যাকে সামলাতে হয় **একাধিক delivery channel** (push, email, SMS, in-app), **user preferences** (কী পাঠাতে হবে আর কখন), **priority routing** (marketing-এর আগে fraud alert), **rate limiting** (notification fatigue যেন না হয়), এবং **delivery tracking** (আসলেই কি পৌঁছালো?)।
+
+ব্যাপারটাকে এমন একটা ডাকঘরের মতো ভাবুন যা একসাথে express mail, standard mail, আর bulk marketing সামলায়। Express প্যাকেজ (security warning-এর মতো critical alert) লাইন এড়িয়ে সাথে সাথে ডেলিভার হয়। Standard mail (order confirmation-এর মতো transactional notification) স্বাভাবিক প্রসেসিং অনুসরণ করে। Bulk marketing (weekly digest, promotional offer) batch করা হয় এবং কম-ট্রাফিকের সময়ে ডেলিভার হয়। প্রতিটি প্যাকেজের একটা tracking number আছে, আর ডেলিভারি ব্যর্থ হলে system ধাপে ধাপে বাড়তে থাকা delay দিয়ে retry করে।
 
 <Mermaid
 title="Notification System Architecture"
@@ -27,36 +35,36 @@ code={`graph TD
   W --> S["Notification Store<br/>History"] --> Q["Priority Queue<br/>Rate Limited"] --> P["User Preferences<br/>Channels & Rules"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উপমা
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a hospital alert system — critical alerts (code blue) go out instantly, routine reminders (appointment tomorrow) are batched and sent during business hours. Each notification's delivery status is tracked.
+একটা হাসপাতালের alert system-এর মতো — critical alert (code blue) সাথে সাথে চলে যায়, routine reminder (আগামীকাল appointment) batch করা হয় আর অফিস চলাকালীন সময়ে পাঠানো হয়। প্রতিটি notification-এর delivery status ট্র্যাক করা হয়।
 
 </Callout>
 
-Facebook sends over 10 billion push notifications daily. When someone likes your photo, the notification system checks your preferences (do you want push notifications for likes?), checks if you're in "do not disturb" mode, checks the rate limit (have you already received 50 notifications this hour?), and then routes through the appropriate channel. For Uber, when your driver is 2 minutes away, the system must deliver that notification within seconds — it goes through the critical priority lane, bypassing all batching and rate limits. Airbnb takes the opposite approach for non-urgent updates: it batches your "homes you might like" into a weekly digest email, reducing notification fatigue while maintaining engagement.
+Facebook প্রতিদিন 10 বিলিয়নেরও বেশি push notification পাঠায়। কেউ আপনার ছবিতে লাইক দিলে notification system আপনার preferences চেক করে (আপনি কি লাইকের জন্য push notification চান?), আপনি "do not disturb" মোডে আছেন কিনা চেক করে, rate limit চেক করে (আপনি কি এই ঘণ্টায় ইতিমধ্যে 50টা notification পেয়ে গেছেন?), এবং তারপর উপযুক্ত channel দিয়ে route করে। Uber-এর ক্ষেত্রে, আপনার ড্রাইভার যখন 2 মিনিট দূরে, system-কে সেই notification সেকেন্ডের মধ্যে ডেলিভার করতেই হবে — এটা critical priority lane দিয়ে যায়, সব batching আর rate limit বাইপাস করে। Airbnb non-urgent update-এর জন্য উল্টো পথ নেয়: এটা আপনার "homes you might like" একটা weekly digest email-এ batch করে, engagement বজায় রেখে notification fatigue কমায়।
 
-## Requirements
+## প্রয়োজনীয়তা
 
-- **Functional**: Multi-channel delivery (push, email, SMS, in-app), user preference management per notification type, batching/digest for non-urgent notifications, priority levels (critical, high, normal, low), delivery tracking with status updates, fan-out for group notifications
-- **Non-functional**: 1M notifications/min at peak, sub-second delivery for critical alerts, 99.95% delivery rate, at-least-once delivery guarantee
-- **Storage**: Notification history with delivery status, user preference profiles, delivery audit trail
+- **Functional**: Multi-channel delivery (push, email, SMS, in-app), প্রতি notification type-এ user preference ম্যানেজমেন্ট, non-urgent notification-এর জন্য batching/digest, priority level (critical, high, normal, low), status update সহ delivery tracking, group notification-এর জন্য fan-out
+- **Non-functional**: পিকে 1M notification/min, critical alert-এর জন্য sub-second delivery, 99.95% delivery rate, at-least-once delivery guarantee
+- **Storage**: delivery status সহ notification history, user preference profile, delivery audit trail
 
-## Step-by-Step: How a Notification Flows
+## ধাপে ধাপে: একটা Notification কীভাবে প্রবাহিত হয়
 
-1. **Event triggers notification** — An upstream service emits an event (e.g., "order_shipped" for user 12345)
-2. **Look up user preferences** — The system checks which channels this user has enabled for "order_shipped" events (maybe push + email, but not SMS)
-3. **Check quiet hours** — If the user has quiet hours set (e.g., 11pm-7am) and the notification isn't critical, defer it
-4. **Assign priority** — The notification type determines priority. "fraud_alert" → critical (immediate). "order_shipped" → high. "weekly_digest" → low
-5. **Enqueue with priority** — Critical notifications go to the front of the queue. Low-priority ones wait behind everything else
-6. **Rate limit check** — Before sending, verify the user hasn't exceeded their per-channel limit (e.g., max 10 push/hour, max 50 email/day)
-7. **Deliver via channel handler** — The appropriate handler (FCM for push, SendGrid for email, Twilio for SMS) delivers the notification
-8. **Track delivery and retry** — If delivery fails, retry with exponential backoff (1s, 2s, 4s). After 3 failures, mark as permanently failed
+1. **Event notification ট্রিগার করে** — একটা upstream service একটা event emit করে (যেমন, user 12345-এর জন্য "order_shipped")
+2. **User preferences দেখা হয়** — system চেক করে "order_shipped" event-এর জন্য এই user কোন channel-গুলো enable করেছে (হয়তো push + email, কিন্তু SMS নয়)
+3. **Quiet hours চেক করা হয়** — user-এর যদি quiet hours সেট থাকে (যেমন, রাত 11টা-সকাল 7টা) এবং notification-টা critical না হয়, তাহলে সেটা পিছিয়ে দেওয়া হয়
+4. **Priority বসানো হয়** — notification type priority নির্ধারণ করে। "fraud_alert" → critical (সাথে সাথে)। "order_shipped" → high। "weekly_digest" → low
+5. **Priority সহ enqueue করা হয়** — critical notification queue-এর সামনে চলে যায়। Low-priority-গুলো বাকি সবার পেছনে অপেক্ষা করে
+6. **Rate limit চেক** — পাঠানোর আগে যাচাই করা হয় user তার per-channel limit ছাড়িয়ে যায়নি (যেমন, সর্বোচ্চ 10 push/hour, সর্বোচ্চ 50 email/day)
+7. **Channel handler দিয়ে deliver করা হয়** — উপযুক্ত handler (push-এর জন্য FCM, email-এর জন্য SendGrid, SMS-এর জন্য Twilio) notification-টা deliver করে
+8. **Delivery ট্র্যাক ও retry করা হয়** — delivery ব্যর্থ হলে exponential backoff দিয়ে retry করা হয় (1s, 2s, 4s)। 3 বার ব্যর্থ হলে permanently failed হিসেবে চিহ্নিত করা হয়
 
-## Building the Notification System
+## Notification System তৈরি করা
 
 <CodeTabs tsFile="notification-system.ts" goFile="notification-system.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -930,46 +938,46 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তগুলোর ব্যাখ্যা
 
-### Why Priority Queues?
+### কেন Priority Queue?
 
-Not all notifications are equal. A fraud alert must arrive in seconds; a weekly digest can wait hours. Priority queues ensure critical notifications (account security, payment failures, ride arriving) always process before marketing emails. Without prioritization, a burst of 100K promotional notifications could delay a security alert by minutes — unacceptable when someone's account is being compromised.
+সব notification সমান নয়। একটা fraud alert সেকেন্ডের মধ্যে পৌঁছাতেই হবে; একটা weekly digest ঘণ্টার পর ঘণ্টা অপেক্ষা করতে পারে। Priority queue নিশ্চিত করে যে critical notification (account security, payment failure, ride arriving) সবসময় marketing email-এর আগে প্রসেস হয়। Prioritization ছাড়া 100K promotional notification-এর একটা burst একটা security alert-কে মিনিট ধরে দেরি করাতে পারে — কারো account যখন compromise হচ্ছে তখন এটা মেনে নেওয়া যায় না।
 
-### Why Fan-Out on Write vs Fan-Out on Read?
+### কেন Fan-Out on Write বনাম Fan-Out on Read?
 
-We use fan-out on write — when an event triggers, we immediately create notification records for all target users and enqueue them. The alternative (fan-out on read) would check for pending notifications when users open the app. Fan-out on write gives predictable delivery timing, works for channels where users don't actively "check" (push, email, SMS), and lets us track delivery status per user. The cost is more queue entries, but notification volume is bounded by rate limits.
+আমরা fan-out on write ব্যবহার করি — একটা event ট্রিগার হলে আমরা সাথে সাথে সব target user-এর জন্য notification record তৈরি করি আর enqueue করি। বিকল্প (fan-out on read) হলে user অ্যাপ খোলার সময় pending notification চেক করা হতো। Fan-out on write দেয় predictable delivery timing, এমন channel-এর জন্য কাজ করে যেখানে user সক্রিয়ভাবে "চেক" করে না (push, email, SMS), এবং আমাদের প্রতি user-এ delivery status ট্র্যাক করতে দেয়। খরচটা হলো বেশি queue entry, কিন্তু notification volume rate limit দিয়ে সীমাবদ্ধ।
 
-### Why Rate Limit Per User Per Channel?
+### কেন Per User Per Channel Rate Limit?
 
-Without rate limiting, a buggy upstream service could send thousands of notifications to one user in minutes. Per-user limits prevent notification fatigue. Per-channel limits are critical because tolerances differ: users accept ~50 emails/day but only ~10 push notifications/hour and ~5 SMS/day. Channel-specific limits let us match expectations for each medium.
+Rate limiting ছাড়া একটা buggy upstream service মিনিটের মধ্যে একজন user-কে হাজার হাজার notification পাঠাতে পারে। Per-user limit notification fatigue ঠেকায়। Per-channel limit খুবই গুরুত্বপূর্ণ কারণ সহনশীলতা ভিন্ন: user ~50 email/day মেনে নেয় কিন্তু মাত্র ~10 push notification/hour আর ~5 SMS/day। Channel-নির্দিষ্ট limit আমাদের প্রতিটি medium-এর প্রত্যাশার সাথে মিল রাখতে দেয়।
 
-### Why Exponential Backoff for Retries?
+### কেন Retry-এর জন্য Exponential Backoff?
 
-When a channel provider (FCM, SendGrid, Twilio) returns an error, it might be transient (network blip) or persistent (invalid device token). Exponential backoff (1s, 2s, 4s) gives transient issues time to resolve without overwhelming the provider. After 3 failures, we mark as permanently failed — if the provider is down for minutes, hammering it makes recovery slower for everyone.
+একটা channel provider (FCM, SendGrid, Twilio) যখন error দেয়, এটা transient হতে পারে (network blip) বা persistent হতে পারে (invalid device token)। Exponential backoff (1s, 2s, 4s) provider-কে বেশি চাপ না দিয়ে transient সমস্যাগুলোকে ঠিক হওয়ার সময় দেয়। 3 বার ব্যর্থ হওয়ার পর আমরা permanently failed হিসেবে চিহ্নিত করি — provider যদি মিনিটের জন্য down থাকে, একে বারবার আঘাত করলে সবার জন্য recovery ধীর হয়।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল বিষয়গুলো
 
-- Priority queues ensure critical alerts (security, payments) always process before marketing — a 10-second delay on a fraud alert is unacceptable
-- Multi-channel delivery means one event can trigger push + email + SMS — user preferences control which channels are active per notification type
-- Rate limiting per user per channel prevents notification fatigue — email tolerance differs vastly from push and SMS
-- Fan-out on write gives predictable delivery timing and works for channels where users don't actively "check" (push, SMS)
-- Exponential backoff on retries prevents overwhelming channel providers during outages
-- Quiet hours respect user preferences — critical notifications bypass quiet hours, everything else waits
+- Priority queue নিশ্চিত করে critical alert (security, payment) সবসময় marketing-এর আগে প্রসেস হয় — একটা fraud alert-এ 10 সেকেন্ডের দেরিও মেনে নেওয়া যায় না
+- Multi-channel delivery মানে একটা event push + email + SMS ট্রিগার করতে পারে — প্রতি notification type-এ কোন channel সক্রিয় তা user preferences নিয়ন্ত্রণ করে
+- Per user per channel rate limiting notification fatigue ঠেকায় — email-এর সহনশীলতা push আর SMS থেকে ব্যাপকভাবে ভিন্ন
+- Fan-out on write দেয় predictable delivery timing এবং এমন channel-এর জন্য কাজ করে যেখানে user সক্রিয়ভাবে "চেক" করে না (push, SMS)
+- Retry-এ exponential backoff outage-এর সময় channel provider-দের অতিরিক্ত চাপে ফেলা ঠেকায়
+- Quiet hours user preferences মান্য করে — critical notification quiet hours বাইপাস করে, বাকি সব অপেক্ষা করে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জীবনে ব্যবহার
 
-- **Facebook** sends 10B+ push notifications daily using priority-based fan-out with per-user rate limiting
-- **Uber** uses real-time notifications for ride updates with sub-second delivery SLAs for critical events like "driver arriving"
-- **Airbnb** batches non-urgent notifications into weekly digest emails to reduce notification fatigue
-- **Slack** uses per-channel rate limiting and "do not disturb" windows that integrate with calendar availability
-- **Stripe** delivers webhook notifications with exponential backoff retry, achieving 99.99% delivery rate
-- This architecture handles 1M+ notifications/minute with sub-second critical delivery
+- **Facebook** per-user rate limiting সহ priority-based fan-out ব্যবহার করে প্রতিদিন 10B+ push notification পাঠায়
+- **Uber** ride update-এর জন্য real-time notification ব্যবহার করে, "driver arriving"-এর মতো critical event-এ sub-second delivery SLA সহ
+- **Airbnb** notification fatigue কমাতে non-urgent notification-গুলোকে weekly digest email-এ batch করে
+- **Slack** per-channel rate limiting এবং "do not disturb" window ব্যবহার করে যা calendar availability-এর সাথে integrate হয়
+- **Stripe** exponential backoff retry সহ webhook notification deliver করে, 99.99% delivery rate অর্জন করে
+- এই architecture sub-second critical delivery সহ 1M+ notification/minute সামলায়
 
 </div>

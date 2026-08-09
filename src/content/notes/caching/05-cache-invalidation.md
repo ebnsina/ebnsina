@@ -1,9 +1,9 @@
 ---
 title: 'Cache Invalidation'
-subtitle: 'The hardest problem in computer science — TTL, event-driven purging, versioned keys, and when to accept staleness.'
+subtitle: 'কম্পিউটার সায়েন্সের সবচেয়ে কঠিন সমস্যা — TTL, event-driven purging, versioned keys, এবং কখন staleness মেনে নিতে হয়।'
 chapter: 5
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['invalidation', 'TTL', 'versioned keys', 'event-driven', 'consistency']
 ---
 
@@ -11,35 +11,43 @@ topics: ['invalidation', 'TTL', 'versioned keys', 'event-driven', 'consistency']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Cache Invalidation Exists
+## গল্পে বুঝি
 
-Every cache is a copy. The moment a copy exists, it can diverge from the original. Invalidation is the mechanism that decides when to throw the copy away.
+ইবনে সিনার মুদি দোকানের সামনে একটা বড় প্রাইস বোর্ড ঝোলানো — চাল, ডাল, তেলের দাম চক দিয়ে লেখা। সকালে পাইকারি বাজারে সয়াবিন তেলের দাম বেড়ে গেল, ইবনে সিনা গুদামে নতুন দরে তেল কিনল, কিন্তু বোর্ডটা মোছার কথা মনেই থাকল না। আল-খোয়ারিজমি এসে বোর্ডে পুরনো দাম দেখে সেই দামে টাকা বাড়িয়ে ধরল, ইবনে সিনা বলল "ভাই, দাম তো বেড়ে গেছে" — আল-খোয়ারিজমি চটে গেল, "বোর্ডে তো এটাই লেখা!" বোর্ডটা হলো cache, আর গুদামের আসল দাম হলো source of truth; দুটো আলাদা হয়ে যাওয়াতেই এই staleness, এই ঝামেলা।
 
-The problem it solves: how do you keep fast cached reads consistent with slow authoritative writes, without making every read slow or every write complicated?
+ইবনে সিনা এরপর তিনটা অভ্যাস শিখল। এক — সে ঠিক করল রোজ সকালে বোর্ড মুছে নতুন করে সব দাম লিখবে, দাম বদলাক বা না বদলাক; মাঝের সময়টুকু একটু পুরনো দাম থাকলেও দিনে একবার তো ঠিক হবেই (এটাই TTL, সময় পার হলেই নতুন করে লেখা)। দুই — বড় কোনো পণ্যের দাম বদলালে সে সঙ্গে সঙ্গে ওই লাইনটা মুছে নতুন দাম বসায়, অপেক্ষা করে না (এটাই event-driven purge, উৎস বদলানোর মুহূর্তেই cache মোছা)। তিন — ঈদের সময় ফাতিমা আল-ফিহরি যখন পুরো দামের তালিকা নতুন করে সাজাল, সে পুরনো বোর্ড না মুছে পাশে "১৫ রমজানের নতুন দর" লেখা একটা তারিখ-দেওয়া নতুন বোর্ড টাঙিয়ে দিল, খদ্দেররা নতুনটা দেখে আর পুরনোটা এমনিতেই অগ্রাহ্য হয় (এটাই versioned key, পুরনো key পড়ে থাকে, নতুন key-তে fresh ডেটা)।
+
+গল্পের বোর্ড হলো cache আর গুদামের দাম source of truth — এদের এক রাখাই cache invalidation। রোজ সকালে মোছা মানে TTL, দাম বদলানোর সঙ্গে সঙ্গে মোছা মানে event-driven purge, আর তারিখ-দেওয়া নতুন বোর্ড মানে versioned key; আর কিছু সময় "সকাল পর্যন্ত পুরনো দামই চলবে" মেনে নেওয়াটাই হলো একটু staleness সহ্য করা। বাস্তবে Redis-এ product price বা user profile ঠিক এভাবেই fresh রাখা হয় — সবচেয়ে কঠিন সমস্যা বলেই এখানে কোনো নিখুঁত উত্তর নেই, শুধু tradeoff।
+
+## কেন Cache Invalidation দরকার
+
+প্রতিটি cache আসলে একটা কপি। যেই মুহূর্তে একটা কপি তৈরি হয়, সেটা মূল ডেটা থেকে আলাদা হয়ে যেতে পারে। Invalidation হলো সেই ব্যবস্থা যা ঠিক করে কখন কপিটা ফেলে দিতে হবে।
+
+এটা যে সমস্যা সমাধান করে: fast cached read-গুলোকে slow authoritative write-গুলোর সাথে কীভাবে consistent রাখবেন, প্রতিটা read-কে slow না করে বা প্রতিটা write-কে জটিল না করে?
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A whiteboard in an office shows the quarterly targets. The finance team updates the spreadsheet. Unless someone erases the whiteboard and rewrites it, people will act on wrong numbers. Invalidation is the act of erasing the whiteboard — the question is who does it, when, and whether anyone notices the gap.
+একটা অফিসের whiteboard-এ quarterly target দেখানো আছে। finance টিম spreadsheet আপডেট করে। কেউ যদি whiteboard মুছে নতুন করে না লেখে, তাহলে মানুষ ভুল সংখ্যার ওপর ভিত্তি করে কাজ করবে। Invalidation হলো whiteboard মোছার কাজ — প্রশ্ন হলো এটা কে করে, কখন করে, এবং মাঝের সময়টায় কেউ ভুল ধরতে পারে কিনা।
 
 </Callout>
 
-Phil Karlton's quip stands: _"There are only two hard things in computer science: cache invalidation and naming things."_ The difficulty is fundamental — cache and database are two sources of truth, and distributed systems have no perfect solution, only tradeoffs.
+Phil Karlton-এর বিখ্যাত উক্তিটা এখনও সত্য: _"There are only two hard things in computer science: cache invalidation and naming things."_ কঠিনতাটা মৌলিক — cache আর database দুটোই source of truth, এবং distributed system-এ কোনো নিখুঁত সমাধান নেই, শুধু tradeoff আছে।
 
 ## Strategy 1 — TTL (Time-Based Expiry)
 
-The simplest approach: let entries expire automatically. After TTL seconds, the next read triggers a fresh fetch.
+সবচেয়ে সহজ উপায়: entry-গুলোকে নিজে থেকে expire হতে দিন। TTL সেকেন্ড পার হওয়ার পরে পরবর্তী read একটা fresh fetch ট্রিগার করে।
 
 ```typescript
 await redis.setEx(`product:${id}`, 300, JSON.stringify(product)); // 5 min TTL
 ```
 
-**When it works:** When you can tolerate stale data for the TTL duration. Product catalog, user profiles, config values — most things in most applications.
+**কখন কাজ করে:** যখন আপনি TTL-এর সময়টুকু stale ডেটা সহ্য করতে পারেন। Product catalog, user profile, config value — বেশিরভাগ অ্যাপ্লিকেশনের বেশিরভাগ জিনিস।
 
-**When it fails:** Low tolerance for staleness. If a user changes their password, a 5-minute TTL means the old data stays valid for 5 more minutes.
+**কখন ব্যর্থ হয়:** যখন staleness-এর প্রতি সহনশীলতা কম। কোনো user যদি তার password বদলায়, তাহলে 5-মিনিটের TTL মানে পুরনো ডেটা আরও 5 মিনিট valid থাকবে।
 
-**TTL tuning guide:**
+**TTL tuning গাইড:**
 
 ```
 User profile:       60s   — changes rarely, staleness rarely matters
@@ -52,13 +60,13 @@ Real-time data:     don't cache, or 1–5s max
 
 <Callout type="tip">
 
-**Jitter your TTLs.** If 10,000 cache entries all expire at the same second (set during a cold-start batch load), you get a miss storm. Add random jitter: `ttl + Math.floor(Math.random() * 30)`.
+**আপনার TTL-গুলোতে jitter দিন।** যদি 10,000 cache entry সব একই সেকেন্ডে expire হয় (cold-start batch load-এর সময় সেট হওয়ায়), তাহলে একটা miss storm তৈরি হয়। random jitter যোগ করুন: `ttl + Math.floor(Math.random() * 30)`.
 
 </Callout>
 
 ## Strategy 2 — Invalidate on Write
 
-Delete the cache entry whenever the underlying data changes. The next read repopulates it.
+যখনই underlying ডেটা বদলায় তখনই cache entry-টা delete করুন। পরবর্তী read সেটা আবার populate করবে।
 
 ```typescript
 class ProductService {
@@ -83,7 +91,7 @@ class ProductService {
 }
 ```
 
-**The race condition:** Between the delete and the next repopulation, a write can sneak in.
+**Race condition-টা:** delete আর পরবর্তী repopulation-এর মাঝে একটা write ঢুকে পড়তে পারে।
 
 ```
 T1: Writer updates DB, deletes cache
@@ -91,11 +99,11 @@ T2: Reader misses cache, reads old DB value (replica lag), populates cache with 
 T3: Writer's new value is in DB but cache has old value
 ```
 
-The fix: **delete after write, not before**. And use replica-aware reads when cache misses on critical paths.
+সমাধান: **write-এর পরে delete করুন, আগে নয়।** আর critical path-এ cache miss হলে replica-aware read ব্যবহার করুন।
 
 ## Strategy 3 — Versioned Keys
 
-Instead of invalidating, change the key. Old key stays in cache until evicted, new key is populated fresh.
+Invalidate করার বদলে, key-টাই বদলে দিন। পুরনো key evict না হওয়া পর্যন্ত cache-এ থাকে, নতুন key fresh করে populate হয়।
 
 ```typescript
 class VersionedCache {
@@ -132,13 +140,13 @@ class VersionedCache {
 }
 ```
 
-**Pros:** No race condition between delete and repopulation. Old readers keep using their version until TTL.
+**সুবিধা:** delete আর repopulation-এর মাঝে কোনো race condition নেই। পুরনো reader-রা TTL শেষ না হওয়া পর্যন্ত তাদের version ব্যবহার করতে থাকে।
 
-**Cons:** Old keys accumulate until eviction. Extra Redis call per operation to fetch version number.
+**অসুবিধা:** eviction না হওয়া পর্যন্ত পুরনো key জমতে থাকে। version number আনার জন্য প্রতি operation-এ একটা বাড়তি Redis call লাগে।
 
 ## Strategy 4 — Event-Driven Invalidation
 
-Publish invalidation events via a message bus. All cache nodes subscribe and purge matching keys.
+একটা message bus-এর মাধ্যমে invalidation event publish করুন। সব cache node subscribe করে এবং matching key-গুলো purge করে।
 
 ```typescript
 // Publisher (in the service that writes)
@@ -156,9 +164,9 @@ eventBus.subscribe('user.updated', async ({ id }) => {
 });
 ```
 
-This scales to multiple services. If Service A updates a user, Service B's cache gets invalidated automatically.
+এটা একাধিক service-এ scale করে। Service A যদি কোনো user আপডেট করে, তাহলে Service B-এর cache নিজে থেকেই invalidate হয়ে যায়।
 
-**With Redis Keyspace Notifications** (for internal invalidation):
+**Redis Keyspace Notifications দিয়ে** (internal invalidation-এর জন্য):
 
 ```bash
 # Enable in redis.conf
@@ -176,9 +184,9 @@ await subscriber.subscribe('__keyevent@0__:expired', (key) => {
 });
 ```
 
-## Strategy 5 — Cache-Aside with Short TTL (the pragmatic default)
+## Strategy 5 — Cache-Aside with Short TTL (বাস্তবসম্মত ডিফল্ট)
 
-For most applications, this combination is enough:
+বেশিরভাগ অ্যাপ্লিকেশনের জন্য, এই কম্বিনেশনটাই যথেষ্ট:
 
 ```typescript
 async function get<T>(key: string, loader: () => Promise<T>, ttl = 60): Promise<T> {
@@ -194,11 +202,11 @@ async function get<T>(key: string, loader: () => Promise<T>, ttl = 60): Promise<
 const user = await get(`user:${id}`, () => db.users.findById(id), 30);
 ```
 
-Short TTL (30–60s) + delete on write handles 95% of invalidation needs without events or versioning.
+Short TTL (30–60s) + write-এ delete — event বা versioning ছাড়াই 95% invalidation দরকার সামলে নেয়।
 
 ## Tag-Based Invalidation
 
-Group keys under logical tags, then invalidate all keys with a tag at once.
+key-গুলোকে logical tag-এর অধীনে গ্রুপ করুন, তারপর একবারে একটা tag-এর সব key invalidate করুন।
 
 ```typescript
 class TaggedCache {
@@ -227,7 +235,7 @@ await cache.set(`user:${id}:perms`, perms, [`user:${id}`, 'permissions'], 600);
 await cache.invalidateTag('user:123');
 ```
 
-## Choosing an Invalidation Strategy
+## Invalidation Strategy নির্বাচন
 
 ```
 Staleness of a few minutes is fine?
@@ -246,4 +254,4 @@ Invalidating groups of related keys?
   → Tag-based invalidation.
 ```
 
-The wrong choice isn't using TTL — it's using _too long_ a TTL and not deleting on writes. Most bugs come from forgetting to invalidate after a write, not from choosing the wrong strategy.
+ভুল সিদ্ধান্তটা TTL ব্যবহার করা নয় — ভুলটা হলো _খুব দীর্ঘ_ একটা TTL ব্যবহার করা আর write-এ delete না করা। বেশিরভাগ bug আসে write-এর পরে invalidate করতে ভুলে যাওয়া থেকে, ভুল strategy বেছে নেওয়া থেকে নয়।

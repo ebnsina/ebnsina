@@ -4,27 +4,24 @@
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import ReadingBar from '$lib/components/notes/ReadingBar.svelte';
 	import ChapterComplete from '$lib/components/notes/ChapterComplete.svelte';
-	import LocaleToggle from '$lib/components/notes/LocaleToggle.svelte';
-	import { nt } from '$lib/i18n/notes';
+	import { t } from '$lib/data/notes-strings';
 
 	let { data } = $props();
 	const Content = $derived(data.component);
 	const meta = $derived(data.meta);
-	const t = $derived(nt(data.locale));
-	const base = $derived(data.base);
-	const nextHref = $derived(data.next ? `${base}/${data.category}/${data.next.slug}` : null);
+	const nextHref = $derived(data.next ? `/notes/${data.category}/${data.next.slug}` : null);
 </script>
 
 <Seo title={`${meta.title} — ${data.categoryLabel}`} description={meta.subtitle} type="article" />
 
 <ReadingBar />
 
-<ArticleLayout lang={data.locale}>
+<ArticleLayout lang="bn">
 	{#snippet header()}
 		<header class="mb-10 pb-8">
 			<div class="article-meta mb-4 flex flex-wrap items-center gap-3">
 				<a
-					href={`${base}/${data.category}`}
+					href={`/notes/${data.category}`}
 					class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
 					>← {data.categoryLabel}</a
 				>
@@ -38,9 +35,6 @@
 				<span class="text-[10px] font-semibold uppercase tracking-widest text-muted">
 					{String(meta.chapter).padStart(2, '0')} / {String(data.total).padStart(2, '0')}
 				</span>
-				<span class="ml-auto"
-					><LocaleToggle locale={data.locale} available={data.hasCounterpart} /></span
-				>
 			</div>
 			<h1
 				class="mb-4 font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl sm:leading-[1.1]"
@@ -67,12 +61,11 @@
 			level={meta.level}
 			trackSlugs={data.trackSlugs}
 			trackLabel={data.categoryLabel}
-			locale={data.locale}
 			{nextHref}
 		/>
 		<nav class="mt-10 flex justify-between gap-3">
 			{#if data.prev}
-				<a href={`${base}/${data.category}/${data.prev.slug}`} class="chapter-nav-link">
+				<a href={`/notes/${data.category}/${data.prev.slug}`} class="chapter-nav-link">
 					<span class="chapter-nav-label">{t.prev}</span>
 					<span class="chapter-nav-title">{data.prev.meta.title}</span>
 				</a>
@@ -81,7 +74,7 @@
 			{/if}
 			{#if data.next}
 				<a
-					href={`${base}/${data.category}/${data.next.slug}`}
+					href={`/notes/${data.category}/${data.next.slug}`}
 					class="chapter-nav-link ml-auto text-right"
 				>
 					<span class="chapter-nav-label">{t.next}</span>

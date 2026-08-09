@@ -1,9 +1,9 @@
 ---
-title: 'Tutorial: Build a Real-Time Analytics Dashboard'
-subtitle: 'Step-by-step guide to building a real-time dashboard with event ingestion, time-series aggregation, WebSocket streaming, and live counters.'
+title: 'টিউটোরিয়াল: রিয়েল-টাইম অ্যানালিটিক্স ড্যাশবোর্ড বানানো'
+subtitle: 'ইভেন্ট ইনজেশন, টাইম-সিরিজ অ্যাগ্রিগেশন, WebSocket স্ট্রিমিং, আর লাইভ কাউন্টার দিয়ে একটা রিয়েল-টাইম ড্যাশবোর্ড বানানোর ধাপে ধাপে গাইড।'
 chapter: 22
 level: 'intermediate'
-readingTime: '28 min'
+readingTime: '28 মিনিট'
 topics: ['tutorial', 'real-time analytics', 'time-series', 'WebSocket', 'event streaming']
 ---
 
@@ -13,19 +13,27 @@ topics: ['tutorial', 'real-time analytics', 'time-series', 'WebSocket', 'event s
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What We're Building
+## গল্পে বুঝি
 
-In this tutorial, we'll build a real-time analytics dashboard from scratch — like a simplified version of Google Analytics or Mixpanel. The system tracks page views, unique visitors, active users, and custom events. Data flows in through an event ingestion API, gets aggregated into time-series buckets (minute/hour/day), and streams to connected dashboards via WebSocket.
+মিরপুর স্টেডিয়ামে খেলা চলছে, গ্যালারি ভর্তি দর্শক। মাঠের চারপাশে ইবনে সিনার কয়েকজন স্কোরার বসানো — প্রতিটা বল খেলা হওয়া মাত্রই তারা ওয়াকিটকিতে জানিয়ে দেয়, "চার রান", "এক রান আউট নেই", "ছক্কা"। এই খবরগুলো একটার পর একটা এসেই যাচ্ছে, থামছে না — যতক্ষণ খেলা চলছে ততক্ষণ বল-বাই-বল রিপোর্ট আসতেই থাকবে।
+
+রিপোর্ট শোনার পর আল-খোয়ারিজমি বসে আছে একটা খাতা নিয়ে। প্রতিটা খবর আসা মাত্রই সে দুটো হিসাব আপডেট করে — মোট স্কোরের সাথে রান যোগ করে দেয়, আর চলতি ওভারের ঘরে বলটা তুলে রাখে। ওভার শেষ হলে সে সেই ওভারের ছয় বলের তালি টেনে পরের ওভারের নতুন ঘর খোলে। আল-খোয়ারিজমি কিন্তু প্রতিবার শুরু থেকে সব বল গোনে না — সে শুধু চলতি যোগফলটা ধরে রাখে আর নতুন রান তার সাথে জুড়ে দেয়। এদিকে ফাতিমা আল-ফিহরি বড় ইলেকট্রনিক স্কোরবোর্ডটা চালায় — আল-খোয়ারিজমির হিসাব বদলানো মাত্রই সে বোর্ডে নতুন সংখ্যা বসিয়ে দেয়, আর গোটা স্টেডিয়ামের প্রতিটা দর্শক সঙ্গে সঙ্গে নতুন স্কোর দেখে ফেলে। কাউকে জিজ্ঞেস করতে হয় না, কেউ বারবার "স্কোর কত হলো?" বলে চেঁচায় না — বোর্ড নিজেই সবাইকে জানিয়ে দেয়।
+
+এই গল্পটাই আসলে একটা **real-time** অ্যানালিটিক্স **dashboard**। প্রতিটা বলের রিপোর্ট হলো একটা ইনকামিং **event** — অবিরাম আসতে থাকা একটা **stream**; আল-খোয়ারিজমির চলতি যোগফল আর প্রতি-ওভারের তালি হলো **stream aggregation** আর windowed অ্যাগ্রিগেশন (পুরোটা আবার না গুনে চলতে চলতে যোগ করা); আর ফাতিমা আল-ফিহরির তখনই-আপডেট-হওয়া স্কোরবোর্ড হলো **WebSocket**/SSE দিয়ে দর্শকদের কাছে live push। বাস্তবে অ্যানালিটিক্স ড্যাশবোর্ড, লাইভ অপস মনিটর বা লাইভ ইউজার কাউন্টার ঠিক এভাবেই কাজ করে — ইভেন্ট ইনজেস্ট হয়, চলতে চলতে অ্যাগ্রিগেট হয়, আর কেউ রিফ্রেশ না চাপতেই স্ক্রিনে লাইভ আপডেট এসে পড়ে।
+
+## আমরা কী বানাচ্ছি
+
+এই টিউটোরিয়ালে আমরা একদম শূন্য থেকে একটা রিয়েল-টাইম অ্যানালিটিক্স ড্যাশবোর্ড বানাব — অনেকটা Google Analytics বা Mixpanel-এর সরলীকৃত সংস্করণের মতো। সিস্টেমটা page view, unique visitor, active user আর custom event ট্র্যাক করে। ডেটা একটা event ingestion API দিয়ে ভেতরে আসে, টাইম-সিরিজ বাকেটে (minute/hour/day) অ্যাগ্রিগেট হয়, আর WebSocket দিয়ে কানেক্টেড ড্যাশবোর্ডে স্ট্রিম হয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a stock exchange trading floor — real-time screens show live prices, volume, and trends. When a big trade happens, the board updates instantly.
+স্টক এক্সচেঞ্জের ট্রেডিং ফ্লোরের মতো — রিয়েল-টাইম স্ক্রিনে লাইভ দাম, ভলিউম আর ট্রেন্ড দেখা যায়। একটা বড় ট্রেড হলেই বোর্ড সঙ্গে সঙ্গে আপডেট হয়।
 
 </Callout>
 
-By the end, you'll have a working system that can ingest 100K+ events per second, aggregate them into queryable time-series data, and push live updates to dashboard clients the instant new data arrives.
+শেষ নাগাদ আপনার হাতে একটা কাজ করা সিস্টেম থাকবে যা সেকেন্ডে 100K+ ইভেন্ট ইনজেস্ট করতে পারে, সেগুলোকে কোয়েরিযোগ্য টাইম-সিরিজ ডেটায় অ্যাগ্রিগেট করে, আর নতুন ডেটা আসা মাত্রই ড্যাশবোর্ড ক্লায়েন্টে লাইভ আপডেট পুশ করে।
 
 <Mermaid
 title="Real-Time Dashboard Architecture"
@@ -34,31 +42,31 @@ code={`graph TD
   A --> T["Time-Series Store<br/>Minute/Hour/Day"] --> U["Active Users<br/>Sliding Window"] --> W["WebSocket Hub<br/>Live Stream"]`}
 />
 
-## Step 1: Event Data Model
+## ধাপ ১: ইভেন্ট ডেটা মডেল
 
-Let's start by defining what an analytics event looks like. Every event has a name (like "page_view" or "button_click"), a visitor ID (to track unique users), optional properties, and a timestamp. Notice how we separate the `visitorId` (anonymous, cookie-based) from `userId` (authenticated). This lets us track visitors before they log in.
+শুরু করি একটা অ্যানালিটিক্স ইভেন্ট দেখতে কেমন সেটা ঠিক করে। প্রতিটা ইভেন্টের থাকে একটা নাম ("page_view" বা "button_click"-এর মতো), একটা visitor ID (unique user ট্র্যাক করার জন্য), ঐচ্ছিক কিছু property, আর একটা timestamp। খেয়াল করুন কীভাবে আমরা `visitorId` (anonymous, cookie-ভিত্তিক) আর `userId` (authenticated)-কে আলাদা রাখছি। এতে ইউজার লগ ইন করার আগেই ভিজিটরদের ট্র্যাক করা যায়।
 
-## Step 2: Event Ingestion API
+## ধাপ ২: ইভেন্ট ইনজেশন API
 
-Now we need an endpoint to receive events. The key insight is **buffering** — instead of processing each event immediately, we batch them and flush periodically. This smooths out traffic spikes and enables efficient batch writes. Our ingestion endpoint validates the event, adds it to a buffer, and returns immediately. A background flush loop processes the buffer every second.
+এখন আমাদের একটা endpoint দরকার ইভেন্ট রিসিভ করার জন্য। মূল বুদ্ধিটা হলো **buffering** — প্রতিটা ইভেন্ট সঙ্গে সঙ্গে প্রসেস না করে, আমরা সেগুলোকে ব্যাচে জমাই আর পর্যায়ক্রমে flush করি। এতে ট্রাফিক স্পাইক মসৃণ হয়ে যায় আর efficient batch write সম্ভব হয়। আমাদের ingestion endpoint ইভেন্টটা validate করে, একটা buffer-এ যোগ করে, আর সঙ্গে সঙ্গে রেসপন্স দিয়ে দেয়। একটা ব্যাকগ্রাউন্ড flush loop প্রতি সেকেন্ডে buffer প্রসেস করে।
 
-## Step 3: Time-Series Aggregation
+## ধাপ ৩: টাইম-সিরিজ অ্যাগ্রিগেশন
 
-This is the core of the dashboard. Raw events are grouped into **time buckets** — one-minute buckets for recent data, rolled up into hourly and daily buckets as they age. Each bucket tracks: total event count, unique visitors (using a simplified HyperLogLog), and per-event-name counts. The key insight is that querying "page views in the last hour" doesn't scan all events — it reads 60 pre-computed minute buckets.
+এটাই ড্যাশবোর্ডের মূল অংশ। Raw ইভেন্টগুলোকে **time bucket**-এ গ্রুপ করা হয় — সাম্প্রতিক ডেটার জন্য এক-মিনিটের বাকেট, যেগুলো পুরনো হতে হতে ঘণ্টা আর দিনের বাকেটে roll up হয়। প্রতিটা বাকেট ট্র্যাক করে: মোট event count, unique visitor (একটা সরলীকৃত HyperLogLog দিয়ে), আর per-event-name count। মূল বুদ্ধিটা হলো "শেষ এক ঘণ্টার page view" কোয়েরি করলে সব ইভেন্ট স্ক্যান হয় না — এটা আগে থেকে হিসাব করা 60টা minute বাকেট পড়ে।
 
-## Step 4: Active User Tracking
+## ধাপ ৪: Active User ট্র্যাকিং
 
-"Users active right now" requires a sliding window approach. We maintain a set of visitor IDs seen in the last 5 minutes, with a cleanup loop that removes expired entries. This gives us an O(1) count of currently active users without scanning all recent events.
+"এই মুহূর্তে active user" বের করতে একটা sliding window পদ্ধতি লাগে। আমরা শেষ 5 মিনিটে দেখা visitor ID-র একটা সেট রাখি, আর একটা cleanup loop দিয়ে expired এন্ট্রিগুলো সরাই। এতে সব সাম্প্রতিক ইভেন্ট স্ক্যান না করেই বর্তমানে active user-এর O(1) কাউন্ট পাওয়া যায়।
 
-## Step 5: WebSocket Streaming
+## ধাপ ৫: WebSocket স্ট্রিমিং
 
-Instead of dashboards polling for updates, we push new data to them via WebSocket. When a dashboard connects, it subscribes to specific metrics. Every time a minute bucket is finalized, we broadcast the update to all connected dashboards. This gives sub-second dashboard updates with zero polling overhead.
+ড্যাশবোর্ড আপডেটের জন্য বারবার poll করার বদলে, আমরা WebSocket দিয়ে নতুন ডেটা তাদের কাছে পুশ করি। একটা ড্যাশবোর্ড কানেক্ট হলে, এটা নির্দিষ্ট কিছু metric-এ subscribe করে। প্রতিবার একটা minute বাকেট finalize হলে, আমরা সব কানেক্টেড ড্যাশবোর্ডে আপডেটটা broadcast করি। এতে polling-এর কোনো overhead ছাড়াই sub-second ড্যাশবোর্ড আপডেট পাওয়া যায়।
 
-## Step 6: Query API
+## ধাপ ৬: Query API
 
-Finally, we need endpoints to query historical data. The API supports time range queries with configurable granularity (minute/hour/day). Dashboards use this for initial load and historical charts, then switch to WebSocket for live updates.
+শেষে, আমাদের কিছু endpoint দরকার ঐতিহাসিক ডেটা কোয়েরি করার জন্য। API-টা configurable granularity (minute/hour/day) সহ time range কোয়েরি সাপোর্ট করে। ড্যাশবোর্ড এটা দিয়ে প্রথম লোড আর ঐতিহাসিক চার্ট দেখায়, তারপর লাইভ আপডেটের জন্য WebSocket-এ চলে যায়।
 
-## Putting It All Together
+## সব একসাথে জোড়া লাগানো
 
 <CodeTabs tsFile="realtime-dashboard.ts" goFile="realtime-dashboard.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -724,45 +732,45 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তগুলোর ব্যাখ্যা
 
-### Why Time Buckets Instead of Raw Events?
+### Raw ইভেন্টের বদলে Time Bucket কেন?
 
-Storing every raw event and scanning them at query time doesn't scale. With 100K events/second, querying "page views in the last hour" would scan 360 million rows. Pre-aggregating into minute buckets means the same query reads only 60 small records. The trade-off is that you lose the ability to ask arbitrary questions about individual events — but dashboards care about aggregates, not individual data points.
+প্রতিটা raw ইভেন্ট জমিয়ে রেখে কোয়েরির সময় স্ক্যান করা স্কেল করে না। সেকেন্ডে 100K ইভেন্ট হলে, "শেষ এক ঘণ্টার page view" কোয়েরি করলে 360 মিলিয়ন row স্ক্যান করতে হবে। আগে থেকে minute বাকেটে অ্যাগ্রিগেট করলে একই কোয়েরি মাত্র 60টা ছোট record পড়ে। ট্রেড-অফটা হলো আপনি আলাদা আলাদা ইভেন্ট নিয়ে যেকোনো প্রশ্ন করার ক্ষমতা হারান — কিন্তু ড্যাশবোর্ডের দরকার aggregate, আলাদা ডেটা পয়েন্ট নয়।
 
-### Why Buffer Events Before Processing?
+### প্রসেস করার আগে ইভেন্ট Buffer কেন?
 
-Traffic spikes are inevitable — a popular blog post gets shared on Reddit, a marketing email goes out. Without buffering, each spike directly hammers the aggregation layer. A buffer absorbs the spike, processes events in efficient batches, and keeps throughput consistent. The 1-second flush interval means events appear on dashboards within 1-2 seconds — fast enough for "real-time" analytics.
+ট্রাফিক স্পাইক অনিবার্য — একটা জনপ্রিয় ব্লগ পোস্ট Reddit-এ শেয়ার হয়, একটা marketing email বেরোয়। Buffering না থাকলে প্রতিটা স্পাইক সরাসরি aggregation লেয়ারে গিয়ে আঘাত করে। একটা buffer স্পাইকটা শুষে নেয়, efficient ব্যাচে ইভেন্ট প্রসেস করে, আর throughput সমান রাখে। 1-সেকেন্ডের flush interval মানে ইভেন্ট ড্যাশবোর্ডে 1-2 সেকেন্ডের মধ্যে দেখা যায় — "real-time" অ্যানালিটিক্সের জন্য যথেষ্ট দ্রুত।
 
-### Why Sliding Window for Active Users?
+### Active User-এর জন্য Sliding Window কেন?
 
-The alternative is counting distinct visitors in the last N minutes by scanning all recent events — this gets expensive as event volume grows. A sliding window map gives O(1) lookups and is updated incrementally. The 30-second cleanup interval is a trade-off: more frequent cleanup uses more CPU, less frequent cleanup uses more memory from stale entries.
+বিকল্পটা হলো শেষ N মিনিটের distinct visitor গোনা সব সাম্প্রতিক ইভেন্ট স্ক্যান করে — ইভেন্ট ভলিউম বাড়ার সাথে সাথে এটা ব্যয়বহুল হয়ে ওঠে। একটা sliding window map O(1) lookup দেয় আর incrementally আপডেট হয়। 30-সেকেন্ডের cleanup interval একটা ট্রেড-অফ: বেশি ঘন ঘন cleanup বেশি CPU খরচ করে, কম ঘন ঘন cleanup পুরনো এন্ট্রি জমিয়ে বেশি মেমরি খরচ করে।
 
-### Why WebSocket Instead of Polling?
+### Polling-এর বদলে WebSocket কেন?
 
-A dashboard polling every second generates 60 requests/minute per client. With 100 dashboard users, that's 6000 requests/minute just for polling. WebSocket flips this: the server pushes updates only when data changes, using persistent connections. 100 clients with WebSocket = 100 open connections, zero polling overhead.
+প্রতি সেকেন্ডে poll করা একটা ড্যাশবোর্ড প্রতি ক্লায়েন্টে মিনিটে 60টা request তৈরি করে। 100 জন ড্যাশবোর্ড ইউজার থাকলে সেটা শুধু polling-এর জন্যই মিনিটে 6000 request। WebSocket এটা উল্টে দেয়: সার্ভার শুধু ডেটা বদলালেই আপডেট পুশ করে, persistent connection ব্যবহার করে। WebSocket-এ 100 ক্লায়েন্ট = 100টা খোলা connection, polling-এর কোনো overhead নেই।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Time-series aggregation into buckets (minute/hour/day) makes queries fast regardless of event volume
-- Sliding window tracking gives you "active users right now" without scanning all events
-- Buffering events before processing smooths out traffic spikes and enables batch writes
-- WebSocket streaming eliminates polling — dashboards update the instant new data arrives
-- Roll-up aggregation (minutes → hours → days) keeps storage bounded as data ages
-- Accept events with 202 Accepted and process async — never make the SDK wait for aggregation
+- বাকেটে (minute/hour/day) টাইম-সিরিজ অ্যাগ্রিগেশন করলে ইভেন্ট ভলিউম যত বড়ই হোক কোয়েরি দ্রুত থাকে
+- Sliding window ট্র্যাকিং সব ইভেন্ট স্ক্যান না করেই "এই মুহূর্তে active user" দেয়
+- প্রসেস করার আগে ইভেন্ট buffer করলে ট্রাফিক স্পাইক মসৃণ হয় আর batch write সম্ভব হয়
+- WebSocket স্ট্রিমিং polling দূর করে — নতুন ডেটা আসা মাত্রই ড্যাশবোর্ড আপডেট হয়
+- Roll-up অ্যাগ্রিগেশন (minute → hour → day) ডেটা পুরনো হলেও storage সীমিত রাখে
+- ইভেন্ট 202 Accepted দিয়ে গ্রহণ করুন আর async প্রসেস করুন — SDK-কে কখনো aggregation-এর জন্য অপেক্ষা করাবেন না
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জীবনে ব্যবহার
 
-- **Google Analytics** processes 10B+ hits per day using time-series aggregation and roll-up storage
-- **Mixpanel** uses probabilistic data structures for unique user counting across billions of events
-- **Datadog** streams real-time metrics to dashboards via WebSocket connections
-- **Cloudflare** processes 45M+ HTTP requests per second with real-time analytics dashboards
-- This architecture handles 100K+ events/second with sub-second dashboard updates
+- **Google Analytics** টাইম-সিরিজ অ্যাগ্রিগেশন আর roll-up storage দিয়ে দিনে 10B+ hit প্রসেস করে
+- **Mixpanel** বিলিয়ন বিলিয়ন ইভেন্টের মধ্যে unique user গোনার জন্য probabilistic data structure ব্যবহার করে
+- **Datadog** WebSocket connection দিয়ে রিয়েল-টাইম metric ড্যাশবোর্ডে স্ট্রিম করে
+- **Cloudflare** রিয়েল-টাইম অ্যানালিটিক্স ড্যাশবোর্ড সহ সেকেন্ডে 45M+ HTTP request প্রসেস করে
+- এই আর্কিটেকচার sub-second ড্যাশবোর্ড আপডেট সহ সেকেন্ডে 100K+ ইভেন্ট সামলায়
 
 </div>

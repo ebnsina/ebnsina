@@ -1,9 +1,9 @@
 ---
-title: '12-Month Mastery Roadmap — Junior SRE → Senior/Staff'
-subtitle: 'The year-long plan that picks up where the 8-week roadmap stops. Monthly milestones, real production projects, deep reading, and the artifacts that prove staff-level capability.'
+title: '12-মাসের Mastery Roadmap — Junior SRE → Senior/Staff'
+subtitle: 'যে year-long plan 8-week roadmap যেখানে থামে সেখান থেকে তুলে নেয়। Monthly milestone, বাস্তব production project, deep reading, আর যে artifact staff-level capability প্রমাণ করে।'
 chapter: 20
 level: 'mastery'
-readingTime: '30 min'
+readingTime: '30 মিনিট'
 topics: ['roadmap', 'career', 'mastery', 'staff SRE', 'year plan', 'depth']
 ---
 
@@ -13,17 +13,17 @@ topics: ['roadmap', 'career', 'mastery', 'staff SRE', 'year plan', 'depth']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A map of the mountain range, not just the summit — mastery is knowing which paths connect, not just reaching one peak.
+শুধু চূড়া নয়, পুরো পর্বতমালার একটা মানচিত্র — mastery হলো কোন পথগুলো সংযুক্ত সেটা জানা, শুধু একটা চূড়ায় পৌঁছানো নয়।
 
 </Callout>
 
-## Where this picks up
+## এটা যেখান থেকে তুলে নেয়
 
-The 8-week roadmap (chapter 0) made you a junior SRE candidate: you can build, deploy, and observe a service, define an SLO, and run a basic incident.
+8-week roadmap (chapter 0) আপনাকে একজন junior SRE candidate বানিয়েছে: আপনি একটা service build, deploy আর observe করতে পারেন, একটা SLO define করতে পারেন, আর একটা basic incident চালাতে পারেন।
 
-This roadmap takes you from there to **senior IC, plausible Staff candidate** in twelve months. The shape is different: longer projects, real production exposure, deeper reading, and artifacts (writeups, talks, OSS contributions) that prove the level externally.
+এই roadmap আপনাকে সেখান থেকে বারো মাসে **senior IC, plausible Staff candidate**-এ নেয়। আকারটা ভিন্ন: দীর্ঘ project, বাস্তব production exposure, deeper reading, আর যে artifact (writeup, talk, OSS contribution) level-টা বাহ্যিকভাবে প্রমাণ করে।
 
 ```
 Year structure
@@ -33,13 +33,13 @@ Year structure
   Months 10-12 — Capstone: a public, defensible artifact
 ```
 
-You should already be in or pursuing an SRE-adjacent role for this to work. Theory without production exposure plateaus around month 4.
+এটা কাজ করতে হলে আপনার ইতিমধ্যে একটা SRE-adjacent role-এ থাকা বা সেটা pursue করা উচিত। production exposure ছাড়া theory month 4-এর কাছাকাছি plateau করে।
 
 <Callout type="info">
 
 **Pacing**
 
-The 8-week plan was 15-18 hrs/week of self-study. This one assumes you have an SRE day job (~40 hrs/week of real production work) plus 5-8 hrs/week of deliberate study. Most of the learning happens at work; the 8 hrs/week guides which problems to tackle and which papers to read.
+8-week plan ছিল সপ্তাহে 15-18 ঘণ্টার self-study। এটা ধরে নেয় আপনার একটা SRE day job আছে (~40 hrs/week বাস্তব production work) plus সপ্তাহে 5-8 ঘণ্টা deliberate study। বেশিরভাগ শেখা কাজে ঘটে; সপ্তাহে 8 ঘণ্টা guide করে কোন সমস্যা ধরবেন আর কোন paper পড়বেন।
 
 </Callout>
 
@@ -47,23 +47,23 @@ The 8-week plan was 15-18 hrs/week of self-study. This one assumes you have an S
 
 ### Reading
 
-- _Systems Performance_ (Brendan Gregg, 2nd ed) — chapters 1-9 deeply.
-- _BPF Performance Tools_ (Brendan Gregg) — at least a thorough skim, chapters 1-6 deep.
-- _Observability Engineering_ (Charity Majors et al) — re-read with production lens.
+- _Systems Performance_ (Brendan Gregg, 2nd ed) — chapter 1-9 গভীরভাবে।
+- _BPF Performance Tools_ (Brendan Gregg) — অন্তত একটা thorough skim, chapter 1-6 deep।
+- _Observability Engineering_ (Charity Majors et al) — production lens দিয়ে re-read।
 
 ### Skill targets
 
-- Run the 60-second performance triage from memory (chapter 12 here).
-- Generate on-CPU and off-CPU flame graphs for at least three services in your prod fleet.
-- Write five `bpftrace` one-liners that solved a real production question.
+- মেমরি থেকে 60-second performance triage চালান (এখানে chapter 12)।
+- আপনার prod fleet-এর অন্তত তিনটা service-এর জন্য on-CPU আর off-CPU flame graph generate করুন।
+- পাঁচটা `bpftrace` one-liner লিখুন যা একটা বাস্তব production প্রশ্ন সমাধান করেছে।
 
 ### Production project
 
-Pick the slowest-tail-latency service in your fleet that you have access to. Investigate p99 with kernel tools. Find the root cause (lock contention, GC, slow disk, network retransmits — find which). Write a postmortem-style writeup of the investigation and the fix.
+আপনার fleet-এ যে slowest-tail-latency service-এ আপনার access আছে সেটা বাছুন। kernel tool দিয়ে p99 তদন্ত করুন। root cause খুঁজুন (lock contention, GC, slow disk, network retransmit — কোনটা তা বের করুন)। তদন্ত আর fix-এর একটা postmortem-style writeup লিখুন।
 
 ### Artifact
 
-Publish the writeup internally. Aim for the kind of doc that makes another team go "wait, are we doing that too?" — that is the senior signal.
+writeup-টা internally publish করুন। এমন একটা doc-এর লক্ষ্য রাখুন যা আরেকটা team-কে বলায় "দাঁড়াও, আমরাও কি এটা করছি?" — সেটাই senior signal।
 
 ---
 
@@ -71,24 +71,24 @@ Publish the writeup internally. Aim for the kind of doc that makes another team 
 
 ### Reading
 
-- _High Performance Browser Networking_ (Ilya Grigorik, free online) — refresh.
-- _TCP/IP Illustrated, Vol 1_ (Stevens) — chapters 17-25 (TCP) deep.
-- BGP RFC 4271 (skim, but learn the AS-PATH attribute well).
-- 2 Cloudflare engineering blog posts on their L4 LB or network architecture.
+- _High Performance Browser Networking_ (Ilya Grigorik, free online) — refresh।
+- _TCP/IP Illustrated, Vol 1_ (Stevens) — chapter 17-25 (TCP) deep।
+- BGP RFC 4271 (skim, কিন্তু AS-PATH attribute ভালোভাবে শিখুন)।
+- Cloudflare-এর L4 LB বা network architecture নিয়ে 2টা engineering blog post।
 
 ### Skill targets
 
-- Read `ss -ti`, `tcpdump`, and `mtr` output and tell a story from each.
-- Decrypt a TLS capture in Wireshark using SSLKEYLOGFILE.
-- Explain anycast + ECMP at a whiteboard with no notes.
+- `ss -ti`, `tcpdump`, আর `mtr`-এর output পড়ুন আর প্রতিটা থেকে একটা গল্প বলুন।
+- SSLKEYLOGFILE ব্যবহার করে Wireshark-এ একটা TLS capture decrypt করুন।
+- কোনো note ছাড়া whiteboard-এ anycast + ECMP ব্যাখ্যা করুন।
 
 ### Production project
 
-Audit cross-AZ data transfer in your largest workload. Find at least one architectural change that cuts it (topology-aware routing, gateway endpoint, regional proximity). Quantify the cost savings.
+আপনার largest workload-এ cross-AZ data transfer audit করুন। অন্তত একটা architectural change খুঁজুন যা এটা কমায় (topology-aware routing, gateway endpoint, regional proximity)। cost saving quantify করুন।
 
 ### Artifact
 
-Internal RFC for the change. Reviewed by the cost owner _and_ a senior network engineer.
+change-এর জন্য Internal RFC। cost owner _আর_ একজন senior network engineer দ্বারা reviewed।
 
 ---
 
@@ -96,50 +96,50 @@ Internal RFC for the change. Reviewed by the cost owner _and_ a senior network e
 
 ### Reading
 
-- _Database Internals_ (Alex Petrov) — chapters on storage engines, replication, transactions.
-- _Designing Data-Intensive Applications_ (Kleppmann) — re-read chapters 5-9 with operator's lens.
-- One Postgres or MySQL deep-dive: _PostgreSQL 14 Internals_ (Egor Rogov) is excellent.
+- _Database Internals_ (Alex Petrov) — storage engine, replication, transaction-এর chapter।
+- _Designing Data-Intensive Applications_ (Kleppmann) — operator-এর lens দিয়ে chapter 5-9 re-read।
+- একটা Postgres বা MySQL deep-dive: _PostgreSQL 14 Internals_ (Egor Rogov) চমৎকার।
 
 ### Skill targets
 
-- Read an `EXPLAIN ANALYZE` and predict the plan-flip risk.
-- Understand and write a CONCURRENT migration for a 100M-row table.
-- Detect a long-running transaction within 60 seconds using `pg_stat_activity`.
+- একটা `EXPLAIN ANALYZE` পড়ুন আর plan-flip risk predict করুন।
+- একটা 100M-row table-এর জন্য একটা CONCURRENT migration বুঝুন আর লিখুন।
+- `pg_stat_activity` ব্যবহার করে 60 second-এর মধ্যে একটা long-running transaction detect করুন।
 
 ### Production project
 
-Take the most-used SQL query in your largest service. Profile it. Add the right index (or remove the wrong one). Measure the impact. Bonus: identify a query whose plan is one statistics update away from disaster, and pin it.
+আপনার largest service-এর most-used SQL query নিন। Profile করুন। সঠিক index যোগ করুন (বা ভুলটা সরান)। impact measure করুন। Bonus: এমন একটা query চিহ্নিত করুন যার plan একটা statistics update দূরত্বে disaster থেকে, আর সেটা pin করুন।
 
 ### Artifact
 
-A "DB health" dashboard for one of your services with: top queries by total time, replication lag, connection-pool saturation, vacuum activity, table bloat. Wire alerts on the high-leverage ones.
+আপনার একটা service-এর জন্য একটা "DB health" dashboard যেখানে: total time অনুযায়ী top query, replication lag, connection-pool saturation, vacuum activity, table bloat। high-leverage-গুলোতে alert wire করুন।
 
 ---
 
-## Month 5 — Distributed systems theory and the papers
+## Month 5 — Distributed systems theory আর paper-গুলো
 
-### Reading (the real reading list)
+### Reading (আসল reading list)
 
-- "Time, Clocks, and the Ordering of Events" — Lamport, 1978.
-- "The Part-Time Parliament" or "Paxos Made Simple" — Lamport.
-- "In Search of an Understandable Consensus Algorithm" — Raft, Ongaro 2014.
-- "Spanner: Google's Globally Distributed Database" — OSDI 2012.
-- "Dynamo: Amazon's Highly Available Key-Value Store" — SOSP 2007.
-- 2-3 Jepsen reports of databases you operate.
+- "Time, Clocks, and the Ordering of Events" — Lamport, 1978।
+- "The Part-Time Parliament" বা "Paxos Made Simple" — Lamport।
+- "In Search of an Understandable Consensus Algorithm" — Raft, Ongaro 2014।
+- "Spanner: Google's Globally Distributed Database" — OSDI 2012।
+- "Dynamo: Amazon's Highly Available Key-Value Store" — SOSP 2007।
+- আপনি যে database operate করেন সেগুলোর 2-3টা Jepsen report।
 
 ### Skill targets
 
-- Explain Raft to another engineer at a whiteboard with no notes.
-- For each system you operate, name CAP/PACELC stance and the consistency model.
-- Identify a distributed lock in your codebase that doesn't use fencing tokens.
+- কোনো note ছাড়া whiteboard-এ আরেকজন engineer-কে Raft ব্যাখ্যা করুন।
+- আপনি operate করা প্রতিটা system-এর জন্য CAP/PACELC stance আর consistency model নাম করুন।
+- আপনার codebase-এ একটা distributed lock চিহ্নিত করুন যা fencing token ব্যবহার করে না।
 
 ### Production project
 
-Find a piece of "exactly-once" behavior in your system. Audit whether it's actually idempotent end-to-end. Fix at least one place where it isn't. Prove the fix with a chaos test.
+আপনার system-এ একটা "exactly-once" behavior খুঁজুন। এটা end-to-end আসলে idempotent কিনা audit করুন। অন্তত একটা জায়গা fix করুন যেখানে এটা নয়। একটা chaos test দিয়ে fix প্রমাণ করুন।
 
 ### Artifact
 
-Brown-bag talk at your team or guild on Raft or on the consistency model of one system you operate. Recorded if possible.
+Raft নিয়ে বা আপনি operate করা একটা system-এর consistency model নিয়ে আপনার team বা guild-এ একটা brown-bag talk। সম্ভব হলে recorded।
 
 ---
 
@@ -147,23 +147,23 @@ Brown-bag talk at your team or guild on Raft or on the consistency model of one 
 
 ### Reading
 
-- _Incident Management for Operations_ (Schnepp et al) — a short, dense book.
-- _The Field Guide to Understanding Human Error_ (Sidney Dekker) — for postmortem maturity.
-- 6 public postmortems from companies bigger than yours (Cloudflare, Stripe, GitHub, AWS).
+- _Incident Management for Operations_ (Schnepp et al) — একটা short, dense বই।
+- _The Field Guide to Understanding Human Error_ (Sidney Dekker) — postmortem maturity-র জন্য।
+- আপনার চেয়ে বড় company-র (Cloudflare, Stripe, GitHub, AWS) 6টা public postmortem।
 
 ### Skill targets
 
-- Comfortable as Incident Commander for a Sev-2 with 5+ engineers in the channel.
-- Can run an effective postmortem meeting with 10+ attendees.
-- Know your rotation's page volume and after-hours percentage by heart.
+- channel-এ 5+ engineer সহ একটা Sev-2-র জন্য Incident Commander হিসেবে comfortable।
+- 10+ attendee সহ একটা effective postmortem meeting চালাতে পারা।
+- আপনার rotation-এর page volume আর after-hours percentage মুখস্থ জানা।
 
 ### Production project
 
-Run a tabletop incident exercise with your team. Pick a realistic scenario from the postmortems you've read; brief the team; play out the incident; debrief on what worked. Repeat quarterly.
+আপনার team-এর সাথে একটা tabletop incident exercise চালান। আপনার পড়া postmortem থেকে একটা realistic scenario বাছুন; team-কে brief করুন; incident-টা play out করুন; কী কাজ করল তা নিয়ে debrief করুন। quarterly পুনরাবৃত্তি করুন।
 
 ### Artifact
 
-Either: write your team's "incident response playbook" if it doesn't exist, OR publish an internal critique of the existing one with proposed changes.
+হয়: আপনার team-এর "incident response playbook" লিখুন যদি এটা না থাকে, নয়তো: বিদ্যমানটার একটা internal critique proposed change সহ publish করুন।
 
 ---
 
@@ -171,51 +171,51 @@ Either: write your team's "incident response playbook" if it doesn't exist, OR p
 
 ### Reading
 
-- _Kubernetes Up & Running_ (3rd ed) — re-read chapters 8+ with operator's lens.
-- _Programming Kubernetes_ (Hausenblas, Schimanski) — informers, controllers, CRDs.
-- The Kubernetes scheduler design doc.
-- Etcd operations docs end to end.
+- _Kubernetes Up & Running_ (3rd ed) — operator-এর lens দিয়ে chapter 8+ re-read।
+- _Programming Kubernetes_ (Hausenblas, Schimanski) — informer, controller, CRD।
+- Kubernetes scheduler design doc।
+- Etcd operations docs end to end।
 
 ### Skill targets
 
-- Operate (or shadow ops on) a 500+ node cluster.
-- Diagnose an apiserver or etcd performance issue using metrics, not guesses.
-- Write a small custom controller using controller-runtime.
+- একটা 500+ node cluster operate করুন (বা ops shadow করুন)।
+- অনুমান নয়, metric ব্যবহার করে একটা apiserver বা etcd performance issue diagnose করুন।
+- controller-runtime ব্যবহার করে একটা ছোট custom controller লিখুন।
 
 ### Production project
 
-Either:
-(a) Lead an etcd tuning / defrag / upgrade exercise on a real cluster.
-(b) Write a small operator or admission webhook that solves a real org pain.
-(c) Migrate a workload off an opaque managed runtime onto K8s with full observability.
+হয়:
+(a) একটা বাস্তব cluster-এ একটা etcd tuning / defrag / upgrade exercise lead করুন।
+(b) একটা ছোট operator বা admission webhook লিখুন যা একটা বাস্তব org pain সমাধান করে।
+(c) full observability সহ একটা opaque managed runtime থেকে একটা workload K8s-এ migrate করুন।
 
 ### Artifact
 
-Talk or writeup on the project, with metrics before/after.
+project নিয়ে talk বা writeup, before/after metric সহ।
 
 ---
 
-## Month 8 — Observability program (org-level, not service-level)
+## Month 8 — Observability program (org-level, service-level নয়)
 
 ### Reading
 
-- _Observability Engineering_ (Majors et al) — chapters 7+ on org adoption.
-- OpenTelemetry spec (the parts you actually use).
-- Cardinality, exemplars, and the cost-of-observability papers from Honeycomb/Grafana blogs.
+- _Observability Engineering_ (Majors et al) — org adoption নিয়ে chapter 7+।
+- OpenTelemetry spec (আপনি আসলে যে অংশ ব্যবহার করেন)।
+- Honeycomb/Grafana blog থেকে cardinality, exemplar, আর cost-of-observability paper।
 
 ### Skill targets
 
-- Define the SLI taxonomy used by 3+ teams in your org consistently.
-- Build a "service-level golden signals" template that any team can adopt in a day.
-- Cap observability spend with cardinality budgets — and justify the cap.
+- আপনার org-এ 3+ team consistently ব্যবহার করা SLI taxonomy define করুন।
+- একটা "service-level golden signals" template বানান যা যেকোনো team একদিনে adopt করতে পারে।
+- cardinality budget দিয়ে observability spend cap করুন — আর cap-টা justify করুন।
 
 ### Production project
 
-Standardize SLOs across at least 5 services. Roll up to a team-level dashboard. Brief leadership on the rollup quarterly.
+অন্তত 5টা service জুড়ে SLO standardize করুন। একটা team-level dashboard-এ roll up করুন। quarterly leadership-কে rollup-টা brief করুন।
 
 ### Artifact
 
-A "how SLOs work here" doc that becomes the company's reference. Plus the standardized dashboards.
+একটা "how SLOs work here" doc যা company-র reference হয়ে যায়। Plus standardized dashboard।
 
 ---
 
@@ -223,134 +223,134 @@ A "how SLOs work here" doc that becomes the company's reference. Plus the standa
 
 ### Reading
 
-- _Cloud FinOps_ (J.R. Storment, Mike Fuller).
-- AWS Well-Architected Framework — Cost Optimization pillar.
-- Vantage / Cast.AI engineering blog posts on real customer optimizations.
+- _Cloud FinOps_ (J.R. Storment, Mike Fuller)।
+- AWS Well-Architected Framework — Cost Optimization pillar।
+- বাস্তব customer optimization নিয়ে Vantage / Cast.AI engineering blog post।
 
 ### Skill targets
 
-- Compute cost-per-request for at least 3 services.
-- Recommend (and quantify) an instance-type or commitment optimization that saves > $50k/year.
-- Run a quarterly cost review with engineering leadership.
+- অন্তত 3টা service-এর জন্য cost-per-request compute করুন।
+- বছরে > $50k সাশ্রয় করে এমন একটা instance-type বা commitment optimization recommend (আর quantify) করুন।
+- engineering leadership-এর সাথে একটা quarterly cost review চালান।
 
 ### Production project
 
-Build a per-team cost allocation dashboard. Drive at least one optimization to completion (rightsizing, Graviton migration, NAT-to-VPC-endpoint, lifecycle policies).
+একটা per-team cost allocation dashboard বানান। অন্তত একটা optimization completion পর্যন্ত drive করুন (rightsizing, Graviton migration, NAT-to-VPC-endpoint, lifecycle policy)।
 
 ### Artifact
 
-The dashboard, plus a writeup of the optimization with dollar impact.
+dashboard, plus dollar impact সহ optimization-এর একটা writeup।
 
 ---
 
 ## Months 10-12 — Capstone
 
-The 8-week roadmap ended with a personal capstone (a service you built and operated). The 12-month mastery capstone is shaped differently: it's an org-level program with a public artifact.
+8-week roadmap একটা personal capstone দিয়ে শেষ হয়েছিল (আপনি build আর operate করা একটা service)। 12-month mastery capstone ভিন্নভাবে আকৃত: এটা একটা public artifact সহ একটা org-level program।
 
-### Pick one capstone
+### একটা capstone বাছুন
 
 **Option A — Resilience program.**
-Lead the org's "what would survive a region failure?" assessment. Produce a multi-page report: services audited, gaps found, prioritized fix list, capital investment ask. Run a real region-failover drill on at least one service.
+org-এর "একটা region failure-এ কী টিকে থাকবে?" assessment lead করুন। একটা multi-page report তৈরি করুন: audited service, পাওয়া gap, prioritized fix list, capital investment ask। অন্তত একটা service-এ একটা বাস্তব region-failover drill চালান।
 
 **Option B — Reliability platform.**
-Build (or significantly contribute to) the org's golden-path platform: SLO-as-code, on-call-as-code, deploy template, observability template. Demonstrate adoption by 3+ teams.
+org-এর golden-path platform build করুন (বা উল্লেখযোগ্যভাবে contribute করুন): SLO-as-code, on-call-as-code, deploy template, observability template। 3+ team-এর adoption দিয়ে demonstrate করুন।
 
 **Option C — Public technical artifact.**
-A long-form blog post, conference talk, or open-source contribution that crystallizes a deep technical lesson from the year. The bar: another senior SRE in the world reads it and learns something.
+একটা long-form blog post, conference talk, বা open-source contribution যা বছরের একটা deep technical lesson crystallize করে। মানদণ্ড: পৃথিবীর আরেকজন senior SRE এটা পড়ে আর কিছু শেখে।
 
 **Option D — Mentorship program.**
-Take 2-3 junior engineers from "knows the basics" to "can run an incident solo" over the three months. Document the program so it can be repeated.
+2-3 জন junior engineer-কে তিন মাসে "knows the basics" থেকে "can run an incident solo"-তে নিয়ে যান। program-টা document করুন যাতে এটা পুনরাবৃত্তি করা যায়।
 
-### What the capstone proves
+### Capstone কী প্রমাণ করে
 
-A staff-track SRE doesn't get there by being the best individual debugger. They get there by _making other people more reliable_ — through programs, platforms, mentoring, or external knowledge transfer. The capstone is your proof you can do that.
+একজন staff-track SRE সেখানে পৌঁছায় না সেরা individual debugger হয়ে। তারা সেখানে পৌঁছায় _অন্যদের বেশি reliable বানিয়ে_ — program, platform, mentoring, বা external knowledge transfer-এর মাধ্যমে। Capstone হলো আপনি সেটা করতে পারেন তার প্রমাণ।
 
 ### Artifact
 
-External: a blog post, talk, OSS PR list, conference proposal accepted.
-Internal: a doc that lives on past you. The kind of doc the next person who joins the team gets pointed at.
+External: একটা blog post, talk, OSS PR list, accepted conference proposal।
+Internal: একটা doc যা আপনার পরেও টিকে থাকে। এমন doc যেদিকে team-এ যোগ দেওয়া পরের ব্যক্তিকে নির্দেশ করা হয়।
 
 ---
 
-## Throughout the year — habits that compound
+## সারা বছর জুড়ে — যে habit যৌগিক হয়
 
 ### Weekly
 
-- Read one engineering blog post or postmortem deeply (Cloudflare, Stripe, GitHub, AWS, Honeycomb, Linkedin Eng all publish gold).
-- Skim Hacker News + lobste.rs for what your peers are reading.
-- Spend 30 minutes on your runbooks/postmortems — improve one of them.
+- একটা engineering blog post বা postmortem গভীরভাবে পড়ুন (Cloudflare, Stripe, GitHub, AWS, Honeycomb, Linkedin Eng সবাই gold publish করে)।
+- আপনার peer-রা কী পড়ছে তার জন্য Hacker News + lobste.rs skim করুন।
+- আপনার runbook/postmortem-এ 30 মিনিট ব্যয় করুন — একটা উন্নত করুন।
 
 ### Monthly
 
-- One paper reading session. One technical book chapter session.
-- A retro on what the month's incidents taught you.
-- A 1:1 with someone senior in another org for perspective.
+- একটা paper reading session। একটা technical book chapter session।
+- মাসের incident আপনাকে কী শেখাল তার একটা retro।
+- perspective-এর জন্য আরেকটা org-এর একজন senior-এর সাথে একটা 1:1।
 
 ### Quarterly
 
-- DR drill on a real service.
-- On-call health retro for your rotation.
-- Update your "what I'd improve if I were Staff today" list.
+- একটা বাস্তব service-এ DR drill।
+- আপনার rotation-এর জন্য on-call health retro।
+- আপনার "আজ Staff হলে কী উন্নত করতাম" list update করুন।
 
 ### Yearly
 
-- Re-read the SRE Book + SRE Workbook. Yes, again. You'll see new things.
-- Submit at least one conference talk proposal.
-- Take real vacation. Burned-out SREs make terrible long-term ICs.
+- SRE Book + SRE Workbook re-read করুন। হ্যাঁ, আবার। আপনি নতুন জিনিস দেখবেন।
+- অন্তত একটা conference talk proposal submit করুন।
+- সত্যিকারের ছুটি নিন। Burned-out SRE খারাপ দীর্ঘমেয়াদী IC হয়।
 
 ---
 
-## Where to plug into the community
+## Community-তে কোথায় plug in করবেন
 
-Senior IC growth requires external pressure. The communities that push you:
+Senior IC growth-এর জন্য external pressure লাগে। যে community আপনাকে ঠেলে:
 
-- **SREcon** (USENIX) — the conference. If you can attend or watch the talks, do.
-- **CNCF events** — KubeCon, Linkerd Summit, etc.
-- **Local SRE meetups** — variable quality, but you'll meet your peers.
-- **Discord/Slack communities**: SRE Discord, Kubernetes Slack, Honeycomb Pollinators.
-- **Twitter/Mastodon/Bluesky**: follow Charity Majors, Brendan Gregg, Tanya Reilly, Will Larson, Aphyr (Jepsen), Kelsey Hightower, Lorin Hochstein.
-- **Open-source contributions** — Prometheus, OpenTelemetry, Cilium, Kubernetes itself. Even small docs PRs build context.
+- **SREcon** (USENIX) — the conference। attend করতে বা talk দেখতে পারলে, করুন।
+- **CNCF events** — KubeCon, Linkerd Summit, ইত্যাদি।
+- **Local SRE meetup** — variable quality, কিন্তু আপনি আপনার peer-দের সাথে দেখা করবেন।
+- **Discord/Slack community**: SRE Discord, Kubernetes Slack, Honeycomb Pollinators।
+- **Twitter/Mastodon/Bluesky**: Charity Majors, Brendan Gregg, Tanya Reilly, Will Larson, Aphyr (Jepsen), Kelsey Hightower, Lorin Hochstein-কে follow করুন।
+- **Open-source contribution** — Prometheus, OpenTelemetry, Cilium, Kubernetes নিজেই। ছোট docs PR-ও context গড়ে।
 
-The pattern: you go from consumer of SRE knowledge to producer. By month 12 you should be the source someone else is reading.
-
----
-
-## Anti-patterns to avoid in this year
-
-1. **Reading without building.** Theory rots without production application.
-2. **Building without reading.** You'll re-derive everything — slowly.
-3. **Optimizing for ticket count.** Closing 200 routine tickets in a year proves nothing.
-4. **Avoiding the on-call rotation to "focus on projects."** You learn most from the pager.
-5. **Going solo.** Mentors + study buddies are a 2-3x multiplier on growth.
-6. **Burnout.** A year of 80% deliberate effort beats 6 months of 120%.
+pattern: আপনি SRE knowledge-এর consumer থেকে producer হন। month 12-এ আপনার সেই source হওয়া উচিত যা আরেকজন পড়ছে।
 
 ---
 
-## What "mastery" actually means at month 12
+## এই বছরে এড়ানোর মতো anti-pattern
 
-Honest framing — what should be true if the year went well:
+1. **Build না করে reading।** production application ছাড়া theory পচে যায়।
+2. **Reading না করে building।** আপনি সবকিছু re-derive করবেন — ধীরে।
+3. **Ticket count-এর জন্য optimize করা।** বছরে 200টা routine ticket close করা কিছুই প্রমাণ করে না।
+4. **"project-এ focus করতে" on-call rotation এড়ানো।** আপনি pager থেকে সবচেয়ে বেশি শেখেন।
+5. **একা চলা।** Mentor + study buddy growth-এ একটা 2-3x multiplier।
+6. **Burnout।** 80% deliberate effort-এর এক বছর 120%-এর 6 মাসকে হারায়।
 
-- You can debug a production outage at any layer — kernel, network, database, app — without escalation in most cases.
-- You can design a new service end-to-end (SLOs, capacity, observability, on-call) and defend the design in review.
-- You can run an incident as IC for any severity, with any team.
-- You've shipped at least one cross-cutting program that other teams use.
-- You have an opinion on every chapter of the SRE Workbook — and can defend it.
-- Your name is the one people put on a doc when they want it read seriously.
+---
 
-You are not "done." The next 5-10 years are about depth in 1-2 areas (DBs, networking, distributed-systems design, SRE leadership) and the breadth to coordinate across the whole stack. But you are now operating at senior, plausibly Staff, level. The career path opens up here.
+## month 12-এ "mastery" আসলে কী মানে
 
-## Stay current
+সৎ framing — বছরটা ভালো গেলে যা সত্য হওয়া উচিত:
 
-- [USENIX SREcon](https://www.usenix.org/srecon) — yearly state-of-the-practice talks
-- [Google SRE books](https://sre.google/books/) — reread these every 18 months; you notice new things
-- [Papers We Love](https://paperswelove.org/) — keep one paper in flight at all times
-- [CNCF TOC radar](https://github.com/cncf/toc) — what's graduating, what's deprecating
+- আপনি যেকোনো layer-এ একটা production outage debug করতে পারেন — kernel, network, database, app — বেশিরভাগ ক্ষেত্রে escalation ছাড়া।
+- আপনি একটা নতুন service end-to-end design করতে পারেন (SLO, capacity, observability, on-call) আর review-এ design defend করতে পারেন।
+- আপনি যেকোনো severity-র জন্য, যেকোনো team-এর সাথে IC হিসেবে একটা incident চালাতে পারেন।
+- আপনি অন্তত একটা cross-cutting program ship করেছেন যা অন্য team ব্যবহার করে।
+- SRE Workbook-এর প্রতিটা chapter নিয়ে আপনার একটা opinion আছে — আর সেটা defend করতে পারেন।
+- একটা doc গুরুত্বসহকারে পড়া হোক চাইলে লোকজন যার নাম দেয় সেটা আপনার নাম।
 
-## Key Takeaways
+আপনি "done" নন। পরের 5-10 বছর হলো 1-2টা এলাকায় depth (DB, networking, distributed-systems design, SRE leadership) আর পুরো stack জুড়ে coordinate করার breadth নিয়ে। কিন্তু আপনি এখন senior, plausibly Staff, level-এ operate করছেন। career path এখান থেকে খুলে যায়।
 
-1. **The year is paced for someone in a real SRE role** — production exposure is the foundation.
-2. **Each month has a depth target + production project + artifact** — reading alone doesn't move the needle.
-3. **Months 7-9 are the staff-shaped pivot** — programs, platforms, mentoring.
-4. **The capstone proves leverage** — making other people more reliable, not just being the best debugger.
-5. **External community pressure** is what turns competent IC into senior IC.
-6. **Sustainable pace beats heroics** — 5-8 hours of deliberate study per week, every week, for 52 weeks.
+## আপডেটেড থাকুন
+
+- [USENIX SREcon](https://www.usenix.org/srecon) — yearly state-of-the-practice talk
+- [Google SRE books](https://sre.google/books/) — প্রতি 18 মাসে reread করুন; নতুন জিনিস লক্ষ্য করবেন
+- [Papers We Love](https://paperswelove.org/) — সবসময় একটা paper হাতে রাখুন
+- [CNCF TOC radar](https://github.com/cncf/toc) — কী graduate করছে, কী deprecate হচ্ছে
+
+## মূল শিক্ষা
+
+1. **বছরটা একটা বাস্তব SRE role-এ থাকা কারো জন্য paced** — production exposure হলো ভিত্তি।
+2. **প্রতিটা month-এ একটা depth target + production project + artifact আছে** — শুধু reading needle নাড়ায় না।
+3. **Months 7-9 হলো staff-shaped pivot** — program, platform, mentoring।
+4. **Capstone leverage প্রমাণ করে** — অন্যদের বেশি reliable বানানো, শুধু সেরা debugger হওয়া নয়।
+5. **External community pressure** হলো যা competent IC-কে senior IC-তে পরিণত করে।
+6. **Sustainable pace heroics-কে হারায়** — সপ্তাহে 5-8 ঘণ্টা deliberate study, প্রতি সপ্তাহে, 52 সপ্তাহ ধরে।

@@ -1,9 +1,9 @@
 ---
 title: 'Restore Drills'
-subtitle: 'How to actually test your backups — the runbook structure, what to verify, and how to make drills a regular practice.'
+subtitle: 'কীভাবে আপনার ব্যাকআপ আসলেই টেস্ট করবেন — runbook স্ট্রাকচার, কী যাচাই করবেন, আর কীভাবে drill-কে নিয়মিত প্র্যাকটিসে পরিণত করবেন।'
 chapter: 3
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['restore drills', 'runbooks', 'backup verification', 'PITR', 'disaster simulation']
 ---
 
@@ -13,25 +13,33 @@ topics: ['restore drills', 'runbooks', 'backup verification', 'PITR', 'disaster 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A fire extinguisher that's never been tested: it looks ready, it's mounted on the wall, and it might work — but you don't actually know until the moment you need it. Untested backups are the same. A backup you've never restored is a backup you don't have.
+একটা fire extinguisher যা কখনো টেস্ট করা হয়নি: দেখতে প্রস্তুত মনে হয়, দেয়ালে লাগানো, আর হয়তো কাজও করবে — কিন্তু দরকার পড়ার মুহূর্ত পর্যন্ত আপনি আসলে জানেন না। Untested ব্যাকআপও একই। যে ব্যাকআপ আপনি কখনো restore করেননি সেটা এমন ব্যাকআপ যা আপনার নেই।
 
 </Callout>
 
-## Why Drills Fail to Happen
+## গল্পে বুঝি
 
-Restore drills are universally acknowledged as important and universally skipped. The reasons:
+ইবনে সিনা বহু বছর ধরে নিয়ম করে গাড়ির ডিকিতে একটা স্পেয়ার টায়ার নিয়ে ঘোরেন। টায়ারটা ওখানেই আছে, দেখতেও ঠিকঠাক — তাই তিনি নিশ্চিন্ত। কিন্তু একটাবারের জন্যও কখনো সেটা নামিয়ে হাওয়া চেক করেননি, জ্যাকটা আছে কি না দেখেননি। এক রাতে নির্জন রাস্তায় হঠাৎ চাকা পাংচার। এতদিনের বয়ে বেড়ানো স্পেয়ারটা তিনি বের করলেন — আর দেখলেন সেটা নিজেই চুপসানো, আর জ্যাকটাই ডিকিতে নেই। যে জিনিসের ভরসায় এতদিন নিশ্চিন্ত ছিলেন, দরকারের মুহূর্তে সেটা কাজেই এল না।
 
-- **No immediate consequence for skipping.** Backups rarely needed, so the risk feels theoretical.
-- **Drills are disruptive.** Requires infrastructure, time, and people who know the procedure.
-- **Fear of what we'll find.** If the drill reveals the backup doesn't work, that's uncomfortable.
+ঠিক এই সময়েই একই রাস্তা দিয়ে যাচ্ছিলেন তাঁর প্রতিবেশী আল-খোয়ারিজমি। তিনি অভ্যাসবশত প্রতি কয়েক মাস পরপর নিজের স্পেয়ার নামিয়ে ফিট করে দেখেন, হাওয়া মাপেন, জ্যাক-রেঞ্চ সব ঠিক আছে কি না যাচাই করেন। ফলে চাকা লাগানো তাঁর মুখস্থ — দশ মিনিটে ইবনে সিনার গাড়ির চাকা বদলে দিলেন। পার্থক্যটা টায়ার কেনায় নয়, টায়ার টেস্ট করায়।
 
-The last reason is exactly why drills matter. Finding broken backups in a drill costs an afternoon. Finding them during an actual disaster costs days of downtime and potentially unrecoverable data.
+এই গল্পটাই আসলে **restore drill**। ডিকিতে পড়ে থাকা, কখনো টেস্ট-না-করা স্পেয়ার হলো সেই backup যা আপনি কখনো restore করে দেখেননি — খাতায় আছে, বাস্তবে নেই। দরকারের রাতে চুপসানো টায়ার পাওয়াটাই হলো আসল disaster-এর সময় corrupt বা অকেজো backup আবিষ্কার করা, যখন আর কিছু করার নেই। আর আল-খোয়ারিজমির নিয়মিত ফিট করে দেখাটাই হলো regular restore drill — যেটা আগেভাগেই ধরিয়ে দেয় backup ভাঙা কি না, আর আসল recovery-তে ঠিক কত সময় লাগবে (আপনার true RTO)। মূল কথা: যে backup আপনি কখনো restore করেননি, সেটা backup নয় — untested backup মানে কোনো backup-ই নেই। বাস্তবে তাই টিমগুলো নিয়ম করে test environment-এ restore চালিয়ে দেখে, আর measure করে কত সময় লাগল।
 
-## What to Test
+## কেন Drill আসলে হয় না
 
-A restore drill isn't just "does the backup file exist." Verify the full chain:
+Restore drill সর্বজনীনভাবে গুরুত্বপূর্ণ বলে স্বীকৃত এবং সর্বজনীনভাবে এড়িয়ে যাওয়া হয়। কারণগুলো:
+
+- **এড়িয়ে গেলে সাথে সাথে কোনো পরিণতি নেই।** ব্যাকআপ খুব কমই দরকার পড়ে, তাই ঝুঁকিটা তাত্ত্বিক মনে হয়।
+- **Drill বিঘ্নকারী।** এতে infrastructure, সময়, আর প্রসিডিওর জানা লোক দরকার।
+- **কী পাব সেই ভয়।** যদি drill-এ ধরা পড়ে ব্যাকআপ কাজ করে না, সেটা অস্বস্তিকর।
+
+শেষ কারণটাই ঠিক কেন drill গুরুত্বপূর্ণ। drill-এ ভাঙা ব্যাকআপ খুঁজে পেলে খরচ একটা বিকেল। বাস্তব disaster-এর সময় সেগুলো খুঁজে পেলে খরচ কয়েক দিনের downtime আর সম্ভবত রিকভার-না-হওয়া ডেটা।
+
+## কী টেস্ট করবেন
+
+একটা restore drill শুধু "ব্যাকআপ ফাইল আছে কি না" নয়। পুরো chain যাচাই করুন:
 
 ```
 □ Backup file is accessible (not just listed — actually downloadable)
@@ -66,7 +74,7 @@ Quarterly (full DR simulation):
   Time: half day
 ```
 
-## Automated Weekly Restore Verification
+## অটোমেটেড সাপ্তাহিক Restore Verification
 
 ```bash
 #!/bin/bash
@@ -135,11 +143,11 @@ ssh "postgres@$TEST_DB_HOST" "systemctl stop postgresql && rm -rf /var/lib/postg
 log "Restore verification complete"
 ```
 
-Run this in CI weekly. If it fails, alert on-call. If it's never failed, check that it's actually running.
+এটা CI-তে সাপ্তাহিক চালান। ফেল করলে on-call-কে alert করুন। কখনো ফেল না করলে, চেক করুন এটা আসলেই চলছে কি না।
 
-## The Restore Runbook
+## Restore Runbook
 
-Write it so that someone who has never done a restore before can execute it under pressure at 3am. Every step must be explicit.
+এমনভাবে লিখুন যাতে কখনো restore না-করা কেউ রাত ৩টায় চাপের মধ্যে এটা চালাতে পারে। প্রতিটা step স্পষ্ট হতে হবে।
 
 ````markdown
 # Database Disaster Recovery Runbook
@@ -187,11 +195,11 @@ aws ssm put-parameter \
 ```
 ````
 
-- [ ] Verify application can connect: `curl https://api.myapp.com/health`
-- [ ] Monitor error rate for 5 minutes
-- [ ] Update status page: "Database recovered, monitoring"
+- [ ] অ্যাপ্লিকেশন কানেক্ট করতে পারে যাচাই করুন: `curl https://api.myapp.com/health`
+- [ ] ৫ মিনিট error rate মনিটর করুন
+- [ ] status page আপডেট করুন: "Database recovered, monitoring"
 
-## Step 3b: Restore from Backup (~45 minutes)
+## Step 3b: ব্যাকআপ থেকে Restore (~45 মিনিট)
 
 ```bash
 # SSH to restore target server
@@ -221,17 +229,17 @@ sudo systemctl start postgresql
 sudo journalctl -u postgresql -f
 ```
 
-- [ ] Verify data integrity: `psql -h restore-db.internal -U postgres -c "SELECT count(*) FROM orders"`
-- [ ] Update DATABASE_URL to restored server
-- [ ] Run smoke tests: `TEST_ENV=staging npm run test:smoke`
-- [ ] Update status page: "Database recovered from backup, monitoring"
+- [ ] ডেটা integrity যাচাই করুন: `psql -h restore-db.internal -U postgres -c "SELECT count(*) FROM orders"`
+- [ ] DATABASE_URL restore করা সার্ভারে আপডেট করুন
+- [ ] smoke test চালান: `TEST_ENV=staging npm run test:smoke`
+- [ ] status page আপডেট করুন: "Database recovered from backup, monitoring"
 
-## Step 4: Post-Recovery (ongoing)
+## Step 4: Post-Recovery (চলমান)
 
-- [ ] Monitor error rates and latency for 30 minutes
-- [ ] Identify and communicate data loss window (RPO achieved vs target)
-- [ ] Open post-mortem issue
-- [ ] Schedule runbook review if steps were wrong or missing
+- [ ] ৩০ মিনিট error rate আর latency মনিটর করুন
+- [ ] ডেটা ক্ষতির window চিহ্নিত করুন আর জানান (অর্জিত RPO vs target)
+- [ ] post-mortem issue খুলুন
+- [ ] step ভুল বা missing থাকলে runbook review শিডিউল করুন
 
 ```
 

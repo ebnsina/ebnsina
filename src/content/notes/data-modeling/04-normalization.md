@@ -1,9 +1,9 @@
 ---
 title: 'Normalization'
-subtitle: '1NF, 2NF, 3NF — three rules that prevent the same data from being recorded twice. Ignore them and your schema rots from the inside as data drifts out of sync.'
+subtitle: '1NF, 2NF, 3NF — তিনটা নিয়ম যা একই ডেটাকে দুবার রেকর্ড হওয়া থেকে ঠেকায়। এদের উপেক্ষা করুন, আর ডেটা সিঙ্ক থেকে সরে যাওয়ার সাথে সাথে আপনার স্কিমা ভেতর থেকে পচতে থাকবে।'
 chapter: 4
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['data-modeling', 'normalization', '1nf', '2nf', '3nf']
 ---
 
@@ -11,21 +11,29 @@ topics: ['data-modeling', 'normalization', '1nf', '2nf', '3nf']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-Normalization sounds like an academic word that maps poorly to engineering reality. It isn't. The three normal forms describe three distinct mistakes you can make in a schema, each of which causes the same disaster: the same fact ends up in multiple places, and over time those copies drift out of sync.
+Normalization শুনতে একটা একাডেমিক শব্দের মতো যা ইঞ্জিনিয়ারিং বাস্তবতার সাথে ঠিক মেলে না। আসলে তা নয়। তিনটা normal form একটা স্কিমায় করা তিনটা আলাদা ভুল বর্ণনা করে, যার প্রত্যেকটা একই বিপর্যয় ঘটায়: একই fact একাধিক জায়গায় গিয়ে বসে, আর সময়ের সাথে সেই কপিগুলো সিঙ্ক থেকে সরে যায়।
 
-This chapter is the working engineer's normalization — the three rules, what each prevents, and when (chapter 5) you deliberately break them.
+এই চ্যাপ্টারটা হলো কর্মজীবী ইঞ্জিনিয়ারের normalization — তিনটা নিয়ম, প্রত্যেকটা কী ঠেকায়, আর কখন (chapter 5) আপনি ইচ্ছাকৃতভাবে এগুলো ভাঙেন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব-জীবনের উদাহরণ**
 
-A well-organized recipe book where each ingredient appears once — change "butter" to "unsalted butter" in one place, not in every recipe.
+একটা সুসংগঠিত recipe বই যেখানে প্রতিটা উপকরণ একবার করে আসে — "butter"-কে "unsalted butter"-এ বদলান একটা জায়গায়, প্রতিটা recipe-তে নয়।
 
 </Callout>
 
-## The disease normalization prevents
+## গল্পে বুঝি
 
-Look at this table:
+আল-খোয়ারিজমির একটা পাইকারি দোকান। আগে সে প্রতিটা অর্ডার স্লিপে হাতে করে সরবরাহকারীর পুরো নাম আর ঠিকানা লিখত — একই সরবরাহকারীর দশটা অর্ডার মানে দশবার একই ঠিকানা লেখা। বছরের পর বছর এভাবে হাজার হাজার স্লিপ জমল, প্রতিটাতে ঠিকানাটা আবার করে বসানো।
+
+তারপর একদিন এক বড় সরবরাহকারী, ফাতিমা আল-ফিহরির গুদাম, বুখারা থেকে সমরকন্দে সরে গেল। এখন আল-খোয়ারিজমিকে পুরনো প্রতিটা স্লিপে গিয়ে ঠিকানা বদলাতে হবে — শত শত স্লিপ। কয়েকটা তো চোখেই পড়ল না, ফলে কিছু ডেলিভারি পুরনো ভুল ঠিকানায় চলে গেল। বিরক্ত হয়ে সে নিয়ম বদলাল: একটা মাত্র "সরবরাহকারী তালিকা" খাতা রাখল যেখানে প্রতিটা সরবরাহকারীর নাম-ঠিকানা একবারই লেখা, আর প্রত্যেকের পাশে একটা ছোট ID। এখন অর্ডার স্লিপে সে শুধু সেই ID টুকু বসায়। পরের বার কেউ সরে গেলে মাস্টার তালিকায় এক জায়গায় ঠিকানা বদলালেই সব অর্ডার আপনাআপনি ঠিক।
+
+গল্পটাই আসলে **normalization**। প্রতিটা স্লিপে পুরো ঠিকানা আবার লেখা হলো **duplication** — আর সরবরাহকারী সরে গেলে কিছু স্লিপ ভুল/মিস হওয়াটাই ক্লাসিক **update anomaly**। একটা মাস্টার সরবরাহকারী তালিকা রেখে স্লিপে শুধু ID (মানে **foreign key**) দিয়ে reference করা মানে প্রতিটা fact ঠিক এক জায়গায় থাকে — এক জায়গায় edit করলেই সব ঠিক, আর কোনো anomaly নেই। বাস্তবে ঠিক এই কারণেই আমরা ঠিকানা প্রতিটা order row-তে না লিখে আলাদা `suppliers` table-এ রেখে সেখান থেকে id দিয়ে join করি।
+
+## normalization যে রোগটা ঠেকায়
+
+এই টেবিলটা দেখুন:
 
 ```
 order_id | customer_name | customer_email      | product_name  | product_price
@@ -36,21 +44,21 @@ order_id | customer_name | customer_email      | product_name  | product_price
 1004     | Sumayya       | SUMAYYA@example.com | Notebook      | 13.00
 ```
 
-Three problems lurking:
+তিনটা সমস্যা লুকিয়ে আছে:
 
-1. **Sumayya's email is recorded three times.** When she changes it, you must update every row. Miss one → drift.
-2. **Notebook's price is recorded twice as 12.00, once as 13.00.** Which is correct? Maybe a typo on row 1004. Maybe the price changed between orders. The schema can't tell.
-3. **Sumayya's name appears multiple times in different cases.** "Sumayya" vs implicit other casings. Aggregating "orders by customer" requires manual cleanup.
+1. **Sumayya-র email তিনবার রেকর্ড হয়েছে।** সে যখন এটা বদলায়, প্রতিটা row আপনাকে আপডেট করতে হবে। একটা মিস করলেই → drift।
+2. **Notebook-এর দাম দুবার 12.00, একবার 13.00 হিসেবে রেকর্ড হয়েছে।** কোনটা ঠিক? হয়তো row 1004-এ একটা typo। হয়তো order-এর মাঝে দাম বদলেছে। স্কিমা বলতে পারে না।
+3. **Sumayya-র নাম আলাদা case-এ একাধিকবার আসে।** "Sumayya" বনাম অন্য casing। "customer অনুযায়ী order" aggregate করতে ম্যানুয়াল cleanup লাগে।
 
-This is what un-normalized schemas look like. Every duplicate is a future bug.
+un-normalized স্কিমা এমনই দেখতে। প্রতিটা ডুপ্লিকেট একটা ভবিষ্যৎ bug।
 
-The fix: **each fact lives in exactly one place.** That's what normalization is.
+সমাধান: **প্রতিটা fact ঠিক একটা জায়গায় থাকে।** এটাই normalization।
 
-## 1NF — atomic columns, no repeating groups
+## 1NF — atomic column, কোনো repeating group নেই
 
-**First Normal Form:** every column holds a single value, not a list or a structure. Every row is a flat tuple.
+**First Normal Form:** প্রতিটা column একটা মাত্র value ধরে, কোনো list বা structure নয়। প্রতিটা row একটা flat tuple।
 
-Bad:
+খারাপ:
 
 ```
 user_id | name  | phone_numbers
@@ -59,9 +67,9 @@ user_id | name  | phone_numbers
 2       | Aisha | 555-9999
 ```
 
-`phone_numbers` is a list jammed into one column. Querying "users with this phone" requires `LIKE '%555-1234%'` — slow, error-prone (substring matches), no validation per number.
+`phone_numbers` হলো একটা column-এ ঠেসে ঢোকানো একটা list। "এই phone-ওয়ালা user" query করতে `LIKE '%555-1234%'` লাগে — ধীর, error-prone (substring match হয়), প্রতি number-এ কোনো validation নেই।
 
-Fixed:
+ঠিক করা:
 
 ```sql
 CREATE TABLE users (id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
@@ -72,21 +80,21 @@ CREATE TABLE phones (
 );
 ```
 
-Each phone number is its own row. Query "find user by phone" is now a clean WHERE clause. Adding a phone number is an INSERT. Validating the format applies per number.
+প্রতিটা phone number নিজের একটা row। "phone দিয়ে user খোঁজো" এখন একটা পরিষ্কার WHERE clause। একটা phone number যোগ করা একটা INSERT। format validate করা প্রতি number-এ প্রযোজ্য।
 
-Other 1NF violations:
+অন্যান্য 1NF violation:
 
-- Pipe-delimited strings: `tags = 'red|fast|new'`. Use a tag table or a real `tags TEXT[]` array (Postgres-specific) with care.
-- Numbered columns: `phone_1`, `phone_2`, `phone_3`. The list isn't unbounded; what about phone 4?
-- Single column holding a small struct: `address = '123 Main St, NY, 10001'`. Each component should be its own column or its own table.
+- Pipe-delimited string: `tags = 'red|fast|new'`। একটা tag টেবিল ব্যবহার করুন বা সাবধানে একটা আসল `tags TEXT[]` array (Postgres-নির্দিষ্ট)।
+- Numbered column: `phone_1`, `phone_2`, `phone_3`। list-টা unbounded নয়; phone 4 হলে কী হবে?
+- একটা ছোট struct ধরে রাখা single column: `address = '123 Main St, NY, 10001'`। প্রতিটা component নিজের একটা column বা নিজের একটা টেবিল হওয়া উচিত।
 
-The exception: **JSONB**. Postgres lets you store structured data as JSONB. That isn't a 1NF violation if the JSONB is treated as opaque (stored together, queried as a unit). It becomes one if you start needing to filter, index, and join on inner fields — at that point the data wants to be normalized into columns. Chapter 9 covers this in detail.
+ব্যতিক্রম: **JSONB**। Postgres আপনাকে structured ডেটা JSONB হিসেবে store করতে দেয়। সেটা 1NF violation নয় যদি JSONB-কে opaque হিসেবে ধরা হয় (একসাথে stored, একক হিসেবে queried)। এটা violation হয়ে যায় যদি আপনি ভেতরের field-এ filter, index, আর join করতে শুরু করেন — তখন ডেটা column-এ normalize হতে চায়। Chapter 9 এটা বিস্তারিতভাবে কভার করে।
 
-## 2NF — every non-key column depends on the _whole_ key
+## 2NF — প্রতিটা non-key column _পুরো_ key-এর উপর নির্ভর করে
 
-**Second Normal Form** only matters when you have a _composite_ primary key. The rule: every non-key column must depend on the entire key, not just part of it.
+**Second Normal Form** শুধু তখনই গুরুত্বপূর্ণ যখন আপনার একটা _composite_ primary key থাকে। নিয়মটা: প্রতিটা non-key column পুরো key-এর উপর নির্ভর করতে হবে, key-এর অংশমাত্রের উপর নয়।
 
-Imagine a course-enrollments table:
+একটা course-enrollment টেবিল কল্পনা করুন:
 
 ```sql
 CREATE TABLE enrollments (
@@ -99,15 +107,15 @@ CREATE TABLE enrollments (
 );
 ```
 
-The PK is `(student_id, course_id)`. But:
+PK হলো `(student_id, course_id)`। কিন্তু:
 
-- `student_name` depends on `student_id` alone — every enrollment for the same student repeats the name.
-- `course_title` depends on `course_id` alone — every enrollment for the same course repeats the title.
-- Only `enrolled_at` depends on the whole `(student_id, course_id)` pair.
+- `student_name` শুধু `student_id`-এর উপর নির্ভর করে — একই student-এর প্রতিটা enrollment নামটা পুনরাবৃত্তি করে।
+- `course_title` শুধু `course_id`-এর উপর নির্ভর করে — একই course-এর প্রতিটা enrollment title-টা পুনরাবৃত্তি করে।
+- শুধু `enrolled_at` পুরো `(student_id, course_id)` জোড়ার উপর নির্ভর করে।
 
-If a student renames themselves, you have to update every enrollment row. 2NF says: split the partially-dependent attributes into their own tables.
+একজন student নিজের নাম বদলালে, আপনাকে প্রতিটা enrollment row আপডেট করতে হবে। 2NF বলে: আংশিকভাবে নির্ভরশীল attribute-গুলোকে নিজেদের টেবিলে ভাগ করুন।
 
-Fixed:
+ঠিক করা:
 
 ```sql
 CREATE TABLE students (id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
@@ -121,17 +129,17 @@ CREATE TABLE enrollments (
 );
 ```
 
-`students.name` lives in one place. Renaming the student is one row update. `enrollments` only carries facts about the enrollment itself.
+`students.name` একটা জায়গায় থাকে। student-এর নাম বদলানো একটা row update। `enrollments` শুধু enrollment সম্পর্কেই fact বহন করে।
 
-Note: with surrogate keys (chapter 3), 2NF is rarely an issue — your single-column `id` PK can't be partially dependent on. 2NF problems mostly appear when you use composite natural keys.
+খেয়াল করুন: surrogate key (chapter 3) দিয়ে, 2NF কদাচিৎ সমস্যা হয় — আপনার single-column `id` PK আংশিকভাবে নির্ভরশীল হতে পারে না। 2NF সমস্যা মূলত তখনই দেখা দেয় যখন আপনি composite natural key ব্যবহার করেন।
 
-## 3NF — non-key columns depend _only_ on the key
+## 3NF — non-key column _শুধু_ key-এর উপর নির্ভর করে
 
-**Third Normal Form:** non-key columns must depend on the key, the whole key, and nothing but the key. (The classic mnemonic.)
+**Third Normal Form:** non-key column key-এর উপর, পুরো key-এর উপর, আর key ছাড়া আর কিছুরই উপর নির্ভর করতে হবে না। (ক্লাসিক mnemonic।)
 
-3NF is about _transitive_ dependencies — column A depends on column B, which depends on the PK.
+3NF হলো _transitive_ dependency নিয়ে — column A নির্ভর করে column B-এর উপর, যেটা নির্ভর করে PK-এর উপর।
 
-Bad:
+খারাপ:
 
 ```sql
 CREATE TABLE orders (
@@ -142,9 +150,9 @@ CREATE TABLE orders (
 );
 ```
 
-`customer_country_name` depends on `customer_country_code`, which depends on `customer_id`. The country _name_ is a fact about the _country_, not about the _order_. If a country changes its display name (this happens — "Czech Republic" → "Czechia"), every order with that country code must be updated.
+`customer_country_name` নির্ভর করে `customer_country_code`-এর উপর, যেটা নির্ভর করে `customer_id`-এর উপর। country-র _নাম_ একটা fact _country_ সম্পর্কে, _order_ সম্পর্কে নয়। একটা country যদি তার display name বদলায় (এটা ঘটে — "Czech Republic" → "Czechia"), সেই country code-ওয়ালা প্রতিটা order আপডেট করতে হবে।
 
-Fixed: countries get their own table.
+ঠিক করা: country-রা নিজেদের টেবিল পায়।
 
 ```sql
 CREATE TABLE countries (
@@ -165,9 +173,9 @@ CREATE TABLE orders (
 );
 ```
 
-Now `country.name` lives once. Customer's country links by code; order's country comes through the customer.
+এখন `country.name` একবার থাকে। customer-এর country code দিয়ে link করে; order-এর country আসে customer-এর মধ্য দিয়ে।
 
-A subtler 3NF violation: storing computed values.
+একটা সূক্ষ্মতর 3NF violation: computed value store করা।
 
 ```sql
 CREATE TABLE invoices (
@@ -178,9 +186,9 @@ CREATE TABLE invoices (
 );
 ```
 
-`total` depends on `subtotal` and `tax_rate`, not directly on the PK. Worse, it can drift — if someone updates `subtotal` but forgets to update `total`, you have inconsistent data.
+`total` নির্ভর করে `subtotal` আর `tax_rate`-এর উপর, সরাসরি PK-এর উপর নয়। আরও খারাপ, এটা drift করতে পারে — কেউ যদি `subtotal` আপডেট করে কিন্তু `total` আপডেট করতে ভুলে যায়, তাহলে আপনার inconsistent ডেটা থাকে।
 
-Fixed: don't store it. Compute on read, or use a generated column:
+ঠিক করা: এটা store করবেন না। read-এর সময় compute করুন, বা একটা generated column ব্যবহার করুন:
 
 ```sql
 CREATE TABLE invoices (
@@ -191,11 +199,11 @@ CREATE TABLE invoices (
 );
 ```
 
-Generated columns recompute automatically; the database guarantees they can't drift.
+Generated column স্বয়ংক্রিয়ভাবে পুনরায় compute করে; database নিশ্চিত করে যে এগুলো drift করতে পারে না।
 
-## The normalized schema for the marketplace example
+## marketplace উদাহরণের জন্য normalized স্কিমা
 
-Putting 1NF, 2NF, 3NF together:
+1NF, 2NF, 3NF একসাথে রেখে:
 
 ```sql
 CREATE TABLE users (
@@ -226,70 +234,70 @@ CREATE TABLE order_items (
 );
 ```
 
-Each fact lives in exactly one place:
+প্রতিটা fact ঠিক একটা জায়গায় থাকে:
 
-- User identity → `users`.
-- Product info → `products`.
-- The order header → `orders`.
-- What was bought → `order_items`.
+- User identity → `users`।
+- Product info → `products`।
+- order header → `orders`।
+- কী কেনা হয়েছিল → `order_items`।
 
-Note that `order_items.unit_price_cents` is **deliberately denormalized** — you might think "the price is in `products`, why duplicate?" Because the order is a historical record. If the product price changes after the order, the order should still reflect what the customer paid. We come back to this in chapter 5.
+খেয়াল করুন `order_items.unit_price_cents` **ইচ্ছাকৃতভাবে denormalized** — আপনি ভাবতে পারেন "দাম তো `products`-এ আছে, ডুপ্লিকেট করব কেন?" কারণ order হলো একটা ঐতিহাসিক রেকর্ড। order-এর পরে product-এর দাম বদলালেও, order-এর এখনো প্রতিফলিত করা উচিত customer কী পরিশোধ করেছিল। আমরা chapter 5-এ এতে ফিরে আসব।
 
-## When normalization conflicts with your needs
+## যখন normalization আপনার প্রয়োজনের সাথে সংঘর্ষে জড়ায়
 
-Three honest tensions:
+তিনটা সৎ টানাপোড়েন:
 
-**1. JOINs cost CPU and reads.** Strict 3NF means every query joins many tables. For hot read paths, this is real performance. Denormalize where you measure (chapter 5).
+**1. JOIN CPU আর read খরচ করে।** কঠোর 3NF মানে প্রতিটা query অনেক টেবিল join করে। hot read path-এর জন্য, এটা বাস্তব performance-এর ব্যাপার। যেখানে measure করেন সেখানে denormalize করুন (chapter 5)।
 
-**2. Some data needs to be historical.** "What was the user's address at the time of this order?" pure-3NF says "look up the user's current address" — but the address has changed since the order. Snapshot critical data into the order itself.
+**2. কিছু ডেটা ঐতিহাসিক হওয়া দরকার।** "এই order-এর সময় user-এর address কী ছিল?" খাঁটি-3NF বলে "user-এর বর্তমান address দেখো" — কিন্তু order-এর পর থেকে address বদলে গেছে। জরুরি ডেটা order-এর ভেতরেই snapshot করুন।
 
-**3. The model needs to evolve under load.** Adding a column to a hot table is cheap; splitting one table into three is a major migration. Pragmatic schemas often keep some 3NF violations in flight.
+**3. মডেলকে load-এর নিচে বিকশিত হতে হয়।** একটা hot টেবিলে একটা column যোগ করা সস্তা; একটা টেবিলকে তিনটায় ভাগ করা একটা বড় migration। বাস্তবসম্মত স্কিমা প্রায়ই চলতি অবস্থায় কিছু 3NF violation রেখে দেয়।
 
-These aren't reasons to avoid normalization. They are reasons to know _why_ you're breaking it when you break it.
+এগুলো normalization এড়ানোর কারণ নয়। এগুলো হলো _কেন_ আপনি ভাঙছেন সেটা জানার কারণ, যখন ভাঙছেন।
 
 <Callout type="tip">
 
-**Default to 3NF. Break it deliberately.** Most schemas should start at 3NF. When you measure a read pattern that costs too much, denormalize that specific column. The rule of thumb: never denormalize before you've seen the slow query plan.
+**Default হিসেবে 3NF। ইচ্ছাকৃতভাবে ভাঙুন।** বেশিরভাগ স্কিমা 3NF-এ শুরু হওয়া উচিত। যখন আপনি এমন একটা read প্যাটার্ন measure করেন যা অতিরিক্ত খরচ করে, সেই নির্দিষ্ট column denormalize করুন। বৃদ্ধাঙ্গুষ্ঠের নিয়ম: slow query plan না দেখা পর্যন্ত কখনো denormalize করবেন না।
 
 </Callout>
 
-## What about higher normal forms
+## উচ্চতর normal form নিয়ে কী
 
-**4NF, 5NF, 6NF, BCNF** are real and academic. They handle edge cases around multi-valued dependencies and join dependencies. In practice:
+**4NF, 5NF, 6NF, BCNF** বাস্তব আর একাডেমিক। এরা multi-valued dependency আর join dependency ঘিরে edge case সামলায়। বাস্তবে:
 
-- 99% of schemas only need 1NF, 2NF, 3NF.
-- If you find yourself in a knot 3NF can't handle, you almost always have a misidentified entity (chapter 2) — fixing that resolves the 4NF/5NF concern.
-- BCNF is essentially "stricter 3NF" — same intuitions, rarely matters in practice.
+- ৯৯% স্কিমার শুধু 1NF, 2NF, 3NF দরকার।
+- আপনি যদি নিজেকে এমন একটা জটিল অবস্থায় পান যা 3NF সামলাতে পারে না, প্রায় সবসময়ই আপনার একটা ভুল-শনাক্ত করা entity আছে (chapter 2) — সেটা ঠিক করলে 4NF/5NF-এর দুশ্চিন্তা মিটে যায়।
+- BCNF মূলত "কঠোরতর 3NF" — একই intuition, বাস্তবে কদাচিৎ গুরুত্বপূর্ণ।
 
-If a senior engineer says "this is a 4NF violation," nine times out of ten they mean "you've got a polymorphic relationship that should be split." Treat it as design feedback, not a normalization theorem.
+একজন senior ইঞ্জিনিয়ার যদি বলেন "এটা একটা 4NF violation," দশবারের মধ্যে নয়বার তার মানে "তোমার একটা polymorphic relationship আছে যেটা ভাগ করা উচিত।" এটাকে design feedback হিসেবে নিন, normalization theorem হিসেবে নয়।
 
-## The shortest summary
+## সবচেয়ে সংক্ষিপ্ত সারাংশ
 
-- **1NF**: each cell holds one value.
-- **2NF**: every non-key column depends on the _whole_ key.
-- **3NF**: every non-key column depends only on the key, not on another column.
+- **1NF**: প্রতিটা cell একটা value ধরে।
+- **2NF**: প্রতিটা non-key column _পুরো_ key-এর উপর নির্ভর করে।
+- **3NF**: প্রতিটা non-key column শুধু key-এর উপর নির্ভর করে, আরেকটা column-এর উপর নয়।
 
-In a single sentence: _every fact lives in exactly one place, identified by its primary key._
+এক বাক্যে: _প্রতিটা fact ঠিক একটা জায়গায় থাকে, তার primary key দিয়ে শনাক্ত করা।_
 
-## A normalization workflow
+## একটা normalization workflow
 
-When designing a new table, ask:
+একটা নতুন টেবিল ডিজাইন করার সময়, জিজ্ঞেস করুন:
 
-1. **Is any column a list, comma-separated, or numbered (1NF)?** Split into a child table.
-2. **Is the PK composite, and does some column depend on only part of it (2NF)?** Move that column to its own table.
-3. **Does any non-key column describe something other than this row (3NF)?** Move it to that thing's table.
-4. **Is any column computable from others?** Use a generated column or compute on read.
+1. **কোনো column কি একটা list, comma-separated, বা numbered (1NF)?** একটা child টেবিলে ভাগ করুন।
+2. **PK কি composite, আর কোনো column কি এর অংশমাত্রের উপর নির্ভর করে (2NF)?** সেই column-কে নিজের টেবিলে সরান।
+3. **কোনো non-key column কি এই row ছাড়া অন্য কিছু বর্ণনা করে (3NF)?** সেটাকে সেই জিনিসের টেবিলে সরান।
+4. **কোনো column কি অন্যগুলো থেকে computable?** একটা generated column ব্যবহার করুন বা read-এর সময় compute করুন।
 
-Twenty seconds of these four questions catches most violations before they ship.
+এই চারটা প্রশ্নে বিশ সেকেন্ড ship করার আগেই বেশিরভাগ violation ধরে ফেলে।
 
-## Recap
+## রিক্যাপ
 
-- Normalization eliminates duplicate facts. Duplicates → drift → bugs.
-- 1NF: atomic columns. No lists, no comma-separated, no numbered columns.
-- 2NF: with composite PKs, every non-key column depends on the whole PK.
-- 3NF: no transitive dependencies. Country names belong on countries, not orders.
-- Generated columns avoid storing computed values that can drift.
-- 99% of schemas only need 1NF–3NF. Higher forms = misidentified entities.
-- Default to 3NF; break it deliberately when measurements demand.
+- Normalization ডুপ্লিকেট fact দূর করে। ডুপ্লিকেট → drift → bug।
+- 1NF: atomic column। কোনো list নেই, comma-separated নেই, numbered column নেই।
+- 2NF: composite PK-তে, প্রতিটা non-key column পুরো PK-এর উপর নির্ভর করে।
+- 3NF: কোনো transitive dependency নেই। Country-র নাম country-তে থাকে, order-এ নয়।
+- Generated column drift করতে পারে এমন computed value store করা এড়ায়।
+- ৯৯% স্কিমার শুধু 1NF–3NF দরকার। উচ্চতর form = ভুল-শনাক্ত করা entity।
+- Default হিসেবে 3NF; measurement দাবি করলে ইচ্ছাকৃতভাবে ভাঙুন।
 
-Next: [Denormalization](/notes/data-modeling/05-denormalization) — when, why, and the bookkeeping it forces.
+পরবর্তী: [Denormalization](/notes/data-modeling/05-denormalization) — কখন, কেন, আর যে bookkeeping এটা বাধ্য করে।

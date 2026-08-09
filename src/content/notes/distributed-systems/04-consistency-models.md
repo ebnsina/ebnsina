@@ -1,9 +1,9 @@
 ---
 title: 'Consistency Models'
-subtitle: "What 'consistent' actually means: linearizable, sequential, causal, and eventual consistency, and the trade-offs along the spectrum."
+subtitle: "'consistent' আসলে কী বোঝায়: linearizable, sequential, causal, ও eventual consistency, এবং spectrum জুড়ে trade-off গুলো।"
 chapter: 4
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['consistency', 'linearizability', 'causal']
 ---
 
@@ -11,17 +11,25 @@ topics: ['consistency', 'linearizability', 'causal']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-When data lives on several machines, "is the data consistent?" stops being a yes/no question. A **consistency model** is a precise contract between the storage system and the programmer: it says which results a read is allowed to return given the writes that came before it. Stronger models are easier to reason about but cost more in latency and availability; weaker models are cheaper and faster but push complexity onto you. This chapter walks the spectrum from strongest to weakest.
+## গল্পে বুঝি
 
-## Why a model is a contract
+সমরকন্দের এক গ্রামে খবর ছড়ানোর দুটো রাস্তা। প্রথমটা — গ্রামের ঢেঁড়াশিয়াল। কোনো বড় খবর এলে সে ঢোল পিটিয়ে গোটা গ্রামটাকে চকের মাঝখানে জড়ো করে, তারপর সরকারি ভাষ্যটা একবারে ঘোষণা করে দেয়। ইবনে সিনা, আল-বিরুনি, ফাতিমা আল-ফিহরি — যে যেখানেই ছিল, সবাই একসাথে একই মুহূর্তে ঠিক একই কথাটা শোনে। ঘোষণার পর গ্রামের যে কাউকে জিজ্ঞেস করো, সবাই হুবহু একই খবর বলবে, কেউ পুরনো ভাষ্য আঁকড়ে থাকতে পারবে না।
 
-Without a stated model, you cannot reason about your program, because you do not know what a read can return. A consistency model removes that uncertainty by enumerating the legal outcomes. The stronger the model, the fewer surprising outcomes it permits — and the more the system has to coordinate behind the scenes to forbid them.
+দ্বিতীয় রাস্তাটা — কানাকানি, মুখে মুখে গুজব। আল-খোয়ারিজমি বাজারে একটা কথা বলল, সেটা এ-পাড়া থেকে ও-পাড়ায় ছড়াতে থাকল। কিছুক্ষণের জন্য উত্তর পাড়া এক ভাষ্য জানে, দক্ষিণ পাড়া আরেকটা, আর নদীর ধারের বাড়িগুলো এখনও কিছুই শোনেনি। কিন্তু গুজব থামলে দিন শেষে গোটা গ্রাম একই গল্পে এসে মেলে। আর মজার ব্যাপার — যে আল-খোয়ারিজমি নিজে কথাটা শুরু করেছিল, সে সবসময় নিজের বলা আসল কথাটা ঠিকঠাক মনে রাখে, তাকে কেউ ভুল ভাষ্য গছাতে পারে না।
 
-Two large families exist. **Data-centric** models describe the order all clients see together; **client-centric** models describe guarantees from a single client's point of view (we met some of these as read-your-writes in chapter 3). We start with the strongest data-centric model.
+গল্পটাই আসলে **consistency model**। ঢেঁড়াশিয়ালের সবাইকে-একসাথে-একই-কথা হলো **strong/linearizable consistency** — write শেষ হওয়ার সঙ্গে সঙ্গে যে কেউ পড়লেই নতুন মানটাই পায়, কেউ পুরনো দেখে না, কিন্তু সবাইকে চকে জড়ো করার খরচটা (coordination, latency) বেশি। ধীরে ধীরে ছড়িয়ে শেষে মিলে যাওয়া গুজব হলো **eventual consistency** — কিছুক্ষণ পাড়ায় পাড়ায় মতভেদ থাকে, তারপর সব replica converge করে; সস্তা আর দ্রুত, কিন্তু মাঝের সময়টায় read পুরনো মান দিতে পারে। আর কথা-শুরু-করা লোকটা নিজের ভাষ্য মনে রাখা হলো **read-your-writes** — নিজের করা write নিজে সবসময় দেখে। বাস্তবেও ঠিক এমন: ব্যাংকের ব্যালেন্স বা unique username-এ linearizable লাগে, কিন্তু like counter বা DNS-এর মতো জিনিস eventual consistency-তেই চলে, উপরে দরকারমতো read-your-writes বসিয়ে।
+
+Data যখন কয়েকটি মেশিনে থাকে, "data কি consistent?" আর একটা হ্যাঁ/না প্রশ্ন থাকে না। একটি **consistency model** হলো storage সিস্টেম আর programmer-এর মধ্যে একটি সূক্ষ্ম চুক্তি: এটা বলে দেয় আগে ঘটে যাওয়া write-গুলোর প্রেক্ষিতে একটি read কোন ফলাফল ফেরত দিতে পারে। শক্তিশালী model নিয়ে যুক্তি সাজানো সহজ কিন্তু latency ও availability-তে বেশি খরচ পড়ে; দুর্বল model সস্তা ও দ্রুত কিন্তু জটিলতা তোমার ঘাড়ে ঠেলে দেয়। এই অধ্যায় শক্তিশালী থেকে দুর্বল পর্যন্ত spectrum ধরে হাঁটে।
+
+## কেন একটি model একটি চুক্তি
+
+একটি বর্ণিত model ছাড়া তুমি তোমার প্রোগ্রাম নিয়ে যুক্তি সাজাতে পারো না, কারণ তুমি জানো না একটি read কী ফেরত দিতে পারে। একটি consistency model বৈধ ফলাফলগুলো গুনে দিয়ে সেই অনিশ্চয়তা দূর করে। Model যত শক্তিশালী, তত কম অবাক করা ফলাফল এটি অনুমতি দেয় — আর সেগুলো নিষিদ্ধ করতে সিস্টেমকে তত বেশি নেপথ্যে সমন্বয় করতে হয়।
+
+দুটি বড় পরিবার আছে। **Data-centric** model বর্ণনা করে সব client একসাথে যে order দেখে; **client-centric** model একটি একক client-এর দৃষ্টিকোণ থেকে গ্যারান্টি বর্ণনা করে (এদের কয়েকটির সাথে আমরা অধ্যায় ৩-এ read-your-writes হিসেবে পরিচিত হয়েছি)। আমরা শক্তিশালীতম data-centric model দিয়ে শুরু করি।
 
 ## Linearizability (strong consistency)
 
-**Linearizability** is the gold standard. It makes the system behave as if there were only one copy of the data and every operation took effect **instantaneously at some point between when it was called and when it returned**. Once any client's write completes, every subsequent read — by any client — sees that write or a later one. There is a single, real-time-respecting order, and nobody ever observes a value go backward.
+**Linearizability** হলো স্বর্ণমান। এটি সিস্টেমকে এমনভাবে আচরণ করায় যেন data-র একটিমাত্র কপি ছিল আর প্রতিটি operation **যখন call করা হয়েছিল আর যখন return করেছিল তার মধ্যবর্তী কোনো একটি বিন্দুতে তাৎক্ষণিকভাবে** কার্যকর হয়েছিল। যেকোনো client-এর write সম্পন্ন হওয়ার পর, পরবর্তী প্রতিটি read — যেকোনো client-এর — সেই write বা একটি পরেরটা দেখে। একটি একক, real-time-সম্মানকারী order আছে, আর কেউ কখনো একটি মান পিছিয়ে যেতে দেখে না।
 
 ```text
 A writes x = 1 (returns at t=5)
@@ -30,19 +38,19 @@ B reads x at t=6  -> must return 1
 C reads x at t=6  -> must return 1   (cannot still see the old value)
 ```
 
-This is what lets you treat the distributed store like a single variable. The price is steep: to guarantee that no read ever sees stale data, the system must coordinate across replicas on the critical path of every operation, which adds latency, and — as chapter 5 shows — it cannot stay fully available during a network partition. Consensus systems (chapter 6) and `compare-and-swap` registers provide linearizability.
+এটাই তোমাকে distributed store-কে একটি একক variable-এর মতো ব্যবহার করতে দেয়। মূল্যটা চড়া: কোনো read যাতে কখনো বাসি data না দেখে তা গ্যারান্টি দিতে, সিস্টেমকে প্রতিটি operation-এর critical path-এ replica জুড়ে সমন্বয় করতে হয়, যা latency যোগ করে, আর — অধ্যায় ৫ যেমন দেখায় — একটি network partition-এর সময় এটি পুরোপুরি available থাকতে পারে না। Consensus সিস্টেম (অধ্যায় ৬) আর `compare-and-swap` register linearizability দেয়।
 
 ## Sequential consistency
 
-Slightly weaker. **Sequential consistency** requires that all operations appear in _some_ single total order, and that this order respects the order each individual client issued its own operations. The crucial difference from linearizability: this order need not match **real time**. If A writes at 10:00 and B reads at 10:01, sequential consistency permits B's read to be ordered _before_ A's write, as long as every client agrees on one consistent ordering.
+সামান্য দুর্বল। **Sequential consistency**-র জন্য দরকার যে সব operation _কোনো_ একটি একক total order-এ দেখা দেয়, আর এই order প্রতিটি আলাদা client নিজের operation যে order-এ জারি করেছে তা সম্মান করে। Linearizability থেকে গুরুত্বপূর্ণ পার্থক্য: এই order-কে **real time**-এর সাথে মিলতে হয় না। A যদি 10:00-এ write করে আর B 10:01-এ read করে, sequential consistency B-র read-কে A-র write-এর _আগে_ order করার অনুমতি দেয়, যতক্ষণ প্রতিটি client একটি consistent order-এ একমত হয়।
 
-In practice this means all clients see the same movie, but the movie may run slightly behind real time. It is rarely offered as a standalone database guarantee but is an important rung on the conceptual ladder.
+বাস্তবে এর মানে সব client একই সিনেমা দেখে, কিন্তু সিনেমাটা real time থেকে সামান্য পিছিয়ে চলতে পারে। এটা একক database গ্যারান্টি হিসেবে খুব কমই দেওয়া হয় কিন্তু ধারণাগত মইয়ের একটি গুরুত্বপূর্ণ ধাপ।
 
 ## Causal consistency
 
-A very useful middle point. **Causal consistency** guarantees that operations which are _causally related_ are seen by everyone in the same order, while operations that are merely **concurrent** (neither caused the other) may be seen in different orders by different clients.
+একটি খুব দরকারি মধ্যবিন্দু। **Causal consistency** গ্যারান্টি দেয় যে যেসব operation _causally সম্পর্কিত_ সেগুলো সবার কাছে একই order-এ দেখা দেয়, যখন যেসব operation নিছক **concurrent** (কোনোটাই অন্যটার কারণ নয়) সেগুলো ভিন্ন client-এর কাছে ভিন্ন order-এ দেখা দিতে পারে।
 
-Causality is the "happens-before" relationship of chapter 7: if you read a value and then write something based on it, your write is causally _after_ that read. The classic example:
+Causality হলো অধ্যায় ৭-এর "happens-before" সম্পর্ক: তুমি যদি একটি মান পড়ো আর তারপর তার ভিত্তিতে কিছু লেখো, তোমার write সেই read-এর causally _পরে_। ক্লাসিক উদাহরণ:
 
 ```text
 Fatima posts: "I lost my keys."
@@ -52,46 +60,46 @@ Causal consistency guarantees nobody sees Omar's reply
 before Fatima's post. Two unrelated posts may appear in any order.
 ```
 
-Causal consistency is attractive because it forbids the genuinely confusing reorderings (a reply before its question) while remaining **available during partitions** — it can be implemented without cross-replica coordination on the write path, by tracking dependencies (vector clocks). It is the strongest model you can have without sacrificing availability under partition.
+Causal consistency আকর্ষণীয় কারণ এটি সত্যিকারের বিভ্রান্তিকর reorder (প্রশ্নের আগে উত্তর) নিষিদ্ধ করে আর একইসাথে **partition-এর সময় available থাকে** — এটি write path-এ cross-replica সমন্বয় ছাড়াই বাস্তবায়ন করা যায়, dependency track করে (vector clock)। Partition-এর সময় availability ত্যাগ না করে তুমি যতটা শক্তিশালী model পেতে পারো এটাই তার সর্বোচ্চ।
 
 ## Eventual consistency
 
-The weakest commonly used model. **Eventual consistency** promises only that _if writes stop, all replicas will eventually converge to the same value_. It says nothing about what reads return in the meantime: you might read your own write and get the old value, see values jump around, or observe updates out of order. "Eventually" is unbounded — it could be milliseconds or, under sustained problems, much longer.
+সবচেয়ে দুর্বল সাধারণভাবে ব্যবহৃত model। **Eventual consistency** শুধু এই প্রতিশ্রুতি দেয় যে _write বন্ধ হলে, সব replica অবশেষে একই মানে converge করবে_। ইতিমধ্যে read কী ফেরত দেয় সে সম্পর্কে এটা কিছুই বলে না: তুমি নিজের write পড়ে পুরনো মান পেতে পারো, মান লাফালাফি করতে দেখতে পারো, বা update ভুল order-এ দেখতে পারো। "Eventually" অসীম — এটা কয়েক millisecond হতে পারে বা, টানা সমস্যার সময়, অনেক বেশি লম্বা।
 
-This sounds alarmingly weak, and used carelessly it is. But for many workloads — a like counter, a cache, a shopping cart that merges, DNS — eventual consistency is exactly right, because it buys maximum availability and the lowest latency. The application absorbs the temporary disagreement.
+এটা ভীতিকরভাবে দুর্বল শোনায়, আর অসাবধানে ব্যবহার করলে তাই। কিন্তু অনেক workload-এর জন্য — একটি like counter, একটি cache, একটি shopping cart যা merge হয়, DNS — eventual consistency একদম ঠিক, কারণ এটা সর্বোচ্চ availability আর সবচেয়ে কম latency কিনে দেয়। Application সাময়িক মতভেদটা শুষে নেয়।
 
 <Callout type="warning">
 
-**"Eventual" hides a multitude of sins.** Eventual consistency permits a read to return a value _older_ than one the same client already saw, and provides no bound on how long convergence takes. If your code assumes monotonic progress or read-your-writes, plain eventual consistency will violate that assumption. Layer client-centric guarantees on top when you need them.
+**"Eventual" অনেক পাপ লুকিয়ে রাখে।** Eventual consistency একটি read-কে একই client-এর ইতিমধ্যে দেখা একটি মানের চেয়ে _পুরনো_ মান ফেরত দিতে অনুমতি দেয়, আর convergence-এ কতক্ষণ লাগে তার কোনো সীমা দেয় না। তোমার code যদি monotonic অগ্রগতি বা read-your-writes ধরে নেয়, plain eventual consistency সেই ধারণা লঙ্ঘন করবে। প্রয়োজন হলে উপরে client-centric গ্যারান্টি স্তরে বসাও।
 
 </Callout>
 
-## The spectrum and its trade-offs
+## Spectrum ও তার trade-off
 
-Arranged from strongest to weakest:
+শক্তিশালী থেকে দুর্বল ক্রমে সাজানো:
 
-| Model        | Guarantee                                  | Coordination cost | Available under partition? |
-| ------------ | ------------------------------------------ | ----------------- | -------------------------- |
-| Linearizable | Single copy, respects real time            | Highest           | No                         |
-| Sequential   | One total order, respects per-client order | High              | No                         |
-| Causal       | Causally related ops ordered for all       | Moderate          | Yes                        |
-| Eventual     | Replicas converge if writes stop           | Lowest            | Yes                        |
+| Model        | গ্যারান্টি                                    | সমন্বয় খরচ | Partition-এ available? |
+| ------------ | --------------------------------------------- | ----------- | ---------------------- |
+| Linearizable | একক কপি, real time সম্মান করে                 | সর্বোচ্চ    | না                     |
+| Sequential   | একটি total order, per-client order সম্মান করে | উচ্চ        | না                     |
+| Causal       | Causally সম্পর্কিত op সবার জন্য order করা     | মাঝারি      | হ্যাঁ                  |
+| Eventual     | Write বন্ধ হলে replica converge করে           | সর্বনিম্ন   | হ্যাঁ                  |
 
-The pattern is monotonic: **the stronger the guarantee, the more coordination it requires, and the less available the system is during failures.** There is a hard line in this table — between sequential and causal — across which you trade strong, real-time-respecting ordering for the ability to keep serving during a partition. Chapter 5 (CAP) is precisely the formalization of that line.
+প্যাটার্নটা monotonic: **গ্যারান্টি যত শক্তিশালী, তত বেশি সমন্বয় লাগে, আর failure-এর সময় সিস্টেম তত কম available।** এই টেবিলে একটা কঠিন রেখা আছে — sequential আর causal-এর মধ্যে — যা পার হলে তুমি শক্তিশালী, real-time-সম্মানকারী order-এর বদলে একটি partition-এর সময় সার্ভ করতে থাকার ক্ষমতা কেনো। অধ্যায় ৫ (CAP) হলো ঠিক সেই রেখার আনুষ্ঠানিকীকরণ।
 
-## Client-centric guarantees
+## Client-centric গ্যারান্টি
 
-Even on top of an eventually consistent store, you can offer per-client promises that eliminate the most disorienting symptoms without global coordination:
+একটি eventually consistent store-এর উপরেও, তুমি per-client প্রতিশ্রুতি দিতে পারো যা global সমন্বয় ছাড়াই সবচেয়ে বিভ্রান্তিকর উপসর্গ দূর করে:
 
-- **Read-your-writes:** a client always sees its own latest writes (chapter 3).
-- **Monotonic reads:** a client never sees time go backward — once it reads a value, later reads return that value or newer, never older.
-- **Monotonic writes:** a client's writes are applied in the order the client issued them.
-- **Consistent prefix reads:** if a sequence of writes happened in some order, a reader never sees a later one without the earlier ones (no reply before its question).
+- **Read-your-writes:** একটি client সবসময় নিজের সর্বশেষ write দেখে (অধ্যায় ৩)।
+- **Monotonic reads:** একটি client কখনো time পিছিয়ে যেতে দেখে না — একবার একটি মান পড়লে, পরের read সেই মান বা নতুনতর ফেরত দেয়, কখনো পুরনো নয়।
+- **Monotonic writes:** একটি client-এর write গুলো client যে order-এ জারি করেছে সেই order-এ প্রয়োগ হয়।
+- **Consistent prefix reads:** একটি write ক্রম যদি কোনো order-এ ঘটে থাকে, একটি reader কখনো আগেরগুলো ছাড়া একটি পরেরটা দেখে না (প্রশ্নের আগে কোনো উত্তর নয়)।
 
-These are cheap to implement (session stickiness, version tracking) and often the right answer: they fix what users actually notice while keeping the availability and latency benefits of weak data-centric consistency.
+এগুলো বাস্তবায়ন করা সস্তা (session stickiness, version tracking) আর প্রায়ই সঠিক উত্তর: ব্যবহারকারীরা যা আসলে খেয়াল করে তা ঠিক করে দুর্বল data-centric consistency-র availability ও latency সুবিধা ধরে রেখে।
 
 <Callout type="tip">
 
-**Choosing a model:** pick the _weakest_ model your correctness requires, not the strongest you can imagine. Money movement and unique-username allocation need linearizability. Social feeds and comment threads are well served by causal. Counters, caches, and presence indicators are fine with eventual plus a client-centric guarantee or two. Each step weaker buys real availability and latency.
+**একটি model বেছে নেওয়া:** তোমার correctness-এর জন্য যে _দুর্বলতম_ model দরকার সেটা বেছে নাও, তুমি কল্পনা করতে পারো এমন শক্তিশালীতমটা নয়। টাকা সরানো আর unique-username বরাদ্দে linearizability দরকার। Social feed আর comment thread-এর জন্য causal ভালো কাজ করে। Counter, cache, আর presence indicator eventual প্লাস একটি-দুটি client-centric গ্যারান্টি নিয়ে ঠিক আছে। প্রতিটি ধাপ দুর্বল হলে বাস্তব availability ও latency কেনা যায়।
 
 </Callout>

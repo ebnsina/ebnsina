@@ -1,9 +1,9 @@
 ---
-title: 'Ethical Hacking — Roadmap'
-subtitle: 'Zero to professional penetration tester. Recon, exploitation, post-exploitation, reporting — with real labs.'
+title: 'Ethical Hacking — রোডম্যাপ'
+subtitle: 'শূন্য থেকে প্রফেশনাল পেনিট্রেশন টেস্টার। রিকন, এক্সপ্লয়টেশন, পোস্ট-এক্সপ্লয়টেশন, রিপোর্টিং — রিয়েল ল্যাব সহ।'
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'ethical hacking', 'penetration testing', 'cybersecurity']
 ---
 
@@ -13,27 +13,27 @@ topics: ['roadmap', 'ethical hacking', 'penetration testing', 'cybersecurity']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A locksmith who tests locks for a living: they know every picking technique, bypass, and flaw — not to rob houses, but because you can't build a lock that resists attacks you don't understand. Ethical hacking is the same trade applied to software systems.
+একজন লকস্মিথ যিনি জীবিকার জন্য তালা টেস্ট করেন: তিনি প্রতিটি পিকিং টেকনিক, বাইপাস আর ফ্লো জানেন — বাড়ি ডাকাতি করার জন্য নয়, বরং যে অ্যাটাক আপনি বোঝেন না তার বিরুদ্ধে টিকে থাকতে পারে এমন তালা আপনি বানাতে পারবেন না বলে। Ethical hacking একই পেশা, শুধু সফটওয়্যার সিস্টেমে প্রয়োগ করা।
 
 </Callout>
 
-## What you will learn
+## যা শিখবেন
 
-Security is not a product you install — it's a discipline you practice. This track teaches you to think like an attacker so you can defend like one. You'll go from zero Linux knowledge to running complete penetration tests: reconnaissance, scanning, exploitation, privilege escalation, post-exploitation, and professional reporting.
+সিকিউরিটি এমন কোনো প্রোডাক্ট নয় যা আপনি ইনস্টল করেন — এটি এমন একটি ডিসিপ্লিন যা আপনি চর্চা করেন। এই ট্র্যাক আপনাকে একজন অ্যাটাকারের মতো ভাবতে শেখায়, যাতে আপনি একজন অ্যাটাকারের মতোই ডিফেন্ড করতে পারেন। আপনি শূন্য Linux জ্ঞান থেকে শুরু করে সম্পূর্ণ পেনিট্রেশন টেস্ট চালানো পর্যন্ত যাবেন: reconnaissance, scanning, exploitation, privilege escalation, post-exploitation, এবং প্রফেশনাল রিপোর্টিং।
 
-Every chapter has real commands, real tools, and real lab exercises. No theory without practice.
+প্রতিটি চ্যাপ্টারে আছে রিয়েল কমান্ড, রিয়েল টুল, আর রিয়েল ল্যাব এক্সারসাইজ। প্র্যাকটিস ছাড়া কোনো থিওরি নেই।
 
-## Prerequisites
+## প্রি-রিকুইজিট
 
-- Basic comfort with a terminal (cd, ls, cat)
-- Some programming exposure (Python helps, not required)
-- A machine that can run VMs (8GB RAM minimum)
+- টার্মিনালে মোটামুটি স্বাচ্ছন্দ্য (cd, ls, cat)
+- কিছুটা প্রোগ্রামিং পরিচয় (Python সাহায্য করে, তবে বাধ্যতামূলক নয়)
+- এমন একটি মেশিন যা VM চালাতে পারে (কমপক্ষে 8GB RAM)
 
-## Lab Setup
+## ল্যাব সেটআপ
 
-Before starting, get your lab running:
+শুরু করার আগে আপনার ল্যাব চালু করুন:
 
 ```bash
 # Install VirtualBox (free)
@@ -44,29 +44,29 @@ Before starting, get your lab running:
 wsl --install -d kali-linux
 ```
 
-You need an **isolated lab network** — never attack systems you don't own or have written permission to test.
+আপনার একটি **isolated lab network** দরকার — কখনো এমন সিস্টেমে অ্যাটাক করবেন না যা আপনার নয় বা যেটি টেস্ট করার লিখিত অনুমতি আপনার নেই।
 
-## Chapters in this track
+## এই ট্র্যাকের চ্যাপ্টারগুলো
 
-1. **Foundations** — How networks work, TCP/IP, the attacker's mental model
-2. **Linux for Hackers** — Terminal mastery, file permissions, bash scripting for recon
+1. **Foundations** — নেটওয়ার্ক কীভাবে কাজ করে, TCP/IP, অ্যাটাকারের মানসিক মডেল
+2. **Linux for Hackers** — টার্মিনাল দক্ষতা, ফাইল পারমিশন, রিকনের জন্য bash স্ক্রিপ্টিং
 3. **Reconnaissance** — OSINT, passive recon, Google dorks, Shodan, theHarvester
 4. **Scanning & Enumeration** — Nmap, service fingerprinting, banner grabbing, SMB/FTP enum
-5. **Vulnerability Analysis** — CVE database, CVSS scoring, automated scanners, manual analysis
-6. **Exploitation Basics** — Metasploit framework, manual exploit development, payload generation
+5. **Vulnerability Analysis** — CVE database, CVSS scoring, automated scanners, ম্যানুয়াল অ্যানালাইসিস
+6. **Exploitation Basics** — Metasploit framework, ম্যানুয়াল exploit development, payload generation
 7. **Web Application Hacking** — OWASP Top 10, Burp Suite, SQLi, XSS, SSRF, IDOR
 8. **Network Attacks** — ARP spoofing, MITM, packet capture, credential sniffing
-9. **Privilege Escalation** — Linux and Windows privesc techniques, SUID, token impersonation
-10. **Post-Exploitation** — Lateral movement, persistence, data exfiltration, covering tracks
-11. **Cryptography Attacks** — Hash cracking, weak cipher exploitation, PKI weaknesses
-12. **Wireless Security** — WPA2 handshake capture, WPS attacks, evil twin APs
-13. **Social Engineering** — Phishing campaigns, pretexting, defense strategies
-14. **CTF Strategy** — How to approach Capture the Flag challenges, platforms, write-ups
-15. **Pentest Reporting** — Professional report structure, CVSS scoring, remediation advice
+9. **Privilege Escalation** — Linux ও Windows privesc টেকনিক, SUID, token impersonation
+10. **Post-Exploitation** — lateral movement, persistence, data exfiltration, ট্র্যাক মুছে ফেলা
+11. **Cryptography Attacks** — hash cracking, weak cipher exploitation, PKI দুর্বলতা
+12. **Wireless Security** — WPA2 handshake capture, WPS attacks, evil twin AP
+13. **Social Engineering** — phishing campaign, pretexting, ডিফেন্স স্ট্র্যাটেজি
+14. **CTF Strategy** — Capture the Flag চ্যালেঞ্জে কীভাবে এগোবেন, প্ল্যাটফর্ম, write-up
+15. **Pentest Reporting** — প্রফেশনাল রিপোর্ট স্ট্রাকচার, CVSS scoring, remediation পরামর্শ
 
-## The Hacker Methodology
+## হ্যাকার মেথডোলজি
 
-Every engagement follows this cycle. Internalize it before you touch a tool:
+প্রতিটি engagement এই সাইকেল অনুসরণ করে। কোনো টুল ছোঁয়ার আগেই এটি আত্মস্থ করুন:
 
 ```
 Reconnaissance  →  Scanning  →  Exploitation  →  Post-Exploitation  →  Reporting
@@ -74,22 +74,22 @@ Reconnaissance  →  Scanning  →  Exploitation  →  Post-Exploitation  →  R
       └────────────────────── Iterate per finding ──────────────────────────┘
 ```
 
-**Recon first, always.** Most beginners jump straight to scanning. Professionals spend 40% of their time just on recon — the more you know before you touch the target, the less noise you make.
+**সবসময় আগে recon।** বেশিরভাগ বিগিনার সরাসরি scanning-এ চলে যায়। প্রফেশনালরা তাদের সময়ের 40% শুধু recon-এই ব্যয় করে — টার্গেট ছোঁয়ার আগে যত বেশি জানবেন, তত কম শব্দ (noise) তৈরি করবেন।
 
-## Legal Framework
+## আইনি কাঠামো
 
-Before every engagement:
+প্রতিটি engagement-এর আগে:
 
-- Written **scope document** defining IP ranges, domains, and methods allowed
-- Signed **rules of engagement** with emergency contacts
-- **Emergency stop** procedure if live systems are affected
+- লিখিত **scope document** যেখানে অনুমোদিত IP range, domain, ও method সংজ্ঞায়িত থাকবে
+- স্বাক্ষরিত **rules of engagement**, ইমার্জেন্সি কন্টাক্ট সহ
+- লাইভ সিস্টেম আক্রান্ত হলে **emergency stop** পদ্ধতি
 
-Hacking without written permission is a crime regardless of intent. In the US: Computer Fraud and Abuse Act (CFAA). In the UK: Computer Misuse Act. In the EU: Directive 2013/40/EU.
+উদ্দেশ্য যাই হোক না কেন, লিখিত অনুমতি ছাড়া হ্যাকিং একটি অপরাধ। US-এ: Computer Fraud and Abuse Act (CFAA)। UK-তে: Computer Misuse Act। EU-তে: Directive 2013/40/EU।
 
-Use these platforms for legal practice:
+আইনি প্র্যাকটিসের জন্য এই প্ল্যাটফর্মগুলো ব্যবহার করুন:
 
-- **TryHackMe** — guided rooms, beginner-friendly
-- **HackTheBox** — realistic machines, intermediate+
-- **VulnHub** — downloadable VMs, offline practice
-- **DVWA** — intentionally vulnerable web app, local install
-- **PentesterLab** — web-focused exercises with solutions
+- **TryHackMe** — গাইডেড রুম, বিগিনার-ফ্রেন্ডলি
+- **HackTheBox** — বাস্তবসম্মত মেশিন, intermediate+
+- **VulnHub** — ডাউনলোডযোগ্য VM, অফলাইন প্র্যাকটিস
+- **DVWA** — ইচ্ছাকৃতভাবে vulnerable ওয়েব অ্যাপ, লোকাল ইনস্টল
+- **PentesterLab** — সমাধান সহ web-focused এক্সারসাইজ

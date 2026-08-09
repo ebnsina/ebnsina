@@ -1,9 +1,9 @@
 ---
 title: 'Schema-first design'
-subtitle: 'The schema is your contract with every client that ever exists. The decisions you make in the first afternoon — types, nullability, IDs — are the ones you live with for years.'
+subtitle: 'Schema হলো আজ পর্যন্ত যত ক্লায়েন্ট আছে তাদের প্রত্যেকের সাথে আপনার contract। প্রথম দুপুরে নেওয়া সিদ্ধান্তগুলো — types, nullability, ID — বছরের পর বছর আপনাকে বয়ে বেড়াতে হয়।'
 chapter: 2
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['graphql', 'schema', 'sdl', 'types', 'nullability']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graphql', 'schema', 'sdl', 'types', 'nullability']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A GraphQL schema is just a text file. By convention it lives at `schema.graphql` (sometimes split into multiple files and stitched at boot). It is written in **SDL** — Schema Definition Language — which is the language for describing types and operations.
+একটা GraphQL schema নিছক একটা text ফাইল। প্রথা অনুযায়ী এটা থাকে `schema.graphql`-এ (কখনও কখনও একাধিক ফাইলে ভাগ করে boot-এর সময় সেলাই করা হয়)। এটা লেখা হয় **SDL**-এ — Schema Definition Language — যা types আর operation বর্ণনা করার ভাষা।
 
-Before we run anything, learn to read and write SDL. Once you can think in schemas, the rest of GraphQL is mostly mechanics.
+কিছু চালানোর আগে, SDL পড়তে আর লিখতে শিখুন। একবার schema-তে ভাবতে পারলে, GraphQL-এর বাকিটা মূলত যান্ত্রিক ব্যাপার।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A GraphQL schema is like an architectural blueprint — agreed on before a single brick is laid, by both the builder and the client.
+একটা GraphQL schema হলো একটা স্থাপত্যের নকশার মতো — একটা ইট গাঁথার আগেই builder আর client দুজন মিলে যেটার উপর একমত হয়।
 
 </Callout>
 
-## A whole schema in one screen
+## গল্পে বুঝি
+
+মারিয়াম আল-আসতুরলাবি একজন স্থপতি। বাগদাদের এক ধনী বণিক ফাতিমা আল-ফিহরি তাঁকে একটা বড় বাড়ি বানানোর দায়িত্ব দিলেন। মারিয়াম প্রথমেই ইট গাঁথতে গেলেন না — বরং টেবিলে বসে গোটা বাড়ির একটা নিখুঁত নকশা আঁকলেন। প্রতিটা ঘর কী — শোবার ঘর, রান্নাঘর, লাইব্রেরি, উঠান — কোন ঘরের দরজা কোন ঘরে খোলে, লাইব্রেরি থেকে সিঁড়ি কোথায় নামে, উঠান কোন ঘরগুলোকে জোড়া দেয় — সব একটা কাগজেই ঠিকঠাক এঁকে দিলেন।
+
+তারপর মারিয়াম, ফাতিমা (client) আর মিস্ত্রিদের প্রধান — তিনজনই সেই নকশায় সই করলেন। এখন একটা ইটও গাঁথার আগে সবাই একমত: বাড়িতে ঠিক কী কী থাকবে, কোন ঘর কীসের সাথে জোড়া। মাঝপথে মিস্ত্রি যদি রান্নাঘরের জায়গায় গুদাম বানাতে চায়, নকশা বলে দেয় — না। ফাতিমা যদি বলেন "লাইব্রেরিটা তো দোতলায় থাকার কথা ছিল", নকশা খুলেই তর্ক মিটে যায়। নকশা হলো চুক্তি; বাড়ি হলো সেটার বাস্তবায়ন মাত্র।
+
+এই নকশাটাই আসলে **GraphQL schema**, আর schema-first design মানে ইট গাঁথার আগে নকশা আঁকা। প্রতিটা ঘর আর তার ধরন হলো একটা **type** আর তার **field** — `type User`, `type Post`, প্রতিটার নির্দিষ্ট field। ঘর কীভাবে একে অন্যের সাথে জোড়া, সেটা হলো type-দের মধ্যে **relationship** — একটা `Post`-এর `author` একটা `User`, একটা `User`-এর `posts` একগুচ্ছ `Post`। আর সইয়ের আগে সবাই একমত হওয়া — এটাই **schema-as-contract**: schema লেখা হয় আগে, resolver (আসল কোড, অর্থাৎ ইট গাঁথা) লেখা হয় পরে। বাস্তবেও ঠিক এই কারণেই দল আগে `.graphql` schema ফাইলে সবাই মিলে একমত হয়, তারপর frontend আর backend দুই দল আলাদাভাবে সেই একই নকশা ধরে কাজ করে — client-server-এর তর্ক schema খুললেই মিটে যায়।
+
+## এক স্ক্রিনে একটা গোটা schema
 
 ```graphql
 scalar DateTime
@@ -75,19 +83,19 @@ type Mutation {
 }
 ```
 
-That is a complete (small) GraphQL API. Every concept you need is in there. Let's unpack each.
+এটা একটা সম্পূর্ণ (ছোট) GraphQL API। আপনার যত ধারণা দরকার সব ওখানে আছে। চলুন প্রতিটা খুলে দেখি।
 
-## The five kinds of types
+## পাঁচ ধরনের type
 
-**1. Scalars** — leaf values. Built-ins: `Int`, `Float`, `String`, `Boolean`, `ID`. You can also declare custom scalars: `scalar DateTime`, `scalar Email`, `scalar UUID`. The runtime needs serializers for those (chapter 3).
+**১. Scalars** — leaf value। Built-in: `Int`, `Float`, `String`, `Boolean`, `ID`। আপনি কাস্টম scalar-ও ঘোষণা করতে পারেন: `scalar DateTime`, `scalar Email`, `scalar UUID`। runtime-এর সেগুলোর জন্য serializer দরকার (৩ নম্বর অধ্যায়)।
 
-**2. Object types** — `type User { ... }`. The bread and butter. Each field has a type. Fields can take arguments.
+**২. Object types** — `type User { ... }`। মূল কাঠামো। প্রতিটা ফিল্ডের একটা type আছে। ফিল্ড argument নিতে পারে।
 
-**3. Input types** — `input CreatePostInput { ... }`. Used as mutation arguments. Cannot have circular references and cannot be returned. Without input types, mutation signatures get unwieldy fast.
+**৩. Input types** — `input CreatePostInput { ... }`। Mutation argument হিসেবে ব্যবহৃত হয়। circular reference থাকতে পারে না আর রিটার্ন করা যায় না। input type ছাড়া mutation signature দ্রুত জবুথবু হয়ে যায়।
 
-**4. Enums** — `enum Role { ADMIN MEMBER GUEST }`. A finite set of named values. The runtime guarantees only those values pass.
+**৪. Enums** — `enum Role { ADMIN MEMBER GUEST }`। নাম-দেওয়া মানের একটা সসীম সেট। runtime নিশ্চিত করে শুধু ওই মানগুলোই পাস হয়।
 
-**5. Interfaces and unions** — for polymorphism.
+**৫. Interfaces আর unions** — polymorphism-এর জন্য।
 
 ```graphql
 interface Node {
@@ -102,19 +110,19 @@ type User implements Node {
 union SearchResult = User | Post
 ```
 
-`Node` lets you ask "give me anything by `id`" — the Relay convention. Unions return one of several object types and clients must use inline fragments to pick fields.
+`Node` আপনাকে "`id` দিয়ে যেকোনো কিছু দাও" জিজ্ঞেস করতে দেয় — Relay convention। Union একাধিক object type-এর মধ্যে একটা রিটার্ন করে আর ফিল্ড বেছে নিতে ক্লায়েন্টকে inline fragment ব্যবহার করতে হয়।
 
-## The two root types
+## দুটো root type
 
-`type Query` — read operations. Every field on `Query` is an entry point clients can ask for.
+`type Query` — read operation। `Query`-এর প্রতিটা ফিল্ড একটা entry point যা ক্লায়েন্ট চাইতে পারে।
 
-`type Mutation` — write operations. Same shape, but they are guaranteed to run sequentially when batched, and the convention says they do something with side effects.
+`type Mutation` — write operation। একই আকার, কিন্তু batch করা হলে সেগুলো ক্রমানুসারে চলার গ্যারান্টি থাকে, আর প্রথা বলে এরা side effect সহ কিছু একটা করে।
 
-There is also `type Subscription` for realtime — covered in chapter 9. You do not need it day one.
+realtime-এর জন্য `type Subscription`-ও আছে — ৯ নম্বর অধ্যায়ে আলোচিত। প্রথম দিন এটা আপনার দরকার নেই।
 
-## Nullability — the decision that haunts you
+## Nullability — যে সিদ্ধান্ত আপনাকে তাড়া করে
 
-Every field is nullable by default. `String` means "may be null." `String!` means "guaranteed non-null." The bang is the most consequential character in your whole schema.
+প্রতিটা ফিল্ড ডিফল্টভাবে nullable। `String` মানে "null হতে পারে।" `String!` মানে "নিশ্চিতভাবে non-null।" এই bang-টা আপনার গোটা schema-র সবচেয়ে গুরুত্বপূর্ণ অক্ষর।
 
 ```graphql
 type User {
@@ -127,22 +135,22 @@ type User {
 }
 ```
 
-Read those array signatures slowly. The first `!` after `]` says the array itself is non-null. The `!` after `Post` says items are non-null. They mean different things.
+ওই array signature-গুলো ধীরে ধীরে পড়ুন। `]`-এর পরের প্রথম `!` বলে array নিজেই non-null। `Post`-এর পরের `!` বলে item-গুলো non-null। এরা আলাদা জিনিস বোঝায়।
 
-**Two rules that save you:**
+**দুটো নিয়ম যা আপনাকে বাঁচায়:**
 
-1. **`null` propagates up.** If a non-null field returns null (or throws), the error bubbles up to the nearest nullable parent and that whole branch becomes null. If everything is non-null, one bad field nukes the whole response.
-2. **You cannot un-mark a field as non-null without breaking clients.** Going `String!` → `String` is a breaking change. Going `String` → `String!` is also breaking. Once non-null, forever non-null.
+1. **`null` উপরের দিকে propagate করে।** একটা non-null ফিল্ড null রিটার্ন করলে (বা থ্রো করলে), error-টা নিকটতম nullable parent পর্যন্ত বুদবুদের মতো উঠে আসে আর সেই গোটা শাখাটা null হয়ে যায়। সব কিছু non-null হলে, একটা খারাপ ফিল্ড গোটা রেসপন্সটাকে উড়িয়ে দেয়।
+2. **ক্লায়েন্ট না ভেঙে একটা ফিল্ডকে non-null থেকে un-mark করতে পারবেন না।** `String!` → `String` করা একটা breaking change। `String` → `String!` করাও breaking। একবার non-null, চিরকাল non-null।
 
 <Callout type="tip">
 
-**Default to nullable.** Mark a field `!` only when truly always present. `id` and `createdAt` deserve `!`. `bio`, `avatar`, `lastLoginAt` almost never do. The cost of being too aggressive shows up as outages two years from now when one query starts failing entirely because one nullable thing returned null.
+**ডিফল্টে nullable রাখুন।** একটা ফিল্ডকে `!` চিহ্নিত করুন শুধু তখনই যখন এটা সত্যিই সবসময় থাকে। `id` আর `createdAt` `!`-এর যোগ্য। `bio`, `avatar`, `lastLoginAt` প্রায় কখনোই নয়। বেশি আক্রমণাত্মক হওয়ার মূল্য দুই বছর পরে outage হিসেবে দেখা দেয়, যখন একটা nullable জিনিস null রিটার্ন করায় একটা query পুরোপুরি ব্যর্থ হতে শুরু করে।
 
 </Callout>
 
-## Arguments and defaults
+## Arguments আর default
 
-Fields can take arguments, including on nested fields:
+ফিল্ড argument নিতে পারে, nested ফিল্ডেও:
 
 ```graphql
 type User {
@@ -150,29 +158,29 @@ type User {
 }
 ```
 
-Defaults belong in the schema, not the resolver. `last: Int = 10` is documented in introspection — clients see the default. `last: Int` with the resolver picking 10 internally is invisible and surprising.
+Default-এর জায়গা schema-তে, resolver-এ নয়। `last: Int = 10` introspection-এ documented — ক্লায়েন্ট default দেখে। `last: Int` যেখানে resolver ভেতরে ভেতরে 10 বেছে নেয়, সেটা অদৃশ্য আর চমকপ্রদ।
 
-## IDs and the ID type
+## ID আর ID type
 
-`ID` is a string. It is opaque — clients should not parse it. This is the lever that lets you migrate from `int` PKs to UUIDs without breaking the schema.
+`ID` একটা string। এটা opaque — ক্লায়েন্টের এটা parse করা উচিত নয়। এই লিভারটাই আপনাকে schema না ভেঙে `int` PK থেকে UUID-তে migrate করতে দেয়।
 
-The Relay convention encodes the type into the ID via base64:
+Relay convention base64-এর মাধ্যমে type-টাকে ID-তে encode করে:
 
 ```
 base64("User:42") = "VXNlcjo0Mg=="
 ```
 
-So `User.id = "VXNlcjo0Mg=="` and the global `node(id: ID!): Node` query can decode it and route to the right resolver. Optional, but worth knowing — you will see it in the wild.
+তো `User.id = "VXNlcjo0Mg=="` আর global `node(id: ID!): Node` query এটা decode করে সঠিক resolver-এ route করতে পারে। ঐচ্ছিক, তবে জেনে রাখার মতো — বাস্তবে এটা দেখবেন।
 
-## Pagination — the right way
+## Pagination — সঠিক উপায়
 
-Three ways exist. Two are wrong.
+তিনটা উপায় আছে। দুটো ভুল।
 
-**Offset/limit** — `posts(offset: Int, limit: Int)`. Easy, but breaks under writes (rows shift), and Postgres `OFFSET 10000` is a full scan. Avoid for anything user-facing.
+**Offset/limit** — `posts(offset: Int, limit: Int)`। সহজ, কিন্তু write-এর নিচে ভেঙে পড়ে (row সরে যায়), আর Postgres `OFFSET 10000` একটা full scan। যেকোনো user-facing জিনিসের জন্য এড়িয়ে চলুন।
 
-**Page numbers** — same problems with extra ceremony. Avoid.
+**Page number** — একই সমস্যা, বাড়তি আনুষ্ঠানিকতা সহ। এড়িয়ে চলুন।
 
-**Cursors (Relay connections)** — the verbose-looking pattern in the schema above. `edges`, `node`, `cursor`, `pageInfo`. Stable under inserts, fast under indexes, paginates forward and backward. Worth the extra types.
+**Cursors (Relay connections)** — উপরের schema-র ওই verbose-দেখতে প্যাটার্নটা। `edges`, `node`, `cursor`, `pageInfo`। insert-এর নিচে stable, index-এর নিচে দ্রুত, সামনে-পিছনে দুই দিকেই paginate করে। বাড়তি type-গুলোর মূল্য আছে।
 
 ```graphql
 type Query {
@@ -180,13 +188,13 @@ type Query {
 }
 ```
 
-The cursor is opaque (usually a base64-encoded `(createdAt, id)` tuple). Clients pass back what they got — no offset math.
+Cursor-টা opaque (সাধারণত একটা base64-encoded `(createdAt, id)` tuple)। ক্লায়েন্ট যা পেয়েছিল তা-ই ফেরত পাঠায় — কোনো offset হিসাব নেই।
 
-## Errors — a real decision
+## Errors — একটা সত্যিকারের সিদ্ধান্ত
 
-GraphQL has two error styles and you must pick one.
+GraphQL-এ দুটো error style আছে আর আপনাকে একটা বেছে নিতে হবে।
 
-**1. Top-level errors.** Resolvers throw, errors land in the response's `errors[]` array, the field becomes null. Simple. Default behavior.
+**১. Top-level errors।** Resolver থ্রো করে, error রেসপন্সের `errors[]` array-তে গিয়ে পড়ে, ফিল্ডটা null হয়ে যায়। সহজ। ডিফল্ট আচরণ।
 
 ```json
 {
@@ -195,7 +203,7 @@ GraphQL has two error styles and you must pick one.
 }
 ```
 
-**2. Errors as data.** Make failures part of the schema:
+**২. Errors as data।** ব্যর্থতাকে schema-র অংশ বানান:
 
 ```graphql
 union UserResult = User | NotFoundError | PermissionError
@@ -205,13 +213,13 @@ type Query {
 }
 ```
 
-The client uses fragments to pattern-match. Verbose, but typed and the client cannot forget to handle errors. Used heavily in production graphs (Shopify, GitHub).
+ক্লায়েন্ট pattern-match করতে fragment ব্যবহার করে। Verbose, কিন্তু typed আর ক্লায়েন্ট error handle করতে ভুলে যেতে পারে না। production graph-এ (Shopify, GitHub) ব্যাপকভাবে ব্যবহৃত।
 
-For day one, top-level errors are fine. Migrate later if needed.
+প্রথম দিনের জন্য top-level error ঠিক আছে। দরকার হলে পরে migrate করবেন।
 
-## Documenting the schema
+## Schema-কে document করা
 
-Anything in `"""..."""` becomes documentation surfaced in introspection and tools:
+`"""..."""`-এর ভেতরের যেকোনো কিছু introspection আর tool-এ ফুটে ওঠা documentation হয়ে যায়:
 
 ```graphql
 """
@@ -230,38 +238,38 @@ type User {
 }
 ```
 
-Treat docs as part of the schema, not optional. Clients without docs reverse-engineer your meaning, and they get it wrong.
+doc-কে schema-র অংশ হিসেবে গণ্য করুন, ঐচ্ছিক নয়। doc ছাড়া ক্লায়েন্ট আপনার অর্থ reverse-engineer করে, আর তারা ভুল বোঝে।
 
-## Schema evolution — additive only
+## Schema evolution — শুধু additive
 
-The first commandment of GraphQL: **additive changes only**. You can:
+GraphQL-এর প্রথম আদেশ: **শুধু additive পরিবর্তন**। আপনি পারেন:
 
-- Add a new type
-- Add a new field to an existing type
-- Add a new argument to a field, **as long as it is nullable or has a default**
+- একটা নতুন type যোগ করতে
+- একটা বিদ্যমান type-এ একটা নতুন ফিল্ড যোগ করতে
+- একটা ফিল্ডে একটা নতুন argument যোগ করতে, **যতক্ষণ সেটা nullable বা একটা default থাকে**
 
-You cannot:
+আপনি পারেন না:
 
-- Remove a field a client might query
-- Make a non-null field nullable (changes return shape)
-- Make an argument required when it was not
-- Change a field's type to anything not assignable
+- ক্লায়েন্ট query করতে পারে এমন একটা ফিল্ড সরাতে
+- একটা non-null ফিল্ডকে nullable করতে (রিটার্ন আকার বদলায়)
+- একটা argument-কে required করতে যখন সেটা ছিল না
+- একটা ফিল্ডের type এমন কিছুতে বদলাতে যা assignable নয়
 
-Removal is a multi-step dance: deprecate first (`@deprecated(reason: "Use newField instead.")`), monitor usage, remove after months. Apollo Studio and similar tools track per-field usage; for a small self-hosted graph, log the field selections (chapter 10).
+সরানো একটা বহু-ধাপের নাচ: আগে deprecate করুন (`@deprecated(reason: "Use newField instead.")`), ব্যবহার monitor করুন, মাসখানেক পরে সরান। Apollo Studio আর অনুরূপ tool per-field ব্যবহার track করে; একটা ছোট self-hosted graph-এর জন্য ফিল্ড selection log করুন (১০ নম্বর অধ্যায়)।
 
-## Naming conventions
+## Naming convention
 
-These are not enforced but every large graph follows them:
+এগুলো enforce করা হয় না তবে প্রতিটা বড় graph এগুলো মেনে চলে:
 
-- **Types:** `PascalCase` — `User`, `BlogPost`, `OrderLineItem`.
-- **Fields and arguments:** `camelCase` — `firstName`, `createdAt`, `pageInfo`.
-- **Enums:** `SCREAMING_SNAKE_CASE` for values — `enum Role { ADMIN MEMBER }`.
-- **Mutations:** verb first — `createPost`, `deletePost`, `archiveOrder`. Inputs as `<Verb><Noun>Input` — `CreatePostInput`.
-- **Booleans:** `is`/`has` prefix — `isPublished`, `hasComments`.
+- **Types:** `PascalCase` — `User`, `BlogPost`, `OrderLineItem`।
+- **Fields আর arguments:** `camelCase` — `firstName`, `createdAt`, `pageInfo`।
+- **Enums:** মানের জন্য `SCREAMING_SNAKE_CASE` — `enum Role { ADMIN MEMBER }`।
+- **Mutations:** verb আগে — `createPost`, `deletePost`, `archiveOrder`। Input হিসেবে `<Verb><Noun>Input` — `CreatePostInput`।
+- **Booleans:** `is`/`has` prefix — `isPublished`, `hasComments`।
 
-## Schema files in practice
+## বাস্তবে schema ফাইল
 
-For a small graph, one `schema.graphql` is fine. For a medium graph, split by domain:
+একটা ছোট graph-এর জন্য একটা `schema.graphql` ঠিক আছে। একটা মাঝারি graph-এর জন্য domain অনুযায়ী ভাগ করুন:
 
 ```
 schema/
@@ -272,16 +280,16 @@ schema/
   index.graphql      # type Query and type Mutation, root only
 ```
 
-graphql-yoga loads them with `loadSchema` and merges them. Same with `gqlgen` and Strawberry.
+graphql-yoga এগুলো `loadSchema` দিয়ে লোড করে merge করে। `gqlgen` আর Strawberry-তেও একই।
 
-## Recap
+## রিক্যাপ
 
-- SDL is a small text file. Five kinds of types: scalar, object, input, enum, interface/union.
-- `Query` and `Mutation` are root types. `Subscription` is the third.
-- `!` means non-null. Default to nullable; non-null is forever.
-- Use cursor-based connections, not offsets.
-- Errors: top-level for simple, errors-as-data for serious. Pick early.
-- Schema evolution is additive only. Deprecate then remove, never break.
-- `"""docs"""` are not optional. Naming conventions matter for tooling.
+- SDL একটা ছোট text ফাইল। পাঁচ ধরনের type: scalar, object, input, enum, interface/union।
+- `Query` আর `Mutation` হলো root type। `Subscription` হলো তৃতীয়টা।
+- `!` মানে non-null। ডিফল্টে nullable রাখুন; non-null চিরকালের।
+- offset নয়, cursor-based connection ব্যবহার করুন।
+- Errors: সহজের জন্য top-level, গুরুতরের জন্য errors-as-data। তাড়াতাড়ি বেছে নিন।
+- Schema evolution শুধু additive। deprecate করে তারপর সরান, কখনও ভাঙবেন না।
+- `"""docs"""` ঐচ্ছিক নয়। tooling-এর জন্য naming convention গুরুত্বপূর্ণ।
 
-Next: [Running your first server](/notes/graphql/03-first-server) — graphql-yoga, end-to-end, in 60 lines of code.
+পরবর্তী: [আপনার প্রথম server চালানো](/notes/graphql/03-first-server) — graphql-yoga, end-to-end, ৬০ লাইন কোডে।

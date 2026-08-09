@@ -1,9 +1,9 @@
 ---
 title: 'Blue Team & Defense'
-subtitle: "SIEM, IDS/IPS, SOC operations, detection engineering, threat hunting, hardening guides, and the defender's toolkit."
+subtitle: 'SIEM, IDS/IPS, SOC অপারেশন, detection engineering, threat hunting, hardening guide, এবং defender-এর toolkit।'
 chapter: 26
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics:
   [
     'blue team',
@@ -26,11 +26,19 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Offense wins games, defense wins championships. Red team finds the holes; blue team patches them, detects future attacks, and contains breaches before they become catastrophic. The best defenders have thought like attackers.
+Offense খেলা জেতায়, defense চ্যাম্পিয়নশিপ জেতায়। Red team ফাঁকফোকর খুঁজে বের করে; blue team সেগুলো patch করে, ভবিষ্যতের attack detect করে, এবং breach বড় বিপর্যয় হয়ে ওঠার আগেই contain করে। সেরা defender-রা attacker-এর মতো করেই চিন্তা করেছে।
 
 </Callout>
+
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির বিশাল এস্টেটে আলাদা একটা security team আছে, যাদের পুরো কাজটাই defence। ইবনে সিনা টিম-লিড হয়ে একটা ঘরে বসে থাকেন, যেখানে দেয়ালজুড়ে CCTV screen — এস্টেটের প্রতিটা কোণা দিনরাত চোখের সামনে। কেউ ঘুমায় না, কারণ নজরদারিতে এক সেকেন্ডের ফাঁকই যথেষ্ট। যেই মুহূর্তে কোনো গেটের সেন্সর নড়ে ওঠে, সঙ্গে সঙ্গে একটা alert বেজে ওঠে — কোথায়, কখন, কোন দরজা। ইবনে সিনা সেই alert দেখে ঠিক করেন, এটা বাতাসে দোলা পাতা নাকি সত্যিই কেউ ঢুকতে চাইছে।
+
+কিন্তু আল-খোয়ারিজমি শুধু বসে থেকে alert-এর অপেক্ষা করেন না। দিনের বেলা তিনি ঘুরে ঘুরে দুর্বল গেট আর পুরনো তালাগুলো খুঁজে বের করেন, আগেভাগেই মজবুত তালা লাগান, ভাঙা প্রাচীর সারান — যাতে ঘটনা ঘটার আগেই ফাঁক বন্ধ হয়ে যায়। আর রাতে তিনি টর্চ হাতে গোটা মাঠ patrol করেন, ঝোপঝাড়-গুদামের পেছনে খুঁজে দেখেন কেউ নজর এড়িয়ে আগেই ভেতরে ঢুকে লুকিয়ে আছে কি না। সন্দেহজনক কিছু চোখে পড়লেই তিনি বিপদঘণ্টা বাজিয়ে পুরো টিমকে ডেকে তোলেন। এই security team হলো সেই সিঁধেল চোরদের ঠিক উল্টো পিঠ — যারা বাইরে থেকে এস্টেটের দুর্বলতা খুঁজে বেড়ায়।
+
+এই গল্পটাই আসলে **blue team**-এর কাজ। দিনরাত CCTV wall দেখা হলো ধারাবাহিক **monitoring**, সেন্সরের alert হলো intrusion **detection**, আগেভাগে দুর্বল গেট-তালা মজবুত করা হলো **hardening**, আর টর্চ হাতে লুকানো অনুপ্রবেশকারী খোঁজা হলো **threat hunting** — আর গোটা defensive team বনাম বাইরে থেকে probe করা চোরদল হলো blue team বনাম **red team**। বাস্তবে ঠিক এভাবেই একটা **SOC** (Security Operations Center) কাজ করে: **SIEM** সব লগ এক জায়গায় এনে alert তোলে, analyst-রা সেগুলো triage করে, আর threat hunter-রা যে attacker detection ফাঁকি দিয়ে ঢুকে পড়েছে তাকে খুঁজে বের করে।
 
 ## The SOC (Security Operations Center)
 
@@ -53,7 +61,7 @@ Tier 3 — Threat Hunting / Detection Engineering
 
 ## SIEM (Security Information and Event Management)
 
-SIEM aggregates logs from across infrastructure and correlates them for detection.
+SIEM পুরো infrastructure-এর লগ একত্র করে এবং detection-এর জন্য সেগুলো correlate করে।
 
 ### Splunk
 
@@ -250,7 +258,7 @@ Set-AdmPwdComputerSelfPermission -OrgUnit "Workstations"
 
 ## Detection Engineering
 
-Writing detection rules from threat intelligence:
+Threat intelligence থেকে detection rule লেখা:
 
 ```python
 # Detection rule development process:

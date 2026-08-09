@@ -1,9 +1,9 @@
 ---
 title: 'systemd'
-subtitle: 'Write a unit file. Restart on crash. Survive reboot. Read the journal. The supervisor that runs everything on a modern Linux box.'
+subtitle: 'একটা unit ফাইল লিখুন। ক্র্যাশে রিস্টার্ট করুন। রিবুট পার করে টিকে থাকুন। journal পড়ুন। যে সুপারভাইজার একটা আধুনিক Linux বক্সে সবকিছু চালায়।'
 chapter: 5
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['systemd', 'services', 'journald', 'init', 'linux']
 ---
 
@@ -13,15 +13,23 @@ topics: ['systemd', 'services', 'journald', 'init', 'linux']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-systemd is like a shift supervisor who starts workers at boot, restarts them automatically if they crash, and keeps a detailed log of everything that happened during the shift.
+systemd অনেকটা একজন শিফট সুপারভাইজারের মতো যে বুটের সময় কর্মীদের শুরু করায়, তারা ক্র্যাশ করলে স্বয়ংক্রিয়ভাবে রিস্টার্ট করে, আর শিফটের সময় যা যা ঘটেছে তার একটা বিস্তারিত লগ রাখে।
 
 </Callout>
 
-## Why systemd
+## গল্পে বুঝি
 
-Before systemd, every distribution had a different init system, every daemon had a different way of being started, and "is nginx running?" had three answers depending on which version of which init script you were looking at. systemd unified all of that. On every mainstream Linux distribution today, the same commands work the same way:
+ফাতিমা আল-ফিহরি একটা বিশাল বাণিজ্যিক ভবনের ফ্যাসিলিটিজ ম্যানেজার। প্রতিদিন সকালে ভবন খোলার আগে তাকে সব জরুরি ইউটিলিটি চালু করতে হয় — কিন্তু ইচ্ছেমতো নয়, একটা নির্দিষ্ট ক্রমে। আগে জেনারেটর চালু হয়, তারপরই লিফট চলে; আগে ওয়াটার পাম্প চালু হয়, তারপরই কলে পানি আসে। জেনারেটর না চললে লিফট চালানোর কোনো মানে নেই, তাই কোন জিনিসের জন্য কোনটা আগে দরকার — এই নির্ভরতাটা সে মাথায় রেখে ক্রম সাজায়।
+
+দিনের বেলায় ফাতিমা চোখ সরায় না। কোনো ইউটিলিটি হঠাৎ ট্রিপ করলে বা বন্ধ হয়ে গেলে সে সঙ্গে সঙ্গে সেটা আবার চালু করে দেয় — পাম্প বন্ধ হলে দোতলার কল শুকিয়ে যাওয়ার আগেই সে সেটা রিস্টার্ট করে। আর তার হাতে একটা রেজিস্টার আছে, যেখান থেকে যেকোনো ইউটিলিটি সে চাইলে চালু করতে, বন্ধ করতে, খোলার তালিকায় যোগ করতে, বা এই মুহূর্তে কোনটা চলছে কোনটা থেমে আছে — যাচাই করতে পারে।
+
+এই গল্পটাই আসলে **systemd**। ফাতিমা হলো systemd নিজে (PID 1, পুরো সিস্টেমের সুপারভাইজার)। সকালে ভবন খোলার সময় ইউটিলিটি চালু করা মানে **boot**-এর সময় সব **service** চালু করা। জেনারেটর→লিফট, পাম্প→কল — এই ক্রমটাই **dependency ordering**। ট্রিপ করা ইউটিলিটি সঙ্গে সঙ্গে চালু করে দেওয়াটাই ক্র্যাশে **auto-restart**। আর তার রেজিস্টার দিয়ে চালু/বন্ধ/enable/status করা মানেই `systemctl` দিয়ে **unit** ম্যানেজ করা। বাস্তবে আপনি নিজের অ্যাপকে (যেমন একটা Node বা Python সার্ভার) একটা systemd **service** বানিয়ে দিলে, সেটা রিবুট পার করে নিজে থেকে চালু হয়, ক্র্যাশ করলে নিজে থেকে **restart** হয়, আর `systemctl status` দিয়ে যেকোনো সময় দেখে নিতে পারেন কী অবস্থায় আছে।
+
+## systemd কেন
+
+systemd-এর আগে, প্রতিটা ডিস্ট্রিবিউশনের একটা আলাদা init সিস্টেম ছিল, প্রতিটা daemon-এর শুরু হওয়ার একটা আলাদা উপায় ছিল, আর "nginx কি চলছে?" এর তিনটা উত্তর ছিল, কোন ভার্সনের কোন init স্ক্রিপ্ট দেখছেন তার উপর নির্ভর করে। systemd এই সবকিছু একীভূত করেছে। আজ প্রতিটা মেইনস্ট্রিম Linux ডিস্ট্রিবিউশনে, একই কমান্ড একইভাবে কাজ করে:
 
 ```bash
 systemctl start nginx
@@ -31,41 +39,41 @@ systemctl restart nginx
 journalctl -u nginx -f
 ```
 
-You may dislike systemd. You may have heard people on the internet dislike it more. None of that matters — it is the standard, it is what every tutorial assumes, and it works.
+আপনি systemd অপছন্দ করতে পারেন। আপনি হয়তো শুনেছেন ইন্টারনেটের মানুষজন একে আরও বেশি অপছন্দ করে। এর কোনোটাতেই কিছু যায় আসে না — এটাই স্ট্যান্ডার্ড, প্রতিটা টিউটোরিয়াল এটাই ধরে নেয়, আর এটা কাজ করে।
 
-## What systemd actually does
+## systemd আসলে কী করে
 
-Three jobs:
+তিনটা কাজ:
 
-1. **Boot the system.** As PID 1, it brings up disks, network, services in dependency order.
-2. **Supervise services.** It starts your processes, restarts them if they crash, captures their stdout/stderr, runs them as the right user, kills them politely on shutdown.
-3. **Manage the journal.** All output from supervised services flows into `journald`, a structured binary log you query with `journalctl`.
+1. **সিস্টেম বুট করা।** PID 1 হিসেবে, এটা ডিস্ক, নেটওয়ার্ক, সার্ভিস dependency অনুসারে চালু করে।
+2. **সার্ভিস সুপারভাইজ করা।** এটা আপনার প্রসেস শুরু করে, ক্র্যাশ করলে রিস্টার্ট করে, তাদের stdout/stderr ধরে রাখে, সঠিক ইউজার হিসেবে চালায়, shutdown-এ ভদ্রভাবে kill করে।
+3. **journal ম্যানেজ করা।** সুপারভাইজড সার্ভিসের সব আউটপুট `journald`-তে যায়, একটা স্ট্রাকচার্ড বাইনারি লগ যা আপনি `journalctl` দিয়ে কোয়েরি করেন।
 
-Everything else (timers, sockets, mounts, scopes, slices) is an extension of these three.
+বাকি সবকিছু (timer, socket, mount, scope, slice) এই তিনটার একটা এক্সটেনশন।
 
-## Units — the building block
+## Unit — বিল্ডিং ব্লক
 
-A **unit** is anything systemd manages. Each has a name and a type, separated by a dot:
+একটা **unit** হলো systemd যা ম্যানেজ করে এমন যেকোনো কিছু। প্রতিটার একটা নাম আর একটা টাইপ আছে, একটা ডট দিয়ে আলাদা করা:
 
-| Type       | What it represents                                                                     |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `.service` | A long-running process. The most common kind.                                          |
-| `.timer`   | A scheduled trigger (cron replacement).                                                |
-| `.socket`  | A listening port managed by systemd, hands off to a service when a connection arrives. |
-| `.target`  | A grouping of units. `multi-user.target` is "the system is up and ready."              |
-| `.mount`   | A filesystem mount point.                                                              |
-| `.path`    | A trigger that fires when a file changes.                                              |
-| `.timer`   | A schedule.                                                                            |
+| Type       | যা প্রতিনিধিত্ব করে                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| `.service` | একটা দীর্ঘ-চলা প্রসেস। সবচেয়ে সাধারণ ধরন।                                                  |
+| `.timer`   | একটা শিডিউল করা ট্রিগার (cron রিপ্লেসমেন্ট)।                                                |
+| `.socket`  | systemd-এর ম্যানেজ করা একটা listening পোর্ট, একটা কানেকশন এলে একটা সার্ভিসে হ্যান্ড অফ করে। |
+| `.target`  | unit-এর একটা গ্রুপিং। `multi-user.target` হলো "সিস্টেম up আর ready।"                        |
+| `.mount`   | একটা ফাইলসিস্টেম মাউন্ট পয়েন্ট।                                                            |
+| `.path`    | একটা ট্রিগার যা একটা ফাইল বদলালে ফায়ার করে।                                                |
+| `.timer`   | একটা শিডিউল।                                                                                |
 
-Units live in three directories, in order of precedence:
+Unit তিনটা ডিরেক্টরিতে থাকে, precedence অনুসারে:
 
-- `/etc/systemd/system/` — **what you write.** Highest priority. Edit here.
-- `/run/systemd/system/` — runtime, generated. Do not touch.
-- `/usr/lib/systemd/system/` — what packages install. Do not edit; copy to `/etc/` and edit there.
+- `/etc/systemd/system/` — **আপনি যা লেখেন।** সর্বোচ্চ প্রাধান্য। এখানে এডিট করুন।
+- `/run/systemd/system/` — রানটাইম, জেনারেট করা। ছোঁবেন না।
+- `/usr/lib/systemd/system/` — প্যাকেজ যা ইনস্টল করে। এডিট করবেন না; `/etc/`-এ কপি করে সেখানে এডিট করুন।
 
-## Your first service unit
+## আপনার প্রথম service unit
 
-Say you have a Go binary at `/opt/myapp/bin/myapp` that listens on port 8080 and reads its config from `/opt/myapp/config.yaml`. Here is the complete unit:
+ধরুন আপনার কাছে `/opt/myapp/bin/myapp`-এ একটা Go বাইনারি আছে যা পোর্ট 8080-এ listen করে আর `/opt/myapp/config.yaml` থেকে এর config পড়ে। এই যে সম্পূর্ণ unit:
 
 ```ini
 # /etc/systemd/system/myapp.service
@@ -98,7 +106,7 @@ MemoryMax=512M
 WantedBy=multi-user.target
 ```
 
-That is it. Save it, then:
+ব্যস। এটা সেভ করুন, তারপর:
 
 ```bash
 sudo systemctl daemon-reload          # systemd picks up the new file
@@ -107,54 +115,54 @@ sudo systemctl enable myapp           # start it at every boot
 sudo systemctl status myapp           # is it running?
 ```
 
-Reboot the box. Your app comes back up automatically. Crash it. systemd waits five seconds and restarts it.
+বক্স রিবুট করুন। আপনার অ্যাপ স্বয়ংক্রিয়ভাবে আবার up হয়। ক্র্যাশ করান। systemd পাঁচ সেকেন্ড অপেক্ষা করে রিস্টার্ট করে।
 
-## Reading a unit file, line by line
+## একটা unit ফাইল, লাইন ধরে ধরে পড়া
 
-**[Unit]** — metadata and dependencies.
+**[Unit]** — মেটাডেটা আর dependency।
 
-- `Description` — shows up in `systemctl status`.
-- `After=network-online.target` — do not start me until the network is fully up.
-- `Wants=network-online.target` — start that target if it is not already, but do not fail if it cannot.
-- `Requires=` (not used here) — if this dependency fails, fail me too. Stricter than `Wants`.
+- `Description` — `systemctl status`-এ দেখায়।
+- `After=network-online.target` — নেটওয়ার্ক পুরোপুরি up না হওয়া পর্যন্ত আমাকে শুরু করো না।
+- `Wants=network-online.target` — সেই target আগে থেকে না থাকলে শুরু করো, কিন্তু না পারলেও fail কোরো না।
+- `Requires=` (এখানে ব্যবহৃত হয়নি) — এই dependency fail করলে, আমাকেও fail করাও। `Wants`-এর চেয়ে কড়া।
 
-**[Service]** — how to run the process.
+**[Service]** — প্রসেসটা কীভাবে চালাতে হবে।
 
-- `Type=simple` — the most common. systemd assumes the process is up the moment it forks.
-  - `Type=forking` — for daemons that fork into the background. Rare in modern apps.
-  - `Type=notify` — the process sends `READY=1` over a socket when it is genuinely ready (good for slow startups).
-  - `Type=oneshot` — runs once and exits, used for setup tasks.
-- `User`, `Group` — never run as root unless you must.
-- `WorkingDirectory` — `cd` here before exec.
-- `ExecStart` — the command. Must be an absolute path.
-- `Restart=on-failure` — restart only on non-zero exit. Other options: `always`, `on-abort`, `no`.
-- `RestartSec=5` — wait this long before restarting.
+- `Type=simple` — সবচেয়ে সাধারণ। প্রসেস fork করার মুহূর্তেই systemd ধরে নেয় এটা up।
+  - `Type=forking` — যেসব daemon ব্যাকগ্রাউন্ডে fork করে তাদের জন্য। আধুনিক অ্যাপে বিরল।
+  - `Type=notify` — প্রসেস সত্যিকারভাবে ready হলে একটা socket-এর উপর `READY=1` পাঠায় (ধীর startup-এর জন্য ভালো)।
+  - `Type=oneshot` — একবার চলে আর বের হয়, setup টাস্কের জন্য ব্যবহৃত।
+- `User`, `Group` — একান্ত বাধ্য না হলে কখনো root হিসেবে চালাবেন না।
+- `WorkingDirectory` — exec-এর আগে এখানে `cd` করো।
+- `ExecStart` — কমান্ড। অবশ্যই একটা absolute পাথ হতে হবে।
+- `Restart=on-failure` — শুধু non-zero exit-এ রিস্টার্ট করো। অন্য অপশন: `always`, `on-abort`, `no`।
+- `RestartSec=5` — রিস্টার্ট করার আগে এতক্ষণ অপেক্ষা করো।
 
-**Hardening directives** — every one of these makes your service safer:
+**Hardening ডিরেক্টিভ** — এদের প্রতিটা আপনার সার্ভিসকে নিরাপদ করে:
 
-- `NoNewPrivileges=true` — process cannot gain privileges via setuid binaries.
-- `ProtectSystem=strict` — `/usr`, `/boot`, `/efi` are read-only. `/etc` is read-only with `=full`.
-- `ProtectHome=true` — `/home`, `/root`, `/run/user` are inaccessible.
-- `ReadWritePaths=` — directories the service is _allowed_ to write, despite the above.
-- `PrivateTmp=true` — your `/tmp` is a sandbox, not the shared `/tmp`.
+- `NoNewPrivileges=true` — প্রসেস setuid বাইনারির মাধ্যমে privilege পেতে পারবে না।
+- `ProtectSystem=strict` — `/usr`, `/boot`, `/efi` read-only। `=full` দিয়ে `/etc`-ও read-only।
+- `ProtectHome=true` — `/home`, `/root`, `/run/user` নাগালের বাইরে।
+- `ReadWritePaths=` — উপরের নিয়ম সত্ত্বেও যেসব ডিরেক্টরিতে সার্ভিসকে লিখতে _দেওয়া_ হয়।
+- `PrivateTmp=true` — আপনার `/tmp` একটা sandbox, শেয়ার্ড `/tmp` নয়।
 
-**Resource limits**:
+**Resource limit**:
 
-- `LimitNOFILE=65536` — max open file descriptors. The default of 1024 is too low for any real network service.
-- `MemoryMax=512M` — kill the service if it grows past 512MB.
-- `CPUQuota=50%` — soft cap on CPU usage.
+- `LimitNOFILE=65536` — সর্বোচ্চ খোলা ফাইল ডেসক্রিপ্টর। 1024-এর ডিফল্ট যেকোনো আসল নেটওয়ার্ক সার্ভিসের জন্য অনেক কম।
+- `MemoryMax=512M` — সার্ভিস 512MB ছাড়িয়ে গেলে kill করো।
+- `CPUQuota=50%` — CPU ব্যবহারের একটা soft cap।
 
-**[Install]** — how `systemctl enable` should wire the service.
+**[Install]** — `systemctl enable` কীভাবে সার্ভিসটা wire করবে।
 
-- `WantedBy=multi-user.target` — when the system boots into "multi-user mode" (the default), start me.
+- `WantedBy=multi-user.target` — সিস্টেম "multi-user মোডে" (ডিফল্ট) বুট করলে, আমাকে শুরু করো।
 
-## Inspecting a service
+## একটা সার্ভিস পরিদর্শন করা
 
 ```bash
 systemctl status myapp
 ```
 
-Output:
+আউটপুট:
 
 ```text
 ● myapp.service - My example app
@@ -171,7 +179,7 @@ May 04 10:42:11 web-01 systemd[1]: Started myapp.service - My example app.
 May 04 10:42:11 web-01 myapp[1234]: starting on :8080
 ```
 
-Useful queries:
+উপকারী কোয়েরি:
 
 ```bash
 systemctl is-active myapp              # active / inactive / failed
@@ -184,9 +192,9 @@ systemctl edit myapp                   # create a drop-in override
 systemctl edit --full myapp            # edit the whole file
 ```
 
-## Logs and journalctl
+## লগ আর journalctl
 
-Anything your service writes to stdout or stderr goes into the journal:
+আপনার সার্ভিস stdout বা stderr-এ যা লেখে তা journal-এ যায়:
 
 ```bash
 journalctl -u myapp                    # all logs ever, oldest first
@@ -199,30 +207,30 @@ journalctl -u myapp -o json-pretty     # full structured JSON
 journalctl -u myapp --grep 'connection refused'
 ```
 
-Priorities, lowest to highest:
+Priority, সর্বনিম্ন থেকে সর্বোচ্চ:
 
 ```text
 debug, info, notice, warning, err, crit, alert, emerg
 ```
 
-## Reload vs restart
+## Reload বনাম restart
 
 ```bash
 systemctl restart myapp                # stop, then start. Drops connections.
 systemctl reload myapp                 # ask the service to re-read its config without exiting
 ```
 
-`reload` only works if the service supports it (the unit file declares `ExecReload=`). nginx reloads on `SIGHUP`, postgres on `SIGHUP`, your custom Go binary unless you wrote a handler.
+`reload` শুধু তখনই কাজ করে যদি সার্ভিস এটা সাপোর্ট করে (unit ফাইল `ExecReload=` ঘোষণা করে)। nginx `SIGHUP`-এ reload করে, postgres `SIGHUP`-এ, আপনার কাস্টম Go বাইনারি — যদি না আপনি একটা handler লিখে থাকেন।
 
-## Drop-in overrides
+## Drop-in override
 
-You should not edit unit files in `/usr/lib/systemd/system/` — package upgrades will overwrite your changes. Use **drop-ins**:
+`/usr/lib/systemd/system/`-এ unit ফাইল এডিট করা উচিত নয় — প্যাকেজ আপগ্রেড আপনার পরিবর্তন মুছে ফেলবে। **drop-in** ব্যবহার করুন:
 
 ```bash
 sudo systemctl edit nginx
 ```
 
-Opens an editor on `/etc/systemd/system/nginx.service.d/override.conf`. Anything you put there is merged with the package's unit file:
+`/etc/systemd/system/nginx.service.d/override.conf`-এ একটা এডিটর খোলে। আপনি সেখানে যা রাখেন তা প্যাকেজের unit ফাইলের সঙ্গে merge হয়:
 
 ```ini
 [Service]
@@ -230,11 +238,11 @@ LimitNOFILE=200000
 Restart=always
 ```
 
-Save. systemd auto-reloads. Your override survives package upgrades.
+সেভ করুন। systemd স্বয়ংক্রিয়ভাবে reload করে। আপনার override প্যাকেজ আপগ্রেড পার করে টিকে থাকে।
 
-## Timers — the modern cron
+## Timer — আধুনিক cron
 
-A `.timer` unit triggers a `.service` unit on a schedule. Two files:
+একটা `.timer` unit একটা শিডিউলে একটা `.service` unit ট্রিগার করে। দুটো ফাইল:
 
 ```ini
 # /etc/systemd/system/backup.service
@@ -260,29 +268,29 @@ RandomizedDelaySec=15min
 WantedBy=timers.target
 ```
 
-Enable the _timer_, not the service:
+_timer_ enable করুন, service নয়:
 
 ```bash
 sudo systemctl enable --now backup.timer
 systemctl list-timers
 ```
 
-`Persistent=true` runs the timer at next boot if the box was off when it should have fired. `RandomizedDelaySec` jitters the start so a hundred boxes do not all hammer the backup server at midnight. Cron has no equivalent; this alone is worth the switch.
+`Persistent=true` timer-টা পরের বুটে চালায় যদি এটা যখন ফায়ার করার কথা ছিল তখন বক্স বন্ধ থাকত। `RandomizedDelaySec` শুরুটা jitter করে যাতে একশোটা বক্স মাঝরাতে একসঙ্গে backup সার্ভারে হামলা না চালায়। Cron-এর কোনো সমতুল্য নেই; শুধু এটাই সুইচ করার মূল্য রাখে।
 
-## Common mistakes
+## সাধারণ ভুল
 
-- **Forgetting `daemon-reload`.** After editing a unit file, `systemctl` still has the old version cached. `sudo systemctl daemon-reload` fixes it.
-- **Running as root by default.** Without `User=`, the service runs as root. Fix it.
-- **Using relative paths in `ExecStart`.** systemd does not have a shell PATH. Always use absolute paths.
-- **Not setting `Restart=`.** Default is `no` — your service will _not_ restart on crash unless you ask.
-- **Logs going to a file the unit cannot write.** Just write to stdout. journald handles the rest.
+- **`daemon-reload` ভুলে যাওয়া।** একটা unit ফাইল এডিট করার পর, `systemctl`-এর কাছে এখনো পুরনো ভার্সন ক্যাশে থাকে। `sudo systemctl daemon-reload` এটা ঠিক করে।
+- **ডিফল্টভাবে root হিসেবে চালানো।** `User=` ছাড়া, সার্ভিস root হিসেবে চলে। ঠিক করুন।
+- **`ExecStart`-এ relative পাথ ব্যবহার করা।** systemd-এর কোনো শেল PATH নেই। সবসময় absolute পাথ ব্যবহার করুন।
+- **`Restart=` সেট না করা।** ডিফল্ট `no` — আপনি না চাইলে আপনার সার্ভিস ক্র্যাশে রিস্টার্ট করবে _না_।
+- **লগ এমন একটা ফাইলে যাওয়া যা unit লিখতে পারে না।** শুধু stdout-এ লিখুন। journald বাকিটা সামলায়।
 
-## Recap
+## রিক্যাপ
 
-- systemd manages services via unit files in `/etc/systemd/system/`.
-- A service unit needs `[Unit]`, `[Service]`, `[Install]`. Five lines is enough; thirty lines is hardened.
-- `systemctl` is the verb. `journalctl` is the log viewer.
-- Use drop-ins for overrides. Use timers for schedules. Run as a non-root user. Set resource limits.
-- Reload picks up new unit files; restart kills and respawns the service.
+- systemd `/etc/systemd/system/`-এ unit ফাইলের মাধ্যমে সার্ভিস ম্যানেজ করে।
+- একটা service unit-এর দরকার `[Unit]`, `[Service]`, `[Install]`। পাঁচ লাইনই যথেষ্ট; তিরিশ লাইন হার্ডেন করা।
+- `systemctl` হলো ক্রিয়া। `journalctl` হলো লগ ভিউয়ার।
+- override-এর জন্য drop-in ব্যবহার করুন। শিডিউলের জন্য timer ব্যবহার করুন। non-root ইউজার হিসেবে চালান। resource limit সেট করুন।
+- Reload নতুন unit ফাইল তুলে নেয়; restart সার্ভিসকে kill করে আবার চালু করে।
 
-Next chapter: who is listening on what port, and the tools to find out.
+পরের চ্যাপ্টার: কে কোন পোর্টে listen করছে, আর তা খুঁজে বের করার টুল।

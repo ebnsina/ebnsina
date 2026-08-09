@@ -1,9 +1,9 @@
 ---
-title: "Sockets, Ports, and What's Listening"
-subtitle: 'Every network service is a socket. Every open port is a socket someone bound. The four tools that tell you exactly what your VPS is exposing.'
+title: 'সকেট, পোর্ট, আর কী listen করছে'
+subtitle: 'প্রতিটা নেটওয়ার্ক সার্ভিস একটা সকেট। প্রতিটা খোলা পোর্ট এমন একটা সকেট যা কেউ bind করেছে। আপনার VPS ঠিক কী এক্সপোজ করছে তা বলে দেওয়া চারটা টুল।'
 chapter: 6
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['sockets', 'ports', 'ss', 'lsof', 'netstat', 'tcp']
 ---
 
@@ -13,41 +13,49 @@ topics: ['sockets', 'ports', 'ss', 'lsof', 'netstat', 'tcp']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Sockets and ports are like a post office with numbered windows — each service listens at its own window number, and the OS routes incoming mail to the right one.
+সকেট আর পোর্ট অনেকটা নম্বর দেওয়া জানালাওয়ালা একটা পোস্ট অফিসের মতো — প্রতিটা সার্ভিস নিজের জানালা নম্বরে listen করে, আর OS আসা মেইল সঠিক জানালায় route করে।
 
 </Callout>
 
-## A socket is a file descriptor that talks to the network
+## গল্পে বুঝি
 
-When a process wants to send or receive data over a network, it asks the kernel for a **socket** — and the kernel hands back a file descriptor, just like opening a file. From there, the process can `read()` and `write()` to it like any other file. The kernel handles TCP, UDP, retransmits, congestion control, all of that.
+ফাতিমা আল-ফিহরির বিশাল অফিস বিল্ডিংয়ের সামনের দিকটায় সারি সারি নম্বর দেওয়া সার্ভিস জানালা। জানালা 80 হলো সাধারণ জিজ্ঞাসার জন্য, জানালা 443 গোপন-নিরাপদ লেনদেনের জন্য, আর জানালা 22 হলো কেয়ারটেকারের ঢোকার দরজা। যে জানালাগুলো খোলা, তার প্রতিটার পেছনে একজন কেরানি বসে আছে — কেউ এসে সামনে দাঁড়ালেই সে শুনতে (listen) প্রস্তুত। কেউ জানালা 80-এর সামনে গিয়ে দাঁড়ায়, কেরানির সঙ্গে একটা কথোপকথন শুরু করে, কাজ সেরে চলে যায়; পরের জন এসে দাঁড়ায় আবার নতুন করে।
 
-Every network service on Earth boils down to:
+বিল্ডিংয়ের সিকিউরিটি ম্যানেজার ইবনে সিনা কিছুক্ষণ পরপর সামনের সারি ধরে হেঁটে যান। তিনি ঠিক দেখে নেন কোন কোন নম্বরের জানালা এই মুহূর্তে খোলা আর সেখানে কে বসে আছে। জানালা 80, 443, 22 — এগুলো তো খোলা থাকারই কথা। কিন্তু হঠাৎ যদি চোখে পড়ে জানালা 5432 (যেটা ভেতরের হিসাব-নিকাশের জন্য, বাইরের কারো জন্য নয়) পাবলিকের দিকে খুলে বসে আছে, তিনি সঙ্গে সঙ্গে সেটা বন্ধ করিয়ে দেন। যে জানালা জনসাধারণের জন্য খোলা থাকার কথা না, সেটা এক মুহূর্তও খোলা থাকবে না।
 
-1. Process calls `socket(AF_INET, SOCK_STREAM, 0)` — "give me a TCP/IP socket."
-2. Process calls `bind(fd, "0.0.0.0:8080")` — "I want this socket to own port 8080."
-3. Process calls `listen(fd, backlog)` — "I am ready to accept connections."
-4. Loop: `accept(fd)` — block until someone connects, then return a _new_ socket for that connection.
+এই গল্পটাই আসলে **socket** আর **port**। প্রতিটা নম্বর দেওয়া সার্ভিস জানালা হলো একটা **port** (80, 443, 22)। খোলা জানালার পেছনে বসে থাকা কেরানি হলো সেই port-এ **listen** করা একটা **service**। কেউ এসে জানালার সামনে দাঁড়িয়ে লেনদেন করা মানে একটা **socket** কানেকশন। আর ইবনে সিনার হেঁটে হেঁটে কোন জানালা খোলা তা যাচাই করে অপ্রত্যাশিতগুলো বন্ধ করাটাই হলো কী listen করছে তা অডিট করা — বাস্তবে `ss -tlnp` বা `netstat -tlnp` চালিয়ে দেখা কোন কোন port খোলা, আর অচেনা কিছু খোলা থাকলে সেটা বন্ধ করা। আপনার VPS-এ এই সিকিউরিটি ওয়াক-থ্রু নিয়মিত করাটাই আপনাকে বাঁচায় — না-জেনে খোলা থাকা একটা port-ই attacker-এর দরজা।
 
-A "port" is a number from 1 to 65535. Ports below 1024 are **privileged** — only root or a process with `CAP_NET_BIND_SERVICE` can bind them. That is why nginx as root can listen on port 80, but your unprivileged Go binary cannot — unless you give it the capability or run it on port 8080 and put nginx in front.
+## একটা সকেট হলো একটা ফাইল ডেসক্রিপ্টর যা নেটওয়ার্কের সঙ্গে কথা বলে
 
-## What is on my box right now?
+একটা প্রসেস যখন একটা নেটওয়ার্কের উপর ডেটা পাঠাতে বা পেতে চায়, এটা কার্নেলের কাছে একটা **সকেট** চায় — আর কার্নেল একটা ফাইল ডেসক্রিপ্টর ফেরত দেয়, ঠিক একটা ফাইল খোলার মতোই। সেখান থেকে, প্রসেস অন্য যেকোনো ফাইলের মতোই এটাতে `read()` আর `write()` করতে পারে। কার্নেল TCP, UDP, retransmit, congestion control, এসব সামলায়।
 
-The single most important command in this chapter:
+পৃথিবীর প্রতিটা নেটওয়ার্ক সার্ভিস এতেই নেমে আসে:
+
+1. প্রসেস `socket(AF_INET, SOCK_STREAM, 0)` কল করে — "আমাকে একটা TCP/IP সকেট দাও।"
+2. প্রসেস `bind(fd, "0.0.0.0:8080")` কল করে — "আমি চাই এই সকেট পোর্ট 8080-এর মালিক হোক।"
+3. প্রসেস `listen(fd, backlog)` কল করে — "আমি কানেকশন accept করতে প্রস্তুত।"
+4. লুপ: `accept(fd)` — কেউ কানেক্ট না করা পর্যন্ত block করে, তারপর সেই কানেকশনের জন্য একটা _নতুন_ সকেট রিটার্ন করে।
+
+একটা "পোর্ট" হলো 1 থেকে 65535 পর্যন্ত একটা সংখ্যা। 1024-এর নিচের পোর্টগুলো **privileged** — শুধু root বা `CAP_NET_BIND_SERVICE`-ওয়ালা একটা প্রসেসই সেগুলো bind করতে পারে। এজন্যই root হিসেবে nginx পোর্ট 80-এ listen করতে পারে, কিন্তু আপনার unprivileged Go বাইনারি পারে না — যদি না আপনি এটাকে ক্যাপাবিলিটি দেন বা পোর্ট 8080-এ চালান আর সামনে nginx বসান।
+
+## আমার বক্সে এখন কী আছে?
+
+এই চ্যাপ্টারের একক সবচেয়ে গুরুত্বপূর্ণ কমান্ড:
 
 ```bash
 ss -tlnp
 ```
 
-Memorize it. It means:
+এটা মুখস্থ করুন। এর মানে:
 
-- `t` — TCP only (use `-u` for UDP).
-- `l` — listening sockets only (sockets accepting incoming connections).
-- `n` — show numeric addresses and ports, do not try to resolve DNS or service names.
-- `p` — show which process owns each socket (requires root for everything).
+- `t` — শুধু TCP (UDP-এর জন্য `-u` ব্যবহার করুন)।
+- `l` — শুধু listening সকেট (যেসব সকেট আসা কানেকশন accept করছে)।
+- `n` — numeric অ্যাড্রেস আর পোর্ট দেখাও, DNS বা সার্ভিস নাম রিজলভ করার চেষ্টা কোরো না।
+- `p` — কোন প্রসেস প্রতিটা সকেটের মালিক তা দেখাও (সবকিছুর জন্য root দরকার)।
 
-Output:
+আউটপুট:
 
 ```text
 $ sudo ss -tlnp
@@ -59,58 +67,58 @@ LISTEN   0        4096                   *:22                   *:*         user
 LISTEN   0        511                0.0.0.0:8080            0.0.0.0:*      users:(("myapp",pid=1567,fd=4))
 ```
 
-Read it like:
+এটা এভাবে পড়ুন:
 
-- nginx is listening on `0.0.0.0:80` and `0.0.0.0:443` — the public internet can reach those.
-- postgres is on `127.0.0.1:5432` — only this machine can connect. Good. **Never** expose Postgres to the internet.
-- sshd is on `*:22` (both IPv4 and IPv6) — your front door.
-- myapp is on `0.0.0.0:8080` — public.
+- nginx `0.0.0.0:80` আর `0.0.0.0:443`-এ listen করছে — পাবলিক ইন্টারনেট সেগুলোতে পৌঁছাতে পারে।
+- postgres `127.0.0.1:5432`-এ — শুধু এই মেশিনই কানেক্ট করতে পারে। ভালো। Postgres-কে **কখনো** ইন্টারনেটে এক্সপোজ করবেন না।
+- sshd `*:22`-এ (IPv4 আর IPv6 দুটোই) — আপনার সদর দরজা।
+- myapp `0.0.0.0:8080`-এ — পাবলিক।
 
-## 0.0.0.0 vs 127.0.0.1 vs ::
+## 0.0.0.0 বনাম 127.0.0.1 বনাম ::
 
-The address a socket binds to determines who can reach it.
+একটা সকেট যে অ্যাড্রেসে bind করে তা ঠিক করে কে এতে পৌঁছাতে পারবে।
 
-| Bind address                   | Who can connect                                                    |
-| ------------------------------ | ------------------------------------------------------------------ |
-| `127.0.0.1` (or `localhost`)   | Only this machine. Nothing on the network can reach it.            |
-| `0.0.0.0`                      | Any IPv4 address on any interface — including the public internet. |
-| `::1`                          | Only this machine, over IPv6.                                      |
-| `::`                           | Any IPv6 address on any interface.                                 |
-| `192.168.1.10` (a specific IP) | Only connections that arrive on that exact interface/IP.           |
+| Bind address                       | কে কানেক্ট করতে পারে                                          |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `127.0.0.1` (বা `localhost`)       | শুধু এই মেশিন। নেটওয়ার্কের কিছুই এতে পৌঁছাতে পারে না।        |
+| `0.0.0.0`                          | যেকোনো ইন্টারফেসে যেকোনো IPv4 অ্যাড্রেস — পাবলিক ইন্টারনেটসহ। |
+| `::1`                              | শুধু এই মেশিন, IPv6-এর উপর।                                   |
+| `::`                               | যেকোনো ইন্টারফেসে যেকোনো IPv6 অ্যাড্রেস।                      |
+| `192.168.1.10` (একটা নির্দিষ্ট IP) | শুধু সেই সঠিক ইন্টারফেস/IP-তে আসা কানেকশন।                    |
 
-A common mistake: a database "exposed to the internet" because it bound `0.0.0.0:5432` instead of `127.0.0.1:5432`. Even with strong passwords, you do not want random scanners running thousands of authentication attempts. Bind to localhost unless something across the network truly needs to reach it.
+একটা সাধারণ ভুল: একটা ডেটাবেস "ইন্টারনেটে এক্সপোজড" কারণ এটা `127.0.0.1:5432`-এর বদলে `0.0.0.0:5432`-এ bind করেছে। শক্তিশালী পাসওয়ার্ড থাকলেও, আপনি চান না র‍্যান্ডম স্ক্যানাররা হাজার হাজার অথেন্টিকেশন চেষ্টা চালাক। নেটওয়ার্কজুড়ে সত্যিই কিছুর পৌঁছানো দরকার না হলে localhost-এ bind করুন।
 
-## Established connections
+## Established কানেকশন
 
-Drop the `-l` to see who is connected right now:
+এখন কে কানেক্টেড তা দেখতে `-l` বাদ দিন:
 
 ```bash
 ss -tnp
 ```
 
-Or count them:
+অথবা সেগুলো গুনুন:
 
 ```bash
 ss -tn state established | wc -l
 ```
 
-Filter by port:
+পোর্ট দিয়ে ফিল্টার করুন:
 
 ```bash
 ss -tn '( dport = :443 or sport = :443 )'
 ```
 
-By peer address:
+peer অ্যাড্রেস দিয়ে:
 
 ```bash
 ss -tn dst 1.2.3.4
 ```
 
-Everything `ss` does, you used to do with `netstat`. `netstat` still works (`netstat -tlnp`) but is deprecated and slower on busy hosts.
+`ss` যা করে, তা আপনি আগে `netstat` দিয়ে করতেন। `netstat` এখনো কাজ করে (`netstat -tlnp`) কিন্তু deprecated আর ব্যস্ত হোস্টে ধীর।
 
-## lsof — when ss is not enough
+## lsof — যখন ss যথেষ্ট নয়
 
-`lsof` lists open files, and since sockets are files, it lists sockets too. It is verbose but flexible:
+`lsof` খোলা ফাইল লিস্ট করে, আর যেহেতু সকেট হলো ফাইল, এটা সকেটও লিস্ট করে। এটা verbose কিন্তু নমনীয়:
 
 ```bash
 sudo lsof -i :8080                  # who has port 8080 open?
@@ -120,9 +128,9 @@ sudo lsof -p 1234                   # all open files for PID 1234, including soc
 sudo lsof -u postgres               # everything postgres user has open
 ```
 
-Use `lsof` when you are debugging "who is holding this file/port" and `ss` when you want a quick listening map.
+আপনি যখন "কে এই ফাইল/পোর্ট ধরে রেখেছে" ডিবাগ করছেন তখন `lsof` ব্যবহার করুন আর একটা দ্রুত listening ম্যাপ চাইলে `ss`।
 
-## netstat (legacy but still useful)
+## netstat (legacy কিন্তু এখনো উপকারী)
 
 ```bash
 netstat -tlnp                       # same idea as ss -tlnp
@@ -131,90 +139,90 @@ netstat -i                          # per-interface byte counters
 netstat -rn                         # routing table
 ```
 
-`netstat -s` is genuinely useful for diagnosing weird network problems — retransmits, accept queue overflows, dropped connections at the kernel level — that `ss` does not summarize as nicely.
+`netstat -s` অদ্ভুত নেটওয়ার্ক সমস্যা নির্ণয়ে সত্যিকারভাবে উপকারী — retransmit, accept queue overflow, কার্নেল লেভেলে ড্রপ হওয়া কানেকশন — যা `ss` এত সুন্দরভাবে summarize করে না।
 
-## TCP states — what they mean
+## TCP স্টেট — এদের মানে কী
 
 ```bash
 ss -tn
 ```
 
-The `State` column tells you where each connection is in TCP's state machine. The ones that matter:
+`State` কলাম আপনাকে বলে প্রতিটা কানেকশন TCP-এর state machine-এর কোথায় আছে। যেগুলো গুরুত্বপূর্ণ:
 
-| State                       | Meaning                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| `LISTEN`                    | Server side, waiting for connections.                                         |
-| `SYN-SENT`                  | Client side, sent SYN, awaiting SYN-ACK.                                      |
-| `SYN-RECV`                  | Server, received SYN, sent SYN-ACK, awaiting ACK.                             |
-| `ESTABLISHED`               | Connection is open in both directions. Most of your sockets.                  |
-| `FIN-WAIT-1` / `FIN-WAIT-2` | Local side is closing.                                                        |
-| `CLOSE-WAIT`                | Remote side closed; _your_ app has not closed yet. **Bug indicator.**         |
-| `TIME-WAIT`                 | Connection closed; kernel holds the socket briefly to handle delayed packets. |
+| State                       | মানে                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| `LISTEN`                    | সার্ভার সাইড, কানেকশনের জন্য অপেক্ষা করছে।                                      |
+| `SYN-SENT`                  | ক্লায়েন্ট সাইড, SYN পাঠিয়েছে, SYN-ACK-এর অপেক্ষায়।                           |
+| `SYN-RECV`                  | সার্ভার, SYN পেয়েছে, SYN-ACK পাঠিয়েছে, ACK-এর অপেক্ষায়।                      |
+| `ESTABLISHED`               | কানেকশন দুই দিকেই খোলা। আপনার বেশিরভাগ সকেট।                                    |
+| `FIN-WAIT-1` / `FIN-WAIT-2` | লোকাল সাইড বন্ধ হচ্ছে।                                                          |
+| `CLOSE-WAIT`                | রিমোট সাইড বন্ধ করেছে; _আপনার_ অ্যাপ এখনো বন্ধ করেনি। **বাগের ইঙ্গিত।**         |
+| `TIME-WAIT`                 | কানেকশন বন্ধ; কার্নেল দেরিতে আসা প্যাকেট সামলাতে সকেটটা সংক্ষিপ্তভাবে ধরে রাখে। |
 
-A few hundred `TIME-WAIT` is normal on a busy server. A million `CLOSE-WAIT` is your app failing to close sockets after the peer disconnects — a slow file descriptor leak.
+একটা ব্যস্ত সার্ভারে কয়েকশো `TIME-WAIT` স্বাভাবিক। দশ লাখ `CLOSE-WAIT` মানে peer disconnect করার পর আপনার অ্যাপ সকেট বন্ধ করতে ব্যর্থ হচ্ছে — একটা ধীর ফাইল ডেসক্রিপ্টর লিক।
 
-## Listen backlog and accept queue overflow
+## Listen backlog আর accept queue overflow
 
-Notice the `Send-Q` column in `ss -tln`:
+`ss -tln`-এ `Send-Q` কলাম খেয়াল করুন:
 
 ```text
 LISTEN   0        511        0.0.0.0:80
 ```
 
-That `511` is the **listen backlog** — the maximum number of connections that have done the TCP handshake but your app has not yet `accept()`-ed. If your app is too slow to accept, the queue fills up and the kernel starts dropping new connections. You will see this with:
+ওই `511` হলো **listen backlog** — যেসব কানেকশন TCP handshake সম্পন্ন করেছে কিন্তু আপনার অ্যাপ এখনো `accept()` করেনি তার সর্বোচ্চ সংখ্যা। আপনার অ্যাপ accept করতে বেশি ধীর হলে, queue ভরে যায় আর কার্নেল নতুন কানেকশন ড্রপ করা শুরু করে। আপনি এটা দেখবেন এভাবে:
 
 ```bash
 netstat -s | grep -i listen
 # 1234 SYNs to LISTEN sockets dropped
 ```
 
-If that number grows during load, your app cannot keep up with `accept()` — usually because event-loop concurrency is blocked or the worker pool is saturated.
+load-এর সময় সেই সংখ্যা বাড়লে, আপনার অ্যাপ `accept()`-এর সঙ্গে তাল মেলাতে পারছে না — সাধারণত কারণ event-loop concurrency ব্লকড বা worker pool saturated।
 
-## A practical audit — what is exposed?
+## একটা প্র্যাকটিক্যাল অডিট — কী এক্সপোজড?
 
-Run this on a fresh-feeling VPS:
+একটা তরতাজা-অনুভূত VPS-এ এটা চালান:
 
 ```bash
 sudo ss -tlnp | awk '$4 !~ /^127\.|^\[::1\]/ {print}'
 ```
 
-Translation: list listening TCP sockets whose local address is **not** localhost. That is your **public attack surface**. Read every line. If you do not recognize what is listening, find out before going to bed.
+অনুবাদ: যেসব listening TCP সকেটের লোকাল অ্যাড্রেস localhost **নয়** সেগুলো লিস্ট করো। ওটাই আপনার **পাবলিক অ্যাটাক সারফেস**। প্রতিটা লাইন পড়ুন। কী listen করছে তা চিনতে না পারলে, ঘুমাতে যাওয়ার আগে খুঁজে বের করুন।
 
-## Don't forget UDP
+## UDP ভুলবেন না
 
-UDP services hide because they have no `LISTEN` state — there are no connections in UDP. List them with:
+UDP সার্ভিস লুকিয়ে থাকে কারণ এদের কোনো `LISTEN` স্টেট নেই — UDP-তে কোনো কানেকশন নেই। এদের লিস্ট করুন এভাবে:
 
 ```bash
 sudo ss -ulnp
 ```
 
-Things you might see:
+আপনি যা দেখতে পারেন:
 
-- `*:53` — DNS resolver (systemd-resolved or unbound).
-- `*:67` / `*:68` — DHCP client.
-- `*:123` — NTP.
-- `*:5353` — mDNS (Avahi).
+- `*:53` — DNS resolver (systemd-resolved বা unbound)।
+- `*:67` / `*:68` — DHCP ক্লায়েন্ট।
+- `*:123` — NTP।
+- `*:5353` — mDNS (Avahi)।
 
-## Unix domain sockets
+## Unix domain socket
 
-Not all sockets cross the network. **Unix domain sockets** are file-system paths used for local IPC — fast, no TCP overhead. nginx talking to PHP-FPM, your app talking to a sidecar, postgres on a local socket:
+সব সকেট নেটওয়ার্ক পার হয় না। **Unix domain socket** হলো লোকাল IPC-এর জন্য ব্যবহৃত ফাইল-সিস্টেম পাথ — দ্রুত, কোনো TCP overhead নেই। nginx PHP-FPM-এর সঙ্গে কথা বলা, আপনার অ্যাপ একটা sidecar-এর সঙ্গে কথা বলা, postgres একটা লোকাল সকেটে:
 
 ```bash
 ss -xln
 ```
 
-Output looks like:
+আউটপুট এমন দেখায়:
 
 ```text
 u_str LISTEN  0  4096  /run/postgresql/.s.PGSQL.5432  ...
 u_str LISTEN  0  128   /run/dbus/system_bus_socket    ...
 ```
 
-These are files in the filesystem; permissions on the socket file control who can connect. Postgres' default config trusts local socket connections from the OS user matching the database user. That is why `psql` works without a password from the `postgres` shell user but a TCP connection requires authentication.
+এগুলো ফাইলসিস্টেমে ফাইল; সকেট ফাইলের পারমিশন নিয়ন্ত্রণ করে কে কানেক্ট করতে পারবে। Postgres-এর ডিফল্ট config OS ইউজারের সঙ্গে মেলানো ডেটাবেস ইউজার থেকে আসা লোকাল সকেট কানেকশন trust করে। এজন্যই `postgres` শেল ইউজার থেকে `psql` পাসওয়ার্ড ছাড়া কাজ করে কিন্তু একটা TCP কানেকশনের অথেন্টিকেশন দরকার।
 
-## Putting it together — a 30-second port audit
+## একসঙ্গে জোড়া লাগানো — একটা ৩০-সেকেন্ডের পোর্ট অডিট
 
-Drop these three commands into your muscle memory:
+এই তিনটা কমান্ড আপনার মাসল মেমরিতে গেঁথে ফেলুন:
 
 ```bash
 sudo ss -tlnp                 # what TCP services are listening?
@@ -222,15 +230,15 @@ sudo ss -ulnp                 # what UDP services are listening?
 sudo ss -tn state established # who is currently connected?
 ```
 
-If you can run these three on any unfamiliar Linux box and explain every line, you understand its network surface.
+আপনি যদি যেকোনো অচেনা Linux বক্সে এই তিনটা চালিয়ে প্রতিটা লাইন ব্যাখ্যা করতে পারেন, আপনি এর নেটওয়ার্ক সারফেস বোঝেন।
 
-## Recap
+## রিক্যাপ
 
-- A socket is a file descriptor. A listening socket is one bound to a port and waiting.
-- Bind to `127.0.0.1` for local-only services. Never expose databases publicly.
-- `ss -tlnp` lists listening TCP sockets and their owning processes. Memorize this.
-- TCP states tell you the lifecycle. `CLOSE-WAIT` piling up means _your_ app is leaking.
-- The accept queue is finite — saturated apps drop SYNs, which `netstat -s` reveals.
-- Unix domain sockets exist and are faster for local IPC. Permissions on the socket file gate access.
+- একটা সকেট একটা ফাইল ডেসক্রিপ্টর। একটা listening সকেট হলো এমন একটা যা একটা পোর্টে bound আর অপেক্ষা করছে।
+- লোকাল-অনলি সার্ভিসের জন্য `127.0.0.1`-এ bind করুন। ডেটাবেস কখনো পাবলিকলি এক্সপোজ করবেন না।
+- `ss -tlnp` listening TCP সকেট আর তাদের মালিক প্রসেস লিস্ট করে। এটা মুখস্থ করুন।
+- TCP স্টেট আপনাকে lifecycle বলে। `CLOSE-WAIT` জমতে থাকা মানে _আপনার_ অ্যাপ লিক করছে।
+- accept queue সসীম — saturated অ্যাপ SYN ড্রপ করে, যা `netstat -s` প্রকাশ করে।
+- Unix domain socket আছে আর লোকাল IPC-এর জন্য দ্রুত। সকেট ফাইলের পারমিশন অ্যাক্সেস নিয়ন্ত্রণ করে।
 
-Next chapter: now that you know what is exposed, the firewall to lock it down.
+পরের চ্যাপ্টার: এখন যেহেতু আপনি জানেন কী এক্সপোজড, তা লক ডাউন করার ফায়ারওয়াল।

@@ -1,9 +1,9 @@
 ---
 title: 'Integration Testing'
-subtitle: 'Testing real boundaries — database queries, HTTP handlers, message queues — without mocking what matters.'
+subtitle: 'সত্যিকারের boundary টেস্ট করা — database query, HTTP handler, message queue — যা গুরুত্বপূর্ণ তা mock না করেই।'
 chapter: 3
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics:
   [
     'integration testing',
@@ -21,13 +21,21 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Testing a new employee's first day working with real coworkers, not role-playing it in a training room. The training (unit tests) teaches the job; the real first day reveals whether the knowledge translates — whether they can actually use the filing system, talk to the right people, follow the actual workflows.
+একজন নতুন কর্মচারীর প্রথম দিন সত্যিকারের সহকর্মীদের সাথে কাজ করে টেস্ট করা, training room-এ role-play করে নয়। training (unit test) কাজটা শেখায়; সত্যিকারের প্রথম দিন প্রকাশ করে জ্ঞানটা বাস্তবে কাজে লাগে কিনা — তারা কি সত্যিই filing system ব্যবহার করতে পারে, সঠিক লোকের সাথে কথা বলতে পারে, আসল workflow অনুসরণ করতে পারে।
 
 </Callout>
 
-## Why Integration Tests Need Real Dependencies
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি নতুন বাড়ির আলোর লাইন বসাচ্ছেন, আর ইলেকট্রিশিয়ান হিসেবে ডেকেছেন ইবনে সিনাকে। কাজ শুরুর আগে ইবনে সিনা প্রতিটা যন্ত্রাংশ আলাদা করে বেঞ্চে পরখ করে নিলেন — সুইচটা টিপে দেখলেন ঠিকঠাক ক্লিক করে, বাল্বটা আলাদা একটা ব্যাটারিতে ঠেকিয়ে দেখলেন জ্বলে, ফিউজটা মিটার দিয়ে মেপে দেখলেন। প্রতিটাই আলাদাভাবে পাস। কিন্তু তিনি জানেন, এতেই কাজ শেষ না।
+
+এবার তিনি সবগুলো একসাথে জোড়া দিলেন — দেয়ালের সুইচ, আসল তার, বাল্ব-হোল্ডার, আর ফিউজ বক্স — তারপর সুইচটা অন করলেন গোটা সার্কিটটা এক হয়ে চলে কিনা দেখতে। আর ঠিক তখনই বেরিয়ে এল সমস্যা: বাল্ব একা একা জ্বললেও, সুইচের তারটা ভুল লাইনে জোড়া দেওয়া ছিল, ফলে অন করতেই ফিউজ ট্রিপ করে বসল। প্রতিটা যন্ত্রাংশ একা একা পাস করেছিল, কিন্তু জোড়া দেওয়ার জায়গায় — interface-এ — লুকিয়ে ছিল বাগটা, যা কেবল আসল অংশগুলো মিলিত হলেই ধরা পড়ে।
+
+এটাই **integration test**। আলাদাভাবে পাস করা যন্ত্রাংশগুলো হলো mock দিয়ে টেস্ট করা unit — প্রতিটা component একা ঠিক। কিন্তু সেগুলো সত্যিকারভাবে জোড়া দিয়ে সুইচ অন করা মানে আসল component-গুলো একসাথে চালিয়ে দেখা, আর ভুল তারে জোড়া দেওয়া বা ফিউজ ট্রিপ করাটাই সেই interface/wiring বাগ, যা mock দিয়ে করা unit test কখনো ধরতে পারে না। আর ইবনে সিনা যেমন খেলনা তার নয়, বাড়ির আসল তার আর আসল ফিউজ বক্স দিয়েই পরীক্ষা করেছেন — বাস্তবেও তাই integration test আসল dependency, যেমন একটা সত্যিকারের database-এর বিপরীতে চালাতে হয়, mock দিয়ে নয়।
+
+## Integration Test-এর জন্য কেন Real Dependency দরকার
 
 ```typescript
 // This test will always pass even if your SQL is wrong
@@ -47,9 +55,9 @@ await createUser(mockDb, { email: 'test@example.com' });
 // - Transaction behavior
 ```
 
-## Database Integration Tests
+## Database Integration Test
 
-Use a real database. Roll back after each test:
+একটা real database ব্যবহার করুন। প্রতিটি test-এর পরে roll back করুন:
 
 ```typescript
 // src/test/setup.ts
@@ -113,11 +121,11 @@ describe('users integration', () => {
 });
 ```
 
-**Transaction rollback** means tests don't interfere with each other — each test starts with a clean slate and leaves no trace.
+**Transaction rollback** মানে test-গুলো একে অপরের সাথে হস্তক্ষেপ করে না — প্রতিটি test একটা পরিষ্কার slate দিয়ে শুরু হয় আর কোনো ছাপ রেখে যায় না।
 
-## Testcontainers — Spin Up Dependencies in CI
+## Testcontainers — CI-তে Dependency চালু করা
 
-Testcontainers starts real Docker containers for your test run — no pre-configured test DB needed:
+Testcontainers আপনার test run-এর জন্য real Docker container চালু করে — কোনো pre-configured test DB দরকার নেই:
 
 ```bash
 npm install -D @testcontainers/postgresql
@@ -166,9 +174,9 @@ export async function setup() {
 }
 ```
 
-## HTTP Integration Tests
+## HTTP Integration Test
 
-Test your HTTP layer end-to-end — real server, real DB, real middleware:
+আপনার HTTP layer end-to-end টেস্ট করুন — real server, real DB, real middleware:
 
 ```bash
 npm install -D supertest @types/supertest
@@ -220,7 +228,7 @@ describe('GET /users/:id', () => {
 });
 ```
 
-## Testing Authenticated Routes
+## Authenticated Route টেস্ট করা
 
 ```typescript
 // Helper: create a test user and get auth token
@@ -255,9 +263,9 @@ it('blocks standard user from deleting', async () => {
 });
 ```
 
-## Testing External HTTP APIs
+## External HTTP API টেস্ট করা
 
-For external services you don't control, use `msw` (Mock Service Worker) to intercept HTTP at the network level — not at the import level:
+আপনার নিয়ন্ত্রণে নেই এমন external service-এর জন্য, HTTP-কে network level-এ intercept করতে `msw` (Mock Service Worker) ব্যবহার করুন — import level-এ নয়:
 
 ```bash
 npm install -D msw
@@ -318,7 +326,7 @@ it('handles Stripe payment failure', async () => {
 });
 ```
 
-## Testing Message Queue Consumers
+## Message Queue Consumer টেস্ট করা
 
 ```typescript
 // Test the consumer function directly — no need to run a real queue
@@ -352,7 +360,7 @@ it('publishes OrderShipped event after processing', async () => {
 });
 ```
 
-## Database Seeding Helpers
+## Database Seeding Helper
 
 ```typescript
 // src/test/factories.ts
@@ -389,4 +397,4 @@ export async function seedProduct(db: Pool, overrides: Partial<Product> = {}): P
 }
 ```
 
-Factories keep test setup readable and maintainable — when schema changes, fix the factory once.
+Factory test setup-কে পঠনযোগ্য আর maintainable রাখে — schema বদলালে, factory-টা একবার ঠিক করুন।

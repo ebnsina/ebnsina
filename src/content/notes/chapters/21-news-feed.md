@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Social Media News Feed'
-subtitle: 'Design and build a production news feed with fan-out, ranking, infinite scroll pagination, and real-time updates.'
+title: 'কেস স্টাডি: সোশ্যাল মিডিয়া নিউজ ফিড'
+subtitle: 'ফ্যান-আউট, র‍্যাঙ্কিং, ইনফিনিট স্ক্রল পেজিনেশন আর রিয়েল-টাইম আপডেট সহ একটি প্রোডাকশন নিউজ ফিড ডিজাইন ও তৈরি করুন।'
 chapter: 21
 level: 'advanced'
-readingTime: '32 min'
+readingTime: '32 মিনিট'
 topics: ['news feed', 'fan-out', 'ranking algorithm', 'pagination', 'real-time updates']
 ---
 
@@ -13,21 +13,29 @@ topics: ['news feed', 'fan-out', 'ranking algorithm', 'pagination', 'real-time u
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## The News Feed Problem
+## গল্পে বুঝি
 
-The news feed is one of the hardest problems in system design because it sits at the intersection of four challenges: **fan-out at scale** (when a celebrity with 50M followers posts, how do you update 50M feeds?), **ranking** (showing the most relevant content, not just the newest), **real-time updates** (new posts should appear without refreshing), and **infinite scroll pagination** (loading more content seamlessly as you scroll).
+ইবনে সিনা একজন ব্যক্তিগত সংবাদপত্রের সম্পাদক। তার কাজটা অদ্ভুত — প্রতিটা পাঠকের জন্য সে আলাদা একটা ফ্রন্ট পেজ বানায়, যেখানে শুধু সেই পাঠক যে লেখকদের ফলো করে, তাদেরই খবর থাকে। আল-খোয়ারিজমি যদি পাঁচজন সাধারণ কলাম-লেখককে ফলো করে, তাহলে ইবনে সিনা চালাকিটা এভাবে করে: ওই সাধারণ লেখকদের কেউ যেই মুহূর্তে নতুন কিছু লেখে, ইবনে সিনা সাথে সাথেই সেটা তাদের প্রতিটা follower-এর আগে থেকে সাজানো কাগজে বসিয়ে দেয়। ফলে আল-খোয়ারিজমি সকালে কাগজ খুললেই তার পার্সোনালাইজড পেজ পুরো তৈরি — কোনো অপেক্ষা নেই।
 
-Think of it like a personalized newspaper that rewrites itself every second.
+কিন্তু ঝামেলা বাধে ফাতিমা আল-ফিহরিকে নিয়ে। ফাতিমা আল-ফিহরি এমন একজন জনপ্রিয় কলামিস্ট যাকে লাখ লাখ মানুষ ফলো করে। সে একটা লেখা লিখলে ইবনে সিনাকে যদি লাখ লাখ কাগজে হাতে হাতে সেটা কপি করে বসাতে হয়, তাহলে সারাদিনেও কাজ শেষ হবে না। তাই ফাতিমা আল-ফিহরির মতো হট লেখকদের বেলায় ইবনে সিনা আগে থেকে কিছু বসায় না — বরং কোনো পাঠক যখন তার কাগজটা খোলে, ঠিক তখনই ইবনে সিনা দৌড়ে গিয়ে ফাতিমা আল-ফিহরির সাম্প্রতিক লেখা এনে সেই কাগজের সাধারণ খবরের সাথে জুড়ে দেয়। আর কোন খবরটা সবচেয়ে মজার বা প্রাসঙ্গিক, সেটা ইবনে সিনা কাগজের একদম উপরে বসায়, কম গুরুত্বেরগুলো নিচে।
+
+ইবনে সিনাই এখানে **feed service**, আর প্রতিটা পাঠকের আলাদা কাগজ হলো তার **personalized feed**। সাধারণ লেখকদের খবর লেখামাত্রই সব follower-এর কাগজে আগে বসিয়ে রাখাটাই **fan-out on write**, আর ফাতিমা আল-ফিহরির মতো celebrity/hot লেখকদের খবর পাঠক কাগজ খোলার মুহূর্তে এনে জোড়া দেওয়াটাই **fan-out on read** — এভাবেই সেই "একটা পোস্ট বনাম লাখ লাখ কপি" সমস্যা এড়ানো হয়। আর সবচেয়ে আকর্ষণীয় খবর উপরে বসানোটাই **ranking**। বাস্তবে Twitter/X আর Instagram ঠিক এই হাইব্রিড কৌশলেই কোটি কোটি মানুষের feed সামলায়।
+
+## নিউজ ফিড সমস্যা
+
+নিউজ ফিড হলো সিস্টেম ডিজাইনের সবচেয়ে কঠিন সমস্যাগুলোর একটা, কারণ এটা চারটা চ্যালেঞ্জের সংযোগস্থলে বসে থাকে: **স্কেলে ফ্যান-আউট** (৫০M ফলোয়ার আছে এমন একজন সেলিব্রিটি যখন পোস্ট করে, তখন তুমি কীভাবে ৫০M ফিড আপডেট করবে?), **র‍্যাঙ্কিং** (শুধু নতুন কনটেন্ট নয়, সবচেয়ে প্রাসঙ্গিক কনটেন্ট দেখানো), **রিয়েল-টাইম আপডেট** (রিফ্রেশ না করেই নতুন পোস্ট দেখানো উচিত), আর **ইনফিনিট স্ক্রল পেজিনেশন** (স্ক্রল করার সাথে সাথে আরও কনটেন্ট নিরবচ্ছিন্নভাবে লোড হওয়া)।
+
+এটাকে ভাবো একটা পার্সোনালাইজড সংবাদপত্র হিসেবে, যেটা প্রতি সেকেন্ডে নিজেকে নতুন করে লেখে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a personalized newspaper — each reader gets a different front page based on their interests. The printing press must produce millions of unique editions simultaneously.
+একটা পার্সোনালাইজড সংবাদপত্রের মতো — প্রতিটা পাঠক তার আগ্রহ অনুযায়ী আলাদা ফ্রন্ট পেজ পায়। প্রিন্টিং প্রেসকে একসাথে লক্ষ লক্ষ ইউনিক সংস্করণ তৈরি করতে হয়।
 
 </Callout>
 
-Each reader gets a different front page based on who they follow, what they engage with, and what's trending. The printing press (fan-out service) must produce millions of unique editions simultaneously. And unlike a real newspaper, readers expect new stories to appear the moment they're published.
+প্রতিটা পাঠক আলাদা ফ্রন্ট পেজ পায় — সে কাকে ফলো করে, কীসের সাথে এনগেজ করে, আর কী ট্রেন্ডিং তার ওপর ভিত্তি করে। প্রিন্টিং প্রেস (ফ্যান-আউট সার্ভিস) কে একসাথে লক্ষ লক্ষ ইউনিক সংস্করণ তৈরি করতে হয়। আর সত্যিকারের সংবাদপত্রের বিপরীতে, পাঠকরা আশা করে নতুন খবর প্রকাশ হওয়ার মুহূর্তেই সেটা দেখা যাবে।
 
 <Mermaid
 title="News Feed Architecture"
@@ -36,34 +44,34 @@ code={`graph TD
   S --> R["Ranking Engine<br/>Score & Sort"] --> G["Social Graph<br/>Followers"] --> U["Real-time Updates<br/>New Posts"]`}
 />
 
-## Requirements
+## রিকোয়ারমেন্ট
 
-- **Functional**: Create posts, follow/unfollow users, generate personalized feed, infinite scroll with cursor-based pagination, real-time "new posts" counter
-- **Non-functional**: Feed generation under 200ms, support users with 10M+ followers (celebrities), eventual consistency acceptable for feeds
-- **Scale**: 500M daily active users, 10K new posts/sec, 100K feed reads/sec
+- **ফাংশনাল**: পোস্ট তৈরি, ইউজার ফলো/আনফলো, পার্সোনালাইজড ফিড জেনারেট, কার্সর-বেসড পেজিনেশন সহ ইনফিনিট স্ক্রল, রিয়েল-টাইম "নতুন পোস্ট" কাউন্টার
+- **নন-ফাংশনাল**: ২০০ms এর নিচে ফিড জেনারেশন, ১০M+ ফলোয়ার আছে এমন ইউজার (সেলিব্রিটি) সাপোর্ট, ফিডের জন্য eventual consistency গ্রহণযোগ্য
+- **স্কেল**: ৫০০M ডেইলি অ্যাক্টিভ ইউজার, ১০K নতুন পোস্ট/সেকেন্ড, ১০০K ফিড রিড/সেকেন্ড
 
-## Fan-Out Strategies Deep Dive
+## ফ্যান-আউট স্ট্র্যাটেজি গভীরভাবে
 
-The fundamental question in news feed design is: **when does a post reach a user's feed?**
+নিউজ ফিড ডিজাইনের মৌলিক প্রশ্ন হলো: **একটা পোস্ট কখন একজন ইউজারের ফিডে পৌঁছায়?**
 
-**Fan-Out on Write (Push Model):** When a user creates a post, immediately write it to every follower's feed. This is fast for readers (feed is pre-computed) but expensive for writers. If a user has 10K followers, one post triggers 10K writes. Works well for users with fewer than ~10K followers.
+**ফ্যান-আউট অন রাইট (পুশ মডেল):** একজন ইউজার যখন পোস্ট তৈরি করে, তখনই সেটা প্রতিটা ফলোয়ারের ফিডে লিখে ফেলা হয়। এটা পাঠকদের জন্য দ্রুত (ফিড আগে থেকেই কম্পিউট করা) কিন্তু লেখকদের জন্য ব্যয়বহুল। একজন ইউজারের যদি ১০K ফলোয়ার থাকে, তাহলে একটা পোস্ট ১০K রাইট ট্রিগার করে। ~১০K এর কম ফলোয়ার আছে এমন ইউজারের জন্য এটা ভালো কাজ করে।
 
-**Fan-Out on Read (Pull Model):** When a user opens their feed, fetch recent posts from all users they follow and merge them. This avoids the write amplification problem but makes reads expensive. Every feed load requires querying N users' post lists and merging them. Works well for celebrity accounts.
+**ফ্যান-আউট অন রিড (পুল মডেল):** একজন ইউজার যখন তার ফিড খোলে, তখন সে যাদের ফলো করে তাদের সবার সাম্প্রতিক পোস্ট এনে merge করা হয়। এটা রাইট অ্যামপ্লিফিকেশন সমস্যা এড়ায় কিন্তু রিডকে ব্যয়বহুল করে তোলে। প্রতিটা ফিড লোডের জন্য N জন ইউজারের পোস্ট লিস্ট কোয়েরি করে merge করতে হয়। সেলিব্রিটি অ্যাকাউন্টের জন্য এটা ভালো কাজ করে।
 
-**Hybrid Approach (Industry Standard):** Use fan-out on write for normal users (fast reads, manageable writes) and fan-out on read for celebrities (avoids write storms). When you open your feed, the pre-computed feed from normal users is merged with on-the-fly fetched celebrity posts. This is what Twitter/X actually does.
+**হাইব্রিড অ্যাপ্রোচ (ইন্ডাস্ট্রি স্ট্যান্ডার্ড):** সাধারণ ইউজারদের জন্য ফ্যান-আউট অন রাইট ব্যবহার করো (দ্রুত রিড, সামলানোর মতো রাইট) আর সেলিব্রিটিদের জন্য ফ্যান-আউট অন রিড (রাইট স্টর্ম এড়ায়)। তুমি যখন তোমার ফিড খোলো, তখন সাধারণ ইউজারদের আগে থেকে কম্পিউট করা ফিডের সাথে সাথে-সাথে ফেচ করা সেলিব্রিটি পোস্ট merge করা হয়। Twitter/X আসলে এটাই করে।
 
-## Step-by-Step: How a Post Reaches Your Feed
+## ধাপে ধাপে: একটা পোস্ট কীভাবে তোমার ফিডে পৌঁছায়
 
-1. **User creates a post** — Post is stored in the post store
-2. **Check follower count** — If the author has fewer than 10K followers, use fan-out on write. Otherwise, mark as celebrity post.
-3. **Fan-out on write** — For normal users, the fan-out service writes the post ID to each follower's feed (a sorted set keyed by timestamp)
-4. **Feed read request** — When a user opens their feed, fetch their pre-computed feed entries
-5. **Merge celebrity posts** — Fetch recent posts from any celebrities the user follows and merge them into the feed
-6. **Rank** — Score each post based on recency, engagement (likes/comments), and author affinity
-7. **Paginate** — Return the top N posts with a cursor for the next page
-8. **Real-time counter** — Track how many new posts have arrived since the user last loaded their feed
+1. **ইউজার একটা পোস্ট তৈরি করে** — পোস্ট পোস্ট স্টোরে জমা হয়
+2. **ফলোয়ার সংখ্যা চেক করো** — লেখকের যদি ১০K এর কম ফলোয়ার থাকে, ফ্যান-আউট অন রাইট ব্যবহার করো। নাহলে সেলিব্রিটি পোস্ট হিসেবে মার্ক করো।
+3. **ফ্যান-আউট অন রাইট** — সাধারণ ইউজারদের জন্য ফ্যান-আউট সার্ভিস প্রতিটা ফলোয়ারের ফিডে পোস্ট ID লেখে (টাইমস্ট্যাম্প দিয়ে কি করা একটা sorted set)
+4. **ফিড রিড রিকোয়েস্ট** — একজন ইউজার যখন তার ফিড খোলে, তখন তার আগে থেকে কম্পিউট করা ফিড এন্ট্রিগুলো ফেচ করা হয়
+5. **সেলিব্রিটি পোস্ট merge করো** — ইউজার যে সেলিব্রিটিদের ফলো করে তাদের সাম্প্রতিক পোস্ট ফেচ করে ফিডে merge করো
+6. **র‍্যাঙ্ক করো** — recency, engagement (লাইক/কমেন্ট), আর author affinity এর ভিত্তিতে প্রতিটা পোস্টকে স্কোর দাও
+7. **পেজিনেট করো** — পরের পেজের জন্য একটা কার্সর সহ টপ N পোস্ট রিটার্ন করো
+8. **রিয়েল-টাইম কাউন্টার** — ইউজার সর্বশেষ ফিড লোড করার পর থেকে কতগুলো নতুন পোস্ট এসেছে তা ট্র্যাক করো
 
-## Building the News Feed System
+## নিউজ ফিড সিস্টেম তৈরি করা
 
 <CodeTabs tsFile="news-feed.ts" goFile="news-feed.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -804,45 +812,45 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন ডিসিশন ব্যাখ্যা
 
-### Why Hybrid Fan-Out?
+### হাইব্রিড ফ্যান-আউট কেন?
 
-Pure fan-out on write breaks when a celebrity with 50M followers posts — that's 50M writes for a single post, taking minutes and overwhelming the write pipeline. Pure fan-out on read makes every feed load slow because you're querying hundreds of users' post lists. The hybrid approach gets the best of both: fast reads for 99% of posts (pre-computed feeds from normal users) with on-demand fetching only for the celebrity posts that would cause write storms.
+খাঁটি ফ্যান-আউট অন রাইট ভেঙে পড়ে যখন ৫০M ফলোয়ার আছে এমন একজন সেলিব্রিটি পোস্ট করে — সেটা একটা পোস্টের জন্য ৫০M রাইট, যাতে কয়েক মিনিট লাগে আর রাইট পাইপলাইন ধসে পড়ে। খাঁটি ফ্যান-আউট অন রিড প্রতিটা ফিড লোডকে ধীর করে দেয় কারণ তুমি শত শত ইউজারের পোস্ট লিস্ট কোয়েরি করছ। হাইব্রিড অ্যাপ্রোচ দুই দিকের সেরাটা দেয়: ৯৯% পোস্টের জন্য দ্রুত রিড (সাধারণ ইউজারদের আগে থেকে কম্পিউট করা ফিড) আর শুধু সেই সেলিব্রিটি পোস্টগুলোর জন্য চাহিদামতো ফেচ করা যেগুলো রাইট স্টর্ম ঘটাত।
 
-### Why Cursor-Based Pagination Instead of Offset?
+### অফসেটের বদলে কার্সর-বেসড পেজিনেশন কেন?
 
-With offset pagination (`LIMIT 20 OFFSET 40`), if 5 new posts are inserted while the user scrolls, page 3 will show duplicates of posts from page 2. Cursor-based pagination (`WHERE id &lt; cursor LIMIT 20`) is stable — it always picks up exactly where you left off, regardless of new insertions. This is critical for infinite scroll where users spend minutes scrolling through feeds.
+অফসেট পেজিনেশনে (`LIMIT 20 OFFSET 40`), ইউজার স্ক্রল করার সময় যদি ৫টা নতুন পোস্ট যোগ হয়, তাহলে পেজ ৩ এ পেজ ২ এর পোস্টগুলোর ডুপ্লিকেট দেখাবে। কার্সর-বেসড পেজিনেশন (`WHERE id &lt; cursor LIMIT 20`) স্থিতিশীল — নতুন কিছু যোগ হলেও সেটা সবসময় ঠিক যেখানে থেমেছিলে সেখান থেকেই তুলে নেয়। ইনফিনিট স্ক্রলের জন্য এটা গুরুত্বপূর্ণ, যেখানে ইউজাররা মিনিটের পর মিনিট ফিড স্ক্রল করে কাটায়।
 
-### Why Rank Instead of Pure Chronological?
+### খাঁটি ক্রনোলজিক্যালের বদলে র‍্যাঙ্ক কেন?
 
-A chronological feed shows you whatever was posted most recently, even if it's irrelevant. Ranking transforms a reverse-chronological list into a personalized experience. Even a simple formula (recency + engagement + affinity) dramatically improves engagement because users see high-quality content first. Instagram's switch from chronological to ranked feeds in 2016 increased engagement significantly because users were missing 70% of posts in chronological order.
+ক্রনোলজিক্যাল ফিড তোমাকে সবচেয়ে সাম্প্রতিক যা পোস্ট হয়েছে তা-ই দেখায়, সেটা অপ্রাসঙ্গিক হলেও। র‍্যাঙ্কিং একটা রিভার্স-ক্রনোলজিক্যাল লিস্টকে পার্সোনালাইজড অভিজ্ঞতায় রূপান্তরিত করে। এমনকি একটা সাধারণ ফর্মুলা (recency + engagement + affinity) নাটকীয়ভাবে এনগেজমেন্ট বাড়ায় কারণ ইউজাররা প্রথমেই উঁচু মানের কনটেন্ট দেখে। Instagram এর ২০১৬ সালে ক্রনোলজিক্যাল থেকে র‍্যাঙ্কড ফিডে সরে যাওয়া এনগেজমেন্ট উল্লেখযোগ্যভাবে বাড়িয়েছিল, কারণ ক্রনোলজিক্যাল অর্ডারে ইউজাররা ৭০% পোস্ট মিস করছিল।
 
-### Why Eventual Consistency for Feeds?
+### ফিডের জন্য eventual consistency কেন?
 
-When a user posts, their followers don't need to see it in their feed instantly. A delay of 1-2 seconds is perfectly acceptable. This relaxation lets us use async fan-out (message queues) instead of synchronous writes, which is the only way to handle posts from users with millions of followers without blocking the post creation API.
+একজন ইউজার যখন পোস্ট করে, তার ফলোয়ারদের সেটা তাদের ফিডে সাথে সাথে দেখার দরকার নেই। ১-২ সেকেন্ড দেরি পুরোপুরি গ্রহণযোগ্য। এই শিথিলতা আমাদের সিঙ্ক্রোনাস রাইটের বদলে async ফ্যান-আউট (message queue) ব্যবহার করতে দেয়, যা লক্ষ লক্ষ ফলোয়ার আছে এমন ইউজারদের পোস্ট পোস্ট-তৈরির API ব্লক না করে সামলানোর একমাত্র উপায়।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Hybrid fan-out (push for normal users, pull for celebrities) is the industry standard approach
-- Cursor-based pagination prevents duplicate/missing posts during infinite scroll, unlike offset pagination
-- Ranking transforms a reverse-chronological list into a personalized experience — even a simple score formula dramatically improves engagement
-- Celebrity posts should be fetched on-read to avoid fan-out storms (one post to 50M followers = 50M writes)
-- Pre-computed feeds trade storage for speed — reading a feed is just reading a sorted list
-- Real-time "new posts" counters create engagement without forcefully refreshing the feed
+- হাইব্রিড ফ্যান-আউট (সাধারণ ইউজারদের জন্য পুশ, সেলিব্রিটিদের জন্য পুল) হলো ইন্ডাস্ট্রি স্ট্যান্ডার্ড অ্যাপ্রোচ
+- কার্সর-বেসড পেজিনেশন ইনফিনিট স্ক্রলের সময় ডুপ্লিকেট/মিসিং পোস্ট রোধ করে, অফসেট পেজিনেশনের বিপরীতে
+- র‍্যাঙ্কিং একটা রিভার্স-ক্রনোলজিক্যাল লিস্টকে পার্সোনালাইজড অভিজ্ঞতায় রূপান্তরিত করে — এমনকি একটা সাধারণ স্কোর ফর্মুলাও নাটকীয়ভাবে এনগেজমেন্ট বাড়ায়
+- সেলিব্রিটি পোস্ট ফ্যান-আউট স্টর্ম এড়াতে অন-রিড ফেচ করা উচিত (৫০M ফলোয়ারের কাছে একটা পোস্ট = ৫০M রাইট)
+- আগে থেকে কম্পিউট করা ফিড স্টোরেজের বিনিময়ে গতি দেয় — একটা ফিড পড়া মানে শুধু একটা sorted লিস্ট পড়া
+- রিয়েল-টাইম "নতুন পোস্ট" কাউন্টার জোর করে ফিড রিফ্রেশ না করেই এনগেজমেন্ট তৈরি করে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জগতে ব্যবহার
 
-- **Twitter/X** uses hybrid fan-out: push for users with fewer than 10K followers, pull for celebrities — timeline is served from Redis
-- **Facebook** ranks ~2000 candidate posts per feed load using a multi-stage ML pipeline
-- **Instagram** switched from chronological to ranked feeds in 2016 and saw a significant increase in engagement
-- **LinkedIn** uses a two-pass ranking system: first pass retrieves candidates, second pass applies personalized scoring
-- This architecture serves personalized feeds in under 200ms for 500M+ daily active users
+- **Twitter/X** হাইব্রিড ফ্যান-আউট ব্যবহার করে: ১০K এর কম ফলোয়ার আছে এমন ইউজারদের জন্য পুশ, সেলিব্রিটিদের জন্য পুল — টাইমলাইন Redis থেকে সার্ভ করা হয়
+- **Facebook** একটা মাল্টি-স্টেজ ML পাইপলাইন ব্যবহার করে প্রতি ফিড লোডে ~২০০০ ক্যান্ডিডেট পোস্ট র‍্যাঙ্ক করে
+- **Instagram** ২০১৬ সালে ক্রনোলজিক্যাল থেকে র‍্যাঙ্কড ফিডে সরে গিয়েছিল আর এনগেজমেন্টে উল্লেখযোগ্য বৃদ্ধি দেখেছিল
+- **LinkedIn** একটা টু-পাস র‍্যাঙ্কিং সিস্টেম ব্যবহার করে: প্রথম পাস ক্যান্ডিডেট আনে, দ্বিতীয় পাস পার্সোনালাইজড স্কোরিং প্রয়োগ করে
+- এই আর্কিটেকচার ৫০০M+ ডেইলি অ্যাক্টিভ ইউজারের জন্য ২০০ms এর নিচে পার্সোনালাইজড ফিড সার্ভ করে
 
 </div>

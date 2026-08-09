@@ -1,9 +1,9 @@
 ---
-title: 'Types, Variables & Control Flow'
-subtitle: "Go's type system is simple but strict — learn the building blocks before you build anything real."
+title: 'Types, Variables ও Control Flow'
+subtitle: 'Go-র type system সরল কিন্তু কড়া — বাস্তব কিছু বানানোর আগে বিল্ডিং ব্লকগুলো শিখে নিন।'
 chapter: 2
 level: 'beginner'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['types', 'variables', 'constants', 'if/else', 'loops', 'switch']
 ---
 
@@ -11,19 +11,27 @@ topics: ['types', 'variables', 'constants', 'if/else', 'loops', 'switch']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Go's Type Philosophy
+## গল্পে বুঝি
 
-Go is **statically typed** — every variable has a type known at compile time. But unlike Java or C++, Go keeps its type system deliberately small. No generics chaos (until Go 1.18), no type hierarchies, no operator overloading.
+ফাতিমা আল-ফিহরির রান্নাঘরে তাকের উপর সারি সারি কাচের বয়াম, প্রতিটার গায়ে স্পষ্ট লেবেল সাঁটা — একটায় লেখা "চিনি", পাশেরটায় "লবণ", তারপর "হলুদ", "মরিচ"। চিনির বয়ামে শুধু চিনিই থাকে, আর কিছু না। একদিন ইবনে সিনা রান্নায় হাত লাগাতে এসে ভুল করে লবণের চামচ চিনির বয়ামে ঢালতে গেল, ফাতিমা আল-ফিহরি সাথে সাথে হাত ধরে ফেলল — "এই বয়াম চিনির, এতে লবণ ঢোকানো যাবে না।" প্রতিটা বয়াম আগেই ঠিক করা কোন জিনিসের জন্য, আর সেটা বদলায় না।
+
+রান্নার সময় ফাতিমা আল-ফিহরি রেসিপি ধরে ধরে এগোয়। "ঝোল যদি বেশি পাতলা হয়, আরেকটু জ্বাল দাও" — এটা একটা শর্ত। "যতক্ষণ না পেঁয়াজ সোনালি হয়, নাড়তে থাকো" — এটা একটা পুনরাবৃত্তি। আবার আজ কী রান্না হবে সেটার উপর নির্ভর করে ধাপ বদলায়: মাংস হলে এক পথ, মাছ হলে আরেক পথ, ডাল হলে অন্য পথ — যেটা মেলে সেই ধাপেই সে ঢোকে।
+
+এই গল্পটাই আসলে Go-র বিল্ডিং ব্লক। লেবেল সাঁটা বয়াম হলো **static typing** — প্রতিটা variable আগেই ঠিক করা একটা type-এর মান ধরে রাখে (চিনির বয়াম মানে `string`, লবণের বয়াম মানে `int`), আর ভুল type ঢোকাতে গেলে compiler ফাতিমা আল-ফিহরির মতোই হাত ধরে ফেলে। বয়ামগুলো নিজেই হলো **variable**, আর রেসিপির শর্ত-পুনরাবৃত্তি-বাছাই হলো **control flow** — `if` দিয়ে শর্ত, `for` দিয়ে লুপ, `switch` দিয়ে অনেক পথের মধ্যে একটা বাছাই। বাস্তবেও ঠিক এ কারণেই Go-তে ভুল type-এর অনেক bug কোড চালানোর আগেই compile time-এ ধরা পড়ে, প্রোডাকশনে গিয়ে ক্র্যাশ করে না।
+
+## Go-র Type Philosophy
+
+Go **statically typed** — প্রতিটা variable-এর type compile time-এই জানা থাকে। কিন্তু Java বা C++-এর সাথে অমিল হলো, Go তার type system-কে ইচ্ছে করেই ছোট রাখে। কোনো generics-এর হুলুস্থুল নেই (Go 1.18 পর্যন্ত), কোনো type hierarchy নেই, কোনো operator overloading নেই।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Go's type system is like a well-organized toolbox. Every drawer is labeled. You can't put a wrench in the screwdriver slot. It's restrictive, but you never waste time searching — you always know exactly what you're working with.
+Go-র type system অনেকটা একটা গোছানো টুলবক্সের মতো। প্রতিটা ড্রয়ারে লেবেল লাগানো। screwdriver-এর জায়গায় আপনি একটা wrench রাখতে পারবেন না। এটা কড়া, কিন্তু আপনি কখনো খুঁজতে সময় নষ্ট করেন না — আপনি সবসময় ঠিক জানেন কী নিয়ে কাজ করছেন।
 
 </Callout>
 
-## Basic Types
+## বেসিক Types
 
 ```go
 package main
@@ -54,9 +62,9 @@ func main() {
 }
 ```
 
-### Zero Values: Go's Default Initialization
+### Zero Values: Go-র ডিফল্ট Initialization
 
-In Go, every variable is initialized to its **zero value** if you don't assign one. No `null`, no `undefined`, no garbage memory.
+Go-তে, আপনি কোনো মান না দিলে প্রতিটা variable তার **zero value**-তে initialize হয়। কোনো `null` নেই, কোনো `undefined` নেই, কোনো এলোমেলো memory নেই।
 
 ```go
 var count int      // 0
@@ -68,15 +76,15 @@ var data []byte    // nil (slices, maps, pointers, channels)
 
 <Callout type="tip">
 
-**Why zero values matter in production:**
+**Production-এ zero value কেন গুরুত্বপূর্ণ:**
 
-Zero values eliminate an entire class of bugs. A `string` is always safe to use — it's `""`, not `null`. An `int` is always `0`, not random memory. Many Go types are designed so their zero value is useful: `sync.Mutex{}` is an unlocked mutex, `bytes.Buffer{}` is an empty buffer ready to write.
+Zero value একটা পুরো শ্রেণির bug মুছে দেয়। একটা `string` সবসময় ব্যবহার করা নিরাপদ — এটা `""`, `null` নয়। একটা `int` সবসময় `0`, এলোমেলো memory নয়। অনেক Go type এমনভাবে ডিজাইন করা যেন তাদের zero value কাজে লাগে: `sync.Mutex{}` একটা unlocked mutex, `bytes.Buffer{}` লেখার জন্য প্রস্তুত একটা খালি buffer।
 
 </Callout>
 
-## Declaring Variables
+## Variable ঘোষণা করা
 
-Go gives you multiple ways to declare variables, each with a purpose:
+Go আপনাকে variable ঘোষণার একাধিক উপায় দেয়, প্রতিটার নিজস্ব উদ্দেশ্য আছে:
 
 ```go
 // 1. Full declaration (rarely used — verbose)
@@ -102,13 +110,13 @@ var (
 
 <Callout type="warning">
 
-**`:=` only works inside functions.** At the package level, you must use `var`. This is intentional — package-level variables should be obvious and explicit.
+**`:=` শুধু ফাংশনের ভেতরে কাজ করে।** package level-এ আপনাকে `var` ব্যবহার করতেই হবে। এটা ইচ্ছাকৃত — package-level variable স্পষ্ট আর explicit হওয়া উচিত।
 
 </Callout>
 
 ## Constants
 
-Constants are computed at compile time and never change:
+Constant compile time-এ হিসাব করা হয় আর কখনো বদলায় না:
 
 ```go
 const maxConnections = 100
@@ -143,15 +151,15 @@ userPerms := Read | Write  // 3 (binary: 011)
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-`iota` is like numbered tickets at a bakery. The first customer gets 0, the next gets 1, and so on. But with bit shifting, each ticket represents a different power of 2 — like having separate on/off switches that can be combined.
+`iota` অনেকটা বেকারিতে নম্বর দেওয়া টিকিটের মতো। প্রথম কাস্টমার পায় 0, পরেরজন পায় 1, এভাবে চলতে থাকে। কিন্তু bit shifting দিয়ে, প্রতিটা টিকিট 2-এর আলাদা একটা power প্রকাশ করে — অনেকটা আলাদা আলাদা on/off সুইচের মতো যেগুলো একসাথে মেলানো যায়।
 
 </Callout>
 
 ## Type Conversions
 
-Go has **no implicit type conversions**. You must be explicit:
+Go-তে **কোনো implicit type conversion নেই**। আপনাকে explicit হতে হবে:
 
 ```go
 var i int = 42
@@ -191,13 +199,13 @@ if err := doSomething(); err != nil {
 
 <Callout type="tip">
 
-**The `if err != nil` pattern** is Go's most common idiom. You'll see it hundreds of times in any Go codebase. The initialization form (`if err := ...; err != nil`) keeps the error variable scoped to where it's handled, preventing accidental reuse.
+**`if err != nil` প্যাটার্ন** হলো Go-র সবচেয়ে সাধারণ idiom। যেকোনো Go কোডবেসে আপনি এটা শত শতবার দেখবেন। Initialization ফর্মটা (`if err := ...; err != nil`) error variable-কে যেখানে হ্যান্ডল করা হচ্ছে সেখানেই scope-এ রাখে, ভুলে আবার ব্যবহার করা ঠেকায়।
 
 </Callout>
 
-## For Loops (The Only Loop)
+## For Loop (একমাত্র Loop)
 
-Go has **one** loop keyword: `for`. It replaces `while`, `do-while`, and `for` from other languages.
+Go-তে **একটাই** loop keyword: `for`। এটা অন্য ভাষার `while`, `do-while`, আর `for`-এর কাজ করে।
 
 ```go
 // Classic for loop
@@ -244,7 +252,7 @@ for i, ch := range "Hello 🌍" {
 
 ## Switch
 
-Go's `switch` is cleaner than most languages — no `break` needed, and it can match expressions:
+Go-র `switch` বেশিরভাগ ভাষার চেয়ে পরিষ্কার — কোনো `break` লাগে না, আর এটা expression-ও match করতে পারে:
 
 ```go
 // Basic switch (no break needed — Go doesn't fall through by default)
@@ -286,15 +294,15 @@ default:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Go's switch without a condition is like a bouncer checking a list of rules from top to bottom: "Are you on the VIP list? No. Are you over 21? No. Do you have a ticket? Yes — come in." The first matching rule wins.
+কন্ডিশন ছাড়া Go-র switch অনেকটা একজন bouncer-এর মতো, যে উপর থেকে নিচে নিয়মের একটা লিস্ট চেক করে: "আপনি কি VIP লিস্টে আছেন? না। আপনার বয়স কি 21-এর বেশি? না। আপনার কি টিকিট আছে? হ্যাঁ — ভেতরে আসুন।" প্রথম যেটা মেলে সেটাই জেতে।
 
 </Callout>
 
-## Slices: Go's Dynamic Arrays
+## Slices: Go-র Dynamic Array
 
-Arrays in Go have a fixed size. In practice, you almost always use **slices** — dynamic, flexible views over arrays.
+Go-তে array-র সাইজ fixed। বাস্তবে আপনি প্রায় সবসময়ই **slice** ব্যবহার করেন — dynamic, flexible, array-র উপর একটা view।
 
 ```go
 // Creating slices
@@ -314,7 +322,7 @@ fmt.Println(len(nums))  // 7 (current elements)
 fmt.Println(cap(nums))  // depends on growth strategy
 ```
 
-## Maps: Key-Value Storage
+## Maps: Key-Value স্টোরেজ
 
 ```go
 // Creating maps
@@ -349,16 +357,16 @@ for name, age := range ages {
 
 <Callout type="warning">
 
-**Maps are not safe for concurrent use.** If multiple goroutines read and write to the same map, your program will crash with a fatal error. Use `sync.Map` or protect with a `sync.RWMutex` in concurrent code.
+**Map concurrent ব্যবহারের জন্য নিরাপদ নয়।** একাধিক goroutine যদি একই map-এ read আর write করে, আপনার প্রোগ্রাম একটা fatal error দিয়ে ক্র্যাশ করবে। Concurrent কোডে `sync.Map` ব্যবহার করুন অথবা একটা `sync.RWMutex` দিয়ে protect করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Zero values eliminate null bugs** — every type has a safe default (`0`, `""`, `false`, `nil`)
-2. **`:=` for short declarations** inside functions, `var` for package level
-3. **`for` is the only loop** — it covers classic, while, infinite, and range iteration
-4. **Switch doesn't fall through** by default — no `break` needed, multiple values per case
-5. **Slices over arrays** — use `make` for pre-allocation, `append` for growing
-6. **Maps need the comma-ok idiom** — `v, ok := m[key]` to distinguish "not found" from "zero value"
-7. **No implicit type conversions** — `float64(myInt)` is required, Go won't guess for you
+1. **Zero value null bug মুছে দেয়** — প্রতিটা type-এর একটা নিরাপদ ডিফল্ট আছে (`0`, `""`, `false`, `nil`)
+2. **short declaration-এ `:=`** ফাংশনের ভেতরে, package level-এ `var`
+3. **`for`-ই একমাত্র loop** — এটা classic, while, infinite, আর range iteration সবই কভার করে
+4. **Switch ডিফল্টভাবে fall through করে না** — কোনো `break` লাগে না, প্রতি case-এ একাধিক value
+5. **Array-র চেয়ে slice** — pre-allocation-এর জন্য `make`, বড় করার জন্য `append`
+6. **Map-এ comma-ok idiom লাগে** — "not found" আর "zero value"-এর ফারাক বোঝাতে `v, ok := m[key]`
+7. **কোনো implicit type conversion নেই** — `float64(myInt)` লাগবেই, Go আপনার হয়ে অনুমান করবে না

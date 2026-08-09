@@ -1,9 +1,9 @@
 ---
 title: 'Scanning & Enumeration'
-subtitle: 'Nmap mastery, service fingerprinting, banner grabbing, and enumerating SMB, FTP, SNMP, and web directories.'
+subtitle: 'Nmap দক্ষতা, service fingerprinting, banner grabbing, এবং SMB, FTP, SNMP ও web directory enumerate করা।'
 chapter: 4
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['nmap', 'scanning', 'enumeration', 'SMB', 'FTP', 'SNMP', 'banner grabbing', 'gobuster']
 ---
 
@@ -13,15 +13,23 @@ topics: ['nmap', 'scanning', 'enumeration', 'SMB', 'FTP', 'SNMP', 'banner grabbi
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Before breaking into a building, you walk the perimeter: which doors exist, which are locked, what kind of locks, are there cameras, is there a guard schedule. Scanning is the digital equivalent — methodical perimeter assessment before you attempt entry.
+কোনো বিল্ডিংয়ে ঢোকার আগে আপনি চারপাশ ঘুরে দেখেন: কোন দরজাগুলো আছে, কোনগুলো তালাবদ্ধ, কী ধরনের তালা, ক্যামেরা আছে কিনা, গার্ডের শিডিউল কেমন। Scanning হলো এর ডিজিটাল সমতুল্য — প্রবেশের চেষ্টা করার আগে পদ্ধতিগত পেরিমিটার মূল্যায়ন।
 
 </Callout>
 
-## Nmap — The Scanning Standard
+## গল্পে বুঝি
 
-Nmap is the most important tool in a pentester's kit. Learn it deeply.
+ফাতিমা আল-ফিহরি একটা বড় পুরনো ভবনের অনুমোদিত বিল্ডিং ইনস্পেক্টর। মালিক তাকে ডেকেছেন — ভবনটা কতটা খোলামেলা, কোথা দিয়ে কেউ ঢুকে পড়তে পারে, সেটা বের করতে। ফাতিমা প্রথমে পুরো পেরিমিটার ঘুরে হাঁটেন, একটা কাগজে প্রতিটা দরজা আর জানালার ম্যাপ আঁকেন, আর প্রতিটার পাশে টুকে রাখেন — এটা খোলা, ওটা বন্ধ, পেছনের এই জানালাটা আলগা। শুধু কোনটা খোলা আর কোনটা বন্ধ, এইটুকুই তার প্রথম কাজ।
+
+তারপর প্রতিটা খোলা দরজা-জানালার সামনে দাঁড়িয়ে ইবনে সিনা, তার সহকারী, খুঁটিয়ে দেখেন — এই দরজায় কী ধরনের তালা, পুরনো নাকি নতুন মডেল, ভেতরে কী ঘর, কে ব্যবহার করে, ছাদের চাবি কার কাছে। সব মিলিয়ে তারা একটা পূর্ণ ইনভেন্টরি বানান — কোন কোন ফাঁক খোলা আছে আর প্রতিটার পেছনে ঠিক কী আছে। এই তালিকা হাতে পেয়ে মালিক এবার সিদ্ধান্ত নিতে পারেন কোন দরজাগুলো আসলে খোলা থাকার দরকার নেই, কোনগুলো বন্ধ করে দেবেন।
+
+এই গল্পটাই আসলে **scanning** আর **enumeration**। কোন দরজা-জানালা খোলা সেটা ম্যাপ করা মানে টার্গেটের কোন **port**/**service** খোলা তা বের করা — এটাই scanning। এরপর প্রতিটা খোলা জায়গার তালার ধরন, ভেতরে কী, কে ব্যবহার করে — এসব বিস্তারিত টুকে রাখা মানে প্রতিটা service-এর version, ব্যবহারকারী, share ইত্যাদি **enumerate** করা। আর পুরো খোলা ফাঁকের ইনভেন্টরিটাই হলো **attack surface**-এর ম্যাপ। বাস্তবে ঠিক এভাবেই একজন authorised pentester Nmap দিয়ে খোলা port খুঁজে বের করেন, তারপর service fingerprint করে বিস্তারিত জোগাড় করেন — যেন প্রতিষ্ঠান জানতে পারে ঠিক কোন কোন জায়গা বন্ধ করে attack surface ছোট করা দরকার।
+
+## Nmap — Scanning স্ট্যান্ডার্ড
+
+Nmap একজন pentester-এর টুলকিটে সবচেয়ে গুরুত্বপূর্ণ টুল। এটি গভীরভাবে শিখুন।
 
 ### Scan Types
 
@@ -61,7 +69,7 @@ nmap -p 22,80,443,445,3306 192.168.1.100
 nmap -p 1-1024 192.168.1.100
 ```
 
-### Speed and Timing
+### Speed ও Timing
 
 ```bash
 # Timing templates: -T0 (paranoid) to -T5 (insane)
@@ -79,7 +87,7 @@ nmap -iL targets.txt              # scan list of hosts
 
 ### Nmap Scripting Engine (NSE)
 
-NSE is what separates Nmap from a basic port scanner. Scripts automate specific checks per service.
+NSE-ই Nmap-কে একটি সাধারণ port scanner থেকে আলাদা করে। Script গুলো প্রতিটি service-এর জন্য নির্দিষ্ট check অটোমেট করে।
 
 ```bash
 # Default scripts
@@ -99,7 +107,7 @@ ls /usr/share/nmap/scripts/ | grep smb
 ls /usr/share/nmap/scripts/ | grep http
 ```
 
-### Full Pentest Scan Workflow
+### সম্পূর্ণ Pentest Scan Workflow
 
 ```bash
 # Phase 1: Quick discovery
@@ -140,7 +148,7 @@ ftp> binary       # binary mode for non-text files
 ftp> mget *       # download all files
 ```
 
-If anonymous login is allowed and you can write, upload a web shell if the FTP root is the web root.
+যদি anonymous login অনুমোদিত হয় এবং আপনি লিখতে পারেন, তাহলে FTP root-ই web root হলে একটি web shell আপলোড করুন।
 
 ### SSH (Port 22)
 
@@ -162,7 +170,7 @@ find / -name "authorized_keys" 2>/dev/null
 
 ### SMB (Ports 139, 445)
 
-SMB is the richest Windows enumeration target.
+SMB হলো সবচেয়ে সমৃদ্ধ Windows enumeration টার্গেট।
 
 ```bash
 # List shares (null session)
@@ -190,7 +198,7 @@ sudo mount -t cifs //192.168.1.100/SHARE /mnt/smb -o user=username,pass=password
 
 ### SNMP (Port 161 UDP)
 
-SNMP v1 and v2c use community strings ("public" is default) as the only auth mechanism. Once you have the community string, you can read the entire MIB — network interfaces, running processes, installed software, ARP table.
+SNMP v1 এবং v2c একমাত্র auth mechanism হিসেবে community string ("public" হলো ডিফল্ট) ব্যবহার করে। একবার community string পেলে আপনি পুরো MIB পড়তে পারবেন — network interface, running process, ইনস্টল করা software, ARP table।
 
 ```bash
 # Enumerate with community string "public"
@@ -258,7 +266,7 @@ ffuf -u http://192.168.1.100/FUZZ.php -w /usr/share/wordlists/common.txt
 
 ## Banner Grabbing
 
-Banners reveal software and version. Version → CVE search.
+Banner সফটওয়্যার ও ভার্সন প্রকাশ করে। ভার্সন → CVE সার্চ।
 
 ```bash
 # Netcat banner grab
@@ -298,9 +306,9 @@ nikto -h http://192.168.1.100 -output nikto-report.txt
 # - Interesting headers missing (no HSTS, no X-Frame-Options)
 ```
 
-## Organizing Findings
+## Finding গোছানো
 
-After scanning, organize by risk:
+Scanning-এর পর, ঝুঁকি অনুযায়ী গুছিয়ে নিন:
 
 ```markdown
 ## Scan Results: 192.168.1.100

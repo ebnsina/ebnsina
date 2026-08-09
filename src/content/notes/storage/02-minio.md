@@ -1,9 +1,9 @@
 ---
 title: 'Self-Hosted Object Storage with MinIO'
-subtitle: 'Running MinIO on your own hardware, S3-compatible API, distributed mode, lifecycle policies, and using it from application code.'
+subtitle: 'নিজের হার্ডওয়্যারে MinIO চালানো, S3-compatible API, distributed mode, lifecycle policy, আর অ্যাপ্লিকেশন কোড থেকে এটা ব্যবহার করা।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['MinIO', 'S3', 'object storage', 'self-hosted', 'distributed', 'buckets']
 ---
 
@@ -13,24 +13,32 @@ topics: ['MinIO', 'S3', 'object storage', 'self-hosted', 'distributed', 'buckets
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Building a post office branch instead of routing everything through Amazon: same service (package delivery), same rules (addresses, tracking), your own infrastructure. MinIO speaks the S3 API so any code written for Amazon S3 works unchanged — you just point it at your server instead of Amazon's.
+সবকিছু Amazon-এর মধ্য দিয়ে রাউট করার বদলে নিজের একটা পোস্ট অফিস শাখা বানানো: একই সার্ভিস (প্যাকেজ ডেলিভারি), একই নিয়ম (ঠিকানা, ট্র্যাকিং), কিন্তু আপনার নিজের ইনফ্রাস্ট্রাকচার। MinIO S3 API-তে কথা বলে, তাই Amazon S3-এর জন্য লেখা যেকোনো কোড কোনো পরিবর্তন ছাড়াই চলে — আপনি শুধু Amazon-এর বদলে নিজের সার্ভারের দিকে পয়েন্ট করেন।
 
 </Callout>
 
-## Why MinIO
+## গল্পে বুঝি
 
-MinIO is an S3-compatible object storage server written in Go. The entire thing is a single binary. Use it when:
+শহরের সবচেয়ে বড় রেলস্টেশনে একটা বিখ্যাত জাতীয় ক্লোকরুম চেইন আছে — যাত্রীরা ব্যাগ জমা রেখে একটা claim-ticket পায়, পরে সেই টিকিট দেখিয়ে ব্যাগ ফেরত নেয়। এই চেইনের টিকিটের ফরম্যাট, কাউন্টারের নিয়ম, পোর্টারদের কাজের ধরন — সবকিছু এতটাই প্রমিত যে গোটা দেশের যেকোনো শাখায় একই টিকিট, একই ফরম, একই যন্ত্রপাতি খাটে। ইবনে সিনার ছোট্ট শহর নিজের একটা ক্লোকরুম গুদাম বানাতে চাইল, কিন্তু চেইনের ফ্র্যাঞ্চাইজি ফি দিতে রাজি না, আর ডেটা-নিয়ন্ত্রণও নিজের হাতে রাখতে চায়।
 
-- You can't send data to AWS (air-gapped, regulation, cost)
-- You want S3-compatible storage on Hetzner or your own hardware
-- Local S3-compatible development environment
-- Egress costs from AWS are prohibitive
+তাই ইবনে সিনা চালাক কাজটা করল — নিজের গুদাম বানাল ঠিকই, কিন্তু জাতীয় চেইনের হুবহু একই claim-ticket সিস্টেম আর কাউন্টার প্রসিডিউর হুবহু নকল করে বসাল। ফলে চেইনের জন্য বানানো প্রতিটা ফরম, প্রতিটা টিকিট-স্ক্যানার, প্রশিক্ষিত প্রতিটা পোর্টার — কোনো পরিবর্তন ছাড়াই তার লোকাল গুদামে খাটে। ফাতিমা আল-ফিহরি যেই পোর্টার আগে জাতীয় চেইনে কাজ করত, সে প্রথম দিনেই নতুন গুদামে কাজ শুরু করতে পারল, কারণ প্রসিডিউর তো এক।
 
-The S3 API compatibility means existing code — SDKs, libraries, tools — works unchanged.
+এই গল্পটাই আসলে **MinIO**। ইবনে সিনার নিজের ক্লোকরুম গুদাম হলো **self-hosted object storage** — নিজের হার্ডওয়্যার, নিজের নিয়ন্ত্রণ, কোনো ফ্র্যাঞ্চাইজি ফি নেই মানে **no vendor lock-in**। জাতীয় চেইনের হুবহু একই টিকিট সিস্টেম নকল করাটাই **S3-compatible API** — Amazon S3-এর জন্য লেখা প্রতিটা SDK, টুল আর কোড কোনো বদল ছাড়াই MinIO-র বিরুদ্ধে খাটে। বাস্তবে ঠিক এ কারণেই MinIO জনপ্রিয়: আপনি AWS S3-এর জন্য লেখা `@aws-sdk/client-s3` কোড লিখে রাখেন, শুধু endpoint-টা নিজের সার্ভারের দিকে পয়েন্ট করে দেন — Amazon-কে egress বিল না দিয়েও পুরো S3 ইকোসিস্টেম হাতে থেকে যায়।
 
-## Single-Node Setup
+## MinIO কেন
+
+MinIO হলো Go-তে লেখা একটা S3-compatible object storage সার্ভার। পুরো জিনিসটা একটা single binary। এটা ব্যবহার করুন যখন:
+
+- আপনি AWS-এ ডেটা পাঠাতে পারবেন না (air-gapped, রেগুলেশন, খরচ)
+- আপনি Hetzner বা নিজের হার্ডওয়্যারে S3-compatible স্টোরেজ চান
+- লোকাল S3-compatible ডেভেলপমেন্ট এনভায়রনমেন্ট
+- AWS থেকে egress খরচ অসহনীয়
+
+S3 API compatibility মানে বিদ্যমান কোড — SDK, লাইব্রেরি, টুল — কোনো পরিবর্তন ছাড়াই চলে।
+
+## Single-Node সেটআপ
 
 ```bash
 # Docker
@@ -63,11 +71,11 @@ services:
       interval: 30s
 ```
 
-Access the console at `http://localhost:9001`. Create buckets, manage users, set policies.
+`http://localhost:9001`-এ console অ্যাক্সেস করুন। bucket তৈরি করুন, ইউজার ম্যানেজ করুন, policy সেট করুন।
 
 ## Distributed Mode (Production)
 
-Single-node MinIO has no redundancy. For production, run 4+ nodes with erasure coding:
+single-node MinIO-তে কোনো redundancy নেই। প্রোডাকশনের জন্য erasure coding সহ 4+ node চালান:
 
 ```bash
 # On each of 4 nodes (16 drives total — 4 per node)
@@ -85,9 +93,9 @@ docker run -d \
 # /data{1...4}  → /data1, /data2, /data3, /data4
 ```
 
-MinIO uses Reed-Solomon erasure coding — with 16 drives, it can tolerate losing any 8 and still serve data. With 4 drives (minimum), tolerates 2 failures.
+MinIO Reed-Solomon erasure coding ব্যবহার করে — 16টা drive থাকলে, এটা যেকোনো 8টা হারানো সহ্য করতে পারে এবং তবুও ডেটা সার্ভ করে। 4টা drive (ন্যূনতম) হলে, 2টা failure সহ্য করে।
 
-Place a load balancer (nginx or HAProxy) in front of all nodes:
+সব node-এর সামনে একটা load balancer (nginx বা HAProxy) বসান:
 
 ```nginx
 upstream minio {
@@ -107,9 +115,9 @@ server {
 }
 ```
 
-## Application Code (AWS SDK)
+## অ্যাপ্লিকেশন কোড (AWS SDK)
 
-MinIO speaks S3 — use the official AWS SDK, just point the endpoint at MinIO:
+MinIO S3-তে কথা বলে — অফিসিয়াল AWS SDK ব্যবহার করুন, শুধু endpoint-টা MinIO-র দিকে পয়েন্ট করুন:
 
 ```typescript
 import {
@@ -184,7 +192,7 @@ async function listFiles(prefix: string) {
 
 ## Presigned URLs
 
-Let clients upload directly to MinIO — no proxying through your server:
+ক্লায়েন্টকে সরাসরি MinIO-তে আপলোড করতে দিন — আপনার সার্ভারের মধ্য দিয়ে proxy করা লাগবে না:
 
 ```typescript
 // Generate upload URL (client uploads directly to MinIO)
@@ -226,11 +234,11 @@ await fetch(uploadUrl, {
 });
 ```
 
-Direct upload bypasses your server entirely — reduces your bandwidth costs and server load.
+সরাসরি আপলোড আপনার সার্ভারকে পুরোপুরি বাইপাস করে — আপনার bandwidth খরচ আর সার্ভার লোড কমায়।
 
 ## Bucket Policies
 
-Control public access per bucket:
+প্রতিটা bucket-এ public access নিয়ন্ত্রণ করুন:
 
 ```typescript
 import { PutBucketPolicyCommand } from '@aws-sdk/client-s3';
@@ -265,7 +273,7 @@ mc anonymous set public myminio/public-assets
 
 ## Lifecycle Policies
 
-Auto-delete or transition objects:
+object অটো-ডিলিট বা transition করুন:
 
 ```typescript
 import { PutBucketLifecycleConfigurationCommand } from '@aws-sdk/client-s3';
@@ -293,7 +301,7 @@ await s3.send(
 );
 ```
 
-## MinIO as Local S3 in Development
+## ডেভেলপমেন্টে লোকাল S3 হিসেবে MinIO
 
 ```yaml
 # docker-compose.dev.yml — use MinIO locally to mirror production S3 behavior
@@ -334,7 +342,7 @@ MINIO_SECRET_KEY=minioadmin
 MINIO_PUBLIC_URL=http://localhost:9000
 ```
 
-Switch to S3 in production by changing environment variables — no code changes.
+প্রোডাকশনে শুধু environment variable বদলে S3-তে সুইচ করুন — কোনো কোড পরিবর্তন লাগে না।
 
 ## Monitoring
 
@@ -360,7 +368,7 @@ scrape_configs:
     bearer_token: <minio-prometheus-token>
 ```
 
-Generate the Prometheus token:
+Prometheus token জেনারেট করুন:
 
 ```bash
 mc admin prometheus generate myminio cluster

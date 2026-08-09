@@ -1,9 +1,9 @@
 ---
 title: 'B-Trees & Indexes'
-subtitle: 'The data structure behind every relational database index — how B-trees keep data sorted and queries fast.'
+subtitle: 'প্রতিটা relational ডেটাবেজ index-এর পেছনের data structure — B-tree কীভাবে ডেটা sorted রাখে আর query দ্রুত করে।'
 chapter: 2
 level: 'beginner'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['B-tree', 'index', 'balanced tree', 'query performance']
 ---
 
@@ -11,17 +11,25 @@ topics: ['B-tree', 'index', 'balanced tree', 'query performance']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why B-Trees?
+## গল্পে বুঝি
 
-A B-tree is a self-balancing tree optimized for disk access. Unlike binary trees (2 children per node), B-trees have hundreds of children per node — each node fills one disk page. This means a tree with millions of entries is only 3-4 levels deep.
+আল-খোয়ারিজমি প্রথমবার শহরের বিশাল সেন্ট্রাল লাইব্রেরিতে গেল একটা বই খুঁজতে। ভেতরে ঢুকে সে থমকে গেল — লাখ লাখ বই, সারি সারি তাক, চোখ যত দূর যায় শুধু বই। এক তাক থেকে আরেক তাক ঘুরে ঘুরে খুঁজলে তো সারা জীবন লেগে যাবে। কিন্তু দরজার পাশেই দাঁড়ানো ফাতিমা আল-ফিহরি, লাইব্রেরিয়ান, হেসে বললেন — "একটাও তাক না ঘেঁটেই বের করে দিচ্ছি।" প্রথমে তিনি একটা বড় ড্রয়ার টেনে বিষয় বেছে নিলেন — ইতিহাস। সেই ড্রয়ারের ভেতরের ডিভাইডার ধরে বেছে নিলেন ঠিক তাকটা। আর সেই তাকের ছোট ট্যাব ধরে আঙুল রাখলেন একদম বইটার গায়ে।
 
-**3 levels = 3 disk reads to find any row among millions.**
+তিনটা ছোট ছোট ধাপ — বিষয়, তারপর তাক, তারপর বই। লাখ লাখ বইয়ের একটাও না ছুঁয়ে, শুধু তিনবার পরিসর ছোট করে আল-খোয়ারিজমির বইটা হাতে চলে এল। প্রতিটা ধাপে সম্ভাবনার পরিসর অর্ধেকের চেয়েও অনেক বেশি কমে যাচ্ছিল, তাই বই যত বাড়ুক, ধাপ প্রায় একই তিন-চারটাই থাকে।
+
+এই ব্যাপারটাই ঠিক **B-tree** index। লাইব্রেরির নেস্টেড ক্যাটালগ হলো multi-level balanced index — বিষয়ের ড্রয়ার, তাকের ডিভাইডার, বইয়ের ট্যাব হলো tree-র একেকটা level-এর node। পুরো লাইব্রেরি scan না করে মাত্র কয়েকটা level নিচে নেমে ঠিক জায়গায় পৌঁছানোটাই few-level descent, আর তাই বই লাখ হোক বা কোটি, lookup থাকে **O(log n)** — ধাপ সামান্যই বাড়ে। বাস্তবে database-এর index ঠিক এভাবেই কাজ করে: কোটি row-এর টেবিলেও পুরো টেবিল scan না করে B-tree-র কয়েকটা level নেমে সেকেন্ডের ভগ্নাংশে সঠিক row খুঁজে দেয়।
+
+## B-Trees কেন?
+
+B-tree হলো একটা self-balancing tree যা disk access-এর জন্য অপটিমাইজড। Binary tree-র (প্রতি node-এ 2টা child) মতো নয়, B-tree-র প্রতি node-এ শত শত child থাকে — প্রতিটা node একটা disk page ভরে ফেলে। এর মানে হলো লক্ষ লক্ষ entry থাকা একটা tree মাত্র 3-4 level গভীর।
+
+**3 level = লক্ষ লক্ষের মধ্যে যেকোনো row খুঁজে পেতে 3 disk read।**
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like the index at the back of a textbook — instead of reading every page to find "binary search", you check the index which tells you the exact page. Each level narrows your search — first by letter, then by word, then the page.
+যেমন একটা textbook-এর পেছনের index — "binary search" খুঁজতে প্রতিটা page পড়ার বদলে আপনি index দেখেন যা আপনাকে ঠিক page-টা বলে দেয়। প্রতিটা level আপনার search সংকুচিত করে — প্রথমে অক্ষর দিয়ে, তারপর শব্দ দিয়ে, তারপর page।
 
 </Callout>
 
@@ -70,7 +78,7 @@ class BTree {
 }
 ```
 
-## How Indexes Work in Practice
+## বাস্তবে Index কীভাবে কাজ করে
 
 ```sql
 -- Without index: full table scan (reads EVERY page)
@@ -83,7 +91,7 @@ SELECT * FROM users WHERE email = 'fatima@example.com';
 -- Reads: 3 pages (B-tree traversal) + 1 page (heap fetch)
 ```
 
-### Composite Indexes
+### Composite Index
 
 ```sql
 -- Composite index: ordered by (country, city, name)
@@ -101,13 +109,13 @@ SELECT * FROM users WHERE name = 'Fatima';            -- ✗ (skips country, cit
 
 <Callout type="tip">
 
-**Index column order matters.** Put high-selectivity columns first (columns that filter out more rows). A composite index on `(country, city)` is useless for `WHERE city = 'NYC'` — it needs the leftmost prefix.
+**Index column-এর ক্রম গুরুত্বপূর্ণ।** high-selectivity column-গুলো আগে রাখুন (যেসব column বেশি row ফিল্টার করে দেয়)। `(country, city)`-র উপর একটা composite index `WHERE city = 'NYC'`-র জন্য অকেজো — এর leftmost prefix লাগে।
 
 </Callout>
 
-## B-Tree Insertions and Splits
+## B-Tree Insertion আর Split
 
-When a node is full, it splits into two nodes and pushes the middle key up to the parent:
+যখন একটা node পূর্ণ হয়ে যায়, তখন এটা দুইটা node-এ split হয় আর মাঝের key-টা parent-এর দিকে push করে দেয়:
 
 ```typescript
 insert(key: number, value: Row): void {
@@ -126,21 +134,21 @@ insert(key: number, value: Row): void {
 }
 ```
 
-This is why B-trees stay balanced — splits propagate upward, and the tree only grows taller at the root.
+এই কারণেই B-tree balanced থাকে — split উপরের দিকে propagate হয়, আর tree শুধু root-এ গিয়ে উঁচু হয়।
 
-## Index Types
+## Index-এর ধরন
 
-| Type   | How it works               | Best for                             |
+| Type   | কীভাবে কাজ করে             | সবচেয়ে ভালো যার জন্য                |
 | ------ | -------------------------- | ------------------------------------ |
 | B-tree | Sorted tree, range queries | `=`, `<`, `>`, `BETWEEN`, `ORDER BY` |
-| Hash   | Hash table lookup          | `=` only (no ranges)                 |
+| Hash   | Hash table lookup          | শুধু `=` (range নয়)                 |
 | GIN    | Inverted index             | Full-text search, arrays, JSONB      |
 | GiST   | Generalized search tree    | Geometry, nearest-neighbor           |
-| BRIN   | Block range index          | Large, naturally ordered tables      |
+| BRIN   | Block range index          | বড়, স্বাভাবিকভাবে ordered টেবিল     |
 
-## The Cost of Indexes
+## Index-এর খরচ
 
-Indexes speed up reads but slow down writes:
+Index read দ্রুত করে কিন্তু write ধীর করে দেয়:
 
 ```typescript
 // Every INSERT/UPDATE/DELETE must also update all indexes
@@ -155,13 +163,13 @@ Indexes speed up reads but slow down writes:
 
 <Callout type="warning">
 
-**Don't over-index.** Each index costs write performance and disk space. Index columns that appear in WHERE, JOIN, and ORDER BY clauses. Remove indexes that aren't being used — `pg_stat_user_indexes` shows index usage stats.
+**অতিরিক্ত index করবেন না।** প্রতিটা index write performance আর disk space খরচ করে। যেসব column WHERE, JOIN, আর ORDER BY clause-এ আসে সেগুলো index করুন। যেসব index ব্যবহার হচ্ছে না সেগুলো সরিয়ে ফেলুন — `pg_stat_user_indexes` index ব্যবহারের stats দেখায়।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **B-trees are shallow** — 3-4 levels deep even with millions of rows, so lookups are 3-4 disk reads
-2. **Composite index order matters** — queries must match the leftmost prefix
-3. **Indexes trade write speed for read speed** — each additional index slows down writes
-4. **Choose the right index type** — B-tree for ranges, hash for equality, GIN for full-text
+1. **B-tree অগভীর** — লক্ষ লক্ষ row থাকলেও 3-4 level গভীর, তাই lookup মাত্র 3-4 disk read
+2. **Composite index-এর ক্রম গুরুত্বপূর্ণ** — query-কে leftmost prefix-এর সাথে মিলতে হবে
+3. **Index write speed-এর বিনিময়ে read speed দেয়** — প্রতিটা অতিরিক্ত index write ধীর করে দেয়
+4. **সঠিক index type বেছে নিন** — range-এর জন্য B-tree, equality-র জন্য hash, full-text-এর জন্য GIN

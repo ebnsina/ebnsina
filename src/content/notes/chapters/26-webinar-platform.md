@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Webinar & Video Conferencing Platform'
-subtitle: 'Design and build a production webinar system with multi-party video, screen sharing, Q&A, polls, breakout rooms, and recording.'
+title: 'কেস স্টাডি: ওয়েবিনার ও ভিডিও কনফারেন্সিং প্ল্যাটফর্ম'
+subtitle: 'মাল্টি-পার্টি ভিডিও, স্ক্রিন শেয়ারিং, Q&A, পোল, ব্রেকআউট রুম আর রেকর্ডিং সহ একটা প্রোডাকশন ওয়েবিনার সিস্টেম ডিজাইন ও তৈরি করুন।'
 chapter: 26
 level: 'advanced'
-readingTime: '33 min'
+readingTime: '33 মিনিট'
 topics: ['webinar', 'video conferencing', 'WebRTC', 'SFU', 'breakout rooms', 'recording']
 ---
 
@@ -13,21 +13,29 @@ topics: ['webinar', 'video conferencing', 'WebRTC', 'SFU', 'breakout rooms', 're
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What Makes Video Conferencing Different from Live Streaming?
+## গল্পে বুঝি
 
-Live streaming is **one-to-many**: one broadcaster, millions of passive viewers. Video conferencing is **many-to-many**: every participant can send and receive video simultaneously. Webinars sit in between — a few **presenters** broadcast to many **attendees** who interact through Q&A, chat, polls, and hand-raising. This in-between model creates unique challenges: the media architecture must handle bidirectional video for presenters while scaling to thousands of view-only attendees, all with sub-200ms audio latency.
+একটা বড় হলে সেমিনার চলছে। মঞ্চে ইবনে সিনা, আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরি — তিনজন speaker হাতে মাইক নিয়ে একে অন্যের সাথে কথা চালাচালি করছেন, প্রশ্ন করছেন, উত্তর দিচ্ছেন। তাঁদের মধ্যে কথাটা প্রায় সঙ্গে সঙ্গে পৌঁছাতে হয়, একটু দেরি হলেই আলোচনা এলোমেলো হয়ে যায় — এটাই কয়েকজনের মধ্যে low-latency interactive conferencing। আর হলের চেয়ারে বসা কয়েকশ শ্রোতা বেশিরভাগ সময় শুধু দেখছেন আর শুনছেন — এটাই one-to-many broadcast।
 
-Think of it like a town hall meeting versus a TV broadcast.
+এখন ভাবুন, প্রতিটা শ্রোতা যদি নিজের কথা হলের প্রত্যেকের কানে সরাসরি পৌঁছাতে চাইত, তাহলে চিৎকারে হল ভেঙে পড়ত — তাই সবার মাইকের অডিও যায় হলের মাঝখানের central sound desk-এ, আর সেই ডেস্ক ঠিক করে কার কণ্ঠ কোন speaker বা কোন সেকশনে পাঠানো দরকার, শুধু সেটুকুই ফরওয়ার্ড করে। এভাবে everyone-to-everyone হট্টগোল এড়ানো যায়। কোনো শ্রোতা প্রশ্ন করতে চাইলে হাত তোলেন, একজন ঘুরে বেড়ানো মাইক তাঁর হাতে ধরিয়ে দেয় — সেই মুহূর্তে তিনি শ্রোতা থেকে বক্তা হয়ে যান, প্রশ্ন শেষ হলে মাইক ফেরত, আবার শ্রোতা।
+
+এই গল্পটাই একটা webinar platform। মঞ্চের মাইক-হাতে speaker-রা হলো interactive conferencing peer, আর বসা দর্শকেরা broadcast viewer — দুটো একসাথে চলে বলেই এটা conferencing আর broadcast-এর মিশ্রণ। central sound desk যেভাবে বেছে বেছে অডিও ফরওয়ার্ড করে, সেটাই **SFU (selective forwarding unit)** — প্রত্যেকে প্রত্যেকের কাছে সরাসরি পাঠানোর full mesh এড়িয়ে সার্ভার শুধু দরকারি stream রুট করে। আর হাত তুলে roving মাইক পাওয়াটা হলো Q&A আর attendee→speaker role change। বাস্তবে Zoom Webinars আর Google Meet ঠিক এভাবেই কয়েকজন speaker-এর interaction আর হাজার হাজার attendee-র broadcast একই session-এ চালায়।
+
+## ভিডিও কনফারেন্সিং লাইভ স্ট্রিমিং থেকে আলাদা কীভাবে?
+
+লাইভ স্ট্রিমিং হলো **one-to-many**: একজন ব্রডকাস্টার, লক্ষ লক্ষ প্যাসিভ ভিউয়ার। ভিডিও কনফারেন্সিং হলো **many-to-many**: প্রতিটা participant একসাথে ভিডিও পাঠাতে ও রিসিভ করতে পারে। ওয়েবিনার এই দুইয়ের মাঝখানে — কয়েকজন **presenter** অনেক **attendee**-র কাছে ব্রডকাস্ট করে, যারা Q&A, চ্যাট, পোল আর হ্যান্ড-রেইজিং দিয়ে ইন্টারঅ্যাক্ট করে। এই মাঝামাঝি মডেলটা কিছু অনন্য চ্যালেঞ্জ তৈরি করে: মিডিয়া আর্কিটেকচারকে presenter-দের জন্য bidirectional ভিডিও হ্যান্ডল করতে হবে, একই সাথে হাজার হাজার view-only attendee-র জন্য স্কেল করতে হবে — সবটাই sub-200ms অডিও latency-তে।
+
+এটাকে একটা টাউন হল মিটিং বনাম একটা টিভি ব্রডকাস্টের মতো ভাবুন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a town hall meeting — speakers present on stage, the audience can raise hands, ask questions through a moderator, and vote. Unlike a TV broadcast, interaction flows both ways.
+একটা টাউন হল মিটিংয়ের মতো — বক্তারা মঞ্চে উপস্থাপন করেন, দর্শক হাত তুলতে পারে, একজন মডারেটরের মাধ্যমে প্রশ্ন করতে পারে, আর ভোট দিতে পারে। টিভি ব্রডকাস্টের বিপরীতে, এখানে ইন্টারঅ্যাকশন দুই দিকেই প্রবাহিত হয়।
 
 </Callout>
 
-A TV broadcast (live streaming) goes one direction — the studio to your screen. A town hall (webinar) has speakers on stage, but the audience can raise their hand, ask questions through a moderator, and vote on proposals. The infrastructure must handle both the broadcast and the interaction simultaneously.
+একটা টিভি ব্রডকাস্ট (লাইভ স্ট্রিমিং) এক দিকে যায় — স্টুডিও থেকে আপনার স্ক্রিনে। একটা টাউন হলে (ওয়েবিনার) মঞ্চে বক্তারা থাকেন, কিন্তু দর্শক হাত তুলতে পারে, একজন মডারেটরের মাধ্যমে প্রশ্ন করতে পারে, আর প্রস্তাবের ওপর ভোট দিতে পারে। ইনফ্রাস্ট্রাকচারকে ব্রডকাস্ট আর ইন্টারঅ্যাকশন — দুটোই একসাথে হ্যান্ডল করতে হবে।
 
 <Mermaid
 title="Webinar Platform Architecture"
@@ -36,45 +44,45 @@ code={`graph TD
   S --> SG["Signaling Server<br/>WebSocket"] --> SM["Session Manager<br/>Rooms & Roles"] --> R["Recording<br/>Composite & Store"]`}
 />
 
-## Requirements
+## রিকোয়ারমেন্ট
 
-- **Functional**: Multi-party video (up to 25 on camera), screen sharing, Q&A with upvoting, polls with live results, hand-raising, breakout rooms, recording, waiting room, attendee management (mute/kick), chat
-- **Non-functional**: Sub-200ms audio latency, support 10K attendees per webinar, 99.9% uptime, graceful quality degradation on poor networks
-- **Scale**: 1000 concurrent webinars, 1M total concurrent attendees
+- **Functional**: মাল্টি-পার্টি ভিডিও (ক্যামেরায় সর্বোচ্চ ২৫ জন), স্ক্রিন শেয়ারিং, upvoting সহ Q&A, লাইভ রেজাল্ট সহ পোল, হ্যান্ড-রেইজিং, ব্রেকআউট রুম, রেকর্ডিং, ওয়েটিং রুম, attendee ম্যানেজমেন্ট (mute/kick), চ্যাট
+- **Non-functional**: sub-200ms অডিও latency, প্রতি ওয়েবিনারে 10K attendee সাপোর্ট, 99.9% uptime, দুর্বল নেটওয়ার্কে গ্রেসফুল কোয়ালিটি ডিগ্রেডেশন
+- **Scale**: 1000 concurrent ওয়েবিনার, 1M মোট concurrent attendee
 
-## WebRTC & Media Architecture Deep Dive
+## WebRTC ও মিডিয়া আর্কিটেকচার গভীরভাবে
 
 ### Mesh vs SFU vs MCU
 
-**Mesh (Peer-to-Peer):** Every participant sends their video directly to every other participant. With N participants, each person sends N-1 streams and receives N-1 streams. This works for 2-4 people but falls apart quickly — 10 participants means each person manages 9 upload + 9 download streams.
+**Mesh (Peer-to-Peer):** প্রতিটা participant তার ভিডিও সরাসরি অন্য প্রতিটা participant-কে পাঠায়। N participant থাকলে, প্রতিজন N-1 stream পাঠায় আর N-1 stream রিসিভ করে। এটা 2-4 জনের জন্য কাজ করে কিন্তু দ্রুত ভেঙে পড়ে — 10 participant মানে প্রতিজন 9 upload + 9 download stream ম্যানেজ করছে।
 
-**SFU (Selective Forwarding Unit):** Each participant sends one upload stream to the server, which forwards it to other participants. The server doesn't decode or re-encode — it just routes packets. With 10 participants, each person uploads 1 stream and downloads 9. The SFU decides which streams to forward based on who's speaking, screen layout, and viewer bandwidth.
+**SFU (Selective Forwarding Unit):** প্রতিটা participant সার্ভারে একটা upload stream পাঠায়, সার্ভার সেটা অন্য participant-দের কাছে ফরওয়ার্ড করে। সার্ভার ডিকোড বা re-encode করে না — শুধু প্যাকেট রুট করে। 10 participant থাকলে, প্রতিজন 1 stream আপলোড করে আর 9 ডাউনলোড করে। কে কথা বলছে, স্ক্রিন লেআউট, আর ভিউয়ারের bandwidth-এর ওপর ভিত্তি করে SFU সিদ্ধান্ত নেয় কোন stream ফরওয়ার্ড করবে।
 
-**MCU (Multipoint Conferencing Unit):** The server decodes all incoming streams, composites them into a single mixed stream, and sends one stream to each participant. Each person uploads 1 and downloads 1. But the server does expensive real-time video encoding, limiting scalability and adding latency.
+**MCU (Multipoint Conferencing Unit):** সার্ভার সব incoming stream ডিকোড করে, একটা মিক্সড stream-এ কম্পোজিট করে, আর প্রতিটা participant-কে একটা করে stream পাঠায়। প্রতিজন 1 আপলোড আর 1 ডাউনলোড করে। কিন্তু সার্ভার ব্যয়বহুল real-time ভিডিও এনকোডিং করে, যা scalability সীমিত করে আর latency বাড়ায়।
 
-**For webinars, SFU is the sweet spot.** Presenters (5-25 people) each upload one stream. The SFU forwards presenter streams to thousands of attendees. No expensive server-side transcoding. Attendees only download, they don't upload.
+**ওয়েবিনারের জন্য SFU হলো sweet spot।** presenter-রা (5-25 জন) প্রত্যেকে একটা করে stream আপলোড করে। SFU presenter-দের stream হাজার হাজার attendee-র কাছে ফরওয়ার্ড করে। কোনো ব্যয়বহুল server-side transcoding নেই। attendee-রা শুধু ডাউনলোড করে, আপলোড করে না।
 
 ### Simulcast
 
-Instead of the SFU transcoding video for different bandwidth viewers, **simulcast** pushes the work to the sender. Each presenter encodes their video at 3 quality levels simultaneously (e.g., 720p, 360p, 180p). The SFU then selects which quality to forward to each viewer based on their available bandwidth. This eliminates server-side transcoding entirely.
+বিভিন্ন bandwidth-এর ভিউয়ারের জন্য SFU-কে ভিডিও transcode করানোর বদলে, **simulcast** কাজটা sender-এর ওপর ঠেলে দেয়। প্রতিটা presenter তার ভিডিও একসাথে 3টা কোয়ালিটি লেভেলে এনকোড করে (যেমন 720p, 360p, 180p)। এরপর SFU প্রতিটা ভিউয়ারের অ্যাভেইলেবল bandwidth-এর ওপর ভিত্তি করে সিলেক্ট করে কোন কোয়ালিটি ফরওয়ার্ড করবে। এটা server-side transcoding পুরোপুরি দূর করে দেয়।
 
 ### Signaling
 
-Before WebRTC media can flow, peers must exchange connection information via a **signaling server** (usually WebSocket). This includes SDP (Session Description Protocol) offers/answers (describing codecs, resolutions) and ICE candidates (network paths). The signaling server doesn't carry any media — it's just a rendezvous point.
+WebRTC মিডিয়া প্রবাহিত হওয়ার আগে, peer-দের একটা **signaling server**-এর মাধ্যমে (সাধারণত WebSocket) কানেকশন ইনফরমেশন এক্সচেঞ্জ করতে হয়। এর মধ্যে থাকে SDP (Session Description Protocol) offer/answer (কোডেক, রেজোলিউশন বর্ণনা করে) আর ICE candidate (নেটওয়ার্ক পাথ)। signaling server কোনো মিডিয়া বহন করে না — এটা শুধু একটা rendezvous point।
 
-## Webinar Features Deep Dive
+## ওয়েবিনার ফিচার গভীরভাবে
 
-**Roles:** Host (full control — mute anyone, end session, manage settings), Presenter (can share camera/screen), Attendee (view only + interact via Q&A/chat/polls). The role system ensures attendees can't unmute themselves or share their screen without being promoted.
+**Roles:** Host (পূর্ণ নিয়ন্ত্রণ — যে কাউকে mute করা, session শেষ করা, সেটিংস ম্যানেজ করা), Presenter (ক্যামেরা/স্ক্রিন শেয়ার করতে পারে), Attendee (শুধু দেখা + Q&A/চ্যাট/পোলের মাধ্যমে ইন্টারঅ্যাক্ট করা)। role সিস্টেম নিশ্চিত করে যে attendee-রা প্রোমোট না হলে নিজেদের unmute করতে বা স্ক্রিন শেয়ার করতে পারবে না।
 
-**Q&A:** Attendees submit questions, others upvote. The host sees questions sorted by votes, can answer inline, mark as answered, or dismiss. This surfaces the most relevant questions without the host drowning in duplicates.
+**Q&A:** attendee-রা প্রশ্ন সাবমিট করে, অন্যরা upvote করে। host ভোট অনুযায়ী সাজানো প্রশ্ন দেখতে পায়, inline উত্তর দিতে পারে, answered মার্ক করতে পারে, বা dismiss করতে পারে। এটা সবচেয়ে প্রাসঙ্গিক প্রশ্নগুলো সামনে আনে, host-কে ডুপ্লিকেটে ডুবিয়ে না দিয়ে।
 
-**Polls:** Host creates a poll with options, attendees vote in real-time, results update live for everyone. Polls drive engagement and give presenters real-time audience feedback.
+**Polls:** host অপশন সহ একটা পোল তৈরি করে, attendee-রা real-time-এ ভোট দেয়, সবার জন্য রেজাল্ট লাইভ আপডেট হয়। পোল engagement বাড়ায় আর presenter-দের real-time দর্শক ফিডব্যাক দেয়।
 
-**Breakout Rooms:** The host splits attendees into small groups, each with their own isolated SFU session, chat, and media. When breakout time ends, everyone returns to the main room. Breakout rooms are just ephemeral sub-sessions.
+**Breakout Rooms:** host attendee-দের ছোট ছোট গ্রুপে ভাগ করে, প্রতিটার নিজস্ব আলাদা SFU session, চ্যাট আর মিডিয়া থাকে। ব্রেকআউট টাইম শেষ হলে, সবাই মূল রুমে ফিরে আসে। ব্রেকআউট রুম আসলে ephemeral সাব-session ছাড়া কিছু নয়।
 
-**Hand Raising:** Attendees join a queue. The host sees the queue and can promote an attendee to presenter (temporarily granting camera/mic access) for a live Q&A segment.
+**Hand Raising:** attendee-রা একটা queue-তে যোগ দেয়। host queue দেখতে পায় আর একটা লাইভ Q&A সেগমেন্টের জন্য একজন attendee-কে presenter-এ প্রোমোট করতে পারে (সাময়িকভাবে ক্যামেরা/মাইক অ্যাক্সেস দিয়ে)।
 
-## Building the Webinar Platform
+## ওয়েবিনার প্ল্যাটফর্ম তৈরি করা
 
 <CodeTabs tsFile="webinar-platform.ts" goFile="webinar-platform.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -1031,49 +1039,49 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তের ব্যাখ্যা
 
-### Why SFU Instead of MCU or Mesh?
+### MCU বা Mesh-এর বদলে SFU কেন?
 
-Mesh: 25 presenters = each person uploads 24 streams. Impossible. MCU: server decodes and re-encodes 25 streams in real-time — extremely CPU expensive, adds 200ms+ latency. SFU: each person uploads 1 stream, server forwards it to others without processing. For a webinar with 25 presenters and 10K attendees, the SFU handles 25 inbound streams and fans out to 10K subscribers with zero transcoding.
+Mesh: 25 presenter = প্রতিজন 24টা stream আপলোড করে। অসম্ভব। MCU: সার্ভার real-time-এ 25টা stream ডিকোড ও re-encode করে — অত্যন্ত CPU-ব্যয়বহুল, 200ms+ latency যোগ করে। SFU: প্রতিজন 1টা stream আপলোড করে, সার্ভার সেটা প্রসেসিং ছাড়াই অন্যদের কাছে ফরওয়ার্ড করে। 25 presenter আর 10K attendee-র একটা ওয়েবিনারে, SFU 25টা inbound stream হ্যান্ডল করে আর কোনো transcoding ছাড়াই 10K subscriber-এ ফ্যান-আউট করে।
 
-### Why Simulcast?
+### Simulcast কেন?
 
-Without simulcast, the SFU must transcode video for viewers with different bandwidths — expensive and latency-adding. With simulcast, each presenter encodes at 3 quality levels simultaneously. The SFU just picks which quality to forward per viewer. A viewer on fiber gets 720p, a viewer on 3G gets 180p — no server processing required.
+Simulcast ছাড়া, ভিন্ন bandwidth-এর ভিউয়ারদের জন্য SFU-কে ভিডিও transcode করতে হয় — ব্যয়বহুল আর latency যোগকারী। Simulcast দিয়ে, প্রতিটা presenter একসাথে 3টা কোয়ালিটি লেভেলে এনকোড করে। SFU শুধু বেছে নেয় প্রতি ভিউয়ারের জন্য কোন কোয়ালিটি ফরওয়ার্ড করবে। fiber-এ থাকা একজন ভিউয়ার 720p পায়, 3G-তে থাকা একজন 180p পায় — কোনো সার্ভার প্রসেসিং লাগে না।
 
-### Why WebSocket for Signaling?
+### Signaling-এর জন্য WebSocket কেন?
 
-WebRTC requires a signaling channel to exchange SDP offers/answers and ICE candidates. WebSocket provides low-latency, bidirectional communication perfect for this. The signaling server also handles room-scoped events (Q&A updates, poll results, hand raises) — it's the control plane for everything that isn't media.
+WebRTC-র SDP offer/answer আর ICE candidate এক্সচেঞ্জ করতে একটা signaling চ্যানেল দরকার। WebSocket low-latency, bidirectional কমিউনিকেশন দেয় যা এর জন্য পারফেক্ট। signaling server room-scoped ইভেন্টও (Q&A আপডেট, পোল রেজাল্ট, হ্যান্ড রেইজ) হ্যান্ডল করে — যা মিডিয়া নয় এমন সবকিছুর জন্য এটাই control plane।
 
-### Why Composite Recording Server-Side?
+### Composite রেকর্ডিং সার্ভার-সাইডে কেন?
 
-Client-side recording would require each viewer to record their own screen — inconsistent quality, missing participants, and no guarantee it happens. Server-side composite recording captures all media streams at the SFU, composites them into a single video (grid layout with screen share), and produces one recording that looks exactly like what attendees saw.
+Client-side রেকর্ডিং করতে হলে প্রতিটা ভিউয়ারকে নিজের স্ক্রিন রেকর্ড করতে হতো — অসামঞ্জস্যপূর্ণ কোয়ালিটি, missing participant, আর এটা যে ঘটবে তার কোনো গ্যারান্টি নেই। সার্ভার-সাইড composite রেকর্ডিং SFU-তে সব মিডিয়া stream ক্যাপচার করে, সেগুলোকে একটা single ভিডিওতে (স্ক্রিন শেয়ার সহ grid লেআউট) কম্পোজিট করে, আর একটা রেকর্ডিং তৈরি করে যা attendee-রা যা দেখেছে ঠিক তেমনই দেখায়।
 
-### Why Separate Q&A from Chat?
+### Q&A-কে চ্যাট থেকে আলাদা কেন?
 
-Chat is ephemeral, high-volume, and conversational. Q&A is structured, persistent, and sorted by relevance (upvotes). Mixing them means important questions get buried under chat messages. Separate systems let the host focus on the top-voted questions without scrolling through "hi!" messages. Chat is for community; Q&A is for knowledge.
+চ্যাট হলো ephemeral, high-volume, আর conversational। Q&A হলো structured, persistent, আর প্রাসঙ্গিকতা অনুযায়ী (upvote দিয়ে) সাজানো। দুটো মিশিয়ে ফেললে গুরুত্বপূর্ণ প্রশ্নগুলো চ্যাট মেসেজের নিচে চাপা পড়ে যায়। আলাদা সিস্টেম host-কে "hi!" মেসেজ স্ক্রল না করে top-voted প্রশ্নগুলোতে ফোকাস করতে দেয়। চ্যাট কমিউনিটির জন্য; Q&A জ্ঞানের জন্য।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- SFU (Selective Forwarding Unit) is the sweet spot for webinars — it handles 25+ video streams without the CPU cost of MCU mixing
-- Simulcast lets each sender encode once at 3 quality levels, and the SFU picks the right quality per viewer — no server transcoding needed
-- Role-based access (host/presenter/attendee) keeps webinars organized — attendees can't unmute themselves or share screen without promotion
-- Q&A with upvoting surfaces the most relevant questions without the host drowning in duplicates
-- Breakout rooms are just ephemeral sub-sessions — each gets its own SFU routing and chat scope
-- Server-side composite recording produces a single video file that looks like what attendees saw — much simpler than client-side recording
+- SFU (Selective Forwarding Unit) ওয়েবিনারের জন্য sweet spot — এটা MCU mixing-এর CPU খরচ ছাড়াই 25+ ভিডিও stream হ্যান্ডল করে
+- Simulcast প্রতিটা sender-কে একবার 3টা কোয়ালিটি লেভেলে এনকোড করতে দেয়, আর SFU প্রতি ভিউয়ারের জন্য সঠিক কোয়ালিটি বেছে নেয় — কোনো সার্ভার transcoding লাগে না
+- Role-based অ্যাক্সেস (host/presenter/attendee) ওয়েবিনারকে গোছানো রাখে — প্রোমোশন ছাড়া attendee-রা নিজেদের unmute করতে বা স্ক্রিন শেয়ার করতে পারে না
+- upvoting সহ Q&A সবচেয়ে প্রাসঙ্গিক প্রশ্নগুলো সামনে আনে, host-কে ডুপ্লিকেটে ডুবিয়ে না দিয়ে
+- ব্রেকআউট রুম আসলে ephemeral সাব-session ছাড়া কিছু নয় — প্রতিটা তার নিজের SFU রাউটিং আর চ্যাট scope পায়
+- সার্ভার-সাইড composite রেকর্ডিং একটা single ভিডিও ফাইল তৈরি করে যা attendee-রা যা দেখেছে তার মতোই দেখায় — client-side রেকর্ডিংয়ের চেয়ে অনেক সহজ
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জগতে ব্যবহার
 
-- **Zoom** uses a global network of SFU servers with simulcast, supporting up to 1000 video participants and 49 on-screen simultaneously
-- **Google Meet** uses SFU with simulcast and VP9/AV1 SVC (Scalable Video Coding) for bandwidth-adaptive forwarding
-- **Microsoft Teams** supports up to 10,000 attendees in webinar mode with role-based controls and Q&A
-- **Hopin** built their virtual event platform on WebRTC SFU architecture with breakout rooms and interactive features
-- This architecture supports 10K attendees per webinar with sub-200ms audio latency and interactive features
+- **Zoom** simulcast সহ SFU সার্ভারের একটা গ্লোবাল নেটওয়ার্ক ব্যবহার করে, সর্বোচ্চ 1000 ভিডিও participant আর একসাথে 49 জন অন-স্ক্রিন সাপোর্ট করে
+- **Google Meet** bandwidth-adaptive ফরওয়ার্ডিংয়ের জন্য simulcast আর VP9/AV1 SVC (Scalable Video Coding) সহ SFU ব্যবহার করে
+- **Microsoft Teams** ওয়েবিনার মোডে role-based কন্ট্রোল আর Q&A সহ সর্বোচ্চ 10,000 attendee সাপোর্ট করে
+- **Hopin** তাদের ভার্চুয়াল ইভেন্ট প্ল্যাটফর্ম WebRTC SFU আর্কিটেকচারের ওপর তৈরি করেছে, ব্রেকআউট রুম আর ইন্টারঅ্যাক্টিভ ফিচার সহ
+- এই আর্কিটেকচার প্রতি ওয়েবিনারে 10K attendee সাপোর্ট করে, sub-200ms অডিও latency আর ইন্টারঅ্যাক্টিভ ফিচার সহ
 
 </div>

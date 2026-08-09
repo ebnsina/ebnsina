@@ -1,9 +1,9 @@
 ---
 title: 'Case Study: URL Shortener'
-subtitle: "Build a complete URL shortener from scratch — applying everything you've learned: HTTP, database, caching, testing, and deployment."
+subtitle: 'শূন্য থেকে একটা সম্পূর্ণ URL shortener বানান — যা শিখেছেন সব প্রয়োগ করে: HTTP, database, caching, testing, আর deployment।'
 chapter: 25
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['project', 'URL shortener', 'full-stack', 'Redis', 'PostgreSQL', 'end-to-end']
 ---
 
@@ -11,23 +11,31 @@ topics: ['project', 'URL shortener', 'full-stack', 'Redis', 'PostgreSQL', 'end-t
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What We're Building
+## গল্পে বুঝি
 
-A production-grade URL shortener like bit.ly. Users submit a long URL, get a short code, and visitors are redirected.
+শহরের নামকরা এক রেস্টুরেন্টের সামনে ইবনে সিনার ভ্যালে পার্কিং ডেস্ক। আপনি বিশাল একটা গাড়ি নিয়ে এসে ফটকের সামনে থামলেন, নেমে গেলেন — গাড়ি কোথায় রাখবেন সেই ঝামেলা আর আপনার নয়। ইবনে সিনা আপনাকে ধরিয়ে দিল একটা ছোট্ট নম্বর দেওয়া টিকিট, আর নিজের খাতায় টুকে রাখল: টিকিট ৪২ মানে গাড়িটা বি-ব্লকের ১৭ নম্বর স্লটে। এই ছোট টিকিটটাই এখন আপনার পুরো গাড়ির পরিচয় — পকেটে অনায়াসে এঁটে যায়।
 
-**Features:**
+খাওয়া শেষে ফিরে এসে আপনি শুধু টিকিটটা বাড়িয়ে দিলেন। ইবনে সিনা খাতা দেখে চট করে বুঝে গেল কোন স্লট, আর আপনার সেই একই গাড়ি এনে সামনে হাজির করল। দুটো গাড়ির টিকিট নম্বর কখনো এক হয় না — নাহলে ইবনে সিনা কার গাড়ি কাকে দেবে গুলিয়ে ফেলবে। আর আল-খোয়ারিজমি সাহেবের মতো নিয়মিত VIP অতিথিদের গাড়ি ইবনে সিনা খাতা না ঘেঁটেই সামনের সারিতে হাতের নাগালে রাখে, যেন চাইলেই সেকেন্ডে বের করে দেওয়া যায়।
 
-- Create short URLs (POST /api/shorten)
-- Redirect to original URL (GET /:code)
+এই গল্পটাই আসলে একটা **URL shortener**। বড় গাড়ি হলো লম্বা মূল URL, ছোট টিকিট হলো **short code**, আর ইবনে সিনার খাতা হলো code-থেকে-URL-এর **key-value mapping**। টিকিট দেখানো মানেই **lookup** করে সেই মূল গাড়িতে **redirect** করে দেওয়া। প্রতিটা টিকিট নম্বর যেমন **unique**, তেমনি প্রতিটা short code-ও unique হতে হয়। আর VIP গাড়ি সামনে রাখাটাই হট লিংক **cache** করে রাখা। বাস্তবে bit.ly ঠিক এভাবেই কাজ করে — লম্বা একটা লিংককে ছোট্ট কোডে বেঁধে দেয়, আর কেউ সেই ছোট লিংকে ক্লিক করলেই আসল ঠিকানায় পাঠিয়ে দেয়।
+
+## আমরা কী বানাচ্ছি
+
+bit.ly-এর মতো একটা production-grade URL shortener। User একটা লম্বা URL জমা দেয়, একটা short code পায়, আর visitor-দের redirect করা হয়।
+
+**Feature:**
+
+- Short URL তৈরি (POST /api/shorten)
+- মূল URL-এ redirect (GET /:code)
 - Click analytics (GET /api/stats/:code)
 - Rate limiting
-- Redis caching for fast redirects
+- দ্রুত redirect-এর জন্য Redis caching
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A URL shortener is like a coat check. You hand in your coat (long URL), get a numbered ticket (short code). When someone presents the ticket, the attendant finds your coat and hands it back (redirect). The attendant keeps a count of how many times each ticket was presented (analytics).
+একটা URL shortener হলো একটা coat check-এর মতো। আপনি আপনার কোট (লম্বা URL) জমা দেন, একটা নম্বর দেওয়া টিকিট (short code) পান। কেউ যখন টিকিটটা দেখায়, অ্যাটেনড্যান্ট আপনার কোট খুঁজে ফেরত দেয় (redirect)। অ্যাটেনড্যান্ট গুনে রাখে প্রতিটা টিকিট কতবার দেখানো হয়েছে (analytics)।
 
 </Callout>
 
@@ -352,7 +360,7 @@ func (s *URLService) GetStats(ctx context.Context, code string) (*model.StatsRes
 }
 ```
 
-## HTTP Handlers
+## HTTP Handler
 
 ```go
 // internal/handler/shorten.go
@@ -412,7 +420,7 @@ func (h *Handler) Stats(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## Wiring Everything Together
+## সব একসাথে Wire করা
 
 ```go
 // cmd/server/main.go
@@ -479,7 +487,7 @@ func main() {
 }
 ```
 
-## Testing the Service
+## Service-টা Test করা
 
 ```go
 func TestURLService_Shorten(t *testing.T) {
@@ -535,7 +543,7 @@ func TestURLService_Shorten(t *testing.T) {
 }
 ```
 
-## Try It Out
+## চালিয়ে দেখুন
 
 ```bash
 # Shorten a URL
@@ -553,11 +561,11 @@ curl http://localhost:8080/api/stats/aB3xK9m
 # {"code":"aB3xK9m","original_url":"...","clicks":1,"created_at":"..."}
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Clean architecture** — handler → service → repository, each layer has one job
-2. **Cache-first reads** — Redis for O(1) redirects, database as source of truth
-3. **Async click tracking** — `go repo.IncrementClicks()` doesn't block the redirect
-4. **Collision handling** — retry code generation up to 5 times on duplicate
-5. **Graceful shutdown** — finish in-flight redirects before stopping
-6. **This project uses every concept from the course** — structs, interfaces, goroutines, context, error handling, testing, middleware, database patterns, and deployment
+1. **Clean architecture** — handler → service → repository, প্রতিটা layer-এর একটা কাজ
+2. **Cache-first read** — O(1) redirect-এর জন্য Redis, source of truth হিসেবে database
+3. **Async click tracking** — `go repo.IncrementClicks()` redirect-কে block করে না
+4. **Collision handling** — duplicate হলে code generation 5 বার পর্যন্ত retry
+5. **Graceful shutdown** — থামার আগে in-flight redirect শেষ করে
+6. **এই project কোর্সের প্রতিটা concept ব্যবহার করে** — struct, interface, goroutine, context, error handling, testing, middleware, database pattern, আর deployment

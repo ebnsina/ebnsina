@@ -1,9 +1,9 @@
 ---
 title: 'Idempotency'
-subtitle: 'Design jobs so running them twice is the same as running them once — because at-least-once delivery guarantees you will run them twice.'
+subtitle: 'Job এমনভাবে ডিজাইন করুন যাতে দুবার চালানো একবার চালানোর সমান হয় — কারণ at-least-once delivery নিশ্চিত করে যে আপনি সেগুলো দুবার চালাবেন।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['idempotency', 'at-least-once', 'exactly-once', 'deduplication', 'distributed systems']
 ---
 
@@ -11,30 +11,38 @@ topics: ['idempotency', 'at-least-once', 'exactly-once', 'deduplication', 'distr
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+পুরনো ঢাকার এক পাড়ায় বিল আদায় করেন আল-খোয়ারিজমি। প্রতিটা বিলের গায়ে আগে থেকেই একটা ইউনিক নম্বর ছাপানো থাকে। কারও বিল আদায় হয়ে গেলেই তিনি ঠিক ওই নম্বরসহ বিলটার গায়ে লাল কালিতে "PAID" সিল মেরে দেন, আর নিজের খাতায় নম্বরটা টুকে রাখেন — অমুক নম্বরের বিল আদায় হয়ে গেছে। কাজটা এক সেকেন্ডেই শেষ।
+
+এখন হয় কী, ডাক-ব্যবস্থার গোলমালে বা গ্রাহকের ভুলে একই নম্বরের বিলের একটা ডুপ্লিকেট কপি আবার তাঁর হাতে চলে আসে, কিংবা ফাতিমা আল-ফিহরি নিজের পুরনো বিলটা নিয়ে আরেকবার হাজির হন। আল-খোয়ারিজমি টাকা চাওয়ার আগে খাতা আর সিলটা এক নজর দেখে নেন — নম্বরটা তো আগেই "PAID" হয়ে আছে! তাই তিনি আর টাকা নেন না, ভদ্রভাবে বলেন "এটা তো মিটে গেছে"। বিল যতবারই ঘুরে আসুক, গ্রাহকের পকেট থেকে টাকা যায় ঠিক একবারই।
+
+এই গল্পটাই আসলে **idempotency**। বিলের ইউনিক নম্বর হলো **idempotency key**, খাতায় "PAID" টুকে রাখাটা হলো এই key-র job একবার চলে গেছে সেটা রেকর্ড করা, আর ডুপ্লিকেট চিনে টাকা না নেওয়াটাই **dedup** — মানে একই job আবার চললেও ফলাফল একবার চালানোর সমানই থাকে (same effect on re-run), কারও ডাবল-চার্জ হয় না। বাস্তবে queue-গুলো **at-least-once** delivery দেয় বলে retry-তে একই job দুবার-তিনবার চলতেই পারে; তাই Stripe-এ payment করা বা welcome email পাঠানোর মতো কাজে আগে থেকেই একটা idempotency key দিয়ে "এটা কি আগেই হয়েছে?" চেক করে নিলে দুবার চললেও গ্রাহক ঠিক একবারই চার্জ হন।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-An elevator button: pressing it once summons the elevator. Pressing it five more times does nothing extra — the elevator still comes exactly once. That's idempotency: repeated application of an operation produces the same result as applying it once.
+একটি এলিভেটরের বোতাম: একবার চাপলে এলিভেটর আসে। আরও পাঁচবার চাপলে বাড়তি কিছু হয় না — এলিভেটর তখনো ঠিক একবারই আসে। এটাই idempotency: একটি অপারেশন বারবার প্রয়োগ করলে যে ফলাফল হয়, একবার প্রয়োগ করলেও সেই একই ফলাফল হয়।
 
 </Callout>
 
 ## At-Least-Once Delivery
 
-Most queue systems guarantee **at-least-once delivery** — a job will run at least once, but might run more. This happens when:
+বেশিরভাগ queue system **at-least-once delivery** গ্যারান্টি দেয় — একটি job অন্তত একবার চলবে, কিন্তু বেশিবারও চলতে পারে। এটা ঘটে যখন:
 
-- A worker processes a job and crashes before acknowledging completion
-- The queue's heartbeat times out during a long-running job
-- Network partition causes the queue to redeliver a job the worker already processed
-- A bug causes the queue to retry a job that actually succeeded
+- একটি worker একটি job প্রসেস করে এবং completion acknowledge করার আগেই crash করে
+- একটি long-running job-এর সময় queue-এর heartbeat time out হয়
+- Network partition-এর কারণে queue এমন একটি job আবার deliver করে যা worker আগেই প্রসেস করেছে
+- একটি bug-এর কারণে queue এমন একটি job retry করে যা আসলে সফল হয়েছিল
 
-You cannot prevent this in a distributed system without significant coordination overhead. The pragmatic approach: accept at-least-once delivery and write idempotent handlers.
+উল্লেখযোগ্য coordination overhead ছাড়া distributed system-এ আপনি এটা ঠেকাতে পারবেন না। ব্যবহারিক পন্থা: at-least-once delivery মেনে নিন এবং idempotent handler লিখুন।
 
-**Exactly-once** delivery is theoretically possible but expensive — it requires distributed transactions across the queue and your application state, with significant performance cost. For most use cases, at-least-once + idempotency is the right trade.
+**Exactly-once** delivery তাত্ত্বিকভাবে সম্ভব কিন্তু ব্যয়বহুল — এর জন্য queue ও আপনার application state জুড়ে distributed transaction দরকার, যার উল্লেখযোগ্য performance খরচ আছে। বেশিরভাগ use case-এর জন্য at-least-once + idempotency-ই সঠিক trade।
 
-## Making Operations Idempotent
+## অপারেশনকে Idempotent বানানো
 
-The pattern: check if the work was already done before doing it, or use the database's conflict handling to prevent duplicates.
+প্যাটার্নটা হলো: কাজটা করার আগে চেক করুন সেটা আগেই হয়ে গেছে কিনা, অথবা duplicate ঠেকাতে database-এর conflict handling ব্যবহার করুন।
 
 **Pattern 1: Existence check**
 
@@ -75,7 +83,7 @@ async function updateSearchIndex(job: Job<{ productId: string }>): Promise<void>
 }
 ```
 
-**Pattern 3: Idempotency keys with external APIs**
+**Pattern 3: External API-র সাথে idempotency key**
 
 ```typescript
 async function chargeCustomer(job: Job<{ orderId: string; amount: number }>): Promise<void> {
@@ -97,11 +105,11 @@ async function chargeCustomer(job: Job<{ orderId: string; amount: number }>): Pr
 }
 ```
 
-Most well-designed APIs accept idempotency keys — Stripe, Twilio, Braintree, and many others. Check the docs before assuming an API is safe to call multiple times.
+বেশিরভাগ ভালোভাবে ডিজাইন করা API idempotency key নেয় — Stripe, Twilio, Braintree, এবং আরও অনেকে। একটি API একাধিকবার call করা নিরাপদ ধরে নেওয়ার আগে docs চেক করুন।
 
-## Deduplication at Enqueue Time
+## Enqueue করার সময় Deduplication
 
-Prevent the same logical job from being added to the queue multiple times:
+একই logical job যাতে queue-তে একাধিকবার যুক্ত না হয় তা ঠেকান:
 
 ```typescript
 // BullMQ — jobId as deduplication key
@@ -122,11 +130,11 @@ await boss.sendOnce(
 );
 ```
 
-This prevents the queue from accumulating duplicate jobs when the enqueue operation itself is retried (e.g., if your API handler runs twice due to a client retry).
+enqueue অপারেশনটাই retry হলে (যেমন client retry-র কারণে আপনার API handler দুবার চললে) এটি queue-তে duplicate job জমা হওয়া ঠেকায়।
 
-## The Job ID as Stable Idempotency Key
+## Stable Idempotency Key হিসেবে Job ID
 
-Job IDs are stable across retries — the same job object is presented to the worker on each attempt. Use the job ID to track work done:
+Job ID retry জুড়ে stable — প্রতিটি attempt-এ worker-কে একই job object দেওয়া হয়। কাজ হয়ে গেছে কিনা track করতে job ID ব্যবহার করুন:
 
 ```typescript
 async function generateReport(job: Job<{ reportId: string }>): Promise<void> {
@@ -168,9 +176,9 @@ async function generateReport(job: Job<{ reportId: string }>): Promise<void> {
 }
 ```
 
-## Non-Idempotent Operations and Fencing
+## Non-Idempotent অপারেশন ও Fencing
 
-Some operations are inherently non-idempotent (email sends with no dedup API, webhook deliveries). Use a **fencing token** to prevent duplicate execution:
+কিছু অপারেশন স্বভাবতই non-idempotent (dedup API নেই এমন email send, webhook delivery)। duplicate execution ঠেকাতে একটি **fencing token** ব্যবহার করুন:
 
 ```typescript
 interface JobFence {
@@ -221,9 +229,9 @@ async function sendNotificationEmail(job: Job): Promise<void> {
 }
 ```
 
-## Testing for Idempotency
+## Idempotency-র জন্য Testing
 
-Make idempotency part of your test suite:
+idempotency-কে আপনার test suite-এর অংশ বানান:
 
 ```typescript
 describe('sendWelcomeEmail job', () => {
@@ -252,4 +260,4 @@ describe('sendWelcomeEmail job', () => {
 });
 ```
 
-Run these tests against a real database (not mocks) — idempotency logic often involves upserts and conflict handling that only works with real SQL semantics.
+এই test-গুলো একটি সত্যিকারের database-এর বিপরীতে চালান (mock নয়) — idempotency logic-এ প্রায়ই upsert ও conflict handling জড়িত থাকে, যা শুধু সত্যিকারের SQL semantics-এই কাজ করে।

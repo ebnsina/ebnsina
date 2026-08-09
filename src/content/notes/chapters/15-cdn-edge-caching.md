@@ -1,9 +1,9 @@
 ---
-title: 'CDN & Edge Caching'
-subtitle: 'Implement edge caching with cache headers, signed URLs for private content, and cache purging strategies.'
+title: 'CDN ও Edge Caching'
+subtitle: 'Cache header, private content-এর জন্য signed URL এবং cache purging strategy সহ edge caching বানান।'
 chapter: 15
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['CDN', 'edge caching', 'Cache-Control', 'signed URLs', 'cache purging']
 ---
 
@@ -13,11 +13,19 @@ topics: ['CDN', 'edge caching', 'Cache-Control', 'signed URLs', 'cache purging']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What is CDN & Edge Caching?
+## গল্পে বুঝি
 
-A **Content Delivery Network (CDN)** is a globally distributed network of servers that caches content close to end users. Instead of every request traveling to your origin server, the CDN edge node closest to the user serves the cached response -- reducing latency from hundreds of milliseconds to single digits.
+ইবনে সিনার একটা প্রোডাক্ট কোম্পানি আছে, কারখানা ঢাকায়। শুরুতে সিলেট, চট্টগ্রাম, রাজশাহী — সব জেলার অর্ডার সরাসরি ঢাকার কারখানা থেকে পাঠানো হতো। ফাতিমা আল-ফিহরি সিলেটে বসে একটা জিনিস অর্ডার করলে সেটা ঢাকা থেকে ট্রাকে করে আসতে দুই দিন লেগে যেত, আর সব অর্ডারের চাপ একা কারখানার ওপরেই পড়ত। দূরত্বই ছিল আসল সমস্যা।
 
-Think of it like a chain of local libraries. The main library (origin server) has every book, but it's across town. Your neighborhood branch (edge node) stocks copies of the most popular books. When you want a bestseller, you grab it from your local branch instantly. Only rare requests need to go to the main library.
+তাই ইবনে সিনা বুদ্ধি করে প্রতিটা জেলায় একটা করে ছোট distribution hub বসাল। এখন যেগুলো বেশি বিক্রি হয়, সেগুলোর স্টক আগে থেকেই কাছের hub-এ রাখা থাকে। ফাতিমা আল-ফিহরি সিলেটে অর্ডার দিলে সিলেটের hub থেকেই কয়েক ঘণ্টায় ডেলিভারি হয়ে যায় — ঢাকা পর্যন্ত যেতেই হয় না। hub-গুলো নির্দিষ্ট সময় পরপর কারখানা থেকে নতুন স্টক এনে রিস্টক করে, আর পুরনো বা মেয়াদ-ফুরানো মাল সরিয়ে ফেলে যাতে গ্রাহক বাসি জিনিস না পায়। কোনো জিনিস হুট করে বদলে গেলে ইবনে সিনা সব hub-কে বলে দেয় পুরনো স্টক এক্ষুনি ফেলে দিতে।
+
+এই গল্পটাই আসলে **CDN ও edge caching**। জেলার distribution hub হলো edge (PoP), ঢাকার কারখানা হলো origin server, কাছের hub থেকে দ্রুত ডেলিভারি হলো কম latency, hub-এর নিয়মিত রিস্টক হলো cache-এর TTL, আর পুরনো স্টক সরানো হলো cache purge/expiry। বাস্তবে Cloudflare বা Akamai ঠিক এভাবেই বিশ্বজুড়ে edge location-এ content cache করে রাখে, যাতে ইউজার দূরের origin-এ না গিয়ে সবচেয়ে কাছের edge থেকেই সাড়া পায়।
+
+## CDN ও Edge Caching কী?
+
+একটি **Content Delivery Network (CDN)** হলো বিশ্বজুড়ে ছড়িয়ে থাকা server-এর একটি network যা end user-দের কাছাকাছি content cache করে রাখে। প্রতিটি request আপনার origin server পর্যন্ত যাওয়ার বদলে, user-এর সবচেয়ে কাছের CDN edge node cache করা response দেয় — এতে latency শত শত millisecond থেকে single digit-এ নেমে আসে।
+
+এটাকে স্থানীয় লাইব্রেরির একটা চেইনের মতো ভাবুন। মূল লাইব্রেরিতে (origin server) সব বই আছে, কিন্তু সেটা শহরের ওপারে। আপনার পাড়ার শাখা (edge node) সবচেয়ে জনপ্রিয় বইগুলোর কপি রাখে। একটা bestseller চাইলে আপনি সেটা তখনই স্থানীয় শাখা থেকে পান। শুধু বিরল request-গুলোকেই মূল লাইব্রেরিতে যেতে হয়।
 
 <Mermaid
 title="CDN Edge Caching Architecture"
@@ -25,21 +33,21 @@ code={`graph LR
   C["Client<br/>Browser / App"] --> E["CDN Edge<br/>Cache Layer"] --> O["Origin Server<br/>Cache Headers"] --> S["Storage<br/>Files / Objects"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উদাহরণ
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a franchise with warehouses in every major city — instead of shipping everything from one central warehouse, local warehouses serve nearby customers faster.
+প্রতিটি বড় শহরে warehouse থাকা একটি franchise-এর মতো — সবকিছু একটা কেন্দ্রীয় warehouse থেকে পাঠানোর বদলে, স্থানীয় warehouse কাছের গ্রাহকদের দ্রুত সেবা দেয়।
 
 </Callout>
 
-When Netflix serves a new season of a show, the video files are pushed from their origin storage to CDN edge nodes around the world. A viewer in Tokyo gets the stream from a nearby edge server in Japan, not from a data center in Virginia. If the edge doesn't have the file cached, it pulls it from the origin once, then serves all subsequent Tokyo requests locally. Cloudflare does the same for web assets -- your CSS and JavaScript are cached at 300+ edge locations worldwide.
+Netflix যখন একটি show-এর নতুন season দেয়, তখন video file-গুলো তাদের origin storage থেকে বিশ্বজুড়ে CDN edge node-এ push করা হয়। Tokyo-র একজন viewer Japan-এর কাছের একটি edge server থেকে stream পান, Virginia-র data center থেকে নয়। Edge-এ file cache না থাকলে, সেটা একবার origin থেকে টেনে আনে, তারপর পরবর্তী সব Tokyo request স্থানীয়ভাবেই দেয়। Cloudflare web asset-এর জন্য একই কাজ করে — আপনার CSS আর JavaScript বিশ্বজুড়ে 300+ edge location-এ cache করা থাকে।
 
-## Building a CDN Origin Server
+## একটি CDN Origin Server বানানো
 
-Here's a complete origin server that implements proper cache headers, conditional requests with ETags, signed URLs for private content, and a cache purge API. This is the server-side logic that powers CDN caching behavior.
+এখানে একটি সম্পূর্ণ origin server আছে যা যথাযথ cache header, ETag সহ conditional request, private content-এর জন্য signed URL এবং একটি cache purge API implement করে। এটাই সেই server-side logic যা CDN caching-এর আচরণ চালায়।
 
 <CodeTabs tsFile="cdn-origin.ts" goFile="cdn-origin.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -818,35 +826,35 @@ func main() {
 </div>
 </CodeTabs>
 
-## What Makes This Production-Ready
+## এটাকে যা Production-Ready করে
 
-- **Content-based ETags** -- SHA-256 hash of file contents ensures accurate cache invalidation
-- **Conditional requests** -- supports both If-None-Match and If-Modified-Since for 304 responses
-- **Tiered cache policies** -- different Cache-Control headers for HTML, assets, and immutable files
-- **Signed URLs** -- HMAC-based, time-limited access to private content with constant-time comparison
-- **Cache purge API** -- authenticated endpoint for instant invalidation when content changes
-- **Directory traversal protection** -- resolves and validates file paths before serving
+- **Content-based ETag** -- file content-এর SHA-256 hash সঠিক cache invalidation নিশ্চিত করে
+- **Conditional request** -- 304 response-এর জন্য If-None-Match এবং If-Modified-Since দুটোই সাপোর্ট করে
+- **Tiered cache policy** -- HTML, asset এবং immutable file-এর জন্য আলাদা Cache-Control header
+- **Signed URL** -- HMAC-ভিত্তিক, সময়-সীমিত access, constant-time comparison সহ private content-এর জন্য
+- **Cache purge API** -- content বদলালে তাৎক্ষণিক invalidation-এর জন্য authenticated endpoint
+- **Directory traversal protection** -- serve করার আগে file path resolve করে validate করে
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- CDNs cache content at edge locations close to users, reducing latency by 10-100x
-- Use content-based ETags (file hashing) for accurate cache validation, not timestamps alone
-- Set Cache-Control policies per content type: immutable for hashed assets, no-cache for HTML
-- Signed URLs provide time-limited access to private content without exposing credentials
-- Always implement a cache purge mechanism for emergency content invalidation
-- Conditional requests (304 Not Modified) save bandwidth even when caches expire
+- CDN user-দের কাছাকাছি edge location-এ content cache করে latency 10-100x কমায়
+- সঠিক cache validation-এর জন্য শুধু timestamp নয়, content-based ETag (file hashing) ব্যবহার করুন
+- প্রতিটি content type অনুযায়ী Cache-Control policy সেট করুন: hashed asset-এর জন্য immutable, HTML-এর জন্য no-cache
+- Signed URL credential না দেখিয়েই private content-এ সময়-সীমিত access দেয়
+- জরুরি content invalidation-এর জন্য সবসময় একটি cache purge ব্যবস্থা রাখুন
+- Conditional request (304 Not Modified) cache expire হলেও bandwidth বাঁচায়
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Cloudflare** caches web assets at 300+ global edge locations using these exact cache header semantics
-- **Netflix** uses a custom CDN (Open Connect) to serve video content from ISP-embedded servers
-- **Akamai** pioneered CDN technology and handles 30% of all web traffic with edge caching
-- **Vercel** uses signed URLs and edge caching to serve Next.js static assets with immutable cache headers
+- **Cloudflare** ঠিক এই cache header semantics ব্যবহার করে 300+ global edge location-এ web asset cache করে
+- **Netflix** video content ISP-এ বসানো server থেকে দিতে একটি custom CDN (Open Connect) ব্যবহার করে
+- **Akamai** CDN প্রযুক্তির পথিকৃৎ এবং edge caching দিয়ে সব web traffic-এর 30% সামলায়
+- **Vercel** immutable cache header সহ Next.js static asset দিতে signed URL এবং edge caching ব্যবহার করে
 
 </div>

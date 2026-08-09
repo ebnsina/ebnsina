@@ -1,9 +1,9 @@
 ---
-title: 'Disaster Recovery — Roadmap'
-subtitle: 'RTO and RPO, pg_dump and WAL-G backups, restore drills, multi-region replication, and runbooks that work at 3am.'
+title: 'Disaster Recovery — রোডম্যাপ'
+subtitle: 'RTO আর RPO, pg_dump আর WAL-G ব্যাকআপ, restore drill, multi-region replication, আর রাত ৩টায় কাজ করে এমন runbook।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,20 +13,20 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Insurance: you buy it before you need it, you hope you never use it, and when you do need it the quality of the policy determines whether you recover or don't. A disaster recovery plan is your operational insurance — its value is entirely determined by whether it actually works when tested.
+ইন্স্যুরেন্স: দরকার হওয়ার আগেই কিনে রাখেন, আশা করেন কখনো ব্যবহার করতে হবে না, আর যখন সত্যিই দরকার পড়ে তখন পলিসিটা কতটা ভালো তার উপরই নির্ভর করে আপনি রিকভার করতে পারবেন কি না। একটা disaster recovery প্ল্যান হলো আপনার অপারেশনাল ইন্স্যুরেন্স — এর মূল্য পুরোপুরি নির্ভর করে টেস্ট করলে সেটা আসলেই কাজ করে কি না তার উপর।
 
 </Callout>
 
-## What you will learn
+## যা শিখবেন
 
-Most engineers think about disaster recovery the wrong way: as something you set up once and hope never matters. This track treats it as a practice — with measurable targets, regular drills, and runbooks that improve after every incident. You'll learn to derive RTO/RPO from business reality (not guesswork), implement continuous backup with WAL-G, test restores on a schedule before you need them, set up streaming replication across regions, and write runbooks that an engineer under pressure can actually follow.
+বেশিরভাগ ইঞ্জিনিয়ার disaster recovery নিয়ে ভুলভাবে ভাবেন: এমন কিছু যা একবার সেটআপ করে রেখে আশা করা হয় কখনো দরকার পড়বে না। এই ট্র্যাক এটাকে একটা প্র্যাকটিস হিসেবে দেখে — মাপা যায় এমন টার্গেট, নিয়মিত drill, আর প্রতিটা incident-এর পর যেগুলো আরও ভালো হয় এমন runbook দিয়ে। আপনি শিখবেন কীভাবে RTO/RPO বিজনেস বাস্তবতা থেকে বের করতে হয় (আন্দাজে নয়), WAL-G দিয়ে continuous backup চালু করতে হয়, দরকার পড়ার আগেই একটা শিডিউলে restore টেস্ট করতে হয়, region জুড়ে streaming replication সেটআপ করতে হয়, আর চাপের মধ্যে থাকা একজন ইঞ্জিনিয়ার আসলেই অনুসরণ করতে পারবে এমন runbook লিখতে হয়।
 
-## Chapters in this track
+## এই ট্র্যাকের চ্যাপ্টারগুলো
 
-1. **RTO, RPO, and What They Actually Mean** — deriving targets from business impact, recovery tiers, why untested plans fail
-2. **Backup Strategies** — pg_dump for snapshots, WAL-G for continuous PITR, retention policies, the 3-2-1 rule
-3. **Restore Drills** — automated weekly verification, full DR simulations, runbook structure, timing RTO
-4. **Multi-Region Replication** — streaming replication, sync vs async, Patroni for automated failover, cross-region architecture
-5. **Runbooks & Incident Response** — runbook structure, incident roles, communication cadence, blameless post-mortems
+1. **RTO, RPO, এবং এরা আসলে কী বোঝায়** — বিজনেস ইমপ্যাক্ট থেকে টার্গেট বের করা, recovery tier, কেন untested প্ল্যান ফেল করে
+2. **Backup Strategies** — snapshot-এর জন্য pg_dump, continuous PITR-এর জন্য WAL-G, retention policy, 3-2-1 রুল
+3. **Restore Drills** — অটোমেটেড সাপ্তাহিক verification, পূর্ণ DR simulation, runbook স্ট্রাকচার, RTO টাইমিং
+4. **Multi-Region Replication** — streaming replication, sync vs async, অটোমেটেড failover-এর জন্য Patroni, cross-region আর্কিটেকচার
+5. **Runbooks & Incident Response** — runbook স্ট্রাকচার, incident-এর রোল, communication cadence, blameless post-mortem

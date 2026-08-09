@@ -1,9 +1,9 @@
 ---
 title: 'Latency Thinking'
-subtitle: 'P50 vs P99 vs P999, the tail latency problem, latency budgets, and why averages hide the failures that matter most.'
+subtitle: 'P50 vs P99 vs P999, tail latency-র সমস্যা, latency budget, আর কেন average সবচেয়ে গুরুত্বপূর্ণ failure-গুলো লুকিয়ে ফেলে।'
 chapter: 1
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['latency', 'percentiles', 'P99', 'tail latency', 'latency budget', 'SLO']
 ---
 
@@ -11,17 +11,25 @@ topics: ['latency', 'percentiles', 'P99', 'tail latency', 'latency budget', 'SLO
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির বিয়ের ভোজ। উঠোনে লম্বা লাইনে অতিথিরা এগোচ্ছে — প্রথমে ভাত, তারপর কোরমা, শেষে মিষ্টি, তিনটে আলাদা স্টেশন একটার পর একটা। ইবনে সিনা সব ঠিকঠাক সাজিয়েছেন, কিন্তু কোরমার হাঁড়ি একটাই আর পরিবেশক ধীর — ভাতের স্টেশন সেকেন্ডে প্লেট ভরে দিলেও কী লাভ, পুরো লাইন কোরমার স্টেশনের গতিতেই এগোচ্ছে। একটা স্টেশন জ্যাম হয়ে গেলে গোটা লাইন থমকে দাঁড়িয়ে যায়, সবাই অপেক্ষা করে।
+
+ভোজ শেষে ইবনে সিনা গর্ব করে বললেন, "গড়ে সবাই তো দশ মিনিটেই খেয়ে নিয়েছে।" পাশ থেকে আল-খোয়ারিজমি মনে করিয়ে দিলেন — লাইনের একদম পেছনের হতভাগা কয়েকজন, ওই শেষ ১%, কোরমার হাঁড়ি বদলানোর সময় পড়ে গিয়ে পাক্কা এক ঘণ্টা দাঁড়িয়ে ছিল। গড় সংখ্যাটা ওই দুর্ভাগা অতিথিদের যন্ত্রণা পুরো ঢেকে দিয়েছিল। পরের বছর তাই ইবনে সিনা তিনটে খাবার আলাদা টেবিলে একসাথে পরিবেশনের ব্যবস্থা করলেন — অতিথিরা তিনটে লাইনে ভাগ হয়ে একই সময়ে খাবার নিতে লাগল, একটার পর একটা অপেক্ষার দিন শেষ।
+
+এই ভোজটাই আসলে **latency thinking**। পুরো লাইন যেমন সবচেয়ে ধীর স্টেশনের (কোরমা) গতিতে চলে, ঠিক তেমনি একটা request-এর মোট সময় তার সবচেয়ে ধীর ধাপটাই নির্ধারণ করে — তাই সবচেয়ে ধীর step-ই total latency-কে dominate করে। ইবনে সিনার "গড়ে দশ মিনিট" যেমন ওই ১% অতিথির এক ঘণ্টা লুকিয়ে ফেলেছিল, তেমনি average আসল যন্ত্রণা লুকায় — সেটা ধরতে হয় **tail latency** দেখে, মানে **p95**/**p99** (সবচেয়ে দুর্ভাগা ১% request)। আর একটার পর একটা (**sequential**) স্টেশনের বদলে তিনটে খাবার একসাথে (**parallel**) পরিবেশন করলে যেমন লাইন দ্রুত এগোয়, কোডেও স্বাধীন কাজগুলো parallel-এ চালালে মোট সময় কমে। বাস্তবে একটা page load-এ যদি দশটা API একসাথে ডাকা যায় sequential-এর বদলে, আর slowest service-টার p99 চেপে ধরা যায়, তাহলেই ইউজার পায় দ্রুত, স্থিতিশীল অভিজ্ঞতা।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A coffee shop that serves 1000 customers a day: the average wait is 3 minutes. But one customer waited 45 minutes because the espresso machine broke mid-order. The average tells you nothing about that customer's experience — and if you're Amazon, that customer is 1 in 1000 requests, which at scale means thousands of users per minute experiencing 45-minute waits. Percentiles tell you what the average hides.
+একটা coffee shop দিনে 1000 কাস্টমারকে সার্ভ করে: গড় অপেক্ষা 3 মিনিট। কিন্তু একজন কাস্টমার 45 মিনিট অপেক্ষা করেছিল কারণ order-এর মাঝপথে espresso মেশিন নষ্ট হয়ে গিয়েছিল। গড় তোমাকে সেই কাস্টমারের অভিজ্ঞতা সম্পর্কে কিছুই বলে না — আর তুমি যদি Amazon হও, সেই কাস্টমার হলো 1000 request-এর মধ্যে 1টা, যা scale-এ মানে প্রতি মিনিটে হাজার হাজার ইউজার 45 মিনিটের অপেক্ষা অনুভব করছে। গড় যা লুকায়, percentile তোমাকে সেটা বলে।
 
 </Callout>
 
-## Why Averages Lie
+## কেন Average মিথ্যা বলে
 
-Average response time of 50ms sounds good. But consider this distribution:
+50ms গড় response time শুনতে ভালোই লাগে। কিন্তু এই distribution-টা ভেবে দেখো:
 
 ```
 900 requests at 10ms   →  contributes 9000ms
@@ -32,20 +40,20 @@ Average response time of 50ms sounds good. But consider this distribution:
 1000 requests, 31500ms total → average: 31.5ms
 ```
 
-Average: 31.5ms. Looks fine. But 10% of users waited 100ms+, and 1 user waited 9 seconds.
+গড়: 31.5ms। দেখতে ঠিকঠাকই লাগে। কিন্তু 10% ইউজার 100ms+ অপেক্ষা করেছে, আর 1 জন ইউজার 9 সেকেন্ড অপেক্ষা করেছে।
 
-**Percentiles give the full picture:**
+**Percentile পুরো ছবিটা দেয়:**
 
-- P50 (median): 10ms — most requests are fast
-- P90: 100ms — 10% of requests here
-- P99: 500ms — 1% of requests here
-- P999: 9000ms — 0.1% of requests here
+- P50 (median): 10ms — বেশিরভাগ request দ্রুত
+- P90: 100ms — 10% request এখানে
+- P99: 500ms — 1% request এখানে
+- P999: 9000ms — 0.1% request এখানে
 
-## The Tail Latency Problem
+## Tail Latency-র সমস্যা
 
-At scale, rare percentiles affect many users.
+Scale-এ, বিরল percentile-গুলো অনেক ইউজারকে প্রভাবিত করে।
 
-If each user makes 10 requests per page load:
+প্রতিটা ইউজার যদি প্রতি page load-এ 10টা request করে:
 
 ```
 P(any request slow) = 1 - P(all requests fast)
@@ -56,13 +64,13 @@ P(any request slow) = 1 - P(all requests fast)
                     = 9.6%
 ```
 
-A P99 of 1% per request means ~10% of page loads hit at least one slow request. Your P99 becomes users' P10.
+প্রতি request-এ 1% P99 মানে ~10% page load কমপক্ষে একটা ধীর request-এ পড়ে। তোমার P99 হয়ে যায় ইউজারদের P10।
 
-At Amazon's scale: 100M requests/day × 1% P99 = 1M slow requests per day. Tail latency is a revenue problem.
+Amazon-এর scale-এ: 100M requests/day × 1% P99 = দিনে 1M ধীর request। Tail latency একটা revenue সমস্যা।
 
-## Latency Budgets
+## Latency Budget
 
-For a request that calls 5 services serially:
+এমন একটা request-এর জন্য যেটা 5টা service-কে serially কল করে:
 
 ```
 User request budget: 500ms
@@ -77,9 +85,9 @@ User request budget: 500ms
   └─ Response:           10ms
 ```
 
-If Payment service P99 is 300ms and you budget 300ms: fine at P99. But P999 of Payment is 2s — you've blown the budget for 0.1% of users.
+Payment service-এর P99 যদি 300ms হয় আর তুমি 300ms budget রাখো: P99-তে ঠিক আছে। কিন্তু Payment-এর P999 হলো 2s — তুমি 0.1% ইউজারের জন্য budget ফাটিয়ে ফেলেছ।
 
-**Serial vs parallel affects budget math:**
+**Serial vs parallel budget-এর অঙ্ককে প্রভাবিত করে:**
 
 ```
 // Serial — budgets add up
@@ -95,11 +103,11 @@ const [auth, order] = await Promise.all([
 // Total: 100ms (max of the two)
 ```
 
-Identify the critical path — the sequential chain of slowest operations. That's your floor. Everything else runs in parallel.
+Critical path শনাক্ত করো — সবচেয়ে ধীর operation-গুলোর sequential chain। সেটাই তোমার floor। বাকি সবকিছু parallel-এ চলে।
 
-## Measuring Latency Correctly
+## Latency সঠিকভাবে মাপা
 
-### In Code
+### কোডে
 
 ```typescript
 // Don't use Date.now() for sub-millisecond measurements
@@ -111,7 +119,7 @@ const elapsed = Number(process.hrtime.bigint() - start) / 1_000_000; // ms
 console.log(`${elapsed.toFixed(2)}ms`);
 ```
 
-### Histogram Buckets in Prometheus
+### Prometheus-এ Histogram Bucket
 
 ```typescript
 import { Histogram } from 'prom-client';
@@ -128,7 +136,7 @@ const httpDuration = new Histogram({
 // histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
 ```
 
-Bucket boundaries matter. If your SLO is 500ms, you need buckets around it (0.25, 0.5, 1.0) to get an accurate quantile estimate — Prometheus interpolates linearly between buckets.
+Bucket-এর সীমানা গুরুত্বপূর্ণ। তোমার SLO যদি 500ms হয়, একটা নির্ভুল quantile estimate পেতে তোমার তার আশেপাশে bucket দরকার (0.25, 0.5, 1.0) — Prometheus bucket-এর মধ্যে linearly interpolate করে।
 
 ### Load Testing
 
@@ -144,7 +152,7 @@ npx autocannon -c 100 -d 30 http://localhost:3000/api/orders
 oha -n 10000 -c 100 http://localhost:3000/api/orders
 ```
 
-Run under realistic concurrency — 10 concurrent users behave differently than 1000. Find where latency starts climbing.
+বাস্তবসম্মত concurrency-তে চালাও — 10 concurrent ইউজার 1000-এর থেকে আলাদাভাবে আচরণ করে। খুঁজে বের করো latency কোথায় থেকে উঠতে শুরু করে।
 
 ## Little's Law
 
@@ -152,23 +160,23 @@ Run under realistic concurrency — 10 concurrent users behave differently than 
 L = λ × W
 ```
 
-- `L` — average number of requests in the system (concurrency)
+- `L` — system-এ থাকা request-এর গড় সংখ্যা (concurrency)
 - `λ` — arrival rate (requests/sec)
-- `W` — average time a request spends in the system (latency)
+- `W` — একটা request system-এ কাটানো গড় সময় (latency)
 
-Rearranged: `W = L / λ`
+সাজিয়ে নিলে: `W = L / λ`
 
-If your server handles 100 concurrent requests and processes 200 req/sec:
+তোমার server যদি 100টা concurrent request handle করে আর 200 req/sec প্রসেস করে:
 
 ```
 W = 100 / 200 = 0.5 seconds average latency
 ```
 
-To halve latency without increasing throughput: reduce concurrency (queue fewer requests) or reduce `W` (make each request faster).
+Throughput না বাড়িয়ে latency অর্ধেক করতে: concurrency কমাও (কম request queue করো) অথবা `W` কমাও (প্রতিটা request দ্রুততর করো)।
 
-## The Four Latency Sources
+## চারটে Latency-র উৎস
 
-Every millisecond of latency comes from one of four places:
+Latency-র প্রতিটা millisecond চারটে জায়গার একটা থেকে আসে:
 
 **1. CPU computation**
 
@@ -178,7 +186,7 @@ Tool: Node.js --prof, Go pprof, async_hooks
 Fix: Algorithmic improvement, caching, moving work off the critical path
 ```
 
-**2. I/O wait (DB, external APIs)**
+**2. I/O wait (DB, external API)**
 
 ```
 Profile: Time spent waiting for responses
@@ -202,11 +210,11 @@ Tool: active connections vs server capacity, queue depth metrics
 Fix: Increase server capacity, reduce queue length, shed load early
 ```
 
-Most optimization time is in #2. Profile before guessing.
+বেশিরভাগ optimization-এর সময় খরচ হয় #2-তে। অনুমান করার আগে profile করো।
 
-## Latency vs Throughput Trade-Off
+## Latency vs Throughput ট্রেড-অফ
 
-Batching improves throughput but hurts latency:
+Batching throughput বাড়ায় কিন্তু latency-র ক্ষতি করে:
 
 ```typescript
 // No batching: each item processed immediately (low latency, low throughput)
@@ -228,10 +236,10 @@ async function handleRequest(item: Item) {
 }
 ```
 
-Batching trades latency (items wait up to 10ms) for throughput (100x fewer DB roundtrips).
+Batching latency-কে (item সর্বোচ্চ 10ms অপেক্ষা করে) throughput-এর (100x কম DB roundtrip) বিনিময়ে দেয়।
 
-Choose based on your workload:
+তোমার workload-এর ভিত্তিতে বেছে নাও:
 
-- User-facing API: optimize for latency (P99 SLO)
-- Bulk data processing: optimize for throughput (items/sec)
-- Analytics writes: batch aggressively (latency doesn't matter, throughput does)
+- User-facing API: latency-র জন্য optimize করো (P99 SLO)
+- Bulk data processing: throughput-এর জন্য optimize করো (items/sec)
+- Analytics write: আগ্রাসীভাবে batch করো (latency গুরুত্বপূর্ণ না, throughput গুরুত্বপূর্ণ)

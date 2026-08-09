@@ -1,9 +1,9 @@
 ---
 title: 'Observability & Production Gateway'
-subtitle: 'Access logs, distributed tracing, circuit breakers, and the operational checklist before putting a gateway in front of real traffic.'
+subtitle: 'Access log, distributed tracing, circuit breaker, আর আসল traffic-এর সামনে gateway বসানোর আগের operational checklist।'
 chapter: 6
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['observability', 'tracing', 'circuit breaker', 'Kong', 'production']
 ---
 
@@ -11,17 +11,25 @@ topics: ['observability', 'tracing', 'circuit breaker', 'Kong', 'production']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা একটা বিশাল ক্যাম্পাসের প্রধান গেটে দায়িত্বে আছেন। ক্যাম্পাসে ঢোকা-বেরোনোর আর কোনো পথ নেই — ছাত্র, শিক্ষক, ভিজিটর, ডেলিভারির লোক, সবাইকে এই একটাই গেট দিয়ে যেতে হয়। এই সুবিধাটা কাজে লাগিয়ে ইবনে সিনা একটা মোটা খাতা রাখেন — কে কখন ঢুকল, কখন বেরোলো, প্রতিটা এন্ট্রি-এক্সিট খাতায় লেখা। পাশে একটা তালি-বোর্ডও ঝোলানো — ঘণ্টায় কতজন এল, আর প্রতিজন ভেতরে কতক্ষণ কাটাল তার হিসাব।
+
+আর প্রতিটা ভিজিটরকে ঢোকার সময় একটা স্লিপ ধরিয়ে দেন, যাতে একটা ইউনিক ট্র্যাকিং নম্বর স্ট্যাম্প করা থাকে। ভেতরে ভিজিটর কোন বিল্ডিং, কোন রুমে গেল — সেই নম্বর ধরে পুরো পথটা পরে অনুসরণ করা যায়। যেহেতু ব্যতিক্রম ছাড়া প্রত্যেকেই এই একটা বিন্দু পেরিয়ে যায়, ইবনে সিনার গেট থেকেই গোটা ক্যাম্পাসের সব যাতায়াতের একটা সম্পূর্ণ, নিখুঁত ছবি পাওয়া যায়। আল-খোয়ারিজমি বা ফাতিমা আল-ফিহরি ভেতরে কোথায় আটকে গেছেন খুঁজতে হলে আলাদা করে প্রতিটা বিল্ডিংয়ে দৌড়াতে হয় না — গেটের রেকর্ডই যথেষ্ট।
+
+এই একটা গেটই আসলে API **gateway** — যেহেতু সব traffic এই একটা chokepoint দিয়ে যায়, observability-র জন্য এটাই সেরা জায়গা। খাতায় প্রতিটা এন্ট্রি-এক্সিট লেখা হলো request **logs**, ঘণ্টার তালি আর ভিজিটের সময়কাল হলো traffic/**latency**/error **metrics**, আর স্লিপে ট্র্যাকিং নম্বর স্ট্যাম্প করা হলো distributed **trace** শুরু করা। একটা বিন্দু থেকেই পুরো ছবি — logs + metrics + traces মিলে সব API traffic-এর complete **observability**। বাস্তবেও ঠিক তাই: gateway-তে বসানো logging, Prometheus metrics আর OpenTelemetry tracing মিলে production-এ পুরো API traffic-এর একটাই বিশ্বস্ত ভিউ দেয়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Air traffic control — not just directing planes (routing), but maintaining a real-time picture of every flight, detecting problems early, and having clear procedures when something goes wrong. The gateway in production is your ATC for API traffic.
+Air traffic control — শুধু প্লেন পরিচালনা (routing) নয়, বরং প্রতিটা ফ্লাইটের একটা রিয়েল-টাইম ছবি বজায় রাখা, সমস্যা আগেভাগে ধরা, আর কিছু ভুল হলে পরিষ্কার procedure থাকা। production-এ gateway হলো API traffic-এর জন্য আপনার ATC।
 
 </Callout>
 
 ## Access Logging
 
-Every request through the gateway should be logged with enough context to reconstruct what happened:
+gateway-র মধ্য দিয়ে যাওয়া প্রতিটা request যথেষ্ট context সহ log করা উচিত যাতে কী ঘটেছিল তা পুনর্গঠন করা যায়:
 
 ```nginx
 log_format gateway escape=json
@@ -41,7 +49,7 @@ log_format gateway escape=json
 access_log /var/log/nginx/gateway.log gateway;
 ```
 
-**Structured logs in Node.js gateway:**
+**Node.js gateway-তে structured log:**
 
 ```typescript
 import pino from 'pino';
@@ -71,7 +79,7 @@ function loggingMiddleware(req: Request, res: Response, next: NextFunction): voi
 
 ## Distributed Tracing
 
-Inject trace context so spans from the gateway and all downstream services appear in one trace:
+trace context inject করুন যাতে gateway আর সব downstream সার্ভিসের span একটাই trace-এ দেখা যায়:
 
 ```typescript
 import { trace, context, propagation } from '@opentelemetry/api';
@@ -106,11 +114,11 @@ function tracingMiddleware(req: Request, res: Response, next: NextFunction): voi
 }
 ```
 
-With this, your Jaeger or Tempo dashboard shows the full request path: gateway → service A → database, with latency at each hop.
+এটা থাকলে আপনার Jaeger বা Tempo dashboard পুরো request path দেখায়: gateway → service A → database, প্রতিটা hop-এ latency সহ।
 
 ## Circuit Breaker
 
-Prevent a slow/failing backend from cascading to gateway exhaustion:
+একটা ধীর/ব্যর্থ backend-কে gateway exhaustion পর্যন্ত ছড়িয়ে পড়া থেকে ঠেকান:
 
 ```typescript
 import CircuitBreaker from 'opossum';
@@ -147,7 +155,7 @@ async function proxyRequest(req: Request, res: Response): Promise<void> {
 
 ## Gateway Metrics
 
-Key metrics to expose and alert on:
+expose আর alert করার মতো গুরুত্বপূর্ণ metric:
 
 ```typescript
 import { Counter, Histogram, Registry } from 'prom-client';
@@ -176,12 +184,12 @@ app.get('/metrics', async (req, res) => {
 });
 ```
 
-**Alert thresholds:**
+**Alert threshold:**
 
-- Gateway p99 latency > 500ms: investigate upstream
-- Error rate (4xx + 5xx) > 5%: page on-call
-- Circuit breaker open: immediate page
-- Rate limit rejections spike: possible abuse or misconfiguration
+- Gateway p99 latency > 500ms: upstream তদন্ত করুন
+- Error rate (4xx + 5xx) > 5%: on-call-কে page করুন
+- Circuit breaker open: সঙ্গে সঙ্গে page
+- Rate limit rejection বেড়ে যাওয়া: সম্ভাব্য abuse বা misconfiguration
 
 ## Production Checklist
 
@@ -200,14 +208,14 @@ app.get('/metrics', async (req, res) => {
 □ Config changes tested in staging before production
 ```
 
-## Choosing a Gateway
+## একটা Gateway বেছে নেওয়া
 
-|               | nginx             | Traefik                      | Kong                     | AWS API Gateway       |
-| ------------- | ----------------- | ---------------------------- | ------------------------ | --------------------- |
-| Config        | Static files      | Dynamic (Docker labels, K8s) | Admin API + DB           | Console/Terraform     |
-| Auth          | Plugin            | Plugin                       | Built-in                 | Built-in              |
-| Rate limiting | Paid (nginx Plus) | Built-in                     | Built-in                 | Built-in              |
-| Best for      | High-perf proxy   | Docker/K8s native            | Feature-rich self-hosted | AWS-native serverless |
-| Ops burden    | Low               | Low                          | Medium                   | None                  |
+|               | nginx             | Traefik                     | Kong                     | AWS API Gateway       |
+| ------------- | ----------------- | --------------------------- | ------------------------ | --------------------- |
+| Config        | Static file       | Dynamic (Docker label, K8s) | Admin API + DB           | Console/Terraform     |
+| Auth          | Plugin            | Plugin                      | Built-in                 | Built-in              |
+| Rate limiting | Paid (nginx Plus) | Built-in                    | Built-in                 | Built-in              |
+| যার জন্য সেরা | High-perf proxy   | Docker/K8s native           | Feature-rich self-hosted | AWS-native serverless |
+| Ops-এর ঝামেলা | কম                | কম                          | মাঝারি                   | নেই                   |
 
-Start with nginx or Traefik. Graduate to Kong when you need the plugin ecosystem. Use managed (AWS/Cloudflare) when ops burden matters more than per-request cost.
+nginx বা Traefik দিয়ে শুরু করুন। plugin ecosystem দরকার হলে Kong-এ উঠুন। per-request খরচের চেয়ে ops-এর ঝামেলা বেশি গুরুত্বপূর্ণ হলে managed (AWS/Cloudflare) ব্যবহার করুন।

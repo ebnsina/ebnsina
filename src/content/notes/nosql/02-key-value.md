@@ -1,9 +1,9 @@
 ---
 title: 'Key-Value Stores'
-subtitle: 'The simplest NoSQL model: a giant distributed hash map. Redis, DynamoDB, TTL, and the workloads where nothing beats an O(1) lookup.'
+subtitle: 'সবচেয়ে সহজ NoSQL model: একটা বিশাল distributed hash map। Redis, DynamoDB, TTL, আর যেসব workload-এ একটা O(1) lookup-কে কেউ হারাতে পারে না।'
 chapter: 2
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['key-value', 'redis', 'dynamodb']
 ---
 
@@ -13,15 +13,23 @@ topics: ['key-value', 'redis', 'dynamodb']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A coat check at a theater. You hand over your coat and get a numbered ticket. The attendant doesn't care what's in your coat, doesn't search by color or size, and can't find "all the wool coats." But hand over ticket number 47 and your coat appears instantly. A key-value store is a coat check at planetary scale: give it the key, get the value, in one step — and ask it for nothing else.
+একটা থিয়েটারের coat check। তুমি তোমার coat জমা দাও আর একটা নম্বর দেওয়া ticket পাও। কর্মচারী তোয়াক্কা করে না তোমার coat-এ কী আছে, রং বা size দিয়ে খোঁজে না, আর "সব wool coat" খুঁজে বের করতে পারে না। কিন্তু ticket নম্বর 47 জমা দাও আর তোমার coat সাথে সাথে হাজির। একটা key-value store হলো গ্রহ-স্কেলে একটা coat check: এটাকে key দাও, value নাও, এক ধাপে — আর এর কাছে আর কিছু চেয়ো না।
 
 </Callout>
 
-## The Model
+## গল্পে বুঝি
 
-A key-value store is conceptually a hash map. Each entry is a unique **key** mapped to a **value**. The store treats the value as opaque — it does not look inside it, index it, or let you query by its contents.
+বাস স্ট্যান্ডের কোণায় একটা মালপত্র জমা রাখার কাউন্টার — লেফট-লাগেজ কাউন্টার। আল-খোয়ারিজমি দূরের বাসে ওঠার আগে তার ভারী ব্যাগটা কাউন্টারে জমা দিল। কর্মচারী ব্যাগটা তাকের নির্দিষ্ট একটা খোপে রেখে আল-খোয়ারিজমির হাতে একটা নম্বর লেখা টোকেন ধরিয়ে দিল — ৪৭। ব্যাগে কী আছে, কী রং, কতটা ভারী — কিছুই কাউন্টারের খাতায় ওঠে না। শুধু টোকেন নম্বর আর খোপ, ব্যস।
+
+ঘণ্টা তিনেক পর আল-খোয়ারিজমি ফিরে এসে টোকেন ৪৭ কাউন্টারে দিল, আর কর্মচারী এক সেকেন্ডেই ৪৭ নম্বর খোপ থেকে ব্যাগটা বের করে দিল — পুরো তাক হাতড়াতে হলো না। কিন্তু ধরো ফাতিমা আল-ফিহরি এসে বলল "আমার কালো ব্যাগটা খুঁজে দিন তো", টোকেন হারিয়ে ফেলেছে — কর্মচারী অসহায়। কালো ব্যাগ, বড় ব্যাগ, চেন লাগানো ব্যাগ — এভাবে খোঁজার কোনো ব্যবস্থাই নেই। টোকেন থাকলে সব, টোকেন নেই তো কিছুই না।
+
+এই কাউন্টারটাই আসলে একটা **key-value store**। টোকেন নম্বর হলো **key**, খোপে রাখা ব্যাগটা হলো **value**। সঠিক key দিলে এক ধাপেই — O(1) lookup — value পাওয়া যায়, তাক ঘেঁটে নয়। আর value-র ভেতরের content দিয়ে (রং, আকার) কখনো খোঁজা যায় না — no query by value, শুধু exact key দিয়ে fetch। বাস্তবে Redis-এ ঠিক এভাবেই user session রাখা হয়: session ID হলো টোকেন (key), session-এর তথ্য হলো ব্যাগ (value), আর ওই ID দিয়ে সাথে সাথে user-কে চিনে নেওয়া যায় — একই ভাবে cache-এও ব্যয়বহুল query-র ফলাফল এক key-র নিচে রেখে পরের বার সরাসরি তুলে আনা হয়।
+
+## Model
+
+একটা key-value store ধারণাগতভাবে একটা hash map। প্রতিটা entry হলো একটা unique **key**, যেটা একটা **value**-এর সাথে map করা। store value-কে opaque হিসেবে ধরে — এটা এর ভেতরে তাকায় না, index করে না, বা তোমাকে এর content দিয়ে query করতে দেয় না।
 
 ```text
 "user:1042"           → {"name": "Zubaida", "tier": "gold"}
@@ -29,21 +37,21 @@ A key-value store is conceptually a hash map. Each entry is a unique **key** map
 "ratelimit:ip:1.2.3.4"→ 47
 ```
 
-This radical simplicity is the whole point. With no query planner, no joins, and no schema, the store can be brutally fast and trivially partitioned: hash the key, and that determines which node owns it. Add nodes, rebalance the hash ranges, and you have linear horizontal scaling.
+এই চরম সরলতাই পুরো ব্যাপারটা। কোনো query planner, কোনো join, আর কোনো schema না থাকায়, store নির্মমভাবে দ্রুত আর অনায়াসে partition করা যায়: key-কে hash করো, আর সেটাই ঠিক করে দেয় কোন node এটার মালিক। node যোগ করো, hash range rebalance করো, আর তুমি পেয়ে গেলে linear horizontal scaling।
 
-## Access Patterns
+## Access Pattern
 
-A key-value store supports essentially three operations:
+একটা key-value store মূলত তিনটা operation সমর্থন করে:
 
-- `GET key` — fetch the value for a key.
-- `PUT key value` (or `SET`) — store or overwrite a value.
-- `DELETE key` — remove a key.
+- `GET key` — একটা key-এর value fetch করা।
+- `PUT key value` (বা `SET`) — একটা value store বা overwrite করা।
+- `DELETE key` — একটা key মুছে ফেলা।
 
-That is the contract. There is no "find all values where tier = gold" — to support a query, you must build the index yourself by writing an extra key (for example a set named `tier:gold` listing member keys). This is your first taste of NoSQL data modeling: **if you need to look something up, you must store it under a key shaped like the question you'll ask.**
+এটাই contract। "tier = gold যেসব value সব খুঁজে বের করো" বলে কিছু নেই — একটা query সমর্থন করতে হলে, তোমাকে নিজেই index বানাতে হবে একটা বাড়তি key লিখে (উদাহরণস্বরূপ `tier:gold` নামের একটা set যেটা member key-গুলোর তালিকা রাখে)। এটাই NoSQL data modeling-এর তোমার প্রথম স্বাদ: **যদি তোমার কিছু খুঁজে বের করতে হয়, তাহলে তুমি যে প্রশ্ন করবে সেই আকারের একটা key-এর নিচে সেটা store করতে হবে।**
 
 ## Redis
 
-Redis is an in-memory key-value store, prized for sub-millisecond latency. Its twist is that values are not just opaque blobs — they are **typed data structures**: strings, hashes, lists, sets, sorted sets, and more. This makes it far more than a cache.
+Redis একটা in-memory key-value store, sub-millisecond latency-র জন্য খুব সমাদৃত। এর মোচড় হলো value শুধু opaque blob নয় — এগুলো হলো **typed data structure**: string, hash, list, set, sorted set, আর আরও অনেক। এটা একে একটা cache-এর চেয়ে অনেক বেশি করে তোলে।
 
 ```text
 # String — a counter
@@ -63,13 +71,13 @@ LPUSH jobs "send-email:42"
 RPOP jobs                     → "send-email:42"
 ```
 
-Because Redis holds data in RAM, it is fast but bounded by memory size, and durability requires care (it offers snapshot and append-only-log persistence). Treat it as a high-speed working set, not your system of record, unless you have deliberately configured durability.
+যেহেতু Redis data RAM-এ ধরে রাখে, এটা দ্রুত কিন্তু memory-র আকার দিয়ে সীমাবদ্ধ, আর durability-র জন্য যত্ন লাগে (এটা snapshot আর append-only-log persistence দেয়)। এটাকে একটা high-speed working set হিসেবে ধরো, তোমার system of record নয়, যদি না তুমি ইচ্ছাকৃতভাবে durability configure করে থাকো।
 
 ## DynamoDB
 
-DynamoDB is AWS's managed key-value (and document) store. Unlike Redis, it is disk-backed, durable, and scales to enormous size with predictable single-digit-millisecond latency. Its data lives on SSDs across many partitions, and AWS handles replication and partitioning for you.
+DynamoDB হলো AWS-এর managed key-value (আর document) store। Redis-এর মতো নয়, এটা disk-backed, durable, আর predictable single-digit-millisecond latency-সহ বিশাল আকারে scale করে। এর data অনেক partition জুড়ে SSD-তে থাকে, আর AWS তোমার হয়ে replication আর partitioning সামলায়।
 
-DynamoDB's key is richer than a single string. Each item has a **partition key** (which node/partition holds it) and an optional **sort key** (ordering within a partition). This lets one "key" address a _range_ of related items — the foundation of single-table design, covered in chapter 6.
+DynamoDB-র key একটা single string-এর চেয়ে সমৃদ্ধ। প্রতিটা item-এর একটা **partition key** (কোন node/partition এটা ধরে রাখে) আর একটা optional **sort key** (একটা partition-এর ভেতরে ordering) থাকে। এটা একটা "key"-কে সম্পর্কিত item-এর একটা _range_ address করতে দেয় — single-table design-এর ভিত্তি, chapter 6-এ আলোচিত।
 
 ```json
 {
@@ -82,13 +90,13 @@ DynamoDB's key is richer than a single string. Each item has a **partition key**
 
 <Callout type="tip">
 
-**Note:** Redis and DynamoDB occupy different niches. Redis is an in-memory accelerator — wickedly fast, memory-bound, often paired with another database. DynamoDB is a durable primary store that scales to terabytes with a managed operations story. "Key-value store" describes both, but you choose between them for very different reasons.
+**নোট:** Redis আর DynamoDB আলাদা জায়গা দখল করে। Redis একটা in-memory accelerator — ভয়ানক দ্রুত, memory-bound, প্রায়ই আরেকটা database-এর সাথে জোড়া লাগানো। DynamoDB একটা durable primary store যা managed operations story-সহ terabyte পর্যন্ত scale করে। "Key-value store" দুটোকেই বর্ণনা করে, কিন্তু তুমি খুব ভিন্ন কারণে এদের মধ্যে বেছে নাও।
 
 </Callout>
 
 ## TTL — Time To Live
 
-Most key-value stores let you attach an expiry to a key. After the TTL elapses, the store deletes the key automatically. This is the killer feature for ephemeral data — you never have to write a cleanup job.
+বেশিরভাগ key-value store তোমাকে একটা key-এর সাথে একটা expiry জুড়তে দেয়। TTL পার হয়ে গেলে, store নিজে থেকেই key মুছে ফেলে। ক্ষণস্থায়ী data-র জন্য এটাই killer feature — তোমাকে কখনো একটা cleanup job লিখতে হয় না।
 
 ```text
 # Redis: set a key that self-destructs in 1 hour
@@ -98,15 +106,15 @@ SET session:abc123 "{...}" EX 3600
 TTL session:abc123            → 3599
 ```
 
-DynamoDB has the same idea via a designated TTL attribute holding a Unix timestamp; AWS deletes expired items in the background. TTL turns sessions, caches, one-time tokens, and rate-limit windows into self-maintaining data.
+DynamoDB-তে একই ধারণা আছে একটা নির্দিষ্ট TTL attribute-এর মাধ্যমে যেটা একটা Unix timestamp ধরে রাখে; AWS মেয়াদোত্তীর্ণ item-গুলো background-এ মুছে ফেলে। TTL session, cache, one-time token, আর rate-limit window-কে self-maintaining data-তে পরিণত করে।
 
-## Common Uses
+## সাধারণ ব্যবহার
 
-**Caching.** The original use case: store the result of an expensive query or computation under a key, with a TTL. Future requests hit the cache instead of the database. (The Caching track covers the strategies and pitfalls in depth.)
+**Caching।** মূল use case: একটা ব্যয়বহুল query বা computation-এর ফলাফল একটা key-এর নিচে store করা, একটা TTL-সহ। পরবর্তী request database-এর বদলে cache-এ গিয়ে লাগে। (Caching track strategy আর pitfall-গুলো গভীরভাবে দেখায়।)
 
-**Sessions.** Web sessions are pure key-value: the session ID is the key, the session blob is the value, and a TTL handles expiry. Storing sessions in Redis instead of application memory lets you scale your web servers horizontally without sticky sessions.
+**Sessions।** Web session বিশুদ্ধ key-value: session ID হলো key, session blob হলো value, আর একটা TTL expiry সামলায়। session application memory-র বদলে Redis-এ রাখলে তুমি sticky session ছাড়াই তোমার web server-গুলোকে horizontally scale করতে পারো।
 
-**Rate limiting.** A counter per client per time window, with the window length as the TTL.
+**Rate limiting।** প্রতি client প্রতি time window-এ একটা counter, window-এর দৈর্ঘ্যকে TTL হিসেবে দিয়ে।
 
 ```text
 # Increment, and on first hit set a 60s window
@@ -115,10 +123,10 @@ EXPIRE ratelimit:user:1042 60
 # If the value exceeds your limit, reject the request
 ```
 
-**Feature flags, leaderboards, distributed locks, pub/sub.** Redis's data structures make all of these a few commands.
+**Feature flag, leaderboard, distributed lock, pub/sub।** Redis-এর data structure এগুলো সবকটাকে কয়েকটা command-এর ব্যাপার বানিয়ে দেয়।
 
-## Limitations
+## সীমাবদ্ধতা
 
-The strengths are the weaknesses. A key-value store gives you no way to query by value, no joins, no aggregations, and no schema enforcement. If you find yourself wanting "all sessions for users in the gold tier," you have outgrown the model — or you must denormalize that query into its own key.
+শক্তিগুলোই দুর্বলতা। একটা key-value store তোমাকে value দিয়ে query করার, join করার, aggregation করার, বা schema enforcement-এর কোনো উপায় দেয় না। যদি তুমি নিজেকে "gold tier-এর user-দের সব session" চাইতে দেখো, তাহলে তুমি model-এর সীমা ছাড়িয়ে গেছ — নয়তো তোমাকে সেই query-টাকে তার নিজের একটা key-তে denormalize করতে হবে।
 
-It also offers weak built-in relationships. Modeling a one-to-many relationship means maintaining a key whose value is a list of other keys, and keeping that list in sync by hand. When relationships and richer queries dominate, a document or graph store is the better fit. Use key-value stores for what they do best: fast, simple lookups by a known key.
+এটা দুর্বল built-in relationship-ও দেয়। একটা one-to-many relationship model করা মানে একটা key বজায় রাখা যার value হলো অন্য key-গুলোর একটা list, আর সেই list হাতে হাতে sync রাখা। যখন relationship আর সমৃদ্ধতর query-ই প্রাধান্য পায়, তখন একটা document বা graph store বেশি মানানসই। key-value store যা সবচেয়ে ভালো করে তার জন্যই ব্যবহার করো: একটা জানা key দিয়ে দ্রুত, সহজ lookup।

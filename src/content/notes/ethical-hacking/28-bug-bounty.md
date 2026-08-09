@@ -1,9 +1,9 @@
 ---
 title: 'Bug Bounty'
-subtitle: 'Methodology, platform selection, recon automation, high-value target selection, triaging, and earning consistently on HackerOne and Bugcrowd.'
+subtitle: 'Methodology, platform নির্বাচন, recon automation, high-value target বাছাই, triaging, এবং HackerOne ও Bugcrowd-এ নিয়মিত আয় করা।'
 chapter: 28
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
     'bug bounty',
@@ -22,11 +22,19 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Bug bounty is consulting with a variable fee — you only get paid for results, but the client is every company with a program simultaneously. The hunters who earn consistently aren't lucky; they're systematic and faster than everyone else.
+Bug bounty হলো variable fee-তে করা consulting — আপনি শুধু result-এর জন্য টাকা পান, কিন্তু ক্লায়েন্ট হলো একসাথে প্রোগ্রাম আছে এমন প্রতিটা কোম্পানি। যেসব hunter নিয়মিত আয় করে তারা ভাগ্যবান নয়; তারা systematic এবং বাকি সবার চেয়ে দ্রুত।
 
 </Callout>
+
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির বাজারের মাঝখানে একটা বড় দোকান — কাপড়, মশলা, দামি জিনিসপত্র সব রাখা। একদিন সে দোকানের সামনে একটা নোটিশ ঝুলিয়ে দিল: "যদি কেউ আমার দোকানে ঢোকার কোনো ফাঁক খুঁজে পাও, চুরি না করে আমাকে চুপিচুপি বলে দাও — আমি ভালো পুরস্কার দেব। ডাকাতি কোরো না, রিপোর্ট করো।" নোটিশে আরও লেখা ছিল কিছু স্পষ্ট নিয়ম: শুধু এই একটা দোকানই পরীক্ষা করা যাবে, ফাঁকটা একান্তে মালিককে জানাতে হবে, আর আসলে কিছু নেওয়া বা ভাঙা যাবে না।
+
+কয়েকদিন পরেই ইবনে সিনা নামের এক চালাক ছেলে খেয়াল করল, দোকানের পেছনের একটা জানালার ছিটকিনি নড়বড়ে — একটু চাপ দিলেই খুলে যায়। আগে হলে হয়তো লোভে পড়ে রাতে ঢুকে যেত। কিন্তু এবার সে সোজা মালিকের কাছে গিয়ে জানালাটার কথা বলল। আল-খোয়ারিজমি খুশি হয়ে তাকে ন্যায্য পুরস্কার দিল, বাজারে সবার সামনে ধন্যবাদ জানাল, আর সেই রাতেই জানালাটা মেরামত করিয়ে ফেলল — আসল কোনো চোর টের পাওয়ার আগেই। এমনকি ফাতিমা আল-ফিহরিও পরে আরেকটা দুর্বল তালা খুঁজে একইভাবে রিপোর্ট করে পুরস্কার নিল।
+
+এই গল্পটাই আসলে **bug bounty**। দোকানের সামনের সেই "ফাঁক খুঁজে জানাও, পুরস্কার নাও" নোটিশটাই হলো একটা bug bounty program — কোম্পানি নিজেই researcher-দের আমন্ত্রণ জানায় দুর্বলতা খুঁজতে। নড়বড়ে জানালা চুরি না করে একান্তে মালিককে জানিয়ে পুরস্কার নেওয়াটাই **responsible disclosure** আর তার **reward**। নোটিশের স্পষ্ট নিয়মগুলোই হলো **rules of engagement** আর **scope** — কোনটা পরীক্ষা করা যাবে, কীভাবে রিপোর্ট করতে হবে। এভাবেই যে লোভে পড়ে চোর হতে পারত, তাকে বরং টাকার বিনিময়ে defender বানিয়ে ফেলা হয়, আর আসল অপরাধী খুঁজে পাওয়ার আগেই ফাঁকটা fix হয়ে যায়। বাস্তবে HackerOne-এর মতো প্ল্যাটফর্ম ঠিক এই কাজটাই করে — হাজার হাজার কোম্পানি সেখানে নোটিশ ঝুলিয়ে রাখে, আর দুনিয়াজুড়ে researcher-রা দুর্বলতা খুঁজে responsibly রিপোর্ট করে পুরস্কার পায়।
 
 ## Bug Bounty Platforms
 
@@ -84,7 +92,7 @@ Reading a program:
 
 ## Recon Automation
 
-Speed is the competitive advantage in bug bounty. Automate everything repetitive.
+Bug bounty-তে গতিই হলো competitive advantage। যা কিছু বারবার করতে হয় তার সবকিছু automate করুন।
 
 ```bash
 # Subfinder — passive subdomain enumeration
@@ -172,7 +180,7 @@ Low ($):
 
 ## Bug Chains — Turning Low into Critical
 
-Combining low-severity bugs to create high-severity impact:
+low-severity bug-গুলো একসাথে জুড়ে high-severity impact তৈরি করা:
 
 ```
 Example 1: Open Redirect + OAuth

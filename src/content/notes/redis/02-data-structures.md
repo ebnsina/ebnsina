@@ -1,9 +1,9 @@
 ---
 title: 'Core Data Structures'
-subtitle: 'Strings, hashes, lists, sets, sorted sets — and the specialized types that ride on top of them.'
+subtitle: 'Strings, hashes, lists, sets, sorted sets — এবং যেসব বিশেষায়িত type এগুলোর উপর ভর করে চলে।'
 chapter: 2
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['strings', 'hashes', 'lists', 'sets', 'sorted sets']
 ---
 
@@ -11,11 +11,19 @@ topics: ['strings', 'hashes', 'lists', 'sets', 'sorted sets']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The reason to choose Redis over a plain memory cache is that its values are not opaque blobs — they are data structures the server understands. Picking the right one turns a multi-step application loop into a single atomic command. This chapter walks the five core types and the three specialized ones, with commands, a real use, and the time complexity that matters when collections grow.
+একটা সাধারণ memory cache-এর বদলে Redis বেছে নেওয়ার কারণ হলো এর values অস্বচ্ছ blob নয় — এগুলো data structure যা server বোঝে। সঠিকটা বেছে নেওয়া একটা multi-step application loop-কে একটা single atomic command-এ পরিণত করে। এই অধ্যায় পাঁচটা core type আর তিনটা বিশেষায়িত type ঘুরে দেখে, command, একটা বাস্তব ব্যবহার, এবং collection বড় হলে যে time complexity গুরুত্বপূর্ণ হয়ে ওঠে তা সহ।
+
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির একটা স্টেশনারি-হার্ডওয়্যারের দোকান, আর তার কাউন্টারের ডেস্ক-অর্গানাইজারটাই পুরো দোকান চালানোর মগজ। ডেস্কের ঠিক সামনে একটা পিনবোর্ডে একটাই কাগজ সাঁটা — আজকের ডলারের রেট। একটাই মান, দরকার হলে খুলে নতুন রেট লিখে আবার সাঁটে। ডান পাশে একটা লোহার শিক (স্পাইক), খদ্দেরদের অর্ডার-স্লিপ যে ক্রমে আসে সেই ক্রমেই গেঁথে জমে; আল-খোয়ারিজমি নিচের দিক থেকে একটা করে তুলে সিরিয়ালি কাজ সারে। এর পাশে কাঠের পিজিয়ন-হোল — প্রতিটা খোপে একটা লেবেল আর তার বিপরীতে একটা মান: "সাপ্লায়ার-ফোন", "দোকান-ঠিকানা", "লাইসেন্স-নম্বর"। একটা খোপের মান বদলাতে বাকিগুলো ছুঁতেও হয় না।
+
+আরও দুটো জিনিস আছে। একটা টিনের বাক্সে আল-খোয়ারিজমি আজ যেসব পাইকারের কাছ থেকে মাল তুলেছে তাদের নাম ফেলে রাখে — একই নাম দুবার ফেললে বাক্স সেটা নেয় না, তাই ভেতরে সবসময় ইউনিক নামগুলোই থাকে, ক্রম নিয়ে মাথাব্যথা নেই। আর দেয়ালে ঝোলানো একটা স্কোরবোর্ড — কোন পণ্য এ মাসে কত বিক্রি হলো, পয়েন্ট অনুযায়ী উপর থেকে নিচে সাজানো; নতুন বিক্রি যোগ হলেই বোর্ড নিজে থেকে ক্রম ঠিক করে নেয়, ফলে "টপ ৫ বেস্টসেলার" এক নজরেই দেখা যায়।
+
+এই অর্গানাইজারটাই আসলে Redis-এর data structure-গুলো। পিনবোর্ডের একলা কাগজ হলো **string** — একটা key, একটা value (রেট, counter, cache করা page)। শিকে গাঁথা স্লিপ হলো **list** — ক্রম রক্ষা করা queue, যেমন background job queue। লেবেল করা পিজিয়ন-হোল হলো **hash** — এক object-এর field→value জোড়া, যেমন পুরো user profile। ডুপ্লিকেট ফিরিয়ে দেওয়া বাক্স হলো **set** — ইউনিক আইটেম, যেমন unique visitor বা tag। আর পয়েন্টে সাজানো স্কোরবোর্ড হলো **sorted set** — প্রতিটা member-এর একটা score, যেমন game leaderboard বা priority queue। প্রতিটা খোপ আলাদা কাজের জন্য বানানো — সঠিকটা বেছে নেওয়াই আসল কাজ।
 
 ## Strings
 
-The simplest type: a key mapped to a value up to 512 MB. Despite the name, a string can hold text, a serialized JSON document, a number, or raw bytes. Numeric strings get atomic increment and decrement.
+সবচেয়ে সরল type: একটা key যা 512 MB পর্যন্ত একটা value-তে map করা। নাম যা-ই হোক, একটা string text, একটা serialized JSON document, একটা number, বা raw bytes ধরে রাখতে পারে। numeric string atomic increment আর decrement পায়।
 
 ```text
 127.0.0.1:6379> SET user:1042:name "Lubna of Cordoba"
@@ -32,13 +40,13 @@ OK
 OK
 ```
 
-**Real-world use:** caching a rendered page or a serialized object, and atomic counters for page views, API rate limits, or unique ID generation. `SET key value EX 30 NX` sets a value only if absent with a 30-second expiry — the foundation of a lock (chapter 6).
+**বাস্তব ব্যবহার:** একটা rendered page বা একটা serialized object cache করা, এবং page view, API rate limit, বা unique ID generation-এর জন্য atomic counter। `SET key value EX 30 NX` একটা value শুধু তখনই সেট করে যদি সেটা অনুপস্থিত থাকে, একটা 30-সেকেন্ড expiry সহ — একটা lock-এর ভিত্তি (অধ্যায় 6)।
 
-**Complexity:** `GET`/`SET`/`INCR` are O(1).
+**Complexity:** `GET`/`SET`/`INCR` হলো O(1)।
 
 ## Hashes
 
-A hash is a map of field-value pairs stored under one key — like a small object. Instead of serializing a whole user into one string, store fields individually so you can read or update one without touching the rest.
+একটা hash হলো একটা key-এর অধীনে সংরক্ষিত field-value জোড়ার একটা map — একটা ছোট object-এর মতো। একটা পুরো user-কে একটা string-এ serialize করার বদলে, field-গুলো আলাদা করে রাখো যাতে বাকিটা না ছুঁয়ে তুমি একটা পড়তে বা update করতে পারো।
 
 ```text
 127.0.0.1:6379> HSET user:1042 name "Lubna of Cordoba" age 36 city "Baghdad"
@@ -56,13 +64,13 @@ A hash is a map of field-value pairs stored under one key — like a small objec
 6) "Baghdad"
 ```
 
-**Real-world use:** representing objects (a user profile, a product, a session) where you update single fields. Small hashes are memory-efficient because Redis packs them into a compact encoding.
+**বাস্তব ব্যবহার:** object (একটা user profile, একটা product, একটা session) উপস্থাপন করা যেখানে তুমি single field update করো। ছোট hash memory-efficient কারণ Redis এগুলোকে একটা compact encoding-এ প্যাক করে।
 
-**Complexity:** `HGET`/`HSET`/`HINCRBY` are O(1); `HGETALL` is O(N) in the number of fields.
+**Complexity:** `HGET`/`HSET`/`HINCRBY` হলো O(1); `HGETALL` হলো field-সংখ্যায় O(N)।
 
 ## Lists
 
-A list is an ordered sequence of strings, implemented as a linked list, so pushing and popping at either end is cheap. This makes it a natural queue or stack.
+একটা list হলো string-এর একটা ordered sequence, একটা linked list হিসেবে বাস্তবায়িত, তাই যেকোনো প্রান্তে push আর pop করা সস্তা। এটা একে একটা স্বাভাবিক queue বা stack বানায়।
 
 ```text
 127.0.0.1:6379> LPUSH tasks "send-email" "resize-image"
@@ -79,13 +87,13 @@ A list is an ordered sequence of strings, implemented as a linked list, so pushi
 (integer) 2
 ```
 
-**Real-world use:** simple job queues (`LPUSH` to enqueue, `BRPOP` to block-and-wait for work), recent-activity feeds, and capped logs trimmed with `LTRIM`.
+**বাস্তব ব্যবহার:** সরল job queue (enqueue করতে `LPUSH`, কাজের জন্য block-and-wait করতে `BRPOP`), recent-activity feed, এবং `LTRIM` দিয়ে ছেঁটে রাখা capped log।
 
-**Complexity:** push/pop at the ends are O(1). `LINDEX` and `LRANGE` are O(N) toward the middle, so do not treat a list like a random-access array.
+**Complexity:** প্রান্তে push/pop হলো O(1)। `LINDEX` আর `LRANGE` মাঝের দিকে O(N), তাই একটা list-কে random-access array-এর মতো ট্রিট করো না।
 
 ## Sets
 
-An unordered collection of unique strings. Adding a duplicate is a no-op, and membership tests are constant time. The standout feature is server-side set algebra.
+unique string-এর একটা unordered collection। একটা duplicate যোগ করা একটা no-op, এবং membership test constant time। বিশেষ ফিচারটা হলো server-side set algebra।
 
 ```text
 127.0.0.1:6379> SADD article:99:tags redis cache database
@@ -100,13 +108,13 @@ An unordered collection of unique strings. Adding a duplicate is a no-op, and me
 1) "redis"
 ```
 
-**Real-world use:** tags, unique visitor tracking, "users who did X," and relationships. `SINTER`, `SUNION`, and `SDIFF` compute intersections, unions, and differences in the server — for example, mutual friends or common tags.
+**বাস্তব ব্যবহার:** tags, unique visitor tracking, "যেসব user X করেছে," এবং সম্পর্ক। `SINTER`, `SUNION`, আর `SDIFF` server-এ intersection, union, আর difference হিসাব করে — যেমন, mutual friends বা common tags।
 
-**Complexity:** `SADD`/`SISMEMBER` are O(1); `SINTER` is roughly O(N\*M) across set sizes, so be careful intersecting very large sets.
+**Complexity:** `SADD`/`SISMEMBER` হলো O(1); `SINTER` set আকার জুড়ে মোটামুটি O(N\*M), তাই খুব বড় set intersect করার সময় সতর্ক থাকো।
 
 ## Sorted sets (ZSET)
 
-The most powerful core type: a set where every member carries a floating-point **score**, and members are kept ordered by that score. You get uniqueness, ordering, and range queries at once.
+সবচেয়ে শক্তিশালী core type: একটা set যেখানে প্রতিটা member একটা floating-point **score** বহন করে, এবং member-গুলো সেই score অনুযায়ী ordered থাকে। তুমি একসাথে uniqueness, ordering, আর range query পাও।
 
 ```text
 127.0.0.1:6379> ZADD leaderboard 100 fatima 250 omar 175 maryam
@@ -128,23 +136,23 @@ The most powerful core type: a set where every member carries a floating-point *
 3) "omar"
 ```
 
-**Real-world use:** leaderboards and rankings, priority queues (score = priority), rate limiters and time-series windows (score = timestamp, then `ZRANGEBYSCORE` or `ZREMRANGEBYSCORE` to expire old entries).
+**বাস্তব ব্যবহার:** leaderboard আর ranking, priority queue (score = priority), rate limiter আর time-series window (score = timestamp, তারপর পুরনো entry expire করতে `ZRANGEBYSCORE` বা `ZREMRANGEBYSCORE`)।
 
-**Complexity:** `ZADD` and rank/range lookups are O(log N) plus the size of the result — the backing skip list is why this type can do ordered queries that lists and sets cannot.
+**Complexity:** `ZADD` এবং rank/range lookup হলো O(log N) প্লাস ফলাফলের আকার — পেছনের skip list-এর কারণেই এই type এমন ordered query করতে পারে যা list আর set পারে না।
 
 <Callout type="tip">
 
-**Note:** When a task feels like "keep the top N" or "give me everything between two values," reach for a sorted set first. The score is whatever you want to order by — points, timestamps, priority — and Redis keeps it sorted for free on every write.
+**নোট:** যখন একটা কাজ "top N রাখো" বা "দুটো value-এর মধ্যে সবকিছু দাও"-এর মতো মনে হয়, প্রথমেই একটা sorted set-এর দিকে যাও। score হলো যা দিয়ে তুমি order করতে চাও — point, timestamp, priority — এবং Redis প্রতিটা write-এ বিনামূল্যে এটা sorted রাখে।
 
 </Callout>
 
-## Specialized structures
+## বিশেষায়িত structure
 
-Three more types build on strings and sets to solve specific problems with very little memory.
+আরও তিনটা type string আর set-এর উপর ভর করে খুব সামান্য memory দিয়ে নির্দিষ্ট সমস্যা সমাধান করে।
 
 ### Bitmaps
 
-Not a separate type but bit-level operations on a string. Each bit is addressed by offset, so a million users fit in 125 KB.
+আলাদা কোনো type নয় বরং একটা string-এর উপর bit-level অপারেশন। প্রতিটা bit offset দিয়ে address করা, তাই এক মিলিয়ন user 125 KB-তে ধরে।
 
 ```text
 127.0.0.1:6379> SETBIT active:2026-06-16 1042 1
@@ -155,11 +163,11 @@ Not a separate type but bit-level operations on a string. Each bit is addressed 
 (integer) 1
 ```
 
-**Use:** daily active users, feature flags per user ID, and any large boolean array. `BITOP` combines days with AND/OR to answer "active on both days."
+**ব্যবহার:** daily active user, user ID অনুযায়ী feature flag, এবং যেকোনো বড় boolean array। `BITOP` দিনগুলোকে AND/OR দিয়ে মিলিয়ে "দুই দিনেই active" এর উত্তর দেয়।
 
 ### HyperLogLog
 
-A probabilistic structure that counts **unique** items using a fixed ~12 KB regardless of cardinality, with about 0.81% error. It trades exactness for tiny, constant memory.
+একটা probabilistic structure যা **unique** item গণনা করে, cardinality নির্বিশেষে একটা fixed ~12 KB ব্যবহার করে, প্রায় 0.81% error সহ। এটা exactness-কে ক্ষুদ্র, constant memory-র জন্য বিনিময় করে।
 
 ```text
 127.0.0.1:6379> PFADD visitors:home user1 user2 user3 user1
@@ -168,11 +176,11 @@ A probabilistic structure that counts **unique** items using a fixed ~12 KB rega
 (integer) 3
 ```
 
-**Use:** counting unique visitors, search terms, or events at scale where storing every distinct value would cost gigabytes and you can tolerate a small error.
+**ব্যবহার:** বড় স্কেলে unique visitor, search term, বা event গণনা করা যেখানে প্রতিটা distinct value সংরক্ষণে gigabyte খরচ হতো এবং তুমি একটা ছোট error সহ্য করতে পারো।
 
 ### Geospatial
 
-Built on sorted sets, geo commands store longitude/latitude and answer radius queries.
+sorted set-এর উপর নির্মিত, geo command longitude/latitude সংরক্ষণ করে এবং radius query-র উত্তর দেয়।
 
 ```text
 127.0.0.1:6379> GEOADD cities -0.1278 51.5074 london 2.3522 48.8566 paris
@@ -184,25 +192,25 @@ Built on sorted sets, geo commands store longitude/latitude and answer radius qu
 2) "paris"
 ```
 
-**Use:** "find drivers near me," store locators, and proximity search.
+**ব্যবহার:** "আমার কাছাকাছি driver খুঁজে দাও," store locator, এবং proximity search।
 
 <Callout type="info">
 
-**Note:** There are more types still — Streams (chapter 5) for append-only logs, and modules like RedisJSON and RediSearch that add document and full-text capabilities. But the five core structures plus these three cover the overwhelming majority of real designs. Master them and most "how do I model this in Redis" questions answer themselves.
+**নোট:** আরও type আছে — append-only log-এর জন্য Streams (অধ্যায় 5), এবং RedisJSON আর RediSearch-এর মতো module যা document আর full-text ক্ষমতা যোগ করে। কিন্তু পাঁচটা core structure প্লাস এই তিনটা বাস্তব design-এর অপ্রতিরোধ্য সংখ্যাগরিষ্ঠতা কভার করে। এগুলো আয়ত্ত করো আর "Redis-এ এটা কীভাবে model করবো"-র বেশিরভাগ প্রশ্ন নিজে থেকেই উত্তর পেয়ে যাবে।
 
 </Callout>
 
-## Choosing quickly
+## দ্রুত বেছে নেওয়া
 
-| You need                     | Structure   | Key command             |
-| ---------------------------- | ----------- | ----------------------- |
-| A single value or counter    | String      | `SET`, `INCR`           |
-| An object with fields        | Hash        | `HSET`, `HGET`          |
-| A queue or stack             | List        | `LPUSH`, `BRPOP`        |
-| Unique items / set math      | Set         | `SADD`, `SINTER`        |
-| Ranked / range-queried items | Sorted set  | `ZADD`, `ZRANGEBYSCORE` |
-| Large boolean array          | Bitmap      | `SETBIT`, `BITCOUNT`    |
-| Approximate unique count     | HyperLogLog | `PFADD`, `PFCOUNT`      |
-| Location proximity           | Geo         | `GEOADD`, `GEOSEARCH`   |
+| তোমার যা দরকার                | Structure   | মূল command             |
+| ----------------------------- | ----------- | ----------------------- |
+| একটা single value বা counter  | String      | `SET`, `INCR`           |
+| field সহ একটা object          | Hash        | `HSET`, `HGET`          |
+| একটা queue বা stack           | List        | `LPUSH`, `BRPOP`        |
+| unique item / set math        | Set         | `SADD`, `SINTER`        |
+| ranked / range-query করা item | Sorted set  | `ZADD`, `ZRANGEBYSCORE` |
+| বড় boolean array             | Bitmap      | `SETBIT`, `BITCOUNT`    |
+| আনুমানিক unique count         | HyperLogLog | `PFADD`, `PFCOUNT`      |
+| Location proximity            | Geo         | `GEOADD`, `GEOSEARCH`   |
 
-The discipline that makes Redis effective is matching the access pattern to the structure before you write a line of code.
+যে শৃঙ্খলা Redis-কে কার্যকর করে তা হলো এক লাইন code লেখার আগে access pattern-কে structure-এর সাথে মেলানো।

@@ -1,9 +1,9 @@
 ---
 title: 'Disaster Recovery & Backups'
-subtitle: 'RTO, RPO, multi-region failover, and the restore drill that proves your backups exist.'
+subtitle: 'RTO, RPO, multi-region failover, আর সেই restore drill যেটা প্রমাণ করে আপনার backup আসলেই আছে।'
 chapter: 9
 level: 'advanced'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['disaster recovery', 'DR', 'RTO', 'RPO', 'backups', 'failover']
 ---
 
@@ -11,9 +11,17 @@ topics: ['disaster recovery', 'DR', 'RTO', 'RPO', 'backups', 'failover']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## RTO and RPO — the two numbers
+## গল্পে বুঝি
 
-Every disaster recovery decision is anchored to two numbers. Memorize them.
+পদ্মার একটা জরুরি খেয়াঘাটে ফাতিমা আল-ফিহরির ফেরি কোম্পানি হাজার হাজার যাত্রী পার করে। মূল ফেরিটা যদি হঠাৎ ইঞ্জিন বিকল হয়ে মাঝনদীতে থেমে যায়, পুরো পারাপার বন্ধ — তাই ফাতিমা ঘাটেই একটা পুরো তেল-ভরা বাড়তি ফেরি আর একটা প্রশিক্ষিত standby ক্রু সবসময় প্রস্তুত রাখেন। শুধু রাখাই যথেষ্ট নয় জেনে, তিনি প্রতি মাসে একবার সত্যিকারের drill চালান — ঘোষণা দিয়ে সব যাত্রীকে মূল ফেরি থেকে বাড়তি ফেরিতে সরিয়ে দেন, ঘড়ি ধরে দেখেন হস্তান্তরটা প্রতিশ্রুত সময়ের মধ্যে আসলেই হয় কিনা।
+
+ফাতিমা দুটো সংখ্যাও মুখস্থ রাখেন। এক, বিপর্যয়ের পর কত দ্রুত আবার পারাপার শুরু করতেই হবে — ধরুন পনেরো মিনিট, এর বেশি হলে ঘাটে যাত্রীর ভিড় সামলানো অসম্ভব। দুই, শেষ যেবার টিকিটের হিসাবের কপি নেওয়া হয়েছিল তার পর থেকে সর্বোচ্চ কত টিকিট-রেকর্ড হারানো গ্রহণযোগ্য। ইবনে সিনা যখন নতুন হিসাবরক্ষক হিসেবে যোগ দেন, আল-খোয়ারিজমি তাকে এই দুটো সংখ্যা আর মাসিক drill-এর রুটিন বুঝিয়ে দেন — যাতে সত্যিকারের দুর্যোগের দিনে কাউকে হাতড়াতে না হয়।
+
+গল্পটাই আসলে **disaster recovery**। ঘাটে প্রস্তুত বাড়তি ফেরি আর standby ক্রু হলো failover-এর জন্য একটা tested standby/backup; প্রতি মাসের switch-over drill হলো failover-টা নিয়মিত drill করা — যাতে recovery সত্যিই সময়মতো কাজ করে, শুধু কাগজে-কলমে নয়। কত দ্রুত পারাপার ফেরাতে হবে সেটাই **RTO**, আর কত সাম্প্রতিক রেকর্ড হারানো চলে সেটাই **RPO**। বাস্তবে multi-region failover-ও ঠিক এভাবেই চলে — Netflix থেকে শুরু করে বড় ব্যাংক পর্যন্ত সবাই standby region প্রস্তুত রাখে, RTO/RPO ঠিক করে, আর নিয়মিত drill চালিয়ে প্রমাণ করে backup আর failover আসলেই কাজ করবে।
+
+## RTO আর RPO — দুটো সংখ্যা
+
+প্রতিটা disaster recovery সিদ্ধান্ত দুটো সংখ্যার সাথে বাঁধা। এগুলো মুখস্থ করুন।
 
 ```
 RTO — Recovery Time Objective
@@ -25,7 +33,7 @@ RPO — Recovery Point Objective
       "We must not lose more than 5 minutes of writes."
 ```
 
-Lower numbers cost exponentially more money.
+সংখ্যা যত কম, খরচ exponentially তত বেশি।
 
 ```
 Tier   RTO         RPO         Cost          Architecture
@@ -42,19 +50,19 @@ T4     <24 hours   <24 hours   $             Backup + restore from S3,
                                              rebuild from scratch
 ```
 
-Pick the cheapest tier that meets the business need. **Do not aim for T0 because it sounds impressive** — the cost is real.
+business need মেটায় এমন সবচেয়ে সস্তা tier বেছে নিন। **T0-এর দিকে যাবেন না শুধু কারণ সেটা শুনতে চিত্তাকর্ষক** — খরচটা বাস্তব।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-A jewelry store's safe vs a bank vault. The store can rebuild from insurance in days (RTO=72h, cheap safe). A central bank cannot lose 5 minutes of transactions (RTO≈0, RPO≈0, multi-region replication, billions in spend). Same problem, four orders of magnitude in cost.
+একটা jewelry store-এর safe বনাম একটা bank vault। store insurance থেকে কয়েক দিনে আবার গড়ে তুলতে পারে (RTO=72h, সস্তা safe)। একটা central bank 5 মিনিটের transaction হারাতে পারে না (RTO≈0, RPO≈0, multi-region replication, বিলিয়ন ডলার খরচ)। একই সমস্যা, খরচে চার order of magnitude পার্থক্য।
 
 </Callout>
 
-## The backup hierarchy
+## backup hierarchy
 
-Backups are not a single thing. A real strategy uses three layers:
+Backup একটা জিনিস নয়। একটা বাস্তব strategy তিনটা layer ব্যবহার করে:
 
 ```
 1. Snapshots (hourly, retain 7 days)
@@ -70,9 +78,9 @@ Backups are not a single thing. A real strategy uses three layers:
    Compliance + ransomware insurance. Restore is slow but cheap.
 ```
 
-Snapshots fail when the storage backend is corrupted. Logical backups fail if the schema migration is broken. Archives fail if you needed the data more recently than last week. You need all three.
+Snapshot fail করে যখন storage backend corrupt হয়। Logical backup fail করে যদি schema migration ভাঙা থাকে। Archive fail করে যদি আপনার data-টা গত সপ্তাহের চেয়ে সাম্প্রতিক লাগত। আপনার তিনটাই লাগবে।
 
-## The 3-2-1 rule
+## 3-2-1 নিয়ম
 
 ```
 3 copies of your data
@@ -85,9 +93,9 @@ Modern cloud version:
   1 in cold archive (Glacier or equivalent)
 ```
 
-The "two providers" rule is what saves you from a region-wide cloud provider outage (which has happened to AWS, GCP, and Azure within the last 5 years).
+"two providers" নিয়মটাই আপনাকে region-wide cloud provider outage থেকে বাঁচায় (যেটা গত 5 বছরে AWS, GCP, আর Azure-এর ঘটেছে)।
 
-## Backup automation in real Terraform
+## বাস্তব Terraform-এ backup automation
 
 ```hcl
 # terraform/backups/postgres.tf
@@ -161,13 +169,13 @@ resource "aws_cloudwatch_metric_alarm" "backup_age" {
 }
 ```
 
-Note the last alarm. **A silent backup failure is worse than no backup at all** — you have a false sense of safety. Always alarm on backup freshness, not just success.
+শেষ alarm-টা খেয়াল করুন। **একটা নীরব backup failure কোনো backup না থাকার চেয়েও খারাপ** — আপনার একটা মিথ্যা নিরাপত্তার অনুভূতি থাকে। সবসময় backup freshness-এর উপর alarm করুন, শুধু success-এর উপর নয়।
 
-## The restore drill (the actual test)
+## restore drill (আসল test)
 
-A backup that has never been restored is not a backup. It is a hopeful collection of bytes.
+যে backup কখনো restore করা হয়নি, সেটা backup নয়। সেটা byte-এর একটা আশাবাদী সংগ্রহ।
 
-Real teams run a quarterly restore drill. The drill is not "verify the backup file exists." It is:
+বাস্তব team প্রতি quarter-এ একটা restore drill চালায়। drill মানে "backup file আছে কিনা যাচাই করা" নয়। এটা হলো:
 
 ```bash
 #!/usr/bin/env bash
@@ -221,17 +229,17 @@ curl -X POST https://prometheus-pushgateway/metrics/job/dr_drill \
   --data "dr_drill_last_duration_seconds ${ELAPSED}"
 ```
 
-The script measures elapsed time. That measured time is your **actual** RTO for this scenario, not your aspirational one. If you claim RTO=30min and the drill took 4 hours, the documented RTO is wrong — fix the documentation or fix the recovery procedure.
+script-টা elapsed time মাপে। সেই মাপা সময়টাই এই scenario-র জন্য আপনার **আসল** RTO, আপনার আকাঙ্ক্ষিত RTO নয়। আপনি যদি দাবি করেন RTO=30min আর drill-এ 4 ঘণ্টা লাগে, তাহলে documented RTO ভুল — documentation ঠিক করুন বা recovery procedure ঠিক করুন।
 
 <Callout type="warning">
 
-**A quarterly drill that has never been run is a fiction.** Put the drill on the SRE team's quarterly calendar with a hard deadline. Failed drills should generate a postmortem-grade investigation, not get rescheduled.
+**যে quarterly drill কখনো চালানো হয়নি সেটা একটা কল্পকাহিনি।** drill-টা SRE team-এর quarterly calendar-এ একটা hard deadline সহ রাখুন। ব্যর্থ drill একটা postmortem-grade investigation তৈরি করবে, reschedule হবে না।
 
 </Callout>
 
-## Multi-region failover (the architecture)
+## Multi-region failover (architecture)
 
-Active-passive is the most common production multi-region pattern. The key components:
+Active-passive হলো সবচেয়ে সাধারণ production multi-region pattern। মূল component-গুলো:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -250,7 +258,7 @@ Active-passive is the most common production multi-region pattern. The key compo
   └─────────┘                     └─────────┘
 ```
 
-The failover playbook (real, ordered, tested):
+failover playbook (বাস্তব, সাজানো, tested):
 
 ````markdown
 # DR Failover Runbook: us-east-1 → us-west-2
@@ -308,11 +316,11 @@ us-east-1 is genuinely healthy first.
 
 ````
 
-Every command in this runbook has been run during a drill. The team knows it works. They are not improvising during a real disaster.
+এই runbook-এর প্রতিটা command একটা drill-এর সময় চালানো হয়েছে। team জানে এটা কাজ করে। তারা একটা আসল disaster-এর সময় improvise করছে না।
 
-## What goes wrong in real failovers
+## বাস্তব failover-এ যা ভুল হয়
 
-Real-world stories from public postmortems:
+public postmortem থেকে বাস্তব জগতের গল্প:
 
 ```typescript
 const realIncidents = {
@@ -342,11 +350,11 @@ const realIncidents = {
 };
 ````
 
-Every one of these is preventable with a thorough drill. They are not preventable with planning alone.
+এগুলোর প্রতিটাই একটা পুঙ্খানুপুঙ্খ drill দিয়ে প্রতিরোধযোগ্য। এগুলো শুধু planning দিয়ে প্রতিরোধযোগ্য নয়।
 
-## Backup security (the ransomware problem)
+## Backup security (ransomware সমস্যা)
 
-In recent years (2024–2026), multiple ransomware attacks specifically targeted backup systems first, then encrypted production. Modern backup hygiene:
+সাম্প্রতিক বছরগুলোতে (2024–2026), একাধিক ransomware attack বিশেষভাবে আগে backup system-কে target করেছে, তারপর production encrypt করেছে। আধুনিক backup hygiene:
 
 ```
 1. Immutable backups
@@ -367,19 +375,19 @@ In recent years (2024–2026), multiple ransomware attacks specifically targeted
    not just the in-cloud snapshot.
 ```
 
-The "separate credentials" rule alone defeats most ransomware playbooks.
+শুধু "separate credentials" নিয়মটাই বেশিরভাগ ransomware playbook হারিয়ে দেয়।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [AWS Disaster Recovery whitepaper](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) — RTO/RPO tiers explained
-- [Google SRE Book — Data Integrity](https://sre.google/sre-book/data-integrity/) — backup theory done right
+- [AWS Disaster Recovery whitepaper](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html) — RTO/RPO tier ব্যাখ্যা করা
+- [Google SRE Book — Data Integrity](https://sre.google/sre-book/data-integrity/) — backup theory ঠিকমতো করা
 - [PostgreSQL backup docs](https://www.postgresql.org/docs/current/backup.html) — version-current
 - [S3 Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) — immutable backup primitive
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **RTO and RPO are the only two DR numbers** — pick the cheapest tier that meets need
-2. **3-2-1 backup rule + immutable + air-gapped** — defense against ransomware
-3. **Untested backups are not backups** — quarterly restore drills are mandatory
-4. **DR region must handle 100% of primary load** — not 30%
-5. **Every step in the failover runbook has been executed in a drill** — improvisation is the failure mode
+1. **RTO আর RPO-ই একমাত্র দুটো DR সংখ্যা** — need মেটায় এমন সবচেয়ে সস্তা tier বেছে নিন
+2. **3-2-1 backup নিয়ম + immutable + air-gapped** — ransomware-এর বিরুদ্ধে প্রতিরক্ষা
+3. **untested backup আসলে backup নয়** — quarterly restore drill বাধ্যতামূলক
+4. **DR region-কে primary load-এর 100% সামলাতে হবে** — 30% নয়
+5. **failover runbook-এর প্রতিটা step একটা drill-এ চালানো হয়েছে** — improvisation-ই হলো failure mode

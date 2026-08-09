@@ -1,9 +1,9 @@
 ---
 title: 'Sorting Algorithms'
-subtitle: 'Merge sort, quicksort, and when to use which — plus the patterns that emerge from sorted data.'
+subtitle: 'Merge sort, quicksort, আর কখন কোনটা ব্যবহার করবেন — সাথে sorted data থেকে যেসব প্যাটার্ন বেরিয়ে আসে।'
 chapter: 7
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['merge sort', 'quicksort', 'binary search', 'sorting']
 ---
 
@@ -11,21 +11,29 @@ topics: ['merge sort', 'quicksort', 'binary search', 'sorting']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনা স্যার ক্লাস নাইনের ফাইনাল পরীক্ষার খাতাগুলো হাতে নিয়ে বসেছেন — চল্লিশটা খাতা, রোল নম্বর অনুযায়ী সাজাতে হবে। প্রথমে তিনি পুরনো অভ্যাসে করলেন — পাশাপাশি দুটো খাতা দেখেন, উল্টো থাকলে জায়গা বদলে দেন, তারপর পরের জোড়া। এক পাস শেষ হলে আবার শুরু থেকে, আবার আরেক পাস। প্রতিটা পাসে শুধু একটা খাতা তার ঠিক জায়গায় বসে। চল্লিশটা খাতার জন্য এভাবে বারবার পাস দিতে গিয়ে দুপুর গড়িয়ে বিকেল — কারণ খাতার সংখ্যা দ্বিগুণ হলে খাটনি চারগুণ হয়।
+
+পরের বছর ইবনে সিনা স্যার চালাকি করলেন। চল্লিশটা খাতা তিনি আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরির মধ্যে ভাগ করে দিলেন — যে যার ছোট স্তূপটা আলাদাভাবে রোল অনুযায়ী সাজিয়ে ফেলল, ছোট স্তূপ সাজানো সহজ। তারপর দুই সাজানো স্তূপ পাশাপাশি রেখে দুজনের হাতের ওপরের খাতা দুটোর মধ্যে যেটার রোল ছোট, সেটাই আগে নতুন স্তূপে — এভাবে একবার করে টেনে নিতেই পুরো সাজানো খাতা তৈরি। ভাগ করো, ছোট অংশ সাজাও, তারপর মিলিয়ে নাও — কাজ শেষ চোখের পলকে।
+
+এই দুটো পদ্ধতিই আসলে দুই ধরনের **sorting**। প্রথম, বারবার পাশের জিনিসের সাথে তুলনা করে জায়গা বদলানো — **bubble sort**/**insertion sort**, খাতা দ্বিগুণ হলে খাটনি চারগুণ, তাই **O(n²)**। দ্বিতীয়, স্তূপ ভাগ করে ছোট অংশ সাজিয়ে merge করা — এটাই **merge sort**, যার মূল কৌশল **divide and conquer**, খরচ অনেক কম **O(n log n)**। বাস্তবে যখন হাজার-লাখ রেকর্ড সাজাতে হয় — ধরুন ই-কমার্স সাইটে দাম বা রেটিং অনুযায়ী প্রোডাক্ট সাজানো — তখন এই O(n log n) পদ্ধতিগুলোই (merge sort, quicksort) কাজে লাগে, আর তাই ভাষার built-in `sort` ঠিক এই আইডিয়ার ওপরই দাঁড়িয়ে।
+
 ## Why Learn Sorting?
 
-You'll rarely implement a sort from scratch — but understanding how they work tells you when to sort, what it costs, and how to exploit sorted data with binary search and two pointers.
+আপনি খুব কমই scratch থেকে কোনো sort লিখবেন — কিন্তু এগুলো কীভাবে কাজ করে সেটা বুঝলে আপনি জানবেন কখন sort করতে হবে, এর খরচ কত, আর কীভাবে binary search ও two pointers দিয়ে sorted data কাজে লাগাতে হবে।
 
 <Callout type="info">
 
 **Real-World Analogy**
 
-Like organizing books on a shelf — Bubble sort compares adjacent books and swaps them. Merge sort divides books into groups, sorts each group, then merges. Quick sort picks one book as a reference and puts smaller ones left, bigger ones right.
+শেলফে বই সাজানোর মতো — Bubble sort পাশাপাশি থাকা বইগুলো তুলনা করে আর swap করে। Merge sort বইগুলোকে গ্রুপে ভাগ করে, প্রতিটি গ্রুপ sort করে, তারপর merge করে। Quick sort একটা বইকে reference হিসেবে নেয় আর ছোটগুলো বামে, বড়গুলো ডানে রাখে।
 
 </Callout>
 
 ## Merge Sort — Divide and Conquer
 
-Split the array in half, sort each half, merge them back. Always O(n log n), stable, but uses O(n) extra space.
+array-কে অর্ধেক করে ভাগ করুন, প্রতিটি অর্ধেক sort করুন, তারপর আবার merge করুন। সবসময় O(n log n), stable, কিন্তু O(n) extra space লাগে।
 
 ```typescript
 function mergeSort(arr: number[]): number[] {
@@ -54,7 +62,7 @@ function merge(left: number[], right: number[]): number[] {
 
 ## Quicksort — Partition and Conquer
 
-Pick a pivot, partition elements around it, recurse. O(n log n) average, O(n²) worst case, but in-place.
+একটা pivot বেছে নিন, তার চারপাশে element গুলো partition করুন, তারপর recurse করুন। average-এ O(n log n), worst case-এ O(n²), কিন্তু in-place।
 
 ```typescript
 function quickSort(arr: number[], lo = 0, hi = arr.length - 1): number[] {
@@ -83,7 +91,7 @@ function partition(arr: number[], lo: number, hi: number): number {
 
 ## Binary Search — Exploiting Sorted Data
 
-Once data is sorted, binary search finds any element in O(log n).
+একবার data sorted হয়ে গেলে, binary search যেকোনো element কে O(log n)-এ খুঁজে বের করে।
 
 ```typescript
 function binarySearch(arr: number[], target: number): number {
@@ -102,7 +110,7 @@ function binarySearch(arr: number[], target: number): number {
 
 <Callout type="tip">
 
-**Binary search is not just for arrays.** Any time you have a monotonic function (always increasing or always decreasing), you can binary search on the answer. This is a powerful technique for optimization problems.
+**Binary search শুধু array-র জন্য নয়।** যখনই আপনার কাছে একটা monotonic function থাকে (সবসময় বাড়ছে বা সবসময় কমছে), তখন আপনি answer-এর উপর binary search করতে পারেন। optimization সমস্যার জন্য এটা একটা শক্তিশালী technique।
 
 </Callout>
 
@@ -116,7 +124,7 @@ function binarySearch(arr: number[], target: number): number {
 
 ## Key Takeaways
 
-1. **Use the built-in sort** (Timsort) for general use — it's optimized for real-world data
-2. **Merge sort** when you need stability and guaranteed O(n log n)
-3. **Quicksort** when you need in-place sorting and can accept rare O(n²)
-4. **Binary search** is the reward for sorted data — master it
+1. **built-in sort ব্যবহার করুন** (Timsort) সাধারণ কাজের জন্য — এটা real-world data-র জন্য optimized
+2. **Merge sort** যখন আপনার stability আর guaranteed O(n log n) দরকার
+3. **Quicksort** যখন আপনার in-place sorting দরকার আর মাঝেমধ্যে O(n²) মেনে নিতে পারেন
+4. **Binary search** হলো sorted data-র পুরস্কার — এটা রপ্ত করুন

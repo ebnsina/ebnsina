@@ -1,9 +1,9 @@
 ---
-title: 'Application Caching Patterns'
-subtitle: 'Fragment caching, query result caching, session stores, computed value memoization — practical patterns for real applications.'
+title: 'অ্যাপ্লিকেশন ক্যাশিং প্যাটার্ন'
+subtitle: 'Fragment caching, query result caching, session store, computed value memoization — বাস্তব অ্যাপ্লিকেশনের জন্য কাজে লাগার মতো প্যাটার্ন।'
 chapter: 9
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['fragment caching', 'query cache', 'session store', 'memoization', 'patterns']
 ---
 
@@ -11,23 +11,31 @@ topics: ['fragment caching', 'query cache', 'session store', 'memoization', 'pat
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Application-Level Caching
+## গল্পে বুঝি
 
-HTTP caching protects your server from repeat requests for the same URL. Database caching stores query results. But there's a middle layer — within your application — where expensive computation happens that doesn't map cleanly to either.
+ইবনে সিনার দর্জির দোকানে সকাল থেকে ভিড়। ও লক্ষ্য করেছে, প্রায় প্রতিটা পাঞ্জাবিতে একই ধরনের কলার আর হাতার কাফ লাগে। তাই ও ফাঁকা সময়ে কয়েক ডজন কলার আর কাফ আগেই কেটে-সেলাই করে একটা বাক্সে রেখে দেয়। নতুন অর্ডার এলে পুরো পাঞ্জাবি শূন্য থেকে বানায় না — শুধু শরীরের কাপড়টা সেলাই করে, আর বাক্স থেকে বানানো কলার-কাফ বসিয়ে দেয়। এই আগে থেকে বানানো টুকরোগুলো বারবার কাজে লাগানোই হলো fragment caching। আবার আল-খোয়ারিজমি ভাই যখন দ্বিতীয়বার আসেন, ইবনে সিনা নতুন করে ফিতা দিয়ে মাপ নেয় না — খাতা খুলে গতবারের বুক-কোমর-হাতার মাপ দেখে নেয়। একই মানুষের একই মাপ বারবার না মেপে আগের হিসাবটা মনে রাখা — এটাই memoization।
 
-The problem: function calls are expensive. Whether it's a database query that joins five tables, a third-party API call, a rendered HTML fragment, or a computed permission check — calling it 1000 times when the result doesn't change is waste.
+দোকানের এক কোণে ইবনে সিনার একটা ড্রয়ার আছে, যেখানে প্রতিটা নিয়মিত খদ্দেরের আলাদা ফাইল — ফাতিমা আল-ফিহরি খালার পছন্দের কাপড়, আল-খোয়ারিজমির মাপ, আগের বকেয়া। যতক্ষণ মানুষটা নিয়মিত আসেন ততক্ষণ ফাইল থাকে, অনেকদিন না এলে ফাইল সরিয়ে দেওয়া হয় — ঠিক TTL-এর মতো। এটাই session store। আর দেয়ালে ঝোলানো একটা কাগজে ইবনে সিনা বড় করে লিখে রেখেছে যে সবাই বারবার জিজ্ঞেস করে: "কাফটিং চার্জ কত, ডেলিভারি কবে।" প্রতিবার মুখে উত্তর না দিয়ে ও কাগজটা দেখিয়ে দেয় — এটাই query-result cache, একটা বারবার আসা প্রশ্নের উত্তর একবার হিসাব করে জমিয়ে রাখা।
+
+গল্পের বাক্সভরা আগে-বানানো কলার-কাফ হলো **fragment caching** (রেন্ডার করা টুকরো আলাদা করে জমানো), খাতায় রাখা পুরনো মাপ হলো **memoization** (একই ইনপুটের ব্যয়বহুল হিসাব আর না করা), খদ্দেরের ফাইল-ড্রয়ার হলো **session store**, আর দেয়ালের প্রশ্ন-উত্তরের কাগজ হলো **query cache**। বাস্তব অ্যাপে ঠিক এভাবেই আমরা HTML টুকরো, ইউজারের সেশন, বারবার আসা কোয়েরির ফলাফল আর ব্যয়বহুল কম্পিউটেশন আলাদা আলাদা TTL দিয়ে ক্যাশ করি — যাতে সার্ভার প্রতিবার শূন্য থেকে সব বানাতে না হয়।
+
+## অ্যাপ্লিকেশন-লেভেল ক্যাশিং কেন
+
+HTTP caching আপনার সার্ভারকে একই URL-এর বারবার রিকোয়েস্ট থেকে রক্ষা করে। Database caching কোয়েরির ফলাফল জমা রাখে। কিন্তু এদের মাঝখানে একটা স্তর আছে — আপনার অ্যাপ্লিকেশনের ভেতরে — যেখানে ব্যয়বহুল কম্পিউটেশন ঘটে যা এই দুটোর কোনোটার সাথেই পরিষ্কারভাবে খাপ খায় না।
+
+সমস্যাটা হলো: ফাংশন কল ব্যয়বহুল। সেটা পাঁচটা টেবিল জয়েন করা একটা database query হোক, একটা third-party API কল হোক, একটা রেন্ডার করা HTML fragment হোক, কিংবা একটা computed permission check হোক — যখন ফলাফল বদলায় না তখন সেটা 1000 বার কল করা নিছক অপচয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব-জীবনের উপমা**
 
-A tax accountant who recalculates your entire tax return every time you ask a question is slow and expensive. One who writes the intermediate results on a scratch pad — and only recalculates when the underlying numbers change — is fast. Application caching is the scratch pad.
+যে ট্যাক্স অ্যাকাউন্ট্যান্ট আপনার প্রতিটা প্রশ্নের জন্য পুরো ট্যাক্স রিটার্ন নতুন করে হিসাব করে, সে ধীর ও ব্যয়বহুল। যিনি মাঝপথের ফলাফলগুলো একটা খসড়া কাগজে লিখে রাখেন — এবং শুধু তখনই পুনরায় হিসাব করেন যখন নিচের সংখ্যাগুলো বদলায় — তিনি দ্রুত। অ্যাপ্লিকেশন ক্যাশিং হলো সেই খসড়া কাগজ।
 
 </Callout>
 
 ## Query Result Caching
 
-Cache the result of expensive database queries:
+ব্যয়বহুল database query-র ফলাফল ক্যাশ করুন:
 
 ```typescript
 class QueryCache {
@@ -61,7 +69,7 @@ const stats = await qc.query(
 );
 ```
 
-**Key composition for parameterized queries:**
+**প্যারামিটারাইজড কোয়েরির জন্য key composition:**
 
 ```typescript
 import { stringify } from 'fast-json-stable-stringify';
@@ -79,7 +87,7 @@ const users = await qc.query(
 
 ## Session Store
 
-Sessions are a classic cache use case: small, frequently read, tied to a TTL.
+Session হলো ক্যাশের একটা ক্লাসিক ব্যবহার: ছোট, বারবার পড়া হয়, এবং একটা TTL-এর সাথে বাঁধা।
 
 ```typescript
 import { randomBytes } from 'crypto';
@@ -133,7 +141,7 @@ async function sessionMiddleware(req, res, next): Promise<void> {
 
 ## Memoization
 
-Cache the result of a pure function keyed by its arguments. Works for in-process or distributed:
+একটা pure function-এর ফলাফল তার আর্গুমেন্ট দিয়ে key করে ক্যাশ করুন। ইন-প্রসেস কিংবা ডিস্ট্রিবিউটেড — দুটোতেই কাজ করে:
 
 ```typescript
 // In-process memoization (survives only in this process)
@@ -162,7 +170,7 @@ const canAccess = memoize(
 );
 ```
 
-**Async memoization with Redis:**
+**Redis দিয়ে async memoization:**
 
 ```typescript
 function memoizeAsync<TArgs extends unknown[], TReturn>(
@@ -191,7 +199,7 @@ const getPermissions = memoizeAsync(async (userId: string) => db.permissions.for
 
 ## Fragment Caching
 
-Cache partial outputs — rendered HTML snippets, partial API payloads — rather than full responses.
+পুরো রেসপন্সের বদলে আংশিক আউটপুট ক্যাশ করুন — রেন্ডার করা HTML স্নিপেট, আংশিক API payload।
 
 ```typescript
 // Cache just the expensive part of a response
@@ -222,11 +230,11 @@ async function getProductPage(productId: string): Promise<ProductPage> {
 }
 ```
 
-This is more granular than full-response caching — different fragments have different TTLs matching their actual rate of change.
+এটা পুরো-রেসপন্স ক্যাশিংয়ের চেয়ে আরও সূক্ষ্ম — প্রতিটা fragment-এর আলাদা TTL, যা তাদের আসল পরিবর্তনের হারের সাথে মেলে।
 
-## Computed Values and Aggregations
+## Computed Values ও Aggregation
 
-Pre-compute and cache values that are expensive to derive on demand:
+যেসব মান চাহিদামাফিক বের করা ব্যয়বহুল, সেগুলো আগে থেকে হিসাব করে ক্যাশ করে রাখুন:
 
 ```typescript
 class Leaderboard {
@@ -259,7 +267,7 @@ class Leaderboard {
 }
 ```
 
-When real-time accuracy matters more, maintain the leaderboard incrementally:
+যখন রিয়েল-টাইম নির্ভুলতা বেশি জরুরি, তখন leaderboard-টা ইনক্রিমেন্টালভাবে মেইনটেইন করুন:
 
 ```typescript
 // Use a sorted set — O(log N) updates, O(1) rank queries
@@ -274,7 +282,7 @@ async function getTop100(): Promise<Array<{ userId: string; score: number }>> {
 
 ## Deduplication Cache
 
-Prevent processing the same event twice (idempotency):
+একই event দুইবার প্রসেস হওয়া ঠেকান (idempotency):
 
 ```typescript
 class IdempotencyCache {
@@ -306,7 +314,7 @@ app.post('/webhooks/payment', async (req, res) => {
 
 ## Negative Caching
 
-Cache the fact that something doesn't exist, preventing repeated DB lookups for non-existent keys:
+কোনো জিনিস যে অস্তিত্বহীন, সেই তথ্যটাই ক্যাশ করুন — এতে অস্তিত্বহীন key-এর জন্য বারবার DB lookup ঠেকানো যায়:
 
 ```typescript
 const CACHE_NULL = '__NULL__';
@@ -332,6 +340,6 @@ async function getUser(id: string): Promise<User | null> {
 
 <Callout type="warning">
 
-**Use short TTLs for negative caches.** If a user signs up, you don't want other services to keep getting a negative cache response for minutes. 30–60 seconds is usually enough to protect the database without causing visible inconsistency.
+**Negative cache-এর জন্য ছোট TTL ব্যবহার করুন।** কোনো ইউজার সাইন আপ করলে, আপনি চাইবেন না যে অন্য সার্ভিসগুলো কয়েক মিনিট ধরে negative cache রেসপন্স পেতে থাকুক। ডেটাবেসকে রক্ষা করতে অথচ দৃশ্যমান অসামঞ্জস্য এড়াতে সাধারণত 30–60 সেকেন্ডই যথেষ্ট।
 
 </Callout>

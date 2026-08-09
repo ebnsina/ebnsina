@@ -1,9 +1,9 @@
 ---
 title: 'Terraform Fundamentals'
-subtitle: 'Resources, state, providers, modules, and the plan/apply workflow that makes cloud provisioning reproducible.'
+subtitle: 'Resource, state, provider, module, আর plan/apply workflow যা cloud provisioning-কে reproducible করে।'
 chapter: 3
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['Terraform', 'HCL', 'state', 'providers', 'modules', 'plan', 'apply']
 ---
 
@@ -11,27 +11,35 @@ topics: ['Terraform', 'HCL', 'state', 'providers', 'modules', 'plan', 'apply']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি এক বিশাল estate-এর manager। মালিক তাকে শুধু বলে দিয়েছেন estate-টা শেষমেশ দেখতে কেমন হওয়া উচিত — "তিনটা guest house থাকবে, একটা কুয়া থাকবে, চারপাশে একটা boundary wall থাকবে।" মালিক কিন্তু বলেননি কীভাবে করতে হবে, ইট গাঁথতে হবে নাকি রং করতে হবে; শুধু final চেহারাটা বলে দিয়েছেন। ফাতিমা একটা বাঁধানো register রাখেন যেখানে এই মুহূর্তে estate-এ ঠিক কী কী তৈরি আছে তা নিখুঁতভাবে লেখা — দুটো guest house, একটা কুয়া, একটা পুরনো wall, একটা ভাঙা shed।
+
+কিছু ছোঁয়ার আগে ফাতিমা কখনোই সরাসরি কাজে নেমে পড়েন না। তিনি প্রথমে desired চেহারার সাথে register-এর বর্তমান অবস্থা মিলিয়ে একটা তালিকা বানান — "একটা নতুন guest house বানাতে হবে, wall-টা আবার রং করতে হবে, পুরনো shed-টা ভেঙে ফেলতে হবে।" এই তালিকাটা তিনি মালিককে দেখান, অনুমোদন নেন, তারপরই শ্রমিকদের দিয়ে ঠিক ততটুকুই কাজ করান — যেন শেষে estate হুবহু desired চেহারায় পৌঁছায়, একটুও বেশি নয়, কমও নয়।
+
+এই গল্পটাই আসলে **Terraform**। মালিকের বলে দেওয়া final চেহারা হলো আপনার **declarative** config অর্থাৎ **desired state** — আপনি কী কী resource শেষমেশ চান তা ঘোষণা করেন, কীভাবে বানাতে হবে সেই ধাপ নয়। ফাতিমার register হলো **state file** — এই মুহূর্তে বাস্তবে কী কী তৈরি আছে তার হিসাব। desired-vs-register মিলিয়ে বানানো তালিকাটাই `terraform plan` (কী add হবে, কী change হবে, কী destroy হবে)। আর অনুমোদনের পর শ্রমিক দিয়ে কাজটা করানোই `terraform apply` — যা বাস্তবকে desired state-এর সাথে মিলিয়ে দেয়। বাস্তবে ঠিক এভাবেই AWS, GCP বা Cloudflare-এ infrastructure provision করা হয়: আপনি end state ঘোষণা করেন, Terraform state file দেখে plan কষে, তারপর apply করে reality-কে সেই অনুযায়ী সাজায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-An architect's blueprint approved before construction: first you draw the plan (terraform plan), someone reviews it, then the crew builds it (terraform apply). You don't start pouring concrete and figure it out as you go. The blueprint is the source of truth — the building is the artifact.
+নির্মাণের আগে অনুমোদিত একজন architect-এর blueprint: প্রথমে আপনি plan আঁকেন (terraform plan), কেউ সেটা review করে, তারপর crew সেটা বানায় (terraform apply)। আপনি কংক্রিট ঢালা শুরু করে চলতে চলতে বুঝে নেন না। Blueprint হলো source of truth — building হলো artifact।
 
 </Callout>
 
-## Core Concepts
+## মূল ধারণা
 
-**Provider:** Plugin that talks to an API (AWS, GCP, Hetzner, Cloudflare). Translates HCL into API calls.
+**Provider:** যে plugin একটা API-এর সাথে কথা বলে (AWS, GCP, Hetzner, Cloudflare)। HCL-কে API call-এ অনুবাদ করে।
 
-**Resource:** A single infrastructure object managed by Terraform (an EC2 instance, a DNS record, a database).
+**Resource:** Terraform-এর manage করা একটা একক infrastructure object (একটা EC2 instance, একটা DNS record, একটা database)।
 
-**State:** Terraform tracks what it has created in a state file. Required to know what exists, what changed, what to destroy.
+**State:** Terraform একটা state file-এ track করে এটা কী কী তৈরি করেছে। কী আছে, কী বদলেছে, কী destroy করতে হবে তা জানার জন্য দরকার।
 
-**Plan:** A preview of what Terraform will do — create, modify, or destroy — before it does it.
+**Plan:** Terraform কী করবে তার একটা preview — create, modify, বা destroy — সেটা করার আগেই।
 
-**Apply:** Execute the plan, making real changes to infrastructure.
+**Apply:** Plan execute করা, infrastructure-এ আসল পরিবর্তন করা।
 
-## Basic Structure
+## মৌলিক Structure
 
 ```
 project/
@@ -69,7 +77,7 @@ provider "aws" {
 }
 ```
 
-## Resources
+## Resource
 
 ```hcl
 # main.tf
@@ -130,7 +138,7 @@ data "aws_ami" "ubuntu" {
 }
 ```
 
-## Variables and Outputs
+## Variable আর Output
 
 ```hcl
 # variables.tf
@@ -184,7 +192,7 @@ db_password  = "secret"   # better: use SSM or environment variable
 export TF_VAR_db_password="secret"
 ```
 
-## The Workflow
+## Workflow
 
 ```bash
 # 1. Initialize — download providers, configure backend
@@ -212,13 +220,13 @@ terraform state list
 terraform show
 ```
 
-**Never skip the plan in production.** A plan is cheap; an accidental `destroy` is not.
+**Production-এ কখনো plan এড়িয়ে যাবেন না।** একটা plan সস্তা; একটা দুর্ঘটনাবশত `destroy` নয়।
 
 ## State Management
 
-State is Terraform's record of what it has created. It maps configuration to real resources.
+State হলো Terraform কী কী তৈরি করেছে তার রেকর্ড। এটা configuration-কে আসল resource-এর সাথে map করে।
 
-**Remote state is required for teams:**
+**টিমের জন্য remote state আবশ্যক:**
 
 ```bash
 # Configure S3 backend (in terraform.tf)
@@ -239,7 +247,7 @@ aws dynamodb create-table \
   --billing-mode PAY_PER_REQUEST
 ```
 
-**State commands:**
+**State command:**
 
 ```bash
 # List resources in state
@@ -258,9 +266,9 @@ terraform state rm aws_instance.web
 terraform import aws_instance.web i-1234567890abcdef0
 ```
 
-## Modules
+## Module
 
-Modules are reusable packages of Terraform configuration:
+Module হলো Terraform configuration-এর পুনর্ব্যবহারযোগ্য package:
 
 ```hcl
 # modules/web-server/main.tf
@@ -306,7 +314,7 @@ output "web_ip" {
 }
 ```
 
-**Public registry modules** (use carefully — audit before trusting):
+**Public registry module** (সাবধানে ব্যবহার করুন — বিশ্বাস করার আগে audit করুন):
 
 ```hcl
 module "vpc" {
@@ -319,9 +327,9 @@ module "vpc" {
 }
 ```
 
-## Workspaces
+## Workspace
 
-Workspaces let you manage multiple environments from the same configuration:
+Workspace দিয়ে আপনি একই configuration থেকে একাধিক environment manage করতে পারেন:
 
 ```bash
 # Create workspace per environment
@@ -341,7 +349,7 @@ resource "aws_instance" "web" {
 }
 ```
 
-Alternative: separate state files per environment with different `tfvars`. Both approaches work — workspaces are simpler, separate configs give stronger isolation.
+বিকল্প: ভিন্ন `tfvars` দিয়ে প্রতি environment-এ আলাদা state file। দুটো approach-ই কাজ করে — workspace সহজতর, আলাদা config শক্তিশালী isolation দেয়।
 
 ## CI/CD Integration
 
@@ -370,4 +378,4 @@ Alternative: separate state files per environment with different `tfvars`. Both 
   run: terraform apply tfplan
 ```
 
-Never auto-apply to production without a human reviewing the plan. Auto-apply to staging is fine for fast feedback.
+কোনো মানুষ plan review না করে কখনো production-এ auto-apply করবেন না। দ্রুত feedback-এর জন্য staging-এ auto-apply ঠিক আছে।

@@ -1,9 +1,9 @@
 ---
-title: 'Observability and replay'
-subtitle: 'Webhooks are not a fire-and-forget feature. They are an operated feature. The dashboards, metrics, and traces you build for debugging are the difference between a feature you maintain and one that maintains you.'
+title: 'Observability ও replay'
+subtitle: 'Webhooks কোনো fire-and-forget feature নয়। এটা একটা operated feature। debug করার জন্য আপনি যে dashboard, metric, আর trace বানান, সেটাই সেই পার্থক্য গড়ে দেয় — যে feature আপনি maintain করেন আর যে feature আপনাকে maintain করায়।'
 chapter: 9
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['webhooks', 'observability', 'metrics', 'tracing', 'dashboards']
 ---
 
@@ -11,32 +11,40 @@ topics: ['webhooks', 'observability', 'metrics', 'tracing', 'dashboards']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A webhook system is two distributed systems (yours and your customer's) glued by HTTP. Bugs surface as silence — a missing email, a stale UI, a record that didn't update. Fast diagnosis requires per-event traceability, per-subscription rollups, and operator tools that don't require SSH.
+একটা webhook সিস্টেম হলো HTTP দিয়ে জোড়া দুটো distributed system (আপনার আর আপনার customer-এর)। Bug নীরবতা হিসেবে প্রকাশ পায় — একটা মিস হওয়া email, একটা বাসি UI, একটা record যা update হয়নি। দ্রুত diagnosis-এর জন্য per-event traceability, per-subscription rollup, আর SSH ছাড়া operator tool দরকার।
 
-This chapter walks the observability stack you need: structured logs, Prometheus metrics, traces, and the customer-facing operator UI.
+এই অধ্যায়টা আপনার প্রয়োজনীয় observability stack ঘুরে দেখায়: structured log, Prometheus metric, trace, আর customer-facing operator UI।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Webhook observability is like a shipping tracking page — you can see every scan, delay, and handoff without opening the package.
+Webhook observability অনেকটা একটা shipping tracking page-এর মতো — package না খুলেই আপনি প্রতিটা scan, delay, আর handoff দেখতে পারেন।
 
 </Callout>
 
-## What you instrument
+## গল্পে বুঝি
 
-Per delivery attempt, capture (already in chapter 8's schema):
+শহরের ডাকঘরে ফাতিমা আল-ফিহরি ক্লার্ক হিসেবে বসেন, আর তাঁর টেবিলে থাকে একটা মোটা **delivery logbook**। প্রতিটা notification slip যখন কোনো রানার নিয়ে বের হয়, ফাতিমা লগবুকে এক লাইন লেখেন — কখন রানার রওনা দিল, প্রাপক সই করে নিল নাকি নিতে অস্বীকার করল, আর পুরো যাত্রায় কতটা সময় লাগল। একবারে না পৌঁছালে রানার আবার যায়, আর সেই দ্বিতীয়, তৃতীয় attempt-ও আলাদা লাইনে ওঠে — status আর সময় সহ। কিছুই মুখে মনে রাখা হয় না, সব খাতায়।
 
-- Event ID, type, subscription ID.
-- Attempt number.
-- Started at, duration.
-- Response status code, response snippet, error.
+একদিন ব্যবসায়ী ইবনে সিনা হাজির হয়ে অভিযোগ করেন, "আমি তো কোনো ডেলিভারি নোটিশই পাইনি!" ফাতিমা লগবুকের পাতা উল্টে তাঁর slip-এর পুরো history বের করেন — দেখা যায় রানার তিনবার গিয়েছিল, তিনবারই দরজা বন্ধ পেয়ে ফিরে এসেছে, প্রতিবারের সময় লেখা আছে। ঝগড়া শেষ, কারণ খাতাই সাক্ষী। ইবনে সিনা তখন অনুরোধ করেন সেই পুরনো slip-টা আবার পাঠাতে — ফাতিমা লগ থেকে ঠিক ওই slip-টা খুঁজে নিয়ে টাটকা করে আরেকবার রানারের হাতে তুলে দেন।
 
-The schema is the source of truth for the dashboard. Logs and metrics are derived.
+এই গল্পটাই হলো webhook **observability**। প্রতিটা attempt status আর latency সহ লগবুকে তোলা মানে হলো প্রতিটা delivery attempt-এর log রাখা (status, response, timing); অভিযোগ এলে slip-এর history দেখে সমস্যা বের করা মানে সেই log দিয়ে delivery debug করা; আর অনুরোধমতো নির্দিষ্ট পুরনো slip আবার পাঠানো মানে **replay** feature দিয়ে একটা past event পুনরায় deliver করা। বাস্তবে Stripe-এর webhook dashboard ঠিক এভাবেই প্রতিটা event-এর সব attempt দেখায় আর "Resend" বাটন দিয়ে যেকোনো নির্দিষ্ট event আবার পাঠাতে দেয়।
 
-## Structured logs
+## কী instrument করবেন
 
-Every attempt, one log line:
+প্রতিটা delivery attempt-এ, capture করুন (ইতিমধ্যে অধ্যায় ৮-এর schema-তে):
+
+- Event ID, type, subscription ID।
+- Attempt number।
+- Started at, duration।
+- Response status code, response snippet, error।
+
+schema হলো dashboard-এর source of truth। Log আর metric তা থেকে derived।
+
+## Structured log
+
+প্রতিটা attempt, একটা log line:
 
 ```
 {
@@ -54,7 +62,7 @@ Every attempt, one log line:
 }
 ```
 
-Failures get more fields:
+Failure-এ আরও field পায়:
 
 ```
 {
@@ -67,13 +75,13 @@ Failures get more fields:
 }
 ```
 
-Send these to **Loki** (self-hosted) or any log aggregator. Grafana queries on `{event_id="evt_..."}` show the full timeline of one event across attempts. Queries on `{subscription_id="42",level="warn"}` show one customer's recent failures.
+এগুলো **Loki** (self-hosted) বা যেকোনো log aggregator-এ পাঠান। `{event_id="evt_..."}`-এ Grafana query attempt জুড়ে একটা event-এর পূর্ণ timeline দেখায়। `{subscription_id="42",level="warn"}`-এ query একজন customer-এর সাম্প্রতিক failure দেখায়।
 
-Log retention 7–14 days is plenty for active debugging. Anything older is in the DB.
+Log retention ৭–১৪ দিন active debug-এর জন্য যথেষ্ট। এর চেয়ে পুরনো কিছু DB-তে আছে।
 
-## Prometheus metrics
+## Prometheus metric
 
-Five metrics cover 95% of operational questions:
+পাঁচটা metric ৯৫% operational প্রশ্ন কভার করে:
 
 ```go
 var (
@@ -105,7 +113,7 @@ var (
 )
 ```
 
-Counters and histograms are recorded by workers; gauges by a periodic scraper:
+Counter আর histogram worker-রা record করে; gauge একটা periodic scraper-এ:
 
 ```go
 func updateGauges() {
@@ -126,17 +134,17 @@ func updateGauges() {
 }
 ```
 
-Run every 30 seconds.
+প্রতি ৩০ সেকেন্ডে চালান।
 
-## The Grafana dashboard
+## Grafana dashboard
 
-Five panels on one screen tell you everything important:
+এক screen-এ পাঁচটা panel আপনাকে গুরুত্বপূর্ণ সবকিছু বলে:
 
-1. **Delivery rate** — sum by outcome over time. Spot regressions.
-2. **Latency** — p50/p95/p99 of `webhook_attempt_duration_seconds`. Slow customers, slow producer.
-3. **Queue depth** — pending, in_flight, retrying. Spot backlog.
-4. **DLQ depth and rate** — how many in DLQ, growing how fast.
-5. **Per-subscription error rate** — top 10 worst subscriptions. Customer-specific issues.
+1. **Delivery rate** — সময়ের সাথে outcome দিয়ে sum। regression ধরুন।
+2. **Latency** — `webhook_attempt_duration_seconds`-এর p50/p95/p99। ধীর customer, ধীর producer।
+3. **Queue depth** — pending, in_flight, retrying। backlog ধরুন।
+4. **DLQ depth ও rate** — DLQ-তে কতগুলো, কত দ্রুত বাড়ছে।
+5. **Per-subscription error rate** — সবচেয়ে খারাপ ১০ subscription। Customer-specific issue।
 
 ```promql
 # delivery rate by outcome
@@ -149,7 +157,7 @@ histogram_quantile(0.95, sum by (le) (rate(webhook_attempt_duration_seconds_buck
 rate(webhook_attempts_total{outcome="permanent_fail"}[1h])
 ```
 
-Alerts fire from Prometheus rules:
+Alert Prometheus rule থেকে fire করে:
 
 ```yaml
 - alert: WebhookQueueBacklog
@@ -165,18 +173,18 @@ Alerts fire from Prometheus rules:
   for: 10m
 ```
 
-Backlog means your workers can't keep up — scale them. DLQ growing fast is a customer or producer issue. High p95 latency may be specific receivers or all of them.
+Backlog মানে আপনার worker-রা তাল মেলাতে পারছে না — সেগুলো scale করুন। DLQ দ্রুত বাড়া একটা customer বা producer issue। উঁচু p95 latency নির্দিষ্ট receiver বা সবগুলো হতে পারে।
 
-## Tracing — OpenTelemetry per delivery
+## Tracing — per delivery OpenTelemetry
 
-Each delivery attempt is a span. Each span includes the event ID, subscription ID, attempt number, status, response time. Spans link to the event creation span (in the producer's outbound code) so you see the whole pipeline:
+প্রতিটা delivery attempt একটা span। প্রতিটা span-এ থাকে event ID, subscription ID, attempt number, status, response time। Span-গুলো event creation span-এর (producer-এর outbound কোডে) সাথে link করে যাতে আপনি পুরো pipeline দেখেন:
 
 ```
 [event-create]──[outbox-write]──[worker-claim]──[deliver-attempt-1]──[deliver-attempt-2]
                                                   status=502           status=200
 ```
 
-OpenTelemetry's HTTP instrumentation auto-spans the outgoing POST. Your code adds custom attributes:
+OpenTelemetry-র HTTP instrumentation outgoing POST auto-span করে। আপনার কোড custom attribute যোগ করে:
 
 ```go
 ctx, span := tracer.Start(ctx, "deliver-attempt",
@@ -197,40 +205,40 @@ if err != nil {
 span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
 ```
 
-Send to **Tempo**, **Jaeger**, or **Honeycomb**. A trace search on `event.id=evt_...` shows the whole life of an event in one chart.
+**Tempo**, **Jaeger**, বা **Honeycomb**-এ পাঠান। `event.id=evt_...`-এ একটা trace search এক চার্টে একটা event-এর পুরো জীবন দেখায়।
 
-For receivers, propagate the trace context via `traceparent` header on the outbound POST. Customers who use OTel can pull your span IDs into their traces — full distributed visibility.
+receiver-দের জন্য, outbound POST-এ `traceparent` header দিয়ে trace context propagate করুন। যেসব customer OTel ব্যবহার করে তারা আপনার span ID তাদের trace-এ টেনে নিতে পারে — পূর্ণ distributed visibility।
 
-## The customer-facing dashboard
+## Customer-facing dashboard
 
-Same data, different audience. Customers see only their own subscriptions. The pages:
+একই data, ভিন্ন audience। Customer-রা কেবল তাদের নিজের subscription দেখে। page-গুলো:
 
-**Subscription list.**
+**Subscription list।**
 
-- URL, event types subscribed, success rate (24h), last successful delivery, current state.
+- URL, subscribe করা event type, success rate (24h), শেষ সফল delivery, current state।
 
-**Recent events.**
+**Recent events।**
 
-- Per-event row: ID, type, status, attempts, last attempt time. Filterable by state and type.
+- Per-event row: ID, type, status, attempt, শেষ attempt time। state আর type দিয়ে filterable।
 
-**Event detail.**
+**Event detail।**
 
-- The signed body and headers we sent.
-- All attempts: timestamps, response status, response body snippet, durations.
-- Resend button.
-- "Why did this fail?" hints (e.g., "Your endpoint returned 502 Bad Gateway").
+- আমরা যে signed body আর header পাঠিয়েছি।
+- সব attempt: timestamp, response status, response body snippet, duration।
+- Resend button।
+- "এটা কেন fail করল?" hint (যেমন, "আপনার endpoint একটা 502 Bad Gateway return করেছে")।
 
-**Endpoint health.**
+**Endpoint health।**
 
-- Success rate over time.
-- Latency chart.
-- Recent failures.
+- সময়ের সাথে success rate।
+- Latency চার্ট।
+- সাম্প্রতিক failure।
 
-Stripe's dashboard is the reference. You can ship a much simpler version in a weekend that covers 90% of the value. Don't over-engineer; ship usable.
+Stripe-এর dashboard হলো reference। আপনি একটা weekend-এ অনেক সরল একটা version ship করতে পারেন যা ৯০% value কভার করে। অতিরিক্ত engineer করবেন না; ব্যবহারযোগ্য ship করুন।
 
 ## Real-time event tail
 
-A "live tail" page shows events as they happen — useful for customers integrating for the first time. Implementation: a SSE stream (chapter 5 of WebSockets track) of new events for the customer's subscriptions, with the full request/response inline.
+একটা "live tail" page event ঘটার সাথে সাথে দেখায় — প্রথমবার integrate করা customer-দের জন্য কাজের। Implementation: customer-এর subscription-এর নতুন event-এর একটা SSE stream (WebSockets track-এর অধ্যায় ৫), পূর্ণ request/response inline সহ।
 
 ```javascript
 const es = new EventSource('/dashboard/subscriptions/42/events/live');
@@ -240,19 +248,19 @@ es.addEventListener('event', (e) => {
 });
 ```
 
-Server-side, query the DB for new rows since `last_event_seen` and emit. Or hook into your producer's pubsub channel to push immediately.
+Server-side-এ, `last_event_seen`-এর পর থেকে নতুন row-এর জন্য DB query করুন আর emit করুন। অথবা সঙ্গে সঙ্গে push করতে আপনার producer-এর pubsub channel-এ hook করুন।
 
-This is the single highest-value debugging feature for first-time integrators. They paste their endpoint URL, hit "test event," and see the round-trip live. Saves hundreds of support tickets.
+এটাই first-time integrator-দের জন্য একক সর্বোচ্চ-value debugging feature। তারা তাদের endpoint URL paste করে, "test event"-এ চাপে, আর round-trip live দেখে। শত শত support ticket বাঁচায়।
 
 <Callout type="tip">
 
-**Show the receiver's response body, not just the status.** A 500 response with a Cloudflare error page tells the customer exactly that "your origin is timing out." Without the body, they file a ticket asking what 500 means.
+**receiver-এর response body দেখান, শুধু status নয়।** একটা Cloudflare error page সহ একটা 500 response customer-কে ঠিক বলে যে "আপনার origin timeout করছে।" body ছাড়া, তারা একটা ticket ফাইল করে জিজ্ঞেস করে 500 মানে কী।
 
 </Callout>
 
-## Auditing replay actions
+## Replay action audit করা
 
-Every "resend" click should write an audit log:
+প্রতিটা "resend" click একটা audit log লেখা উচিত:
 
 ```sql
 CREATE TABLE webhook_audit (
@@ -264,7 +272,7 @@ CREATE TABLE webhook_audit (
 );
 ```
 
-A `bulk_replay` audit row carries the criteria:
+একটা `bulk_replay` audit row criteria বহন করে:
 
 ```json
 {
@@ -278,22 +286,22 @@ A `bulk_replay` audit row carries the criteria:
 }
 ```
 
-When customers ask "did you resend our events?" you have an answer. When investigating a duplicate-processing bug, you can see who replayed when.
+Customer-রা জিজ্ঞেস করলে "আপনি কি আমাদের event resend করেছেন?" আপনার কাছে একটা উত্তর থাকে। একটা duplicate-processing bug তদন্তের সময়, কে কখন replay করল দেখতে পারেন।
 
-## Volume estimates
+## Volume estimate
 
-Webhook ops costs scale with delivery volume, not user count. Rough numbers:
+Webhook ops-এর খরচ delivery volume-এর সাথে scale করে, user count-এর সাথে নয়। মোটামুটি সংখ্যা:
 
-- **10K deliveries/day:** 1 worker, all logs to Loki, dashboard is one HTML page. Easy.
-- **100K/day:** 2–4 workers, structured logs at INFO level get noisy — sample, or downgrade success logs to DEBUG. Dashboard needs pagination.
-- **1M/day:** dedicated worker fleet, log sampling, partitioned tables, real ops attention.
-- **10M+/day:** specialised infra; consider whether to build vs buy.
+- **10K deliveries/day:** 1 worker, সব log Loki-তে, dashboard একটা HTML page। সহজ।
+- **100K/day:** 2–4 worker, INFO level-এ structured log noisy হয় — sample করুন, বা success log-কে DEBUG-এ নামান। Dashboard-এর pagination দরকার।
+- **1M/day:** dedicated worker fleet, log sampling, partitioned table, আসল ops মনোযোগ।
+- **10M+/day:** specialised infra; build vs buy ভেবে দেখুন।
 
-Most app integrations are in the 10K–100K/day range per producer. The patterns in this chapter scale through ~1M/day on commodity hardware.
+বেশিরভাগ app integration প্রতি producer-এ 10K–100K/day range-এ। এই অধ্যায়ের pattern commodity hardware-এ ~1M/day পর্যন্ত scale করে।
 
-## Sampling logs at scale
+## Scale-এ log sampling
 
-At high volume, logging every successful attempt becomes expensive. Sample:
+উঁচু volume-এ, প্রতিটা সফল attempt log করা খরচসাপেক্ষ হয়ে যায়। Sample করুন:
 
 ```go
 if outcome == "success" && rand.Intn(100) != 0 {
@@ -303,34 +311,34 @@ if outcome == "success" && rand.Intn(100) != 0 {
 }
 ```
 
-Always log failures. Sample successes. Metrics still capture everything; logs are for the moments you want to inspect a single delivery.
+সবসময় failure log করুন। Success sample করুন। Metric তবুও সবকিছু capture করে; log হলো সেই মুহূর্তগুলোর জন্য যখন আপনি একটা delivery পরিদর্শন করতে চান।
 
-## Per-customer rate limits and quotas
+## Per-customer rate limit ও quota
 
-For multi-tenant producers, observability includes per-customer counters:
+Multi-tenant producer-এর জন্য, observability-তে per-customer counter থাকে:
 
 ```go
 deliveriesPerCustomer.WithLabelValues(customerID).Inc()
 ```
 
-Combined with their plan limits, you alert _them_ (not just yourself):
+তাদের plan limit-এর সাথে মিলিয়ে, আপনি _তাদের_ alert দেন (শুধু নিজেকে নয়):
 
 ```
 Your webhook usage this month: 4.2M of 5M plan limit.
 ```
 
-This is product, not just ops. But the same metric supports both — it just takes a UI on top.
+এটা product, শুধু ops নয়। কিন্তু একই metric দুটোকেই সমর্থন করে — এর ওপর শুধু একটা UI লাগে।
 
-## Recap
+## রিক্যাপ
 
-- Five Prometheus metrics cover 95% of operational questions.
-- One Grafana dashboard with rate, latency, queue depth, DLQ depth, per-subscription rate.
-- Three Prometheus alerts: backlog, DLQ growing, latency high.
-- OpenTelemetry spans on every attempt; trace by event ID.
-- Customer-facing dashboard: subscriptions, events, attempt detail, resend, endpoint health.
-- Live tail (SSE) is the killer feature for first-time integrators.
-- Audit every replay/pause/resume action with actor, target, metadata.
-- Sample success logs at high volume; never sample failures.
-- Per-customer counters support both ops alerts and product UX.
+- পাঁচটা Prometheus metric ৯৫% operational প্রশ্ন কভার করে।
+- rate, latency, queue depth, DLQ depth, per-subscription rate সহ একটা Grafana dashboard।
+- তিনটে Prometheus alert: backlog, DLQ growing, latency high।
+- প্রতিটা attempt-এ OpenTelemetry span; event ID দিয়ে trace করুন।
+- Customer-facing dashboard: subscription, event, attempt detail, resend, endpoint health।
+- Live tail (SSE) হলো first-time integrator-দের জন্য killer feature।
+- প্রতিটা replay/pause/resume action actor, target, metadata সহ audit করুন।
+- উঁচু volume-এ success log sample করুন; failure কখনও sample করবেন না।
+- Per-customer counter ops alert আর product UX দুটোকেই সমর্থন করে।
 
-Next: [Self-host](/notes/webhooks/10-production) — the outbox pattern, worker pool, and full deploy on a VPS.
+পরবর্তী: [Self-host](/notes/webhooks/10-production) — outbox pattern, worker pool, আর একটা VPS-এ পূর্ণ deploy।

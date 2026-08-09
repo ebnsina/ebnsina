@@ -1,9 +1,9 @@
 ---
 title: 'Meilisearch'
-subtitle: 'Self-hosting, indexing documents, typo tolerance, faceted search, and keeping Meilisearch in sync with your database.'
+subtitle: 'সেল্ফ-হোস্টিং, ডকুমেন্ট indexing, typo tolerance, faceted search, এবং Meilisearch-কে আপনার ডেটাবেসের সাথে সিঙ্ক রাখা।'
 chapter: 3
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['Meilisearch', 'typo tolerance', 'facets', 'indexing', 'self-hosted', 'sync']
 ---
 
@@ -13,25 +13,33 @@ topics: ['Meilisearch', 'typo tolerance', 'facets', 'indexing', 'self-hosted', '
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A specialist search consultant hired by the library: they set up a separate, purpose-built card system optimized purely for finding things fast — typo-tolerant, faceted by genre and year, with relevance tuning. The main catalogue (Postgres) remains authoritative; the consultant's system is the search interface layered on top.
+লাইব্রেরির নিয়োগ করা একজন বিশেষজ্ঞ search কনসালট্যান্ট: তিনি একটা আলাদা, বিশেষভাবে বানানো কার্ড সিস্টেম সেট আপ করেন যা শুধুমাত্র দ্রুত জিনিস খুঁজে পাওয়ার জন্য অপ্টিমাইজড — typo-tolerant, genre আর year অনুযায়ী faceted, relevance tuning-সহ। মূল ক্যাটালগ (Postgres) authoritative থাকে; কনসালট্যান্টের সিস্টেমটা তার উপর বসানো search ইন্টারফেস।
 
 </Callout>
 
-## Why Meilisearch
+## গল্পে বুঝি
 
-Meilisearch is a Rust-based search engine optimized for developer experience:
+সমরকন্দের এক ব্যস্ত দোকানে আল-খোয়ারিজমি নামে এক আশ্চর্য চটপটে সেলসম্যান আছেন। আপনি মুখ খুলে "চিনি..." বলতে না বলতেই তিনি কাউন্টারের সামনে চিনিগুঁড়া চাল আর চিনির প্যাকেট দুটোই নামিয়ে ফেলেছেন — পুরো শব্দটা শেষ হওয়ার অপেক্ষাও করেননি। যত টাইপ করছেন, মানে যত বলছেন, ঠিক সেই মুহূর্তেই তাক থেকে সম্ভাব্য জিনিসগুলো সামনে চলে আসছে।
 
-- Typo tolerance out of the box (1 typo for 5+ char words by default)
-- Sub-100ms search even on millions of documents
-- Facets with counts, filter, and sort — all configured per index
-- Simple JSON API — no query DSL to learn
-- Single binary, easy to self-host
+আরও মজার ব্যাপার — আপনি যদি একটু ভুল করে বলেন "chinigura" কিংবা উচ্চারণ এদিক-ওদিক হয়ে যায়, আল-খোয়ারিজমি বিরক্ত হন না, "বুঝলাম না" বলেও ফিরিয়ে দেন না; তিনি ঠিক ধরে ফেলেন আপনি চিনিগুঁড়া চালই খুঁজছেন আর সেটাই এগিয়ে দেন। আর এসব করতে তাঁকে মাস মাস ট্রেনিং দিতে হয়নি — দোকানের নতুন ছেলেটাও প্রথম দিন থেকেই এভাবে কাজ করতে পারে, কারণ পদ্ধতিটা সহজ। ইবনে সিনা কিংবা ফাতিমা আল-ফিহরি যে-ই আসুক, সবাই সেকেন্ডের মধ্যে জিনিস পেয়ে যায়।
 
-Compared to Elasticsearch: Meilisearch is simpler, faster to set up, but less configurable. Elasticsearch handles petabyte-scale and complex aggregations; Meilisearch handles "search my product catalog" without a PhD in Lucene.
+এই দোকানটাই আসলে **Meilisearch**। কথা বলা শুরু করতেই ফলাফল সামনে চলে আসা — এটাই **instant / as-you-type search** (প্রতিটা কি-স্ট্রোকে সাথে সাথে রেজাল্ট)। ভুল বলা শব্দও বুঝে ফেলা — এটাই **typo tolerance**। আর নতুন ছেলেও প্রথম দিনেই পারা — এটাই সহজ setup আর দারুণ ডেভেলপার এক্সপেরিয়েন্স, বেশি কনফিগ ছাড়াই কাজ। সেলসম্যানের গতি হলো Meilisearch-এর হালকা, ঝটপট search। বাস্তবে আপনার অ্যাপ বা সাইটের সার্চ বক্সে ইউজার যখন টাইপ করে আর সাথে সাথে (বানান ভুল হলেও) মিলিয়ে-যাওয়া ফলাফল দেখতে পায়, তখন নেপথ্যে ঠিক এই কাজটাই একটা Meilisearch index করছে।
 
-## Running Meilisearch
+## কেন Meilisearch
+
+Meilisearch একটা Rust-ভিত্তিক search engine যা ডেভেলপার এক্সপেরিয়েন্সের জন্য অপ্টিমাইজড:
+
+- আউট-অফ-দ্য-বক্স typo tolerance (ডিফল্টে 5+ char শব্দের জন্য 1 typo)
+- লক্ষ লক্ষ ডকুমেন্টেও sub-100ms search
+- count, filter আর sort-সহ facet — সব index অনুযায়ী configure করা
+- সিম্পল JSON API — শেখার জন্য কোনো query DSL নেই
+- সিঙ্গেল বাইনারি, সহজে সেল্ফ-হোস্ট করা যায়
+
+Elasticsearch-এর তুলনায়: Meilisearch সহজ, সেট আপ করা দ্রুত, কিন্তু কম configurable। Elasticsearch petabyte-scale আর জটিল aggregation হ্যান্ডল করে; Meilisearch Lucene-এ PhD ছাড়াই "আমার প্রোডাক্ট ক্যাটালগ সার্চ করো" হ্যান্ডল করে।
+
+## Meilisearch চালানো
 
 ```bash
 # Docker
@@ -62,7 +70,7 @@ curl http://localhost:7700/health
 # {"status":"available"}
 ```
 
-## Creating an Index and Configuring Settings
+## একটা Index বানানো এবং Settings Configure করা
 
 ```typescript
 import MeiliSearch from 'meilisearch';
@@ -122,7 +130,7 @@ await index.updateSettings({
 });
 ```
 
-## Indexing Documents
+## Document Indexing করা
 
 ```typescript
 // Index documents (upsert — safe to re-run)
@@ -220,11 +228,11 @@ app.get('/search', async (req, res) => {
 });
 ```
 
-## Keeping Meilisearch in Sync
+## Meilisearch-কে সিঙ্কে রাখা
 
-Meilisearch is a read-optimized secondary index. Postgres is authoritative. Sync strategies:
+Meilisearch একটা read-optimized secondary index। Postgres authoritative। সিঙ্ক স্ট্র্যাটেজি:
 
-**1. Write-through (sync on every write):**
+**1. Write-through (প্রতিটা write-এ সিঙ্ক):**
 
 ```typescript
 async function createProduct(product: Product): Promise<Product> {
@@ -239,9 +247,9 @@ async function createProduct(product: Product): Promise<Product> {
 }
 ```
 
-Simple but fragile — if Meilisearch is down, the sync is lost.
+সহজ কিন্তু ভঙ্গুর — Meilisearch down থাকলে সিঙ্কটা হারিয়ে যায়।
 
-**2. Outbox pattern (reliable sync):**
+**2. Outbox pattern (নির্ভরযোগ্য সিঙ্ক):**
 
 ```typescript
 // On write: record intent to sync
@@ -287,7 +295,7 @@ async function processSyncQueue() {
 setInterval(processSyncQueue, 5000);
 ```
 
-**3. Full reindex (scheduled):**
+**3. Full reindex (নির্ধারিত সময়ে):**
 
 ```typescript
 async function fullReindex() {
@@ -314,7 +322,7 @@ new CronJob('0 2 * * *', fullReindex).start();
 
 ## Multi-Tenant Search
 
-Separate index per tenant (small tenants) or filter by tenant ID (large tenants):
+প্রতি tenant-এ আলাদা index (ছোট tenant) অথবা tenant ID দিয়ে filter (বড় tenant):
 
 ```typescript
 // Small SaaS: one index per tenant
@@ -329,11 +337,11 @@ const results = await index.search(query, {
 });
 ```
 
-Separate indexes provide perfect isolation but multiply operational overhead. Shared index with filter is simpler but requires careful access control (server-side filter injection, never trust client-provided filters).
+আলাদা index পারফেক্ট আইসোলেশন দেয় কিন্তু অপারেশনাল ওভারহেড বাড়ায়। filter-সহ shared index সহজ কিন্তু সতর্ক access control দরকার (সার্ভার-সাইড filter injection, ক্লায়েন্ট-প্রদত্ত filter কখনো বিশ্বাস করবেন না)।
 
-## Meilisearch API Keys for Frontend
+## Frontend-এর জন্য Meilisearch API Key
 
-Never expose the master key to clients. Create scoped API keys:
+master key কখনো ক্লায়েন্টের কাছে এক্সপোজ করবেন না। scoped API key বানান:
 
 ```typescript
 const searchKey = await client.createKey({
@@ -346,4 +354,4 @@ const searchKey = await client.createKey({
 console.log(searchKey.key); // give this to the frontend
 ```
 
-Frontend can call Meilisearch directly — zero latency from bypassing your backend — while the master key stays server-side.
+Frontend সরাসরি Meilisearch কল করতে পারে — আপনার backend বাইপাস করায় শূন্য latency — আর master key সার্ভার-সাইডে থাকে।

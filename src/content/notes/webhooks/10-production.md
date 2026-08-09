@@ -1,9 +1,9 @@
 ---
 title: 'Self-host'
-subtitle: 'The outbox pattern bridges your domain transactions and the webhook queue. The worker pool drains it. Behind nginx with TLS, on a VPS, with all the operational pieces from chapter 9 wired in.'
+subtitle: 'outbox pattern আপনার domain transaction আর webhook queue-র মধ্যে সেতু গড়ে। worker pool সেটা drain করে। TLS সহ nginx-এর পেছনে, একটা VPS-এ, অধ্যায় ৯-এর সব operational টুকরো জোড়া দিয়ে।'
 chapter: 10
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['webhooks', 'outbox', 'worker pool', 'nginx', 'deployment']
 ---
 
@@ -11,21 +11,29 @@ topics: ['webhooks', 'outbox', 'worker pool', 'nginx', 'deployment']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-This chapter ties everything together. The outbox pattern bridges domain commits to webhook deliveries. The worker pool drains the queue. Postgres holds state durably. nginx and systemd round it out. Same operational shape as the GraphQL, gRPC, and WebSockets tracks — different protocol on top.
+এই অধ্যায় সবকিছু একসাথে বাঁধে। outbox pattern domain commit-কে webhook delivery-র সাথে সেতু করে। worker pool queue drain করে। Postgres state durably ধরে রাখে। nginx আর systemd সেটা সম্পূর্ণ করে। GraphQL, gRPC, আর WebSockets track-এর মতোই একই operational গড়ন — উপরে ভিন্ন protocol।
 
-By the end you have a single Go binary that hosts the producer (write events to outbox), the worker pool (deliver them), the receiver (verify and process incoming webhooks), and a small admin UI for replay. Self-hosted. Vendor-neutral.
+শেষে আপনার হাতে একটা single Go binary থাকবে যা producer (event outbox-এ লেখে), worker pool (সেগুলো deliver করে), receiver (আসা webhook verify আর process করে), আর replay-র জন্য একটা ছোট admin UI host করে। Self-hosted। Vendor-neutral।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A self-hosted webhook system is like a professional courier service versus handing a letter to a stranger — reliability, receipts, and escalation paths.
+একটা self-hosted webhook সিস্টেম অনেকটা একজন অচেনা লোকের হাতে চিঠি তুলে দেওয়ার বদলে একটা professional courier service-এর মতো — নির্ভরযোগ্যতা, receipt, আর escalation path।
 
 </Callout>
 
-## The outbox pattern — the missing piece
+## গল্পে বুঝি
 
-In chapter 1, one silent failure was: "producer crashes after the side-effect, before sending the POST." This is real and it happens.
+ইবনে সিনার একটা বড় courier-notification অফিস, সারা শহরে গ্রাহকদের কাছে খবরের স্লিপ পাঠানোই কাজ। শুরুর দিকে অফিসের কাউন্টার-কেরানি নিজেই প্রতিটা স্লিপ হাতে নিয়ে গ্রাহকের ঠিকানায় দৌড়ে যেত। কিন্তু ব্যস্ত দিনে এটা বিপর্যয় — কেরানি একটা স্লিপ পৌঁছাতে বেরোলে কাউন্টারে নতুন গ্রাহকদের লম্বা লাইন জমে যায়, পুরো অফিস থমকে দাঁড়ায়। তাই ইবনে সিনা নিয়ম বদলালেন: এখন থেকে যত স্লিপই পাঠাতে হোক, কেরানি সেটা নিজে না পৌঁছে একটা কেন্দ্রীয় dispatch বাক্সে ফেলে দেবে, আর কাউন্টার ছেড়ে নড়বে না।
+
+সেই বাক্স থেকে স্লিপ তুলে নেওয়ার জন্য আলাদা একদল ডেডিকেটেড রানার আছে — আল-খোয়ারিজমি, ফাতিমা আল-ফিহরি আর তাঁদের দল — যারা সারাদিন ধরে বাক্স থেকে স্লিপ তুলে একের পর এক ঠিকানায় পৌঁছে দেয়, কাউন্টারের কাজ একটুও না আটকে। ম্যানেজার আল-বিরুনি দিনের চাপ দেখে রানার কমান-বাড়ান — সকালের ভিড়ে বেশি রানার রাস্তায় নামান, দুপুরের ঝিমুনিতে কম। কাউন্টার তার নিজের ছন্দে গ্রাহক সামলে যায়, কেউ কখনো স্লিপ পৌঁছানোর জন্য অপেক্ষা করে বসে থাকে না।
+
+এই গল্পটাই আসলে production-এ self-hosted webhook সিস্টেম চালানো। কেরানির নিজে না দৌড়ে প্রতিটা স্লিপ dispatch বাক্সে ফেলা মানে — প্রতিটা notification inline না পাঠিয়ে একটা durable **queue**-তে enqueue করা, যাতে পাঠানোর কাজ main app-কে block না করে (**async**, **background**)। বাক্স থেকে স্লিপ তুলে নেওয়া রানারের দল হলো async **worker** pool। আর দিনের চাপ বুঝে রানার কমানো-বাড়ানোই হলো লোড অনুযায়ী **worker scale** করা। বাস্তবে এই প্যাটার্নই outbox আর worker pool — Postgres-এর queue-তে delivery জমা হয়, worker-রা সেগুলো drain করে, আর traffic বাড়লে আপনি শুধু worker সংখ্যা বাড়িয়ে দেন; Hookdeck বা Svix-এর মতো সার্ভিসগুলোও ঠিক এভাবেই ভেতরে কাজ করে।
+
+## outbox pattern — অনুপস্থিত টুকরো
+
+অধ্যায় ১-এ, একটা নীরব failure ছিল: "producer side-effect-এর পরে, POST পাঠানোর আগে crash করে।" এটা আসল আর এটা ঘটে।
 
 ```go
 // THIS IS BROKEN
@@ -38,7 +46,7 @@ func ChargeCustomer(customerID string, amount int) error {
 }
 ```
 
-The fix: write the _intent_ to send the webhook into the same transaction as the domain change. A separate process drains the outbox.
+সমাধান: webhook পাঠানোর _intent_-টা domain change-এর মতো একই transaction-এ লিখুন। একটা আলাদা process outbox drain করে।
 
 ```sql
 CREATE TABLE webhook_outbox (
@@ -55,7 +63,7 @@ CREATE INDEX webhook_outbox_pending ON webhook_outbox(created_at)
 WHERE fanned_out_at IS NULL;
 ```
 
-The new flow:
+নতুন flow:
 
 ```go
 func ChargeCustomer(ctx context.Context, customerID string, amount int) error {
@@ -80,9 +88,9 @@ func ChargeCustomer(ctx context.Context, customerID string, amount int) error {
 }
 ```
 
-If the transaction commits, both the charge and the outbox row are durable. If it doesn't, neither is. No half-states.
+transaction commit হলে, charge আর outbox row দুটোই durable। না হলে, কোনোটাই না। কোনো half-state নেই।
 
-A separate worker reads pending outbox rows and creates per-subscription `webhook_deliveries` rows:
+একটা আলাদা worker pending outbox row পড়ে আর per-subscription `webhook_deliveries` row তৈরি করে:
 
 ```go
 func fanOut(ctx context.Context) error {
@@ -121,11 +129,11 @@ func fanOut(ctx context.Context) error {
 }
 ```
 
-Run this fan-out worker every few seconds, or have it triggered by a Postgres notification (`pg_notify`) for low-latency event flow.
+এই fan-out worker প্রতি কয়েক সেকেন্ডে চালান, অথবা low-latency event flow-এর জন্য একটা Postgres notification (`pg_notify`) দিয়ে trigger করান।
 
-The pattern guarantees: every committed domain change generates exactly one outbox row, which generates exactly one delivery per subscription, which is retried until ack or DLQ. No event loss, no double-fan-out (the `SKIP LOCKED` plus the `fanned_out_at` flag keep it idempotent).
+pattern-টা guarantee দেয়: প্রতিটা committed domain change ঠিক একটা outbox row তৈরি করে, যা প্রতি subscription-এ ঠিক একটা delivery তৈরি করে, যা ack বা DLQ পর্যন্ত retried হয়। কোনো event loss নেই, কোনো double-fan-out নেই (`SKIP LOCKED` প্লাস `fanned_out_at` flag এটা idempotent রাখে)।
 
-## The full worker pool
+## পূর্ণ worker pool
 
 ```go
 type Worker struct {
@@ -196,28 +204,28 @@ func (w *Worker) deliver(ctx context.Context, d *Delivery) {
 }
 ```
 
-That is the worker. ~50 lines around the framework you build out in earlier chapters.
+এটাই worker। আগের অধ্যায়গুলোতে বানানো framework-এর চারপাশে ~৫০ লাইন।
 
-Pool of N workers: `for i := 0; i &lt; runtime.NumCPU()*8; i++ { go workers[i].Run(ctx) }`. For network-bound work, more workers than CPUs is fine. Cap at the per-receiver concurrency limit (chapter 6) so you don't hammer one customer.
+N worker-এর pool: `for i := 0; i &lt; runtime.NumCPU()*8; i++ { go workers[i].Run(ctx) }`। Network-bound কাজের জন্য, CPU-র চেয়ে বেশি worker ঠিক আছে। per-receiver concurrency limit-এ cap করুন (অধ্যায় ৬) যাতে আপনি এক customer-কে হাতুড়ি না মারেন।
 
 ## Postgres tuning
 
-Webhook delivery is queue-heavy. Three tunables matter:
+Webhook delivery queue-heavy। তিনটে tunable গুরুত্বপূর্ণ:
 
-**1. `FOR UPDATE SKIP LOCKED` is your primitive.** Already covered. It's free, it scales to thousands of workers.
+**১. `FOR UPDATE SKIP LOCKED` হলো আপনার primitive।** ইতিমধ্যে কভার করা। এটা বিনামূল্যে, হাজার হাজার worker-এ scale করে।
 
-**2. Partial indexes for hot queries.**
+**২. Hot query-র জন্য partial index।**
 
 ```sql
 CREATE INDEX webhook_deliveries_pending ON webhook_deliveries(next_attempt_at)
 WHERE state = 'pending';
 ```
 
-The pending-deliveries scan is the hottest query in the system. A partial index keeps it fast even with millions of `delivered` rows.
+pending-deliveries scan হলো সিস্টেমের সবচেয়ে hot query। একটা partial index লক্ষ লক্ষ `delivered` row থাকলেও এটা দ্রুত রাখে।
 
-**3. Vacuum aggressively on the deliveries table.** UPDATE-heavy tables bloat. Cron `VACUUM ANALYZE webhook_deliveries` nightly. For really high throughput, consider table partitioning (one partition per day; drop old partitions instead of deleting rows).
+**৩. deliveries table-এ aggressively vacuum করুন।** UPDATE-heavy table bloat করে। প্রতি রাতে cron `VACUUM ANALYZE webhook_deliveries`। সত্যিকার উঁচু throughput-এর জন্য, table partitioning ভেবে দেখুন (প্রতিদিন এক partition; row delete করার বদলে পুরনো partition drop করুন)।
 
-For the **DB self-hosted** track later in the path: the delivery table is the canonical example of "queue inside Postgres" — reaching the limits is at ~10K deliveries/sec, well past most apps. Beyond that, RabbitMQ or Redis are the upgrade.
+path-এ পরের **DB self-hosted** track-এর জন্য: delivery table হলো "Postgres-এর ভেতরে queue"-র canonical উদাহরণ — limit-এ পৌঁছানো হয় ~10K deliveries/sec-এ, বেশিরভাগ app-এর অনেক পরে। এর বাইরে, RabbitMQ বা Redis হলো upgrade।
 
 ## systemd unit
 
@@ -249,14 +257,14 @@ ProtectHome=true
 WantedBy=multi-user.target
 ```
 
-The single binary hosts:
+single binary host করে:
 
-- HTTP server for the receiver endpoint and admin UI.
-- Background goroutines for the fan-out worker and N delivery workers.
-- `/metrics` for Prometheus.
-- `/healthz`, `/readyz` for orchestrator probes.
+- receiver endpoint আর admin UI-র জন্য HTTP server।
+- fan-out worker আর N delivery worker-এর জন্য background goroutine।
+- Prometheus-এর জন্য `/metrics`।
+- orchestrator probe-এর জন্য `/healthz`, `/readyz`।
 
-For higher throughput, split into separate services (one for receiver, one for delivery workers) — same binary, different `--mode` flags. Until measured needed: keep it one process.
+উঁচু throughput-এর জন্য, আলাদা service-এ ভাগ করুন (একটা receiver-এর জন্য, একটা delivery worker-এর জন্য) — একই binary, ভিন্ন `--mode` flag। মাপা প্রয়োজন না হওয়া পর্যন্ত: এক process-ই রাখুন।
 
 ## nginx config
 
@@ -304,17 +312,17 @@ server {
 }
 ```
 
-The receiver path size limit is tight (1 MiB) — webhook bodies are small. Larger limits invite abuse.
+receiver path-এর size limit টাইট (1 MiB) — webhook body ছোট। বড় limit abuse ডেকে আনে।
 
 ## Per-subscription delivery isolation
 
-A worker pool with no per-subscription throttling lets one bad customer's slow endpoint hog all workers. With 32 workers and one customer that takes 30 seconds to respond:
+per-subscription throttling ছাড়া একটা worker pool একজন খারাপ customer-এর ধীর endpoint-কে সব worker দখল করতে দেয়। 32 worker আর একজন customer যে response দিতে ৩০ সেকেন্ড নেয়:
 
-- 32 workers all stuck waiting on customer X.
-- Other customers' deliveries queue up.
-- Queue depth grows; alerts fire.
+- 32 worker সবাই customer X-এর জন্য অপেক্ষায় আটকে।
+- অন্য customer-দের delivery জমতে থাকে।
+- Queue depth বাড়ে; alert fire করে।
 
-Solution: per-subscription concurrency cap. Use a semaphore keyed by subscription ID:
+সমাধান: per-subscription concurrency cap। subscription ID দিয়ে keyed একটা semaphore ব্যবহার করুন:
 
 ```go
 type SubLimiter struct {
@@ -338,71 +346,71 @@ defer func() { <-ch }()
 // proceed with delivery
 ```
 
-5 concurrent deliveries to one subscription is enough for any reasonable receiver. The 6th waits without blocking other subscriptions.
+এক subscription-এ 5 concurrent delivery যেকোনো যুক্তিসঙ্গত receiver-এর জন্য যথেষ্ট। 6তমটা অন্য subscription block না করে অপেক্ষা করে।
 
-## Receiver in the same binary
+## একই binary-তে receiver
 
-If you also receive webhooks (from third parties — Stripe, GitHub, etc.), the same service can host the receiver:
+আপনি যদি webhook-ও পান (third party থেকে — Stripe, GitHub, ইত্যাদি), একই service receiver host করতে পারে:
 
 ```go
 mux.HandleFunc("/webhooks/stripe", stripeHandler(stripeSecret))
 mux.HandleFunc("/webhooks/github", githubHandler(githubSecret))
 ```
 
-Each handler does the verify-then-enqueue pattern from chapter 5. Combined with the outbox pattern, your service becomes a clean integration hub: third-party event arrives → verified → enqueued → processed by your domain code, which writes to outbox → fan-out → your subscribers receive.
+প্রতিটা handler অধ্যায় ৫-এর verify-then-enqueue pattern করে। outbox pattern-এর সাথে মিলিয়ে, আপনার service একটা পরিচ্ছন্ন integration hub হয়ে ওঠে: third-party event আসে → verified → enqueued → আপনার domain কোড process করে, যা outbox-এ লেখে → fan-out → আপনার subscriber-রা পায়।
 
-## Backups and disaster recovery
+## Backup আর disaster recovery
 
-The webhook tables are operational state — losing them loses event history and pending deliveries. Two layers:
+webhook table হলো operational state — সেগুলো হারানো মানে event history আর pending delivery হারানো। দুটো layer:
 
-**1. Postgres backups.** Continuous WAL archiving + nightly base backups. Standard Postgres ops; covered in **DB self-hosted** track.
+**১. Postgres backup।** Continuous WAL archiving + প্রতি রাতে base backup। Standard Postgres ops; **DB self-hosted** track-এ কভার করা।
 
-**2. Outbox is the source of truth.** A disaster scenario: the deliveries table is lost. Replay from outbox: re-fan-out every outbox row, re-create deliveries, retry from scratch. Customers get duplicates; their idempotency handles it. No data loss.
+**২. Outbox হলো source of truth।** একটা disaster scenario: deliveries table হারিয়ে গেছে। outbox থেকে replay করুন: প্রতিটা outbox row re-fan-out করুন, delivery re-create করুন, শুরু থেকে retry করুন। Customer-রা duplicate পায়; তাদের idempotency সামলায়। কোনো data loss নেই।
 
-For really paranoid setups, mirror the outbox to S3 or another offsite store. Recover by replaying from the mirror. Most apps don't need this.
+সত্যিকার paranoid setup-এর জন্য, outbox-কে S3 বা আরেকটা offsite store-এ mirror করুন। mirror থেকে replay করে recover করুন। বেশিরভাগ app-এর এটা লাগে না।
 
-## Cost reality
+## খরচের বাস্তবতা
 
-For a self-hosted webhook system handling ~100K deliveries/day:
+~100K deliveries/day সামলানো একটা self-hosted webhook সিস্টেমের জন্য:
 
-- $20/month VPS (4 GB RAM, 2 vCPU) for the service.
-- $10/month VPS for Postgres (or co-located if traffic is light).
-- Free Let's Encrypt TLS.
-- Free Loki + Prometheus + Grafana (also self-hosted).
+- service-এর জন্য $20/month VPS (4 GB RAM, 2 vCPU)।
+- Postgres-এর জন্য $10/month VPS (বা traffic কম হলে co-located)।
+- Free Let's Encrypt TLS।
+- Free Loki + Prometheus + Grafana (এগুলোও self-hosted)।
 
-Total ~$30/month. Hosted webhook services (Hookdeck, Svix) charge $50–500/month for similar volume. Build vs buy is a real choice; once you've built it, you have something you understand top to bottom.
+মোট ~$30/month। Hosted webhook service (Hookdeck, Svix) একই volume-এর জন্য $50–500/month নেয়। Build vs buy একটা আসল পছন্দ; একবার বানিয়ে ফেললে, আপনার এমন কিছু থাকে যা আপনি উপর থেকে নিচ পর্যন্ত বোঝেন।
 
 ## Pre-launch checklist
 
-Before customers send real traffic:
+Customer-রা আসল traffic পাঠানোর আগে:
 
-- [ ] Outbox pattern wired into every domain commit that should emit events.
-- [ ] Fan-out worker running, replicates outbox rows to per-subscription deliveries.
-- [ ] Worker pool sized appropriately, with per-subscription concurrency caps.
-- [ ] HMAC signing on every delivery, with shared-secret rotation supported.
-- [ ] Verify and dedupe on every receiver endpoint.
-- [ ] Retry policy: exponential + jitter, 72-hour deadline, classifier handles 4xx/5xx correctly.
-- [ ] DLQ + alerts at the right thresholds (per-subscription, producer-wide).
-- [ ] Customer dashboard with list, detail, attempts, resend.
-- [ ] Audit log on all admin/customer replay actions.
-- [ ] Prometheus metrics, Grafana dashboard, OpenTelemetry traces.
-- [ ] systemd unit with restart on failure.
-- [ ] nginx with TLS + tight body size limit + appropriate timeouts.
-- [ ] Postgres tuned: partial indexes, regular VACUUM, backups verified.
-- [ ] Documented contract: retry window, at-least-once, signing scheme, dashboard URL.
+- [ ] event emit করা উচিত এমন প্রতিটা domain commit-এ outbox pattern জোড়া।
+- [ ] Fan-out worker চলছে, outbox row-কে per-subscription delivery-তে replicate করে।
+- [ ] Worker pool যথাযথভাবে sized, per-subscription concurrency cap সহ।
+- [ ] প্রতিটা delivery-তে HMAC signing, shared-secret rotation সমর্থিত।
+- [ ] প্রতিটা receiver endpoint-এ verify আর dedupe।
+- [ ] Retry policy: exponential + jitter, ৭২-ঘণ্টা deadline, classifier 4xx/5xx সঠিকভাবে সামলায়।
+- [ ] DLQ + সঠিক threshold-এ alert (per-subscription, producer-wide)।
+- [ ] list, detail, attempt, resend সহ customer dashboard।
+- [ ] সব admin/customer replay action-এ audit log।
+- [ ] Prometheus metric, Grafana dashboard, OpenTelemetry trace।
+- [ ] failure-এ restart সহ systemd unit।
+- [ ] TLS + টাইট body size limit + যথাযথ timeout সহ nginx।
+- [ ] Postgres tuned: partial index, নিয়মিত VACUUM, backup verified।
+- [ ] Documented contract: retry window, at-least-once, signing scheme, dashboard URL।
 
-Half unchecked? Not yet. The good news: webhooks rarely break in dramatic ways once correctly deployed; the boring ops work pays off.
+অর্ধেক unchecked? এখনও নয়। সুখবর: সঠিকভাবে deploy করা হলে webhooks নাটকীয়ভাবে খুব কমই ভাঙে; সেই বোরিং ops কাজটাই দাম দেয়।
 
-## Recap
+## রিক্যাপ
 
-- Outbox pattern: domain commit + outbox row in one transaction. Bridges to delivery queue.
-- Fan-out worker creates per-subscription `webhook_deliveries` rows from outbox.
-- Worker pool with `FOR UPDATE SKIP LOCKED` claim, per-subscription concurrency caps.
-- Postgres partial indexes on hot queue scans. Vacuum and partition for high throughput.
-- systemd unit, nginx with HTTPS + tight limits, env-driven config.
-- Single binary hosts producer, workers, receiver, admin UI. Split when measured.
-- Outbox is the disaster-recovery source of truth. Re-fan-out replays.
-- Per-subscription concurrency caps prevent one bad customer from starving the rest.
-- Self-hosted cost ~$30/month for moderate volume.
+- Outbox pattern: domain commit + outbox row এক transaction-এ। delivery queue-র সাথে সেতু।
+- Fan-out worker outbox থেকে per-subscription `webhook_deliveries` row তৈরি করে।
+- `FOR UPDATE SKIP LOCKED` claim সহ worker pool, per-subscription concurrency cap।
+- Hot queue scan-এ Postgres partial index। উঁচু throughput-এর জন্য vacuum আর partition।
+- systemd unit, HTTPS + টাইট limit সহ nginx, env-driven config।
+- Single binary producer, worker, receiver, admin UI host করে। মাপা হলে ভাগ করুন।
+- Outbox হলো disaster-recovery-র source of truth। Re-fan-out replay করে।
+- Per-subscription concurrency cap একজন খারাপ customer-কে বাকিদের অভুক্ত রাখা থেকে ঠেকায়।
+- Self-hosted খরচ মাঝারি volume-এর জন্য ~$30/month।
 
-That is the full Backend Engineering Path's webhooks track. Next topic in the path: [Data modeling](/notes/data-modeling) — designing schemas, choosing keys, normalising and denormalising for the kinds of queries you actually run.
+এটাই পূর্ণ Backend Engineering Path-এর webhooks track। path-এর পরের topic: [Data modeling](/notes/data-modeling) — schema ডিজাইন করা, key বেছে নেওয়া, আপনি আসলে যে ধরনের query চালান তার জন্য normalise আর denormalise করা।

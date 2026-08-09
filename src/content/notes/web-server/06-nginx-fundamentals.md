@@ -1,9 +1,9 @@
 ---
 title: 'nginx Fundamentals'
-subtitle: 'Install, structure the config, write server blocks, understand locations and includes. The nginx mental model that holds for every advanced feature.'
+subtitle: 'ইনস্টল করুন, config-এর গঠন সাজান, server block লিখুন, location আর include বুঝুন। যে nginx মেন্টাল মডেল প্রতিটি advanced feature-এর জন্য টিকে থাকে।'
 chapter: 6
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['nginx', 'configuration', 'server blocks', 'locations']
 ---
 
@@ -11,19 +11,27 @@ topics: ['nginx', 'configuration', 'server blocks', 'locations']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why nginx
+## গল্পে বুঝি
 
-nginx is fast, stable, has been deployed at every scale from one VPS to global CDNs, runs on a vanishing amount of CPU, and has a config language that makes sense once you have read this chapter. It is the standard answer for "what serves my static files and proxies my app." This chapter teaches the structure; later chapters add reverse proxying, caching, performance tuning.
+ফাতিমা আল-ফিহরি একটা বিশাল অফিস কমপ্লেক্সের ফ্রন্ট-ডেস্ক ম্যানেজার। তার একটাই কাজ — দিনে হাজার হাজার লোক এসে বলে "আমি লাইব্রেরি করিডোরে যাব", "আমি অফিস করিডোরে যাব" — আর তাকে চোখের পলকে সবাইকে ঠিক জায়গায় পাঠিয়ে দিতে হয়। মজার ব্যাপার হলো, ফাতিমা কখনো নিজের মাথা খাটিয়ে সিদ্ধান্ত নেয় না, কখনো "মনে হচ্ছে আপনি ওখানে যাবেন" বলে আন্দাজ করে না। তার সামনে একটা মোটা লিখিত রুলবুক খোলা থাকে, আর সে অক্ষরে অক্ষরে সেটাই মেনে চলে — দ্রুত, নির্ভুল, একটুও এদিক-ওদিক না করে।
+
+রুলবুকটা সুন্দরভাবে সাজানো। প্রতিটা বিল্ডিং-এর জন্য আলাদা একটা সেকশন — ইবনে সিনা টাওয়ার, আল-খোয়ারিজমি হল — প্রতিটার নিজস্ব ঠিকানা আর পোর্ট লেখা। আর প্রতিটা সেকশনের ভেতরে করিডোর-ভিত্তিক নিয়ম: "যার গন্তব্য /library, তাকে এই সিঁড়িতে পাঠাও", "যার গন্তব্য /office, তাকে ওই লিফটে পাঠাও"। কেউ /library চাইলে ফাতিমা রুলবুকের ঠিক ওই লাইনটা খুঁজে বের করে, আর সেখানে লেখা প্রতিটা নির্দেশ — কোন তলা, কোন চাবি, কার অনুমতি লাগবে — হুবহু পালন করে। নতুন বিল্ডিং যোগ হলে সে শুধু রুলবুকে একটা নতুন সেকশন লিখে দেয়, ব্যস।
+
+এই গল্পটাই আসলে **nginx**। ফাতিমা হলো nginx — একটা **event-driven** ম্যানেজার যে অল্প শক্তিতে বিপুল ভিড় সামলায়। পুরো রুলবুকটা হলো nginx **config**, যেটা **declarative** — কী করতে হবে সেটা লেখা থাকে, কীভাবে করবে সেটা nginx নিজে বুঝে নেয়, কোনো improvisation নেই। প্রতিটা বিল্ডিং-এর সেকশন হলো একটা **server block** (একটা ডোমেইন/পোর্টের জন্য নিয়মের সেট), করিডোর-ভিত্তিক "/library এখানে, /office ওখানে" নিয়মগুলো হলো **location block** যা URL path দেখে ম্যাচ করে, আর ভেতরের প্রতিটা নির্দেশ-লাইন হলো একটা **directive**। বাস্তবে ঠিক এভাবেই একটা `nginx.conf` ফাইলে server block আর location block সাজিয়ে হাজার হাজার request রাউট করা হয় — GitHub, Netflix থেকে শুরু করে ছোট VPS পর্যন্ত সবাই এই লিখিত রুলবুক মডেলেই চলে।
+
+## nginx কেন
+
+nginx দ্রুত, স্থিতিশীল, একটি VPS থেকে শুরু করে global CDN পর্যন্ত প্রতিটি স্কেলে deploy করা হয়েছে, খুবই অল্প CPU-তে চলে, আর এর একটা config language আছে যা এই অধ্যায় পড়া হয়ে গেলে বোধগম্য হয়ে ওঠে। "আমার static file কে serve করবে আর আমার app কে proxy করবে" — এর স্ট্যান্ডার্ড উত্তর এটাই। এই অধ্যায় গঠনটা শেখায়; পরের অধ্যায়গুলো reverse proxying, caching, performance tuning যোগ করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-nginx is like a traffic cop at an intersection — it directs each request to the right lane without touching the cargo inside.
+nginx অনেকটা একটি চৌরাস্তার ট্রাফিক পুলিশের মতো — এটা ভেতরের মালামালে হাত না দিয়েই প্রতিটি request-কে সঠিক লেনে পাঠিয়ে দেয়।
 
 </Callout>
 
-## Installing on Debian/Ubuntu
+## Debian/Ubuntu-তে ইনস্টল করা
 
 ```bash
 sudo apt update
@@ -31,7 +39,7 @@ sudo apt install -y nginx
 sudo systemctl enable --now nginx
 ```
 
-Verify:
+যাচাই করুন:
 
 ```bash
 curl -i http://localhost/
@@ -41,9 +49,9 @@ curl -i http://localhost/
 # Welcome to nginx!
 ```
 
-The default config serves `/usr/share/nginx/html/index.html` (or `/var/www/html/index.nginx-debian.html` on Debian). You will replace this.
+ডিফল্ট config `/usr/share/nginx/html/index.html` serve করে (অথবা Debian-এ `/var/www/html/index.nginx-debian.html`)। এটা আপনি বদলে দেবেন।
 
-## The file layout
+## ফাইল লেআউট
 
 ```text
 /etc/nginx/
@@ -64,7 +72,7 @@ The default config serves `/usr/share/nginx/html/index.html` (or `/var/www/html/
 /var/www/html/              # default document root
 ```
 
-The Debian convention of `sites-available` + `sites-enabled` (symlinks) is a neat way to enable/disable virtual hosts:
+Debian-এর `sites-available` + `sites-enabled` (symlink) কনভেনশন virtual host enable/disable করার একটা পরিপাটি উপায়:
 
 ```bash
 # Disable a site without deleting it:
@@ -72,13 +80,13 @@ sudo rm /etc/nginx/sites-enabled/example.com
 sudo systemctl reload nginx
 ```
 
-## The config grammar
+## config গ্রামার
 
-nginx's config is a tree of _directives_ and _blocks_. Three rules:
+nginx-এর config হলো _directive_ আর _block_-এর একটা tree। তিনটি নিয়ম:
 
-1. **Directives end with `;`.**
-2. **Blocks open with `{` and close with `}`.**
-3. **Directives only work inside the right context.** A `server` directive only makes sense inside an `http` block. nginx tells you when you put one in the wrong place.
+1. **Directive `;` দিয়ে শেষ হয়।**
+2. **Block `{` দিয়ে খোলে আর `}` দিয়ে বন্ধ হয়।**
+3. **Directive কেবল সঠিক context-এর ভেতরে কাজ করে।** একটা `server` directive শুধু একটা `http` block-এর ভেতরে অর্থবহ। ভুল জায়গায় দিলে nginx আপনাকে বলে দেয়।
 
 ```nginx
 # Top level — this is the "main" context
@@ -101,25 +109,25 @@ http {
 }
 ```
 
-Three contexts you will see immediately:
+তিনটি context যা আপনি সাথে সাথেই দেখবেন:
 
-- **main** — worker count, error log, PID file.
-- **events** — connection-handling tuning.
-- **http** — everything HTTP-related: server blocks, MIME types, sendfile, gzip, caching.
+- **main** — worker count, error log, PID file।
+- **events** — connection-handling tuning।
+- **http** — HTTP-সম্পর্কিত সবকিছু: server block, MIME type, sendfile, gzip, caching।
 
-Inside `http`:
+`http`-এর ভেতরে:
 
-- **server** — a virtual host. One per domain, or one per port, or both.
-- **upstream** — a named pool of backend servers (for proxying).
-- **map** — variable transformations.
+- **server** — একটি virtual host। প্রতি domain-এ একটা, বা প্রতি port-এ একটা, বা দুটোই।
+- **upstream** — backend server-এর একটি নামযুক্ত pool (proxying-এর জন্য)।
+- **map** — variable transformation।
 
-Inside `server`:
+`server`-এর ভেতরে:
 
-- **location** — a path-prefix or regex match for routing within this host.
+- **location** — এই host-এর ভেতরে routing-এর জন্য একটি path-prefix বা regex match।
 
-## Your first server block
+## আপনার প্রথম server block
 
-A static site at `example.com`:
+`example.com`-এ একটি static site:
 
 ```nginx
 # /etc/nginx/sites-available/example.com
@@ -142,7 +150,7 @@ server {
 }
 ```
 
-Enable it:
+এটা enable করুন:
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
@@ -150,29 +158,29 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-`nginx -t` tests the config without applying it — always run this before reload. A bad config can take down all your sites.
+`nginx -t` config প্রয়োগ না করেই সেটা টেস্ট করে — reload করার আগে সবসময় এটা চালান। একটা খারাপ config আপনার সব site নামিয়ে দিতে পারে।
 
-## Reading the server block, line by line
+## server block পড়া, লাইন ধরে ধরে
 
 ```nginx
 listen 80;
 listen [::]:80;
 ```
 
-Listen on TCP port 80 over IPv4 and IPv6. The `[::]` is IPv6's `0.0.0.0`. Without explicit IPv6, you only listen on IPv4.
+IPv4 আর IPv6-এর ওপর TCP port 80-এ listen করুন। `[::]` হলো IPv6-এর `0.0.0.0`। explicit IPv6 ছাড়া আপনি শুধু IPv4-এ listen করবেন।
 
 ```nginx
 server_name example.com www.example.com;
 ```
 
-Match these exact hostnames in the `Host` header. nginx's virtual hosting works entirely off `Host`. A request to `other.com` will not be served by this block; it falls back to the _default_ server (or returns 404 if none matches).
+`Host` header-এ এই ঠিক hostname-গুলো match করুন। nginx-এর virtual hosting পুরোপুরি `Host`-এর ওপর কাজ করে। `other.com`-এ একটা request এই block দিয়ে serve হবে না; এটা _default_ server-এ fall back করে (অথবা কোনোটা match না করলে 404 ফেরত দেয়)।
 
 ```nginx
 root /var/www/example.com;
 index index.html;
 ```
 
-`root` is the document root. A request for `/about/team.html` looks for `/var/www/example.com/about/team.html`. `index index.html` says when a request is `/some/dir/`, try `index.html` inside it.
+`root` হলো document root। `/about/team.html`-এর জন্য একটা request `/var/www/example.com/about/team.html` খোঁজে। `index index.html` বলে যে request যখন `/some/dir/`, তখন এর ভেতরে `index.html` চেষ্টা করো।
 
 ```nginx
 location / {
@@ -180,7 +188,7 @@ location / {
 }
 ```
 
-For any path, try the file at `$uri`, then a directory at `$uri/`, otherwise 404. This is the standard SPA-fallback-free pattern; for a single-page app you would write `try_files $uri /index.html;` to fall back to the SPA shell.
+যেকোনো path-এর জন্য, `$uri`-তে file চেষ্টা করো, তারপর `$uri/`-তে directory, নয়তো 404। এটা স্ট্যান্ডার্ড SPA-fallback-free প্যাটার্ন; একটা single-page app-এর জন্য আপনি `try_files $uri /index.html;` লিখতেন যাতে SPA shell-এ fall back করে।
 
 ```nginx
 location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2)$ {
@@ -189,67 +197,67 @@ location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2)$ {
 }
 ```
 
-`~*` is a case-insensitive regex match. Anything with these extensions gets a 30-day cache lifetime.
+`~*` হলো একটা case-insensitive regex match। এই extension-গুলো যার আছে সে 30-দিনের cache lifetime পায়।
 
-## location matching — the rules in order
+## location matching — নিয়মগুলো ক্রম অনুযায়ী
 
-`location` blocks compete for each request. nginx picks one and only one to serve. The rules:
+`location` block প্রতিটি request-এর জন্য প্রতিযোগিতা করে। nginx একটা এবং কেবল একটা বেছে নেয় serve করতে। নিয়মগুলো:
 
-1. **Exact match (`=`)** — wins immediately if it matches.
+1. **Exact match (`=`)** — match করলে সাথে সাথে জিতে যায়।
 
    ```nginx
    location = / { ... }       # only the literal `/`
    location = /favicon.ico { ... }
    ```
 
-2. **Prefix match (no modifier)** — longest-prefix match wins.
+2. **Prefix match (কোনো modifier নেই)** — সবচেয়ে দীর্ঘ prefix match জেতে।
 
    ```nginx
    location /api/ { ... }     # everything starting with /api/
    location / { ... }         # catch-all
    ```
 
-3. **Preferential prefix (`^~`)** — like prefix, but wins over regex.
+3. **Preferential prefix (`^~`)** — prefix-এর মতোই, কিন্তু regex-এর ওপর জেতে।
 
    ```nginx
    location ^~ /static/ { ... }  # do not even try regexes
    ```
 
-4. **Regex match (`~` case-sensitive, `~*` case-insensitive)** — first match wins.
+4. **Regex match (`~` case-sensitive, `~*` case-insensitive)** — প্রথম match জেতে।
    ```nginx
    location ~ \.php$ { ... }
    location ~* \.(jpg|png)$ { ... }
    ```
 
-The actual matching algorithm:
+আসল matching অ্যালগরিদম:
 
-1. Find the longest `=` match. If found, use it. Done.
-2. Find the longest prefix match (including `^~`). Remember it.
-3. If the longest prefix was `^~`, use it. Done.
-4. Otherwise, walk regex blocks in order. First match wins.
-5. If no regex matched, use the prefix from step 2.
+1. সবচেয়ে দীর্ঘ `=` match খোঁজো। পেলে, সেটা ব্যবহার করো। শেষ।
+2. সবচেয়ে দীর্ঘ prefix match খোঁজো (`^~` সহ)। সেটা মনে রাখো।
+3. সবচেয়ে দীর্ঘ prefix যদি `^~` হয়, সেটা ব্যবহার করো। শেষ।
+4. নয়তো, regex block-গুলো ক্রম অনুযায়ী হাঁটো। প্রথম match জেতে।
+5. কোনো regex match না করলে, step 2-এর prefix ব্যবহার করো।
 
-This is one of the few quirks of nginx — once you know the algorithm, it is predictable; without it, "why is _this_ block matching?" is mysterious.
+এটা nginx-এর গুটিকয়েক খুঁতের একটা — একবার অ্যালগরিদমটা জানলে এটা predictable; সেটা ছাড়া, "কেন _এই_ block-টা match করছে?" রহস্যময় থেকে যায়।
 
-## Variables — the language under the language
+## Variables — ভাষার নিচের ভাষা
 
-nginx has a small built-in DSL with variables. Some of the common ones:
+nginx-এর একটা ছোট built-in DSL আছে variable সহ। সাধারণ কয়েকটা:
 
-| Variable          | Meaning                                                           |
-| ----------------- | ----------------------------------------------------------------- |
-| `$uri`            | The current URI (rewritten if you used `rewrite`).                |
-| `$request_uri`    | The original URI as the client sent it.                           |
-| `$args`           | The query string.                                                 |
-| `$host`           | The Host header (lowercased).                                     |
-| `$server_name`    | The matched server_name.                                          |
-| `$remote_addr`    | The client's IP (or proxy's, see `set_real_ip_from`).             |
-| `$scheme`         | `http` or `https`.                                                |
-| `$request_method` | `GET`, `POST`, etc.                                               |
-| `$http_<header>`  | Any request header — `$http_user_agent`, `$http_x_forwarded_for`. |
-| `$cookie_<name>`  | A specific cookie value.                                          |
-| `$arg_<name>`     | A specific query-string argument.                                 |
+| Variable          | মানে                                                                 |
+| ----------------- | -------------------------------------------------------------------- |
+| `$uri`            | বর্তমান URI (`rewrite` ব্যবহার করলে rewrite করা)।                    |
+| `$request_uri`    | client যেভাবে পাঠিয়েছিল সেই মূল URI।                                |
+| `$args`           | query string।                                                        |
+| `$host`           | Host header (lowercased)।                                            |
+| `$server_name`    | match হওয়া server_name।                                             |
+| `$remote_addr`    | client-এর IP (বা proxy-র, দেখুন `set_real_ip_from`)।                 |
+| `$scheme`         | `http` বা `https`।                                                   |
+| `$request_method` | `GET`, `POST`, ইত্যাদি।                                              |
+| `$http_<header>`  | যেকোনো request header — `$http_user_agent`, `$http_x_forwarded_for`। |
+| `$cookie_<name>`  | একটি নির্দিষ্ট cookie value।                                         |
+| `$arg_<name>`     | একটি নির্দিষ্ট query-string argument।                                |
 
-Use them in directives:
+এগুলো directive-এ ব্যবহার করুন:
 
 ```nginx
 add_header X-Request-ID $request_id;
@@ -257,9 +265,9 @@ log_format main '$remote_addr "$request" $status $bytes_sent';
 return 301 https://$host$request_uri;
 ```
 
-## Includes — keep the config readable
+## Includes — config পড়ার যোগ্য রাখুন
 
-Repeated patterns belong in `snippets/` or `conf.d/`. Example: a snippet for security headers:
+পুনরাবৃত্ত প্যাটার্নগুলো `snippets/` বা `conf.d/`-তে রাখা উচিত। উদাহরণ: security header-এর জন্য একটা snippet:
 
 ```nginx
 # /etc/nginx/snippets/security-headers.conf
@@ -269,7 +277,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header X-XSS-Protection "0" always;
 ```
 
-In the server block:
+server block-এ:
 
 ```nginx
 server {
@@ -280,13 +288,13 @@ server {
 }
 ```
 
-Now the same headers ship from every site you serve, without copy/paste.
+এখন একই header আপনার serve করা প্রতিটি site থেকে যাবে, copy/paste ছাড়াই।
 
-`always` on `add_header` means "include this even on error responses (4xx, 5xx)." Without it, a 500 response from your backend skips the header — undesirable.
+`add_header`-এ `always` মানে "এটা error response-এও (4xx, 5xx) অন্তর্ভুক্ত করো।" এটা ছাড়া, আপনার backend থেকে একটা 500 response header-টা এড়িয়ে যায় — অনাকাঙ্ক্ষিত।
 
-## The default server — what catches unmatched requests
+## default server — যা unmatched request ধরে
 
-If a request's `Host` does not match any `server_name`, nginx uses the **default** server. By default, that is the _first_ server block defined. To make it explicit:
+যদি কোনো request-এর `Host` কোনো `server_name`-এর সাথে match না করে, nginx **default** server ব্যবহার করে। ডিফল্টভাবে, সেটা হলো _প্রথম_ সংজ্ঞায়িত server block। এটা স্পষ্ট করতে:
 
 ```nginx
 server {
@@ -297,11 +305,11 @@ server {
 }
 ```
 
-This catches scanner traffic that hits your IP directly (without a real domain) and quietly drops it. Cleaner than serving them your default site.
+এটা scanner traffic ধরে যা সরাসরি আপনার IP-তে হিট করে (কোনো real domain ছাড়া) আর চুপচাপ সেটা drop করে দেয়। ওদের আপনার default site serve করার চেয়ে পরিচ্ছন্ন।
 
-## Reload, test, and roll back
+## Reload, test, আর roll back
 
-The development cycle:
+ডেভেলপমেন্ট সাইকেল:
 
 ```bash
 sudo nano /etc/nginx/sites-available/example.com
@@ -309,18 +317,18 @@ sudo nginx -t                              # verify config
 sudo systemctl reload nginx                # apply without downtime
 ```
 
-`reload` sends `SIGHUP` to nginx — the master forks new workers with the new config and gracefully retires the old ones. Active connections finish on the old workers. Zero-downtime config changes.
+`reload` nginx-কে `SIGHUP` পাঠায় — master নতুন config দিয়ে নতুন worker fork করে আর পুরনোগুলোকে সুন্দরভাবে অবসরে পাঠায়। active connection পুরনো worker-এ শেষ হয়। Zero-downtime config পরিবর্তন।
 
-If reload fails:
+reload ব্যর্থ হলে:
 
 ```text
 nginx: [emerg] "server" directive is not allowed here in /etc/nginx/sites-available/example.com:5
 nginx: configuration file /etc/nginx/nginx.conf test failed
 ```
 
-The reload aborted; the previous config is still running. Fix the file, run `nginx -t` again, retry the reload.
+reload বাতিল হলো; আগের config এখনো চলছে। file ঠিক করুন, আবার `nginx -t` চালান, reload আবার চেষ্টা করুন।
 
-## Logs to watch
+## যে log-গুলো দেখবেন
 
 ```bash
 sudo tail -f /var/log/nginx/access.log
@@ -328,17 +336,17 @@ sudo tail -f /var/log/nginx/error.log
 sudo journalctl -u nginx -f
 ```
 
-Access logs record every request; error logs record failures, timeouts, malformed requests, upstream errors. When something is wrong, `error.log` is almost always the first place to look.
+Access log প্রতিটি request রেকর্ড করে; error log রেকর্ড করে failure, timeout, malformed request, upstream error। কিছু ভুল হলে, `error.log` প্রায় সবসময়ই প্রথমে দেখার জায়গা।
 
-## Common mistakes
+## সাধারণ ভুল
 
-- **Forgetting `nginx -t` before reload.** Eventually you ship a typo and reload fails. Make `nginx -t` muscle memory.
-- **Editing in `sites-enabled`.** That directory should only contain symlinks. Edit in `sites-available`, the symlink picks it up.
-- **Multiple `default_server` declarations on the same `listen`.** nginx refuses to start.
-- **Forgetting `always` on `add_header`.** Headers vanish on error pages.
-- **Setting `worker_connections` too high.** Multiplied by `worker_processes`, it caps total simultaneous connections; but each connection consumes a file descriptor, so raise `worker_rlimit_nofile` to match.
+- **reload-এর আগে `nginx -t` ভুলে যাওয়া।** এক সময় আপনি একটা typo ship করবেন আর reload ব্যর্থ হবে। `nginx -t`-কে মাসল মেমরি বানান।
+- **`sites-enabled`-এ এডিট করা।** সেই directory-তে শুধু symlink থাকা উচিত। `sites-available`-এ এডিট করুন, symlink সেটা তুলে নেবে।
+- **একই `listen`-এ একাধিক `default_server` ঘোষণা।** nginx চালু হতে অস্বীকার করে।
+- **`add_header`-এ `always` ভুলে যাওয়া।** error page-এ header উধাও হয়ে যায়।
+- **`worker_connections` খুব বেশি সেট করা।** `worker_processes` দিয়ে গুণ করলে এটা মোট simultaneous connection-এর সীমা বেঁধে দেয়; কিন্তু প্রতিটি connection একটা file descriptor খায়, তাই মিলিয়ে `worker_rlimit_nofile` বাড়ান।
 
-## A tidy production layout
+## একটি পরিপাটি production লেআউট
 
 ```text
 /etc/nginx/
@@ -361,15 +369,15 @@ Access logs record every request; error logs record failures, timeouts, malforme
     └── _default -> ../sites-available/_default
 ```
 
-One file per site. Shared config in `conf.d/` (loaded automatically) and `snippets/` (included by hand). A `_default` server that catches scanner traffic. This scales to dozens of sites without becoming hostile to read.
+প্রতি site-এ একটা file। শেয়ার্ড config `conf.d/`-তে (স্বয়ংক্রিয়ভাবে লোড হয়) আর `snippets/`-এ (হাতে include করা)। একটা `_default` server যা scanner traffic ধরে। এটা পড়ার জন্য বিরূপ না হয়েই কয়েক ডজন site পর্যন্ত স্কেল করে।
 
-## Recap
+## রিক্যাপ
 
-- nginx config is a tree of directives and blocks, organized by context (main, events, http, server, location).
-- A `server` block is a virtual host matched by `server_name`. A `location` block routes within a host.
-- `location` matching has a defined order — exact, prefix, `^~`, regex, longest-prefix fallback.
-- Variables (`$uri`, `$host`, etc.) and `add_header always` cover most everyday work.
-- `nginx -t` then `systemctl reload nginx` for zero-downtime config changes.
-- Use `sites-available`/`sites-enabled` and `snippets/` to keep config readable.
+- nginx config হলো directive আর block-এর একটা tree, context (main, events, http, server, location) দিয়ে সংগঠিত।
+- একটা `server` block হলো একটা virtual host যা `server_name` দিয়ে match হয়। একটা `location` block একটা host-এর ভেতরে route করে।
+- `location` matching-এর একটা সংজ্ঞায়িত ক্রম আছে — exact, prefix, `^~`, regex, সবচেয়ে দীর্ঘ prefix fallback।
+- Variable (`$uri`, `$host`, ইত্যাদি) আর `add_header always` প্রতিদিনের বেশিরভাগ কাজ কভার করে।
+- Zero-downtime config পরিবর্তনের জন্য `nginx -t` তারপর `systemctl reload nginx`।
+- config পড়ার যোগ্য রাখতে `sites-available`/`sites-enabled` আর `snippets/` ব্যবহার করুন।
 
-Next chapter: putting nginx in front of an application server — the reverse proxy pattern that ties everything together.
+পরের অধ্যায়: একটি application server-এর সামনে nginx বসানো — সেই reverse proxy প্যাটার্ন যা সবকিছুকে একসাথে বাঁধে।

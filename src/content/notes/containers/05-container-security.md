@@ -1,9 +1,9 @@
 ---
 title: 'Container Security'
-subtitle: 'Attack surface, capabilities, seccomp, read-only filesystems, and what actually matters for production hardening.'
+subtitle: 'Attack surface, capabilities, seccomp, read-only filesystem, এবং প্রোডাকশন hardening-এর জন্য যা আসলে গুরুত্বপূর্ণ।'
 chapter: 5
 level: 'advanced'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['container security', 'capabilities', 'seccomp', 'read-only', 'rootless', 'supply chain']
 ---
 
@@ -13,27 +13,35 @@ topics: ['container security', 'capabilities', 'seccomp', 'read-only', 'rootless
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Defense in depth for a museum: the front door has guards, each wing has alarms, display cases are locked, and the most valuable items are in a vault. No single measure is sufficient — you layer them so that breaching one layer doesn't give access to everything. Container security is the same: non-root + read-only + capability drop + seccomp, together.
+একটা জাদুঘরের জন্য defense in depth: সামনের দরজায় guard, প্রতিটা wing-এ alarm, display case তালাবদ্ধ, আর সবচেয়ে মূল্যবান জিনিসগুলো একটা vault-এ। কোনো একটা ব্যবস্থাই যথেষ্ট নয় — আপনি সেগুলো স্তরে স্তরে সাজান যাতে একটা স্তর ভাঙলেও সবকিছুতে access না পাওয়া যায়। Container security-ও একই: non-root + read-only + capability drop + seccomp, একসাথে।
 
 </Callout>
 
-## The Threat Model
+## গল্পে বুঝি
 
-What you're defending against in a containerized environment:
+আল-খোয়ারিজমি একটা সুরক্ষিত গুদাম চালান, যেখানে দামি পণ্য রাখা হয়। নতুন কোনো কর্মী কাজে যোগ দিলে ম্যানেজার তার হাতে গুদামের master key তুলে দেন না — যে যেই কাজ করবে, শুধু সেই দরজার চাবিটাই পায়। প্যাকিং যে করে সে ভল্টে ঢুকতে পারে না, ভল্টের লোক লোডিং বে-তে যেতে পারে না। কারও একটা চাবি চুরি হয়ে গেলেও পুরো গুদাম হাতছাড়া হয় না। আর প্রতিটা ইনকামিং ক্রেট ভেতরে ঢোকার আগে X-ray মেশিনে চেক করা হয় — লুকানো contraband বা গোলমেলে কিছু ধরা পড়লে সেটা ফটকেই আটকে যায়, ভেতরে ঢোকেই না।
 
-1. **Compromised application code** — an attacker exploits a bug in your app and gets RCE inside the container
-2. **Compromised base image** — a malicious or vulnerable upstream image
-3. **Container escape** — exploiting a kernel or runtime vulnerability to escape the container and reach the host
-4. **Privilege escalation** — a process inside the container gains capabilities it shouldn't have
-5. **Supply chain attack** — a dependency or base image is compromised after you build
+আল-খোয়ারিজমি আরও দুটো নিয়ম কড়াভাবে মানেন। এক, শুধু বিশ্বস্ত, পরিচিত সাপ্লায়ারের সিল-করা মাল-ই তিনি গ্রহণ করেন — অজানা জায়গা থেকে খোলা, নাম-ঠিকানাহীন বাক্স ফিরিয়ে দেওয়া হয়, কারণ ভেতরে কী আছে কেউ জানে না। দুই, বেশিরভাগ স্টোররুম সবসময় তালাবদ্ধ থাকে; একবার মাল সাজিয়ে দেওয়ার পর ভেতরে কেউ কিছু বদলাতে, সরাতে বা নতুন কিছু ঢোকাতে পারে না। কাজের প্রয়োজনে যেটুকু জায়গায় হাত দেওয়া লাগবে, শুধু সেটুকুই খোলা রাখা হয়।
 
-Defense in depth: make each of these harder, accept you can't make any of them impossible.
+এই গুদামটাই আসলে container security। যে যেই কাজের সেই চাবিটুকুই পায় — মানে **least privilege**, container-এ **root হিসেবে না চালিয়ে** non-root user দিয়ে চালানো আর অপ্রয়োজনীয় **capabilities** drop করে দেওয়া। প্রতিটা ক্রেট X-ray করা মানে base image আর dependency-কে ভেতরে টানার আগে **image scanning** দিয়ে known vulnerability খোঁজা। শুধু বিশ্বস্ত সাপ্লায়ারের সিল-করা মাল নেওয়া মানে **trusted, minimal base image** (নির্দিষ্ট digest-এ pin করা, signed) ব্যবহার করা। আর স্টোররুম তালাবদ্ধ রাখা মানে **read-only filesystem** — container চলার সময় কেউ যেন backdoor লিখতে বা binary বদলাতে না পারে। বাস্তবে Kubernetes-এ `runAsNonRoot`, CI-তে Trivy/Grype scan, digest-pinned base image আর `readOnlyRootFilesystem` — এই স্তরগুলো একসাথে বসিয়েই প্রোডাকশন container hardening করা হয়, ঠিক গুদামের defense in depth-এর মতো।
 
-## Non-Root by Default
+## Threat Model
 
-Running as root inside a container is the most common mistake. If your app is compromised and running as root, the attacker has root — which makes container escapes and lateral movement much easier.
+একটা containerized এনভায়রনমেন্টে আপনি যার বিরুদ্ধে রক্ষা করছেন:
+
+1. **Compromised application code** — একজন attacker আপনার অ্যাপের একটা bug exploit করে container-এর ভেতরে RCE পায়
+2. **Compromised base image** — একটা ক্ষতিকর বা vulnerable upstream image
+3. **Container escape** — একটা kernel বা runtime vulnerability exploit করে container থেকে বেরিয়ে হোস্টে পৌঁছানো
+4. **Privilege escalation** — container-এর ভেতরের একটা process এমন capability পায় যা তার থাকার কথা নয়
+5. **Supply chain attack** — build করার পর একটা dependency বা base image compromise হয়
+
+Defense in depth: এগুলোর প্রতিটাকে কঠিন করুন, মেনে নিন যে কোনোটাকেই অসম্ভব করা যায় না।
+
+## ডিফল্টভাবে Non-Root
+
+একটা container-এর ভেতরে root হিসেবে চালানো সবচেয়ে প্রচলিত ভুল। আপনার অ্যাপ compromise হয়ে root হিসেবে চললে, attacker root পেয়ে যায় — যা container escape আর lateral movement অনেক সহজ করে।
 
 ```dockerfile
 # Most official images have a non-root user — use it
@@ -59,7 +67,7 @@ RUN addgroup -g 1001 -S appgroup && \
 USER appuser
 ```
 
-**Enforce non-root in Kubernetes:**
+**Kubernetes-এ non-root বাধ্যতামূলক করুন:**
 
 ```yaml
 spec:
@@ -74,7 +82,7 @@ spec:
 
 ## Read-Only Root Filesystem
 
-A read-only filesystem prevents an attacker from writing backdoors, modifying binaries, or installing tools:
+একটা read-only filesystem একজন attacker-কে backdoor লেখা, binary পরিবর্তন করা, বা টুল install করা থেকে ঠেকায়:
 
 ```bash
 # Run with read-only root filesystem
@@ -87,7 +95,7 @@ docker run --read-only \
   myapp
 ```
 
-**In Kubernetes:**
+**Kubernetes-এ:**
 
 ```yaml
 containers:
@@ -104,11 +112,11 @@ volumes:
       sizeLimit: 100Mi
 ```
 
-Most apps need to write somewhere. Audit what your app writes and make it explicit — `readOnlyRootFilesystem` forces you to enumerate writable paths rather than having the entire filesystem available.
+বেশিরভাগ অ্যাপকে কোথাও না কোথাও লিখতে হয়। আপনার অ্যাপ কী লেখে তা audit করে সেটা স্পষ্ট করুন — `readOnlyRootFilesystem` পুরো filesystem উপলব্ধ রাখার বদলে আপনাকে writable path-গুলো একে একে গুনে বের করতে বাধ্য করে।
 
 ## Linux Capabilities
 
-The root user has ~40 distinct capabilities (ability to bind port &lt;1024, kill any process, load kernel modules, etc.). Running as root gives all of them. You can run as root but drop all non-essential capabilities:
+root user-এর প্রায় ৪০টা আলাদা capability আছে (port &lt;1024-এ bind করার ক্ষমতা, যেকোনো process kill করা, kernel module load করা, ইত্যাদি)। root হিসেবে চালালে এগুলোর সবই পাওয়া যায়। আপনি root হিসেবে চালাতে পারেন কিন্তু সব অপ্রয়োজনীয় capability drop করে দিতে পারেন:
 
 ```bash
 # Drop all capabilities, add back only what's needed
@@ -124,9 +132,9 @@ docker run \
 # SYS_PTRACE: debug other processes (debugging only, never in prod)
 ```
 
-**The right default:** `--cap-drop=ALL` and add back only what testing proves is needed. Use port 3000+ to avoid needing `NET_BIND_SERVICE`.
+**সঠিক ডিফল্ট:** `--cap-drop=ALL` আর শুধু যা টেস্টে প্রমাণিতভাবে দরকার সেটুকু ফিরিয়ে আনুন। `NET_BIND_SERVICE`-এর প্রয়োজন এড়াতে port 3000+ ব্যবহার করুন।
 
-**In Kubernetes:**
+**Kubernetes-এ:**
 
 ```yaml
 securityContext:
@@ -135,9 +143,9 @@ securityContext:
     add: [] # empty — your app should run without any special capabilities
 ```
 
-## seccomp Profiles
+## seccomp Profile
 
-seccomp (Secure Computing Mode) filters which syscalls a container can make. The default Docker seccomp profile blocks ~44 dangerous syscalls including `ptrace`, `kexec_load`, and `mount`.
+seccomp (Secure Computing Mode) filter করে একটা container কোন কোন syscall করতে পারবে। ডিফল্ট Docker seccomp profile প্রায় ৪৪টা বিপজ্জনক syscall block করে, যার মধ্যে আছে `ptrace`, `kexec_load`, আর `mount`।
 
 ```bash
 # Default seccomp profile is already applied
@@ -151,11 +159,11 @@ docker run --security-opt seccomp=unconfined myapp
 strace -e trace=all -f node server.js 2>&1 | awk -F'(' '{print $1}' | sort -u
 ```
 
-For most applications, the default Docker seccomp profile is sufficient. Creating a custom minimal profile for high-security workloads requires significant testing but dramatically reduces attack surface.
+বেশিরভাগ অ্যাপ্লিকেশনের জন্য ডিফল্ট Docker seccomp profile-ই যথেষ্ট। high-security workload-এর জন্য একটা custom minimal profile বানাতে যথেষ্ট টেস্টিং লাগে কিন্তু এটা attack surface নাটকীয়ভাবে কমায়।
 
 ## Image Supply Chain Security
 
-**Use specific digests, not tags:**
+**Tag নয়, নির্দিষ্ট digest ব্যবহার করুন:**
 
 ```dockerfile
 # WRONG — 'latest' can change to anything
@@ -168,7 +176,7 @@ FROM node:20.11.1-alpine3.19
 FROM node:20.11.1-alpine3.19@sha256:bf77dc26e48ea95fca9d1aceb5acfa69d2e546b765ec2abfb502975f1a2d4def
 ```
 
-**Scan dependencies before build:**
+**Build-এর আগে dependency scan করুন:**
 
 ```bash
 # Scan npm dependencies
@@ -194,7 +202,7 @@ syft myapp:latest -o spdx-json > sbom.json
 cosign verify ghcr.io/org/myapp:v1.0.0 --certificate-identity=...
 ```
 
-**Sign your images:**
+**আপনার image sign করুন:**
 
 ```bash
 # Sign with cosign (keyless, using OIDC)
@@ -206,7 +214,7 @@ cosign verify ghcr.io/org/myapp:v1.0.0
 
 ## Secrets Management
 
-Never bake secrets into images:
+কখনো image-এ secret বেক করবেন না:
 
 ```dockerfile
 # WRONG — secret in image layer forever
@@ -225,7 +233,7 @@ RUN --mount=type=secret,id=mykey \
     curl -H "Authorization: Bearer $API_KEY" ...
 ```
 
-**At runtime:** inject secrets via environment variables from a secrets manager, not from `.env` files in the container:
+**রানটাইমে:** container-এর `.env` file থেকে নয়, একটা secrets manager থেকে environment variable-এর মাধ্যমে secret inject করুন:
 
 ```yaml
 # Kubernetes: secret from Vault or AWS Secrets Manager

@@ -1,9 +1,9 @@
 ---
 title: 'Replication & Sharding'
-subtitle: 'Scaling databases beyond a single machine — leader-follower replication, consensus, and horizontal partitioning.'
+subtitle: 'একটা মেশিনের বাইরে ডেটাবেজ scale করা — leader-follower replication, consensus, আর horizontal partitioning।'
 chapter: 8
 level: 'advanced'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['replication', 'sharding', 'partitioning', 'consensus']
 ---
 
@@ -11,25 +11,33 @@ topics: ['replication', 'sharding', 'partitioning', 'consensus']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Replicate?
+## গল্পে বুঝি
 
-A single database server is a single point of failure. Replication copies data to multiple machines for:
+শহরের পাবলিক লাইব্রেরি নেটওয়ার্কে অনেকগুলো শাখা — মিরপুর, ধানমন্ডি, উত্তরা। একটা জনপ্রিয় উপন্যাস সবাই একসাথে পড়তে চায়, তাই লাইব্রেরিয়ান ফাতিমা আল-ফিহরি প্রতিটা শাখায় ওই একই বইয়ের হুবহু কয়েকটা কপি রাখেন। ফলে ইবনে সিনা মিরপুরে, আল-খোয়ারিজমি ধানমন্ডিতে — একই সময়ে দুজনেই বই ধার নিতে পারে, কাউকে অন্য শাখা পর্যন্ত দৌড়াতে হয় না। আর একটা শাখায় একটা কপি ছিঁড়ে বা হারিয়ে গেলেও সমস্যা নেই, বাকি কপিগুলো থেকেই পাঠক পড়তে পারে।
 
-- **High availability**: if one server dies, another takes over
-- **Read scaling**: spread read traffic across replicas
-- **Geographic distribution**: put data close to users
+কিন্তু পুরো সংগ্রহটা এত বিশাল যে কোনো একটা বিল্ডিংয়ে সব বই আঁটে না। তাই ফাতিমা আল-ফিহরি পুরো collection-টাকে বিষয় ধরে ভাগ করে দেন — বিজ্ঞানের সব বই মিরপুর শাখায়, ইতিহাসের সব বই ধানমন্ডিতে, সাহিত্য উত্তরায়। কেউ ইতিহাসের বই খুঁজলে তাকে সরাসরি ধানমন্ডিতে পাঠিয়ে দেওয়া হয়; প্রতিটা শাখা তখন গোটা সংগ্রহের একটা আলাদা টুকরো সামলায়, কোনো শাখাই একা পুরো বোঝা টানে না।
+
+এই দুই কৌশলই এই chapter-এর মূল কথা। একই বইয়ের হুবহু কপি সব শাখায় রাখা হলো **replication** — প্রতিটা replica-তে পুরো ডেটার একই কপি, তাই read একাধিক node-এ ছড়িয়ে যায় (read-scaling) আর একটা node মরে গেলেও আরেকটা কাজ চালিয়ে নেয় (failover)। আর বিষয় ধরে সংগ্রহ ভাগ করাটা হলো **sharding** — একটা shard key (এখানে "বিষয়") ধরে ডেটাকে আলাদা আলাদা disjoint টুকরোয় ভাগ করা, যাতে ডেটা যত বড়ই হোক এক মেশিনে না আঁটার সমস্যা মেটে (size/write-scaling)। বাস্তবে PostgreSQL read replica দিয়ে read scale করে, আর Instagram বা Discord ব্যবহারকারীর id-কে shard key ধরে বিলিয়ন সারির টেবিল অনেক node-এ ভাগ করে চালায়।
+
+## Replicate কেন?
+
+একটা মাত্র ডেটাবেজ server একটা single point of failure। Replication ডেটা একাধিক মেশিনে কপি করে এর জন্য:
+
+- **High availability**: একটা server মরে গেলে, আরেকটা দায়িত্ব নেয়
+- **Read scaling**: read traffic replica-গুলোর মধ্যে ছড়িয়ে দেওয়া
+- **Geographic distribution**: ডেটা user-দের কাছে রাখা
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a bank with branches — Replication: every branch has a copy of your account (if one branch is down, another still works). Sharding: accounts are divided by region — West Coast accounts at one branch, East Coast at another, for faster local access.
+যেমন শাখাসহ একটা bank — Replication: প্রতিটা শাখায় আপনার account-এর একটা কপি থাকে (একটা শাখা বন্ধ থাকলে, আরেকটা এখনও কাজ করে)। Sharding: account-গুলো region অনুযায়ী ভাগ করা — West Coast account এক শাখায়, East Coast আরেক শাখায়, দ্রুত local access-এর জন্য।
 
 </Callout>
 
 ## Leader-Follower Replication
 
-The most common model. One leader accepts writes, followers replicate from the leader.
+সবচেয়ে সাধারণ model। একটা leader write গ্রহণ করে, follower-রা leader থেকে replicate করে।
 
 ```typescript
 class ReplicationManager {
@@ -78,13 +86,13 @@ class ReplicationManager {
 
 <Callout type="info">
 
-**Replication lag** causes read-after-write inconsistency: you write to the leader, then read from a follower that hasn't received the write yet. Solutions: read your own writes from the leader, or use causal consistency tokens.
+**Replication lag** read-after-write inconsistency তৈরি করে: আপনি leader-এ write করেন, তারপর এমন একটা follower থেকে read করেন যে এখনও write-টা পায়নি। সমাধান: নিজের write leader থেকে read করুন, বা causal consistency token ব্যবহার করুন।
 
 </Callout>
 
 ## Failover
 
-When the leader dies, a follower must be promoted:
+Leader মরে গেলে, একটা follower-কে promote করতে হয়:
 
 ```typescript
 async function failover(deadLeader: Database, followers: Database[]): Promise<Database> {
@@ -118,7 +126,7 @@ async function failover(deadLeader: Database, followers: Database[]): Promise<Da
 
 ## Sharding (Horizontal Partitioning)
 
-When data outgrows a single machine, split it across multiple databases by a **shard key**:
+ডেটা যখন একটা মেশিনের চেয়ে বড় হয়ে যায়, তখন একটা **shard key** দিয়ে এটা একাধিক ডেটাবেজে ভাগ করুন:
 
 ```typescript
 class ShardRouter {
@@ -164,7 +172,7 @@ class ShardRouter {
 }
 ```
 
-### Choosing a Shard Key
+### একটা Shard Key বেছে নেওয়া
 
 ```typescript
 // Good shard key: evenly distributes data AND queries
@@ -183,13 +191,13 @@ class ShardRouter {
 
 <Callout type="warning">
 
-**Sharding is a last resort.** It adds massive complexity: cross-shard queries, distributed transactions, rebalancing, operational overhead. First try: read replicas, better indexes, caching, query optimization. Only shard when you've exhausted single-node optimizations.
+**Sharding হলো শেষ উপায়।** এটা বিশাল জটিলতা যোগ করে: cross-shard query, distributed transaction, rebalancing, operational overhead। প্রথমে চেষ্টা করুন: read replica, ভালো index, caching, query optimization। শুধু তখনই shard করুন যখন single-node optimization-এর সব উপায় শেষ করে ফেলেছেন।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Replication** provides availability and read scaling — async is faster but risks stale reads
-2. **Failover** promotes a follower to leader when the leader dies — automate it
-3. **Sharding** splits data across machines by a shard key — choose keys that distribute evenly
-4. **Avoid sharding until necessary** — it adds complexity to every operation
+1. **Replication** availability আর read scaling দেয় — async দ্রুত কিন্তু stale read-এর ঝুঁকি থাকে
+2. **Failover** leader মরে গেলে একটা follower-কে leader-এ promote করে — এটা automate করুন
+3. **Sharding** একটা shard key দিয়ে ডেটা মেশিনগুলোর মধ্যে ভাগ করে — এমন key বেছে নিন যা সমানভাবে distribute করে
+4. **প্রয়োজন না হওয়া পর্যন্ত sharding এড়িয়ে চলুন** — এটা প্রতিটা operation-এ জটিলতা যোগ করে

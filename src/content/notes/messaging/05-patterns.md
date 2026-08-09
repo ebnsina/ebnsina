@@ -1,9 +1,9 @@
 ---
 title: 'Messaging Patterns'
-subtitle: 'Saga, inbox/outbox, event-driven choreography vs orchestration — the patterns that make distributed systems reliable despite partial failure.'
+subtitle: 'Saga, inbox/outbox, event-driven choreography বনাম orchestration — সেসব pattern যা partial failure সত্ত্বেও distributed system-কে নির্ভরযোগ্য করে।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics:
   ['saga', 'outbox', 'choreography', 'orchestration', 'idempotency', 'transactional messaging']
 ---
@@ -14,15 +14,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A multi-department approval process: you submit a request, it moves through HR, Finance, and Legal sequentially (orchestration — a coordinator tracks state), or each department gets a copy and acts independently while publishing their own decisions (choreography — no central coordinator). The saga pattern handles what happens when Finance approves but Legal rejects: compensate what already happened.
+একটা multi-department অনুমোদন প্রক্রিয়া: আপনি একটা request জমা দেন, সেটা ধারাবাহিকভাবে HR, Finance, আর Legal-এর মধ্য দিয়ে যায় (orchestration — একটা coordinator state ট্র্যাক করে), অথবা প্রতিটা বিভাগ একটা করে copy পায় আর স্বাধীনভাবে কাজ করে নিজেদের সিদ্ধান্ত publish করতে করতে (choreography — কোনো কেন্দ্রীয় coordinator নেই)। Saga pattern সামলায় তখন যা ঘটে যখন Finance অনুমোদন করে কিন্তু Legal প্রত্যাখ্যান করে: যা ইতিমধ্যে ঘটে গেছে তা compensate করা।
 
 </Callout>
 
-## The Dual-Write Problem
+## গল্পে বুঝি
 
-The most common reliability mistake: writing to a database AND publishing an event in two separate operations.
+সমরকন্দ শহরে খবর আর কাজ ছড়ায় তিনভাবে। প্রথমে আছে টাউন ক্রায়ার — শহরের ঘোষক। বাজারের মাঝখানে দাঁড়িয়ে সে যখন হাঁক দেয় "আজ নতুন কাফেলা এসেছে!", তখন যে যেখানে আছে, যারই আগ্রহ আছে — কাপড়ের ব্যবসায়ী, মশলাওয়ালা, কর কালেক্টর — সবাই একসাথে খবরটা পেয়ে যায়। ঘোষক জানেও না কে কে শুনছে, কে কী করবে; সে শুধু একবার ঘোষণা দেয়, বাকিটা যার যার। একজনের খবর একসাথে অনেকের কাছে।
+
+তারপর আছে শহরের কাজের বোর্ড। ইবনে সিনার কারখানায় গাঁথনির কাজ জমলে সে বোর্ডে একটা করে কাজের চিরকুট টাঙিয়ে দেয়। শহরের যত মজুর খালি আছে, তারা এসে বোর্ড থেকে একটা করে চিরকুট তুলে নেয় — যে আগে ফাঁকা, সে-ই তোলে। একই চিরকুট দুজন তোলে না; একটা কাজ একজনই করে, কিন্তু মজুর যত বেশি, কাজ তত দ্রুত শেষ। আর তৃতীয়টা হলো হেল্প ডেস্ক — ফাতিমা আল-ফিহরির কাছে গিয়ে আল-খোয়ারিজমি একটা নির্দিষ্ট প্রশ্ন করে দাঁড়িয়ে থাকে, আর ঠিক সেই একটা উত্তরের জন্যই অপেক্ষা করে ফিরে আসে।
+
+এই তিনটাই আসলে messaging-এর তিন pattern। টাউন ক্রায়ারের একবার হাঁক দিয়ে সব আগ্রহীর কাছে পৌঁছানো হলো **pub/sub** আর **fan-out** — একটা event, অনেক স্বাধীন consumer, ঠিক এই chapter-এর choreography যেখানে এক service-এর ঘোষণা শুনে অন্যরা react করে। কাজের বোর্ড হলো **work queue** বা **competing consumers** — এক queue, অনেক worker, প্রতিটা message ঠিক একজনই process করে, worker বাড়ালে throughput বাড়ে। আর হেল্প ডেস্কের এক প্রশ্ন-এক উত্তর হলো **request/reply**। বাস্তবে Kafka-র একাধিক consumer group দিয়ে fan-out হয়, RabbitMQ-র একই queue-তে একাধিক consumer দিয়ে work queue হয় — নিচে ঠিক এই দুটোই কোড দিয়ে দেখব।
+
+## Dual-Write সমস্যা
+
+সবচেয়ে সাধারণ reliability ভুল: একটা database-এ লেখা এবং একটা event publish করা দুটো আলাদা operation-এ।
 
 ```typescript
 // WRONG — dual write
@@ -35,11 +43,11 @@ async function createOrder(order: Order) {
 }
 ```
 
-If the process crashes between the two operations, you have an inconsistency: DB and message broker are out of sync.
+দুটো operation-এর মাঝখানে process crash করলে, আপনার একটা inconsistency তৈরি হয়: DB আর message broker আউট অফ সিঙ্ক।
 
 ## Outbox Pattern
 
-Write the event to the database in the same transaction as the business data. A separate process reads undelivered events and publishes them.
+business data-র সাথে একই transaction-এ event-টা database-এ লিখুন। একটা আলাদা process undelivered event পড়ে সেগুলো publish করে।
 
 ```sql
 -- outbox table
@@ -93,19 +101,19 @@ async function publishOutbox() {
 }
 ```
 
-`FOR UPDATE SKIP LOCKED` lets multiple publisher instances run without duplicate publishing — each row is claimed by one publisher.
+`FOR UPDATE SKIP LOCKED` একাধিক publisher instance-কে duplicate publishing ছাড়াই চলতে দেয় — প্রতিটা row একটা publisher claim করে।
 
-**Cleanup:** delete published rows after a retention window:
+**Cleanup:** একটা retention window পরে published row মুছে ফেলুন:
 
 ```sql
 DELETE FROM outbox WHERE published_at < NOW() - INTERVAL '7 days';
 ```
 
-Use Debezium for the publisher instead of polling — CDC watches the Postgres WAL and publishes outbox rows to Kafka automatically (zero polling delay).
+polling-এর বদলে publisher-এর জন্য Debezium ব্যবহার করুন — CDC Postgres WAL দেখে আর outbox row স্বয়ংক্রিয়ভাবে Kafka-তে publish করে (শূন্য polling delay)।
 
 ## Inbox Pattern
 
-Prevent duplicate processing when a consumer receives the same message twice (at-least-once delivery):
+একটা consumer যখন একই মেসেজ দুবার পায় (at-least-once delivery) তখন duplicate processing প্রতিরোধ করুন:
 
 ```sql
 CREATE TABLE inbox (
@@ -135,11 +143,11 @@ async function handleOrder(msg: KafkaMessage) {
 }
 ```
 
-The `ON CONFLICT DO NOTHING` combined with `RETURNING` makes the duplicate check atomic. No separate SELECT needed.
+`RETURNING`-এর সাথে মিলিয়ে `ON CONFLICT DO NOTHING` duplicate check-টাকে atomic করে তোলে। কোনো আলাদা SELECT লাগে না।
 
 ## Choreography
 
-Services react to events from other services — no central coordinator.
+সার্ভিসগুলো অন্য সার্ভিসের event-এ react করে — কোনো কেন্দ্রীয় coordinator নেই।
 
 ```
 OrderService publishes order.created
@@ -148,9 +156,9 @@ OrderService publishes order.created
       → NotificationService (subscribes) sends email
 ```
 
-**Pros:** loose coupling, no SPOF coordinator, easy to add new services.
+**সুবিধা:** loose coupling, কোনো SPOF coordinator নেই, নতুন সার্ভিস যোগ করা সহজ।
 
-**Cons:** hard to trace a saga across services, hard to answer "what's the current state of order 123?", failure recovery requires each service to handle compensating events.
+**অসুবিধা:** সার্ভিস জুড়ে একটা saga trace করা কঠিন, "order 123-এর বর্তমান state কী?" উত্তর দেওয়া কঠিন, failure recovery-র জন্য প্রতিটা সার্ভিসকে compensating event সামলাতে হয়।
 
 ```typescript
 // Each service is autonomous
@@ -173,7 +181,7 @@ class PaymentService {
 
 ## Orchestration (Saga)
 
-A central coordinator (the saga) tracks the state of a distributed transaction and directs each step.
+একটা কেন্দ্রীয় coordinator (saga) একটা distributed transaction-এর state ট্র্যাক করে আর প্রতিটা step নির্দেশ করে।
 
 ```typescript
 // Saga state machine
@@ -217,11 +225,11 @@ class OrderSaga {
 }
 ```
 
-**Pros:** clear state, easy to reason about, one place to handle failures.
+**সুবিধা:** পরিষ্কার state, সহজে বোঝা যায়, failure সামলানোর একটাই জায়গা।
 
-**Cons:** the saga coordinator is a SPOF (mitigated by persisting state), tighter coupling to step order.
+**অসুবিধা:** saga coordinator একটা SPOF (state persist করে প্রশমিত করা যায়), step order-এর সাথে বেশি coupling।
 
-For durable sagas (survive process restart), persist state to a database:
+durable saga-র জন্য (process restart-এও টিকে থাকে), state একটা database-এ persist করুন:
 
 ```sql
 CREATE TABLE sagas (
@@ -234,11 +242,11 @@ CREATE TABLE sagas (
 );
 ```
 
-Temporal (temporal.io) is a purpose-built durable workflow engine that makes saga implementation with automatic replay, retries, and state persistence trivial.
+Temporal (temporal.io) একটা বিশেষভাবে তৈরি durable workflow engine যেটা automatic replay, retry, আর state persistence সহ saga implementation-কে খুবই সহজ করে তোলে।
 
 ## Competing Consumers
 
-Scale message processing by running multiple worker instances against the same queue:
+একই queue-এর বিরুদ্ধে একাধিক worker instance চালিয়ে message processing scale করুন:
 
 ```
 Queue: [msg1, msg2, msg3, msg4, msg5]
@@ -246,19 +254,19 @@ Queue: [msg1, msg2, msg3, msg4, msg5]
   Worker 2 processes: msg2, msg4
 ```
 
-Works automatically with:
+এটা স্বয়ংক্রিয়ভাবে কাজ করে:
 
-- RabbitMQ: multiple consumers on the same queue
-- Kafka: multiple consumers in the same consumer group (up to partition count)
-- NATS JetStream: multiple pull consumers on same durable
+- RabbitMQ: একই queue-তে একাধিক consumer
+- Kafka: একই consumer group-এ একাধিক consumer (partition সংখ্যা পর্যন্ত)
+- NATS JetStream: একই durable-এ একাধিক pull consumer
 
-The key invariant: each message processed by exactly one worker. Guaranteed by the broker's locking semantics.
+মূল invariant: প্রতিটা মেসেজ ঠিক একটা worker process করে। Broker-এর locking semantics দিয়ে নিশ্চিত করা।
 
 ## Fan-Out
 
-One event consumed by multiple independent services:
+একটা event একাধিক স্বাধীন সার্ভিস consume করে:
 
-**Per-consumer queues (RabbitMQ):**
+**Per-consumer queue (RabbitMQ):**
 
 ```typescript
 // Exchange with one binding per service
@@ -274,7 +282,7 @@ await ch.bindQueue('orders.analytics', 'orders', 'created');
 await ch.bindQueue('orders.notifications', 'orders', 'created');
 ```
 
-**Kafka:** multiple consumer groups automatically achieve fan-out. Each group reads all messages independently.
+**Kafka:** একাধিক consumer group স্বয়ংক্রিয়ভাবে fan-out অর্জন করে। প্রতিটা group স্বাধীনভাবে সব মেসেজ পড়ে।
 
 ```typescript
 // payment-service group — reads all messages
@@ -284,9 +292,9 @@ const paymentConsumer = kafka.consumer({ groupId: 'payment-service' });
 const analyticsConsumer = kafka.consumer({ groupId: 'analytics-service' });
 ```
 
-## Poison Pills
+## Poison Pill
 
-A message that always causes consumer failure, blocking the queue.
+একটা মেসেজ যেটা সবসময় consumer failure ঘটায়, queue আটকে দেয়।
 
 Detection:
 
@@ -319,4 +327,4 @@ ch.consume('orders', async (msg) => {
 });
 ```
 
-Always have a DLQ. A queue without a DLQ eventually blocks on a poison pill indefinitely.
+সবসময় একটা DLQ রাখুন। DLQ ছাড়া একটা queue শেষমেশ একটা poison pill-এ অনির্দিষ্টকাল আটকে যায়।

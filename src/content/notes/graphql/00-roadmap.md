@@ -1,9 +1,9 @@
 ---
-title: 'GraphQL Building — Roadmap'
-subtitle: "Ten chapters that go from 'a query is just a string' to a self-hosted GraphQL server with batched resolvers, auth, subscriptions, and depth limits behind nginx."
+title: 'GraphQL Building — রোডম্যাপ'
+subtitle: "দশটি অধ্যায় যা 'একটা query তো নিছক একটা string' থেকে শুরু করে batched resolver, auth, subscription আর depth limit সহ nginx-এর পিছনে বসানো একটা self-hosted GraphQL server পর্যন্ত নিয়ে যায়।"
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'graphql', 'schema', 'resolvers', 'dataloader', 'federation']
 ---
 
@@ -11,39 +11,39 @@ topics: ['roadmap', 'graphql', 'schema', 'resolvers', 'dataloader', 'federation'
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What you will be able to do at the end
+## শেষে গিয়ে আপনি যা করতে পারবেন
 
-You will be able to design a real GraphQL schema, run a self-hosted server (graphql-yoga on Node — the same patterns translate to Go's `gqlgen` and Python's Strawberry), explain why your first version is slow and fix it with DataLoader, wire authentication into the resolver context, ship subscriptions over WebSockets, and deploy the whole thing behind nginx with depth and complexity limits that survive a hostile client.
+আপনি একটা সত্যিকারের GraphQL schema ডিজাইন করতে পারবেন, একটা self-hosted server চালাতে পারবেন (Node-এর উপর graphql-yoga — একই প্যাটার্ন Go-এর `gqlgen` আর Python-এর Strawberry-তেও অনুবাদ হয়), আপনার প্রথম ভার্সনটা কেন ধীর সেটা ব্যাখ্যা করতে পারবেন আর DataLoader দিয়ে সেটা ঠিক করতে পারবেন, resolver context-এ authentication যুক্ত করতে পারবেন, WebSockets-এর উপর subscription পাঠাতে পারবেন, আর গোটা জিনিসটা nginx-এর পিছনে এমন depth ও complexity limit সহ deploy করতে পারবেন যা একটা বৈরী ক্লায়েন্টের সামনেও টিকে থাকে।
 
 <Callout type="info">
 
-**Prereqs:** finish **REST API building** first. GraphQL is not a replacement for HTTP — it runs on top of it. You should also know basic Node (or whatever language you pick) and have a Postgres database to query. The **Web Server Fundamentals** track is helpful for the deployment chapter.
+**Prereqs:** আগে **REST API building** শেষ করুন। GraphQL কিন্তু HTTP-এর বিকল্প নয় — এটা HTTP-এর উপরেই চলে। আপনার basic Node (বা আপনি যে ভাষাই বেছে নিন) জানা থাকা উচিত আর query করার জন্য একটা Postgres database থাকা উচিত। deployment অধ্যায়ের জন্য **Web Server Fundamentals** track-টা সহায়ক।
 
 </Callout>
 
-## The 10 chapters, in order
+## ১০টি অধ্যায়, ক্রম অনুসারে
 
 **Foundations**
 
-1. **What GraphQL is and when to use it** — query language vs API style, vs REST
+1. **GraphQL কী আর কখন ব্যবহার করবেন** — query language বনাম API style, বনাম REST
 2. **Schema-first design** — types, queries, mutations, scalars, nullability
-3. **Running your first server** — graphql-yoga end-to-end, in 60 lines
-4. **Resolvers and the execution tree** — how a query becomes calls
+3. **আপনার প্রথম server চালানো** — graphql-yoga end-to-end, ৬০ লাইনে
+4. **Resolvers আর execution tree** — একটা query কীভাবে কল-এ পরিণত হয়
 
-**The classic problems**
+**ক্লাসিক সমস্যাগুলো**
 
-5. **The N+1 problem** — why your first GraphQL server is 50× slower than REST
-6. **DataLoader** — batching and per-request caching that actually fixes it
-7. **Mutations, input types, validation** — writes done properly
-8. **Authentication and authorization** — context, field-level checks, directives
+5. **N+1 সমস্যা** — কেন আপনার প্রথম GraphQL server REST-এর চেয়ে 50× ধীর
+6. **DataLoader** — batching আর per-request caching যা আসলেই এটা ঠিক করে
+7. **Mutations, input types, validation** — লেখালেখি ঠিকভাবে করা
+8. **Authentication আর authorization** — context, field-level check, directive
 
 **Production**
 
-9. **Subscriptions over WebSockets** — realtime done right, on graphql-ws
-10. **Production hardening and self-host** — depth/complexity limits, persisted queries, federation overview, behind nginx
+9. **WebSockets-এর উপর Subscriptions** — graphql-ws দিয়ে realtime ঠিকভাবে করা
+10. **Production hardening আর self-host** — depth/complexity limit, persisted queries, federation-এর ওভারভিউ, nginx-এর পিছনে
 
-## How to use this track
+## এই track কীভাবে ব্যবহার করবেন
 
-Read in order. The early chapters are conceptual; from chapter 3 onward you are running real servers and curling them. By chapter 6 you should be sceptical of any GraphQL article that does not mention DataLoader. Total reading time: ~2.5 hours. Hands-on time, the first time you build it all: a long weekend.
+ক্রম অনুসারে পড়ুন। শুরুর অধ্যায়গুলো ধারণাগত; ৩ নম্বর অধ্যায় থেকে আপনি সত্যিকারের server চালাচ্ছেন আর সেগুলোতে curl করছেন। ৬ নম্বর অধ্যায়ে পৌঁছাতে পৌঁছাতে DataLoader-এর উল্লেখ নেই এমন যেকোনো GraphQL আর্টিকেল নিয়ে আপনার সন্দেহপ্রবণ হওয়া উচিত। মোট পড়ার সময়: ~২.৫ ঘণ্টা। হাতে-কলমে সময়, প্রথমবার পুরোটা বানাতে: একটা লম্বা উইকেন্ড।
 
-You need Node 20+, Postgres, and a domain pointed at a VPS for the deployment chapter. Everything else runs on `localhost`.
+deployment অধ্যায়ের জন্য আপনার লাগবে Node 20+, Postgres, আর একটা VPS-এর দিকে পয়েন্ট করা একটা domain। বাকি সব কিছু `localhost`-এ চলে।

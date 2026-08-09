@@ -1,9 +1,9 @@
 ---
 title: 'Common Auth Vulnerabilities'
-subtitle: 'CSRF, session fixation, timing attacks, insecure direct object references — what they are and how to close them.'
+subtitle: 'CSRF, session fixation, timing attack, insecure direct object reference — এগুলো কী আর কীভাবে বন্ধ করবেন।'
 chapter: 6
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['CSRF', 'session fixation', 'IDOR', 'timing attacks', 'OWASP']
 ---
 
@@ -13,17 +13,25 @@ topics: ['CSRF', 'session fixation', 'IDOR', 'timing attacks', 'OWASP']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A locksmith's education: understanding how locks are picked isn't to enable burglary — it's to know which locks are actually secure. Security engineers study attack patterns to build defenses, not exploits.
+একজন locksmith-এর শিক্ষা: lock কীভাবে pick করা হয় তা বোঝা চুরি সম্ভব করার জন্য নয় — কোন lock আসলে নিরাপদ তা জানার জন্য। Security engineer-রা defense বানাতে attack pattern পড়ে, exploit নয়।
 
 </Callout>
 
+## গল্পে বুঝি
+
+মিরপুরে ইবনে সিনাদের একটা অ্যাপার্টমেন্ট বিল্ডিং, নিচে একজন দারোয়ান — আল-খোয়ারিজমি। নিয়ম হলো, ভেতরে ঢুকতে হলে রেজিস্টারে নাম মিলিয়ে দারোয়ান একটা ভিজিটর পাস দেবে। কিন্তু এক চালাক লোক আগেভাগেই ইবনে সিনাকে একটা পাস ধরিয়ে দিলো — "ভাই, এটা রেখে দেন, কাজে লাগবে।" ইবনে সিনা কিছু না ভেবে সেটা নিয়েই ভেতরে গেল, আর সেই লোকটার কাছে ওই পাসের হুবহু নকল থেকে যাওয়ায় ইবনে সিনার নামেই সে দিব্যি ঢুকে পড়ল। আরেকদিন একজন অচেনা লোক আল-খোয়ারিজমির হাতে একটা চিরকুট দিলো — "৩-বি ফ্ল্যাটের পার্সেলটা এই লোককে দিয়ে দিন।" চিরকুটে ৩-বি'র বাসিন্দার সিলমোহর দেখে আল-খোয়ারিজমি কিছু যাচাই না করেই পার্সেল দিয়ে দিলো — অথচ চিরকুটটা বাসিন্দা লেখেননি, সিলটা শুধু ধার করা।
+
+আল-খোয়ারিজমির আরেকটা অভ্যাস — কেউ আসল বাসিন্দার নাম বললে সে রেজিস্টারের পাতা উল্টে উল্টে খোঁজে, কয়েক সেকেন্ড লাগে; আর ভুয়া নাম বললে সঙ্গে সঙ্গে "নাই" বলে ফিরিয়ে দেয়। বাইরের একজন শুধু জবাব আসতে কত সময় লাগছে তা মেপেই বুঝে ফেলল কোন কোন নাম আসল। এদিকে ফাতিমা আল-ফিহরি একদিন খেয়াল করলেন, তাঁর ১২-এ ফ্ল্যাটের চাবি দিয়ে পাশের ১২-বি'র দরজাও খুলে যায়, কারণ আল-খোয়ারিজমি শুধু দেখে "ইনি কি বাসিন্দা?" — "এটা কি আপনারই ফ্ল্যাট?" তা কখনো মেলায় না।
+
+এই প্রতিটা ফাঁকই একেকটা auth vulnerability। আগেভাগে চেনা পাস ধরিয়ে দেওয়া = **session fixation** (তাই login-এর সময় session ID regenerate করতে হয়, যাতে আগের পাসটা অকেজো হয়ে যায়)। ধার করা সিল দেখে চিরকুট মেনে নেওয়া = **CSRF**, যেখানে browser নিজেই cookie জুড়ে দেয় বলে forged request বৈধ দেখায় (SameSite cookie বা CSRF token দিয়ে ঠেকান)। নাম যাচাইয়ে সময়ের পার্থক্য = **timing attack**, যা দিয়ে valid email/user enumerate করা যায় (তাই ফলাফল যাই হোক একই সময় নিন, secret মেলাতে `timingSafeEqual`)। আর নিজের চাবিতে পাশের দরজা খুলে যাওয়া = **IDOR/BOLA** — শুধু "logged in কি না" দেখলে হবে না, query-তেই ownership মেলাতে হবে। বাস্তবেও বহু API-তে অন্যের অর্ডার বা ইনভয়েস শুধু URL-এর ID বদলে দেখে ফেলার ঘটনা ঘটেছে; OWASP-এর API Top 10 তালিকায় এই BOLA এখনো এক নম্বর ঝুঁকি।
+
 ## Cross-Site Request Forgery (CSRF)
 
-A CSRF attack tricks an authenticated user's browser into making an unintended request to your server. The browser automatically includes cookies, so the request looks legitimate.
+একটা CSRF attack একজন authenticated user-এর browser-কে আপনার server-এ একটা অনিচ্ছাকৃত request পাঠাতে ফাঁদে ফেলে। Browser স্বয়ংক্রিয়ভাবে cookie যোগ করে, তাই request-টা বৈধ দেখায়।
 
-**The attack:**
+**Attack-টা:**
 
 ```html
 <!-- On attacker.com -->
@@ -36,9 +44,9 @@ A CSRF attack tricks an authenticated user's browser into making an unintended r
 </script>
 ```
 
-If the user is logged in to yourbank.com, their session cookie is sent automatically.
+User যদি yourbank.com-এ logged in থাকে, তাদের session cookie স্বয়ংক্রিয়ভাবে পাঠানো হয়।
 
-**Defense 1: SameSite cookies**
+**Defense 1: SameSite cookie**
 
 ```typescript
 res.cookie('session', sessionId, {
@@ -48,10 +56,10 @@ res.cookie('session', sessionId, {
 });
 ```
 
-`SameSite=Strict` is the strongest defense. `Lax` (the default in modern browsers) allows the cookie on top-level GET navigations but not POST.
+`SameSite=Strict` হলো সবচেয়ে শক্ত defense। `Lax` (আধুনিক browser-এ default) top-level GET navigation-এ cookie allow করে কিন্তু POST-এ নয়।
 
-**Defense 2: CSRF tokens**
-For APIs that can't rely on SameSite (e.g., older browser support, subdomains):
+**Defense 2: CSRF token**
+যেসব API SameSite-এর উপর নির্ভর করতে পারে না (যেমন পুরনো browser support, subdomain):
 
 ```typescript
 import crypto from 'crypto';
@@ -85,15 +93,15 @@ app.get('/api/csrf-token', (req, res) => {
 });
 ```
 
-The client sends this token as a header (e.g., `X-CSRF-Token`). A cross-origin attacker can't read the token because of the same-origin policy.
+Client এই token-টা একটা header হিসেবে পাঠায় (যেমন `X-CSRF-Token`)। same-origin policy-র কারণে একজন cross-origin attacker token-টা পড়তে পারে না।
 
-**Note:** If you're using JWT in Authorization headers (not cookies), you don't need CSRF protection — the attacker can't set arbitrary headers cross-origin.
+**নোট:** আপনি যদি Authorization header-এ JWT ব্যবহার করেন (cookie নয়), তাহলে আপনার CSRF protection দরকার নেই — attacker cross-origin-এ যা-খুশি header সেট করতে পারে না।
 
 ## Session Fixation
 
-An attacker sets a known session ID before the user logs in, then after login, uses that same session ID to impersonate the authenticated session.
+একজন attacker user log in করার আগে একটা পরিচিত session ID সেট করে, তারপর login-এর পরে, সেই একই session ID ব্যবহার করে authenticated session-এর ছদ্মবেশ ধারণ করে।
 
-**The fix:** Always regenerate the session ID on login:
+**সমাধান:** সবসময় login-এ session ID regenerate করুন:
 
 ```typescript
 app.post('/login', async (req, res) => {
@@ -110,7 +118,7 @@ app.post('/login', async (req, res) => {
 });
 ```
 
-Similarly, regenerate on logout:
+একইভাবে, logout-এ regenerate করুন:
 
 ```typescript
 app.post('/logout', (req, res) => {
@@ -121,18 +129,18 @@ app.post('/logout', (req, res) => {
 });
 ```
 
-## Timing Attacks
+## Timing Attack
 
-If your login function returns faster for "user not found" than for "wrong password," an attacker can enumerate valid emails by measuring response times.
+আপনার login function যদি "wrong password"-এর চেয়ে "user not found"-এর জন্য faster return করে, তাহলে একজন attacker response time মেপে valid email enumerate করতে পারে।
 
-**The attack:**
+**Attack-টা:**
 
 ```
 POST /login {"email": "test1@example.com"} → 2ms (user not found — no DB hit)
 POST /login {"email": "admin@yourapp.com"} → 120ms (user found, hash compared)
 ```
 
-**The fix:** Always do the expensive operation regardless of outcome:
+**সমাধান:** ফলাফল যাই হোক না কেন সবসময় ব্যয়বহুল operation-টা করুন:
 
 ```typescript
 const DUMMY_HASH = await argon2.hash('dummy-password');
@@ -151,7 +159,7 @@ async function login(email: string, password: string): Promise<User | null> {
 }
 ```
 
-**String comparison timing:** Use `crypto.timingSafeEqual` when comparing secrets:
+**String comparison timing:** secret compare করার সময় `crypto.timingSafeEqual` ব্যবহার করুন:
 
 ```typescript
 // WRONG — exits early on first mismatch
@@ -166,14 +174,14 @@ if (crypto.timingSafeEqual(
 
 ## Insecure Direct Object References (IDOR)
 
-User A accesses User B's data by guessing or incrementing an ID.
+User A একটা ID অনুমান করে বা increment করে User B-এর data access করে।
 
 ```
 GET /api/orders/12345  → User A's order (they're logged in)
 GET /api/orders/12346  → User B's order (oops — just incremented)
 ```
 
-**The fix:** Always enforce ownership in queries:
+**সমাধান:** সবসময় query-তে ownership enforce করুন:
 
 ```typescript
 // WRONG — only checks auth, not ownership
@@ -193,11 +201,11 @@ app.get('/api/orders/:id', requireAuth, async (req, res) => {
 });
 ```
 
-Also consider using random IDs (UUIDs) instead of sequential integers — they're harder to guess, though not a substitute for ownership checks.
+sequential integer-এর বদলে random ID (UUID) ব্যবহার করার কথাও ভাবুন — এগুলো অনুমান করা কঠিন, যদিও ownership check-এর বিকল্প নয়।
 
 ## Mass Assignment
 
-Allowing users to set any field via a bulk assignment operation:
+একটা bulk assignment operation দিয়ে user-দের যেকোনো field সেট করতে দেওয়া:
 
 ```typescript
 // WRONG — user can set role: 'admin', isVerified: true, etc.
@@ -215,11 +223,11 @@ app.put('/api/users/:id', requireAuth, async (req, res) => {
 });
 ```
 
-Use a validation library (Zod, Joi) to define exact shapes for incoming data rather than filtering manually.
+incoming data-র জন্য exact shape define করতে manually filter করার বদলে একটা validation library (Zod, Joi) ব্যবহার করুন।
 
-## JWT Vulnerabilities (Practical)
+## JWT Vulnerability (বাস্তবিক)
 
-**Accepting unsigned tokens:**
+**Unsigned token মেনে নেওয়া:**
 
 ```typescript
 // WRONG — 'none' alg accepted
@@ -229,7 +237,7 @@ jwt.verify(token, secret); // some libraries accept alg:none by default
 jwt.verify(token, secret, { algorithms: ['HS256'] });
 ```
 
-**Not verifying claims:**
+**Claim verify না করা:**
 
 ```typescript
 // WRONG — only checks signature
@@ -247,7 +255,7 @@ const payload = jwt.verify(token, secret, {
 });
 ```
 
-**Long-lived tokens:**
+**Long-lived token:**
 
 ```typescript
 // WRONG — 30-day access token means 30 days of exposure if leaked
@@ -257,9 +265,9 @@ jwt.sign({ sub: userId }, secret, { expiresIn: '30d' });
 jwt.sign({ sub: userId }, secret, { expiresIn: '15m' });
 ```
 
-## Broken Object Level Authorization (BOLA/IDOR) in APIs
+## API-তে Broken Object Level Authorization (BOLA/IDOR)
 
-GraphQL and REST APIs that expose IDs are especially prone:
+যে GraphQL আর REST API ID expose করে সেগুলো বিশেষভাবে ঝুঁকিপূর্ণ:
 
 ```graphql
 # Attacker queries another user's data
@@ -291,9 +299,9 @@ const resolvers = {
 };
 ```
 
-## Security Headers
+## Security Header
 
-Add these on every response:
+প্রতিটা response-এ এগুলো যোগ করুন:
 
 ```typescript
 app.use((req, res, next) => {
@@ -319,7 +327,7 @@ app.use((req, res, next) => {
 });
 ```
 
-Or use [Helmet](https://helmetjs.github.io/) which sets sensible defaults:
+অথবা [Helmet](https://helmetjs.github.io/) ব্যবহার করুন যা যুক্তিসঙ্গত default সেট করে:
 
 ```typescript
 import helmet from 'helmet';

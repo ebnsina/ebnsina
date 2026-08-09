@@ -1,9 +1,9 @@
 ---
 title: 'Sizing Fundamentals'
-subtitle: 'CPU, memory, disk, and network — how to translate request load into resource requirements before you buy anything.'
+subtitle: 'CPU, memory, disk আর network — কিছু কেনার আগেই request load-কে resource requirement-এ কীভাবে অনুবাদ করবেন।'
 chapter: 1
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['sizing', 'capacity planning', 'CPU', 'memory', 'throughput']
 ---
 
@@ -11,29 +11,37 @@ topics: ['sizing', 'capacity planning', 'CPU', 'memory', 'throughput']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বড় বিয়ের catering-এর দায়িত্ব নিয়েছেন। প্রথম কাজ — কত মানুষ খাবে সেটা আন্দাজ করা। তিনি বসে দাওয়াতপত্রগুলো গুনলেন: চারশো জন invited। এই সংখ্যাটাই তাঁর হিসাবের ভিত্তি, ঠিক যেমন expected load দেখে capacity ঠিক করতে হয়। কিন্তু ফাতিমা অভিজ্ঞ — তিনি জানেন বিয়েবাড়িতে দাওয়াত ছাড়াও কিছু আত্মীয়স্বজন হুট করে এসে পড়ে। তাই তিনি ঠিক চারশো জনের রান্না না করে, একটু বাফার রেখে সাড়ে চারশো জনের আয়োজন করলেন। এই বাড়তি অংশটুকুই headroom — হঠাৎ ভিড় বেড়ে গেলেও যেন কেউ খালি পেটে না ফেরে।
+
+এখন কথা হলো, বাফারটা মেপে রাখতে হয়। ফাতিমা যদি ভয়ে ভয়ে হাজার জনের রান্না করে বসতেন, বাড়তি খাবারের পাহাড় শেষমেশ নষ্ট হয়ে ডাস্টবিনে যেত — সেই টাকাটা পুরো জলে। আবার উল্টোদিকে, তিনি যদি কিপ্টেমি করে মোটে তিনশো জনের রান্না করতেন, মাঝপথে খাবার ফুরিয়ে গিয়ে অতিথিরা না খেয়ে ফিরত, আর পুরো বিয়ের আয়োজনটাই মাটি হতো। সঠিক আন্দাজ আর মেপে বাফার — এই দুটোই catering-এর আসল শিল্প।
+
+গল্পটা হুবহু capacity **sizing**-এর। দাওয়াতপত্র গুনে খাবারের পরিমাণ ঠিক করা মানে expected **load** থেকে resource requirement আন্দাজ করা; সাড়ে চারশো জনের বাফার রাখা মানে traffic spike-এর জন্য **headroom** রাখা। হাজার জনের রান্না করে খাবার নষ্ট করা হলো **over-provisioning** — resource কিনে ফেলে রাখা, নিছক টাকার অপচয়; আর তিনশো জনের রান্না করে অতিথি না-খাওয়ানো হলো **under-provisioning** — capacity কম পড়ে সার্ভার ধসে পড়া, মানে outage। বাস্তবেও ঠিক এভাবেই peak RPS আন্দাজ করে, তার ওপর ৩০-৫০% headroom রেখে server size করা হয়: বেশি কিনলে cloud bill অকারণে ফুলে ওঠে, কম কিনলে Black Friday-র ভিড়ে সাইট বসে যায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Sizing a parking lot before building a mall: you count expected cars at peak hour, add buffer for bad days, decide how many floors you need, and build it before you open — not after the lot fills up and traffic backs onto the highway.
+একটা mall বানানোর আগে parking lot-এর সাইজ ঠিক করা: peak hour-এ কতগুলো গাড়ি আসবে সেটা গুনে নেন, খারাপ দিনের জন্য buffer যোগ করেন, কত floor লাগবে ঠিক করেন, এবং খোলার আগেই বানিয়ে ফেলেন — lot ভরে গিয়ে traffic highway-তে ফিরে আসার পরে নয়।
 
 </Callout>
 
-## The Four Resources
+## চারটি Resource
 
-Every server constraint comes down to four resources. A bottleneck in any one of them caps your capacity regardless of how much headroom you have on the others.
+প্রতিটা server-এর constraint শেষ পর্যন্ত চারটা resource-এ এসে দাঁড়ায়। এদের যেকোনো একটাতে bottleneck হলে বাকিগুলোতে যতই headroom থাকুক, আপনার capacity সেখানেই আটকে যায়।
 
-**CPU** — compute work per unit time. Measured in cores and utilization percentage. Bottlenecks when: request handlers do heavy computation, serialization/deserialization is frequent, encryption overhead is high.
+**CPU** — প্রতি unit time-এ compute work। core আর utilization percentage-এ মাপা হয়। Bottleneck হয় যখন: request handler-গুলো ভারী computation করে, serialization/deserialization ঘন ঘন হয়, encryption overhead বেশি।
 
-**Memory** — working set size. Bottlenecks when: caches hold too much data, connection pools grow large, in-memory datastores (Redis) approach instance RAM.
+**Memory** — working set-এর সাইজ। Bottleneck হয় যখন: cache-এ অনেক বেশি data থাকে, connection pool বড় হয়ে যায়, in-memory datastore (Redis) instance RAM-এর কাছাকাছি পৌঁছে যায়।
 
-**Disk I/O** — read/write throughput and IOPS (operations per second). Bottlenecks when: databases write faster than disk can absorb, logs flush to slow storage, application reads large files per request.
+**Disk I/O** — read/write throughput আর IOPS (প্রতি সেকেন্ডে operation)। Bottleneck হয় যখন: database disk যত দ্রুত শুষে নিতে পারে তার চেয়ে দ্রুত write করে, log ধীর storage-এ flush হয়, application প্রতি request-এ বড় file পড়ে।
 
-**Network** — bandwidth in/out. Bottlenecks when: responses are large (images, reports), upload-heavy workloads, inter-service traffic is high.
+**Network** — bandwidth in/out। Bottleneck হয় যখন: response বড় হয় (image, report), upload-heavy workload, inter-service traffic বেশি।
 
 ## Request Cost Model
 
-Before sizing anything, measure what a single request costs:
+কিছু sizing করার আগে মাপুন একটা single request-এর খরচ কত:
 
 ```typescript
 // Instrument your handlers to capture resource use
@@ -58,11 +66,11 @@ app.use(async (req, res, next) => {
 });
 ```
 
-Profile in production or under realistic load (staging with production data volume). Averages lie — collect p50, p95, p99 latency and resource use.
+Production-এ অথবা বাস্তবসম্মত load-এ (production-এর data volume সহ staging) profile করুন। Average মিথ্যা বলে — p50, p95, p99 latency আর resource use সংগ্রহ করুন।
 
-## Working Backwards from RPS
+## RPS থেকে উল্টো দিকে হিসাব
 
-**Requests per second (RPS)** is your primary load metric. Everything else derives from it.
+**Requests per second (RPS)** হলো আপনার প্রধান load metric। বাকি সবকিছু এর থেকে বের হয়।
 
 ```
 Given:
@@ -85,11 +93,11 @@ CPU required:
 
 **Little's Law:** `L = λ × W`
 
-- L = average number of concurrent requests
+- L = গড় concurrent request-এর সংখ্যা
 - λ = arrival rate (RPS)
-- W = average request duration (seconds)
+- W = গড় request duration (সেকেন্ড)
 
-This tells you how many concurrent connections your server must support — which drives connection pool sizing, thread pool sizing, and memory allocation.
+এটা আপনাকে বলে দেয় আপনার server-কে কতগুলো concurrent connection support করতে হবে — যা connection pool sizing, thread pool sizing, আর memory allocation-এর হিসাব চালায়।
 
 ```typescript
 function estimateConcurrency(rps: number, avgDurationMs: number): number {
@@ -107,7 +115,7 @@ const coresNeeded = estimateCpuCores(500, 2); // 1 core
 
 ## Memory Sizing
 
-Memory has three main consumers:
+Memory-র তিনটা প্রধান খরচকারী আছে:
 
 **Per-connection overhead:**
 
@@ -121,14 +129,14 @@ At 25 concurrent: Node.js ~50MB connection overhead
 
 **Application working set:**
 
-- In-memory cache (if using node-cache, LRU, etc.)
-- Database query result buffers
-- Request/response bodies in flight
+- In-memory cache (যদি node-cache, LRU, ইত্যাদি ব্যবহার করেন)
+- Database query result buffer
+- চলমান request/response body
 
 **Runtime overhead:**
 
 - V8 heap (Node.js): base ~50MB
-- JVM: depends on heap settings
+- JVM: heap setting-এর উপর নির্ভর করে
 - Go binary: base ~10MB
 
 ```typescript
@@ -147,7 +155,7 @@ function estimateMemoryMb(
 
 ## Disk I/O Sizing
 
-For database servers, disk I/O is the most common bottleneck:
+Database server-এর জন্য disk I/O সবচেয়ে সাধারণ bottleneck:
 
 ```
 IOPS needed = write_rate + read_rate
@@ -163,7 +171,7 @@ Cloud disk options:
   NVMe SSD (bare metal): 100k+ IOPS
 ```
 
-For application servers (not databases), disk I/O is rarely the bottleneck unless you're writing logs synchronously — use async logging or ship logs over network.
+Application server-এর জন্য (database নয়), disk I/O খুব কমই bottleneck হয় — যদি না আপনি synchronously log write করেন। async logging ব্যবহার করুন বা network-এর উপর দিয়ে log পাঠান।
 
 ## Network Sizing
 
@@ -182,9 +190,9 @@ For video streaming or file downloads:
   At 1000 concurrent streams: 8 Gbps — now network matters
 ```
 
-## Headroom and Growth
+## Headroom আর Growth
 
-Never size for your current load. Size for your peak load plus headroom:
+কখনো আপনার বর্তমান load-এর জন্য sizing করবেন না। আপনার peak load plus headroom-এর জন্য sizing করুন:
 
 ```
 Target utilization at peak: 50-70%
@@ -197,11 +205,11 @@ If memory needed is 356MB:
   Provision 1GB (roughly 50% target)
 ```
 
-**Growth buffer:** If you expect 2x growth in 12 months and provisioning takes 2 weeks, size for 2x now. Overprovisioning compute is cheaper than the engineering time to emergency-scale.
+**Growth buffer:** যদি ১২ মাসে 2x growth আশা করেন এবং provisioning-এ ২ সপ্তাহ লাগে, এখনই 2x-এর জন্য sizing করুন। compute overprovision করা emergency-scale করার engineering time-এর চেয়ে সস্তা।
 
-## Profiling to Verify
+## যাচাই করার জন্য Profiling
 
-Model first, then verify with measurement:
+আগে model বানান, তারপর measurement দিয়ে যাচাই করুন:
 
 ```bash
 # Load test to find actual limits
@@ -219,4 +227,4 @@ npx autocannon -c 50 -d 30 http://localhost:3000/api/users
 # Network saturation → CDN for static, compression for APIs
 ```
 
-Don't guess at bottlenecks. Load test, watch metrics, and let the data tell you where the ceiling is.
+Bottleneck নিয়ে অনুমান করবেন না। Load test করুন, metric দেখুন, আর data-কেই বলতে দিন ceiling কোথায়।

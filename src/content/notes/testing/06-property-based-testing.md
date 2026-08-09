@@ -1,9 +1,9 @@
 ---
 title: 'Property-Based Testing'
-subtitle: 'Generate hundreds of random inputs automatically — fast-check finds edge cases your example tests miss.'
+subtitle: 'স্বয়ংক্রিয়ভাবে শত শত random input তৈরি করা — fast-check এমন edge case খুঁজে বের করে যা আপনার example test মিস করে।'
 chapter: 6
 level: 'intermediate'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['property-based testing', 'fast-check', 'fuzzing', 'generative testing', 'invariants']
 ---
 
@@ -13,15 +13,23 @@ topics: ['property-based testing', 'fast-check', 'fuzzing', 'generative testing'
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Hiring a professional adversarial tester vs writing a checklist: you write tests for cases you can think of. Property-based testing is the adversarial tester who tries every weird combination you'd never imagine — empty strings, negative numbers, Unicode edge cases, maximum values — until something breaks.
+একজন professional adversarial tester নিয়োগ করা বনাম একটা checklist লেখা: আপনি যেসব case ভাবতে পারেন সেগুলোর জন্য test লেখেন। Property-based testing হলো সেই adversarial tester যে আপনার কল্পনাতেও আসবে না এমন প্রতিটা অদ্ভুত combination চেষ্টা করে — খালি string, ঋণাত্মক সংখ্যা, Unicode edge case, সর্বোচ্চ মান — যতক্ষণ না কিছু একটা ভেঙে পড়ে।
 
 </Callout>
 
-## What Property-Based Testing Catches
+## গল্পে বুঝি
 
-Example tests check specific cases you thought of. Property tests check invariants that must hold for _any_ valid input:
+একটা প্যাকেজিং ফ্যাক্টরির কোয়ালিটি ইনস্পেক্টর ফাতিমা আল-ফিহরি। আগে তিনি লাইন থেকে তিন-চারটা বাক্স হাতে তুলে চেক করতেন — যেগুলো নিয়ে তার মনে আগে থেকেই ধারণা ছিল যে ঠিকঠাকই হবে। ওজন মিলে যেত, তিনি সিলমোহর মেরে দিতেন। কিন্তু গুদামে গিয়ে দেখা যেত, তার হাতে না-তোলা কোনো বাক্সে ভেতরের জিনিস কম, অথচ গায়ে লেখা ওজন ঠিকই আছে। তার বাছাই করা নমুনাগুলো ওই গোলমাল কখনো ধরতেই পারত না।
+
+তাই ফাতিমা নিয়ম পাল্টালেন। এখন তিনি আর নির্দিষ্ট কয়েকটা বাক্স বাছেন না — বরং একটা কঠিন নিয়ম ঘোষণা করেন: "ভেতরে যা-ই থাকুক, সিল করা প্রতিটা বাক্সের ওজন গায়ে ছাপানো লেবেলের সাথে হুবহু মিলতে হবে।" তারপর কনভেয়র থেকে এলোমেলোভাবে শত শত বাক্স একটার পর একটা স্কেলের উপর দিয়ে চালান — একটাও যদি নিয়ম ভাঙে, সেটাই ধরা। আর যেই একটা বেঁকে বসে, তিনি সেটা নিয়ে বসে ভেতরের জিনিস একটা একটা করে কমিয়ে সবচেয়ে সরল অবস্থায় নিয়ে আসেন — শুধু ঠিক যতটুকু রাখলে গোলমালটা তখনও থাকে — যেন ইঞ্জিনিয়ারকে একদম পরিষ্কার করে দোষটা দেখাতে পারেন।
+
+এই গল্পটাই আসলে **property-based testing**। ফাতিমার হাতে-বাছা কয়েকটা নমুনা বাক্স হলো **example-based** test — শুধু আপনার ভাবা নির্দিষ্ট কেসগুলো চেক করে। "প্রতিটা বাক্সের ওজন লেবেলের সাথে মিলবে" — এই সর্বজনীন নিয়মটাই হলো **property** বা **invariant**, যা সব valid input-এর জন্য সত্য হতে হবে। কনভেয়র থেকে এলোমেলো শত শত বাক্স চালানোটাই টুলের **random inputs** স্বয়ংক্রিয়ভাবে generate করা, আর ভাঙা বাক্সটাকে ছেঁটে সরলতম অবস্থায় আনাটাই **shrinking** — failing case-কে minimal example-এ নামিয়ে আনা। বাস্তবে fast-check বা QuickCheck ঠিক এভাবেই কাজ করে: আপনি property লেখেন, টুল শত শত random input দিয়ে সেটা ভাঙার চেষ্টা করে, আর ভাঙলে সবচেয়ে ছোট counterexample-টা হাতে ধরিয়ে দেয়।
+
+## Property-Based Testing কী ধরে
+
+Example test আপনার ভাবা নির্দিষ্ট case চেক করে। Property test এমন invariant চেক করে যা _যেকোনো_ valid input-এর জন্য সত্য হতে হবে:
 
 ```typescript
 // Example test — you thought of 3 cases
@@ -38,7 +46,7 @@ test('sort works', () => {
 // 4. First element ≤ last element (for non-empty arrays)
 ```
 
-You didn't think about: `[NaN, Infinity, -0]`, `[2^53, 2^53 + 1]`, arrays with 10,000 elements.
+আপনি এগুলো নিয়ে ভাবেননি: `[NaN, Infinity, -0]`, `[2^53, 2^53 + 1]`, ১০,০০০ element-এর array।
 
 ## Setup: fast-check
 
@@ -82,7 +90,7 @@ describe('sort', () => {
 });
 ```
 
-fast-check runs 100 random inputs by default. When it finds a failure, it **shrinks** — finds the minimal reproducing case:
+fast-check ডিফল্টভাবে 100টা random input চালায়। যখন এটা একটা failure খুঁজে পায়, তখন এটা **shrink** করে — সবচেয়ে ছোট reproduce-করা case বের করে:
 
 ```
 Error: Property failed after 14 tests
@@ -90,9 +98,9 @@ Counterexample: [[-2147483648, 2147483647]]
 Shrunk 4 times
 ```
 
-Not `[1, -5, 3, 8, -2147483648, 2147483647]` — just `[-2147483648, 2147483647]`.
+`[1, -5, 3, 8, -2147483648, 2147483647]` নয় — শুধু `[-2147483648, 2147483647]`।
 
-## Arbitraries: Generating Test Data
+## Arbitraries: Test Data তৈরি করা
 
 ```typescript
 import fc from 'fast-check';
@@ -125,9 +133,9 @@ fc.tuple(fc.string(), fc.integer()); // fixed-length tuple
 fc.constantFrom('admin', 'standard', 'premium'); // enum-like
 ```
 
-## Domain-Specific Generators
+## Domain-Specific Generator
 
-Build generators for your domain types:
+আপনার domain type-এর জন্য generator তৈরি করুন:
 
 ```typescript
 const arbEmail = fc
@@ -157,7 +165,7 @@ const arbOrder = fc.record({
 });
 ```
 
-## Testing Business Logic Properties
+## Business Logic Property টেস্ট করা
 
 ```typescript
 import fc from 'fast-check';
@@ -206,7 +214,7 @@ describe('pricing properties', () => {
 
 ## Stateful Property Testing
 
-Test sequences of operations — model-based testing:
+operation-এর ক্রম টেস্ট করা — model-based testing:
 
 ```typescript
 // Test a shopping cart: any sequence of add/remove operations
@@ -260,9 +268,9 @@ it('cart invariants hold for any sequence of operations', () => {
 });
 ```
 
-## Round-Trip Properties
+## Round-Trip Property
 
-Especially useful for serialization, encoding, and data transformations:
+serialization, encoding, আর data transformation-এর জন্য বিশেষভাবে কাজের:
 
 ```typescript
 import { serialize, deserialize } from './serializer';
@@ -295,7 +303,7 @@ it('parseDate → formatDate is identity for valid dates', () => {
 });
 ```
 
-## Configuring Runs
+## Run Configure করা
 
 ```typescript
 // More samples for critical code
@@ -311,21 +319,21 @@ fc.assert(fc.property(fc.integer(), fn), { seed: 1234567890, path: '3:1' });
 fc.assert(fc.property(fc.integer(), fn), { verbose: true });
 ```
 
-## When to Use Property Tests
+## কখন Property Test ব্যবহার করবেন
 
-**Great fit:**
+**দারুণ মানানসই:**
 
-- Pure functions with mathematical properties (sort, encode/decode, arithmetic)
-- Parsers and serializers (round-trip property)
-- Data transformation pipelines
-- Domain logic with clear invariants (pricing, discounts, scoring)
-- Protocol implementations
+- গাণিতিক property সহ pure function (sort, encode/decode, arithmetic)
+- Parser আর serializer (round-trip property)
+- Data transformation pipeline
+- স্পষ্ট invariant সহ domain logic (pricing, discount, scoring)
+- Protocol implementation
 
-**Poor fit:**
+**দুর্বল মানানসই:**
 
-- UI interactions (use e2e tests)
-- Operations with side effects (DB writes, HTTP calls)
-- Logic where "correct" output is hard to define without re-implementing the function
-- Simple CRUD (example tests are clearer)
+- UI interaction (e2e test ব্যবহার করুন)
+- Side effect সহ operation (DB write, HTTP call)
+- যেখানে function-টা আবার লেখা ছাড়া "সঠিক" output সংজ্ঞায়িত করা কঠিন
+- সাধারণ CRUD (example test স্পষ্টতর)
 
-Mix property and example tests: property tests catch the edge cases you can't imagine, example tests document the specific cases that matter for your domain.
+Property আর example test মিশিয়ে নিন: property test সেই edge case ধরে যা আপনি কল্পনা করতে পারেন না, example test আপনার domain-এর জন্য গুরুত্বপূর্ণ নির্দিষ্ট case নথিভুক্ত করে।

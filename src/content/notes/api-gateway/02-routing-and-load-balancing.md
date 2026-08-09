@@ -1,9 +1,9 @@
 ---
 title: 'Routing & Load Balancing'
-subtitle: 'Path matching, header-based routing, weighted splits, and health-aware balancing — how the gateway decides where each request goes.'
+subtitle: 'Path matching, header-based routing, weighted split আর health-aware balancing — gateway কীভাবে ঠিক করে প্রতিটা request কোথায় যাবে।'
 chapter: 2
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['routing', 'load balancing', 'weighted traffic', 'health checks', 'nginx']
 ---
 
@@ -13,15 +13,23 @@ topics: ['routing', 'load balancing', 'weighted traffic', 'health checks', 'ngin
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A traffic management system at a busy intersection — it reads the destination on every car (URL, headers), knows which roads are clear (healthy backends), and directs each car accordingly. If one road is closed (unhealthy instance), it stops sending cars there without anyone having to manually redirect traffic.
+একটা ব্যস্ত মোড়ের traffic management সিস্টেম — এটা প্রতিটা গাড়ির গন্তব্য পড়ে (URL, header), জানে কোন রাস্তাগুলো ফাঁকা (healthy backend), আর সেই অনুযায়ী প্রতিটা গাড়িকে পাঠায়। কোনো রাস্তা বন্ধ থাকলে (unhealthy instance) সে সেদিকে গাড়ি পাঠানো বন্ধ করে দেয়, কাউকে হাতে করে traffic ঘোরাতে হয় না।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বড় অফিসের switchboard operator। সারাদিন বাইরে থেকে ফোন আসে, আর প্রতিটা কল সামলাতে তাকে দুটো ধাপ পার করতে হয়। প্রথমে সে শোনে কলার আসলে কী চায় — কেউ বলে "বিল নিয়ে ঝামেলা", কেউ বলে "প্রোডাক্ট কাজ করছে না"। সেই কথা শুনেই সে ঠিক করে কলটা কোন ডিপার্টমেন্টে যাবে — billing হলে billing ডেস্কে, সমস্যা হলে support ডেস্কে। ভুল ডিপার্টমেন্টে দিলে কলার ঘুরপাক খাবে, তাই এই বাছাইটা সে খুব মন দিয়ে করে।
+
+কিন্তু বাছাই করেই কাজ শেষ না। ধরুন support ডিপার্টমেন্টে ইবনে সিনা, আল-খোয়ারিজমি সহ চারজন এজেন্ট বসে আছে। ফাতিমা তো যেকোনো একজনকে দিতে পারে না — কেউ হয়তো আগের কলে ব্যস্ত। তাই সে বোর্ডের বাতি দেখে বোঝে এই মুহূর্তে কে ফ্রি, আর কলটা সেই ফ্রি এজেন্টের লাইনে জুড়ে দেয়। কোনো এজেন্ট ছুটিতে থাকলে বা লাইন কেটে গেলে সে তাকে বাদ দিয়ে বাকিদের মধ্যে ভাগ করে দেয়।
+
+ফাতিমার এই দুই ধাপই আসলে একটা gateway-র কাজ। কলার কী চায় শুনে কোন ডিপার্টমেন্টে পাঠাবে ঠিক করা — এটাই **routing**: path বা host দেখে gateway ঠিক করে request কোন service-এ যাবে (billing ডেস্ক = billing service, support ডেস্ক = support service)। আর ডিপার্টমেন্টের ভেতর কোন ফ্রি এজেন্টকে দেবে সেটা বেছে নেওয়া — এটাই **load balancing**: একই service-এর কয়েকটা healthy instance-এর মধ্যে request ভাগ করে দেওয়া। বাস্তবে nginx বা Traefik-এর মতো gateway ঠিক এভাবেই কাজ করে — আগে path দেখে সঠিক service বাছে, তারপর সেই service-এর একাধিক instance-এর মধ্যে round-robin বা least-connections দিয়ে traffic ছড়িয়ে দেয়, আর কোনো instance unhealthy হলে তাকে বাদ দিয়ে দেয়।
+
 ## Path-Based Routing
 
-The most common pattern. Route by URL prefix to a backend service.
+সবচেয়ে সাধারণ প্যাটার্ন। URL prefix অনুযায়ী একটা backend সার্ভিসে route করা।
 
 **nginx:**
 
@@ -55,7 +63,7 @@ server {
 }
 ```
 
-**Traefik (docker-compose labels):**
+**Traefik (docker-compose label):**
 
 ```yaml
 services:
@@ -74,7 +82,7 @@ services:
 
 ## Header-Based Routing
 
-Route by request headers — useful for versioning, A/B tests, or tenant routing.
+request header অনুযায়ী route করা — versioning, A/B test, বা tenant routing-এর জন্য কাজে লাগে।
 
 ```nginx
 # Route by API version header
@@ -104,11 +112,11 @@ function tenantRouter(req: Request): string {
 }
 ```
 
-## Load Balancing Algorithms
+## Load Balancing Algorithm
 
-Once a route is matched, the gateway picks which backend instance handles the request.
+একবার একটা route ম্যাচ হলে, gateway ঠিক করে কোন backend instance request-টা সামলাবে।
 
-**Round robin** — requests distributed evenly, one at a time:
+**Round robin** — request সমানভাবে ভাগ হয়, একটা করে:
 
 ```nginx
 upstream backend {
@@ -119,7 +127,7 @@ upstream backend {
 }
 ```
 
-**Least connections** — send to the instance with fewest active requests. Better when requests have variable duration:
+**Least connections** — যে instance-এ সবচেয়ে কম active request আছে সেখানে পাঠানো। request-এর সময়কাল আলাদা আলাদা হলে এটা ভালো:
 
 ```nginx
 upstream backend {
@@ -130,7 +138,7 @@ upstream backend {
 }
 ```
 
-**IP hash** — same client always hits the same backend (session affinity):
+**IP hash** — একই client সবসময় একই backend-এ যায় (session affinity):
 
 ```nginx
 upstream backend {
@@ -140,7 +148,7 @@ upstream backend {
 }
 ```
 
-**Weighted** — send more traffic to higher-capacity instances:
+**Weighted** — বেশি capacity-র instance-এ বেশি traffic পাঠানো:
 
 ```nginx
 upstream backend {
@@ -151,9 +159,9 @@ upstream backend {
 
 ## Health Checks
 
-The gateway must stop sending traffic to unhealthy backends automatically.
+gateway-কে অবশ্যই unhealthy backend-এ traffic পাঠানো নিজে থেকেই বন্ধ করতে হবে।
 
-**Passive health checks** (default in nginx) — mark a backend unhealthy after N consecutive failures:
+**Passive health check** (nginx-এ default) — N বার পরপর failure হলে একটা backend-কে unhealthy চিহ্নিত করা:
 
 ```nginx
 upstream backend {
@@ -162,7 +170,7 @@ upstream backend {
 }
 ```
 
-**Active health checks** (nginx Plus / open-source alternatives):
+**Active health check** (nginx Plus / open-source বিকল্প):
 
 ```nginx
 # nginx Plus
@@ -175,7 +183,7 @@ upstream backend {
 }
 ```
 
-**Traefik health checks:**
+**Traefik health check:**
 
 ```yaml
 services:
@@ -186,7 +194,7 @@ services:
       - 'traefik.http.services.api.loadbalancer.healthcheck.timeout=3s'
 ```
 
-Your backend `/health` endpoint should check its own dependencies:
+আপনার backend-এর `/health` endpoint-এর উচিত নিজের dependency-গুলো যাচাই করা:
 
 ```typescript
 app.get('/health', async (req, res) => {
@@ -200,9 +208,9 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-## Weighted Traffic Splits (Canary Deploys)
+## Weighted Traffic Split (Canary Deploy)
 
-Send a small percentage of traffic to a new version before full rollout:
+পুরো rollout-এর আগে নতুন version-এ traffic-এর একটা ছোট শতাংশ পাঠানো:
 
 ```nginx
 upstream stable {
@@ -242,9 +250,9 @@ http:
             weight: 5
 ```
 
-## Timeouts
+## Timeout
 
-Every route should have explicit timeouts. Without them, a slow backend holds connections indefinitely:
+প্রতিটা route-এর explicit timeout থাকা উচিত। এগুলো ছাড়া একটা ধীর backend অনির্দিষ্টকাল ধরে connection আটকে রাখে:
 
 ```nginx
 location /api/ {
@@ -258,4 +266,4 @@ location /api/ {
 }
 ```
 
-Match timeouts to your SLOs. A 30-second timeout on a route that should respond in 200ms means 30 seconds of degraded user experience before you detect the problem.
+timeout-কে আপনার SLO-র সাথে মিলিয়ে নিন। যে route-এর 200ms-এ সাড়া দেওয়ার কথা সেখানে 30 সেকেন্ডের timeout মানে সমস্যা ধরার আগে 30 সেকেন্ড ধরে খারাপ user experience।

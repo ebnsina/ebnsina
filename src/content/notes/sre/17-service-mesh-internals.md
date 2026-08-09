@@ -1,9 +1,9 @@
 ---
 title: 'Service Mesh Internals'
-subtitle: 'Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting. What a mesh actually does and when it earns its complexity.'
+subtitle: 'Envoy, Istio, Linkerd, sidecar vs ambient, mTLS, xDS, retries, circuit breakers, traffic shifting। একটা mesh আসলে কী করে আর কখন এর জটিলতা পুষিয়ে দেয়।'
 chapter: 17
 level: 'mastery'
-readingTime: '28 min'
+readingTime: '28 মিনিট'
 topics: ['service mesh', 'Envoy', 'Istio', 'Linkerd', 'ambient', 'mTLS', 'xDS', 'Cilium']
 ---
 
@@ -13,37 +13,45 @@ topics: ['service mesh', 'Envoy', 'Istio', 'Linkerd', 'ambient', 'mTLS', 'xDS', 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A service mesh is like the electrical wiring in a building — every room gets power, circuit breakers, and grounding without each room wiring itself. You pay for the infrastructure once; every tenant benefits automatically.
+একটা service mesh একটা building-এর electrical wiring-এর মতো — প্রতিটা room বিদ্যুৎ, circuit breaker আর grounding পায় প্রতিটা room নিজে wiring না করেই। আপনি infrastructure-এর দাম একবার দেন; প্রতিটা tenant স্বয়ংক্রিয়ভাবে উপকৃত হয়।
 
 </Callout>
 
-## What a service mesh is, in one paragraph
+## গল্পে বুঝি
 
-A service mesh moves cross-cutting networking concerns — mTLS, retries, timeouts, traffic shifting, telemetry, circuit breakers, load balancing — out of every service and into a dedicated proxy that sits next to (sidecar) or under (ambient/eBPF) every service. The proxies are the **data plane**. A separate **control plane** configures them and ships them updated routing and policy.
+ফাতিমা আল-ফিহরির অফিসে একটা অদ্ভুত নিয়ম চালু হলো। প্রতিটা ডিপার্টমেন্ট — অ্যাকাউন্টস, সেলস, সাপোর্ট — এর ঠিক পাশে বসিয়ে দেওয়া হলো একজন করে নিজস্ব personal secretary। ডিপার্টমেন্টের কেউ আর নিজে ফোন ধরে না, নিজে ডায়াল করে না; বাইরের সব যোগাযোগ ওই secretary-র হাত দিয়েই যায়। কল এলে secretary আগে ওপাশের লোকের পরিচয় যাচাই করে, তারপর একটা encrypted secure লাইনে কথা বলে — বেঠিক পরিচয় হলে লাইনই কাটে। কল কানেক্ট না হলে সে কয়েকবার আবার চেষ্টা করে, আর অনেকক্ষণ রিং হয়ে গেলে ছেড়ে দিয়ে ব্যর্থ ঘোষণা করে। কোনো এক শাখা অফিসে ডায়াল করতে হলে সে দেখে কোন শাখা এখন ফাঁকা, সেখানেই রুট করে। আর প্রতিটা কল সে খাতায় লিখে রাখে — কার সাথে, কতক্ষণ, ফল কী।
 
-You buy: consistent zero-trust networking, language-agnostic resilience, deep telemetry, traffic-shifted deploys.
+মজার ব্যাপার হলো, ডিপার্টমেন্টের ইবনে সিনা বা আল-খোয়ারিজমিকে এসবের কিছুই শিখতে হয়নি — তারা শুধু নিজের আসল কাজটা করে যায়, ফোন সিস্টেমের ঝামেলা secretary সামলায়। আর প্রতিটা secretary কীভাবে চলবে — কীভাবে পরিচয় যাচাই করবে, কতবার রি-ট্রাই করবে, কোন শাখায় রুট করবে — সেটা কেউ আলাদা আলাদা শেখায়নি; head office থেকে একটাই manual নেমে আসে, সব secretary সেটা মেনে চলে। manual বদলালে সব secretary-র আচরণ একসাথে বদলায়।
 
-You pay: an extra hop per call, a new control plane to operate, a learning curve, and a new failure mode (the mesh itself).
+এই secretary-ই হলো **sidecar proxy** — প্রতিটা service-এর পাশে বসানো একটা dedicated proxy, যেটা service-এর হয়ে সব inter-service traffic সামলায়। পরিচয় যাচাই + secure লাইন হলো **mTLS**, রি-ট্রাই আর অনেকক্ষণে হাল ছেড়ে দেওয়া হলো **retries/timeouts**, ফাঁকা শাখায় রুট করা হলো **load balancing**, আর কল খাতায় তোলা হলো **observability** — সব service কোডে হাত না দিয়েই, transparently। head office-এর সেই একক manual হলো **control plane**, যেটা প্রতিটা sidecar-কে configure করে। বাস্তবে Istio ঠিক এই কাজটাই করে: প্রতিটা pod-এ Envoy proxy sidecar হিসেবে বসিয়ে দেয়, আর Istiod (control plane) xDS দিয়ে সব sidecar-কে config পাঠায় — নিচের চ্যাপ্টার জুড়ে আমরা এই ব্যাপারটাই গভীরে দেখব।
 
-## When a mesh actually earns its keep
+## এক প্যারায় service mesh কী
 
-| Situation                                | Mesh worth it?                                      |
-| ---------------------------------------- | --------------------------------------------------- |
-| 1 monolith + 3 services, single language | No. Use HTTP keepalive + a library.                 |
-| 50 services, 5 languages, mTLS required  | Yes. The library cost dominates.                    |
-| Zero-trust mandate, policy-as-code       | Yes. Mesh is the natural enforcement point.         |
-| Pure event-driven (Kafka/SQS) services   | No. The mesh sits on RPC paths, not queues.         |
-| Heavy egress to third-party SaaS         | Partial. Egress gateway is useful; full mesh isn't. |
+একটা service mesh cross-cutting networking concern — mTLS, retries, timeouts, traffic shifting, telemetry, circuit breakers, load balancing — প্রতিটা service থেকে বের করে এমন একটা dedicated proxy-তে নিয়ে যায় যা প্রতিটা service-এর পাশে (sidecar) বা নিচে (ambient/eBPF) বসে। proxy-গুলো হলো **data plane**। একটা আলাদা **control plane** সেগুলো configure করে আর তাদের updated routing ও policy পাঠায়।
 
-The honest test: **list the cross-cutting concerns you'd otherwise build into N libraries.** If the list is short, skip the mesh.
+আপনি পান: consistent zero-trust networking, language-agnostic resilience, deep telemetry, traffic-shifted deploy।
 
-## Envoy — the data plane the industry standardized on
+আপনি দেন: প্রতি call-এ একটা extra hop, operate করার মতো একটা নতুন control plane, একটা learning curve, আর একটা নতুন failure mode (mesh নিজেই)।
 
-Istio uses Envoy. Linkerd has its own (Rust-based linkerd2-proxy). Cilium has its own (eBPF + Envoy for L7). Most "service mesh" articles are really Envoy articles.
+## কখন একটা mesh সত্যিই এর মূল্য দেয়
 
-Envoy is a high-performance L4/L7 proxy with a few defining ideas:
+| পরিস্থিতি                               | Mesh worth it?                                  |
+| --------------------------------------- | ----------------------------------------------- |
+| 1 monolith + 3 service, single language | না। HTTP keepalive + একটা library ব্যবহার করুন। |
+| 50 service, 5 language, mTLS required   | হ্যাঁ। library-র খরচ প্রধান হয়ে ওঠে।           |
+| Zero-trust mandate, policy-as-code      | হ্যাঁ। Mesh স্বাভাবিক enforcement point।        |
+| Pure event-driven (Kafka/SQS) service   | না। Mesh RPC path-এ বসে, queue-তে নয়।          |
+| Third-party SaaS-এ heavy egress         | আংশিক। Egress gateway কাজের; full mesh নয়।     |
+
+সৎ পরীক্ষা: **যে cross-cutting concern-গুলো আপনি নাহলে N-টা library-তে বানাতেন সেগুলোর তালিকা করুন।** তালিকা ছোট হলে, mesh skip করুন।
+
+## Envoy — industry যে data plane-এ standardize করেছে
+
+Istio Envoy ব্যবহার করে। Linkerd-এর নিজেরটা আছে (Rust-ভিত্তিক linkerd2-proxy)। Cilium-এর নিজেরটা আছে (L7-র জন্য eBPF + Envoy)। বেশিরভাগ "service mesh" article আসলে Envoy article।
+
+Envoy একটা high-performance L4/L7 proxy, কয়েকটা সংজ্ঞায়ক ধারণা নিয়ে:
 
 ```
 - Configuration is dynamic. xDS APIs (LDS/RDS/CDS/EDS) push updates
@@ -57,7 +65,7 @@ Envoy is a high-performance L4/L7 proxy with a few defining ideas:
   model, not bolted on.
 ```
 
-### xDS — the Envoy config protocol
+### xDS — Envoy config protocol
 
 ```
 LDS — Listener Discovery Service.    Where Envoy listens.
@@ -67,7 +75,7 @@ EDS — Endpoint Discovery Service.    Endpoints inside each cluster.
 SDS — Secret Discovery Service.      Certificates for mTLS.
 ```
 
-Istiod, Cilium's mesh agent, Consul Connect — all speak xDS to Envoy. If you understand the xDS taxonomy, you can debug _any_ Envoy-based mesh.
+Istiod, Cilium-এর mesh agent, Consul Connect — সবাই Envoy-র সাথে xDS-এ কথা বলে। আপনি xDS taxonomy বুঝলে, _যেকোনো_ Envoy-ভিত্তিক mesh debug করতে পারবেন।
 
 ```bash
 # Dump live Envoy config from an Istio sidecar
@@ -77,11 +85,11 @@ istioctl proxy-config route    payments-api-7c5d8 -n team-payments
 istioctl proxy-config endpoint payments-api-7c5d8 -n team-payments
 ```
 
-The first time a route doesn't work, dump RDS. The first time mTLS fails, dump SDS. Treat the proxy as inspectable, not magical.
+প্রথমবার যখন একটা route কাজ করবে না, RDS dump করুন। প্রথমবার যখন mTLS fail করবে, SDS dump করুন। proxy-কে inspectable হিসেবে treat করুন, magical নয়।
 
-## Sidecar vs ambient — the architectural fight
+## Sidecar vs ambient — architectural লড়াই
 
-For a decade, "service mesh" meant "sidecar mesh": every pod gets an Envoy container running next to it, and `iptables` rules redirect pod traffic through that Envoy.
+এক দশক ধরে, "service mesh" মানে ছিল "sidecar mesh": প্রতিটা pod তার পাশে চলা একটা Envoy container পায়, আর `iptables` rule pod traffic সেই Envoy-র মধ্য দিয়ে redirect করে।
 
 ```
 Sidecar pros:
@@ -94,7 +102,7 @@ Sidecar cons:
     sidecar must drain before pod terminates).
 ```
 
-Ambient mesh (Istio's newer mode) and Cilium service mesh take a different shape:
+Ambient mesh (Istio-র নতুন mode) আর Cilium service mesh একটা ভিন্ন আকার নেয়:
 
 ```
 Ambient / eBPF mesh:
@@ -109,15 +117,15 @@ Tradeoffs:
   - Per-tenant blast radius slightly larger (shared ztunnel per node).
 ```
 
-If you're starting fresh in 2026, evaluate ambient/eBPF before sidecar. The resource math at 10,000 pods is dramatic.
+আপনি যদি 2026-এ নতুন করে শুরু করেন, sidecar-এর আগে ambient/eBPF evaluate করুন। 10,000 pod-এ resource-এর হিসাব নাটকীয়।
 
-## mTLS — the feature that pays for the mesh
+## mTLS — যে feature mesh-এর দাম মিটিয়ে দেয়
 
-Mutual TLS: every connection inside the cluster is TLS-encrypted, and both ends present certificates the other validates. The mesh:
+Mutual TLS: cluster-এর ভেতরে প্রতিটা connection TLS-encrypted, আর দুই প্রান্তই certificate পেশ করে যা অন্যটা validate করে। Mesh:
 
-1. **Provisions per-workload certs** automatically (SPIFFE/SPIRE identities or Istio's CA).
-2. **Rotates them** regularly (default 24 h in Istio).
-3. **Enforces mTLS** via policy (`PeerAuthentication: STRICT`).
+1. **per-workload cert provision করে** স্বয়ংক্রিয়ভাবে (SPIFFE/SPIRE identity বা Istio-র CA)।
+2. **সেগুলো rotate করে** নিয়মিত (Istio-তে default 24 h)।
+3. **mTLS enforce করে** policy দিয়ে (`PeerAuthentication: STRICT`)।
 
 ```yaml
 # Istio: require mTLS in production namespaces
@@ -131,14 +139,14 @@ spec:
     mode: STRICT
 ```
 
-The two operational gotchas:
+দুটো operational gotcha:
 
-1. **PERMISSIVE → STRICT migration must be staged.** Start PERMISSIVE (accept both plain + mTLS), confirm all clients have sidecars, then switch to STRICT.
-2. **Cert rotation depends on the control plane.** Istiod outage during a long rotation cycle can leave pods with expired certs. Monitor cert age.
+1. **PERMISSIVE → STRICT migration staged হতে হবে।** PERMISSIVE দিয়ে শুরু করুন (plain + mTLS দুটোই নিন), নিশ্চিত করুন সব client-এর sidecar আছে, তারপর STRICT-এ switch করুন।
+2. **Cert rotation control plane-এর উপর নির্ভর করে।** একটা long rotation cycle-এর সময় Istiod outage pod-কে expired cert নিয়ে ফেলে রাখতে পারে। cert age monitor করুন।
 
-## Authorization — workload-level RBAC over the network
+## Authorization — network-এর উপর workload-level RBAC
 
-Once you have identity (mTLS gives every workload a verifiable name), you can write network policies that look like API authorization:
+একবার identity পেলে (mTLS প্রতিটা workload-কে একটা verifiable নাম দেয়), আপনি এমন network policy লিখতে পারেন যা API authorization-এর মতো দেখায়:
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -162,11 +170,11 @@ spec:
             paths: [/v1/charges/*]
 ```
 
-Compare to NetworkPolicy: NP says "this pod label can talk to this pod label." AuthorizationPolicy says "this _identity_ can perform _this RPC_." That's the leap from network ACL to service-level RBAC.
+NetworkPolicy-র সাথে তুলনা করুন: NP বলে "এই pod label এই pod label-এর সাথে কথা বলতে পারে।" AuthorizationPolicy বলে "এই _identity_ _এই RPC_ করতে পারে।" এটাই network ACL থেকে service-level RBAC-এ লাফ।
 
-## Traffic management — the second feature you'll actually use
+## Traffic management — দ্বিতীয় feature যা আপনি আসলে ব্যবহার করবেন
 
-Canary deploys, blue-green, mirror traffic for testing, fault injection — all become declarative.
+Canary deploy, blue-green, testing-এর জন্য mirror traffic, fault injection — সব declarative হয়ে যায়।
 
 ```yaml
 # Send 5% to v2, 95% to v1
@@ -201,11 +209,11 @@ spec:
         - destination: { host: payments-api }
 ```
 
-Argo Rollouts + a mesh make progressive delivery (auto-canary, auto-rollback on SLO breach) a 50-line config.
+Argo Rollouts + একটা mesh progressive delivery (auto-canary, SLO breach-এ auto-rollback)-কে একটা 50-লাইনের config বানায়।
 
-## Resilience features — and the trap of double retries
+## Resilience feature — আর double retry-র ফাঁদ
 
-Mesh-level retries, timeouts, and circuit breakers are powerful and dangerous.
+Mesh-level retry, timeout আর circuit breaker শক্তিশালী আর বিপজ্জনক।
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -223,11 +231,11 @@ spec:
         retryOn: 5xx,connect-failure,reset
 ```
 
-The trap: if both the application and the mesh retry, you get **retry amplification** (3 client retries × 3 mesh retries × 3 backend retries = 27 calls per failed request). At scale this turns a tiny upstream blip into a stampede that takes the upstream out.
+ফাঁদ: যদি application আর mesh দুটোই retry করে, আপনি **retry amplification** পান (3 client retry × 3 mesh retry × 3 backend retry = প্রতি failed request-এ 27 call)। স্কেলে এটা একটা ছোট upstream blip-কে একটা stampede-এ পরিণত করে যা upstream-কে নামিয়ে দেয়।
 
-The senior-team rule: **decide where retries live, and disable them everywhere else.** Mesh-level retries are the right answer most of the time because they share a budget across services. Application-level retries should be the exception — and labeled "no further retry" so the mesh doesn't retry on top.
+Senior-team নিয়ম: **retry কোথায় থাকবে ঠিক করুন, আর বাকি সব জায়গায় disable করুন।** Mesh-level retry বেশিরভাগ সময় সঠিক উত্তর কারণ তারা service জুড়ে একটা budget share করে। Application-level retry হওয়া উচিত ব্যতিক্রম — আর "no further retry" লেবেল করা যাতে mesh এর উপরে retry না করে।
 
-## Circuit breakers — Envoy's outlier detection
+## Circuit breaker — Envoy-র outlier detection
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -247,21 +255,21 @@ spec:
       maxEjectionPercent: 50
 ```
 
-This says: if a backend pod returns 5 consecutive 5xx, eject it for 30 s. Up to 50% of pods can be ejected at once. The `maxEjectionPercent` cap is critical — without it, a bad deploy can eject every replica and leave you with zero capacity.
+এটা বলে: একটা backend pod যদি 5টা টানা 5xx ফেরত দেয়, তাকে 30 s-এর জন্য eject করো। একসাথে 50% পর্যন্ত pod eject হতে পারে। `maxEjectionPercent` cap-টা critical — এটা ছাড়া, একটা খারাপ deploy প্রতিটা replica eject করে আপনাকে zero capacity নিয়ে ফেলে রাখতে পারে।
 
-## Observability that comes for free
+## যে observability free-তে আসে
 
-Every mesh ships:
+প্রতিটা mesh ship করে:
 
-- **Per-RPC metrics** (request rate, error rate, duration percentiles) — RED automatically.
-- **Distributed traces** with mesh-injected B3/W3C trace headers (you still need a tracer for app spans, but the network spans show up free).
-- **Access logs** for every request, in JSON or any format you like.
+- **Per-RPC metric** (request rate, error rate, duration percentile) — স্বয়ংক্রিয়ভাবে RED।
+- **Distributed trace** mesh-injected B3/W3C trace header সহ (app span-এর জন্য এখনও একটা tracer লাগে, কিন্তু network span free-তে দেখায়)।
+- প্রতিটা request-এর জন্য **Access log**, JSON-এ বা আপনার পছন্দের যেকোনো format-এ।
 
-This alone is the value pitch for many teams: even before you use traffic shifting or mTLS, the mesh gives you uniform telemetry across every service in every language.
+অনেক team-এর জন্য এটাই value pitch: traffic shifting বা mTLS ব্যবহার করার আগেই, mesh প্রতিটা language-এর প্রতিটা service জুড়ে uniform telemetry দেয়।
 
-## Failure modes the mesh adds
+## যে failure mode mesh যোগ করে
 
-Every layer is a layer that can fail. The mesh-specific failure patterns:
+প্রতিটা layer একটা layer যা fail করতে পারে। mesh-specific failure pattern:
 
 ```
 1. Sidecar crash loops cause pod failure even when the app is fine.
@@ -281,9 +289,9 @@ Every layer is a layer that can fail. The mesh-specific failure patterns:
    → Alert on cert age, not just cluster status.
 ```
 
-Each of these has caused a Sev-1 in some team somewhere. The mesh gives capability; it adds another component you must operate.
+এর প্রতিটাই কোথাও না কোথাও কোনো team-এ একটা Sev-1 ঘটিয়েছে। mesh capability দেয়; এটা আরেকটা component যোগ করে যা আপনাকে operate করতে হবে।
 
-## Mesh comparison — what to pick in 2026
+## Mesh comparison — 2026-এ কী বাছবেন
 
 |                   | Istio (sidecar)      | Istio Ambient            | Linkerd                  | Cilium Service Mesh      |
 | ----------------- | -------------------- | ------------------------ | ------------------------ | ------------------------ |
@@ -295,16 +303,16 @@ Each of these has caused a Sev-1 in some team somewhere. The mesh gives capabili
 | mTLS              | Yes (Istio CA)       | Yes                      | Yes                      | Yes (SPIFFE)             |
 | Multi-cluster     | Yes (complex)        | Yes                      | Yes                      | Yes                      |
 
-The real-world picks:
+বাস্তব পছন্দ:
 
-- **Cilium for CNI already?** Cilium service mesh is the lowest-friction path.
-- **Greenfield K8s, want simplest mesh?** Linkerd. Boring is good.
-- **Already on Istio?** Migrate to ambient when stable for your use case.
-- **Heavy on Envoy already (e.g. front proxy fleet)?** Istio gives consistency.
+- **ইতিমধ্যে CNI-র জন্য Cilium?** Cilium service mesh সবচেয়ে কম-ঘর্ষণের পথ।
+- **Greenfield K8s, সবচেয়ে সহজ mesh চান?** Linkerd। Boring is good।
+- **ইতিমধ্যে Istio-তে?** আপনার use case-এর জন্য stable হলে ambient-এ migrate করুন।
+- **ইতিমধ্যে Envoy-তে heavy (যেমন front proxy fleet)?** Istio consistency দেয়।
 
-## A real mesh debugging walkthrough
+## একটা বাস্তব mesh debugging walkthrough
 
-Symptom: a downstream service intermittently sees 503s with `upstream connect error or disconnect/reset before headers`. Five-minute spike, then quiet, then back. No app logs.
+লক্ষণ: একটা downstream service মাঝেমধ্যে `upstream connect error or disconnect/reset before headers` সহ 503 দেখে। পাঁচ-মিনিটের spike, তারপর চুপ, তারপর আবার। কোনো app log নেই।
 
 ```
 Step 1: Check the mesh access log on the SOURCE side.
@@ -332,16 +340,16 @@ Step 4: Common root causes for this exact pattern:
      bump sidecar memory request.
 ```
 
-This kind of triage is impossible without knowing the mesh's data model. Which is why the chapter exists.
+mesh-এর data model না জেনে এই ধরনের triage অসম্ভব। এই কারণেই এই chapter আছে।
 
-## Common mistakes
+## Common ভুল
 
-1. **Adopting a mesh because it's trendy.** It's a tax. Make sure you collect.
-2. **Sidecar without resource requests.** Sidecar OOMs cause weird app errors.
-3. **Both app and mesh retry.** Pick one layer; disable on the other.
-4. **PERMISSIVE forever.** STRICT mTLS is the goal; staying PERMISSIVE means you don't know what's encrypted.
-5. **Ignoring control-plane HA.** Istiod is a SPOF for cert rotation. Run multiple replicas across zones.
-6. **Treating VirtualService as immutable.** Route changes need canary + monitoring like any deploy.
+1. **trendy বলে একটা mesh adopt করা।** এটা একটা tax। নিশ্চিত হন আপনি আদায় করছেন।
+2. **resource request ছাড়া sidecar।** Sidecar OOM অদ্ভুত app error ঘটায়।
+3. **app আর mesh দুটোই retry।** একটা layer বাছুন; অন্যটায় disable করুন।
+4. **চিরকাল PERMISSIVE।** STRICT mTLS-ই লক্ষ্য; PERMISSIVE থাকা মানে আপনি জানেন না কী encrypted।
+5. **control-plane HA উপেক্ষা করা।** Istiod cert rotation-এর জন্য একটা SPOF। zone জুড়ে একাধিক replica চালান।
+6. **VirtualService-কে immutable হিসেবে treat করা।** Route change-এর যেকোনো deploy-এর মতো canary + monitoring লাগে।
 
 ## Tools tier list
 
@@ -364,18 +372,18 @@ Tier F
   iptables hand-tuned to "fix" sidecar redirection. You'll regret it.
 ```
 
-## Stay current
+## আপডেটেড থাকুন
 
 - [Istio docs](https://istio.io/latest/docs/) — sidecar + ambient mode reference
-- [Linkerd docs](https://linkerd.io/2/overview/) — Rust-based, simpler alternative
+- [Linkerd docs](https://linkerd.io/2/overview/) — Rust-ভিত্তিক, সহজ বিকল্প
 - [Cilium service mesh](https://docs.cilium.io/en/stable/network/servicemesh/) — eBPF-native mesh
-- [Envoy docs](https://www.envoyproxy.io/docs/envoy/latest/) — the data plane underneath most meshes
+- [Envoy docs](https://www.envoyproxy.io/docs/envoy/latest/) — বেশিরভাগ mesh-এর নিচের data plane
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **A mesh is a tax with a payback** — adopt it when the cross-cutting library cost dominates.
-2. **Envoy + xDS is the underlying data model** of Istio, Cilium, Consul Connect. Learn it once.
-3. **Ambient / eBPF meshes are the future at scale** — sidecar overhead becomes brutal past 10k pods.
-4. **mTLS + workload identity-based authz** is what makes a mesh strategically valuable.
-5. **Retry budgets, not multiplicative retries** — pick one layer to retry from.
-6. **The mesh adds failure modes** — control plane HA, cert TTLs, sidecar OOMs are now your problem.
+1. **একটা mesh হলো payback সহ একটা tax** — cross-cutting library খরচ প্রধান হলে adopt করুন।
+2. **Envoy + xDS হলো Istio, Cilium, Consul Connect-এর underlying data model।** একবার শিখুন।
+3. **Ambient / eBPF mesh স্কেলে ভবিষ্যৎ** — 10k pod-এর পর sidecar overhead নিষ্ঠুর হয়ে যায়।
+4. **mTLS + workload identity-ভিত্তিক authz** হলো যা একটা mesh-কে কৌশলগতভাবে মূল্যবান করে।
+5. **Retry budget, multiplicative retry নয়** — retry করার জন্য একটা layer বাছুন।
+6. **Mesh failure mode যোগ করে** — control plane HA, cert TTL, sidecar OOM এখন আপনার সমস্যা।

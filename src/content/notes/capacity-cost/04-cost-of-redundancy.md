@@ -1,9 +1,9 @@
 ---
 title: 'The Cost of Redundancy'
-subtitle: 'Multi-AZ, N+1, active-active — what each availability pattern actually costs and the math behind choosing one.'
+subtitle: 'Multi-AZ, N+1, active-active — প্রতিটা availability pattern আসলে কত খরচ করে আর একটা বেছে নেওয়ার পেছনের হিসাব।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['redundancy', 'high availability', 'multi-AZ', 'N+1', 'active-active', 'SLA']
 ---
 
@@ -13,13 +13,21 @@ topics: ['redundancy', 'high availability', 'multi-AZ', 'N+1', 'active-active', 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A spare tire in your car: one spare doubles the cost of tires but prevents you being stranded. Two spares and a tow-truck subscription means you never miss a meeting — but now you've spent more on contingency than on the trip. Every availability tier has a price, and the right one depends on what being stuck actually costs you.
+আপনার গাড়ির spare tire: একটা spare টায়ারের খরচ দ্বিগুণ করে কিন্তু আপনাকে রাস্তায় আটকে যাওয়া থেকে বাঁচায়। দুটো spare আর একটা tow-truck subscription মানে আপনি কখনো meeting মিস করবেন না — কিন্তু এখন আপনি trip-এর চেয়ে contingency-তে বেশি খরচ করে ফেলেছেন। প্রতিটা availability tier-এর একটা দাম আছে, আর সঠিকটা নির্ভর করে আটকে যাওয়া আসলে আপনার কত খরচ করায় তার উপর।
 
 </Callout>
 
-## Availability Targets and What They Mean
+## গল্পে বুঝি
+
+শহরের বড় হাসপাতালটা চালান ফাতিমা আল-ফিহরি। তাঁর ICU-তে ভেন্টিলেটর, অপারেশন থিয়েটারে লাইট — সবকিছু বিদ্যুতে চলে। মেইন লাইন এক সেকেন্ডের জন্য গেলেও কারো জীবন চলে যেতে পারে। তাই বেসমেন্টে একটা বিশাল ব্যাকআপ জেনারেটর সবসময় ফুল-ট্যাংক ভরা, টেস্ট করা, রেডি অবস্থায় বসে থাকে। এমনকি ফাতিমা আরেকটা জেনারেটর রেখেছেন পাশের আলাদা বিল্ডিংয়ে — কারণ কোনো এক আগুন বা বন্যায় যদি পুরো বেসমেন্টটাই ডুবে যায়, তবু হাসপাতাল যেন থামে না। বছরের ৯৯% সময় এই দুটো জেনারেটর কিছুই করে না, শুধু বসে থাকে। কিন্তু ফাতিমা প্রতি মাসে ডিজেল কেনেন, মেকানিক ডেকে সার্ভিস করান, ভাড়া গোনেন — শুধু ওই একটা দিনের জন্য যেদিন মেইন পাওয়ার চলে যাবে।
+
+ঠিক একই মোড়ে ইবনে সিনার ছোট্ট চায়ের দোকান। কারেন্ট গেলে তাঁর ফ্রিজের দুধ একটু গরম হয়, দুই-চারজন কাস্টমার হয়তো ফিরে যায় — ব্যস। এখন ইবনে সিনা যদি ফাতিমার মতো দুটো দামি জেনারেটর কিনে প্রতি মাসে ডিজেল আর সার্ভিসের পেছনে টাকা ঢালতেন, সেটা হতো নিছক বোকামি — যা রক্ষা করছেন তার চেয়ে ইনস্যুরেন্সেই বেশি খরচ। তাঁর জন্য একটা মোমবাতি বা ছোট একটা inverter-ই যথেষ্ট।
+
+এই দুই দৃশ্যই আসলে **redundancy আর high availability**-র হিসাব। বসে থাকা ব্যাকআপ জেনারেটর হলো আপনার **standby replica** বা spare capacity, আর পাশের বিল্ডিংয়ের দ্বিতীয় জেনারেটর হলো **multi-region / availability zone** redundancy — একটা AZ বা region পুরো গেলেও যেন সেবা না থামে। জেনারেটর মূলত অলস বসে থাকলেও তেল-সার্ভিসের বিল গোনাটাই হলো reliability-র চলমান খরচ: বেশিরভাগ সময় idle থাকা resource-এর জন্য আপনাকে ঠিকই টাকা দিতে হয়। আর হাসপাতাল-বনাম-চায়ের-দোকানের বিচারটাই মূল শিল্প — reliability কতটা মূল্যবান সেটা তার খরচের বিপরীতে মেপে নেওয়া। বাস্তবে এই জন্যই একটা life-critical B2B SaaS হয়তো Multi-AZ database আর multi-region failover-এ মাসে হাজার ডলার ঢালে, অথচ একটা ছোট hobby প্রোজেক্ট একটা মাত্র সার্ভারেই দিব্যি চলে — কারণ তাদের downtime-এর দাম এক নয়।
+
+## Availability Target আর সেগুলোর মানে
 
 ```
 99%    uptime = 87.6 hours/year downtime
@@ -30,7 +38,7 @@ A spare tire in your car: one spare doubles the cost of tires but prevents you b
 Each additional "9" roughly costs 10x more in infrastructure and ops complexity.
 ```
 
-Before choosing a target, calculate what downtime actually costs your business:
+একটা target বেছে নেওয়ার আগে হিসাব করুন downtime আসলে আপনার business-এর কত খরচ করায়:
 
 ```
 Revenue impact:
@@ -45,11 +53,11 @@ Infrastructure cost to go 99.9% → 99.99%:
 99.9% is the economically rational choice.
 ```
 
-Do this math before committing to five nines.
+Five nines-এ commit করার আগে এই হিসাবটা করুন।
 
 ## N+1 Redundancy
 
-The baseline: run N+1 instances where N is what you need to serve load. If one fails, the remaining N handle full traffic.
+Baseline: N+1 instance চালান যেখানে N হলো load serve করতে যা লাগে। একটা fail করলে বাকি N পুরো traffic সামলায়।
 
 ```
 At peak: 100 RPS → need 2 app servers at 50% utilization each
@@ -63,11 +71,11 @@ Availability gain:
   P = (1/720)² = 0.000002 ≈ 99.9998% availability
 ```
 
-N+1 is the default for stateless application servers. It's cheap (50% premium) and handles the most common failure mode (single server crash or restart).
+Stateless application server-এর জন্য N+1 হলো default। এটা সস্তা (50% premium) আর সবচেয়ে সাধারণ failure mode (single server crash বা restart) সামলায়।
 
 ## Multi-AZ (Active-Standby)
 
-Run primary in one availability zone, standby in another. On primary failure, failover to standby — typically 30-60 seconds of downtime.
+Primary একটা availability zone-এ চালান, standby আরেকটায়। Primary fail করলে standby-তে failover — সাধারণত 30-60 সেকেন্ডের downtime।
 
 ```
 AWS RDS Multi-AZ:
@@ -85,13 +93,13 @@ What you get:
   OS/maintenance failover (zero-downtime patching)
 ```
 
-Multi-AZ for your database is usually the right call for production. The 2x cost is justified by protection against AZ-level failures and maintenance windows.
+আপনার database-এর জন্য Multi-AZ সাধারণত production-এ সঠিক সিদ্ধান্ত। 2x খরচটা AZ-level failure আর maintenance window-এর বিরুদ্ধে protection দিয়ে justify হয়।
 
 ## Active-Active vs Active-Standby
 
-**Active-Standby:** One node handles traffic, standby is idle until needed. Simple but wastes the standby's capacity.
+**Active-Standby:** একটা node traffic সামলায়, standby দরকার না হওয়া পর্যন্ত idle থাকে। সরল কিন্তু standby-র capacity নষ্ট করে।
 
-**Active-Active:** Both nodes handle traffic simultaneously. Failover is seamless (no switchover delay) and the standby's capacity is actually used.
+**Active-Active:** দুটো node একসাথে traffic সামলায়। Failover seamless (কোনো switchover delay নেই) আর standby-র capacity আসলে ব্যবহার হয়।
 
 ```
 Active-Standby (Multi-AZ):
@@ -105,11 +113,11 @@ Active-Active (two regions):
   Complexity: high — need conflict resolution for writes
 ```
 
-Active-active makes sense for stateless services (both nodes serve traffic = 2x capacity at the same price as active-standby). For stateful services (databases), it requires handling write conflicts, which adds significant complexity.
+Stateless service-এর জন্য active-active অর্থবহ (দুটো node-ই traffic serve করে = active-standby-র সমান দামে 2x capacity)। Stateful service-এর (database) জন্য এটাতে write conflict সামলাতে হয়, যা উল্লেখযোগ্য জটিলতা যোগ করে।
 
 ## Regional Redundancy (Multi-Region)
 
-Protects against entire region failures (rare but real — AWS us-east-1 has had multi-hour outages).
+পুরো region failure-এর বিরুদ্ধে protect করে (বিরল কিন্তু বাস্তব — AWS us-east-1-এ multi-hour outage হয়েছে)।
 
 ```
 Architecture: Primary region (us-east-1) + DR region (us-west-2)
@@ -126,11 +134,11 @@ RTO (Recovery Time Objective): hours (multi-region setup, manual failover)
 RPO (Recovery Point Objective): seconds-to-minutes (async replication lag)
 ```
 
-Most companies don't need active-active multi-region. A simpler approach: deploy your stack in a second region but keep it scaled down. On disaster, scale up and update DNS. Cold standby costs 20-30% of a full replica.
+বেশিরভাগ কোম্পানির active-active multi-region দরকার নেই। একটা সহজ approach: দ্বিতীয় region-এ আপনার stack deploy করুন কিন্তু scaled down রাখুন। Disaster হলে scale up করুন আর DNS আপডেট করুন। Cold standby একটা full replica-র 20-30% খরচ করে।
 
-## The Cost of Cross-Region Replication
+## Cross-Region Replication-এর খরচ
 
-Replicating data between regions is expensive on AWS:
+Region-এর মধ্যে data replicate করা AWS-এ ব্যয়বহুল:
 
 ```
 Data transfer between AWS regions: $0.02/GB (inter-region)
@@ -148,9 +156,9 @@ For read-only replicas in other regions (analytics workloads):
   DMS or pglogical replication: simpler and cheaper than full multi-region
 ```
 
-## Chaos Budgets: Trading Money for Confidence
+## Chaos Budget: Confidence-এর জন্য টাকা দেওয়া
 
-Redundancy is an insurance policy. The premium is ongoing infrastructure cost; the payout is surviving failures without downtime. Size your insurance to your actual risk:
+Redundancy একটা insurance policy। Premium হলো চলমান infrastructure cost; payout হলো downtime ছাড়া failure থেকে বেঁচে যাওয়া। আপনার আসল risk অনুযায়ী insurance-এর সাইজ ঠিক করুন:
 
 ```
 Risk matrix for a B2B SaaS:
@@ -168,17 +176,17 @@ Acceptable risk decision: cover everything up to AZ failure, accept region failu
 Total redundancy cost: ~$350/month
 ```
 
-## Operational Cost of Redundancy
+## Redundancy-র Operational খরচ
 
-Hardware cost is visible. Operational cost is not:
+Hardware cost দৃশ্যমান। Operational cost নয়:
 
 **Complexity tax:**
 
-- More components to monitor
-- More failure modes to test
-- More runbooks to write and maintain
-- Failover procedures to practice quarterly
+- monitor করার জন্য বেশি component
+- test করার জন্য বেশি failure mode
+- লেখা আর maintain করার জন্য বেশি runbook
+- প্রতি quarter-এ practice করার জন্য failover procedure
 
-**Testing debt:** Untested failover fails at the worst moment. Add chaos testing (chapter in chaos-resilience) and game days. Budget 1-2 engineer-days per quarter for HA testing.
+**Testing debt:** Untested failover সবচেয়ে খারাপ মুহূর্তে fail করে। Chaos testing (chaos-resilience-এর chapter) আর game day যোগ করুন। HA testing-এর জন্য প্রতি quarter-এ 1-2 engineer-day budget রাখুন।
 
-**The simplicity premium:** Many teams run their production on 2 app servers + managed DB + managed Redis. Simple to reason about, fast to fix when something breaks, cheap to operate. Add complexity only when the math above shows it pays off.
+**Simplicity premium:** অনেক team তাদের production 2 app server + managed DB + managed Redis-এ চালায়। বোঝা সহজ, কিছু ভাঙলে দ্রুত ঠিক করা যায়, operate করা সস্তা। শুধু তখনই জটিলতা যোগ করুন যখন উপরের হিসাব দেখায় সেটা পোষায়।

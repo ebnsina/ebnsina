@@ -1,9 +1,9 @@
 ---
 title: 'NATS'
-subtitle: 'Core pub/sub, JetStream persistence, KV store, and running a 3-node cluster — the fast path to reliable messaging without Kafka complexity.'
+subtitle: 'Core pub/sub, JetStream persistence, KV store, আর একটা 3-node cluster চালানো — Kafka-র জটিলতা ছাড়াই নির্ভরযোগ্য messaging-এর দ্রুততম পথ।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['NATS', 'JetStream', 'pub/sub', 'clustering', 'KV store', 'subjects']
 ---
 
@@ -13,25 +13,33 @@ topics: ['NATS', 'JetStream', 'pub/sub', 'clustering', 'KV store', 'subjects']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Walkie-talkies vs a recorded dispatch system: core NATS is walkie-talkies — instant, lightweight, but if you're not listening when the message is sent, you miss it. JetStream is the dispatch recording system — messages are stored, replayed on demand, and acknowledged on receipt. Same underlying radio network, with persistence layered on.
+ওয়াকি-টকি বনাম একটা রেকর্ডেড ডিসপ্যাচ সিস্টেম: core NATS হলো ওয়াকি-টকি — তাৎক্ষণিক, হালকা, কিন্তু মেসেজ পাঠানোর সময় আপনি না শুনলে সেটা মিস করবেন। JetStream হলো ডিসপ্যাচ রেকর্ডিং সিস্টেম — মেসেজ জমা রাখা হয়, চাহিদামতো replay হয়, আর গ্রহণের সময় acknowledge করা হয়। একই অন্তর্নিহিত রেডিও নেটওয়ার্ক, তার উপর persistence যোগ করা।
 
 </Callout>
 
-## Why NATS
+## গল্পে বুঝি
 
-NATS is a cloud-native messaging system written in Go. The server is a single ~20MB binary. Core characteristics:
+ইবনে সিনার পুরনো ছয়তলা বিল্ডিংয়ে একটা মজার ইন্টারকম বাজার নেটওয়ার্ক বসানো। দেয়ালে সারি সারি লেবেল-করা বোতাম — "ছাদ", "গ্যারেজ", "দারোয়ান", "তিনতলা"। কেউ একটা বোতাম চাপলেই সেই লেবেলে যে যে শুনছে, তাদের ঘরে সঙ্গে সঙ্গে বাজ পড়ে। কোনো তার-জট নেই, কোনো সেটআপ নেই, বিদ্যুৎ খরচ প্রায় শূন্য — বোতাম চাপো, বাজ পড়ে, ব্যস। আল-খোয়ারিজমি নিচে দাঁড়িয়ে "গ্যারেজ" বোতাম চাপলে গ্যারেজে বসা যে কেউ তাৎক্ষণিক শুনে ফেলে।
 
-- 1M+ messages/sec on modest hardware
+কিন্তু একটা ব্যাপার আছে — এই বাজার কোনো স্মৃতি নেই। ফাতিমা আল-ফিহরি যদি "দারোয়ান" বোতাম চাপেন আর ঠিক সেই মুহূর্তে দারোয়ান চা খেতে বাইরে থাকেন, বাজটা কেবল হাওয়ায় মিলিয়ে যায় — কোথাও জমা থাকে না, পরে আর শোনা যায় না। যেদিন সত্যিই দরকার যে বার্তা হারানো চলবে না, সেদিন ইবনে সিনা বাজারের সঙ্গে একটা অ্যানসারিং-মেশিন অ্যাটাচমেন্ট জুড়ে দেন — এবার প্রতিটা বাজ রেকর্ড হয়ে জমা থাকে, দারোয়ান ফিরে এসে পরেও শুনে নিতে পারেন।
+
+এই বাজার নেটওয়ার্কটাই আসলে **NATS** — হালকা, ভয়ানক দ্রুত আর সরল। প্রতিটা বোতামের লেবেল হলো একটা **subject**, আর সেই লেবেলে যারা শুনছে তারা হলো ওই subject-এর subscriber — এটাই subject-ভিত্তিক pub/sub। কেউ না শুনলে বাজ হারিয়ে যাওয়াটাই core NATS-এর **fire-and-forget** তথা **at-most-once** ডেলিভারি। আর সেই অ্যানসারিং-মেশিন অ্যাটাচমেন্ট হলো **JetStream** — যখন বার্তা জমা রাখা, replay করা আর acknowledge করা দরকার, তখন একই নেটওয়ার্কের উপরেই persistence যোগ হয়। বাস্তবে internal microservice-এর দ্রুত সিগন্যালিং (health ping, cache invalidation notify) core NATS-এ পাঠানো হয়, আর order event-এর মতো হারানো-চলবে-না জিনিস JetStream stream-এ রাখা হয়।
+
+## NATS কেন
+
+NATS হলো Go-তে লেখা একটা cloud-native messaging system। Server একটা একক ~20MB binary। মূল বৈশিষ্ট্য:
+
+- মাঝারি hardware-এ 1M+ messages/sec
 - Sub-millisecond latency
-- Subjects are strings with wildcards (`>`, `*`)
-- No per-message routing config — subjects are the routing
-- JetStream adds persistence, at-least-once delivery, and KV store on top
+- Subject হলো wildcard সহ string (`>`, `*`)
+- Per-message routing config নেই — subject-ই হলো routing
+- JetStream এর উপর persistence, at-least-once delivery, আর KV store যোগ করে
 
-Use NATS when you want Kafka-level throughput with dramatically simpler operations.
+NATS ব্যবহার করুন যখন আপনি Kafka-মাত্রার throughput চান নাটকীয়ভাবে সহজতর operation-সহ।
 
-## Running NATS
+## NATS চালানো
 
 ```bash
 # Single node — local dev
@@ -91,16 +99,16 @@ nc.publish(
 );
 ```
 
-Subject wildcards:
+Subject wildcard:
 
-- `orders.*` — matches `orders.created`, `orders.cancelled` but not `orders.payment.failed`
-- `orders.>` — matches `orders.created`, `orders.payment.failed`, any depth
+- `orders.*` — `orders.created`, `orders.cancelled` মেলায় কিন্তু `orders.payment.failed` নয়
+- `orders.>` — `orders.created`, `orders.payment.failed`, যেকোনো depth মেলায়
 
-Core pub/sub is fire-and-forget — if no subscriber is listening when you publish, the message is gone. Use JetStream for persistence.
+Core pub/sub হলো fire-and-forget — publish করার সময় কোনো subscriber না শুনলে মেসেজটা হারিয়ে যায়। Persistence-এর জন্য JetStream ব্যবহার করুন।
 
-## JetStream Streams
+## JetStream Stream
 
-JetStream stores messages in streams with configurable retention:
+JetStream মেসেজ configurable retention সহ stream-এ জমা রাখে:
 
 ```typescript
 import { connect, JSONCodec, RetentionPolicy, StorageType } from 'nats';
@@ -130,7 +138,7 @@ await js.publish(
 );
 ```
 
-## JetStream Consumers
+## JetStream Consumer
 
 ```typescript
 // Push consumer — server pushes to a subject
@@ -160,9 +168,9 @@ for await (const msg of messages) {
 }
 ```
 
-## Work Queues (Competing Consumers)
+## Work Queue (Competing Consumers)
 
-JetStream work queues: each message delivered to exactly one consumer in the group.
+JetStream work queue: প্রতিটা মেসেজ group-এর ঠিক একটা consumer-কে deliver করা হয়।
 
 ```typescript
 // Create work queue stream
@@ -194,7 +202,7 @@ for await (const msg of iter) {
 
 ## KV Store
 
-JetStream includes a distributed key-value store:
+JetStream-এ একটা distributed key-value store আছে:
 
 ```typescript
 const kv = await js.views.kv('config', {
@@ -217,11 +225,11 @@ for await (const entry of watcher) {
 }
 ```
 
-This replaces Consul KV or Redis for distributed config — you get change notifications, history, and TTL built in, all on the same NATS cluster your messaging uses.
+এটা distributed config-এর জন্য Consul KV বা Redis-কে প্রতিস্থাপন করে — আপনি change notification, history, আর TTL বিল্ট-ইন পান, সবটাই আপনার messaging যে NATS cluster ব্যবহার করে সেই একই cluster-এ।
 
 ## Request-Reply
 
-NATS has built-in request-reply — no setup needed:
+NATS-এ বিল্ট-ইন request-reply আছে — কোনো setup লাগে না:
 
 ```typescript
 // Server
@@ -238,7 +246,7 @@ const response = await nc.request('user.lookup', jc.encode({ userId: '123' }), {
 const user = jc.decode(response.data);
 ```
 
-NATS handles the correlation and reply routing automatically. The client blocks until the server responds or the timeout fires.
+NATS correlation আর reply routing স্বয়ংক্রিয়ভাবে সামলায়। Server respond করা বা timeout শেষ হওয়া পর্যন্ত client block হয়ে থাকে।
 
 ## Monitoring
 
@@ -258,22 +266,22 @@ nats consumer ls ORDERS
 # Shows pending messages (lag) per consumer
 ```
 
-Prometheus metrics via `nats-server` built-in exporter (enable with `-m 8222`), scraped by `nats_prometheus_exporter`.
+Prometheus metrics `nats-server`-এর বিল্ট-ইন exporter দিয়ে (`-m 8222` দিয়ে enable করুন), `nats_prometheus_exporter` দিয়ে scrape করা।
 
-## When to Use NATS Over Kafka
+## কখন Kafka-র বদলে NATS ব্যবহার করবেন
 
-**Use NATS when:**
+**NATS ব্যবহার করুন যখন:**
 
-- You want a single binary to deploy and operate
-- You need request-reply as a first-class primitive
-- Your throughput requirements are &lt; 1M msg/sec per node
-- You want the KV store for config alongside messaging
-- Operational simplicity matters more than Kafka's ecosystem
+- আপনি deploy আর operate করার জন্য একটা single binary চান
+- আপনার first-class primitive হিসেবে request-reply দরকার
+- আপনার throughput requirement প্রতি node-এ &lt; 1M msg/sec
+- আপনি messaging-এর পাশাপাশি config-এর জন্য KV store চান
+- Kafka-র ecosystem-এর চেয়ে operational simplicity বেশি গুরুত্বপূর্ণ
 
-**Use Kafka when:**
+**Kafka ব্যবহার করুন যখন:**
 
-- You need long-term event retention (weeks/months)
-- You're building stream processing (Kafka Streams, Flink)
-- You need the Kafka Connect ecosystem (hundreds of connectors)
-- Your team already knows Kafka
-- Log compaction is a primary requirement
+- আপনার দীর্ঘমেয়াদি event retention দরকার (সপ্তাহ/মাস)
+- আপনি stream processing বানাচ্ছেন (Kafka Streams, Flink)
+- আপনার Kafka Connect ecosystem দরকার (শত শত connector)
+- আপনার টিম আগে থেকেই Kafka জানে
+- Log compaction একটা মূল requirement

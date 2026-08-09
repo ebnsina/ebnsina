@@ -1,9 +1,9 @@
 ---
 title: 'DataLoader'
-subtitle: 'DataLoader is a tiny library that fixes the N+1 problem by batching loads inside an event loop tick, and caching by key for the duration of one request. Once you wire it in, your resolvers stay clean and the SQL graph collapses.'
+subtitle: 'DataLoader একটা ছোট লাইব্রেরি যা একটা event loop tick-এর ভেতরে load গুলো batch করে আর একটা request-এর সময়কাল জুড়ে key ধরে cache করে N+1 সমস্যা ঠিক করে। একবার wire করে দিলে তোমার resolver গুলো পরিষ্কার থাকে আর SQL graph collapse করে যায়।'
 chapter: 6
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['graphql', 'dataloader', 'batching', 'performance']
 ---
 
@@ -11,19 +11,27 @@ topics: ['graphql', 'dataloader', 'batching', 'performance']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The fix for N+1 is to batch. The principle is simple — collect every "fetch user 1, fetch user 2, fetch user 3" into one trip — but doing that by hand for every relationship is grim. DataLoader does it generically.
+N+1-এর সমাধান হলো batch করা। মূলনীতিটা সহজ — প্রতিটা "fetch user 1, fetch user 2, fetch user 3"-কে একটা trip-এ জড়ো করা — কিন্তু প্রতিটা relationship-এর জন্য এটা হাতে হাতে করা বিরক্তিকর। DataLoader এটা generic-ভাবে করে দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-DataLoader is like a school bus that waits until it's full before leaving — batching all the kids rather than making one trip per child.
+DataLoader হলো একটা স্কুল বাসের মতো যেটা ভরে যাওয়ার আগ পর্যন্ত অপেক্ষা করে ছাড়ে না — প্রতিটা বাচ্চার জন্য আলাদা trip না করে সব বাচ্চাকে একসাথে batch করে।
 
 </Callout>
 
-## What DataLoader actually does
+## গল্পে বুঝি
 
-A `DataLoader` is created with a **batch function**: a function that takes an array of keys and returns an array of values, in the same order.
+বাগদাদের এক বড় অফিসে মারিয়াম আল-আসতুরলাবি অফিস অ্যাসিস্ট্যান্ট। উপরের তলায় বসে কর্মীরা সারাদিন পুরনো ফাইল চায় — কেউ ফাইল নম্বর ৭, কেউ ১২, কেউ আবার ৭। ফাইল সব থাকে নিচের তলার আর্কাইভে। আগের অ্যাসিস্ট্যান্ট প্রতিটা অনুরোধ পাওয়ামাত্র লাফ দিয়ে সিঁড়ি বেয়ে নিচে নামত, একটা ফাইল এনে দিত, আবার পরের অনুরোধের জন্য আবার নিচে নামত। দশজন কর্মী মানে দশবার সিঁড়ি ভাঙা — বেচারা হাঁপিয়ে শেষ, আর কাজও ধীর।
+
+মারিয়াম চালাক। অনুরোধ এলে সে সঙ্গে সঙ্গে দৌড়ায় না — একটু দাঁড়ায়, এই মুহূর্তে আসা সব ফাইল নম্বর একটা কাগজে টুকে নেয়। ইবনে সিনা ৭ চাইল, আল-খোয়ারিজমি ১২ চাইল, ফাতিমা আল-ফিহরি আবার ৭ চাইল। তালিকা দাঁড়াল ৭, ১২। খেয়াল করো — ৭ দুবার এসেছে বলে সে দুবার লেখেনি, একবারই। তারপর একটাই ট্রিপে নিচে নেমে ৭ আর ১২ একসাথে তুলে আনে, ৭-এর একটা কপি ইবনে সিনাকে আর আরেকটা কপি ফাতিমাকে ধরিয়ে দেয়। একবার সিঁড়ি ভেঙে সবার কাজ শেষ।
+
+এই গল্পটাই আসলে **DataLoader**। এক মুহূর্তের সব অনুরোধ জড়ো করে ফেলা মানে এক tick-এর ভেতরে সব key **batch** করা; একটাই ট্রিপে নেমে আনা মানে একটামাত্র batched query; আর একই ফাইল দুবার না বয়ে একবার এনে দুই কপি দেওয়া মানে একটা request-এর ভেতরে key ধরে **cache**/dedupe করা। এভাবেই প্রতি-অনুরোধে এক ট্রিপের সেই ক্লান্তিকর N+1 সমস্যা মিটে যায়। বাস্তবে এটাই ঘটে — একটা GraphQL query-তে ১০০টা user-এর author চাইলেও DataLoader সেগুলোকে একটা `WHERE id = ANY($1)` query-তে গুটিয়ে ফেলে, আর একই id বারবার এলে database-এ দ্বিতীয়বার যায় না।
+
+## DataLoader আসলে কী করে
+
+একটা `DataLoader` তৈরি হয় একটা **batch function** দিয়ে: এমন একটা function যা key-এর একটা array নেয় আর একই order-এ value-র একটা array ফেরত দেয়।
 
 ```js
 import DataLoader from 'dataloader';
@@ -35,24 +43,24 @@ const userLoader = new DataLoader(async (ids) => {
 });
 ```
 
-Then anywhere in your code:
+তারপর তোমার কোডের যেকোনো জায়গায়:
 
 ```js
 const aoife = await userLoader.load('1');
 const niamh = await userLoader.load('2');
 ```
 
-DataLoader does three things in concert:
+DataLoader একসাথে তিনটা কাজ করে:
 
-1. **Coalesces calls within a microtask.** Both `load()` calls in the same tick (one resolver call returns a promise, sibling resolvers await theirs in parallel) are queued, the batch function is called once with `["1", "2"]`, the rows are sliced back to each caller.
-2. **Caches by key.** Calling `userLoader.load("1")` again returns the cached promise. No second SQL trip.
-3. **Returns ordered results.** Your batch function must return values in the same order as the input keys (or `null` for misses). DataLoader uses index alignment to dispatch.
+1. **একটা microtask-এর ভেতরে call গুলো coalesce করে।** একই tick-এর দুটো `load()` call (একটা resolver call একটা promise ফেরত দেয়, sibling resolver গুলো তাদেরটা parallel-এ await করে) queue-তে জমা হয়, batch function একবার `["1", "2"]` দিয়ে call হয়, row গুলো slice করে প্রতিটা caller-এর কাছে ফেরত যায়।
+2. **key ধরে cache করে।** আবার `userLoader.load("1")` call করলে cache করা promise ফেরত আসে। দ্বিতীয় SQL trip নেই।
+3. **ordered result ফেরত দেয়।** তোমার batch function-কে input key-গুলোর মতো একই order-এ value ফেরত দিতে হবে (miss-এর জন্য `null`)। DataLoader index alignment ব্যবহার করে dispatch করে।
 
-That is the whole library. ~200 lines of code. The genius is using JavaScript's microtask queue to gather work without changing the resolver API.
+এটাই পুরো লাইব্রেরি। ~200 লাইন কোড। জিনিয়াস ব্যাপারটা হলো resolver API না বদলে কাজ জড়ো করতে JavaScript-এর microtask queue ব্যবহার করা।
 
-## Wiring DataLoader into the chapter 3 server
+## chapter 3-এর server-এ DataLoader wire করা
 
-The critical rule from chapter 4: **DataLoaders are per-request**. Create them in `context`, never in module scope.
+chapter 4-এর গুরুত্বপূর্ণ নিয়ম: **DataLoader গুলো per-request**। এগুলো `context`-এ তৈরি করো, কখনো module scope-এ নয়।
 
 ```js
 // loaders.js
@@ -92,7 +100,7 @@ const yoga = createYoga({
 });
 ```
 
-Then update resolvers:
+তারপর resolver গুলো update করো:
 
 ```js
 const resolvers = {
@@ -113,7 +121,7 @@ const resolvers = {
 };
 ```
 
-Now run the same query:
+এখন একই query চালাও:
 
 ```graphql
 {
@@ -137,12 +145,12 @@ SQL log:
 [sql] SELECT * FROM users WHERE id = ANY($1::bigint[])
 ```
 
-Three queries for arbitrary N. The post-author lookup hits the user loader, which had already cached user 1, 2 from `Query.users` … wait, no. `Query.users` did not go through the loader. So `Post.author` does fire — but it batches all post authors into one query. Two improvements possible:
+যেকোনো N-এর জন্য তিনটা query। post-author lookup user loader-এ হিট করে, যেটা `Query.users` থেকে user 1, 2 আগেই cache করেছিল … দাঁড়াও, না। `Query.users` loader দিয়ে যায়নি। তাই `Post.author` আসলেই fire করে — কিন্তু এটা সব post author-কে একটা query-তে batch করে। দুটো উন্নতি সম্ভব:
 
-1. Have `Query.users` prime the loader cache on the way out.
-2. Use `loader.load()` for everything and never write raw SQL outside loaders.
+1. `Query.users`-কে বেরিয়ে যাওয়ার সময় loader cache prime করানো।
+2. সবকিছুর জন্য `loader.load()` ব্যবহার করা আর loader-এর বাইরে কখনো raw SQL না লেখা।
 
-Both are common. Priming on the way out:
+দুটোই common। বেরোনোর সময় prime করা:
 
 ```js
 Query: {
@@ -154,84 +162,84 @@ Query: {
 }
 ```
 
-Now the post-author lookup is a cache hit on every key — zero extra SQL.
+এখন post-author lookup প্রতিটা key-তে cache hit — কোনো extra SQL নেই।
 
-## Two batch shapes
+## দুই ধরনের batch shape
 
-There are two patterns and you will use both.
+দুটো pattern আছে আর তুমি দুটোই ব্যবহার করবে।
 
-**Pattern A: load one by key.** `userLoader.load(id)` returns one user.
+**Pattern A: key ধরে একটা load করা।** `userLoader.load(id)` একটা user ফেরত দেয়।
 
-- Batch function: `(ids) => [user0, user1, user2]` — same length and order.
-- Use for: lookup-by-PK, lookup-by-unique-key.
+- Batch function: `(ids) => [user0, user1, user2]` — একই length আর order।
+- ব্যবহার: lookup-by-PK, lookup-by-unique-key।
 
-**Pattern B: load many by key.** `postsByAuthor.load(authorId)` returns an array of posts.
+**Pattern B: key ধরে অনেকগুলো load করা।** `postsByAuthor.load(authorId)` post-এর একটা array ফেরত দেয়।
 
-- Batch function: `(authorIds) => [[posts0], [posts1], [posts2]]` — same length, each element is the matching array.
-- Use for: child arrays in a 1-to-many relationship.
+- Batch function: `(authorIds) => [[posts0], [posts1], [posts2]]` — একই length, প্রতিটা element হলো matching array।
+- ব্যবহার: একটা 1-to-many relationship-এ child array।
 
-Both pull the same `ANY($1::bigint[])` SQL. The difference is how you fold the rows back into batches.
+দুটোই একই `ANY($1::bigint[])` SQL টানে। পার্থক্য হলো তুমি কীভাবে row গুলোকে batch-এ ফিরে fold করো।
 
 <Callout type="warn">
 
-**The order of the returned array must match the input keys.** If you return `byId.get(id)` and a key is missing, that slot has to be `null` or `[]`, not skipped. Misaligning by even one index gives clients the wrong row attached to the wrong parent. This is the most common DataLoader bug.
+**ফেরত দেওয়া array-র order অবশ্যই input key-গুলোর সাথে মিলতে হবে।** যদি তুমি `byId.get(id)` ফেরত দাও আর একটা key missing থাকে, সেই slot-টা `null` বা `[]` হতে হবে, skip করা যাবে না। এক index-ও misalign হলে client-দের ভুল row ভুল parent-এর সাথে attach হয়ে যায়। এটা সবচেয়ে common DataLoader bug।
 
 </Callout>
 
-## Loaders for things that are not databases
+## database নয় এমন জিনিসের জন্য loader
 
-DataLoader is unaware of databases. Anywhere you have "function that takes a key, returns a value, with batchable equivalent" — DataLoader works.
+DataLoader database সম্পর্কে কিছু জানে না। যেখানেই তোমার আছে "একটা function যা key নেয়, value ফেরত দেয়, আর একটা batchable equivalent আছে" — সেখানে DataLoader কাজ করে।
 
-- **Permissions API** that supports `POST /permissions?ids=1,2,3`: one loader per resource type.
-- **Redis MGET** for cached entities: `redis.mget(keys)`.
-- **gRPC service** with a `BatchGet` method: pass the array of IDs.
+- **Permissions API** যা `POST /permissions?ids=1,2,3` support করে: প্রতিটা resource type-এর জন্য একটা loader।
+- cache করা entity-র জন্য **Redis MGET**: `redis.mget(keys)`।
+- একটা `BatchGet` method সহ **gRPC service**: ID-র array pass করো।
 
-For any external dependency you call inside resolvers, ask: "does this dependency have a batch endpoint?" If yes, write a DataLoader. If no, fix the dependency or add a small batch shim in front of it.
+resolver-এর ভেতরে তুমি যে external dependency call করো তার প্রতিটার জন্য জিজ্ঞেস করো: "এই dependency-র কি একটা batch endpoint আছে?" যদি হ্যাঁ, একটা DataLoader লেখো। যদি না, dependency-টা ঠিক করো অথবা তার সামনে একটা ছোট batch shim যোগ করো।
 
-## What about caching across requests
+## request জুড়ে caching-এর কী হবে
 
-DataLoader caches _per loader instance_. Per-request loaders means caches die at request end. That is intentional — cross-request caching is a different problem (Redis, in-process LRU, persisted query caches) and a different lifetime.
+DataLoader _প্রতিটা loader instance ধরে_ cache করে। Per-request loader মানে request শেষ হলে cache মরে যায়। এটা ইচ্ছাকৃত — cross-request caching একটা আলাদা সমস্যা (Redis, in-process LRU, persisted query cache) আর একটা আলাদা lifetime।
 
-Putting a DataLoader at module scope would share cache across requests. **Do not.** It leaks data between users (loader cache hit on a row another user does not have permission to see), grows unboundedly, and makes the loader cache poisoned for the lifetime of the process. Every GraphQL N+1 horror story has this in it.
+module scope-এ একটা DataLoader রাখলে request জুড়ে cache share হবে। **এটা করো না।** এটা user-দের মধ্যে data leak করে (একটা row-তে loader cache hit যেটা দেখার permission অন্য user-এর নেই), অসীমভাবে বাড়ে, আর process-এর পুরো lifetime জুড়ে loader cache poisoned করে রাখে। প্রতিটা GraphQL N+1 horror story-তে এটা থাকে।
 
-## When DataLoader is not enough
+## DataLoader যখন যথেষ্ট নয়
 
-DataLoader is brilliant for the common case but it does not magically solve every fetch pattern.
+DataLoader common case-এর জন্য দুর্দান্ত কিন্তু এটা জাদুবলে প্রতিটা fetch pattern সমাধান করে না।
 
-**1. Conditional fetches.** A field that should only load when the client asked for nested children — DataLoader cannot prune ahead of time. Use selection-aware projection.
+**1. Conditional fetch।** এমন একটা field যা শুধু তখনই load হওয়া উচিত যখন client nested children চেয়েছে — DataLoader আগে থেকে prune করতে পারে না। selection-aware projection ব্যবহার করো।
 
-**2. Cursor pagination on children.** `User.posts(first: 10)` is hard to batch — different users want different counts and cursors. Either expose a flat `Query.posts(authorId, first, after)` or accept that paginated child arrays do not batch.
+**2. Children-এর উপর cursor pagination।** `User.posts(first: 10)` batch করা কঠিন — ভিন্ন user ভিন্ন count আর cursor চায়। হয় একটা flat `Query.posts(authorId, first, after)` expose করো, নয়তো মেনে নাও যে paginated child array batch হয় না।
 
-**3. Aggregations.** `User.postCount` is a `COUNT(*)` per user. Batch with `SELECT author_id, COUNT(*) FROM posts WHERE author_id = ANY($1) GROUP BY author_id`.
+**3. Aggregation।** `User.postCount` হলো প্রতি user-এ একটা `COUNT(*)`। `SELECT author_id, COUNT(*) FROM posts WHERE author_id = ANY($1) GROUP BY author_id` দিয়ে batch করো।
 
-**4. Cross-database / cross-service joins.** When the parent is in Postgres and the child is in Redis or another service, you need two loaders and the resolver glues them.
+**4. Cross-database / cross-service join।** যখন parent Postgres-এ আর child Redis বা অন্য service-এ, তখন তোমার দুটো loader লাগে আর resolver তাদের জোড়া লাগায়।
 
-## Comparison: how Go and Python handle this
+## তুলনা: Go আর Python কীভাবে এটা handle করে
 
-**Go (gqlgen)** — there is `graph-gophers/dataloader` for the same pattern. gqlgen ships an example. The `singleflight` and `errgroup` patterns combine well.
+**Go (gqlgen)** — একই pattern-এর জন্য `graph-gophers/dataloader` আছে। gqlgen একটা example দেয়। `singleflight` আর `errgroup` pattern গুলো ভালোভাবে মেলে।
 
-**Python (Strawberry)** — `strawberry.dataloader.DataLoader` ships in the framework. Uses asyncio.
+**Python (Strawberry)** — framework-এ `strawberry.dataloader.DataLoader` আসে। asyncio ব্যবহার করে।
 
-The semantics are identical. The implementation is the same idea: collect calls inside one tick, fire one batch, dispatch results.
+Semantics অভিন্ন। implementation একই ধারণা: এক tick-এর ভেতরে call জড়ো করা, একটা batch fire করা, result dispatch করা।
 
-## Anti-patterns to avoid
+## যেসব anti-pattern এড়িয়ে চলবে
 
-**1. Module-scope loaders.** Already covered. Bears repeating.
+**1. Module-scope loader।** আগেই বলা হয়েছে। আবার বলার মতো।
 
-**2. Loaders that do too much.** A "user-with-posts" loader that fetches both is a re-implementation of JOIN. Keep loaders thin — one entity, one key.
+**2. যেসব loader বেশি কাজ করে।** একটা "user-with-posts" loader যা দুটোই fetch করে সেটা JOIN-এর একটা re-implementation। loader গুলো thin রাখো — একটা entity, একটা key।
 
-**3. Loaders that throw on missing keys.** Return `null` (or `[]`), let the resolver decide. Throwing inside the batch function fails _every_ caller in that batch.
+**3. যেসব loader missing key-তে throw করে।** `null` (বা `[]`) ফেরত দাও, resolver-কে সিদ্ধান্ত নিতে দাও। batch function-এর ভেতরে throw করলে সেই batch-এর _প্রতিটা_ caller fail করে।
 
-**4. Loaders without `ANY($1::array)`.** If your batch function calls SQL N times in a loop, you have not actually batched. Always `WHERE col = ANY($1::type[])` or the `IN (...)` equivalent.
+**4. `ANY($1::array)` ছাড়া loader।** যদি তোমার batch function একটা loop-এ N বার SQL call করে, তুমি আসলে batch করোনি। সবসময় `WHERE col = ANY($1::type[])` অথবা তার `IN (...)` equivalent।
 
-## Recap
+## রিক্যাপ
 
-- DataLoader solves N+1 by coalescing `load()` calls in one tick into one batched fetch.
-- Two patterns: load-one-by-key (e.g. user by id), load-many-by-key (e.g. posts by author).
-- **Per-request, in context.** Module-scope is a security and memory bug.
-- Batch function must return arrays of the same length and order as input keys.
-- Use `prime()` to pre-populate the cache from non-loader fetches.
-- DataLoader is a generic primitive — works for Redis, gRPC, REST, anything batchable.
-- It is not magic. Some patterns (cursor children, conditional fetches) need other tools.
+- DataLoader এক tick-এর ভেতরে `load()` call গুলোকে একটা batched fetch-এ coalesce করে N+1 সমাধান করে।
+- দুটো pattern: load-one-by-key (যেমন id ধরে user), load-many-by-key (যেমন author ধরে posts)।
+- **Per-request, context-এ।** Module-scope একটা security আর memory bug।
+- Batch function-কে input key-গুলোর মতো একই length আর order-এর array ফেরত দিতে হবে।
+- non-loader fetch থেকে cache pre-populate করতে `prime()` ব্যবহার করো।
+- DataLoader একটা generic primitive — Redis, gRPC, REST, যেকোনো batchable জিনিসের জন্য কাজ করে।
+- এটা জাদু নয়। কিছু pattern (cursor children, conditional fetch) অন্য tool লাগে।
 
-Next: [Mutations, input types, validation](/notes/graphql/07-mutations) — writes done properly.
+পরবর্তী: [Mutations, input types, validation](/notes/graphql/07-mutations) — write ঠিকভাবে করা।

@@ -1,9 +1,9 @@
 ---
-title: 'Microservices — Roadmap'
-subtitle: 'When to split a monolith, gRPC between services, service discovery with Consul.'
+title: 'Microservices — রোডম্যাপ'
+subtitle: 'কখন একটা monolith ভাঙবেন, service-দের মধ্যে gRPC, Consul দিয়ে service discovery।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,20 +13,20 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A small restaurant vs a food court: one restaurant (monolith) has one kitchen, one bill, one staff — easy to run until the menu explodes and the kitchen can't keep up. A food court (microservices) has specialized stalls that can open and close independently, scale on their own, and fail without closing the whole court. The trade-off is coordination: who takes the order, and how does sushi know the stir-fry is ready?
+একটা ছোট রেস্তোরাঁ বনাম একটা food court: একটা রেস্তোরাঁর (monolith) থাকে একটাই রান্নাঘর, একটাই বিল, একটাই স্টাফ — মেনু বিস্ফোরিত না হওয়া পর্যন্ত আর রান্নাঘর সামলাতে না পারা পর্যন্ত চালানো সহজ। একটা food court-এ (microservices) থাকে বিশেষায়িত স্টল, যেগুলো স্বাধীনভাবে খুলতে-বন্ধ হতে পারে, নিজেদের মতো scale করতে পারে, এবং পুরো court বন্ধ না করে একাই fail করতে পারে। এর trade-off হলো coordination: অর্ডার কে নেয়, আর sushi কীভাবে জানবে যে stir-fry রেডি?
 
 </Callout>
 
-## What you will learn
+## আপনি যা শিখবেন
 
-Microservices are not a default — they're a trade-off. This track covers the real costs of splitting (distributed transactions, network calls, operational overhead), how to find the right seams before cutting, and the infrastructure that holds services together: gRPC contracts, service discovery, the API gateway pattern, and the reliability patterns (circuit breakers, bulkheads, retries) that prevent one slow service from cascading into a full outage.
+Microservices কোনো default নয় — এটা একটা trade-off। এই track-এ কভার করা হয়েছে ভাঙার আসল খরচগুলো (distributed transactions, network calls, operational overhead), কাটার আগে সঠিক seam কীভাবে খুঁজে বের করবেন, আর যে infrastructure service-গুলোকে একসাথে ধরে রাখে: gRPC contracts, service discovery, API gateway pattern, এবং reliability pattern (circuit breakers, bulkheads, retries) যেগুলো একটা slow service-কে পুরো outage-এ cascade হওয়া থেকে ঠেকায়।
 
-## Chapters in this track
+## এই track-এর chapter-গুলো
 
-1. **Monolith vs Microservices** — when to split, the strangler fig pattern, modular monolith as the middle ground
+1. **Monolith vs Microservices** — কখন ভাঙবেন, strangler fig pattern, মাঝামাঝি সমাধান হিসেবে modular monolith
 2. **gRPC Between Services** — Protocol Buffers, code generation, streaming, error handling, schema evolution
 3. **Service Discovery** — DNS-based discovery, Consul, client-side vs server-side LB, service mesh
-4. **API Gateway** — routing, auth, rate limiting, request transformation, what not to put in the gateway
+4. **API Gateway** — routing, auth, rate limiting, request transformation, gateway-এ কী রাখবেন না
 5. **Inter-Service Reliability** — timeouts, retries, circuit breakers, bulkheads, hedged requests

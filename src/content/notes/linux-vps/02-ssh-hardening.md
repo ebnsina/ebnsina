@@ -1,9 +1,9 @@
 ---
-title: 'First Login & SSH Hardening'
-subtitle: 'Generate a key, disable password login, lock down sshd, and put fail2ban in front. The single most important hour you will ever spend on a VPS.'
+title: 'প্রথম লগইন ও SSH হার্ডেনিং'
+subtitle: 'একটা কী জেনারেট করুন, পাসওয়ার্ড লগইন বন্ধ করুন, sshd লক ডাউন করুন, আর সামনে fail2ban বসান। একটা VPS-এ আপনি যত ঘণ্টা কাটাবেন তার মধ্যে সবচেয়ে গুরুত্বপূর্ণ এক ঘণ্টা।'
 chapter: 2
 level: 'beginner'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['ssh', 'security', 'openssh', 'fail2ban', 'hardening']
 ---
 
@@ -13,95 +13,103 @@ topics: ['ssh', 'security', 'openssh', 'fail2ban', 'hardening']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-SSH hardening is like replacing a cheap lock with a deadbolt and removing the spare key from under the mat — the door still opens, just only for the right people.
+SSH হার্ডেনিং অনেকটা একটা সস্তা তালা বদলে একটা ডেডবোল্ট লাগানো আর ম্যাটের নিচ থেকে বাড়তি চাবিটা সরিয়ে ফেলার মতো — দরজা এখনো খোলে, শুধু সঠিক মানুষদের জন্য।
 
 </Callout>
 
-## Why SSH is your only real risk surface
+## গল্পে বুঝি
 
-Once you provision a fresh VPS, **port 22 is open to the entire internet**. Within minutes of a new IP being assigned, automated scanners are knocking on it, trying `root`/`123456`, `admin`/`admin`, every leaked credential dump from the last decade. This is not paranoia — it is the default state of public IPs.
+ফাতিমা আল-ফিহরি সবে শহরের ধারে একটা নতুন বাড়ি ভাড়া নিলেন। বাড়িটার সামনের দরজায় লাগানো আছে ফ্যাক্টরির সেই সস্তা ডিফল্ট তালা — যে তালার চাবি একটু আন্দাজ করলেই যে কেউ বানিয়ে ফেলতে পারে। রাত নামতেই টের পেলেন, গলির মাথায় দাঁড়িয়ে অচেনা লোকজন একের পর এক ঘরে গিয়ে হাজারটা চাবি ঢুকিয়ে দেখছে কোনটা খুলে যায়। ফাতিমা ভাবলেন, এই তালা রাখা মানে বিপদ ডেকে আনা।
 
-If you do nothing else, lock down SSH first. Everything else can wait.
+তাই তিনি প্রথমেই সেই আন্দাজ-করা-চাবির তালাটা খুলে ফেলে দিলেন, আর বসালেন এমন এক তালা যা কেবল তাঁর হাতে থাকা একটামাত্র বিশেষ চাবিতেই খোলে — সেই চাবির নকল কারও পক্ষে বানানো অসম্ভব। এরপর খেয়াল করলেন, বাড়িওয়ালার কাছে একটা মাস্টার-চাবি আছে যা দিয়ে সে সোজা ভেতরের সিন্দুক-ঘরে ঢুকে পড়তে পারত; সেই মাস্টার-চাবির সুবিধাটাও তিনি বন্ধ করে দিলেন — এখন ভেতরে ঢুকতে হলে আগে সাধারণ দরজা দিয়ে ঢুকে তবেই সিন্দুক-ঘরে যেতে হবে। শেষে, রাস্তার ঘরে-ঘরে চাবি পরখ করা চোরদের চোখ এড়াতে তিনি সামনের দরজাটাই সরিয়ে নিলেন পাশের নির্জন গলিতে — এলোমেলো চোর আর দরজাটা খুঁজেই পায় না।
+
+এই গল্পটাই আসলে **SSH hardening**। আন্দাজ-করা-চাবির তালা ফেলে একমাত্র বিশেষ চাবির তালা বসানো মানে password auth বন্ধ করে শুধু SSH key দিয়ে লগইন করা; বাড়িওয়ালার মাস্টার-চাবি বাতিল করা মানে সরাসরি root login বন্ধ করা (আগে সাধারণ ইউজারে ঢুকে তারপর `sudo`); আর দরজা পাশের গলিতে সরানো মানে ডিফল্ট পোর্ট 22 থেকে সরে অন্য পোর্টে যাওয়া, যাতে অটোমেটেড স্ক্যানারের নজরে না পড়ে। বাস্তবে এটা নিছক গল্প নয় — একটা পাবলিক IP-তে SSH সার্ভার চালু হওয়ার কয়েক মিনিটের মধ্যেই দুনিয়াজুড়ে brute-force বট নাগাড়ে হাজারো password চেষ্টা করতে শুরু করে, ঠিক গলির মাথার সেই চোরদের মতোই।
+
+## SSH-ই কেন আপনার একমাত্র আসল রিস্ক সারফেস
+
+একটা তরতাজা VPS প্রভিশন করার সঙ্গে সঙ্গেই **পোর্ট 22 গোটা ইন্টারনেটের কাছে খোলা**। একটা নতুন IP অ্যাসাইন হওয়ার কয়েক মিনিটের মধ্যেই অটোমেটেড স্ক্যানাররা তাতে টোকা দিতে থাকে, `root`/`123456`, `admin`/`admin`, আর গত দশকের প্রতিটা ফাঁস হওয়া ক্রেডেনশিয়াল ডাম্প চেষ্টা করে। এটা প্যারানয়া নয় — এটাই পাবলিক IP-এর ডিফল্ট অবস্থা।
+
+আর কিছু না করলেও, আগে SSH লক ডাউন করুন। বাকি সবকিছু অপেক্ষা করতে পারে।
 
 <Callout type="warn">
 
-The actions in this chapter are **non-optional**. A VPS with password auth and root SSH enabled will be compromised. Not "might be" — _will be_.
+এই চ্যাপ্টারের অ্যাকশনগুলো **ঐচ্ছিক নয়**। পাসওয়ার্ড auth আর root SSH চালু থাকা একটা VPS কম্প্রোমাইজড হবেই। "হতে পারে" নয় — _হবেই_।
 
 </Callout>
 
-## The plan
+## পরিকল্পনা
 
-1. Generate an SSH key pair on your laptop (if you do not already have one).
-2. Copy the public key to the VPS.
-3. Create a non-root user with `sudo`.
-4. Disable password authentication.
-5. Disable root SSH.
-6. Move SSH to a non-standard port (optional, reduces noise).
-7. Install `fail2ban` to ban IPs that try too many times.
+1. আপনার ল্যাপটপে একটা SSH কী পেয়ার জেনারেট করুন (যদি আগে থেকে না থাকে)।
+2. পাবলিক কী VPS-এ কপি করুন।
+3. `sudo`-সহ একটা non-root ইউজার বানান।
+4. পাসওয়ার্ড অথেন্টিকেশন বন্ধ করুন।
+5. root SSH বন্ধ করুন।
+6. SSH-কে একটা non-standard পোর্টে সরান (ঐচ্ছিক, নয়েজ কমায়)।
+7. যেসব IP অনেকবার চেষ্টা করে সেগুলো ব্যান করতে `fail2ban` ইনস্টল করুন।
 
-## Step 1 — Generate a key on your laptop
+## ধাপ 1 — আপনার ল্যাপটপে একটা কী জেনারেট করুন
 
-Run this on your **local machine**, not the VPS:
+এটা VPS-এ নয়, আপনার **লোকাল মেশিনে** চালান:
 
 ```bash
 ssh-keygen -t ed25519 -C "you@laptop"
 ```
 
-When prompted:
+যখন জিজ্ঞেস করবে:
 
-- **File** — accept the default `~/.ssh/id_ed25519`.
-- **Passphrase** — set one. A keyfile without a passphrase is a credential anyone can copy. With a passphrase, even a stolen laptop is one more wall.
+- **File** — ডিফল্ট `~/.ssh/id_ed25519` মেনে নিন।
+- **Passphrase** — একটা সেট করুন। প্যাসফ্রেজ ছাড়া একটা কীফাইল হলো এমন একটা ক্রেডেনশিয়াল যা যে কেউ কপি করতে পারে। প্যাসফ্রেজ থাকলে, একটা চুরি হওয়া ল্যাপটপও আরেকটা দেয়াল।
 
-You now have two files:
+এখন আপনার কাছে দুটো ফাইল আছে:
 
-- `~/.ssh/id_ed25519` — **private key**. Never copy this anywhere. Never paste it into chat. If it leaks, anyone who reads it is you.
-- `~/.ssh/id_ed25519.pub` — **public key**. Safe to share.
+- `~/.ssh/id_ed25519` — **private key**। এটা কখনো কোথাও কপি করবেন না। কখনো চ্যাটে পেস্ট করবেন না। এটা ফাঁস হলে, যে-ই এটা পড়বে সে-ই আপনি।
+- `~/.ssh/id_ed25519.pub` — **public key**। শেয়ার করা নিরাপদ।
 
 <Callout type="info">
 
-**Why ed25519 over RSA?**
+**RSA-এর বদলে ed25519 কেন?**
 
-Smaller, faster, modern. RSA-2048 is fine but unnecessarily large. RSA-1024 is broken. ed25519 is the current default for new keys.
+ছোট, দ্রুত, আধুনিক। RSA-2048 ঠিকঠাক কিন্তু অপ্রয়োজনীয়ভাবে বড়। RSA-1024 ভাঙা। নতুন কী-র জন্য ed25519 এখনকার ডিফল্ট।
 
 </Callout>
 
-## Step 2 — Copy the public key to the VPS
+## ধাপ 2 — পাবলিক কী VPS-এ কপি করুন
 
-If you added the key during provisioning, skip this. Otherwise:
+প্রভিশনিংয়ের সময় কী যোগ করে থাকলে এটা স্কিপ করুন। নাহলে:
 
 ```bash
 ssh-copy-id root@49.13.123.45
 ```
 
-Or by hand:
+অথবা হাতে হাতে:
 
 ```bash
 cat ~/.ssh/id_ed25519.pub | ssh root@49.13.123.45 \
   'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys'
 ```
 
-Now log in with the key:
+এখন কী দিয়ে লগইন করুন:
 
 ```bash
 ssh root@49.13.123.45
 ```
 
-It should not ask for a password (except your local key passphrase).
+এটার পাসওয়ার্ড চাওয়া উচিত নয় (আপনার লোকাল কী প্যাসফ্রেজ ছাড়া)।
 
-## Step 3 — Create a non-root user
+## ধাপ 3 — একটা non-root ইউজার বানান
 
-Working as root is a habit you should break early. Create a real user:
+root হিসেবে কাজ করা এমন একটা অভ্যাস যা আপনার তাড়াতাড়ি ভাঙা উচিত। একটা রিয়েল ইউজার বানান:
 
 ```bash
 adduser deploy
 usermod -aG sudo deploy
 ```
 
-`adduser` will ask for a password — set a long random one and put it in your password manager. You will rarely use it; it is the fallback if your key file is ever inaccessible.
+`adduser` একটা পাসওয়ার্ড চাইবে — একটা লম্বা র‍্যান্ডম পাসওয়ার্ড সেট করুন আর সেটা আপনার পাসওয়ার্ড ম্যানেজারে রাখুন। আপনি এটা খুব কমই ব্যবহার করবেন; আপনার কী ফাইল কখনো অ্যাক্সেস করা না গেলে এটাই ফলব্যাক।
 
-Copy your authorized_keys to the new user:
+আপনার authorized_keys নতুন ইউজারে কপি করুন:
 
 ```bash
 mkdir -p /home/deploy/.ssh
@@ -111,7 +119,7 @@ chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
 ```
 
-Open a **new terminal** (keep your root session open as a safety net) and verify:
+একটা **নতুন টার্মিনাল** খুলুন (নিরাপত্তা জাল হিসেবে আপনার root সেশন খোলা রাখুন) আর যাচাই করুন:
 
 ```bash
 ssh deploy@49.13.123.45
@@ -119,15 +127,15 @@ sudo whoami
 # expected: root
 ```
 
-If that worked, you are ready to disable root SSH.
+এটা কাজ করলে, আপনি root SSH বন্ধ করতে প্রস্তুত।
 
-## Step 4 — Edit sshd_config
+## ধাপ 4 — sshd_config এডিট করুন
 
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
 
-Make these changes (most lines exist commented out — uncomment and edit):
+এই পরিবর্তনগুলো করুন (বেশিরভাগ লাইন কমেন্ট করা অবস্থায় থাকে — আনকমেন্ট করে এডিট করুন):
 
 ```text
 PermitRootLogin no
@@ -144,15 +152,15 @@ LoginGraceTime 30
 AllowUsers deploy
 ```
 
-What each does:
+প্রতিটা যা করে:
 
-- **PermitRootLogin no** — root cannot SSH in directly. Forces you to log in as `deploy` and use `sudo`.
-- **PasswordAuthentication no** — only key-based auth. The brute-force surface is gone.
-- **MaxAuthTries 3** — three wrong attempts and the connection drops.
-- **ClientAliveInterval / Max** — kicks idle sessions after ~10 minutes.
-- **AllowUsers deploy** — only this one user can SSH at all.
+- **PermitRootLogin no** — root সরাসরি SSH করতে পারবে না। আপনাকে `deploy` হিসেবে লগইন করে `sudo` ব্যবহার করতে বাধ্য করে।
+- **PasswordAuthentication no** — শুধু কী-ভিত্তিক auth। ব্রুট-ফোর্স সারফেস উধাও।
+- **MaxAuthTries 3** — তিনবার ভুল চেষ্টা করলে কানেকশন কেটে যায়।
+- **ClientAliveInterval / Max** — ~১০ মিনিট পর আইডল সেশন বের করে দেয়।
+- **AllowUsers deploy** — শুধু এই একজন ইউজারই SSH করতে পারবে।
 
-Save, then reload:
+সেভ করুন, তারপর রিলোড করুন:
 
 ```bash
 sudo systemctl reload ssh
@@ -160,27 +168,27 @@ sudo systemctl reload ssh
 
 <Callout type="warn">
 
-**Do not close your existing root session yet.**
+**আপনার বিদ্যমান root সেশন এখনো বন্ধ করবেন না।**
 
-Open a brand new terminal and try `ssh deploy@49.13.123.45`. If it works, you are safe. If it fails, your old session still has root and you can fix `sshd_config`. Closing both before testing is how people lock themselves out.
+একদম নতুন একটা টার্মিনাল খুলে `ssh deploy@49.13.123.45` চেষ্টা করুন। কাজ করলে, আপনি নিরাপদ। ফেইল করলে, আপনার পুরনো সেশনে এখনো root আছে আর আপনি `sshd_config` ঠিক করতে পারবেন। পরীক্ষা করার আগেই দুটো বন্ধ করাই হলো মানুষ কীভাবে নিজেকে বাইরে আটকে ফেলে।
 
 </Callout>
 
-## Step 5 — Move SSH to a non-standard port (optional)
+## ধাপ 5 — SSH-কে একটা non-standard পোর্টে সরান (ঐচ্ছিক)
 
-This does not improve security in any deep sense — port scans find anything — but it dramatically reduces _noise_ in your logs. Pick a port between 1024 and 65535 that you can remember:
+এটা গভীর কোনো অর্থে সিকিউরিটি বাড়ায় না — পোর্ট স্ক্যান যেকোনো কিছু খুঁজে পায় — কিন্তু এটা আপনার লগে _নয়েজ_ নাটকীয়ভাবে কমায়। 1024 আর 65535-এর মধ্যে এমন একটা পোর্ট বাছুন যা আপনি মনে রাখতে পারবেন:
 
 ```text
 Port 2222
 ```
 
-Reload `ssh`. Now connect with:
+`ssh` রিলোড করুন। এখন এভাবে কানেক্ট করুন:
 
 ```bash
 ssh -p 2222 deploy@49.13.123.45
 ```
 
-Add it to `~/.ssh/config` on your laptop so you do not have to type `-p 2222` every time:
+প্রতিবার `-p 2222` টাইপ করতে না হয় বলে আপনার ল্যাপটপে `~/.ssh/config`-এ এটা যোগ করুন:
 
 ```text
 Host web-01
@@ -190,18 +198,18 @@ Host web-01
     IdentityFile ~/.ssh/id_ed25519
 ```
 
-Then just: `ssh web-01`.
+তারপর শুধু: `ssh web-01`।
 
-## Step 6 — Install fail2ban
+## ধাপ 6 — fail2ban ইনস্টল করুন
 
-Even with key-only auth, the SSH log fills with junk. `fail2ban` watches the log and bans IPs that hit it too many times.
+কী-অনলি auth থাকলেও, SSH লগ আবর্জনায় ভরে যায়। `fail2ban` লগে নজর রাখে আর যেসব IP অনেকবার আঘাত হানে সেগুলো ব্যান করে।
 
 ```bash
 sudo apt update
 sudo apt install -y fail2ban
 ```
 
-Create a local override so package upgrades do not stomp your settings:
+একটা লোকাল ওভাররাইড বানান যাতে প্যাকেজ আপগ্রেড আপনার সেটিংস মাড়িয়ে না যায়:
 
 ```bash
 sudo nano /etc/fail2ban/jail.local
@@ -218,30 +226,30 @@ enabled = true
 port    = 2222
 ```
 
-Reload:
+রিলোড করুন:
 
 ```bash
 sudo systemctl restart fail2ban
 sudo fail2ban-client status sshd
 ```
 
-## Step 7 — Quick verification
+## ধাপ 7 — দ্রুত যাচাই
 
-From your laptop, try a wrong password to confirm it is blocked:
+আপনার ল্যাপটপ থেকে, একটা ভুল পাসওয়ার্ড চেষ্টা করে নিশ্চিত করুন এটা ব্লক করা:
 
 ```bash
 ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no deploy@web-01
 # Should fail immediately with "Permission denied (publickey)"
 ```
 
-Try connecting as root:
+root হিসেবে কানেক্ট করার চেষ্টা করুন:
 
 ```bash
 ssh -p 2222 root@49.13.123.45
 # Should fail
 ```
 
-Try a few wrong attempts to trip fail2ban:
+fail2ban ট্রিপ করাতে কয়েকবার ভুল চেষ্টা করুন:
 
 ```bash
 for i in 1 2 3 4 5 6; do
@@ -250,12 +258,12 @@ done
 # After ~5, your laptop's IP is banned for an hour
 ```
 
-## Recap
+## রিক্যাপ
 
-- Keys, not passwords. ed25519 with a passphrase.
-- Non-root user with `sudo`. Root SSH disabled.
-- `MaxAuthTries 3`, `AllowUsers deploy`, no PAM challenge nonsense.
-- `fail2ban` to keep the log clean.
-- Save your laptop's `~/.ssh/config` host alias so future commands stay short.
+- পাসওয়ার্ড নয়, কী। প্যাসফ্রেজসহ ed25519।
+- `sudo`-সহ non-root ইউজার। root SSH বন্ধ।
+- `MaxAuthTries 3`, `AllowUsers deploy`, কোনো PAM চ্যালেঞ্জের ঝামেলা নয়।
+- লগ পরিষ্কার রাখতে `fail2ban`।
+- ভবিষ্যতের কমান্ড ছোট রাখতে আপনার ল্যাপটপের `~/.ssh/config` হোস্ট alias সেভ করুন।
 
-In chapter 3, we explore the filesystem you just landed in.
+চ্যাপ্টার 3-এ, আপনি সবেমাত্র যে ফাইলসিস্টেমে নামলেন সেটা আমরা এক্সপ্লোর করি।

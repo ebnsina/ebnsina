@@ -1,9 +1,9 @@
 ---
 title: 'WebSockets & Shared State at Scale'
-subtitle: 'How to handle persistent connections, pub/sub fan-out, and the Redis adapter that makes Socket.io work across instances.'
+subtitle: 'কীভাবে persistent connection, pub/sub fan-out, এবং যে Redis adapter Socket.io-কে একাধিক instance জুড়ে কাজ করায় তা সামলাবেন।'
 chapter: 5
 level: 'intermediate'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['WebSockets', 'Socket.io', 'Redis adapter', 'pub/sub', 'sticky sessions']
 ---
 
@@ -13,17 +13,25 @@ topics: ['WebSockets', 'Socket.io', 'Redis adapter', 'pub/sub', 'sticky sessions
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A walkie-talkie network: each device (instance) has its own radio, but to broadcast to all devices, you need a repeater (Redis) that relays your signal to every radio on the network. Without the repeater, your message only reaches devices within direct range of yours.
+একটা walkie-talkie নেটওয়ার্ক: প্রতিটা ডিভাইসের (instance) নিজের রেডিও আছে, কিন্তু সব ডিভাইসে broadcast করতে হলে আপনার একটা repeater (Redis) দরকার যা আপনার signal নেটওয়ার্কের প্রতিটা রেডিওতে relay করে। Repeater ছাড়া, আপনার বার্তা শুধু আপনার সরাসরি range-এর মধ্যে থাকা ডিভাইসগুলোতে পৌঁছায়।
 
 </Callout>
 
-## The Problem with WebSockets and Multiple Instances
+## গল্পে বুঝি
 
-HTTP is stateless — each request is independent. WebSockets are stateful — a connection persists on a specific instance.
+আল-খোয়ারিজমি একটা বিশাল কাস্টমার-সাপোর্ট হলের ম্যানেজার। সারি সারি ডেস্কে অনেক এজেন্ট বসে আছে, আর প্রতিটা কলার একটা লম্বা খোলা কলে একজন নির্দিষ্ট এজেন্টের সাথে আটকে থাকে — কলটা যতক্ষণ চলে, ঐ একজন এজেন্টই কলারের সব কথা শোনে, লাইনটা তার হাতেই খোলা থাকে। ইবনে সিনা যদি আজ কল করে ফাতিমা আল-ফিহরির লাইনে যুক্ত হয়, তার পুরো কথোপকথনের ইতিহাস, প্রসঙ্গ — সবই এখন শুধু ফাতিমার মাথায়। পাশের সারির কোনো এজেন্ট হঠাৎ ইবনে সিনার কল ধরলে সে কিছুই জানে না, শূন্য থেকে শুরু করতে হবে।
 
-With one app server, every WebSocket message from any client goes to the right place. With multiple instances, a message sent to instance A cannot natively reach clients connected to instance B.
+তাই আল-খোয়ারিজমি দুটো নিয়ম চালু করল। প্রথমত, ইবনে সিনা কল কেটে আবার ফোন করলে অপারেটর তাকে যেন আবার ফাতিমার ডেস্কেই পাঠায় — যার কাছে তার খোলা লাইনটা আছে, নয়তো প্রসঙ্গ হারিয়ে যাবে। দ্বিতীয়ত, ধরো একটা জরুরি বার্তা এসেছে যেটা ইবনে সিনাকে পৌঁছে দিতে হবে, কিন্তু বার্তাটা হাতে পেয়েছে অন্য সারির আল-বিরুনি। আল-বিরুনি তো সরাসরি ইবনে সিনার লাইনে ঢুকতে পারে না। তাই হলের মাঝখানে একটা কমন ইন্টারকম বসানো হলো — আল-বিরুনি ইন্টারকমে ঘোষণা দেয় "ইবনে সিনার জন্য বার্তা", পুরো হলের সব এজেন্ট সেটা শোনে, আর যার ডেস্কে ইবনে সিনার খোলা লাইন আছে (ফাতিমা) সে রিলে করে দেয়।
+
+এই গল্পটাই আসলে **scale-এ WebSocket সামলানো**। প্রতিটা খোলা কল একজন এজেন্টের কাছে পিন করা থাকা মানে একটা **WebSocket connection একটা নির্দিষ্ট server-এ টিকে থাকা** — সেই client-এর লাইন ঐ এক server-এই বাঁচে। কলারকে বারবার তার নিজের এজেন্টের কাছে ফেরত পাঠানোটাই **sticky session** বা affinity — যাতে reconnect হলেও একই server-এ যায়। আর হলের কমন ইন্টারকমটাই **shared state / pub/sub backplane** — যে কোনো server যাতে যে কোনো client-এ পৌঁছাতে পারে, এমনকি client অন্য server-এ যুক্ত থাকলেও। বাস্তবে ঠিক এই ইন্টারকমের কাজটা করে **Redis pub/sub** (Socket.io-র Redis adapter) — এক server একটা event Redis-এ publish করে, বাকি সব server subscribe করে সেটা পায় আর নিজের নিজের local client-দের কাছে পৌঁছে দেয়।
+
+## WebSocket এবং একাধিক Instance-এর সমস্যা
+
+HTTP stateless — প্রতিটা request স্বাধীন। WebSocket stateful — একটা connection একটা নির্দিষ্ট instance-এ টিকে থাকে।
+
+একটা অ্যাপ সার্ভার থাকলে, যেকোনো client থেকে আসা প্রতিটা WebSocket বার্তা সঠিক জায়গায় যায়। একাধিক instance থাকলে, instance A-তে পাঠানো একটা বার্তা স্বাভাবিকভাবে instance B-তে যুক্ত client-দের কাছে পৌঁছাতে পারে না।
 
 ```
 Instance A:  [user-1, user-3, user-5 connected]
@@ -36,9 +44,9 @@ Instance A wants to broadcast to all users in user-1's room
 → They miss the message
 ```
 
-## Socket.io with Redis Adapter
+## Redis Adapter সহ Socket.io
 
-The Redis adapter uses Redis Pub/Sub to relay events across all instances:
+Redis adapter সব instance জুড়ে event relay করতে Redis Pub/Sub ব্যবহার করে:
 
 ```typescript
 import { createServer } from 'http';
@@ -64,7 +72,7 @@ io.adapter(createAdapter(pubClient, subClient));
 io.to('room-123').emit('message', { text: 'Hello everyone' });
 ```
 
-**What the Redis adapter does:**
+**Redis adapter যা করে:**
 
 ```
 Instance A emits to room-123
@@ -83,11 +91,11 @@ Client 3  ──── WebSocket ──→  Instance A      ↑
                               Instance B ──────┘ (subscribes, relays to Client 2)
 ```
 
-Every instance subscribes to Redis. When any instance publishes a room event, all instances receive it and deliver to their locally-connected clients.
+প্রতিটা instance Redis-এ subscribe করে। যখন যেকোনো instance একটা room event publish করে, সব instance সেটা পায় এবং তাদের স্থানীয়ভাবে যুক্ত client-দের কাছে পৌঁছে দেয়।
 
-## Sticky Sessions as a Temporary Measure
+## অস্থায়ী ব্যবস্থা হিসেবে Sticky Sessions
 
-Socket.io requires the HTTP upgrade handshake and subsequent WebSocket frames to hit the same instance. Without sticky sessions, the handshake might go to instance A, but the first WebSocket frame hits instance B (which has no record of the handshake) and fails.
+Socket.io-এর দরকার হয় যে HTTP upgrade handshake এবং পরবর্তী WebSocket frame-গুলো একই instance-এ পৌঁছায়। Sticky session ছাড়া, handshake হয়তো instance A-তে যায়, কিন্তু প্রথম WebSocket frame instance B-তে পৌঁছায় (যার handshake-এর কোনো রেকর্ড নেই) এবং ব্যর্থ হয়।
 
 ```nginx
 upstream socketio {
@@ -97,9 +105,9 @@ upstream socketio {
 }
 ```
 
-Sticky sessions are acceptable here — unlike application state, WebSocket connections naturally "belong" to one instance. The problem is failure: if an instance dies, its clients disconnect and reconnect (to another instance). This is expected behavior for WebSockets, not a data integrity issue.
+Sticky session এখানে গ্রহণযোগ্য — application state-এর বিপরীতে, WebSocket connection স্বাভাবিকভাবেই একটা instance-এর "অন্তর্ভুক্ত"। সমস্যা হলো failure: একটা instance মারা গেলে, তার client-রা disconnect হয়ে reconnect করে (অন্য একটা instance-এ)। এটা WebSocket-এর জন্য প্রত্যাশিত আচরণ, কোনো data integrity সমস্যা নয়।
 
-**AWS ALB sticky sessions:**
+**AWS ALB sticky session:**
 
 ```bash
 aws elbv2 modify-target-group-attributes \
@@ -111,9 +119,9 @@ aws elbv2 modify-target-group-attributes \
   ]'
 ```
 
-## Presence and Connection Registry
+## Presence এবং Connection Registry
 
-Track which users are currently connected across all instances:
+সব instance জুড়ে বর্তমানে কোন কোন ব্যবহারকারী যুক্ত আছে তা track করুন:
 
 ```typescript
 // On connection: register in Redis
@@ -149,9 +157,9 @@ async function getOnlineUsers(userIds: string[]): Promise<string[]> {
 }
 ```
 
-## Scaling Limits
+## Scaling Limit
 
-Each WebSocket connection consumes a file descriptor on the server. Linux default limit is 1024 per process — but this is easily raised:
+প্রতিটা WebSocket connection সার্ভারে একটা file descriptor খরচ করে। Linux-এর default limit প্রতি process 1024 — কিন্তু এটা সহজেই বাড়ানো যায়:
 
 ```bash
 # Check current limits
@@ -169,17 +177,17 @@ sysctl -w net.core.somaxconn=65535
 sysctl -w net.ipv4.tcp_max_syn_backlog=65535
 ```
 
-Practical limits per instance with Node.js:
+Node.js দিয়ে প্রতি instance বাস্তব limit:
 
-- ~10,000 concurrent WebSocket connections (comfortable)
-- ~50,000 with tuning
-- Beyond that: scale out (add more instances + Redis adapter handles fan-out)
+- ~10,000 concurrent WebSocket connection (স্বাচ্ছন্দ্যে)
+- tuning করে ~50,000
+- তার বেশি হলে: scale out করুন (আরও instance যোগ করুন + Redis adapter fan-out সামলায়)
 
-## When to Not Use WebSockets
+## কখন WebSocket ব্যবহার করবেন না
 
-WebSockets have real overhead. Consider cheaper alternatives:
+WebSocket-এর বাস্তব overhead আছে। সস্তা বিকল্প বিবেচনা করুন:
 
-**Server-Sent Events (SSE):** One-way push from server to client. Simpler, lower overhead, HTTP/2-compatible. Right for notifications, live feeds, dashboard updates.
+**Server-Sent Events (SSE):** সার্ভার থেকে client-এ এক-মুখী push। সহজ, কম overhead, HTTP/2-সঙ্গতিপূর্ণ। notification, live feed, dashboard update-এর জন্য উপযুক্ত।
 
 ```typescript
 app.get('/events', (req, res) => {
@@ -200,8 +208,8 @@ app.get('/events', (req, res) => {
 });
 ```
 
-**Long-polling:** Client makes a request, server holds it open until there's data, client immediately re-requests. Works anywhere HTTP works. Worse for high-frequency updates but simpler operationally.
+**Long-polling:** Client একটা request করে, সার্ভার ডেটা না আসা পর্যন্ত সেটা খোলা রাখে, client সঙ্গে সঙ্গে আবার request করে। HTTP যেখানে কাজ করে সেখানেই কাজ করে। উচ্চ-ফ্রিকোয়েন্সি update-এর জন্য খারাপ কিন্তু পরিচালনার দিক থেকে সহজ।
 
-**Webhook push:** Server pushes to a client-provided URL when events occur. Right for integrations, not user-facing realtime.
+**Webhook push:** event ঘটলে সার্ভার একটা client-সরবরাহকৃত URL-এ push করে। integration-এর জন্য উপযুক্ত, ব্যবহারকারী-মুখী realtime-এর জন্য নয়।
 
-Use WebSockets when you need bidirectional communication (chat, collaborative editing, multiplayer games). For one-way server push, SSE is usually simpler and sufficient.
+WebSocket ব্যবহার করুন যখন আপনার দ্বি-মুখী যোগাযোগ দরকার (chat, collaborative editing, multiplayer game)। এক-মুখী server push-এর জন্য, SSE সাধারণত সহজ এবং যথেষ্ট।

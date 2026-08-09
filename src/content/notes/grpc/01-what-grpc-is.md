@@ -1,9 +1,9 @@
 ---
-title: 'What gRPC is and when to use it'
-subtitle: 'gRPC is HTTP/2, plus protobuf, plus codegen. That trio gives you a typed, fast, polyglot RPC system. Knowing what each layer is doing is half the skill of using it well.'
+title: 'gRPC কী আর কখন ব্যবহার করবেন'
+subtitle: 'gRPC হলো HTTP/2, সাথে protobuf, সাথে codegen। এই তিনটা মিলে আপনাকে একটা typed, দ্রুত, polyglot RPC system দেয়। প্রতিটা layer কী করছে সেটা জানাই এটা ভালোভাবে ব্যবহার করার অর্ধেক দক্ষতা।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['grpc', 'rpc', 'rest', 'graphql', 'protobuf']
 ---
 
@@ -11,21 +11,29 @@ topics: ['grpc', 'rpc', 'rest', 'graphql', 'protobuf']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-You wrote REST in chapter 5 of the path. You wrote GraphQL in the previous topic. Both speak JSON over HTTP/1.1. Both serialize fields with names and string keys on every request. Both let any HTTP client poke around the API by hand.
+আপনি path-এর অধ্যায় 5-এ REST লিখেছেন। আগের topic-এ GraphQL লিখেছেন। দুটোই HTTP/1.1-এর ওপর JSON বলে। দুটোই প্রতিটা request-এ field গুলো name আর string key দিয়ে serialize করে। দুটোই যেকোনো HTTP client-কে হাত দিয়ে API ঘাঁটাঘাঁটি করতে দেয়।
 
-gRPC is none of those things. It is a **binary** protocol over **HTTP/2**, with a **schema-first** contract that generates code in your language. You do not write HTTP handlers; you write a service implementation, the framework wires the network plumbing.
+gRPC এগুলোর কোনোটাই না। এটা একটা **binary** protocol, চলে **HTTP/2**-এর ওপর, একটা **schema-first** contract সহ যা আপনার ভাষায় কোড জেনারেট করে। আপনি HTTP handler লেখেন না; আপনি একটা service implementation লেখেন, framework network plumbing জুড়ে দেয়।
 
-That is a very different shape. This chapter is about deciding when that shape is right.
+এটা খুবই আলাদা একটা shape। এই অধ্যায় হলো সেই shape কখন সঠিক তা ঠিক করা নিয়ে।
 
 <Callout type="info">
 
 **Real-World Analogy**
 
-gRPC lets you call a function on another computer as naturally as calling a local function — the network disappears.
+gRPC আপনাকে অন্য একটা কম্পিউটারে একটা function কল করতে দেয় ঠিক যতটা সহজভাবে একটা local function কল করা যায় — network অদৃশ্য হয়ে যায়।
 
 </Callout>
 
-## A gRPC call worth looking at
+## গল্পে বুঝি
+
+একটা বড় কোম্পানির অফিসে দুইটা ডিপার্টমেন্ট — ইবনে সিনার Billing টিম আর আল-খোয়ারিজমির Inventory টিম। এরা সারাদিন একে অপরকে ডাকে: প্রতিটা অর্ডারে Billing জিজ্ঞেস করে "এই প্রোডাক্ট স্টকে আছে?", Inventory উল্টো জিজ্ঞেস করে "এই কাস্টমারের পেমেন্ট ক্লিয়ার?"। দিনে হাজার হাজার বার। শুরুতে এরা সামনের রিসেপশনে গিয়ে চিরকুট জমা দিত, কিন্তু তাতে প্রতিবার লম্বা ফর্ম ভরা, লাইনে দাঁড়ানো — অসহ্য ধীর।
+
+তাই দুই টিম মিলে সিদ্ধান্ত নিল: তাদের দুই রুমের মাঝে একটা ডেডিকেটেড ইন্টারকম হটলাইন বসাবে। আর বসানোর আগেই তারা লিখিতভাবে ঠিক করে নিল কে কীভাবে কথা বলবে — কোন প্রশ্নের ঠিক কোন ফরম্যাটে উত্তর আসবে, প্রতিটা ফিল্ড কোন টাইপের। এখন আল-বিরুনি Billing থেকে বাটন চাপলেই ওপাশে Inventory-তে রিং হয়, সংক্ষিপ্ত সাংকেতিক ভাষায় সেকেন্ডে উত্তর চলে আসে। বাইরের কেউ এই লাইনে ঢুকতে পারে না, দরকারও নেই — এটা শুধু ভেতরের দুই টিমের জন্য। এদিকে বাইরের কাস্টমার বা ভিজিটর এলে তারা যায় সামনের পাবলিক রিসেপশন ডেস্কে, যেখানে ফাতিমা আল-ফিহরি যেকোনো সাধারণ অনুরোধ সাধারণ ভাষায় নেন।
+
+এই ডেডিকেটেড হটলাইনটাই **gRPC**: দুই internal service (দুই ডিপার্টমেন্ট) যখন ঘনঘন কথা বলে, তখন আগে থেকে ঠিক করা একটা **contract** (কে কীভাবে কথা বলবে) মেনে একটা fast, typed, binary লাইনে সরাসরি remote method কল করা — যেন পাশের রুমের function কল করছেন। আর সামনের পাবলিক রিসেপশন ডেস্ক হলো **REST**: যেকোনো browser বা বাইরের client হেঁটে এসে সাধারণ HTTP/JSON-এ অনুরোধ করতে পারে। বাস্তবে ঠিক এভাবেই বড় কোম্পানিগুলো ভেতরের microservice-গুলোর মধ্যে gRPC চালায় (দ্রুত, contract-first, internal RPC), আর বাইরের public API-র জন্য REST রাখে — Google তো তাদের ভেতরের সিস্টেম gRPC-র উপরেই দাঁড় করিয়েছে।
+
+## একটা gRPC কল দেখার মতো
 
 Server (Go):
 
@@ -47,9 +55,9 @@ if err != nil { return err }
 fmt.Println(resp.Name)
 ```
 
-No URLs. No JSON. No status codes hand-rolled. The wire format is binary protobuf; the function call looks like a local function call. That is the entire pitch of RPC: make remote calls feel local.
+কোনো URL নেই। কোনো JSON নেই। হাতে বানানো কোনো status code নেই। wire format হলো binary protobuf; function call টা দেখতে একটা local function call-এর মতো। এটাই RPC-র পুরো pitch: remote call গুলোকে local-এর মতো অনুভব করানো।
 
-The contract that makes this possible is a `.proto` file:
+যে contract এটা সম্ভব করে তা হলো একটা `.proto` ফাইল:
 
 ```proto
 syntax = "proto3";
@@ -67,19 +75,19 @@ message User {
 }
 ```
 
-`protoc` reads that file and emits Go (or Node, or Python, or Rust) code. The server implements the service; the client calls it.
+`protoc` সেই ফাইলটা পড়ে আর Go (বা Node, বা Python, বা Rust) কোড emit করে। server service টা implement করে; client সেটা কল করে।
 
-## The three layers of gRPC
+## gRPC-র তিনটা layer
 
-You cannot use gRPC well without knowing each.
+প্রতিটা না জেনে আপনি gRPC ভালোভাবে ব্যবহার করতে পারবেন না।
 
-**1. Protocol Buffers** — the schema language and wire format. You write `.proto`, you ship binary. Smaller than JSON, faster to parse, strictly typed. Chapter 2.
+**1. Protocol Buffers** — schema language আর wire format। আপনি `.proto` লেখেন, আপনি binary ship করেন। JSON-এর চেয়ে ছোট, parse করতে দ্রুত, কড়াকড়িভাবে typed। অধ্যায় 2।
 
-**2. HTTP/2** — the transport. Multiplexed (many concurrent calls on one TCP connection), header-compressed, supports server push and bidirectional streams. Chapter 3.
+**2. HTTP/2** — transport। Multiplexed (একটা TCP connection-এ অনেকগুলো concurrent call), header-compressed, server push আর bidirectional stream সাপোর্ট করে। অধ্যায় 3।
 
-**3. The framework** — `grpc-go`, `@grpc/grpc-js`, `grpcio`. Generates code from `.proto`, handles serialization, manages the HTTP/2 connections, surfaces deadlines, errors, metadata.
+**3. framework** — `grpc-go`, `@grpc/grpc-js`, `grpcio`। `.proto` থেকে কোড জেনারেট করে, serialization handle করে, HTTP/2 connection গুলো manage করে, deadline, error, metadata সামনে আনে।
 
-Most of your time is at layer 3. But when something goes wrong — a connection drops mid-stream, a deadline does not propagate, a binary mystery shows up in tcpdump — you need to understand all three.
+আপনার বেশিরভাগ সময় কাটবে layer 3-এ। কিন্তু যখন কিছু ভুল হয় — stream-এর মাঝখানে একটা connection drop করে, একটা deadline propagate করে না, tcpdump-এ একটা binary রহস্য দেখা দেয় — তখন আপনাকে তিনটাই বুঝতে হবে।
 
 ## RPC vs REST vs GraphQL
 
@@ -96,38 +104,38 @@ Most of your time is at layer 3. But when something goes wrong — a connection 
 | Debugging       | great              | good          | needs tooling           |
 | Speed           | baseline           | baseline      | 2–10× faster            |
 
-Three numbers worth memorizing:
+মনে রাখার মতো তিনটা সংখ্যা:
 
-- **Wire size:** binary protobuf is roughly 3–10× smaller than equivalent JSON.
-- **Parse time:** binary parsing is roughly 5–20× faster than JSON parsing.
-- **Connections:** HTTP/2 multiplexes hundreds of concurrent calls on one TCP socket. HTTP/1.1 needs a connection per call (or 6 max with browser pooling).
+- **Wire size:** binary protobuf সমতুল্য JSON-এর চেয়ে মোটামুটি 3–10× ছোট।
+- **Parse time:** binary parsing JSON parsing-এর চেয়ে মোটামুটি 5–20× দ্রুত।
+- **Connections:** HTTP/2 একটা TCP socket-এ শত শত concurrent call multiplex করে। HTTP/1.1-এর প্রতি call-এ একটা connection লাগে (বা browser pooling-এ সর্বোচ্চ 6টা)।
 
-For service-to-service traffic in a tight cluster, those numbers compound.
+একটা টাইট cluster-এর মধ্যে service-to-service traffic-এর জন্য, এই সংখ্যাগুলো একে অপরের সাথে যোগ হয়ে বড় হয়।
 
-## When gRPC is the right call
+## কখন gRPC সঠিক পছন্দ
 
-- **Service-to-service inside your own infrastructure.** Two Go services talking to each other? gRPC. Both ends are typed, both are polyglot, the wire is fast, and there is no client outside your control.
-- **Polyglot teams.** A Python data team needs to call a Go service. The `.proto` is the contract; both teams generate their own client. No one writes a "client SDK" by hand.
-- **High-throughput, latency-sensitive paths.** Realtime trading, telemetry pipelines, streaming jobs. The speed of binary + HTTP/2 is the whole point.
-- **Bidirectional streaming.** Realtime two-way communication. Chat, video signaling, live dashboards. gRPC's streaming RPCs are first-class, not bolted on.
-- **Strong contract evolution.** Adding fields to a protobuf message is backward-compatible by default. The wire format was designed for it.
+- **আপনার নিজের infrastructure-এর ভেতরে service-to-service।** দুটো Go service একে অপরের সাথে কথা বলছে? gRPC। দুই প্রান্তই typed, দুটোই polyglot, wire দ্রুত, আর আপনার নিয়ন্ত্রণের বাইরে কোনো client নেই।
+- **Polyglot টিম।** একটা Python data টিমের একটা Go service কল করা দরকার। `.proto` হলো contract; দুই টিমই নিজেদের client জেনারেট করে। কেউ হাত দিয়ে একটা "client SDK" লেখে না।
+- **High-throughput, latency-sensitive path।** Realtime trading, telemetry pipeline, streaming job। binary + HTTP/2-এর গতিই এখানে পুরো ব্যাপার।
+- **Bidirectional streaming।** Realtime দুই-দিকের communication। Chat, video signaling, live dashboard। gRPC-র streaming RPC first-class, উপরে জোড়া লাগানো কিছু না।
+- **শক্ত contract evolution।** একটা protobuf message-এ field যোগ করা default-ভাবেই backward-compatible। wire format এটার জন্যই ডিজাইন করা হয়েছিল।
 
-## When gRPC is the wrong call
+## কখন gRPC ভুল পছন্দ
 
-- **Public APIs over the internet.** Browsers cannot speak gRPC natively. Mobile apps can but the SDK is heavy. REST + JSON wins for ecosystem reach. gRPC-Web exists but is gRPC-with-an-asterisk.
-- **Human consumption.** A `curl` against a JSON API is a ten-second debug. gRPC needs `grpcurl` (or a code client) and a `.proto` file in hand.
-- **Static caching / CDN.** REST `GET` requests cache for free at the edge. gRPC is `POST` over HTTP/2 — no edge caching without bespoke proxies.
-- **Small one-team service.** REST is faster to ship if your team is one or two engineers and the API has eight endpoints.
+- **ইন্টারনেটের ওপর public API।** Browser natively gRPC বলতে পারে না। Mobile app পারে কিন্তু SDK ভারী। ecosystem-এর নাগালের জন্য REST + JSON জেতে। gRPC-Web আছে কিন্তু সেটা asterisk-সহ gRPC।
+- **মানুষের ব্যবহার।** একটা JSON API-এর বিরুদ্ধে একটা `curl` হলো দশ সেকেন্ডের debug। gRPC-র জন্য `grpcurl` (বা একটা code client) আর হাতে একটা `.proto` ফাইল লাগে।
+- **Static caching / CDN।** REST `GET` request edge-এ বিনামূল্যে cache হয়। gRPC হলো HTTP/2-এর ওপর `POST` — bespoke proxy ছাড়া কোনো edge caching নেই।
+- **ছোট এক-টিমের service।** আপনার টিম যদি এক বা দুইজন engineer হয় আর API-তে আটটা endpoint থাকে, তাহলে REST ship করা দ্রুত।
 
 <Callout type="warn">
 
-**gRPC is not magic speed.** A naive gRPC service can be slower than a tuned REST one. The wins come from the _combination_ of HTTP/2 reuse, binary serialization, codegen, and streaming. If you are using gRPC over HTTP/1.1 (gRPC-Web fallback) without streaming and with small messages, JSON over keep-alive HTTP/1.1 is comparable.
+**gRPC কোনো জাদুর গতি না।** একটা naive gRPC service একটা tuned REST service-এর চেয়ে ধীর হতে পারে। জয়গুলো আসে HTTP/2 reuse, binary serialization, codegen, আর streaming-এর _সংমিশ্রণ_ থেকে। আপনি যদি streaming ছাড়া আর ছোট message নিয়ে HTTP/1.1-এর ওপর gRPC ব্যবহার করেন (gRPC-Web fallback), তাহলে keep-alive HTTP/1.1-এর ওপর JSON তুলনীয়।
 
 </Callout>
 
-## The four kinds of RPC
+## RPC-র চার রকম
 
-gRPC supports four call shapes — pick the one that matches your data flow:
+gRPC চার রকম call shape সাপোর্ট করে — আপনার data flow-এর সাথে যেটা মেলে সেটা বেছে নিন:
 
 ```proto
 service Demo {
@@ -145,40 +153,40 @@ service Demo {
 }
 ```
 
-Most APIs use unary. Streaming is the lever you reach for when the data is genuinely long-lived: log tails, telemetry, realtime collaboration.
+বেশিরভাগ API unary ব্যবহার করে। Streaming হলো সেই lever যেটার দিকে আপনি হাত বাড়ান যখন data সত্যিই দীর্ঘ-জীবী: log tail, telemetry, realtime collaboration।
 
-## What "self-hosted" looks like for gRPC
+## gRPC-র জন্য "self-hosted" দেখতে কেমন
 
-The whole track stays vendor-neutral. You will run gRPC services on a VPS, behind nginx, with mTLS and Prometheus metrics. No "use Cloud Run" or "deploy to Anthos." A static Go binary, a systemd unit, an nginx config — same operational shape as the REST and GraphQL tracks.
+পুরো track টা vendor-neutral থাকে। আপনি একটা VPS-এ, nginx-এর পেছনে, mTLS আর Prometheus metrics সহ gRPC service চালাবেন। কোনো "use Cloud Run" বা "deploy to Anthos" নেই। একটা static Go binary, একটা systemd unit, একটা nginx config — REST আর GraphQL track গুলোর মতোই একই operational shape।
 
-Tools you will install over the next nine chapters:
+পরের নয়টা অধ্যায়ে আপনি যেসব tool ইনস্টল করবেন:
 
-- `protoc` — the protocol buffers compiler (`apt install protobuf-compiler`).
-- `protoc-gen-go` and `protoc-gen-go-grpc` — Go code generators (`go install`).
-- `grpcurl` — like `curl` for gRPC. Indispensable for debugging.
-- `buf` — modern alternative to `protoc`, with linting and breaking-change detection.
+- `protoc` — protocol buffers compiler (`apt install protobuf-compiler`)।
+- `protoc-gen-go` আর `protoc-gen-go-grpc` — Go code generator (`go install`)।
+- `grpcurl` — gRPC-র জন্য `curl`-এর মতো। Debugging-এর জন্য অপরিহার্য।
+- `buf` — `protoc`-এর আধুনিক বিকল্প, linting আর breaking-change detection সহ।
 
-## A note on grpc-go vs grpc-go-experimental
+## grpc-go বনাম grpc-go-experimental নিয়ে একটা নোট
 
-grpc-go is the canonical Go implementation. It is a Google project, used by Google internally, stable and battle-tested. We use it throughout. Avoid forks and experimental clients unless you have a specific reason; the wire compatibility is universal so the framework choice is purely ergonomics.
+grpc-go হলো canonical Go implementation। এটা একটা Google project, Google-এর ভেতরে ব্যবহৃত, stable আর battle-tested। আমরা সর্বত্র এটা ব্যবহার করি। নির্দিষ্ট কারণ না থাকলে fork আর experimental client এড়িয়ে চলুন; wire compatibility সর্বজনীন তাই framework পছন্দ পুরোপুরি ergonomics-এর ব্যাপার।
 
-## What about REST gateways and gRPC-Web
+## REST gateway আর gRPC-Web নিয়ে কী
 
-Two adapters worth knowing now, even though we don't use them until chapter 10:
+এখনই জেনে রাখার মতো দুটো adapter, যদিও অধ্যায় 10-এর আগে আমরা এগুলো ব্যবহার করি না:
 
-- **grpc-gateway** — generates a REST/JSON proxy from your `.proto`. Browsers (or any HTTP client) call REST; the gateway translates to gRPC. Good when one service must serve both internal callers (gRPC) and public callers (REST) without writing two implementations.
-- **gRPC-Web** — a wire-compatible variant for browsers. Needs a proxy (Envoy, nginx, or Connect) to translate from gRPC-Web to native gRPC.
+- **grpc-gateway** — আপনার `.proto` থেকে একটা REST/JSON proxy জেনারেট করে। Browser (বা যেকোনো HTTP client) REST কল করে; gateway সেটা gRPC-তে অনুবাদ করে। ভালো যখন একটা service-কে দুই implementation না লিখে internal caller (gRPC) আর public caller (REST) — দুইকেই serve করতে হয়।
+- **gRPC-Web** — browser-এর জন্য একটা wire-compatible variant। gRPC-Web থেকে native gRPC-তে অনুবাদ করতে একটা proxy (Envoy, nginx, বা Connect) লাগে।
 
-If you are starting a service that is purely backend-to-backend, you do not need either. If you need a browser to call gRPC directly, plan for gRPC-Web in chapter 10.
+আপনি যদি এমন একটা service শুরু করেন যা সম্পূর্ণ backend-to-backend, তাহলে আপনার কোনোটাই লাগবে না। আপনার যদি একটা browser-কে সরাসরি gRPC কল করাতে হয়, তাহলে অধ্যায় 10-এ gRPC-Web-এর পরিকল্পনা করুন।
 
-## Recap
+## রিক্যাপ
 
-- gRPC = HTTP/2 + protobuf + codegen. Three layers, all worth understanding.
-- The wire is binary, the contract is mandatory, the codegen is free.
-- Right for service-to-service, polyglot, streaming, latency-sensitive paths.
-- Wrong for public APIs, browser-native, human-debug-friendly endpoints, edge caching.
-- Four call shapes: unary, server-streaming, client-streaming, bidirectional.
-- We use grpc-go as the primary runtime; Node and Python in chapter 5.
-- Self-hosted, on a VPS, behind nginx — same operational shape as the rest of the path.
+- gRPC = HTTP/2 + protobuf + codegen। তিনটা layer, সবগুলোই বোঝার মতো।
+- wire binary, contract বাধ্যতামূলক, codegen বিনামূল্যে।
+- service-to-service, polyglot, streaming, latency-sensitive path-এর জন্য সঠিক।
+- public API, browser-native, মানুষের-debug-বান্ধব endpoint, edge caching-এর জন্য ভুল।
+- চার রকম call shape: unary, server-streaming, client-streaming, bidirectional।
+- আমরা primary runtime হিসেবে grpc-go ব্যবহার করি; Node আর Python অধ্যায় 5-এ।
+- Self-hosted, একটা VPS-এ, nginx-এর পেছনে — path-এর বাকি অংশের মতোই একই operational shape।
 
-Next: [Protocol Buffers](/notes/grpc/02-protobuf) — the schema language, the wire format, and the evolution rules that keep your services compatible for years.
+পরবর্তী: [Protocol Buffers](/notes/grpc/02-protobuf) — schema language, wire format, আর সেই evolution rule যা আপনার service গুলোকে বছরের পর বছর compatible রাখে।

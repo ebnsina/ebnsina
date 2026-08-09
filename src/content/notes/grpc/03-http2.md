@@ -1,9 +1,9 @@
 ---
-title: 'HTTP/2 underneath'
-subtitle: 'gRPC is HTTP/2 with a particular set of headers and a particular way of framing protobuf bytes. Knowing what HTTP/2 actually does explains every gRPC failure mode you will hit in production.'
+title: 'নিচে যে HTTP/2 চলছে'
+subtitle: 'gRPC হলো HTTP/2 — একটা নির্দিষ্ট সেট হেডার আর protobuf বাইটকে ফ্রেম করার একটা নির্দিষ্ট উপায় সহ। HTTP/2 আসলে কী করে সেটা জানলে প্রোডাকশনে আপনি যত gRPC failure mode-এ পড়বেন তার সবগুলোই ব্যাখ্যা হয়ে যায়।'
 chapter: 3
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['grpc', 'http2', 'framing', 'multiplexing', 'flow control']
 ---
 
@@ -11,23 +11,31 @@ topics: ['grpc', 'http2', 'framing', 'multiplexing', 'flow control']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The gRPC framework hides HTTP/2 behind generated code. Most days that is fine. But the moment you debug a stuck stream, a balancer that pinned all calls to one backend, or a connection that died silently, HTTP/2 stops being an implementation detail and becomes the thing you must understand.
+gRPC ফ্রেমওয়ার্ক জেনারেটেড কোডের পেছনে HTTP/2 লুকিয়ে রাখে। বেশিরভাগ দিন এটা ঠিকঠাকই চলে। কিন্তু যেই মুহূর্তে আপনি একটা আটকে থাকা stream, এমন একটা balancer যেটা সব কল একই backend-এ pin করে দিয়েছে, বা নিঃশব্দে মরে যাওয়া একটা connection ডিবাগ করবেন — সেই মুহূর্তে HTTP/2 আর কোনো implementation detail থাকে না, বরং হয়ে যায় এমন জিনিস যেটা আপনাকে বুঝতেই হবে।
 
-This chapter is HTTP/2 from gRPC's angle. Not the spec; just the parts that change how you operate.
+এই অধ্যায়টা gRPC-এর দৃষ্টিকোণ থেকে HTTP/2। স্পেক নয়; শুধু সেই অংশগুলো যেগুলো আপনি কীভাবে অপারেট করেন তা বদলে দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-HTTP/2 is like a highway with multiple lanes versus a single-lane road — HTTP/1.1 is one lane, HTTP/2 opens many simultaneously.
+HTTP/2 হলো একটা মাল্টি-লেন হাইওয়ে বনাম সিঙ্গেল-লেন রাস্তার মতো — HTTP/1.1 হলো একটা লেন, HTTP/2 একসঙ্গে অনেকগুলো খুলে দেয়।
 
 </Callout>
 
-## The shape of HTTP/2
+## গল্পে বুঝি
 
-HTTP/1.1 is a text protocol. One request per TCP connection at a time (or pipelined, if anyone supported it, which they don't). New connection per call, or six-way browser pool.
+আল-বিরুনির অফিসটা পুরনো আমলের — সাততলা দালান, আর প্রতি ফ্লোরের মধ্যে চিঠি-নথি পাঠানোর জন্য দেয়ালের ভেতর দিয়ে গেছে একটাই নিউম্যাটিক-টিউব পাইপ। ছোট ছোট ক্যাপসুলে কাগজ ভরে টিউবে ফেললেই হাওয়ার চাপে হুশ করে সেটা চলে যায় গন্তব্যে। মজার ব্যাপার হলো, প্রতিটা ক্যাপসুলের গায়ে একটা লেবেল সাঁটা থাকে — "৩ নম্বর ফ্লোর, হিসাব বিভাগ", "৫ নম্বর ফ্লোর, ইবনে সিনা"। নিচতলার সর্টিং ঘরে ফাতিমা আল-ফিহরি লেবেল দেখেই বুঝে নেন কোন ক্যাপসুল কোথায় পাঠাতে হবে।
 
-HTTP/2 is a binary protocol with **frames** flowing in both directions over one TCP connection. Each frame belongs to a **stream**. Streams are multiplexed — frames from different streams interleave on the same connection. This is the whole story.
+গুরুত্বপূর্ণ কথাটা হলো — পাইপটা কিন্তু সবসময় বসানোই থাকে, প্রতিবার নতুন করে পাইপ পাততে হয় না। একই সেকেন্ডে হিসাব বিভাগের তিনটা ক্যাপসুল, আল-খোয়ারিজমির দুটো নথি, আর উপর থেকে নিচে আসা কয়েকটা জবাব — সব একসাথে একই পাইপের ভেতর দিয়ে দুই দিকেই হুশ হুশ করে ছুটছে। লেবেল থাকার কারণে কোনোটা কোনোটার সাথে গুলিয়ে যায় না, সর্টার ঠিকঠাক আলাদা করে ফেলে। ডজনখানেক আলাদা কথোপকথন একটামাত্র পাইপ ভাগাভাগি করে চলছে, অথচ কারও জন্য কাউকে অপেক্ষা করতে হচ্ছে না।
+
+এই গল্পটাই আসলে HTTP/2। সবসময় বসানো ওই একটা পাইপ হলো একটা persistent connection — প্রতি মেসেজে নতুন connection খুলতে হয় না। প্রতিটা লেবেল-করা ক্যাপসুল হলো একেকটা stream বা frame, আর একসাথে দুই দিকে বয়ে চলা অনেকগুলো ক্যাপসুল হলো multiplexing আর bidirectional traffic। gRPC ঠিক এভাবেই কাজ করে — একটা long-lived HTTP/2 connection-এর ওপর শত শত stream একসাথে interleave হয়ে দুই দিকে চলে, প্রতি কলে নতুন connection সেটআপের খরচ ছাড়াই। বাস্তবে এই কারণেই একটা Go service আরেকটাকে একটামাত্র connection দিয়ে সেকেন্ডে হাজার হাজার RPC পাঠাতে পারে।
+
+## HTTP/2-এর আকৃতি
+
+HTTP/1.1 একটা টেক্সট প্রোটোকল। একটা TCP connection-এ একবারে একটা request (বা pipelined, যদি কেউ এটা সাপোর্ট করত, যেটা তারা করে না)। প্রতি কলে নতুন connection, নয়তো ছয়-ওয়ে browser pool।
+
+HTTP/2 একটা বাইনারি প্রোটোকল যেখানে একটা TCP connection-এ দুই দিকেই **frame** বয়ে চলে। প্রতিটা frame একটা **stream**-এর অন্তর্ভুক্ত। Stream-গুলো multiplexed — ভিন্ন ভিন্ন stream-এর frame একই connection-এ interleave হয়। এটাই পুরো গল্প।
 
 ```
 HTTP/1.1: client → request → server → response → client (one at a time)
@@ -36,11 +44,11 @@ HTTP/2:   client ↔ frame frame frame frame frame ↔ server
                   stream 1 stream 3 stream 1 stream 5
 ```
 
-Streams have IDs (odd numbers from clients, even from servers). They are full-duplex — both sides can send frames at any time. Streams open, exchange frames, and close.
+Stream-এর ID থাকে (client থেকে বিজোড় সংখ্যা, server থেকে জোড়)। এগুলো full-duplex — দুই পক্ষই যেকোনো সময় frame পাঠাতে পারে। Stream খোলে, frame আদান-প্রদান করে, আর বন্ধ হয়।
 
-## How a gRPC call rides on HTTP/2
+## একটা gRPC কল HTTP/2-এর ওপর কীভাবে চড়ে
 
-A unary gRPC call is one HTTP/2 stream. The frames that flow:
+একটা unary gRPC কল হলো একটা HTTP/2 stream। যে frame-গুলো বয়ে চলে:
 
 ```
 Client → Server: HEADERS  :method=POST :path=/UserService/GetUser
@@ -55,61 +63,61 @@ Server → Client: HEADERS  grpc-status=0  grpc-message=...
                           (END_STREAM flag set; this is "trailers")
 ```
 
-That last HEADERS frame — sent _after_ the DATA — is gRPC's **trailers**. HTTP/1.1 cannot send headers after the body started; HTTP/2 can. gRPC uses trailers to carry the status code and message. That is why every gRPC client demands trailer support.
+ওই শেষ HEADERS frame-টা — যেটা DATA-এর _পরে_ পাঠানো হয় — সেটাই gRPC-এর **trailers**। HTTP/1.1 body শুরু হয়ে গেলে আর হেডার পাঠাতে পারে না; HTTP/2 পারে। gRPC status code আর message বহন করতে trailers ব্যবহার করে। এই কারণেই প্রতিটা gRPC client-এর trailer support লাগে।
 
-For streaming RPCs, multiple DATA frames flow on the same stream. The framing format is `[1-byte compressed flag][4-byte length][message bytes]`, repeated. A reader pulls one length-prefixed message at a time.
+Streaming RPC-এর ক্ষেত্রে একই stream-এ একাধিক DATA frame বয়ে চলে। Framing ফরম্যাটটা হলো `[1-byte compressed flag][4-byte length][message bytes]`, যা বারবার হয়। একটা reader একবারে একটা length-prefixed message টেনে নেয়।
 
-## Multiplexing — the killer feature
+## Multiplexing — মোক্ষম ফিচার
 
-One TCP connection. Hundreds of concurrent streams. No connection setup per call.
+একটা TCP connection। শত শত concurrent stream। প্রতি কলে কোনো connection setup নেই।
 
-For service-to-service traffic that is normally chatty, this is huge. Compare:
+যে service-to-service traffic সাধারণত খুব chatty, তার জন্য এটা বিশাল ব্যাপার। তুলনা করুন:
 
-|                              | HTTP/1.1                                | HTTP/2          |
-| ---------------------------- | --------------------------------------- | --------------- |
-| TCP handshakes for 100 calls | 100 (or 17 with keep-alive + pool of 6) | 1               |
-| TLS handshakes               | 100 (or 17)                             | 1               |
-| Concurrent in-flight         | 6 per origin (browser limit)            | hundreds        |
-| Head-of-line blocking        | yes (next request waits for prior)      | no (per-stream) |
+|                             | HTTP/1.1                                      | HTTP/2          |
+| --------------------------- | --------------------------------------------- | --------------- |
+| ১০০ কলের জন্য TCP handshake | 100 (বা keep-alive + ৬-এর pool দিয়ে 17)      | 1               |
+| TLS handshake               | 100 (বা 17)                                   | 1               |
+| একসঙ্গে in-flight           | origin প্রতি 6 (browser limit)                | শত শত           |
+| Head-of-line blocking       | হ্যাঁ (পরের request আগেরটার জন্য অপেক্ষা করে) | না (per-stream) |
 
-Real-world impact: a Go service calling another Go service over gRPC sustains tens of thousands of RPCs per second on one connection without breaking a sweat. The same workload on HTTP/1.1 + JSON spends most of its time on connection churn.
+বাস্তব প্রভাব: একটা Go service gRPC-এর ওপর আরেকটা Go service কল করলে একটা connection-এই সেকেন্ডে হাজার হাজার RPC অনায়াসে টিকিয়ে রাখে। একই workload HTTP/1.1 + JSON-এ তার বেশিরভাগ সময় connection churn-এ কাটিয়ে দেয়।
 
 <Callout type="info">
 
-**One connection per backend, not per call.** gRPC clients hold a long-lived `ClientConn` to each backend. Reuse it; do not dial per call. Misusing the client (creating a fresh `ClientConn` for every request) destroys the multiplexing benefit and is the most common gRPC performance bug.
+**প্রতি backend-এ একটা connection, প্রতি কলে নয়।** gRPC client প্রতিটা backend-এর জন্য একটা long-lived `ClientConn` ধরে রাখে। সেটা reuse করুন; প্রতি কলে dial করবেন না। client-কে ভুলভাবে ব্যবহার করা (প্রতি request-এ একটা নতুন `ClientConn` বানানো) multiplexing-এর সুবিধা নষ্ট করে দেয় এবং এটাই সবচেয়ে common gRPC performance বাগ।
 
 </Callout>
 
-## Flow control — backpressure built in
+## Flow control — বিল্ট-ইন backpressure
 
-HTTP/2 has per-stream and per-connection **flow control windows**. A receiver advertises "I have N bytes of buffer for this stream." Senders must not exceed that.
+HTTP/2-এ per-stream আর per-connection **flow control window** থাকে। একটা receiver জানান দেয় "এই stream-এর জন্য আমার কাছে N বাইট buffer আছে।" Sender-রা সেটা ছাড়িয়ে যেতে পারবে না।
 
-When the sender hits the window, it stops sending DATA frames until the receiver sends a `WINDOW_UPDATE` saying "I have processed M bytes, you can send M more."
+Sender যখন window-তে পৌঁছে যায়, তখন DATA frame পাঠানো বন্ধ করে দেয় যতক্ষণ না receiver একটা `WINDOW_UPDATE` পাঠায় যেটা বলে "আমি M বাইট প্রসেস করেছি, তুমি আরও M পাঠাতে পারো।"
 
-For streaming RPCs this is essential. A slow consumer naturally slows the producer down — no buffers blow up, no out-of-memory deaths from runaway streams. Backpressure is the protocol, not something you build.
+Streaming RPC-এর জন্য এটা অপরিহার্য। একটা slow consumer স্বাভাবিকভাবেই producer-কে ধীর করে দেয় — কোনো buffer ফেটে যায় না, runaway stream থেকে out-of-memory-তে মরে যাওয়াও ঘটে না। Backpressure প্রোটোকলের অংশ, আপনার বানানো কিছু নয়।
 
-The default window is small (65 KB) and tuned for browsers. For server-to-server streaming, increase it:
+ডিফল্ট window ছোট (65 KB) আর browser-এর জন্য tuned করা। server-to-server streaming-এর জন্য এটা বাড়ান:
 
 ```go
 grpc.WithInitialWindowSize(1 << 20)        // 1 MiB per stream
 grpc.WithInitialConnWindowSize(1 << 23)    // 8 MiB per connection
 ```
 
-Without that, large streaming throughput is starved by tiny windows.
+এটা ছাড়া বড় streaming throughput ছোট window-এর কারণে অভুক্ত থেকে যায়।
 
 ## Header compression — HPACK
 
-HTTP/2 compresses headers with HPACK, which keeps a dictionary of seen names and values. The first time you send `:path=/UserService/GetUser` it costs bytes; the second time it is one or two bytes.
+HTTP/2 HPACK দিয়ে হেডার compress করে, যেটা দেখা নাম আর value-এর একটা dictionary রাখে। প্রথমবার যখন আপনি `:path=/UserService/GetUser` পাঠান তখন এর জন্য বাইট খরচ হয়; দ্বিতীয়বার এটা এক-দুই বাইট।
 
-For gRPC, this matters because every call carries some standard headers (`content-type`, `te`, the path). Across thousands of calls on one connection, header bytes drop to near zero.
+gRPC-এর জন্য এটা গুরুত্বপূর্ণ কারণ প্রতিটা কল কিছু standard হেডার বহন করে (`content-type`, `te`, path)। একটা connection-এ হাজার হাজার কলের মধ্যে হেডার বাইট প্রায় শূন্যে নেমে আসে।
 
-A consequence: very long custom headers (`Authorization` with a giant JWT, custom trace headers) defeat HPACK on the first call but win after that. Avoid changing them per call where possible.
+এর একটা পরিণাম: খুব লম্বা custom হেডার (বিশাল JWT সহ `Authorization`, custom trace header) প্রথম কলে HPACK-কে হারিয়ে দেয় কিন্তু তার পরে জিতে যায়। যেখানে সম্ভব সেখানে প্রতি কলে এগুলো বদলানো এড়িয়ে চলুন।
 
-## Connection lifecycle and PINGs
+## Connection lifecycle আর PING
 
-A gRPC connection is supposed to stay open. The client and server both send periodic `PING` frames as keepalives — without these, NAT boxes and load balancers drop "idle" connections after a few minutes.
+একটা gRPC connection খোলা থাকার কথা। client আর server দুই পক্ষই keepalive হিসেবে নিয়মিত `PING` frame পাঠায় — এগুলো ছাড়া NAT box আর load balancer কয়েক মিনিট পর "idle" connection ফেলে দেয়।
 
-Default keepalive is conservative. For service-to-service over the internet (or anywhere with unreliable middleboxes), tighten it:
+ডিফল্ট keepalive রক্ষণশীল। ইন্টারনেটের ওপর service-to-service-এর জন্য (বা যেখানেই অনির্ভরযোগ্য middlebox আছে), এটা আঁটসাঁট করুন:
 
 ```go
 keepalive.ClientParameters{
@@ -119,13 +127,13 @@ keepalive.ClientParameters{
 }
 ```
 
-The server side must allow it (`keepalive.EnforcementPolicy{MinTime: 5 * time.Second, PermitWithoutStream: true}`) or it will RST aggressive clients with `ENHANCE_YOUR_CALM` errors. Yes that is a real error code.
+Server দিক থেকে এটা অনুমোদন করতে হবে (`keepalive.EnforcementPolicy{MinTime: 5 * time.Second, PermitWithoutStream: true}`) নয়তো এটা আক্রমণাত্মক client-দের `ENHANCE_YOUR_CALM` error দিয়ে RST করবে। হ্যাঁ, ওটা আসলেই একটা real error code।
 
-## Stream cancellation and deadlines
+## Stream cancellation আর deadline
 
-A client cancellation sends `RST_STREAM` with a CANCEL code. The server's stream context is canceled; the handler should return promptly. Same for deadline expiry — the framework cancels the stream automatically when the deadline passes, and the server context's `<-ctx.Done()` fires.
+একটা client cancellation CANCEL code সহ `RST_STREAM` পাঠায়। Server-এর stream context cancel হয়ে যায়; handler-এর দ্রুত return করা উচিত। Deadline expiry-এর জন্যও একই — deadline পার হলে ফ্রেমওয়ার্ক স্বয়ংক্রিয়ভাবে stream cancel করে দেয়, আর server context-এর `<-ctx.Done()` ফায়ার করে।
 
-This is why every gRPC handler must be deadline-aware:
+এই কারণেই প্রতিটা gRPC handler-কে deadline-aware হতে হবে:
 
 ```go
 func (s *server) Slow(ctx context.Context, req *pb.Req) (*pb.Resp, error) {
@@ -138,27 +146,27 @@ func (s *server) Slow(ctx context.Context, req *pb.Req) (*pb.Resp, error) {
 }
 ```
 
-Code that ignores `ctx` will keep working after the client gave up. Wasted CPU, wasted DB queries, possible cascading failures. Deadlines are non-negotiable in production gRPC; chapter 7 has the full pattern.
+যে কোড `ctx` উপেক্ষা করে, client হাল ছেড়ে দেওয়ার পরও সেটা কাজ করতে থাকবে। নষ্ট CPU, নষ্ট DB query, সম্ভাব্য cascading failure। প্রোডাকশন gRPC-তে deadline non-negotiable; পুরো প্যাটার্নটা অধ্যায় 7-এ আছে।
 
-## Load balancing — where HTTP/2 makes life harder
+## Load balancing — যেখানে HTTP/2 জীবন আরও কঠিন করে দেয়
 
-HTTP/2 long-lived connections + multiplexing are great for throughput. They are _terrible_ for naïve load balancing.
+HTTP/2-এর long-lived connection + multiplexing throughput-এর জন্য দারুণ। কিন্তু naïve load balancing-এর জন্য এগুলো _ভয়ানক_।
 
-A standard L4 (TCP) load balancer sees one connection from the client and routes it to one backend. All hundreds of streams ride that connection. The other backends sit idle. You scaled to ten replicas; one is taking 100% of the traffic.
+একটা standard L4 (TCP) load balancer client থেকে একটা connection দেখে আর সেটা একটা backend-এ route করে। সব কয়টা stream ওই একটা connection-এ চড়ে। বাকি backend-গুলো বসে থাকে। আপনি দশটা replica-তে scale করলেন; একটা নিচ্ছে 100% traffic।
 
-Three fixes, in order of preference:
+তিনটা fix, পছন্দের ক্রমানুসারে:
 
-1. **Client-side load balancing.** The client opens connections to all backends and round-robins streams across them. gRPC supports this natively (`grpc.WithDefaultServiceConfig` with round-robin). Best for service-to-service inside your network.
-2. **L7 (HTTP/2-aware) load balancer.** Envoy, nginx (with `http2` enabled), Linkerd, traefik. Routes individual streams, not connections. Best for traffic that crosses trust boundaries.
-3. **DNS-based with short TTLs.** Worse than the others; mentioned for completeness.
+1. **Client-side load balancing.** client সব backend-এ connection খোলে আর সেগুলোর মধ্যে round-robin করে stream ছড়িয়ে দেয়। gRPC এটা native ভাবে সাপোর্ট করে (round-robin সহ `grpc.WithDefaultServiceConfig`)। আপনার network-এর ভেতরে service-to-service-এর জন্য সবচেয়ে ভালো।
+2. **L7 (HTTP/2-aware) load balancer.** Envoy, nginx (`http2` enabled সহ), Linkerd, traefik। connection নয়, একেকটা stream route করে। যে traffic trust boundary পার হয় তার জন্য সবচেয়ে ভালো।
+3. **DNS-based, ছোট TTL সহ।** বাকিগুলোর চেয়ে খারাপ; সম্পূর্ণতার জন্য উল্লেখ করা হলো।
 
-Do not put a vanilla TCP load balancer in front of gRPC unless you accept the imbalance. Chapter 10 has the full pattern.
+gRPC-এর সামনে একটা সাধারণ TCP load balancer বসাবেন না, যদি না আপনি imbalance মেনে নেন। পুরো প্যাটার্নটা অধ্যায় 10-এ আছে।
 
-## TLS and ALPN
+## TLS আর ALPN
 
-gRPC over the public internet is TLS 1.2 or 1.3, with **ALPN** (Application-Layer Protocol Negotiation) selecting `h2` during the handshake. Without ALPN, the server can't tell HTTP/2 from HTTP/1.1.
+পাবলিক ইন্টারনেটের ওপর gRPC হলো TLS 1.2 বা 1.3, যেখানে **ALPN** (Application-Layer Protocol Negotiation) handshake-এর সময় `h2` বেছে নেয়। ALPN ছাড়া server HTTP/2-কে HTTP/1.1 থেকে আলাদা করতে পারে না।
 
-Locally and inside trusted networks, plaintext HTTP/2 (`h2c`) is fine. The gRPC framework defaults to TLS; you opt into plaintext explicitly:
+লোকালি আর বিশ্বস্ত network-এর ভেতরে plaintext HTTP/2 (`h2c`) ঠিক আছে। gRPC ফ্রেমওয়ার্ক ডিফল্টে TLS ধরে; আপনি স্পষ্টভাবে plaintext-এ opt-in করেন:
 
 ```go
 // Client
@@ -169,11 +177,11 @@ conn, err := grpc.NewClient("localhost:9000",
 s := grpc.NewServer()  // plaintext by default; add credentials for TLS
 ```
 
-Chapter 9 covers TLS and mTLS in full.
+অধ্যায় 9 TLS আর mTLS পুরোপুরি কভার করে।
 
-## Tooling — seeing what's on the wire
+## Tooling — তারে কী আছে দেখা
 
-**`grpcurl`** — like `curl`, for gRPC.
+**`grpcurl`** — gRPC-এর জন্য `curl`-এর মতো।
 
 ```bash
 brew install grpcurl
@@ -181,48 +189,48 @@ grpcurl -plaintext localhost:9000 list
 grpcurl -plaintext -d '{"id": 42}' localhost:9000 user.v1.UserService/GetUser
 ```
 
-You need server reflection enabled (chapter 4) or a `.proto` file in your hand. Indispensable for sanity-checking deployed services.
+আপনার server reflection enabled থাকা লাগবে (অধ্যায় 4) নয়তো হাতে একটা `.proto` ফাইল। deploy করা service-এর sanity-check-এর জন্য অপরিহার্য।
 
-**`tcpdump` + Wireshark** — see actual HTTP/2 frames. Wireshark decodes HTTP/2 cleanly:
+**`tcpdump` + Wireshark** — আসল HTTP/2 frame দেখুন। Wireshark HTTP/2 পরিষ্কারভাবে decode করে:
 
 ```bash
 sudo tcpdump -i lo -w grpc.pcap port 9000
 wireshark grpc.pcap  # filter: http2
 ```
 
-For TLS-encrypted traffic, you need to dump the session keys (`SSLKEYLOGFILE` env in some clients) or run plaintext locally for the dump. Worth doing once per career to demystify the wire.
+TLS-encrypted traffic-এর জন্য আপনাকে session key dump করতে হবে (কিছু client-এ `SSLKEYLOGFILE` env) বা dump-এর জন্য লোকালি plaintext চালাতে হবে। তারটা রহস্যমুক্ত করার জন্য career-এ একবার করার মতো।
 
-**`netstat`/`ss`** — see active connections.
+**`netstat`/`ss`** — active connection দেখুন।
 
 ```bash
 ss -tan state established '( dport = :9000 or sport = :9000 )'
 ```
 
-If a client is supposed to multiplex but you see fifty connections, your client config is wrong.
+একটা client-এর multiplex করার কথা থাকলেও যদি আপনি পঞ্চাশটা connection দেখেন, তাহলে আপনার client config ভুল।
 
-## Common HTTP/2-flavored gRPC bugs
+## সাধারণ HTTP/2-ধাঁচের gRPC বাগ
 
-**1. Tons of new connections instead of multiplexing.** Client is creating a fresh `ClientConn` per call. Fix: hold one `ClientConn` per backend, share it.
+**1. multiplexing-এর বদলে গাদা গাদা নতুন connection।** client প্রতি কলে একটা নতুন `ClientConn` বানাচ্ছে। Fix: প্রতি backend-এ একটা `ClientConn` ধরে রাখুন, share করুন।
 
-**2. One backend takes all traffic.** L4 load balancer in front; client opened one connection. Fix: client-side LB or L7 proxy.
+**2. একটা backend সব traffic নিচ্ছে।** সামনে L4 load balancer; client একটা connection খুলেছে। Fix: client-side LB বা L7 proxy।
 
-**3. Connection dies after 60 seconds idle.** NAT or middlebox dropped it. Fix: tighten keepalive on both client and server.
+**3. 60 সেকেন্ড idle থাকার পর connection মরে যায়।** NAT বা middlebox ফেলে দিয়েছে। Fix: client আর server দুই দিকেই keepalive আঁটসাঁট করুন।
 
-**4. Streaming throughput tops out at a few MB/s.** Default flow control window. Fix: increase initial window sizes.
+**4. Streaming throughput কয়েক MB/s-এ আটকে যায়।** ডিফল্ট flow control window। Fix: initial window size বাড়ান।
 
-**5. `ENHANCE_YOUR_CALM` errors.** Client is pinging too often for the server's policy. Fix: align both keepalive policies.
+**5. `ENHANCE_YOUR_CALM` error।** server-এর policy-র জন্য client বড্ড বেশি ping করছে। Fix: দুই দিকের keepalive policy মিলিয়ে নিন।
 
-## Recap
+## রিক্যাপ
 
-- HTTP/2 is binary frames over one TCP connection, multiplexed by stream ID.
-- A gRPC call is one stream — HEADERS, DATA frames, trailers (post-body HEADERS).
-- Multiplexing kills HTTP/1.1's connection churn — one client connection per backend handles thousands of concurrent calls.
-- Flow control windows are backpressure. Increase for streaming.
-- HPACK compresses headers across calls on the same connection.
-- Keepalive is mandatory across NAT and load balancers. Tighten the defaults.
-- Cancellations and deadlines flow as `RST_STREAM` and via `ctx.Done()`. Handlers must be ctx-aware.
-- L4 load balancers ruin gRPC. Use client-side LB or L7 proxy.
-- ALPN selects `h2` in TLS; `h2c` is plaintext for trusted networks.
-- `grpcurl` and Wireshark are your debugging eyes.
+- HTTP/2 হলো একটা TCP connection-এর ওপর বাইনারি frame, stream ID দিয়ে multiplexed।
+- একটা gRPC কল হলো একটা stream — HEADERS, DATA frame, trailers (body-পরবর্তী HEADERS)।
+- Multiplexing HTTP/1.1-এর connection churn শেষ করে দেয় — প্রতি backend-এ একটা client connection হাজার হাজার concurrent কল সামলায়।
+- Flow control window হলো backpressure। Streaming-এর জন্য বাড়ান।
+- HPACK একই connection-এ কলের মধ্যে হেডার compress করে।
+- NAT আর load balancer পার হতে keepalive বাধ্যতামূলক। ডিফল্টগুলো আঁটসাঁট করুন।
+- Cancellation আর deadline `RST_STREAM` হিসেবে আর `ctx.Done()`-এর মাধ্যমে বয়ে চলে। Handler-কে ctx-aware হতে হবে।
+- L4 load balancer gRPC নষ্ট করে। client-side LB বা L7 proxy ব্যবহার করুন।
+- ALPN TLS-এ `h2` বেছে নেয়; `h2c` হলো বিশ্বস্ত network-এর জন্য plaintext।
+- `grpcurl` আর Wireshark আপনার ডিবাগিং-এর চোখ।
 
-Next: [Your first server and client](/notes/grpc/04-first-server) — Go end-to-end, codegen included, in code you understand.
+পরবর্তী: [আপনার প্রথম server আর client](/notes/grpc/04-first-server) — Go end-to-end, codegen সহ, এমন কোডে যা আপনি বোঝেন।

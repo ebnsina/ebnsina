@@ -1,9 +1,9 @@
 ---
-title: 'Event Sourcing & CQRS'
-subtitle: 'Build an event store with projections, command handlers, and event replay for an e-commerce order system.'
+title: 'Event Sourcing ও CQRS'
+subtitle: 'একটি e-commerce order সিস্টেমের জন্য projections, command handlers এবং event replay সহ একটি event store বানান।'
 chapter: 10
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['event sourcing', 'CQRS', 'projections', 'event store', 'domain events']
 ---
 
@@ -13,23 +13,31 @@ topics: ['event sourcing', 'CQRS', 'projections', 'event store', 'domain events'
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What is Event Sourcing?
+## গল্পে বুঝি
 
-Instead of storing the current state of an entity (like an order), you store the sequence of events that led to that state. An order isn't just "status: shipped" — it's a history: `OrderPlaced -> PaymentReceived -> OrderShipped`.
+ইবনে সিনার একটা মুদির দোকান। খদ্দের ফাতিমা আল-ফিহরি প্রতি মাসে বাকিতে জিনিস নেয়, মাঝেমধ্যে টাকা শোধ করে। ইবনে সিনা কোনোদিন খাতায় শুধু "ফাতিমা আল-ফিহরির বাকি ৫০০ টাকা" লিখে রাখে না — বদলে সে খাতার পাতায় লাইন ধরে সব লিখে যায়: "১ তারিখ চাল নিল ৩০০", "৫ তারিখ শোধ দিল ২০০", "১০ তারিখ তেল নিল ৪০০"। প্রতিটা লেনদেন একটা আলাদা লাইন, আর ইবনে সিনা পুরনো লাইন কখনো কাটে না বা বদলায় না — নতুন কিছু হলে শুধু নিচে নতুন লাইন যোগ করে। আজকের বাকি কত জানতে হলে সে উপর থেকে নিচ পর্যন্ত সব লাইন যোগ-বিয়োগ করে বের করে নেয়।
 
-This gives you a complete audit trail, the ability to replay events to rebuild state, and the ability to answer questions about your data that you didn't anticipate when you designed the schema.
+এতে মজাটা হলো — কোনোদিন ফাতিমা আল-ফিহরি যদি বলে "গত মাসের ১৫ তারিখে আমার বাকি কত ছিল?", ইবনে সিনা শুধু সেই তারিখ পর্যন্ত লাইনগুলো আবার যোগ করে হুবহু বলে দিতে পারে। ঝগড়া বাধলে খাতাই সাক্ষী, প্রতিটা লাইন ধরে দেখানো যায় কবে কী হয়েছিল। তবে প্রতিবার পুরো খাতা যোগ করা ঝামেলা, তাই ইবনে সিনা দোকানের সামনে একটা ছোট বোর্ডে শুধু "ফাতিমা আল-ফিহরির বর্তমান বাকি: ৫০০" লিখে ঝুলিয়ে রাখে — খাতা না খুলেই এক নজরে দেখা যায়। নতুন লেনদেন হলে বোর্ডের সংখ্যাটা সে আপডেট করে দেয়, কিন্তু আসল সত্য থাকে খাতাতেই।
+
+ইবনে সিনার খাতার প্রতিটা লাইনই হলো একটা **event**, আর কেবল যোগ করা যায় কাটা যায় না বলে এটা immutable log — ঠিক **event sourcing**-এর মূল কথা। সব লাইন যোগ করে আজকের বাকি বের করাটাই **replay** করে state আবার গড়ে তোলা, আর সামনের বোর্ডটা হলো **read model** যা দ্রুত পড়ার জন্য আলাদা রাখা — এটাই **CQRS**, যেখানে লেখা (খাতায় নতুন লাইন যোগ) আর পড়া (বোর্ড দেখা) আলাদা। বাস্তবে banking সিস্টেম আর audit log ঠিক এভাবেই কাজ করে — প্রতিটা transaction চিরস্থায়ীভাবে জমা থাকে, যেকোনো সময়ের অবস্থা replay করে বের করা যায়, আর নিয়ন্ত্রকদের কাছে সম্পূর্ণ হিসাব দেওয়া যায়।
+
+## Event Sourcing কী?
+
+কোনো entity-র (যেমন একটি order) বর্তমান state store করার বদলে, আপনি সেই state-এ পৌঁছানোর জন্য যে event-গুলোর ক্রম ঘটেছে সেগুলো store করেন। একটি order কেবল "status: shipped" নয় — এটি একটি history: `OrderPlaced -> PaymentReceived -> OrderShipped`।
+
+এটি আপনাকে দেয় একটি সম্পূর্ণ audit trail, event replay করে state পুনরায় গড়ে তোলার ক্ষমতা, এবং আপনার data সম্পর্কে এমন প্রশ্নের উত্তর দেওয়ার ক্ষমতা যা schema ডিজাইন করার সময় আপনি ভাবেনওনি।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like the announcement system at a train station — when a train arrives (event), multiple listeners react: passengers board, vendors prepare, cleaners start working.
+একটি ট্রেন স্টেশনের announcement সিস্টেমের মতো — একটি ট্রেন এলে (event), একাধিক listener react করে: যাত্রীরা ওঠে, দোকানিরা প্রস্তুতি নেয়, ক্লিনাররা কাজ শুরু করে।
 
 </Callout>
 
-## What is CQRS?
+## CQRS কী?
 
-**Command Query Responsibility Segregation** separates reads from writes. Commands (writes) go through the event store. Queries (reads) go through materialized **projections** — pre-computed views optimized for specific read patterns.
+**Command Query Responsibility Segregation** read আর write আলাদা করে দেয়। Command (write) event store দিয়ে যায়। Query (read) materialized **projection** দিয়ে যায় — নির্দিষ্ট read pattern-এর জন্য optimized, আগে থেকে হিসাব করা view।
 
 <Mermaid
 title="Event Sourcing + CQRS Architecture"
@@ -42,7 +50,7 @@ code={`graph TD
   P2 --> Q`}
 />
 
-## Complete Event Sourcing System
+## সম্পূর্ণ Event Sourcing সিস্টেম
 
 <CodeTabs tsFile="eventsourcing.ts" goFile="eventsourcing.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -756,23 +764,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- Events are immutable facts — never update or delete them, only append new ones
-- The event store is the single source of truth; projections are derived and can be rebuilt
-- **Optimistic concurrency control** (version checks) prevents conflicting writes
-- Projections can be destroyed and rebuilt from events — this enables adding new read models retroactively
-- Correlation IDs link related events across aggregates for debugging and tracing
+- Event হলো immutable fact — এগুলো কখনো update বা delete করবেন না, শুধু নতুন event append করবেন
+- Event store হলো single source of truth; projection derived এবং এগুলো আবার rebuild করা যায়
+- **Optimistic concurrency control** (version check) conflicting write আটকায়
+- Projection মুছে ফেলে event থেকে আবার গড়ে তোলা যায় — এতে পুরনো data-তে নতুন read model যোগ করা সম্ভব হয়
+- Correlation ID debugging আর tracing-এর জন্য aggregate-জুড়ে সম্পর্কিত event-গুলো সংযুক্ত করে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Banking systems** use event sourcing because regulators require complete audit trails of every transaction
-- **Walmart** uses event sourcing for their inventory management to track every stock movement
-- **LinkedIn** uses event sourcing for their activity feed — each action is an event that gets projected into different views
-- Use event sourcing when you need audit trails, temporal queries ("what was the state at 3pm?"), or the ability to add new read models to existing data
+- **Banking সিস্টেম** event sourcing ব্যবহার করে কারণ regulator-রা প্রতিটি transaction-এর সম্পূর্ণ audit trail দাবি করে
+- **Walmart** তাদের inventory management-এ event sourcing ব্যবহার করে প্রতিটি stock movement track করতে
+- **LinkedIn** তাদের activity feed-এ event sourcing ব্যবহার করে — প্রতিটি action একটি event যা বিভিন্ন view-তে project করা হয়
+- Event sourcing ব্যবহার করুন যখন আপনার audit trail দরকার, temporal query দরকার ("বিকেল ৩টায় state কী ছিল?"), অথবা বিদ্যমান data-তে নতুন read model যোগ করার ক্ষমতা দরকার
 
 </div>

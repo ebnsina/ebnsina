@@ -1,9 +1,9 @@
 ---
 title: 'Elasticsearch'
-subtitle: "Mappings, analyzers, the Query DSL, aggregations, and running a production cluster — for when Meilisearch isn't enough."
+subtitle: 'Mapping, analyzer, Query DSL, aggregation, এবং একটা production cluster চালানো — যখন Meilisearch যথেষ্ট নয়।'
 chapter: 4
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['Elasticsearch', 'mappings', 'analyzers', 'Query DSL', 'aggregations', 'cluster']
 ---
 
@@ -11,26 +11,34 @@ topics: ['Elasticsearch', 'mappings', 'analyzers', 'Query DSL', 'aggregations', 
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা জাতীয় লাইব্রেরি নেটওয়ার্কের প্রধান। এক সময় পুরো দেশের সব বইয়ের একটাই কেন্দ্রীয় ক্যাটালগ ছিল, এক বিল্ডিংয়ে রাখা। কিন্তু বইয়ের সংখ্যা কোটি ছাড়িয়ে গেল, এক বিল্ডিংয়ে আর জায়গা হয় না, একটা খোঁজ করতে গেলেই ঘণ্টার পর ঘণ্টা লেগে যায়। তাই ফাতিমা ক্যাটালগটাকে ভেঙে দেশের নানা শাখা লাইব্রেরিতে ছড়িয়ে দিলেন — বাগদাদের শাখায় এক টুকরো, কর্ডোবায় আরেক টুকরো, সমরকন্দে আরেক টুকরো। প্রতিটা শাখা পুরো ক্যাটালগের একটা করে অংশ ধরে রাখে।
+
+এখন কেউ যখন কোনো বই খোঁজে, ফাতিমার অফিস সেই খোঁজটা একসাথে সব শাখায় পাঠিয়ে দেয়। প্রতিটা শাখা নিজের অংশটুকু একই সময়ে খুঁজে দেখে, আর সবার ফলাফল এক জায়গায় জড়ো করে পাঠকের হাতে তুলে দেওয়া হয়। শুধু "এই বইটা কোথায়" — এতটুকুই নয়; ইবনে সিনা যখন জানতে চান "গোটা দেশে দশক অনুযায়ী প্রতিটা বিষয়ে কত বই আছে", তখনও প্রতিটা শাখা নিজের অংশে হিসাব কষে, আর সেই হিসাবগুলো মিলিয়ে বিশাল একটা রিপোর্ট বেরিয়ে আসে। কিন্তু এত শাখা, এত সমন্বয় সামলাতে আল-খোয়ারিজমিকে অনেক কর্মী নিয়োগ দিতে হয়, নিয়ম-কানুন বেঁধে দিতে হয় — একটা বইয়ের দোকানের চেয়ে এটা চালানো ঢের ভারী কাজ।
+
+এই গল্পটাই আসলে **Elasticsearch**। ক্যাটালগ ভেঙে নানা শাখায় ছড়িয়ে দেওয়াটাই index-কে **shard**-এ ভাগ করে অনেক **node**-এ রাখা (**distributed**), খোঁজ একসাথে সব শাখায় পাঠিয়ে ফলাফল মিলিয়ে দেওয়াটাই **distributed** search, আর দশক-বিষয় অনুযায়ী হিসাবগুলোই **aggregation**/**analytics**। কিন্তু এত শাখা সামলানোর কর্মী-সমন্বয়ের বোঝাটাই বাস্তবে Elasticsearch চালানোর operational ভার — একটা single binary টুলের চেয়ে অনেক বেশি খাটুনি। বাস্তবে ঠিক এভাবেই কোটি কোটি log আর event-এর উপর analytics চালানো হয় — ELK stack (Elasticsearch, Logstash, Kibana) দিয়ে বড় বড় কোম্পানি তাদের সার্ভারের log খুঁজে আর বিশ্লেষণ করে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A university research library vs a bookstore: the bookstore (Meilisearch) is fast, well-organized for browsing, good for most searches. The research library (Elasticsearch) has specialized cataloguing, subject librarians, cross-referencing, complex aggregations, and handles the full academic corpus. More powerful, more complex to operate, more to configure correctly.
+একটা বিশ্ববিদ্যালয়ের গবেষণা লাইব্রেরি বনাম একটা বইয়ের দোকান: বইয়ের দোকান (Meilisearch) দ্রুত, ব্রাউজিংয়ের জন্য সুসংগঠিত, বেশিরভাগ search-এর জন্য ভালো। গবেষণা লাইব্রেরির (Elasticsearch) বিশেষায়িত ক্যাটালগিং, বিষয়ভিত্তিক লাইব্রেরিয়ান, ক্রস-রেফারেন্সিং, জটিল aggregation আছে, আর পুরো একাডেমিক corpus হ্যান্ডল করে। বেশি শক্তিশালী, চালানো বেশি জটিল, সঠিকভাবে configure করার জন্য বেশি কিছু।
 
 </Callout>
 
-## When to Use Elasticsearch
+## কখন Elasticsearch ব্যবহার করবেন
 
-- Full-text search on billions of documents
-- Complex aggregations (histograms, geo-distance, nested objects)
-- Log and event analytics (Elastic stack: ELK)
-- Multi-language search with custom analyzers
-- Complex relevance tuning (function scoring, scripted scoring)
-- Percolator (reverse search: match documents against stored queries)
+- কোটি কোটি ডকুমেন্টে full-text search
+- জটিল aggregation (histogram, geo-distance, nested object)
+- Log আর event analytics (Elastic stack: ELK)
+- custom analyzer-সহ multi-language search
+- জটিল relevance tuning (function scoring, scripted scoring)
+- Percolator (reverse search: স্টোর করা query-এর সাথে ডকুমেন্ট ম্যাচ করা)
 
-Meilisearch for product search, Elasticsearch for analytics and petabyte-scale.
+প্রোডাক্ট search-এর জন্য Meilisearch, analytics আর petabyte-scale-এর জন্য Elasticsearch।
 
-## Running Elasticsearch
+## Elasticsearch চালানো
 
 ```yaml
 # docker-compose.yml — single node for development
@@ -56,9 +64,9 @@ services:
 curl http://localhost:9200/_cluster/health?pretty
 ```
 
-## Mappings (Schema)
+## Mapping (Schema)
 
-Unlike Meilisearch, Elasticsearch requires explicit mappings for production use. Dynamic mappings (auto-detection) cause type conflicts and poor performance.
+Meilisearch-এর বিপরীতে, Elasticsearch production ব্যবহারের জন্য explicit mapping দাবি করে। Dynamic mapping (auto-detection) type conflict আর দুর্বল performance-এর কারণ হয়।
 
 ```typescript
 import { Client } from '@elastic/elasticsearch';
@@ -134,7 +142,7 @@ await es.indices.create({
 });
 ```
 
-## Indexing Documents
+## Document Indexing করা
 
 ```typescript
 // Single document
@@ -217,9 +225,9 @@ console.log(results.hits.hits.map((h) => h._source));
 console.log(results.hits.total.value); // total matching docs
 ```
 
-## Aggregations
+## Aggregation
 
-The killer feature over Meilisearch — complex analytics on search results:
+Meilisearch-এর উপর কিলার ফিচার — search result-এর উপর জটিল analytics:
 
 ```typescript
 const results = await es.search({
@@ -311,11 +319,11 @@ xpack.security.transport.ssl.enabled: true
 
 Sizing:
 
-- Each data node: 32GB RAM minimum for production (ES uses 50% for JVM heap by default)
-- JVM heap: `-Xms16g -Xmx16g` (max 32GB — beyond that G1GC pauses increase)
-- SSD storage: ES is I/O intensive
+- প্রতিটা data node: production-এর জন্য ন্যূনতম 32GB RAM (ES ডিফল্টে JVM heap-এর জন্য 50% ব্যবহার করে)
+- JVM heap: `-Xms16g -Xmx16g` (সর্বোচ্চ 32GB — এর বেশি হলে G1GC pause বাড়ে)
+- SSD storage: ES I/O-নিবিড়
 
-**Index lifecycle management (ILM)** for log indices:
+log index-এর জন্য **Index lifecycle management (ILM)**:
 
 ```typescript
 // Automatically move indices through hot → warm → cold → delete
@@ -349,7 +357,7 @@ await es.ilm.putLifecycle({
 });
 ```
 
-## Choosing Between Meilisearch and Elasticsearch
+## Meilisearch এবং Elasticsearch-এর মধ্যে বেছে নেওয়া
 
 ```
 Use Meilisearch when:

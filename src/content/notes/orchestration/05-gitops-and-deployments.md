@@ -1,9 +1,9 @@
 ---
 title: 'GitOps & Deployments'
-subtitle: "ArgoCD, Helm, progressive delivery with Argo Rollouts — cluster state as code, automated sync, and deployments that can't silently go wrong."
+subtitle: 'ArgoCD, Helm, Argo Rollouts দিয়ে progressive delivery — cluster state as code, automated sync, এবং এমন deployment যা নীরবে ভুল হয়ে যেতে পারে না।'
 chapter: 5
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['GitOps', 'ArgoCD', 'Helm', 'Argo Rollouts', 'canary', 'blue-green', 'CD']
 ---
 
@@ -13,29 +13,37 @@ topics: ['GitOps', 'ArgoCD', 'Helm', 'Argo Rollouts', 'canary', 'blue-green', 'C
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A version-controlled building blueprint: the blueprint in the vault (git) is always the source of truth. Any time a contractor makes an unauthorized change to the building (cluster drift), the system detects it and reverts to the blueprint. To make a legitimate change, you update the blueprint — not the building directly. ArgoCD is the system that enforces this.
+একটা version-controlled বিল্ডিং ব্লুপ্রিন্ট: ভল্টে রাখা ব্লুপ্রিন্ট (git)-ই সবসময় source of truth। কোনো contractor যখনই বিল্ডিংয়ে অননুমোদিত পরিবর্তন আনে (cluster drift), সিস্টেম সেটা ধরে ফেলে এবং ব্লুপ্রিন্টে ফিরিয়ে নেয়। বৈধ কোনো পরিবর্তন করতে হলে আপনি ব্লুপ্রিন্ট আপডেট করেন — সরাসরি বিল্ডিং নয়। ArgoCD হলো সেই সিস্টেম যা এটা enforce করে।
 
 </Callout>
 
+## গল্পে বুঝি
+
+সমরকন্দ শহরে নতুন একটা বড় লাইব্রেরি বানানো হচ্ছে। শহরের নিয়ম কড়া — বিল্ডিংয়ের আসল, অফিসিয়াল master blueprint শহরের আর্কাইভে তালাবদ্ধ থাকে, আর সেই blueprint-ই একমাত্র সত্য। কোন দেয়াল কোথায়, কোন দরজা কত চওড়া — সব ওখানে আঁকা। ইবনে সিনা হলেন প্রধান foreman। তার কাজ একটাই, কিন্তু সে সেটা অক্লান্তভাবে করে যায়: প্রতিদিন সে আসল বিল্ডিংটা ঘুরে দেখে আর আর্কাইভের master blueprint-এর সাথে মিলিয়ে দেখে, কোথাও এক চুল অমিল পেলেই সেটা ঠিক করে blueprint-এর মতো বানিয়ে দেয়।
+
+একদিন রাতে এক শ্রমিক নিজের বুদ্ধিতে একটা বাড়তি দেয়াল তুলে ফেলল, যেটা blueprint-এ নেই। সকালে ইবনে সিনা এসে দেখল বিল্ডিং আর blueprint মিলছে না — সঙ্গে সঙ্গে সে সেই অননুমোদিত দেয়াল ভেঙে আগের অবস্থায় ফিরিয়ে দিল। কেউ যদি সত্যিই একটা নতুন দেয়াল চায়, তার একটাই পথ: আগে আর্কাইভে গিয়ে master blueprint-এ পরিবর্তনটা আঁকতে হবে, আল-খোয়ারিজমির মতো একজন যাচাই করে অনুমোদন দেবে, তারপরই সেটা বিল্ডিংয়ে ফুটে উঠবে। এভাবে প্রতিটা পরিবর্তনের একটা পরিষ্কার ইতিহাস থেকে যায় — কে, কবে, কী বদলাল, সব blueprint-এই লেখা।
+
+এই গল্পটাই **GitOps**। আর্কাইভের master blueprint হলো আপনার **Git repo** — একমাত্র source of truth। foreman ইবনে সিনার ক্রমাগত বিল্ডিং আর blueprint মিলিয়ে দেখা হলো GitOps controller-এর **continuous reconciliation** — cluster-কে সবসময় Git-এর সাথে মেলানো। রাতের অননুমোদিত দেয়াল ভেঙে ফেলাটা হলো **drift** অটোমেটিক ঠিক করা — কেউ সরাসরি `kubectl edit` করলে controller সেটা Git-এর অবস্থায় revert করে দেয়। আর আগে blueprint আঁকতে হবে বলার মানে হলো, পরিবর্তন হয় শুধু **commit/PR** দিয়ে, সরাসরি cluster হাতে ধরে নয় — ফলে বিনামূল্যে পূর্ণ audit history পাওয়া যায়, আর rollback মানে শুধু আগের commit-এ ফিরে যাওয়া। বাস্তবে **Argo CD** বা **Flux** ঠিক এই foreman-এর কাজটাই করে — Git repo watch করে, drift ধরে, আর নীরবে cluster-কে source of truth-এর সাথে মিলিয়ে রাখে।
+
 ## GitOps Principles
 
-1. **Declarative** — desired state described in files (YAML manifests, Helm charts)
-2. **Versioned** — all state stored in git; every change is a commit
-3. **Pulled** — a controller in the cluster pulls from git (vs pushing from CI)
-4. **Reconciled** — the controller continuously ensures cluster state matches git
+1. **Declarative** — desired state ফাইলে বর্ণিত (YAML manifest, Helm chart)
+2. **Versioned** — সব state git-এ সংরক্ষিত; প্রতিটা পরিবর্তন একটা commit
+3. **Pulled** — ক্লাস্টারের ভেতরের একটা controller git থেকে pull করে (CI থেকে push করার বদলে)
+4. **Reconciled** — controller ক্রমাগত নিশ্চিত করে যে cluster state git-এর সাথে মেলে
 
-Benefits:
+সুবিধা:
 
-- Cluster state is always in git — audit log for free
-- Roll back a deployment = `git revert`
-- Drift is detected and corrected automatically
-- No kubectl access needed from CI/CD pipelines (reduced attack surface)
+- Cluster state সবসময় git-এ — বিনামূল্যে audit log
+- একটা deployment রোলব্যাক করা = `git revert`
+- Drift অটোমেটিক ধরা পড়ে এবং ঠিক হয়
+- CI/CD pipeline থেকে kubectl access লাগে না (attack surface কমে)
 
 ## Helm
 
-Helm is a package manager for Kubernetes — templates + values files = rendered manifests.
+Helm হলো Kubernetes-এর একটা package manager — template + values ফাইল = rendered manifest।
 
 ```
 my-chart/
@@ -116,7 +124,7 @@ helm list -n production
 
 ## ArgoCD
 
-ArgoCD watches a git repo and ensures the cluster matches. Any git commit triggers a sync.
+ArgoCD একটা git repo watch করে এবং নিশ্চিত করে যে ক্লাস্টার তার সাথে মেলে। যেকোনো git commit একটা sync ট্রিগার করে।
 
 ```bash
 # Install ArgoCD
@@ -161,9 +169,9 @@ spec:
       - CreateNamespace=true
 ```
 
-With `automated.selfHeal: true`, any manual `kubectl apply` or `kubectl edit` is immediately reverted to match git. Cluster state is fully controlled by git.
+`automated.selfHeal: true` থাকলে, যেকোনো ম্যানুয়াল `kubectl apply` বা `kubectl edit` সঙ্গে সঙ্গে git-এর সাথে মেলাতে revert হয়ে যায়। Cluster state পুরোপুরি git দিয়ে নিয়ন্ত্রিত।
 
-**ArgoCD ApplicationSet** — deploy the same app to multiple clusters/environments:
+**ArgoCD ApplicationSet** — একই app একাধিক cluster/environment-এ deploy করুন:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -199,17 +207,17 @@ spec:
 
 ## Progressive Delivery with Argo Rollouts
 
-Standard Kubernetes rolling updates are binary — you're either on old or new. Argo Rollouts adds:
+স্ট্যান্ডার্ড Kubernetes rolling update বাইনারি — আপনি হয় পুরনো নয় নতুনে। Argo Rollouts এর সাথে যোগ করে:
 
-- **Canary** — send X% of traffic to new version, watch metrics, gradually increase
-- **Blue-green** — run both versions simultaneously, switch traffic atomically
+- **Canary** — নতুন version-এ X% traffic পাঠান, metric দেখুন, ধীরে ধীরে বাড়ান
+- **Blue-green** — দুই version একসাথে চালান, atomic-ভাবে traffic switch করুন
 
 ```bash
 kubectl apply -n argo-rollouts \
   -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
 ```
 
-**Canary with analysis:**
+**analysis সহ Canary:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -275,7 +283,7 @@ spec:
             }[5m]))
 ```
 
-If the analysis fails: Argo Rollouts automatically rolls back. No human intervention.
+analysis ফেইল করলে: Argo Rollouts অটোমেটিক রোলব্যাক করে। কোনো মানুষের হস্তক্ষেপ লাগে না।
 
 ```bash
 # Watch rollout progress
@@ -325,8 +333,8 @@ jobs:
       # ArgoCD detects the git change and syncs automatically
 ```
 
-The CI pipeline never touches `kubectl` or the cluster directly. It only updates git. ArgoCD handles the rest. This means:
+CI pipeline কখনো সরাসরি `kubectl` বা ক্লাস্টার স্পর্শ করে না। এটা শুধু git আপডেট করে। বাকিটা ArgoCD সামলায়। এর মানে:
 
-- CI doesn't need cluster credentials
-- Every deploy is a git commit (full audit log)
-- Rollback = `git revert` + ArgoCD syncs
+- CI-এর cluster credential লাগে না
+- প্রতিটা deploy একটা git commit (পূর্ণ audit log)
+- Rollback = `git revert` + ArgoCD sync করে

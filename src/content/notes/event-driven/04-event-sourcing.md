@@ -1,9 +1,9 @@
 ---
 title: 'Event Sourcing'
-subtitle: 'Store events as the primary record instead of current state — rebuild any past state by replaying the event log.'
+subtitle: 'Current state-এর বদলে events-কে প্রধান রেকর্ড হিসেবে store করুন — event log আবার replay করে যেকোনো অতীত state ফিরে গড়ুন।'
 chapter: 4
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['event sourcing', 'event store', 'aggregates', 'projections', 'snapshots']
 ---
 
@@ -13,17 +13,25 @@ topics: ['event sourcing', 'event store', 'aggregates', 'projections', 'snapshot
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A bank account statement: your bank doesn't store your current balance and erase the history. It stores every transaction — deposits, withdrawals, fees — and your current balance is derived by summing them. Every past state is recoverable. If there's a dispute, you can replay exactly what happened and when.
+একটা bank account statement: আপনার ব্যাংক আপনার current balance store করে ইতিহাস মুছে ফেলে না। এটা প্রতিটি transaction store করে — deposit, withdrawal, fee — আর আপনার current balance এদের যোগফল থেকে বের করা হয়। প্রতিটি অতীত state পুনরুদ্ধারযোগ্য। কোনো বিরোধ হলে, ঠিক কী ঘটেছিল আর কখন ঘটেছিল তা আপনি হুবহু replay করতে পারেন।
 
 </Callout>
 
-## The Core Idea
+## গল্পে বুঝি
 
-Traditional persistence stores current state — a row in a database with the latest values. When you update the row, the previous state is gone.
+স্টেডিয়ামের এক কোণে বসে আছেন স্কোরার ফাতিমা আল-ফিহরি। তার হাতে একটা মোটা স্কোরবুক। ম্যাচ শুরু হতেই তিনি শুধু "স্কোর ১২০" লিখে রাখেন না — তিনি প্রতিটা বল যেভাবে হয়েছে হুবহু সেভাবে লিখে যান: "১ম বল — ৪ রান; ২য় বল — উইকেট; ৩য় বল — ১ রান; ৪র্থ বল — ওয়াইড, ১ রান..."। কোনো বলই বাদ যায় না, আর একবার লেখা কোনো লাইন তিনি কখনো মোছেন না বা বদলান না — নতুন বল হলে শুধু নিচে নতুন লাইন যোগ হয়।
 
-Event sourcing stores the sequence of events that led to the current state. Current state is derived by replaying the events.
+এখন কেউ যদি জিজ্ঞেস করে "এই মুহূর্তে স্কোর কত?" বা "ইবনে সিনার ব্যক্তিগত রান কত?" বা "রান-রেট কত?" — ফাতিমা আলাদা করে এসব কোথাও লিখে রাখেননি। তিনি শুরু থেকে বলগুলো একটার পর একটা যোগ করে বের করে ফেলেন। আম্পায়ার যদি হঠাৎ প্রশ্ন তোলেন "১৫তম ওভার শেষে ঠিক কী অবস্থা ছিল?" — ফাতিমা প্রথম বল থেকে ওই বল পর্যন্ত আবার পড়ে গিয়ে সেই মুহূর্তের হুবহু অবস্থা ফিরে গড়তে পারেন। প্রতিটা রান কোথা থেকে এলো, তার পুরো হিসাব মেলানো যায়।
+
+এই স্কোরবুকটাই আসলে **event sourcing**। প্রতিটা বল আলাদা করে ক্রমে লিখে রাখা, আর কখনো না মোছা — এটাই **append-only log**, আর সেটাই একমাত্র সত্য উৎস (source of truth)। শুধু সর্বশেষ স্কোরটা না লিখে প্রতিটা ডেলিভারি লেখা মানে current state কখনো সরাসরি store করা হয় না — বরং শুরু থেকে বল **replay** করে current state বের করা হয়। আর যেকোনো অতীত মুহূর্ত হুবহু ফিরে গড়তে পারা, প্রতিটা রানের হিসাব মেলাতে পারা — এটাই time-travel আর পূর্ণ **audit** trail। বাস্তবে financial ledger, order-processing বা ব্যাংকিং সিস্টেমে ঠিক এভাবেই প্রতিটা event জমিয়ে রাখা হয়, যাতে পরে যেকোনো বিরোধে ঠিক কী কখন ঘটেছিল তা replay করে দেখা যায়।
+
+## মূল ধারণা
+
+প্রথাগত persistence current state store করে — database-এ একটা row যেখানে সর্বশেষ value থাকে। আপনি যখন row-টা update করেন, আগের state হারিয়ে যায়।
+
+Event sourcing সেই events-এর ক্রম store করে যা current state-এ পৌঁছে দিয়েছিল। Current state events আবার replay করে বের করা হয়।
 
 ```typescript
 // Traditional: store current state
@@ -41,9 +49,9 @@ Event sourcing stores the sequence of events that led to the current state. Curr
 // Current state is derived by replaying these three events
 ```
 
-## Aggregates and Event Application
+## Aggregate ও Event Application
 
-An **aggregate** is the domain object that owns the event stream. Its current state is rebuilt by applying each event in sequence.
+একটা **aggregate** হলো সেই domain object যে event stream-টার মালিক। এর current state প্রতিটি event ক্রমে apply করে আবার গড়া হয়।
 
 ```typescript
 interface OrderEvent {
@@ -112,9 +120,9 @@ class Order {
 }
 ```
 
-## The Event Store
+## Event Store
 
-An append-only store for events. Each aggregate has its own stream identified by aggregate type + ID.
+Events-এর জন্য একটা append-only store। প্রতিটি aggregate-এর নিজস্ব stream আছে যা aggregate type + ID দিয়ে চিহ্নিত।
 
 ```typescript
 interface StoredEvent {
@@ -186,7 +194,7 @@ CREATE INDEX ON events (created_at);                  -- for projections catchin
 
 ## Optimistic Concurrency
 
-Two requests try to modify the same aggregate simultaneously. Optimistic concurrency prevents the second write from overwriting the first:
+দুটো request একই aggregate একসাথে পাল্টানোর চেষ্টা করে। Optimistic concurrency দ্বিতীয় write-কে প্রথমটাকে overwrite করা থেকে আটকায়:
 
 ```typescript
 class OrderService {
@@ -215,7 +223,7 @@ class OrderService {
 
 ## Projections
 
-A projection is a read model built by consuming the event stream. Different projections answer different questions from the same event history.
+একটা projection হলো একটা read model যা event stream consume করে তৈরি হয়। একই event ইতিহাস থেকে ভিন্ন projection ভিন্ন প্রশ্নের উত্তর দেয়।
 
 ```typescript
 class OrderSummaryProjection {
@@ -266,11 +274,11 @@ async function rebuildOrderSummaries(): Promise<void> {
 }
 ```
 
-**Key advantage:** You can create new projections retroactively by replaying history. Added a new analytics requirement? Build a new projection from existing events — no data lost.
+**মূল সুবিধা:** আপনি ইতিহাস replay করে পিছিয়ে গিয়ে নতুন projection তৈরি করতে পারেন। নতুন একটা analytics দরকার হলো? বিদ্যমান events থেকে একটা নতুন projection গড়ুন — কোনো ডেটা হারায় না।
 
 ## Snapshots
 
-Loading thousands of events to rebuild an aggregate is slow. Snapshots checkpoint the aggregate state periodically:
+একটা aggregate আবার গড়তে হাজার হাজার event load করা ধীর। Snapshot পর্যায়ক্রমে aggregate state-এর checkpoint নেয়:
 
 ```typescript
 interface Snapshot {
@@ -316,19 +324,19 @@ async function maybeSnapshot(orderId: string, currentVersion: number): Promise<v
 }
 ```
 
-## When to Use Event Sourcing
+## কখন Event Sourcing ব্যবহার করবেন
 
-Event sourcing adds real complexity. Use it when:
+Event sourcing সত্যিকারের জটিলতা যোগ করে। এটা ব্যবহার করুন যখন:
 
-- **Audit log is mandatory** — financial systems, healthcare, compliance
-- **Business wants temporal queries** — "what was the state of this order on Tuesday?"
-- **Multiple read models needed** — events as the single source feeding many projections
-- **Debugging production issues** — replay events to reproduce bugs exactly
+- **Audit log বাধ্যতামূলক** — financial সিস্টেম, healthcare, compliance
+- **Business temporal query চায়** — "মঙ্গলবার এই order-এর state কী ছিল?"
+- **একাধিক read model দরকার** — events একটা single source হিসেবে অনেক projection-কে খাওয়াচ্ছে
+- **Production issue debug করা** — bug হুবহু reproduce করতে events replay করা
 
-Don't use it for:
+এটা ব্যবহার করবেন না:
 
-- Simple CRUD with no audit requirements
-- Small teams without experience with the pattern
-- Systems where the operational complexity of rebuilding projections is too high
+- Audit-এর প্রয়োজন নেই এমন সাধারণ CRUD-এর জন্য
+- প্যাটার্নটার অভিজ্ঞতা নেই এমন ছোট team-এর জন্য
+- যেসব সিস্টেমে projection আবার গড়ার operational জটিলতা অনেক বেশি
 
-Event sourcing pairs naturally with CQRS and pub/sub: events are stored in the event store, published to a bus, and consumed by projection builders — all consistent, all from one write.
+Event sourcing স্বাভাবিকভাবেই CQRS আর pub/sub-এর সাথে জোড় বাঁধে: events event store-এ store করা হয়, একটা bus-এ publish করা হয়, আর projection builder-রা consume করে — সবই consistent, সবই একটা write থেকে।

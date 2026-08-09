@@ -1,9 +1,9 @@
 ---
 title: 'Load Balancers'
-subtitle: 'Layer 4 vs Layer 7, algorithms, health checks, connection draining — the mechanics of distributing traffic across instances.'
+subtitle: 'Layer 4 বনাম Layer 7, algorithm, health check, connection draining — একাধিক instance জুড়ে ট্রাফিক বিতরণের কারিগরি।'
 chapter: 2
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['load balancer', 'L4', 'L7', 'round robin', 'health checks', 'connection draining']
 ---
 
@@ -13,17 +13,25 @@ topics: ['load balancer', 'L4', 'L7', 'round robin', 'health checks', 'connectio
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A maitre d' at a restaurant with multiple dining rooms: they don't let all guests rush to the same room while others sit empty. They direct each party to an available room with capacity, check that rooms are actually open (health checks), and when a room needs to close, they stop seating new guests but let current diners finish (connection draining).
+একাধিক ডাইনিং রুম আছে এমন রেস্তোরাঁর একজন maitre d': তারা সব অতিথিকে একই রুমে হুড়মুড় করে ঢুকতে দেয় না যখন বাকি রুমগুলো খালি পড়ে থাকে। তারা প্রতিটা দলকে একটা খালি জায়গাওয়ালা রুমে পাঠায়, যাচাই করে যে রুমগুলো আসলেই খোলা আছে (health check), এবং যখন একটা রুম বন্ধ করতে হয়, তখন নতুন অতিথি বসানো বন্ধ করে দেয় কিন্তু এখনকার অতিথিদের খাওয়া শেষ করতে দেয় (connection draining)।
 
 </Callout>
 
-## Layer 4 vs Layer 7
+## গল্পে বুঝি
 
-**Layer 4 (TCP/UDP):** Routes based on IP address and port. Fast, minimal overhead, blind to HTTP content.
+শহরের রেলস্টেশনের সামনে একটা টাক্সি-স্ট্যান্ড, আর সেখানে দাঁড়িয়ে আছেন ডিসপ্যাচার আল-খোয়ারিজমি। ট্রেন থেকে নামা যাত্রীরা একটা জায়গাতেই এসে জড়ো হয়, কিন্তু কেউ নিজে থেকে ট্যাক্সি বেছে নেয় না — আল-খোয়ারিজমি প্রতিটা যাত্রীকে হাত দেখিয়ে পরের খালি ট্যাক্সিতে তুলে দেন। কোনো ট্যাক্সি একা বসে থাকে না, আবার একটা ট্যাক্সির ঘাড়েই সব যাত্রীর ভিড় জমে না।
 
-**Layer 7 (HTTP/HTTPS):** Routes based on HTTP headers, URLs, cookies, and body content. Smarter routing but more overhead.
+সাধারণ দিনে তিনি সহজভাবেই ভাগ করেন — এক নম্বর গাড়ি, তারপর দুই, তারপর তিন, তারপর আবার এক নম্বর, ঘুরে ঘুরে ক্রম মেনে। কিন্তু ভিড়ের সময় তিনি লক্ষ করেন কোন ট্যাক্সির সামনে সবচেয়ে ছোট লাইন — লম্বা দূরত্বের ভাড়া পাওয়া গাড়িটা ফিরতে দেরি করবে, তাই পরের যাত্রীকে তিনি হালকা-চাপে থাকা গাড়িটায় পাঠান। আবার ইবনে সিনার গাড়িটার ইঞ্জিন যদি হঠাৎ বিগড়ে যায়, আল-খোয়ারিজমি সঙ্গে সঙ্গে ওই গাড়িতে আর যাত্রী পাঠানো বন্ধ করে দেন — নয়তো যাত্রী গিয়ে আটকে বসে থাকবে। ভিড় বাড়লে ফাতিমা আল-ফিহরি আরও কয়েকটা নতুন ট্যাক্সি স্ট্যান্ডে যোগ করেন, আর একই ডিসপ্যাচার নির্দ্বিধায় সবগুলোর মধ্যে যাত্রী ছড়িয়ে দিতে থাকেন।
+
+এই ডিসপ্যাচারই হলো **load balancer**, প্রতিটা ট্যাক্সি একেকটা **backend** server, আর যাত্রী তুলে দেওয়ার নিয়মটাই algorithm। ঘুরে ঘুরে ক্রম মেনে পাঠানো হলো **round-robin**, আর যে গাড়ির লাইন সবচেয়ে ছোট তাকে পাঠানো হলো **least-connections**। বিগড়ে যাওয়া গাড়িকে বাদ দেওয়াটাই **health check** ফেল করা backend সরিয়ে দেওয়া, আর নতুন ট্যাক্সি যোগ করাটাই horizontal scale। বাস্তবে nginx, HAProxy বা AWS ALB ঠিক এভাবেই কাজ করে — একটা এন্ট্রি-পয়েন্টে ট্রাফিক এসে জমা হয়, load balancer সেটা সুস্থ backend-গুলোর মধ্যে বিলি করে, আর server যোগ করলেই সেই একই load balancer বাড়তি চাপ সামলে নেয়।
+
+## Layer 4 বনাম Layer 7
+
+**Layer 4 (TCP/UDP):** IP address এবং port-এর ভিত্তিতে route করে। দ্রুত, কম overhead, HTTP content সম্পর্কে অন্ধ।
+
+**Layer 7 (HTTP/HTTPS):** HTTP header, URL, cookie, এবং body content-এর ভিত্তিতে route করে। বুদ্ধিমান routing কিন্তু বেশি overhead।
 
 ```
 L4 Load Balancer:
@@ -38,17 +46,17 @@ L7 Load Balancer:
   Can do: path-based routing, header insertion, SSL termination, request rewriting
 ```
 
-Most production setups use L7. nginx, HAProxy, AWS ALB, and Traefik are all L7. AWS NLB is L4.
+বেশিরভাগ production setup L7 ব্যবহার করে। nginx, HAProxy, AWS ALB, এবং Traefik সবই L7। AWS NLB হলো L4।
 
-**When to use L4:**
+**কখন L4 ব্যবহার করবেন:**
 
-- Non-HTTP protocols (gRPC in raw TCP mode, database proxies)
-- Extreme performance requirements (1M+ connections/second)
-- When you need to preserve client IP through TLS termination
+- Non-HTTP protocol (raw TCP mode-এ gRPC, database proxy)
+- চরম performance-এর প্রয়োজন (1M+ connection/second)
+- যখন TLS termination-এর মধ্য দিয়ে client IP সংরক্ষণ করা দরকার
 
-## Algorithms
+## Algorithm
 
-**Round Robin** — distribute requests sequentially across backends. Simple, works well when requests are similar in cost.
+**Round Robin** — request-গুলো ক্রমানুসারে backend-দের মধ্যে বিতরণ করে। সহজ, ভালো কাজ করে যখন request-গুলোর খরচ প্রায় একই রকম।
 
 ```nginx
 upstream backend {
@@ -59,7 +67,7 @@ upstream backend {
 }
 ```
 
-**Least Connections** — send to the backend with fewest active connections. Better when request duration varies widely (some requests take 10ms, some take 5s).
+**Least Connections** — সবচেয়ে কম active connection আছে এমন backend-এ পাঠায়। request duration-এ বড় তারতম্য থাকলে ভালো (কিছু request নেয় 10ms, কিছু নেয় 5s)।
 
 ```nginx
 upstream backend {
@@ -69,7 +77,7 @@ upstream backend {
 }
 ```
 
-**Weighted Round Robin** — send proportionally more traffic to higher-capacity instances. Useful when instances have different hardware specs.
+**Weighted Round Robin** — বেশি ক্ষমতাসম্পন্ন instance-এ আনুপাতিকভাবে বেশি ট্রাফিক পাঠায়। instance-গুলোর hardware spec আলাদা হলে কাজে লাগে।
 
 ```nginx
 upstream backend {
@@ -78,7 +86,7 @@ upstream backend {
 }
 ```
 
-**IP Hash** — route the same client IP to the same backend. Provides soft session affinity (not recommended as a solution to stateful apps — see previous chapter).
+**IP Hash** — একই client IP-কে একই backend-এ route করে। নরম session affinity দেয় (stateful অ্যাপের সমাধান হিসেবে সুপারিশ করা হয় না — আগের চ্যাপ্টার দেখুন)।
 
 ```nginx
 upstream backend {
@@ -88,13 +96,13 @@ upstream backend {
 }
 ```
 
-**Random** — pick a backend at random. Statistically equivalent to round robin at scale, but simpler to implement and avoids coordinating state across load balancer instances.
+**Random** — এলোমেলোভাবে একটা backend বেছে নেয়। বড় স্কেলে round robin-এর পরিসংখ্যানগতভাবে সমতুল্য, কিন্তু বাস্তবায়ন সহজ এবং load balancer instance-গুলোর মধ্যে state সমন্বয় করা এড়ায়।
 
 ## Health Checks
 
-The load balancer must stop sending traffic to unhealthy backends automatically.
+Load balancer-কে অবশ্যই স্বয়ংক্রিয়ভাবে unhealthy backend-এ ট্রাফিক পাঠানো বন্ধ করতে হবে।
 
-**Passive health checks** (all open-source nginx) — mark a backend unhealthy after N consecutive failures:
+**Passive health check** (সব open-source nginx) — N বার পরপর ব্যর্থ হলে একটা backend-কে unhealthy চিহ্নিত করে:
 
 ```nginx
 upstream backend {
@@ -104,7 +112,7 @@ upstream backend {
 }
 ```
 
-**Active health checks** (nginx Plus, HAProxy, Traefik) — proactively probe backends:
+**Active health check** (nginx Plus, HAProxy, Traefik) — সক্রিয়ভাবে backend-দের probe করে:
 
 ```nginx
 # nginx Plus
@@ -146,11 +154,11 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-Design your health check to reflect actual readiness. An instance that's up but can't reach the database shouldn't receive traffic.
+আপনার health check-কে এমনভাবে ডিজাইন করুন যাতে এটা আসল readiness প্রতিফলিত করে। যে instance চালু আছে কিন্তু ডেটাবেসে পৌঁছাতে পারছে না, সেটার ট্রাফিক পাওয়া উচিত নয়।
 
 ## Connection Draining
 
-When you remove a backend (deploy, scale down), in-flight requests must complete. Connection draining (or "deregistration delay") holds the backend in a "draining" state: no new connections sent, existing connections allowed to finish.
+যখন আপনি একটা backend সরান (deploy, scale down), তখন চলমান request-গুলোকে শেষ হতে হবে। Connection draining (বা "deregistration delay") backend-টাকে একটা "draining" অবস্থায় ধরে রাখে: কোনো নতুন connection পাঠানো হয় না, বিদ্যমান connection-গুলোকে শেষ হতে দেওয়া হয়।
 
 ```
 Normal:   [request] → backend
@@ -167,7 +175,7 @@ aws elbv2 modify-target-group-attributes \
   --attributes Key=deregistration_delay.timeout_seconds,Value=30
 ```
 
-**Application-side: graceful shutdown must align with drain timeout:**
+**Application-side: graceful shutdown-কে drain timeout-এর সাথে মিলতে হবে:**
 
 ```typescript
 // SIGTERM: stop accepting new requests, finish existing ones
@@ -189,7 +197,7 @@ process.on('SIGTERM', async () => {
 
 ## SSL Termination
 
-The load balancer handles TLS — backends communicate in plain HTTP on the internal network.
+Load balancer TLS সামলায় — backend-গুলো internal network-এ plain HTTP-তে যোগাযোগ করে।
 
 ```nginx
 server {
@@ -213,7 +221,7 @@ server {
 }
 ```
 
-**Preserving client IP:** After SSL termination, backends see the load balancer's IP, not the client's. Use `X-Forwarded-For` header:
+**Client IP সংরক্ষণ:** SSL termination-এর পর, backend-গুলো load balancer-এর IP দেখে, client-এর নয়। `X-Forwarded-For` header ব্যবহার করুন:
 
 ```typescript
 app.set('trust proxy', 1); // trust first proxy (the load balancer)
@@ -223,7 +231,7 @@ app.get('/log', (req, res) => {
 });
 ```
 
-## nginx as a Load Balancer — Full Config
+## Load Balancer হিসেবে nginx — সম্পূর্ণ Config
 
 ```nginx
 upstream api_servers {
@@ -267,9 +275,9 @@ server {
 
 ## Load Balancer High Availability
 
-A single load balancer is a single point of failure. Solutions:
+একটা মাত্র load balancer হলো একটা single point of failure। সমাধান:
 
-**Active-passive LB pair (traditional):**
+**Active-passive LB pair (প্রথাগত):**
 
 ```
 Primary LB → active, handles traffic
@@ -285,4 +293,4 @@ api.myapp.com → LB-1 (us-east-1a)
 Route53 health checks remove failed LBs automatically
 ```
 
-**Managed load balancers** (AWS ALB, GCP Load Balancing, Cloudflare) handle their own HA internally — the right choice for most teams. Don't build LB HA when a managed service does it for you.
+**Managed load balancer** (AWS ALB, GCP Load Balancing, Cloudflare) নিজেদের HA ভেতরে ভেতরেই সামলায় — বেশিরভাগ টিমের জন্য সঠিক পছন্দ। যখন একটা managed service আপনার হয়ে কাজটা করে দেয়, তখন নিজে LB HA বানাবেন না।

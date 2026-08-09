@@ -1,9 +1,9 @@
 ---
-title: 'Sending webhooks'
-subtitle: 'End-to-end producer in Go in sixty lines. By the end you have a binary that POSTs JSON to a URL, handles non-2xx, and times out cleanly. Signing, retries, and the outbox come later.'
+title: 'Webhooks পাঠানো'
+subtitle: 'Go-তে ষাট লাইনে end-to-end producer। শেষে আপনার হাতে একটা binary থাকবে যা একটা URL-এ JSON POST করে, non-2xx সামলায়, আর পরিষ্কারভাবে timeout করে। Signing, retries, আর outbox পরে আসছে।'
 chapter: 3
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['webhooks', 'go', 'http client', 'producer']
 ---
 
@@ -11,33 +11,41 @@ topics: ['webhooks', 'go', 'http client', 'producer']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-This chapter ships a working webhook producer. Real Go code. We focus only on the _sending_ — signing in chapter 4, retries in chapter 6, the outbox pattern in chapter 10. By the end you have a tiny program that delivers an event to any URL and reports success or failure honestly.
+এই অধ্যায়ে একটা কাজ করা webhook producer ship হয়। আসল Go কোড। আমরা শুধু _পাঠানোর_ দিকে মন দিই — অধ্যায় ৪-এ signing, অধ্যায় ৬-এ retries, অধ্যায় ১০-এ outbox pattern। শেষে আপনার হাতে একটা ছোট program থাকবে যা যেকোনো URL-এ event deliver করে আর সততার সাথে success বা failure রিপোর্ট করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Sending a webhook is like posting a certified letter — you send it, get a receipt, but the recipient confirms delivery separately.
+একটা webhook পাঠানো অনেকটা একটা registered চিঠি পোস্ট করার মতো — আপনি পাঠান, একটা receipt পান, কিন্তু প্রাপক আলাদাভাবে delivery নিশ্চিত করে।
 
 </Callout>
 
-## What you need
+## গল্পে বুঝি
 
-- Go 1.22+ (`go version`).
-- A receiver — for now, **webhook.site** gives you a free public URL that displays incoming POSTs in a browser. We use that for testing.
+ফাতিমা আল-ফিহরি একটা কুরিয়ার অফিস চালান। ইবনে সিনার নামে একটা জরুরি নোটিশ-স্লিপ এসেছে, আর তাঁর খাতায় লেখা আছে ইবনে সিনার রেজিস্টার্ড করা ঠিকানা — কোন গলি, কোন বাড়ি। ফাতিমা একজন রানারের হাতে স্লিপটা তুলে দেন। রানার সেই ঠিকানায় হেঁটে যায়, দরজায় গিয়ে কড়া নাড়ে, আর একটা নিয়ম মেনে চলে — একটা যুক্তিসংগত সময় দাঁড়িয়ে অপেক্ষা করবে, তার বেশি নয়।
+
+সকালে ইবনে সিনা নিজেই দরজা খুললেন, স্লিপ নিলেন, আর রিসিট-বইয়ে সই করে দিলেন — রানার খুশিমনে ফিরে গিয়ে "ডেলিভার্ড" লিখল। কিন্তু পরদিন আল-খোয়ারিজমির ঠিকানায় গিয়ে দেখা গেল অন্য চিত্র: একবার এত ডাকাডাকির পরও ভেতর থেকে কেউ সাড়া দিল না, রানার নির্দিষ্ট সময় দাঁড়িয়ে থেকে ফিরে এল; আরেকবার ঠিকানাটাই ভুল বেরোল, বাড়ির লোক স্লিপ নিতে সাফ মানা করে দিল। দুই ক্ষেত্রেই রানার খাতায় "ব্যর্থ চেষ্টা — পরে আবার" টুকে রাখল।
+
+গল্পটা হুবহু webhook পাঠানো। রানারের স্লিপ নিয়ে রেজিস্টার্ড ঠিকানায় হেঁটে যাওয়া = provider-এর subscriber-এর URL-এ payload নিয়ে POST করা; ইবনে সিনার সই করে নেওয়া = একটা 2xx success response, মানে ডেলিভার্ড; নির্দিষ্ট সময়ে কেউ সাড়া না দেওয়া = timeout; আর ভুল বা মানা-করা ঠিকানা = non-2xx failure — timeout আর non-2xx দুটোই retry-র জন্য চিহ্নিত। বাস্তবেও তাই: Stripe বা GitHub আপনার event পাঠানোর সময় ঠিক এভাবেই একটা timeout সেট করে POST করে, 2xx পেলে সফল ধরে, না পেলে পরে backoff দিয়ে আবার চেষ্টা করে।
+
+## যা যা লাগবে
+
+- Go 1.22+ (`go version`)।
+- একটা receiver — আপাতত, **webhook.site** আপনাকে একটা free public URL দেয় যা browser-এ আসা POST দেখায়। আমরা টেস্টিংয়ের জন্য সেটা ব্যবহার করি।
 
 ```bash
 mkdir webhook-sender && cd webhook-sender
 go mod init example.com/webhook-sender
 ```
 
-No dependencies for the basic sender. We will add `oklog/ulid/v2` for IDs.
+Basic sender-এর জন্য কোনো dependency নেই। আমরা ID-র জন্য `oklog/ulid/v2` যোগ করব।
 
 ```bash
 go get github.com/oklog/ulid/v2
 ```
 
-## The minimum viable sender
+## Minimum viable sender
 
 ```go
 // sender.go
@@ -149,31 +157,31 @@ WEBHOOK_URL=https://webhook.site/your-id-here go run .
 # 2026/05/04 12:00:01 delivered evt_01HF5J7XK4TG6N2VRT9P0M3DZ4
 ```
 
-Refresh webhook.site — you see the POST, the headers, the JSON body. End-to-end.
+webhook.site refresh করুন — আপনি POST, header, JSON body দেখতে পাবেন। End-to-end।
 
-That is roughly 60 lines for a working sender. The shape is universal: build an event, marshal, POST, check status, surface errors.
+একটা কাজ করা sender-এর জন্য এটা মোটামুটি ৬০ লাইন। গড়নটা সর্বজনীন: একটা event বানাও, marshal করো, POST করো, status check করো, error surface করো।
 
-## What to read carefully
+## যা মন দিয়ে পড়বেন
 
-**`http.Client` with explicit `Timeout`.** The default Go HTTP client has _no timeout_. A receiver that accepts the connection and never responds will hang your sender forever. Always set one. 10 seconds is generous; 5 is more aggressive.
+**explicit `Timeout` সহ `http.Client`।** Go-র default HTTP client-এর _কোনো timeout নেই_। যে receiver connection accept করে অথচ কখনও response দেয় না, সে আপনার sender-কে চিরকাল ঝুলিয়ে রাখবে। সবসময় একটা set করুন। ১০ সেকেন্ড উদার; ৫ আরও aggressive।
 
-**`Transport` with idle conn pooling.** Reusing TCP connections to the same host avoids the handshake on each call. For a sender that delivers thousands of events to the same receiver, this is meaningful. For one event, irrelevant.
+**idle conn pooling সহ `Transport`।** একই host-এ TCP connection reuse করলে প্রতি call-এ handshake এড়ানো যায়। যে sender একই receiver-এ হাজার হাজার event deliver করে, তার জন্য এটা অর্থবহ। একটা event-এর জন্য অপ্রাসঙ্গিক।
 
-**`io.Copy(io.Discard, resp.Body)`.** A subtle Go gotcha: if you don't drain the response body, the connection cannot be reused from the pool. The library sees an in-progress response and opens a new connection next call. Always drain, even on success.
+**`io.Copy(io.Discard, resp.Body)`।** একটা সূক্ষ্ম Go gotcha: response body drain না করলে pool থেকে connection reuse করা যায় না। library একটা in-progress response দেখে আর পরের call-এ একটা নতুন connection খোলে। সবসময় drain করুন, success-এও।
 
-**Limited error body capture.** `io.LimitReader(resp.Body, 512)` reads at most 512 bytes from the error response. Without the limit, a buggy server returning megabytes of HTML could OOM your sender. Cap it.
+**সীমিত error body capture।** `io.LimitReader(resp.Body, 512)` error response থেকে সর্বোচ্চ 512 byte পড়ে। limit ছাড়া, একটা buggy server megabyte-খানেক HTML ফেরত দিলে আপনার sender OOM হতে পারে। Cap করুন।
 
-**Context with timeout.** The client timeout is one safety net; the request context is another. Either firing aborts the call. Belt-and-braces.
+**timeout সহ Context।** client timeout একটা safety net; request context আরেকটা। যেকোনো একটা trigger হলে call abort হয়। Belt-and-braces।
 
-## Choosing the timeout
+## Timeout বেছে নেওয়া
 
-Three tiers worth thinking through:
+তিন tier ভেবে দেখার মতো:
 
-- **Connect timeout** — how long to wait for TCP+TLS to complete. ~3 seconds is plenty.
-- **Request timeout** — total time including read. ~10 seconds covers most receivers.
-- **Per-event budget** — for a worker queue, how long do you spend on one event before giving up and retrying later? ~30 seconds.
+- **Connect timeout** — TCP+TLS complete হতে কতক্ষণ অপেক্ষা। ~৩ সেকেন্ডই যথেষ্ট।
+- **Request timeout** — read সহ মোট সময়। ~১০ সেকেন্ড বেশিরভাগ receiver কভার করে।
+- **Per-event budget** — একটা worker queue-এর জন্য, একটা event-এ কতক্ষণ কাটিয়ে হাল ছেড়ে পরে retry করবেন? ~৩০ সেকেন্ড।
 
-Go's `http.Client.Timeout` is the total request timeout. For separate connect/read timeouts, configure them on the `Transport`:
+Go-র `http.Client.Timeout` হলো মোট request timeout। আলাদা connect/read timeout-এর জন্য, সেগুলো `Transport`-এ configure করুন:
 
 ```go
 &http.Transport{
@@ -186,11 +194,11 @@ Go's `http.Client.Timeout` is the total request timeout. For separate connect/re
 }
 ```
 
-For most production senders, the simpler `Timeout: 10 * time.Second` on the client is enough.
+বেশিরভাগ production sender-এর জন্য, client-এ সরল `Timeout: 10 * time.Second`-ই যথেষ্ট।
 
-## Distinguishing transient vs permanent failures
+## Transient vs permanent failure আলাদা করা
 
-Not all failures should be retried. Receiver returns 410 Gone? The endpoint is dead; retrying does nothing. Returns 500? Probably transient — try again later.
+সব failure retry করা উচিত না। receiver 410 Gone return করল? endpoint মৃত; retry করে কিছু হয় না। 500 return করল? সম্ভবত transient — পরে আবার চেষ্টা করুন।
 
 ```go
 type DeliveryResult struct {
@@ -217,53 +225,53 @@ func classify(statusCode int, err error) DeliveryResult {
 }
 ```
 
-A real classifier will be more nuanced (chapter 6 expands on retry semantics). The principle: 4xx is usually permanent (the payload itself is the problem); 5xx and network errors are transient.
+একটা আসল classifier আরও সূক্ষ্ম হবে (অধ্যায় ৬ retry semantics বিস্তারিত করে)। মূল নীতি: 4xx সাধারণত permanent (payload নিজেই সমস্যা); 5xx আর network error transient।
 
 <Callout type="warn">
 
-**Be conservative about marking errors permanent.** A 404 from a misconfigured receiver looks the same as a 404 from a dead endpoint. If you delete events too eagerly, customers find their integration broken with no recourse. When in doubt, retry.
+**error-কে permanent হিসেবে mark করায় রক্ষণশীল হোন।** একটা misconfigured receiver থেকে আসা 404 আর একটা মৃত endpoint থেকে আসা 404 একই দেখতে। আপনি খুব আগ্রহভরে event delete করলে customer-রা তাদের integration ভাঙা অবস্থায় পায়, কোনো উপায় ছাড়াই। সন্দেহ হলে, retry করুন।
 
 </Callout>
 
-## What to log
+## যা log করবেন
 
-Per delivery attempt, structured log:
+প্রতিটা delivery attempt-এ, structured log:
 
 ```
 webhook-deliver event_id=evt_... type=payment.succeeded url=https://... status=200 dur=243ms
 webhook-deliver event_id=evt_... type=payment.succeeded url=https://... status=502 dur=11s err="non-2xx"
 ```
 
-The fields:
+field-গুলো:
 
-- **`event_id`** — for grepping all attempts at a single event.
-- **`type`** — for per-type metrics.
-- **`url`** — for per-receiver metrics. Strip query strings if they contain secrets.
-- **`status`** + **`dur`** — for latency and error tracking.
-- **`err`** — short error description; full stack trace at debug level only.
+- **`event_id`** — একটা event-এর সব attempt grep করার জন্য।
+- **`type`** — per-type metric-এর জন্য।
+- **`url`** — per-receiver metric-এর জন্য। query string secret ধারণ করলে সেগুলো strip করুন।
+- **`status`** + **`dur`** — latency আর error tracking-এর জন্য।
+- **`err`** — সংক্ষিপ্ত error বর্ণনা; পূর্ণ stack trace শুধু debug level-এ।
 
-This becomes the foundation of the observability pipeline (chapter 9).
+এটাই observability pipeline-এর ভিত্তি হয়ে দাঁড়ায় (অধ্যায় ৯)।
 
-## Test locally with smee.io or ngrok
+## smee.io বা ngrok দিয়ে লোকালে টেস্ট করুন
 
-Before pointing the sender at production receivers, test locally:
+sender-কে production receiver-এর দিকে তাক করার আগে, লোকালে টেস্ট করুন:
 
-**ngrok** — exposes a local port to the internet via a tunnel.
+**ngrok** — একটা tunnel দিয়ে একটা local port-কে internet-এ expose করে।
 
 ```bash
 ngrok http 3000
 # https://abc123.ngrok-free.app -> http://localhost:3000
 ```
 
-Run a Go receiver on port 3000 that prints incoming requests. Set `WEBHOOK_URL=https://abc123.ngrok-free.app/webhooks` and watch them flow.
+port 3000-এ একটা Go receiver চালান যা আসা request print করে। `WEBHOOK_URL=https://abc123.ngrok-free.app/webhooks` set করুন আর সেগুলো বয়ে আসতে দেখুন।
 
-**smee.io** — free public webhook proxy. Visit smee.io, get a URL, point your sender at it, run `smee --url <url> --target http://localhost:3000` to forward.
+**smee.io** — free public webhook proxy। smee.io-তে যান, একটা URL নিন, আপনার sender-কে সেটার দিকে তাক করুন, forward করার জন্য `smee --url <url> --target http://localhost:3000` চালান।
 
-Both are dev-only tools. In production the receiver runs on a public URL.
+দুটোই dev-only tool। Production-এ receiver একটা public URL-এ চলে।
 
-## Sending many events — work pool
+## অনেক event পাঠানো — work pool
 
-The single-event sender becomes a multi-event worker by adding a queue and N goroutines:
+একটা queue আর N goroutine যোগ করলে single-event sender একটা multi-event worker হয়ে যায়:
 
 ```go
 func worker(ctx context.Context, jobs <-chan Job) {
@@ -285,13 +293,13 @@ func main() {
 }
 ```
 
-16 workers can sustain ~1500 deliveries/sec to a single fast receiver, less for slow ones. Tune by measurement; don't over-parallelise to a single receiver (you'll trip rate limits).
+16 worker একটা fast receiver-এ ~1500 deliveries/sec টানতে পারে, ধীর receiver-এ কম। মেপে tune করুন; একটা receiver-এ অতিরিক্ত parallelise করবেন না (rate limit-এ ঠোক্কর খাবেন)।
 
-The full picture — durable queue, retries, dead-letter — comes in later chapters. For now the takeaway is: scaling out is goroutines plus a channel.
+পূর্ণ ছবিটা — durable queue, retries, dead-letter — পরের অধ্যায়গুলোতে আসে। আপাতত মূল কথা: scale out করা মানে goroutine প্লাস একটা channel।
 
-## Sending to many receivers
+## অনেক receiver-এ পাঠানো
 
-If five customers subscribe to the same event, you fan out:
+পাঁচজন customer একই event-এ subscribe করলে, আপনি fan out করেন:
 
 ```go
 for _, sub := range subscriptions {
@@ -304,29 +312,29 @@ for _, sub := range subscriptions {
 }
 ```
 
-Each subscription becomes one delivery attempt. Five subscribers = five POSTs. Chapter 8 covers per-subscription failure handling — one customer's broken endpoint shouldn't slow down delivery to the others.
+প্রতিটা subscription একটা delivery attempt হয়ে দাঁড়ায়। পাঁচ subscriber = পাঁচটা POST। অধ্যায় ৮ per-subscription failure handling কভার করে — একজন customer-এর ভাঙা endpoint বাকিদের delivery ধীর করবে না।
 
-## What we have not done yet
+## এখনও যা করিনি
 
-This sender:
+এই sender:
 
-- Does not sign payloads. Anyone who knows the URL can forge events. **Chapter 4.**
-- Does not retry. One transient failure and the event is gone. **Chapter 6.**
-- Does not persist outbound events. A crash mid-send loses them. **Chapter 10.**
-- Does not have a dashboard. Operators cannot see what failed. **Chapter 9.**
+- payload sign করে না। URL জানা যে কেউ event জাল করতে পারে। **অধ্যায় ৪।**
+- retry করে না। একটা transient failure আর event গায়েব। **অধ্যায় ৬।**
+- outbound event persist করে না। পাঠানোর মাঝপথে crash হলে হারায়। **অধ্যায় ১০।**
+- এর কোনো dashboard নেই। কী fail করল operator দেখতে পারে না। **অধ্যায় ৯।**
 
-That's most of a real system. But knowing how the basic POST works first means each subsequent layer has a clear "what problem does this solve."
+এটাই একটা আসল সিস্টেমের বেশিরভাগ অংশ। কিন্তু আগে basic POST কীভাবে কাজ করে জানলে পরের প্রতিটা layer-এর একটা পরিষ্কার "এটা কোন সমস্যা সমাধান করে" থাকে।
 
-## Recap
+## রিক্যাপ
 
-- Sender is a POST with JSON body, signed in chapter 4, retried in chapter 6.
-- `http.Client` with a real `Timeout` — defaults are dangerous.
-- Drain response bodies (`io.Copy(io.Discard, ...)`) so TCP connections reuse.
-- Classify failures: 4xx mostly permanent, 5xx and network mostly transient.
-- Be conservative about "permanent" — retrying twice extra is cheaper than dropping the event.
-- Log every attempt with event ID, type, URL, status, duration, error.
-- Test locally with ngrok or smee.io.
-- Scale via worker pool over a channel; fan out per subscription.
-- Sign, retry, persist, dashboard — coming next.
+- Sender হলো JSON body সহ একটা POST, অধ্যায় ৪-এ signed, অধ্যায় ৬-এ retried।
+- একটা আসল `Timeout` সহ `http.Client` — default বিপজ্জনক।
+- response body drain করুন (`io.Copy(io.Discard, ...)`) যাতে TCP connection reuse হয়।
+- Failure classify করুন: 4xx বেশিরভাগ permanent, 5xx আর network বেশিরভাগ transient।
+- "permanent" নিয়ে রক্ষণশীল হোন — দুবার বেশি retry করা event drop করার চেয়ে সস্তা।
+- প্রতিটা attempt event ID, type, URL, status, duration, error সহ log করুন।
+- ngrok বা smee.io দিয়ে লোকালে টেস্ট করুন।
+- একটা channel-এর ওপর worker pool দিয়ে scale করুন; per subscription fan out করুন।
+- Sign, retry, persist, dashboard — পরে আসছে।
 
-Next: [Signing payloads](/notes/webhooks/04-signing) — HMAC, the canonical string, and timestamps that defend against replay.
+পরবর্তী: [Payload signing](/notes/webhooks/04-signing) — HMAC, canonical string, আর replay-এর বিরুদ্ধে রক্ষা করা timestamp।

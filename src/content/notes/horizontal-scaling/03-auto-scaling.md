@@ -1,9 +1,9 @@
 ---
 title: 'Auto-Scaling'
-subtitle: 'Scaling out on demand — target tracking, scheduled scaling, scale-in protection, and the metrics that actually drive good decisions.'
+subtitle: 'চাহিদা অনুযায়ী scale out — target tracking, scheduled scaling, scale-in protection, এবং যে metric আসলে ভালো সিদ্ধান্ত চালায়।'
 chapter: 3
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['auto-scaling', 'ASG', 'HPA', 'target tracking', 'scale-in', 'KEDA']
 ---
 
@@ -13,27 +13,35 @@ topics: ['auto-scaling', 'ASG', 'HPA', 'target tracking', 'scale-in', 'KEDA']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A call center that opens more phone lines during peak hours: they don't staff 100 agents at 3am just because they need them at noon. Auto-scaling does the same — provisions capacity when load demands it, releases it when load drops, and does this automatically without a human deciding when.
+একটা কল সেন্টার যা peak hour-এ আরও ফোন লাইন খোলে: তারা দুপুরে ১০০ এজেন্ট দরকার বলে ভোর ৩টায় ১০০ এজেন্ট বসিয়ে রাখে না। Auto-scaling ঠিক এটাই করে — load যখন চায় তখন capacity জোগায়, load কমলে ছেড়ে দেয়, এবং কখন করবে তা মানুষ ঠিক না করেই স্বয়ংক্রিয়ভাবে এটা করে।
 
 </Callout>
 
-## What Auto-Scaling Provides
+## গল্পে বুঝি
 
-Manual scaling has two failure modes: too much capacity (expensive) and too little (users affected). Auto-scaling replaces the manual decision loop with a control loop:
+ফাতিমা আল-ফিহরির একটা রেস্তোরাঁ। বিকেল ৩টায় হলঘরটা প্রায় ফাঁকা — টেবিলের বড়জোর ১০-১৫% ভরা। এই সময় যদি সে ২০ জন ওয়েটার দাঁড় করিয়ে রাখত, তারা শুধু ঘুরঘুর করত আর মাস শেষে বেতনের বিল আকাশচুম্বী হতো। তাই ফাতিমা একটা সহজ নিয়ম ঠিক করল: গেটে একজন বসে থাকবে যে কেবল একটা জিনিসই মাপবে — এই মুহূর্তে কত শতাংশ টেবিল ভরা। টেবিল-ফুলনেস যখন ৮০% ছাড়াবে, সে ফোন করে অন-কল ওয়েটারদের ডেকে আনবে; আর যখন ৩০%-এর নিচে নামবে, বাড়তি লোকদের বাসায় পাঠিয়ে দেবে।
+
+রাত ৯টায় ডিনার রাশ শুরু হতেই টেবিল ভরে ৮৫% হয়ে গেল — সঙ্গে সঙ্গে চারজন বাড়তি ওয়েটার হাজির, খাবার সময়মতো টেবিলে পৌঁছাল, কেউ বিরক্ত হলো না। রাত সাড়ে ১১টায় ভিড় পাতলা হয়ে ৩০%-এর নিচে নামতেই ফাতিমা তাদের ছুটি দিয়ে দিল। তবে সে একটা কৌশল রাখল — প্রতিবার লোক ডাকা বা ছুটি দেওয়ার পর কিছুক্ষণ চুপ থাকে, তখনকার সংখ্যা দেখে তাড়াহুড়ো করে আবার সিদ্ধান্ত নেয় না। কারণ একটা টেবিল উঠল বলেই যদি সাথে সাথে একজনকে ছুটি দিয়ে দেয়, আর পরক্ষণেই নতুন কাস্টমার এসে বসে, তাহলে ডাকা-ছুটি-ডাকা করতে করতেই দিন পার হয়ে যাবে।
+
+এই গল্পটাই আসলে **auto-scaling**। টেবিল-ফুলনেস হলো সেই **metric** (যেমন CPU বা traffic) যা দেখে সিদ্ধান্ত নেওয়া হয়; ৮০% আর ৩০% হলো **scale-up** আর **scale-down threshold**; বাড়তি ওয়েটার ডাকা মানে server যোগ করা (**scale out**), আর তাদের বাসায় পাঠানো মানে server সরিয়ে দেওয়া (**scale in**); প্রতিবার পরিবর্তনের পর একটু থেমে থাকাটাই **cooldown**, যা দোলাচল আটকায়; আর দুপুরে দল বসিয়ে না রেখে শুধু রাশের সময় লোক নেওয়াটাই — যতটুকু লাগে ততটুকুর জন্যই টাকা দেওয়া। বাস্তবে AWS Auto Scaling Group বা Kubernetes HPA ঠিক এভাবেই CPU বা request count দেখে instance/pod বাড়ায়-কমায় — Netflix থেকে শুরু করে বড় সব সাইট peak-এ scale out করে আর রাতে scale in করে খরচ বাঁচায়।
+
+## Auto-Scaling যা দেয়
+
+Manual scaling-এর দুইটা failure mode আছে: বেশি capacity (খরচ বেশি) এবং কম capacity (ব্যবহারকারীরা ভোগে)। Auto-scaling manual সিদ্ধান্তের loop-টাকে একটা control loop দিয়ে বদলে দেয়:
 
 ```
 Measure metric → Compare to target → Adjust capacity → Repeat
 ```
 
-The result: you pay for what you use, and you always have enough capacity (within scaling limits and cooldown periods).
+ফলাফল: আপনি যা ব্যবহার করেন তার জন্য টাকা দেন, এবং আপনার সবসময় যথেষ্ট capacity থাকে (scaling limit এবং cooldown period-এর মধ্যে)।
 
 ## AWS Auto Scaling Groups
 
-An ASG manages a fleet of EC2 instances. Scaling policies define when and how the fleet grows or shrinks.
+একটা ASG EC2 instance-এর একটা fleet পরিচালনা করে। Scaling policy নির্ধারণ করে কখন এবং কীভাবে fleet বাড়বে বা কমবে।
 
-**Target Tracking — the recommended default:**
+**Target Tracking — সুপারিশকৃত default:**
 
 ```bash
 # Scale to maintain CPU at 70%
@@ -50,9 +58,9 @@ aws autoscaling put-scaling-policy \
   }'
 ```
 
-AWS does the PID control for you: if CPU is above 70%, add instances; if below, remove them. You only set the target.
+AWS আপনার হয়ে PID control করে: CPU যদি 70%-এর উপরে থাকে, instance যোগ করে; নিচে থাকলে সরিয়ে দেয়। আপনি শুধু target সেট করেন।
 
-**Step Scaling — for fine-grained control:**
+**Step Scaling — সূক্ষ্ম নিয়ন্ত্রণের জন্য:**
 
 ```bash
 aws autoscaling put-scaling-policy \
@@ -69,7 +77,7 @@ aws autoscaling put-scaling-policy \
 # CPU 90%+:   add 4 instances
 ```
 
-**Scheduled Scaling — for predictable traffic patterns:**
+**Scheduled Scaling — অনুমানযোগ্য traffic pattern-এর জন্য:**
 
 ```bash
 # Scale up before peak hours (weekdays 9am)
@@ -87,11 +95,11 @@ aws autoscaling put-scheduled-update-group-action \
   --min-size 1 --desired-capacity 2 --max-size 20
 ```
 
-Combine scheduled + target tracking: scheduled sets the floor for known peaks, target tracking handles unexpected spikes above that.
+Scheduled + target tracking একসাথে ব্যবহার করুন: scheduled জানা peak-এর জন্য floor সেট করে, target tracking তার উপরের অপ্রত্যাশিত spike সামলায়।
 
-## The Right Scaling Metric
+## সঠিক Scaling Metric
 
-CPU is the most common metric but not always the right one:
+CPU সবচেয়ে সাধারণ metric কিন্তু সবসময় সঠিক নয়:
 
 ```
 CPU-based scaling works for:
@@ -108,7 +116,7 @@ Better metrics for I/O-bound workloads:
   Custom metric: in-flight requests per instance
 ```
 
-**Custom metric scaling (request count via ALB):**
+**Custom metric scaling (ALB-এর মাধ্যমে request count):**
 
 ```bash
 # Scale on ALB RequestCountPerTarget
@@ -131,7 +139,7 @@ aws autoscaling put-scaling-policy \
 
 ## Kubernetes Horizontal Pod Autoscaler (HPA)
 
-Kubernetes HPA scales Deployment replicas based on metrics:
+Kubernetes HPA metric-এর ভিত্তিতে Deployment replica scale করে:
 
 ```yaml
 # Basic: scale on CPU
@@ -162,7 +170,7 @@ spec:
           averageUtilization: 80
 ```
 
-**Custom metrics HPA (scale on RPS from Prometheus):**
+**Custom metric HPA (Prometheus থেকে RPS-এর উপর scale):**
 
 ```yaml
 metrics:
@@ -175,11 +183,11 @@ metrics:
         averageValue: '100' # 100 RPS per pod
 ```
 
-Requires `prometheus-adapter` or KEDA to bridge Prometheus metrics to the Kubernetes metrics API.
+Prometheus metric-কে Kubernetes metrics API-তে সংযুক্ত করার জন্য `prometheus-adapter` বা KEDA দরকার।
 
 ## KEDA: Event-Driven Autoscaling
 
-KEDA (Kubernetes Event-Driven Autoscaling) scales based on queue depth, Kafka lag, or any external metric — perfect for worker fleets:
+KEDA (Kubernetes Event-Driven Autoscaling) queue depth, Kafka lag, বা যেকোনো external metric-এর ভিত্তিতে scale করে — worker fleet-এর জন্য একদম উপযুক্ত:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -206,11 +214,11 @@ spec:
         lagThreshold: '100' # scale when lag > 100 per partition
 ```
 
-Workers scale to zero when the queue is empty — zero cost at idle. They scale out linearly with queue depth. This is the cleanest model for batch workloads.
+Queue খালি হলে worker-রা zero-তে scale হয় — idle অবস্থায় শূন্য খরচ। Queue depth-এর সাথে তারা রৈখিকভাবে scale out করে। Batch workload-এর জন্য এটাই সবচেয়ে পরিচ্ছন্ন model।
 
 ## Scale-In Protection
 
-Scaling in (removing instances) is dangerous if done mid-request. Protection mechanisms:
+Scale in করা (instance সরানো) বিপজ্জনক যদি request-এর মাঝখানে করা হয়। রক্ষার উপায়:
 
 **Instance scale-in protection (AWS ASG):**
 
@@ -228,7 +236,7 @@ aws autoscaling set-instance-protection \
   --no-protected-from-scale-in
 ```
 
-**For worker processes:** check scale-in notice and finish current job:
+**Worker process-এর জন্য:** scale-in নোটিশ যাচাই করুন এবং চলমান কাজ শেষ করুন:
 
 ```typescript
 // AWS: poll for termination notice
@@ -245,9 +253,9 @@ setInterval(async () => {
 }, 5_000);
 ```
 
-## Cooldown Periods
+## Cooldown Period
 
-Auto-scaling doesn't react instantly — cooldown prevents oscillation (scale out, scale in, scale out again in rapid succession).
+Auto-scaling তাৎক্ষণিকভাবে প্রতিক্রিয়া দেখায় না — cooldown দোলাচল আটকায় (scale out, scale in, আবার দ্রুত পরপর scale out)।
 
 ```bash
 # ASG default cooldown: 300 seconds after any scaling activity
@@ -256,7 +264,7 @@ aws autoscaling update-auto-scaling-group \
   --default-cooldown 120   # 2 minutes (reduce for faster-responding apps)
 ```
 
-**Warm-up period:** New instances aren't instantly at full capacity — they need time to start, register with the load balancer, and prime their caches. Account for this in your target:
+**Warm-up period:** নতুন instance তাৎক্ষণিকভাবে পূর্ণ capacity-তে থাকে না — তাদের start করতে, load balancer-এর সাথে register করতে, এবং cache prime করতে সময় লাগে। আপনার target-এ এটার হিসাব রাখুন:
 
 ```bash
 # Target tracking: instance warm-up of 120s

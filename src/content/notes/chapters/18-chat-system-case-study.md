@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: Chat System at Scale'
-subtitle: 'Design and build a production chat system with message delivery, read receipts, typing indicators, and fan-out.'
+title: 'কেস স্টাডি: স্কেলে Chat System'
+subtitle: 'message delivery, read receipt, typing indicator এবং fan-out সহ একটি production chat system ডিজাইন করে বানান।'
 chapter: 18
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['chat system', 'message delivery', 'fan-out', 'presence', 'read receipts']
 ---
 
@@ -13,11 +13,19 @@ topics: ['chat system', 'message delivery', 'fan-out', 'presence', 'read receipt
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What Does a Chat System at Scale Look Like?
+## গল্পে বুঝি
 
-A production chat system is far more than sending messages between two users. It involves **message ordering** across distributed servers, **fan-out** to deliver messages to all participants, **presence tracking** to know who is online, **read receipts** so senders know their message was seen, and **offline queues** to store messages for users who are not currently connected. These are the exact problems that WhatsApp, Telegram, and Slack solve at billions-of-messages-per-day scale.
+ইবনে সিনার পাড়ায় একটা ছোট ডাকঘর আছে, আর আল-খোয়ারিজমি হলো সেখানকার একমাত্র পিয়ন। কেউ চিঠি পাঠাতে চাইলে চিঠিটা প্রথমে ডাকঘরে আসে, আল-খোয়ারিজমি দেখে ঠিকানাটা কার — তারপর সেই লোকের কাছে পৌঁছে দেয়। ফাতিমা আল-ফিহরি যদি বাড়িতেই থাকে, আল-খোয়ারিজমি সঙ্গে সঙ্গে দরজায় গিয়ে চিঠিটা হাতে তুলে দেয়, ফাতিমা আল-ফিহরি একটা সই করে দেয় "পেয়েছি" বলে। কিন্তু ফাতিমা আল-ফিহরি যদি বাইরে থাকে, আল-খোয়ারিজমি চিঠিটা ফেলে না দিয়ে ডাকঘরেই জমা রাখে — ফাতিমা আল-ফিহরি যেই মুহূর্তে পাড়ায় ফেরে, আল-খোয়ারিজমি জমানো সব চিঠি একসাথে তার হাতে দিয়ে দেয়।
 
-Think of it like a postal service for a large office building. The mailroom (message router) receives every letter, checks the directory (presence service) to see if the recipient is at their desk, and either delivers it directly or puts it in their mailbox (offline queue). The sender gets a delivery receipt when the letter arrives, and a read receipt when the recipient opens it. Every letter has a timestamp and sequence number so they can be sorted correctly even if they arrive out of order.
+পাড়ার একটা সমিতির নোটিশ এলে ব্যাপারটা আরেকটু বড় — আল-খোয়ারিজমি সেই একটা নোটিশের অনেকগুলো কপি বানায়, সমিতির প্রতিটা সদস্যের নামে আলাদা করে বিলি করে দেয়, যে বাড়িতে নেই তার কপি জমা থাকে। আর সই একবারে শেষ হয় না — চিঠি হাতে পাওয়ার সময় একটা সই, আর ফাতিমা আল-ফিহরি যখন খামটা খুলে সত্যিই পড়ে ফেলে তখন আল-খোয়ারিজমি আরেকটা সই নিয়ে যায়, যাতে পাঠানো লোকটা জানতে পারে চিঠি শুধু পৌঁছায়নি, পড়াও হয়েছে।
+
+এই ডাকঘরটাই আসলে একটা chat system-এর message routing server। ফাতিমা আল-ফিহরি বাড়িতে থাকলে সঙ্গে সঙ্গে চিঠি দেওয়াটা হলো persistent connection-এর উপর real-time delivery, আর বাইরে থাকলে চিঠি জমিয়ে রাখাটা হলো offline store-and-forward queue। সমিতির নোটিশের অনেক কপি বিলি করাটাই group message-এর fan-out, আর দুই দফা সই নেওয়াটা হলো delivery receipt আর read receipt। WhatsApp বা Messenger-এ ঠিক এভাবেই কাজ হয় — আপনি online থাকলে message সঙ্গে সঙ্গে পান, offline থাকলে server-এ জমা থেকে reconnect করার মুহূর্তে আসে, আর single/double/blue tick দিয়ে sender বুঝতে পারে message পৌঁছেছে কি পড়া হয়েছে।
+
+## স্কেলে একটি Chat System দেখতে কেমন?
+
+একটি production chat system দুজন user-এর মধ্যে message পাঠানোর চেয়ে অনেক বেশি কিছু। এতে জড়িত distributed server-জুড়ে **message ordering**, সব participant-এর কাছে message পৌঁছাতে **fan-out**, কে অনলাইন তা জানতে **presence tracking**, sender যেন জানে তার message দেখা হয়েছে তার জন্য **read receipt**, এবং যেসব user এখন connected নয় তাদের জন্য message রাখতে **offline queue**। এগুলোই ঠিক সেই সমস্যা যা WhatsApp, Telegram আর Slack দিনে কোটি কোটি message-এর স্কেলে সমাধান করে।
+
+এটাকে একটা বড় অফিস ভবনের জন্য postal service-এর মতো ভাবুন। mailroom (message router) প্রতিটি চিঠি নেয়, directory (presence service) দেখে recipient তার ডেস্কে আছে কিনা যাচাই করে, আর হয় সরাসরি delivery করে অথবা তার mailbox-এ (offline queue) রেখে দেয়। চিঠি পৌঁছালে sender একটা delivery receipt পায়, আর recipient খুললে একটা read receipt পায়। প্রতিটি চিঠির একটা timestamp আর sequence number থাকে যাতে ভুল ক্রমে এলেও সেগুলো সঠিকভাবে sort করা যায়।
 
 <Mermaid
 title="Chat System Architecture"
@@ -26,21 +34,21 @@ code={`graph TD
   MR --> MS["Message Store<br/>Conversations"] --> OQ["Offline Queue<br/>Pending Delivery"] --> PS["Presence Service<br/>Status Tracking"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উদাহরণ
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a messaging app's delivery system — single tick means sent to server, double tick means delivered to recipient, blue tick means read. Group messages fan out to all members.
+একটি messaging app-এর delivery সিস্টেমের মতো — single tick মানে server-এ পৌঁছেছে, double tick মানে recipient-এর কাছে delivered, blue tick মানে read। Group message সব member-এর কাছে fan out হয়।
 
 </Callout>
 
-WhatsApp handles over 100 billion messages per day. When you send a message, it goes to a message router that looks up the recipient's connection server, fans out the message, stores it, and returns a single checkmark (delivered to server). When the recipient's device receives it, you get a double checkmark. When they open the chat, you get blue checkmarks (read receipt). If the recipient is offline, the message sits in an offline queue and gets delivered the moment their phone reconnects. Telegram uses Lamport timestamps to ensure messages appear in the correct order even when sent from multiple devices simultaneously.
+WhatsApp দিনে 100 বিলিয়নেরও বেশি message সামলায়। আপনি একটা message পাঠালে, সেটা একটা message router-এ যায় যা recipient-এর connection server খুঁজে বের করে, message fan out করে, store করে, আর একটা single checkmark ফেরত দেয় (server-এ delivered)। Recipient-এর device সেটা পেলে, আপনি একটা double checkmark পান। তারা chat খুললে, আপনি blue checkmark পান (read receipt)। Recipient offline থাকলে, message একটা offline queue-তে বসে থাকে আর তার ফোন reconnect করার মুহূর্তেই delivered হয়। Telegram Lamport timestamp ব্যবহার করে নিশ্চিত করে যে একাধিক device থেকে একসাথে পাঠানো message-ও সঠিক ক্রমে দেখা যায়।
 
-## Building a Chat System
+## একটি Chat System বানানো
 
-Here's a complete chat system with message storage, fan-out on write, read receipts, typing indicators, Lamport timestamps for ordering, and offline message queues. This implements the core architecture used by production chat systems.
+এখানে একটি সম্পূর্ণ chat system আছে -- message storage, write-এর সময় fan-out, read receipt, typing indicator, ordering-এর জন্য Lamport timestamp, এবং offline message queue সহ। এটা production chat system-এর ব্যবহৃত মূল architecture implement করে।
 
 <CodeTabs tsFile="chat-system.ts" goFile="chat-system.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -1046,35 +1054,35 @@ func main() {
 </div>
 </CodeTabs>
 
-## What Makes This Production-Ready
+## এটাকে যা Production-Ready করে
 
-- **Lamport timestamps** -- provides causal ordering of messages across distributed servers
-- **Fan-out on write** -- pushes messages to recipients immediately rather than requiring them to poll
-- **Offline message queue** -- stores messages for disconnected users with guaranteed delivery on reconnect
-- **Read receipts** -- tracks per-user read state with receipts propagated to message senders
-- **Typing indicators** -- ephemeral events broadcast to conversation participants without persistence
-- **Connection manager** -- tracks online/offline status with last-seen timestamps for presence
+- **Lamport timestamp** -- distributed server-জুড়ে message-এর causal ordering দেয়
+- **Write-এর সময় fan-out** -- recipient-দের poll করতে বাধ্য না করে সঙ্গে সঙ্গে তাদের কাছে message push করে
+- **Offline message queue** -- disconnected user-দের জন্য message store করে, reconnect-এ নিশ্চিত delivery সহ
+- **Read receipt** -- প্রতি user-এর read state track করে, receipt message sender-দের কাছে propagate করে
+- **Typing indicator** -- ক্ষণস্থায়ী event যা conversation participant-দের কাছে broadcast হয়, কোনো persistence ছাড়াই
+- **Connection manager** -- presence-এর জন্য last-seen timestamp সহ online/offline status track করে
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- Fan-out on write (push model) delivers messages instantly but requires tracking all recipient connections
-- Lamport timestamps provide causal ordering without requiring synchronized clocks across servers
-- Offline queues are essential -- mobile users frequently disconnect and reconnect throughout the day
-- Read receipts require a separate tracking layer from message delivery status
-- Typing indicators are fire-and-forget events that should never be persisted or queued
-- Connection-level presence is different from application-level presence -- a user can have multiple devices
+- Write-এর সময় fan-out (push model) সঙ্গে সঙ্গে message delivery করে, তবে সব recipient connection track করা লাগে
+- Lamport timestamp server-জুড়ে synchronized clock ছাড়াই causal ordering দেয়
+- Offline queue অপরিহার্য -- mobile user সারাদিন ঘন ঘন disconnect আর reconnect করে
+- Read receipt-এর জন্য message delivery status থেকে আলাদা একটি tracking layer লাগে
+- Typing indicator হলো fire-and-forget event যা কখনো persist বা queue করা উচিত নয়
+- Connection-level presence application-level presence থেকে আলাদা -- একজন user-এর একাধিক device থাকতে পারে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **WhatsApp** processes 100+ billion messages per day using fan-out on write with offline queuing for mobile users
-- **Telegram** uses a custom protocol (MTProto) with Lamport-style ordering for multi-device message sync
-- **Discord** separates ephemeral events (typing, presence) from persistent data (messages) for different scaling strategies
-- **Slack** uses a combination of WebSockets for real-time delivery and REST API for message history retrieval
+- **WhatsApp** mobile user-দের জন্য offline queuing সহ write-এর সময় fan-out ব্যবহার করে দিনে 100+ বিলিয়ন message প্রসেস করে
+- **Telegram** multi-device message sync-এর জন্য Lamport-ধাঁচের ordering সহ একটি custom protocol (MTProto) ব্যবহার করে
+- **Discord** ভিন্ন scaling strategy-র জন্য ক্ষণস্থায়ী event (typing, presence) থেকে persistent data (message) আলাদা করে
+- **Slack** real-time delivery-র জন্য WebSocket আর message history retrieval-এর জন্য REST API-র সমন্বয় ব্যবহার করে
 
 </div>

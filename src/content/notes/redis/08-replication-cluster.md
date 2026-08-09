@@ -1,9 +1,9 @@
 ---
 title: 'Replication, Sentinel & Cluster'
-subtitle: 'From one node to many: copies, automatic failover, and sharding across hash slots.'
+subtitle: 'এক node থেকে অনেক: copy, automatic failover, এবং hash slot জুড়ে sharding।'
 chapter: 8
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['replication', 'sentinel', 'cluster']
 ---
 
@@ -11,11 +11,19 @@ topics: ['replication', 'sentinel', 'cluster']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A single Redis node is a single point of failure and a hard ceiling on memory and read throughput. Scaling past one node comes in layers: replication for copies and read scaling, Sentinel for automatic failover, and Cluster for sharding data across machines. Each layer adds capability and complexity, and adds them in that order. This chapter explains what each gives you and what it costs in consistency.
+## গল্পে বুঝি
+
+ইবনে সিনার একটা মুদি দোকানের চেইন — শহরজুড়ে অনেকগুলো শাখা। দাম আর স্টকের আসল হিসাবের খাতাটা থাকে হেড শপে, ইবনে সিনার নিজের হাতে। কিন্তু হেড শপে গিয়ে সবাই কেনাকাটা করলে তো লাইন লেগে যাবে, তাই প্রতিটা শাখা হেড শপের খাতাটা সমানে দেখে দেখে নিজের কাছে হুবহু কপি করে রাখে। কোন জিনিসের কত দাম, কত স্টক — যেকোনো শাখায় গিয়ে কাস্টমার জিজ্ঞেস করলেই সঙ্গে সঙ্গে জবাব পায়, হেড শপ পর্যন্ত দৌড়াতে হয় না। খাতা যেই আপডেট হয়, শাখাগুলোর কপিও একটু পরেই মিলে যায়।
+
+কিন্তু বিপদ তো বলে আসে না। এক রাতে হেড শপে আগুন লেগে সব পুড়ে ছাই। ভাগ্যিস ইবনে সিনা একটা নাইট-ওয়াচম্যান রেখেছিল, যে সারা রাত হেড শপের দিকে চোখ রাখে। হেড শপ পুড়তেই সে থেমে থাকে না — সঙ্গে সঙ্গে সবচেয়ে কাছের শাখাটাকে ঘোষণা দিয়ে নতুন হেড শপ বানিয়ে দেয়, বাকি শাখাগুলোকে বলে দেয় এখন থেকে এর খাতা দেখেই কপি করবে। ব্যবসা এক মিনিটও বন্ধ থাকে না। আবার পুরো ক্যাটালগ এত বিশাল যে এক দোকানে সব ধরে না — তাই ইবনে সিনা পণ্য ভাগ করে দেয়: চাল-ডাল-তেল এক শাখায়, প্রসাধনী আরেক শাখায়, ইলেকট্রনিক্স আরেকটায়। কোন জিনিস কোন শাখায় সেটা ঠিক থাকে বলে কাস্টমার সোজা সেই শাখাতেই চলে যায়।
+
+এই গল্পটাই আসলে এই অধ্যায়। শাখাগুলোর হেড শপের খাতা কপি করাটা হলো **replication** (replica-রা primary-র copy রাখে, read সামলায়, HA দেয়), নাইট-ওয়াচম্যানের হেড শপ পুড়লে কাছের শাখাকে নতুন হেড বানানোটা হলো **Sentinel**-এর automatic **failover** (primary মরলে একটা replica-কে promote করা), আর পণ্য ভাগ করে আলাদা শাখায় রাখাটা হলো **Cluster**-এর **sharding** (keyspace শাখা মানে node জুড়ে ভাগ করে দেওয়া)। বাস্তবে Redis ঠিক এভাবেই এক node পেরিয়ে scale করে — Twitter, GitHub-এর মতো বড় সিস্টেম এই তিন স্তর দিয়েই একটা machine-এর সীমা টপকায়।
+
+একটা single Redis node একটা single point of failure এবং memory ও read throughput-এর উপর একটা কঠিন ছাদ। এক node পেরিয়ে scale করা layer-এ layer-এ আসে: copy আর read scaling-এর জন্য replication, automatic failover-এর জন্য Sentinel, এবং machine জুড়ে data sharding-এর জন্য Cluster। প্রতিটা layer ক্ষমতা আর জটিলতা যোগ করে, এবং সেই ক্রমেই যোগ করে। এই অধ্যায় ব্যাখ্যা করে প্রতিটা তোমাকে কী দেয় এবং consistency-তে এর কী খরচ।
 
 ## Primary/replica replication
 
-The foundation is replication: one **primary** (master) accepts writes and streams every change to one or more **replicas**, which keep their own full copy. Replicas serve reads, freeing the primary, and stand ready to be promoted if it dies.
+ভিত্তি হলো replication: একটা **primary** (master) write গ্রহণ করে এবং প্রতিটা পরিবর্তন এক বা একাধিক **replica**-তে stream করে, যারা নিজেদের পূর্ণ copy রাখে। replica read serve করে, primary-কে মুক্ত করে, এবং primary মারা গেলে promote হতে প্রস্তুত থাকে।
 
 ```text
 # On a replica node
@@ -29,27 +37,27 @@ master_link_status:up
 slave_read_only:1
 ```
 
-How it works: on connect the replica does a full sync — the primary forks an RDB snapshot, ships it, and the replica loads it. From then on the primary streams a continuous replication log of commands. A brief disconnect triggers a _partial_ resync from a backlog buffer rather than a full one.
+এটা কীভাবে কাজ করে: connect-এ replica একটা full sync করে — primary একটা RDB snapshot fork করে, এটা ship করে, এবং replica এটা load করে। এরপর থেকে primary command-এর একটা continuous replication log stream করে। একটা সংক্ষিপ্ত disconnect একটা full-এর বদলে একটা backlog buffer থেকে একটা _partial_ resync trigger করে।
 
-The crucial property is that **replication is asynchronous**. The primary acknowledges a write to the client _before_ confirming the replica received it. This keeps writes fast but means a replica can lag slightly behind, and a primary that crashes may take its last few writes with it.
+গুরুত্বপূর্ণ বৈশিষ্ট্য হলো যে **replication asynchronous**। primary replica write receive করেছে নিশ্চিত করার _আগেই_ client-কে একটা write acknowledge করে। এটা write দ্রুত রাখে কিন্তু মানে একটা replica সামান্য পিছিয়ে থাকতে পারে, এবং একটা primary যে crash করে সে তার শেষ কয়েকটা write নিয়ে যেতে পারে।
 
-What replication buys you:
+Replication তোমাকে যা দেয়:
 
-- **Read scaling** — point read-heavy traffic at replicas (accepting they may be slightly stale).
-- **Data redundancy** — a full live copy on another machine.
-- **A failover target** — a replica can be promoted to primary.
+- **Read scaling** — read-ভারী traffic replica-তে নির্দেশ করো (এই মেনে নিয়ে যে এগুলো সামান্য বাসি হতে পারে)।
+- **Data redundancy** — আরেকটা machine-এ একটা পূর্ণ live copy।
+- **একটা failover target** — একটা replica primary-তে promote হতে পারে।
 
-What it does _not_ buy you: automatic recovery. If the primary dies, promoting a replica and repointing clients is manual. That is Sentinel's job.
+এটা তোমাকে যা _দেয় না_: automatic recovery। যদি primary মারা যায়, একটা replica promote করা এবং client repoint করা manual। সেটা Sentinel-এর কাজ।
 
 <Callout type="info">
 
-**Note:** Because replication is asynchronous, replicas are **eventually consistent**. A write acknowledged by the primary may not yet be on a replica, so a read from a replica right after a write can return stale data. The `WAIT numreplicas timeout` command lets a client block until a write reaches N replicas, narrowing the window — but it cannot make replication synchronous or eliminate the risk entirely.
+**নোট:** যেহেতু replication asynchronous, replica-গুলো **eventually consistent**। primary দ্বারা acknowledge করা একটা write এখনও একটা replica-তে না থাকতে পারে, তাই একটা write-এর ঠিক পরে একটা replica থেকে একটা read বাসি ডেটা ফেরত দিতে পারে। `WAIT numreplicas timeout` command একটা client-কে একটা write N replica-তে পৌঁছানো পর্যন্ত block করতে দেয়, window সরু করে — কিন্তু এটা replication-কে synchronous বানাতে বা ঝুঁকি সম্পূর্ণ দূর করতে পারে না।
 
 </Callout>
 
 ## Sentinel: automatic failover
 
-Replication gives you a spare; Sentinel makes the swap automatic. Sentinel is a separate set of processes (you run at least three for a reliable quorum) that monitor the primary and replicas, agree among themselves when the primary is truly down, promote a replica, and tell clients where the new primary is.
+Replication তোমাকে একটা spare দেয়; Sentinel swap-টা automatic করে। Sentinel হলো process-এর একটা আলাদা সেট (একটা নির্ভরযোগ্য quorum-এর জন্য তুমি অন্তত তিনটা চালাও) যা primary আর replica monitor করে, primary সত্যিই down কিনা তা নিজেদের মধ্যে সম্মত হয়, একটা replica promote করে, এবং client-দের বলে নতুন primary কোথায়।
 
 ```text
 # sentinel.conf — monitor a primary named "mymaster", quorum of 2
@@ -58,19 +66,19 @@ sentinel down-after-milliseconds mymaster 5000
 sentinel failover-timeout mymaster 60000
 ```
 
-The failover sequence:
+failover sequence:
 
-1. **Detection.** A Sentinel stops getting `PING` replies and marks the primary _subjectively down_.
-2. **Agreement.** Once a _quorum_ of Sentinels agree, the primary is _objectively down_ — the quorum prevents one Sentinel's bad network from triggering a needless failover.
-3. **Election.** The Sentinels elect a leader to run the failover.
-4. **Promotion.** A suitable replica is promoted; the others are reconfigured to replicate from it.
-5. **Notification.** Clients, using a Sentinel-aware library, ask Sentinel for the current primary address and reconnect.
+1. **Detection।** একটা Sentinel `PING` reply পাওয়া বন্ধ করে এবং primary-কে _subjectively down_ mark করে।
+2. **Agreement।** একবার Sentinel-দের একটা _quorum_ সম্মত হলে, primary _objectively down_ — quorum একটা Sentinel-এর খারাপ network-কে একটা অপ্রয়োজনীয় failover trigger করা থেকে রোধ করে।
+3. **Election।** Sentinel-রা failover চালাতে একটা leader নির্বাচন করে।
+4. **Promotion।** একটা উপযুক্ত replica promote হয়; বাকিগুলো এটা থেকে replicate করতে reconfigure হয়।
+5. **Notification।** client-রা, একটা Sentinel-aware library ব্যবহার করে, Sentinel-কে current primary address জিজ্ঞেস করে এবং reconnect করে।
 
-Sentinel handles **high availability** but not sharding — every node still holds the entire dataset, so your data must fit on one machine. When it does not, you need Cluster.
+Sentinel **high availability** সামলায় কিন্তু sharding নয় — প্রতিটা node এখনও পুরো dataset ধরে, তাই তোমার ডেটা এক machine-এ ধরতে হবে। যখন ধরে না, তোমার Cluster দরকার।
 
-## Cluster: sharding across nodes
+## Cluster: node জুড়ে sharding
 
-Cluster mode partitions data across multiple primaries so the total dataset can exceed any single machine's memory and writes scale horizontally. The mechanism is **hash slots**: the keyspace is divided into a fixed **16384** slots, each slot owned by one primary.
+Cluster mode একাধিক primary জুড়ে ডেটা partition করে যাতে মোট dataset যেকোনো single machine-এর memory ছাড়াতে পারে এবং write horizontally scale করে। mechanism হলো **hash slot**: keyspace একটা fixed **16384** slot-এ ভাগ হয়, প্রতিটা slot একটা primary-র মালিকানায়।
 
 ```text
 127.0.0.1:7000> CLUSTER INFO
@@ -85,11 +93,11 @@ cluster_slots_assigned:16384
 OK
 ```
 
-A key's slot is `CRC16(key) mod 16384`. To find a key, a client hashes it, looks up which node owns that slot, and talks to that node directly — no proxy in the hot path. If a client hits the wrong node it gets a `MOVED` redirect telling it the right one; smart clients cache the slot map and route correctly thereafter. Each primary typically has its own replica, so Cluster also provides HA — failover is built in, no separate Sentinel needed.
+একটা key-এর slot হলো `CRC16(key) mod 16384`। একটা key খুঁজতে, একটা client এটা hash করে, দেখে কোন node সেই slot-এর মালিক, এবং সরাসরি সেই node-এর সাথে কথা বলে — hot path-এ কোনো proxy নেই। যদি একটা client ভুল node-এ আঘাত করে সে একটা `MOVED` redirect পায় যা সঠিকটা বলে দেয়; স্মার্ট client slot map cache করে এবং এরপর সঠিকভাবে route করে। প্রতিটা primary-র সাধারণত নিজের একটা replica থাকে, তাই Cluster HA-ও দেয় — failover built-in, কোনো আলাদা Sentinel দরকার নেই।
 
-### Multi-key operations and hash tags
+### Multi-key operation আর hash tag
 
-Sharding has a real cost: a command touching several keys only works if those keys live in the **same** slot, because no single node sees them all. `MGET a b c`, `SINTER`, and multi-key Lua scripts fail across slots. **Hash tags** force related keys onto one slot by hashing only the part in braces:
+Sharding-এর একটা আসল খরচ আছে: কয়েকটা key ছোঁয়া একটা command শুধু তখনই কাজ করে যদি সেই key-গুলো **একই** slot-এ থাকে, কারণ কোনো single node এদের সবাইকে দেখে না। `MGET a b c`, `SINTER`, আর multi-key Lua script slot জুড়ে fail করে। **Hash tag** braces-এর ভেতরের অংশটাই শুধু hash করে সম্পর্কিত key-গুলোকে এক slot-এ বাধ্য করে:
 
 ```text
 # Both keys hash on "{1042}" -> same slot -> multi-key ops work
@@ -101,31 +109,31 @@ OK
 (integer) 5439
 ```
 
-Design your keys with hash tags _up front_ for any group you will need to read or modify together — retrofitting them later means moving data.
+যেকোনো group-এর জন্য যা তোমাকে একসাথে পড়তে বা modify করতে হবে সেটার জন্য _আগেভাগে_ hash tag দিয়ে তোমার key design করো — পরে এগুলো retrofit করা মানে ডেটা সরানো।
 
 <Callout type="warning">
 
-**Note:** Cluster changes the programming model, not just the deployment. Cross-slot multi-key commands and transactions are restricted, some clients need extra logic, and operations like `KEYS` or `SCAN` only see one node at a time. Do not enable Cluster for high availability alone — Sentinel does that without these constraints. Use Cluster only when one machine genuinely cannot hold your data or serve your write rate.
+**নোট:** Cluster শুধু deployment নয়, programming model বদলায়। Cross-slot multi-key command আর transaction সীমাবদ্ধ, কিছু client-এর অতিরিক্ত logic দরকার, এবং `KEYS` বা `SCAN`-এর মতো অপারেশন একবারে শুধু এক node দেখে। শুধু high availability-র জন্য Cluster enable করো না — Sentinel সেটা এসব সীমাবদ্ধতা ছাড়াই করে। Cluster শুধু তখনই ব্যবহার করো যখন একটা machine সত্যিই তোমার ডেটা ধরতে বা তোমার write rate serve করতে পারে না।
 
 </Callout>
 
-## Consistency trade-offs
+## Consistency trade-off
 
-Every layer here is built on asynchronous replication, so none offers strong consistency. The honest model is:
+এখানকার প্রতিটা layer asynchronous replication-এর উপর নির্মিত, তাই কোনোটাই strong consistency দেয় না। সৎ model হলো:
 
-- **A failover can lose recently acknowledged writes.** If the primary accepts a write, has not yet replicated it, and then dies, the promoted replica never had that write. It is gone.
-- **Split-brain is possible.** During a partition an old primary may keep accepting writes from clients on its side until it notices it has been replaced; those writes are discarded when it rejoins. `min-replicas-to-write` reduces this by refusing writes unless enough replicas are connected.
-- **Reads from replicas are stale** by some small, variable amount.
+- **একটা failover সম্প্রতি acknowledge করা write হারাতে পারে।** যদি primary একটা write গ্রহণ করে, এখনও এটা replicate করেনি, এবং তারপর মারা যায়, promote করা replica সেই write কখনো পায়নি। এটা চলে গেছে।
+- **Split-brain সম্ভব।** একটা partition-এর সময় একটা পুরনো primary তার দিকের client থেকে write গ্রহণ করতে থাকতে পারে যতক্ষণ না এটা লক্ষ্য করে যে এটা প্রতিস্থাপিত হয়েছে; সেই write-গুলো যখন এটা আবার যোগ দেয় তখন বাতিল হয়। `min-replicas-to-write` যথেষ্ট replica connected না থাকলে write প্রত্যাখ্যান করে এটা কমায়।
+- **Replica থেকে read বাসি** কিছু ছোট, পরিবর্তনশীল পরিমাণে।
 
-This is the standard CAP trade-off: under a partition Redis favors availability over strict consistency. For caches, sessions, and most of what Redis is good at, that is the right trade — losing a few of the last writes during a rare failover is acceptable. If it is _not_ acceptable for a particular piece of data, that data probably belongs in a system designed for strong consistency, with Redis caching in front of it.
+এটা standard CAP trade-off: একটা partition-এর অধীনে Redis strict consistency-র চেয়ে availability-কে প্রাধান্য দেয়। cache, session, এবং Redis যাতে ভালো তার বেশিরভাগের জন্য, সেটাই সঠিক trade — একটা বিরল failover-এর সময় শেষ কয়েকটা write হারানো গ্রহণযোগ্য। যদি একটা নির্দিষ্ট ডেটার জন্য এটা গ্রহণযোগ্য _না_ হয়, সেই ডেটা সম্ভবত strong consistency-র জন্য design করা একটা system-এ থাকা উচিত, Redis এর সামনে cache করে।
 
-## When you actually need clustering
+## কখন তোমার সত্যিই clustering দরকার
 
-Resist scaling complexity until the numbers demand it. A practical ladder:
+সংখ্যাগুলো দাবি না করা পর্যন্ত scaling জটিলতা প্রতিহত করো। একটা ব্যবহারিক সিঁড়ি:
 
-1. **Single instance** — most applications never outgrow one well-sized Redis. Start here.
-2. **Add a replica** when you need read scaling or a warm standby.
-3. **Add Sentinel** when downtime from a manual failover is unacceptable and the data still fits on one machine.
-4. **Adopt Cluster** only when the dataset truly exceeds one machine's RAM, or write throughput exceeds one primary — and you can live with the multi-key restrictions.
+1. **Single instance** — বেশিরভাগ application একটা ভালোভাবে-মাপা Redis-কে কখনো ছাড়িয়ে যায় না। এখানে শুরু করো।
+2. **একটা replica যোগ করো** যখন তোমার read scaling বা একটা warm standby দরকার।
+3. **Sentinel যোগ করো** যখন একটা manual failover থেকে downtime অগ্রহণযোগ্য এবং ডেটা এখনও এক machine-এ ধরে।
+4. **Cluster গ্রহণ করো** শুধু তখনই যখন dataset সত্যিই এক machine-এর RAM ছাড়ায়, বা write throughput এক primary ছাড়ায় — এবং তুমি multi-key সীমাবদ্ধতা নিয়ে বাঁচতে পারো।
 
-Each rung adds operational burden. Climb only as high as your actual constraints require; premature clustering buys complexity you will pay for at 3 a.m.
+প্রতিটা ধাপ operational বোঝা যোগ করে। শুধু তোমার প্রকৃত constraint যতটা দাবি করে ততটাই উঁচুতে ওঠো; অকাল clustering এমন জটিলতা কেনে যার মূল্য তুমি রাত ৩টায় দেবে।

@@ -1,9 +1,9 @@
 ---
 title: 'Backpressure, reconnects, heartbeats'
-subtitle: 'Networks drop. Clients stall. Tabs sleep. The patterns in this chapter are the difference between a WebSocket service that runs for a week and one that limps for an hour.'
+subtitle: 'Network ড্রপ করে। Client stall করে। Tab ঘুমায়। এই চ্যাপ্টারের প্যাটার্নগুলোই একটা WebSocket service যা এক সপ্তাহ চলে আর একটা যা এক ঘণ্টা খুঁড়িয়ে চলে — এদের মধ্যে পার্থক্য।'
 chapter: 9
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['websockets', 'backpressure', 'reconnect', 'heartbeat', 'resilience']
 ---
 
@@ -11,37 +11,45 @@ topics: ['websockets', 'backpressure', 'reconnect', 'heartbeat', 'resilience']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A demo WebSocket server works. A production one survives the worst clients on the worst networks for weeks. The gap is filled by three concerns:
+## গল্পে বুঝি
 
-- **Backpressure** — slow consumers can take down a server unless you bound their effect.
-- **Heartbeats** — TCP does not detect dead peers fast enough; you need an application-layer check.
-- **Reconnects** — clients will disconnect; the server and client both need to behave well when they do.
+আল-খোয়ারিজমির কারখানায় একটা লম্বা conveyor belt চলে — একদিক থেকে পার্সেল আসে, অন্য মাথায় বসে ইবনে সিনা সেগুলো একটা একটা করে বাক্সে ভরে সিল করে। belt-এর গতি ঠিক থাকলে সব মসৃণ। কিন্তু একদিন পার্সেল আসার হার হঠাৎ বেড়ে গেল, আর ইবনে সিনা হাত চালিয়েও কুলিয়ে উঠতে পারছিলেন না। তার সামনে পার্সেল জমতে জমতে টাল হয়ে যাচ্ছিল, একটু পরেই মেঝেতে গড়িয়ে পড়ে ভাঙার দশা। তাই belt-এর সাথে একটা sensor জুড়ে দেওয়া হলো — packer পিছিয়ে পড়লে belt নিজে থেকেই গতি কমায়, দরকারে খানিক জমতে দেয় (একটা ছোট ট্রে-তে), আর ট্রে-ও উপচে গেলে belt একদম থামিয়ে দেয়। packer সামলে নিলে belt আবার স্বাভাবিক গতিতে চলে।
 
-Each is small in isolation. Get all three right and the service feels boring.
+তার উপরে সুপারভাইজার ফাতিমা আল-ফিহরি প্রতি মিনিটে একবার হাঁক দেন — "আছো তো?" — আর packer-কে "হ্যাঁ" বলে জবাব দিতে হয়। কোনো মিনিটে জবাব না এলে ধরে নেওয়া হয় packer কাহিল হয়ে পড়েছে, সাথে সাথে খোঁজ নেওয়া হয়। আর belt-টা যদি কখনো ছিঁড়ে যায়, সেটা তক্ষুনি আবার চালু করার চেষ্টা হয় না — আগে অল্প কয়েক সেকেন্ড থামা, না হলে আরেকটু বেশি, তারপরও না হলে আরও বেশি — এভাবে বাড়তে থাকা বিরতি দিয়ে belt নিজে থেকে রিস্টার্ট হয়, যাতে একসাথে ঝাঁকুনি দিয়ে পুরো মোটর পুড়ে না যায়।
+
+এই কারখানাটাই আসলে একটা টেকসই WebSocket connection। belt-এর গতি packer-এর সাথে মিলিয়ে কমানো আর ট্রে-তে জমতে দেওয়াটাই **backpressure** — slow client সামলাতে message buffer করা, দরকারে drop করা, একদম না পারলে connection বন্ধ করা। সুপারভাইজারের প্রতি মিনিটের "আছো তো?" আর তার জবাবটাই **heartbeat** বা **ping/pong** — জবাব না এলে মরা connection দ্রুত ধরা পড়ে। আর belt ছিঁড়লে বাড়তে থাকা বিরতি দিয়ে রিস্টার্ট করাটাই **reconnect with exponential backoff** — drop হলে client প্রতিবার একটু বেশি সময় অপেক্ষা করে আবার connect করে, যাতে server-এর উপর একসাথে ঝাঁপিয়ে না পড়ে (thundering herd)। বাস্তবে এই তিনটা প্যাটার্নই একটা service-কে "এক সপ্তাহ চলে" আর "এক ঘণ্টা খুঁড়িয়ে চলে"-র মধ্যে আলাদা করে দেয়।
+
+একটা demo WebSocket server কাজ করে। একটা production-টা সবচেয়ে খারাপ network-এ সবচেয়ে খারাপ client-দের সপ্তাহের পর সপ্তাহ টিকিয়ে রাখে। ব্যবধানটা তিনটা বিষয় দিয়ে ভরাট:
+
+- **Backpressure** — slow consumer একটা server নামিয়ে দিতে পারে যদি না আপনি তাদের প্রভাব bound করেন।
+- **Heartbeat** — TCP dead peer যথেষ্ট দ্রুত detect করে না; আপনার একটা application-layer check দরকার।
+- **Reconnect** — client disconnect করবেই; disconnect করলে server আর client দুজনকেই ভালো আচরণ করতে হবে।
+
+প্রতিটা বিচ্ছিন্নভাবে ছোট। তিনটাই ঠিক করুন আর service একঘেয়ে লাগে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Backpressure is like a pressure valve on a garden hose — without it, too much flow bursts the hose; the valve lets you control the rate so the system stays intact.
+Backpressure হলো একটা garden hose-এর উপর একটা pressure valve-এর মতো — এটা ছাড়া, অতিরিক্ত flow hose ফাটায়; valve আপনাকে rate control করতে দেয় যাতে system অক্ষত থাকে।
 
 </Callout>
 
 ## Backpressure recap
 
-Chapter 3 introduced the per-client buffered channel and the drop-on-full pattern. Chapter 6 extended it to multi-process pub/sub. The principle:
+চ্যাপ্টার 3 per-client buffered channel আর drop-on-full প্যাটার্ন introduce করেছিল। চ্যাপ্টার 6 এটা multi-process pub/sub-এ বিস্তৃত করেছিল। নীতি:
 
-> Never let a slow client slow down the rest of the system.
+> কখনো একটা slow client-কে বাকি system slow করতে দেবেন না।
 
-There are only three things to do when a client cannot keep up:
+একটা client keep up করতে না পারলে করার মাত্র তিনটা জিনিস আছে:
 
-1. **Buffer.** Some queue depth absorbs short stalls.
-2. **Drop.** Past the buffer, throw messages away.
-3. **Disconnect.** If drops become a pattern, kill the connection.
+1. **Buffer.** কিছু queue depth ছোট stall শোষণ করে।
+2. **Drop.** buffer পার হলে, message ফেলে দিন।
+3. **Disconnect.** drop একটা প্যাটার্ন হয়ে গেলে, connection kill করুন।
 
-Each has a place. Buffering alone fails on sustained slowness (memory blowup). Dropping alone makes a slow client invisibly broken. Disconnecting alone is too aggressive for transient hiccups.
+প্রতিটার একটা জায়গা আছে। শুধু buffering sustained slowness-এ fail করে (memory blowup)। শুধু dropping একটা slow client-কে অদৃশ্যভাবে ভাঙা করে। শুধু disconnect করা transient hiccup-এর জন্য অতিরিক্ত আক্রমণাত্মক।
 
-## A real backpressure policy
+## একটা বাস্তব backpressure policy
 
 ```go
 type Client struct {
@@ -69,13 +77,13 @@ func (h *Hub) deliver(c *Client, msg []byte) {
 }
 ```
 
-64 buffered messages absorbs network jitter. If the client cannot drain that within ~hundreds of messages of new traffic, it is unhealthy. Disconnect; let it reconnect when it can keep up.
+64 buffered message network jitter শোষণ করে। client যদি নতুন traffic-এর ~শত শত message-এর মধ্যে সেটা drain করতে না পারে, এটা unhealthy। Disconnect করুন; keep up করতে পারলে এটাকে reconnect করতে দিন।
 
-The exact numbers depend on your traffic. For chat at 1 msg/sec, a 64-message buffer is over a minute of slack. For a high-frequency dashboard at 100 msg/sec, it is under a second; raise the buffer to 1024 and the disconnect threshold accordingly.
+সঠিক সংখ্যা আপনার traffic-এর উপর নির্ভর করে। 1 msg/sec-এ chat-এর জন্য, একটা 64-message buffer এক মিনিটের বেশি slack। 100 msg/sec-এ একটা high-frequency dashboard-এর জন্য, এটা এক সেকেন্ডের কম; buffer 1024-এ বাড়ান আর disconnect threshold সেই অনুযায়ী।
 
-## Write timeouts
+## Write timeout
 
-A separate failure mode: `conn.Write` itself blocks forever because the kernel's TCP send buffer is full and the network is wedged. `coder/websocket` requires you to pass a context — use one with a timeout:
+একটা আলাদা failure mode: `conn.Write` নিজেই চিরকাল block করে কারণ kernel-এর TCP send buffer full আর network আটকে গেছে। `coder/websocket`-এ আপনাকে একটা context pass করতে হয় — একটা timeout সহ একটা ব্যবহার করুন:
 
 ```go
 go func() {
@@ -90,28 +98,28 @@ go func() {
 }()
 ```
 
-10 seconds is generous; 5 is fine for most apps. If a write to the network does not complete in that window, the connection is effectively dead — close and move on.
+10 সেকেন্ড উদার; বেশিরভাগ app-এর জন্য 5 ঠিক আছে। network-এ একটা write যদি সেই window-এ সম্পন্ন না হয়, connection কার্যত মৃত — close করুন আর এগিয়ে যান।
 
-## Heartbeats — protocol level vs application level
+## Heartbeat — protocol level vs application level
 
-Two complementary patterns.
+দুটো পরিপূরক প্যাটার্ন।
 
-**Protocol-level pings.** RFC 6455 ping/pong frames. The library handles it transparently when you configure it:
+**Protocol-level ping.** RFC 6455 ping/pong frame। আপনি configure করলে library এটা স্বচ্ছভাবে সামলায়:
 
 ```go
 // coder/websocket already pings periodically; tune via context and Read:
 // the read context's deadline acts as the inactivity timeout
 ```
 
-Practically, `coder/websocket` sends pings when the connection has been idle, and a missed pong via the read context's deadline becomes a read error. The default behaviour is fine; you do not write ping code.
+বাস্তবিকভাবে, connection idle থাকলে `coder/websocket` ping পাঠায়, আর read context-এর deadline-এর মাধ্যমে একটা missed pong একটা read error হয়ে যায়। Default behaviour ঠিক আছে; আপনি কোনো ping code লেখেন না।
 
-**Application-level pings.** Your own protocol's `{"type":"ping"}` and `{"type":"pong"}`. Useful for:
+**Application-level ping.** আপনার নিজের protocol-এর `{"type":"ping"}` আর `{"type":"pong"}`। কাজে লাগে:
 
-- Carrying timestamps for latency measurement.
-- Working through proxies that strip or buffer protocol-level pings.
-- Detecting half-open connections from the client side without privileged access.
+- latency measurement-এর জন্য timestamp বহন করতে।
+- যে proxy protocol-level ping strip বা buffer করে তার ভেতর দিয়ে কাজ করতে।
+- privileged access ছাড়া client side থেকে half-open connection detect করতে।
 
-Most apps do both: protocol-level pings handled by the library, application-level pings every 30 seconds for health and latency.
+বেশিরভাগ app দুটোই করে: library দিয়ে সামলানো protocol-level ping, health আর latency-র জন্য প্রতি 30 সেকেন্ডে application-level ping।
 
 ```js
 // client side
@@ -128,24 +136,24 @@ ws.addEventListener('message', (e) => {
 });
 ```
 
-The server echoes `{"type":"pong","t":<original>}`. Easy. Now you have round-trip-time per connection — log it, alert on spikes.
+server `{"type":"pong","t":<original>}` echo করে। সহজ। এখন আপনার প্রতি connection-এ round-trip-time আছে — এটা log করুন, spike-এ alert দিন।
 
-## Why pings keep middleboxes happy
+## ping কেন middlebox-দের খুশি রাখে
 
-NAT routers, corporate proxies, mobile carrier middleboxes drop "idle" connections after some duration. The thresholds are inconsistent — sometimes 30 seconds, sometimes minutes. Pings keep traffic flowing so the connection looks active.
+NAT router, corporate proxy, mobile carrier middlebox কিছু সময় পর "idle" connection ড্রপ করে। threshold অসামঞ্জস্যপূর্ণ — কখনো 30 সেকেন্ড, কখনো মিনিট। Ping traffic চালু রাখে যাতে connection active দেখায়।
 
-If your app sees connections die after ~1 minute of inactivity, something in the path is dropping idle TCP. Add a ping every 25 seconds and the issue disappears. This is the single most common cause of "WebSockets work locally but die in production."
+আপনার app যদি ~1 মিনিট inactivity-র পর connection মারা যেতে দেখে, path-এর কিছু idle TCP ড্রপ করছে। প্রতি 25 সেকেন্ডে একটা ping যোগ করুন আর সমস্যা মিলিয়ে যায়। এটা "WebSockets locally কাজ করে কিন্তু production-এ মারা যায়"-এর একক সবচেয়ে সাধারণ কারণ।
 
-## Detecting half-open connections
+## Half-open connection detect করা
 
-A "half-open" connection is one where the TCP state on one side is alive but the other side is gone (network blip, peer crashed, NAT box dropped state). Without traffic, neither side notices for a long time.
+একটা "half-open" connection হলো এমন একটা যেখানে এক পক্ষের TCP state জীবিত কিন্তু অন্য পক্ষ চলে গেছে (network blip, peer crash, NAT box state ড্রপ)। traffic ছাড়া, কোনো পক্ষ অনেকক্ষণ টের পায় না।
 
-Both sides should:
+দুই পক্ষেরই উচিত:
 
-- Send pings periodically.
-- Set a **read deadline** on the connection that exceeds the ping interval.
+- periodic-ভাবে ping পাঠানো।
+- connection-এ একটা **read deadline** set করা যা ping interval-এর বেশি।
 
-If pings are every 25s and the read deadline is 60s, a missed two-ping-cycle without traffic kills the connection. The `coder/websocket` `Read(ctx)` honors the context deadline; chain a `context.WithTimeout` around each Read inside the reader loop:
+ping যদি প্রতি 25s আর read deadline 60s হয়, traffic ছাড়া দুই-ping-cycle miss connection kill করে। `coder/websocket`-এর `Read(ctx)` context deadline সম্মান করে; reader loop-এর ভেতরে প্রতিটা Read-এর চারপাশে একটা `context.WithTimeout` chain করুন:
 
 ```go
 for {
@@ -159,20 +167,20 @@ for {
 }
 ```
 
-Combined with periodic pings (which generate inbound pong frames or app-level messages), the deadline only fires when truly nothing arrived for a minute.
+periodic ping-এর (যা inbound pong frame বা app-level message তৈরি করে) সাথে মিলিত, deadline শুধু তখনই fire করে যখন সত্যিই এক মিনিট কিছু আসেনি।
 
-## Server-side reconnection logic — there isn't any
+## Server-side reconnection logic — কোনোটা নেই
 
-Important realization: the server does not reconnect. The server only handles disconnects gracefully. The client is responsible for reconnecting.
+গুরুত্বপূর্ণ উপলব্ধি: server reconnect করে না। server শুধু disconnect gracefully সামলায়। reconnect করার দায়িত্ব client-এর।
 
 Server side:
 
-- Detect disconnect quickly (timeouts above).
-- Run all cleanup (`leave` from rooms, decrement presence, drop subscriptions).
-- Log the disconnect with reason.
-- Wait for the reconnect — it will come from somewhere, likely the same user.
+- disconnect দ্রুত detect করুন (উপরের timeout)।
+- সব cleanup চালান (room থেকে `leave`, presence decrement, subscription drop)।
+- reason সহ disconnect log করুন।
+- reconnect-এর জন্য অপেক্ষা করুন — এটা কোথাও থেকে আসবে, সম্ভবত একই user।
 
-Server has zero state about "this is the same client coming back." All it sees is a fresh handshake. The client carries identity (auth token, user ID, last-seen-event) — server matches.
+Server-এর "এটা একই client ফিরে আসছে" সম্পর্কে শূন্য state। এটা যা দেখে তা হলো একটা fresh handshake। client identity বহন করে (auth token, user ID, last-seen-event) — server match করে।
 
 ## Client-side reconnect — exponential backoff
 
@@ -216,43 +224,43 @@ class ReconnectingWS {
 }
 ```
 
-Three production-flavoured details.
+তিনটা production-স্বাদের detail।
 
-**1. Backoff with cap.** 500ms, 1s, 2s, 4s, 8s, 16s, 30s, then plateau. Never reconnect faster than 500ms — a permanent failure becomes a denial-of-service against your own server.
+**1. Cap সহ backoff।** 500ms, 1s, 2s, 4s, 8s, 16s, 30s, তারপর plateau। কখনো 500ms-এর চেয়ে দ্রুত reconnect করবেন না — একটা permanent failure আপনার নিজের server-এর বিরুদ্ধে একটা denial-of-service হয়ে যায়।
 
-**2. Jitter.** Without it, a server outage means every client reconnects at the same instant when service returns, and you get a thundering herd. ~30% jitter spreads the reconnects.
+**2. Jitter.** এটা ছাড়া, একটা server outage মানে service ফিরলে প্রতিটা client একই মুহূর্তে reconnect করে, আর আপনি একটা thundering herd পান। ~30% jitter reconnect ছড়িয়ে দেয়।
 
-**3. Don't reconnect on intentional closes.** Codes `1000` (normal) and `1001` (going away) mean the server told you to leave. Respect it.
+**3. Intentional close-এ reconnect করবেন না।** Code `1000` (normal) আর `1001` (going away) মানে server আপনাকে চলে যেতে বলেছে। সম্মান করুন।
 
-For a production-ready client, libraries like `partysocket`, `reconnecting-websocket`, or `nice-grpc-web` (for the gRPC-Web case) handle this for you. Roll your own only if you understand the cases above.
+একটা production-ready client-এর জন্য, `partysocket`, `reconnecting-websocket`, বা `nice-grpc-web`-এর (gRPC-Web ক্ষেত্রের জন্য) মতো library আপনার জন্য এটা সামলায়। উপরের ক্ষেত্রগুলো বুঝলে তবেই নিজেরটা বানান।
 
-## Resumption — picking up where you left off
+## Resumption — যেখানে ছেড়েছিলেন সেখান থেকে তুলে নেওয়া
 
-A reconnect that just opens a fresh stream loses everything that happened during the disconnection. For chat, that is usually fine; the client requests history on reconnect via REST. For a notification stream where every event matters, you need resumption.
+একটা reconnect যা শুধু একটা fresh stream খোলে সেটা disconnection-এর সময় ঘটা সবকিছু হারায়। chat-এর জন্য, সেটা সাধারণত ঠিক আছে; client REST-এর মাধ্যমে reconnect-এ history request করে। যে notification stream-এ প্রতিটা event গুরুত্বপূর্ণ তার জন্য, আপনার resumption দরকার।
 
-Pattern: every server-pushed message has a sequence ID. The client tracks the last one it saw. On reconnect, the client sends `last_seq` and the server replays from there.
+প্যাটার্ন: প্রতিটা server-pushed message-এর একটা sequence ID আছে। client শেষ যেটা দেখেছে সেটা track করে। reconnect-এ, client `last_seq` পাঠায় আর server সেখান থেকে replay করে।
 
 ```js
 ws.send({ type: 'subscribe', room: 'general', lastSeq: this.lastSeq });
 ```
 
-Server-side requires:
+Server-side-এর দরকার:
 
-- A persistent log of recent events per room (Redis Streams, Postgres, NATS JetStream).
-- A subscription handler that backfills from the log up to "now" before joining the live stream.
+- প্রতি room-এ recent event-এর একটা persistent log (Redis Streams, Postgres, NATS JetStream)।
+- একটা subscription handler যা live stream-এ join করার আগে log থেকে "now" পর্যন্ত backfill করে।
 
-Identical to SSE's `Last-Event-ID` (chapter 5). Build it once, reuse the data store across both protocols.
+SSE-র `Last-Event-ID`-র (চ্যাপ্টার 5) অভিন্ন। একবার বানান, দুটো protocol জুড়ে data store পুনরায় ব্যবহার করুন।
 
-## Page visibility and tab sleep
+## Page visibility আর tab sleep
 
-When a browser tab is hidden, the OS may throttle or suspend timers and JS execution. `setInterval` for a heartbeat may not fire on schedule. The WebSocket itself does not close — the tab is paused, not gone.
+একটা browser tab hidden থাকলে, OS timer আর JS execution throttle বা suspend করতে পারে। একটা heartbeat-এর জন্য `setInterval` schedule অনুযায়ী fire নাও করতে পারে। WebSocket নিজে close হয় না — tab paused, gone নয়।
 
-Two practical effects:
+দুটো বাস্তব প্রভাব:
 
-1. **Server pings still arrive.** The connection stays alive; it just queues messages.
-2. **On tab focus, the client sees a flood of messages.** Buffer client-side and process at a sane pace.
+1. **Server ping এখনো পৌঁছায়।** connection জীবিত থাকে; এটা শুধু message queue করে।
+2. **Tab focus-এ, client message-এর একটা flood দেখে।** client-side buffer করুন আর একটা sane pace-এ process করুন।
 
-The `Page Visibility API` lets you handle the transitions:
+`Page Visibility API` আপনাকে transition সামলাতে দেয়:
 
 ```js
 document.addEventListener('visibilitychange', () => {
@@ -262,25 +270,25 @@ document.addEventListener('visibilitychange', () => {
 });
 ```
 
-For some apps the right move is to **disconnect when hidden** to free server resources, **reconnect** (with resumption) when visible. Worth it when you have many users with many tabs idle.
+কিছু app-এর জন্য সঠিক পদক্ষেপ হলো server resource মুক্ত করতে **hidden হলে disconnect** করা, visible হলে (resumption সহ) **reconnect** করা। অনেক idle tab সহ অনেক user থাকলে এটা মূল্যবান।
 
-## Mobile — the network is hostile
+## Mobile — network প্রতিকূল
 
-Mobile networks roam, hand off between cells, lose signal in tunnels. Connections drop frequently. Two patterns help:
+Mobile network roam করে, cell-এর মধ্যে hand off করে, tunnel-এ signal হারায়। Connection প্রায়ই ড্রপ করে। দুটো প্যাটার্ন সাহায্য করে:
 
-1. **Aggressive heartbeats** (every 15 seconds) detect drops faster. Worth the bandwidth cost.
-2. **Faster initial reconnect** on mobile clients — start at 250ms, jitter 50%. The user is more likely to be in a quick recovery from a brief drop.
+1. **Aggressive heartbeat** (প্রতি 15 সেকেন্ড) drop দ্রুত detect করে। bandwidth খরচের যোগ্য।
+2. **Mobile client-এ faster initial reconnect** — 250ms-এ শুরু করুন, jitter 50%। User একটা সংক্ষিপ্ত drop থেকে দ্রুত recovery-তে থাকার সম্ভাবনা বেশি।
 
-For pure-mobile apps, libraries like `Starscream` (iOS), `OkHttp WebSocket` (Android), or `flutter_socket_io` already handle reconnect; tune the cadence.
+pure-mobile app-এর জন্য, `Starscream` (iOS), `OkHttp WebSocket` (Android), বা `flutter_socket_io`-র মতো library ইতিমধ্যে reconnect সামলায়; cadence tune করুন।
 
 ## Graceful server shutdown
 
-When the server is restarting:
+server যখন restart করছে:
 
-1. **Stop accepting new connections.** `srv.SetKeepAlivesEnabled(false)` plus a healthcheck flip.
-2. **Tell connected clients to reconnect.** Send `{"type":"reconnect","data":{"after":2000}}` then close with `1001 GoingAway`.
-3. **Wait for in-flight closes** with a deadline (30s).
-4. **Force-close** the rest.
+1. **নতুন connection নেওয়া বন্ধ করুন।** `srv.SetKeepAlivesEnabled(false)` plus একটা healthcheck flip।
+2. **connected client-দের reconnect করতে বলুন।** `{"type":"reconnect","data":{"after":2000}}` পাঠান তারপর `1001 GoingAway` দিয়ে close করুন।
+3. একটা deadline (30s) সহ **in-flight close-এর জন্য অপেক্ষা করুন**।
+4. বাকিটা **force-close** করুন।
 
 ```go
 sigs := make(chan os.Signal, 1)
@@ -297,19 +305,19 @@ hub.closeAllByDeadline(websocket.StatusGoingAway, deadline)
 srv.Shutdown(context.Background())
 ```
 
-Combined with client-side backoff and jitter, this lets you deploy without thousands of clients reconnecting at the same instant.
+client-side backoff আর jitter-এর সাথে মিলিত, এটা আপনাকে হাজার হাজার client একই মুহূর্তে reconnect না করে deploy করতে দেয়।
 
 ## Recap
 
-- Backpressure: bounded buffer, drop-on-full, disconnect after sustained drops.
-- Write timeouts on every `conn.Write`. The connection is dead if writes hang.
-- Pings: protocol-level handled by the library; application-level for latency and proxy friendliness.
-- Read deadline that exceeds ping interval — detects half-open connections.
-- Server doesn't reconnect; clients do, with exponential backoff plus jitter, capped at 30s.
-- Don't reconnect on close codes 1000 and 1001.
-- Resumption: client tracks last sequence, server backfills from a persistent log.
-- Tab visibility: handle catch-up on focus; disconnect-when-hidden for high-traffic apps.
-- Mobile: tighter heartbeats, faster initial reconnect.
-- Graceful shutdown: stop new connections, hint reconnect, drain, force-close at deadline.
+- Backpressure: bounded buffer, drop-on-full, sustained drop-এর পর disconnect।
+- প্রতিটা `conn.Write`-এ write timeout। write hang করলে connection মৃত।
+- Ping: library দিয়ে সামলানো protocol-level; latency আর proxy friendliness-এর জন্য application-level।
+- Ping interval-এর বেশি একটা read deadline — half-open connection detect করে।
+- Server reconnect করে না; client করে, exponential backoff plus jitter সহ, 30s-এ capped।
+- close code 1000 আর 1001-এ reconnect করবেন না।
+- Resumption: client last sequence track করে, server একটা persistent log থেকে backfill করে।
+- Tab visibility: focus-এ catch-up সামলান; high-traffic app-এর জন্য disconnect-when-hidden।
+- Mobile: টাইট heartbeat, faster initial reconnect।
+- Graceful shutdown: নতুন connection বন্ধ, reconnect hint, drain, deadline-এ force-close।
 
-Next: [Production self-host](/notes/websockets/10-production) — nginx, systemd, observability, and scaling out on a VPS.
+পরবর্তী: [Production self-host](/notes/websockets/10-production) — nginx, systemd, observability, আর একটা VPS-এ scaling out।

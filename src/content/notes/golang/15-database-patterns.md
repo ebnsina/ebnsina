@@ -1,9 +1,9 @@
 ---
-title: 'Database Patterns'
-subtitle: 'Migrations, repository pattern, connection pooling, and query builders — the database layer that scales.'
+title: 'Database Pattern'
+subtitle: 'Migration, repository pattern, connection pooling, আর query builder — যে database layer স্কেল করে।'
 chapter: 15
 level: 'intermediate'
-readingTime: '22 min'
+readingTime: '22 মিনিট'
 topics:
   ['database', 'migrations', 'repository pattern', 'sqlc', 'transactions', 'connection pooling']
 ---
@@ -12,9 +12,17 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Database Migrations
+## গল্পে বুঝি
 
-Schema changes must be versioned, reproducible, and reversible. Never modify production schemas by hand.
+আল-খোয়ারিজমির একটা বড় মুদির দোকান — সামনে বিক্রির কাউন্টার, আর পেছনে বিশাল গুদাম। নিয়ম একটাই কড়া: কোনো সেলসম্যান নিজে গুদামে ঢুকে জিনিস হাতড়াতে পারবে না। গুদামের ভেতরের সাজানো-গোছানো, কোন তাকে কী আছে, কোনটা কীভাবে বের করতে হয় — এসব শুধু ফাতিমা আল-ফিহরি জানে, দোকানের একমাত্র গুদাম-রক্ষক। সেলসম্যানকে কিছু লাগলে সে শুধু কাউন্টারে দাঁড়িয়ে ফাতিমা আল-ফিহরিকে বলে "পাঁচ কেজি চাল দাও", ব্যস। চাল কোন বস্তায়, কোন তাকে, সেটা তার জানার দরকার নেই — একটা পরিষ্কার কাউন্টারের পেছনেই পুরো গুদামের ঝামেলা লুকানো।
+
+আরেকটা মজার ব্যবস্থা আছে আল-খোয়ারিজমির। প্রতিটা অর্ডার ডেলিভারি দিতে সে প্রতিবার নতুন ডেলিভারি বয় ভাড়া করে না — সেটা তো সময় আর টাকা দুটোই নষ্ট। বরং তিন-চারজন ডেলিভারি বয় সবসময় দোকানেই বসা থাকে; একজন ডেলিভারি সেরে ফিরলেই তাকে পরের অর্ডারে পাঠানো হয়। ভিড় বেশি হলে সবাই ব্যস্ত, তখন নতুন অর্ডার একটু অপেক্ষা করে খালি হওয়া বয়ের জন্য। আর কেউ যদি ঘণ্টার পর ঘণ্টা বসেই থাকে, আল-খোয়ারিজমি তাকে ছুটি দিয়ে দেয় — বসিয়ে খাওয়ানোর মানে হয় না।
+
+এটাই আসলে এই চ্যাপ্টারের **repository pattern** আর **connection pool**। ফাতিমা আল-ফিহরি হলো repository — সব ডেটা অ্যাক্সেস একটাই পরিষ্কার কাউন্টার (interface) দিয়ে যায়, ভেতরের SQL বা গুদামের বিন্যাস বাইরের service layer কখনো দেখে না। আর ডেলিভারি বয়দের দলটা হলো connection pool — কয়েকটা database connection বারবার শেয়ার করে reuse হয়, প্রতিবার নতুন connection খোলার খরচ বাঁচে; সবাই ব্যস্ত থাকলে নতুন query অপেক্ষা করে (`MaxOpenConns`), আর বেশিক্ষণ বসে থাকা idle connection বন্ধ হয়ে যায় (`ConnMaxIdleTime`)। বাস্তবে Go-র `database/sql` ঠিক এভাবেই pool চালায়, আর একটা ডেলিভারি বয়কে কয়েকটা কাজ একসাথে করতে বলা — আগে ইনভেন্টরি কমাও, তারপর অর্ডার লেখো, দুটোর একটা ভুল হলে পুরোটা বাতিল — সেটাই **transaction**, হয় সব হবে নয় কিছুই না।
+
+## Database Migration
+
+Schema পরিবর্তন অবশ্যই version-করা, পুনরুৎপাদনযোগ্য (reproducible), আর reversible হতে হবে। কখনো হাতে হাতে production schema বদলাবেন না।
 
 ```sql
 -- migrations/001_create_users.up.sql
@@ -36,7 +44,7 @@ CREATE INDEX idx_users_email ON users(email);
 DROP TABLE IF EXISTS users;
 ```
 
-Using `golang-migrate`:
+`golang-migrate` ব্যবহার করে:
 
 ```bash
 # Install
@@ -54,13 +62,13 @@ migrate -path migrations -database "postgres://localhost/myapp?sslmode=disable" 
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Migrations are like version-controlled blueprints for a building. Migration 001 lays the foundation. Migration 002 adds the second floor. Migration 003 installs plumbing. You can always look at the history and know exactly what was built and when. Rolling back tears down the last change without destroying earlier work.
+Migration অনেকটা একটা ভবনের version-controlled নকশার মতো। Migration 001 ভিত গাঁথে। Migration 002 দোতলা যোগ করে। Migration 003 পাইপলাইন বসায়। আপনি সবসময় ইতিহাস দেখে ঠিক জানতে পারেন কী কখন বানানো হয়েছিল। Rollback আগের কাজ নষ্ট না করে শেষ পরিবর্তনটা ভেঙে ফেলে।
 
 </Callout>
 
-### Running Migrations in Code
+### কোডে Migration চালানো
 
 ```go
 import (
@@ -84,9 +92,9 @@ func runMigrations(dbURL string) error {
 }
 ```
 
-## The Repository Pattern
+## Repository Pattern
 
-Repositories abstract database access behind an interface. The service layer never sees SQL:
+Repository একটা interface-এর পেছনে database access-কে abstract করে। service layer কখনো SQL দেখে না:
 
 ```go
 // internal/repository/user.go
@@ -160,9 +168,9 @@ func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*model.
 }
 ```
 
-## Type-Safe SQL with sqlc
+## sqlc দিয়ে Type-Safe SQL
 
-`sqlc` generates Go code from SQL queries — no ORM, no runtime reflection:
+`sqlc` SQL query থেকে Go কোড generate করে — কোনো ORM নেই, কোনো runtime reflection নেই:
 
 ```yaml
 # sqlc.yaml
@@ -204,7 +212,7 @@ DELETE FROM users WHERE id = $1;
 sqlc generate
 ```
 
-sqlc generates type-safe functions:
+sqlc type-safe function generate করে:
 
 ```go
 // Auto-generated — internal/db/users.sql.go
@@ -215,7 +223,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 <Callout type="tip">
 
-**sqlc is the industry recommendation** for Go database access. It catches SQL errors at compile time, generates zero-reflection code, and works with your existing migrations. No ORM magic — you write SQL, it generates Go.
+**Go database access-এর জন্য sqlc হলো industry recommendation।** এটা compile time-এই SQL error ধরে, zero-reflection কোড generate করে, আর আপনার বিদ্যমান migration-এর সাথে কাজ করে। কোনো ORM জাদু নেই — আপনি SQL লেখেন, এটা Go generate করে।
 
 </Callout>
 
@@ -245,13 +253,13 @@ func setupDB(dbURL string) (*sql.DB, error) {
 }
 ```
 
-**Tuning guide:**
+**Tuning গাইড:**
 
-- `MaxOpenConns`: Start with 25. Monitor `db.Stats()` — if `WaitCount` is high, increase
-- `MaxIdleConns`: 5-10 is typical. Too many wastes resources, too few causes reconnection overhead
-- `ConnMaxLifetime`: 5 minutes prevents stale connections after database failover
+- `MaxOpenConns`: 25 দিয়ে শুরু করুন। `db.Stats()` মনিটর করুন — যদি `WaitCount` বেশি হয়, বাড়ান
+- `MaxIdleConns`: 5-10 সাধারণ। বেশি হলে resource নষ্ট, কম হলে reconnection overhead
+- `ConnMaxLifetime`: database failover-এর পর 5 মিনিট stale connection ঠেকায়
 
-## Transactions with Helper
+## Helper দিয়ে Transaction
 
 ```go
 // Generic transaction helper — eliminates boilerplate
@@ -297,7 +305,7 @@ func (s *OrderService) PlaceOrder(ctx context.Context, order Order) error {
 }
 ```
 
-## Handling NULL Values
+## NULL Value সামলানো
 
 ```go
 // Option 1: sql.NullXxx types
@@ -318,7 +326,7 @@ var bio *string
 err := db.QueryRow("SELECT bio FROM users WHERE id = $1", id).Scan(&bio)
 ```
 
-## Bulk Operations
+## Bulk Operation
 
 ```go
 func (r *UserRepository) BulkCreate(ctx context.Context, users []*model.User) error {
@@ -340,11 +348,11 @@ func (r *UserRepository) BulkCreate(ctx context.Context, users []*model.User) er
 }
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Version your schema** — use migration tools, never modify production schemas by hand
-2. **Repository pattern** separates SQL from business logic — services depend on interfaces
-3. **Use sqlc** for type-safe, compile-time-checked SQL — no ORM overhead
-4. **Configure connection pools** — `MaxOpenConns=25`, `MaxIdleConns=5`, `ConnMaxLifetime=5m`
-5. **`WithTx` helper** eliminates transaction boilerplate — commit on success, rollback on error
-6. **Use `*string` over `sql.NullString`** — cleaner API, works naturally with JSON
+1. **আপনার schema version করুন** — migration tool ব্যবহার করুন, কখনো হাতে হাতে production schema বদলাবেন না
+2. **Repository pattern** SQL-কে business logic থেকে আলাদা করে — service interface-এর উপর নির্ভর করে
+3. **type-safe, compile-time-checked SQL-এর জন্য sqlc ব্যবহার করুন** — কোনো ORM overhead নেই
+4. **connection pool কনফিগার করুন** — `MaxOpenConns=25`, `MaxIdleConns=5`, `ConnMaxLifetime=5m`
+5. **`WithTx` helper** transaction boilerplate দূর করে — success-এ commit, error-এ rollback
+6. **`sql.NullString`-এর বদলে `*string` ব্যবহার করুন** — পরিচ্ছন্ন API, JSON-এর সাথে স্বাভাবিকভাবে কাজ করে

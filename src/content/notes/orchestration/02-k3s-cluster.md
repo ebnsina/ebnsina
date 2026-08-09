@@ -1,9 +1,9 @@
 ---
 title: 'k3s on Your Own VPS'
-subtitle: 'A production-grade Kubernetes cluster on bare metal — k3s setup, node joining, persistent storage, and why k3s beats managed Kubernetes for cost-conscious teams.'
+subtitle: 'bare metal-এর উপর একটা production-grade Kubernetes ক্লাস্টার — k3s সেটআপ, node joining, persistent storage, এবং cost-conscious টিমের জন্য managed Kubernetes-এর চেয়ে k3s কেন এগিয়ে।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['k3s', 'VPS', 'bare metal', 'Hetzner', 'cluster setup', 'Longhorn', 'Traefik']
 ---
 
@@ -11,24 +11,32 @@ topics: ['k3s', 'VPS', 'bare metal', 'Hetzner', 'cluster setup', 'Longhorn', 'Tr
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনার একটা বিশাল ভ্রাম্যমাণ সার্কাস দল। পুরো শো নামাতে লাগে বিশাল ক্রু, ডজনখানেক তাঁবু, ভারী রিগিং, হাতি-ঘোড়ার খাঁচা আর মালপত্র টানার লম্বা ট্রাকের বহর। বড় শহরের খোলা মাঠে এটা দিব্যি জমে। কিন্তু একদিন পাশের ছোট গ্রাম থেকে দাওয়াত এলো — সেখানকার মেলার মাঠটুকু এত ছোট যে গোটা বহর ঢোকানোই অসম্ভব, আর এত ক্রু-র থাকা-খাওয়ার খরচও মেলা কমিটির সাধ্যের বাইরে।
+
+তখন আল-খোয়ারিজমি বুদ্ধি বের করলেন — গোটা শো-টাই এক তাঁবুর ছোট সংস্করণে নামিয়ে আনলেন। জাগলিং, ট্র্যাপিজ, জোকার, ম্যাজিক — দর্শক যা দেখতে আসে, মূল খেলাগুলো সব একই থাকল; শুধু ভারী ডেকরেশন আর বাড়তি লোকলস্কর বাদ। ফাতিমা আল-ফিহরি মাত্র কয়েকজন পারফরমার আর একটা তাঁবু নিয়েই গ্রামের ছোট মাঠে হুবহু একই মেজাজের শো নামিয়ে দিলেন — দর্শক টেরই পেল না যে এটা "ছোট" সংস্করণ।
+
+এই এক-তাঁবুর সার্কাসটাই আসলে **k3s**। গোটা গ্র্যান্ড সার্কাস মানে full **Kubernetes** — যার ভারী control plane চালাতে অনেক রিসোর্স আর ওভারহেড লাগে। এক-তাঁবুর একই শো মানে k3s — একই core Kubernetes, শুধু কাটছাঁট করে **lightweight** বানানো, তাই সব `kubectl` কমান্ড আর manifest হুবহু একইভাবে কাজ করে। আর গ্রামের ছোট মেলার মাঠটাই হলো একটা ছোট single **VPS** বা **edge** হার্ডওয়্যার — যেখানে full Kubernetes আঁটে না, সেখানেও k3s দিব্যি চলে। বাস্তবে Raspberry Pi-র ছোট cluster থেকে শুরু করে দূরের IoT/edge সাইট বা €4.5/month-এর একটা Hetzner VPS — এই সব জায়গাতেই টিমরা এই একই কারণে full k8s-এর বদলে k3s বেছে নেয়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Renting vs owning: EKS costs $0.10/hour just for the control plane (~$72/month) before a single node. A Hetzner CX21 (2 vCPU, 4GB RAM) costs €4.5/month. Three of them with k3s gives you a production Kubernetes cluster for less than the EKS control plane fee alone. You own the hardware bill; the trade-off is that you own the operations too.
+ভাড়া নেওয়া বনাম মালিকানা: EKS-এর শুধু control plane-এর জন্যই খরচ $0.10/hour (~$72/month), একটা node যোগ হওয়ার আগেই। একটা Hetzner CX21 (2 vCPU, 4GB RAM) খরচ €4.5/month। এর তিনটা মেশিনে k3s চালালে আপনি EKS-এর শুধু control plane ফি-র চেয়েও কম খরচে একটা production Kubernetes ক্লাস্টার পান। হার্ডওয়্যারের বিলটা আপনার; বিনিময়ে operation-ও আপনার ঘাড়ে।
 
 </Callout>
 
 ## Why k3s
 
-k3s is a lightweight Kubernetes distribution by Rancher. The entire control plane runs as a single binary (~70MB). It removes alpha features, uses SQLite instead of etcd by default (PostgreSQL for production), and bundles Traefik as an ingress controller.
+k3s হলো Rancher-এর তৈরি একটা lightweight Kubernetes distribution। পুরো control plane একটা single binary হিসেবে চলে (~70MB)। এটা alpha feature বাদ দেয়, default-এ etcd-র বদলে SQLite ব্যবহার করে (production-এ PostgreSQL), এবং ingress controller হিসেবে Traefik বান্ডল করে দেয়।
 
-Compared to full Kubernetes:
+full Kubernetes-এর তুলনায়:
 
-- Same API surface — all `kubectl` commands work
-- Same YAML manifests — no changes needed
-- Embedded etcd or external PostgreSQL — no separate etcd cluster to operate
-- 512MB RAM for the server node (vs 2GB+ for full k8s)
+- একই API surface — সব `kubectl` কমান্ড কাজ করে
+- একই YAML manifest — কোনো পরিবর্তন লাগে না
+- Embedded etcd বা external PostgreSQL — আলাদা কোনো etcd ক্লাস্টার চালাতে হয় না
+- server node-এর জন্য 512MB RAM (full k8s-এ যেখানে 2GB+)
 
 ## Cluster Architecture
 
@@ -41,7 +49,7 @@ Internet ──── LB ──→│  server-1 (control plane + worker)│
                     (or: 1 control-plane + N worker nodes)
 ```
 
-For small clusters (&lt; 20 nodes), run the control plane on worker nodes — fewer machines, same HA with 3 nodes. For larger clusters, dedicate control plane nodes.
+ছোট ক্লাস্টারের জন্য (&lt; 20 nodes), control plane-কে worker node-এর উপরই চালান — কম মেশিন, ৩টা node দিয়েই একই HA। বড় ক্লাস্টারের জন্য control plane node আলাদা করে দিন।
 
 ## Server Preparation
 
@@ -101,7 +109,7 @@ curl -sfL https://get.k3s.io | sh -s - server \
   --flannel-backend=wireguard-native
 ```
 
-With 3 server nodes, you have an HA control plane. The embedded etcd tolerates 1 node failure.
+৩টা server node থাকলে আপনার একটা HA control plane হয়ে গেল। Embedded etcd একটা node ফেইল সহ্য করতে পারে।
 
 ## Joining Worker Nodes
 
@@ -113,7 +121,7 @@ export K3S_URL="https://10.0.0.1:6443"
 curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN sh -
 ```
 
-Workers run workloads but don't participate in etcd or API serving.
+Worker-রা workload চালায় কিন্তু etcd বা API serving-এ অংশ নেয় না।
 
 ## Configuring kubectl
 
@@ -134,7 +142,7 @@ kubectl get nodes
 
 ## Installing ingress-nginx
 
-k3s bundles Traefik. If you want nginx instead (more familiar config):
+k3s Traefik বান্ডল করে। এর বদলে nginx চাইলে (আরও পরিচিত config):
 
 ```bash
 # Disable Traefik in k3s (done during install with --disable traefik)
@@ -151,11 +159,11 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.replicaCount=2
 ```
 
-Point your external load balancer (or HAProxy on the VPS) to port 30080/30443 on all nodes.
+আপনার external load balancer (বা VPS-এর HAProxy)-কে সব node-এর 30080/30443 port-এর দিকে point করান।
 
 ## Persistent Storage with Longhorn
 
-k3s doesn't include persistent storage. Longhorn provides replicated block storage:
+k3s-এ persistent storage থাকে না। Longhorn replicated block storage দেয়:
 
 ```bash
 # Prerequisites
@@ -202,7 +210,7 @@ spec:
       storage: 20Gi
 ```
 
-Longhorn replicates each volume across 2 nodes. If a node fails, the replica is promoted and a new one built on another node.
+Longhorn প্রতিটা volume ২টা node-এ replicate করে। একটা node ফেইল করলে replica-টা promote হয় এবং আরেকটা node-এ নতুন একটা বানানো হয়।
 
 ## cert-manager for TLS
 
@@ -233,7 +241,7 @@ spec:
             class: nginx
 ```
 
-Certificates are provisioned and renewed automatically. Add `cert-manager.io/cluster-issuer: letsencrypt-prod` annotation to Ingress resources.
+সার্টিফিকেট অটোমেটিক provision আর renew হয়। Ingress resource-এ `cert-manager.io/cluster-issuer: letsencrypt-prod` annotation যোগ করুন।
 
 ## Node Maintenance
 
@@ -253,7 +261,7 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.29.0+k3s1" sh -
 
 ## Backup
 
-k3s's embedded etcd is the source of truth. Back it up:
+k3s-এর embedded etcd-ই হলো source of truth। এটা ব্যাকআপ করুন:
 
 ```bash
 # Manual snapshot
@@ -269,7 +277,7 @@ k3s etcd-snapshot restore \
   --cluster-reset-restore-path /var/lib/rancher/k3s/server/db/snapshots/pre-upgrade-snapshot
 ```
 
-Automate with a cron job:
+একটা cron job দিয়ে অটোমেট করুন:
 
 ```bash
 # /etc/cron.d/k3s-backup
@@ -293,4 +301,4 @@ k3s on Hetzner (3× CX31: 2 vCPU, 8GB RAM):
 Savings: ~$130/mo ($1,560/yr) for equivalent capacity
 ```
 
-The trade-off: you operate the control plane. With k3s that's: one command to join nodes, one snapshot command for backup, `apt upgrade` + `curl | sh` to upgrade k3s. For a 3-node cluster: 30 minutes/month of maintenance.
+বিনিময়ে: control plane-টা আপনাকে চালাতে হয়। k3s দিয়ে সেটা হলো: node join করতে একটা কমান্ড, backup-এর জন্য একটা snapshot কমান্ড, k3s আপগ্রেড করতে `apt upgrade` + `curl | sh`। একটা ৩-node ক্লাস্টারের জন্য: মাসে ৩০ মিনিটের maintenance।

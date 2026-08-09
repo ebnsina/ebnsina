@@ -1,9 +1,9 @@
 ---
 title: 'Server-Sent Events'
-subtitle: 'When the client only listens, SSE beats WebSockets in every dimension that matters — simpler protocol, free reconnect, plain HTTP. The default for one-way realtime.'
+subtitle: 'যখন client শুধু শোনে, SSE গুরুত্বপূর্ণ প্রতিটা মাত্রায় WebSockets-কে হারায় — সহজতর protocol, বিনামূল্যে reconnect, plain HTTP। One-way realtime-এর default।'
 chapter: 5
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['sse', 'server-sent-events', 'realtime', 'http']
 ---
 
@@ -13,19 +13,27 @@ topics: ['sse', 'server-sent-events', 'realtime', 'http']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A radio broadcast — the station transmits continuously, listeners tune in and receive, and there's no mechanism for a listener to talk back. SSE is that model over HTTP: one direction, always on, free reconnect.
+একটা রেডিও broadcast — স্টেশন একটানা transmit করে, শ্রোতারা tune in করে receive করে, আর একজন শ্রোতার পাল্টা কথা বলার কোনো ব্যবস্থা নেই। SSE হলো HTTP-র উপর সেই model: এক দিক, সবসময় on, বিনামূল্যে reconnect।
 
 </Callout>
 
-You read chapter 1's heuristic: if the client only consumes, choose SSE. This chapter is the case for it. By the end you will have an SSE server in Go, a browser client that reconnects automatically, and a clear sense of when SSE is the right tool and when WebSockets are.
+চ্যাপ্টার 1-এর heuristic পড়েছেন: client যদি শুধু consume করে, SSE বাছুন। এই চ্যাপ্টার সেটার পক্ষে যুক্তি। শেষে আপনার কাছে Go-তে একটা SSE server থাকবে, একটা browser client যা স্বয়ংক্রিয়ভাবে reconnect করে, আর কখন SSE সঠিক tool আর কখন WebSockets সেটার একটা পরিষ্কার ধারণা।
 
-## What SSE is
+## গল্পে বুঝি
 
-A Server-Sent Events stream is a long-running HTTP response with `Content-Type: text/event-stream`. The server writes UTF-8 text in a tiny line-based format; the browser's `EventSource` API parses each event and fires a callback.
+ফাতিমা আল-ফিহরি প্রথমবার শেয়ারবাজারের ট্রেডিং ফ্লোরে ঢুকে একটা জিনিস দেখে থমকে গেলেন — দেয়ালজুড়ে একটা ticker tape মেশিন, একটানা কাগজের ফিতা বেরিয়ে আসছে আর তাতে ছাপা হয়ে যাচ্ছে সদ্য হওয়া প্রতিটা দর: এই স্টক উঠল, ওই স্টক নামল, লেনদেন হলো। মেশিনটা থামে না, কাউকে জিজ্ঞেসও করে না — শুধু নতুন লাইন এসে যায়, ফাতিমা পড়ে যান। তিনি চাইলেই প্রতিটা আপডেট চোখের সামনে দেখতে পান, কিন্তু ওই কাগজের ফিতা দিয়ে পাল্টা কিছু বলার কোনো উপায় নেই — এটা নিছক একমুখী, ছাপা হয় শুধু তাঁর দিকেই।
 
-The whole protocol fits in a paragraph. There are no frames, no opcodes, no masking. It is plain HTTP.
+মজার ব্যাপার হলো মেশিনটা বসাতে কোনো ঝামেলা নেই — সাধারণ কাগজের ফিড, ব্যস। মাঝেমধ্যে ফিতা টান লেগে ছিঁড়ে গেলেও চিন্তা নেই; মেশিন নিজে থেকেই আবার ফিতা গেঁথে নিয়ে যেখানে থেমেছিল সেখান থেকে ছাপা চালু করে দেয়। ইবনে সিনা পাশে বসে অন্য একটা ব্যবস্থা চালান — একটা খোলা রাখা দরজা, যেখান দিয়ে দুই পক্ষই কথা চালাচালি করতে পারে; শক্তিশালী, কিন্তু বসাতে-চালাতে অনেক বেশি খাটুনি। ফাতিমার শুধু দর জানলেই চলে, পাল্টা কথা বলার দরকার নেই — তাই তাঁর জন্য ticker tape-ই যথেষ্ট।
+
+এই ticker tape-ই হলো **Server-Sent Events (SSE)**। মেশিন যে একটানা তাঁর দিকে ছাপছে সেটাই server push — server থেকে client-এর দিকে একমুখী (one-way) stream, পাল্টা বলার উপায় নেই। সাধারণ কাগজের ফিড দিয়ে চলাটাই plain HTTP-র উপরে চলা, তাই আলাদা কোনো protocol লাগে না। আর ফিতা ছিঁড়লে নিজে থেকে আবার গেঁথে নেওয়াটাই SSE-র বিনামূল্যে auto-reconnect। ইবনে সিনার খোলা দরজা হলো WebSocket — bidirectional, দুই দিকেই কথা চলে, কিন্তু ভারী। বাস্তবে যেখানে client শুধু আপডেট _পায়_ — live sports score, notification, activity feed, LLM token stream — সেখানে SSE-ই নিখুঁত; দুই দিকে কথা লাগলে তবেই WebSocket।
+
+## SSE কী
+
+একটা Server-Sent Events stream হলো `Content-Type: text/event-stream` সহ একটা long-running HTTP response। server একটা ছোট line-based format-এ UTF-8 text লেখে; browser-এর `EventSource` API প্রতিটা event parse করে আর একটা callback fire করে।
+
+পুরো protocol একটা paragraph-এ ধরে যায়। কোনো frame নেই, কোনো opcode নেই, কোনো masking নেই। এটা plain HTTP।
 
 ```
 GET /events HTTP/1.1
@@ -48,16 +56,16 @@ data: {"text": "you got mail"}
 retry: 5000
 ```
 
-Every event is one or more `field: value` lines, terminated by a blank line. Fields:
+প্রতিটা event হলো এক বা একাধিক `field: value` line, একটা blank line দিয়ে terminated। Field:
 
-- **`data:`** — the event payload. Multiple `data:` lines join with newlines.
-- **`event:`** — the event name. Defaults to `"message"`. Browser routes by name.
-- **`id:`** — a sequence ID. The browser remembers it and sends it as `Last-Event-ID` header on reconnect.
-- **`retry:`** — milliseconds to wait before reconnecting. Browser respects it.
+- **`data:`** — event payload। একাধিক `data:` line newline দিয়ে join হয়।
+- **`event:`** — event-এর নাম। Default `"message"`। Browser নাম দিয়ে route করে।
+- **`id:`** — একটা sequence ID। Browser এটা মনে রাখে আর reconnect-এ `Last-Event-ID` header হিসেবে পাঠায়।
+- **`retry:`** — reconnect করার আগে অপেক্ষার মিলিসেকেন্ড। Browser এটা সম্মান করে।
 
-That is the whole format. RFC 6202 plus the `EventSource` spec.
+এটাই পুরো format। RFC 6202 plus `EventSource` spec।
 
-## A Go SSE server
+## একটা Go SSE server
 
 ```go
 // sse/main.go
@@ -109,11 +117,11 @@ func main() {
 }
 ```
 
-Two pieces worth pointing at.
+দুটো অংশ দেখানোর মতো।
 
-**`http.Flusher`** is the lever that turns a normal handler into a stream. Without `Flush()`, the response is buffered until the handler returns. With `Flush()` after each write, bytes go out immediately. Most Go web frameworks expose this.
+**`http.Flusher`** হলো সেই লিভার যা একটা সাধারণ handler-কে একটা stream-এ পরিণত করে। `Flush()` ছাড়া, handler return না করা পর্যন্ত response buffered থাকে। প্রতিটা write-এর পর `Flush()` সহ, byte সাথে সাথে বেরিয়ে যায়। বেশিরভাগ Go web framework এটা expose করে।
 
-**`r.Context().Done()`** fires when the client disconnects (TCP RST, browser tab closed, navigation). Always select on it. Without that, the goroutine ticks forever after the client is gone.
+**`r.Context().Done()`** client disconnect করলে (TCP RST, browser tab বন্ধ, navigation) fire করে। সবসময় এটার উপর select করুন। এটা ছাড়া, client চলে যাওয়ার পরও goroutine চিরকাল tick করতে থাকে।
 
 ## Browser client
 
@@ -137,15 +145,15 @@ Two pieces worth pointing at.
 </html>
 ```
 
-Three things `EventSource` does for you:
+`EventSource` আপনার জন্য তিনটা জিনিস করে:
 
-1. **Auto-reconnect.** If the connection drops, the browser retries. Default backoff a few seconds; server can override with `retry:`.
-2. **Last-Event-ID resumption.** On reconnect, browser sends `Last-Event-ID: <last-id-it-saw>`. Server can resume from there — see below.
-3. **Event routing.** `addEventListener("tick", cb)` only fires for events with `event: tick`. The default is `"message"`.
+1. **Auto-reconnect.** connection ড্রপ করলে, browser retry করে। Default backoff কয়েক সেকেন্ড; server `retry:` দিয়ে override করতে পারে।
+2. **Last-Event-ID resumption.** reconnect-এ, browser `Last-Event-ID: <last-id-it-saw>` পাঠায়। server সেখান থেকে resume করতে পারে — নিচে দেখুন।
+3. **Event routing.** `addEventListener("tick", cb)` শুধু `event: tick` সহ event-এর জন্য fire করে। Default হলো `"message"`।
 
-## Resumption with `Last-Event-ID`
+## `Last-Event-ID` দিয়ে resumption
 
-If the network drops mid-stream, the browser reconnects with the `Last-Event-ID` header set to the most recent `id:` it saw. The server can then resume:
+network যদি stream-এর মাঝপথে ড্রপ করে, browser সবচেয়ে সাম্প্রতিক `id:` যা দেখেছে সেটায় set করা `Last-Event-ID` header সহ reconnect করে। server তখন resume করতে পারে:
 
 ```go
 lastID := r.Header.Get("Last-Event-ID")
@@ -159,36 +167,36 @@ if lastID != "" {
 // then continue with live events
 ```
 
-This is at-least-once delivery for free, as long as you keep an event log. Postgres + a `seq` column, Redis Streams, Kafka, any append-only store works.
+এটা বিনামূল্যে at-least-once delivery, যতক্ষণ আপনি একটা event log রাখেন। Postgres + একটা `seq` column, Redis Streams, Kafka, যেকোনো append-only store কাজ করে।
 
-WebSockets do not have this built in. You build it yourself. SSE wins here.
+WebSockets-এ এটা built in নেই। আপনি নিজে বানান। এখানে SSE জেতে।
 
-## When SSE beats WebSockets
+## কখন SSE WebSockets-কে হারায়
 
-- **One-way push** — the entire reason the protocol exists.
-- **HTTP middleboxes everywhere.** Corporate proxies that strip `Upgrade` headers, CDNs that buffer responses, ancient firewalls — SSE goes through. WebSockets sometimes don't.
-- **Auth and routing infrastructure.** SSE is just HTTP. Your existing rate limiter, auth middleware, observability, log forwarding, CDN — they all work unchanged.
-- **Free reconnection.** `EventSource` retries with backoff and resumes via `Last-Event-ID`. You write zero client code.
-- **Simple debugging.** `curl -N https://example.com/events` shows the live stream. No `wscat` needed.
+- **One-way push** — protocol-টা যে কারণে আছে সেই পুরো কারণ।
+- **সব জায়গায় HTTP middlebox।** Corporate proxy যা `Upgrade` header strip করে, CDN যা response buffer করে, প্রাচীন firewall — SSE পার হয়। WebSockets কখনো কখনো পারে না।
+- **Auth আর routing infrastructure।** SSE শুধুই HTTP। আপনার বিদ্যমান rate limiter, auth middleware, observability, log forwarding, CDN — সব অপরিবর্তিতভাবে কাজ করে।
+- **বিনামূল্যে reconnection।** `EventSource` backoff সহ retry করে আর `Last-Event-ID`-র মাধ্যমে resume করে। আপনি শূন্য client code লেখেন।
+- **সহজ debugging।** `curl -N https://example.com/events` live stream দেখায়। কোনো `wscat` দরকার নেই।
 
-## When WebSockets beat SSE
+## কখন WebSockets SSE-কে হারায়
 
-- **Bidirectional.** SSE is server-to-client only. The client uses normal HTTP for sends.
-- **Low-latency two-way.** The client-to-server path adds an HTTP round-trip; for chat-feel typing indicators, the latency adds up.
-- **Binary frames.** SSE is text-only. Binary needs base64 — adds 33% overhead.
-- **Browser limit.** Browsers cap concurrent `EventSource` connections per origin to ~6 (HTTP/1.1 limit). HTTP/2 lifts it. WebSockets are unlimited per origin.
+- **Bidirectional.** SSE শুধু server-to-client। client পাঠানোর জন্য সাধারণ HTTP ব্যবহার করে।
+- **Low-latency two-way।** client-to-server path একটা HTTP round-trip যোগ করে; chat-feel typing indicator-এর জন্য, latency জমে ওঠে।
+- **Binary frame।** SSE text-only। Binary-র জন্য base64 লাগে — 33% overhead যোগ করে।
+- **Browser limit.** Browser প্রতি origin-এ concurrent `EventSource` connection ~6-এ cap করে (HTTP/1.1 limit)। HTTP/2 এটা তুলে দেয়। WebSockets প্রতি origin-এ unlimited।
 
-For an admin dashboard with a "send command" button, the right shape is often SSE for receiving + plain `fetch` for sending. The button does `POST /actions`; the dashboard subscribes via SSE. Two protocols, both familiar, no WebSocket framing.
+একটা "send command" button সহ একটা admin dashboard-এর জন্য, সঠিক shape প্রায়ই receive-এর জন্য SSE + পাঠানোর জন্য plain `fetch`। button `POST /actions` করে; dashboard SSE-র মাধ্যমে subscribe করে। দুটো protocol, দুটোই পরিচিত, কোনো WebSocket framing নেই।
 
 <Callout type="tip">
 
-**A common pattern: SSE for read, REST for write.** The browser opens an `EventSource` for the live feed; user actions are normal `fetch` calls that the server processes and broadcasts back through SSE. Half the WebSocket protocol, none of the framing complexity.
+**একটা সাধারণ প্যাটার্ন: read-এর জন্য SSE, write-এর জন্য REST।** browser live feed-এর জন্য একটা `EventSource` খোলে; user action হলো সাধারণ `fetch` call যা server process করে আর SSE-র মাধ্যমে ফেরত broadcast করে। WebSocket protocol-এর অর্ধেক, framing-এর জটিলতার কিছুই না।
 
 </Callout>
 
-## SSE behind nginx
+## nginx-এর পেছনে SSE
 
-Two nginx settings make or break SSE.
+দুটো nginx setting SSE-কে গড়ে বা ভাঙে।
 
 ```nginx
 location /events {
@@ -201,15 +209,15 @@ location /events {
 }
 ```
 
-**`proxy_buffering off`** stops nginx from holding the response until it has a full buffer's worth. Without this, your tick events bunch up and arrive in batches.
+**`proxy_buffering off`** nginx-কে একটা full buffer-এর মতো না হওয়া পর্যন্ত response আটকে রাখা থেকে বিরত রাখে। এটা ছাড়া, আপনার tick event জমে গিয়ে batch-এ পৌঁছায়।
 
-**`proxy_read_timeout 24h`** lets the connection live longer than the default 60 seconds. SSE connections are meant to be long.
+**`proxy_read_timeout 24h`** connection-কে default 60 সেকেন্ডের চেয়ে বেশি বাঁচতে দেয়। SSE connection long হওয়ার কথা।
 
-The `X-Accel-Buffering: no` response header tells nginx (and some CDNs) "do not buffer this response," in case the location block doesn't override.
+`X-Accel-Buffering: no` response header nginx-কে (আর কিছু CDN-কে) বলে "এই response buffer করবেন না", location block override না করলে।
 
-## Heartbeats — keepalive comments
+## Heartbeat — keepalive comment
 
-SSE has no protocol-level heartbeat. To keep middleboxes from closing idle connections, send a periodic comment:
+SSE-র কোনো protocol-level heartbeat নেই। middlebox-দের idle connection বন্ধ করা থেকে বিরত রাখতে, একটা periodic comment পাঠান:
 
 ```go
 case <-keepalive.C:
@@ -217,11 +225,11 @@ case <-keepalive.C:
     flusher.Flush()
 ```
 
-Lines starting with `:` are comments. The browser ignores them. Send one every 15–30 seconds.
+`:` দিয়ে শুরু হওয়া line হলো comment। Browser এগুলো উপেক্ষা করে। প্রতি 15–30 সেকেন্ডে একটা পাঠান।
 
 ## Compression
 
-SSE benefits from gzip just like any HTTP response:
+SSE যেকোনো HTTP response-এর মতোই gzip থেকে উপকৃত হয়:
 
 ```nginx
 location /events {
@@ -231,37 +239,37 @@ location /events {
 }
 ```
 
-For JSON payloads, this halves bandwidth. Like `permessage-deflate` for WebSockets, the cost is CPU; for chat-rate traffic it is free.
+JSON payload-এর জন্য, এটা bandwidth অর্ধেক করে। WebSockets-এর `permessage-deflate`-এর মতো, খরচ হলো CPU; chat-rate traffic-এর জন্য এটা বিনামূল্যে।
 
-## Scaling SSE
+## SSE scaling
 
-The architectural shape is the same as WebSockets:
+architectural shape WebSockets-এর মতোই:
 
-- One process can hold tens of thousands of SSE connections (each is a goroutine and a TCP socket).
-- Multiple processes need a pub/sub bus to fan out to clients connected to other processes.
+- একটা process হাজার হাজার SSE connection ধরে রাখতে পারে (প্রতিটা একটা goroutine আর একটা TCP socket)।
+- একাধিক process-এর অন্য process-এ connected client-দের fan out করতে একটা pub/sub bus দরকার।
 
-Chapter 6 covers Redis pub/sub for both SSE and WebSocket workers. The pattern is identical — same broker, same fan-out, just different per-client output (SSE writes to `http.ResponseWriter`, WebSocket writes to `conn.Write`).
+চ্যাপ্টার 6 SSE আর WebSocket worker দুটোর জন্যই Redis pub/sub cover করে। প্যাটার্ন অভিন্ন — একই broker, একই fan-out, শুধু আলাদা per-client output (SSE `http.ResponseWriter`-এ লেখে, WebSocket `conn.Write`-এ লেখে)।
 
-## SSE for AI/LLM streaming
+## AI/LLM streaming-এর জন্য SSE
 
-A real-world case where SSE is dominant: streaming LLM responses. ChatGPT, Claude, every LLM API streams token deltas via SSE. Why:
+একটা বাস্তব ক্ষেত্র যেখানে SSE প্রভাবশালী: streaming LLM response। ChatGPT, Claude, প্রতিটা LLM API SSE-র মাধ্যমে token delta stream করে। কেন:
 
-- One-way push (the model produces, the client consumes).
-- HTTP-native means it works through every proxy.
-- The standard fits the use case perfectly: each token is one event.
-- `Last-Event-ID` semantics map to "resume from this token."
+- One-way push (model produce করে, client consume করে)।
+- HTTP-native মানে এটা প্রতিটা proxy-র ভেতর দিয়ে কাজ করে।
+- standard use case-এর সাথে নিখুঁতভাবে মানায়: প্রতিটা token একটা event।
+- `Last-Event-ID` semantics "এই token থেকে resume"-এ map করে।
 
-If you build an AI app, SSE is almost certainly the right choice for the model output channel.
+আপনি যদি একটা AI app বানান, model output channel-এর জন্য SSE প্রায় নিশ্চিতভাবে সঠিক পছন্দ।
 
-## Common SSE bugs
+## সাধারণ SSE bug
 
-**1. Buffered output.** `proxy_buffering` not turned off in nginx, or the language's HTTP framework not flushing. Symptom: events arrive in batches, not live. Fix: explicit `Flush()` and proxy config.
+**1. Buffered output.** nginx-এ `proxy_buffering` off করা হয়নি, বা ভাষার HTTP framework flush করছে না। লক্ষণ: event live-এর বদলে batch-এ পৌঁছায়। Fix: explicit `Flush()` আর proxy config।
 
-**2. Forgot to close on disconnect.** The handler keeps writing to a closed connection because `http.ResponseWriter.Write` swallows errors. Fix: always select on `r.Context().Done()`.
+**2. disconnect-এ close করতে ভুলে যাওয়া।** handler একটা বন্ধ connection-এ লিখতেই থাকে কারণ `http.ResponseWriter.Write` error গিলে ফেলে। Fix: সবসময় `r.Context().Done()`-এর উপর select করুন।
 
-**3. CORS for cross-origin SSE.** The browser respects CORS. If your SSE endpoint is on a different origin, set `Access-Control-Allow-Origin`.
+**3. cross-origin SSE-র জন্য CORS।** browser CORS সম্মান করে। আপনার SSE endpoint যদি একটা আলাদা origin-এ থাকে, `Access-Control-Allow-Origin` set করুন।
 
-**4. Unicode and the `data:` parser.** The browser splits on `\n` per the spec; multi-line `data:` payloads need each line prefixed. JSON one-liners avoid the issue.
+**4. Unicode আর `data:` parser।** browser spec অনুযায়ী `\n`-এ split করে; multi-line `data:` payload-এর প্রতিটা line-এ prefix দরকার। JSON one-liner সমস্যাটা এড়ায়।
 
 ```go
 // safe: one data line per event
@@ -270,13 +278,13 @@ fmt.Fprintf(w, "data: %s\n\n", string(jsonBytes))
 
 ## Recap
 
-- SSE = HTTP/1.1 streaming response with `Content-Type: text/event-stream`.
-- Wire format is line-based: `data:`, `event:`, `id:`, `retry:`. Blank line ends an event.
-- `EventSource` in browsers handles auto-reconnect and `Last-Event-ID` resumption for free.
-- For one-way push, SSE beats WebSockets on simplicity, ops, and middlebox compatibility.
-- For bidirectional, low-latency, or binary, WebSockets win.
-- nginx: `proxy_buffering off`, long `proxy_read_timeout`, `X-Accel-Buffering no`.
-- Heartbeats: comment lines (`:` prefix) every 15–30s.
-- LLM streaming and most "live updates" features fit SSE perfectly.
+- SSE = `Content-Type: text/event-stream` সহ HTTP/1.1 streaming response।
+- Wire format line-based: `data:`, `event:`, `id:`, `retry:`। একটা blank line একটা event শেষ করে।
+- browser-এ `EventSource` বিনামূল্যে auto-reconnect আর `Last-Event-ID` resumption সামলায়।
+- One-way push-এর জন্য, SSE সরলতা, ops আর middlebox compatibility-তে WebSockets-কে হারায়।
+- Bidirectional, low-latency, বা binary-র জন্য, WebSockets জেতে।
+- nginx: `proxy_buffering off`, long `proxy_read_timeout`, `X-Accel-Buffering no`।
+- Heartbeat: প্রতি 15–30s-এ comment line (`:` prefix)।
+- LLM streaming আর বেশিরভাগ "live updates" feature SSE-তে নিখুঁতভাবে মানায়।
 
-Next: [Pub/sub at scale](/notes/websockets/06-pubsub-scale) — fanning out events across many WebSocket or SSE worker processes with Redis or NATS.
+পরবর্তী: [Pub/sub at scale](/notes/websockets/06-pubsub-scale) — Redis বা NATS দিয়ে অনেক WebSocket বা SSE worker process জুড়ে event fan out করা।

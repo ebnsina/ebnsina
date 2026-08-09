@@ -1,9 +1,9 @@
 ---
 title: 'Why Background Jobs'
-subtitle: 'What belongs in a job queue, what belongs in the request cycle, and why mixing them breaks both.'
+subtitle: 'কী job queue-তে থাকা উচিত, কী request cycle-এ থাকা উচিত, এবং দুটো মেশালে কেন দুটোই ভেঙে পড়ে।'
 chapter: 1
 level: 'beginner'
-readingTime: '7 min'
+readingTime: '7 মিনিট'
 topics: ['background jobs', 'queues', 'async processing', 'request lifecycle']
 ---
 
@@ -13,20 +13,28 @@ topics: ['background jobs', 'queues', 'async processing', 'request lifecycle']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A restaurant kitchen: the waiter takes your order and confirms it immediately — they don't stand there while the chef cooks your meal. The order goes to the kitchen (a queue), and the waiter goes back to take more orders. Background jobs are the kitchen.
+একটি রেস্তোরাঁর রান্নাঘর: ওয়েটার আপনার অর্ডার নিয়ে সঙ্গে সঙ্গে সেটা কনফার্ম করে — শেফ আপনার খাবার রান্না করার সময়টা সে দাঁড়িয়ে থাকে না। অর্ডার রান্নাঘরে (একটি queue) চলে যায়, আর ওয়েটার আরও অর্ডার নিতে ফিরে যায়। Background job হলো সেই রান্নাঘর।
 
 </Callout>
 
-## The Problem with Doing Everything in the Request
+## গল্পে বুঝি
 
-A typical HTTP request should respond in under a few hundred milliseconds. Users notice anything slower. But many real operations take longer: sending emails, resizing images, syncing with third-party APIs, generating PDFs, processing uploads.
+ইবনে সিনা এক বিকেলে ফটো স্টুডিওতে গেলেন এক রোল ফিল্ম ডেভেলপ করাতে। কাউন্টারে বসা আল-খোয়ারিজমি ফিল্মের রোলটা হাতে নিয়ে একটা নম্বর লেখা টোকেন ধরিয়ে দিলেন — "সন্ধ্যায় আসেন, প্রিন্ট রেডি থাকবে।" ইবনে সিনাকে কাউন্টারে দাঁড়িয়ে ঘণ্টার পর ঘণ্টা ফিল্ম ডেভেলপ হওয়া দেখতে হলো না; টোকেন নিয়ে তিনি সঙ্গে সঙ্গে বেরিয়ে গিয়ে নিজের বাকি কাজ সেরে ফেললেন।
 
-Doing slow work inline has two failure modes:
+এদিকে স্টুডিওর পেছনের ঘরে টেকনিশিয়ান ফাতিমা আল-ফিহরি ধীরেসুস্থে ফিল্মটা ডেভেলপ করছেন — এই ধীর কাজটা সামনের কাউন্টারকে একটুও আটকে রাখেনি, তাই লাইনের পরের গ্রাহকও দ্রুত টোকেন পেয়ে গেলেন। সন্ধ্যায় ইবনে সিনা ফিরে এসে টোকেন দেখিয়ে তাঁর তৈরি হয়ে যাওয়া প্রিন্টগুলো নিয়ে গেলেন।
 
-1. **Timeout:** The request takes too long, the client disconnects, the work is half-done.
-2. **Backpressure:** Slow requests pile up, exhausting your server's connection pool and degrading everything else.
+এই গল্পটাই **background job**। ফিল্ম জমা দিয়ে সঙ্গে সঙ্গে টোকেন নিয়ে বেরিয়ে যাওয়া হলো ইউজারকে instant response ফেরত দেওয়া — ধীর কাজটাকে request path থেকে সরিয়ে দেওয়া। পেছনের ঘরের ডেভেলপিং হলো async-এ চলা সেই slow work, আর টেকনিশিয়ান হলেন background worker; সন্ধ্যায় প্রিন্ট নিতে আসা মানে পরে গিয়ে ফলাফল সংগ্রহ করা। বাস্তবে welcome email পাঠানো, upload করা image resize করা, বা মাসিক report generate করা — এগুলো ঠিক এভাবেই queue-তে দিয়ে দেওয়া হয় যাতে request সঙ্গে সঙ্গে respond করে আর worker পেছনে কাজটা সেরে ফেলে।
+
+## সবকিছু Request-এর মধ্যে করার সমস্যা
+
+একটি সাধারণ HTTP request কয়েকশো মিলিসেকেন্ডের মধ্যে respond করা উচিত। এর চেয়ে ধীর কিছু ইউজার টের পেয়ে যায়। কিন্তু অনেক বাস্তব অপারেশন এর চেয়ে বেশি সময় নেয়: email পাঠানো, image resize করা, third-party API-র সাথে sync করা, PDF তৈরি করা, upload প্রসেস করা।
+
+ধীর কাজ inline করার দুটো failure mode আছে:
+
+1. **Timeout:** Request-এ বেশি সময় লাগে, client disconnect হয়ে যায়, কাজ অর্ধেক হয়ে থাকে।
+2. **Backpressure:** ধীর request-গুলো জমতে থাকে, আপনার server-এর connection pool শেষ করে ফেলে এবং বাকি সবকিছুকে ধীর করে দেয়।
 
 ```typescript
 // WRONG — email sending blocks the response
@@ -42,7 +50,7 @@ app.post('/register', async (req, res) => {
 });
 ```
 
-If the email provider is slow, every registration is slow. If it's down, registrations fail entirely — even though the user was created successfully.
+email provider ধীর হলে প্রতিটি registration ধীর হয়। সেটা down থাকলে registration একদম fail করে — যদিও user সফলভাবে তৈরি হয়ে গিয়েছিল।
 
 ```typescript
 // RIGHT — enqueue the work, respond immediately
@@ -58,30 +66,30 @@ app.post('/register', async (req, res) => {
 });
 ```
 
-## What Goes in a Queue
+## কী Queue-তে যায়
 
-**Good candidates:**
+**ভালো candidate:**
 
-- Email/SMS notifications
-- Image/video processing (resize, transcode)
-- PDF generation
-- Third-party API calls (Stripe, Twilio, Salesforce)
-- Search index updates
-- Report generation
+- Email/SMS notification
+- Image/video প্রসেসিং (resize, transcode)
+- PDF তৈরি
+- Third-party API call (Stripe, Twilio, Salesforce)
+- Search index update
+- Report তৈরি
 - Webhook delivery
-- Data exports/imports
+- Data export/import
 - Cache warming
-- Cleanup tasks (delete expired sessions, soft-deleted records)
+- Cleanup task (expired session, soft-deleted record মুছে ফেলা)
 
-**Bad candidates:**
+**খারাপ candidate:**
 
-- Data that the response depends on (user needs the result immediately)
-- Short operations (&lt;10ms) — queue overhead exceeds the work
-- Operations that need transactional consistency with the request
+- এমন data যার উপর response নির্ভর করে (user-এর সাথে সাথে ফলাফল দরকার)
+- ছোট অপারেশন (&lt;10ms) — queue-এর overhead-ই কাজের চেয়ে বেশি হয়ে যায়
+- এমন অপারেশন যার request-এর সাথে transactional consistency দরকার
 
-The test: "Does the user need this result before I can respond?" If yes, do it inline. If no, queue it.
+পরীক্ষাটা হলো: "respond করার আগে user-এর কি এই ফলাফলটা দরকার?" হ্যাঁ হলে inline করুন। না হলে queue-তে দিন।
 
-## The Anatomy of a Job
+## একটি Job-এর গঠন
 
 ```typescript
 interface Job<T = unknown> {
@@ -106,7 +114,7 @@ interface JobResult {
 
 ## Worker Architecture
 
-Workers are processes (or threads) that pull jobs from a queue and execute them:
+Worker হলো এমন process (বা thread) যারা queue থেকে job টেনে নিয়ে সেগুলো execute করে:
 
 ```typescript
 // Single worker — processes one job at a time
@@ -156,9 +164,9 @@ const worker = new Worker(
 );
 ```
 
-## Scaling Workers
+## Worker Scale করা
 
-Workers are stateless — you can run as many as your queue and database support:
+Worker stateless — আপনার queue ও database যতগুলো সাপোর্ট করে ততগুলো চালাতে পারেন:
 
 ```
 Queue (Redis or Postgres)
@@ -166,11 +174,11 @@ Queue (Redis or Postgres)
  Worker 1    Worker 2    Worker 3
 ```
 
-Each worker picks up the next available job. Horizontal scaling is just starting more worker processes. Scale workers independently from your web servers — if you have a sudden spike in email jobs, spin up more email workers without touching your API tier.
+প্রতিটি worker পরের available job তুলে নেয়। Horizontal scaling মানে শুধু আরও বেশি worker process চালু করা। আপনার web server থেকে আলাদাভাবে worker scale করুন — email job-এ হঠাৎ spike এলে API tier-এ হাত না দিয়েই আরও email worker চালু করুন।
 
-## Concurrency Within a Worker
+## একটি Worker-এর ভেতরে Concurrency
 
-A single worker process can run multiple jobs in parallel:
+একটি single worker process একসাথে একাধিক job parallel-এ চালাতে পারে:
 
 ```typescript
 import Queue from 'bull';
@@ -188,15 +196,15 @@ queue.process('generate-pdf', 2, async (job) => {
 });
 ```
 
-Match concurrency to the nature of the work: I/O-bound jobs (network calls) can run many in parallel; CPU-bound jobs should be limited to the number of cores.
+কাজের ধরন অনুযায়ী concurrency মেলান: I/O-bound job (network call) অনেকগুলো parallel-এ চলতে পারে; CPU-bound job কোরের সংখ্যার মধ্যে সীমিত রাখা উচিত।
 
-## Choosing a Queue Backend
+## Queue Backend বাছাই করা
 
-| Backend              | Pros                              | Cons                   | Best for                     |
-| -------------------- | --------------------------------- | ---------------------- | ---------------------------- |
-| Redis (Bull/BullMQ)  | Fast, feature-rich, great tooling | Extra infra dependency | High throughput, real-time   |
-| PostgreSQL (pg-boss) | No extra infra, ACID guarantees   | Slower than Redis      | Teams already using Postgres |
-| In-memory            | Zero infra                        | Lost on restart        | Dev/test only                |
-| SQS/Cloud queues     | Managed, durable                  | Cost, cold start       | AWS-native apps              |
+| Backend              | Pros                               | Cons                      | Best for                             |
+| -------------------- | ---------------------------------- | ------------------------- | ------------------------------------ |
+| Redis (Bull/BullMQ)  | দ্রুত, feature-rich, দারুণ tooling | অতিরিক্ত infra dependency | High throughput, real-time           |
+| PostgreSQL (pg-boss) | অতিরিক্ত infra নেই, ACID guarantee | Redis-এর চেয়ে ধীর        | যারা আগে থেকেই Postgres ব্যবহার করছে |
+| In-memory            | Zero infra                         | restart-এ হারিয়ে যায়    | শুধু dev/test                        |
+| SQS/Cloud queue      | Managed, durable                   | খরচ, cold start           | AWS-native app                       |
 
-If you're already running Postgres and don't need sub-second job pickup, **pg-boss** is the pragmatic choice — no Redis to operate. If you need high throughput or real-time job processing, **BullMQ** on Redis.
+আপনি যদি আগে থেকেই Postgres চালাচ্ছেন এবং sub-second job pickup না লাগে, তাহলে **pg-boss** হলো ব্যবহারিক পছন্দ — Redis চালানোর ঝামেলা নেই। High throughput বা real-time job processing দরকার হলে Redis-এ **BullMQ**।

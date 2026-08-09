@@ -1,25 +1,33 @@
 ---
-title: 'Secrets & Configuration'
-subtitle: 'Environment variables, secret managers, config as code — how to handle sensitive data without leaking it.'
+title: 'Secrets ও Configuration'
+subtitle: 'Environment variables, secret managers, config as code — sensitive data লিক না করে কীভাবে হ্যান্ডল করবেন।'
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
 topics: ['secrets', 'env vars', 'config', 'security']
+readingTime: '12 মিনিট'
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Configuration Spectrum
+## গল্পে বুঝি
 
-From least sensitive to most:
+ফাতিমা আল-ফিহরি একটা মিষ্টির দোকান চালান, আর সামনে ক্যাশবাক্সের একটা সিন্দুক আছে। নতুন এক কর্মচারী একদিন সিন্দুকের গায়েই একটা sticky note সেঁটে তাতে সিন্দুকের কম্বিনেশন লিখে রাখল — "ভুলে না যাই"। ফাতিমা দেখেই টেনে খুলে ফেললেন। কম্বিনেশন সিন্দুকের গায়ে লেখা মানে তো সিন্দুকে তালা থাকা আর না থাকা সমান — যে-ই দোকানে ঢোকে, ক্যাশবাক্স তার হাতের নাগালে।
+
+তার বদলে ফাতিমা কম্বিনেশনটা রাখেন একটা আলাদা তালাবদ্ধ চাবি-ক্যাবিনেটে। যে কর্মচারীর ঠিক এই মুহূর্তে সিন্দুক খোলা দরকার, তাকে সেই সময়েই কম্বিনেশনটা বের করে দেন — কাজ শেষে সেটা আর কারো কাছে থাকে না। আবার ফাতিমার তিনটে শাখা: মূল দোকান, গুদাম, আর ট্রেনিং শপ। প্রতিটা শাখা চলে নিজের একটা আলাদা সেটিংস কার্ড দিয়ে — আলাদা till, আলাদা শুরুর float — যদিও স্টাফ ম্যানুয়াল তিন জায়গাতেই হুবহু একই বই।
+
+এই গল্পটাই আসলে secrets ও configuration। সিন্দুকের গায়ে sticky note সেঁটে কম্বিনেশন লেখা মানে হলো secret সরাসরি কোডে hard-code করে রাখা — যে কেউ কোড দেখলেই পেয়ে যাবে। তালাবদ্ধ চাবি-ক্যাবিনেট থেকে ঠিক দরকারের সময় কম্বিনেশন হাতে দেওয়াটাই secret store — secret আলাদা নিরাপদ জায়গায় থাকে, runtime-এ ঠিক যেখানে লাগে সেখানেই inject হয়। আর প্রতিটা শাখার নিজস্ব সেটিংস কার্ড কিন্তু একই ম্যানুয়াল — এটাই per-environment config: একই code তিন environment-এ (dev/staging/prod) চলে, শুধু config আলাদা। বাস্তবে ঠিক এভাবেই secret store হিসেবে HashiCorp Vault বা AWS Secrets Manager ব্যবহার হয়, আর environment-ভেদে আলাদা config দেওয়া হয় env var দিয়ে।
+
+## Configuration-এর স্পেকট্রাম
+
+সবচেয়ে কম sensitive থেকে সবচেয়ে বেশি:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like keeping your bank PIN vs. your display name — your PIN (secret) is stored securely and never shown, while your display name (config) can be shared openly. Mixing them up is like writing your PIN on a sticky note on your monitor.
+আপনার ব্যাংকের PIN বনাম আপনার display name রাখার মতো — আপনার PIN (secret) নিরাপদে জমা থাকে এবং কখনো দেখানো হয় না, আর আপনার display name (config) খোলাখুলি শেয়ার করা যায়। এই দুটো গুলিয়ে ফেলা মানে হলো আপনার মনিটরে একটা sticky note-এ PIN লিখে রাখা।
 
 </Callout>
 
@@ -65,7 +73,7 @@ validateConfig(config);
 
 <Callout type="warning">
 
-**Never commit `.env` files to git.** Add `.env` to `.gitignore` immediately. Committed secrets stay in git history forever — even if you delete the file, anyone can find it with `git log`.
+**কখনোই `.env` ফাইল git-এ commit করবেন না।** এখনই `.env`-কে `.gitignore`-এ যোগ করুন। Commit করা secrets git history-তে চিরকাল থেকে যায় — এমনকি আপনি ফাইলটা মুছে ফেললেও যে কেউ `git log` দিয়ে সেটা খুঁজে বের করতে পারে।
 
 </Callout>
 
@@ -128,7 +136,7 @@ spec:
 
 <Callout type="info">
 
-**Kubernetes Secrets are base64-encoded, not encrypted.** Anyone with cluster access can read them. For real secret management, use an external secret manager (Vault, AWS Secrets Manager) with a Kubernetes operator like External Secrets.
+**Kubernetes Secrets base64-encoded, encrypted নয়।** cluster access আছে এমন যে কেউ সেগুলো পড়তে পারে। আসল secret management-এর জন্য External Secrets-এর মতো একটা Kubernetes operator সহ একটা external secret manager (Vault, AWS Secrets Manager) ব্যবহার করুন।
 
 </Callout>
 
@@ -157,9 +165,9 @@ async function rotateDbPassword(): Promise<void> {
 }
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Never commit secrets to git** — use `.env` for local dev, secret managers for production
-2. **Validate config at startup** — fail fast if required values are missing
-3. **Use a secret manager** for production — env vars don't provide rotation, auditing, or encryption
-4. **Rotate secrets regularly** — automate it so it's painless
+1. **কখনো secrets git-এ commit করবেন না** — local dev-এর জন্য `.env`, আর production-এর জন্য secret managers ব্যবহার করুন
+2. **Startup-এ config validate করুন** — required value না থাকলে fail fast করুন
+3. **Production-এর জন্য একটা secret manager ব্যবহার করুন** — env vars rotation, auditing, বা encryption দেয় না
+4. **নিয়মিত secrets rotate করুন** — এটা automate করুন যাতে ঝামেলাহীন হয়

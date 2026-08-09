@@ -1,9 +1,9 @@
 ---
 title: 'MVCC — Multi-Version Concurrency Control'
-subtitle: 'How databases let readers and writers work simultaneously without blocking — snapshots, visibility rules, and isolation levels.'
+subtitle: 'ডেটাবেজ কীভাবে reader আর writer-কে block ছাড়াই একসাথে কাজ করতে দেয় — snapshots, visibility rules, আর isolation levels।'
 chapter: 4
 level: 'intermediate'
-readingTime: '17 min'
+readingTime: '17 মিনিট'
 topics: ['MVCC', 'transactions', 'isolation levels', 'snapshots']
 ---
 
@@ -11,23 +11,31 @@ topics: ['MVCC', 'transactions', 'isolation levels', 'snapshots']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Concurrency Problem
+## গল্পে বুঝি
 
-Without concurrency control, two transactions modifying the same row can corrupt data. Locking everything works but kills performance — readers block writers and vice versa.
+ইবনে সিনার অফিসের করিডোরে একটা নোটিশ বোর্ড আছে। শুক্রবার সকালে ফাতিমা আল-ফিহরি বোর্ডে একটা নোটিশ টাঙায় — "শনিবার মিটিং, দুপুর ২টা"। আল-খোয়ারিজমি ঠিক তখনই বোর্ডের সামনে দাঁড়িয়ে পুরো নোটিশটা মন দিয়ে পড়ছে, নোটবুকে টুকে নিচ্ছে। এমন সময় খবর এলো মিটিং পিছিয়ে বিকেল ৪টা হয়েছে। এখন ফাতিমা আল-ফিহরি যদি পুরনো নোটিশটা মুছে নতুন সময় লিখতে যেত, আল-খোয়ারিজমি মাঝপথে দেখত অর্ধেক পুরনো অর্ধেক নতুন — পুরো গোলমাল।
 
-**MVCC** solves this by keeping multiple versions of each row. Readers see a consistent snapshot without blocking writers.
+তাই ফাতিমা আল-ফিহরি চালাক। পুরনোটা না মুছে সে একটা নতুন কাগজে নতুন নোটিশ লেখে, উপরে তারিখ-সময় বসিয়ে বোর্ডে টাঙিয়ে দেয়। আল-খোয়ারিজমি যে পুরনো কাগজটা পড়া শুরু করেছিল, সেটা শেষ পর্যন্ত অক্ষত থাকে — সে একটা consistent জিনিসই পড়ে শেষ করে। কিন্তু এর পরে যে-ই বোর্ডের সামনে আসে, সে সবচেয়ে নতুন তারিখের কাগজটাই দেখে। ফাতিমা আল-ফিহরির লেখা আর আল-খোয়ারিজমির পড়া — কেউ কারো জন্য থেমে থাকে না।
+
+এই নোটিশ বোর্ডটাই আসলে **MVCC**। প্রতিটা row-র একাধিক **version** থাকে — পুরনো কাগজ, নতুন কাগজ। এক-একটা reader transaction শুরুর মুহূর্তের একটা **snapshot** ধরে রাখে, তাই সে পুরো read জুড়ে একটাই consistent version দেখে; মাঝপথে কেউ **write** করলেও তার পড়ায় ভাঙন ধরে না। **Write** মানে পুরনোটা মুছে ফেলা নয়, নতুন একটা version তৈরি করা — এজন্যই reader কখনো writer-কে block করে না, writer-ও reader-কে থামায় না, **lock** ছাড়াই দুজন একসাথে চলে। বাস্তবে PostgreSQL আর MySQL InnoDB ঠিক এভাবেই কাজ করে — পুরনো version জমতে থাকে বলে PostgreSQL-এ পরে VACUUM দিয়ে সেই বাতিল কাগজগুলো পরিষ্কার করতে হয়।
+
+## Concurrency সমস্যা
+
+Concurrency control ছাড়া, একই row modify করা দুইটা transaction ডেটা নষ্ট করে ফেলতে পারে। সবকিছু lock করলে কাজ হয় কিন্তু performance মেরে ফেলে — reader writer-কে block করে আর উল্টোটাও।
+
+**MVCC** এটা সমাধান করে প্রতিটা row-র একাধিক version রেখে। Reader একটা consistent snapshot দেখে, writer-কে block না করেই।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a document under review — when someone is editing a shared document, others still see the last saved version. The new version only becomes visible after the edit is fully saved, so no one sees half-written content.
+যেমন review-তে থাকা একটা document — কেউ যখন একটা shared document এডিট করছে, অন্যরা তখনও শেষ save করা version দেখে। নতুন version শুধু তখনই দৃশ্যমান হয় যখন এডিট পুরোপুরি save হয়ে যায়, তাই কেউ অর্ধেক-লেখা content দেখে না।
 
 </Callout>
 
-## How MVCC Works
+## MVCC কীভাবে কাজ করে
 
-Every row has hidden metadata tracking which transactions created and deleted it:
+প্রতিটা row-র লুকানো metadata থাকে যা track করে কোন transaction এটা তৈরি আর delete করেছে:
 
 ```typescript
 interface MVCCRow {
@@ -49,7 +57,7 @@ interface MVCCRow {
 
 ## Snapshot Isolation
 
-Each transaction gets a **snapshot** — a frozen view of which transactions were committed at the time it started.
+প্রতিটা transaction একটা **snapshot** পায় — একটা জমাট view যে কোন কোন transaction ওটা শুরু হওয়ার সময় committed ছিল।
 
 ```typescript
 interface Snapshot {
@@ -73,13 +81,13 @@ function isVisible(row: MVCCRow, snapshot: Snapshot): boolean {
 
 <Callout type="info">
 
-**This is why PostgreSQL needs VACUUM**: Old row versions aren't immediately removed — other transactions might still need them. VACUUM cleans up versions that no active transaction can see.
+**এই কারণেই PostgreSQL-এর VACUUM লাগে**: পুরনো row version সাথে সাথে সরানো হয় না — অন্য transaction-এর এখনও এগুলো দরকার হতে পারে। VACUUM সেই version-গুলো পরিষ্কার করে যেগুলো কোনো active transaction আর দেখতে পায় না।
 
 </Callout>
 
 ## Isolation Levels
 
-SQL defines four isolation levels. Most databases default to Read Committed.
+SQL চারটা isolation level সংজ্ঞায়িত করে। বেশিরভাগ ডেটাবেজ default হিসেবে Read Committed ব্যবহার করে।
 
 ```typescript
 // Read Committed (PostgreSQL default)
@@ -107,7 +115,7 @@ SQL defines four isolation levels. Most databases default to Read Committed.
 
 ## Write Conflicts
 
-When two transactions try to update the same row:
+যখন দুইটা transaction একই row update করার চেষ্টা করে:
 
 ```typescript
 // PostgreSQL approach (first-updater-wins):
@@ -139,23 +147,23 @@ async function updateRow(txId: number, rowId: number, newData: Row): Promise<voi
 
 <Callout type="tip">
 
-**Use Repeatable Read or Serializable** for any transaction that reads a value and then writes based on it (read-modify-write). Read Committed allows lost updates. If you get serialization errors, retry the transaction — that's the expected behavior.
+**Repeatable Read বা Serializable ব্যবহার করুন** এমন যেকোনো transaction-এর জন্য যা একটা value পড়ে তারপর সেটার উপর ভিত্তি করে write করে (read-modify-write)। Read Committed lost update-কে অনুমতি দেয়। serialization error পেলে, transaction retry করুন — এটাই প্রত্যাশিত আচরণ।
 
 </Callout>
 
 ## MVCC vs. Locking
 
-|                        | MVCC            | Locking               |
-| ---------------------- | --------------- | --------------------- |
-| Readers block writers? | No              | Yes (shared locks)    |
-| Writers block readers? | No              | Yes (exclusive locks) |
-| Writers block writers? | Same row only   | Same row              |
-| Dead row cleanup       | Needed (VACUUM) | Not needed            |
-| Complexity             | Higher          | Lower                 |
+|                             | MVCC          | Locking                 |
+| --------------------------- | ------------- | ----------------------- |
+| Reader writer-কে block করে? | না            | হ্যাঁ (shared locks)    |
+| Writer reader-কে block করে? | না            | হ্যাঁ (exclusive locks) |
+| Writer writer-কে block করে? | শুধু একই row  | একই row                 |
+| Dead row cleanup            | লাগে (VACUUM) | লাগে না                 |
+| জটিলতা                      | বেশি          | কম                      |
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **MVCC keeps old row versions** so readers see a consistent snapshot without blocking writers
-2. **Updates create new versions** — old versions are cleaned up by VACUUM (PostgreSQL) or purge thread (MySQL)
-3. **Isolation level determines what you see** — Read Committed sees latest committed data per statement; Repeatable Read sees a snapshot from transaction start
-4. **Serializable catches all anomalies** but requires retry logic for aborted transactions
+1. **MVCC পুরনো row version রাখে** যাতে reader writer-কে block না করেই একটা consistent snapshot দেখে
+2. **Update নতুন version তৈরি করে** — পুরনো version পরিষ্কার হয় VACUUM (PostgreSQL) বা purge thread (MySQL) দিয়ে
+3. **Isolation level নির্ধারণ করে আপনি কী দেখবেন** — Read Committed প্রতি statement-এ সর্বশেষ committed ডেটা দেখে; Repeatable Read transaction শুরুর একটা snapshot দেখে
+4. **Serializable সব anomaly ধরে ফেলে** কিন্তু abort হওয়া transaction-এর জন্য retry logic লাগে

@@ -1,9 +1,9 @@
 ---
 title: 'Window Functions'
-subtitle: 'Aggregate-like calculations that keep every row — rankings, running totals, and row-to-row comparisons.'
+subtitle: 'অ্যাগ্রিগেটের মতো ক্যালকুলেশন, কিন্তু প্রতিটি row রেখে দেয় — ranking, running total আর row-to-row তুলনা।'
 chapter: 7
 level: 'advanced'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['window function', 'partition by', 'ranking']
 ---
 
@@ -11,11 +11,19 @@ topics: ['window function', 'partition by', 'ranking']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Gap Window Functions Fill
+## গল্পে বুঝি
 
-`GROUP BY` collapses rows: ten orders per customer become one summary row. But often you want a calculation _across_ a set of rows while **keeping every individual row** — rank each order within its customer, show each row's share of the total, compare each row to the previous one. That's exactly what **window functions** do.
+ফাতিমা আল-ফিহরি আপা একটা স্কুলে ক্লাস টিচার। পরীক্ষার পর তিনি চাইলে শুধু প্রতিটা ক্লাসের গড় নম্বরটা একটা কাগজে লিখে রাখতে পারতেন — "ক্লাস সিক্সের গড় ৭২, ক্লাস সেভেনের গড় ৬৮"। কিন্তু তাতে ইবনে সিনা-আল-খোয়ারিজমি-প্রতিটা ছাত্রের নিজের অবস্থান হারিয়ে যায়, পুরো ক্লাস মিলে একটা লাইনে গুটিয়ে যায়। এমন সারাংশ দিয়ে কোন ছাত্র কোথায় দাঁড়িয়ে আছে সেটা বোঝা যায় না।
 
-A window function looks like an aggregate but with an `OVER` clause attached. The `OVER` clause defines the "window" of rows the function sees, _without_ collapsing the result.
+তাই ফাতিমা আল-ফিহরি আপা অন্যভাবে করেন। তিনি একটা ছাত্রও বাদ দেন না — প্রতিটা ছাত্রের নামের পাশে তার নিজের সারিতেই লিখে দেন সে তার _নিজের ক্লাসের ভেতরে_ কত নম্বরে আছে। ইবনে সিনা সিক্সের মধ্যে ৩য়, আল-খোয়ারিজমি সেভেনের মধ্যে ১ম — একজনের rank অন্য ক্লাসের কারো সাথে মেশে না, প্রতি ক্লাস আলাদা করে গোনা হয়। পাশাপাশি তিনি একটা খাতায় আদায় হওয়া বেতনের একটা চলমান যোগফলও রাখেন — প্রতিটা এন্ট্রির পাশে "এ পর্যন্ত মোট কত জমা হলো" সেই running total, নিচের দিকে নামতে নামতে বাড়তেই থাকে।
+
+ফাতিমা আল-ফিহরি আপার এই কাজটাই আসলে **window function**। ক্লাস অনুযায়ী rank দেওয়াটা হলো `PARTITION BY class` করে `RANK()` — প্রতিটা ক্লাস একটা আলাদা window, তার ভেতরেই ছাত্রকে rank করা হয়, অথচ কোনো ছাত্রের row মুছে যায় না। বেতনের খাতার চলমান যোগফলটাই **running total**। এর উল্টোদিকে `GROUP BY` হলো শুধু গড় লিখে রাখা — সবাইকে এক লাইনে collapse করে ফেলা। মূল পার্থক্যটা এখানেই: window function হিসাব করে সম্পর্কিত row-গুলোর উপর দিয়ে, কিন্তু **প্রতিটা row রেখে দেয়**। বাস্তবে গেমের leaderboard-এ প্রতি অঞ্চলের ভেতরে খেলোয়াড়ের rank, কিংবা ব্যাংকের statement-এ প্রতি লেনদেনের পাশে চলতি ব্যালেন্স — সবই ঠিক এই জিনিস।
+
+## Window Functions যে ফাঁকটা পূরণ করে
+
+`GROUP BY` row-গুলোকে collapse করে ফেলে: প্রতি customer-এর দশটা order মিলে একটা summary row হয়ে যায়। কিন্তু অনেক সময় আপনি এক সেট row-এর _উপর দিয়ে_ একটা ক্যালকুলেশন চান, অথচ **প্রতিটি আলাদা row রেখে দিতে চান** — প্রতিটি order-কে তার customer-এর ভেতরে rank করা, প্রতিটি row-এর total-এর মধ্যে অংশ দেখানো, প্রতিটি row-কে আগেরটার সাথে তুলনা করা। ঠিক এই কাজটাই **window functions** করে।
+
+একটা window function দেখতে অ্যাগ্রিগেটের মতোই, তবে সাথে একটা `OVER` clause লাগানো থাকে। এই `OVER` clause যে "window" বা row-গুলোর সেট function দেখবে সেটা ঠিক করে দেয়, _অথচ_ result collapse করে না।
 
 ```sql
 SELECT
@@ -25,11 +33,11 @@ SELECT
 FROM orders;
 ```
 
-Every order row is returned, each annotated with its customer's total. Compare to `GROUP BY`, which would return one row per customer. Same `SUM`, very different shape.
+প্রতিটি order row ফেরত আসে, প্রতিটার সাথে তার customer-এর total যুক্ত করা থাকে। এর সাথে `GROUP BY`-এর তুলনা করুন, যেটা প্রতি customer-এ একটা করে row ফেরত দিত। একই `SUM`, কিন্তু shape একদম আলাদা।
 
-## Anatomy of OVER
+## OVER-এর গঠন
 
-The `OVER` clause has up to three parts:
+`OVER` clause-এ সর্বোচ্চ তিনটা অংশ থাকতে পারে:
 
 ```sql
 function(...) OVER (
@@ -39,11 +47,11 @@ function(...) OVER (
 )
 ```
 
-- **`PARTITION BY`** divides rows into groups; the function restarts for each group. Omit it and the whole result is one partition.
-- **`ORDER BY`** orders rows within a partition — essential for ranking, running totals, and `LAG`/`LEAD`.
-- **Frame clause** narrows the window to a range of rows _relative to the current row_ (more below).
+- **`PARTITION BY`** row-গুলোকে group-এ ভাগ করে; প্রতি group-এর জন্য function আবার নতুন করে শুরু হয়। এটা বাদ দিলে পুরো result একটাই partition হয়ে যায়।
+- **`ORDER BY`** একটা partition-এর ভেতরে row-গুলো order করে — ranking, running total আর `LAG`/`LEAD`-এর জন্য এটা অপরিহার্য।
+- **Frame clause** window-কে _current row-এর সাপেক্ষে_ একটা row-এর range-এ সংকুচিত করে (নিচে আরও আছে)।
 
-An empty `OVER ()` means "the entire result set as one unordered window" — useful for "each row's percentage of the grand total":
+একটা খালি `OVER ()` মানে "পুরো result set-টাই একটা order-বিহীন window" — "প্রতিটি row-এর grand total-এর মধ্যে শতকরা কত অংশ" বের করতে এটা কাজে লাগে:
 
 ```sql
 SELECT amount,
@@ -53,7 +61,7 @@ FROM orders;
 
 ## Ranking Functions
 
-Three functions assign positions within an ordered partition:
+তিনটা function একটা order করা partition-এর ভেতরে position বসিয়ে দেয়:
 
 ```sql
 SELECT
@@ -64,17 +72,17 @@ SELECT
 FROM orders;
 ```
 
-They differ only in how they handle **ties**:
+এগুলোর পার্থক্য শুধু **tie** (সমান মান) হলে কীভাবে সামলায় সেখানে:
 
-| Function       | Behavior on ties                       | Example sequence |
-| -------------- | -------------------------------------- | ---------------- |
-| `ROW_NUMBER()` | Always distinct, arbitrary tie-break   | 1, 2, 3, 4       |
-| `RANK()`       | Ties share a rank, then _skip_ numbers | 1, 2, 2, 4       |
-| `DENSE_RANK()` | Ties share a rank, _no_ gaps           | 1, 2, 2, 3       |
+| Function       | Tie হলে আচরণ                              | উদাহরণ sequence |
+| -------------- | ----------------------------------------- | --------------- |
+| `ROW_NUMBER()` | সবসময় আলাদা, tie যেকোনোভাবে ভাঙে         | 1, 2, 3, 4      |
+| `RANK()`       | Tie একই rank পায়, তারপর নম্বর _skip_ করে | 1, 2, 2, 4      |
+| `DENSE_RANK()` | Tie একই rank পায়, কোনো gap _নেই_         | 1, 2, 2, 3      |
 
 <Callout type="tip">
 
-**"Top N per group" is the killer use case.** Wrap a `ROW_NUMBER()` query in a subquery and filter:
+**"প্রতি group-এ Top N" হলো এর সবচেয়ে জোরালো use case।** একটা `ROW_NUMBER()` query-কে subquery-তে মুড়ে দিন আর filter করুন:
 
 ```sql
 SELECT * FROM (
@@ -86,13 +94,13 @@ SELECT * FROM (
 WHERE rn <= 3;   -- the 3 biggest orders per customer
 ```
 
-You can't filter on a window function in `WHERE` directly (it's computed in `SELECT`, after `WHERE`), so the subquery is required.
+আপনি `WHERE`-এ সরাসরি কোনো window function-এর উপর filter করতে পারবেন না (এটা `SELECT`-এ, অর্থাৎ `WHERE`-এর পরে হিসাব হয়), তাই subquery লাগবেই।
 
 </Callout>
 
-## LAG and LEAD: Looking at Neighbors
+## LAG আর LEAD: প্রতিবেশী দেখা
 
-`LAG` and `LEAD` pull a value from a row _before_ or _after_ the current one within the partition — perfect for period-over-period comparisons:
+`LAG` আর `LEAD` partition-এর ভেতরে current row-এর _আগের_ বা _পরের_ কোনো row থেকে মান টেনে আনে — period-over-period তুলনার জন্য একদম আদর্শ:
 
 ```sql
 SELECT
@@ -103,11 +111,11 @@ SELECT
 FROM monthly_revenue;
 ```
 
-`LAG(revenue)` returns the previous row's revenue; subtracting gives month-over-month change. Both take optional arguments — `LAG(revenue, 1, 0)` means "go back 1 row, default to 0 when there's no prior row" (e.g. the first month). `LEAD` is the same idea looking forward.
+`LAG(revenue)` আগের row-এর revenue ফেরত দেয়; বিয়োগ করলে month-over-month পরিবর্তন পাওয়া যায়। দুটোতেই ঐচ্ছিক argument দেওয়া যায় — `LAG(revenue, 1, 0)` মানে "১ row পেছনে যাও, আগের কোনো row না থাকলে default 0 ধরো" (যেমন প্রথম month-এ)। `LEAD` একই জিনিস, তবে সামনের দিকে তাকায়।
 
-## Running Totals and Frame Clauses
+## Running Total আর Frame Clause
 
-When a window function has an `ORDER BY` but no explicit frame, the default frame is `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — everything from the start of the partition up to the current row. That default is exactly what produces a **running total**:
+কোনো window function-এ `ORDER BY` থাকলে কিন্তু কোনো explicit frame না থাকলে, default frame হয় `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — partition-এর শুরু থেকে current row পর্যন্ত সবকিছু। এই default-টাই ঠিক যা একটা **running total** তৈরি করে:
 
 ```sql
 SELECT
@@ -117,7 +125,7 @@ SELECT
 FROM orders;
 ```
 
-Each row's `running_total` is the sum of every order up to and including it. To compute a **moving average** over the current row plus the two before it, specify the frame explicitly with `ROWS`:
+প্রতিটি row-এর `running_total` হলো সেটা সহ তার আগ পর্যন্ত প্রতিটা order-এর যোগফল। current row আর তার আগের দুটো row নিয়ে একটা **moving average** বের করতে, `ROWS` দিয়ে frame-টা explicitly বলে দিন:
 
 ```sql
 SELECT
@@ -130,27 +138,27 @@ SELECT
 FROM orders;
 ```
 
-The frame clause has two common forms:
+Frame clause-এর দুটো সাধারণ রূপ আছে:
 
-- **`ROWS`** — counts a physical number of rows (`2 PRECEDING` = the two rows above).
-- **`RANGE`** — counts rows by _value_ of the `ORDER BY` column (all rows with the same value are one peer group).
+- **`ROWS`** — নির্দিষ্ট সংখ্যক physical row গোনে (`2 PRECEDING` = উপরের দুটো row)।
+- **`RANGE`** — `ORDER BY` column-এর _মান_ অনুযায়ী row গোনে (একই মানের সব row একটা peer group)।
 
 <Callout type="warning">
 
-**`ROWS` and `RANGE` differ on ties.** With `RANGE`, rows that share the same `ORDER BY` value are treated as a single peer group, so a running total can "jump" past several equal-valued rows at once. With `ROWS`, each physical row is distinct. For a strict row-by-row running total, prefer `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.
+**Tie হলে `ROWS` আর `RANGE`-এর আচরণ আলাদা।** `RANGE`-এ যে row-গুলোর `ORDER BY` মান একই, সেগুলোকে একটা peer group ধরা হয়, তাই একটা running total কয়েকটা সমান-মানের row একবারে "টপকে" যেতে পারে। `ROWS`-এ প্রতিটা physical row আলাদা। কঠোরভাবে row-by-row running total চাইলে `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` ব্যবহার করুন।
 
 </Callout>
 
-## Other Useful Window Functions
+## আরও কিছু কাজের Window Function
 
-- **`FIRST_VALUE(col)` / `LAST_VALUE(col)`** — the first/last value in the frame (mind the frame: `LAST_VALUE` needs an explicit full frame to mean "last in the partition").
-- **`NTH_VALUE(col, n)`** — the nth value in the frame.
-- **`NTILE(n)`** — splits the partition into `n` roughly equal buckets, e.g. `NTILE(4)` for quartiles.
-- **`PERCENT_RANK()` / `CUME_DIST()`** — relative rank as a fraction, for percentile analysis.
+- **`FIRST_VALUE(col)` / `LAST_VALUE(col)`** — frame-এর প্রথম/শেষ মান (frame-এর দিকে খেয়াল রাখবেন: `LAST_VALUE` দিয়ে "partition-এর শেষ" বোঝাতে হলে একটা explicit পূর্ণ frame লাগে)।
+- **`NTH_VALUE(col, n)`** — frame-এর n-তম মান।
+- **`NTILE(n)`** — partition-কে `n`টা মোটামুটি সমান bucket-এ ভাগ করে, যেমন quartile-এর জন্য `NTILE(4)`।
+- **`PERCENT_RANK()` / `CUME_DIST()`** — ভগ্নাংশ হিসেবে relative rank, percentile analysis-এর জন্য।
 
-## Naming the Window with WINDOW
+## WINDOW দিয়ে Window-এর নাম দেওয়া
 
-When several functions share the same `OVER` spec, define it once with a `WINDOW` clause to avoid repetition:
+যখন কয়েকটা function একই `OVER` spec ব্যবহার করে, তখন পুনরাবৃত্তি এড়াতে একটা `WINDOW` clause দিয়ে সেটা একবারই define করে দিন:
 
 ```sql
 SELECT
@@ -161,10 +169,10 @@ FROM orders
 WINDOW w AS (PARTITION BY customer_id ORDER BY amount DESC);
 ```
 
-## A Mental Model
+## একটা মানসিক মডেল
 
-Think of a window function as running in two passes. First the engine produces the normal result set (after `FROM`/`WHERE`/`GROUP BY`). Then, for each row, it looks at that row's _window_ of related rows and computes the function — annotating, never collapsing. Because window functions run _after_ `WHERE` and `GROUP BY` but _before_ the final `ORDER BY`, you filter their output in an outer query, as the top-N example showed.
+একটা window function-কে দুই ধাপে চলা হিসেবে ভাবুন। প্রথমে engine স্বাভাবিক result set তৈরি করে (`FROM`/`WHERE`/`GROUP BY`-এর পরে)। তারপর প্রতিটি row-এর জন্য সে সেই row-এর সম্পর্কিত row-গুলোর _window_-টা দেখে function হিসাব করে — মান যুক্ত করে, কখনো collapse করে না। যেহেতু window function `WHERE` আর `GROUP BY`-এর _পরে_ কিন্তু চূড়ান্ত `ORDER BY`-এর _আগে_ চলে, তাই আপনি এদের output একটা বাইরের query-তে filter করেন, ঠিক যেমন উপরের top-N উদাহরণে দেখা গেল।
 
-## Recap
+## রিক্যাপ
 
-Window functions compute across related rows while preserving every row. `PARTITION BY` groups, `ORDER BY` sequences, and the frame clause bounds the rows considered. Use ranking functions for top-N and leaderboards, `LAG`/`LEAD` for period comparisons, and ordered `SUM`/`AVG` for running totals and moving averages. They replace whole families of self-joins and correlated subqueries with one readable clause. Next we pull everything together into query optimization.
+Window functions সম্পর্কিত row-গুলোর উপর দিয়ে হিসাব করে, অথচ প্রতিটি row রেখে দেয়। `PARTITION BY` group করে, `ORDER BY` ক্রম ঠিক করে, আর frame clause কোন row-গুলো বিবেচনায় আসবে তার সীমা বেঁধে দেয়। top-N আর leaderboard-এর জন্য ranking function, period তুলনার জন্য `LAG`/`LEAD`, আর running total ও moving average-এর জন্য order করা `SUM`/`AVG` ব্যবহার করুন। এরা গোটা এক পরিবার self-join আর correlated subquery-কে একটা পড়ার-মতো clause দিয়ে বদলে দেয়। এরপর আমরা সবকিছু একসাথে জুড়ে query optimization-এ যাব।

@@ -1,10 +1,10 @@
 ---
-title: 'Caching — Roadmap'
-subtitle: 'In-process LRU first. Self-host Redis. Eviction policies, invalidation, stampedes.'
+title: 'Caching — রোডম্যাপ'
+subtitle: 'প্রথমে in-process LRU। নিজে Redis সেল্ফ-হোস্ট করুন। Eviction পলিসি, invalidation, stampede।'
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
-topics: ['roadmap']
+readingTime: '5 মিনিট'
+topics: ['রোডম্যাপ']
 ---
 
 <script>
@@ -13,25 +13,25 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A chef's mise en place: everything prepped and within arm's reach before service starts. The chef doesn't walk to the stockroom for each ingredient mid-service — the frequently needed things are already on the counter. Caching is mise en place for software: the data your application uses most often lives somewhere fast and close, so it doesn't have to fetch it from the database on every request.
+একজন শেফের mise en place: রান্না শুরুর আগেই সবকিছু প্রস্তুত করে হাতের নাগালে রাখা। শেফ রান্নার মাঝখানে প্রতিটি উপকরণের জন্য স্টোররুমে হেঁটে যান না — যেসব জিনিস ঘন ঘন দরকার হয়, সেগুলো আগে থেকেই কাউন্টারে রাখা থাকে। Caching হলো সফটওয়্যারের জন্য mise en place: আপনার অ্যাপ্লিকেশন যে ডেটা সবচেয়ে বেশি ব্যবহার করে, সেটা এমন কোনো দ্রুত ও কাছাকাছি জায়গায় থাকে, যাতে প্রতিটি রিকোয়েস্টে ডেটাবেস থেকে সেটা আনতে না হয়।
 
 </Callout>
 
-## What you will learn
+## যা যা শিখবেন
 
-Caching is the single most effective performance optimization in most systems — and one of the easiest to get wrong. This track starts with why caches exist (the latency gap between memory, disk, and network), then covers every layer: in-process LRU, Redis fundamentals, eviction policies, cache invalidation strategies, stampede prevention, distributed caching with Redis Cluster, HTTP caching and CDN edge caching, and the operational patterns that keep caches reliable in production.
+বেশিরভাগ সিস্টেমে caching হলো সবচেয়ে কার্যকর একটিমাত্র পারফরম্যান্স অপটিমাইজেশন — এবং এটাই সবচেয়ে সহজে ভুল করে ফেলার মতো একটি জিনিস। এই ট্র্যাকটি শুরু হয় কেন cache-এর প্রয়োজন হয় তা দিয়ে (মেমরি, ডিস্ক ও নেটওয়ার্কের মধ্যকার latency-এর ফারাক), তারপর প্রতিটি স্তর কভার করে: in-process LRU, Redis-এর মূল বিষয়, eviction পলিসি, cache invalidation কৌশল, stampede প্রতিরোধ, Redis Cluster দিয়ে distributed caching, HTTP caching ও CDN edge caching, এবং প্রোডাকশনে cache-কে নির্ভরযোগ্য রাখার অপারেশনাল প্যাটার্ন।
 
-## Chapters in this track
+## এই ট্র্যাকের চ্যাপ্টারগুলো
 
-1. **Why Caching Exists** — latency gap, memory hierarchy, when caching is and isn't the answer
-2. **Cache Strategies** — cache-aside, read-through, write-through, write-behind — trade-offs and failure modes
-3. **Eviction Policies** — LRU, LFU, TTL, random — how caches decide what to drop
-4. **Redis Fundamentals** — data structures, core commands, persistence (RDB/AOF), self-hosting
-5. **Cache Invalidation** — TTL, event-driven purging, versioned keys, write-through patterns
-6. **Cache Stampede & Thundering Herd** — what causes it, mutex locks, probabilistic early expiration, request coalescing
-7. **Distributed Caching** — consistent hashing, Redis Cluster, replication, failure modes
-8. **HTTP Caching & CDN** — Cache-Control, ETags, Vary, CDN edge caching, purging
-9. **Application Caching Patterns** — fragment caching, query result caching, session stores, memoization
-10. **Production Caching** — monitoring hit ratios, hot keys, graceful Redis failure, when to flush
+1. **কেন Caching-এর অস্তিত্ব আছে** — latency-এর ফারাক, মেমরি হায়ারার্কি, কখন caching সমাধান আর কখন নয়
+2. **Cache Strategies** — cache-aside, read-through, write-through, write-behind — ট্রেড-অফ ও ফেইলিওর মোড
+3. **Eviction Policies** — LRU, LFU, TTL, random — cache কীভাবে ঠিক করে কোনটা বাদ দেবে
+4. **Redis-এর মূল বিষয়** — ডেটা স্ট্রাকচার, কোর কমান্ড, persistence (RDB/AOF), সেল্ফ-হোস্টিং
+5. **Cache Invalidation** — TTL, event-driven purging, versioned key, write-through প্যাটার্ন
+6. **Cache Stampede ও Thundering Herd** — এর কারণ কী, mutex lock, probabilistic early expiration, request coalescing
+7. **Distributed Caching** — consistent hashing, Redis Cluster, replication, ফেইলিওর মোড
+8. **HTTP Caching ও CDN** — Cache-Control, ETag, Vary, CDN edge caching, purging
+9. **Application Caching প্যাটার্ন** — fragment caching, query result caching, session store, memoization
+10. **Production Caching** — hit ratio মনিটরিং, hot key, Redis-এর graceful ফেইলিওর, কখন flush করতে হবে

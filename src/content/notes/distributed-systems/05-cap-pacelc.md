@@ -1,9 +1,9 @@
 ---
 title: 'CAP & PACELC'
-subtitle: 'The CAP theorem stated precisely, why a partition forces a choice between consistency and availability, and the latency dimension PACELC adds.'
+subtitle: 'CAP theorem সূক্ষ্মভাবে বর্ণিত, কেন একটি partition consistency ও availability-র মধ্যে একটি পছন্দ বাধ্য করে, এবং PACELC যে latency মাত্রা যোগ করে।'
 chapter: 5
 level: 'advanced'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['cap', 'pacelc', 'tradeoffs']
 ---
 
@@ -11,86 +11,94 @@ topics: ['cap', 'pacelc', 'tradeoffs']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-CAP is the most cited — and most misunderstood — result in distributed systems. Stated loosely ("pick two of three") it is misleading. Stated precisely it is a sharp, useful tool for reasoning about what a system must give up when the network fails. This chapter states it correctly, draws the real conclusion, and then extends it with PACELC, which captures the trade-off that exists even when nothing is broken.
+## গল্পে বুঝি
 
-## The three properties
+দুটো দ্বীপে দুটো ট্রেডিং পোস্ট — একটা চালায় আল-কিন্দি, অন্যটা ইবনে সিনা। দুই দ্বীপের মাঝে কোনো তার নেই, কেবল একটা ফেরি দিনভর যাতায়াত করে দুই পোস্টের মধ্যে চিঠি আর দামের তালিকা বয়ে নেয়। কেউ কিছু বিক্রি করলে ফেরি সেই খবর অন্য পোস্টে পৌঁছে দেয়, যাতে দুই দ্বীপে জিনিসের দাম এক থাকে। যতক্ষণ ফেরি চলছে, দুই পোস্ট প্রায় হাত ধরাধরি করে চলে।
 
-CAP concerns three properties of a distributed data store:
+তারপর এলো এক ঝড়। ফেরি বন্ধ, দুই দ্বীপ একে অন্যের কাছ থেকে বিচ্ছিন্ন। এখন আল-কিন্দির সামনে একজন ক্রেতা দাঁড়িয়ে — কী করবে সে? হয় সে নিজের কাছে থাকা পুরোনো দামের তালিকা দেখেই বিক্রি চালিয়ে যাবে (ঝুঁকি: ইবনে সিনার দ্বীপে ততক্ষণে দাম বদলে গেছে, দুই দ্বীপের দাম মিলবে না), নয়তো সে বলবে "ফেরি না ফেরা পর্যন্ত বিক্রি বন্ধ" — যাতে দুই দ্বীপ সবসময় একই দামে একমত থাকে, কিন্তু ক্রেতা খালি হাতে ফেরে। তৃতীয় কোনো পথ নেই: ইবনে সিনার সর্বশেষ দাম শারীরিকভাবেই আল-কিন্দির কাছে পৌঁছাতে পারছে না।
 
-- **Consistency (C):** every read receives the most recent write or an error. Here "consistency" means **linearizability** specifically (chapter 4) — a single up-to-date copy of the data. This is _not_ the "C" of ACID transactions; the overloaded word causes endless confusion.
-- **Availability (A):** every request to a non-failed node receives a non-error response — the system keeps serving, even if the response might be stale.
-- **Partition tolerance (P):** the system continues to operate despite the network dropping or delaying arbitrarily many messages between nodes.
+এই গল্পটাই **CAP**। ফেরি বন্ধ হওয়া মানে **partition** — আর তখন বাধ্যতামূলক পছন্দ: বিক্রি চালিয়ে যাওয়া (**availability**, বেঠিক দামের ঝুঁকি নিয়ে) নাকি ফেরি না ফেরা পর্যন্ত থেমে থাকা (**consistency**, দুই দ্বীপ সবসময় একমত)। আর **PACELC**-এর "Else" অংশটা হলো: ফেরি যখন **চলছেও**, আল-কিন্দি প্রতি বিক্রির আগে ফেরি পাঠিয়ে ইবনে সিনার সর্বশেষ দাম যাচাই করে নিতে পারে (ধীর, কিন্তু বেশি consistent) — নাকি স্মৃতি থেকেই তক্ষুনি বিক্রি করে দিতে পারে (দ্রুত, কিন্তু ঢিলা), অর্থাৎ **latency** বনাম **consistency**-র ট্রেড-অফ। বাস্তবে Cassandra বা DynamoDB ঠিক এই সিদ্ধান্তই নেয় — partition-এ available থাকে, আর স্বাভাবিক সময়েও কম latency-র জন্য strong consistency শিথিল করে।
 
-## The theorem, stated precisely
+CAP হলো distributed systems-এ সবচেয়ে উদ্ধৃত — এবং সবচেয়ে ভুল বোঝা — ফলাফল। শিথিলভাবে বললে ("তিনটার মধ্যে দুটো নাও") এটা বিভ্রান্তিকর। সূক্ষ্মভাবে বললে এটা network fail করলে একটি সিস্টেমকে কী ছাড়তে হবে তা নিয়ে যুক্তি সাজানোর একটি ধারালো, দরকারি হাতিয়ার। এই অধ্যায় এটা সঠিকভাবে বর্ণনা করে, আসল সিদ্ধান্ত টানে, তারপর PACELC দিয়ে বাড়ায়, যা কিছু ভাঙা না থাকলেও যে trade-off বিদ্যমান তা ধরে।
 
-The careless version is "you can only have two of the three." The precise version is more pointed:
+## তিনটি বৈশিষ্ট্য
 
-> When a network **partition** occurs, a distributed system must choose between **consistency** and **availability**. It cannot have both.
+CAP একটি distributed data store-এর তিনটি বৈশিষ্ট্য নিয়ে:
 
-The key realization is that **partition tolerance is not optional**. In any real network, partitions _will_ happen — links fail, switches reboot, packets drop. You do not get to "choose" P out; the network chooses it for you. So the real, forced choice is between C and A, and it is only forced **during a partition**. When the network is healthy, a well-built system can offer both consistency and availability.
+- **Consistency (C):** প্রতিটি read সবচেয়ে সাম্প্রতিক write বা একটি error পায়। এখানে "consistency" মানে নির্দিষ্টভাবে **linearizability** (অধ্যায় ৪) — data-র একটি একক up-to-date কপি। এটা ACID transaction-এর "C" _নয়_; এই অতিরিক্ত-বোঝাই শব্দটা অন্তহীন বিভ্রান্তি ঘটায়।
+- **Availability (A):** একটি non-failed node-এ প্রতিটি request একটি non-error সাড়া পায় — সিস্টেম সার্ভ করতে থাকে, যদিও সাড়াটা বাসি হতে পারে।
+- **Partition tolerance (P):** network node-এর মধ্যে যথেচ্ছ সংখ্যক message drop বা দেরি করা সত্ত্বেও সিস্টেম কাজ করতে থাকে।
+
+## Theorem, সূক্ষ্মভাবে বর্ণিত
+
+অসাবধান সংস্করণটা হলো "তুমি তিনটার মধ্যে শুধু দুটো পেতে পারো।" সূক্ষ্ম সংস্করণটা আরও ধারালো:
+
+> যখন একটি network **partition** ঘটে, একটি distributed system-কে **consistency** আর **availability**-র মধ্যে বেছে নিতে হয়। এটা দুটোই পেতে পারে না।
+
+মূল উপলব্ধি হলো **partition tolerance ঐচ্ছিক নয়**। যেকোনো বাস্তব network-এ, partition _ঘটবেই_ — link fail করে, switch reboot হয়, packet drop হয়। তুমি P বাদ দেওয়ার "পছন্দ" পাও না; network তোমার হয়ে সেটা বেছে নেয়। তাই আসল, বাধ্যতামূলক পছন্দটা C আর A-র মধ্যে, আর এটা শুধু **একটি partition-এর সময়** বাধ্যতামূলক। Network সুস্থ থাকলে, একটি ভালোভাবে বানানো সিস্টেম consistency ও availability দুটোই দিতে পারে।
 
 <Callout type="warning">
 
-**"Pick two of three" is wrong.** P is a fact of nature, not a design choice — you must tolerate partitions. CAP really says: _during a partition_, choose C or A. The rest of the time the trade-off does not even apply. Read CAP as a statement about behavior under partition, not a menu.
+**"তিনটার মধ্যে দুটো নাও" ভুল।** P প্রকৃতির একটি সত্য, একটি ডিজাইন পছন্দ নয় — তোমাকে partition সহ্য করতেই হবে। CAP আসলে বলে: _একটি partition-এর সময়_, C বা A বেছে নাও। বাকি সময় trade-off-টা প্রযোজ্যই নয়। CAP-কে partition-এর সময়কার আচরণ নিয়ে একটি বিবৃতি হিসেবে পড়ো, একটা মেনু হিসেবে নয়।
 
 </Callout>
 
-## Why the choice is forced
+## কেন পছন্দটা বাধ্যতামূলক
 
-Picture a system partitioned into two halves that cannot communicate. A client sends a write to one half. Now consider what the _other_ half should do when it receives a read for that same data:
+কল্পনা করো একটি সিস্টেম দুটি অর্ধেকে partition হয়েছে যারা যোগাযোগ করতে পারে না। একটি client একটি অর্ধেকে একটি write পাঠায়। এখন ভাবো _অন্য_ অর্ধেকের কী করা উচিত যখন সে সেই একই data-র জন্য একটি read পায়:
 
 ```text
    [ Half 1 ]   ||  partition  ||   [ Half 2 ]
    write x = 9                        read x = ?
 ```
 
-- If Half 2 **answers** the read, it must answer with its stale value (it never heard about `x = 9`). It stayed **available** but broke **consistency**.
-- If Half 2 **refuses** the read (or blocks until the partition heals), it stayed **consistent** but broke **availability**.
+- Half 2 যদি read-এর **উত্তর দেয়**, তাকে নিজের বাসি মান দিয়ে উত্তর দিতে হবে (সে কখনো `x = 9` সম্পর্কে শোনেনি)। এটা **available** থাকল কিন্তু **consistency** ভাঙল।
+- Half 2 যদি read **প্রত্যাখ্যান করে** (বা partition সেরে ওঠা পর্যন্ত block করে), এটা **consistent** থাকল কিন্তু **availability** ভাঙল।
 
-There is no third option. Half 2 cannot return the new value because the new value physically cannot reach it. This is the whole theorem, and it is unavoidable.
+কোনো তৃতীয় বিকল্প নেই। Half 2 নতুন মান ফেরত দিতে পারে না কারণ নতুন মান শারীরিকভাবেই তার কাছে পৌঁছাতে পারে না। এটাই পুরো theorem, আর এটা অনিবার্য।
 
-## CP versus AP
+## CP বনাম AP
 
-Systems are therefore classified by which property they sacrifice during a partition:
+তাই সিস্টেমগুলো একটি partition-এর সময় কোন বৈশিষ্ট্য ত্যাগ করে তা দিয়ে শ্রেণিবদ্ধ হয়:
 
-**CP (consistent under partition):** when partitioned, the system refuses requests it cannot serve correctly rather than return stale or conflicting data. The minority side stops accepting writes; only a side with a quorum keeps working. You get correctness at the cost of some unavailability. Examples: ZooKeeper, etcd, HBase, and consensus-backed stores generally. Choose CP when wrong data is worse than no data — account balances, locks, configuration, leader election.
+**CP (partition-এ consistent):** partition হলে, সিস্টেম বাসি বা সাংঘর্ষিক data ফেরত দেওয়ার বদলে যেসব request সঠিকভাবে সার্ভ করতে পারে না সেগুলো প্রত্যাখ্যান করে। সংখ্যালঘু পক্ষ write গ্রহণ বন্ধ করে; শুধু quorum আছে এমন পক্ষ কাজ করতে থাকে। তুমি কিছু unavailability-র বিনিময়ে correctness পাও। উদাহরণ: ZooKeeper, etcd, HBase, এবং সাধারণভাবে consensus-সমর্থিত store। CP বেছে নাও যখন ভুল data কোনো data না থাকার চেয়ে খারাপ — account balance, lock, configuration, leader election।
 
-**AP (available under partition):** when partitioned, every side keeps accepting reads and writes, allowing replicas to diverge, and reconciles afterward (last-write-wins, merges, CRDTs). You get availability at the cost of temporary inconsistency. Examples: Cassandra, DynamoDB (in its eventually-consistent mode), Riak. Choose AP when serving _something_ always matters more than serving the _latest_ — shopping carts, social feeds, telemetry, caches.
+**AP (partition-এ available):** partition হলে, প্রতিটি পক্ষ read ও write গ্রহণ করতে থাকে, replica-কে diverge করতে দেয়, আর পরে মিলিয়ে নেয় (last-write-wins, merge, CRDT)। তুমি সাময়িক inconsistency-র বিনিময়ে availability পাও। উদাহরণ: Cassandra, DynamoDB (তার eventually-consistent mode-এ), Riak। AP বেছে নাও যখন _কিছু একটা_ সবসময় সার্ভ করা _সর্বশেষটা_ সার্ভ করার চেয়ে বেশি গুরুত্বপূর্ণ — shopping cart, social feed, telemetry, cache।
 
-|                  | CP system             | AP system                 |
-| ---------------- | --------------------- | ------------------------- |
-| During partition | Rejects some requests | Serves all requests       |
-| Sacrifices       | Availability          | Consistency               |
-| Recovery         | Already consistent    | Must reconcile divergence |
-| Good for         | Money, locks, config  | Carts, feeds, metrics     |
+|                   | CP সিস্টেম                    | AP সিস্টেম                  |
+| ----------------- | ----------------------------- | --------------------------- |
+| Partition-এর সময় | কিছু request প্রত্যাখ্যান করে | সব request সার্ভ করে        |
+| ত্যাগ করে         | Availability                  | Consistency                 |
+| Recovery          | ইতিমধ্যে consistent           | Divergence মিলিয়ে নিতে হয় |
+| ভালো              | টাকা, lock, config            | Cart, feed, metrics         |
 
 <Callout type="info">
 
-**Note:** CP and AP are not whole-system labels carved in stone. Many systems are tunable per operation — DynamoDB and Cassandra let you request a strongly consistent read (more CP-leaning) or an eventual one (more AP-leaning) per query. The trade-off can be made at the granularity of individual requests.
+**নোট:** CP ও AP পাথরে খোদাই করা whole-system লেবেল নয়। অনেক সিস্টেম per operation tunable — DynamoDB আর Cassandra তোমাকে per query একটি strongly consistent read (বেশি CP-ঘেঁষা) বা একটি eventual read (বেশি AP-ঘেঁষা) অনুরোধ করতে দেয়। Trade-off-টা আলাদা আলাদা request-এর মাত্রায় করা যায়।
 
 </Callout>
 
-## PACELC: the part CAP omits
+## PACELC: CAP যে অংশটা বাদ দেয়
 
-CAP only describes behavior _during a partition_, which is rare. It says nothing about the trade-off you face the other 99.9% of the time, when the network is healthy. **PACELC** (proposed by Daniel Abadi) fills that gap. Read it as a sentence:
+CAP শুধু _একটি partition-এর সময়_ আচরণ বর্ণনা করে, যা বিরল। Network সুস্থ থাকা বাকি 99.9% সময়ে তুমি যে trade-off-এর মুখোমুখি হও সে সম্পর্কে এটা কিছুই বলে না। **PACELC** (Daniel Abadi-র প্রস্তাবিত) সেই ফাঁকটা পূরণ করে। এটাকে একটি বাক্য হিসেবে পড়ো:
 
-> **If** there is a **P**artition, choose between **A**vailability and **C**onsistency; **E**lse (normal operation), choose between **L**atency and **C**onsistency.
+> **যদি** একটি **P**artition থাকে, **A**vailability আর **C**onsistency-র মধ্যে বেছে নাও; **E**lse (স্বাভাবিক কাজ), **L**atency আর **C**onsistency-র মধ্যে বেছে নাও।
 
-The new insight is the "else" clause. Even with a perfectly healthy network, a system that wants strong consistency must coordinate across replicas before answering — and that coordination takes time. So strong consistency costs **latency** even when nothing is broken. A system can buy lower latency by relaxing consistency (answering from the nearest replica without checking), or pay for consistency with higher latency on every request.
+নতুন অন্তর্দৃষ্টি হলো "else" clause। একটি একদম সুস্থ network দিয়েও, একটি সিস্টেম যেটা strong consistency চায় তাকে উত্তর দেওয়ার আগে replica জুড়ে সমন্বয় করতে হয় — আর সেই সমন্বয়ে সময় লাগে। তাই কিছু ভাঙা না থাকলেও strong consistency-র খরচ **latency**। একটি সিস্টেম consistency শিথিল করে (নিকটতম replica থেকে যাচাই না করে উত্তর দিয়ে) কম latency কিনতে পারে, বা প্রতিটি request-এ বেশি latency দিয়ে consistency-র মূল্য দিতে পারে।
 
-This gives a four-way classification, written `PA/EL`, `PC/EC`, and so on:
+এটা একটি চার-মুখী শ্রেণিবিভাগ দেয়, লেখা হয় `PA/EL`, `PC/EC`, ইত্যাদি:
 
-| Class | Under partition | Normally    | Example                                          |
-| ----- | --------------- | ----------- | ------------------------------------------------ |
-| PC/EC | Consistency     | Consistency | Strongly consistent stores, etcd / spanner-style |
-| PA/EL | Availability    | Latency     | Cassandra, DynamoDB (eventual)                   |
-| PA/EC | Availability    | Consistency | Tunable, leans consistent when healthy           |
-| PC/EL | Consistency     | Latency     | Less common                                      |
+| Class | Partition-এর সময় | স্বাভাবিকভাবে | উদাহরণ                                          |
+| ----- | ----------------- | ------------- | ----------------------------------------------- |
+| PC/EC | Consistency       | Consistency   | Strongly consistent store, etcd / spanner-style |
+| PA/EL | Availability      | Latency       | Cassandra, DynamoDB (eventual)                  |
+| PA/EC | Availability      | Consistency   | Tunable, সুস্থ থাকলে consistent-ঘেঁষা           |
+| PC/EL | Consistency       | Latency       | কম প্রচলিত                                      |
 
-PACELC is the more honest model because it surfaces the trade-off you actually make every day. Most teams never hit a partition in a given month, but every single request pays — or skips — the consistency-versus-latency tax described by the `EL`/`EC` choice.
+PACELC বেশি সৎ model কারণ এটা তুমি আসলে প্রতিদিন যে trade-off করো তা সামনে আনে। বেশিরভাগ দল একটি নির্দিষ্ট মাসে কখনো partition-এ পড়ে না, কিন্তু প্রতিটি request `EL`/`EC` পছন্দে বর্ণিত consistency-বনাম-latency কর দেয় — বা এড়ায়।
 
 <Callout type="tip">
 
-**Using these in design:** decide CP vs AP per _data category_, not per company. Your billing ledger wants PC/EC; your "users online now" widget wants PA/EL. Picking one stance for an entire system either makes critical data unsafe or makes trivial data needlessly slow and fragile. Match the trade-off to the cost of being wrong about that specific data.
+**ডিজাইনে এগুলো ব্যবহার করা:** CP বনাম AP ঠিক করো per _data category_, per company নয়। তোমার billing ledger চায় PC/EC; তোমার "users online now" widget চায় PA/EL। একটা পুরো সিস্টেমের জন্য একটি অবস্থান বেছে নিলে হয় critical data অনিরাপদ হয় নয়তো তুচ্ছ data অপ্রয়োজনীয়ভাবে ধীর ও ভঙ্গুর হয়। সেই নির্দিষ্ট data সম্পর্কে ভুল হওয়ার খরচের সাথে trade-off মেলাও।
 
 </Callout>

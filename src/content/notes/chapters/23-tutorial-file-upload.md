@@ -1,9 +1,9 @@
 ---
-title: 'Tutorial: Build a File Upload Service'
-subtitle: 'Step-by-step guide to building a production file upload service with chunked uploads, resumable transfers, virus scanning, and CDN integration.'
+title: 'Tutorial: একটি File Upload Service বানানো'
+subtitle: 'chunked upload, resumable transfer, virus scanning এবং CDN integration সহ একটি প্রোডাকশন file upload service বানানোর ধাপে ধাপে গাইড।'
 chapter: 23
 level: 'intermediate'
-readingTime: '26 min'
+readingTime: '26 মিনিট'
 topics: ['tutorial', 'file upload', 'chunked upload', 'resumable transfer', 'content delivery']
 ---
 
@@ -13,19 +13,27 @@ topics: ['tutorial', 'file upload', 'chunked upload', 'resumable transfer', 'con
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What We're Building
+## গল্পে বুঝি
 
-In this tutorial, we'll build a production file upload service that handles large files (up to 5GB), supports chunked and resumable uploads, validates content types, generates signed URLs for secure downloads, and processes files asynchronously (virus scanning, thumbnail generation). Think of it as a simplified version of what AWS S3, Google Drive, or Dropbox uses internally.
+আল-খোয়ারিজমির একটা কুরিয়ার কাউন্টার, যেখানে পার্সেল জমা নেওয়া হয়। একদিন এক দোকানদার বিশাল একটা চালান পাঠাতে এলো — এত বড় যে একটা আস্ত ক্রেটে করে আনলে দরজা দিয়েই ঢোকে না, মাঝপথে ট্রাক থেকে পড়ে গেলে পুরোটাই নষ্ট। তাই আল-খোয়ারিজমি বুদ্ধি করে চালানটাকে ছোট ছোট নম্বর দেওয়া বাক্সে ভাগ করে নিল — ১ থেকে ২০ — আর একটা একটা করে ভেতরে আনতে বলল। প্রতিটা বাক্স আসার সময় সে গায়ে লেখা নম্বর আর ওজন মিলিয়ে টুকে রাখে, যাতে কোনটা এসেছে আর কোনটা বাকি সেটা সবসময় জানা থাকে।
+
+মাঝপথে দেখা গেল ৩ নম্বর বাক্সটা রাস্তায় হারিয়ে গেছে। আল-খোয়ারিজমি পুরো চালান আবার আনতে বলল না — শুধু ৩ নম্বর বাক্সটাই আবার পাঠাতে বলল, বাকি ১৯টা তো কাউন্টারেই সাজানো আছে। সব বাক্স এসে গেলে সে নম্বর অনুযায়ী ক্রমে সাজিয়ে চালানটা আবার জোড়া লাগায়, গুদামের একটা নম্বর দেওয়া তাকে তুলে রাখে, আর দোকানদারের হাতে একটা ছোট রসিদ ধরিয়ে দেয় — যাতে শুধু তাকের নম্বরটা লেখা, পুরো মালটা নয়। আর গেটেই একটা নিয়ম — ওজনের সীমা পেরোনো বা নিষিদ্ধ কিছু হলে ভেতরেই ঢুকতে দেওয়া হয় না, গেট থেকেই ফেরত।
+
+এই গল্পটাই আসলে একটা **file upload service**। নম্বর দেওয়া বাক্সে চালান ভাগ করাটাই বড় ফাইলকে **chunk**-এ ভাগ করে **multipart upload** করা, হারানো ৩ নম্বর বাক্সটা শুধু আবার পাঠানোটাই **resumable** upload-এ শুধু ফেল করা chunk-টা retry করা, আর বাক্সগুলো ক্রমে জোড়া লাগানোটাই chunk-গুলো assemble করা। গুদামের নম্বর দেওয়া তাক হলো **object storage** (S3, MinIO), রসিদটা হলো ফাইলের reference URL, আর গেটের নিয়মটাই size ও type-এর **validation** — বাস্তবে বড় ভিডিও বা ব্যাকআপ আপলোডে ঠিক এভাবেই কাজ হয়।
+
+## আমরা কী বানাচ্ছি
+
+এই টিউটোরিয়ালে আমরা একটা প্রোডাকশন file upload service বানাবো যেটা বড় ফাইল (5GB পর্যন্ত) হ্যান্ডল করবে, chunked ও resumable upload সাপোর্ট করবে, content type ভ্যালিডেট করবে, নিরাপদ download-এর জন্য signed URL জেনারেট করবে, এবং ফাইলগুলো asynchronously প্রসেস করবে (virus scanning, thumbnail generation)। এটাকে AWS S3, Google Drive বা Dropbox যা internally ব্যবহার করে তার একটা সরলীকৃত সংস্করণ হিসেবে ভাবতে পারেন।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like submitting documents at a government office — you fill out a form, attach your files, the clerk checks everything is correct, stamps it, and files it away. Large documents get broken into sections.
+সরকারি অফিসে ডকুমেন্ট জমা দেওয়ার মতো — আপনি একটা ফর্ম পূরণ করেন, ফাইল সংযুক্ত করেন, কেরানি সব ঠিক আছে কিনা যাচাই করে, স্ট্যাম্প মারে, এবং ফাইল করে রাখে। বড় ডকুমেন্টগুলোকে সেকশনে ভাগ করা হয়।
 
 </Callout>
 
-The key insight: you can't just POST a 5GB file in one request. Networks fail, timeouts expire, and servers run out of memory. Instead, we split files into chunks, upload each chunk independently, and assemble them server-side. If the network drops, only the current chunk is lost — resume from where you left off.
+মূল কথাটা হলো: আপনি একটা 5GB ফাইল এক রিকোয়েস্টেই POST করতে পারবেন না। নেটওয়ার্ক ফেল করে, timeout শেষ হয়ে যায়, আর সার্ভারের মেমরি ফুরিয়ে যায়। বদলে আমরা ফাইলগুলোকে chunk-এ ভাগ করি, প্রতিটা chunk আলাদাভাবে upload করি, এবং সার্ভার-সাইডে সেগুলো জোড়া দিই। নেটওয়ার্ক ড্রপ করলে শুধু বর্তমান chunk-টা হারায় — যেখানে থেমেছিলেন সেখান থেকেই resume করুন।
 
 <Mermaid
 title="File Upload Service Architecture"
@@ -34,37 +42,37 @@ code={`graph TD
   A --> O["Object Store<br/>File Storage"] --> Q["Processing Queue<br/>Scan & Transform"] --> CDN["CDN<br/>Edge Delivery"]`}
 />
 
-## Step 1: The Upload Protocol
+## ধাপ 1: Upload Protocol
 
-Our upload follows a three-phase approach, similar to S3's multipart upload:
+আমাদের upload একটা তিন-ধাপের approach মেনে চলে, S3-এর multipart upload-এর মতো:
 
-1. **Initiate** — Client tells the server: "I want to upload a 2GB file called video.mp4 in 20 chunks." Server creates an upload session and returns an upload ID.
-2. **Upload chunks** — Client uploads each chunk independently (can be in parallel). Each chunk includes its number and a checksum for integrity verification.
-3. **Complete** — Client says "all chunks uploaded." Server assembles them, verifies the total checksum, and marks the file as ready.
+1. **Initiate** — Client সার্ভারকে বলে: "আমি video.mp4 নামের একটা 2GB ফাইল 20টা chunk-এ upload করতে চাই।" সার্ভার একটা upload session তৈরি করে এবং একটা upload ID ফেরত দেয়।
+2. **Upload chunks** — Client প্রতিটা chunk আলাদাভাবে upload করে (parallel-এ হতে পারে)। প্রতিটা chunk-এ থাকে তার নম্বর এবং integrity যাচাইয়ের জন্য একটা checksum।
+3. **Complete** — Client বলে "সব chunk upload হয়ে গেছে।" সার্ভার সেগুলো জোড়া দেয়, মোট checksum যাচাই করে, এবং ফাইলটাকে ready হিসেবে মার্ক করে।
 
-This protocol makes uploads **resumable** (just re-upload failed chunks), **parallelizable** (upload 4 chunks at once), and **verifiable** (per-chunk and total checksums).
+এই protocol upload-কে **resumable** করে (শুধু ফেল করা chunk আবার upload করুন), **parallelizable** করে (একসাথে 4টা chunk upload করুন), এবং **verifiable** করে (per-chunk এবং মোট checksum)।
 
-## Step 2: Upload Initiation
+## ধাপ 2: Upload Initiation
 
-Let's start by defining the upload session. When a client initiates an upload, we validate the file type against an allow-list, check the total size against limits, calculate the expected number of chunks, and return an upload ID.
+চলুন upload session সংজ্ঞায়িত করে শুরু করি। যখন কোনো client একটা upload শুরু করে, আমরা ফাইল টাইপটাকে একটা allow-list-এর বিপরীতে ভ্যালিডেট করি, মোট সাইজ লিমিটের বিপরীতে যাচাই করি, প্রত্যাশিত chunk সংখ্যা হিসাব করি, এবং একটা upload ID ফেরত দিই।
 
-## Step 3: Chunked Upload Handler
+## ধাপ 3: Chunked Upload Handler
 
-Each chunk upload includes the upload ID, chunk number, and the chunk data. We verify the chunk checksum, store it, and track which chunks have been received. The client can query which chunks are missing to implement resume logic.
+প্রতিটা chunk upload-এ থাকে upload ID, chunk নম্বর, এবং chunk-এর ডেটা। আমরা chunk-এর checksum যাচাই করি, সেটা store করি, এবং কোন chunk-গুলো পাওয়া গেছে তা ট্র্যাক করি। Client জিজ্ঞেস করতে পারে কোন chunk-গুলো missing, যাতে resume logic বাস্তবায়ন করা যায়।
 
-## Step 4: Assembly and Verification
+## ধাপ 4: Assembly এবং Verification
 
-When the client signals completion, we verify all chunks are present, concatenate them in order, and verify the total file checksum matches what the client declared at initiation. If any chunk is missing or corrupted, the assembly fails with a clear error.
+যখন client completion সিগন্যাল দেয়, আমরা যাচাই করি সব chunk আছে কিনা, সেগুলোকে ক্রমানুসারে concatenate করি, এবং মোট ফাইলের checksum client যা initiation-এ ঘোষণা করেছিল তার সাথে মেলে কিনা তা যাচাই করি। কোনো chunk missing বা corrupted হলে, assembly একটা পরিষ্কার error দিয়ে ফেল করে।
 
-## Step 5: Post-Processing Pipeline
+## ধাপ 5: Post-Processing Pipeline
 
-After assembly, files enter an async processing pipeline: content type verification (don't trust the client's claim), virus scanning (in production, call ClamAV or similar), and for images, thumbnail generation. Processing happens in the background — the upload API returns immediately.
+Assembly-র পরে, ফাইলগুলো একটা async processing pipeline-এ ঢোকে: content type verification (client-এর দাবি বিশ্বাস করবেন না), virus scanning (প্রোডাকশনে ClamAV বা সমতুল্য কিছু call করুন), এবং ছবির ক্ষেত্রে thumbnail generation। প্রসেসিং ব্যাকগ্রাউন্ডে হয় — upload API সাথে সাথেই ফেরত আসে।
 
-## Step 6: File Serving with Signed URLs
+## ধাপ 6: Signed URL দিয়ে File Serving
 
-Files are served through signed URLs — time-limited, HMAC-signed tokens that grant temporary access. This lets you serve files through a CDN without exposing your auth system. The signed URL contains the file ID, expiration timestamp, and a signature that the CDN can verify without calling your backend.
+ফাইলগুলো signed URL-এর মাধ্যমে serve করা হয় — সময়-সীমিত, HMAC-signed token যা সাময়িক access দেয়। এটা আপনাকে auth system এক্সপোজ না করেই CDN-এর মাধ্যমে ফাইল serve করতে দেয়। Signed URL-এ থাকে file ID, expiration timestamp, এবং একটা signature যা CDN আপনার backend-কে call না করেই যাচাই করতে পারে।
 
-## Putting It All Together
+## সব একসাথে জোড়া দেওয়া
 
 <CodeTabs tsFile="file-upload.ts" goFile="file-upload.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -733,45 +741,45 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তের ব্যাখ্যা
 
-### Why Chunked Uploads?
+### কেন Chunked Upload?
 
-A single HTTP request uploading a 5GB file is fragile — any network hiccup means starting over. Chunked uploads split the file into manageable pieces (5MB each). If chunk 47 of 200 fails, you only re-upload 5MB, not 235MB. Chunks can also be uploaded in parallel (4 at a time = 4x faster) and out of order (the server tracks which are received).
+একটা 5GB ফাইল upload করা single HTTP request ভঙ্গুর — সামান্য নেটওয়ার্ক সমস্যা মানেই আবার শুরু থেকে করা। Chunked upload ফাইলটাকে সামলানোর মতো টুকরোয় (প্রতিটা 5MB) ভাগ করে। 200-এর মধ্যে 47 নম্বর chunk ফেল করলে, আপনি শুধু 5MB আবার upload করেন, 235MB নয়। Chunk-গুলো parallel-এও upload হতে পারে (একসাথে 4টা = 4x দ্রুত) এবং ক্রম ছাড়াও (সার্ভার ট্র্যাক করে কোনগুলো পাওয়া গেছে)।
 
-### Why Checksums Per Chunk?
+### কেন প্রতি Chunk-এ Checksum?
 
-Corruption can happen at any layer — network, disk, memory. If you only verify the final assembled file, a corrupted chunk means re-uploading the entire file. Per-chunk checksums catch corruption at the smallest possible unit: upload fails immediately, you know exactly which chunk to retry, and you haven't wasted bandwidth on subsequent chunks.
+Corruption যেকোনো layer-এ হতে পারে — নেটওয়ার্ক, ডিস্ক, মেমরি। আপনি যদি শুধু চূড়ান্ত assembled ফাইলটা যাচাই করেন, তবে একটা corrupted chunk মানে পুরো ফাইল আবার upload করা। Per-chunk checksum সম্ভাব্য সবচেয়ে ছোট এককে corruption ধরে ফেলে: upload সাথে সাথেই ফেল করে, আপনি ঠিক জানেন কোন chunk retry করতে হবে, এবং পরবর্তী chunk-গুলোতে bandwidth নষ্ট করেননি।
 
-### Why Signed URLs Instead of Auth Tokens?
+### কেন Auth Token-এর বদলে Signed URL?
 
-Auth tokens require the CDN to call your backend for every file request — defeating the purpose of a CDN. Signed URLs embed authorization directly in the URL: the CDN verifies the HMAC signature locally, no backend call needed. The URL expires automatically (1 hour by default), so even if shared, access is time-limited. This is exactly how AWS S3 presigned URLs and Cloudflare signed URLs work.
+Auth token-এর জন্য CDN-কে প্রতিটা ফাইল রিকোয়েস্টের জন্য আপনার backend-কে call করতে হয় — যা CDN-এর উদ্দেশ্যই ব্যর্থ করে দেয়। Signed URL authorization সরাসরি URL-এর মধ্যে embed করে: CDN HMAC signature স্থানীয়ভাবে যাচাই করে, কোনো backend call লাগে না। URL স্বয়ংক্রিয়ভাবে expire হয়ে যায় (ডিফল্টে 1 ঘণ্টা), তাই শেয়ার করা হলেও access সময়-সীমিত। AWS S3-এর presigned URL এবং Cloudflare-এর signed URL ঠিক এভাবেই কাজ করে।
 
-### Why Async Post-Processing?
+### কেন Async Post-Processing?
 
-Virus scanning a 2GB video takes seconds to minutes. Making the upload API wait for the scan would mean terrible upload UX. Instead, the upload returns immediately with status "processing," and a background worker handles scanning, thumbnail generation, and content type verification. The client polls the status endpoint or receives a webhook when processing completes.
+একটা 2GB ভিডিও virus scan করতে কয়েক সেকেন্ড থেকে মিনিট লাগে। Upload API-কে scan-এর জন্য অপেক্ষা করানো মানে ভয়ংকর upload UX। বদলে, upload সাথে সাথেই "processing" status নিয়ে ফেরত আসে, এবং একটা background worker scanning, thumbnail generation, এবং content type verification সামলায়। Client status endpoint poll করে বা প্রসেসিং শেষ হলে একটা webhook পায়।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Chunked uploads make large file transfers reliable — a network failure only loses one chunk, not the entire file
-- Per-chunk checksums detect corruption at the smallest possible unit, before wasting bandwidth on subsequent chunks
-- Resumable uploads let users continue where they left off — critical for mobile users on unreliable networks
-- Signed URLs decouple authentication from file serving, enabling CDN edge delivery without hitting your auth server
-- Async post-processing (virus scan, thumbnails) keeps upload response times fast
-- Content type validation at upload time prevents serving malicious files later
+- Chunked upload বড় ফাইল transfer-কে নির্ভরযোগ্য করে — একটা নেটওয়ার্ক ব্যর্থতা শুধু একটা chunk হারায়, পুরো ফাইল নয়
+- Per-chunk checksum সম্ভাব্য সবচেয়ে ছোট এককে corruption শনাক্ত করে, পরবর্তী chunk-গুলোতে bandwidth নষ্ট হওয়ার আগেই
+- Resumable upload ব্যবহারকারীদের যেখানে থেমেছিলেন সেখান থেকে চালিয়ে যেতে দেয় — অনির্ভরযোগ্য নেটওয়ার্কে থাকা মোবাইল ব্যবহারকারীদের জন্য অপরিহার্য
+- Signed URL authentication-কে file serving থেকে আলাদা করে, আপনার auth server-কে না ছুঁয়েই CDN edge delivery সম্ভব করে
+- Async post-processing (virus scan, thumbnail) upload response time দ্রুত রাখে
+- Upload-এর সময় content type validation পরে ক্ষতিকর ফাইল serve করা প্রতিরোধ করে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জীবনে ব্যবহার
 
-- **AWS S3** multipart upload splits files into 5MB-5GB chunks with parallel upload support
-- **Google Drive** uses resumable uploads with chunk checksums for reliable transfer over flaky connections
-- **Cloudflare R2** serves files through 300+ edge locations using signed URLs for access control
-- **Dropbox** deduplicates chunks across users — if someone already uploaded that chunk, it's referenced, not re-stored
-- This architecture handles files up to 5GB with resumable chunked uploads and sub-100ms signed URL generation
+- **AWS S3** multipart upload ফাইলগুলোকে 5MB-5GB chunk-এ ভাগ করে parallel upload সাপোর্ট সহ
+- **Google Drive** অস্থির connection-এ নির্ভরযোগ্য transfer-এর জন্য chunk checksum সহ resumable upload ব্যবহার করে
+- **Cloudflare R2** access control-এর জন্য signed URL ব্যবহার করে 300+ edge location-এর মাধ্যমে ফাইল serve করে
+- **Dropbox** ব্যবহারকারীদের মধ্যে chunk deduplicate করে — কেউ আগে সেই chunk upload করে থাকলে, সেটা রেফারেন্স করা হয়, আবার store করা হয় না
+- এই architecture resumable chunked upload এবং sub-100ms signed URL generation সহ 5GB পর্যন্ত ফাইল হ্যান্ডল করে
 
 </div>

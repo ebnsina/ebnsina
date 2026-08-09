@@ -1,9 +1,9 @@
 ---
-title: 'Retries and backoff'
-subtitle: "A delivery that fails once is normal. A delivery that fails ten times in a hot loop takes down your service and your customer's. Exponential backoff with jitter and a hard deadline is the simple, correct fix."
+title: 'Retries ও backoff'
+subtitle: 'একবার fail হওয়া delivery স্বাভাবিক। একটা hot loop-এ দশবার fail হওয়া delivery আপনার আর আপনার customer-এর service নামিয়ে দেয়। jitter সহ exponential backoff আর একটা hard deadline-ই হলো সরল, সঠিক সমাধান।'
 chapter: 6
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['webhooks', 'retries', 'backoff', 'jitter', 'deadlines']
 ---
 
@@ -11,40 +11,48 @@ topics: ['webhooks', 'retries', 'backoff', 'jitter', 'deadlines']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A network drops. A receiver restarts. A database lock holds. None of these mean "the customer no longer wants this event" — they mean "try again later." Webhooks need retry semantics that recover from transient failures without ever degrading into a hot loop.
+একটা network drop করে। একটা receiver restart করে। একটা database lock ধরে রাখে। এর কোনোটাই মানে না "customer আর এই event চায় না" — এগুলো মানে "পরে আবার চেষ্টা করো।" Webhooks-এর এমন retry semantics দরকার যা transient failure থেকে recover করে কিন্তু কখনও একটা hot loop-এ অবনতি ঘটায় না।
 
-This chapter is the algorithm and the parameters. Producers in the wild that get this wrong DDoS their own customers; teams that get it right almost never page anyone for delivery issues.
+এই অধ্যায়টা হলো algorithm আর parameter। বাস্তবের যেসব producer এটা ভুল করে তারা নিজেদের customer-কে DDoS করে; যারা ঠিক করে তারা delivery issue-র জন্য প্রায় কখনও কাউকে page করে না।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Retrying a failed webhook is like leaving a voicemail and calling back if they don't pick up — you don't give up after one ring.
+একটা fail হওয়া webhook retry করা অনেকটা একটা voicemail রেখে তারা না ধরলে আবার ফোন করার মতো — এক ring-এই আপনি হাল ছাড়েন না।
 
 </Callout>
 
-## What needs retry
+## গল্পে বুঝি
 
-Three families of failure, each with its own retry policy.
+ফাতিমা আল-ফিহরির একটা কুরিয়ার সার্ভিস আছে, আর তার সবচেয়ে ভরসার রানার আল-খোয়ারিজমি। একদিন সে ইবনে সিনার বাড়িতে একটা জরুরি স্লিপ পৌঁছাতে গেল, কিন্তু দরজায় কেউ সাড়া দিল না। আল-খোয়ারিজমি বোকা নয় — সে দরজা ধরে অনবরত ধাক্কাতে থাকল না। সে চলে গেল, একটু পরে আবার ফিরে এল। এবারও কেউ নেই। তখন সে আরও বেশি সময় পর ফিরল, তারপর তারও বেশি সময় পর — প্রতিবারের মাঝের ফাঁকটা বড় হতে থাকল, ধৈর্য ধরে, ছড়িয়ে ছড়িয়ে।
 
-**1. Transient failures — retry.**
+ইবনে সিনা আসলে বাজারে গিয়েছিল অল্প সময়ের জন্য। কোনো এক ফিরতি ভিজিটে সে দরজায় ছিল, আর স্লিপটা হাতে পেয়ে গেল — কেউ দরজায় দাঁড়িয়ে ঘণ্টার পর ঘণ্টা ধাক্কানোরও দরকার হলো না। ফাতিমা আবার চালাক আরেকটা জায়গায়: সে সব রানারকে ঠিক একই মিনিটে ফেরত পাঠায় না, সময়টা একটু এদিক-ওদিক করে দেয় — নাহলে দিনের একই মুহূর্তে সব রানার একসাথে ইবনে সিনার দরজায় ভিড় করত। আর কোনো বাড়িতে যদি ধরুন পাঁচবার গিয়েও কেউ না থাকে, রানার আর চেষ্টা করে না — স্লিপটা অফিসে "পরে দেখা হবে" বাক্সে জমা রেখে দেয়।
 
-- Network errors: timeouts, connection refused, DNS failures.
-- Receiver returns `5xx` (server error).
-- Receiver returns `429` (rate limited; usually with `Retry-After`).
-- Receiver returns `408` (request timeout).
+এটাই হলো webhook-এর **retry**। সাড়া না পেয়ে বড় হতে থাকা ফাঁকে বারবার ফিরে আসা মানে retry-র মাঝে **exponential backoff** (ফাঁক দ্বিগুণ হতে থাকে — ১ মিনিট, ৫ মিনিট, ৩০ মিনিট)। ফেরার সময়টা সামান্য এদিক-ওদিক করা যাতে সব রানার একসাথে না পৌঁছায়, সেটাই **jitter** — synchronised retry ঢেউ ঠেকায়। ইবনে সিনা অল্প সময়ের জন্য বাইরে থাকলেও পরের ভিজিটে স্লিপ পাওয়া মানে সাময়িকভাবে down থাকা receiver-ও পরে delivery পেয়ে যায়। আর পাঁচবার ব্যর্থ হলে থেমে যাওয়া মানে **max attempts** limit — এরপর জিনিসটা dead-letter-এ চলে যায়। বাস্তবে Stripe বা SendGrid-এর মতো producer ঠিক এভাবেই কয়েক দিন ধরে backoff+jitter দিয়ে retry করে, তারপর হাল ছেড়ে dead-letter করে।
 
-These are "try again later" — the failure isn't about the payload.
+## কী retry দরকার
 
-**2. Permanent failures — do not retry.**
+তিন পরিবারের failure, প্রতিটার নিজস্ব retry policy।
 
-- Receiver returns `400` or `422` (the payload is malformed; another try with the same payload won't help).
-- Receiver returns `401` or `403` (auth failed; the secret is wrong, fix the config).
-- Receiver returns `410` (the endpoint is gone; tell the customer).
+**১. Transient failure — retry।**
 
-**3. Ambiguous — retry conservatively.**
+- Network error: timeout, connection refused, DNS failure।
+- receiver `5xx` return করে (server error)।
+- receiver `429` return করে (rate limited; সাধারণত `Retry-After` সহ)।
+- receiver `408` return করে (request timeout)।
 
-- Receiver returns `404`. Could be a misconfigured URL (transient — they fix it) or a dead endpoint (permanent). Retry for a while; eventually escalate.
+এগুলো "পরে আবার চেষ্টা করো" — failure-টা payload নিয়ে নয়।
+
+**২. Permanent failure — retry করবেন না।**
+
+- receiver `400` বা `422` return করে (payload malformed; একই payload দিয়ে আরেকবার চেষ্টা কাজে দেবে না)।
+- receiver `401` বা `403` return করে (auth failed; secret ভুল, config ঠিক করুন)।
+- receiver `410` return করে (endpoint চলে গেছে; customer-কে জানান)।
+
+**৩. Ambiguous — রক্ষণশীলভাবে retry।**
+
+- receiver `404` return করে। এটা একটা misconfigured URL হতে পারে (transient — তারা ঠিক করে) বা একটা মৃত endpoint (permanent)। কিছুক্ষণ retry করুন; একসময় escalate করুন।
 
 ```go
 func classify(statusCode int, err error) Decision {
@@ -66,11 +74,11 @@ func classify(statusCode int, err error) Decision {
 }
 ```
 
-When in doubt, retry. The cost of an extra attempt is small; the cost of dropping a real event is large.
+সন্দেহ হলে, retry করুন। একটা অতিরিক্ত attempt-এর খরচ ছোট; একটা আসল event drop করার খরচ বড়।
 
 ## Exponential backoff
 
-Wait between retries; double the wait each time. Cap at some max.
+retry-র মাঝে অপেক্ষা করুন; প্রতিবার অপেক্ষা দ্বিগুণ করুন। কোনো একটা max-এ cap করুন।
 
 ```
 attempt 1: deliver immediately
@@ -85,16 +93,16 @@ attempt 9: wait 1 hour
 ...
 ```
 
-Two reasons exponential is right:
+Exponential ঠিক হওয়ার দুটো কারণ:
 
-1. A receiver that's down for 5 seconds and a receiver that's down for 2 hours need different policies. Exponential adapts: brief outages recover fast, long outages don't drown the receiver in retries.
-2. The total number of attempts in any time window is bounded — eight retries cover ~2 hours; a hot loop would do thousands.
+1. ৫ সেকেন্ড down থাকা receiver আর ২ ঘণ্টা down থাকা receiver-এর ভিন্ন policy দরকার। Exponential মানিয়ে নেয়: সংক্ষিপ্ত outage দ্রুত recover করে, দীর্ঘ outage receiver-কে retry-তে ডুবিয়ে দেয় না।
+2. যেকোনো time window-এ মোট attempt সংখ্যা bounded — আটটা retry ~২ ঘণ্টা কভার করে; একটা hot loop হাজার হাজার করত।
 
-## Jitter — don't synchronise
+## Jitter — synchronise করবেন না
 
-Without jitter, every event that started failing at the same moment retries at the same moment. When the receiver comes back up, it's hit with a synchronised wave.
+jitter ছাড়া, একই মুহূর্তে fail শুরু করা প্রতিটা event একই মুহূর্তে retry করে। receiver ফিরে এলে, একটা synchronised ঢেউ তাকে আঘাত করে।
 
-Add randomness:
+randomness যোগ করুন:
 
 ```go
 func backoffWithJitter(attempt int) time.Duration {
@@ -107,21 +115,21 @@ func backoffWithJitter(attempt int) time.Duration {
 }
 ```
 
-This produces a delay between half and full of the nominal backoff. The "thundering herd" disappears.
+এটা nominal backoff-এর অর্ধেক আর পূর্ণের মাঝে একটা delay তৈরি করে। "thundering herd" উধাও হয়।
 
-Two jitter strategies, both common:
+দুটো jitter strategy, দুটোই common:
 
-**Full jitter:** `delay = rand(0, base)` — most spread, lowest expected delay.
+**Full jitter:** `delay = rand(0, base)` — সবচেয়ে বেশি ছড়ানো, সবচেয়ে কম প্রত্যাশিত delay।
 
-**Equal jitter:** `delay = base/2 + rand(0, base/2)` — half-randomized; preserves average backoff. Recommended.
+**Equal jitter:** `delay = base/2 + rand(0, base/2)` — অর্ধেক randomized; গড় backoff সংরক্ষণ করে। Recommended।
 
-The exact formula matters less than having jitter at all.
+সঠিক formula-টা jitter আদৌ থাকার চেয়ে কম গুরুত্বপূর্ণ।
 
-## How long to retry — the give-up policy
+## কতক্ষণ retry — give-up policy
 
-Retry forever and you fill your queue with dead events. Stop too soon and a 6-hour outage loses every event.
+চিরকাল retry করলে আপনার queue মৃত event-এ ভরে যায়। খুব তাড়াতাড়ি থামলে একটা ৬-ঘণ্টার outage প্রতিটা event হারায়।
 
-The standard window is **2 to 5 days** of retries. Stripe retries for 3 days; SendGrid for 4. Long enough to survive a weekend outage; short enough to bound the queue.
+Standard window হলো **২ থেকে ৫ দিন**-এর retry। Stripe ৩ দিন retry করে; SendGrid ৪। একটা weekend outage টিকে থাকার মতো যথেষ্ট দীর্ঘ; queue bound করার মতো যথেষ্ট ছোট।
 
 Implementation:
 
@@ -140,16 +148,16 @@ func shouldRetry(d Delivery) bool {
 }
 ```
 
-`GiveUpAt` is set on first delivery: `time.Now().Add(72 * time.Hour)`. Every retry checks; if past, mark permanently failed and route to dead-letter (chapter 8).
+`GiveUpAt` প্রথম delivery-তে set হয়: `time.Now().Add(72 * time.Hour)`। প্রতিটা retry check করে; পার হয়ে গেলে, permanently failed mark করে dead-letter-এ route করুন (অধ্যায় ৮)।
 
-## Number of attempts vs total time
+## attempt সংখ্যা vs মোট সময়
 
-Two ways to express the same policy: "8 attempts" or "3 days." Both are needed.
+একই policy প্রকাশের দুটো উপায়: "৮ attempt" অথবা "৩ দিন।" দুটোই দরকার।
 
-- **Max attempts:** caps total work. A receiver that returns 500 in 10 ms doesn't burn 100K attempts in an afternoon.
-- **Max total time:** caps the customer's exposure window. A 30-day-old event is rarely useful even if it could still deliver.
+- **Max attempts:** মোট কাজ cap করে। ১০ ms-এ 500 return করা receiver একটা বিকেলে 100K attempt পোড়ায় না।
+- **Max total time:** customer-এর exposure window cap করে। ৩০ দিন পুরনো একটা event deliver হতে পারলেও খুব কমই কাজের।
 
-The conservative implementation enforces both:
+রক্ষণশীল implementation দুটোই enforce করে:
 
 ```go
 if d.Attempts >= 16 || time.Now().After(d.GiveUpAt) {
@@ -157,18 +165,18 @@ if d.Attempts >= 16 || time.Now().After(d.GiveUpAt) {
 }
 ```
 
-16 attempts × max-1-hour backoff = ~10 hours, well under the 3-day GiveUpAt. Either condition triggers escalation.
+16 attempt × max-১-ঘণ্টা backoff = ~১০ ঘণ্টা, ৩-দিনের GiveUpAt-এর অনেক নিচে। যেকোনো একটা condition escalation ট্রিগার করে।
 
 ## `Retry-After` header
 
-`429 Too Many Requests` and sometimes `503 Service Unavailable` come with a `Retry-After` header — the receiver telling you exactly when to come back. **Respect it.**
+`429 Too Many Requests` আর মাঝেমধ্যে `503 Service Unavailable` একটা `Retry-After` header সহ আসে — receiver আপনাকে ঠিক কখন ফিরতে হবে বলছে। **সেটা মানুন।**
 
 ```
 HTTP/1.1 429 Too Many Requests
 Retry-After: 60
 ```
 
-Two formats: integer seconds or HTTP-date. Parse both, override your usual backoff if it's longer:
+দুটো format: integer second বা HTTP-date। দুটোই parse করুন, বেশি হলে আপনার usual backoff-কে override করুন:
 
 ```go
 if resp.StatusCode == 429 || resp.StatusCode == 503 {
@@ -181,17 +189,17 @@ if resp.StatusCode == 429 || resp.StatusCode == 503 {
 }
 ```
 
-A receiver that says "wait 5 minutes" knows more than your backoff algorithm. Listen.
+যে receiver বলে "৫ মিনিট অপেক্ষা করো" সে আপনার backoff algorithm-এর চেয়ে বেশি জানে। শুনুন।
 
 <Callout type="warn">
 
-**Don't shorten on `Retry-After`.** If the receiver says wait 5 minutes and your backoff says wait 1, retrying at 1 minute will probably get another 429. Take the larger of the two.
+**`Retry-After`-এ ছোট করবেন না।** receiver ৫ মিনিট অপেক্ষা করতে বললে আর আপনার backoff ১ মিনিট বললে, ১ মিনিটে retry করলে সম্ভবত আরেকটা 429 পাবেন। দুটোর বড়টা নিন।
 
 </Callout>
 
-## Concurrency limits per receiver
+## Per-receiver concurrency limit
 
-Multiple events failing at once should not produce N parallel retry storms at one receiver. Cap the in-flight count:
+একসাথে অনেক event fail করলে এক receiver-এ N parallel retry storm তৈরি হওয়া উচিত নয়। in-flight count cap করুন:
 
 ```go
 type ReceiverLimits struct {
@@ -199,13 +207,13 @@ type ReceiverLimits struct {
 }
 ```
 
-A simple per-host semaphore in the worker pool throttles to, say, 10 concurrent attempts to one receiver. The 11th waits.
+worker pool-এ একটা সরল per-host semaphore এক receiver-এ, ধরুন, 10 concurrent attempt-এ throttle করে। 11তমটা অপেক্ষা করে।
 
-For very hot receivers with sustained traffic, the cap should be higher; for typical webhooks, 10 is plenty.
+টানা traffic সহ খুব hot receiver-এর জন্য, cap বেশি হওয়া উচিত; সাধারণ webhook-এর জন্য 10-ই যথেষ্ট।
 
-## Worker queue with retry
+## retry সহ worker queue
 
-The full picture wires a durable queue, a worker pool, and the retry decision:
+পূর্ণ ছবিটা একটা durable queue, একটা worker pool, আর retry decision তার করে:
 
 ```go
 type Job struct {
@@ -240,7 +248,7 @@ func worker(ctx context.Context, jobs <-chan Job, retries chan<- Job) {
 }
 ```
 
-`scheduleRetry` writes back to the durable queue with `next_attempt_at = now + delay`; a scheduler reads jobs whose time has come and dispatches them. Postgres with a `next_attempt_at TIMESTAMPTZ` index works for tens of thousands per second; Redis or RabbitMQ for higher throughput.
+`scheduleRetry` `next_attempt_at = now + delay` সহ durable queue-তে লিখে ফেরায়; একটা scheduler সেসব job পড়ে যাদের সময় এসেছে আর dispatch করে। একটা `next_attempt_at TIMESTAMPTZ` index সহ Postgres প্রতি সেকেন্ডে হাজার-দশেকের জন্য কাজ করে; বেশি throughput-এর জন্য Redis বা RabbitMQ।
 
 ```sql
 -- claim due jobs
@@ -258,23 +266,23 @@ WHERE webhook_deliveries.id = claimed.id
 RETURNING webhook_deliveries.*;
 ```
 
-`FOR UPDATE SKIP LOCKED` is Postgres's built-in queue primitive. Multiple workers claim non-overlapping rows; each row is processed once.
+`FOR UPDATE SKIP LOCKED` হলো Postgres-এর built-in queue primitive। একাধিক worker non-overlapping row claim করে; প্রতিটা row একবার process হয়।
 
-## Idempotency in retries
+## retry-তে idempotency
 
-The producer's own retries must send the **same `id` and the same body**. If you regenerate the event ID on retry, the receiver cannot dedupe and processes twice (chapter 7).
+producer-এর নিজের retry-কে **একই `id` আর একই body** পাঠাতে হবে। retry-তে event ID regenerate করলে, receiver dedupe করতে পারে না আর দুবার process করে (অধ্যায় ৭)।
 
-The producer also must keep the **signature consistent**. The signature was computed over the original body and timestamp; retries must reuse that exact pair, or sign with the new timestamp:
+producer-কে **signature-ও consistent** রাখতে হবে। signature মূল body আর timestamp-এর ওপর গণনা করা হয়েছিল; retry-কে ঠিক ওই জোড়া reuse করতে হবে, অথবা নতুন timestamp দিয়ে sign করতে হবে:
 
-**Option A:** sign once at first attempt, store the signature in the queue, reuse on every retry. The receiver's replay window must be long enough to cover the entire retry duration (3 days). Receivers typically don't allow that.
+**Option A:** প্রথম attempt-এ একবার sign করুন, signature queue-তে store করুন, প্রতি retry-তে reuse করুন। receiver-এর replay window পুরো retry duration (৩ দিন) কভার করার মতো দীর্ঘ হতে হবে। receiver-রা সাধারণত সেটা দেয় না।
 
-**Option B:** re-sign with a fresh timestamp on each attempt. Standard practice; the receiver always sees a current timestamp.
+**Option B:** প্রতিটা attempt-এ একটা fresh timestamp দিয়ে re-sign করুন। Standard practice; receiver সবসময় একটা current timestamp দেখে।
 
-Option B is the standard. The body and event ID stay the same; the timestamp and signature change per attempt.
+Option B-ই standard। body আর event ID একই থাকে; timestamp আর signature per attempt বদলায়।
 
-## Don't retry into errors
+## error-এর মধ্যে retry করবেন না
 
-A subtle bug: a worker that fails to claim a job (DB error), or fails to deserialize, or panics before sending — these aren't _delivery_ failures, they're _worker_ failures. Don't increment `Attempts`; don't bump `next_attempt_at`. Just put the job back, let another worker try.
+একটা সূক্ষ্ম bug: একটা worker job claim করতে fail করে (DB error), বা deserialize করতে fail করে, বা পাঠানোর আগে panic করে — এগুলো _delivery_ failure নয়, এগুলো _worker_ failure। `Attempts` বাড়াবেন না; `next_attempt_at` bump করবেন না। শুধু job-টা ফিরিয়ে রাখুন, অন্য একটা worker-কে চেষ্টা করতে দিন।
 
 ```go
 defer func() {
@@ -285,11 +293,11 @@ defer func() {
 }()
 ```
 
-Confusing worker errors with delivery errors leads to giving up too fast.
+worker error-কে delivery error-এর সাথে গুলিয়ে ফেললে খুব দ্রুত হাল ছেড়ে দেওয়া হয়।
 
-## Backoff for permanent transitions
+## Permanent transition-এর জন্য backoff
 
-A receiver that returns `200` for two days then suddenly `410`s for a week is signaling "this endpoint is gone." After repeated permanent-class errors, mark the _subscription_ as suspect — pause new deliveries, alert the customer. Don't keep firing retries at a known-dead URL.
+যে receiver দুদিন `200` return করে হঠাৎ এক সপ্তাহ ধরে `410` করে, সে সংকেত দিচ্ছে "এই endpoint চলে গেছে।" বারবার permanent-class error-এর পরে, _subscription_-কে সন্দেহভাজন mark করুন — নতুন delivery pause করুন, customer-কে alert দিন। একটা known-dead URL-এ retry ছুড়তে থাকবেন না।
 
 ```go
 if subscription.PermanentFailureStreak > 100 {
@@ -298,11 +306,11 @@ if subscription.PermanentFailureStreak > 100 {
 }
 ```
 
-This balances "transient flap recovers" against "let's not flood a dead URL."
+এটা "transient flap recover করে" আর "চলুন একটা মৃত URL flood না করি"-র মধ্যে ভারসাম্য রাখে।
 
-## Per-subscription rate limits
+## Per-subscription rate limit
 
-Some receivers have known capacity — "we can handle 10 events/sec." The producer should respect that even when retries pile up:
+কিছু receiver-এর known capacity আছে — "আমরা 10 events/sec সামলাতে পারি।" retry জমা হলেও producer-এর সেটা মানা উচিত:
 
 ```go
 type SubscriptionRate struct {
@@ -316,11 +324,11 @@ if !rateLimiter.Allow(subscription.ID) {
 }
 ```
 
-Configurable per subscription; defaults to a generous-but-finite number.
+per subscription configurable; default একটা উদার-কিন্তু-সসীম সংখ্যা।
 
-## Total system view
+## পুরো সিস্টেমের ছবি
 
-Putting the pieces together:
+টুকরোগুলো একসাথে জোড়া:
 
 ```
 event happens
@@ -335,19 +343,19 @@ non-2xx + permanent?  → mark failed, dead-letter (chapter 8)
 expired? → mark expired, dead-letter
 ```
 
-That is the full lifecycle of one event. The retry layer is a few hundred lines once you have the queue and the classifier.
+এটাই একটা event-এর পূর্ণ lifecycle। queue আর classifier থাকলে retry layer কয়েকশো লাইন।
 
-## Recap
+## রিক্যাপ
 
-- Classify: 5xx/network/429/408 retry; 400/401/403/410/422 permanent; 404 conservatively retry.
-- Exponential backoff (double per attempt), capped at ~1 hour.
-- Always add jitter (equal or full). Avoid synchronised retry waves.
-- Total retry window: 2–5 days. Dead-letter after that.
-- Respect `Retry-After`. Take the longer of header and computed backoff.
-- Cap concurrent in-flight per receiver (~10).
-- Use Postgres `FOR UPDATE SKIP LOCKED` for the worker queue.
-- Re-sign with fresh timestamp on each retry; same event ID and body.
-- Worker errors aren't delivery errors — don't bump attempt count.
-- Pause subscriptions after sustained permanent failures; notify the customer.
+- Classify করুন: 5xx/network/429/408 retry; 400/401/403/410/422 permanent; 404 রক্ষণশীলভাবে retry।
+- Exponential backoff (per attempt দ্বিগুণ), ~১ ঘণ্টায় cap।
+- সবসময় jitter যোগ করুন (equal বা full)। synchronised retry ঢেউ এড়ান।
+- মোট retry window: ২–৫ দিন। তারপর dead-letter।
+- `Retry-After` মানুন। header আর computed backoff-এর দীর্ঘটা নিন।
+- per receiver concurrent in-flight cap করুন (~10)।
+- worker queue-র জন্য Postgres `FOR UPDATE SKIP LOCKED` ব্যবহার করুন।
+- প্রতিটা retry-তে fresh timestamp দিয়ে re-sign করুন; একই event ID আর body।
+- worker error delivery error নয় — attempt count bump করবেন না।
+- টানা permanent failure-এর পরে subscription pause করুন; customer-কে জানান।
 
-Next: [Idempotency on the receiver](/notes/webhooks/07-idempotency) — the inbox pattern, dedup keys, and processing once even when delivery is at-least-once.
+পরবর্তী: [Receiver-এ idempotency](/notes/webhooks/07-idempotency) — inbox pattern, dedup key, আর delivery at-least-once হলেও একবার process করা।

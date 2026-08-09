@@ -1,9 +1,9 @@
 ---
 title: 'Case Study: Live Streaming Platform'
-subtitle: 'Design and build a production live streaming system with RTMP ingest, real-time transcoding, HLS delivery, chat integration, and viewer scaling.'
+subtitle: 'RTMP ingest, real-time transcoding, HLS delivery, chat integration আর viewer scaling সহ একটি প্রোডাকশন লাইভ স্ট্রিমিং সিস্টেম ডিজাইন ও তৈরি করা।'
 chapter: 25
 level: 'advanced'
-readingTime: '36 min'
+readingTime: '36 মিনিট'
 topics: ['live streaming', 'RTMP', 'real-time transcoding', 'HLS', 'viewer scaling', 'low latency']
 ---
 
@@ -13,19 +13,27 @@ topics: ['live streaming', 'RTMP', 'real-time transcoding', 'HLS', 'viewer scali
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What Makes Live Streaming Hard?
+## গল্পে বুঝি
 
-Live streaming combines the hardest problems in distributed systems: **real-time processing** (no do-overs — if you drop a frame, it's gone), **massive concurrent viewers** (Twitch peaks at 30M+ simultaneous viewers), **low latency** (2-10 seconds from camera to screen), **adaptive quality** (viewers on 5G and 3G watch the same stream), and **chat synchronization** (chat messages should align with what's happening on screen).
+বিশ্বকাপ ফাইনালের দিন। মাঠে ধারাভাষ্যকার ইবনে সিনা মাইক হাতে বসে আছেন — প্রতিটা বল, প্রতিটা চার-ছক্কা তিনি তখনই বলে যাচ্ছেন। কিন্তু ইবনে সিনার গলা তো সরাসরি সবার রেডিওতে পৌঁছায় না। তাঁর কথা প্রথমে স্টেশনে গিয়ে ছোট ছোট টুকরোয় সাজানো হয়, তারপর সেই সিগন্যাল একটা টাওয়ার থেকে আরেকটা বুস্টার টাওয়ারে, সেখান থেকে আরও দূরের টাওয়ারে — এভাবে রিলে হতে হতে সারা দেশের লক্ষ লক্ষ রেডিওতে একসাথে বাজে। একজন ইবনে সিনা, কিন্তু শ্রোতা কোটি।
+
+আল-খোয়ারিজমি গ্রামে বসে রেডিও শুনছেন। খেয়াল করলে বোঝা যায়, মাঠে বল হওয়ার ঠিক সেকেন্ড-দুয়েক পরে তিনি ধারাভাষ্য শোনেন — এই সামান্য দেরিটা টাওয়ারের চেইন পার হতে গিয়েই হয়, এড়ানো যায় না। আবার আল-খোয়ারিজমির এলাকায় সিগন্যাল দুর্বল হলে স্টেশন চালাক — তারা পুরো ঝকঝকে অডিওর বদলে একটু কম মানের, হালকা অডিওতে নেমে আসে, যাতে খেলা একদম কেটে না যায়, চললেও চলুক। পাশের শহরে ফাতিমা আল-ফিহরির সিগন্যাল ভালো, তাই তিনি টান-টান পরিষ্কার শব্দে শোনেন। একই সম্প্রচার, কিন্তু যার লাইন যেমন, সে তেমন মানে পায়।
+
+এই গল্পটাই আসলে **live streaming**। মাঠের ইবনে সিনা হলেন live source আর encoder — ঘটনা ঘটছে এখনই, আবার করার সুযোগ নেই। কথাকে ছোট টুকরোয় ভাগ করা হলো segment বানানো, আর টাওয়ার-থেকে-টাওয়ার রিলে চেইনটাই হলো **CDN**-এর edge fan-out — এক উৎস থেকে কোটি শ্রোতার কাছে পৌঁছানো। বল আর শোনার মাঝের সেকেন্ড-দুয়েকের ফাঁকই streaming **latency**, আর দুর্বল সিগন্যালে অডিওর মান নামিয়ে আনাই **adaptive bitrate** — বেশি viewer আর কম latency-র মাঝের এই tradeoff-টাই YouTube Live বা Twitch-এ লক্ষ দর্শককে একসাথে সামলানোর মূল কৌশল।
+
+## লাইভ স্ট্রিমিং কেন কঠিন?
+
+লাইভ স্ট্রিমিং ডিস্ট্রিবিউটেড সিস্টেমের সবচেয়ে কঠিন সমস্যাগুলোকে একসাথে করে: **real-time processing** (আবার করার সুযোগ নেই — একটা frame drop হলে সেটা চলে গেছে), **massive concurrent viewers** (Twitch একসাথে 30M+ viewer-এ peak করে), **low latency** (ক্যামেরা থেকে স্ক্রিন পর্যন্ত 2-10 সেকেন্ড), **adaptive quality** (5G আর 3G-তে থাকা viewer-রা একই স্ট্রিম দেখে), আর **chat synchronization** (chat message স্ক্রিনে যা ঘটছে তার সাথে align হওয়া উচিত)।
 
 <Callout type="info">
 
 **Real-World Analogy**
 
-Like a live TV broadcast of a sports match — cameras capture the action, the production truck mixes feeds, and the signal goes to millions of viewers simultaneously with minimal delay.
+একটা স্পোর্টস ম্যাচের লাইভ টিভি সম্প্রচারের মতো — ক্যামেরা অ্যাকশন ধরে, প্রোডাকশন ট্রাক feed গুলো mix করে, আর সিগন্যাল একই সাথে minimal delay-এ লক্ষ লক্ষ viewer-এর কাছে যায়।
 
 </Callout>
 
-Think of it like broadcasting live TV, but every viewer can choose their own quality level, and the broadcast infrastructure must scale from 0 to millions of viewers in seconds when a popular streamer goes live. Unlike VOD where you process the entire video before anyone watches, live streaming must transcode, package, and distribute each second of video as it's created.
+এটাকে লাইভ টিভি সম্প্রচারের মতো ভাবুন, কিন্তু এখানে প্রতিটি viewer নিজের quality level বেছে নিতে পারে, আর একটা জনপ্রিয় streamer লাইভে গেলে broadcast infrastructure-কে সেকেন্ডের মধ্যে 0 থেকে লক্ষ লক্ষ viewer পর্যন্ত scale করতে হয়। VOD-তে যেখানে কেউ দেখা শুরু করার আগেই আপনি পুরো ভিডিও process করেন, লাইভ স্ট্রিমিং-এ তার বদলে ভিডিওর প্রতিটি সেকেন্ড তৈরি হওয়ার সাথে সাথেই transcode, package আর distribute করতে হয়।
 
 <Mermaid
 title="Live Streaming Architecture"
@@ -36,43 +44,43 @@ code={`graph TD
 
 ## Requirements
 
-- **Functional**: RTMP ingest from OBS/Streamlabs, real-time transcoding to multiple qualities, HLS delivery, stream key authentication, live chat, viewer count, stream recording (DVR), go-live/end-stream lifecycle
-- **Non-functional**: Glass-to-glass latency under 5 seconds, support 100K+ concurrent viewers per stream, 99.95% uptime, auto-scaling CDN
-- **Scale**: 10K concurrent streams, 50M concurrent viewers total
+- **Functional**: OBS/Streamlabs থেকে RTMP ingest, একাধিক quality-তে real-time transcoding, HLS delivery, stream key authentication, live chat, viewer count, stream recording (DVR), go-live/end-stream lifecycle
+- **Non-functional**: glass-to-glass latency 5 সেকেন্ডের নিচে, প্রতি স্ট্রিমে 100K+ concurrent viewer support, 99.95% uptime, auto-scaling CDN
+- **Scale**: 10K concurrent stream, মোট 50M concurrent viewer
 
-## The Live Streaming Pipeline
+## লাইভ স্ট্রিমিং পাইপলাইন
 
 ### Ingest
 
-Broadcasters send video from OBS, Streamlabs, or mobile apps using **RTMP (Real-Time Messaging Protocol)**. RTMP is used for ingest (not delivery) because it provides low-latency, reliable, bidirectional communication with wide encoder support. The stream connects to the nearest **Point of Presence (PoP)** to minimize upload latency. The stream key serves as authentication — it's a secret token the broadcaster gets from the platform.
+Broadcaster-রা OBS, Streamlabs, বা মোবাইল অ্যাপ থেকে **RTMP (Real-Time Messaging Protocol)** ব্যবহার করে ভিডিও পাঠায়। RTMP ingest-এর জন্য ব্যবহৃত হয় (delivery-র জন্য নয়) কারণ এটা low-latency, reliable, bidirectional communication দেয় আর বহু encoder-এ support পায়। স্ট্রিমটি upload latency কমাতে সবচেয়ে কাছের **Point of Presence (PoP)**-এ connect করে। stream key authentication হিসেবে কাজ করে — এটা একটা secret token যা broadcaster প্ল্যাটফর্ম থেকে পায়।
 
 ### Real-Time Transcoding
 
-As RTMP data arrives, it's transcoded into multiple quality levels in real-time. Unlike VOD (where you can split and parallelize), live transcoding is sequential — you must process segment N before segment N+1. Each output quality must have **keyframe-aligned segments** so players can switch between qualities at any segment boundary without visual artifacts.
+RTMP ডেটা আসার সাথে সাথে সেটা real-time-এ একাধিক quality level-এ transcode করা হয়। VOD-র মতো নয় (যেখানে আপনি split আর parallelize করতে পারেন), live transcoding sequential — segment N+1-এর আগে আপনাকে segment N process করতেই হবে। প্রতিটি output quality-তে **keyframe-aligned segment** থাকতে হবে যাতে player-রা কোনো visual artifact ছাড়াই যেকোনো segment boundary-তে quality-র মধ্যে switch করতে পারে।
 
 ### HLS Packaging
 
-Transcoded segments are packaged as HLS — `.ts` video segments (typically 2-4 seconds each) with `.m3u8` playlists. The playlist uses a **sliding window** that keeps only the last N segments (e.g., last 30 seconds). New segments are appended, old ones are removed. The `EXT-X-MEDIA-SEQUENCE` tag tells players which segment number comes next.
+Transcode হওয়া segment গুলো HLS হিসেবে package করা হয় — `.ts` ভিডিও segment (সাধারণত প্রতিটি 2-4 সেকেন্ড) সাথে `.m3u8` playlist। playlist একটা **sliding window** ব্যবহার করে যেটা শুধু শেষ N segment রাখে (যেমন, শেষ 30 সেকেন্ড)। নতুন segment যোগ হয়, পুরনোগুলো সরানো হয়। `EXT-X-MEDIA-SEQUENCE` tag player-দের বলে দেয় পরের segment number কোনটা।
 
 ### CDN Distribution
 
-Segments are pushed to CDN origin servers, which propagate to edge nodes worldwide. When 100K viewers request the same segment, only one request reaches the origin — the CDN serves cached copies from edge nodes. This is why HLS (HTTP-based) won over RTMP for delivery: HTTP content is trivially cacheable by existing CDN infrastructure.
+Segment গুলো CDN origin server-এ push করা হয়, যেগুলো বিশ্বজুড়ে edge node-এ propagate হয়। যখন 100K viewer একই segment request করে, তখন origin-এ মাত্র একটা request পৌঁছায় — CDN edge node থেকে cached copy serve করে। এই কারণেই HLS (HTTP-ভিত্তিক) delivery-র জন্য RTMP-কে হারিয়েছে: HTTP content বিদ্যমান CDN infrastructure দিয়ে সহজেই cacheable।
 
 ## Low Latency vs Ultra-Low Latency
 
-| Approach                     | Latency  | How It Works                         | Use Case                       |
-| ---------------------------- | -------- | ------------------------------------ | ------------------------------ |
-| **Standard HLS**             | 10-30s   | 3 segments × 6s + buffer             | VOD-like live (sports replays) |
-| **Low-Latency HLS (LL-HLS)** | 2-5s     | Partial segments + blocking playlist | Interactive streams (Twitch)   |
-| **WebRTC**                   | under 1s | Peer-to-peer, no segments            | Video calls, auctions          |
+| Approach                     | Latency  | কীভাবে কাজ করে                      | Use Case                       |
+| ---------------------------- | -------- | ----------------------------------- | ------------------------------ |
+| **Standard HLS**             | 10-30s   | 3 segment × 6s + buffer             | VOD-র মতো live (sports replay) |
+| **Low-Latency HLS (LL-HLS)** | 2-5s     | Partial segment + blocking playlist | Interactive stream (Twitch)    |
+| **WebRTC**                   | under 1s | Peer-to-peer, segment নেই           | ভিডিও কল, auction              |
 
-Standard HLS has high latency because the player buffers 3 segments before playing (to handle network jitter). **LL-HLS** solves this with partial segments — instead of waiting for a full 6-second segment, the player can start playing after receiving just 200ms of data. The playlist uses **blocking reload** — the player's request blocks at the CDN until the next partial segment is ready, eliminating polling delay.
+Standard HLS-এ high latency থাকে কারণ player play করার আগে 3 segment buffer করে (network jitter সামলানোর জন্য)। **LL-HLS** এটা partial segment দিয়ে সমাধান করে — পুরো 6-সেকেন্ডের segment-এর জন্য অপেক্ষা না করে player মাত্র 200ms ডেটা পাওয়ার পরই play শুরু করতে পারে। playlist **blocking reload** ব্যবহার করে — player-এর request পরের partial segment তৈরি না হওয়া পর্যন্ত CDN-এ block হয়ে থাকে, ফলে polling delay বাদ যায়।
 
 ## Live Chat at Scale
 
-Chat is deceptively complex at live-streaming scale. A popular stream with 100K viewers generates thousands of chat messages per second. The chat system must: **fan out messages** to all viewers in the room (100K WebSocket connections), **rate limit** senders (slow mode: 1 message every 3 seconds), **synchronize with video** (chat timestamps align with stream time), and handle **moderation** (ban, timeout, delete messages).
+Chat লাইভ-স্ট্রিমিং স্কেলে দেখতে যতটা সহজ ততটা নয়। 100K viewer-ওয়ালা একটা জনপ্রিয় স্ট্রিম প্রতি সেকেন্ডে হাজার হাজার chat message তৈরি করে। chat সিস্টেমকে করতে হবে: room-এর সব viewer-এর কাছে **message fan out** করা (100K WebSocket connection), sender-দের **rate limit** করা (slow mode: প্রতি 3 সেকেন্ডে 1 message), **video-র সাথে synchronize** করা (chat timestamp stream time-এর সাথে align হয়), আর **moderation** সামলানো (ban, timeout, message delete)।
 
-## Building the Live Streaming Platform
+## লাইভ স্ট্রিমিং প্ল্যাটফর্ম তৈরি করা
 
 <CodeTabs tsFile="live-streaming.ts" goFile="live-streaming.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -957,49 +965,50 @@ func main() {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তের ব্যাখ্যা
 
-### Why RTMP for Ingest?
+### Ingest-এর জন্য RTMP কেন?
 
-RTMP provides low-latency, reliable, bidirectional streaming with wide encoder support (OBS, Streamlabs, FFmpeg). While newer protocols like SRT offer better error correction, RTMP's ubiquity makes it the pragmatic choice. Every streaming software supports it out of the box.
+RTMP low-latency, reliable, bidirectional streaming দেয় আর বহু encoder-এ support পায় (OBS, Streamlabs, FFmpeg)। SRT-র মতো নতুন protocol গুলো ভালো error correction দিলেও, RTMP-র সর্বব্যাপীতা এটাকে বাস্তবসম্মত পছন্দ করে তোলে। প্রতিটি streaming software এটা out of the box support করে।
 
-### Why HLS for Delivery Instead of RTMP to Viewers?
+### Viewer-দের কাছে RTMP-র বদলে delivery-র জন্য HLS কেন?
 
-RTMP requires persistent TCP connections and doesn't work with CDNs (which cache HTTP responses). HLS uses standard HTTP requests for small segment files, making it trivially cacheable. When 100K viewers request the same segment, the CDN serves 99,999 of them from cache. RTMP would require 100K individual connections to your servers.
+RTMP-র persistent TCP connection দরকার আর এটা CDN-র সাথে কাজ করে না (যেগুলো HTTP response cache করে)। HLS ছোট segment file-এর জন্য standard HTTP request ব্যবহার করে, ফলে সেগুলো সহজেই cacheable। যখন 100K viewer একই segment request করে, CDN তাদের মধ্যে 99,999 জনকে cache থেকে serve করে। RTMP-তে আপনার server-এ 100K individual connection দরকার হতো।
 
-### Why a Sliding Window Manifest?
+### Sliding Window Manifest কেন?
 
-A live HLS playlist can't grow forever — a 24-hour stream at 2-second segments would have 43,200 entries. The sliding window keeps only the last N segments (e.g., 15 segments = 30 seconds). New viewers start from the live edge, and the `EXT-X-MEDIA-SEQUENCE` tag ensures players know the correct segment ordering even as old segments are removed.
+একটা live HLS playlist চিরকাল বাড়তে পারে না — 2-সেকেন্ড segment-এ 24-ঘণ্টার একটা স্ট্রিমে 43,200 entry থাকত। sliding window শুধু শেষ N segment রাখে (যেমন, 15 segment = 30 সেকেন্ড)। নতুন viewer-রা live edge থেকে শুরু করে, আর `EXT-X-MEDIA-SEQUENCE` tag নিশ্চিত করে যে পুরনো segment সরে গেলেও player সঠিক segment ordering জানে।
 
-### Why Keyframe-Aligned Segments?
+### Keyframe-Aligned Segment কেন?
 
-Video codecs use keyframes (I-frames) as reference points — you can only start decoding from a keyframe. If segments across quality levels don't align at keyframe boundaries, switching from 720p to 480p mid-segment would produce visual artifacts. Keyframe alignment ensures clean quality switching at every segment boundary.
+ভিডিও codec keyframe (I-frame)-কে reference point হিসেবে ব্যবহার করে — আপনি শুধু একটা keyframe থেকেই decode শুরু করতে পারেন। quality level জুড়ে segment গুলো keyframe boundary-তে align না হলে, segment-এর মাঝখানে 720p থেকে 480p-তে switch করলে visual artifact তৈরি হবে। keyframe alignment প্রতিটি segment boundary-তে পরিষ্কার quality switching নিশ্চিত করে।
 
-### Why Chat Separate from Video?
+### Video থেকে Chat আলাদা কেন?
 
-Chat and video have different latency profiles. Video has 3-5 second delivery latency (segment buffering). Chat can be near-instant (WebSocket). Coupling them would either delay chat (bad for interaction) or require complex synchronization. Keeping them separate and adding stream timestamps to chat messages lets clients optionally sync them.
+Chat আর video-র latency profile আলাদা। video-র 3-5 সেকেন্ড delivery latency থাকে (segment buffering)। chat প্রায় সাথে সাথেই হতে পারে (WebSocket)। এদের একসাথে করলে হয় chat delay হবে (interaction-এর জন্য খারাপ) নয়তো জটিল synchronization দরকার হবে। এদের আলাদা রেখে chat message-এ stream timestamp যোগ করলে client-রা চাইলে সেগুলো sync করতে পারে।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- RTMP for ingest + HLS for delivery is the industry standard split — RTMP is low-latency for upload, HLS is CDN-friendly for distribution
-- Keyframe-aligned segments across quality levels enable seamless quality switching mid-stream
-- Sliding window HLS manifests keep the playlist bounded — viewers join at the live edge, DVR users get a longer window
-- Live chat must be rate-limited and decoupled from video delivery — a chat storm shouldn't affect video quality
-- Stream health monitoring detects encoding issues before viewers notice — dropped frames, bitrate drops, audio desync
-- CDN edge caching is critical — without it, 100K viewers requesting the same segment would overwhelm the origin server
+- Ingest-এর জন্য RTMP + delivery-র জন্য HLS হলো industry-standard বিভাজন — RTMP upload-এর জন্য low-latency, HLS distribution-এর জন্য CDN-friendly
+- quality level জুড়ে keyframe-aligned segment স্ট্রিমের মাঝখানে seamless quality switching সম্ভব করে
+- sliding window HLS manifest playlist-কে সীমিত রাখে — viewer-রা live edge-এ যোগ দেয়, DVR user-রা একটা লম্বা window পায়
+- live chat rate-limited আর video delivery থেকে decoupled হতে হবে — একটা chat storm-এর video quality-তে প্রভাব ফেলা উচিত নয়
+- stream health monitoring viewer লক্ষ্য করার আগেই encoding সমস্যা ধরে ফেলে — dropped frame, bitrate drop, audio desync
+- CDN edge caching অত্যন্ত জরুরি — এটা ছাড়া একই segment request করা 100K viewer origin server-কে overwhelm করে দিত
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব জগতে ব্যবহার
 
-- **Twitch** handles 30M+ concurrent viewers using RTMP ingest → real-time transcoding → HLS delivery through a global CDN
-- **YouTube Live** uses RTMP/SRT ingest with automatic quality transcoding and LL-HLS for sub-3-second latency
-- **Netflix Live** (launched 2024) serves live events to 200M+ subscribers using their existing CDN infrastructure
-- **Discord** uses WebRTC for screen sharing (sub-1-second latency) but HLS for Go Live streams to larger audiences
-- This architecture supports 10K concurrent streams with 100K+ viewers each, with sub-5-second glass-to-glass latency
+- **Twitch** একটা global CDN-এর মধ্য দিয়ে RTMP ingest → real-time transcoding → HLS delivery ব্যবহার করে 30M+ concurrent viewer সামলায়
+- **YouTube Live** automatic quality transcoding সহ RTMP/SRT ingest আর sub-3-সেকেন্ড latency-র জন্য LL-HLS ব্যবহার করে
+- **Netflix Live** (2024-এ চালু) তাদের বিদ্যমান CDN infrastructure ব্যবহার করে 200M+ subscriber-কে লাইভ ইভেন্ট serve করে
+- **Discord** screen sharing-এর জন্য WebRTC ব্যবহার করে (sub-1-সেকেন্ড latency) কিন্তু বড় audience-এর কাছে Go Live stream-এর জন্য HLS
+- এই architecture প্রতিটিতে 100K+ viewer সহ 10K concurrent stream support করে, sub-5-সেকেন্ড glass-to-glass latency-তে
 
 </div>
+```

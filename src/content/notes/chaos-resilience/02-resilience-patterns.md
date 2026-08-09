@@ -1,9 +1,9 @@
 ---
 title: 'Resilience Patterns'
-subtitle: 'Timeouts, retries, circuit breakers, bulkheads, and graceful degradation — the building blocks that keep failures contained.'
+subtitle: 'Timeouts, retries, circuit breakers, bulkheads, এবং graceful degradation — সেই বিল্ডিং ব্লক যা failure-কে আটকে রাখে।'
 chapter: 2
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['circuit breaker', 'bulkhead', 'timeout', 'retry', 'graceful degradation']
 ---
 
@@ -13,15 +13,23 @@ topics: ['circuit breaker', 'bulkhead', 'timeout', 'retry', 'graceful degradatio
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A ship's watertight compartments: if one section floods, the bulkheads contain the water to that compartment. The ship keeps sailing. Without compartments, one breach sinks everything. Resilience patterns are your system's watertight compartments.
+জাহাজের watertight compartment: যদি একটা অংশে পানি ঢুকে যায়, bulkhead সেই পানিকে ওই compartment-এই আটকে রাখে। জাহাজ চলতে থাকে। Compartment না থাকলে একটা ছিদ্রই সবকিছু ডুবিয়ে দেয়। Resilience patterns হলো আপনার সিস্টেমের watertight compartment।
 
 </Callout>
 
-## Timeouts: The Foundation
+## গল্পে বুঝি
 
-Every outbound call needs a timeout. Without one, a slow dependency holds connections open indefinitely — eventually exhausting your connection pool and taking down your entire service.
+ইবনে সিনার পুরনো বাড়িতে একদিন রান্নাঘরের একটা তারে শর্ট সার্কিট হলো। আগের আমলে হলে হয়তো পুরো বাড়িতে আগুন ধরে যেত। কিন্তু ফাতিমা আল-ফিহরি নামের ইলেকট্রিশিয়ান বছরখানেক আগে বাড়ির মেইন বোর্ডে একটা circuit breaker বসিয়ে গিয়েছিলেন। শর্ট হওয়ার সাথে সাথে breaker টিক করে ট্রিপ করল — ওই লাইনে বিদ্যুৎ যাওয়া পুরো বন্ধ করে দিল। কিছুক্ষণ পর তার ঠান্ডা হলে, ইবনে সিনা breaker আবার তুলে দেখলেন সব ঠিক কিনা; ঠিক থাকলে লাইন আবার চালু, না হলে আবার ট্রিপ।
+
+মজার ব্যাপার হলো, রান্নাঘরের এই গোলমালে বেডরুম বা পড়ার ঘরের বাতি একটুও নেভেনি — কারণ ফাতিমা প্রতিটা ঘরের জন্য আলাদা আলাদা fuse বসিয়েছিলেন। এক ঘরের সমস্যা অন্য ঘরে ছড়ায় না। আর যে কয়েক সেকেন্ড ওই লাইন বন্ধ ছিল, তখনও ইবনে সিনা অন্ধকারে পড়েননি — দেয়ালে বসানো emergency lantern মেইন বিদ্যুৎ বন্ধ হতেই নিজে থেকে জ্বলে উঠেছিল। পূর্ণ আলো নয়, কিন্তু কাজ চালানোর মতো যথেষ্ট।
+
+এই বাড়ির নিরাপত্তা ব্যবস্থাটাই আসলে এই chapter-এর resilience patterns। শর্ট হওয়া লাইনে বিদ্যুৎ কেটে recover করার সময় দেওয়া breaker হলো **circuit breaker** — একটা fail করা dependency-কে বারবার call না করে কিছুক্ষণ থামিয়ে রাখা। প্রতি ঘরের আলাদা fuse হলো **bulkhead** isolation — এক resource pool ডুবলেও বাকিগুলো বাঁচে। আর মেইন গেলে জ্বলে ওঠা lantern হলো **fallback** তথা graceful degradation — মূল সেবা না পেলে একটা কম-ক্ষমতার কিন্তু কার্যকর বিকল্প। breaker আবার তোলার আগে তার ঠান্ডা হওয়ার অপেক্ষা করাটা **timeout**, আর ঠিক আছে কিনা দেখতে দুয়েকবার চেষ্টা করাটা **retry**। বাস্তবে payment বা database service fail করলে ঠিক এভাবেই — circuit breaker, bulkhead pool আর fallback response দিয়ে — পুরো সিস্টেমকে "আগুন ধরে যাওয়া" থেকে বাঁচানো হয়।
+
+## Timeouts: ভিত্তি
+
+প্রতিটা outbound call-এর একটা timeout দরকার। এটা ছাড়া, একটা ধীর dependency অসীম সময় ধরে connection খুলে রাখে — শেষ পর্যন্ত আপনার connection pool নিঃশেষ করে আর আপনার পুরো service নামিয়ে ফেলে।
 
 ```typescript
 // WRONG — hangs forever if service is slow
@@ -38,7 +46,7 @@ const response = await fetch('https://payment-service/charge', {
 });
 ```
 
-**Timeout hierarchy:** Set timeouts at every layer:
+**Timeout hierarchy:** প্রতিটা layer-এ timeout সেট করুন:
 
 ```typescript
 const TIMEOUTS = {
@@ -54,7 +62,7 @@ const client = axios.create({
 });
 ```
 
-**Timeout budget:** When service A calls B which calls C, total latency is A + B + C. Set timeouts so inner calls leave budget for outer calls:
+**Timeout budget:** যখন service A, B-কে call করে যে C-কে call করে, মোট latency হলো A + B + C। Timeout এমনভাবে সেট করুন যাতে ভেতরের call-গুলো বাইরের call-এর জন্য budget রেখে দেয়:
 
 ```
 Client timeout: 10s
@@ -66,7 +74,7 @@ Each call has room to fail and retry without blowing the client's timeout.
 
 ## Retries
 
-Transient failures (network blip, brief overload) often resolve on retry. But retry naively and you amplify load on an already-struggling dependency.
+Transient failure (network blip, সাময়িক overload) প্রায়ই retry-তে ঠিক হয়ে যায়। কিন্তু naive-ভাবে retry করলে আপনি ইতিমধ্যেই ধুঁকতে থাকা dependency-র উপর load বাড়িয়ে দেন।
 
 ```typescript
 async function withRetry<T>(
@@ -100,7 +108,7 @@ const result = await withRetry(() => fetch('https://api.service/data'), {
 });
 ```
 
-**Only retry idempotent operations.** A POST that creates a record will create duplicates on retry unless it's idempotent. Use idempotency keys:
+**শুধু idempotent operation retry করুন।** একটা POST যা record তৈরি করে সেটা retry-তে duplicate তৈরি করবে, যদি না সেটা idempotent হয়। Idempotency key ব্যবহার করুন:
 
 ```typescript
 // Safe to retry with same key
@@ -111,7 +119,7 @@ const response = await fetch('https://payments/charge', {
 });
 ```
 
-**Retry on the right errors:**
+**সঠিক error-এ retry করুন:**
 
 ```typescript
 function isRetryable(err: unknown): boolean {
@@ -133,7 +141,7 @@ function isRetryable(err: unknown): boolean {
 
 ## Circuit Breaker
 
-When a dependency is failing consistently, retrying just makes it worse. A circuit breaker tracks failure rate and "opens" — stopping all calls — to give the dependency time to recover.
+যখন একটা dependency ধারাবাহিকভাবে fail করছে, retry করলে সেটা আরও খারাপ হয়। একটা circuit breaker failure rate ট্র্যাক করে আর "open" হয় — সব call বন্ধ করে দেয় — যাতে dependency-কে recover করার সময় দেয়।
 
 ```typescript
 type CircuitState = 'closed' | 'open' | 'half-open';
@@ -194,7 +202,7 @@ class CircuitBreaker {
 }
 ```
 
-Use [opossum](https://nodeshift.dev/opossum/) in production rather than rolling your own:
+Production-এ নিজেরটা বানানোর বদলে [opossum](https://nodeshift.dev/opossum/) ব্যবহার করুন:
 
 ```typescript
 import CircuitBreaker from 'opossum';
@@ -216,7 +224,7 @@ breaker.fallback(() => ({ status: 'pending', message: 'Payment queued for proces
 
 ## Bulkheads
 
-Isolate resources so that one slow consumer can't exhaust resources for all consumers. Named after ship compartments.
+Resource আলাদা করে রাখুন যাতে একটা ধীর consumer সব consumer-এর resource নিঃশেষ করতে না পারে। জাহাজের compartment-এর নামে নামকরণ।
 
 **Thread/connection pool isolation:**
 
@@ -230,7 +238,7 @@ const inventoryPool = new ConnectionPool({ max: 5 }); // max 5 to inventory
 const emailPool = new ConnectionPool({ max: 2 }); // non-critical — fewer resources
 ```
 
-If payment service becomes slow and saturates `paymentPool`, inventory and email calls are unaffected. Without bulkheads, payment latency would exhaust the shared pool and cascade to all services.
+যদি payment service ধীর হয়ে `paymentPool` saturate করে, inventory আর email call প্রভাবিত হয় না। Bulkhead ছাড়া, payment latency shared pool নিঃশেষ করত আর সব service-এ cascade হতো।
 
 **Queue-based bulkheads:**
 
@@ -244,7 +252,7 @@ const bulkQueue = new Queue('bulk-exports', { concurrency: 2 });
 
 ## Graceful Degradation
 
-When a non-critical dependency fails, serve a degraded but functional response rather than a hard error.
+যখন একটা non-critical dependency fail করে, hard error দেওয়ার বদলে একটা degraded কিন্তু কার্যকর response দিন।
 
 ```typescript
 async function getProductPage(productId: string): Promise<ProductPage> {
@@ -266,9 +274,9 @@ async function getProductPage(productId: string): Promise<ProductPage> {
 }
 ```
 
-Design your UI to handle empty states for non-critical sections. A product page without recommendations is fine. A product page that errors because recommendations timed out is not.
+আপনার UI এমনভাবে ডিজাইন করুন যাতে non-critical section-এর জন্য empty state সামলাতে পারে। Recommendation ছাড়া একটা product page ঠিক আছে। কিন্তু recommendation timeout হওয়ায় error দেওয়া একটা product page ঠিক নয়।
 
-**Feature flags for graceful degradation:**
+**Graceful degradation-এর জন্য Feature flags:**
 
 ```typescript
 async function checkout(cart: Cart): Promise<CheckoutResult> {
@@ -292,7 +300,7 @@ async function checkout(cart: Cart): Promise<CheckoutResult> {
 
 ## Hedged Requests
 
-Send the same request to two backends simultaneously, use whichever responds first. Reduces tail latency at the cost of double load.
+একই request একসাথে দুটো backend-এ পাঠান, যেটা আগে সাড়া দেয় সেটা ব্যবহার করুন। দ্বিগুণ load-এর বিনিময়ে tail latency কমায়।
 
 ```typescript
 async function hedgedRequest<T>(
@@ -339,11 +347,11 @@ const data = await hedgedRequest(
 );
 ```
 
-Hedged requests effectively reduce p99 latency toward p50 latency at the cost of ~2x request volume to the slower percentile requests.
+Hedged request কার্যকরভাবে p99 latency-কে p50 latency-র দিকে নামিয়ে আনে, ধীর percentile request-এ ~2x request volume-এর বিনিময়ে।
 
-## Combining Patterns
+## Pattern-গুলো একসাথে ব্যবহার
 
-In production, use these together:
+Production-এ এগুলো একসাথে ব্যবহার করুন:
 
 ```typescript
 const paymentBreaker = new CircuitBreaker(callPaymentService, {
@@ -376,4 +384,4 @@ async function chargeCustomer(order: Order): Promise<PaymentResult> {
 }
 ```
 
-Timeout → Retry → Circuit Breaker → Bulkhead → Graceful Degradation: each layer handles a different failure mode. Together they make the system fail gracefully instead of catastrophically.
+Timeout → Retry → Circuit Breaker → Bulkhead → Graceful Degradation: প্রতিটা layer আলাদা একটা failure mode সামলায়। একসাথে এগুলো সিস্টেমকে বিপর্যয়করভাবে না ফেলে gracefully fail করতে সাহায্য করে।

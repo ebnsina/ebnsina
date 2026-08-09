@@ -1,9 +1,9 @@
 ---
-title: 'Resolvers and the execution tree'
-subtitle: 'A resolver is a function that returns a value. Stack them in a tree, and that tree is your API. Once you see the walk, every weird GraphQL bug becomes obvious.'
+title: 'Resolvers আর execution tree'
+subtitle: 'একটা resolver হলো একটা ফাংশন যা একটা ভ্যালু রিটার্ন করে। এগুলোকে একটা tree-তে সাজাও, আর সেই tree-ই তোমার API। একবার walk-টা দেখে ফেললে, প্রতিটা অদ্ভুত GraphQL বাগ স্পষ্ট হয়ে যায়।'
 chapter: 4
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['graphql', 'resolvers', 'execution', 'context']
 ---
 
@@ -11,34 +11,42 @@ topics: ['graphql', 'resolvers', 'execution', 'context']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-In chapter 3 you wrote resolvers without thinking too hard about what they were. This chapter slows down. If you can picture the executor walking your query, you stop being surprised by GraphQL — performance issues, error propagation, weird `null` paths all become readable.
+চ্যাপ্টার 3-এ তুমি resolver লিখেছ, সেগুলো আসলে কী সে নিয়ে খুব বেশি না ভেবেই। এই চ্যাপ্টার একটু ধীরে যায়। তুমি যদি executor-কে তোমার কোয়েরি ধরে হাঁটতে কল্পনা করতে পারো, তাহলে GraphQL তোমাকে আর অবাক করবে না — পারফরম্যান্স ইস্যু, error propagation, অদ্ভুত `null` path সবকিছুই পড়ার যোগ্য হয়ে যায়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A GraphQL resolver is like a waiter who coordinates between your order and the kitchen, the wine cellar, and the dessert trolley — each independently fetched.
+একটা GraphQL resolver অনেকটা একজন ওয়েটারের মতো যে তোমার অর্ডার আর রান্নাঘর, ওয়াইন সেলার, আর ডেজার্ট ট্রলির মধ্যে সমন্বয় করে — প্রতিটাই আলাদাভাবে আনা।
 
 </Callout>
 
-## A resolver is a function with four arguments
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বড় দর্জিবাড়ির হেড ক্লার্ক। এক সকালে বিশাল এক অর্ডার এলো — একটা পুরো বিয়ের পোশাকের সেট, সাথে জুতা, গয়না, সব। ফাতিমা একা এত কিছু বানান না; তিনি অর্ডারটাকে টুকরো টুকরো কাজে ভাগ করেন। কাপড়ের অংশটা দেন ইবনে সিনাকে, জুতার অংশটা আল-খোয়ারিজমিকে, গয়নার অংশটা আল-বিরুনিকে। প্রত্যেকে শুধু নিজের টুকরোটার দায়িত্ব নেন, বাকিটা নিয়ে মাথা ঘামান না।
+
+কিন্তু ইবনে সিনা নিজেও তো একা পুরো কাপড় সামলান না। তিনি আবার তাঁর কাজটাকে ভাগ করেন — সুতার হিসাব একজন জুনিয়রকে, নকশা আরেকজনকে, রং তৃতীয়জনকে। এভাবে প্রতিটা কাজ আরও ছোট সাব-টাস্কে ভেঙে নিচের দিকে ছড়িয়ে পড়ে, একটা গাছের ডালপালার মতো। সবার নিচের জুনিয়ররা যখন যার যার টুকরো এনে জমা দেয়, সেগুলো উপরের দিকে জড়ো হতে থাকে — জুনিয়রের সুতা যায় ইবনে সিনার কাছে, ইবনে সিনার কাপড় যায় ফাতিমার কাছে — আর শেষে ফাতিমার হাতে পুরো অর্ডারটা সম্পূর্ণ হয়ে ওঠে।
+
+এই গল্পটাই আসলে একটা GraphQL query-র **execution tree**। প্রতিটা worker হলো একটা resolver, যে একটা মাত্র field-এর দায়িত্বে — যেমন ফাতিমা হলো `Query.order`-এর resolver, ইবনে সিনা `Order.fabric`-এর, তার জুনিয়র `Fabric.thread`-এর। কাজটাকে সাব-টাস্কে ভাগ করে নিচে পাঠানোটাই হলো tree-র parent থেকে child-এ নেমে যাওয়া, আর প্রত্যেকে শুধু নিজের টুকরো fetch করাটাই per-field resolution। টুকরোগুলো উপরের দিকে জড়ো হয়ে final answer বানানোটাই executor-এর response তৈরি করা — parent আগে চলে, তারপর তার children, ধাপে ধাপে উপরে assemble হয়। বাস্তবে ঠিক এভাবেই একটা nested query চলে: `user` resolve হয়, তারপর তার `posts`, তারপর প্রতিটা post-এর `author` — কেউ পুরো response একা বানায় না, প্রত্যেকে নিজের এক টুকরো এনে গাছটা ভরে তোলে।
+
+## একটা resolver হলো চারটা argument-ওয়ালা একটা ফাংশন
 
 ```js
 fieldName: (parent, args, context, info) => returnValue;
 ```
 
-That is the signature for every resolver, in every GraphQL server, in every language.
+এটাই প্রতিটা resolver-এর signature, প্রতিটা GraphQL সার্ভারে, প্রতিটা ভাষায়।
 
-- **`parent`** — the value returned by the _parent_ resolver. For root types (`Query`, `Mutation`), parent is `undefined` (or whatever you pass as `rootValue`). For `User.name`, parent is the user object.
-- **`args`** — arguments declared on the field. `posts(last: 10)` arrives as `{ last: 10 }`.
-- **`context`** — request-scoped object. The DB pool, the current user, a DataLoader instance, the trace ID. Every resolver in one request shares it.
-- **`info`** — metadata about the execution. Field name, return type, the path you are at, the entire AST, all variables. Most resolvers ignore it; advanced ones use it for projection (selecting only requested DB columns).
+- **`parent`** — _parent_ resolver-এর রিটার্ন করা ভ্যালু। root type-এর (`Query`, `Mutation`) জন্য parent হলো `undefined` (বা তুমি `rootValue` হিসেবে যা পাস করো)। `User.name`-এর জন্য parent হলো user object।
+- **`args`** — ফিল্ডে declare করা argument। `posts(last: 10)` আসে `{ last: 10 }` হিসেবে।
+- **`context`** — request-scoped object। DB pool, current user, একটা DataLoader instance, trace ID। এক request-এর প্রতিটা resolver এটা শেয়ার করে।
+- **`info`** — execution সম্পর্কে metadata। ফিল্ডের নাম, রিটার্ন type, তুমি যে path-এ আছ, পুরো AST, সব variable। বেশিরভাগ resolver এটা উপেক্ষা করে; advanced-গুলো projection-এর জন্য এটা ব্যবহার করে (শুধু চাওয়া DB column বেছে নেয়া)।
 
-You almost always use `parent`, `args`, and `context`. `info` is for the 5% case.
+তুমি প্রায় সবসময়ই `parent`, `args`, আর `context` ব্যবহার করবে। `info` হলো 5% ক্ষেত্রের জন্য।
 
-## The execution tree
+## execution tree
 
-Look at this query:
+এই কোয়েরিটা দেখো:
 
 ```graphql
 {
@@ -54,7 +62,7 @@ Look at this query:
 }
 ```
 
-The executor builds a tree of resolver calls:
+executor resolver call-এর একটা tree বানায়:
 
 ```
 Query.user(id: 1)                    -> { id: 1, name: "Sumayya", ... }
@@ -68,40 +76,40 @@ Query.user(id: 1)                    -> { id: 1, name: "Sumayya", ... }
       User.name(parent={id:1,...})   -> "Sumayya"
 ```
 
-Every field is a function call. Sibling fields run in parallel. Children wait for their parent.
+প্রতিটা ফিল্ড একটা ফাংশন call। Sibling ফিল্ডগুলো parallel-এ চলে। Children তাদের parent-এর জন্য অপেক্ষা করে।
 
-For that one query, that is 1 + 1 + 1 + 4 + 4 = 11 resolver invocations. The author field gets called twice and resolves to the same user — no caching by default. That is the seed of the N+1 problem (chapter 5).
+ওই এক কোয়েরির জন্য, সেটা 1 + 1 + 1 + 4 + 4 = 11টা resolver invocation। author ফিল্ড দুবার call হয় আর একই user-এ resolve হয় — ডিফল্টে কোনো caching নেই। এটাই N+1 সমস্যার বীজ (চ্যাপ্টার 5)।
 
 ## Default resolvers
 
-You did not write `User.name` in chapter 3. You did not need to. The default resolver for a field is:
+তুমি চ্যাপ্টার 3-এ `User.name` লেখোনি। তোমার দরকার হয়নি। একটা ফিল্ডের default resolver হলো:
 
 ```js
 (parent) => parent[fieldName];
 ```
 
-If `parent` is `{ name: "Sumayya", email: "..." }` and the field is `name`, the default resolver returns `parent.name`. So the only fields that need explicit resolvers are:
+`parent` যদি `{ name: "Sumayya", email: "..." }` হয় আর ফিল্ড হয় `name`, তাহলে default resolver `parent.name` রিটার্ন করে। তাই যে ফিল্ডগুলোর explicit resolver দরকার সেগুলো হলো শুধু:
 
-- Root fields (`Query.*`, `Mutation.*`) — there is no parent yet.
-- Fields where the parent property name does not match the schema field — `created_at` vs `createdAt`.
-- Fields that need to fetch — `User.posts` runs a SQL query, it cannot just be a property access.
-- Fields that compute — a virtual field like `User.fullName` that joins `firstName` and `lastName`.
+- Root ফিল্ড (`Query.*`, `Mutation.*`) — এখনো কোনো parent নেই।
+- যে ফিল্ডে parent property-র নাম schema ফিল্ডের সাথে মেলে না — `created_at` বনাম `createdAt`।
+- যে ফিল্ডের fetch করা দরকার — `User.posts` একটা SQL কোয়েরি চালায়, এটা শুধু একটা property access হতে পারে না।
+- যে ফিল্ড compute করে — একটা virtual ফিল্ড যেমন `User.fullName` যা `firstName` আর `lastName` জোড়া লাগায়।
 
-Everything else is implicit. Your resolver map ends up small.
+বাকি সব implicit। তোমার resolver map শেষপর্যন্ত ছোট হয়ে যায়।
 
-## Returning the right shape
+## সঠিক shape রিটার্ন করা
 
-A resolver returns whatever the next layer of resolvers can use as their `parent`. Two common patterns:
+একটা resolver যা রিটার্ন করে সেটাই পরবর্তী স্তরের resolver-গুলো তাদের `parent` হিসেবে ব্যবহার করতে পারে। দুটো সাধারণ প্যাটার্ন:
 
-**1. Return the full row.** `Query.user` returns `{ id, name, email, created_at }`. Field resolvers on `User` either use defaults (`name`, `email`) or read properties (`createdAt: u => u.created_at`).
+**1. পুরো row রিটার্ন করো।** `Query.user` রিটার্ন করে `{ id, name, email, created_at }`। `User`-এর ফিল্ড resolver-গুলো হয় default ব্যবহার করে (`name`, `email`) নয়তো property পড়ে (`createdAt: u => u.created_at`)।
 
-**2. Return a partial object, fetch the rest lazily.** `Query.user` returns `{ id }`, and every other field on `User` (`name`, `email`, `posts`) has its own resolver that fetches what it needs. Wasteful unless the client only ever asks for one or two fields.
+**2. একটা partial object রিটার্ন করো, বাকিটা lazily fetch করো।** `Query.user` রিটার্ন করে `{ id }`, আর `User`-এর অন্য প্রতিটা ফিল্ডের (`name`, `email`, `posts`) নিজের resolver আছে যা যা দরকার তা fetch করে। অপচয় — যদি না client শুধু কখনো এক-দুটো ফিল্ড চায়।
 
-In practice, return what the SQL gave you and let resolvers handle joins and computation.
+বাস্তবে, SQL তোমাকে যা দিয়েছে সেটাই রিটার্ন করো আর resolver-দের join আর computation সামলাতে দাও।
 
-## Async, parallelism, and you
+## Async, parallelism, আর তুমি
 
-Resolvers can return promises. The executor awaits them. Sibling fields are awaited concurrently — `User.name` and `User.posts` are not sequential.
+Resolver-গুলো promise রিটার্ন করতে পারে। executor সেগুলো await করে। Sibling ফিল্ডগুলো concurrently await হয় — `User.name` আর `User.posts` sequential নয়।
 
 ```js
 User: {
@@ -112,19 +120,19 @@ User: {
 }
 ```
 
-For one user, `posts` and `followers` fire at roughly the same time. Two parallel queries — about as fast as one.
+একজন user-এর জন্য, `posts` আর `followers` মোটামুটি একই সময়ে fire হয়। দুটো parallel কোয়েরি — মোটামুটি একটার মতোই দ্রুত।
 
-Children block on their parent. `Post.title` cannot run until `User.posts` has resolved.
+Children তাদের parent-এ block হয়। `User.posts` resolve না হওয়া পর্যন্ত `Post.title` চলতে পারে না।
 
 <Callout type="warn">
 
-**Sibling parallelism is real but breaks under naive resolvers.** If `User.posts` runs ten times in parallel for ten users, that is ten parallel SQL queries hammering Postgres. Cache misses, connection pool exhaustion, the works. The fix — DataLoader — is chapter 6.
+**Sibling parallelism সত্যি কিন্তু naive resolver-এর নিচে ভেঙে পড়ে।** যদি `User.posts` দশজন user-এর জন্য দশবার parallel-এ চলে, তাহলে সেটা দশটা parallel SQL কোয়েরি Postgres-কে পিটাচ্ছে। Cache miss, connection pool exhaustion, সবকিছু। সমাধান — DataLoader — হলো চ্যাপ্টার 6।
 
 </Callout>
 
-## Context — the lifeline
+## Context — জীবনরেখা
 
-Context is created once per request and passed to every resolver. It is the _only_ legitimate way to share state across resolvers in one query.
+Context প্রতি request-এ একবার তৈরি হয় আর প্রতিটা resolver-এ পাস করা হয়। এক কোয়েরিতে resolver-দের মধ্যে state শেয়ার করার এটাই _একমাত্র_ বৈধ উপায়।
 
 ```js
 const yoga = createYoga({
@@ -137,7 +145,7 @@ const yoga = createYoga({
 });
 ```
 
-Then any resolver can:
+তারপর যেকোনো resolver পারে:
 
 ```js
 posts: async (_, args, ctx) => {
@@ -146,30 +154,30 @@ posts: async (_, args, ctx) => {
 };
 ```
 
-Things that belong in context:
+যেগুলো context-এ থাকা উচিত:
 
 - DB connection / pool / transaction handle
 - Current user / auth state
-- DataLoaders (chapter 6) — this is critical, must be per-request
+- DataLoaders (চ্যাপ্টার 6) — এটা critical, অবশ্যই per-request হতে হবে
 - Tracing / request ID
-- Loaders for permissions, feature flags, tenant info
+- Permission, feature flag, tenant info-র জন্য loader
 
-Things that **do not** belong in context:
+যেগুলো context-এ থাকা **উচিত নয়**:
 
-- Per-field state — use the resolver tree, not context.
-- Mutable shared state across requests — context is per-request, do not break that.
+- Per-field state — context নয়, resolver tree ব্যবহার করো।
+- Request-জুড়ে mutable shared state — context per-request, সেটা ভেঙো না।
 
-## Errors and how they propagate
+## Error আর সেগুলো কীভাবে propagate হয়
 
-A resolver can throw. The executor catches the throw, attaches the error to the response's `errors[]` array, and sets that field to `null`.
+একটা resolver throw করতে পারে। executor throw-টা ধরে, error-টা response-এর `errors[]` array-তে যুক্ত করে, আর সেই ফিল্ডটাকে `null` সেট করে।
 
-If the field is nullable, the response continues with `null` for that field:
+ফিল্ড যদি nullable হয়, response সেই ফিল্ডের জন্য `null` দিয়ে চলতে থাকে:
 
 ```json
 { "data": { "user": { "name": "Sumayya", "bio": null } }, "errors": [...] }
 ```
 
-If the field is non-null, the `null` propagates up to the nearest nullable parent:
+ফিল্ড যদি non-null হয়, `null`-টা সবচেয়ে কাছের nullable parent পর্যন্ত propagate করে:
 
 ```graphql
 type Query {
@@ -181,13 +189,13 @@ type User {
 }
 ```
 
-If `User.name` throws, `name` cannot be `null`, so the `null` bubbles up to `User`, which is nullable on `Query`, so the whole `user` field becomes `null`. The error is in `errors[]`, the data still parses.
+`User.name` যদি throw করে, `name` `null` হতে পারে না, তাই `null`-টা `User` পর্যন্ত bubble up করে, যা `Query`-তে nullable, তাই পুরো `user` ফিল্ডটা `null` হয়ে যায়। error-টা `errors[]`-এ থাকে, data তবুও parse হয়।
 
-If you ever see "the entire response collapsed to null because one nested field threw," that is non-null propagation. Avoidable by being honest about which fields are truly always present.
+যদি কখনো দেখো "একটা nested ফিল্ড throw করায় পুরো response null-এ ধসে গেছে," সেটা non-null propagation। কোন ফিল্ডগুলো সত্যিই সবসময় থাকে সে ব্যাপারে সৎ থেকে এটা এড়ানো যায়।
 
-## `info` and selection projection
+## `info` আর selection projection
 
-The fourth resolver argument is the one you usually ignore. But for one specific optimization — fetching only the columns the client asked for — it is gold.
+চতুর্থ resolver argument-টা সাধারণত তুমি উপেক্ষা করো। কিন্তু একটা নির্দিষ্ট অপটিমাইজেশনের জন্য — client শুধু যে column-গুলো চেয়েছে সেগুলোই fetch করা — এটা সোনার মতো।
 
 ```js
 import { fieldsList } from 'graphql-fields-list';
@@ -200,26 +208,26 @@ users: async (_, __, ___, info) => {
 };
 ```
 
-Skip until performance demands it. Premature in chapter 4.
+পারফরম্যান্স যতক্ষণ না দাবি করে ততক্ষণ এটা এড়িয়ে যাও। চ্যাপ্টার 4-এ অকালপক্ব।
 
-## Common mistakes
+## সাধারণ ভুল
 
-**1. Doing the lookup in the wrong resolver.** If `User.posts` always needs the user's posts, do not stash a SQL query in `Query.user` — that pulls posts even when the client did not ask. Resolvers run lazily; lean on that.
+**1. ভুল resolver-এ lookup করা।** যদি `User.posts`-এর সবসময় user-এর পোস্ট দরকার হয়, তাহলে `Query.user`-এ একটা SQL কোয়েরি লুকিয়ে রেখো না — সেটা client না চাইলেও পোস্ট টেনে আনে। Resolver-গুলো lazily চলে; সেটার ওপর ভরসা করো।
 
-**2. Putting per-request state in module scope.** A DataLoader created at module scope is shared across requests, leaks data between users, and never frees memory. Always per-request, always in context.
+**2. Per-request state module scope-এ রাখা।** Module scope-এ তৈরি একটা DataLoader request-জুড়ে শেয়ার হয়, user-দের মধ্যে data leak করে, আর কখনো memory ছাড়ে না। সবসময় per-request, সবসময় context-এ।
 
-**3. Forgetting field resolvers exist.** If a column is computed (`fullName`, `slug`), it does not need to be in SQL. Add a field resolver, compute it from the parent.
+**3. Field resolver আছে ভুলে যাওয়া।** যদি একটা column computed হয় (`fullName`, `slug`), সেটার SQL-এ থাকার দরকার নেই। একটা field resolver যোগ করো, parent থেকে সেটা compute করো।
 
-**4. Returning the wrong type.** If `User.posts` returns `[Post!]!` and your resolver returns `null`, you get a non-null violation. The error is clear; but only if you read it.
+**4. ভুল type রিটার্ন করা।** যদি `User.posts` `[Post!]!` রিটার্ন করে আর তোমার resolver `null` রিটার্ন করে, তুমি একটা non-null violation পাবে। error স্পষ্ট; কিন্তু শুধু যদি তুমি এটা পড়ো।
 
-## Recap
+## রিক্যাপ
 
-- Resolver signature: `(parent, args, context, info) => value`. Memorize.
-- The executor walks the query as a tree. Siblings parallel, children sequential.
-- Defaults read `parent[fieldName]`. Only write resolvers when needed.
-- Context is per-request. DB pool, auth, DataLoaders go there.
-- Promises work; sibling resolvers run concurrently.
-- Errors fail the field. Non-null fields propagate the failure up.
-- `info` is for selection-aware optimizations later.
+- Resolver signature: `(parent, args, context, info) => value`। মুখস্থ করো।
+- executor কোয়েরিটাকে একটা tree হিসেবে হাঁটে। Sibling parallel, children sequential।
+- Default-গুলো `parent[fieldName]` পড়ে। শুধু দরকার হলেই resolver লেখো।
+- Context per-request। DB pool, auth, DataLoaders সেখানে যায়।
+- Promise কাজ করে; sibling resolver-গুলো concurrently চলে।
+- Error ফিল্ড fail করে। Non-null ফিল্ড failure-টা উপরে propagate করে।
+- `info` হলো selection-aware অপটিমাইজেশনের জন্য, পরে।
 
-Next: [The N+1 problem](/notes/graphql/05-n-plus-one) — why your first GraphQL server is slow, and what is actually happening at the SQL layer.
+পরবর্তী: [N+1 সমস্যা](/notes/graphql/05-n-plus-one) — কেন তোমার প্রথম GraphQL সার্ভার স্লো, আর SQL স্তরে আসলে কী ঘটছে।

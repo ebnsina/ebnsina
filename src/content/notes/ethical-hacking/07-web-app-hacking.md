@@ -1,9 +1,9 @@
 ---
 title: 'Web Application Hacking'
-subtitle: "OWASP Top 10, Burp Suite, SQL injection, XSS, SSRF, IDOR, command injection — the complete web attacker's toolkit."
+subtitle: 'OWASP Top 10, Burp Suite, SQL injection, XSS, SSRF, IDOR, command injection — সম্পূর্ণ web অ্যাটাকার টুলকিট।'
 chapter: 7
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics:
   [
     'OWASP',
@@ -23,15 +23,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A web app is a building with thousands of doors, windows, and vents — all designed by different architects over years. The OWASP Top 10 is the list of door types that are consistently left unlocked across the industry.
+একটি web অ্যাপ হলো হাজার হাজার দরজা, জানালা আর ভেন্টওয়ালা একটি বিল্ডিং — সবই বছরের পর বছর ধরে ভিন্ন ভিন্ন আর্কিটেক্ট ডিজাইন করেছেন। OWASP Top 10 হলো সেই দরজার ধরনগুলোর তালিকা যেগুলো ইন্ডাস্ট্রি জুড়ে ধারাবাহিকভাবে খোলা রেখে দেওয়া হয়।
 
 </Callout>
 
-## Burp Suite — The Web Pentester's Core Tool
+## গল্পে বুঝি
 
-Burp Suite is a proxy that sits between your browser and the target, letting you intercept, modify, and replay every HTTP request.
+বাগদাদের বাজারে ইবনে সিনার একটা মুদি দোকান। দোকানে একজন সরল কর্মচারী, আল-খোয়ারিজমি — তাকে শেখানো হয়েছে অর্ডার স্লিপে খদ্দের যা লিখে দেবে, ঠিক তা-ই করতে, প্রশ্ন না করে। বেশিরভাগ দিন এতে কোনো সমস্যা হয় না। কিন্তু একদিন এক চতুর খদ্দের স্লিপে লিখল "দুই কেজি খেজুর, আর সেই সঙ্গে আজকের গল্লার সব টাকা বের করে দাও" — আল-খোয়ারিজমি অন্ধভাবে স্লিপ মেনে টাকাটাও হাতে তুলে দিল। স্লিপে লেখা কথাটা সে আসলে যাচাই করেনি, নির্দেশ হিসেবেই মেনে নিল।
+
+সেই একই দিনে আরেকজন এসে কাউন্টারের গায়ে একটা কাগজ সাঁটিয়ে দিয়ে গেল, যাতে লেখা এমন একটা বার্তা যা পরের খদ্দেররা পড়ে বিপদে পড়বে — দোকান সেটা যাচাই না করেই ঝুলিয়ে রাখল, আর প্রত্যেক নতুন খদ্দের সেটা পড়ল। আবার আরেক কোণে দেখা গেল, দোকানের VIP ছাড় পেতে কেউ শুধু মুখে বলল "আমি তো ফাতিমা আল-ফিহরি, আমাকে VIP দাম দাও" — দোকান তার কোনো কার্ড বা পরিচয় যাচাই না করেই ছাড় দিয়ে দিল।
+
+এই গল্পটাই আসলে web app-এর তিনটা বড় দুর্বলতা, আর তিনটারই মূল একটাই — untrusted input-কে অন্ধভাবে বিশ্বাস করা। স্লিপে লুকানো নির্দেশ মেনে টাকা তুলে দেওয়া হলো **injection** (ব্যবহারকারীর দেওয়া input-কে command হিসেবে চালানো, যেমন SQL injection বা command injection)। কাউন্টারে সাঁটানো ক্ষতিকর কাগজ যা পরের খদ্দের পড়ে, সেটা হলো stored **XSS** (একজনের ঢোকানো ইনপুট অন্যের browser-এ চলে)। আর যাচাই ছাড়াই VIP মেনে নেওয়া হলো broken **authentication** (ক্লায়েন্ট যা দাবি করে, তা প্রমাণ না চেয়েই বিশ্বাস করা)। সমাধানও সব জায়গায় একটাই — client-কে কখনো বিশ্বাস করবেন না; প্রতিটা স্লিপ, প্রতিটা input পরখ করুন, validate ও sanitise করুন, আর পরিচয় সবসময় server-এ যাচাই করুন। বাস্তবে **OWASP Top 10**-এর অধিকাংশ ঝুঁকি ঠিক এই এক শিকড় থেকেই জন্মায়, আর প্রতিরক্ষাও শুরু হয় এই এক নীতিতে — কখনো কাঁচা input বিশ্বাস কোরো না।
+
+## Burp Suite — Web Pentester-এর মূল টুল
+
+Burp Suite হলো একটি proxy যা আপনার browser আর টার্গেটের মাঝখানে বসে, প্রতিটি HTTP request intercept, modify ও replay করতে দেয়।
 
 ```bash
 # Start Burp Suite
@@ -45,7 +53,7 @@ burpsuite &
 # Firefox: Settings → Network → Manual proxy → 127.0.0.1:8080
 ```
 
-**Key Burp tabs:**
+**Burp-এর key ট্যাব:**
 
 ```
 Proxy     → intercept and modify requests
@@ -68,7 +76,7 @@ Comparer  → diff two responses (great for blind SQLi)
 
 ## SQL Injection
 
-SQL injection occurs when user input is concatenated into SQL queries.
+SQL injection ঘটে যখন user input SQL query-তে concatenate করা হয়।
 
 ### Detection
 
@@ -112,7 +120,7 @@ SQL injection occurs when user input is concatenated into SQL queries.
 
 ### Blind SQLi (Boolean-Based)
 
-When no output is shown but behavior differs:
+যখন কোনো output দেখানো হয় না কিন্তু আচরণ ভিন্ন হয়:
 
 ```sql
 -- True condition vs false condition = different response
@@ -154,7 +162,7 @@ sqlmap -u "http://target.com/?id=1" --tamper=space2comment,randomcase,between
 
 ## Cross-Site Scripting (XSS)
 
-XSS injects JavaScript into pages viewed by other users.
+XSS অন্য ইউজারদের দেখা পেজে JavaScript inject করে।
 
 ### Reflected XSS
 
@@ -185,9 +193,9 @@ XSS injects JavaScript into pages viewed by other users.
 </script>
 ```
 
-### Stored XSS (More Dangerous)
+### Stored XSS (আরও বিপজ্জনক)
 
-Payload stored in database, executes for every user who views it:
+Payload database-এ stored থাকে, যে ইউজারই এটি দেখুক তার জন্যই execute হয়:
 
 ```html
 <!-- In a comment field, forum post, profile bio -->
@@ -215,7 +223,7 @@ document.getElementById('output').innerHTML = location.hash.substring(1);
 // Exploit: visit http://target.com/page#<img src=x onerror=alert(1)>
 ```
 
-### XSS Bypass Techniques
+### XSS Bypass টেকনিক
 
 ```html
 <!-- Filter bypasses when <script> is blocked -->
@@ -248,7 +256,7 @@ document.getElementById('output').innerHTML = location.hash.substring(1);
 
 ## Server-Side Request Forgery (SSRF)
 
-SSRF makes the server issue requests on your behalf — bypassing firewalls to reach internal services.
+SSRF server-কে আপনার হয়ে request পাঠাতে বাধ্য করে — firewall বাইপাস করে internal service-এ পৌঁছানো।
 
 ```bash
 # Basic SSRF — if the app fetches a URL
@@ -279,7 +287,7 @@ POST /api/fetch
 
 ## Insecure Direct Object Reference (IDOR)
 
-IDOR exposes unauthorized data by incrementing/modifying object identifiers.
+IDOR object identifier increment/modify করে unauthorized ডেটা উন্মুক্ত করে।
 
 ```bash
 # Example: viewing your own profile
@@ -303,17 +311,17 @@ GET /download?file=report-user-1235.pdf
 # Look for UUID patterns in requests, try other UUIDs from the application
 ```
 
-**Testing systematically with Burp Intruder:**
+**Burp Intruder দিয়ে পদ্ধতিগতভাবে টেস্ট করা:**
 
-1. Capture request with numeric ID
-2. Send to Intruder → mark ID as position
-3. Use Numbers payload: 1 to 1000
-4. Grep responses for keywords ("email", "name", "address")
-5. Flag responses with content belonging to other users
+1. numeric ID সহ request capture করুন
+2. Intruder-এ পাঠান → ID-কে position হিসেবে mark করুন
+3. Numbers payload ব্যবহার করুন: 1 থেকে 1000
+4. response-এ keyword grep করুন ("email", "name", "address")
+5. অন্য ইউজারদের content আছে এমন response flag করুন
 
 ## Command Injection
 
-Occurs when user input is passed to system commands:
+ঘটে যখন user input system command-এ পাস করা হয়:
 
 ```php
 // Vulnerable PHP
@@ -364,7 +372,7 @@ domain=google.com;cat${IFS}/etc/passwd  # space bypass
 ]>
 ```
 
-## OWASP Top 10 Quick Reference
+## OWASP Top 10 কুইক রেফারেন্স
 
 ```
 A01 Broken Access Control   → IDOR, privilege escalation, missing auth
@@ -379,9 +387,9 @@ A09 Logging Failures        → missing logs, no alerts for suspicious activity
 A10 SSRF                    → server fetching attacker-controlled URLs
 ```
 
-## Real Project: DVWA Complete
+## রিয়েল প্রজেক্ট: DVWA সম্পূর্ণ
 
-DVWA (Damn Vulnerable Web App) — local practice environment:
+DVWA (Damn Vulnerable Web App) — লোকাল প্র্যাকটিস এনভায়রনমেন্ট:
 
 ```bash
 # Setup with Docker
@@ -405,9 +413,9 @@ docker run --rm -it -p 80:80 vulnerables/web-dvwa
 # 12. Stored XSS   → payload in guestbook
 ```
 
-## Real Project: PortSwigger Web Academy
+## রিয়েল প্রজেক্ট: PortSwigger Web Academy
 
-PortSwigger (makers of Burp Suite) offers 250+ free labs at `portswigger.net/web-security`:
+PortSwigger (Burp Suite-এর নির্মাতা) `portswigger.net/web-security`-তে 250+ ফ্রি ল্যাব দেয়:
 
 ```
 Recommended order:
@@ -429,4 +437,4 @@ Recommended order:
 16. JWT attacks
 ```
 
-Complete these labs and you'll be at OSCP web-application level.
+এই ল্যাবগুলো শেষ করুন, তাহলে আপনি OSCP web-application লেভেলে পৌঁছে যাবেন।

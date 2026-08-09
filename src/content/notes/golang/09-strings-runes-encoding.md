@@ -1,9 +1,9 @@
 ---
-title: 'Strings, Runes & Encoding'
-subtitle: 'Go strings are UTF-8 byte slices — knowing this prevents an entire class of bugs when handling international text, emojis, and binary data.'
+title: 'Strings, Runes ও Encoding'
+subtitle: 'Go-তে string আসলে UTF-8 byte slice — এটা জানা থাকলে international text, emoji আর binary data হ্যান্ডেল করার সময় একটা গোটা শ্রেণীর bug এড়ানো যায়।'
 chapter: 9
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['strings', 'runes', 'UTF-8', 'encoding', 'bytes', 'text processing']
 ---
 
@@ -11,9 +11,17 @@ topics: ['strings', 'runes', 'UTF-8', 'encoding', 'bytes', 'text processing']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Strings Are Byte Slices
+## গল্পে বুঝি
 
-In Go, a string is a **read-only slice of bytes**. Not characters, not runes — bytes.
+আল-খোয়ারিজমি সাইনবোর্ড লেখে — দোকানের নাম, ঠিকানা, সব রঙ দিয়ে হাতে আঁকা। একদিন এক খদ্দের এসে বলল, "আমার দোকানের নাম 'কৃষ্ণা'— কয়টা অক্ষর, সেই হিসাবে দাম নিও।" আল-খোয়ারিজমি চোখে দেখে গুনল: কৃ, ষ, ্‌, ণ, া — চোখে যতগুলো আলাদা টান আর টুকরো দেখা যায়, সব মিলিয়ে সে বলল "ছয়টা টান হবে, ছয় অক্ষরের দাম।" খদ্দের হেসে বলল, "আরে ভাই, নামটা তো মোটে তিন অক্ষর — 'কৃ', 'ষ্ণ', 'া'। তুমি প্রতিটা অক্ষরের ভেতরের রঙের টানগুলো আলাদা করে গুনছ!"
+
+আসল কথাটা এখানেই। চোখে দেখা একটা গোটা যুক্তাক্ষর, যেমন 'ষ্ণ', আল-খোয়ারিজমির তুলি একটা টানে আঁকে না — ষ, হসন্ত, ণ, এমন কয়েকটা আলাদা টানে বসাতে হয়। আল-খোয়ারিজমি যদি তুলির টান গোনে, সংখ্যা বেশি আসে; আর যদি চোখে-দেখা পুরো অক্ষর গোনে, সংখ্যা ঠিক আসে। একই নাম, কিন্তু "কী গুনছ" তার উপর দুই রকম উত্তর।
+
+এটাই string বনাম rune-এর গল্প। চোখে-দেখা একটা গোটা অক্ষর হলো একটা **rune** (একটা Unicode code point), আর সেটা আঁকতে যে আলাদা তুলির টান লাগে সেগুলো হলো **byte**। Go-তে string হলো byte-এর sequence — UTF-8 encoding-এ ইংরেজি ASCII অক্ষর এক byte-এ ধরে, কিন্তু বাংলা অক্ষর বা emoji ধরতে ২-৪টা byte লাগে। তাই আল-খোয়ারিজমির মতো byte গুনলে (`len(s)`) সংখ্যা বেশি আসে, character গুনতে হলে rune গুনতে হয় (`utf8.RuneCountInString`)। বাস্তবে এটাই ভুলের জায়গা: username-এর length চেক, বাংলা বা emoji-সহ কমেন্টের অক্ষর গোনা, বা tweet-এর character limit — byte দিয়ে গুনলে বাংলা "কৃষ্ণা" বা "😊" থাকা লেখা ভুল লম্বা দেখাবে, rune দিয়ে গুনলেই ইউজার চোখে যা দেখে তার সাথে মিলবে।
+
+## String হলো Byte Slice
+
+Go-তে একটা string হলো **read-only byte slice**। character নয়, rune নয় — byte।
 
 ```go
 s := "Hello"
@@ -28,15 +36,15 @@ fmt.Println(len(s))    // 10 (NOT 7!) — 🌍 is 4 bytes in UTF-8
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A Go string is like a filmstrip. Each frame (byte) is one piece. Simple ASCII characters use one frame each. But complex characters (Chinese, Arabic, emojis) use 2-4 frames. `len()` counts frames, not pictures. To count pictures, you need to decode the filmstrip.
+Go-এর একটা string অনেকটা filmstrip-এর মতো। প্রতিটা frame (byte) হলো একেকটা টুকরো। সাধারণ ASCII character একটা করে frame ব্যবহার করে। কিন্তু জটিল character (চাইনিজ, আরবি, emoji) ২-৪টা frame ব্যবহার করে। `len()` frame গোনে, ছবি নয়। ছবি গুনতে হলে filmstrip টা decode করতে হবে।
 
 </Callout>
 
-## Runes: Unicode Code Points
+## Runes: Unicode Code Point
 
-A `rune` is Go's name for a Unicode code point — an `int32` that represents a single character:
+`rune` হলো Unicode code point-এর Go-এর নাম — একটা `int32` যেটা একটা single character-কে প্রকাশ করে:
 
 ```go
 s := "Hello 🌍"
@@ -62,7 +70,7 @@ for i, r := range s {
 fmt.Println(utf8.RuneCountInString(s))  // 7 (not 10)
 ```
 
-## Common String Operations
+## সাধারণ String Operation
 
 ```go
 import "strings"
@@ -86,9 +94,9 @@ strings.Repeat("ha", 3)            // "hahaha"
 strings.Fields("  foo   bar  baz ")  // ["foo", "bar", "baz"]
 ```
 
-## String Building: Performance Matters
+## String Building: Performance ব্যাপারটা গুরুত্বপূর্ণ
 
-String concatenation with `+` creates a new string every time (strings are immutable). For building strings in loops, use `strings.Builder`:
+`+` দিয়ে string concatenation প্রতিবারই একটা নতুন string তৈরি করে (string immutable)। loop-এর ভেতর string বানাতে হলে `strings.Builder` ব্যবহার করুন:
 
 ```go
 // BAD: O(n²) — copies the entire string each iteration
@@ -118,13 +126,13 @@ result := strings.Join(items, ",")
 
 <Callout type="tip">
 
-**Benchmark difference:** For 1000 items, `+` concatenation takes ~500μs with ~500 allocations. `strings.Builder` takes ~5μs with ~8 allocations. That's **100x faster**.
+**Benchmark পার্থক্য:** 1000 item-এর জন্য, `+` concatenation লাগে ~500μs আর ~500 allocation। `strings.Builder` লাগে ~5μs আর ~8 allocation। অর্থাৎ **100x দ্রুত**।
 
 </Callout>
 
-## Bytes vs Strings
+## Bytes বনাম Strings
 
-`[]byte` is the mutable cousin of `string`. Converting between them copies the data:
+`[]byte` হলো `string`-এর mutable কাজিন। এদের মধ্যে convert করলে data কপি হয়:
 
 ```go
 s := "hello"
@@ -148,14 +156,14 @@ buf.WriteString("World")
 result := buf.Bytes()  // []byte("Hello World")
 ```
 
-**When to use which:**
+**কখন কোনটা ব্যবহার করবেন:**
 
-- `string` — text that shouldn't change (JSON keys, log messages, user display)
-- `[]byte` — data you need to modify, binary data, I/O buffers
-- `strings.Builder` — building strings incrementally
-- `bytes.Buffer` — building byte sequences, implementing `io.Writer`
+- `string` — যে text বদলানো উচিত নয় (JSON key, log message, user display)
+- `[]byte` — যে data আপনাকে modify করতে হবে, binary data, I/O buffer
+- `strings.Builder` — string ধাপে ধাপে বানানোর জন্য
+- `bytes.Buffer` — byte sequence বানানো, `io.Writer` implement করা
 
-## String Conversion Gotchas
+## String Conversion-এর ফাঁদ
 
 ```go
 // Converting number to string does NOT give you the decimal representation
@@ -173,7 +181,7 @@ f, err := strconv.ParseFloat("3.14", 64)  // 3.14
 b, err := strconv.ParseBool("true")       // true
 ```
 
-## Real-World: Sanitizing User Input
+## বাস্তব উদাহরণ: User Input Sanitize করা
 
 ```go
 func sanitizeUsername(input string) (string, error) {
@@ -203,11 +211,11 @@ sanitizeUsername("ab")          // "ab", nil
 sanitizeUsername("a")           // error: too short
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **`len(s)` counts bytes**, not characters — use `utf8.RuneCountInString` for character count
-2. **`range` over strings iterates runes**, index access `s[i]` gives bytes — use range for text
-3. **Use `strings.Builder`** for concatenation in loops — 100x faster than `+`
-4. **`string(65)` is `"A"`**, not `"65"` — use `strconv.Itoa` for number formatting
-5. **`[]byte` for mutable data**, `string` for immutable text — conversion copies the data
-6. **Use `unicode` package** for character classification — `unicode.IsLetter`, `unicode.IsDigit`
+1. **`len(s)` byte গোনে**, character নয় — character count-এর জন্য `utf8.RuneCountInString` ব্যবহার করুন
+2. **string-এর উপর `range` rune ধরে iterate করে**, index access `s[i]` byte দেয় — text-এর জন্য range ব্যবহার করুন
+3. **loop-এ concatenation-এর জন্য `strings.Builder` ব্যবহার করুন** — `+`-এর চেয়ে 100x দ্রুত
+4. **`string(65)` হলো `"A"`**, `"65"` নয় — number format করতে `strconv.Itoa` ব্যবহার করুন
+5. **mutable data-এর জন্য `[]byte`**, immutable text-এর জন্য `string` — conversion data কপি করে
+6. **character classification-এর জন্য `unicode` package** ব্যবহার করুন — `unicode.IsLetter`, `unicode.IsDigit`

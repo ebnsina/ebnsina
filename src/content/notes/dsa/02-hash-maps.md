@@ -1,9 +1,9 @@
 ---
 title: 'Hash Maps & Sets'
-subtitle: 'Turn O(n) lookups into O(1) with hash-based data structures — the most practically useful tool in your kit.'
+subtitle: 'হ্যাশ-ভিত্তিক ডেটা স্ট্রাকচার দিয়ে O(n) lookup-কে O(1)-তে নামিয়ে আনুন — আপনার টুলকিটের সবচেয়ে ব্যবহারিক জিনিস।'
 chapter: 2
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['hash map', 'hash set', 'collision handling', 'frequency counting']
 ---
 
@@ -11,21 +11,29 @@ topics: ['hash map', 'hash set', 'collision handling', 'frequency counting']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+বড় একটা অফিসের মেইলরুম কল্পনা করুন। দেয়ালজুড়ে সারি সারি ছোট ছোট খোপ (pigeonhole) — প্রতিটা খোপের গায়ে লেখা প্রাপকের নামের প্রথম অক্ষর: আ, ই, খ, গ, ম, র... ইবনে সিনা নামের একটা চিঠি এলে মেইলরুমের ছেলেটা পুরো ভবনের সবার নাম মেলায় না; সে শুধু নামের প্রথম অক্ষরটা দেখে — "ই" — আর সোজা "ই" খোপে চিঠিটা রেখে দেয়। পরে মালেকের চিঠি খুঁজতে হলেও একই নিয়ম: "ম" খোপে হাত ঢুকিয়ে টেনে নাও। হাজারটা খোপ ঘাঁটতে হয় না, এক ঝটকায় পাওয়া যায়।
+
+তবে একটা ঝামেলা আছে। ইবনে সিনা আর ইবনে রুশদ — দুজনের নামই "ই" দিয়ে শুরু, তাই দুটো চিঠিই একই "ই" খোপে গিয়ে পড়ে। মেইলরুমের ছেলে তখন গোটা ভবন খোঁজে না, শুধু "ই" খোপের ছোট্ট গোছাটা একটু উল্টেপাল্টে দেখে ইবনে সিনারটা বের করে ফেলে। খোপগুলো যত ভালোভাবে ভাগ করা থাকে, প্রতিটা খোপে তত কম চিঠি জমে, খোঁজাও তত দ্রুত।
+
+এই গল্পটাই আসলে **hash map**। নামের প্রথম অক্ষর বের করার নিয়মটা হলো **hash function** — একটা key নিয়ে সেটাকে একটা নির্দিষ্ট খোপে (bucket) পাঠিয়ে দেয়। খোপ থেকে সরাসরি চিঠি তুলে নেওয়াটাই **O(1) lookup** — পুরো লিস্ট স্ক্যান না করে এক লাফে জিনিসটা পাওয়া। আর ইবনে সিনা-ইবনে রুশদ একই খোপে পড়ে যাওয়াটাই **collision**, যেটা সামলাতে ওই ছোট গোছাটুকুই কেবল খোঁজা হয়। বাস্তবে ডেটাবেসের index থেকে শুরু করে প্রোগ্রামের `Map`/`Set`, কিংবা ভাষার dictionary — সবই ঠিক এভাবে key থেকে সরাসরি value বের করে আনে।
+
 ## Why Hash Maps Matter
 
-Hash maps (also called dictionaries, associative arrays, or objects) are arguably the most important data structure in practical programming. They give you O(1) average-case lookups, insertions, and deletions. If you're ever doing repeated lookups in an array, a hash map is almost certainly the answer.
+Hash map (এগুলোকে dictionary, associative array বা object-ও বলা হয়) ব্যবহারিক প্রোগ্রামিংয়ে সম্ভবত সবচেয়ে গুরুত্বপূর্ণ ডেটা স্ট্রাকচার। এগুলো আপনাকে গড়ে O(1) lookup, insertion আর deletion দেয়। কোনো array-তে যদি বারবার lookup করতে হয়, তাহলে hash map প্রায় নিশ্চিতভাবেই উত্তর।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a phone contact list — each name maps directly to a phone number. You don't scroll through every contact; you search by name and jump straight to it. That's exactly how a hash map works: constant-time lookup by key.
+ফোনের কন্টাক্ট লিস্টের মতো — প্রতিটি নাম সরাসরি একটা ফোন নম্বরে ম্যাপ করা থাকে। আপনি প্রতিটা কন্টাক্ট স্ক্রল করেন না; নাম দিয়ে খোঁজেন আর সোজা সেটাতে চলে যান। hash map ঠিক এভাবেই কাজ করে: key দিয়ে constant-time lookup।
 
 </Callout>
 
 ## How Hashing Works
 
-A hash function converts a key into an array index. The simplest version:
+একটা hash function একটা key-কে array index-এ রূপান্তর করে। সবচেয়ে সহজ ভার্সনটা:
 
 ```typescript
 function simpleHash(key: string, size: number): number {
@@ -37,16 +45,16 @@ function simpleHash(key: string, size: number): number {
 }
 ```
 
-When two keys produce the same index (a **collision**), common strategies include:
+যখন দুটো key একই index তৈরি করে (একটা **collision**), তখন সাধারণ কিছু কৌশল হলো:
 
-- **Chaining**: Each bucket holds a linked list of entries
-- **Open addressing**: Probe the next available slot
+- **Chaining**: প্রতিটা bucket entry-গুলোর একটা linked list ধরে রাখে
+- **Open addressing**: পরের খালি slot-টা probe করা
 
 ## Practical Patterns
 
 ### Frequency Counting
 
-The most common hash map pattern — count occurrences of elements.
+সবচেয়ে কমন hash map প্যাটার্ন — element-গুলোর occurrence গোনা।
 
 ```typescript
 function topKFrequent(nums: number[], k: number): number[] {
@@ -121,7 +129,7 @@ function longestConsecutive(nums: number[]): number {
 
 <Callout type="info">
 
-**Hash maps vs. sorting**: Many problems can be solved by either sorting (O(n log n)) or using a hash map (O(n) time, O(n) space). Hash maps trade space for time — usually worth it.
+**Hash map বনাম sorting**: অনেক সমস্যা হয় sorting দিয়ে (O(n log n)) নয়তো hash map দিয়ে (O(n) time, O(n) space) সমাধান করা যায়। Hash map time-এর জন্য space ব্যয় করে — সাধারণত এটা ভালোই লাভজনক।
 
 </Callout>
 
@@ -134,11 +142,11 @@ function longestConsecutive(nums: number[]): number {
 | Delete    | O(1)    | O(n)       |
 | Has       | O(1)    | O(n)       |
 
-Worst case happens with pathological hash collisions — extremely rare with good hash functions.
+Worst case তখনই ঘটে যখন pathological hash collision হয় — ভালো hash function-এ এটা অত্যন্ত বিরল।
 
 ## Key Takeaways
 
-1. **Default to hash maps** when you need fast lookups by key
-2. **Frequency counting** is the #1 hash map pattern — learn it cold
-3. **Sets** are hash maps without values — perfect for membership checks and deduplication
-4. **Trade space for time**: O(n) extra memory for O(1) lookups is almost always worth it
+1. **Hash map-কে ডিফল্ট ধরুন** যখন key দিয়ে দ্রুত lookup দরকার
+2. **Frequency counting** হলো #1 hash map প্যাটার্ন — এটা পুরোপুরি রপ্ত করুন
+3. **Set** হলো value ছাড়া hash map — membership check আর deduplication-এর জন্য পারফেক্ট
+4. **Time-এর জন্য space ব্যয় করুন**: O(1) lookup-এর বিনিময়ে O(n) extra memory প্রায় সবসময়ই লাভজনক

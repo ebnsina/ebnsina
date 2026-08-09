@@ -1,9 +1,9 @@
 ---
-title: 'Operating Systems — Roadmap'
-subtitle: 'How the kernel turns raw hardware into the processes, memory, and files your programs depend on.'
+title: 'Operating Systems — রোডম্যাপ'
+subtitle: 'কার্নেল কীভাবে raw hardware-কে আপনার প্রোগ্রামের নির্ভরযোগ্য process, memory আর file-এ রূপান্তরিত করে।'
 chapter: 0
 level: 'beginner'
-readingTime: '5 min'
+readingTime: '5 মিনিট'
 topics: ['roadmap', 'operating systems']
 ---
 
@@ -11,41 +11,41 @@ topics: ['roadmap', 'operating systems']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What You'll Learn
+## যা যা শিখবেন
 
-Every program you write runs on top of an operating system. It hands you memory you didn't allocate from RAM directly, schedules your code onto CPUs you never asked for, and exposes files that aren't really files. Understanding the OS turns a pile of mysterious behavior — why a thread stalls, why memory usage spikes, why an `fsync` is slow — into something you can reason about.
+আপনি যত প্রোগ্রামই লেখেন, প্রতিটাই একটা operating system-এর উপরে চলে। এটা আপনাকে এমন memory দেয় যা আপনি সরাসরি RAM থেকে allocate করেননি, আপনার কোডকে এমন CPU-তে schedule করে যা আপনি কখনো চাননি, আর এমন file দেখায় যেগুলো আসলে file-ই না। OS বুঝতে পারলে একগাদা রহস্যময় আচরণ — কেন একটা thread আটকে যায়, কেন memory usage হঠাৎ বেড়ে যায়, কেন একটা `fsync` ধীর — সবকিছুই এমন জিনিসে পরিণত হয় যা নিয়ে আপনি reason করতে পারবেন।
 
-This track builds a mental model of how a modern OS works, using **Linux** as the reference system. By the end you'll understand:
+এই track একটা modern OS কীভাবে কাজ করে তার mental model তৈরি করে, reference system হিসেবে **Linux** ব্যবহার করে। শেষে গিয়ে আপনি বুঝবেন:
 
-- How the kernel isolates and protects programs from each other.
-- What a process and a thread really are, and how the CPU is shared between them.
-- How virtual memory makes every program think it owns the machine.
-- How synchronization, file systems, and I/O actually work under the hood.
+- কার্নেল কীভাবে প্রোগ্রামগুলোকে একে অন্যের থেকে isolate ও protect করে।
+- একটা process আর একটা thread আসলে কী, আর CPU তাদের মধ্যে কীভাবে ভাগ হয়।
+- virtual memory কীভাবে প্রতিটা প্রোগ্রামকে ভাবায় যে সে পুরো মেশিনের মালিক।
+- synchronization, file system আর I/O ভেতরে ভেতরে আসলে কীভাবে কাজ করে।
 
 <Callout type="info">
 
-**Note:** You don't need to write kernel code to benefit from this. The goal is to make the abstractions you use every day — `fork`, `malloc`, `open`, `epoll` — stop being magic.
+**নোট:** এর সুফল পেতে আপনাকে kernel code লিখতে হবে না। লক্ষ্য হলো আপনি প্রতিদিন যেসব abstraction ব্যবহার করেন — `fork`, `malloc`, `open`, `epoll` — সেগুলো যেন আর ম্যাজিক মনে না হয়।
 
 </Callout>
 
 ## Prerequisites
 
-This track pairs naturally with two others:
+এই track স্বাভাবিকভাবেই আরও দুটোর সাথে জোড়া মেলে:
 
-- **linux-vps** — comfort with the shell, processes, and `ps`/`top` makes the examples concrete.
-- **networking** — sockets and I/O multiplexing (Chapter 8) build directly on networking fundamentals.
+- **linux-vps** — shell, process আর `ps`/`top`-এর সাথে স্বাচ্ছন্দ্য থাকলে উদাহরণগুলো concrete হয়ে ওঠে।
+- **networking** — socket আর I/O multiplexing (Chapter 8) সরাসরি networking fundamentals-এর উপরে গড়ে ওঠে।
 
-A little C reading ability helps, since system calls are easiest to show in C. You won't need to be fluent — every snippet is explained.
+একটু C পড়তে পারার ক্ষমতা কাজে দেয়, কারণ system call C-তে দেখানোই সবচেয়ে সহজ। fluent হতে হবে না — প্রতিটা snippet ব্যাখ্যা করা আছে।
 
-## The Chapters
+## অধ্যায়গুলো
 
-1. **What an Operating System Does** — the kernel, user vs kernel space, system calls, and the OS as a resource manager.
-2. **Processes** — the process model, address spaces, the PCB, process states, and `fork`/`exec`/`wait`.
-3. **Threads & Concurrency** — threads vs processes, context switching, shared state, and race conditions.
-4. **CPU Scheduling** — how the kernel decides who runs next, from round-robin to Linux's CFS.
-5. **Memory Management & Virtual Memory** — paging, page tables, the TLB, page faults, and swapping.
-6. **Synchronization** — mutexes, semaphores, condition variables, and the four conditions for deadlock.
-7. **File Systems** — inodes, the page cache, journaling, and durability with `fsync`.
-8. **I/O & System Calls** — blocking vs non-blocking I/O, `epoll`, `io_uring`, and how event loops are built.
+1. **What an Operating System Does** — কার্নেল, user vs kernel space, system call, আর resource manager হিসেবে OS।
+2. **Processes** — process model, address space, PCB, process state, আর `fork`/`exec`/`wait`।
+3. **Threads & Concurrency** — thread vs process, context switching, shared state, আর race condition।
+4. **CPU Scheduling** — কার্নেল কীভাবে ঠিক করে পরের বার কে চলবে, round-robin থেকে Linux-এর CFS পর্যন্ত।
+5. **Memory Management & Virtual Memory** — paging, page table, TLB, page fault, আর swapping।
+6. **Synchronization** — mutex, semaphore, condition variable, আর deadlock-এর চারটা শর্ত।
+7. **File Systems** — inode, page cache, journaling, আর `fsync` দিয়ে durability।
+8. **I/O & System Calls** — blocking vs non-blocking I/O, `epoll`, `io_uring`, আর event loop কীভাবে তৈরি হয়।
 
-Work through them in order. Each chapter assumes the vocabulary of the ones before it.
+এগুলো ক্রমানুসারে পড়ুন। প্রতিটা অধ্যায় ধরে নেয় আগেরগুলোর vocabulary আপনার জানা আছে।

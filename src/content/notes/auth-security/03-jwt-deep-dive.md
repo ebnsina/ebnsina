@@ -1,9 +1,9 @@
 ---
 title: 'JWT Deep Dive'
-subtitle: 'Structure, signing algorithms, validation rules, and the common mistakes that make JWTs insecure.'
+subtitle: 'Structure, signing algorithm, validation rule, আর যে সাধারণ ভুলগুলো JWT-কে insecure করে তোলে।'
 chapter: 3
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['JWT', 'RS256', 'HS256', 'JWKS', 'token validation']
 ---
 
@@ -13,27 +13,35 @@ topics: ['JWT', 'RS256', 'HS256', 'JWKS', 'token validation']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A notarized document: anyone can read it, no one can forge the notary's seal without the private key, and the notary's public record lets anyone verify the seal is genuine. JWTs work the same way — readable, tamper-evident, and verifiable by anyone with the public key.
+একটা notarized document: যে কেউ এটা পড়তে পারে, private key ছাড়া কেউ notary-র seal নকল করতে পারে না, আর notary-র public record যে কাউকে seal-টা আসল কিনা verify করতে দেয়। JWT একইভাবে কাজ করে — পড়ার যোগ্য, tamper-evident, আর public key থাকা যে কারো দ্বারা verifiable।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ইবনে সিনা কনসার্টের গেটে দাঁড়িয়ে। হাতে একটা কাগজের রিস্টব্যান্ড — তার উপর ছাপা তার নাম, সিট ক্লাস "VIP", আর "রাত ১১টা পর্যন্ত বৈধ"। ব্যান্ডের গায়ে একটা চকচকে hologram seal, যেটা আয়োজকদের নিজস্ব মেশিন ছাড়া কেউ নকল করতে পারে না। গেটের দারোয়ান আল-খোয়ারিজমি ব্যান্ডটা এক নজর দেখেই বুঝে যায় — নামটা পড়া যাচ্ছে, ক্লাস দেখা যাচ্ছে, seal-টা আসল। অফিসে ফোন করে "এই লোকটা কি সত্যিই VIP?" জিজ্ঞেস করার দরকার হয় না; সব তথ্য তো ব্যান্ডেই লেখা আর seal-টাই প্রমাণ করছে এটা আয়োজকদের দেওয়া, কেউ ঘষামাজা করেনি।
+
+কেউ যদি চালাকি করে ব্যান্ডে "General" কেটে "VIP" লিখে দিতে চায়, তাহলে seal-টা ফেটে যায় বা মিলে না — জালিয়াতি সঙ্গে সঙ্গে ধরা পড়ে। আবার রাত ১১টা বাজার পর ওই একই ব্যান্ড দেখালেও আল-খোয়ারিজমি ঢুকতে দেবে না, কারণ ছাপার গায়েই মেয়াদ শেষ হওয়ার সময় লেখা। আর যেহেতু ব্যান্ডে যা লেখা তা যে কেউ পড়ে ফেলতে পারে, আয়োজকরা কখনোই সেখানে গোপন কিছু (যেমন কারো পাসওয়ার্ড) লেখে না।
+
+এই রিস্টব্যান্ডটাই আসলে একটা **JWT**। ব্যান্ডে ছাপা নাম-সিট ক্লাস-মেয়াদ হলো token-এর **claims** (readable তথ্য), hologram seal হলো **signature** — cryptographic প্রমাণ যে কেউ tamper করেনি। দারোয়ানের অফিসে ফোন না করে এক নজরে যাচাই করাটাই **stateless verification**: server database lookup ছাড়াই শুধু signature দেখে token verify করে। ছাপার গায়ে লেখা সময়টা হলো **expiry** (`exp`), আর "যে কেউ পড়তে পারে বলে গোপন কিছু লিখি না" — এটাই মনে রাখার নিয়ম, payload encrypted নয়। বাস্তবে ঠিক এভাবেই একটা API একটা login token verify করে — প্রতিটা request-এ user-কে আবার database-এ খুঁজতে না গিয়ে শুধু signature আর claims দেখেই সিদ্ধান্ত নেয়।
+
 ## Structure
 
-A JWT is three base64url-encoded JSON objects joined by dots:
+একটা JWT হলো তিনটা base64url-encoded JSON object যা dot দিয়ে জোড়া লাগানো:
 
 ```
 eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxNzAwMDAzNjAwfQ.signature
 ```
 
-**Header** — algorithm and token type:
+**Header** — algorithm আর token type:
 
 ```json
 { "alg": "RS256", "typ": "JWT" }
 ```
 
-**Payload** — claims (user data + metadata):
+**Payload** — claim (user data + metadata):
 
 ```json
 {
@@ -47,13 +55,13 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsInJvbGUiOiJhZG1pbiI
 }
 ```
 
-**Signature** — cryptographic proof the header+payload weren't tampered with.
+**Signature** — cryptographic প্রমাণ যে header+payload-এ tamper করা হয়নি।
 
-The payload is **not encrypted** — anyone can base64-decode it. Don't put secrets in JWT claims.
+payload **encrypted নয়** — যে কেউ এটা base64-decode করতে পারে। JWT claim-এ secret রাখবেন না।
 
-## Signing Algorithms
+## Signing Algorithm
 
-**HS256 (HMAC-SHA256):** Symmetric — same secret signs and verifies.
+**HS256 (HMAC-SHA256):** Symmetric — একই secret sign আর verify করে।
 
 ```typescript
 import jwt from 'jsonwebtoken';
@@ -74,9 +82,9 @@ const payload = jwt.verify(token, SECRET, {
 });
 ```
 
-Problem: every service that validates tokens needs the secret. If you have 10 services, the secret is in 10 places. One breach exposes the signing key.
+সমস্যা: token validate করা প্রতিটা service-এর secret দরকার। আপনার 10টা service থাকলে, secret 10 জায়গায় থাকে। একটা breach signing key-টা expose করে দেয়।
 
-**RS256 (RSA-SHA256):** Asymmetric — private key signs, public key verifies.
+**RS256 (RSA-SHA256):** Asymmetric — private key sign করে, public key verify করে।
 
 ```typescript
 import { createPrivateKey, createPublicKey } from 'crypto';
@@ -108,7 +116,7 @@ async function verifyToken(token: string) {
 }
 ```
 
-**ES256 (ECDSA P-256):** Asymmetric like RS256, but shorter signatures and faster verification. Prefer this over RS256 for new systems.
+**ES256 (ECDSA P-256):** RS256-এর মতোই asymmetric, কিন্তু signature ছোট আর verification faster। নতুন system-এর জন্য RS256-এর বদলে এটা prefer করুন।
 
 ```typescript
 // Generate a P-256 key pair
@@ -119,7 +127,7 @@ const { privateKey, publicKey } = crypto.generateKeyPairSync('ec', {
 
 ## JWKS Endpoint
 
-The JSON Web Key Set endpoint lets services fetch current public keys automatically. This enables key rotation without updating every service's config:
+JSON Web Key Set endpoint service-গুলোকে current public key স্বয়ংক্রিয়ভাবে fetch করতে দেয়। এটা প্রতিটা service-এর config update না করেই key rotation সম্ভব করে:
 
 ```typescript
 import { exportJWK, generateKeyPair } from 'jose';
@@ -154,11 +162,11 @@ async function sign(payload: Record<string, unknown>): Promise<string> {
 }
 ```
 
-**Key rotation:** Generate a new key pair, add it to JWKS alongside the old one (so tokens signed with the old key still validate), then after old tokens expire, remove the old key.
+**Key rotation:** একটা নতুন key pair generate করুন, পুরনোটার পাশে JWKS-এ যোগ করুন (যাতে পুরনো key দিয়ে sign করা token এখনও validate হয়), তারপর পুরনো token expire হয়ে গেলে পুরনো key সরিয়ে দিন।
 
 ## Validation Checklist
 
-Verifying a JWT signature is not enough. Validate all of these:
+শুধু একটা JWT signature verify করাই যথেষ্ট নয়। এই সবগুলো validate করুন:
 
 ```typescript
 async function validateToken(token: string): Promise<TokenPayload> {
@@ -190,16 +198,16 @@ async function validateToken(token: string): Promise<TokenPayload> {
 }
 ```
 
-## The "alg: none" Attack
+## "alg: none" Attack
 
-Early JWT libraries accepted `"alg": "none"` in the header, meaning no signature required. An attacker could forge any token by setting `alg: none` and providing no signature.
+প্রাথমিক JWT library header-এ `"alg": "none"` মেনে নিত, যার মানে কোনো signature দরকার নেই। একজন attacker `alg: none` সেট করে আর কোনো signature না দিয়ে যেকোনো token নকল করতে পারত।
 
 ```
 // Malicious token with alg:none
 eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiJ9.
 ```
 
-Fix: always specify allowed algorithms explicitly and never include `'none'`.
+সমাধান: সবসময় allowed algorithm explicit-ভাবে specify করুন এবং কখনও `'none'` include করবেন না।
 
 ```typescript
 // WRONG — library might accept 'none'
@@ -210,11 +218,11 @@ jwt.verify(token, secret, { algorithms: ['HS256'] });
 // or with jose: algorithms: ['ES256', 'RS256']
 ```
 
-## The RS256 → HS256 Confusion Attack
+## RS256 → HS256 Confusion Attack
 
-If a server uses RS256, it signs with a private key and verifies with the public key. An attacker who knows the public key (it's public!) can craft a token signed with HS256 using the public key as the HMAC secret — then submit it to a server that accepts both algorithms.
+একটা server যদি RS256 ব্যবহার করে, এটা private key দিয়ে sign করে আর public key দিয়ে verify করে। যে attacker public key জানে (এটা তো public!) সে public key-কে HMAC secret হিসেবে ব্যবহার করে HS256 দিয়ে sign করা একটা token তৈরি করতে পারে — তারপর এটা এমন একটা server-এ submit করতে পারে যা দুটো algorithm-ই মেনে নেয়।
 
-Fix: never allow both symmetric and asymmetric algorithms for the same use case. Be explicit.
+সমাধান: একই use case-এর জন্য কখনও symmetric আর asymmetric দুটো algorithm-ই allow করবেন না। Explicit হন।
 
 ```typescript
 // WRONG — accepts both
@@ -224,9 +232,9 @@ algorithms: ['RS256', 'HS256'];
 algorithms: ['RS256'];
 ```
 
-## Token Lifetime and Refresh
+## Token Lifetime ও Refresh
 
-Short-lived access tokens + long-lived refresh tokens:
+Short-lived access token + long-lived refresh token:
 
 ```typescript
 // Issue both on login
@@ -263,18 +271,18 @@ app.post('/auth/refresh', async (req, res) => {
 });
 ```
 
-**Refresh token rotation** (issuing a new refresh token on each use) detects theft: if an attacker uses a stolen refresh token, the legitimate user's next refresh fails, alerting you to a compromise.
+**Refresh token rotation** (প্রতিবার ব্যবহারে একটা নতুন refresh token issue করা) চুরি detect করে: একজন attacker চুরি করা refresh token ব্যবহার করলে, বৈধ user-এর পরবর্তী refresh fail করে, যা আপনাকে একটা compromise সম্পর্কে সতর্ক করে।
 
-## Where to Store Tokens in Browsers
+## Browser-এ কোথায় Token Store করবেন
 
-| Storage              | XSS        | CSRF       | Notes                                   |
-| -------------------- | ---------- | ---------- | --------------------------------------- |
-| `localStorage`       | Vulnerable | Safe       | Any script can read it                  |
-| `sessionStorage`     | Vulnerable | Safe       | Cleared on tab close                    |
-| `httpOnly` cookie    | Safe       | Vulnerable | JS can't read it; needs CSRF protection |
-| Memory (JS variable) | Safe       | Safe       | Lost on page refresh                    |
+| Storage              | XSS        | CSRF       | Note                                        |
+| -------------------- | ---------- | ---------- | ------------------------------------------- |
+| `localStorage`       | Vulnerable | নিরাপদ     | যেকোনো script এটা পড়তে পারে                |
+| `sessionStorage`     | Vulnerable | নিরাপদ     | tab close-এ মুছে যায়                       |
+| `httpOnly` cookie    | নিরাপদ     | Vulnerable | JS এটা পড়তে পারে না; CSRF protection দরকার |
+| Memory (JS variable) | নিরাপদ     | নিরাপদ     | page refresh-এ হারিয়ে যায়                 |
 
-**Recommendation:** `httpOnly`, `Secure`, `SameSite=Strict` cookies for the refresh token. Access token in memory (JS variable), re-fetched from refresh endpoint on page load.
+**সুপারিশ:** refresh token-এর জন্য `httpOnly`, `Secure`, `SameSite=Strict` cookie। Access token memory-তে (JS variable), page load-এ refresh endpoint থেকে আবার fetch করা।
 
 ```typescript
 // Set refresh token as httpOnly cookie

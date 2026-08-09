@@ -1,9 +1,9 @@
 ---
-title: 'Monitoring & Observability'
-subtitle: 'Metrics, logs, traces — the three pillars of understanding what your system is doing in production.'
+title: 'Monitoring ও Observability'
+subtitle: 'Metrics, logs, traces — production-এ আপনার সিস্টেম কী করছে তা বোঝার তিনটি স্তম্ভ।'
 chapter: 5
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['monitoring', 'observability', 'metrics', 'logging', 'tracing']
 ---
 
@@ -11,19 +11,27 @@ topics: ['monitoring', 'observability', 'metrics', 'logging', 'tracing']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Three Pillars
+## গল্পে বুঝি
 
-**Metrics**: numbers over time (request count, error rate, latency p99)
-**Logs**: discrete events with context (request details, errors, audit trail)
-**Traces**: request flow across services (which service took how long)
+আল-খোয়ারিজমি একটা কারখানার কন্ট্রোল রুমে বসেন। তাঁর সামনের দেয়ালজুড়ে সারি সারি গেজ — একটা দেখায় বয়লারের temperature, একটা দেখায় পাইপের pressure, আরেকটা দেখায় প্রতি ঘণ্টায় কত মাল উৎপাদন হচ্ছে। কাঁটাগুলো লাইভ নড়াচড়া করে, ঠিক এই মুহূর্তে মেশিন কী করছে তা এক নজরে বলে দেয়। প্রতিটা গেজের গায়ে লাল দাগ টানা — নিরাপদ সীমা। কাঁটা যতক্ষণ লাল দাগের নিচে, ততক্ষণ শান্তি।
 
-You need all three. Metrics tell you _something is wrong_. Logs tell you _what went wrong_. Traces tell you _where it went wrong_.
+একদিন বিকেলে বয়লারের temperature গেজের কাঁটা আস্তে আস্তে উঠতে থাকে, আর লাল দাগ ছুঁতেই ছাদের হর্নটা তীক্ষ্ণ স্বরে বেজে ওঠে। আল-খোয়ারিজমি চোখ তুলে দেয়ালের বড় বোর্ডটায় তাকান — গোটা প্লান্টের সব সেকশন সেখানে একসাথে দেখানো, কোনটা সবুজ কোনটা লাল। বয়লার সেকশনটা লাল হয়ে জ্বলছে। তিনি পাশের printout রোলটা টেনে নেন, যেখানে প্রতিটা রিডিং সময় ধরে ছাপা হয়ে আছে, আর দেখেন গত দশ মিনিটে temperature কোন ধাপে চড়ল। মেশিন ফেটে যাওয়ার আগেই তিনি ভালভ ছেড়ে দেন — ফাতিমা আল-ফিহরির শিফট শুরু হওয়ার আগেই সমস্যাটা সামলে যায়।
+
+এই গল্পটাই **monitoring ও observability**। লাইভ গেজগুলো হলো **metrics** (temperature, pressure, output মানে request rate, latency, error rate) — সিস্টেম এখন কী করছে তার সংখ্যা। লাল দাগ পেরোলেই হর্ন বাজা হলো **threshold alert** — কোনো metric সীমা ছাড়ালে আপনাকে ডেকে তোলা। গোটা প্লান্টের বড় বোর্ডটা হলো **dashboard** — সব কিছুর স্বাস্থ্য এক নজরে। আর সময় ধরে ছাপা printout হলো **logs** — পরে খুঁজে বের করার জন্য প্রতিটা event-এর রেকর্ড। আসল লাভটা হলো মেশিন ফেটে যাওয়ার আগেই ধরা পড়া — মানে user টের পাওয়ার আগেই সমস্যা ধরে ফেলা। বাস্তবে ঠিক এই কাজটাই করে **Prometheus** (metrics জমায় ও threshold-এ alert দেয়) আর **Grafana** (সেই metrics দিয়ে লাইভ dashboard আঁকে)।
+
+## তিনটি স্তম্ভ
+
+**Metrics**: সময়ের সাথে সংখ্যা (request count, error rate, latency p99)
+**Logs**: context সহ আলাদা আলাদা event (request-এর বিস্তারিত, error, audit trail)
+**Traces**: service-গুলোর মধ্য দিয়ে request-এর flow (কোন service কতক্ষণ নিল)
+
+আপনার তিনটিই দরকার। Metrics বলে দেয় _কিছু একটা ভুল হচ্ছে_। Logs বলে দেয় _কী ভুল হলো_। Traces বলে দেয় _কোথায় ভুল হলো_।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a hospital patient monitoring system — sensors track heart rate, blood pressure, and oxygen levels. When any metric drops below threshold, an alarm fires and the medical team is dispatched.
+হাসপাতালের patient monitoring system-এর মতো — sensor-গুলো heart rate, blood pressure আর oxygen level ট্র্যাক করে। যখন কোনো metric threshold-এর নিচে নেমে যায়, একটা alarm বাজে আর medical team ছুটে আসে।
 
 </Callout>
 
@@ -62,7 +70,7 @@ app.use((req, res, next) => {
 });
 ```
 
-### The Four Golden Signals
+### চারটি Golden Signal
 
 ```typescript
 // Google SRE's four golden signals:
@@ -107,13 +115,13 @@ logger.info(
 
 <Callout type="tip">
 
-**Log levels matter.** Use `error` for things that need attention, `warn` for degraded behavior, `info` for significant events, `debug` for development. In production, set the level to `info` — debug logs can generate terabytes.
+**Log level গুরুত্বপূর্ণ।** যেসব জিনিসে নজর দেওয়া দরকার তার জন্য `error`, degraded behavior-এর জন্য `warn`, গুরুত্বপূর্ণ event-এর জন্য `info`, আর development-এর জন্য `debug` ব্যবহার করুন। Production-এ level `info` রাখুন — debug log টেরাবাইট পরিমাণ ডেটা তৈরি করতে পারে।
 
 </Callout>
 
 ## Distributed Tracing
 
-When a request touches 5 services, how do you know which one is slow?
+যখন একটা request ৫টি service-এ যায়, তখন কোনটা slow তা কীভাবে বুঝবেন?
 
 ```typescript
 // Each request gets a trace ID that propagates across services
@@ -188,13 +196,13 @@ groups:
 
 <Callout type="warning">
 
-**Alert fatigue kills on-call teams.** Every alert must be actionable. If you get paged and the answer is "ignore it," delete that alert. Aim for fewer, higher-signal alerts rather than monitoring everything.
+**Alert fatigue on-call team-কে শেষ করে দেয়।** প্রতিটা alert actionable হতে হবে। যদি আপনাকে page করা হয় আর উত্তরটা হয় "এটা ignore করো," তাহলে সেই alert মুছে ফেলুন। সবকিছু monitor করার চেয়ে কম কিন্তু বেশি signal-যুক্ত alert-এর দিকে লক্ষ্য রাখুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Metrics, logs, traces** — you need all three to diagnose production issues
-2. **Alert on symptoms** (error rate, latency), not causes (CPU, memory)
-3. **Structured logging** makes logs queryable — never use string concatenation
-4. **Distributed tracing** is essential for debugging microservice architectures
+1. **Metrics, logs, traces** — production issue diagnose করতে আপনার তিনটিই দরকার
+2. **Symptom-এর উপর alert দিন** (error rate, latency), cause-এর উপর নয় (CPU, memory)
+3. **Structured logging** log-কে queryable করে তোলে — কখনো string concatenation ব্যবহার করবেন না
+4. **Distributed tracing** microservice architecture debug করার জন্য অপরিহার্য

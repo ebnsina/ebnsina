@@ -1,9 +1,9 @@
 ---
 title: 'Pub/Sub Patterns'
-subtitle: 'Topics, consumer groups, fan-out, filtering, and the delivery guarantees that determine what your subscribers can depend on.'
+subtitle: 'Topics, consumer groups, fan-out, filtering, আর সেই delivery guarantee-গুলো যা ঠিক করে দেয় আপনার subscriber কীসের উপর নির্ভর করতে পারবে।'
 chapter: 2
 level: 'intermediate'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['pub/sub', 'consumer groups', 'fan-out', 'Kafka', 'SNS', 'delivery guarantees']
 ---
 
@@ -13,21 +13,29 @@ topics: ['pub/sub', 'consumer groups', 'fan-out', 'Kafka', 'SNS', 'delivery guar
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A radio broadcast: the station (publisher) transmits once on a frequency (topic). Anyone with a receiver tuned to that frequency (subscriber) gets it — the station doesn't know or care how many people are listening. A consumer group is like a household with one radio: everyone in the household hears the same broadcast once, not once per person.
+একটা রেডিও broadcast: স্টেশন (publisher) একবার একটা frequency-তে (topic) সম্প্রচার করে। যার রিসিভার সেই frequency-তে টিউন করা (subscriber) সে-ই পায় — স্টেশন জানে না বা পরোয়া করে না কতজন শুনছে। একটা consumer group হলো একটা পরিবারের মতো যেখানে একটাই রেডিও: পরিবারের সবাই একই broadcast একবারই শোনে, প্রতি ব্যক্তির জন্য একবার করে নয়।
 
 </Callout>
 
-## Core Concepts
+## গল্পে বুঝি
 
-**Publisher:** Produces events to a topic. Knows nothing about subscribers.
+ইবনে সিনার একটা ম্যাগাজিন প্রকাশনা আছে। প্রতি মাসে সে আলাদা আলাদা বিষয়ে ইস্যু ছাপে — একটা খেলার ম্যাগাজিন, একটা রান্নার ম্যাগাজিন, একটা বিজ্ঞানের ম্যাগাজিন। ছাপা হয়ে গেলে সে শুধু কপিগুলো ডিস্ট্রিবিউটরের কাছে জমা দিয়ে দেয়, ব্যস। কে পড়বে, কতজন পড়বে, কোথায় বসে পড়বে — এসব নিয়ে ইবনে সিনা মাথাই ঘামায় না। তার কাজ শুধু বিষয় অনুযায়ী ইস্যু বের করা।
 
-**Topic:** Named channel. Messages are sent to a topic, not to a specific subscriber.
+অন্যদিকে পাঠকরা যার যেটা পছন্দ সেই বিষয়ে সাবস্ক্রাইব করে রাখে। আল-খোয়ারিজমি খেলা আর বিজ্ঞান — দুটোতেই সাবস্ক্রাইব করা, তাই দুই বিষয়ের নতুন ইস্যু বেরোলেই তার কাছে চলে আসে। ফাতিমা আল-ফিহরি শুধু রান্নার ম্যাগাজিন নিয়েছে, সে কেবল রান্নার ইস্যু পায়। কেউ চাইলে যেকোনো সময় নতুন বিষয়ে সাবস্ক্রাইব করতে পারে, আবার মন উঠে গেলে আনসাবস্ক্রাইবও করে দিতে পারে — ইবনে সিনাকে জানানোরও দরকার নেই। নতুন কোনো ইস্যু বেরোলে ডিস্ট্রিবিউটর সেটার প্রতিটা বর্তমান সাবস্ক্রাইবারের কাছে আপনাআপনি পৌঁছে দেয়।
 
-**Subscriber:** Consumes events from one or more topics. Declares interest, receives matching events.
+এই গল্পটাই আসলে **pub/sub**। ইবনে সিনা হলো **publisher** — সে পাঠকদের চেনেও না, তাদের কথা ভাবেও না, মানে producer পুরোপুরি consumer থেকে **decouple** করা। প্রতিটা ম্যাগাজিনের বিষয় হলো একেকটা **topic**, আর পাঠকরা যার যেই বিষয় পছন্দ সেই topic-এ **subscriber** হয়ে থাকে। একটা নতুন ইস্যু যখন তার সব সাবস্ক্রাইবারের কাছে একসাথে পৌঁছায় — সেটাই **fan-out**। বাস্তবে Kafka, SNS/SQS ঠিক এভাবেই কাজ করে: publisher একটা topic-এ event ছাড়ে, কে শুনছে না জেনেই, আর সিস্টেম সেই event প্রতিটা subscriber-এর কাছে fan-out করে দেয়।
 
-**Consumer Group:** Multiple instances of the same subscriber sharing the processing load. Each message is delivered to exactly one member of the group.
+## মূল ধারণাগুলো
+
+**Publisher:** একটা topic-এ events তৈরি করে। Subscriber সম্পর্কে কিছুই জানে না।
+
+**Topic:** নাম দেওয়া channel। Messages কোনো নির্দিষ্ট subscriber-এর কাছে নয়, একটা topic-এ পাঠানো হয়।
+
+**Subscriber:** এক বা একাধিক topic থেকে events consume করে। আগ্রহ প্রকাশ করে, মিলে যাওয়া events পায়।
+
+**Consumer Group:** একই subscriber-এর একাধিক instance যারা processing-এর load ভাগ করে নেয়। প্রতিটি message group-এর ঠিক একজন সদস্যের কাছে পৌঁছায়।
 
 ```
 Topic: order-events
@@ -44,19 +52,19 @@ Topic: order-events
 └─────────────────────────────────────┘
 ```
 
-Two consumer groups on the same topic get independent copies of every message. Three instances within the same group share the load — each message goes to one of them.
+একই topic-এ দুটো consumer group প্রতিটি message-এর আলাদা কপি পায়। একই group-এর তিনটা instance load ভাগ করে নেয় — প্রতিটি message তাদের যেকোনো একজনের কাছে যায়।
 
-## Delivery Guarantees
+## Delivery Guarantee
 
-Every pub/sub system makes a choice about what it guarantees:
+প্রতিটি pub/sub সিস্টেম কী guarantee করবে সেটা নিয়ে একটা সিদ্ধান্ত নেয়:
 
-**At-most-once:** Message delivered zero or one times. Can be lost. Fastest. Use for: metrics, telemetry, real-time dashboards where dropping a point is acceptable.
+**At-most-once:** Message শূন্য বা একবার delivered হয়। হারিয়ে যেতে পারে। সবচেয়ে দ্রুত। ব্যবহার করুন: metrics, telemetry, real-time dashboard যেখানে একটা point বাদ পড়া মেনে নেওয়া যায়।
 
-**At-least-once:** Message delivered one or more times. May be duplicated. Most common. Use for: anything that can be made idempotent (most business events).
+**At-least-once:** Message এক বা একাধিকবার delivered হয়। duplicate হতে পারে। সবচেয়ে প্রচলিত। ব্যবহার করুন: যা কিছু idempotent বানানো যায় (বেশিরভাগ business event)।
 
-**Exactly-once:** Message delivered exactly once. Most expensive. Use for: financial transactions, inventory deductions where duplicates cause real harm.
+**Exactly-once:** Message ঠিক একবারই delivered হয়। সবচেয়ে ব্যয়বহুল। ব্যবহার করুন: financial transaction, inventory deduction যেখানে duplicate সত্যিকারের ক্ষতি করে।
 
-Most systems offer at-least-once and require consumers to handle deduplication:
+বেশিরভাগ সিস্টেম at-least-once দেয় আর consumer-দের deduplication handle করতে বলে:
 
 ```typescript
 async function handleOrderPlaced(event: EventEnvelope<OrderPlaced>): Promise<void> {
@@ -79,7 +87,7 @@ async function handleOrderPlaced(event: EventEnvelope<OrderPlaced>): Promise<voi
 
 ## Fan-Out
 
-One event → many subscribers, each doing different work:
+একটা event → অনেক subscriber, প্রত্যেকে আলাদা কাজ করছে:
 
 ```
 OrderPlaced
@@ -90,9 +98,9 @@ OrderPlaced
   └── loyalty-service: award points
 ```
 
-Each subscriber handles independently, fails independently, scales independently. Adding a new subscriber (e.g., a new loyalty program) requires zero changes to the order service.
+প্রতিটি subscriber স্বাধীনভাবে handle করে, স্বাধীনভাবে fail করে, স্বাধীনভাবে scale করে। একটা নতুন subscriber যোগ করতে (যেমন একটা নতুন loyalty program) order service-এ শূন্য পরিবর্তন লাগে।
 
-**Implementing fan-out with SNS + SQS (AWS):**
+**SNS + SQS দিয়ে fan-out তৈরি করা (AWS):**
 
 ```typescript
 import { SNS, SQS } from 'aws-sdk';
@@ -156,7 +164,7 @@ async function processNotificationQueue(): Promise<void> {
 
 ## Message Filtering
 
-Subscribers can filter to only receive events they care about — no need to receive and discard irrelevant events:
+Subscriber শুধু সেই events পেতে filter করতে পারে যেগুলো নিয়ে তারা আগ্রহী — অপ্রাসঙ্গিক events পেয়ে ফেলে দেওয়ার দরকার নেই:
 
 ```typescript
 // SNS filter policy: only receive OrderPlaced with amount > $100
@@ -188,7 +196,7 @@ await sns
 
 ## Kafka: Durable, Ordered, Replayable
 
-Kafka is not just a message queue — it's a persistent log. Messages are retained (configurable, often 7-30 days) and consumers can replay from any offset. This changes what's possible:
+Kafka শুধু একটা message queue নয় — এটা একটা persistent log। Messages ধরে রাখা হয় (configurable, প্রায়ই 7-30 দিন) আর consumer যেকোনো offset থেকে replay করতে পারে। এটা যা সম্ভব তা পাল্টে দেয়:
 
 ```typescript
 import { Kafka, Consumer, Producer } from 'kafkajs';
@@ -235,23 +243,23 @@ await consumer.run({
 });
 ```
 
-**Kafka's key properties:**
+**Kafka-র মূল বৈশিষ্ট্যগুলো:**
 
-- **Ordering:** Messages with the same partition key are strictly ordered
-- **Durability:** Messages persisted to disk, replicated across brokers
-- **Replay:** Consumers can seek to any offset and reprocess history
-- **Throughput:** Millions of messages/second on modest hardware
+- **Ordering:** একই partition key-সহ messages কঠোরভাবে ordered থাকে
+- **Durability:** Messages disk-এ persist করা হয়, broker-দের মধ্যে replicate করা হয়
+- **Replay:** Consumer যেকোনো offset-এ গিয়ে ইতিহাস আবার process করতে পারে
+- **Throughput:** সাধারণ hardware-এ প্রতি সেকেন্ডে লক্ষ লক্ষ message
 
-**When Kafka over SNS/SQS:**
+**কখন SNS/SQS-এর বদলে Kafka:**
 
-- Need message ordering within a partition
-- Need to replay events (fix a bug in a consumer, reprocess historical data)
-- Need to share events across teams/systems with different retention needs
-- Throughput exceeds what managed queues handle economically
+- একটা partition-এর ভেতর message ordering দরকার
+- Events replay করা দরকার (একটা consumer-এর bug ঠিক করা, historical data আবার process করা)
+- ভিন্ন retention চাহিদাসহ team/system-দের মধ্যে events শেয়ার করা দরকার
+- Throughput এত বেশি যে managed queue দিয়ে অর্থনৈতিকভাবে handle করা যায় না
 
-## Ordering Guarantees
+## Ordering Guarantee
 
-Ordering is only guaranteed within a partition (Kafka) or within a single FIFO queue (SQS FIFO). Cross-partition ordering is not guaranteed.
+Ordering শুধু একটা partition-এর ভেতর (Kafka) বা একটা single FIFO queue-এর ভেতর (SQS FIFO) guaranteed। Cross-partition ordering guaranteed নয়।
 
 ```typescript
 // Kafka: partition by user ID for per-user ordering
@@ -269,11 +277,11 @@ await producer.send({
 // Trade-off: single partition = single-threaded consumers = limited throughput
 ```
 
-For most business events, per-entity ordering (all events for order_123 in order) is sufficient and achievable. Global ordering across all events usually isn't needed and isn't worth the throughput cost.
+বেশিরভাগ business event-এর জন্য per-entity ordering (order_123-এর সব event ঠিক ক্রমে) যথেষ্ট আর অর্জনযোগ্য। সব event জুড়ে global ordering সাধারণত দরকার হয় না আর throughput-এর খরচ দিয়ে সেটা করার মূল্য নেই।
 
 ## Dead-Letter Topics
 
-Messages that fail processing after retries go to a dead-letter topic for investigation:
+Retry-র পরেও যে messages process-এ fail করে সেগুলো তদন্তের জন্য একটা dead-letter topic-এ যায়:
 
 ```typescript
 // Consumer with DLQ
@@ -312,4 +320,4 @@ await consumer.run({
 });
 ```
 
-Monitor DLQ depth — a growing DLQ signals a consumer bug or a schema mismatch between producer and consumer.
+DLQ-র গভীরতা মনিটর করুন — বেড়ে চলা DLQ একটা consumer bug বা producer আর consumer-এর মধ্যে schema mismatch-এর ইঙ্গিত দেয়।

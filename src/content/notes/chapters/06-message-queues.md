@@ -1,9 +1,9 @@
 ---
-title: 'Message Queues'
-subtitle: 'Build producers and consumers with RabbitMQ/NATS including acknowledgments, retries, and dead letter queues.'
+title: 'মেসেজ কিউ'
+subtitle: 'acknowledgment, retry আর dead letter queue সহ RabbitMQ/NATS দিয়ে producer আর consumer বানান।'
 chapter: 6
 level: 'intermediate'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['message queue', 'RabbitMQ', 'NATS', 'async processing', 'dead letter queue']
 ---
 
@@ -13,15 +13,23 @@ topics: ['message queue', 'RabbitMQ', 'NATS', 'async processing', 'dead letter q
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Why Message Queues?
+## গল্পে বুঝি
 
-When a user uploads a profile picture, you don't want them waiting while you resize it into 5 sizes, upload to CDN, update the database, and send a confirmation email. Instead, you put a message on a queue — "resize this image" — and return immediately. A worker picks up the message and processes it in the background.
+শুক্রবার সন্ধ্যা, আল-খোয়ারিজমির রেস্টুরেন্টে ঠাসা ভিড়। ওয়েটার ইবনে সিনা টেবিলে টেবিলে ঘুরে অর্ডার নিচ্ছে — কাচ্চি, রোস্ট, বোরহানি — আর প্রতিটা অর্ডার একটা কাগজের টিকিটে লিখে কিচেনের সামনের টিকিট রেলে ক্লিপ দিয়ে ঝুলিয়ে দিচ্ছে। ইবনে সিনা টিকিট ঝুলিয়েই পরের টেবিলে ছুটছে, রান্না শেষ হওয়ার জন্য দাঁড়িয়ে থাকছে না। ভেতরে রাঁধুনি ফাতিমা আল-ফিহরি একটা একটা করে টিকিট রেল থেকে টেনে নিয়ে নিজের গতিতে রান্না করছে। ভিড়ের ঝাপটায় ইবনে সিনা মিনিটে দশটা অর্ডার আনলেও কিচেন থমকে যায় না — টিকিটগুলো রেলে জমা থাকে, ফাতিমা আল-ফিহরি একটু পিছিয়ে পড়লেও পরে ধরে ফেলে।
+
+আর গুরুত্বপূর্ণ ব্যাপার হলো, ফাতিমা আল-ফিহরি রান্না শেষ করে ডিশটা কনফার্ম না করা পর্যন্ত টিকিটটা রেল থেকে খোলা হয় না। এতে যদি মাঝপথে ফাতিমা আল-ফিহরির হাত ফসকে যায় বা রান্না নষ্ট হয়, টিকিটটা রেলেই ঝুলে থাকে বলে আরেকবার রান্না হয়ে যায় — কোনো অর্ডার হারায় না। যদি টিকিট খুলে ফেলার পর ডিশটা পড়ে যেত, তাহলে গেস্ট বসেই থাকত, কেউ জানতই না।
+
+এই গল্পটাই আসলে **message queue**। ওয়েটার ইবনে সিনা হলো **producer** (দ্রুত অর্ডার জমা দেয়), টিকিট রেল হলো queue (spike-এর সময় অর্ডার বাফার করে রাখে), আর রাঁধুনি ফাতিমা আল-ফিহরি হলো **consumer** (নিজের গতিতে একটা একটা প্রসেস করে) — দ্রুত producer আর ধীর consumer এভাবে decouple হয়ে যায়, একে অন্যের জন্য বসে থাকে না। ডিশ কনফার্ম হওয়ার পর টিকিট খোলাটাই **ack**, আর নষ্ট হলে রেলে ঝুলে থেকে আবার রান্না হওয়াটাই **retry**। বাস্তবে RabbitMQ বা Kafka দিয়ে ঠিক এভাবেই ট্রাফিক স্পাইক সামলে ব্যাকগ্রাউন্ড কাজ প্রসেস করা হয়।
+
+## মেসেজ কিউ কেন?
+
+একজন ইউজার যখন প্রোফাইল ছবি আপলোড করে, আপনি চান না সে বসে থাকুক যখন আপনি সেটাকে 5টা সাইজে resize করছেন, CDN-এ আপলোড করছেন, ডেটাবেস আপডেট করছেন আর একটা কনফার্মেশন ইমেইল পাঠাচ্ছেন। বরং, আপনি একটা কিউতে একটা মেসেজ রাখেন — "এই ইমেজটা resize করো" — আর সাথে সাথে ফিরে আসেন। একটা worker মেসেজটা তুলে নিয়ে ব্যাকগ্রাউন্ডে সেটা প্রসেস করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a busy restaurant kitchen — orders come in faster than chefs can cook, so they're placed on a ticket rail and processed one at a time in order.
+একটা ব্যস্ত রেস্টুরেন্টের কিচেনের মতো — অর্ডার শেফদের রান্নার গতির চেয়ে দ্রুত আসে, তাই সেগুলো একটা টিকিট রেলে রাখা হয় আর একে একে ক্রমানুসারে প্রসেস করা হয়।
 
 </Callout>
 
@@ -34,13 +42,13 @@ code={`graph LR
   Q -- failed messages --> DLQ["Dead Letter Queue"]`}
 />
 
-## Key Concepts
+## মূল ধারণা
 
-- **Producer** — sends messages to the queue
-- **Consumer** — pulls messages and processes them
-- **Acknowledgment (ACK)** — consumer tells the queue it processed the message successfully
-- **NACK** — consumer rejects the message (it can be retried or sent to DLQ)
-- **Dead Letter Queue (DLQ)** — where failed messages go after max retries
+- **Producer** — কিউতে মেসেজ পাঠায়
+- **Consumer** — মেসেজ টেনে নিয়ে প্রসেস করে
+- **Acknowledgment (ACK)** — consumer কিউকে জানায় যে সে মেসেজটা সফলভাবে প্রসেস করেছে
+- **NACK** — consumer মেসেজটা reject করে (এটা retry হতে পারে বা DLQ-তে যেতে পারে)
+- **Dead Letter Queue (DLQ)** — সর্বোচ্চ retry-এর পরও ফেল করা মেসেজগুলো যেখানে যায়
 
 <CodeTabs tsFile="queue.ts" goFile="queue.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -537,23 +545,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Queues decouple producers from consumers — they don't need to be online at the same time
-- Always use **manual acknowledgment** — auto-ack loses messages if the consumer crashes mid-processing
-- Implement **exponential backoff** for retries (1s, 2s, 4s, 8s) to avoid thundering herd
-- **Dead letter queues** catch permanently failed messages for debugging and manual replay
-- Set **prefetch limits** so one slow consumer doesn't starve others
+- কিউ producer আর consumer-কে আলাদা করে দেয় — তাদের একসাথে অনলাইন থাকার দরকার নেই
+- সবসময় **manual acknowledgment** ব্যবহার করুন — auto-ack প্রসেসিংয়ের মাঝে consumer ক্র্যাশ করলে মেসেজ হারায়
+- thundering herd এড়াতে retry-এর জন্য **exponential backoff** (1s, 2s, 4s, 8s) বসান
+- **Dead letter queue** স্থায়ীভাবে ফেল করা মেসেজগুলো ডিবাগিং আর ম্যানুয়াল replay-এর জন্য ধরে রাখে
+- **prefetch limit** সেট করুন যাতে একটা ধীর consumer বাকিদের অভুক্ত না রাখে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Uber** processes millions of ride events per second through Apache Kafka
-- **Shopify** uses message queues for order processing, inventory updates, and webhook delivery
-- **Slack** queues message delivery, push notifications, and search indexing
-- Use queues when the work can happen asynchronously and the user doesn't need the result immediately
+- **Uber** Apache Kafka-র মাধ্যমে প্রতি সেকেন্ডে লাখ লাখ ride event প্রসেস করে
+- **Shopify** অর্ডার প্রসেসিং, inventory আপডেট আর webhook delivery-র জন্য মেসেজ কিউ ব্যবহার করে
+- **Slack** মেসেজ delivery, push notification আর search indexing কিউতে রাখে
+- কিউ ব্যবহার করুন যখন কাজটা asynchronously হতে পারে আর ইউজারের সাথে সাথে ফলাফল দরকার নেই
 
 </div>

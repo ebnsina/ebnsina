@@ -1,9 +1,9 @@
 ---
 title: 'The Relational Model & Basic Queries'
-subtitle: 'Tables, rows, columns, types — and the SELECT statement that pulls data back out.'
+subtitle: 'Table, row, column, type — আর যে SELECT statement দিয়ে ডেটা আবার টেনে বের করা হয়।'
 chapter: 1
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['select', 'relational model', 'ddl']
 ---
 
@@ -11,17 +11,25 @@ topics: ['select', 'relational model', 'ddl']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ধরুন আপনি একটা স্কুলের অফিসে বসে আছেন। কেরানি ইবনে সিনা সাহেবের টেবিলে দুটো আলাদা রেজিস্টার খাতা। একটা "ছাত্র রেজিস্টার" — প্রতি পাতায় এক লাইনে একজন ছাত্রের তথ্য: রোল নম্বর, নাম, বয়স, কোন ক্লাসে পড়ে তার ক্লাস-আইডি। প্রতিটা লাইনের বাঁয়ে বসানো রোল নম্বরটাই ওই ছাত্রকে আলাদা করে চেনায় — আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরির নাম এক হলেও রোল আলাদা, তাই কখনো গুলিয়ে যায় না। আরেকটা খাতা "ক্লাস রেজিস্টার" — এক লাইনে এক ক্লাস: ক্লাস-আইডি, ক্লাসের নাম, ঘরের নম্বর।
+
+এখন হেডস্যার এসে বললেন, "ক্লাস নাইনের সব ছাত্রের একটা লিস্ট দাও।" ইবনে সিনা সাহেব ছাত্র রেজিস্টারটা খুলে উপর থেকে নিচে চোখ বোলান, আর শুধু যাদের ক্লাস-আইডি নাইনের সাথে মেলে তাদের লাইনগুলোই আলাদা কাগজে টুকে নেন — বাকিদের বাদ। কারো ক্লাসের ঘর কোথায় জানতে হলে ছাত্রের ক্লাস-আইডি দিয়ে ক্লাস রেজিস্টারে গিয়ে মিলিয়ে দেখেন। দুই খাতা এই আইডি দিয়েই একে অপরের সাথে বাঁধা।
+
+গল্পের প্রতিটা রেজিস্টার খাতা আসলে একটা **table**, খাতার এক-একটা লাইন হলো একটা **row**, আর রোল/নাম/বয়সের মতো ঘরগুলো হলো **column**। রোল নম্বরটা প্রতিটা row-কে unique করে চেনায় — এটাই **key**। দুই খাতাকে ক্লাস-আইডি দিয়ে জোড়া লাগানোটাই দুই table-এর মধ্যে **relation**। আর "শুধু ক্লাস নাইনের লাইনগুলো টুকে নাও" — এটাই `SELECT ... WHERE`: পুরো table থেকে শর্তে মেলা row-গুলো বেছে নেওয়া। বাস্তবে একটা database ঠিক এভাবেই কাজ করে, শুধু ইবনে সিনা সাহেবের হাতে চোখ বোলানোর বদলে কাজটা মিলিসেকেন্ডে সেরে ফেলে — স্কুলের হাজার হাজার ছাত্রের হাজিরা বা রেজাল্ট সিস্টেম এই একই ধারণার উপর দাঁড়িয়ে।
+
 ## The Relational Model
 
-A relational database stores data in **tables** (formally, _relations_). A table is a grid:
+একটা relational database ডেটা রাখে **table**-এ (আনুষ্ঠানিকভাবে, _relation_)। একটা table হলো একটা grid:
 
-- A **row** (or _tuple_) is a single record — one user, one order, one event.
-- A **column** (or _attribute_) describes one property every row has — a name, a price, a created timestamp.
-- Every column has a **data type** that constrains what values it can hold.
+- একটা **row** (বা _tuple_) হলো একটা একক record — একজন user, একটা order, একটা event।
+- একটা **column** (বা _attribute_) প্রতিটা row-এর একটা property বর্ণনা করে — একটা নাম, একটা দাম, একটা created timestamp।
+- প্রতিটা column-এর একটা **data type** থাকে, যা ঠিক করে দেয় সেটা কী কী value ধরে রাখতে পারবে।
 
-The model dates to Edgar Codd's 1970 paper, and its power comes from a simple idea: data is just sets of rows, and you describe _what_ you want rather than _how_ to fetch it. The database figures out the "how".
+এই মডেলের শুরু Edgar Codd-এর ১৯৭০ সালের পেপার থেকে, আর এর শক্তি আসে একটা সহজ ধারণা থেকে: ডেটা মানে শুধু row-এর কিছু set, আর আপনি বর্ণনা করেন _কী_ চান, _কীভাবে_ আনতে হবে সেটা নয়। "কীভাবে"-টা database নিজেই বের করে নেয়।
 
-A table called `users` might look like this:
+`users` নামের একটা table দেখতে এমন হতে পারে:
 
 | id  | email               | age | created_at          |
 | --- | ------------------- | --- | ------------------- |
@@ -29,31 +37,31 @@ A table called `users` might look like this:
 | 2   | nusayba@example.com | 41  | 2026-02-18 14:30:00 |
 | 3   | harun@example.com   |     | 2026-03-01 08:00:00 |
 
-Notice row 3 has no `age` — that empty cell is a `NULL`, which we'll return to.
+লক্ষ্য করুন row 3-এর কোনো `age` নেই — ওই খালি cell-টা একটা `NULL`, যেটায় আমরা আবার ফিরব।
 
 ## Data Types
 
-Picking the right type matters: it controls storage size, what operations are valid, and how the database sorts and compares values. Common PostgreSQL types:
+সঠিক type বেছে নেওয়া গুরুত্বপূর্ণ: এটা storage size নিয়ন্ত্রণ করে, কোন operation বৈধ তা ঠিক করে, আর database কীভাবে value sort ও compare করবে সেটা নির্ধারণ করে। PostgreSQL-এর কমন কিছু type:
 
-| Type                   | Use for                                        |
-| ---------------------- | ---------------------------------------------- |
-| `integer` / `bigint`   | Whole numbers, IDs, counts                     |
-| `numeric(p, s)`        | Exact decimals — money, never use `float` here |
-| `text` / `varchar(n)`  | Strings                                        |
-| `boolean`              | True/false flags                               |
-| `date` / `timestamptz` | Dates and timezone-aware timestamps            |
-| `uuid`                 | Globally unique identifiers                    |
-| `jsonb`                | Semi-structured documents                      |
+| Type                   | যার জন্য                                          |
+| ---------------------- | ------------------------------------------------- |
+| `integer` / `bigint`   | পূর্ণসংখ্যা, ID, count                            |
+| `numeric(p, s)`        | নির্ভুল দশমিক — টাকাপয়সা, এখানে কখনো `float` নয় |
+| `text` / `varchar(n)`  | String                                            |
+| `boolean`              | True/false flag                                   |
+| `date` / `timestamptz` | তারিখ আর timezone-সচেতন timestamp                 |
+| `uuid`                 | Globally unique identifier                        |
+| `jsonb`                | Semi-structured document                          |
 
 <Callout type="warning">
 
-**Never store money in floating point.** `float` and `double` can't represent values like `0.1` exactly, so totals drift by fractions of a cent. Use `numeric` (also called `decimal`) for any value where exactness matters.
+**টাকাপয়সা কখনো floating point-এ রাখবেন না।** `float` আর `double` `0.1`-এর মতো value নির্ভুলভাবে ধরে রাখতে পারে না, তাই total এক সেন্টের ভগ্নাংশ পরিমাণে সরে যায়। যেখানে নির্ভুলতা জরুরি সেখানে `numeric` (যাকে `decimal`-ও বলে) ব্যবহার করুন।
 
 </Callout>
 
 ## Creating a Table (DDL)
 
-Statements that define structure — `CREATE`, `ALTER`, `DROP` — are called **DDL** (Data Definition Language).
+যেসব statement structure সংজ্ঞায়িত করে — `CREATE`, `ALTER`, `DROP` — সেগুলোকে বলা হয় **DDL** (Data Definition Language)।
 
 ```sql
 CREATE TABLE users (
@@ -64,15 +72,15 @@ CREATE TABLE users (
 );
 ```
 
-Breaking this down:
+একটু ভেঙে দেখা যাক:
 
-- `PRIMARY KEY` marks `id` as the unique identifier for each row; it's automatically `NOT NULL` and indexed.
-- `GENERATED ALWAYS AS IDENTITY` makes Postgres assign sequential ids for you.
-- `NOT NULL` forbids missing values for that column.
-- `UNIQUE` forbids two rows sharing the same email.
-- `DEFAULT now()` fills `created_at` automatically when you don't supply it.
+- `PRIMARY KEY` `id`-কে প্রতিটা row-এর unique identifier হিসেবে চিহ্নিত করে; এটা স্বয়ংক্রিয়ভাবে `NOT NULL` আর indexed।
+- `GENERATED ALWAYS AS IDENTITY` Postgres-কে দিয়ে আপনার হয়ে ধারাবাহিক id বসিয়ে দেয়।
+- `NOT NULL` ওই column-এ missing value নিষিদ্ধ করে।
+- `UNIQUE` দুটো row-কে একই email শেয়ার করতে দেয় না।
+- `DEFAULT now()` আপনি না দিলে `created_at` স্বয়ংক্রিয়ভাবে ভরে দেয়।
 
-Inserting rows uses **DML** (Data Manipulation Language):
+Row insert করতে **DML** (Data Manipulation Language) ব্যবহার হয়:
 
 ```sql
 INSERT INTO users (email, age) VALUES
@@ -83,7 +91,7 @@ INSERT INTO users (email, age) VALUES
 
 ## SELECT: Reading Data
 
-The `SELECT` statement is how you ask questions. Its basic shape:
+`SELECT` statement হলো আপনার প্রশ্ন করার উপায়। এর মূল রূপ:
 
 ```sql
 SELECT email, age
@@ -93,17 +101,17 @@ ORDER BY age DESC
 LIMIT 10;
 ```
 
-Each clause does one job:
+প্রতিটা clause একটা করে কাজ করে:
 
-- **`SELECT`** — which columns to return. `SELECT *` returns all of them (handy interactively, but spell out columns in application code so adding a column later doesn't surprise you).
-- **`FROM`** — which table to read.
-- **`WHERE`** — a filter; only rows where the condition is true come back.
-- **`ORDER BY`** — sort order, `ASC` (default) or `DESC`.
-- **`LIMIT`** — cap the number of rows returned.
+- **`SELECT`** — কোন column ফেরত দেওয়া হবে। `SELECT *` সবগুলো ফেরত দেয় (ইন্টারঅ্যাক্টিভভাবে সুবিধাজনক, তবে application code-এ column-গুলো স্পষ্ট করে লিখুন, যাতে পরে একটা column যোগ করলে সেটা আপনাকে চমকে না দেয়)।
+- **`FROM`** — কোন table থেকে পড়া হবে।
+- **`WHERE`** — একটা filter; শুধু যেসব row-তে শর্তটা সত্য, সেগুলোই ফেরত আসে।
+- **`ORDER BY`** — sort করার ক্রম, `ASC` (default) বা `DESC`।
+- **`LIMIT`** — কতগুলো row ফেরত আসবে তার সীমা।
 
 ### Filtering with WHERE
 
-`WHERE` conditions combine comparisons with `AND`, `OR`, and `NOT`:
+`WHERE`-এর শর্তগুলো `AND`, `OR` আর `NOT` দিয়ে comparison জোড়া লাগায়:
 
 ```sql
 SELECT * FROM users
@@ -119,30 +127,30 @@ SELECT * FROM users
 WHERE created_at BETWEEN '2026-01-01' AND '2026-03-31';
 ```
 
-When you compare a column to a literal — say, "give me everyone younger than 30" — that's `WHERE age &lt; 30` in prose, but inside a code block you'd just write `age < 30` normally. `LIKE` does pattern matching where `%` means "any sequence of characters".
+যখন আপনি একটা column-কে একটা literal-এর সাথে তুলনা করেন — যেমন, "৩০-এর কম বয়সী সবাইকে দাও" — সেটা prose-এ হয় `WHERE age &lt; 30`, কিন্তু একটা code block-এর ভেতরে আপনি সাধারণভাবে শুধু `age < 30` লিখবেন। `LIKE` pattern matching করে, যেখানে `%` মানে "যেকোনো ক্রমের অক্ষর"।
 
 ### DISTINCT
 
-`DISTINCT` removes duplicate rows from the result:
+`DISTINCT` রেজাল্ট থেকে ডুপ্লিকেট row সরিয়ে দেয়:
 
 ```sql
 SELECT DISTINCT age FROM users ORDER BY age;
 ```
 
-This returns each distinct age once. `DISTINCT` applies to the whole selected row, so `SELECT DISTINCT age, email` deduplicates on the _combination_ of both columns.
+এটা প্রতিটা আলাদা age একবার করে ফেরত দেয়। `DISTINCT` পুরো selected row-এর ওপর প্রযোজ্য, তাই `SELECT DISTINCT age, email` দুটো column-এর _সমন্বয়ের_ ওপর দেখে deduplicate করে।
 
 ## NULL Semantics
 
-`NULL` means "unknown" or "absent" — it is _not_ zero, and it is _not_ an empty string. This trips up nearly everyone at first because `NULL` does not behave like a value in comparisons.
+`NULL` মানে "অজানা" বা "অনুপস্থিত" — এটা zero _নয়_, আর empty string-ও _নয়_। শুরুতে এটা প্রায় সবাইকে বিভ্রান্ত করে, কারণ comparison-এ `NULL` কোনো value-এর মতো আচরণ করে না।
 
-Any comparison _with_ `NULL` yields `NULL` (which is treated as "not true"), so:
+`NULL`-এর _সাথে_ যেকোনো comparison-এর ফল `NULL` (যাকে "সত্য নয়" হিসেবে ধরা হয়), তাই:
 
 ```sql
 SELECT * FROM users WHERE age = NULL;   -- returns ZERO rows, always
 SELECT * FROM users WHERE age <> 25;    -- excludes NULL-age rows!
 ```
 
-To test for null you must use the special `IS` operators:
+null পরীক্ষা করতে হলে আপনাকে বিশেষ `IS` operator ব্যবহার করতেই হবে:
 
 ```sql
 SELECT * FROM users WHERE age IS NULL;
@@ -151,11 +159,11 @@ SELECT * FROM users WHERE age IS NOT NULL;
 
 <Callout type="info">
 
-**`NULL` is contagious in arithmetic too.** `5 + NULL` is `NULL`, and `'hi' || NULL` is `NULL`. Use `COALESCE(age, 0)` to substitute a fallback value when a column might be null — it returns the first non-null argument.
+**arithmetic-এও `NULL` ছোঁয়াচে।** `5 + NULL` হলো `NULL`, আর `'hi' || NULL` হলো `NULL`। কোনো column null হতে পারে এমন হলে fallback value বসাতে `COALESCE(age, 0)` ব্যবহার করুন — এটা প্রথম non-null argument-টা ফেরত দেয়।
 
 </Callout>
 
-A practical consequence: if you want "everyone whose age is not 25, _including_ people with unknown age", you need to be explicit:
+একটা বাস্তব ফলাফল: আপনি যদি চান "যাদের age 25 নয় এমন সবাই, _সহ_ যাদের age অজানা", তাহলে আপনাকে স্পষ্ট হতে হবে:
 
 ```sql
 SELECT * FROM users WHERE age <> 25 OR age IS NULL;
@@ -163,4 +171,4 @@ SELECT * FROM users WHERE age <> 25 OR age IS NULL;
 
 ## Recap
 
-You now have the foundation: tables hold typed rows, DDL defines them, and `SELECT` with `WHERE` / `ORDER BY` / `LIMIT` reads them back. Keep the `NULL` rules in mind — they're the source of more subtle bugs than any other feature. Next we'll summarize many rows into single answers with aggregation.
+এখন আপনার ভিত্তিটা তৈরি: table typed row ধরে রাখে, DDL সেগুলো সংজ্ঞায়িত করে, আর `WHERE` / `ORDER BY` / `LIMIT` সহ `SELECT` সেগুলো আবার পড়ে। `NULL`-এর নিয়মগুলো মাথায় রাখুন — অন্য যেকোনো feature-এর চেয়ে এগুলোই বেশি সূক্ষ্ম bug-এর উৎস। এরপর আমরা aggregation দিয়ে অনেকগুলো row-কে একক উত্তরে সারসংক্ষেপ করব।

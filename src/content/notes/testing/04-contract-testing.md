@@ -1,9 +1,9 @@
 ---
 title: 'Contract Testing'
-subtitle: 'Verify that services agree on the API contract without deploying them together — Pact for consumer-driven contracts.'
+subtitle: 'Service-গুলোকে একসাথে deploy না করেই যাচাই করা যে তারা API contract-এ একমত — consumer-driven contract-এর জন্য Pact।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   [
     'contract testing',
@@ -20,15 +20,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Two companies signing a supply agreement before either starts production: the buyer specifies exactly what they need (package dimensions, delivery schedule, labeling), and the supplier verifies they can meet those specs without the buyer having to stand in the warehouse watching every shipment. Contract testing does the same between services — the consumer defines what it expects, the provider verifies it can deliver, all without requiring both to be running simultaneously.
+দুটো কোম্পানি production শুরু করার আগেই একটা supply agreement সই করছে: ক্রেতা ঠিক কী দরকার তা নির্দিষ্ট করে (package-এর মাপ, delivery schedule, labeling), আর সরবরাহকারী যাচাই করে যে তারা সেই spec পূরণ করতে পারবে — ক্রেতাকে warehouse-এ দাঁড়িয়ে প্রতিটা shipment দেখতে হয় না। Contract testing service-গুলোর মধ্যে ঠিক এটাই করে — consumer সংজ্ঞায়িত করে সে কী আশা করে, provider যাচাই করে সে সেটা দিতে পারবে, দুটোকে একসাথে চালু রাখার দরকার ছাড়াই।
 
 </Callout>
 
-## The Problem Contract Tests Solve
+## গল্পে বুঝি
 
-In a microservices architecture, services depend on each other's APIs. Without contract tests:
+ফাতিমা আল-ফিহরির একটা কাপড়ের দোকান, আর তার সব থান কাপড় আসে ইবনে সিনার সাপ্লাই গুদাম থেকে। শুরুর দিকে ঝামেলা লেগেই থাকত — ফাতিমা কখনো ফোনে অর্ডার দিত, কখনো চিরকুটে, আর কোন ঘরটায় কী লেখা থাকবে তার কোনো ঠিক ছিল না। ইবনে সিনার লোকজনও কখনো বস্তার গায়ে দাম লিখত, কখনো ভেতরে কাগজে। ফলে মাঝেমধ্যেই ভুল মাপের কাপড় আসত, নয়তো দাম নিয়ে গণ্ডগোল হতো। তাই দুজন বসে একটা স্ট্যান্ডার্ড অর্ডার-ফর্ম বানিয়ে নিল — অর্ডারে ঠিক কোন কোন ঘর থাকবে (কাপড়ের ধরন, মাপ, সংখ্যা), আর ইবনে সিনার জবাবি রসিদে ঠিক কী কী থাকবে (দাম, ডেলিভারির তারিখ, লট নম্বর)। এই ফর্মটাই হলো তাদের মধ্যে চুক্তি।
+
+মজার ব্যাপারটা হলো, এই ফর্ম চালু হওয়ার পর দুজনকে আর প্রতিবার সরাসরি একটা আস্ত লাইভ অর্ডার চালিয়ে মিলিয়ে দেখতে হয় না। ফাতিমা তার লেখা অর্ডারগুলো নিজের দোকানে বসেই ওই ফর্মের নমুনার সাথে মিলিয়ে নেয় — সব ঘর ঠিকঠাক ভরা আছে তো? ওদিকে ইবনে সিনাও তার রসিদগুলো নিজের গুদামে বসে একই ফর্মের সাথে আলাদাভাবে মিলিয়ে নেয়। এখন যদি ইবনে সিনা হঠাৎ কাউকে না জানিয়ে রসিদ থেকে "লট নম্বর" ঘরটা তুলে দেয়, তার নিজের চেকেই সেটা ফর্মের সাথে না মেলার কারণে ধরা পড়ে যায় — কোনো কাপড় ভুল ঠিকানায় পাঠানোর আগেই।
+
+এই গল্পটাই আসলে **contract testing**। দুজনের একমত হওয়া অর্ডার-ফর্মের নমুনা হলো **contract** — request আর response-এর নির্দিষ্ট shape। ফাতিমার দোকান হলো **consumer**, ইবনে সিনার গুদাম হলো **provider**, আর যে যার জায়গায় বসে শুধু ফর্মের সাথে মিলিয়ে দেখাটাই হলো প্রতিটা side-কে shared contract-এর বিপরীতে আলাদাভাবে test করা। কেউ চুপিসারে ফর্ম বদলালে চেক ফেল করাটাই হলো দুই service একসাথে লাইভ না চালিয়েই breaking API change ধরে ফেলা। বাস্তবে **Pact**-এর মতো tool দিয়ে ঠিক এভাবেই microservices-এর মধ্যে consumer-driven contract যাচাই করা হয়।
+
+## Contract Test যে সমস্যাটি সমাধান করে
+
+একটা microservices architecture-এ, service-গুলো একে অপরের API-র ওপর নির্ভর করে। Contract test ছাড়া:
 
 ```
 Integration test approach (fragile):
@@ -44,11 +52,11 @@ Contract test approach:
   - Clear: breaks tell you exactly which field/endpoint changed
 ```
 
-The canonical tool is **Pact** — a library for consumer-driven contract testing.
+আদর্শ tool হলো **Pact** — consumer-driven contract testing-এর জন্য একটা library।
 
 ## Consumer Side
 
-The consumer (the service making requests) defines what it expects the provider to return:
+consumer (যে service request করে) সংজ্ঞায়িত করে provider কী return করবে বলে সে আশা করে:
 
 ```bash
 npm install -D @pact-foundation/pact
@@ -124,9 +132,9 @@ describe('UserClient', () => {
 });
 ```
 
-Running these tests generates a `pacts/OrderService-UserService.json` file — the contract.
+এই test-গুলো চালালে একটা `pacts/OrderService-UserService.json` file তৈরি হয় — এটাই contract।
 
-## The UserClient Implementation
+## UserClient Implementation
 
 ```typescript
 // order-service/src/user-client.ts
@@ -148,7 +156,7 @@ export class UserClient {
 
 ## Provider Verification
 
-The provider (UserService) verifies it can fulfill the contract without needing OrderService running:
+provider (UserService) OrderService চালু না রেখেই যাচাই করে যে সে contract পূরণ করতে পারে:
 
 ```typescript
 // user-service/src/contract.test.ts
@@ -190,11 +198,11 @@ describe('Pact provider verification', () => {
 });
 ```
 
-When the provider test runs, Pact replays each contract interaction against the real server and verifies the response matches what the consumer expected.
+Provider test চললে, Pact প্রতিটি contract interaction real server-এর বিপরীতে replay করে আর যাচাই করে যে response টা consumer যা আশা করেছিল তার সাথে মেলে।
 
 ## Pact Broker
 
-For teams with many services, a Pact Broker stores and shares contracts:
+অনেক service আছে এমন দলের জন্য, একটা Pact Broker contract-গুলো store ও share করে:
 
 ```yaml
 # docker-compose.yml
@@ -270,21 +278,21 @@ const verifier = new PactV3({
       --to-environment production
 ```
 
-`can-i-deploy` checks the broker: "have all the contracts for this version been verified by all providers?" If not, deployment is blocked.
+`can-i-deploy` broker-কে চেক করে: "এই version-এর সব contract কি সব provider যাচাই করেছে?" যদি না করে থাকে, deployment আটকে দেওয়া হয়।
 
-## What Makes a Good Contract
+## একটা ভালো Contract কী দিয়ে তৈরি
 
-**Include:**
+**যা রাখবেন:**
 
-- Fields your consumer actually uses (not every field the provider returns)
-- Response status codes for success and known error states
-- Required headers (Content-Type, auth)
+- যেসব field আপনার consumer আসলেই ব্যবহার করে (provider যত field return করে সব নয়)
+- সফলতা আর পরিচিত error state-এর জন্য response status code
+- প্রয়োজনীয় header (Content-Type, auth)
 
-**Don't include:**
+**যা রাখবেন না:**
 
-- Optional fields your consumer ignores — adding them to the contract breaks you when the provider removes them
-- Exact values where only the type matters — use `like()` matchers
-- Provider implementation details — test the interface, not the internals
+- আপনার consumer উপেক্ষা করে এমন optional field — contract-এ এগুলো যোগ করলে provider যখন সেগুলো সরায় তখন আপনি ভেঙে পড়েন
+- শুধু type-টাই গুরুত্বপূর্ণ এমন exact value — `like()` matcher ব্যবহার করুন
+- Provider implementation detail — interface টেস্ট করুন, internal নয়
 
 ```typescript
 // BAD: over-specified
@@ -304,9 +312,9 @@ body: {
 },
 ```
 
-## Alternatives to Pact
+## Pact-এর বিকল্প
 
-For smaller teams or REST-only APIs, simpler alternatives work:
+ছোট দল বা REST-only API-র জন্য, সহজতর বিকল্প কাজ করে:
 
 ```typescript
 // OpenAPI-based contract testing: verify provider matches its own spec
@@ -322,4 +330,4 @@ it('GET /users/:id matches OpenAPI spec', async () => {
 // No runtime verification but TypeScript will catch contract drift at build time
 ```
 
-Contract tests pay off proportional to the number of service boundaries. One service → don't bother. Ten services with shared APIs → essential.
+Contract test service boundary-র সংখ্যার সমানুপাতে ফল দেয়। একটা service → দরকার নেই। shared API সহ দশটা service → অপরিহার্য।

@@ -1,9 +1,9 @@
 ---
 title: 'API Gateway'
-subtitle: 'Build a gateway that handles routing, authentication, rate limiting, and request aggregation in one layer.'
+subtitle: 'একটি gateway বানান যা routing, authentication, rate limiting এবং request aggregation একটিই layer-এ সামলায়।'
 chapter: 14
 level: 'intermediate'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['API gateway', 'reverse proxy', 'request aggregation', 'middleware pipeline']
 ---
 
@@ -13,17 +13,25 @@ topics: ['API gateway', 'reverse proxy', 'request aggregation', 'middleware pipe
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What is an API Gateway?
+## গল্পে বুঝি
 
-An API gateway is a single entry point for all client requests. Instead of clients calling 10 different microservices directly, they call one gateway that routes, authenticates, rate limits, and sometimes aggregates responses from multiple services.
+ইবনে সিনা একটা বড় সরকারি অফিস ভবনে গেছে জমির একটা কাগজ ঠিক করাতে। ভেতরে ঢুকেই সে দেখল সামনে একটাই reception desk, আর তার পেছনে অসংখ্য department — কেউ সরাসরি ভেতরে ঢুকে যে কোনো ঘরে চলে যেতে পারে না। reception-এর লোক আগে ইবনে সিনার ভোটার আইডি দেখল, নাম-ঠিকানা মিলিয়ে একটা visitor slip দিল, তারপর বলল — আপনার কাজ তো ভূমি শাখায়, তিনতলায় বাঁয়ের ঘর, এই slip দেখিয়ে ঢুকবেন। ইবনে সিনাকে কোন department কোথায় সেটা খুঁজে বেড়াতে হলো না; reception-ই ঠিক করে দিল সে কোথায় যাবে।
 
-Think of it as a hotel concierge — guests don't need to know where the restaurant, spa, or gym is. They tell the concierge what they want, and the concierge handles the routing.
+একটু পরেই আল-খোয়ারিজমি এসে হাজির — সে সকাল থেকে এই নিয়ে পাঁচবার এসেছে, প্রতিবার একই কথা জিজ্ঞেস করে কর্মচারীদের বিরক্ত করছে। এবার reception তাকে থামিয়ে দিল, বলল — ভাই, একটু পরে আসেন, বারবার একই তদবিরে ভেতরে পাঠানো যাবে না। পাশে ফাতিমা আল-ফিহরি এল অন্য একটা কাজে; তার আইডি ঠিক ছিল, কিন্তু সে ভুল দরজায় যাচ্ছিল বলে reception তাকে হিসাব শাখায় redirect করে দিল। পুরো ভবনে ঢোকার একটাই দরজা, আর সেই দরজাই ঠিক করছে কে ঢুকবে, কে ঢুকবে না, আর কে কোন department-এ যাবে।
+
+এই reception desk-টাই আসলে একটা **API gateway**। ভেতরের department-গুলো হলো আলাদা আলাদা backend service, আইডি যাচাই করাটা **authentication**, আল-খোয়ারিজমিকে বারবার ঢুকতে না দেওয়াটা **rate limiting**, আর ফাতিমা আল-ফিহরিকে সঠিক শাখায় পাঠানোটা **routing** — client কখনো সরাসরি service-এ যায় না, সবাই একটাই দরজা দিয়ে ঢোকে। বাস্তবে Kong বা AWS API Gateway ঠিক এই কাজটাই করে: সব request-এর একটাই entry point, যেখানে auth, rate limit আর route একসাথে সামলানো হয়।
+
+## API Gateway কী?
+
+একটি API gateway হলো সব client request-এর একক প্রবেশপথ। 10টা আলাদা microservice সরাসরি কল করার বদলে, client একটাই gateway কল করে যা route করে, authenticate করে, rate limit করে, আর মাঝে মাঝে একাধিক service-এর response aggregate করে।
+
+এটাকে একটা হোটেলের concierge-এর মতো ভাবুন — অতিথিদের restaurant, spa বা gym কোথায় সেটা জানার দরকার নেই। তারা concierge-কে বলে কী চায়, আর concierge routing সামলায়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like the reception desk at a large office building — instead of wandering each floor, you tell reception what you need, they verify your visitor badge and direct you to the right department.
+একটি বড় অফিস ভবনের reception desk-এর মতো — প্রতিটি floor ঘুরে না বেড়িয়ে আপনি reception-কে বলেন কী দরকার, তারা আপনার visitor badge যাচাই করে সঠিক department-এ পাঠায়।
 
 </Callout>
 
@@ -38,16 +46,16 @@ code={`graph TD
   G --> PS["Product Service"]`}
 />
 
-## Gateway Responsibilities
+## Gateway-র দায়িত্ব
 
-| Concern             | What It Does                                                     |
-| ------------------- | ---------------------------------------------------------------- |
-| Routing             | Forward `/users/*` to user service, `/orders/*` to order service |
-| Authentication      | Verify JWT tokens before forwarding                              |
-| Rate Limiting       | Throttle per API key or IP                                       |
-| Request Aggregation | Combine responses from multiple services into one                |
-| Circuit Breaking    | Stop forwarding to a service that's failing                      |
-| Logging/Tracing     | Add correlation IDs, log all requests                            |
+| বিষয়               | কী করে                                                             |
+| ------------------- | ------------------------------------------------------------------ |
+| Routing             | `/users/*` user service-এ, `/orders/*` order service-এ forward করা |
+| Authentication      | Forward করার আগে JWT token যাচাই করা                               |
+| Rate Limiting       | প্রতি API key বা IP অনুযায়ী throttle করা                          |
+| Request Aggregation | একাধিক service-এর response একটিতে মিলিয়ে দেওয়া                   |
+| Circuit Breaking    | যে service ব্যর্থ হচ্ছে তার দিকে forward বন্ধ করা                  |
+| Logging/Tracing     | Correlation ID যোগ করা, সব request log করা                         |
 
 ## Production API Gateway
 
@@ -613,23 +621,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- An API gateway centralizes cross-cutting concerns: auth, rate limiting, logging, routing
-- **Circuit breakers** prevent cascading failures by stopping requests to failing services
-- **Request aggregation** reduces client round-trips by combining multiple service calls
-- Always add **request IDs** at the gateway and propagate them downstream for tracing
-- Set per-route **timeouts** — a slow product search shouldn't make order creation timeout
+- একটি API gateway cross-cutting concern-গুলো একজায়গায় আনে: auth, rate limiting, logging, routing
+- **Circuit breaker** ব্যর্থ হওয়া service-এ request থামিয়ে cascading failure আটকায়
+- **Request aggregation** একাধিক service call মিলিয়ে client-এর round-trip কমায়
+- Gateway-তে সবসময় **request ID** যোগ করুন এবং tracing-এর জন্য downstream-এ পাঠিয়ে দিন
+- প্রতি route-এ **timeout** সেট করুন — একটি ধীর product search যেন order creation-কে timeout করে না ফেলে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Netflix Zuul** handles billions of requests per day as their API gateway
-- **Kong** and **AWS API Gateway** are popular managed gateway solutions
-- **Shopify** uses a custom gateway for routing between their 300+ services
-- Use a managed gateway unless you need custom routing logic. Build custom for request aggregation or domain-specific auth flows.
+- **Netflix Zuul** তাদের API gateway হিসেবে দিনে কোটি কোটি request সামলায়
+- **Kong** এবং **AWS API Gateway** জনপ্রিয় managed gateway সমাধান
+- **Shopify** তাদের 300+ service-এর মধ্যে routing-এর জন্য একটি custom gateway ব্যবহার করে
+- Custom routing logic দরকার না হলে একটি managed gateway ব্যবহার করুন। Request aggregation বা domain-specific auth flow-এর জন্য custom বানান।
 
 </div>

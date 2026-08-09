@@ -1,9 +1,9 @@
 ---
-title: 'Testing Strategies'
-subtitle: 'Unit tests, integration tests, test fixtures, mocking, and testcontainers — testing that catches real bugs, not just checkbox coverage.'
+title: 'Testing Strategy'
+subtitle: 'Unit test, integration test, test fixture, mocking, আর testcontainers — এমন testing যা আসল bug ধরে, শুধু checkbox coverage নয়।'
 chapter: 19
 level: 'advanced'
-readingTime: '22 min'
+readingTime: '22 মিনিট'
 topics: ['testing', 'integration tests', 'mocking', 'testcontainers', 'fixtures', 'golden files']
 ---
 
@@ -11,7 +11,15 @@ topics: ['testing', 'integration tests', 'mocking', 'testcontainers', 'fixtures'
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Testing Pyramid in Go
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা শার্ট বানানোর গার্মেন্টস কারখানা, আর সবচেয়ে বড় দায়িত্ব quality-control লাইনের। সেখানে ইবনে সিনা বসে থাকে সবার আগে — প্রতিটা বোতাম আলাদা করে টেনে দেখে ঠিকমতো সেলাই হয়েছে কিনা, প্রতিটা সেলাই আলাদা করে পরখ করে। একটা বোতাম, একটা সেলাই — একবারে একটা জিনিস, বাকি সব বাদ দিয়ে। এতে যদি কোনো একটা বোতাম ঢিলা থাকে, ইবনে সিনা সঙ্গে সঙ্গে ধরে ফেলে, কোন জায়গায় গড়বড় সেটাও নিশ্চিত জানে।
+
+ইবনে সিনার পাশেই একটা ইন্সপেকশন স্টেশন, যেখানে একটা বাঁধা checklist ঝোলানো — S সাদা, M সাদা, L নীল, XL কালো, এরকম অনেকগুলো সাইজ-রঙের কম্বিনেশন। আল-খোয়ারিজমি প্রতিটা কম্বিনেশন একই স্টেশন দিয়ে একই নিয়মে চালিয়ে যায়, শুধু ইনপুট বদলায়, যন্ত্র একটাই। এরপর পুরো শার্টটা — কলার, হাতা, বোতাম, পকেট সব একসাথে জোড়া লাগিয়ে গায়ে পরিয়ে দেখা হয় সব অংশ একসাথে ঠিকমতো খাটছে কিনা। কিন্তু আসল কাস্টমার তো আর সবসময় হাজির থাকে না, তাই একটা নকল ডামি ধড় দাঁড় করানো থাকে — মানুষের বদলে ওটাতেই শার্ট পরিয়ে ফিটিং যাচাই হয়।
+
+এই পুরো লাইনটাই আসলে testing strategy। ইবনে সিনার একটা বোতাম বা সেলাই আলাদা পরখ করা হলো **unit test** (একটা function একলা যাচাই)। আল-খোয়ারিজমির বাঁধা checklist ধরে একই স্টেশনে অনেক কম্বিনেশন চালানো হলো **table-driven test** (এক লুপ, অনেক input/output কেস)। পুরো শার্ট জোড়া লাগিয়ে সব অংশ একসাথে যাচাই করা হলো **integration test**। আর কাস্টমার না থাকলে নকল ধড় দিয়ে কাজ চালানো হলো **mock/fake** — আসল database বা API-র বদলে দাঁড় করানো একটা stand-in। বাস্তবেও ঠিক এভাবে: বেশিরভাগ test হবে দ্রুত unit test, mock দিয়ে বাইরের নির্ভরতা সরিয়ে, আর কয়েকটা integration test আসল সিস্টেমে সব একসাথে খাটছে কিনা তা নিশ্চিত করতে — coverage শুধু একটা সংখ্যা, আসল লক্ষ্য bug ধরা।
+
+## Go-তে Testing Pyramid
 
 ```
          /  E2E  \          Few — slow, brittle, but validates everything
@@ -24,15 +32,15 @@ topics: ['testing', 'integration tests', 'mocking', 'testcontainers', 'fixtures'
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-**Unit tests** = checking each ingredient tastes right. **Integration tests** = cooking a dish and tasting it. **E2E tests** = having a customer order, eat, and pay — testing the full restaurant experience. You need all three, but most of your tests should be unit tests (fast and cheap).
+**Unit test** = প্রতিটা উপকরণের স্বাদ ঠিক আছে কিনা যাচাই করা। **Integration test** = একটা পুরো রান্না করে সেটার স্বাদ নেওয়া। **E2E test** = একজন কাস্টমার অর্ডার দিয়ে খেয়ে বিল দিচ্ছে — পুরো রেস্তোরাঁর অভিজ্ঞতা টেস্ট করা। তিনটাই দরকার, কিন্তু আপনার বেশিরভাগ test হওয়া উচিত unit test (দ্রুত আর সস্তা)।
 
 </Callout>
 
-## Unit Testing with Interfaces
+## Interface দিয়ে Unit Testing
 
-The key to testable Go code: depend on interfaces, not implementations.
+testable Go code-এর মূল চাবিকাঠি: implementation-এর উপর নয়, interface-এর উপর নির্ভর করুন।
 
 ```go
 // Define what you need
@@ -109,9 +117,9 @@ func TestUserService_Register(t *testing.T) {
 }
 ```
 
-## Integration Tests with Testcontainers
+## Testcontainers দিয়ে Integration Test
 
-Test against real databases, not mocks:
+mock নয়, আসল database-এর বিরুদ্ধে test করুন:
 
 ```go
 import (
@@ -264,7 +272,7 @@ func TestBookHandler_Create(t *testing.T) {
 
 ## Golden File Testing
 
-Compare output against saved "golden" files — great for complex output:
+output-কে সেভ করা "golden" file-এর সাথে তুলনা করুন — জটিল output-এর জন্য দারুণ:
 
 ```go
 var update = flag.Bool("update", false, "update golden files")
@@ -300,9 +308,9 @@ go test -run TestGenerateReport -update ./...
 go test -run TestGenerateReport ./...
 ```
 
-## Test Fixtures
+## Test Fixture
 
-Reusable test data:
+আবার ব্যবহারযোগ্য test data:
 
 ```go
 // internal/testutil/fixtures.go
@@ -330,7 +338,7 @@ admin := testutil.NewTestUser(func(u *User) {
 })
 ```
 
-## Testing Concurrent Code
+## Concurrent Code Testing
 
 ```go
 func TestSafeCache_Concurrent(t *testing.T) {
@@ -384,12 +392,12 @@ internal/
     └── assert.go             # Custom assertions
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Depend on interfaces** — mock implementations are trivial to write
-2. **Table-driven tests** for comprehensive coverage with minimal code
-3. **Testcontainers** for integration tests against real databases — no mocking the DB
-4. **`testing.Short()`** to skip slow integration tests in fast feedback loops
-5. **Golden files** for complex output comparison — update with `-update` flag
-6. **Always run `-race`** — data races are bugs, not warnings
-7. **Test fixtures with functional options** — `NewTestUser(func(u *User) { u.Role = "admin" })`
+1. **interface-এর উপর নির্ভর করুন** — mock implementation লেখা খুবই সহজ
+2. **Table-driven test** সবচেয়ে কম code-এ ব্যাপক coverage-এর জন্য
+3. **Testcontainers** আসল database-এর বিরুদ্ধে integration test-এর জন্য — DB mock করার দরকার নেই
+4. **`testing.Short()`** দ্রুত feedback loop-এ slow integration test skip করার জন্য
+5. **Golden file** জটিল output তুলনার জন্য — `-update` flag দিয়ে update করুন
+6. **সবসময় `-race` দিয়ে চালান** — data race হলো bug, warning নয়
+7. **functional option সহ test fixture** — `NewTestUser(func(u *User) { u.Role = "admin" })`

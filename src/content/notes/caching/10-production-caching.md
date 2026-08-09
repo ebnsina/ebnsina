@@ -1,9 +1,9 @@
 ---
-title: 'Production Caching'
-subtitle: 'Monitoring hit ratios, detecting hot keys, handling Redis failures gracefully, and knowing when to flush everything.'
+title: 'প্রোডাকশন ক্যাশিং'
+subtitle: 'hit ratio মনিটর করা, hot key শনাক্ত করা, Redis ব্যর্থতা সুন্দরভাবে সামলানো, আর কখন সবকিছু flush করতে হবে তা জানা।'
 chapter: 10
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['monitoring', 'hot keys', 'circuit breaker', 'graceful degradation', 'observability']
 ---
 
@@ -11,17 +11,25 @@ topics: ['monitoring', 'hot keys', 'circuit breaker', 'graceful degradation', 'o
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Production Caching Is Different
+## গল্পে বুঝি
 
-A cache that works in development will fail in production in ways that are hard to predict: memory exhaustion, hot key contention, network partitions, stale data cascades, and cold-start storms. The difference between a cache that helps and one that creates incidents is operational discipline.
+ইবনে সিনার একটা বড় সুপারস্টোর, বহু বছরের অভিজ্ঞ ম্যানেজার। সে সারাদিন খেয়াল রাখে — যে জিনিসগুলো বেশি বিক্রি হয়, সেগুলো সামনের কাউন্টারে সাজানো থাকে যেন কাস্টমার এসেই হাতের নাগালে পেয়ে যায়। ইবনে সিনা মনে মনে হিসাব রাখে, প্রতি দশজন কাস্টমারের মধ্যে কতজন সামনেই জিনিস পেয়ে খুশি হয়ে চলে গেল, আর কতজনকে পেছনের গুদামে গিয়ে খুঁজে আনতে হলো। যদি বেশিরভাগ কাস্টমারকেই গুদামে হাঁটতে হয়, ইবনে সিনা বোঝে সামনের সাজানোটা ঠিক হচ্ছে না — এটাই তার **hit ratio** দেখা।
 
-The problem production caching solves differently from development: how do you know the cache is actually working? How do you degrade gracefully when it fails? How do you respond to anomalies before they become outages?
+একদিন হঠাৎ দেখা গেল, একটা নির্দিষ্ট ব্র্যান্ডের গুঁড়ো দুধ সবাই একসাথে চাইছে — টিভিতে বিজ্ঞাপন দেখে হুড়মুড় করে ভিড়। কাউন্টারের ওই একটা তাক ঘিরেই জটলা, বাকি দোকান ফাঁকা। ইবনে সিনা টের পায় এই একটা পণ্যই এখন অসামঞ্জস্য পরিমাণ ভিড় টানছে — এটাই **hot key**। সে তখন ওই দুধ কয়েক জায়গায় ছড়িয়ে রাখে আর কাছেই একজন হেল্পারকে হাতে কিছু তুলে দেয়, যেন এক তাকেই সব চাপ না পড়ে। আরেকদিন কাউন্টার গোছানোর হেল্পার ছুটিতে, তাকগুলো এলোমেলো। ইবনে সিনা দোকান বন্ধ না করে সোজা গুদাম থেকেই কাস্টমারদের জিনিস এনে দিতে থাকে — একটু ধীর হয়, কিন্তু দোকান চলতেই থাকে। আর যেদিন কাউন্টারে ভুল দামের স্টিকার আর পুরনো মেয়াদের প্যাকেট জমে যায়, ইবনে সিনা গোটা সাজানোটা খালি করে নতুন করে গুছিয়ে বসায়।
+
+গল্পের কাউন্টার হলো Redis cache, গুদাম হলো database। কতজন কাউন্টারেই জিনিস পেল বনাম গুদামে যেতে হলো — সেটাই **hit ratio** মনিটর করা; এক পণ্যে হঠাৎ ভিড় হলো **hot key**, যা ছড়িয়ে বা লোকাল কপি রেখে সামলাতে হয়; হেল্পার না থাকলেও গুদাম থেকে সরাসরি সার্ভ করাটাই Redis fail করলে database-এ **graceful fallback**; আর গোটা কাউন্টার খালি করে নতুন করে সাজানোই হলো **cache flush**। বাস্তবেও প্রোডাকশনে এভাবেই hit ratio-তে চোখ রাখা হয়, hot key ধরা হয়, Redis পড়ে গেলেও অ্যাপ যেন না ভাঙে তা নিশ্চিত করা হয়।
+
+## কেন প্রোডাকশন ক্যাশিং আলাদা
+
+যে ক্যাশ ডেভেলপমেন্টে ঠিকঠাক কাজ করে, সেটা প্রোডাকশনে এমন সব উপায়ে ব্যর্থ হয় যা আগে থেকে অনুমান করা কঠিন: মেমরি ফুরিয়ে যাওয়া, hot key contention, network partition, বাসি ডেটার cascade, আর cold-start storm। যে ক্যাশ সাহায্য করে আর যেটা incident তৈরি করে — এই দুইয়ের মধ্যে পার্থক্য হলো operational discipline।
+
+প্রোডাকশন ক্যাশিং যে সমস্যাটা ডেভেলপমেন্টের চেয়ে ভিন্নভাবে সমাধান করে: আপনি কীভাবে জানবেন ক্যাশ আসলেই কাজ করছে? এটা ব্যর্থ হলে আপনি কীভাবে সুন্দরভাবে degrade করবেন? anomaly-গুলো outage হয়ে ওঠার আগেই আপনি কীভাবে সাড়া দেবেন?
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A restaurant that caches pre-made meals is efficient — until the kitchen runs out of containers, the stored meals go bad, or one dish becomes so popular that everyone wants it at once. Production caching requires the same operational awareness: inventory monitoring, freshness checks, and a plan for when the system is overwhelmed.
+যে রেস্তোরাঁ আগে থেকে বানানো খাবার ক্যাশ করে রাখে সেটা দক্ষ — যতক্ষণ না রান্নাঘরের container ফুরিয়ে যায়, জমিয়ে রাখা খাবার নষ্ট হয়ে যায়, কিংবা একটা পদ এত জনপ্রিয় হয়ে ওঠে যে সবাই একসাথে সেটাই চায়। প্রোডাকশন ক্যাশিংয়ের জন্যও একই operational সচেতনতা দরকার: inventory মনিটরিং, freshness যাচাই, আর সিস্টেম যখন সামলাতে পারছে না তখনকার জন্য একটা পরিকল্পনা।
 
 </Callout>
 
@@ -29,7 +37,7 @@ A restaurant that caches pre-made meals is efficient — until the kitchen runs 
 
 ### Hit Ratio
 
-The single most important metric. Track it continuously.
+সবচেয়ে গুরুত্বপূর্ণ একক metric। এটাকে অবিরাম track করুন।
 
 ```typescript
 class ObservableCache {
@@ -78,12 +86,12 @@ class ObservableCache {
 }
 ```
 
-**Alert thresholds:**
+**Alert threshold:**
 
-- Hit ratio drops below 80%: investigate (cold start? cache poisoning? new access pattern?)
-- Hit ratio drops below 50%: page on-call
-- Eviction rate > 0 and rising: cache undersized, add memory or reduce TTLs
-- Cache latency p99 > 5ms: network issue or hot key contention
+- Hit ratio 80%-এর নিচে নামলে: তদন্ত করুন (cold start? cache poisoning? নতুন access pattern?)
+- Hit ratio 50%-এর নিচে নামলে: on-call-কে page করুন
+- Eviction rate > 0 এবং বাড়ছে: ক্যাশ ছোট পড়েছে, মেমরি বাড়ান বা TTL কমান
+- Cache latency p99 > 5ms: network সমস্যা বা hot key contention
 
 ### Redis INFO
 
@@ -125,9 +133,9 @@ async function collectRedisMetrics(): Promise<void> {
 setInterval(collectRedisMetrics, 30_000);
 ```
 
-## Hot Key Detection
+## Hot Key শনাক্তকরণ
 
-A hot key is one that receives a disproportionate fraction of all requests — often a viral piece of content or a shared session. It creates a bottleneck on the node hosting that key.
+hot key হলো এমন একটা key যেটা সব request-এর অসামঞ্জস্যপূর্ণ বড় একটা অংশ পায় — প্রায়ই কোনো ভাইরাল কনটেন্ট বা একটা shared session। এটা যে node-এ ওই key থাকে সেখানে একটা bottleneck তৈরি করে।
 
 ```bash
 # Built-in hot key analysis (requires LFU policy)
@@ -161,7 +169,7 @@ class HotKeyDetector {
 }
 ```
 
-**Mitigating hot keys:**
+**Hot key সামলানো:**
 
 ```typescript
 // Strategy 1: local in-process cache for hot keys
@@ -196,7 +204,7 @@ async function setHotValue(baseKey: string, value: string, ttl: number): Promise
 
 ## Graceful Degradation
 
-Your application should work when Redis is down — just slower.
+Redis ডাউন থাকলেও আপনার অ্যাপ্লিকেশনের কাজ করা উচিত — শুধু একটু ধীরে।
 
 ```typescript
 class ResilientCache {
@@ -250,13 +258,13 @@ class ResilientCache {
 
 <Callout type="warning">
 
-**Never make your application unavailable because Redis is unavailable.** Cache is a performance optimization, not a system of record. When the cache is down, your application should be slower, not broken.
+**Redis অনুপলব্ধ বলে আপনার অ্যাপ্লিকেশনকে কখনো অনুপলব্ধ করবেন না।** ক্যাশ হলো একটা performance optimization, system of record নয়। ক্যাশ ডাউন থাকলে আপনার অ্যাপ্লিকেশন ধীর হওয়া উচিত, ভেঙে পড়া নয়।
 
 </Callout>
 
-## Cache Flush Strategy
+## Cache Flush কৌশল
 
-Sometimes you need to flush everything — bad data was cached, a critical bug wrote corrupt values, a deploy changed data shape.
+কখনো কখনো আপনাকে সবকিছু flush করতে হয় — খারাপ ডেটা ক্যাশ হয়ে গেছে, একটা critical bug corrupt value লিখেছে, একটা deploy ডেটার shape বদলে দিয়েছে।
 
 ```typescript
 // Flush by pattern (never use KEYS in production — blocks Redis)
@@ -285,7 +293,7 @@ await flushByPattern('user:*');
 await flushByPattern('catalog:product:*');
 ```
 
-**Version-based global flush** (better than FLUSHDB):
+**Version-ভিত্তিক global flush** (FLUSHDB-এর চেয়ে ভালো):
 
 ```typescript
 // Increment a global cache version — all existing keys become stale
@@ -303,9 +311,9 @@ async function get(key: string): Promise<string | null> {
 }
 ```
 
-## Connection Pool Management
+## Connection Pool ব্যবস্থাপনা
 
-Unconfigured connection pools are a common source of Redis outages.
+Configure না করা connection pool Redis outage-এর একটা সাধারণ উৎস।
 
 ```typescript
 const redis = createClient({
@@ -330,9 +338,9 @@ redis.on('reconnecting', () => {
 });
 ```
 
-## Pre-Deploy Checklist
+## Pre-Deploy চেকলিস্ট
 
-Before deploying a service that uses Redis heavily:
+Redis-নির্ভর একটা service deploy করার আগে:
 
 ```
 □ maxmemory set with appropriate policy (allkeys-lru for pure cache)

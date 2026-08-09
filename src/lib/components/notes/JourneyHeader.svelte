@@ -2,17 +2,16 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { progress } from '$lib/progress.svelte';
-	import { nt, type Locale } from '$lib/i18n/notes';
+	import { t } from '$lib/data/notes-strings';
 
-	let { total, locale = 'en' }: { total: number; locale?: Locale } = $props();
+	let { total }: { total: number } = $props();
 
-	const t = $derived(nt(locale));
 	// Rank names are stored in English in the progress store; localize for display.
 	const rankName = $derived(t.ranks[progress.rank.name] ?? progress.rank.name);
 	const nextRankName = $derived(
 		progress.rank.next ? (t.ranks[progress.rank.next.name] ?? progress.rank.next.name) : ''
 	);
-	const curious = $derived(t.ranks['Curious']);
+	const curious = t.ranks['Curious'];
 
 	let fileInput = $state<HTMLInputElement>();
 	let menuEl = $state<HTMLElement>();
@@ -52,7 +51,7 @@
 		try {
 			progress.import(await file.text());
 		} catch {
-			importError = nt(locale).importError;
+			importError = t.importError;
 		}
 		if (fileInput) fileInput.value = '';
 	}

@@ -1,9 +1,9 @@
 ---
-title: 'Processes & Signals'
-subtitle: 'What a Linux process actually is, how fork and exec build the entire universe, and the signals that decide whether your app shuts down cleanly or dies screaming.'
+title: 'প্রসেস ও সিগন্যাল'
+subtitle: 'একটা Linux প্রসেস আসলে কী, কীভাবে fork আর exec গোটা মহাবিশ্ব বানায়, আর যে সিগন্যালগুলো ঠিক করে আপনার অ্যাপ পরিষ্কারভাবে বন্ধ হবে নাকি চিৎকার করতে করতে মরবে।'
 chapter: 4
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['processes', 'signals', 'fork', 'exec', 'linux']
 ---
 
@@ -13,17 +13,25 @@ topics: ['processes', 'signals', 'fork', 'exec', 'linux']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Processes and signals are like employees in an office — you can see who's working, send a message telling someone to stop, and escalate with a harder signal if they ignore you.
+প্রসেস আর সিগন্যাল অনেকটা একটা অফিসের কর্মচারীদের মতো — আপনি দেখতে পারেন কে কাজ করছে, কাউকে থামতে বলে একটা বার্তা পাঠাতে পারেন, আর সে উপেক্ষা করলে একটা কড়া সিগন্যাল দিয়ে চাপ বাড়াতে পারেন।
 
 </Callout>
 
-## A process is not your app
+## গল্পে বুঝি
 
-A process is a **kernel data structure** describing a running program: its memory, its file descriptors, its credentials, the address of the next instruction to execute. Your Go binary, your Node server, your Postgres — they are all processes. The kernel manages a few hundred or few thousand of them simultaneously, scheduling them onto your CPU cores microsecond by microsecond.
+ফাতিমা আল-ফিহরি একটা বড় কারখানার ম্যানেজার। ফ্লোরে অনেক কর্মী কাজ করছে, প্রত্যেকের বুকে একটা করে ব্যাজ নম্বর ঝোলানো — ব্যাজ ১২৩৪ কাঠ কাটছে, ব্যাজ ১৫৬৭ হিসাবের খাতা লিখছে, ব্যাজ ৮৯০ যন্ত্র চালাচ্ছে। একজন কর্মীকে কাজ থেকে ছুটি দিতে হলে ফাতিমা প্রথমে একটা ভদ্র চিরকুট পাঠায় — "হাতের কাজটা শেষ করে গুছিয়ে বেরিয়ে যান।" কর্মী তখন যন্ত্রটা নিরাপদে বন্ধ করে, খাতার লাইনটা শেষ করে, হাতিয়ার জায়গামতো রেখে, পরিষ্কারভাবে বেরিয়ে যায়। কোনো কাজ অসম্পূর্ণ থাকে না, কিছু নষ্টও হয় না।
 
-Look at one:
+কিন্তু মাঝেমধ্যে এমন হয় — কোনো কর্মী পুরোপুরি জমে গেছে, চিরকুট পাঠানোর পরেও নড়ছে না, কোনো সাড়া নেই। তখন আর অপেক্ষা করে লাভ নেই। ফাতিমা সিকিউরিটি ডাকে, আর তারা লোকটাকে কাজের মাঝখান থেকেই টেনে বের করে দেয় — হাতিয়ার মেঝেতে পড়ে থাকে, খাতা খোলা থাকে, গোছানোর কোনো সুযোগই থাকে না। কাজ হয়ে যায়, কিন্তু পেছনে একটা অগোছালো অবস্থা রেখে যায়।
+
+এই গল্পটাই আসলে **process** আর **signal**। প্রতিটা কর্মী তার ব্যাজ নম্বর নিয়ে হলো একটা process, যার **PID**। ভদ্র চিরকুট "গুছিয়ে বেরিয়ে যান" হলো **SIGTERM** — process নিজের কাজ শেষ করে, connection বন্ধ করে, buffer flush করে পরিষ্কারভাবে বেরোয়, অর্থাৎ **graceful shutdown**। আর জমে-যাওয়া কর্মীকে সিকিউরিটি দিয়ে টেনে বের করা হলো **SIGKILL** — কার্নেল process-কে সঙ্গে সঙ্গে মেরে ফেলে, গোছানোর কোনো সুযোগ ছাড়াই। বাস্তবে তাই সবসময় আগে SIGTERM পাঠান, কয়েক সেকেন্ড অপেক্ষা করুন; process সত্যিই আটকে না গেলে SIGKILL-এ যাবেন না, নাহলে অসম্পূর্ণ transaction, করাপ্ট ফাইল আর পড়ে থাকা lock-এর মতো ঝামেলা হতে পারে।
+
+## একটা প্রসেস আপনার অ্যাপ নয়
+
+একটা প্রসেস হলো একটা চলমান প্রোগ্রামের বর্ণনা দেওয়া একটা **কার্নেল ডেটা স্ট্রাকচার**: এর মেমরি, এর ফাইল ডেসক্রিপ্টর, এর ক্রেডেনশিয়াল, এক্সিকিউট করার পরের ইনস্ট্রাকশনের অ্যাড্রেস। আপনার Go বাইনারি, আপনার Node সার্ভার, আপনার Postgres — সবই প্রসেস। কার্নেল একই সঙ্গে কয়েকশো বা কয়েক হাজার প্রসেস ম্যানেজ করে, মাইক্রোসেকেন্ডে মাইক্রোসেকেন্ডে সেগুলোকে আপনার CPU কোরে শিডিউল করে।
+
+একটা দেখুন:
 
 ```bash
 $ ps -ef | head
@@ -34,54 +42,54 @@ deploy      1234    1233  0 10:42 pts/0 00:00:00 -bash
 deploy      1567    1234  0 10:43 pts/0 00:00:00 ps -ef
 ```
 
-Five columns matter:
+পাঁচটা কলাম গুরুত্বপূর্ণ:
 
-- **PID** — process ID, a number unique while the process is alive.
-- **PPID** — parent PID. Every process except `init` (PID 1) has a parent.
-- **TTY** — the terminal it is attached to, or `?` if none.
-- **TIME** — total CPU time the process has consumed.
-- **CMD** — the command line.
+- **PID** — process ID, প্রসেস জীবিত থাকা অবস্থায় একটা ইউনিক সংখ্যা।
+- **PPID** — parent PID। `init` (PID 1) ছাড়া প্রতিটা প্রসেসের একটা parent আছে।
+- **TTY** — এটা যে টার্মিনালে যুক্ত, বা কোনোটা না থাকলে `?`।
+- **TIME** — প্রসেস যত মোট CPU টাইম খরচ করেছে।
+- **CMD** — কমান্ড লাইন।
 
-## How processes are born — fork and exec
+## প্রসেস কীভাবে জন্মায় — fork আর exec
 
-Linux has only one way to create a process: `fork()`. The kernel takes an existing process, makes an _exact copy_ of it (same memory, same file descriptors, same everything), and gives the copy a new PID. Both copies return from the `fork()` call — the parent gets the child's PID, the child gets `0`. From there they diverge.
+একটা প্রসেস বানানোর Linux-এ একটাই উপায়: `fork()`। কার্নেল একটা বিদ্যমান প্রসেস নেয়, তার একটা _হুবহু কপি_ বানায় (একই মেমরি, একই ফাইল ডেসক্রিপ্টর, একই সবকিছু), আর কপিটাকে একটা নতুন PID দেয়। দুটো কপিই `fork()` কল থেকে রিটার্ন করে — parent পায় child-এর PID, child পায় `0`। সেখান থেকে তারা আলাদা হয়ে যায়।
 
-To run a _different_ program, the child immediately calls `exec()`, which replaces its own program text and memory with the new binary. So when you type:
+একটা _ভিন্ন_ প্রোগ্রাম চালাতে, child সঙ্গে সঙ্গে `exec()` কল করে, যা নিজের প্রোগ্রাম টেক্সট আর মেমরি নতুন বাইনারি দিয়ে প্রতিস্থাপন করে। তাই আপনি যখন টাইপ করেন:
 
 ```bash
 ls /etc
 ```
 
-What actually happens:
+আসলে যা ঘটে:
 
-1. Your shell (`bash`) calls `fork()`. Now there are two bashes.
-2. The child bash calls `exec("/usr/bin/ls", ["ls", "/etc"])`. Its memory is replaced with `ls`.
-3. The parent bash calls `wait()` and pauses until the child exits.
-4. `ls` runs, prints, exits.
-5. The parent bash resumes and shows you a prompt.
+1. আপনার শেল (`bash`) `fork()` কল করে। এখন দুটো bash আছে।
+2. child bash `exec("/usr/bin/ls", ["ls", "/etc"])` কল করে। এর মেমরি `ls` দিয়ে প্রতিস্থাপিত হয়।
+3. parent bash `wait()` কল করে আর child বের হওয়া পর্যন্ত থেমে থাকে।
+4. `ls` চলে, প্রিন্ট করে, বের হয়।
+5. parent bash আবার শুরু হয় আর আপনাকে একটা প্রম্পট দেখায়।
 
-This is **all of Unix**. Every command, every daemon, every `systemctl start nginx` — fork and exec.
+এটাই **গোটা Unix**। প্রতিটা কমান্ড, প্রতিটা daemon, প্রতিটা `systemctl start nginx` — fork আর exec।
 
 <Callout type="info">
 
-**Why fork+exec instead of one call?**
+**একটা কলের বদলে fork+exec কেন?**
 
-Because between the fork and the exec, the child has a chance to set things up — close inherited file descriptors, redirect stdin/stdout, change user, set environment variables. Pipes, redirects, and `sudo` all work because of this gap.
+কারণ fork আর exec-এর মাঝখানে, child-এর জিনিসপত্র সেট আপ করার একটা সুযোগ থাকে — উত্তরাধিকারসূত্রে পাওয়া ফাইল ডেসক্রিপ্টর বন্ধ করা, stdin/stdout রিডাইরেক্ট করা, ইউজার বদলানো, এনভায়রনমেন্ট ভ্যারিয়েবল সেট করা। পাইপ, রিডাইরেক্ট, আর `sudo` — সবই এই ফাঁকটার জন্য কাজ করে।
 
 </Callout>
 
-## The init process — PID 1
+## init প্রসেস — PID 1
 
-PID 1 is special. The kernel starts it as the very first userspace process. On modern Linux that is `systemd`. PID 1's job:
+PID 1 বিশেষ। কার্নেল একে একদম প্রথম userspace প্রসেস হিসেবে শুরু করে। আধুনিক Linux-এ সেটা `systemd`। PID 1-এর কাজ:
 
-- Be the ancestor of every other process.
-- Adopt orphaned processes (when a parent dies, the children's PPID becomes 1).
-- Reap zombie processes (more on this below).
-- Run the boot sequence — bring up disks, network, services.
+- অন্য প্রতিটা প্রসেসের পূর্বপুরুষ হওয়া।
+- অনাথ প্রসেস দত্তক নেওয়া (একটা parent মারা গেলে, child-দের PPID হয়ে যায় 1)।
+- জম্বি প্রসেস reap করা (এ নিয়ে আরও নিচে)।
+- বুট সিকোয়েন্স চালানো — ডিস্ক, নেটওয়ার্ক, সার্ভিস চালু করা।
 
-If PID 1 dies, the kernel panics. That is why systemd is so cautious about its own crashes.
+PID 1 মারা গেলে, কার্নেল panic করে। এজন্যই systemd নিজের ক্র্যাশ নিয়ে এত সতর্ক।
 
-## Process states
+## প্রসেস স্টেট
 
 ```bash
 $ ps -axo pid,state,comm | head
@@ -93,20 +101,20 @@ $ ps -axo pid,state,comm | head
  1567 R ps
 ```
 
-The single-letter state:
+একক-অক্ষরের স্টেট:
 
-| State | Meaning                                                                   |
-| ----- | ------------------------------------------------------------------------- |
-| `R`   | Running or runnable — actively using a CPU or waiting for one.            |
-| `S`   | Sleeping interruptibly — waiting for I/O, a signal, or a network event.   |
-| `D`   | Sleeping uninterruptibly — usually waiting on disk. **Cannot be killed.** |
-| `Z`   | Zombie — exited, but parent has not collected its exit code yet.          |
-| `T`   | Stopped — paused with `Ctrl+Z` or by a signal.                            |
-| `I`   | Idle kernel thread.                                                       |
+| State | মানে                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------- |
+| `R`   | Running বা runnable — সক্রিয়ভাবে একটা CPU ব্যবহার করছে বা একটার জন্য অপেক্ষা করছে।         |
+| `S`   | Interruptibly sleeping — I/O, একটা সিগন্যাল, বা একটা নেটওয়ার্ক ইভেন্টের জন্য অপেক্ষা করছে। |
+| `D`   | Uninterruptibly sleeping — সাধারণত ডিস্কের জন্য অপেক্ষা করছে। **kill করা যায় না।**         |
+| `Z`   | Zombie — বের হয়ে গেছে, কিন্তু parent এখনো এর exit code সংগ্রহ করেনি।                       |
+| `T`   | Stopped — `Ctrl+Z` দিয়ে বা একটা সিগন্যাল দিয়ে থামানো।                                     |
+| `I`   | Idle কার্নেল থ্রেড।                                                                         |
 
-A `D`-state process stuck for minutes usually means the disk is dying or the network filesystem is unreachable. You cannot `kill -9` it; the kernel has it. The only fix is fixing the underlying I/O or rebooting.
+মিনিটের পর মিনিট আটকে থাকা একটা `D`-স্টেট প্রসেস সাধারণত মানে ডিস্ক মরে যাচ্ছে বা নেটওয়ার্ক ফাইলসিস্টেম নাগালের বাইরে। আপনি এটাকে `kill -9` করতে পারবেন না; কার্নেল একে ধরে রেখেছে। একমাত্র সমাধান হলো অন্তর্নিহিত I/O ঠিক করা বা রিবুট করা।
 
-## Tools to see processes
+## প্রসেস দেখার টুল
 
 ```bash
 ps -ef                  # POSIX-ish, every process
@@ -122,18 +130,18 @@ pidof nginx             # similar, single-line output
 pstree                  # the whole family tree
 ```
 
-`htop` is what you reach for nine times out of ten:
+`htop`-ই আপনি দশবারের নয়বার হাতে তুলে নেন:
 
 ```bash
 sudo apt install htop
 htop
 ```
 
-Press `t` for tree view, `F5` to refresh, `F9` to send a signal, `q` to quit.
+tree view-এর জন্য `t` চাপুন, রিফ্রেশের জন্য `F5`, একটা সিগন্যাল পাঠাতে `F9`, বের হতে `q`।
 
-## Signals — how processes talk to the kernel and each other
+## সিগন্যাল — প্রসেস কীভাবে কার্নেল আর একে অপরের সঙ্গে কথা বলে
 
-A **signal** is a one-byte message sent to a process. The kernel delivers it; the process either runs a handler, ignores it, or dies. There are about thirty of them:
+একটা **সিগন্যাল** হলো একটা প্রসেসে পাঠানো এক-বাইটের বার্তা। কার্নেল এটা ডেলিভার করে; প্রসেস হয় একটা handler চালায়, উপেক্ষা করে, বা মরে যায়। এদের প্রায় তিরিশটা আছে:
 
 ```bash
 $ kill -l | head -3
@@ -142,20 +150,20 @@ $ kill -l | head -3
 11) SIGSEGV  12) SIGUSR2  13) SIGPIPE   14) SIGALRM  15) SIGTERM
 ```
 
-The ones you actually use:
+আপনি আসলে যেগুলো ব্যবহার করেন:
 
-| Signal                | Number  | What it asks                                          |
-| --------------------- | ------- | ----------------------------------------------------- |
-| `SIGTERM`             | 15      | "Please shut down cleanly." Default for `kill`.       |
-| `SIGINT`              | 2       | "User pressed Ctrl+C."                                |
-| `SIGHUP`              | 1       | "Reload your config." (Originally: terminal hung up.) |
-| `SIGUSR1` / `SIGUSR2` | 10 / 12 | Application-defined.                                  |
-| `SIGKILL`             | 9       | "Die now." Cannot be caught or ignored.               |
-| `SIGSTOP`             | 19      | "Pause." Cannot be caught.                            |
-| `SIGCONT`             | 18      | "Resume after a stop."                                |
-| `SIGCHLD`             | 17      | Sent to a parent when a child exits.                  |
+| Signal                | Number  | যা চায়                                                      |
+| --------------------- | ------- | ------------------------------------------------------------ |
+| `SIGTERM`             | 15      | "দয়া করে পরিষ্কারভাবে বন্ধ হও।" `kill`-এর ডিফল্ট।           |
+| `SIGINT`              | 2       | "ইউজার Ctrl+C চেপেছে।"                                       |
+| `SIGHUP`              | 1       | "তোমার config রিলোড করো।" (মূলত: টার্মিনাল hang up হয়েছিল।) |
+| `SIGUSR1` / `SIGUSR2` | 10 / 12 | অ্যাপ্লিকেশন-নির্ধারিত।                                      |
+| `SIGKILL`             | 9       | "এখনই মরো।" ধরা বা উপেক্ষা করা যায় না।                      |
+| `SIGSTOP`             | 19      | "থামো।" ধরা যায় না।                                         |
+| `SIGCONT`             | 18      | "থামার পর আবার শুরু করো।"                                    |
+| `SIGCHLD`             | 17      | একটা child বের হলে parent-কে পাঠানো হয়।                     |
 
-Send a signal:
+একটা সিগন্যাল পাঠান:
 
 ```bash
 kill 1234              # SIGTERM by default
@@ -166,18 +174,18 @@ killall -HUP nginx     # by name, all matching processes
 pkill -f 'node server' # by command-line pattern
 ```
 
-## SIGTERM vs SIGKILL — the most important distinction
+## SIGTERM বনাম SIGKILL — সবচেয়ে গুরুত্বপূর্ণ পার্থক্য
 
-`SIGTERM` is **catchable**. A well-written app installs a handler that:
+`SIGTERM` **catchable**। একটা ভালোভাবে লেখা অ্যাপ একটা handler ইনস্টল করে যা:
 
-1. Stops accepting new requests.
-2. Finishes in-flight requests.
-3. Closes database connections, flushes buffers, unlinks PID files.
-4. Exits with code 0.
+1. নতুন রিকোয়েস্ট নেওয়া বন্ধ করে।
+2. চলমান রিকোয়েস্ট শেষ করে।
+3. ডেটাবেস কানেকশন বন্ধ করে, বাফার flush করে, PID ফাইল unlink করে।
+4. code 0 দিয়ে বের হয়।
 
-`SIGKILL` is **not catchable**. The kernel kills the process _immediately_, with no chance to clean up. In-flight transactions die. Open files may end up corrupt. Locks held in memory are gone but locks held in databases or files persist.
+`SIGKILL` **catchable নয়**। কার্নেল প্রসেসটাকে _সঙ্গে সঙ্গে_ kill করে, পরিষ্কার করার কোনো সুযোগ ছাড়াই। চলমান ট্রানজ্যাকশন মরে যায়। খোলা ফাইল করাপ্ট হয়ে যেতে পারে। মেমরিতে ধরে রাখা লক চলে যায় কিন্তু ডেটাবেস বা ফাইলে ধরে রাখা লক থেকে যায়।
 
-Always send `SIGTERM` first. Wait a few seconds. Only escalate to `SIGKILL` if the process is truly stuck.
+সবসময় আগে `SIGTERM` পাঠান। কয়েক সেকেন্ড অপেক্ষা করুন। প্রসেস সত্যিই আটকে থাকলে তবেই `SIGKILL`-এ চাপ বাড়ান।
 
 ```bash
 # Graceful shutdown attempt:
@@ -186,11 +194,11 @@ sleep 5
 kill -0 1234 2>/dev/null && kill -9 1234
 ```
 
-`systemd` does exactly this. By default it sends `SIGTERM`, waits `TimeoutStopSec` seconds (90 default), then sends `SIGKILL`.
+`systemd` ঠিক এটাই করে। ডিফল্টভাবে এটা `SIGTERM` পাঠায়, `TimeoutStopSec` সেকেন্ড (ডিফল্ট 90) অপেক্ষা করে, তারপর `SIGKILL` পাঠায়।
 
-## Catching signals in your app
+## আপনার অ্যাপে সিগন্যাল catch করা
 
-Every language can install signal handlers. Here is Go:
+প্রতিটা ভাষা সিগন্যাল handler ইনস্টল করতে পারে। এই যে Go-তে:
 
 ```go
 package main
@@ -222,17 +230,17 @@ func main() {
 }
 ```
 
-When `systemctl stop myservice` runs, this binary gets `SIGTERM`, drains, and exits cleanly. With no handler, the process dies the instant the signal arrives.
+`systemctl stop myservice` চললে, এই বাইনারিটা `SIGTERM` পায়, drain করে, আর পরিষ্কারভাবে বের হয়। handler না থাকলে, সিগন্যাল পৌঁছানোর মুহূর্তেই প্রসেস মরে যায়।
 
-## Zombies and orphans
+## জম্বি আর অনাথ
 
-When a process exits, its PID and exit code linger in the kernel until the parent calls `wait()` to collect them. If the parent is sloppy and never calls `wait()`, the child stays around as a **zombie** — visible in `ps` with state `Z`. Zombies do not consume CPU or memory beyond the kernel struct, but they consume PIDs. A leak of a million zombies will exhaust the PID table and the box will refuse to fork.
+একটা প্রসেস বের হলে, parent তাদের সংগ্রহ করতে `wait()` কল না করা পর্যন্ত এর PID আর exit code কার্নেলে ঝুলে থাকে। parent যদি অসাবধান হয় আর কখনো `wait()` কল না করে, child একটা **জম্বি** হিসেবে থেকে যায় — `ps`-এ `Z` স্টেটে দেখা যায়। জম্বি কার্নেল struct-এর বাইরে CPU বা মেমরি খায় না, কিন্তু PID খায়। দশ লাখ জম্বির লিক PID টেবিল নিঃশেষ করবে আর বক্স fork করতে অস্বীকার করবে।
 
-If the parent dies before the child, the child is **orphaned** and re-parented to PID 1. systemd reaps these correctly, so orphans are usually fine. Zombies are a parent-process bug.
+parent যদি child-এর আগে মারা যায়, child **অনাথ** হয়ে PID 1-এ re-parent হয়। systemd এদের সঠিকভাবে reap করে, তাই অনাথরা সাধারণত ঠিক থাকে। জম্বি হলো একটা parent-প্রসেস বাগ।
 
 ## Foreground, background, jobs
 
-In an interactive shell:
+একটা ইন্টারঅ্যাক্টিভ শেলে:
 
 ```bash
 sleep 100               # foreground — your prompt is gone until it finishes
@@ -243,14 +251,14 @@ fg                      # bring back to foreground
 disown                  # detach from the shell so it survives logout
 ```
 
-For real long-running daemons, do not rely on `nohup` and `disown`. Use systemd (next chapter).
+আসল দীর্ঘ-চলা daemon-এর জন্য, `nohup` আর `disown`-এর উপর ভরসা করবেন না। systemd ব্যবহার করুন (পরের চ্যাপ্টার)।
 
-## Recap
+## রিক্যাপ
 
-- A process is a kernel object: memory, file descriptors, credentials, a PID.
-- New processes come from `fork` (copy) plus `exec` (replace). PID 1 is the ancestor of all.
-- Process states matter — `D` is the scary one, `Z` is a parent-process bug.
-- `SIGTERM` asks politely. `SIGKILL` is non-negotiable. Always try `SIGTERM` first.
-- Catch signals in your app to drain cleanly. Untrapped signals = unclean shutdown.
+- একটা প্রসেস একটা কার্নেল অবজেক্ট: মেমরি, ফাইল ডেসক্রিপ্টর, ক্রেডেনশিয়াল, একটা PID।
+- নতুন প্রসেস আসে `fork` (কপি) আর `exec` (প্রতিস্থাপন) থেকে। PID 1 সবার পূর্বপুরুষ।
+- প্রসেস স্টেট গুরুত্বপূর্ণ — `D` ভয়ংকরটা, `Z` একটা parent-প্রসেস বাগ।
+- `SIGTERM` ভদ্রভাবে অনুরোধ করে। `SIGKILL` নিয়ে আপস চলে না। সবসময় আগে `SIGTERM` চেষ্টা করুন।
+- পরিষ্কারভাবে drain করতে আপনার অ্যাপে সিগন্যাল catch করুন। ধরা না-পড়া সিগন্যাল = নোংরা shutdown।
 
-Next: systemd — the supervisor that turns "I have a binary" into "this thing is up forever."
+পরবর্তী: systemd — যে সুপারভাইজার "আমার একটা বাইনারি আছে" কে "এই জিনিসটা চিরকাল up" এ পরিণত করে।

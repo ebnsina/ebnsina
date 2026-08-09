@@ -1,9 +1,9 @@
 ---
 title: 'Production self-host'
-subtitle: 'Behind nginx with TLS, systemd-managed, observable, scaled across processes via Redis. Same operational shape as the GraphQL and gRPC tracks — different protocol on the wire.'
+subtitle: 'TLS সহ nginx-এর পেছনে, systemd-managed, observable, Redis-এর মাধ্যমে process জুড়ে scaled। GraphQL আর gRPC ট্র্যাকের মতোই একই operational shape — wire-এ আলাদা protocol।'
 chapter: 10
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['websockets', 'nginx', 'systemd', 'observability', 'scaling']
 ---
 
@@ -11,19 +11,27 @@ topics: ['websockets', 'nginx', 'systemd', 'observability', 'scaling']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-By chapter 9 you have a working multi-process WebSocket service with auth, presence, backpressure, and reconnection. This chapter walks the deploy. Self-hosted, on a VPS, with nginx terminating TLS and Redis fanning out events. By the end, an A+ on SSL Labs, metrics on Grafana, and a systemd unit you can `systemctl restart`.
+চ্যাপ্টার 9-এ আপনার কাছে auth, presence, backpressure আর reconnection সহ একটা কাজ করা multi-process WebSocket service আছে। এই চ্যাপ্টার deploy-এর মধ্যে দিয়ে হাঁটে। Self-hosted, একটা VPS-এ, nginx TLS terminate করছে আর Redis event fan out করছে। শেষে, SSL Labs-এ একটা A+, Grafana-তে metric, আর একটা systemd unit যা আপনি `systemctl restart` করতে পারেন।
 
-This mirrors the production chapters of the GraphQL and gRPC tracks. If you've shipped one of those, much of this is review — adapted for HTTP/1.1 Upgrade traffic.
+এটা GraphQL আর gRPC ট্র্যাকের production চ্যাপ্টারকে প্রতিফলিত করে। আপনি সেগুলোর একটা ship করে থাকলে, এর অনেকটাই review — HTTP/1.1 Upgrade traffic-এর জন্য adapted।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Going to production is like the difference between a walkie-talkie prototype and a commercial radio network — same underlying idea, but completely different operational standards for reliability, coverage, and uptime.
+Production-এ যাওয়া হলো একটা walkie-talkie prototype আর একটা commercial radio network-এর মধ্যে পার্থক্যের মতো — একই অন্তর্নিহিত ধারণা, কিন্তু reliability, coverage আর uptime-এর জন্য সম্পূর্ণ ভিন্ন operational standard।
 
 </Callout>
 
-## The deploy shape
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা কাস্টমার-সাপোর্ট কোম্পানি চালান, যার শাখা কর্ডোভা থেকে সমরকন্দ পর্যন্ত ছড়ানো। এখানে প্রতিটা কাস্টমারের সাথে একটা করে খোলা ফোন লাইন সবসময় জোড়া থাকে — দুই দিক থেকেই যখন খুশি কথা বলা যায়, লাইন কাটে না। সমস্যা হলো, একজন কাস্টমার আজ যে এজেন্টের সাথে তার ঝামেলা নিয়ে কথা বলছিল, কাল আবার ফোন করলে সেই একই এজেন্টের কাছেই যাওয়া দরকার — কারণ ওই এজেন্টই তার পুরো ইতিহাস জানে। তাই ফাতিমা সুইচবোর্ডকে নিয়ম বেঁধে দিলেন: এই কাস্টমারের লাইন সবসময় সেই একই এজেন্টের ডেস্কেই ফেরত পাঠাও, নতুন কাউকে নয়।
+
+তারপর তিনি দেখলেন সামনের ফটকেই আসল প্যাঁচ। সাধারণ ফোন তো শুধু "হ্যালো, বলুন, রাখলাম" — কিন্তু এই "লাইনটা খোলা রাখো, কাটবে না" ধরনের বিশেষ অনুরোধ ফটকের অপারেটর যদি না বোঝে, সে লাইন কেটে দেয়। তাই ফাতিমা এমন অপারেটর বসালেন যে এই "লাইন খোলা রাখো" অনুরোধ চিনে ভেতরে যেতে দেয়। একই সাথে প্রতিটা শাখাকে বললেন — এক ডেস্ক একসাথে হাজারখানেকের বেশি খোলা লাইন ধরবে না, তাহলে এজেন্ট হাঁপিয়ে ওঠে। আর বন্ধের সময় এলে ইবনে সিনার শাখা কখনো ঝপ করে সব লাইন কাটে না; এজেন্টরা চলতি কথাগুলো শেষ করেন, কাস্টমারদের পাশের ডেস্কে সরিয়ে দেন, তারপর ধীরে ধীরে ডেস্ক গোটানো হয়।
+
+এই পুরো ব্যবস্থাটাই একটা production WebSocket deployment। কাস্টমারকে একই এজেন্টে ফেরত পাঠানোই **sticky session** (connection affinity) — load balancer একই client-কে বারবার একই backend process-এ বাঁধে। "লাইন খোলা রাখো" অনুরোধ চেনা অপারেটরটাই **Upgrade-aware reverse proxy** (nginx-এ `Upgrade`/`Connection` header pass করা), যা ছাড়া long-lived connection হয় না। এক ডেস্কের হাজারখানেক লাইনের সীমাই **connection limit** — প্রতি process-এর `LimitNOFILE` আর memory ceiling। আর বন্ধের সময় চলতি কথা শেষ করে ধীরে গোটানোই **graceful shutdown** — worker restart-এর আগে connection drain করে `1001 GoingAway` পাঠানো, সবাইকে একসাথে না কাটা। বাস্তবে Slack বা WhatsApp Web-এর মতো সার্ভিস ঠিক এভাবেই লক্ষ লক্ষ খোলা socket সামলায়।
+
+## deploy shape
 
 ```
 Internet
@@ -37,19 +45,19 @@ Internet
   Postgres :5432  (durable state, history)
 ```
 
-nginx terminates TLS and reverse-proxies as plain `ws://` to one of N local Go processes. Each process holds connections, talks to Redis for fanout, and to Postgres for persistent state.
+nginx TLS terminate করে আর N-টা local Go process-এর একটায় plain `ws://` হিসেবে reverse-proxy করে। প্রতিটা process connection ধরে রাখে, fanout-এর জন্য Redis-এর সাথে কথা বলে, আর persistent state-এর জন্য Postgres-এর সাথে।
 
-## Linux limits
+## Linux limit
 
-A WebSocket process holding tens of thousands of connections needs the OS to allow it.
+হাজার হাজার connection ধরে থাকা একটা WebSocket process-এর OS-কে সেটা অনুমতি দিতে হয়।
 
-**File descriptors.** Default ulimit is 1024 — far too low. systemd unit:
+**File descriptor.** Default ulimit 1024 — অনেক কম। systemd unit:
 
 ```ini
 LimitNOFILE=1048576
 ```
 
-This raises both the soft and hard limits to ~1M. Sysctl-wide cap is `fs.file-max`, also bump if needed:
+এটা soft আর hard দুটো limit-ই ~1M-এ তোলে। Sysctl-wide cap হলো `fs.file-max`, দরকার হলে সেটাও বাড়ান:
 
 ```ini
 # /etc/sysctl.d/99-ws.conf
@@ -60,9 +68,9 @@ net.ipv4.ip_local_port_range = 1024 65535
 net.ipv4.tcp_tw_reuse = 1
 ```
 
-Apply with `sysctl --system`. Reboot or `sysctl -p` and the limits stick.
+`sysctl --system` দিয়ে apply করুন। Reboot বা `sysctl -p` করলে limit টিকে থাকে।
 
-**Process memory.** For ~10K idle WebSocket connections, expect ~500 MB–1 GB resident memory. Real traffic adds buffer overhead. A 4 GB VPS comfortably hosts a process with 50K connections; an 8 GB instance gives headroom for OS and Redis.
+**Process memory.** ~10K idle WebSocket connection-এর জন্য, ~500 MB–1 GB resident memory আশা করুন। বাস্তব traffic buffer overhead যোগ করে। একটা 4 GB VPS আরামসে 50K connection সহ একটা process host করে; একটা 8 GB instance OS আর Redis-এর জন্য headroom দেয়।
 
 ## systemd unit
 
@@ -98,15 +106,15 @@ LimitCORE=0
 WantedBy=multi-user.target
 ```
 
-The `@` makes it a template. Start four instances:
+`@` এটাকে একটা template বানায়। চারটা instance শুরু করুন:
 
 ```bash
 sudo systemctl enable --now ws-server@80 ws-server@81 ws-server@82 ws-server@83
 ```
 
-`%i` becomes `80`, `81`, etc.; `Environment=PORT=80%i` makes them listen on `8080`, `8081`, `8082`, `8083`.
+`%i` `80`, `81` ইত্যাদি হয়ে যায়; `Environment=PORT=80%i` তাদের `8080`, `8081`, `8082`, `8083`-এ listen করায়।
 
-`Restart=on-failure` brings the process back if it crashes. `RestartSec=5` gives the OS a moment between restarts so you don't crash-loop on a permanent error.
+`Restart=on-failure` process crash করলে ফিরিয়ে আনে। `RestartSec=5` restart-এর মধ্যে OS-কে একটা মুহূর্ত দেয় যাতে একটা permanent error-এ crash-loop না করেন।
 
 ## nginx config
 
@@ -167,38 +175,38 @@ server {
 }
 ```
 
-Read the critical lines.
+গুরুত্বপূর্ণ line-গুলো পড়ুন।
 
-**`map $http_upgrade $connection_upgrade`** — maps the inbound `Upgrade` header to a `Connection` value. Required for upgrades to flow through nginx.
+**`map $http_upgrade $connection_upgrade`** — inbound `Upgrade` header-কে একটা `Connection` value-তে map করে। upgrade nginx-এর ভেতর দিয়ে বইতে দরকার।
 
-**`proxy_set_header Upgrade $http_upgrade`** + **`proxy_set_header Connection $connection_upgrade`** — without these, nginx treats the request as a normal HTTP and the upgrade fails.
+**`proxy_set_header Upgrade $http_upgrade`** + **`proxy_set_header Connection $connection_upgrade`** — এগুলো ছাড়া, nginx request-কে একটা সাধারণ HTTP হিসেবে দেখে আর upgrade fail করে।
 
-**`proxy_read_timeout 1h`** — default is 60 seconds, which kills connections that ping less often than that. Raise to whatever your idle interval allows.
+**`proxy_read_timeout 1h`** — default 60 সেকেন্ড, যা সেই connection kill করে যা এর চেয়ে কম ঘন ping করে। আপনার idle interval যা অনুমতি দেয় তাতে বাড়ান।
 
-**`ip_hash`** is optional. If you use it, the same IP hits the same backend on reconnect. Useful for any local-only state; for chapter 6's design (state in Redis), unnecessary.
+**`ip_hash`** optional। ব্যবহার করলে, একই IP reconnect-এ একই backend-এ যায়। যেকোনো local-only state-এর জন্য কাজে লাগে; চ্যাপ্টার 6-এর ডিজাইনের জন্য (Redis-এ state), অপ্রয়োজনীয়।
 
-The TLS snippet (`tls-strong.conf`) is from the **TLS & Certificates** track — TLS 1.3 only, modern ciphers, OCSP stapling, HSTS.
+TLS snippet (`tls-strong.conf`) হলো **TLS & Certificates** ট্র্যাক থেকে — শুধু TLS 1.3, modern cipher, OCSP stapling, HSTS।
 
-## Reload-without-disconnect — the limit
+## Reload-without-disconnect — সীমা
 
-WebSocket connections are long-lived. A `nginx -s reload` restarts worker processes; existing connections continue on the old workers. New connections land on new workers. Eventually the old workers exit when the last connection closes.
+WebSocket connection long-lived। একটা `nginx -s reload` worker process restart করে; existing connection পুরোনো worker-এ চলতে থাকে। নতুন connection নতুন worker-এ ল্যান্ড করে। শেষ connection বন্ধ হলে পুরোনো worker শেষমেশ exit করে।
 
-This is fine for nginx changes. **Backend rolling restarts** are different: restarting `ws-server@80` drops every connection on that worker.
+এটা nginx পরিবর্তনের জন্য ঠিক আছে। **Backend rolling restart** ভিন্ন: `ws-server@80` restart করলে সেই worker-এর প্রতিটা connection ড্রপ হয়।
 
-The pattern is "drain and replace":
+প্যাটার্ন হলো "drain and replace":
 
-1. Set the worker's health to "draining" (a flag the LB sees).
-2. Send `{"type":"reconnect"}` and close all connections with `1001 GoingAway`.
-3. Wait briefly; clients reconnect to a different worker.
-4. Restart the worker.
+1. worker-এর health "draining"-এ set করুন (একটা flag যা LB দেখে)।
+2. `{"type":"reconnect"}` পাঠান আর `1001 GoingAway` দিয়ে সব connection close করুন।
+3. সংক্ষিপ্তভাবে অপেক্ষা করুন; client একটা আলাদা worker-এ reconnect করে।
+4. worker restart করুন।
 
-A simple version: take one worker out of nginx upstream, restart it, put it back. Repeat for each. Clients on the restarted worker reconnect immediately and land on a still-running worker.
+একটা সহজ সংস্করণ: nginx upstream থেকে একটা worker বের করুন, এটা restart করুন, ফিরিয়ে দিন। প্রতিটার জন্য পুনরাবৃত্তি করুন। restarted worker-এর client সাথে সাথে reconnect করে আর একটা এখনো-চলা worker-এ ল্যান্ড করে।
 
-Tools like `nginx-plus` or `consul-template` automate this. For a small deployment, scripting it with `systemctl` and `nginx -s reload` is fine.
+`nginx-plus` বা `consul-template`-এর মতো tool এটা automate করে। একটা ছোট deployment-এর জন্য, `systemctl` আর `nginx -s reload` দিয়ে scripting করা ঠিক আছে।
 
-## Health endpoints
+## Health endpoint
 
-Two endpoints for the orchestrator:
+orchestrator-এর জন্য দুটো endpoint:
 
 ```go
 http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -214,11 +222,11 @@ http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 })
 ```
 
-`readyToServe()` returns false during shutdown drain, when Redis is unreachable, etc. Tie nginx upstream health checks to `/readyz` (with the `nginx_http_healthcheck_module` or by polling externally).
+`readyToServe()` shutdown drain-এর সময়, Redis unreachable হলে ইত্যাদি false return করে। nginx upstream health check-কে `/readyz`-এর সাথে বাঁধুন (`nginx_http_healthcheck_module` দিয়ে বা externally poll করে)।
 
-## Observability — the same stack
+## Observability — একই stack
 
-**Logs:** structured JSON to stdout. Captured by `journalctl`, forwarded to Loki, queried in Grafana.
+**Log:** stdout-এ structured JSON। `journalctl` দিয়ে captured, Loki-তে forwarded, Grafana-তে queried।
 
 ```go
 logger.LogAttrs(ctx, slog.LevelInfo, "ws-connect",
@@ -228,9 +236,9 @@ logger.LogAttrs(ctx, slog.LevelInfo, "ws-connect",
 )
 ```
 
-One line per connect, one per disconnect, one per significant event. Avoid logging per message — too noisy.
+প্রতি connect-এ এক line, প্রতি disconnect-এ এক, প্রতি significant event-এ এক। প্রতি message log করা এড়িয়ে চলুন — অনেক noisy।
 
-**Metrics:** Prometheus scraping `/metrics`. Custom counters and gauges for the pieces nobody else can give you:
+**Metric:** Prometheus `/metrics` scrape করছে। অন্য কেউ যা দিতে পারে না সেই অংশগুলোর জন্য custom counter আর gauge:
 
 ```go
 var (
@@ -262,93 +270,93 @@ var (
 )
 ```
 
-Combined with Prometheus's built-in process metrics, you get RPS, error rate, latency, saturation — all the things SRE chapter on golden signals taught you to care about.
+Prometheus-এর built-in process metric-এর সাথে মিলিত, আপনি RPS, error rate, latency, saturation পান — SRE চ্যাপ্টারের golden signal-এ যত্ন নিতে শেখানো সব জিনিস।
 
-**Traces:** OpenTelemetry spans on the publish→deliver path. A message published in process A and delivered to a client in process B should be one trace with both spans. Carry the trace context through Redis pub/sub messages (most clients let you stamp it as a Redis attribute or in the message envelope).
+**Trace:** publish→deliver path-এ OpenTelemetry span। process A-তে publish করা আর process B-তে একটা client-এ deliver করা একটা message দুটো span সহ একটা trace হওয়া উচিত। Redis pub/sub message-এর মধ্য দিয়ে trace context বহন করুন (বেশিরভাগ client আপনাকে এটা একটা Redis attribute হিসেবে বা message envelope-এ stamp করতে দেয়)।
 
 ## Scaling out
 
-When one box runs out of room, more boxes:
+একটা box-এর জায়গা ফুরিয়ে গেলে, আরও box:
 
-1. **Move Redis to a dedicated host.** Co-locating Redis with workers is fine until disk/CPU contends.
-2. **Use Redis cluster or sharded pub/sub.** Pure pub/sub does not benefit from sharding; if you outgrow one Redis, shard channels (e.g. `room:1*` on shard A, `room:2*` on shard B, hash by room name).
-3. **Switch to NATS** if Redis pub/sub is the actual bottleneck (chapter 6).
-4. **Add more boxes behind nginx.** Each runs its own worker fleet; nginx upstream lists them all.
+1. **Redis-কে একটা dedicated host-এ সরান।** Redis worker-এর সাথে co-locate করা ঠিক আছে যতক্ষণ না disk/CPU-তে contend করে।
+2. **Redis cluster বা sharded pub/sub ব্যবহার করুন।** Pure pub/sub sharding থেকে উপকৃত হয় না; একটা Redis ছাড়িয়ে গেলে, channel shard করুন (যেমন shard A-তে `room:1*`, shard B-তে `room:2*`, room name দিয়ে hash করুন)।
+3. Redis pub/sub আসল bottleneck হলে **NATS-এ switch করুন** (চ্যাপ্টার 6)।
+4. **nginx-এর পেছনে আরও box যোগ করুন।** প্রতিটা নিজের worker fleet চালায়; nginx upstream সবগুলো তালিকাভুক্ত করে।
 
-Scale plateau on a single box is typically:
+একটা single box-এ scale plateau সাধারণত:
 
-- ~50K idle connections per process; ~250K per 4-process box.
-- Multiple boxes for HA and capacity beyond that.
+- প্রতি process-এ ~50K idle connection; প্রতি 4-process box-এ ~250K।
+- এর বাইরে HA আর capacity-র জন্য একাধিক box।
 
-For real services with messaging at modest rates, one box with four processes handles tens of thousands of users comfortably.
+modest rate-এ messaging সহ বাস্তব service-এর জন্য, চারটা process সহ একটা box আরামসে হাজার হাজার user সামলায়।
 
-## CDNs and edge
+## CDN আর edge
 
-Cloudflare, Fastly, and other CDNs support WebSockets — at a price. They will proxy `wss://` and provide DDoS scrubbing, but they limit max connection duration (a few hours typically). Plan for forced reconnects.
+Cloudflare, Fastly, আর অন্য CDN WebSockets support করে — একটা দামে। তারা `wss://` proxy করবে আর DDoS scrubbing দেবে, কিন্তু max connection duration limit করে (সাধারণত কয়েক ঘণ্টা)। forced reconnect-এর জন্য পরিকল্পনা করুন।
 
-For self-hosted with no CDN, you skip those limits but lose the DDoS shield. A reasonable middle ground: a CDN for static + REST API, your own nginx for WebSockets directly. Two domains (`api.example.com` for REST behind CDN, `ws.example.com` for WebSocket direct) keep both clean.
+কোনো CDN ছাড়া self-hosted-এর জন্য, আপনি ওই limit এড়ান কিন্তু DDoS shield হারান। একটা যুক্তিসঙ্গত মধ্যপন্থা: static + REST API-র জন্য একটা CDN, WebSocket-এর জন্য সরাসরি আপনার নিজের nginx। দুটো domain (`api.example.com` CDN-এর পেছনে REST-এর জন্য, `ws.example.com` সরাসরি WebSocket-এর জন্য) দুটোই পরিষ্কার রাখে।
 
-## Rate limits at the edge
+## edge-এ rate limit
 
-Production rate limiting layers:
+Production rate limiting layer:
 
-1. **nginx `limit_req`** (chapter 8) — first defence against abuse at upgrade time.
-2. **Application-level per-connection limits** — message rate per connection.
-3. **Application-level per-user limits** — Redis-backed counters.
-4. **Global circuit breakers** — if Redis dies, refuse new connections rather than failing every message.
+1. **nginx `limit_req`** (চ্যাপ্টার 8) — upgrade time-এ অপব্যবহারের বিরুদ্ধে প্রথম প্রতিরক্ষা।
+2. **Application-level per-connection limit** — প্রতি connection-এ message rate।
+3. **Application-level per-user limit** — Redis-backed counter।
+4. **Global circuit breaker** — Redis মারা গেলে, প্রতিটা message fail করার বদলে নতুন connection refuse করুন।
 
-Each layer catches a different attack. Multiple layers are not paranoia; they are how you survive the actual internet.
+প্রতিটা layer একটা আলাদা আক্রমণ ধরে। একাধিক layer paranoia নয়; এগুলোই আসল internet-এ কীভাবে টিকে থাকবেন।
 
 ## Pre-launch checklist
 
-Before pointing a real domain:
+একটা real domain point করার আগে:
 
-- [ ] TLS via Let's Encrypt, A+ on SSL Labs.
-- [ ] Origin verification on the upgrade. Allow-list real frontends only.
-- [ ] Auth at handshake (cookie, ticket, or token).
-- [ ] Rate limits at every layer (nginx, per-connection, per-user).
-- [ ] Connection caps per IP and global.
-- [ ] `ReadHeaderTimeout` set on the HTTP server.
-- [ ] `LimitNOFILE` raised in systemd.
-- [ ] sysctl tuning (`somaxconn`, `tcp_max_syn_backlog`).
-- [ ] Heartbeats: protocol-level via library, application-level for latency.
-- [ ] Backpressure: bounded buffer, drop-on-full, disconnect-on-sustained.
-- [ ] Write deadlines on every `conn.Write`.
-- [ ] Read deadlines exceeding heartbeat interval.
-- [ ] Multi-process via systemd templates.
-- [ ] nginx with `Upgrade` and `Connection` headers, long `proxy_read_timeout`, optional `ip_hash`.
-- [ ] Redis pub/sub for fan-out across processes.
-- [ ] Presence with TTL-backed expiry.
-- [ ] Graceful shutdown: drain hint, then close 1001.
-- [ ] Logs to journal/Loki; metrics on `/metrics` to Prometheus; traces to Tempo.
-- [ ] Health endpoints (`/healthz`, `/readyz`).
-- [ ] Reconnect logic in client with backoff and jitter.
-- [ ] Resumption pattern documented (sequence IDs or last-event-ID).
+- [ ] Let's Encrypt-এর মাধ্যমে TLS, SSL Labs-এ A+।
+- [ ] upgrade-এ origin verification। শুধু real frontend allow-list।
+- [ ] handshake-এ auth (cookie, ticket, বা token)।
+- [ ] প্রতিটা layer-এ rate limit (nginx, per-connection, per-user)।
+- [ ] প্রতি IP আর global connection cap।
+- [ ] HTTP server-এ `ReadHeaderTimeout` set।
+- [ ] systemd-এ `LimitNOFILE` বাড়ানো।
+- [ ] sysctl tuning (`somaxconn`, `tcp_max_syn_backlog`)।
+- [ ] Heartbeat: library-র মাধ্যমে protocol-level, latency-র জন্য application-level।
+- [ ] Backpressure: bounded buffer, drop-on-full, disconnect-on-sustained।
+- [ ] প্রতিটা `conn.Write`-এ write deadline।
+- [ ] heartbeat interval-এর বেশি read deadline।
+- [ ] systemd template-এর মাধ্যমে multi-process।
+- [ ] `Upgrade` আর `Connection` header, long `proxy_read_timeout`, optional `ip_hash` সহ nginx।
+- [ ] process জুড়ে fan-out-এর জন্য Redis pub/sub।
+- [ ] TTL-backed expiry সহ presence।
+- [ ] Graceful shutdown: drain hint, তারপর close 1001।
+- [ ] journal/Loki-তে log; `/metrics`-এ metric Prometheus-এ; Tempo-তে trace।
+- [ ] Health endpoint (`/healthz`, `/readyz`)।
+- [ ] backoff আর jitter সহ client-এ reconnect logic।
+- [ ] Resumption প্যাটার্ন documented (sequence ID বা last-event-ID)।
 
-If half are unchecked: not yet. Spend the day. The good news: it is the last day.
+অর্ধেক unchecked হলে: এখনো নয়। দিনটা ব্যয় করুন। সুখবর: এটাই শেষ দিন।
 
 ## Cost reality
 
-Self-hosted WebSocket service for a real app:
+একটা real app-এর জন্য self-hosted WebSocket service:
 
-- $10–20/month VPS (Hetzner, OVH) handles tens of thousands of users for a chat-style service.
-- $5/month Postgres and Redis on the same box, or split when needed.
-- Free TLS via Let's Encrypt.
-- Free observability via Loki + Prometheus + Grafana (also self-hosted).
+- $10–20/month VPS (Hetzner, OVH) একটা chat-style service-এর জন্য হাজার হাজার user সামলায়।
+- একই box-এ $5/month Postgres আর Redis, বা দরকার হলে split।
+- Let's Encrypt-এর মাধ্যমে free TLS।
+- Loki + Prometheus + Grafana-র মাধ্যমে free observability (এটাও self-hosted)।
 
-Total cost of ownership beats every managed service for the small-to-medium scale. The skill of running it pays for itself many times over.
+Total cost of ownership small-to-medium scale-এ প্রতিটা managed service-কে হারায়। এটা চালানোর দক্ষতা নিজের খরচ বহুবার পুষিয়ে দেয়।
 
 ## Recap
 
-- nginx with `Upgrade`/`Connection` headers, long timeouts, optional `ip_hash`, TLS at the edge.
-- systemd template units run multiple worker processes; `LimitNOFILE` raised.
-- Linux sysctl: `somaxconn`, `tcp_max_syn_backlog`, big port range.
-- Redis (chapter 6) for fan-out across workers; presence (chapter 7) with TTL.
-- Health endpoints `/healthz` and `/readyz`; nginx upstream health-checks `/readyz`.
-- Drain and replace for zero-downtime restarts.
-- Observability: structured logs, Prometheus metrics (gauges, counters, histograms), OpenTelemetry traces.
-- Multiple defence layers for rate limiting and connection caps.
-- Scale plateau: ~50K connections/process; multiple processes per box; multiple boxes when you need them.
-- Pre-launch checklist or it bites.
+- `Upgrade`/`Connection` header, long timeout, optional `ip_hash`, edge-এ TLS সহ nginx।
+- systemd template unit একাধিক worker process চালায়; `LimitNOFILE` বাড়ানো।
+- Linux sysctl: `somaxconn`, `tcp_max_syn_backlog`, বড় port range।
+- worker জুড়ে fan-out-এর জন্য Redis (চ্যাপ্টার 6); TTL সহ presence (চ্যাপ্টার 7)।
+- Health endpoint `/healthz` আর `/readyz`; nginx upstream `/readyz` health-check করে।
+- zero-downtime restart-এর জন্য drain and replace।
+- Observability: structured log, Prometheus metric (gauge, counter, histogram), OpenTelemetry trace।
+- rate limiting আর connection cap-এর জন্য একাধিক defence layer।
+- Scale plateau: ~50K connection/process; প্রতি box-এ একাধিক process; দরকার হলে একাধিক box।
+- Pre-launch checklist নাহলে এটা কামড়ায়।
 
-That is the full Backend Engineering Path's WebSockets track. Next topic in the path: [Webhooks](/notes/webhooks) — when push goes the other direction, between _services_, and "deliver-or-die" semantics matter.
+এটাই full Backend Engineering Path-এর WebSockets ট্র্যাক। path-এর পরের বিষয়: [Webhooks](/notes/webhooks) — যখন push অন্য দিকে যায়, _service_-এর মধ্যে, আর "deliver-or-die" semantics গুরুত্বপূর্ণ।

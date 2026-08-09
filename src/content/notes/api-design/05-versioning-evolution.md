@@ -1,9 +1,9 @@
 ---
-title: 'Versioning & Evolution'
-subtitle: 'Evolve your API without breaking existing clients — URL versioning, header versioning, backward compatibility, and deprecation strategies.'
+title: 'Versioning ও Evolution'
+subtitle: 'বিদ্যমান client না ভেঙে আপনার API-কে বিকশিত করুন — URL versioning, header versioning, backward compatibility, আর deprecation strategy।'
 chapter: 5
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['versioning', 'backward compatibility', 'deprecation', 'API evolution']
 ---
 
@@ -11,23 +11,31 @@ topics: ['versioning', 'backward compatibility', 'deprecation', 'API evolution']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Version?
+## গল্পে বুঝি
 
-APIs evolve. You will need to rename fields, change response formats, or remove endpoints. Without a versioning strategy, every change risks breaking existing clients.
+ইবনে সিনাদের স্কুলে ক্লাস সিক্সের গণিত বই এবার নতুন সংস্করণে ছাপা হয়েছে। আগের সংস্করণ যাদের কেনা, তাদের বই তো আর হঠাৎ অচল হয়ে যায়নি — স্যার ক্লাসে অধ্যায় ধরে ধরে পড়ান, আর পুরনো বইয়ের ছাত্ররাও দিব্যি ক্লাস ফলো করতে পারে। কারণ নতুন সংস্করণে পুরনো অধ্যায়গুলোর নম্বর বদলানো হয়নি; আগের ১ থেকে ১২ ঠিক আগের মতোই আছে, শুধু শেষে দুটো নতুন অধ্যায় জুড়ে দেওয়া হয়েছে। ফাতিমা আল-ফিহরি নতুন বই কিনেছে, আল-খোয়ারিজমির কাছে পুরনোটা — দুজনেই একই ক্লাস করতে পারছে।
+
+তবে স্কুল একদিনে দুই সংস্করণই সমান্তরালে চালিয়ে যাবে না। কিছুদিন দুটোই চলে, কিন্তু বছরের শুরুতেই স্যার ঘোষণা দিয়ে দেন — "সামনের বছর থেকে পুরনো সংস্করণ আর সাপোর্ট করা হবে না, সবাই নতুনটা জোগাড় করে নিও।" আগেভাগে এই নোটিশ দেওয়ার কারণ একটাই: যাতে ছাত্ররা সময় নিয়ে বই বদলে নিতে পারে, কেউ যেন হঠাৎ এসে দেখে তার বই দিয়ে আর ক্লাস চলছে না।
+
+এই পুরো ব্যাপারটাই আসলে **API versioning ও evolution**। নতুন সংস্করণে পুরনো অধ্যায় নম্বর অটুট রেখে শুধু নতুন অধ্যায় যোগ করাটা হলো **backward compatible** পরিবর্তন — পুরনো client (আল-খোয়ারিজমির বই) না ভেঙেই v2 আনা। অধ্যায় নম্বর ওলটপালট করে দিলে সেটাই হতো **breaking change**, তখন পুরনো বই দিয়ে ক্লাস ফলো করা যেত না। আর আগেভাগে নোটিশ দিয়ে পুরনো সংস্করণ তুলে দেওয়াটাই **deprecation** — ঘোষণা, সময়, তারপর retire। বাস্তবে Stripe বা GitHub-এর মতো API ঠিক এভাবেই v1 আর v2 কিছুদিন একসাথে চালায়, deprecation নোটিশ দেয়, তারপর পুরনোটা বন্ধ করে — যাতে কারও অ্যাপ হঠাৎ ভেঙে না পড়ে।
+
+## Version কেন করবেন?
+
+API বিকশিত হয়। আপনাকে ফিল্ড rename করতে, response format বদলাতে, বা endpoint সরাতে হবে। একটি versioning strategy ছাড়া প্রতিটি পরিবর্তন বিদ্যমান client ভাঙার ঝুঁকি তৈরি করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a phone OS update — the old version still works for a while, but new features are only on v2. The maker doesn't break everyone's apps overnight; they deprecate gradually.
+ফোনের OS আপডেটের মতো — পুরনো version কিছুদিন কাজ করতে থাকে, কিন্তু নতুন ফিচার শুধু v2-তে। নির্মাতা রাতারাতি সবার অ্যাপ ভাঙে না; তারা ধীরে ধীরে deprecate করে।
 
 </Callout>
 
-## Versioning Strategies
+## Versioning Strategy
 
 ### 1. URL Path Versioning
 
-The most common and most visible approach:
+সবচেয়ে প্রচলিত আর সবচেয়ে দৃশ্যমান পদ্ধতি:
 
 ```typescript
 // Version in the URL path
@@ -71,12 +79,12 @@ router.get('/users', async (req, res) => {
 });
 ```
 
-**Pros:** Easy to understand, visible in URLs, easy to route
-**Cons:** Duplicates code, hard to maintain many versions
+**সুবিধা:** বোঝা সহজ, URL-এ দৃশ্যমান, route করা সহজ
+**অসুবিধা:** কোড ডুপ্লিকেট হয়, অনেক version maintain করা কঠিন
 
 ### 2. Header Versioning
 
-Version is specified in a custom header or the Accept header:
+Version একটি custom header বা Accept header-এ নির্দিষ্ট করা হয়:
 
 ```typescript
 // Custom header
@@ -114,8 +122,8 @@ function getApiVersion(req: express.Request): number {
 }
 ```
 
-**Pros:** Clean URLs, no code duplication
-**Cons:** Less visible, harder to test in browser
+**সুবিধা:** পরিচ্ছন্ন URL, কোড ডুপ্লিকেশন নেই
+**অসুবিধা:** কম দৃশ্যমান, browser-এ টেস্ট করা কঠিন
 
 ### 3. Query Parameter Versioning
 
@@ -126,23 +134,23 @@ GET /api/users?version=2
 // Simple but not recommended for production APIs
 ```
 
-**Pros:** Easy to switch versions for testing
-**Cons:** Mixes concerns in query params, caching issues
+**সুবিধা:** টেস্টিংয়ের জন্য version বদলানো সহজ
+**অসুবিধা:** query param-এ বিষয় জট পাকায়, caching সমস্যা
 
 <Callout type="tip">
 
-**Which Strategy to Choose?**
+**কোন Strategy বেছে নেবেন?**
 
-- **URL versioning** is the best default choice for public APIs — it is explicit, cacheable, and easy to understand
-- **Header versioning** works well for internal APIs and when you want clean URLs
-- **Query parameter versioning** is fine for quick prototypes but not for production
-- Most major APIs (Stripe, GitHub, Twilio) use URL versioning
+- public API-এর জন্য **URL versioning** সেরা ডিফল্ট পছন্দ — এটা স্পষ্ট, cacheable, আর বোঝা সহজ
+- **Header versioning** internal API-তে আর পরিচ্ছন্ন URL চাইলে ভালো কাজ করে
+- **Query parameter versioning** দ্রুত prototype-এর জন্য ঠিক আছে, production-এর জন্য নয়
+- বেশিরভাগ বড় API (Stripe, GitHub, Twilio) URL versioning ব্যবহার করে
 
 </Callout>
 
-## Backward-Compatible Changes
+## Backward-Compatible পরিবর্তন
 
-Not every change needs a new version. These changes are backward-compatible:
+প্রতিটি পরিবর্তনে নতুন version লাগে না। এই পরিবর্তনগুলো backward-compatible:
 
 ```typescript
 // SAFE — Adding new fields (clients ignore unknown fields)
@@ -177,7 +185,7 @@ GET /api/users?include=orders  // New filter, existing calls without it still wo
 
 ## Deprecation Strategy
 
-When you need to retire an old version:
+যখন আপনাকে একটি পুরনো version অবসরে পাঠাতে হবে:
 
 ```typescript
 // Step 1: Mark endpoints as deprecated with headers
@@ -229,7 +237,7 @@ app.use('/api/v1', (req, res) => {
 
 ## Migration Guide Pattern
 
-Always provide a clear migration guide when introducing a new version:
+নতুন version আনার সময় সবসময় একটি পরিষ্কার migration guide দিন:
 
 ```typescript
 // Document every breaking change
@@ -264,20 +272,20 @@ const migrationGuide = {
 
 <Callout type="warning">
 
-**Common Versioning Mistakes**
+**সাধারণ Versioning ভুল**
 
-- Versioning too early — you do not need v2 for backward-compatible changes
-- Versioning too late — once clients depend on a behavior, it is a contract
-- Maintaining too many versions — support at most 2 (current + previous)
-- Not monitoring deprecated endpoint usage — you need data to know when it is safe to retire
+- খুব তাড়াতাড়ি versioning করা — backward-compatible পরিবর্তনের জন্য আপনার v2 লাগে না
+- খুব দেরিতে versioning করা — একবার client কোনো behavior-এর ওপর নির্ভর করলে সেটা একটা contract
+- খুব বেশি version maintain করা — সর্বোচ্চ ২টি সাপোর্ট করুন (current + previous)
+- deprecated endpoint-এর ব্যবহার monitor না করা — কখন retire করা নিরাপদ তা জানতে আপনার ডেটা দরকার
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **URL path versioning** is the standard for public APIs — explicit and cacheable
-2. **Additive changes are safe** — new fields, new endpoints, new optional parameters
-3. **Removing or renaming fields is breaking** — always requires a new version or a migration period
-4. **Deprecation is a process** — announce, warn, sunset, then retire
-5. **Support at most two versions** at a time to keep maintenance manageable
-6. **Monitor deprecated endpoint usage** to know when it is safe to remove old versions
+1. public API-এর জন্য **URL path versioning** স্ট্যান্ডার্ড — স্পষ্ট আর cacheable
+2. **Additive পরিবর্তন নিরাপদ** — নতুন ফিল্ড, নতুন endpoint, নতুন optional parameter
+3. **ফিল্ড সরানো বা rename করা breaking** — সবসময় একটি নতুন version বা migration period লাগে
+4. **Deprecation একটি প্রক্রিয়া** — ঘোষণা করুন, সতর্ক করুন, sunset করুন, তারপর retire করুন
+5. maintenance সামলানোর মতো রাখতে একসাথে **সর্বোচ্চ দুটি version সাপোর্ট করুন**
+6. পুরনো version সরানো কখন নিরাপদ তা জানতে **deprecated endpoint-এর ব্যবহার monitor করুন**

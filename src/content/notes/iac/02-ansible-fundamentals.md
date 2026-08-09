@@ -1,9 +1,9 @@
 ---
 title: 'Ansible Fundamentals'
-subtitle: 'Inventories, playbooks, roles, and variables — configuring servers reliably without installing an agent.'
+subtitle: 'Inventory, playbook, role, আর variable — কোনো agent install না করেই নির্ভরযোগ্যভাবে server configure করা।'
 chapter: 2
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['Ansible', 'playbooks', 'roles', 'inventory', 'handlers', 'templates']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Ansible', 'playbooks', 'roles', 'inventory', 'handlers', 'templates']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A stage director with a script: they don't perform every action themselves — they give instructions to the right actors (hosts), in the right order (tasks), with the flexibility to handle different characters differently (variables and conditionals). Ansible is the director; your servers are the cast.
+script হাতে একজন stage director: তিনি প্রতিটা কাজ নিজে করেন না — তিনি সঠিক actor-দের (host) সঠিক ক্রমে (task) নির্দেশ দেন, আর ভিন্ন character-কে ভিন্নভাবে সামলানোর নমনীয়তা রাখেন (variable আর conditional)। Ansible হলো director; আপনার server-গুলো হলো cast।
 
 </Callout>
 
-## How Ansible Works
+## গল্পে বুঝি
 
-Ansible is agentless — it SSHes into target machines and runs tasks. No daemon to install on managed nodes. Requirements: SSH access from the control node, Python on the target.
+ইবনে সিনার একটা নামকরা রেস্তোরাঁর চেইন — শহরের নানা মহল্লায় ছড়ানো অনেকগুলো শাখার রান্নাঘর, প্রতিটাই আগে থেকে চালু। সমস্যা হলো, প্রতিটা শাখার রান্না একেক রকম হয়ে যাচ্ছিল। তাই ইবনে সিনা একটা লিখিত নির্দেশনা-শিট বানালেন, ধাপে ধাপে সাজানো: "১. কাউন্টার ঘষে পরিষ্কার করো, ২. মসলার তাক ভরাও, ৩. চুলা জ্বালাও"। তারপর একজন দৌড়বিদ ছেলেকে দিয়ে প্রতিটা শাখায় হুবহু একই শিট পাঠিয়ে দিলেন। শাখায় কোনো স্থায়ী লোক বসিয়ে রাখতে হয়নি — দৌড়বিদ শুধু শিটটা পৌঁছে দিয়ে রাঁধুনিকে ধাপগুলো ধরিয়ে দিয়ে আসে।
+
+মজার ব্যাপার হলো, কোনো ধাপ যদি আগে থেকেই করা থাকে — ধরুন মসলার তাক আগেই ভরা — রাঁধুনি সেটা টুক করে টপকে যায়, নতুন করে কিছু বদলায় না। তাই একই শিট আজ পাঠান, কাল পাঠান, পরশু পাঠান — কোনো ক্ষতি নেই; যেটুকু বাকি সেটুকুই ঠিক হয়, বাকিটা যেমন আছে তেমনই থাকে। আল-খোয়ারিজমি চাইলে শুধু নতুন খোলা শাখাটায়ও একই শিট পাঠিয়ে সেটাকে সবার সাথে মিলিয়ে দিতে পারেন।
+
+এই গল্পটাই আসলে **Ansible**। ধাপে ধাপে সাজানো নির্দেশনা-শিটটাই হলো একটা **playbook**, যার প্রতিটা লাইন একেকটা **task**। শিটটা চালু শাখাগুলোয় পাঠানোটাই **push-based config** — Ansible আপনার control node থেকে চালু server-গুলোতে **SSH** দিয়ে গিয়ে task চালায়। দৌড়বিদের জন্য শাখায় স্থায়ী কেউ লাগে না — এটাই **agentless**, target-এ কোনো daemon বসাতে হয় না। "আগে থেকে করা ধাপ টপকে যাও, কিছু বদলায় না" — এটাই **idempotency**, একই playbook বারবার চালালেও শুধু যা desired state-এ নেই সেটুকুই বদলায়। আর কোন কোন শাখায় শিট যাবে তার তালিকাটাই **inventory**। বাস্তবে ঠিক এভাবেই টিমগুলো Ansible দিয়ে ডজন ডজন চালু server-কে একই কনফিগে standardize করে — নতুন কোনো agent install না করেই।
+
+## Ansible কীভাবে কাজ করে
+
+Ansible agentless — এটা target মেশিনে SSH করে আর task চালায়। Managed node-এ কোনো daemon install করতে হয় না। প্রয়োজন: control node থেকে SSH access, target-এ Python।
 
 ```
 Control node (your laptop or CI server)
@@ -33,7 +41,7 @@ Control node (your laptop or CI server)
 
 ## Inventory
 
-The inventory defines which hosts Ansible manages and how to reach them:
+Inventory define করে Ansible কোন host manage করে আর কীভাবে সেগুলোতে পৌঁছায়:
 
 ```ini
 # inventory/hosts.ini
@@ -54,7 +62,7 @@ web
 db
 ```
 
-**Dynamic inventory** (for cloud environments — hosts change as you scale):
+**Dynamic inventory** (cloud environment-এর জন্য — scale করার সাথে host বদলায়):
 
 ```bash
 # AWS dynamic inventory
@@ -71,9 +79,9 @@ keyed_groups:
   - key: tags.Role     # group by Role tag: [tag_Role_web], [tag_Role_db]
 ```
 
-## Playbooks
+## Playbook
 
-A playbook is a list of plays. Each play applies tasks to a group of hosts.
+একটা playbook হলো play-এর একটা list। প্রতিটা play একদল host-এ task apply করে।
 
 ```yaml
 # site.yml
@@ -141,9 +149,9 @@ ansible-playbook -i inventory/hosts.ini site.yml --limit web-1.example.com
 ansible-playbook -i inventory/hosts.ini site.yml --tags nginx
 ```
 
-## Templates (Jinja2)
+## Template (Jinja2)
 
-Templates let you generate config files with variables:
+Template দিয়ে আপনি variable সহ config file generate করতে পারেন:
 
 ```jinja2
 {# templates/nginx.conf.j2 #}
@@ -168,9 +176,9 @@ server {
 }
 ```
 
-Variables come from: playbook vars, inventory vars, group_vars, host_vars, or passed at runtime.
+Variable আসে: playbook vars, inventory vars, group_vars, host_vars থেকে, কিংবা runtime-এ পাস করা হয়।
 
-## Variables and Precedence
+## Variable আর Precedence
 
 ```yaml
 # group_vars/web.yml — applies to all hosts in [web] group
@@ -185,7 +193,7 @@ log_level: error
 nginx_worker_connections: 2048
 ```
 
-Ansible variable precedence (lower number = lower priority, overridden by higher):
+Ansible variable precedence (ছোট নম্বর = কম priority, বড় নম্বর দিয়ে override হয়):
 
 ```
 1. Role defaults
@@ -196,9 +204,9 @@ Ansible variable precedence (lower number = lower priority, overridden by higher
 6. Task vars (highest — use sparingly)
 ```
 
-## Roles
+## Role
 
-Roles are reusable, self-contained units of Ansible content. Instead of one giant playbook, roles organize tasks by function.
+Role হলো পুনর্ব্যবহারযোগ্য, স্বয়ংসম্পূর্ণ Ansible content-এর unit। একটা বিশাল playbook-এর বদলে role task-গুলোকে function অনুযায়ী সাজায়।
 
 ```
 roles/
@@ -251,9 +259,9 @@ nginx_keepalive_timeout: 65
     - node_app
 ```
 
-## Handlers
+## Handler
 
-Handlers run only when notified — and only once, at the end of the play, even if notified multiple times:
+Handler কেবল notify হলেই চলে — আর একবারই, play-এর শেষে, একাধিকবার notify হলেও:
 
 ```yaml
 tasks:
@@ -276,11 +284,11 @@ handlers:
       state: reloaded
 ```
 
-If neither task changes anything (because the config is already correct), the handler never runs. This is idempotency in action.
+যদি কোনো task-ই কিছু পরিবর্তন না করে (কারণ config আগে থেকেই সঠিক), তাহলে handler কখনো চলে না। এটাই idempotency বাস্তবে।
 
-## Secrets with Ansible Vault
+## Ansible Vault দিয়ে Secrets
 
-Never put passwords or API keys in plaintext YAML:
+কখনো plaintext YAML-এ password বা API key রাখবেন না:
 
 ```bash
 # Encrypt a file
@@ -304,9 +312,9 @@ api_key: '{{ vault_api_key }}'
 database_url: 'postgresql://app:{{ db_password }}@db.internal/mydb'
 ```
 
-Store `vault_pass` in CI secrets, not in the repo. The encrypted files can be committed safely.
+`vault_pass` CI secrets-এ রাখুন, repo-তে নয়। Encrypted file-গুলো নিরাপদে commit করা যায়।
 
-## A Complete Server Provisioning Example
+## একটা সম্পূর্ণ Server Provisioning উদাহরণ
 
 ```yaml
 # provision-web-server.yml
@@ -333,7 +341,7 @@ Store `vault_pass` in CI secrets, not in the repo. The encrypted files can be co
       delay: 5
 ```
 
-Run against a new server after it's provisioned:
+একটা নতুন server provision হওয়ার পর সেটার ওপর চালান:
 
 ```bash
 ansible-playbook \
@@ -342,4 +350,4 @@ ansible-playbook \
   --private-key ~/.ssh/deploy_key
 ```
 
-The same playbook that configures a new server can be re-run later to apply config changes or update the application. Idempotent all the way down.
+যে playbook একটা নতুন server configure করে সেটাই পরে আবার চালিয়ে config পরিবর্তন apply করা বা application আপডেট করা যায়। একেবারে নিচ পর্যন্ত idempotent।

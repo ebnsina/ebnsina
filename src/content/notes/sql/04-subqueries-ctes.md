@@ -1,9 +1,9 @@
 ---
 title: 'Subqueries & CTEs'
-subtitle: 'Queries inside queries — scalar, correlated, derived tables, WITH clauses, and recursion.'
+subtitle: 'Query-র ভেতরে query — scalar, correlated, derived table, WITH clause আর recursion।'
 chapter: 4
 level: 'intermediate'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['subquery', 'cte', 'recursive']
 ---
 
@@ -11,13 +11,21 @@ topics: ['subquery', 'cte', 'recursive']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Queries Within Queries
+## গল্পে বুঝি
 
-A **subquery** is a `SELECT` nested inside another statement. They let you answer questions in stages: compute an intermediate result, then use it. Subqueries appear in three main positions — as a single value, in a `WHERE` filter, and as a table in the `FROM` clause.
+আল-খোয়ারিজমি বাবুর্চি একটা বিয়ের অনুষ্ঠানে কাচ্চি বিরিয়ানি রাঁধছে। রেসিপিটা বড়, একগাদা ধাপ। কিন্তু আসল স্বাদটা আসে একটা জিনিস থেকে — মসলার বাটা। সে তাই আগে আলাদা করে পেঁয়াজ, আদা, রসুন, গরম মসলা শিলে বেটে একটা পেস্ট বানায়, নাম দেয় "বিরিয়ানির বাটা"। এই বাটাটা একবার বানানো, কিন্তু পরে মাংস মাখাতেও লাগে, চালের সাথে মেশাতেও লাগে, উপরে ছড়িয়ে দিতেও লাগে — একই নাম ধরে বারবার ফিরে আসে। ফলে বড় রেসিপিটা এখন উপর থেকে নিচে পড়া যায়: আগে বাটা বানাও, তারপর মাংস মাখাও, তারপর দমে বসাও।
 
-## Scalar Subqueries
+আবার মাঝপথে ছোট ছোট হিসাবও লাগে। যেমন "লবণ কতটুকু দেব?" — এর উত্তর নির্ভর করে চাল কত কেজি তার উপর। আল-খোয়ারিজমি আলাদা করে হাঁড়ি মাপে না, রান্নার ফাঁকেই চট করে মনে মনে হিসাব করে ফেলে — এই ছোট প্রশ্নের উত্তরটা বড় কাজটার ভেতরেই মিশে থাকে, আলাদা কোনো নাম পায় না।
 
-A scalar subquery returns exactly **one row and one column** — a single value — that you can drop anywhere a value is expected:
+এই "বিরিয়ানির বাটা"-ই হলো একটা **CTE** (`WITH`) — একটা মধ্যবর্তী (_intermediate_) ফলাফলকে নাম দিয়ে রাখা, যেন পরের ধাপগুলো সেই নাম ধরে বারবার ব্যবহার করতে পারে আর পুরো query ধাপে ধাপে পড়া যায়। আর লবণের ওই চট করে করা হিসাবটা হলো একটা **subquery** — মূল query-র ভেতরেই nested একটা ছোট helper প্রশ্ন, যার উত্তর সঙ্গে সঙ্গে কাজে লেগে যায়, আলাদা নাম লাগে না। বাস্তবে reporting query লিখতে গেলে ঠিক এই দুই টুল দিয়েই একটা ভীতিকর প্রশ্নকে ছোট ছোট বোধগম্য টুকরায় ভেঙে ফেলা হয়।
+
+## Query-র ভেতরে Query
+
+একটা **subquery** হলো আরেকটা statement-এর ভেতরে nested একটা `SELECT`। এগুলো আপনাকে ধাপে ধাপে প্রশ্নের উত্তর দিতে দেয়: একটা মধ্যবর্তী ফলাফল বের করুন, তারপর সেটা ব্যবহার করুন। Subquery মূলত তিন জায়গায় দেখা যায় — একটা single value হিসেবে, একটা `WHERE` ফিল্টারে, আর `FROM` clause-এ একটা টেবিল হিসেবে।
+
+## Scalar Subquery
+
+একটা scalar subquery ঠিক **একটা row আর একটা column** ফেরত দেয় — একটা single value — যেটা আপনি যেখানে একটা value আশা করা হয় সেখানেই বসাতে পারেন:
 
 ```sql
 SELECT name, amount,
@@ -25,18 +33,18 @@ SELECT name, amount,
 FROM orders;
 ```
 
-The inner query computes the overall average once; each row subtracts it. If a scalar subquery accidentally returns more than one row, the database raises an error — that constraint is the point.
+ভেতরের query একবারই সামগ্রিক average বের করে; প্রতিটা row সেটা বিয়োগ করে। কোনো scalar subquery যদি ভুলবশত একের বেশি row ফেরত দেয়, database একটা error তোলে — ওই constraint-টাই এখানে মূল কথা।
 
-## Subqueries in WHERE: IN and EXISTS
+## WHERE-এ Subquery: IN আর EXISTS
 
-To filter against a _set_ of values, use a subquery with `IN`:
+একগুচ্ছ (_set_) value-এর বিপরীতে ফিল্টার করতে `IN` সহ একটা subquery ব্যবহার করুন:
 
 ```sql
 SELECT name FROM customers
 WHERE id IN (SELECT customer_id FROM orders WHERE amount > 100);
 ```
 
-This finds customers who have at least one order over 100. `EXISTS` expresses the same idea differently — it tests whether the subquery returns _any_ row at all:
+এটা এমন customer-দের খুঁজে বের করে যাদের অন্তত একটা order 100-এর বেশি। `EXISTS` একই ধারণাকে ভিন্নভাবে প্রকাশ করে — এটা পরীক্ষা করে subquery আদৌ _কোনো_ row ফেরত দেয় কিনা:
 
 ```sql
 SELECT name FROM customers c
@@ -48,15 +56,15 @@ WHERE EXISTS (
 
 <Callout type="warning">
 
-**`NOT IN` with nulls is a trap.** If the subquery returns even one `NULL`, `NOT IN` returns _no rows at all_, because `x <> NULL` is unknown for every comparison. `WHERE id NOT IN (SELECT customer_id FROM orders)` silently breaks if `customer_id` can be null. Prefer `NOT EXISTS`, which handles nulls correctly and is usually optimized just as well.
+**null-সহ `NOT IN` একটা ফাঁদ।** subquery যদি একটা `NULL`-ও ফেরত দেয়, `NOT IN` _একটাও row ফেরত দেয় না_, কারণ প্রতিটা তুলনায় `x <> NULL` unknown হয়ে যায়। `WHERE id NOT IN (SELECT customer_id FROM orders)` চুপচাপ ভেঙে পড়ে যদি `customer_id` null হতে পারে। `NOT EXISTS` বেছে নিন, যা null ঠিকভাবে হ্যান্ডল করে আর সাধারণত ঠিক ততটাই ভালো অপ্টিমাইজ হয়।
 
 </Callout>
 
-## Correlated Subqueries
+## Correlated Subquery
 
-The `EXISTS` example above is **correlated**: the inner query references `c.id` from the outer query. Logically it re-runs once per outer row. Correlated subqueries are expressive but can be slow when the table is large, because of that per-row evaluation — though Postgres often rewrites them into joins internally. Reach for a join or CTE if a correlated subquery dominates your query plan.
+উপরের `EXISTS` উদাহরণটা **correlated**: ভেতরের query বাইরের query থেকে `c.id` রেফার করে। যুক্তিগতভাবে এটা প্রতিটা outer row-এর জন্য একবার করে আবার চলে। Correlated subquery প্রকাশের দিক থেকে শক্তিশালী কিন্তু টেবিল বড় হলে ধীর হতে পারে, ওই per-row মূল্যায়নের কারণে — যদিও Postgres প্রায়ই এগুলোকে ভেতরে ভেতরে join-এ রিরাইট করে ফেলে। কোনো correlated subquery যদি আপনার query plan-এ প্রাধান্য বিস্তার করে, তাহলে একটা join বা CTE-র দিকে হাত বাড়ান।
 
-A classic correlated pattern is "the most recent order per customer":
+একটা ক্লাসিক correlated প্যাটার্ন হলো "প্রতি customer-এর সবচেয়ে সাম্প্রতিক order":
 
 ```sql
 SELECT * FROM orders o
@@ -66,11 +74,11 @@ WHERE o.created_at = (
 );
 ```
 
-(Window functions in chapter 7 usually express this more cleanly.)
+(chapter 7-এর window function সাধারণত এটা আরও পরিষ্কারভাবে প্রকাশ করে।)
 
-## Derived Tables (Subqueries in FROM)
+## Derived Table (FROM-এ Subquery)
 
-A subquery in the `FROM` clause acts as a temporary, unnamed table — a **derived table**. It must be given an alias:
+`FROM` clause-এ একটা subquery একটা অস্থায়ী, নামহীন টেবিল হিসেবে কাজ করে — একটা **derived table**। এটাকে অবশ্যই একটা alias দিতে হয়:
 
 ```sql
 SELECT bucket, COUNT(*)
@@ -85,11 +93,11 @@ FROM (
 GROUP BY bucket;
 ```
 
-The inner query labels each order; the outer query counts per label. Derived tables are how you aggregate the result of an aggregation, or join against a pre-summarized set. Recall the fan-out fix from chapter 3 — pre-aggregating the many-side in a derived table is exactly that technique.
+ভেতরের query প্রতিটা order-কে লেবেল করে; বাইরের query প্রতি লেবেলে গোনে। Derived table হলো এমন উপায় যা দিয়ে আপনি একটা aggregation-এর ফলাফলকে আবার aggregate করেন, অথবা একটা আগে থেকে summarize করা set-এর সাথে join করেন। chapter 3-এর fan-out সমাধানটা মনে করুন — একটা derived table-এ many-side-কে আগে থেকে aggregate করাটা ঠিক ওই টেকনিকটাই।
 
-## Common Table Expressions (CTEs)
+## Common Table Expression (CTE)
 
-A **CTE** is a named subquery defined up front with `WITH`. It does the same job as a derived table but reads top-to-bottom and can be referenced multiple times:
+একটা **CTE** হলো `WITH` দিয়ে শুরুতে সংজ্ঞায়িত একটা named subquery। এটা derived table-এর মতোই কাজ করে কিন্তু উপর থেকে নিচে পড়া যায় আর একাধিকবার রেফার করা যায়:
 
 ```sql
 WITH customer_totals AS (
@@ -104,7 +112,7 @@ WHERE ct.total > 100
 ORDER BY ct.total DESC;
 ```
 
-You can chain several CTEs, each building on the last, which turns an intimidating nested query into a readable pipeline:
+আপনি কয়েকটা CTE চেইন করতে পারেন, প্রতিটা আগেরটার উপর ভর করে গড়ে ওঠে, যা একটা ভীতিকর nested query-কে একটা পড়ার-উপযোগী pipeline-এ পরিণত করে:
 
 ```sql
 WITH shipped AS (
@@ -119,18 +127,18 @@ SELECT * FROM per_customer WHERE total > 50;
 
 <Callout type="info">
 
-**CTEs and performance.** Historically Postgres treated CTEs as an "optimization fence" — always materializing them, sometimes hurting performance. Since Postgres 12, simple non-recursive CTEs referenced once are _inlined_ (optimized like a subquery) by default. You can force the old behavior with `WITH ... AS MATERIALIZED` when you genuinely want to compute a result once and reuse it.
+**CTE আর পারফরম্যান্স।** ঐতিহাসিকভাবে Postgres CTE-কে একটা "optimization fence" হিসেবে গণ্য করত — সবসময় materialize করত, কখনো কখনো পারফরম্যান্স খারাপ করত। Postgres 12 থেকে, একবার রেফার করা সাধারণ non-recursive CTE ডিফল্টভাবে _inline_ হয় (একটা subquery-র মতো অপ্টিমাইজ হয়)। আপনি যখন সত্যিই একটা ফলাফল একবার হিসাব করে আবার ব্যবহার করতে চান, তখন `WITH ... AS MATERIALIZED` দিয়ে পুরনো আচরণ জোর করে আনতে পারেন।
 
 </Callout>
 
-## Recursive CTEs
+## Recursive CTE
 
-A `WITH RECURSIVE` CTE references _itself_, letting you traverse hierarchies and graphs — org charts, category trees, bill-of-materials. It has two parts joined by `UNION ALL`:
+একটা `WITH RECURSIVE` CTE _নিজেকেই_ রেফার করে, যা আপনাকে hierarchy আর graph পাড়ি দিতে দেয় — org chart, category tree, bill-of-materials। এর দুইটা অংশ থাকে যেগুলো `UNION ALL` দিয়ে জোড়া লাগে:
 
-1. The **anchor** — the starting rows.
-2. The **recursive term** — rows derived from the previous iteration, run repeatedly until it produces nothing.
+1. **anchor** — শুরুর row-গুলো।
+2. **recursive term** — আগের iteration থেকে উদ্ভূত row, যা বারবার চলে যতক্ষণ না কিছুই তৈরি করে।
 
-Given an `employees` table with `id`, `name`, and `manager_id`, walk the chain of command downward from the CEO:
+একটা `employees` টেবিল দেওয়া আছে যাতে `id`, `name` আর `manager_id` আছে, CEO থেকে নিচের দিকে কমান্ডের চেইন ধরে হাঁটুন:
 
 ```sql
 WITH RECURSIVE org AS (
@@ -151,23 +159,23 @@ FROM org
 ORDER BY depth;
 ```
 
-Each iteration finds the direct reports of the rows discovered last round, accumulating a `depth` counter. The recursion stops automatically when no new rows are produced — i.e. when you reach the leaves.
+প্রতিটা iteration গত রাউন্ডে আবিষ্কৃত row-গুলোর সরাসরি report খুঁজে বের করে, একটা `depth` কাউন্টার জমা করতে থাকে। কোনো নতুন row তৈরি না হলে recursion স্বয়ংক্রিয়ভাবে থেমে যায় — অর্থাৎ যখন আপনি leaf-এ পৌঁছান।
 
 <Callout type="warning">
 
-**Guard against infinite loops.** If your data has a cycle (A manages B manages A), a naive recursive CTE never terminates. Track visited nodes in an array, or use the `UNION` (deduplicating) form, or in newer Postgres add a `CYCLE` clause to detect and stop on repeats.
+**অসীম লুপ থেকে সাবধান থাকুন।** আপনার ডেটায় যদি একটা cycle থাকে (A ম্যানেজ করে B-কে, B ম্যানেজ করে A-কে), একটা সরল recursive CTE কখনো থামে না। একটা array-তে visited node ট্র্যাক করুন, অথবা `UNION` (deduplicating) ফর্ম ব্যবহার করুন, অথবা নতুন Postgres-এ পুনরাবৃত্তি শনাক্ত করে থামাতে একটা `CYCLE` clause যোগ করুন।
 
 </Callout>
 
-A common companion query is "everything _under_ a given node" — flip the join direction (`org.id = e.manager_id` becomes `e.manager_id = org.id`) and start the anchor at the node you care about rather than the root.
+একটা কমন সঙ্গী query হলো "একটা নির্দিষ্ট node-এর _নিচের_ সবকিছু" — join-এর দিক উল্টে দিন (`org.id = e.manager_id` হয়ে যায় `e.manager_id = org.id`) আর root-এর বদলে আপনার কাঙ্ক্ষিত node-এ anchor শুরু করুন।
 
-## Choosing Between Them
+## কোনটা বেছে নেবেন
 
-- **Scalar subquery** — when you need one computed value inline.
-- **`IN` / `EXISTS`** — set membership filters; prefer `EXISTS` / `NOT EXISTS` for null safety.
-- **Derived table / CTE** — when you need to query the result of another query; CTEs win on readability and reuse.
-- **Recursive CTE** — the only standard SQL tool for hierarchical and graph traversal.
+- **Scalar subquery** — যখন আপনার inline একটা computed value দরকার।
+- **`IN` / `EXISTS`** — set membership ফিল্টার; null safety-র জন্য `EXISTS` / `NOT EXISTS` বেছে নিন।
+- **Derived table / CTE** — যখন আপনার আরেকটা query-র ফলাফল query করা দরকার; পড়ার-সুবিধা আর পুনর্ব্যবহারে CTE জেতে।
+- **Recursive CTE** — hierarchical আর graph traversal-এর জন্য একমাত্র স্ট্যান্ডার্ড SQL টুল।
 
-## Recap
+## রিক্যাপ
 
-Subqueries let you compose queries in stages; CTEs give those stages names and make complex logic readable; recursive CTEs unlock tree and graph traversal. Mind the `NOT IN`-with-nulls trap and watch correlated subqueries on large tables. Next we make all of this _fast_ with indexes and query plans.
+Subquery আপনাকে ধাপে ধাপে query রচনা করতে দেয়; CTE সেই ধাপগুলোকে নাম দেয় আর জটিল লজিককে পড়ার-উপযোগী করে; recursive CTE tree আর graph traversal খুলে দেয়। `NOT IN`-with-null-এর ফাঁদ খেয়াল রাখুন আর বড় টেবিলে correlated subquery-র দিকে নজর রাখুন। এরপর আমরা index আর query plan দিয়ে এই সবকিছুকে _দ্রুত_ বানাব।

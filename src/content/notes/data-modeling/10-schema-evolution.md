@@ -1,9 +1,9 @@
 ---
 title: 'Schema evolution'
-subtitle: 'Every schema change against live data is a deploy. The expand/contract pattern is how you change tables that have a million rows and a thousand concurrent writers without downtime.'
+subtitle: 'Live data-র বিরুদ্ধে প্রতিটা schema পরিবর্তনই একটা deploy। expand/contract pattern-ই যেভাবে আপনি এমন table বদলান যেখানে দশ লাখ row আর হাজারখানেক concurrent writer আছে — কোনো downtime ছাড়াই।'
 chapter: 10
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['data-modeling', 'migrations', 'expand-contract', 'zero-downtime']
 ---
 
@@ -11,59 +11,67 @@ topics: ['data-modeling', 'migrations', 'expand-contract', 'zero-downtime']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A schema migration on a small dev database takes 50 milliseconds. The same migration against 100 million rows can take hours and lock the table for the duration. The difference between "ran my migration" and "operated my migration" is the difference between a junior and senior engineer.
+## গল্পে বুঝি
 
-This chapter is the patterns for changing a live schema without taking the app down: expand/contract, careful ALTERs, online indexes, and the boring discipline that makes it routine.
+ইবনে সিনার একটা পুরনো তিনতলা বাড়ি, ভাড়াটেরা এখনো সবাই বসবাস করছে। মাঝখানের কাঠের সিঁড়িটা জীর্ণ হয়ে গেছে, নতুন একটা বসাতে হবে। এখন তিনি তো সবাইকে বাড়ি খালি করতে বলতে পারেন না — লোকজন প্রতিদিন ওঠানামা করছে, জীবন চলছে। তাই তিনি চালাক পথ ধরলেন। পুরনো সিঁড়িটা না ভেঙে, তার ঠিক পাশেই একটা নতুন সিঁড়ি বানিয়ে ফেললেন। দুটোই একসাথে দাঁড়িয়ে থাকল, কেউ পুরনোটা দিয়ে ওঠে, কেউ নতুনটা।
+
+এরপর ইবনে সিনা ধীরে ধীরে সবাইকে নতুন সিঁড়িতে অভ্যস্ত করালেন, একে একে সবার মালপত্র আর যাতায়াত নতুন সিঁড়ির দিকে সরিয়ে দিলেন। যতদিন না নিশ্চিত হলেন যে পুরনো সিঁড়িতে আর একজনও পা রাখে না, ততদিন সেটা দাঁড়িয়েই থাকল। তারপর, একদম শেষে, অব্যবহৃত পুরনো সিঁড়িটা ভেঙে ফেললেন। পুরো সময়টা জুড়ে বাড়িটা ভাড়াটে-ভর্তি, চালু, বসবাসযোগ্য থাকল — একটা রাতও কাউকে ঘরছাড়া হতে হলো না।
+
+এটাই আসলে **expand/contract** pattern। পুরনো সিঁড়ির পাশে নতুন সিঁড়ি বানানো মানে পুরনো column-এর পাশে নতুন একটা **column** যোগ করা (**expand**)। মানুষ আর তাদের জিনিস সরিয়ে নেওয়া মানে **backfill** করে data ভরে দেওয়া আর app-কে নতুন column-এ **switch** করানো। কেউ ব্যবহার না করলে তবেই পুরনো সিঁড়ি ভাঙা মানে সবার শেষে পুরনো column **drop** করা (**contract**)। আর ভাড়াটেদের কখনো উচ্ছেদ না করাটাই live system-এ zero **downtime** — বাস্তবেও Postgres-এ একটা ব্যস্ত table rename বা type বদলাতে ঠিক এভাবেই কয়েকটা deploy-এ ভাগ করে কাজটা করা হয়, যাতে চলন্ত app কখনো ভেঙে না পড়ে।
+
+একটা ছোট dev database-এ schema migration লাগে 50 মিলিসেকেন্ড। একই migration 100 মিলিয়ন row-র বিরুদ্ধে চালালে ঘণ্টার পর ঘণ্টা লাগতে পারে আর ততক্ষণ table-টা lock করে রাখতে পারে। "আমার migration চলল" আর "আমার migration operate করলাম" এর মধ্যে পার্থক্যটাই junior আর senior engineer-এর মধ্যেকার পার্থক্য।
+
+এই চ্যাপ্টারে আছে সেই pattern-গুলো যা দিয়ে app বন্ধ না করেই live schema বদলানো যায়: expand/contract, সাবধানী ALTER, online index, আর সেই একঘেয়ে শৃঙ্খলা যা এটাকে রুটিন বানিয়ে দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Renovating a house while people are still living in it — you can't just tear everything down and start over.
+মানুষ এখনো বাস করছে এমন একটা বাড়ি সংস্কার করা — আপনি তো সব ভেঙে ফেলে নতুন করে শুরু করতে পারবেন না।
 
 </Callout>
 
-## What "live" means
+## "live" মানে কী
 
-Two assumptions for the rest of this chapter:
+এই চ্যাপ্টারের বাকিটার জন্য দুটো ধরে নেওয়া:
 
-1. **The application is reading and writing to the database while the migration runs.** No "stop the world" maintenance window. Big enough projects can never afford one.
-2. **The migration must be able to roll back.** If something breaks, you must be able to revert app code without re-running the migration backwards.
+1. **migration চলাকালীন application database-এ read আর write করছে।** কোনো "stop the world" maintenance window নেই। যথেষ্ট বড় প্রজেক্ট কখনোই একটা এর সামর্থ্য রাখে না।
+2. **migration-টা roll back করতে সক্ষম হতে হবে।** কিছু ভেঙে গেলে, migration উল্টো করে আবার না চালিয়েই আপনাকে app code revert করতে পারতে হবে।
 
-These two assumptions ban most "natural" schema changes:
+এই দুই ধরে-নেওয়া বেশিরভাগ "স্বাভাবিক" schema পরিবর্তন নিষিদ্ধ করে দেয়:
 
-- `DROP COLUMN` — old code might still be reading it.
-- `ALTER COLUMN ... TYPE` — different binary format, possibly long table rewrite.
-- `ADD COLUMN ... NOT NULL` — fails if the column has no default and the table has rows.
-- `RENAME COLUMN` — old code is referencing the old name.
+- `DROP COLUMN` — পুরনো কোড হয়তো এখনো এটা read করছে।
+- `ALTER COLUMN ... TYPE` — ভিন্ন binary format, সম্ভবত দীর্ঘ table rewrite।
+- `ADD COLUMN ... NOT NULL` — column-এর default না থাকলে আর table-এ row থাকলে fail করে।
+- `RENAME COLUMN` — পুরনো কোড পুরনো নামটা reference করছে।
 
-The fix: every change is a sequence of small, individually safe steps. **Expand → migrate → contract.**
+সমাধান: প্রতিটা পরিবর্তন হলো ছোট, আলাদা-আলাদাভাবে নিরাপদ ধাপের একটা ক্রম। **Expand → migrate → contract।**
 
-## The expand/contract pattern
+## expand/contract pattern
 
-For any structural change, three phases:
+যেকোনো structural পরিবর্তনের জন্য, তিনটি ধাপ:
 
-**1. Expand.** Add the new shape _alongside_ the old. Both work. Old code continues using the old; new code starts using the new.
+**1. Expand।** পুরনোটার _পাশাপাশি_ নতুন shape যোগ করুন। দুটোই কাজ করে। পুরনো কোড পুরনোটা ব্যবহার করতে থাকে; নতুন কোড নতুনটা ব্যবহার করা শুরু করে।
 
-**2. Migrate.** Backfill, dual-write, switch reads. The new shape is now the source of truth.
+**2. Migrate।** Backfill করুন, dual-write করুন, read switch করুন। নতুন shape এখন source of truth।
 
-**3. Contract.** Remove the old shape. Old code is gone; old reads have been redirected.
+**3. Contract।** পুরনো shape সরিয়ে ফেলুন। পুরনো কোড চলে গেছে; পুরনো read redirect হয়ে গেছে।
 
-Each phase is a separate deploy. Between phases, the system is always in a consistent state.
+প্রতিটা ধাপ আলাদা একটা deploy। ধাপগুলোর মাঝে, system সবসময় একটা consistent অবস্থায় থাকে।
 
-## Worked example: rename a column
+## কাজে-খাটানো উদাহরণ: একটা column rename করা
 
-Old:
+পুরনো:
 
 ```sql
 CREATE TABLE users (id BIGSERIAL PRIMARY KEY, full_name TEXT NOT NULL);
 ```
 
-You want to rename `full_name` to `display_name`.
+আপনি `full_name`-কে `display_name`-এ rename করতে চান।
 
-Naive: `ALTER TABLE users RENAME COLUMN full_name TO display_name`. Instant, but breaks every running query that references `full_name` until the new app version is deployed.
+সরল উপায়: `ALTER TABLE users RENAME COLUMN full_name TO display_name`। তাৎক্ষণিক, কিন্তু নতুন app version deploy না হওয়া পর্যন্ত `full_name` reference করা প্রতিটা চলমান query ভেঙে দেয়।
 
-Expand/contract version:
+Expand/contract সংস্করণ:
 
 ```sql
 -- Step 1 (deploy A): add new column, backfill, dual-write
@@ -72,59 +80,59 @@ UPDATE users SET display_name = full_name WHERE display_name IS NULL;
 ALTER TABLE users ALTER COLUMN display_name SET NOT NULL;
 ```
 
-App code is updated to write to both columns:
+App code-কে update করা হয় যাতে দুটো column-এই write করে:
 
 ```go
 INSERT INTO users(full_name, display_name) VALUES($1, $1)
 UPDATE users SET full_name = $1, display_name = $1 WHERE id = $2
 ```
 
-Reads still come from `full_name`. Both columns stay synchronised.
+Read এখনো `full_name` থেকে আসে। দুটো column synchronised থাকে।
 
 ```sql
 -- Step 2 (deploy B): switch reads
 ```
 
-App code is updated to read from `display_name`. `full_name` is now redundant; we keep the dual-write a bit longer in case of rollback.
+App code-কে update করা হয় যাতে `display_name` থেকে read করে। `full_name` এখন অপ্রয়োজনীয়; rollback-এর ক্ষেত্রে সতর্কতার জন্য dual-write আরও কিছুক্ষণ রেখে দিই।
 
 ```sql
 -- Step 3 (deploy C): stop writing to old column
 ```
 
-App code drops the dual-write. `full_name` is now unused.
+App code dual-write বাদ দেয়। `full_name` এখন অব্যবহৃত।
 
 ```sql
 -- Step 4 (deploy D): drop the column
 ALTER TABLE users DROP COLUMN full_name;
 ```
 
-Four deploys for one rename. Painful — but each step is reversible, and at no point does the app crash. For a feature that customers depend on, the slow approach is the only approach.
+একটা rename-এর জন্য চারটা deploy। কষ্টকর — কিন্তু প্রতিটা ধাপ reversible, আর কোনো মুহূর্তেই app crash করে না। কাস্টমার যে feature-এর উপর নির্ভরশীল, তার জন্য ধীর উপায়টাই একমাত্র উপায়।
 
-For lower-stakes systems, you can compress this to two deploys (expand + dual-write together; later contract + drop).
+কম-ঝুঁকির system-এর জন্য, আপনি এটাকে দুই deploy-এ সংকুচিত করতে পারেন (expand + dual-write একসাথে; পরে contract + drop)।
 
-## ALTER TABLE locks
+## ALTER TABLE lock
 
-Every `ALTER TABLE` takes some kind of lock. Knowing which is critical:
+প্রতিটা `ALTER TABLE` কোনো-না-কোনো ধরনের lock নেয়। কোনটা নেয় তা জানা জরুরি:
 
-| Operation                           | Lock level                       | Blocks                                                       |
+| Operation                           | Lock level                       | কী block করে                                                 |
 | ----------------------------------- | -------------------------------- | ------------------------------------------------------------ |
-| `ADD COLUMN` (no default)           | ACCESS EXCLUSIVE                 | reads + writes                                               |
-| `ADD COLUMN ... DEFAULT` (constant) | ACCESS EXCLUSIVE                 | reads + writes — but Postgres 11+ does this as metadata only |
-| `ADD COLUMN ... DEFAULT` (volatile) | ACCESS EXCLUSIVE + table rewrite | full lock for hours                                          |
-| `DROP COLUMN`                       | ACCESS EXCLUSIVE                 | brief — metadata only                                        |
+| `ADD COLUMN` (no default)           | ACCESS EXCLUSIVE                 | read + write                                                 |
+| `ADD COLUMN ... DEFAULT` (constant) | ACCESS EXCLUSIVE                 | read + write — তবে Postgres 11+ এটা কেবল metadata হিসেবে করে |
+| `ADD COLUMN ... DEFAULT` (volatile) | ACCESS EXCLUSIVE + table rewrite | ঘণ্টাখানেকের জন্য full lock                                  |
+| `DROP COLUMN`                       | ACCESS EXCLUSIVE                 | সংক্ষিপ্ত — কেবল metadata                                    |
 | `ALTER COLUMN ... SET NOT NULL`     | ACCESS EXCLUSIVE                 | full table scan                                              |
-| `ALTER COLUMN ... TYPE`             | ACCESS EXCLUSIVE + rewrite       | hours on big tables                                          |
-| `CREATE INDEX`                      | SHARE                            | writes (reads work)                                          |
-| `CREATE INDEX CONCURRENTLY`         | SHARE UPDATE EXCLUSIVE           | nothing                                                      |
-| `ADD CONSTRAINT FOREIGN KEY`        | SHARE ROW EXCLUSIVE              | writes briefly                                               |
-| `ADD CONSTRAINT ... NOT VALID`      | ACCESS EXCLUSIVE briefly         | writes briefly                                               |
+| `ALTER COLUMN ... TYPE`             | ACCESS EXCLUSIVE + rewrite       | বড় table-এ ঘণ্টার পর ঘণ্টা                                  |
+| `CREATE INDEX`                      | SHARE                            | write (read কাজ করে)                                         |
+| `CREATE INDEX CONCURRENTLY`         | SHARE UPDATE EXCLUSIVE           | কিছুই না                                                     |
+| `ADD CONSTRAINT FOREIGN KEY`        | SHARE ROW EXCLUSIVE              | সংক্ষিপ্তভাবে write                                          |
+| `ADD CONSTRAINT ... NOT VALID`      | ACCESS EXCLUSIVE briefly         | সংক্ষিপ্তভাবে write                                          |
 
-The two everyone needs to internalize:
+যে দুটো সবার মজ্জাগত করে নেওয়া দরকার:
 
-1. **`CREATE INDEX CONCURRENTLY`** for index creation on big tables. Slower than the locking version, but doesn't block writes.
-2. **`ADD CONSTRAINT ... NOT VALID`** then `VALIDATE CONSTRAINT` for adding constraints to big tables. The two-step pattern from chapter 6.
+1. বড় table-এ index তৈরির জন্য **`CREATE INDEX CONCURRENTLY`**। locking সংস্করণের চেয়ে ধীর, কিন্তু write block করে না।
+2. বড় table-এ constraint যোগ করার জন্য **`ADD CONSTRAINT ... NOT VALID`** তারপর `VALIDATE CONSTRAINT`। চ্যাপ্টার 6-এর সেই দুই-ধাপের pattern।
 
-## Adding a column safely
+## নিরাপদে একটা column যোগ করা
 
 ```sql
 -- BAD on big tables: forces a table rewrite to set defaults
@@ -140,24 +148,24 @@ ALTER TABLE big_table ALTER COLUMN status SET NOT NULL;
 ALTER TABLE big_table DROP CONSTRAINT status_not_null;
 ```
 
-Postgres 11+ made `ADD COLUMN ... DEFAULT <constant>` near-instant — it stores the default as metadata, doesn't rewrite existing rows. Earlier versions need the multi-step dance always. Even on 11+, **avoid volatile defaults** like `DEFAULT now()` — those force a rewrite.
+Postgres 11+ `ADD COLUMN ... DEFAULT <constant>`-কে প্রায়-তাৎক্ষণিক করে দিয়েছে — এটা default-টা metadata হিসেবে সংরক্ষণ করে, বিদ্যমান row rewrite করে না। আগের version-গুলোর সবসময় multi-step নাচটা দরকার। 11+ এও, `DEFAULT now()` এর মতো **volatile default এড়িয়ে চলুন** — সেগুলো একটা rewrite বাধ্য করে।
 
-## Backfilling at scale
+## Scale-এ backfill করা
 
-The naïve backfill is one SQL statement:
+সরল backfill হলো একটা SQL statement:
 
 ```sql
 UPDATE big_table SET status = 'pending' WHERE status IS NULL;
 ```
 
-For a 100M-row table this:
+একটা 100M-row table-এর জন্য এটা:
 
-- Holds a row lock on every updated row.
-- Generates ~100M WAL entries.
-- Possibly triggers replication lag.
-- Takes hours.
+- প্রতিটা update হওয়া row-তে একটা row lock ধরে রাখে।
+- প্রায় 100M WAL entry তৈরি করে।
+- সম্ভবত replication lag ট্রিগার করে।
+- ঘণ্টার পর ঘণ্টা নেয়।
 
-The better pattern: batch by primary key range, with sleeps and progress tracking.
+ভালো pattern: primary key range ধরে batch করা, সাথে sleep আর progress tracking।
 
 ```sql
 DO $$
@@ -178,7 +186,7 @@ END;
 $$;
 ```
 
-Or write the loop in application code so you can monitor and cancel:
+অথবা loop-টা application code-এ লিখুন যাতে আপনি monitor আর cancel করতে পারেন:
 
 ```go
 func backfill(ctx context.Context, db *sql.DB) error {
@@ -199,18 +207,18 @@ func backfill(ctx context.Context, db *sql.DB) error {
 }
 ```
 
-Backfills are jobs, not migrations. Run them outside the migration framework, with progress monitoring and the ability to pause.
+Backfill হলো job, migration নয়। migration framework-এর বাইরে, progress monitoring আর pause করার সামর্থ্য সহ চালান।
 
-## Adding a NOT NULL constraint to existing data
+## বিদ্যমান data-তে একটা NOT NULL constraint যোগ করা
 
-The classic mistake:
+ক্লাসিক ভুলটা:
 
 ```sql
 ALTER TABLE users ADD COLUMN onboarded_at TIMESTAMPTZ NOT NULL;
 -- ERROR: column "onboarded_at" of relation "users" contains null values
 ```
 
-The safe sequence:
+নিরাপদ ক্রম:
 
 ```sql
 -- 1. add nullable
@@ -233,34 +241,34 @@ ALTER TABLE users ALTER COLUMN onboarded_at SET NOT NULL;
 ALTER TABLE users DROP CONSTRAINT users_onboarded_at_not_null;
 ```
 
-In Postgres 12+, step 5 is fast because Postgres can skip the table scan when a valid CHECK constraint already proves NOT NULL.
+Postgres 12+ এ, ধাপ 5 দ্রুত কারণ একটা valid CHECK constraint যখন আগে থেকেই NOT NULL প্রমাণ করে, তখন Postgres table scan-টা এড়িয়ে যেতে পারে।
 
-## Indexes online
+## Index online-ভাবে
 
-For any non-trivial index:
+যেকোনো non-trivial index-এর জন্য:
 
 ```sql
 CREATE INDEX CONCURRENTLY ON big_table(some_column);
 ```
 
-`CONCURRENTLY` builds the index without taking a write lock. Slower (multiple passes), but the table is read-write throughout.
+`CONCURRENTLY` কোনো write lock না নিয়ে index তৈরি করে। ধীর (একাধিক pass), কিন্তু পুরোটা সময় table read-write থাকে।
 
-Caveats:
+সাবধানতা:
 
-- **Cannot run inside a transaction.** Migration tools must support out-of-transaction statements (most do; some require flagging).
-- **Can fail mid-build.** If the build fails, you're left with an `INVALID` index that must be dropped manually:
+- **একটা transaction-এর ভেতরে চালানো যায় না।** migration tool-কে out-of-transaction statement সাপোর্ট করতে হবে (বেশিরভাগই করে; কিছু flag করা দরকার)।
+- **build-এর মাঝপথে fail করতে পারে।** build fail করলে, আপনার হাতে একটা `INVALID` index থেকে যায় যা manually drop করতে হয়:
   ```sql
   DROP INDEX CONCURRENTLY some_invalid_index;
   ```
-- **Slower than the locking version.** Plan for hours on huge tables.
+- **locking সংস্করণের চেয়ে ধীর।** বিশাল table-এ ঘণ্টার পর ঘণ্টার পরিকল্পনা করুন।
 
-For unique indexes, also concurrent:
+Unique index-এর জন্যও concurrent:
 
 ```sql
 CREATE UNIQUE INDEX CONCURRENTLY ON users(email);
 ```
 
-## Adding a foreign key
+## একটা foreign key যোগ করা
 
 ```sql
 -- BAD: locks the referenced table briefly + scans the new FK column
@@ -273,21 +281,21 @@ ALTER TABLE orders ADD CONSTRAINT orders_user_fk
 ALTER TABLE orders VALIDATE CONSTRAINT orders_user_fk;
 ```
 
-Same pattern as CHECKs. `NOT VALID` makes the FK apply to new writes immediately; `VALIDATE` checks existing rows in the background.
+CHECK-এর মতোই একই pattern। `NOT VALID` FK-টাকে সাথে সাথে নতুন write-এ প্রয়োগ করায়; `VALIDATE` বিদ্যমান row-গুলো background-এ যাচাই করে।
 
-## Changing a column type
+## একটা column-এর type বদলানো
 
-The most painful operation. `ALTER COLUMN ... TYPE` rewrites the table for most type changes.
+সবচেয়ে কষ্টকর operation। বেশিরভাগ type পরিবর্তনের জন্য `ALTER COLUMN ... TYPE` table rewrite করে।
 
-Two strategies:
+দুটো কৌশল:
 
-**A. Compatible cast (no rewrite).** Some changes are metadata-only:
+**A. Compatible cast (কোনো rewrite নেই)।** কিছু পরিবর্তন কেবল metadata:
 
-- Increasing `VARCHAR(50)` to `VARCHAR(100)` — no rewrite.
-- `INTEGER` to `BIGINT` — rewrite (different size).
-- Changing `TEXT` ↔ `VARCHAR` — no rewrite (both stored the same way).
+- `VARCHAR(50)`-কে `VARCHAR(100)`-এ বাড়ানো — কোনো rewrite নেই।
+- `INTEGER` থেকে `BIGINT` — rewrite (ভিন্ন আকার)।
+- `TEXT` ↔ `VARCHAR` বদলানো — কোনো rewrite নেই (দুটোই একইভাবে সংরক্ষিত)।
 
-**B. New column, dual-write, switch.** For incompatible types:
+**B. নতুন column, dual-write, switch।** অসামঞ্জস্যপূর্ণ type-এর জন্য:
 
 ```sql
 -- 1. add new column
@@ -305,13 +313,13 @@ ALTER TABLE invoices DROP COLUMN amount_dollars;
 ALTER TABLE invoices RENAME COLUMN amount_cents_v2 TO amount_cents;
 ```
 
-The expand/contract dance again.
+আবারও সেই expand/contract নাচ।
 
 ## Migration tooling
 
-Three categories.
+তিনটা শ্রেণি।
 
-**Source-of-truth migration tools.** `golang-migrate`, `flyway`, `dbmate`, `sqitch`. Each migration is a numbered file. Tool tracks which have run.
+**Source-of-truth migration tool।** `golang-migrate`, `flyway`, `dbmate`, `sqitch`। প্রতিটা migration একটা numbered file। কোনগুলো চলেছে tool তা track করে।
 
 ```
 migrations/
@@ -321,62 +329,62 @@ migrations/
   002_add_email_unique.down.sql
 ```
 
-Pros: simple, language-agnostic, easy to review.
-Cons: no schema diffing — you write each migration by hand.
+সুবিধা: সরল, language-agnostic, review করা সহজ।
+অসুবিধা: কোনো schema diffing নেই — আপনি প্রতিটা migration হাতে লেখেন।
 
-**Schema-as-code tools.** `atlas`, `prisma migrate`, `liquibase`. Define the desired schema; tool generates the migration to get there.
+**Schema-as-code tool।** `atlas`, `prisma migrate`, `liquibase`। কাঙ্ক্ষিত schema define করুন; সেখানে পৌঁছানোর migration tool তৈরি করে দেয়।
 
-Pros: less repetitive for simple changes.
-Cons: generated migrations need careful review (especially for big-table changes — auto-generated `ALTER TABLE ... TYPE` will break).
+সুবিধা: সরল পরিবর্তনের জন্য কম পুনরাবৃত্তি।
+অসুবিধা: generated migration সাবধানে review করা দরকার (বিশেষত বড়-table পরিবর্তনের জন্য — auto-generated `ALTER TABLE ... TYPE` ভেঙে দেবে)।
 
-**ORM-managed migrations.** Active Record, Django migrations, Sequelize, GORM. Migrations live with the model code.
+**ORM-managed migration।** Active Record, Django migration, Sequelize, GORM। migration model code-এর সাথেই থাকে।
 
-Pros: tight coupling with the ORM model.
-Cons: ORM-flavored migrations sometimes hide what's actually running, which is dangerous on big tables.
+সুবিধা: ORM model-এর সাথে ঘনিষ্ঠ সংযোগ।
+অসুবিধা: ORM-ঘেঁষা migration কখনো কখনো আসলে কী চলছে তা লুকিয়ে ফেলে, যা বড় table-এ বিপজ্জনক।
 
-For a self-hosted backend, **`golang-migrate` or `dbmate` with hand-written SQL** is the boring, correct choice. You see exactly what runs against the DB.
+একটা self-hosted backend-এর জন্য, **হাতে-লেখা SQL সহ `golang-migrate` বা `dbmate`** ই একঘেয়ে, সঠিক পছন্দ। DB-র বিরুদ্ধে ঠিক কী চলছে তা আপনি দেখতে পান।
 
-## Deploy alongside the migration
+## Migration-এর সাথে deploy করা
 
-Three patterns for sequencing migrations and deploys.
+migration আর deploy-এর ক্রম সাজানোর তিনটা pattern।
 
-**Migration before deploy.** New schema is in place when the new app comes up. Required when the new schema is _required_ by the new code (e.g., the new code reads a column that didn't exist).
+**Deploy-এর আগে migration।** নতুন app উঠে আসার সময় নতুন schema জায়গায় থাকে। যখন নতুন schema নতুন code-এর জন্য _প্রয়োজনীয়_ (যেমন, নতুন code এমন একটা column read করে যা আগে ছিল না) তখন এটা দরকার।
 
-**Deploy before migration.** New app code can handle both old and new schemas. Migration runs after, the code adapts. Required for some expand/contract phases.
+**Migration-এর আগে deploy।** নতুন app code পুরনো আর নতুন — দুই schema সামলাতে পারে। migration পরে চলে, code মানিয়ে নেয়। কিছু কিছু expand/contract ধাপের জন্য এটা দরকার।
 
-**Migration with deploy (interleaved).** Some teams orchestrate this — migration A, deploy A, migration B, deploy B. The full expand/contract dance.
+**Deploy-এর সাথে migration (interleaved)।** কিছু টিম এটা orchestrate করে — migration A, deploy A, migration B, deploy B। পূর্ণ expand/contract নাচ।
 
-In practice, multi-step deploys for big schema changes is the right rhythm. Trying to do "migration + deploy + cleanup" in one shot is how outages happen.
+বাস্তবে, বড় schema পরিবর্তনের জন্য multi-step deploy-ই সঠিক ছন্দ। এক ধাক্কায় "migration + deploy + cleanup" করার চেষ্টাই যেভাবে outage ঘটে।
 
 <Callout type="warn">
 
-**Always test the migration on a copy of production data.** A migration that takes 50ms in dev with 100 rows takes 4 hours in prod with 100M rows. The lock contention is also different. A staging environment with a recent prod restore is non-negotiable for any schema change against a busy table.
+**সবসময় production data-র একটা কপির উপর migration test করুন।** যে migration dev-এ 100 row নিয়ে 50ms নেয়, সেটা prod-এ 100M row নিয়ে 4 ঘণ্টা নেয়। lock contention-ও আলাদা। ব্যস্ত table-এর বিরুদ্ধে যেকোনো schema পরিবর্তনের জন্য সাম্প্রতিক prod restore সহ একটা staging environment অ-আলোচনাসাপেক্ষ।
 
 </Callout>
 
-## Rollback strategy
+## Rollback কৌশল
 
-A well-designed migration should be reversible — you write the `down` migration too. But in practice:
+একটা ভালোভাবে ডিজাইন করা migration reversible হওয়া উচিত — আপনি `down` migration-ও লেখেন। কিন্তু বাস্তবে:
 
-- **Some migrations cannot be reversed without data loss.** Dropping a column means the data is gone. The "down" migration recreates the column structurally, but the data isn't coming back without a backup.
-- **Reverting an already-deployed change is risky.** App code may have started writing the new shape. Reverting reverts the schema; the app crashes.
+- **কিছু migration data loss ছাড়া reverse করা যায় না।** একটা column drop করা মানে data চলে গেছে। "down" migration column-টা structurally আবার বানায়, কিন্তু backup ছাড়া data ফিরে আসছে না।
+- **ইতিমধ্যে deploy হওয়া একটা পরিবর্তন revert করা ঝুঁকিপূর্ণ।** App code হয়তো নতুন shape লেখা শুরু করে দিয়েছে। Revert করলে schema revert হয়; app crash করে।
 
-Practical rollback strategy: **don't roll back; roll forward.** If a migration breaks production, write a new migration to fix it. This is faster, safer, and forces you to keep moving.
+ব্যবহারিক rollback কৌশল: **roll back করবেন না; roll forward করুন।** একটা migration production ভেঙে দিলে, সেটা ঠিক করতে একটা নতুন migration লিখুন। এটা দ্রুততর, নিরাপদ, আর আপনাকে এগিয়ে চলতে বাধ্য করে।
 
-Reserve down migrations for the case "I haven't deployed yet; I want to undo on staging."
+Down migration শুধু এই ক্ষেত্রের জন্য রেখে দিন: "আমি এখনো deploy করিনি; আমি staging-এ undo করতে চাই।"
 
 ## Recap
 
-- Expand → migrate → contract. Three phases, each safe by itself.
-- Most renames take 4 deploys. Worth it for live systems.
-- Know lock levels: `CREATE INDEX CONCURRENTLY`, `NOT VALID` constraints.
-- Adding a column: nullable + backfill + NOT NULL via CHECK + promotion.
-- Backfills are jobs, not migrations. Batch by ID range, sleep, monitor.
-- `CREATE INDEX CONCURRENTLY` for big tables; can fail and leave INVALID indexes.
-- FKs: `NOT VALID` then `VALIDATE`.
-- Type changes: usually new column + dual-write + switch.
-- Tooling: prefer hand-written SQL migrations (`golang-migrate`, `dbmate`); review auto-generated migrations carefully.
-- Test against prod-sized data on a staging restore.
-- Roll forward, not back.
+- Expand → migrate → contract। তিন ধাপ, প্রতিটা নিজে থেকে নিরাপদ।
+- বেশিরভাগ rename-এ 4টা deploy লাগে। live system-এর জন্য এর মূল্য আছে।
+- Lock level জানুন: `CREATE INDEX CONCURRENTLY`, `NOT VALID` constraint।
+- একটা column যোগ করা: nullable + backfill + CHECK-এর মাধ্যমে NOT NULL + promotion।
+- Backfill হলো job, migration নয়। ID range ধরে batch করুন, sleep দিন, monitor করুন।
+- বড় table-এর জন্য `CREATE INDEX CONCURRENTLY`; fail করে INVALID index রেখে যেতে পারে।
+- FK: `NOT VALID` তারপর `VALIDATE`।
+- Type পরিবর্তন: সাধারণত নতুন column + dual-write + switch।
+- Tooling: হাতে-লেখা SQL migration (`golang-migrate`, `dbmate`) কে অগ্রাধিকার দিন; auto-generated migration সাবধানে review করুন।
+- prod-আকারের data-র বিরুদ্ধে একটা staging restore-এ test করুন।
+- Roll forward, back নয়।
 
-That is the full Backend Engineering Path's data modeling track. Next topic in the path: [Auth & security](/notes/auth-security) — sessions, password hashing, OAuth flows, and rate-limiting patterns done by hand.
+এই ছিল পুরো Backend Engineering Path-এর data modeling track। path-এর পরবর্তী বিষয়: [Auth & security](/notes/auth-security) — session, password hashing, OAuth flow, আর হাতে করা rate-limiting pattern।

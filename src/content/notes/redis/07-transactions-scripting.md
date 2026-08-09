@@ -1,9 +1,9 @@
 ---
 title: 'Transactions & Lua Scripting'
-subtitle: 'MULTI/EXEC, optimistic locking with WATCH, and atomic multi-step logic with Lua.'
+subtitle: 'MULTI/EXEC, WATCH দিয়ে optimistic locking, এবং Lua দিয়ে atomic multi-step logic।'
 chapter: 7
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['multi', 'lua', 'atomicity']
 ---
 
@@ -11,11 +11,19 @@ topics: ['multi', 'lua', 'atomicity']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A single Redis command is atomic, but real operations often need several commands to happen together with nothing slipping in between. Redis offers two tools: transactions, which group commands, and Lua scripting, which runs arbitrary logic atomically on the server. Both rely on the single-threaded core — but Redis transactions behave differently from the database transactions you may expect, and that difference trips people up.
+## গল্পে বুঝি
 
-## MULTI / EXEC: grouping commands
+ফাতিমা আল-ফিহরি একটা ব্যাংকের ক্যাশ কাউন্টারে বসেন। এক গ্রাহক এসে বললেন, "আমার সেভিংস থেকে বিশ হাজার টাকা তুলে সেটা কারেন্ট অ্যাকাউন্টে জমা দিন।" এটা তো একটা কাজ নয় — কয়েক ধাপের কাজ: সেভিংস থেকে টাকা কাটা, তারপর কারেন্টে যোগ করা। ফাতিমা আল-ফিহরি যদি প্রথম ধাপটা করে মাঝপথে থেমে অন্য গ্রাহককে সামলাতে যান, তাহলে হিসাব গোলমাল হয়ে যেতে পারে। তাই তিনি চালাক — আগে একটা স্লিপে পুরো কাজের সব ধাপ লিখে ফেলেন, তারপর কাউন্টারে "এক মিনিট" বলে সব ধাপ একটানা, একসাথে সেরে ফেলেন। এই বিরতিহীন বার্স্টের মধ্যে অন্য কোনো গ্রাহক লাইন ভেঙে ঢুকতে পারে না।
 
-`MULTI` opens a transaction. Commands typed after it are **queued**, not executed, each replying `QUEUED`. `EXEC` runs the whole batch atomically — no other client's command can interleave between them. `DISCARD` throws the queue away.
+আর কিছু কাজ তো রোজই আসে, যেমন "যদি ব্যালেন্স যথেষ্ট থাকে তবেই লোনের কিস্তি কাটো"। এই জটিল অথচ কমন কাজের জন্য ফাতিমা আল-ফিহরির কাছে একটা সিল-করা নির্দেশনা কার্ড আছে — শুরু থেকে শেষ পর্যন্ত এক দমে ফলো করেন, মাঝে থামেন না, কেউ বাধা দিতে পারে না। আবার টাকা তোলার আগে তিনি একবার দেখে নেন এই ফাঁকে ব্যালেন্সটা বদলে যায়নি তো — বদলে গেলে পুরো লেনদেন বাতিল করে নতুন করে শুরু করেন।
+
+এই গল্পটাই আসলে Redis-এর transaction আর scripting। স্লিপে সব ধাপ লিখে এক বার্স্টে সেরে ফেলা হলো **MULTI/EXEC transaction** — command-গুলো queue হয়, তারপর একসাথে চলে, মাঝে অন্য কারো command interleave করতে পারে না। সিল-করা নির্দেশনা কার্ড এক দমে ফলো করা হলো **atomic Lua script** — পুরো logic server-এ atomically চলে, মাঝে কিছু ঢোকে না। আর টাকা তোলার আগে ব্যালেন্স বদলায়নি কিনা যাচাই করা হলো **WATCH** দিয়ে optimistic locking — watch-করা key বদলে গেলে EXEC বাতিল হয়, তুমি retry করো। বাস্তবে ব্যাংকের ফান্ড ট্রান্সফার, ই-কমার্সের স্টক কমানো, বা টিকিট বুকিং — যেখানে কয়েকটা ধাপ মাঝে কিছু না ঢুকিয়ে একসাথে ঘটতে হবে — ঠিক এভাবেই Redis সামলায়।
+
+একটা single Redis command atomic, কিন্তু আসল অপারেশনের প্রায়ই কয়েকটা command-কে একসাথে ঘটতে হয় যেখানে মাঝে কিছু ঢুকে না পড়ে। Redis দুটো tool দেয়: transaction, যা command গ্রুপ করে, এবং Lua scripting, যা server-এ atomically arbitrary logic চালায়। দুটোই single-threaded core-এর উপর নির্ভর করে — কিন্তু Redis transaction তুমি যে database transaction আশা করো তার থেকে ভিন্ন আচরণ করে, এবং সেই পার্থক্য মানুষকে হোঁচট খাওয়ায়।
+
+## MULTI / EXEC: command গ্রুপ করা
+
+`MULTI` একটা transaction খোলে। এর পরে টাইপ করা command **queued** হয়, execute হয় না, প্রতিটা `QUEUED` reply করে। `EXEC` পুরো batch-টা atomically চালায় — অন্য কোনো client-এর command এদের মাঝে interleave করতে পারে না। `DISCARD` queue-টা ফেলে দেয়।
 
 ```text
 127.0.0.1:6379> MULTI
@@ -32,11 +40,11 @@ QUEUED
 3) (integer) 20
 ```
 
-Between `MULTI` and `EXEC`, no other client runs. The three commands above execute as one indivisible unit. That is the guarantee — and the whole guarantee.
+`MULTI` আর `EXEC`-এর মাঝে, অন্য কোনো client চলে না। উপরের তিনটা command একটা অবিভাজ্য unit হিসেবে execute হয়। এটাই guarantee — এবং পুরো guarantee।
 
-## Why these are not rollback transactions
+## কেন এগুলো rollback transaction নয়
 
-Coming from SQL, you expect a transaction to be all-or-nothing: if any statement fails, the whole thing rolls back. **Redis does not do this.** If a queued command fails _at execution time_, the other commands still run, and there is no rollback.
+SQL থেকে আসা, তুমি আশা করো একটা transaction all-or-nothing হবে: যদি কোনো statement fail করে, পুরোটা roll back করে। **Redis এটা করে না।** যদি একটা queued command _execution-এর সময়_ fail করে, অন্য command-গুলো তখনও চলে, এবং কোনো rollback নেই।
 
 ```text
 127.0.0.1:6379> SET counter "not-a-number"
@@ -52,22 +60,22 @@ QUEUED
 2) OK                                # flag was set despite the error above
 ```
 
-There are two kinds of failure to distinguish:
+আলাদা করার মতো দুই ধরনের failure আছে:
 
-- **Errors detected at queue time** (a syntactically wrong command, an unknown command) abort the whole transaction — `EXEC` refuses to run it. This is checked since modern Redis versions.
-- **Errors detected at run time** (like `INCR` on a non-numeric value) do _not_ abort the others. The bad command returns an error inside the `EXEC` result array, and everything else still applies.
+- **queue-এর সময় শনাক্ত হওয়া error** (একটা syntactically ভুল command, একটা unknown command) পুরো transaction বাতিল করে — `EXEC` এটা চালাতে অস্বীকার করে। আধুনিক Redis version থেকে এটা চেক করা হয়।
+- **run-time-এ শনাক্ত হওয়া error** (যেমন একটা non-numeric value-তে `INCR`) অন্যগুলো বাতিল _করে না_। খারাপ command-টা `EXEC` ফলাফল array-এর ভেতরে একটা error ফেরত দেয়, এবং বাকি সবকিছু তখনও প্রয়োগ হয়।
 
-Redis's author defends this deliberately: run-time errors are almost always programming bugs that would be caught in development, and omitting rollback keeps the server simple and fast. The practical takeaway is to stop thinking "transaction = safety net" and think "transaction = these commands run together, isolated, with no rollback." If a step can fail meaningfully, you must handle it yourself — and Lua is usually the better fit.
+Redis-এর author এটা ইচ্ছাকৃতভাবে রক্ষা করেন: run-time error প্রায় সবসময় programming bug যা development-এ ধরা পড়তো, এবং rollback বাদ দেওয়া server-কে সরল আর দ্রুত রাখে। ব্যবহারিক শিক্ষা হলো "transaction = safety net" ভাবা বন্ধ করে "transaction = এই command-গুলো একসাথে চলে, isolated, কোনো rollback ছাড়া" ভাবা। যদি একটা step অর্থপূর্ণভাবে fail করতে পারে, তোমাকে নিজেকেই এটা সামলাতে হবে — এবং Lua সাধারণত ভালো ফিট।
 
 <Callout type="warning">
 
-**Note:** A Redis transaction gives you **atomic isolation** (no interleaving) but **not atomic rollback**. Do not assume a failed command undoes its predecessors — it does not. If your logic genuinely needs "all or nothing" with conditional steps, reach for a Lua script, which lets you check conditions and decide before mutating anything.
+**নোট:** একটা Redis transaction তোমাকে **atomic isolation** (কোনো interleaving নেই) দেয় কিন্তু **atomic rollback নয়**। ধরে নিও না যে একটা fail করা command তার পূর্বসূরিদের undo করে — এটা করে না। যদি তোমার logic-এর সত্যিই conditional step সহ "all or nothing" দরকার হয়, একটা Lua script-এর দিকে যাও, যা তোমাকে কিছু mutate করার আগে condition চেক করে সিদ্ধান্ত নিতে দেয়।
 
 </Callout>
 
 ## WATCH: optimistic locking
 
-A transaction alone cannot make a decision based on current data, because the commands are queued before they run. `WATCH` bridges that gap with **optimistic concurrency control**: you watch one or more keys, read them, build your transaction based on what you saw, and `EXEC` succeeds only if none of the watched keys changed in the meantime. If any did, `EXEC` returns nil and you retry.
+একটা transaction একা current data-র উপর ভিত্তি করে সিদ্ধান্ত নিতে পারে না, কারণ command-গুলো চলার আগে queue হয়ে যায়। `WATCH` সেই ফাঁকটা **optimistic concurrency control** দিয়ে পূরণ করে: তুমি এক বা একাধিক key watch করো, এগুলো পড়ো, যা দেখলে তার উপর ভিত্তি করে তোমার transaction গড়ো, এবং `EXEC` শুধু তখনই সফল হয় যদি এর মধ্যে কোনো watched key না বদলায়। যদি কোনোটা বদলায়, `EXEC` nil ফেরত দেয় এবং তুমি retry করো।
 
 ```text
 127.0.0.1:6379> WATCH stock:item42
@@ -83,11 +91,11 @@ QUEUED
 1) (integer) 2          # success: nobody else touched stock:item42
 ```
 
-If another client modified `stock:item42` after the `WATCH` but before the `EXEC`, then `EXEC` returns `(nil)` and nothing is applied — you loop and try again. This is "optimistic" because it assumes conflicts are rare and only pays a cost (a retry) when one actually happens, unlike a pessimistic lock that blocks everyone up front. It is the right tool for low-contention check-then-act sequences.
+যদি আরেকটা client `WATCH`-এর পর কিন্তু `EXEC`-এর আগে `stock:item42` modify করে, তাহলে `EXEC` `(nil)` ফেরত দেয় এবং কিছুই প্রয়োগ হয় না — তুমি loop করো এবং আবার চেষ্টা করো। এটা "optimistic" কারণ এটা ধরে নেয় conflict বিরল এবং শুধু একটা সত্যিই ঘটলেই একটা খরচ (একটা retry) দেয়, একটা pessimistic lock-এর মতো নয় যা আগেভাগে সবাইকে block করে। এটা low-contention check-then-act sequence-এর জন্য সঠিক tool।
 
-## Lua scripting: atomic logic on the server
+## Lua scripting: server-এ atomic logic
 
-`WATCH` retries get awkward when the logic is complex. Lua scripting sidesteps that entirely: you send a script with `EVAL`, and Redis runs the _whole script_ atomically — no other command interleaves, no network round-trips between steps, and the script can branch on values it reads.
+logic জটিল হলে `WATCH` retry অস্বস্তিকর হয়ে যায়। Lua scripting সেটা পুরোপুরি এড়িয়ে যায়: তুমি `EVAL` দিয়ে একটা script পাঠাও, এবং Redis _পুরো script_-টা atomically চালায় — অন্য কোনো command interleave করে না, step-এর মাঝে কোনো network round-trip নেই, এবং script যে value পড়ে তার উপর ভিত্তি করে branch করতে পারে।
 
 ```lua
 -- Atomic conditional decrement: only if stock remains
@@ -109,9 +117,9 @@ OK
 (integer) -1
 ```
 
-The call shape is `EVAL script numkeys key [key ...] arg [arg ...]`. Keys go through `KEYS` and other parameters through `ARGV` — keep all key names in `KEYS` so the script works correctly in Cluster mode (chapter 8), which routes by key.
+call-এর আকার হলো `EVAL script numkeys key [key ...] arg [arg ...]`। key-গুলো `KEYS`-এর মধ্য দিয়ে যায় এবং অন্য parameter `ARGV`-র মধ্য দিয়ে — সব key name `KEYS`-এ রাখো যাতে script Cluster mode-এ (অধ্যায় 8) সঠিকভাবে কাজ করে, যা key দিয়ে route করে।
 
-To avoid resending the script body every time, load it once and call it by SHA hash:
+প্রতিবার script body আবার না পাঠাতে, একবার load করো এবং SHA hash দিয়ে call করো:
 
 ```text
 127.0.0.1:6379> SCRIPT LOAD "return redis.call('GET', KEYS[1])"
@@ -120,16 +128,16 @@ To avoid resending the script body every time, load it once and call it by SHA h
 "hello"
 ```
 
-Why Lua beats a `WATCH` loop for hard cases: the entire decision-and-mutation happens in one atomic, server-side step. There is nothing to retry because nothing can interleave, and there are no extra round-trips. The earlier safe lock-release (chapter 6) — check the token, then delete only if it matches — is a perfect example: as a Lua script it is atomic; as separate `GET` then `DEL` commands it has a race.
+কেন কঠিন কেসের জন্য Lua একটা `WATCH` loop-কে হারায়: পুরো decision-and-mutation একটা atomic, server-side step-এ ঘটে। retry করার কিছু নেই কারণ কিছুই interleave করতে পারে না, এবং কোনো অতিরিক্ত round-trip নেই। আগের safe lock-release (অধ্যায় 6) — token চেক করো, তারপর মিললেই শুধু delete করো — একটা নিখুঁত উদাহরণ: একটা Lua script হিসেবে এটা atomic; আলাদা `GET` তারপর `DEL` command হিসেবে এর একটা race আছে।
 
 <Callout type="info">
 
-**Note:** Because a script blocks the single thread until it finishes, keep scripts short and avoid long loops or O(N) work over big collections inside them. A slow script stalls every other client, exactly like a slow command. Lua is for _atomic_, _small_ multi-step logic — not for batch processing.
+**নোট:** যেহেতু একটা script single thread-কে শেষ না হওয়া পর্যন্ত block করে, script ছোট রাখো এবং এদের ভেতরে বড় collection-এর উপর দীর্ঘ loop বা O(N) কাজ এড়াও। একটা slow script প্রতিটা অন্য client-কে থামিয়ে দেয়, ঠিক একটা slow command-এর মতো। Lua হলো _atomic_, _ছোট_ multi-step logic-এর জন্য — batch processing-এর জন্য নয়।
 
 </Callout>
 
 ## Redis Functions
 
-Newer Redis versions add **Functions**, an evolution of scripting. Instead of an app sending script text on the fly, you register a named library of functions on the server with `FUNCTION LOAD`, then invoke them by name with `FCALL`. This treats server-side logic as first-class, deployable code — versioned, listed with `FUNCTION LIST`, and persisted/replicated with the dataset — rather than ad-hoc strings scattered through the application. The atomicity and execution model are the same as `EVAL`; Functions mainly improve how that logic is organized and shipped.
+নতুন Redis version **Functions** যোগ করে, scripting-এর একটা বিবর্তন। একটা app উড়িয়ে উড়িয়ে script text পাঠানোর বদলে, তুমি server-এ `FUNCTION LOAD` দিয়ে function-এর একটা named library রেজিস্টার করো, তারপর `FCALL` দিয়ে নাম ধরে এদের invoke করো। এটা server-side logic-কে first-class, deployable code হিসেবে ট্রিট করে — versioned, `FUNCTION LIST` দিয়ে তালিকাভুক্ত, এবং dataset-এর সাথে persist/replicate করা — application জুড়ে ছড়ানো ad-hoc string-এর বদলে। atomicity আর execution model `EVAL`-এর মতোই; Functions মূলত সেই logic কীভাবে সংগঠিত আর ship করা হয় তা উন্নত করে।
 
-The mental model for the whole chapter: use **MULTI/EXEC** to group independent commands, **WATCH** for simple optimistic check-then-act, and **Lua (or Functions)** whenever the logic needs to read a value and branch before deciding what to write.
+পুরো অধ্যায়ের মানসিক model: independent command গ্রুপ করতে **MULTI/EXEC** ব্যবহার করো, সরল optimistic check-then-act-এর জন্য **WATCH**, এবং যখনই logic-এর একটা value পড়ে এবং কী লিখবে তা সিদ্ধান্ত নেওয়ার আগে branch করতে হয় তখন **Lua (বা Functions)**।

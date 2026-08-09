@@ -1,9 +1,9 @@
 ---
-title: 'REST Fundamentals'
-subtitle: 'Understand RESTful principles, HTTP methods, status codes, and resource naming conventions that form the backbone of modern APIs.'
+title: 'REST-এর মূল ধারণা'
+subtitle: 'RESTful নীতি, HTTP মেথড, স্ট্যাটাস কোড, আর রিসোর্স নেমিং কনভেনশন বুঝে নিন — এগুলোই আধুনিক API-এর মূল ভিত্তি।'
 chapter: 1
 level: 'beginner'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['REST', 'HTTP methods', 'status codes', 'resource naming']
 ---
 
@@ -11,30 +11,38 @@ topics: ['REST', 'HTTP methods', 'status codes', 'resource naming']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What is REST?
+## গল্পে বুঝি
 
-REST (Representational State Transfer) is an architectural style for designing networked applications. It was defined by Roy Fielding in his 2000 doctoral dissertation and has become the dominant approach for building web APIs.
+ইবনে সিনা গেল বিদ্যুৎ অফিসে, হাতে তার অ্যাকাউন্ট নম্বর। কাউন্টারে গিয়ে দেখে জানালার পাশে আলাদা আলাদা ছাপানো ফর্ম সাজানো — একটা ফর্ম বিল দেখার জন্য, একটা বিল জমা দেওয়ার জন্য, একটা ঠিকানা বদলানোর জন্য, আর একটা লাইন কাটানোর জন্য। ইবনে সিনা বিল দেখতে চায়, তাই সে "বিল দেখুন" ফর্মটা তুলে নেয়, অ্যাকাউন্ট নম্বর বসিয়ে জমা দেয়। পরের সপ্তাহে বিল জমা দিতে এসে সে "বিল জমা" ফর্ম নেয়, আর ঠিকানা পাল্টানোর দিন নেয় "ঠিকানা পরিবর্তন" ফর্ম — কাজ যা-ই হোক, ফর্মের ধরনটাই বলে দেয় সে ঠিক কী করতে চাইছে।
 
-REST is not a protocol — it is a set of constraints. When an API follows these constraints, we call it RESTful.
+মজার ব্যাপার হলো, কাউন্টারের কেরানি ইবনে সিনাকে চেনে না, আর চেনার দরকারও নেই। প্রতিটা ফর্মেই যেহেতু অ্যাকাউন্ট নম্বর লেখা থাকে, কেরানি প্রতিবার শুধু হাতের কাগজটা দেখেই কাজ সেরে ফেলে — ইবনে সিনা গতবার কী করে গিয়েছিল সেটা মনে রাখার কোনো ঝামেলা নেই। তাই আজ ইবনে সিনা গেলে যা হয়, কাল আল-খোয়ারিজমি একই ফর্মে একই অ্যাকাউন্ট নম্বর দিলেও ঠিক তা-ই হয়।
+
+এই কাউন্টারটাই আসলে একটা **REST** API। অ্যাকাউন্ট (বা বিল) হলো **resource**, আর প্রতিটা কাজের আলাদা ফর্ম হলো HTTP verb — বিল দেখা **GET**, বিল জমা **POST**, ঠিকানা বদলানো **PUT**, লাইন কাটানো **DELETE**। সব কাজ একই ছাঁচের ফর্মে হওয়াটাই **uniform interface**, আর প্রতিটা ফর্মে অ্যাকাউন্ট নম্বর থাকায় কেরানির আগের কথা মনে না রাখাটাই **stateless** — প্রতিটা request নিজেই স্বয়ংসম্পূর্ণ। বাস্তবে ঠিক এভাবেই, ধরুন, একটা মোবাইল ব্যাংকিং অ্যাপ প্রতিটা লেনদেনে টোকেন আর অ্যাকাউন্ট আইডি পাঠায়, যাতে সার্ভারকে আগের সেশন মনে রাখতে না হয়।
+
+## REST কী?
+
+REST (Representational State Transfer) হলো নেটওয়ার্কড অ্যাপ্লিকেশন ডিজাইন করার একটি আর্কিটেকচারাল স্টাইল। Roy Fielding তাঁর ২০০০ সালের ডক্টরাল ডিজার্টেশনে এটি সংজ্ঞায়িত করেন, এবং এখন এটি web API বানানোর প্রধান পদ্ধতি হয়ে দাঁড়িয়েছে।
+
+REST কোনো protocol নয় — এটি কিছু constraint-এর সেট। একটি API যখন এই constraint-গুলো মেনে চলে, তখন আমরা তাকে RESTful বলি।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a restaurant menu — GET reads the menu, POST places an order, PUT modifies your order, DELETE cancels it. The menu defines what you can request and what you'll get back.
+একটা রেস্টুরেন্টের মেনুর মতো — GET মেনু পড়ে, POST অর্ডার দেয়, PUT আপনার অর্ডার বদলায়, DELETE সেটা বাতিল করে। মেনু ঠিক করে দেয় আপনি কী চাইতে পারবেন আর বিনিময়ে কী পাবেন।
 
 </Callout>
 
-## The Six REST Constraints
+## ছয়টি REST Constraint
 
-REST defines six architectural constraints:
+REST ছয়টি আর্কিটেকচারাল constraint সংজ্ঞায়িত করে:
 
-1. **Client-Server** — Separate the user interface from the data storage
-2. **Stateless** — Each request contains all the information needed to process it
-3. **Cacheable** — Responses must define themselves as cacheable or not
-4. **Uniform Interface** — A consistent way to interact with resources
-5. **Layered System** — The client cannot tell if it is connected directly to the server
-6. **Code on Demand** (optional) — Servers can send executable code to clients
+1. **Client-Server** — ইউজার ইন্টারফেসকে ডেটা স্টোরেজ থেকে আলাদা রাখুন
+2. **Stateless** — প্রতিটি request-এ সেটা প্রসেস করার জন্য প্রয়োজনীয় সব তথ্য থাকে
+3. **Cacheable** — response-কে নিজেই বলে দিতে হবে সেটা cacheable কিনা
+4. **Uniform Interface** — রিসোর্সের সাথে ইন্টারঅ্যাক্ট করার একটি সামঞ্জস্যপূর্ণ উপায়
+5. **Layered System** — client বুঝতে পারে না সে সরাসরি সার্ভারের সাথে যুক্ত কিনা
+6. **Code on Demand** (ঐচ্ছিক) — সার্ভার client-কে এক্সিকিউটেবল কোড পাঠাতে পারে
 
 ```typescript
 // Stateless means every request is self-contained
@@ -49,17 +57,17 @@ fetch('/api/products?page=3&limit=20', {
 });
 ```
 
-## HTTP Methods
+## HTTP মেথড
 
-HTTP methods (also called verbs) define the action to perform on a resource:
+HTTP মেথড (যাকে verb-ও বলা হয়) একটি রিসোর্সের ওপর কী অ্যাকশন করতে হবে তা নির্ধারণ করে:
 
-| Method | Purpose                     | Idempotent | Safe | Has Body |
-| ------ | --------------------------- | ---------- | ---- | -------- |
-| GET    | Read a resource             | Yes        | Yes  | No       |
-| POST   | Create a resource           | No         | No   | Yes      |
-| PUT    | Replace a resource entirely | Yes        | No   | Yes      |
-| PATCH  | Partially update a resource | No         | No   | Yes      |
-| DELETE | Remove a resource           | Yes        | No   | Optional |
+| Method | কাজ                      | Idempotent | Safe  | Body আছে |
+| ------ | ------------------------ | ---------- | ----- | -------- |
+| GET    | রিসোর্স পড়া             | হ্যাঁ      | হ্যাঁ | না       |
+| POST   | রিসোর্স তৈরি করা         | না         | না    | হ্যাঁ    |
+| PUT    | পুরো রিসোর্স রিপ্লেস করা | হ্যাঁ      | না    | হ্যাঁ    |
+| PATCH  | রিসোর্স আংশিক আপডেট করা  | না         | না    | হ্যাঁ    |
+| DELETE | রিসোর্স মুছে ফেলা        | হ্যাঁ      | না    | ঐচ্ছিক   |
 
 ```typescript
 // GET — Retrieve a list of users
@@ -102,17 +110,17 @@ await fetch('/api/users/42', { method: 'DELETE' });
 
 <Callout type="warning">
 
-**PUT vs PATCH Confusion**
+**PUT বনাম PATCH নিয়ে গোলমাল**
 
-PUT replaces the entire resource. If you PUT a user with only `{ name: "Rahim" }`, you will lose the email and role fields. PATCH only updates the fields you send. Most APIs should use PATCH for updates unless you genuinely want full replacement semantics.
+PUT পুরো রিসোর্সটাকে রিপ্লেস করে। আপনি যদি শুধু `{ name: "Rahim" }` দিয়ে একটি user-কে PUT করেন, তাহলে email আর role ফিল্ডগুলো হারিয়ে যাবে। PATCH শুধু আপনার পাঠানো ফিল্ডগুলোই আপডেট করে। সত্যিকার অর্থে পুরো রিপ্লেসমেন্ট না চাইলে বেশিরভাগ API-তে আপডেটের জন্য PATCH ব্যবহার করাই ভালো।
 
 </Callout>
 
-## HTTP Status Codes
+## HTTP স্ট্যাটাস কোড
 
-Status codes tell the client what happened. They are grouped by category:
+স্ট্যাটাস কোড client-কে জানায় কী ঘটেছে। এগুলো ক্যাটাগরি অনুযায়ী গ্রুপ করা:
 
-### 2xx — Success
+### 2xx — সফল
 
 ```typescript
 // 200 OK — Request succeeded (GET, PUT, PATCH)
@@ -130,7 +138,7 @@ app.delete('/api/users/:id', async (req, res) => {
 });
 ```
 
-### 4xx — Client Errors
+### 4xx — Client Error
 
 ```typescript
 // 400 Bad Request — Invalid input
@@ -153,7 +161,7 @@ app.get('/api/users/:id', async (req, res) => {
 });
 ```
 
-### 5xx — Server Errors
+### 5xx — Server Error
 
 ```typescript
 // 500 Internal Server Error — Something broke on the server
@@ -176,19 +184,19 @@ app.get('/api/reports', async (req, res) => {
 
 <Callout type="tip">
 
-**Status Code Rules of Thumb**
+**স্ট্যাটাস কোডের কিছু সাধারণ নিয়ম**
 
-- Use **201** for successful POST, not 200
-- Use **204** for DELETE when you return no body
-- Use **404** for missing resources, not a 200 with an empty body
-- Use **422** when the JSON is valid but the data fails validation
-- Never return a **200** with an error message in the body — that defeats the purpose of status codes
+- সফল POST-এর জন্য **201** ব্যবহার করুন, 200 নয়
+- যখন কোনো body রিটার্ন করছেন না, তখন DELETE-এর জন্য **204** ব্যবহার করুন
+- না-পাওয়া রিসোর্সের জন্য **404** ব্যবহার করুন, খালি body-সহ 200 নয়
+- JSON valid কিন্তু ডেটা validation-এ fail করলে **422** ব্যবহার করুন
+- body-তে error message দিয়ে কখনো **200** রিটার্ন করবেন না — এতে স্ট্যাটাস কোডের পুরো উদ্দেশ্যই মাটি হয়
 
 </Callout>
 
-## Resource Naming Conventions
+## রিসোর্স নেমিং কনভেনশন
 
-Good resource naming is the most important part of API design. URLs should represent resources (nouns), not actions (verbs).
+ভালো রিসোর্স নেমিং API ডিজাইনের সবচেয়ে গুরুত্বপূর্ণ অংশ। URL-এ রিসোর্স (noun) থাকা উচিত, অ্যাকশন (verb) নয়।
 
 ```typescript
 // BAD — verbs in URLs
@@ -206,13 +214,13 @@ PATCH / users / 42; // Update a user
 DELETE / users / 42; // Delete a user
 ```
 
-### Naming Rules
+### নেমিংয়ের নিয়ম
 
-1. **Use plural nouns** — `/users`, not `/user`
-2. **Use kebab-case** — `/order-items`, not `/orderItems`
-3. **Nest for relationships** — `/users/42/orders` (orders belonging to user 42)
-4. **Keep it shallow** — max 2-3 levels of nesting
-5. **Use query params for filtering** — `/users?role=admin&active=true`
+1. **Plural noun ব্যবহার করুন** — `/users`, `/user` নয়
+2. **kebab-case ব্যবহার করুন** — `/order-items`, `/orderItems` নয়
+3. **সম্পর্কের জন্য nest করুন** — `/users/42/orders` (user 42-এর অধীন orders)
+4. **কম গভীরে রাখুন** — সর্বোচ্চ ২-৩ লেভেল nesting
+5. **ফিল্টারিংয়ের জন্য query param ব্যবহার করুন** — `/users?role=admin&active=true`
 
 ```typescript
 // Nested resources — relationships
@@ -231,18 +239,18 @@ GET /order-items/3/reviews
 
 <Callout type="warning">
 
-**Common Naming Mistakes**
+**সাধারণ নেমিং ভুল**
 
-- Using verbs: `/getUser` instead of `GET /users/:id`
-- Inconsistent pluralization: `/user/42/orders` vs `/products`
-- CamelCase in URLs: `/orderItems` instead of `/order-items`
-- Trailing slashes inconsistency: some endpoints with `/`, some without
+- verb ব্যবহার করা: `GET /users/:id`-এর বদলে `/getUser`
+- অসামঞ্জস্যপূর্ণ pluralization: `/user/42/orders` বনাম `/products`
+- URL-এ CamelCase: `/order-items`-এর বদলে `/orderItems`
+- Trailing slash-এর অসামঞ্জস্য: কিছু endpoint-এ `/`, কিছুতে নেই
 
 </Callout>
 
-## Putting It All Together
+## সবকিছু একসাথে জোড়া লাগানো
 
-Here is a complete example of a RESTful resource definition using Express:
+Express দিয়ে একটি RESTful রিসোর্স ডেফিনিশনের সম্পূর্ণ উদাহরণ এখানে:
 
 ```typescript
 import express from 'express';
@@ -307,10 +315,10 @@ router.delete('/products/:id', async (req, res) => {
 export default router;
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **REST is a set of constraints**, not a protocol — statelessness, uniform interface, and cacheability are the core ideas
-2. **HTTP methods map to CRUD** — GET reads, POST creates, PUT/PATCH updates, DELETE removes
-3. **Status codes communicate outcomes** — use the right code for the right situation
-4. **URLs represent resources** — use plural nouns, kebab-case, and shallow nesting
-5. **Every request must be self-contained** — no server-side session state between requests
+1. **REST হলো কিছু constraint-এর সেট**, protocol নয় — statelessness, uniform interface, আর cacheability এর মূল ধারণা
+2. **HTTP মেথড CRUD-এ ম্যাপ করে** — GET পড়ে, POST তৈরি করে, PUT/PATCH আপডেট করে, DELETE মুছে ফেলে
+3. **স্ট্যাটাস কোড ফলাফল জানায়** — সঠিক পরিস্থিতিতে সঠিক কোড ব্যবহার করুন
+4. **URL রিসোর্স রিপ্রেজেন্ট করে** — plural noun, kebab-case, আর অগভীর nesting ব্যবহার করুন
+5. **প্রতিটি request নিজেই স্বয়ংসম্পূর্ণ হতে হবে** — request-এর মধ্যে কোনো server-side session state থাকবে না

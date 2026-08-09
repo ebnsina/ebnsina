@@ -1,9 +1,9 @@
 ---
-title: 'Testing Strategies'
-subtitle: 'Unit tests, integration tests, E2E tests, Testing Library patterns, and mocking — building confidence in your code.'
+title: 'টেস্টিং স্ট্র্যাটেজি'
+subtitle: 'ইউনিট টেস্ট, ইন্টিগ্রেশন টেস্ট, E2E টেস্ট, Testing Library প্যাটার্ন এবং মকিং — আপনার কোডে আস্থা তৈরি করা।'
 chapter: 7
 level: 'advanced'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['testing', 'unit tests', 'integration tests', 'E2E', 'testing library', 'mocking']
 ---
 
@@ -11,21 +11,29 @@ topics: ['testing', 'unit tests', 'integration tests', 'E2E', 'testing library',
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Test Frontend Code?
+## গল্পে বুঝি
 
-Frontend code is notoriously fragile — a CSS change can break layouts, a refactor can disconnect event handlers, and API changes can crash entire pages. Testing gives you confidence to ship changes without manually clicking through every flow. The key is knowing which type of test to write for each situation.
+গাড়ির অ্যাসেম্বলি প্ল্যান্টে টেকনিশিয়ান আল-খোয়ারিজমি সকাল থেকে বেঞ্চে বসে একটার পর একটা আলাদা পার্ট বাজিয়ে দেখছেন। একটা হর্ন হাতে নিয়ে সরাসরি ব্যাটারিতে তার লাগিয়ে চাপ দেন — বাজল কিনা, ঠিক শব্দটা এল কিনা, ব্যস। পাশের বাক্সে সুইচ, ওটাতেও একটা করে ক্লিক — অন হয় তো অফ হয়। এক-একটা পার্ট মিনিটখানেকের পরীক্ষা, খরচও নেই বললেই চলে, তাই দিনে শত শত পার্ট এভাবে যাচাই হয়ে যায়।
+
+কিন্তু পার্ট আলাদা ভালো মানে তো পুরোটা এক সাথে কাজ করবে এমন না। তাই পরের ধাপে ইবনে সিনা একটা পুরো অ্যাসেম্বল করা ড্যাশবোর্ড প্যানেল সামনে টেনে নেন — হর্ন, সুইচ, ইন্ডিকেটর সব বসানো। তিনি বাস্তবে বাটনগুলো টিপে দেখেন আর চোখ রাখেন বাতিগুলোর দিকে: হেডলাইট সুইচ টিপলে ঠিক আলোটা জ্বলছে তো, ইন্ডিকেটর দিলে ঠিক পাশের বাতি ব্লিংক করছে তো। এমন প্যানেল-পরীক্ষা পার্ট-পরীক্ষার চেয়ে কম হয়, একটু সময়ও নেয়। আর একদম শেষে ফাতিমা আল-ফিহরি তৈরি হয়ে যাওয়া গোটা গাড়িটা নিয়ে রাস্তায় নামেন — লম্বা টেস্ট-ড্রাইভ, স্টিয়ারিং, ব্রেক, হর্ন, লাইট সব একসাথে। এই পুরো টেস্ট-ড্রাইভ দিনে গুটিকয়েক গাড়িতেই হয়, কারণ ওতে সময় আর খরচ দুটোই বেশি।
+
+এই গল্পটাই আসলে ফ্রন্টএন্ড টেস্টিং। বেঞ্চে একটা পার্ট আলাদা বাজিয়ে দেখা হলো **unit test** — পিওর ফাংশন বা ইউটিলিটি একা যাচাই করা। ড্যাশবোর্ড প্যানেলের বাটন টিপে বাতি দেখা হলো **component test** — কম্পোনেন্ট রেন্ডার করে বাস্তবে ইন্টারঅ্যাক্ট করে ফলাফল দেখা। আর গোটা গাড়ি নিয়ে রাস্তায় টেস্ট-ড্রাইভ হলো **end-to-end (e2e) test** — আসল ব্রাউজারে পুরো অ্যাপ চালিয়ে দেখা। আর অনেক সস্তা পার্ট-টেস্ট, কম প্যানেল-টেস্ট, মুষ্টিমেয় ড্রাইভ — এই বণ্টনটাই **testing pyramid**। বাস্তবে এই তিন ধাপ হয় Vitest (unit), Testing Library (component) আর Playwright (e2e) দিয়ে — নিচের অংশে ঠিক এগুলোই ব্যবহার করব।
+
+## ফ্রন্টএন্ড কোড কেন টেস্ট করবেন?
+
+ফ্রন্টএন্ড কোড কুখ্যাতভাবে ভঙ্গুর — একটা CSS পরিবর্তন লেআউট ভেঙে দিতে পারে, একটা রিফ্যাক্টর ইভেন্ট হ্যান্ডলার বিচ্ছিন্ন করে দিতে পারে, আর API পরিবর্তন গোটা পেজ ক্র্যাশ করাতে পারে। টেস্টিং আপনাকে সেই আস্থা দেয় যাতে প্রতিটা ফ্লো ম্যানুয়ালি ক্লিক করে না দেখেই পরিবর্তন শিপ করা যায়। মূল বিষয়টা হলো — কোন পরিস্থিতিতে কোন ধরনের টেস্ট লিখতে হবে সেটা জানা।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like quality control at a car factory — unit testing checks each part individually, integration testing checks if the engine connects to the transmission, E2E testing drives the finished car around a track.
+গাড়ির কারখানায় কোয়ালিটি কন্ট্রোলের মতো — ইউনিট টেস্টিং প্রতিটা পার্ট আলাদাভাবে যাচাই করে, ইন্টিগ্রেশন টেস্টিং দেখে ইঞ্জিন ট্রান্সমিশনের সাথে ঠিকমতো যুক্ত হয় কিনা, আর E2E টেস্টিং পুরো তৈরি গাড়িটা একটা ট্র্যাকে চালিয়ে দেখে।
 
 </Callout>
 
-## The Testing Trophy
+## দ্য টেস্টিং ট্রফি
 
-Kent C. Dodds' testing trophy suggests this distribution:
+Kent C. Dodds-এর টেস্টিং ট্রফি এই বণ্টনটা প্রস্তাব করে:
 
 ```
          /\
@@ -39,11 +47,11 @@ Kent C. Dodds' testing trophy suggests this distribution:
   Static Analysis    — Foundation: TypeScript, ESLint
 ```
 
-Integration tests give the most confidence per dollar because they test components the way users interact with them — without being as slow and brittle as E2E tests.
+ইন্টিগ্রেশন টেস্ট প্রতি ডলারে সবচেয়ে বেশি আস্থা দেয়, কারণ ব্যবহারকারীরা যেভাবে কম্পোনেন্টের সাথে ইন্টারঅ্যাক্ট করে সেভাবেই এগুলো কম্পোনেন্ট টেস্ট করে — অথচ E2E টেস্টের মতো ধীর আর ভঙ্গুর নয়।
 
-## Unit Testing: Pure Logic
+## ইউনিট টেস্টিং: পিওর লজিক
 
-Unit tests are for pure functions and utilities — things with clear inputs and outputs, no DOM, no side effects.
+ইউনিট টেস্ট হলো পিওর ফাংশন আর ইউটিলিটির জন্য — যেগুলোর ইনপুট-আউটপুট স্পষ্ট, কোনো DOM নেই, কোনো সাইড এফেক্ট নেই।
 
 ```typescript
 // utils/price.ts
@@ -109,9 +117,9 @@ describe('isInStock', () => {
 });
 ```
 
-## Integration Testing: Components
+## ইন্টিগ্রেশন টেস্টিং: কম্পোনেন্ট
 
-Integration tests render components, simulate user interactions, and verify the resulting DOM. Use Testing Library to test components the way users see them.
+ইন্টিগ্রেশন টেস্ট কম্পোনেন্ট রেন্ডার করে, ইউজার ইন্টারঅ্যাকশন সিমুলেট করে, আর ফলাফল হিসেবে যে DOM তৈরি হয় সেটা যাচাই করে। ব্যবহারকারীরা যেভাবে দেখে সেভাবেই কম্পোনেন্ট টেস্ট করতে Testing Library ব্যবহার করুন।
 
 ```typescript
 // components/LoginForm.tsx
@@ -210,18 +218,18 @@ describe("LoginForm", () => {
 
 <Callout type="tip">
 
-**Testing Library best practices:**
+**Testing Library-এর সেরা চর্চা:**
 
-- Query by role, label, or text — never by class name or test ID (unless necessary)
-- Use `userEvent` over `fireEvent` — it simulates real user behavior including focus, keyboard events, and pointer events
-- Test behavior, not implementation — do not assert on state variables or component internals
-- One assertion per behavior — if a test does too many things, split it
+- role, label বা text দিয়ে কোয়েরি করুন — কখনো class name বা test ID দিয়ে নয় (একান্ত দরকার না হলে)
+- `fireEvent`-এর বদলে `userEvent` ব্যবহার করুন — এটা ফোকাস, কীবোর্ড ইভেন্ট আর পয়েন্টার ইভেন্টসহ প্রকৃত ব্যবহারকারীর আচরণ সিমুলেট করে
+- বিহেভিয়ার টেস্ট করুন, ইমপ্লিমেন্টেশন নয় — state ভেরিয়েবল বা কম্পোনেন্টের অভ্যন্তরীণ বিষয় নিয়ে assert করবেন না
+- প্রতি বিহেভিয়ারে একটা assertion — কোনো টেস্ট যদি অনেক কিছু করে ফেলে, সেটা ভাগ করে দিন
 
 </Callout>
 
-## Mocking
+## মকিং
 
-Mocking isolates the code under test from external dependencies like APIs, timers, and modules.
+মকিং টেস্টের অধীন কোডকে API, টাইমার আর মডিউলের মতো বাইরের নির্ভরশীলতা থেকে আলাদা করে রাখে।
 
 ```typescript
 // Mocking API calls
@@ -262,9 +270,9 @@ it("handles API error", async () => {
 });
 ```
 
-## E2E Testing with Playwright
+## Playwright দিয়ে E2E টেস্টিং
 
-E2E tests run in a real browser and test complete user flows across multiple pages.
+E2E টেস্ট একটা আসল ব্রাউজারে চলে আর একাধিক পেজজুড়ে সম্পূর্ণ ইউজার ফ্লো টেস্ট করে।
 
 ```typescript
 // tests/checkout.spec.ts
@@ -306,16 +314,16 @@ test.describe('Checkout Flow', () => {
 
 <Callout type="warning">
 
-**Common testing mistakes:**
+**টেস্টিংয়ের সাধারণ ভুল:**
 
-- **Testing implementation details** — asserting on state variables, CSS classes, or internal method calls. These tests break on refactors even when behavior is unchanged.
-- **Not testing error states** — happy path tests are easy. The bugs hide in loading, error, empty, and edge case states.
-- **Flaky E2E tests** — always use `await expect(...).toBeVisible()` instead of arbitrary `waitForTimeout` calls.
-- **100% coverage as a goal** — coverage measures which lines executed, not which behaviors are verified. A test that renders a component with no assertions gives 100% coverage and 0% confidence.
+- **ইমপ্লিমেন্টেশন ডিটেইল টেস্ট করা** — state ভেরিয়েবল, CSS ক্লাস বা অভ্যন্তরীণ মেথড কলের উপর assert করা। বিহেভিয়ার একই থাকলেও রিফ্যাক্টরে এই টেস্টগুলো ভেঙে পড়ে।
+- **এরর স্টেট টেস্ট না করা** — হ্যাপি পাথ টেস্ট সহজ। বাগ লুকিয়ে থাকে loading, error, empty আর এজ কেস স্টেটে।
+- **ফ্লেকি E2E টেস্ট** — এলোমেলো `waitForTimeout` কলের বদলে সবসময় `await expect(...).toBeVisible()` ব্যবহার করুন।
+- **লক্ষ্য হিসেবে 100% কভারেজ** — কভারেজ মাপে কোন লাইন এক্সিকিউট হলো, কোন বিহেভিয়ার যাচাই হলো তা নয়। কোনো assertion ছাড়া একটা কম্পোনেন্ট রেন্ডার করা টেস্ট 100% কভারেজ দেয় আর 0% আস্থা দেয়।
 
 </Callout>
 
-## Test Organization
+## টেস্ট সংগঠন
 
 ```
 src/
@@ -335,11 +343,11 @@ tests/
 └── setup.ts                    ← test setup (mocks, matchers)
 ```
 
-## Key Takeaways
+## মূল বিষয়সমূহ
 
-1. **Integration tests** give the most value — test components the way users interact with them
-2. **Unit test** pure logic — utilities, reducers, formatters — not React components
-3. **E2E tests** cover critical user flows — login, checkout, signup — sparingly
-4. **Query by role and label** — never by class name or DOM structure
-5. **Mock at the boundary** — mock API calls and external services, not internal modules
-6. **Test error states** — the bugs live in loading, error, empty, and edge cases
+1. **ইন্টিগ্রেশন টেস্ট** সবচেয়ে বেশি মূল্য দেয় — ব্যবহারকারীরা যেভাবে কম্পোনেন্টের সাথে ইন্টারঅ্যাক্ট করে সেভাবেই টেস্ট করুন
+2. পিওর লজিক **ইউনিট টেস্ট** করুন — ইউটিলিটি, রিডিউসার, ফরম্যাটার — React কম্পোনেন্ট নয়
+3. **E2E টেস্ট** ক্রিটিক্যাল ইউজার ফ্লো কভার করে — login, checkout, signup — অল্প পরিমাণে
+4. **role আর label দিয়ে কোয়েরি করুন** — কখনো class name বা DOM স্ট্রাকচার দিয়ে নয়
+5. **বাউন্ডারিতে মক করুন** — API কল আর বাইরের সার্ভিস মক করুন, অভ্যন্তরীণ মডিউল নয়
+6. **এরর স্টেট টেস্ট করুন** — বাগ থাকে loading, error, empty আর এজ কেসে

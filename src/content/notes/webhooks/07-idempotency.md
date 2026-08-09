@@ -1,9 +1,9 @@
 ---
-title: 'Idempotency on the receiver'
-subtitle: "At-least-once delivery means duplicates. The receiver's job is to process exactly once anyway. The inbox pattern — dedupe keys, atomic claim, idempotent side effects — is how."
+title: 'Receiver-এ idempotency'
+subtitle: 'At-least-once delivery মানে duplicate। receiver-এর কাজ তবুও exactly once process করা। inbox pattern — dedupe key, atomic claim, idempotent side effect — সেটাই উপায়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['webhooks', 'idempotency', 'inbox pattern', 'dedup', 'transactions']
 ---
 
@@ -11,44 +11,52 @@ topics: ['webhooks', 'idempotency', 'inbox pattern', 'dedup', 'transactions']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-The producer retries until acknowledged. The receiver crashes occasionally between processing and ACK. Both behaviours are correct. The unavoidable consequence is that some webhooks are delivered, processed, and _then_ the producer retries because it never saw the ACK.
+## গল্পে বুঝি
 
-The receiver must handle that. Process every event exactly once, even when it arrives twice (or ten times). This chapter is the receiver's idempotency story — small in code, large in correctness.
+সমরকন্দের বাজারে ইবনে সিনার একটা মুদি দোকান। শহরের বড় সওদাগরখানা থেকে ছোট ছোট নম্বর-দেওয়া কাগজের স্লিপ আসে — প্রতিটায় লেখা থাকে "অমুক খদ্দেরের হিসাবে এত দিরহাম জমা করো"। স্লিপগুলো দৌড়-বার্তাবাহক দিয়ে পাঠানো হয়, আর ইবনে সিনা জানে ঝামেলাটা কোথায় — বার্তাবাহক মাঝেমধ্যে একই নম্বরের স্লিপ দুবার এনে হাজির করে। রাস্তায় দেরি হলে সওদাগরখানা ভাবে স্লিপটা পৌঁছায়নি, তাই আরেকটা কপি পাঠিয়ে দেয়।
+
+তাই ইবনে সিনা একটা কাজ করে। তার হাতের কাছে একটা খাতা — যে স্লিপের নম্বরে সে ইতিমধ্যে টাকা জমা করে ফেলেছে, সেই নম্বরটা খাতায় টিক দিয়ে রাখে। নতুন স্লিপ এলে সে প্রথমে নম্বরটা খাতায় খুঁজে দেখে। যদি নম্বরটা আগেই টিক-দেওয়া থাকে, সে চুপচাপ স্লিপটা ফাইলে গুঁজে রাখে আর কিছুই করে না — কারণ ওই খদ্দের এই এক স্লিপের জন্য আগেই টাকা পেয়ে গেছে। নম্বরটা নতুন হলে তবেই সে টাকা জমা করে, তারপর নম্বরটা খাতায় টিক দেয়।
+
+এই গল্পটাই আসলে **receiver-এর idempotency**। প্রতিটা স্লিপের অনন্য নম্বর হলো **event id**, ইবনে সিনার টিক-দেওয়া খাতা হলো ইতিমধ্যে process করা event id-র record (inbox), আর আগেই টিক-দেওয়া নম্বর দেখে কিছু না করাটাই **deduplicate** — একটা duplicate তখন no-op, কোনো side-effect ঘটায় না। ফলে একই event দুবার এলেও খদ্দের কখনও দুবার credit পায় না; দুবার process করার ফলাফল একবার process করার সমান। বাস্তবেও ঠিক এটাই — Stripe বা GitHub-এর মতো producer at-least-once deliver করে, তাই আপনার receiver-কে event id ধরে dedupe করতে হয়, নইলে একই payment webhook দুবার এসে একজন ব্যবহারকারীকে দুবার charge করে বসবে।
+
+producer acknowledge না পাওয়া পর্যন্ত retry করে। receiver মাঝেমধ্যে processing আর ACK-এর মাঝে crash করে। দুটো behaviour-ই সঠিক। অনিবার্য পরিণতি হলো কিছু webhook deliver হয়, process হয়, আর _তারপর_ producer retry করে কারণ সে ACK কখনও দেখেনি।
+
+receiver-কে সেটা সামলাতে হবে। প্রতিটা event exactly once process করুন, দুবার (বা দশবার) এলেও। এই অধ্যায়টা receiver-এর idempotency গল্প — কোডে ছোট, correctness-এ বড়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Idempotency is like pressing an elevator button twice — the second press does nothing, the elevator still comes once.
+Idempotency অনেকটা একটা elevator button দুবার চাপার মতো — দ্বিতীয় চাপে কিছু হয় না, elevator তবুও একবারই আসে।
 
 </Callout>
 
-## What "idempotent" actually means
+## "idempotent" আসলে কী মানে
 
-A handler is idempotent if **running it twice on the same input produces the same end state as running it once**.
+একটা handler idempotent যদি **একই input-এ দুবার চালালে একবার চালানোর মতোই একই end state তৈরি হয়**।
 
 ```
 Process(event A) once  ->  state X
 Process(event A) twice ->  state X (not X again, just X)
 ```
 
-Some operations are naturally idempotent:
+কিছু operation স্বাভাবিকভাবেই idempotent:
 
-- **Setting** a value: `user.email = 'a@b'` — same end state regardless of how many times you set it.
-- **Adding to a set:** `tags.add("blue")` — already-present is a no-op.
-- **Deleting by ID:** `DELETE FROM users WHERE id = 42` — no rows the second time, same outcome.
+- একটা value **set করা**: `user.email = 'a@b'` — কতবার set করলেন তা নির্বিশেষে একই end state।
+- একটা set-এ **যোগ করা:** `tags.add("blue")` — আগে থেকেই থাকলে no-op।
+- ID দিয়ে **delete করা:** `DELETE FROM users WHERE id = 42` — দ্বিতীয়বার কোনো row নেই, একই ফলাফল।
 
-Some are not:
+কিছু নয়:
 
-- **Incrementing a counter:** `views = views + 1` — runs twice, increments twice. Wrong.
-- **Inserting a row** without unique constraints — two events, two rows.
-- **Charging a card** — two events, two charges. The cardinal sin.
+- একটা counter **increment করা:** `views = views + 1` — দুবার চললে, দুবার increment। ভুল।
+- unique constraint ছাড়া একটা **row insert করা** — দুটো event, দুটো row।
+- একটা **card charge করা** — দুটো event, দুটো charge। মূল পাপ।
 
-For non-idempotent operations, the receiver needs an explicit dedupe layer.
+non-idempotent operation-এর জন্য, receiver-এর একটা explicit dedupe layer দরকার।
 
-## The inbox pattern
+## inbox pattern
 
-Track every event ID you've successfully processed. Before doing the work, check if you've seen the ID. If yes, ack and move on. If no, do the work and record the ID — atomically.
+আপনি সফলভাবে process করা প্রতিটা event ID track করুন। কাজ করার আগে, check করুন ID-টা দেখেছেন কিনা। দেখে থাকলে, ack করে এগিয়ে যান। না দেখলে, কাজটা করুন আর ID record করুন — atomically।
 
 ```sql
 CREATE TABLE webhook_inbox (
@@ -59,7 +67,7 @@ CREATE TABLE webhook_inbox (
 );
 ```
 
-Receiver flow:
+receiver flow:
 
 ```go
 func process(ctx context.Context, event Event) error {
@@ -110,22 +118,22 @@ func process(ctx context.Context, event Event) error {
 }
 ```
 
-Three guarantees from this shape:
+এই গড়ন থেকে তিনটে guarantee:
 
-1. **Inserting the inbox row is atomic with the side effects.** The transaction either commits both or neither.
-2. **Concurrent duplicate deliveries serialize on `FOR UPDATE`.** The first one processes; the second sees `processed_at IS NOT NULL` and acks without re-running.
-3. **A crash mid-handler leaves no inbox row** (transaction rolled back), so the next delivery does the work cleanly.
+1. **inbox row insert করা side effect-এর সাথে atomic।** transaction হয় দুটোই commit করে অথবা কোনোটাই না।
+2. **Concurrent duplicate delivery `FOR UPDATE`-এ serialize হয়।** প্রথমটা process করে; দ্বিতীয়টা `processed_at IS NOT NULL` দেখে re-run ছাড়াই ack করে।
+3. **handler-এর মাঝপথে crash কোনো inbox row রাখে না** (transaction rolled back), তাই পরের delivery কাজটা পরিষ্কারভাবে করে।
 
-This is the standard inbox pattern. ~30 lines of Go around your domain logic.
+এটাই standard inbox pattern। আপনার domain logic-এর চারপাশে ~৩০ লাইন Go।
 
-## What "side effects" includes
+## "side effect" কী কী অন্তর্ভুক্ত করে
 
-The transaction must wrap **everything that has a visible effect**:
+transaction-কে **দৃশ্যমান প্রভাব আছে এমন সবকিছু** মুড়তে হবে:
 
-- DB writes (the obvious one).
-- External API calls — these are the trap. A webhook that "send a confirmation email" is calling Postmark; if the email send is in the same transaction logically but not actually atomic, you can email twice. Use idempotency keys when calling external APIs.
-- Outbound webhook fan-out — same problem; use the outbox pattern (chapter 10).
-- File system operations — for these, derive filenames from the event ID so re-running overwrites the same file.
+- DB write (স্পষ্টটা)।
+- External API call — এগুলোই ফাঁদ। "একটা confirmation email পাঠাও" এমন webhook Postmark-কে call করছে; email send যদি logic-এ একই transaction-এ থাকে কিন্তু আসলে atomic না হয়, আপনি দুবার email করতে পারেন। External API call করার সময় idempotency key ব্যবহার করুন।
+- Outbound webhook fan-out — একই সমস্যা; outbox pattern ব্যবহার করুন (অধ্যায় ১০)।
+- File system operation — এগুলোর জন্য filename event ID থেকে derive করুন যাতে re-run একই file overwrite করে।
 
 ```go
 func handleEvent(ctx context.Context, tx *sql.Tx, event Event) error {
@@ -148,51 +156,51 @@ func handleEvent(ctx context.Context, tx *sql.Tx, event Event) error {
 }
 ```
 
-External APIs that don't support idempotency keys are the trickiest. Options:
+যেসব External API idempotency key সমর্থন করে না সেগুলোই সবচেয়ে ঝামেলার। Option:
 
-- Use a "check-then-act" — check via API if the side effect already happened, skip if so. Race-conditional but often acceptable.
-- Move the call to an outbound webhook of your own; rely on your idempotent processor.
-- Accept duplicates and log loudly.
+- একটা "check-then-act" ব্যবহার করুন — API দিয়ে check করুন side effect ইতিমধ্যে ঘটেছে কিনা, ঘটলে skip করুন। Race-conditional কিন্তু প্রায়ই গ্রহণযোগ্য।
+- call-টা আপনার নিজের একটা outbound webhook-এ সরান; আপনার idempotent processor-এর ওপর ভরসা করুন।
+- Duplicate accept করুন আর জোরালোভাবে log করুন।
 
-## Idempotency keys for outbound calls
+## Outbound call-এর জন্য idempotency key
 
-Many APIs (Stripe, Postmark, Twilio) accept an `Idempotency-Key` header. Using your event ID:
+অনেক API (Stripe, Postmark, Twilio) একটা `Idempotency-Key` header accept করে। আপনার event ID ব্যবহার করে:
 
 ```go
 req.Header.Set("Idempotency-Key", event.ID)
 ```
 
-The remote service dedupes on the key for some window (usually 24 hours). A retry with the same key returns the original result instead of charging again or sending again. Lifesaver.
+remote service কোনো একটা window-এর জন্য (সাধারণত ২৪ ঘণ্টা) key-র ওপর dedupe করে। একই key দিয়ে একটা retry আবার charge বা send না করে মূল result ফেরত দেয়। জীবনরক্ষাকারী।
 
-If the remote call costs money (charges, email sends), idempotency keys are not optional.
+remote call-এ টাকা লাগলে (charge, email send), idempotency key ঐচ্ছিক নয়।
 
-## Dedup window — how long to remember
+## Dedup window — কতক্ষণ মনে রাখবেন
 
-The inbox grows linearly with events. After a year, billions of rows. Two strategies:
+inbox event-এর সাথে linearly বাড়ে। এক বছর পরে, বিলিয়ন row। দুটো strategy:
 
-**1. Expire old inbox rows.** Anything older than the producer's max retry window (3–5 days) is safe to delete. Anything older than that, if it arrives, is so far from "current" you can decide your own policy (probably reject as stale).
+**১. পুরনো inbox row expire করুন।** producer-এর max retry window (৩–৫ দিন)-এর চেয়ে পুরনো যেকোনো কিছু delete করা নিরাপদ। এর চেয়ে পুরনো কিছু এলে, তা "current" থেকে এত দূরে যে আপনি নিজের policy ঠিক করতে পারেন (সম্ভবত stale হিসেবে reject)।
 
 ```sql
 DELETE FROM webhook_inbox WHERE received_at < now() - interval '7 days';
 ```
 
-Run via cron daily. Trim to whatever window is comfortably larger than the producer's retry deadline.
+প্রতিদিন cron দিয়ে চালান। producer-এর retry deadline-এর চেয়ে আরামসে বড় যেকোনো window-তে ছাঁটুন।
 
-**2. Keep forever.** Only viable for low-volume webhook receivers (under 1M events ever). Cheaper than running a cleanup job, and you get history for audit purposes.
+**২. চিরকাল রাখুন।** কেবল low-volume webhook receiver-এর জন্য কার্যকর (কখনও 1M event-এর নিচে)। একটা cleanup job চালানোর চেয়ে সস্তা, আর audit-এর জন্য history পান।
 
-For most receivers, expiring at 7–14 days is the right tradeoff.
+বেশিরভাগ receiver-এর জন্য, ৭–১৪ দিনে expire করাই সঠিক tradeoff।
 
 <Callout type="warn">
 
-**Don't make the dedup window shorter than the producer's retry deadline.** If you delete rows after 24 hours but the producer retries for 3 days, the same event can be re-processed on day 2.
+**dedup window-কে producer-এর retry deadline-এর চেয়ে ছোট করবেন না।** ২৪ ঘণ্টা পরে row delete করলেন কিন্তু producer ৩ দিন retry করে, তাহলে একই event দ্বিতীয় দিনে আবার process হতে পারে।
 
 </Callout>
 
-## What if the event ID is missing or untrusted?
+## event ID না থাকলে বা অবিশ্বস্ত হলে?
 
-A receiver that trusts the producer's `event.id` to be unique is making an assumption. Almost always safe with reputable producers; less safe with unknown integrations.
+যে receiver producer-এর `event.id`-কে unique বলে বিশ্বাস করে, সে একটা অনুমান করছে। খ্যাতিমান producer-এর সাথে প্রায় সবসময় নিরাপদ; অজানা integration-এর সাথে কম নিরাপদ।
 
-Belt-and-braces: derive a dedup key from a hash of the canonical body:
+Belt-and-braces: canonical body-র একটা hash থেকে একটা dedup key derive করুন:
 
 ```go
 key := event.ID
@@ -202,11 +210,11 @@ if key == "" {
 }
 ```
 
-Now any duplicate body is dedupable even without a unique ID. Costs CPU; protects against producer bugs.
+এখন একটা unique ID ছাড়াও যেকোনো duplicate body dedupable। CPU খরচ করে; producer bug থেকে রক্ষা করে।
 
-## What about Redis-based dedup
+## Redis-based dedup নিয়ে
 
-Redis SETNX with a TTL is a tempting alternative to a Postgres table:
+TTL সহ Redis SETNX একটা Postgres table-এর একটা লোভনীয় বিকল্প:
 
 ```go
 ok, _ := rdb.SetNX(ctx, "inbox:"+event.ID, "1", 7*24*time.Hour).Result()
@@ -215,19 +223,19 @@ if !ok {
 }
 ```
 
-This works for **the dedup decision** but not for **atomicity with side effects**. If your work is "update Postgres," the Redis SETNX and the Postgres write are in two systems — you can SETNX in Redis, then crash before Postgres commits, and on retry Redis says "duplicate" and the work is never done.
+এটা **dedup decision-এর জন্য** কাজ করে কিন্তু **side effect-এর সাথে atomicity-র জন্য** নয়। আপনার কাজ যদি "Postgres update" হয়, Redis SETNX আর Postgres write দুটো সিস্টেমে — আপনি Redis-এ SETNX করতে পারেন, তারপর Postgres commit করার আগে crash করতে পারেন, আর retry-তে Redis বলে "duplicate" আর কাজটা কখনও হয় না।
 
-Two patterns make Redis-based dedup safe:
+দুটো pattern Redis-based dedup-কে নিরাপদ করে:
 
-**A. SETNX after the work commits.** First do the DB work atomically, then SETNX. On retry: if the work would be a no-op (idempotent at the DB layer thanks to upserts), the second processor reaches SETNX and sees it set, acks. Works only if the underlying operations are themselves naturally idempotent (UPSERT, set-equals-value).
+**A. কাজ commit হওয়ার পরে SETNX।** প্রথমে DB কাজটা atomically করুন, তারপর SETNX। retry-তে: কাজটা যদি একটা no-op হয় (upsert-এর কল্যাণে DB layer-এ idempotent), দ্বিতীয় processor SETNX-এ পৌঁছে দেখে সেট আছে, ack করে। কেবল তখনই কাজ করে যখন অন্তর্নিহিত operation নিজেই স্বাভাবিকভাবে idempotent (UPSERT, set-equals-value)।
 
-**B. Two-phase.** SETNX with a short TTL (5 min) at start; do work; on success, extend TTL to dedup window. On crash, the short TTL expires and the next delivery retries cleanly.
+**B. Two-phase।** শুরুতে একটা short TTL (৫ মিনিট) সহ SETNX; কাজ করুন; success-এ, TTL-টা dedup window পর্যন্ত extend করুন। crash-এ, short TTL expire করে আর পরের delivery পরিষ্কারভাবে retry করে।
 
-Postgres-based inbox is simpler. Use it unless you have a measured reason to switch.
+Postgres-based inbox সরল। মাপা কারণ না থাকলে সেটাই ব্যবহার করুন।
 
-## Receiver returns 200 on duplicate
+## Duplicate-এ receiver 200 return করে
 
-A duplicate event is **not an error** for the receiver to surface. Return 200. The producer sees success, stops retrying, moves on.
+একটা duplicate event receiver-এর surface করার মতো **error নয়**। 200 return করুন। producer success দেখে, retry থামায়, এগিয়ে যায়।
 
 ```go
 if alreadyProcessed {
@@ -237,17 +245,17 @@ if alreadyProcessed {
 }
 ```
 
-Returning anything else (4xx, 5xx) makes the producer keep retrying. Worst case, the producer gets stuck on an event the receiver "thinks" is bad but is actually a re-delivery.
+অন্য কিছু return করা (4xx, 5xx) producer-কে retry করতেই থাকতে বাধ্য করে। worst case, producer এমন একটা event-এ আটকে যায় যেটাকে receiver "খারাপ" ভাবছে কিন্তু আসলে একটা re-delivery।
 
-## Ordering — webhooks don't guarantee it
+## Ordering — webhooks এর guarantee দেয় না
 
-A retry pattern produces _out-of-order_ delivery. Event A is sent at t=0, fails. Event B is sent at t=1, succeeds. Event A retries at t=60 — receiver sees A _after_ B.
+একটা retry pattern _out-of-order_ delivery তৈরি করে। Event A t=0-এ পাঠানো হয়, fail করে। Event B t=1-এ পাঠানো হয়, succeed করে। Event A t=60-এ retry করে — receiver A-কে B-র _পরে_ দেখে।
 
-If you depend on order ("user.created must arrive before user.updated"), you have a problem. Three approaches:
+আপনি order-এর ওপর নির্ভর করলে ("user.updated-এর আগে user.created আসতে হবে"), আপনার সমস্যা আছে। তিনটে উপায়:
 
-**1. Don't depend on it.** For most state-update webhooks where the payload is the full resource, ordering doesn't matter — the latest event wins regardless of arrival order.
+**১. এর ওপর নির্ভর করবেন না।** বেশিরভাগ state-update webhook যেখানে payload পুরো resource, সেখানে ordering গুরুত্বপূর্ণ নয় — arrival order নির্বিশেষে সর্বশেষ event জেতে।
 
-**2. Sequence numbers.** Producer adds a monotonic `sequence` per resource. Receiver applies only if `event.sequence > last_seen_for_resource`. Out-of-order events are dropped.
+**২. Sequence number।** producer প্রতি resource-এ একটা monotonic `sequence` যোগ করে। receiver কেবল তখনই apply করে যদি `event.sequence > last_seen_for_resource`। Out-of-order event drop হয়।
 
 ```go
 if event.Sequence <= lastSeen[event.ResourceID] {
@@ -256,39 +264,39 @@ if event.Sequence <= lastSeen[event.ResourceID] {
 lastSeen[event.ResourceID] = event.Sequence
 ```
 
-**3. Pause processing until prerequisites arrive.** A `user.updated` for user 42 arrives but no `user.created` yet — buffer for some time, then process. Complex and error-prone; usually not worth it.
+**৩. পূর্বশর্ত আসা পর্যন্ত processing pause করুন।** user 42-এর একটা `user.updated` আসে কিন্তু এখনও কোনো `user.created` নেই — কিছুক্ষণ buffer করুন, তারপর process করুন। জটিল আর error-prone; সাধারণত মূল্য নেই।
 
-Sequence numbers are the right tool for resources where order matters. The producer must include them in the event payload.
+Sequence number হলো সেসব resource-এর জন্য সঠিক tool যেখানে order গুরুত্বপূর্ণ। producer-কে সেগুলো event payload-এ অন্তর্ভুক্ত করতে হবে।
 
-## Failures during processing
+## Processing চলাকালীন failure
 
-A handler that throws halfway through must not partially commit. With the transaction pattern above, a thrown error rolls back — no inbox row, no side effects. The next delivery retries from scratch.
+মাঝপথে throw করা handler আংশিকভাবে commit করা উচিত নয়। উপরের transaction pattern দিয়ে, একটা throw করা error rollback করে — কোনো inbox row নেই, কোনো side effect নেই। পরের delivery শুরু থেকে retry করে।
 
-If your handler does multi-step work that takes minutes, the long transaction holds locks; better to:
+আপনার handler multi-step কাজ করলে যা মিনিট নেয়, দীর্ঘ transaction lock ধরে রাখে; ভালো:
 
-1. Insert the inbox row in a short transaction (claim).
-2. Do the long work without a transaction.
-3. Mark processed in a second short transaction.
+1. একটা short transaction-এ inbox row insert করুন (claim)।
+2. transaction ছাড়া দীর্ঘ কাজটা করুন।
+3. একটা দ্বিতীয় short transaction-এ processed mark করুন।
 
-Trade-off: between steps 2 and 3, a crash means the work happened but the inbox isn't marked. The next delivery re-runs the work. Either accept the rare duplicate or put per-step idempotency keys around individual operations.
+Trade-off: step 2 আর 3-এর মাঝে, একটা crash মানে কাজটা হয়েছে কিন্তু inbox mark হয়নি। পরের delivery কাজটা re-run করে। হয় বিরল duplicate accept করুন অথবা পৃথক operation-এর চারপাশে per-step idempotency key রাখুন।
 
-For most webhook handlers, the work is small (update a record, enqueue a job). One transaction is fine.
+বেশিরভাগ webhook handler-এর জন্য, কাজটা ছোট (একটা record update, একটা job enqueue)। একটা transaction ঠিক আছে।
 
 ## Receiver-side replay
 
-When debugging, you may want to _re-process_ a specific event. The simplest path: clear its inbox row, then trigger redelivery from the producer. Receivers should not have a "force re-process" button that bypasses the inbox — too easy to double-process by accident.
+debug করার সময়, আপনি একটা নির্দিষ্ট event _re-process_ করতে চাইতে পারেন। সরলতম পথ: এর inbox row clear করুন, তারপর producer থেকে redelivery ট্রিগার করুন। Receiver-এ এমন কোনো "force re-process" button থাকা উচিত নয় যা inbox bypass করে — ভুলবশত double-process করা খুব সহজ।
 
-## Recap
+## রিক্যাপ
 
-- At-least-once delivery means duplicates. Receivers process exactly once anyway.
-- Inbox pattern: a row per event ID, atomic with side effects, `FOR UPDATE` serializes concurrent dupes.
-- Wrap **all** side effects in the same transaction, including DB writes and outbound queue rows.
-- Use `Idempotency-Key` on outbound API calls to dedupe at the remote service.
-- Expire inbox rows older than the producer's retry window + buffer.
-- Fall back to body hashes if event IDs aren't trustworthy.
-- Redis SETNX alone isn't atomic with DB work — Postgres inbox is the simpler tool.
-- Return 200 on duplicate. Never error.
-- Out-of-order delivery is the default. Use sequence numbers if order matters.
-- Long handlers: split into "claim → work → mark processed" if you need to avoid long transactions.
+- At-least-once delivery মানে duplicate। Receiver তবুও exactly once process করে।
+- Inbox pattern: প্রতি event ID-তে একটা row, side effect-এর সাথে atomic, `FOR UPDATE` concurrent dupe serialize করে।
+- **সব** side effect একই transaction-এ মুড়ুন, DB write আর outbound queue row সহ।
+- remote service-এ dedupe করতে outbound API call-এ `Idempotency-Key` ব্যবহার করুন।
+- producer-এর retry window + buffer-এর চেয়ে পুরনো inbox row expire করুন।
+- event ID বিশ্বাসযোগ্য না হলে body hash-এ fall back করুন।
+- Redis SETNX একা DB কাজের সাথে atomic নয় — Postgres inbox সরল tool।
+- Duplicate-এ 200 return করুন। কখনও error নয়।
+- Out-of-order delivery-ই default। order গুরুত্বপূর্ণ হলে sequence number ব্যবহার করুন।
+- দীর্ঘ handler: দীর্ঘ transaction এড়াতে হলে "claim → work → mark processed"-এ ভাগ করুন।
 
-Next: [Delivery guarantees and the dead-letter queue](/notes/webhooks/08-delivery-dlq) — what happens when retries run out, and the operator interface for deciding what to do.
+পরবর্তী: [Delivery guarantee ও dead-letter queue](/notes/webhooks/08-delivery-dlq) — retry ফুরিয়ে গেলে কী হয়, আর কী করবেন ঠিক করার operator interface।

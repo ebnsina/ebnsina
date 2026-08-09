@@ -1,9 +1,9 @@
 ---
-title: 'Postgres Streaming Replication by Hand'
-subtitle: 'Setting up a primary, configuring pg_basebackup, streaming WAL to a standby — no managed service, no Patroni, just Postgres.'
+title: 'Postgres Streaming Replication নিজ হাতে'
+subtitle: 'একটি primary সেটআপ করা, pg_basebackup কনফিগার করা, একটি standby-তে WAL stream করা — কোনো managed service নেই, কোনো Patroni নেই, শুধু Postgres।'
 chapter: 2
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['PostgreSQL', 'streaming replication', 'pg_basebackup', 'WAL', 'standby', 'failover']
 ---
 
@@ -13,11 +13,19 @@ topics: ['PostgreSQL', 'streaming replication', 'pg_basebackup', 'WAL', 'standby
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Training a replacement employee by giving them a complete copy of your work history (pg_basebackup) and then letting them shadow every new task you do in real time (streaming WAL). When you leave, they're fully up to date and can take over immediately.
+একজন প্রতিস্থাপন কর্মীকে প্রশিক্ষণ দেওয়া, তাকে আপনার পুরো কাজের ইতিহাসের একটি সম্পূর্ণ কপি দিয়ে (pg_basebackup) এবং তারপর আপনার করা প্রতিটি নতুন কাজ রিয়েল-টাইমে তাকে ছায়ার মতো অনুসরণ করতে দিয়ে (streaming WAL)। আপনি চলে গেলে, সে পুরোপুরি হালনাগাদ এবং সাথে সাথেই দায়িত্ব নিতে পারে।
 
 </Callout>
+
+## গল্পে বুঝি
+
+ঢাকার এক পুরনো ব্যবসাপ্রতিষ্ঠানের প্রধান হিসাবরক্ষক ইবনে সিনা। তার হাতে মূল খাতা — প্রতিটি লেনদেন সবার আগে এখানেই ওঠে। কিন্তু ইবনে সিনার একটা অন্যরকম অভ্যাস আছে: টেবিলের পাশে একটা টেলিফোন লাইন সবসময় খোলা রাখা থাকে, আর সেই লাইনের ওপাশে বসে থাকে শাখা অফিসের জুনিয়র হিসাবরক্ষক ফাতিমা আল-ফিহরি। ইবনে সিনা যেই মুহূর্তে খাতায় একটা এন্ট্রি লেখেন, ঠিক সেই মুহূর্তেই সেটা গলা ছেড়ে বলে দেন — "অ্যাকাউন্ট বারো-তে ক্রেডিট পাঁচশো... এবার অ্যাকাউন্ট সাতে ডেবিট দুইশো..."।
+
+ওপাশে ফাতিমা প্রতিটা কথা যে ক্রমে বলা হচ্ছে ঠিক সেই ক্রমে নিজের খাতায় হুবহু তুলে নেন — একটা এন্ট্রিও এদিক-ওদিক করেন না, একটাও বাদ দেন না। তিনি সবসময় ইবনে সিনার থেকে মাত্র এক হৃৎস্পন্দন পেছনে — মূল খাতায় কালি শুকানোর আগেই শাখার খাতায় একই লাইন উঠে যায়। ফলে শাখার খাতা কার্যত মূল খাতার এক জীবন্ত প্রতিচ্ছবি। কোনো একদিন ইবনে সিনা যদি হঠাৎ টেবিলেই লুটিয়ে পড়েন, ফাতিমা এক সেকেন্ডও দেরি না করে কলম তুলে ঠিক যেখানে থেমেছিল সেখান থেকে কাজ চালিয়ে নিতে পারবেন — একটা লেনদেনও হারাবে না।
+
+এই গল্পটাই আসলে **Postgres streaming replication**। ইবনে সিনার মূল খাতা হলো **primary**, আর প্রতিটা এন্ট্রি লেখার মুহূর্তেই খোলা লাইনে বলে দেওয়া হলো WAL (write-ahead log) একটানা **stream** করা। ফাতিমা প্রতিটা এন্ট্রি একই ক্রমে তুলে নেওয়া হলো **standby**-এর সেই WAL রেকর্ডগুলো ক্রমে **replay** করা, যাতে সে near-real-time একটা কপি হয়ে থাকে। আর "এক হৃৎস্পন্দন পেছনে, যেকোনো মুহূর্তে দায়িত্ব নিতে প্রস্তুত" — এটাই **hot standby**, যা primary হঠাৎ মারা গেলে **failover**-এ সাথে সাথে promote হয়ে নতুন primary হয়ে যায়। বাস্তবে এভাবেই read replica আর high-availability সেটআপ চলে — এই অধ্যায়ে আমরা managed service ছাড়াই খালি হাতে ঠিক এই জিনিসটা দাঁড় করাবো।
 
 ## Primary Configuration
 
@@ -50,7 +58,7 @@ CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'strong-password';
 pg_ctlcluster 16 main reload
 ```
 
-## Creating the Replica
+## Replica তৈরি করা
 
 ```bash
 # On the replica server — stop any existing Postgres
@@ -71,10 +79,10 @@ pg_basebackup \
   --verbose
 ```
 
-`--write-recovery-conf` creates two files:
+`--write-recovery-conf` দুটি file তৈরি করে:
 
-- `standby.signal` — presence of this file tells Postgres to start as a standby
-- `postgresql.auto.conf` — contains `primary_conninfo` pointing to the primary
+- `standby.signal` — এই file-এর উপস্থিতি Postgres-কে বলে standby হিসেবে শুরু হতে
+- `postgresql.auto.conf` — এতে `primary_conninfo` থাকে যা primary-কে নির্দেশ করে
 
 ```bash
 # postgresql.auto.conf (written by pg_basebackup)
@@ -93,7 +101,7 @@ psql -c "SELECT pg_is_in_recovery();"
 psql -h 10.0.0.10 -c "SELECT * FROM pg_stat_replication;"
 ```
 
-## postgresql.conf on Replica
+## Replica-তে postgresql.conf
 
 ```bash
 # postgresql.conf on replica
@@ -103,9 +111,9 @@ max_standby_streaming_delay = 30s # max delay before cancelling queries that con
 max_standby_archive_delay = 30s
 ```
 
-`hot_standby_feedback` tells the primary which rows the replica is reading so the primary doesn't vacuum them away. The trade-off: table bloat on the primary if the replica has long-running queries.
+`hot_standby_feedback` primary-কে জানায় replica কোন row গুলো পড়ছে যাতে primary সেগুলো vacuum করে না ফেলে। Trade-off: replica-তে দীর্ঘ-চলমান query থাকলে primary-তে table bloat।
 
-## Verifying Replication
+## Replication যাচাই করা
 
 ```sql
 -- On primary
@@ -127,7 +135,7 @@ SELECT
   pg_last_wal_replay_lsn();
 ```
 
-Write a row on the primary, check it appears on the replica:
+Primary-তে একটি row লিখুন, সেটি replica-তে আসে কিনা দেখুন:
 
 ```bash
 # Primary
@@ -139,7 +147,7 @@ psql -h 10.0.0.11 -c "SELECT * FROM test_replication;"
 
 ## Manual Failover
 
-If the primary fails, promote a replica:
+Primary fail করলে, একটি replica promote করুন:
 
 ```bash
 # On the replica to promote
@@ -152,13 +160,13 @@ psql -c "SELECT pg_is_in_recovery();"
 # f  → it's now primary
 ```
 
-After promotion:
+Promotion-এর পর:
 
-1. Update application connection strings to point to the new primary
-2. Re-point any other replicas to the new primary
-3. If the old primary recovers, it must be rebuilt as a replica (it has diverged)
+1. Application connection string গুলো নতুন primary-কে নির্দেশ করতে আপডেট করুন
+2. অন্য যেকোনো replica-কে নতুন primary-তে re-point করুন
+3. পুরনো primary যদি recover করে, সেটাকে replica হিসেবে আবার বানাতে হবে (এটি diverge করেছে)
 
-**Rebuilding the old primary as a new replica:**
+**পুরনো primary-কে নতুন replica হিসেবে আবার বানানো:**
 
 ```bash
 # On old primary (now demoted)
@@ -176,7 +184,7 @@ pg_basebackup \
 pg_ctlcluster 16 main start
 ```
 
-## Replication with Multiple Replicas
+## একাধিক Replica সহ Replication
 
 ```bash
 # Primary postgresql.conf
@@ -187,7 +195,7 @@ synchronous_standby_names = 'ANY 1 (replica1, replica2)'
 # Primary waits for any 1 of these two to confirm WAL receipt
 ```
 
-Cascade replication (replica replicates from another replica):
+Cascade replication (একটি replica অন্য একটি replica থেকে replicate করে):
 
 ```bash
 # replica2 replicates from replica1 instead of primary
@@ -196,7 +204,7 @@ primary_conninfo = 'host=10.0.0.11 port=5432 user=replicator ...'
 # replica1 must also be configured to allow WAL streaming
 ```
 
-Cascade reduces network load on the primary but increases replication lag (replica2 = primary lag + replica1 lag).
+Cascade primary-তে network load কমায় কিন্তু replication lag বাড়ায় (replica2 = primary lag + replica1 lag)।
 
 ## Monitoring Script
 
@@ -230,7 +238,7 @@ done
 
 ## WAL Archiving (Point-in-Time Recovery)
 
-WAL archiving keeps old WAL segments for PITR:
+WAL archiving PITR-এর জন্য পুরনো WAL segment গুলো ধরে রাখে:
 
 ```bash
 # postgresql.conf
@@ -244,7 +252,7 @@ psql -c "SELECT * FROM pg_stat_archiver;"
 # failed_count should be 0
 ```
 
-With WAL archiving + base backup, you can restore to any point in time:
+WAL archiving + base backup থাকলে, আপনি যেকোনো সময়ের পয়েন্টে restore করতে পারেন:
 
 ```bash
 # 1. Restore base backup

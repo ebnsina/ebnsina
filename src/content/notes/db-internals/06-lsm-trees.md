@@ -1,9 +1,9 @@
 ---
 title: 'LSM Trees'
-subtitle: 'The write-optimized alternative to B-trees — how RocksDB, Cassandra, and LevelDB handle massive write throughput.'
+subtitle: 'B-tree-র write-optimized বিকল্প — RocksDB, Cassandra, আর LevelDB কীভাবে বিশাল write throughput সামলায়।'
 chapter: 6
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['LSM tree', 'compaction', 'memtable', 'SSTable']
 ---
 
@@ -11,21 +11,29 @@ topics: ['LSM tree', 'compaction', 'memtable', 'SSTable']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির মুদি দোকানে সন্ধ্যাবেলা কেনাকাটার ভিড় লেগে যায়। প্রতিটা বিক্রি খাতায় গুছিয়ে-গুছিয়ে সাজিয়ে লিখতে গেলে ক্রেতার লাইন থমকে যাবে। তাই ভিড়ের সময় আল-খোয়ারিজমি প্রতিটা বিক্রি চটজলদি একটা করে ছোট কাগজের স্লিপে লিখে সামনের ট্রে-তে ফেলে দেয় — কে কী নিলো, কত দাম, এইটুকু। লিখতে সেকেন্ডও লাগে না, লাইনও এগোয়। ট্রে ভরে গেলে সে ওটা তুলে রেখে একটা গোছানো বান্ডিল বানিয়ে ফেলে, আর সামনে নতুন খালি ট্রে বসায়।
+
+দিনশেষে দোকান ফাঁকা হলে আল-খোয়ারিজমি কয়েকটা বান্ডিল একসাথে নিয়ে বসে — সব স্লিপ মিলিয়ে একটা পরিষ্কার হিসাবের খাতায় পুরো দিনের বিক্রি গুছিয়ে তোলে, ডুপ্লিকেট বাদ দেয়, একই জিনিসের একাধিক এন্ট্রি এক করে দেয়। এতে লেখার কাজটা রাতভর দ্রুত হয়েছিল ঠিকই, কিন্তু দিনের মাঝখানে কেউ এসে "আজ চিনি কত দরে দিলে?" জিজ্ঞেস করলে আল-খোয়ারিজমিকে সামনের ট্রে থেকে শুরু করে কয়েকটা বান্ডিল উল্টে দেখতে হয় — একটু ধীর।
+
+এই পুরো ব্যাপারটাই আসলে **LSM tree**। সামনের ট্রে হলো in-memory buffer বা **memtable** — নতুন লেখা প্রথমে ওখানেই দ্রুত জমা হয়। ট্রে ভরে গেলে বান্ডিল বানিয়ে তুলে রাখা মানে ওটা ডিস্কে sorted file হিসেবে **flush** হয়ে **SSTable** হয়ে যাওয়া। আর রাতে বান্ডিলগুলো মিলিয়ে এক খাতা বানানোটাই **compaction** — কয়েকটা sorted file merge করে পরিষ্কার একটা করা। এজন্যই LSM tree **write-optimized**: লেখা বিদ্যুৎগতির, পড়ায় কয়েকটা file দেখতে হয় বলে একটু খরচ বেশি। Cassandra, RocksDB আর LevelDB ঠিক এভাবেই বিশাল write throughput সামলায়।
+
 ## B-Trees vs LSM Trees
 
-B-trees are read-optimized: lookups are fast (3-4 disk reads), but every write requires updating pages in place — random disk I/O.
+B-tree read-optimized: lookup দ্রুত (3-4 disk read), কিন্তু প্রতিটা write-এর জন্য page-গুলো in place আপডেট করতে হয় — random disk I/O।
 
-LSM trees flip this tradeoff: all writes go to an in-memory buffer first, then flush to disk as sorted files. Writes are sequential (fast), but reads may need to check multiple files.
+LSM tree এই tradeoff উল্টে দেয়: সব write প্রথমে একটা in-memory buffer-এ যায়, তারপর sorted file হিসেবে ডিস্কে flush হয়। Write sequential (দ্রুত), কিন্তু read-এর জন্য একাধিক file চেক করা লাগতে পারে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a donation drop-off center — donors (writes) rapidly drop items into temporary bins (memtable). Periodically, volunteers sort and merge bins into organized shelves (SSTables). Collecting is fast; finding a specific item requires checking multiple bins.
+যেমন একটা donation drop-off center — দাতারা (write) দ্রুত জিনিস অস্থায়ী bin-এ (memtable) ফেলে যায়। পর্যায়ক্রমে, স্বেচ্ছাসেবকরা bin-গুলো sort ও merge করে গোছানো shelf-এ (SSTable) সাজায়। জমা করা দ্রুত; কিন্তু একটা নির্দিষ্ট জিনিস খুঁজতে একাধিক bin চেক করা লাগে।
 
 </Callout>
 
-## The LSM Tree Architecture
+## LSM Tree Architecture
 
 ```typescript
 class LSMTree {
@@ -74,7 +82,7 @@ class LSMTree {
 
 ## SSTables (Sorted String Tables)
 
-When the memtable flushes to disk, it becomes an **SSTable** — an immutable, sorted file:
+Memtable যখন ডিস্কে flush হয়, তখন এটা একটা **SSTable** হয়ে যায় — একটা immutable, sorted file:
 
 ```typescript
 interface SSTable {
@@ -104,13 +112,13 @@ interface SSTable {
 
 <Callout type="info">
 
-**Bloom filters are crucial for LSM reads.** Without them, every read would check every SSTable file. A bloom filter tells you "definitely not in this file" with zero disk I/O — false positives are rare (~1%) and just mean one extra disk read.
+**LSM read-এর জন্য bloom filter অপরিহার্য।** এগুলো ছাড়া, প্রতিটা read প্রতিটা SSTable file চেক করত। একটা bloom filter আপনাকে শূন্য disk I/O-তে বলে দেয় "এই file-এ নিশ্চিতভাবে নেই" — false positive বিরল (~1%) আর শুধু একটা extra disk read মানে।
 
 </Callout>
 
 ## Compaction
 
-Over time, LSM trees accumulate many SSTable files. **Compaction** merges them to reduce read amplification and reclaim space:
+সময়ের সাথে, LSM tree-তে অনেক SSTable file জমে যায়। **Compaction** এগুলো merge করে read amplification কমায় আর space ফিরিয়ে আনে:
 
 ```typescript
 // Level-based compaction (used by LevelDB, RocksDB)
@@ -136,23 +144,23 @@ async function compact(level: number): Promise<void> {
 
 ## Tradeoffs: Read/Write/Space Amplification
 
-|                     | B-Tree                               | LSM Tree                       |
-| ------------------- | ------------------------------------ | ------------------------------ |
-| Write amplification | ~10x (page splits, in-place updates) | ~10-30x (compaction rewrites)  |
-| Read amplification  | 1x (single B-tree lookup)            | ~1-5x (check multiple levels)  |
-| Space amplification | ~1.5x (page fill factor)             | ~1.1-2x (temporary duplicates) |
-| Write throughput    | Lower (random I/O)                   | Higher (sequential I/O)        |
-| Read latency        | Lower (predictable)                  | Higher (varies)                |
+|                     | B-Tree                             | LSM Tree                     |
+| ------------------- | ---------------------------------- | ---------------------------- |
+| Write amplification | ~10x (page split, in-place update) | ~10-30x (compaction rewrite) |
+| Read amplification  | 1x (single B-tree lookup)          | ~1-5x (একাধিক level চেক)     |
+| Space amplification | ~1.5x (page fill factor)           | ~1.1-2x (অস্থায়ী duplicate) |
+| Write throughput    | কম (random I/O)                    | বেশি (sequential I/O)        |
+| Read latency        | কম (predictable)                   | বেশি (varies)                |
 
 <Callout type="tip">
 
-**Choose B-trees** for read-heavy workloads (OLTP, typical web apps). **Choose LSM trees** for write-heavy workloads (time-series, logging, IoT, analytics ingestion).
+**B-tree বেছে নিন** read-heavy workload-এর জন্য (OLTP, সাধারণ web app)। **LSM tree বেছে নিন** write-heavy workload-এর জন্য (time-series, logging, IoT, analytics ingestion)।
 
 </Callout>
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **LSM trees buffer writes in memory** and flush sorted files to disk — all sequential I/O
-2. **Reads check multiple levels** — bloom filters and sparse indexes minimize disk reads
-3. **Compaction merges files** to keep read performance manageable and reclaim space
-4. **B-trees win on reads, LSM trees win on writes** — pick based on your workload
+1. **LSM tree write-গুলো মেমরিতে buffer করে** আর sorted file ডিস্কে flush করে — সবই sequential I/O
+2. **Read একাধিক level চেক করে** — bloom filter আর sparse index disk read কমিয়ে দেয়
+3. **Compaction file merge করে** read performance সামলানোর মতো রাখতে আর space ফিরিয়ে আনতে
+4. **B-tree read-এ জেতে, LSM tree write-এ জেতে** — আপনার workload অনুযায়ী বেছে নিন

@@ -1,9 +1,9 @@
 ---
-title: 'Cache Stampede & Thundering Herd'
-subtitle: 'What happens when a popular cache entry expires and a thousand requests hit the database simultaneously — and how to stop it.'
+title: 'Cache Stampede ও Thundering Herd'
+subtitle: 'একটি জনপ্রিয় cache entry expire হলে এবং একসাথে হাজার হাজার request database-এ আঘাত করলে কী ঘটে — এবং কীভাবে সেটা থামানো যায়।'
 chapter: 6
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['stampede', 'thundering herd', 'mutex', 'probabilistic expiry', 'dog pile']
 ---
 
@@ -11,23 +11,31 @@ topics: ['stampede', 'thundering herd', 'mutex', 'probabilistic expiry', 'dog pi
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why This Exists
+## গল্পে বুঝি
 
-A cache entry expires. Ten thousand concurrent requests for that entry all find a miss at the same moment. All ten thousand fall through to the database. The database, which was handling a comfortable 100 reads/second through the cache, suddenly gets 10,000 simultaneous queries. It falls over. The cache never repopulates. Your outage deepens.
+মহল্লায় নতুন একটা ট্রেনের টিকিট কাউন্টার বসেছে, কিন্তু জানালা মাত্র একটা। ঈদের আগে ভোরবেলা কাউন্টার খোলার আগেই বাইরে দুই-তিনশ মানুষ জমে গেছে — ইবনে সিনা, আল-খোয়ারিজমি, ফাতিমা আল-ফিহরি, সবাই একই টিকিট চায়। জানালা খুলতেই সবাই হুমড়ি খেয়ে একসাথে হাত বাড়িয়ে দিল। একজন কেরানি একসাথে দুইশ জনের চাপ সামলাতে পারে না — কাগজপত্র এলোমেলো হয়ে গেল, জানালা আটকে গেল, কেউই টিকিট পেল না। আগে যতক্ষণ টিকিট হাতে হাতে বিলি হচ্ছিল ততক্ষণ সব ঠিকঠাক চলছিল; বিলি শেষ হওয়ার (expire) সঙ্গে সঙ্গেই একসাথে সবার ঝাঁপিয়ে পড়াটাই সব ভেঙে দিল।
 
-This is the **cache stampede** — also called the thundering herd or dog-pile effect.
+পরদিন কাউন্টারের লোক বুদ্ধি করল। ভিড়ের মধ্যে একজনকে — ধরা যাক ইবনে সিনাকে — শুধু ভেতরে ঢুকতে দিল, বাকিরা লাইনে দাঁড়িয়ে অপেক্ষা করল। ইবনে সিনা গিয়ে একবারে গোটা মহল্লার টিকিটের বান্ডিলটা নিয়ে এল, তারপর লাইনে দাঁড়ানো সবাই সেই এক ট্রিপের ফল থেকেই টিকিট পেয়ে গেল — কেরানিকে আর দুইশবার একই কাজ করতে হলো না। কেউ কেউ আবার এই ভিড় এড়াতে কাউন্টার একটু ভাগ করে খুলল — কিছু লাইন একটু আগে, কিছু একটু পরে, যাতে সবাই ঠিক একই মুহূর্তে ঝাঁপিয়ে না পড়ে।
+
+এই ভোরবেলার হুড়োহুড়িটাই **cache stampede** বা **thundering herd** — একটা হট cache entry expire হওয়ামাত্র হাজার হাজার request একসাথে miss করে সোজা database-এ আঘাত করে, আর সেই একা database ভেঙে পড়ে। ইবনে সিনাকে একা পাঠিয়ে বাকিদের অপেক্ষা করানোটাই **single-flight/lock** সমাধান — একটাই request নতুন করে ডেটা তোলে, বাকিরা তার ফল ভাগ করে নেয়; আর লাইন ভাগ করে খোলাটা **staggered TTL**। Instagram থেকে Stack Overflow পর্যন্ত যেকোনো হাই-ট্রাফিক সাইট জনপ্রিয় key-র জন্য ঠিক এভাবেই database-কে বাঁচায়।
+
+## কেন এটি প্রয়োজন
+
+একটি cache entry expire হলো। ঐ entry-র জন্য দশ হাজার concurrent request একই মুহূর্তে miss খুঁজে পেল। দশ হাজারই database পর্যন্ত পৌঁছে গেল। যে database cache-এর মাধ্যমে আরামসে 100 reads/second সামলাচ্ছিল, সেটি হঠাৎ 10,000 simultaneous query পেল। এটি ভেঙে পড়ল। Cache আর কখনও repopulate হলো না। আপনার outage আরও গভীর হলো।
+
+এটাই হলো **cache stampede** — একে thundering herd বা dog-pile effect-ও বলা হয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A concert venue opens a single ticket window. The doors open and five thousand people rush the window at once. The lone ticketing agent (your database) cannot process five thousand requests simultaneously. If the queue had been managed — one person let through at a time while others wait — the ticketing agent would have coped fine.
+একটি কনসার্ট ভেন্যু একটিমাত্র টিকিট উইন্ডো খুলল। দরজা খুলতেই পাঁচ হাজার মানুষ একসাথে উইন্ডোর দিকে ছুটল। একাকী টিকেটিং এজেন্ট (আপনার database) একসাথে পাঁচ হাজার request প্রসেস করতে পারে না। যদি queue-টা ব্যবস্থাপনা করা হতো — একজন করে ঢুকতে দেওয়া হতো আর বাকিরা অপেক্ষা করত — তাহলে টিকেটিং এজেন্ট দিব্যি সামলে নিত।
 
 </Callout>
 
-The fix: ensure only **one** request populates the cache on a miss, while the rest wait for it.
+সমাধান: নিশ্চিত করুন যে miss-এর সময় শুধু **একটি** request cache populate করে, আর বাকিরা তার জন্য অপেক্ষা করে।
 
-## Reproducing the Problem
+## সমস্যাটি পুনরুৎপাদন করা
 
 ```typescript
 async function getHomepage(): Promise<Page> {
@@ -42,11 +50,11 @@ async function getHomepage(): Promise<Page> {
 }
 ```
 
-With 10,000 RPS and a 60-second TTL, every 60 seconds this function hammers the database with ~600 concurrent requests (10,000 \* 200ms window). If the DB can handle 100, you have a problem.
+10,000 RPS এবং 60-second TTL থাকলে, প্রতি 60 সেকেন্ড পর পর এই function database-কে ~600 concurrent request দিয়ে হাতুড়ি পেটায় (10,000 \* 200ms window)। যদি DB 100 সামলাতে পারে, তাহলে আপনার সমস্যা আছে।
 
-## Fix 1 — Mutex Lock (Single Repopulation)
+## Fix 1 — Mutex Lock (একবারই Repopulation)
 
-Only one request populates the cache. Others wait for it.
+শুধু একটি request cache populate করে। বাকিরা তার জন্য অপেক্ষা করে।
 
 ```typescript
 import { createClient } from 'redis';
@@ -100,11 +108,11 @@ async function waitForCache<T>(key: string, fallback: () => Promise<T>): Promise
 }
 ```
 
-**Problem:** Waiting requests still stress the system. If the lock holder crashes, the lock stays until it expires (up to `lockTtl` seconds of downtime for that key).
+**সমস্যা:** অপেক্ষমাণ request-গুলো এখনও system-এর উপর চাপ ফেলে। যদি lock holder crash করে, তাহলে lock expire না হওয়া পর্যন্ত থেকে যায় (ঐ key-র জন্য `lockTtl` সেকেন্ড পর্যন্ত downtime)।
 
 ## Fix 2 — Probabilistic Early Expiry (XFetch)
 
-Instead of waiting for the key to expire, proactively refresh it early based on a probabilistic formula. Prevents the cliff-edge expiry entirely.
+Key-টি expire হওয়ার জন্য অপেক্ষা না করে, একটি probabilistic formula-র ভিত্তিতে সক্রিয়ভাবে সেটিকে আগেভাগে refresh করুন। এটি cliff-edge expiry পুরোপুরি প্রতিরোধ করে।
 
 ```typescript
 interface CacheEntry<T> {
@@ -152,13 +160,13 @@ class ProbabilisticCache<T> {
 }
 ```
 
-**How it works:** Each request that reads a cache entry decides probabilistically whether to refresh early. The probability increases as expiry approaches and as the entry took longer to compute. Expensive entries get refreshed earlier. Multiple processes independently make this decision, so the cache stays warm without coordination.
+**এটি যেভাবে কাজ করে:** যে প্রতিটি request একটি cache entry পড়ে, সেটি probabilistically সিদ্ধান্ত নেয় আগেভাগে refresh করবে কিনা। expiry যত কাছাকাছি আসে এবং entry compute করতে যত বেশি সময় লেগেছিল, probability তত বাড়ে। ব্যয়বহুল entry-গুলো আগেই refresh হয়। একাধিক process স্বাধীনভাবে এই সিদ্ধান্ত নেয়, তাই কোনো coordination ছাড়াই cache গরম (warm) থাকে।
 
-This is based on the XFetch algorithm from the research paper _"Optimal Probabilistic Cache Stampede Prevention"_.
+এটি গবেষণাপত্র _"Optimal Probabilistic Cache Stampede Prevention"_-এর XFetch algorithm-এর উপর ভিত্তি করে।
 
 ## Fix 3 — Stale-While-Revalidate
 
-Return the stale value immediately, refresh in the background.
+stale value সাথে সাথেই return করুন, background-এ refresh করুন।
 
 ```typescript
 interface SWREntry<T> {
@@ -216,11 +224,11 @@ class StaleWhileRevalidate<T> {
 }
 ```
 
-This is what HTTP's `Cache-Control: stale-while-revalidate` header does — serve the stale response, refresh in the background, next request gets the fresh one.
+HTTP-র `Cache-Control: stale-while-revalidate` header ঠিক এটাই করে — stale response serve করে, background-এ refresh করে, পরবর্তী request fresh-টা পায়।
 
 ## Fix 4 — Cache Warming
 
-Prevent cold starts by pre-populating the cache before traffic hits.
+Traffic আঘাত করার আগেই cache pre-populate করে cold start প্রতিরোধ করুন।
 
 ```typescript
 async function warmCache(): Promise<void> {
@@ -244,7 +252,7 @@ await warmCache();
 server.listen(3000);
 ```
 
-**Scheduled re-warming** for entries with long TTLs:
+দীর্ঘ TTL-যুক্ত entry-গুলোর জন্য **নির্ধারিত সময়ে পুনরায় re-warming**:
 
 ```typescript
 // Re-warm every 50 minutes for entries with 1-hour TTL
@@ -256,14 +264,14 @@ cron.schedule('*/50 * * * *', async () => {
 });
 ```
 
-## Choosing a Fix
+## একটি Fix বেছে নেওয়া
 
-| Scenario                                           | Solution                      |
-| -------------------------------------------------- | ----------------------------- |
-| Single popular key, can accept brief latency spike | Mutex lock                    |
-| High-traffic key, need zero latency spikes         | Probabilistic early expiry    |
-| Can tolerate brief staleness (most cases)          | Stale-while-revalidate        |
-| Predictable access patterns                        | Cache warming                 |
-| All of the above, high scale                       | SWR + warming + probabilistic |
+| পরিস্থিতি                                                        | সমাধান                        |
+| ---------------------------------------------------------------- | ----------------------------- |
+| একটিমাত্র জনপ্রিয় key, সংক্ষিপ্ত latency spike মেনে নেওয়া যায় | Mutex lock                    |
+| High-traffic key, শূন্য latency spike দরকার                      | Probabilistic early expiry    |
+| সংক্ষিপ্ত staleness সহ্য করা যায় (বেশিরভাগ ক্ষেত্রে)            | Stale-while-revalidate        |
+| অনুমানযোগ্য access pattern                                       | Cache warming                 |
+| উপরের সবকিছু, high scale-এ                                       | SWR + warming + probabilistic |
 
-For most applications: **stale-while-revalidate with a short SWR window** (5–30 seconds) is the pragmatic solution. It requires no locking, never blocks, and the brief staleness is usually acceptable.
+বেশিরভাগ application-এর জন্য: **ছোট SWR window সহ stale-while-revalidate** (5–30 সেকেন্ড) হলো বাস্তবসম্মত সমাধান। এতে কোনো locking লাগে না, কখনও block হয় না, এবং সংক্ষিপ্ত staleness সাধারণত গ্রহণযোগ্য।

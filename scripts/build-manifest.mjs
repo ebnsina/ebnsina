@@ -9,7 +9,6 @@ import { join } from 'node:path';
 
 const ROOT = '/Users/ebnsina/Sites/ebnsina';
 const NOTES_DIR = join(ROOT, 'src/content/notes');
-const NOTES_BN_DIR = join(ROOT, 'src/content/notes-bn');
 const MANIFEST = join(ROOT, 'src/lib/content-manifest.json');
 
 /** Turn one frontmatter value string into a JS value.
@@ -57,7 +56,7 @@ function parseFrontmatter(text) {
 	return meta;
 }
 
-/** Scan a notes tree (English or a translated locale) into manifest entries. */
+/** Scan the notes tree into manifest entries. */
 function scanNotes(baseDir) {
 	if (!existsSync(baseDir)) return [];
 	const dirs = readdirSync(baseDir).filter((d) => statSync(join(baseDir, d)).isDirectory());
@@ -78,13 +77,12 @@ function scanNotes(baseDir) {
 }
 
 const notes = scanNotes(NOTES_DIR);
-const notesBn = scanNotes(NOTES_BN_DIR);
 
 const existing = JSON.parse(readFileSync(MANIFEST, 'utf8'));
-const manifest = { blog: existing.blog ?? [], notes, notesBn };
+const manifest = { blog: existing.blog ?? [], notes };
 
 writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 const trackCount = new Set(notes.map((n) => n.category)).size;
 console.log(
-	`Manifest rebuilt: ${manifest.notes.length} note chapters across ${trackCount} tracks, ${manifest.notesBn.length} Bangla chapters, ${manifest.blog.length} blog posts preserved.`
+	`Manifest rebuilt: ${manifest.notes.length} note chapters across ${trackCount} tracks, ${manifest.blog.length} blog posts preserved.`
 );

@@ -1,9 +1,9 @@
 ---
 title: 'Load Testing'
-subtitle: 'k6, autocannon, realistic traffic models, finding the breaking point — and why load testing in staging is different from production.'
+subtitle: 'k6, autocannon, বাস্তবসম্মত traffic model, breaking point খুঁজে বের করা — আর কেন staging-এ load testing production থেকে আলাদা।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['load testing', 'k6', 'autocannon', 'throughput', 'breaking point', 'performance baseline']
 ---
 
@@ -13,27 +13,35 @@ topics: ['load testing', 'k6', 'autocannon', 'throughput', 'breaking point', 'pe
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A fire drill vs an actual fire: a fire drill reveals whether evacuation procedures work under controlled conditions, before the real emergency. Load testing does the same for traffic — you find out whether the system breaks, where it breaks, and how it breaks, while you're in control and can stop the test. Discovering it during a traffic spike is the fire.
+একটা fire drill vs আসল আগুন: একটা fire drill দেখায় নিয়ন্ত্রিত পরিস্থিতিতে evacuation procedure কাজ করে কিনা, আসল emergency-র আগে। Load testing traffic-এর জন্য একই কাজ করে — তুমি জেনে নাও system ভাঙে কিনা, কোথায় ভাঙে, আর কীভাবে ভাঙে, যখন তুমি নিয়ন্ত্রণে আছ আর test বন্ধ করতে পারো। traffic spike-এর সময় এটা আবিষ্কার করা হলো আসল আগুন।
 
 </Callout>
 
-## Types of Load Tests
+## গল্পে বুঝি
 
-**Baseline:** measure normal behavior. What are the P50/P99 latencies at expected traffic?
+নতুন একটা কংক্রিটের ব্রিজ সবে তৈরি হয়েছে, নদীর দুই পাড় জুড়ে। ইঞ্জিনিয়ার আল-খোয়ারিজমি জানেন কাগজে-কলমে হিসাব যতই নিখুঁত হোক, ব্রিজ সাধারণ মানুষের জন্য খুলে দেওয়ার আগে বাস্তবে এর সহ্যক্ষমতা যাচাই করতে হবে। তাই তিনি জনসাধারণকে ঢুকতে না দিয়ে আগে বোঝাই ট্রাকের বহর ব্রিজের উপর দিয়ে চালানোর ব্যবস্থা করলেন — প্রথমে অল্প কয়েকটা ট্রাক, ব্রিজ দিব্যি দাঁড়িয়ে আছে। এরপর আরও কয়েকটা, তারপর আরও বেশি — ধীরে ধীরে ওজন বাড়তে থাকল।
 
-**Stress:** increase load until something breaks. Find the system's limits.
+বহর যত ভারী হতে থাকল, ততই আল-খোয়ারিজমি খেয়াল রাখলেন ব্রিজ কোথায় কেমন সাড়া দিচ্ছে। এক পর্যায়ে দেখা গেল একটা নির্দিষ্ট ওজনের পর ব্রিজের মাঝখানটা সামান্য দেবে যাচ্ছে, কংক্রিটে চিড় ধরার শব্দ শোনা যাচ্ছে। ঠিক সেই বিন্দুটাই ব্রিজের সীমা — এর বেশি ওজন নিরাপদ নয়। কিন্তু এই সীমাটা তিনি জানলেন একটা নিয়ন্ত্রিত পরীক্ষায়, নিজের হাতে ট্রাক থামিয়ে — ভরা লোকজন নিয়ে ব্রিজ যখন কেঁপে উঠবে তখন নয়।
 
-**Soak:** run at expected load for hours. Find memory leaks, connection pool exhaustion, log file growth.
+এই গল্পটাই আসলে **load testing**। বোঝাই ট্রাকের বহর হলো simulated **concurrent users** বা traffic, ধীরে ধীরে ট্রাক বাড়ানোটা হলো test-এ load **ramp up** করা, আর যে বিন্দুতে ব্রিজ দেবে যেতে শুরু করে সেটাই **breaking point** — যেখানে **latency** খারাপ হতে শুরু করে (degrade করে)। খোলার আগে পরীক্ষা করাটাই হলো আসল traffic আসার আগেই সীমা জেনে নেওয়া। বাস্তবে **k6** বা **JMeter** দিয়ে ঠিক এভাবেই বাড়তে থাকা virtual user দিয়ে system-এ চাপ বাড়ানো হয়, **throughput** আর latency মাপা হয়, আর দেখা হয় ঠিক কোথায় গিয়ে সব ভেঙে পড়ে।
 
-**Spike:** sudden 10x traffic jump. Does the system recover? How long does it take?
+## Load Test-এর ধরন
 
-**Breakpoint:** same as stress but you're looking for the exact RPS where P99 crosses your SLO.
+**Baseline:** স্বাভাবিক আচরণ মাপা। প্রত্যাশিত traffic-এ P50/P99 latency কত?
+
+**Stress:** কিছু একটা না ভাঙা পর্যন্ত load বাড়াও। System-এর সীমা খুঁজে বের করো।
+
+**Soak:** ঘণ্টার পর ঘণ্টা প্রত্যাশিত load-এ চালাও। Memory leak, connection pool exhaustion, log file বৃদ্ধি খুঁজে বের করো।
+
+**Spike:** হঠাৎ 10x traffic লাফ। System কি recover করে? কতক্ষণ লাগে?
+
+**Breakpoint:** stress-এর মতোই কিন্তু তুমি ঠিক সেই RPS খুঁজছ যেখানে P99 তোমার SLO পার করে।
 
 ## autocannon
 
-Fast, simple HTTP benchmarking for Node.js:
+Node.js-এর জন্য দ্রুত, সহজ HTTP benchmarking:
 
 ```bash
 # 100 connections, 30 seconds
@@ -64,11 +72,11 @@ Bytes/Sec    | 2.1M | 2.7M | 2.9M  | 2.9M |
 35672 requests in 10s, 236 MB read
 ```
 
-Watch for: P99 climbing, error rate appearing, Max exploding above P99 (outliers).
+লক্ষ্য রাখো: P99 উঠছে, error rate দেখা দিচ্ছে, Max P99-এর উপরে বিস্ফোরিত হচ্ছে (outlier)।
 
 ## k6
 
-k6 is a scripting tool for complex load test scenarios — think realistic user journeys, not just "hammer this endpoint":
+k6 হলো জটিল load test scenario-র জন্য একটা scripting tool — বাস্তবসম্মত user journey ভাবো, শুধু "এই endpoint-এ হাতুড়ি মারা" না:
 
 ```javascript
 // load-test.js
@@ -163,9 +171,9 @@ k6 run --out json=results.json load-test.js
 k6-html-reporter results.json
 ```
 
-## Finding the Breaking Point
+## Breaking Point খুঁজে বের করা
 
-Binary search on RPS to find where P99 crosses your SLO:
+P99 কোথায় তোমার SLO পার করে তা খুঁজতে RPS-এ binary search:
 
 ```javascript
 // breakpoint-test.js
@@ -189,11 +197,11 @@ export const options = {
 };
 ```
 
-Watch the Grafana dashboard while the test runs. The point where P99 starts climbing steeply is your inflection point — where queuing begins. Your sustainable RPS is about 70% of the breaking point.
+Test চলার সময় Grafana dashboard-এ নজর রাখো। যে বিন্দুতে P99 খাড়াভাবে উঠতে শুরু করে সেটাই তোমার inflection point — যেখানে queuing শুরু হয়। তোমার sustainable RPS হলো breaking point-এর প্রায় 70%।
 
-## Realistic Test Data
+## বাস্তবসম্মত Test Data
 
-Load testing with `cust-123` hardcoded produces unrealistic cache hit rates and database behavior:
+`cust-123` hardcode করে load testing অবাস্তব cache hit rate আর database আচরণ তৈরি করে:
 
 ```javascript
 // k6 — parameterized test data
@@ -216,9 +224,9 @@ export default function () {
 }
 ```
 
-## Monitoring During Load Tests
+## Load Test চলাকালীন Monitoring
 
-Watch these metrics while the test runs:
+Test চলার সময় এই metric-গুলোতে নজর রাখো:
 
 ```bash
 # Node.js process
@@ -236,25 +244,25 @@ iostat -x 1  # disk I/O
 ss -s  # connection counts
 ```
 
-When latency spikes: check which resource saturated first. CPU? Disk I/O? Connection pool? The first one to saturate is the bottleneck.
+Latency spike হলে: কোন resource আগে saturate হয়েছে চেক করো। CPU? Disk I/O? Connection pool? যেটা প্রথমে saturate হয় সেটাই bottleneck।
 
-## Staging vs Production Differences
+## Staging vs Production-এর পার্থক্য
 
-Load test in staging, but be aware of the gaps:
+Staging-এ load test করো, কিন্তু ফাঁকগুলো সম্পর্কে সচেতন থাকো:
 
-|                      | Staging           | Production                      |
-| -------------------- | ----------------- | ------------------------------- |
-| Database size        | Small (100k rows) | Large (10M+ rows)               |
-| Cache state          | Cold              | Warm                            |
-| Index effectiveness  | Artificially good | Real-world performance          |
-| External API latency | Mocked            | Variable                        |
-| Background jobs      | Off               | Running and consuming resources |
+|                      | Staging          | Production                |
+| -------------------- | ---------------- | ------------------------- |
+| Database size        | ছোট (100k rows)  | বড় (10M+ rows)           |
+| Cache state          | Cold             | Warm                      |
+| Index effectiveness  | কৃত্রিমভাবে ভালো | বাস্তব-জগতের performance  |
+| External API latency | Mocked           | পরিবর্তনশীল               |
+| Background jobs      | বন্ধ             | চলছে আর resource খরচ করছে |
 
-Mitigation:
+প্রশমন:
 
-- Seed staging with production-scale data (anonymized)
-- Run load test with cache cold AND warm — measure both
-- Enable background jobs during load test
-- Mock external APIs with realistic latency (p50=100ms, p99=500ms)
+- Staging-কে production-scale ডেটা দিয়ে seed করো (anonymized)
+- Cache cold এবং warm দুই অবস্থায় load test চালাও — দুটোই মাপো
+- Load test-এর সময় background job সক্ষম করো
+- External API-কে বাস্তবসম্মত latency দিয়ে mock করো (p50=100ms, p99=500ms)
 
-A load test on empty-table staging will not reveal the index you forgot. Test with real data scale.
+খালি-table staging-এ একটা load test তুমি যে index ভুলে গেছ সেটা প্রকাশ করবে না। আসল ডেটা scale দিয়ে test করো।

@@ -1,9 +1,9 @@
 ---
 title: 'Toil & Automation'
-subtitle: 'Measuring toil, the 50% cap, and the automation taxonomy from one-off scripts to self-healing operators.'
+subtitle: 'toil মাপা, 50% cap, আর one-off script থেকে self-healing operator পর্যন্ত automation taxonomy।'
 chapter: 10
 level: 'advanced'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics: ['toil', 'automation', 'operators', 'self-healing', 'Kubernetes']
 ---
 
@@ -13,15 +13,23 @@ topics: ['toil', 'automation', 'operators', 'self-healing', 'Kubernetes']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-A factory that automates its repetitive assembly steps so workers can focus on quality control instead.
+একটা factory যেটা তার পুনরাবৃত্তিমূলক assembly step-গুলো automate করে যাতে শ্রমিকরা তার বদলে quality control-এ মনোযোগ দিতে পারে।
 
 </Callout>
 
-## Toil: the precise definition
+## গল্পে বুঝি
 
-Google's SRE book defines toil with five characteristics. A task is toil if it is **all five**:
+পুরনো বাজারের এক আটার মিলে ইবনে সিনা সারাদিন হাত দিয়ে পাথরের চাকা ঘোরায় আর মুঠো মুঠো গম চাকার নিচে ঢেলে দেয়। কাজটা কঠিন কিছু নয় — শুধু ঘোরাও, গম ঢালো, ঘোরাও, গম ঢালো। কিন্তু অর্ডার যত বাড়ে, তার হাতও তত বেশি ঘুরতে থাকে; দ্বিগুণ গমের অর্ডার মানে দ্বিগুণ ঘাম। দিনশেষে হাত ব্যথায় অবশ, অথচ সে নতুন কিছু শেখেনি, মিলটাও এক চুল ভালো হয়নি — কাল আবার সেই একই চাকা, সেই একই হাত।
+
+একদিন আল-খোয়ারিজমি এসে দেখল ব্যাপারটা। সে একটা মোটর বসিয়ে দিল চাকায়, আর উপরে একটা আপনা-আপনি-গম-ঢালা ফানেল লাগিয়ে দিল। এখন চাকা নিজে নিজেই ঘোরে, গমও নিজে নিজেই পড়ে। ইবনে সিনার আর হাত ঘোরাতে হয় না। মুক্ত হয়ে সে এবার বসল আরও ভালো মিলের নকশা করতে, আর যে সমস্যাগুলো আগে সময়ের অভাবে ধরাই যেত না — কোন পাথর তাড়াতাড়ি ক্ষয়ে যায়, কোথায় আটা আটকে থাকে — সেগুলো ঠিক করতে।
+
+এই গল্পটাই আসলে **toil**। ইবনে সিনার সেই অন্তহীন হাত-ঘোরানো ছিল খাঁটি toil — **manual** (হাতে করা), **repetitive** (একই কাজ বারবার), service-এর সাথে **scale** করে (অর্ডার বাড়লে খাটুনি বাড়ে), আর কোনো **lasting value** তৈরি করে না। মোটর আর অটো-ফিডার বসানোটাই হলো toil-কে **automate** করে দূর করা, আর মুক্ত হওয়া কারিগরের নকশা-করা ও আসল সমস্যা ঠিক করাটাই হলো engineer-দের আসল engineering কাজে ফিরিয়ে দেওয়া। বাস্তবে ঠিক এভাবেই একটা manual runbook-কে script দিয়ে বেঁধে ফেলা হয় — যেই কাজটা প্রতি সপ্তাহে কেউ হাতে করত, সেটা একবার লিখে ফেললে মেশিন করে দেয়, আর SRE-রা ফিরে যায় সিস্টেম ভালো করার কাজে।
+
+## Toil: সুনির্দিষ্ট সংজ্ঞা
+
+Google-এর SRE বই toil-কে পাঁচটা বৈশিষ্ট্য দিয়ে সংজ্ঞায়িত করে। একটা task toil যদি সেটা **পাঁচটাই** হয়:
 
 ```
 1. MANUAL          A human runs it
@@ -31,7 +39,7 @@ Google's SRE book defines toil with five characteristics. A task is toil if it i
 5. NO ENDURING VALUE  Service is not improved by doing it
 ```
 
-Plus one more practical test: **scales linearly with service size**. If your team has 10 services and toil takes 1h/week, ten more services means another 1h/week. That linear growth is what eventually drowns the team.
+সাথে আরও একটা ব্যবহারিক test: **service size-এর সাথে linearly scale করে**। যদি আপনার team-এর 10টা service থাকে আর toil-এ সপ্তাহে 1h লাগে, আরও দশটা service মানে আরও সপ্তাহে 1h। সেই linear growth-ই শেষ পর্যন্ত team-কে ডুবিয়ে দেয়।
 
 ```typescript
 // Examples of toil (kill these)
@@ -60,9 +68,9 @@ const tricky = [
 ];
 ```
 
-## Measuring toil
+## Toil মাপা
 
-You cannot reduce what you do not measure. The minimum viable instrumentation:
+আপনি যা মাপেন না তা কমাতে পারবেন না। ন্যূনতম কার্যকর instrumentation:
 
 ```
 Every SRE logs time weekly in two columns:
@@ -76,7 +84,7 @@ Quarterly review:
   - Trend over the past 4 quarters
 ```
 
-A real quarterly toil report:
+একটা বাস্তব quarterly toil report:
 
 ```
 TEAM: payments-platform SRE  Q1 2026
@@ -105,17 +113,17 @@ Initiatives launched to reduce toil:
 Projected Q2 toil: 22%
 ```
 
-That report is the artifact that justifies the engineering work. Without numbers, "we should reduce toil" is hand-waving.
+সেই report-টাই সেই artifact যেটা engineering কাজকে যুক্তিসঙ্গত করে। সংখ্যা ছাড়া, "আমাদের toil কমানো উচিত" কথাটা ফাঁকা বুলি।
 
 <Callout type="tip">
 
-**Toil tracking is itself a form of toil.** Use a simple Slack bot or weekly survey, not a heavyweight time-tracking tool. The measurement should take under 5 minutes per person per week, or it gets skipped.
+**Toil tracking নিজেই এক ধরনের toil।** একটা ভারী time-tracking tool নয়, একটা সাধারণ Slack bot বা weekly survey ব্যবহার করুন। মাপার কাজটা প্রতি ব্যক্তির প্রতি সপ্তাহে 5 মিনিটের কম লাগা উচিত, নয়তো এটা skip হয়ে যায়।
 
 </Callout>
 
-## The automation taxonomy
+## automation taxonomy
 
-Not all automation is equal. There is a hierarchy of how mature a given operation is:
+সব automation সমান নয়। একটা নির্দিষ্ট operation কতটা mature তার একটা hierarchy আছে:
 
 ```
 Level 0 — No automation
@@ -140,11 +148,11 @@ Level 5 — Self-healing
   with no human involvement at all.
 ```
 
-The trap is jumping from Level 0 to Level 5. Each level catches different bugs. Skipping levels leaves blind spots.
+ফাঁদটা হলো Level 0 থেকে Level 5-এ লাফ দেওয়া। প্রতিটা level আলাদা bug ধরে। level skip করলে blind spot থেকে যায়।
 
-## A worked example: certificate rotation
+## একটা worked example: certificate rotation
 
-How a real team moved this from Level 0 to Level 5 over 18 months:
+কীভাবে একটা বাস্তব team এটাকে 18 মাসে Level 0 থেকে Level 5-এ নিয়ে গেল:
 
 ```
 Level 0 (the past)
@@ -175,11 +183,11 @@ Level 5 (18 months later)
   an outage in the 4 years since.
 ```
 
-Each level eliminated a class of bug. Skipping to Level 5 first would have hidden the bugs that Levels 1-3 found.
+প্রতিটা level একটা শ্রেণির bug দূর করেছে। প্রথমেই Level 5-এ লাফ দিলে Level 1-3 যে bug-গুলো খুঁজে পেয়েছে সেগুলো লুকিয়ে থাকত।
 
-## Building a Kubernetes operator (real code)
+## একটা Kubernetes operator বানানো (বাস্তব code)
 
-An operator is the canonical Level 5 automation. Here is a skeleton in Go using controller-runtime — the same library kubebuilder generates.
+একটা operator হলো canonical Level 5 automation। এখানে Go-তে controller-runtime দিয়ে একটা skeleton আছে — একই library kubebuilder generate করে।
 
 ```go
 // internal/controller/databasebackup_controller.go
@@ -265,17 +273,17 @@ func (r *DatabaseBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 ```
 
-The shape — observe, reconcile, update status, requeue — is the universal pattern. Once a team has written one operator, they can write many. Operators replace cron jobs, scripts, and human SRE intervention with declarative resources.
+এর shape — observe, reconcile, update status, requeue — হলো universal pattern। একবার কোনো team একটা operator লিখে ফেললে, তারা অনেকগুলো লিখতে পারে। Operator cron job, script, আর human SRE intervention-কে declarative resource দিয়ে প্রতিস্থাপন করে।
 
 <Callout type="info">
 
-**Operators are not just for K8s.** The same control-loop pattern works for cloud resources via Crossplane, terraform-controller, or AWS Controllers for Kubernetes (ACK). The pattern outlives the framework.
+**Operator শুধু K8s-এর জন্য নয়।** একই control-loop pattern Crossplane, terraform-controller, বা AWS Controllers for Kubernetes (ACK)-এর মাধ্যমে cloud resource-এর জন্যও কাজ করে। pattern-টা framework-এর চেয়ে বেশি টেকে।
 
 </Callout>
 
-## Self-service platforms (the org-level lever)
+## Self-service platform (org-level lever)
 
-The biggest toil reductions don't come from automating individual tasks. They come from giving product teams self-service tooling so SRE is no longer in the loop.
+সবচেয়ে বড় toil হ্রাস একক task automate করা থেকে আসে না। সেগুলো আসে product team-কে self-service tooling দেওয়া থেকে, যাতে SRE আর loop-এ না থাকে।
 
 ```typescript
 // A real internal developer platform (IDP) capability list
@@ -293,11 +301,11 @@ const idpCapabilities = {
 };
 ```
 
-The metric to track: **% of routine SRE requests that have a self-service path.** Aim for 90%+. The remaining 10% are the truly novel cases that benefit from human judgment.
+যে metric track করবেন: **routine SRE request-এর কত % এর একটা self-service path আছে।** 90%+ লক্ষ্য রাখুন। বাকি 10% হলো সত্যিকারের অভিনব case যেগুলো human judgment থেকে উপকৃত হয়।
 
-## When NOT to automate
+## কখন automate করবেন না
 
-Counter-intuitively, some toil should stay manual:
+উল্টো দিকে, কিছু toil manual থাকাই উচিত:
 
 ```
 1. Tasks that happen fewer than 2x per year
@@ -313,11 +321,11 @@ Counter-intuitively, some toil should stay manual:
    Mass-deletion scripts. The manual version forces a sanity check.
 ```
 
-The decision rule: **automation cost (build + maintain) &lt; toil cost (hours × rate × frequency × time horizon)**. Do the math.
+সিদ্ধান্তের নিয়ম: **automation cost (build + maintain) &lt; toil cost (hours × rate × frequency × time horizon)**। অঙ্কটা কষুন।
 
 ## Anti-toil culture
 
-The cultural side is as important as the technical side. Real teams build practices like:
+সাংস্কৃতিক দিকটা technical দিকের মতোই গুরুত্বপূর্ণ। বাস্তব team এমন practice গড়ে তোলে:
 
 ```
 - Weekly "toil triage" — 30 min where the team picks one toil category
@@ -332,20 +340,20 @@ The cultural side is as important as the technical side. Real teams build practi
   features get deferred until toil is reduced.
 ```
 
-Without the cultural backing, the metrics become decorative.
+সাংস্কৃতিক সমর্থন ছাড়া, metric-গুলো সাজানো শোভা হয়ে দাঁড়ায়।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Google SRE Book — Eliminating Toil](https://sre.google/sre-book/eliminating-toil/) — the definition
-- [Kubernetes Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) — when automation belongs in a controller
-- [Operator SDK](https://sdk.operatorframework.io/) — modern scaffolding
+- [Google SRE Book — Eliminating Toil](https://sre.google/sre-book/eliminating-toil/) — সংজ্ঞা
+- [Kubernetes Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) — কখন automation একটা controller-এ থাকা উচিত
+- [Operator SDK](https://sdk.operatorframework.io/) — আধুনিক scaffolding
 - [Backstage](https://backstage.io/) — internal developer platform reference
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **Toil is precisely defined** — five characteristics, all required
-2. **Measure quarterly** with a simple weekly survey; track trend over time
-3. **Climb the automation ladder** (0 → 5) — skipping levels hides bugs
-4. **Operators are the Level 5 endpoint** for many recurring K8s tasks
-5. **Self-service IDPs eliminate whole categories of toil** by removing SRE from the loop
-6. **Some toil should stay manual** — automation cost > toil cost is a real boundary
+1. **Toil সুনির্দিষ্টভাবে সংজ্ঞায়িত** — পাঁচটা বৈশিষ্ট্য, সবগুলো লাগবে
+2. **প্রতি quarter-এ মাপুন** একটা সাধারণ weekly survey দিয়ে; সময়ের সাথে trend track করুন
+3. **automation ladder বেয়ে উঠুন** (0 → 5) — level skip করলে bug লুকিয়ে থাকে
+4. **Operator হলো অনেক পুনরাবৃত্ত K8s task-এর Level 5 endpoint**
+5. **Self-service IDP পুরো toil শ্রেণি দূর করে** SRE-কে loop থেকে সরিয়ে
+6. **কিছু toil manual থাকাই উচিত** — automation cost > toil cost একটা বাস্তব সীমারেখা

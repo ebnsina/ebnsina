@@ -1,9 +1,9 @@
 ---
 title: 'Linux Performance Mastery'
-subtitle: 'From `top` to `perf`, `bpftrace`, and flame graphs. The senior-SRE toolkit for diagnosing latency, CPU, memory, and I/O at the kernel level — without restarting anything in production.'
+subtitle: '`top` থেকে `perf`, `bpftrace`, আর flame graph পর্যন্ত। production-এ কিছু restart না করে kernel level-এ latency, CPU, memory, আর I/O diagnose করার senior-SRE toolkit।'
 chapter: 12
 level: 'mastery'
-readingTime: '32 min'
+readingTime: '32 মিনিট'
 topics: ['linux', 'perf', 'eBPF', 'bpftrace', 'flame graphs', 'USE', 'kernel', 'performance']
 ---
 
@@ -11,23 +11,31 @@ topics: ['linux', 'perf', 'eBPF', 'bpftrace', 'flame graphs', 'USE', 'kernel', '
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why this chapter exists
+## গল্পে বুঝি
 
-The 8-week roadmap stops at "use Grafana to find slow endpoints." Real production failures live below that line: a service is slow but CPU is idle, p99 latency doubled but request rate is flat, throughput collapses at 8 PM with no deploy. Application metrics cannot answer those — you need kernel-level visibility.
+শহরের সবচেয়ে দক্ষ মেকানিক ফাতিমা আল-ফিহরির গ্যারেজে একটা ট্রাক এল — ইঞ্জিন চলছে ঠিকই, কিন্তু শক্তি নেই, ভয়ানক ধীর। পাশের গ্যারেজের এক আনাড়ি শিক্ষানবিশ ইতিমধ্যে তিন দিন নষ্ট করেছে — আন্দাজে একবার স্পার্ক প্লাগ বদলেছে, তারপর ফুয়েল পাম্প, তারপর রেডিয়েটর — কোনোটাই কাজে লাগেনি, ইঞ্জিন আগের মতোই ঝিমিয়ে আছে। ফাতিমা এভাবে কাজ করেন না। তিনি একটা একটা করে গজ হাতে নেন। প্রথমে ফুয়েল লাইনে চাপমাপক লাগান — জ্বালানি ঠিকঠাক আসছে। তারপর এয়ার ইনটেকে গজ ধরেন — বাতাসও পরিষ্কার। এরপর ইগনিশন টাইমিং মেপে দেখেন — স্বাভাবিক।
 
-This chapter teaches the toolchain Brendan Gregg, Netflix performance engineers, and senior SREs at Facebook actually use: `perf`, eBPF, `bpftrace`, BCC, flame graphs, and the USE method applied to every resource on a Linux box.
+শেষে তিনি কুলিং সিস্টেমে গজ লাগান, আর সেখানেই ধরা পড়ে — কুল্যান্ট পাম্প আটকে গিয়ে ইঞ্জিন গরমে হাঁপাচ্ছে, তাই নিজে থেকেই শক্তি কমিয়ে দিচ্ছে। ফাতিমা অন্য কিছু ছোঁন না, শুধু সেই প্রমাণিত সমস্যাটাই সারান। এক ঘণ্টায় ট্রাক আবার আগের মতো ছোটে। আনাড়ি শিক্ষানবিশ যেখানে তিন দিনে কিছুই ঠিক করতে পারেনি, ফাতিমা মেপে এক ঘণ্টায় শেষ করলেন — কারণ তিনি কখনো আন্দাজ করেন না, তিনি মাপেন।
+
+এই গল্পটাই আসলে **Linux performance** ডিবাগিং। ইঞ্জিনের চারটা সাবসিস্টেম — জ্বালানি, বাতাস, ইগনিশন, কুলিং — একটা একটা করে গজ দিয়ে পরীক্ষা করা মানে একটা box-এর চারটা resource — CPU, memory, disk I/O, network — এক এক করে সঠিক tool দিয়ে মাপা। প্রতিটা সাবসিস্টেমে আলাদা গজ লাগানোই হলো প্রতিটা resource-এ ঠিক performance tool ব্যবহার করা, আর শুধু প্রমাণিত অভুক্ত সাবসিস্টেমটা সারানোই হলো মেপে পাওয়া আসল **bottleneck**-টা fix করা। শিক্ষানবিশের আন্দাজে যন্ত্রাংশ বদলানোই হলো না মেপে অনুমানে ঠিক করার চেষ্টা — যা দিন নষ্ট করে, কিছুই সারায় না। বাস্তবে ঠিক এভাবেই senior SRE-রা `top` দিয়ে CPU, `iostat` দিয়ে disk I/O, `perf` দিয়ে কোন cycle-এ CPU stall করছে — এক এক করে মেপে দেখেন কোন resource আসলে ভুগছে, তারপর শুধু সেটাই ঠিক করেন।
+
+## এই chapter কেন আছে
+
+8-সপ্তাহের roadmap "slow endpoint খুঁজতে Grafana ব্যবহার করো"-তে থেমে যায়। বাস্তব production failure সেই রেখার নিচে বাস করে: একটা service slow কিন্তু CPU idle, p99 latency দ্বিগুণ হয়েছে কিন্তু request rate flat, রাত 8টায় throughput ধসে যায় কোনো deploy ছাড়াই। Application metric এগুলোর উত্তর দিতে পারে না — আপনার kernel-level visibility লাগবে।
+
+এই chapter সেই toolchain শেখায় যেটা Brendan Gregg, Netflix performance engineer, আর Facebook-এর senior SRE-রা আসলে ব্যবহার করে: `perf`, eBPF, `bpftrace`, BCC, flame graph, আর একটা Linux box-এর প্রতিটা resource-এ প্রয়োগ করা USE method।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-Application metrics are like the dashboard on a car. They tell you you're going slow. Kernel-level tools are the OBD-II port plus a stethoscope on the engine block — they tell you _which cylinder is misfiring_. You can drive without them. You cannot fix the car.
+Application metric একটা গাড়ির dashboard-এর মতো। এটা আপনাকে বলে আপনি ধীরে যাচ্ছেন। Kernel-level tool হলো OBD-II port প্লাস engine block-এ একটা stethoscope — এটা বলে _কোন cylinder-টা misfire করছে_। আপনি এগুলো ছাড়া চালাতে পারবেন। কিন্তু গাড়ি ঠিক করতে পারবেন না।
 
 </Callout>
 
-## The 60-second performance triage
+## 60-সেকেন্ডের performance triage
 
-Brendan Gregg's checklist. Run this within the first minute of any "the box feels slow" page. Each command is on a different layer of the stack so the answer falls out fast.
+Brendan Gregg-এর checklist। যেকোনো "box-টা slow লাগছে" page-এর প্রথম মিনিটের মধ্যে এটা চালান। প্রতিটা command stack-এর একটা ভিন্ন layer-এ, যাতে উত্তরটা দ্রুত বেরিয়ে আসে।
 
 ```bash
 uptime                # load avg over 1, 5, 15 min — saturation trend
@@ -42,7 +50,7 @@ sar -n TCP,ETCP 1     # TCP retransmits, listen drops
 top                   # the catch-all — sort by %CPU, then by RES
 ```
 
-What each tells you, in priority:
+প্রতিটা আপনাকে কী বলে, অগ্রাধিকার অনুসারে:
 
 | Signal                      | Tool     | What it rules out         |
 | --------------------------- | -------- | ------------------------- |
@@ -52,9 +60,9 @@ What each tells you, in priority:
 | `await` >> 10ms in `iostat` | `iostat` | "the disk is fine"        |
 | TCP retransmits > 0.1%      | `sar`    | "the network is fine"     |
 
-## The USE method — every resource, three questions
+## USE method — প্রতিটা resource, তিনটা প্রশ্ন
 
-For every resource (CPU, memory, disk, NIC, controller queues, file descriptors), ask:
+প্রতিটা resource-এর জন্য (CPU, memory, disk, NIC, controller queue, file descriptor), জিজ্ঞেস করুন:
 
 ```
 Utilization  — % time the resource was busy
@@ -62,7 +70,7 @@ Saturation   — degree of queued work the resource cannot service yet
 Errors       — count of error events
 ```
 
-Most teams monitor utilization only. Saturation is where production dies — a CPU at 70% utilization but with run-queue depth 12 is far worse than one at 95% with run-queue depth 1.
+বেশিরভাগ team শুধু utilization monitor করে। Saturation-ই যেখানে production মরে — 70% utilization কিন্তু run-queue depth 12-ওয়ালা একটা CPU, 95% কিন্তু run-queue depth 1-ওয়ালা একটার চেয়ে অনেক খারাপ।
 
 ```bash
 # CPU
@@ -85,13 +93,13 @@ sar -n EDEV 1          # errors (rxerr/s, txdrop/s)
 ss -s                  # saturation (tcp listen backlog)
 ```
 
-The pattern: one tool per box. Build a dashboard with all three columns per resource and the answer to "where is the box hurting?" becomes a glance.
+pattern-টা: প্রতি box-এ একটা tool। প্রতি resource-এ তিনটা column সহ একটা dashboard বানান আর "box কোথায় ব্যথা পাচ্ছে?" এর উত্তর একটা glance হয়ে যায়।
 
-## CPU performance — beyond `top`
+## CPU performance — `top`-এর বাইরে
 
-`top` shows you _who_ is running. It doesn't show you _what they're doing inside the kernel_. `perf` does.
+`top` আপনাকে দেখায় _কে_ চলছে। এটা দেখায় না _তারা kernel-এর ভেতরে কী করছে_। `perf` দেখায়।
 
-### perf stat — the cheap counter dump
+### perf stat — সস্তা counter dump
 
 ```bash
 # Counters for one process for 10 seconds
@@ -109,11 +117,11 @@ perf stat -p $(pgrep -f my-svc) -- sleep 10
 #         4,567,890      cache-misses         # check vs cache-references
 ```
 
-**The key signal: instructions per cycle (IPC).** Modern x86 cores can retire 4 instructions per cycle. If you measure 0.5 IPC, the CPU is stalled — usually on memory. If IPC is 2.5+, the workload is CPU-bound and you need either more cores or a smarter algorithm.
+**মূল signal: instructions per cycle (IPC)।** আধুনিক x86 core প্রতি cycle-এ 4টি instruction retire করতে পারে। আপনি যদি 0.5 IPC মাপেন, CPU stall করছে — সাধারণত memory-তে। IPC যদি 2.5+ হয়, workload CPU-bound আর আপনার হয় আরও core, নয়তো একটা স্মার্ট algorithm লাগবে।
 
-### perf record + flame graphs — the exact line of code
+### perf record + flame graph — code-এর ঠিক line
 
-This is the highest-leverage tool in performance work. One command produces an interactive SVG showing exactly which functions consumed CPU.
+এটা performance work-এর সবচেয়ে বেশি leverage-দেওয়া tool। একটা command একটা interactive SVG তৈরি করে যেটা ঠিক দেখায় কোন function CPU খেয়েছে।
 
 ```bash
 # Sample on-CPU stacks at 99 Hz for 30 seconds
@@ -126,7 +134,7 @@ perf script | stackcollapse-perf.pl | flamegraph.pl > flame.svg
 # The wide plateaus near the top = where CPU actually goes.
 ```
 
-For Go services, use `pprof` instead — the runtime is goroutine-aware:
+Go service-এর জন্য, তার বদলে `pprof` ব্যবহার করুন — runtime-টা goroutine-aware:
 
 ```go
 import _ "net/http/pprof"
@@ -134,21 +142,21 @@ import _ "net/http/pprof"
 // go tool pprof -http=:8080 cpu.pprof
 ```
 
-For Java/JVM, use `async-profiler` — it samples without safepoint bias.
+Java/JVM-এর জন্য, `async-profiler` ব্যবহার করুন — এটা safepoint bias ছাড়াই sample করে।
 
 <Callout type="tip">
 
-**Flame graphs always read top-down for the answer.** The widest box at the _top_ is the leaf function eating CPU. The bottom of its column is the call chain. Don't read bottom-up; you'll waste 10 minutes on framework code.
+**Flame graph উত্তরের জন্য সবসময় top-down পড়ুন।** _উপরের_ সবচেয়ে চওড়া box হলো সেই leaf function যেটা CPU খাচ্ছে। তার column-এর নিচের অংশটা হলো call chain। bottom-up পড়বেন না; framework code-এ 10 মিনিট নষ্ট করবেন।
 
 </Callout>
 
-## eBPF and bpftrace — observability without restarts
+## eBPF আর bpftrace — restart ছাড়া observability
 
-eBPF is the single biggest shift in Linux observability since `strace`. You attach safe, JIT-compiled programs to kernel hooks (kprobes, uprobes, tracepoints, USDT) and stream telemetry out — no kernel patches, no service restarts, near-zero overhead.
+eBPF হলো `strace`-এর পর Linux observability-তে একক সবচেয়ে বড় পরিবর্তন। আপনি নিরাপদ, JIT-compiled program kernel hook-এ (kprobe, uprobe, tracepoint, USDT) attach করেন আর telemetry stream করে বের করেন — কোনো kernel patch নেই, কোনো service restart নেই, প্রায়-শূন্য overhead।
 
-`bpftrace` is the awk-like CLI on top of eBPF. One-liners replace whole traditional tools.
+`bpftrace` হলো eBPF-এর উপর awk-এর মতো CLI। one-liner পুরো traditional tool প্রতিস্থাপন করে।
 
-### bpftrace one-liners that earn their keep
+### যে bpftrace one-liner-গুলো তাদের মূল্য দেয়
 
 ```bash
 # Latency histogram of every read() syscall, system-wide
@@ -175,7 +183,7 @@ bpftrace -e 'kprobe:vfs_fsync_range { @[comm] = count(); }
              interval:s:5 { print(@); clear(@); }'
 ```
 
-### BCC tools — pre-built BPF programs for the common cases
+### BCC tools — সাধারণ ক্ষেত্রের জন্য pre-built BPF program
 
 ```bash
 # Install once (Ubuntu/Debian)
@@ -198,18 +206,18 @@ offcputime-bpfcc -p $(pgrep my-svc) -f 30 > out.stacks
 flamegraph.pl --color=io < out.stacks > offcpu.svg
 ```
 
-The last one — **off-CPU flame graphs** — is how you find lock contention, sleep storms, and "my service is slow but CPU is idle" mysteries. On-CPU flames show you what's running; off-CPU flames show you what's _blocked_. Together they cover the whole story.
+শেষেরটা — **off-CPU flame graph** — এভাবেই আপনি lock contention, sleep storm, আর "আমার service slow কিন্তু CPU idle" রহস্য খুঁজে পান। On-CPU flame আপনাকে দেখায় কী চলছে; off-CPU flame দেখায় কী _blocked_। একসাথে তারা পুরো গল্প কভার করে।
 
-## Memory — finding the real consumer
+## Memory — আসল consumer খুঁজে বের করা
 
-`free -m` lies. It shows kernel page cache as "used" because Linux uses every byte of free RAM for caching. Read it like:
+`free -m` মিথ্যা বলে। এটা kernel page cache-কে "used" হিসেবে দেখায় কারণ Linux caching-এর জন্য free RAM-এর প্রতিটা byte ব্যবহার করে। এভাবে পড়ুন:
 
 ```
 total = used + buffers + cached + free
 "available" = what processes can actually allocate without paging
 ```
 
-The real questions:
+আসল প্রশ্নগুলো:
 
 ```bash
 # Per-process resident set, sorted
@@ -230,9 +238,9 @@ done
 slabtop -o | head -20
 ```
 
-### The classic memory bug: the leaking sidecar
+### ক্লাসিক memory bug: leaking sidecar
 
-A pattern seen in real production: a sidecar (log shipper, mesh proxy) leaks 1 KB per request. Three weeks later, the node OOMs at 3 AM. The application looks innocent in `top` because the sidecar is in a different cgroup.
+বাস্তব production-এ দেখা একটা pattern: একটা sidecar (log shipper, mesh proxy) প্রতি request-এ 1 KB leak করে। তিন সপ্তাহ পরে, node রাত 3 AM-এ OOM করে। application-কে `top`-এ নিরীহ দেখায় কারণ sidecar একটা ভিন্ন cgroup-এ।
 
 ```bash
 # Per-cgroup memory accounting (cgroup v2)
@@ -244,11 +252,11 @@ cat /sys/fs/cgroup/system.slice/my-svc.service/memory.events  # oom_kill counter
 ls /sys/fs/cgroup/kubepods.slice/
 ```
 
-Set `memory.high` (soft limit) below `memory.max` (OOM-kill limit). The service slows under pressure instead of dying — buying you time to scale or roll back.
+`memory.high` (soft limit) `memory.max` (OOM-kill limit)-এর নিচে সেট করুন। service মারা যাওয়ার বদলে চাপের নিচে slow হয় — আপনাকে scale বা roll back করার সময় দেয়।
 
-## Disk and filesystem — `iostat` is just the start
+## Disk আর filesystem — `iostat` শুধু শুরু
 
-The four numbers from `iostat -xz 1`:
+`iostat -xz 1` থেকে চারটা সংখ্যা:
 
 ```
 %util    — busy time. > 80% sustained = device near saturation.
@@ -257,9 +265,9 @@ avgqu-sz — average queue depth. > 1 sustained = backlog forming.
 r/s w/s  — IOPS. Compare to device's spec sheet.
 ```
 
-But `%util` is misleading on SSDs and NVMe — they pipeline, so 100% util can still serve more IOPS. Trust `await` and the per-vendor IOPS spec instead.
+কিন্তু `%util` SSD আর NVMe-তে বিভ্রান্তিকর — তারা pipeline করে, তাই 100% util-এও আরও IOPS serve করতে পারে। তার বদলে `await` আর per-vendor IOPS spec-এ ভরসা করুন।
 
-### The deeper questions
+### গভীর প্রশ্নগুলো
 
 ```bash
 # Which file is hot? (BCC)
@@ -276,9 +284,9 @@ xfsslower-bpfcc 5             # > 5ms xfs ops
 cat /proc/meminfo | grep -i dirty
 ```
 
-The classic "nightly batch killed Postgres" outage: a backup job called `fsync()` on a 4 GB log, blocking the DB's WAL writer for 8 seconds. `ext4slower-bpfcc` would have flagged it the first night.
+ক্লাসিক "রাতের batch Postgres মেরে ফেলল" outage: একটা backup job একটা 4 GB log-এ `fsync()` call করেছিল, DB-এর WAL writer-কে 8 সেকেন্ড ধরে block করে রেখেছিল। `ext4slower-bpfcc` প্রথম রাতেই এটা flag করত।
 
-### Filesystem choice matters at scale
+### Filesystem-এর choice scale-এ গুরুত্বপূর্ণ
 
 ```
 ext4   — the safe default. Predictable. Slower on >1M files per dir.
@@ -287,18 +295,18 @@ btrfs  — snapshots are great. CoW write amplification is real.
 zfs    — best snapshots, ARC cache wins for read-heavy. Memory hungry.
 ```
 
-For production databases, the mount options matter as much as the FS:
+production database-এর জন্য, mount option-গুলো FS-এর মতোই গুরুত্বপূর্ণ:
 
 ```bash
 # Postgres on ext4, the boring-but-correct way
 mount -o noatime,data=ordered,barrier=1 /dev/nvme0n1 /var/lib/postgresql
 ```
 
-`noatime` alone shaves 20–30% off metadata write load on read-heavy filesystems.
+শুধু `noatime` read-heavy filesystem-এ metadata write load থেকে 20–30% কমিয়ে দেয়।
 
-## Network — beyond `ping`
+## Network — `ping`-এর বাইরে
 
-Layer-by-layer toolset for the SRE on the box:
+box-এর SRE-র জন্য layer-by-layer toolset:
 
 ```bash
 # Link layer
@@ -325,14 +333,14 @@ tcplife-bpfcc                 # connection lifetimes + bytes
 tcpretrans-bpfcc              # every retransmit with stack
 ```
 
-The two TCP fields you should know cold:
+যে দুটো TCP field আপনার মুখস্থ জানা উচিত:
 
-- **cwnd** (congestion window) — how many segments the sender will put in flight before waiting for ACKs. A small cwnd in `ss -ti` after a long-lived connection means the path saw loss and slowed down.
-- **rtt** (round-trip time) — should match your data center latency budget. If `ss -ti` shows rtt 5x baseline on internal connections, the NIC, switch, or kernel queue is hurting.
+- **cwnd** (congestion window) — ACK-এর জন্য অপেক্ষা করার আগে sender কতগুলো segment in flight রাখবে। একটা long-lived connection-এর পরে `ss -ti`-তে একটা ছোট cwnd মানে path-টা loss দেখেছে আর ধীর হয়ে গেছে।
+- **rtt** (round-trip time) — আপনার data center latency budget-এর সাথে মেলা উচিত। যদি `ss -ti` internal connection-এ baseline-এর 5x rtt দেখায়, NIC, switch, বা kernel queue ব্যথা পাচ্ছে।
 
-### A real example: the listen backlog drop
+### একটা বাস্তব উদাহরণ: listen backlog drop
 
-Symptom: 1% of new connections occasionally get reset for no reason. App looks fine, no errors logged.
+Symptom: 1% নতুন connection মাঝেমধ্যে বিনা কারণে reset হয়। App ঠিক দেখায়, কোনো error log হয় না।
 
 ```bash
 # The smoking gun
@@ -351,11 +359,11 @@ sysctl -w net.ipv4.tcp_max_syn_backlog=8192
 # AND raise the listen() backlog in the application
 ```
 
-Without the kernel counter, this looks like a flaky network. With it, it's a one-line fix.
+kernel counter ছাড়া, এটাকে একটা flaky network-এর মতো দেখায়। এটা দিয়ে, এটা একটা one-line fix।
 
-## TCP tuning that actually moves the needle
+## যে TCP tuning সত্যিই কাজে লাগে
 
-Most `sysctl` advice on the internet is cargo-cult. The few that matter on a modern (5.x+) kernel:
+internet-এ বেশিরভাগ `sysctl` পরামর্শ cargo-cult। একটা আধুনিক (5.x+) kernel-এ যে কয়েকটা গুরুত্বপূর্ণ:
 
 ```bash
 # Allow more concurrent connections
@@ -376,11 +384,11 @@ net.ipv4.tcp_congestion_control=bbr
 net.ipv4.tcp_tw_reuse=1
 ```
 
-Test before and after with the same load. Anything that doesn't show up in your latency histogram is noise.
+একই load দিয়ে আগে আর পরে test করুন। আপনার latency histogram-এ যা দেখা যায় না তা noise।
 
-## Putting it together — a production debugging walkthrough
+## সব একসাথে — একটা production debugging walkthrough
 
-A real incident pattern: p99 latency for `/api/checkout` jumped from 80 ms to 600 ms with no code change.
+একটা বাস্তব incident pattern: `/api/checkout`-এর জন্য p99 latency কোনো code change ছাড়াই 80 ms থেকে 600 ms-এ লাফ দিল।
 
 ```bash
 # Step 1: which layer? Application metrics show p50 normal, p99 wild.
@@ -411,17 +419,17 @@ cat /proc/meminfo | grep Dirty
 #         or schedule outside business hours.
 ```
 
-No restart, no guess, no "let's roll back the deploy." Five tools, five minutes.
+কোনো restart নেই, কোনো অনুমান নেই, কোনো "চলো deploy roll back করি" নেই। পাঁচটা tool, পাঁচ মিনিট।
 
-## Common pitfalls senior SREs avoid
+## যে সাধারণ ফাঁদ senior SRE-রা এড়ায়
 
-1. **Looking at averages, missing tails.** p50 is fine; p99 tells the truth. Always histogram.
-2. **Assuming the bottleneck is the most-loaded resource.** A 95%-utilized NIC is fine if the queue depth is 0; the 60% disk with queue depth 8 is the bottleneck.
-3. **Trusting `top`'s CPU%.** The kernel scheduler counts time, not work. `perf stat` (IPC) tells you whether those cycles did anything.
-4. **Restarting before observing.** Every restart destroys the state you need to debug. Snapshot first (`perf record`, `bpftrace`), then mitigate.
-5. **Tuning sysctls one-at-a-time without a benchmark.** You'll find a "magic" setting that quietly harms a different workload three months later.
+1. **Average দেখা, tail miss করা।** p50 ঠিক আছে; p99 সত্য বলে। সবসময় histogram করুন।
+2. **ধরে নেওয়া bottleneck হলো সবচেয়ে বেশি লোডেড resource।** একটা 95%-utilized NIC ঠিক আছে যদি queue depth 0 হয়; queue depth 8-ওয়ালা 60% disk-টাই bottleneck।
+3. **`top`-এর CPU%-এ ভরসা করা।** kernel scheduler সময় গণনা করে, কাজ নয়। `perf stat` (IPC) বলে সেই cycle-গুলো আদৌ কিছু করেছে কিনা।
+4. **observe করার আগে restart করা।** প্রতিটা restart সেই state ধ্বংস করে যা আপনার debug করতে লাগবে। আগে snapshot নিন (`perf record`, `bpftrace`), তারপর mitigate করুন।
+5. **benchmark ছাড়া একটা একটা করে sysctl tune করা।** আপনি একটা "magic" setting খুঁজে পাবেন যেটা তিন মাস পরে নীরবে একটা ভিন্ন workload-এর ক্ষতি করে।
 
-## Tooling tier list for an SRE box
+## একটা SRE box-এর জন্য tooling tier list
 
 ```
 Tier S (always installed)
@@ -441,18 +449,18 @@ Tier F (avoid)
   "Performance optimizers" sold as products — they're wrappers around the above
 ```
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Brendan Gregg's site](https://www.brendangregg.com/) — perf tools, methodology, kernel deep-dives
+- [Brendan Gregg's site](https://www.brendangregg.com/) — perf tool, methodology, kernel deep-dive
 - [Linux kernel performance docs](https://www.kernel.org/doc/html/latest/admin-guide/perf/index.html) — authoritative
-- [bpftrace reference](https://github.com/bpftrace/bpftrace/blob/master/man/adoc/bpftrace.adoc) — modern eBPF tracing
+- [bpftrace reference](https://github.com/bpftrace/bpftrace/blob/master/man/adoc/bpftrace.adoc) — আধুনিক eBPF tracing
 - [Julia Evans — debugging zines](https://wizardzines.com/) — Linux internals visualized
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **The 60-second triage covers 80% of host-level pages** — keep it muscle memory.
-2. **USE method per resource is the senior baseline** — utilization alone is a lie.
-3. **Flame graphs (on-CPU + off-CPU) replace hours of guessing** with one SVG.
-4. **eBPF / bpftrace removes the "I'd need a restart to debug this" excuse** — observe live.
-5. **Tail latency lives at the kernel layer** — application traces show _what_ is slow; kernel tools show _why_.
-6. **Tune nothing without a measurement before and after.** The internet is full of anti-tuning advice.
+1. **60-সেকেন্ডের triage host-level page-এর 80% কভার করে** — এটা muscle memory রাখুন।
+2. **প্রতি resource-এ USE method হলো senior baseline** — শুধু utilization একটা মিথ্যা।
+3. **Flame graph (on-CPU + off-CPU) ঘণ্টার পর ঘণ্টা অনুমান প্রতিস্থাপন করে** একটা SVG দিয়ে।
+4. **eBPF / bpftrace "এটা debug করতে একটা restart লাগত" অজুহাত সরিয়ে দেয়** — live observe করুন।
+5. **Tail latency kernel layer-এ বাস করে** — application trace দেখায় _কী_ slow; kernel tool দেখায় _কেন_।
+6. **আগে আর পরে measurement ছাড়া কিছু tune করবেন না।** internet anti-tuning পরামর্শে ভরা।

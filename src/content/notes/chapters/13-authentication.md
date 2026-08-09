@@ -1,9 +1,9 @@
 ---
-title: 'Authentication & Authorization'
-subtitle: 'Implement JWT-based auth, refresh tokens, RBAC middleware, and secure password hashing from scratch.'
+title: 'Authentication ও Authorization'
+subtitle: 'JWT-ভিত্তিক auth, refresh token, RBAC middleware এবং secure password hashing গোড়া থেকে বানান।'
 chapter: 13
 level: 'beginner'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['JWT', 'bcrypt', 'RBAC', 'refresh tokens', 'middleware']
 ---
 
@@ -13,15 +13,23 @@ topics: ['JWT', 'bcrypt', 'RBAC', 'refresh tokens', 'middleware']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## Authentication vs Authorization
+## গল্পে বুঝি
 
-**Authentication** answers "who are you?" — verifying identity via passwords, tokens, or OAuth. **Authorization** answers "what can you do?" — checking permissions to access resources.
+আল-খোয়ারিজমির বড় ভাইয়ের বিয়ে, বিশাল কমিউনিটি সেন্টারে অনুষ্ঠান। গেটে দাঁড়ানো এক গার্ড প্রতিটা মানুষের হাতে ধরা invitation card দেখেন, আর কার্ডে সন্দেহ হলে NID মিলিয়ে নিশ্চিত হন — মানুষটা সত্যিই যাকে দাবি করছে সে-ই কি না। ইবনে সিনা নিজের কার্ড দেখাল, গার্ড মিলিয়ে দেখে নিশ্চিত হলেন এ আসলেই দাওয়াতি মেহমান, তারপর ঢুকতে দিলেন। কিন্তু গেটে ঢোকা মানেই তো সব ঘরে ঢোকার ছাড়পত্র নয়।
+
+গেট পার হতেই এক আপা ইবনে সিনার হাতে একটা রঙিন wristband পরিয়ে দিলেন। সাধারণ মেহমানের হাতে নীল ব্যান্ড — শুধু খাওয়ার হল আর স্টেজের সামনে যাওয়া যায়। ফাতিমা আল-ফিহরি কনের ঘনিষ্ঠ, তার হাতে লাল ব্যান্ড — VIP রুম আর কনের সাজঘরেও ঢুকতে পারে। রান্নাঘরের ভেতরে ঢোকার সবুজ ব্যান্ড শুধু ক্যাটারিং টিমের। মজার ব্যাপার হলো, ভেতরে প্রতিটা দরজায় আর কেউ NID চায় না — হাতের ব্যান্ডের রঙ দেখেই বুঝে যায় কে কোথায় যেতে পারবে। ব্যান্ডটা একবারই গেটে ইস্যু হয়, তারপর সারা অনুষ্ঠানজুড়ে ওটাই পরিচয়।
+
+এই গল্পটাই authentication বনাম authorization। গেটে card/NID মিলিয়ে "তুমি আসলে কে" প্রমাণ করাটা হলো **authentication**, আর হাতের রঙিন ব্যান্ড দিয়ে "তুমি কোন ঘরে ঢুকতে পারবে" ঠিক করাটা হলো role-ভিত্তিক **authorization**। একবার ইস্যু হওয়া wristband যেটা ভেতরে বারবার NID না দেখিয়েই পরিচয় বহন করে, সেটাই বাস্তবে **token/session** — login-এ একবার পরিচয় প্রমাণ হওয়ার পর সার্ভার একটা token (যেমন JWT) দেয়, আর প্রতিটা request-এ সেই token-ই permission বহন করে; OAuth-ও ঠিক এভাবে একবার প্রমাণ করা identity নিরাপদে টোকেনে পুরে সব জায়গায় চালায়।
+
+## Authentication বনাম Authorization
+
+**Authentication** উত্তর দেয় "তুমি কে?" — password, token বা OAuth দিয়ে identity যাচাই করা। **Authorization** উত্তর দেয় "তুমি কী করতে পারো?" — resource access করার permission চেক করা।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a gym membership card — you verify your identity once at the front desk (login), get a card (token), and swipe it for access without showing your ID again. Your membership tier (basic/premium) determines what areas you can use (authorization).
+একটি জিমের membership card-এর মতো — front desk-এ একবার আপনার identity যাচাই করেন (login), একটা card পান (token), আর আবার ID না দেখিয়েই swipe করে ঢোকেন। আপনার membership tier (basic/premium) ঠিক করে আপনি কোন কোন এলাকা ব্যবহার করতে পারবেন (authorization)।
 
 </Callout>
 
@@ -32,13 +40,13 @@ code={`graph TD
   J --> C2["Client<br/>Bearer token"] --> M["Auth Middleware<br/>Verify + RBAC"] --> P["Protected API"]`}
 />
 
-## Why JWTs?
+## JWT কেন?
 
-Traditional session-based auth stores session data on the server. This requires sticky sessions or shared session storage as you scale. JWTs are **stateless** — the token itself contains the user's identity and permissions. Any server can validate it without hitting a database.
+Traditional session-ভিত্তিক auth session data server-এ store করে। স্কেল করার সময় এতে sticky session বা shared session storage লাগে। JWT হলো **stateless** — token নিজেই user-এর identity আর permission ধারণ করে। যেকোনো server database না ছুঁয়েই এটা validate করতে পারে।
 
-The tradeoff: you can't revoke a JWT before it expires without maintaining a blacklist (which re-introduces server state). The solution: short-lived access tokens (15 min) + long-lived refresh tokens (7 days).
+Tradeoff-টা হলো: একটি blacklist না রেখে (যা আবার server state ফিরিয়ে আনে) JWT expire হওয়ার আগে revoke করা যায় না। সমাধান: short-lived access token (15 min) + long-lived refresh token (7 day)।
 
-## Complete Auth System
+## সম্পূর্ণ Auth সিস্টেম
 
 <CodeTabs tsFile="auth.ts" goFile="auth.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -716,23 +724,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- Use **timing-safe comparison** for signature verification — prevents timing attacks
-- **Rotate refresh tokens** on every use — if one is stolen, it can only be used once
-- Return the **same error** for "user not found" and "wrong password" — prevents user enumeration
-- **RBAC** is simpler than ABAC (attribute-based) and sufficient for most applications
-- Hash passwords with **bcrypt** (Go) or **scrypt** (Node.js) — never SHA-256 or MD5
+- Signature verification-এর জন্য **timing-safe comparison** ব্যবহার করুন — timing attack আটকায়
+- প্রতিবার ব্যবহারে **refresh token rotate করুন** — একটা চুরি গেলেও সেটা মাত্র একবার ব্যবহার করা যাবে
+- "user not found" আর "wrong password"-এর জন্য **একই error** ফেরত দিন — user enumeration আটকায়
+- **RBAC**, ABAC (attribute-based)-এর চেয়ে সহজ এবং বেশিরভাগ application-এর জন্য যথেষ্ট
+- Password hash করুন **bcrypt** (Go) বা **scrypt** (Node.js) দিয়ে — কখনো SHA-256 বা MD5 নয়
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Auth0** and **Firebase Auth** implement exactly this JWT + refresh token flow
-- **GitHub** uses short-lived tokens with refresh for their OAuth apps
-- **Stripe** uses API keys (simpler than JWT) because they don't need user sessions
-- For most apps, use a managed auth service (Auth0, Clerk, Supabase Auth). Build custom only if you have specific compliance needs.
+- **Auth0** এবং **Firebase Auth** ঠিক এই JWT + refresh token flow-টাই implement করে
+- **GitHub** তাদের OAuth app-এর জন্য refresh সহ short-lived token ব্যবহার করে
+- **Stripe** API key ব্যবহার করে (JWT-এর চেয়ে সহজ) কারণ তাদের user session লাগে না
+- বেশিরভাগ app-এর জন্য একটি managed auth service (Auth0, Clerk, Supabase Auth) ব্যবহার করুন। নির্দিষ্ট compliance দরকার হলেই কেবল custom বানান।
 
 </div>

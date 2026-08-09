@@ -1,9 +1,9 @@
 ---
-title: 'What WebSockets are and when to use them'
-subtitle: 'A WebSocket is a bidirectional, persistent TCP connection that starts life as an HTTP request. Useful when neither REST nor RPC fits. Misused often.'
+title: 'WebSockets কী এবং কখন ব্যবহার করবেন'
+subtitle: 'একটা WebSocket হলো একটা bidirectional, persistent TCP connection যা জীবন শুরু করে একটা HTTP request হিসেবে। যখন REST বা RPC কোনোটাই মানায় না তখন কাজে লাগে। প্রায়ই ভুলভাবে ব্যবহৃত হয়।'
 chapter: 1
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['websockets', 'sse', 'realtime', 'polling']
 ---
 
@@ -11,21 +11,29 @@ topics: ['websockets', 'sse', 'realtime', 'polling']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-A WebSocket is the answer to "I need to push to a browser, low-latency, both directions, on a connection that stays open." It is one of the few protocols that browsers speak natively that is not request-response. Every other shape — REST, GraphQL, gRPC — assumes the client speaks first.
+## গল্পে বুঝি
 
-That property changes what kinds of features you can ship. It also opens a category of bugs that does not exist for stateless protocols.
+পুরনো বাজারের গলিতে পাশাপাশি দুটো দোকান — একটা ইবনে সিনার মশলার দোকান, লাগোয়া আরেকটা আল-খোয়ারিজমির শুকনো ফলের দোকান। দুই দোকানের মাঝে একটা ভেতরের দরজা আছে। শুরুতে দরজাটা সবসময় বন্ধ থাকত। আল-খোয়ারিজমির কোনো মশলা দরকার হলে সে দরজায় টোকা দিত, দাঁড়িয়ে অপেক্ষা করত, ইবনে সিনা এসে দরজা খুলে জিনিসটা দিত, তারপর দরজা আবার বন্ধ। পরেরবার আবার টোকা, আবার অপেক্ষা, আবার বন্ধ — প্রতিটা কথার জন্য নতুন করে পুরো এই কষ্ট।
+
+বিক্রির মৌসুমে যখন দুজনকে সারাক্ষণ একে অপরকে জিনিস, দাম, খদ্দেরের খবর দিতে হচ্ছিল, তখন এই টোকা-অপেক্ষা-বন্ধের চক্র অসহ্য হয়ে উঠল। তাই তারা একটা সহজ কাজ করল — মাঝের দরজাটা কাঠের গোঁজ দিয়ে স্থায়ীভাবে খুলে রাখল। এখন আর টোকা দিতে হয় না, অপেক্ষাও নয়। কিছু ঘটলেই যে-কেউ যেকোনো মুহূর্তে দরজা দিয়ে পা বাড়িয়ে অন্যজনকে বলে দেয় — "নতুন জাফরান এসেছে", "সামনে ভিড় বেড়েছে"। দুই দিক থেকেই, যখন খুশি।
+
+এই গোঁজ-দেওয়া খোলা দরজাটাই আসলে একটা **persistent connection** — একবার খুলে গেলে বন্ধ হয় না, তাই প্রতিবার নতুন করে হাত মেলানোর খরচ নেই। আর দুই দোকানদারের যেকোনো একজনের যেকোনো সময় পা বাড়িয়ে কথা বলাটাই হলো **full-duplex** — দুই দিকেই বার্তা যায়, কারও আগে "request" করার অপেক্ষা লাগে না। এটাই একটা **WebSocket**। উল্টোদিকে, টোকা দাও-অপেক্ষা করো-দরজা বন্ধ হয়ে যাক চক্রটা হলো **HTTP request/response** — প্রতিটা কথার জন্য client-কেই আগে শুরু করতে হয়, উত্তর এলে সংযোগ শেষ। কখন কোনটা? দিনে একবার একটা প্রশ্ন থাকলে দরজা গোঁজ দিয়ে খুলে রাখাটা বাড়াবাড়ি — তখন request/response-ই ঠিক। কিন্তু যখন দুই পক্ষ সারাক্ষণ কথা বলছে — chat, live dashboard, বা multiplayer game — তখন খোলা দরজা, মানে WebSocket-ই সঠিক পছন্দ।
+
+WebSocket হলো "আমাকে একটা browser-এ push করতে হবে, low-latency, দুই দিকেই, এমন একটা connection-এ যেটা খোলা থাকে" — এর উত্তর। যে কয়টা protocol browser নেটিভভাবে বোঝে তার মধ্যে এটাই এমন একটা যা request-response নয়। বাকি প্রতিটা shape — REST, GraphQL, gRPC — ধরে নেয় client আগে কথা বলবে।
+
+এই বৈশিষ্ট্য বদলে দেয় আপনি কী ধরনের feature ship করতে পারবেন। এটা এমন একটা bug-এর ক্যাটাগরিও খুলে দেয় যা stateless protocol-এ নেই।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-HTTP is like sending letters — you write, wait for a reply, and repeat; a WebSocket is a live phone call where both sides can speak freely at any moment.
+HTTP হলো চিঠি পাঠানোর মতো — আপনি লেখেন, উত্তরের জন্য অপেক্ষা করেন, আবার একই কাজ করেন; একটা WebSocket হলো একটা লাইভ ফোন কল যেখানে দুই পক্ষ যেকোনো মুহূর্তে অবাধে কথা বলতে পারে।
 
 </Callout>
 
-## The big picture
+## বড় ছবিটা
 
-A WebSocket starts as a regular HTTP/1.1 GET request with `Upgrade: websocket`. The server agrees, the connection switches protocols, and from that point it is a raw bidirectional pipe carrying **frames** (small length-prefixed binary records). Either side sends frames at any time. The connection lives until somebody closes it or the network drops.
+একটা WebSocket শুরু হয় একটা সাধারণ HTTP/1.1 GET request হিসেবে, সাথে `Upgrade: websocket`। server রাজি হয়, connection protocol switch করে, আর সেই মুহূর্ত থেকে এটা একটা raw bidirectional pipe যা **frame** (ছোট length-prefixed binary record) বহন করে। দুই পক্ষের যেকোনোটা যেকোনো সময় frame পাঠায়। কেউ বন্ধ না করা বা network ড্রপ না করা পর্যন্ত connection বেঁচে থাকে।
 
 ```
 Client                                    Server
@@ -53,120 +61,120 @@ Client                                    Server
   |<----------------------------------------|
 ```
 
-The handshake is HTTP. The post-handshake traffic is its own protocol (RFC 6455). Knowing both halves lets you debug the parts that are misconfigured.
+handshake হলো HTTP। handshake-পরবর্তী traffic নিজের একটা আলাদা protocol (RFC 6455)। দুই অর্ধেকই জানলে যে অংশগুলো misconfigured সেগুলো debug করা সহজ হয়।
 
-## The four shapes of "realtime"
+## "realtime"-এর চারটি shape
 
-|                              | Direction       | Connection                       | Latency              | Browser native   |
-| ---------------------------- | --------------- | -------------------------------- | -------------------- | ---------------- |
-| **Polling**                  | client → server | one per poll                     | high (poll interval) | yes              |
-| **Long-polling**             | client → server | one per cycle, idle until update | medium               | yes              |
-| **SSE** (Server-Sent Events) | server → client | one persistent                   | low                  | yes              |
-| **WebSockets**               | both            | one persistent                   | low                  | yes              |
-| **gRPC streams**             | both            | one persistent (HTTP/2)          | low                  | no (needs proxy) |
+|                              | দিক             | Connection                              | Latency              | Browser native  |
+| ---------------------------- | --------------- | --------------------------------------- | -------------------- | --------------- |
+| **Polling**                  | client → server | প্রতি poll-এ একটা                       | high (poll interval) | yes             |
+| **Long-polling**             | client → server | প্রতি cycle-এ একটা, update পর্যন্ত idle | medium               | yes             |
+| **SSE** (Server-Sent Events) | server → client | একটা persistent                         | low                  | yes             |
+| **WebSockets**               | দুই দিকেই       | একটা persistent                         | low                  | yes             |
+| **gRPC streams**             | দুই দিকেই       | একটা persistent (HTTP/2)                | low                  | no (proxy লাগে) |
 
-Picking the wrong one is a category of bug.
+ভুলটা বাছাই করাটা এক ধরনের bug।
 
-**Polling** is fine for "this might change every 30 seconds and the user won't notice 5 seconds of staleness." Order status pages, deploy dashboards, anything where exact timing does not matter.
+**Polling** ঠিক আছে "এটা হয়তো প্রতি 30 সেকেন্ডে বদলাতে পারে আর user 5 সেকেন্ডের staleness টের পাবে না" — এমন ক্ষেত্রে। Order status page, deploy dashboard, যেখানে exact timing গুরুত্বপূর্ণ নয় এমন যেকোনো কিছু।
 
-**Long-polling** is what jQuery did before SSE. Mostly historical now; SSE replaces it cleanly.
+**Long-polling** হলো SSE-র আগে jQuery যা করত। এখন বেশিরভাগই ইতিহাস; SSE একে পরিষ্কারভাবে replace করে।
 
-**SSE** is the unsung hero. One-way (server pushes, client receives), works through any HTTP proxy, auto-reconnects in the browser, dead simple to implement. Most "realtime" features (notifications, live counters, log tails) only need one-way push. **If one direction is enough, choose SSE first.** Chapter 5 has the full pattern.
+**SSE** হলো অপ্রশংসিত নায়ক। One-way (server push করে, client receive করে), যেকোনো HTTP proxy-র ভেতর দিয়ে কাজ করে, browser-এ auto-reconnect করে, implement করা ভীষণ সহজ। বেশিরভাগ "realtime" feature (notification, live counter, log tail) শুধু one-way push দরকার। **যদি এক দিক যথেষ্ট হয়, প্রথমে SSE বেছে নিন।** চ্যাপ্টার 5-এ পুরো প্যাটার্ন আছে।
 
-**WebSockets** when you actually need bidirectional traffic with low latency: chat, collaborative editing, multiplayer games, agent control, live trading.
+**WebSockets** যখন আপনার সত্যিই low latency সহ bidirectional traffic দরকার: chat, collaborative editing, multiplayer game, agent control, live trading।
 
-**gRPC streaming** when both ends are services (or your client SDK ships gRPC-Web with a proxy). Native browser support is limited.
+**gRPC streaming** যখন দুই প্রান্তই service (বা আপনার client SDK একটা proxy সহ gRPC-Web ship করে)। নেটিভ browser support সীমিত।
 
 <Callout type="warn">
 
-**WebSockets are not a magic upgrade for "more realtime."** A REST endpoint polled every 200 ms is faster than a WebSocket reconnecting every 30 s. The win is not in the protocol; it is in the _connection model_ — one persistent pipe avoids the per-call overhead. If your data updates once a minute, polling is the right answer.
+**WebSockets "আরও realtime"-এর জন্য জাদুকরী upgrade নয়।** প্রতি 200 ms-এ poll করা একটা REST endpoint প্রতি 30 s-এ reconnect করা একটা WebSocket-এর চেয়ে দ্রুত। জিতটা protocol-এ নয়; এটা _connection model_-এ — একটা persistent pipe প্রতি-call overhead এড়ায়। যদি আপনার data মিনিটে একবার update হয়, polling-ই সঠিক উত্তর।
 
 </Callout>
 
-## When WebSockets are right
+## কখন WebSockets সঠিক
 
-- **Chat, comments, presence.** Both sides type at unpredictable times.
-- **Collaborative editing.** Operational transforms or CRDTs flowing in both directions.
-- **Multiplayer games.** State sync, input events, low-latency.
-- **Live agent UIs.** Server pushes status, client sends control commands.
-- **Streaming dashboards** where the user can also configure filters live.
+- **Chat, comments, presence.** দুই পক্ষই অনিশ্চিত সময়ে type করে।
+- **Collaborative editing.** Operational transform বা CRDT দুই দিকেই বইছে।
+- **Multiplayer game.** State sync, input event, low-latency।
+- **Live agent UI.** Server status push করে, client control command পাঠায়।
+- **Streaming dashboard** যেখানে user লাইভ filter-ও configure করতে পারে।
 
-A heuristic: **does the client need to send data on the same connection without a request/response handshake?** If yes, WebSocket. If the client only consumes, SSE. If the client only sends bursts, batched HTTP.
+একটা heuristic: **client-কে কি request/response handshake ছাড়াই একই connection-এ data পাঠাতে হবে?** যদি হ্যাঁ, WebSocket। client যদি শুধু consume করে, SSE। client যদি শুধু burst পাঠায়, batched HTTP।
 
-## When WebSockets are wrong
+## কখন WebSockets ভুল
 
-- **You only push, the client never sends.** SSE — half the protocol, twice the simplicity.
-- **You only get bursts of writes.** Just POST. Connection setup cost is not worth it.
-- **You need request/response semantics with retries and per-call timeouts.** REST or gRPC.
-- **The data shape is rigid and typed.** gRPC streaming gives you protobuf + HTTP/2 with the same persistent connection model.
-- **Your traffic crosses an HTTP proxy you don't control.** Some proxies do not support `Upgrade`. SSE works everywhere HTTP/1.1 works.
+- **আপনি শুধু push করেন, client কখনো পাঠায় না।** SSE — অর্ধেক protocol, দ্বিগুণ সরলতা।
+- **আপনি শুধু write-এর burst পান।** শুধু POST করুন। Connection setup-এর খরচ পোষায় না।
+- **আপনার retry আর per-call timeout সহ request/response semantics দরকার।** REST বা gRPC।
+- **data shape rigid আর typed।** gRPC streaming আপনাকে একই persistent connection model সহ protobuf + HTTP/2 দেয়।
+- **আপনার traffic এমন একটা HTTP proxy পার হয় যা আপনি control করেন না।** কিছু proxy `Upgrade` support করে না। SSE যেখানে HTTP/1.1 কাজ করে সেখানে সব জায়গায় কাজ করে।
 
-## The mental model
+## mental model
 
-A WebSocket is two state machines (one per side) sending frames over a single TCP connection. There is no concept of "request" or "response" once the handshake completes. There are no headers per message. Either side can send a frame at any time, including a close frame.
+একটা WebSocket হলো দুটো state machine (প্রতি পক্ষে একটা) যা একটা single TCP connection-এর উপর frame পাঠায়। handshake শেষ হওয়ার পর "request" বা "response" বলে কোনো ধারণা নেই। প্রতি message-এ কোনো header নেই। দুই পক্ষের যেকোনোটা যেকোনো সময় একটা frame পাঠাতে পারে, close frame সহ।
 
-This sounds simple. The complications:
+শুনতে সরল। জটিলতাগুলো:
 
-1. **Connections are stateful and long-lived.** A server holding 50,000 WebSocket connections is holding 50,000 file descriptors and 50,000 goroutines (in Go) or 50,000 sockets (in Node). Tuning the OS and the runtime matters.
-2. **Messages are unordered across connections.** Two messages on the same connection arrive in order. Two messages on two connections do not.
-3. **No built-in delivery guarantees.** A frame sent that the kernel buffered and the network dropped is gone. If you need at-least-once, you build it on top.
-4. **No request/response correlation.** If the client wants a reply to a message, you build a request ID system on top.
+1. **Connection stateful আর long-lived।** ৫০,০০০ WebSocket connection ধরে থাকা একটা server আসলে ৫০,০০০ file descriptor আর ৫০,০০০ goroutine (Go-তে) বা ৫০,০০০ socket (Node-এ) ধরে আছে। OS আর runtime tune করাটা গুরুত্বপূর্ণ।
+2. **Connection জুড়ে message unordered।** একই connection-এ দুটো message ক্রমে পৌঁছায়। দুটো connection-এ দুটো message পৌঁছায় না।
+3. **কোনো built-in delivery guarantee নেই।** kernel যে frame buffer করেছিল আর network যেটা ড্রপ করেছে সেটা চলে গেছে। at-least-once লাগলে, আপনি সেটা উপরে বানান।
+4. **কোনো request/response correlation নেই।** client যদি একটা message-এর reply চায়, আপনি উপরে একটা request ID system বানান।
 
-Chapters 4 and 9 cover the protocol design choices that make these manageable.
+চ্যাপ্টার 4 আর 9 এই protocol design পছন্দগুলো cover করে যা এগুলো ম্যানেজেবল করে।
 
-## What rides on top — the message protocol
+## উপরে যা চলে — message protocol
 
-Raw WebSocket frames carry text or binary bytes. Above that, you choose your own protocol:
+Raw WebSocket frame text বা binary byte বহন করে। তার উপরে, আপনি নিজের protocol বাছেন:
 
-- **JSON over text frames** — the default for browser apps. Easy to debug, slow to parse at scale.
-- **MessagePack or CBOR over binary frames** — compact, fast, polyglot. Worth it for high-volume traffic.
-- **Protobuf over binary frames** — same protobuf you used in gRPC. Strict schemas, fast, polyglot.
-- **Custom binary** — for games where every byte matters.
+- **JSON over text frames** — browser app-এর জন্য default। Debug করা সহজ, scale-এ parse করা slow।
+- **MessagePack বা CBOR over binary frames** — compact, fast, polyglot। High-volume traffic-এর জন্য মূল্যবান।
+- **Protobuf over binary frames** — gRPC-তে যে protobuf ব্যবহার করেছিলেন সেটাই। Strict schema, fast, polyglot।
+- **Custom binary** — game-এর জন্য যেখানে প্রতিটা byte গুরুত্বপূর্ণ।
 
-Most apps land on JSON until benchmarks demand otherwise. Chapter 4 walks through the tradeoffs and the framing decisions you need to make either way.
+বেশিরভাগ app benchmark দাবি না করা পর্যন্ত JSON-এ থিতু হয়। চ্যাপ্টার 4 tradeoff আর framing decision-গুলো নিয়ে হাঁটে যা যেভাবেই হোক আপনাকে নিতে হবে।
 
-## The libraries you will use
+## যে library-গুলো ব্যবহার করবেন
 
-**Go:** `github.com/coder/websocket` (formerly `nhooyr.io/websocket`). Modern, idiomatic, context-aware, uses `net/http` directly. Replaces the older `gorilla/websocket` (still maintained but with a clunkier API).
+**Go:** `github.com/coder/websocket` (আগে `nhooyr.io/websocket`)। Modern, idiomatic, context-aware, সরাসরি `net/http` ব্যবহার করে। পুরোনো `gorilla/websocket`-কে replace করে (এখনো maintained কিন্তু আরও ক্লাঙ্কি API সহ)।
 
-**Node:** `ws` for the server, the native browser `WebSocket` API for the client.
+**Node:** server-এর জন্য `ws`, client-এর জন্য নেটিভ browser `WebSocket` API।
 
-**Python:** `websockets` (asyncio-native) or `aiohttp` for integrated HTTP + WS.
+**Python:** `websockets` (asyncio-native) বা integrated HTTP + WS-এর জন্য `aiohttp`।
 
-**Browser:** `new WebSocket(url)` is built in. Or `partysocket` / `reconnecting-websocket` for auto-reconnect.
+**Browser:** `new WebSocket(url)` built in। বা auto-reconnect-এর জন্য `partysocket` / `reconnecting-websocket`।
 
-This track uses Go with `coder/websocket`. The patterns translate directly.
+এই ট্র্যাক Go-তে `coder/websocket` ব্যবহার করে। প্যাটার্নগুলো সরাসরি খাটে।
 
-## What "realtime" actually means
+## "realtime" আসলে কী বোঝায়
 
-Three latency tiers worth keeping in mind:
+মনে রাখার মতো তিনটা latency tier:
 
-- **Under 50 ms end-to-end** — interactive, feels instant. Multiplayer games, live cursor positions, voice/video signaling.
-- **Under 500 ms end-to-end** — feels fast. Chat, notifications, presence updates.
-- **Under 5 s end-to-end** — feels live. Dashboards, comment threads, deploy progress.
+- **End-to-end 50 ms-এর নিচে** — interactive, instant মনে হয়। Multiplayer game, live cursor position, voice/video signaling।
+- **End-to-end 500 ms-এর নিচে** — fast মনে হয়। Chat, notification, presence update।
+- **End-to-end 5 s-এর নিচে** — live মনে হয়। Dashboard, comment thread, deploy progress।
 
-WebSockets get you into all three, but most of the latency is your code, not the protocol. A WebSocket message with a database write and a fan-out to 1000 subscribers can easily blow 500 ms — not because of WebSockets, but because of everything else. Knowing which tier you need shapes architecture choices later.
+WebSockets আপনাকে তিনটাতেই নিয়ে যায়, কিন্তু বেশিরভাগ latency আপনার code-এ, protocol-এ নয়। একটা database write আর 1000 subscriber-এ fan-out সহ একটা WebSocket message সহজেই 500 ms পার করতে পারে — WebSockets-এর কারণে নয়, বরং বাকি সবকিছুর কারণে। কোন tier আপনার দরকার তা জানলে পরে architecture পছন্দ শেপ হয়।
 
-## What we ship by chapter 10
+## চ্যাপ্টার 10-এ আমরা কী ship করি
 
-A self-hosted Go service that:
+একটা self-hosted Go service যা:
 
-- Accepts WebSocket connections at `wss://example.com/ws` (TLS, behind nginx).
-- Verifies a session/token at the handshake (chapter 8).
-- Joins clients to rooms (chapter 7).
-- Pushes messages from one process to clients connected to other processes via Redis pub/sub (chapter 6).
-- Survives slow clients with bounded buffers and drop policies (chapter 9).
-- Runs as a systemd service with metrics, logs, and graceful shutdown (chapter 10).
+- `wss://example.com/ws`-এ WebSocket connection নেয় (TLS, nginx-এর পেছনে)।
+- handshake-এ একটা session/token verify করে (চ্যাপ্টার 8)।
+- client-দের room-এ join করায় (চ্যাপ্টার 7)।
+- Redis pub/sub-এর মাধ্যমে এক process থেকে অন্য process-এ connected client-দের message push করে (চ্যাপ্টার 6)।
+- bounded buffer আর drop policy দিয়ে slow client-এ টিকে থাকে (চ্যাপ্টার 9)।
+- metric, log আর graceful shutdown সহ একটা systemd service হিসেবে চলে (চ্যাপ্টার 10)।
 
-Same operational shape as the GraphQL and gRPC tracks. Vendor-neutral, on a VPS, no managed services.
+GraphQL আর gRPC ট্র্যাকের মতোই একই operational shape। Vendor-neutral, একটা VPS-এ, কোনো managed service নেই।
 
 ## Recap
 
-- WebSocket = HTTP/1.1 Upgrade + bidirectional frames over one TCP connection.
-- Compare with polling, long-polling, SSE, gRPC streams. SSE is the right call surprisingly often.
-- Right for chat, collaboration, games, agent UIs. Wrong when one direction is enough or when you need request/response.
-- Long-lived connections mean OS tuning and stateful server-side bookkeeping.
-- Message protocol on top is your choice — JSON for ease, msgpack/protobuf for scale.
-- Library: `coder/websocket` for Go in this track. Patterns generalize.
+- WebSocket = HTTP/1.1 Upgrade + একটা TCP connection-এর উপর bidirectional frame।
+- polling, long-polling, SSE, gRPC stream-এর সাথে তুলনা করুন। SSE বিস্ময়করভাবে প্রায়ই সঠিক পছন্দ।
+- Chat, collaboration, game, agent UI-এর জন্য সঠিক। এক দিক যথেষ্ট হলে বা request/response লাগলে ভুল।
+- Long-lived connection মানে OS tuning আর stateful server-side bookkeeping।
+- উপরে message protocol আপনার পছন্দ — সহজতার জন্য JSON, scale-এর জন্য msgpack/protobuf।
+- Library: এই ট্র্যাকে Go-র জন্য `coder/websocket`। প্যাটার্ন generalize করে।
 
-Next: [The handshake and frame protocol](/notes/websockets/02-handshake-frames) — what's actually on the wire, byte by byte.
+পরবর্তী: [handshake আর frame protocol](/notes/websockets/02-handshake-frames) — wire-এ আসলে কী আছে, byte by byte।

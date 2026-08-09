@@ -1,9 +1,9 @@
 ---
-title: 'WebSockets & Real-Time'
-subtitle: 'Full-duplex communication over a single connection — chat, live updates, collaborative editing, and when not to use them.'
+title: 'WebSockets ও রিয়েল-টাইম'
+subtitle: 'একটি single connection-এর উপর full-duplex communication — chat, live update, collaborative editing, আর কখন এগুলো ব্যবহার করা উচিত নয়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['WebSocket', 'real-time', 'SSE', 'long polling']
 ---
 
@@ -11,23 +11,31 @@ topics: ['WebSocket', 'real-time', 'SSE', 'long polling']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Problem with HTTP for Real-Time
+## গল্পে বুঝি
 
-HTTP is request-response: the client asks, the server answers. But what if the server needs to push data to the client — a new chat message, a stock price update, a collaborative edit?
+ইবনে সিনার গার্মেন্টস ফ্যাক্টরির দোতলায় কাটিং ফ্লোর, তিনতলায় সেলাই ফ্লোর। আগে যখন কাটিং ফ্লোরের আল-খোয়ারিজমির কিছু জানানোর দরকার হতো, সে একটা চিরকুটে লিখে এক ছেলেকে তিনতলায় পাঠাত, তারপর জবাবের চিঠি নিয়ে ছেলেটা ফিরে না আসা পর্যন্ত দাঁড়িয়ে থাকত। আবার সেলাই ফ্লোরের ফাতিমা আল-ফিহরি নতুন কোনো খবর আছে কিনা জানতে প্রতি মিনিটে ছেলেটাকে নিচে পাঠিয়ে জিজ্ঞেস করাত — "নতুন কিছু আছে?" — বেশিরভাগ সময়ই জবাব আসত "না, কিছু নাই", শুধু দৌড়াদৌড়িই সার।
 
-**Polling** (asking repeatedly) wastes bandwidth. **Long polling** (holding requests open) is hacky. WebSockets solve this with a persistent, bidirectional connection.
+শেষে ইবনে সিনা দুই ফ্লোরের মাঝে একটা intercom লাইন বসিয়ে দিল, যেটা সারাক্ষণ খোলা থাকে। এখন আর চিঠি-দৌড়ের অপেক্ষা নেই, প্রতি মিনিটে "নতুন কিছু আছে?" জিজ্ঞেস করারও দরকার নেই। কাটিং শেষ হওয়ামাত্র আল-খোয়ারিজমি লাইনে বলে দেয়, আবার সুতা ফুরিয়ে গেলে ফাতিমা আল-ফিহরিও সঙ্গে সঙ্গে নিচে জানিয়ে দেয় — যে যখন যা বলার, তখনই বলে, দুই দিক থেকেই, একই খোলা লাইনে।
+
+এই খোলা intercom লাইনটাই আসলে **WebSocket** — একবার connection খুলে গেলে সেটা persistent থাকে আর দুই পক্ষই যেকোনো সময় full-duplex-ভাবে কথা বলতে পারে। চিঠি পাঠিয়ে প্রতিবার জবাবের অপেক্ষা করাটা হলো HTTP-এর request-response, আর "নতুন কিছু আছে?" বারবার জিজ্ঞেস করাটা হলো **polling** — দুটোতেই দেরি আর অপচয়। বাস্তবে chat অ্যাপে মেসেজ সঙ্গে সঙ্গে আসা কিংবা live notification পাওয়া — এসব ঠিক এই খোলা লাইনের জোরেই কাজ করে।
+
+## রিয়েল-টাইমের জন্য HTTP-এর সমস্যা
+
+HTTP হলো request-response: client জিজ্ঞেস করে, server উত্তর দেয়। কিন্তু server-কে যদি client-এর কাছে ডেটা push করতে হয় — একটা নতুন chat message, একটা stock price update, কিংবা একটা collaborative edit — তখন কী হবে?
+
+**Polling** (বারবার জিজ্ঞেস করা) bandwidth নষ্ট করে। **Long polling** (request খোলা ধরে রাখা) একটা hacky উপায়। WebSockets এই সমস্যাটা সমাধান করে একটা persistent, bidirectional connection দিয়ে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a walkie-talkie vs. sending letters — once the channel is open, both sides can talk anytime without re-establishing connection. HTTP is like mailing a letter and waiting for a reply each time.
+এটা অনেকটা walkie-talkie বনাম চিঠি পাঠানোর মতো — একবার channel খুলে গেলে দুই পক্ষই connection নতুন করে বসানো ছাড়াই যেকোনো সময় কথা বলতে পারে। HTTP হলো চিঠি পাঠিয়ে প্রতিবার উত্তরের জন্য অপেক্ষা করার মতো।
 
 </Callout>
 
-## How WebSockets Work
+## WebSockets কীভাবে কাজ করে
 
-A WebSocket starts as an HTTP request, then **upgrades** to a persistent TCP connection:
+একটা WebSocket শুরু হয় একটা HTTP request হিসেবে, তারপর সেটা একটা persistent TCP connection-এ **upgrade** হয়:
 
 ```typescript
 // 1. Client sends HTTP upgrade request
@@ -99,7 +107,7 @@ ws.onclose = (event) => {
 
 ## Server-Sent Events (SSE)
 
-If you only need **server → client** push (no bidirectional), SSE is simpler:
+যদি তোমার শুধু **server → client** push দরকার হয় (bidirectional নয়), তাহলে SSE বেশি সহজ:
 
 ```typescript
 // Server (Node.js / Express)
@@ -130,11 +138,11 @@ events.onmessage = (e) => {
 
 <Callout type="tip">
 
-**Choose SSE over WebSockets** when data only flows server→client. SSE is simpler, auto-reconnects, works through HTTP/2 multiplexing, and doesn't need a separate protocol. Use WebSockets only when you need true bidirectional communication.
+**WebSockets-এর বদলে SSE বেছে নাও** যখন ডেটা শুধু server→client দিকে যায়। SSE বেশি সহজ, নিজে থেকেই auto-reconnect করে, HTTP/2 multiplexing-এর মধ্য দিয়ে কাজ করে, আর আলাদা কোনো protocol লাগে না। WebSockets শুধু তখনই ব্যবহার করো যখন তোমার সত্যিকারের bidirectional communication দরকার।
 
 </Callout>
 
-## Comparison
+## তুলনা
 
 |                   | Polling         | Long Polling  | SSE           | WebSocket     |
 | ----------------- | --------------- | ------------- | ------------- | ------------- |
@@ -145,9 +153,9 @@ events.onmessage = (e) => {
 | Auto-reconnect    | Manual          | Manual        | Built-in      | Manual        |
 | HTTP/2 compatible | Yes             | Yes           | Yes           | No (uses TCP) |
 
-## Key Takeaways
+## মূল শেখার বিষয়
 
-1. **WebSockets provide bidirectional, persistent connections** — ideal for chat, gaming, collaboration
-2. **SSE is simpler for server-to-client push** — auto-reconnects and works with HTTP/2
-3. **Always implement reconnection with backoff** — connections will drop
-4. **Don't default to WebSockets** — most "real-time" features only need server→client (SSE)
+1. **WebSockets bidirectional, persistent connection দেয়** — chat, gaming, collaboration-এর জন্য আদর্শ
+2. **Server-to-client push-এর জন্য SSE বেশি সহজ** — auto-reconnect করে আর HTTP/2-এর সাথে কাজ করে
+3. **সবসময় backoff দিয়ে reconnection বসাও** — connection drop হবেই
+4. **ডিফল্টভাবে WebSockets ধরে নিও না** — বেশিরভাগ "real-time" feature-এর শুধু server→client দরকার হয় (SSE)

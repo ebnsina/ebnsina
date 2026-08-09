@@ -1,9 +1,9 @@
 ---
 title: 'API Key Management'
-subtitle: 'Generating, storing, rotating, and revoking API keys — the plumbing behind machine-to-machine auth.'
+subtitle: 'API key generate করা, store করা, rotate করা, আর revoke করা — machine-to-machine auth-এর পেছনের plumbing।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['API keys', 'HMAC', 'key rotation', 'scopes', 'machine-to-machine']
 ---
 
@@ -13,30 +13,38 @@ topics: ['API keys', 'HMAC', 'key rotation', 'scopes', 'machine-to-machine']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A physical key to a server room: you give one to each person who needs access, log who has which key, and when someone leaves the company you collect (revoke) their key and replace the lock if needed. You never hand out the master key — just copies scoped to specific doors.
+একটা server room-এর physical key: যার access দরকার তাদের প্রত্যেককে একটা করে দেন, কার কাছে কোন key আছে তা log রাখেন, আর কেউ company ছেড়ে গেলে তার key ফেরত নেন (revoke) আর দরকার হলে lock বদলে দেন। আপনি কখনও master key দেন না — শুধু নির্দিষ্ট দরজার জন্য scoped copy দেন।
 
 </Callout>
 
-## When to Use API Keys
+## গল্পে বুঝি
 
-API keys work well for machine-to-machine (M2M) communication where there's no human involved to complete an OAuth flow:
+আল-খোয়ারিজমির একটা ডেলিভারি কোম্পানি। শহরের নানা জায়গায় তার গুদাম, আর মাল টানার জন্য অনেক partner rider। প্রতিটা rider-কে অফিস থেকে একটা কোড দেওয়া ID badge দেওয়া হয় — গেটে ঢোকার সময় badge-টা ছোঁয়ালেই warehouse বুঝে যায় "এটা ইবনে সিনা, আমাদের একজন rider, ওকে ঢুকতে দাও"। মনে রাখবেন, badge-টা কিন্তু কোনো কাস্টমারের পরিচয় না — এটা rider হিসেবে ইবনে সিনার নিজের সার্ভিসের পরিচয়, যাতে গেটে বারবার নাম-ঠিকানা যাচাই করতে না হয়। আর ইবনে সিনার badge শুধু মিরপুর আর উত্তরার গুদামে কাজ করে; চট্টগ্রামের গুদামে ছোঁয়ালে গেট খোলে না — কারণ ওর কাজ ওই দুই এলাকাতেই।
 
-- CI/CD pipelines calling your deployment API
-- Third-party integrations (Stripe webhooks, GitHub Actions)
-- SDKs and CLI tools accessing your API
-- Service-to-service calls within your infrastructure
+একদিন ইবনে সিনার badge-টা রাস্তায় পড়ে হারিয়ে গেল। সে সঙ্গে সঙ্গে অফিসে ফোন করল। অফিস এক সেকেন্ডে ওই badge নম্বরটা সিস্টেম থেকে বাতিল করে দিল — এখন কেউ ওটা কুড়িয়ে পেয়ে গেটে ছোঁয়ালেও আর ঢুকতে পারবে না। তারপর ইবনে সিনাকে একটা নতুন নম্বরের ফ্রেশ badge ইস্যু করা হলো, কাজ চলতে থাকল আগের মতোই। অফিস আবার নিয়ম করে প্রতি কয়েক মাস পরপর সবার badge বদলে নতুন নম্বর দেয় — যাতে পুরনো কোনো কপি কারো হাতে থেকে গেলেও সেটা আপনা থেকেই অকেজো হয়ে যায়।
 
-For user-facing auth, use OAuth/OIDC or sessions. API keys don't carry user identity — they carry client identity.
+এই badge-টাই আসলে **API key**। এটা কোনো end user নয়, একটা সার্ভিস বা অ্যাপকে identify করে (rider = আপনার service)। badge শুধু কিছু গুদামে চলে — সেটাই **scope**, key-কে দরকারি permission-এই সীমাবদ্ধ রাখা। হারানো badge সঙ্গে সঙ্গে বাতিল করা হলো leak হলে **revoke**, আর নিয়ম করে নতুন badge ইস্যু করাটাই **rotate**। বাস্তবে ঠিক এভাবেই Stripe বা Google Maps-এর API key কাজ করে — আপনার server থেকে server-to-server call-এ key পাঠিয়ে "আমি অমুক অ্যাপ" প্রমাণ করেন, key leak হলে dashboard থেকে এক ক্লিকে revoke করে নতুন key নেন।
+
+## কখন API Key ব্যবহার করবেন
+
+API key machine-to-machine (M2M) communication-এর জন্য ভালো কাজ করে যেখানে OAuth flow সম্পূর্ণ করার জন্য কোনো মানুষ জড়িত থাকে না:
+
+- আপনার deployment API call করা CI/CD pipeline
+- Third-party integration (Stripe webhook, GitHub Actions)
+- আপনার API access করা SDK আর CLI tool
+- আপনার infrastructure-এর মধ্যে service-to-service call
+
+User-facing auth-এর জন্য, OAuth/OIDC বা session ব্যবহার করুন। API key user identity বহন করে না — এরা client identity বহন করে।
 
 ## Key Generation
 
-Keys should be:
+Key যেমন হওয়া উচিত:
 
-- Long enough to be unguessable (32+ bytes of randomness)
-- Prefixed for identification (helps in logs, secret scanning)
-- Non-sequential (no timestamps, no incrementing IDs)
+- অনুমান করা অসম্ভব হওয়ার মতো যথেষ্ট লম্বা (32+ byte randomness)
+- শনাক্তকরণের জন্য prefixed (log-এ, secret scanning-এ সাহায্য করে)
+- Non-sequential (কোনো timestamp নয়, কোনো incrementing ID নয়)
 
 ```typescript
 import crypto from 'crypto';
@@ -61,7 +69,7 @@ function generateApiKey(prefix = 'sk'): GeneratedKey {
 }
 ```
 
-**Prefix convention:** Use meaningful prefixes (`sk_` for secret keys, `pk_` for public keys, `whsec_` for webhook secrets). GitHub, Stripe, and Twilio do this — it enables secret scanning in repos.
+**Prefix convention:** অর্থপূর্ণ prefix ব্যবহার করুন (`sk_` secret key-র জন্য, `pk_` public key-র জন্য, `whsec_` webhook secret-এর জন্য)। GitHub, Stripe, আর Twilio এটা করে — এটা repo-তে secret scanning সম্ভব করে।
 
 ```typescript
 // GitHub secret scanning pattern example
@@ -71,7 +79,7 @@ function generateApiKey(prefix = 'sk'): GeneratedKey {
 
 ## Storage
 
-Store only the hash, never the plaintext key:
+শুধু hash store করুন, কখনও plaintext key নয়:
 
 ```typescript
 interface StoredApiKey {
@@ -105,7 +113,7 @@ async function createApiKey(ownerId: string, name: string, scopes: string[]): Pr
 }
 ```
 
-Show the key exactly once after creation. After that, only show the `keyId` and name. This mimics how GitHub and AWS handle access key creation.
+Creation-এর পরে key ঠিক একবার দেখান। এরপর, শুধু `keyId` আর name দেখান। এটা GitHub আর AWS কীভাবে access key creation handle করে তার অনুকরণ করে।
 
 ## Verification
 
@@ -131,7 +139,7 @@ async function verifyApiKey(key: string): Promise<StoredApiKey | null> {
 }
 ```
 
-**Cache verified keys briefly** — hashing + DB lookup on every request adds latency. A 30-60 second cache is safe since revocation doesn't need to be instant for most use cases:
+**Verified key সংক্ষিপ্তভাবে cache করুন** — প্রতিটা request-এ hashing + DB lookup latency যোগ করে। একটা 30-60 second cache নিরাপদ কারণ বেশিরভাগ use case-এ revocation তাৎক্ষণিক হওয়ার দরকার নেই:
 
 ```typescript
 import LRU from 'lru-cache';
@@ -152,9 +160,9 @@ async function verifyApiKeyCached(key: string): Promise<StoredApiKey | null> {
 }
 ```
 
-## Scopes
+## Scope
 
-Scope keys to the minimum required permissions:
+Key-কে ন্যূনতম প্রয়োজনীয় permission-এ scope করুন:
 
 ```typescript
 type Scope = 'read:users' | 'write:users' | 'read:orders' | 'write:orders' | 'admin';
@@ -182,7 +190,7 @@ app.use('/api/orders', async (req, res, next) => {
 
 ## Rotation
 
-Rotation replaces an old key with a new one without downtime. The challenge: you can't force the client to rotate instantly.
+Rotation একটা পুরনো key-কে downtime ছাড়াই একটা নতুন দিয়ে প্রতিস্থাপন করে। চ্যালেঞ্জ: আপনি client-কে তাৎক্ষণিক rotate করতে বাধ্য করতে পারেন না।
 
 **Dual-key rotation:**
 
@@ -213,11 +221,11 @@ async function rotateApiKey(keyId: string): Promise<{ oldKey: string; newKey: st
 }
 ```
 
-This gives callers a week to update to the new key before the old one stops working. Log a warning when the old key is used after rotation to track adoption.
+এটা caller-দের পুরনোটা কাজ বন্ধ করার আগে নতুন key-তে update করার জন্য এক সপ্তাহ দেয়। adoption track করতে rotation-এর পরে পুরনো key ব্যবহার হলে একটা warning log করুন।
 
 ## Revocation
 
-Immediate — just mark the key revoked:
+তাৎক্ষণিক — শুধু key-টা revoked mark করুন:
 
 ```typescript
 async function revokeApiKey(keyId: string, ownerId: string): Promise<void> {
@@ -231,7 +239,7 @@ async function revokeApiKey(keyId: string, ownerId: string): Promise<void> {
 }
 ```
 
-## Exposing Key Management to Users
+## User-দের কাছে Key Management উন্মুক্ত করা
 
 ```typescript
 // List keys (never return the key itself)
@@ -261,13 +269,13 @@ app.delete('/api/keys/:keyId', requireAuth, async (req, res) => {
 });
 ```
 
-## Detecting Leaked Keys
+## Leaked Key শনাক্ত করা
 
-Add your key format to GitHub's secret scanning partner program or build your own detection:
+GitHub-এর secret scanning partner program-এ আপনার key format যোগ করুন অথবা আপনার নিজের detection বানান:
 
-1. Use a distinct prefix pattern — makes automated scanning possible.
-2. If a key is used from an unexpected IP/country, flag it and email the owner.
-3. Implement webhook alerts: "Your key `sk_abc...xyz` was used 10,000 times in the last minute from 50 different IPs."
+1. একটা স্বতন্ত্র prefix pattern ব্যবহার করুন — automated scanning সম্ভব করে।
+2. একটা key যদি অপ্রত্যাশিত IP/country থেকে ব্যবহার হয়, এটা flag করুন আর owner-কে email করুন।
+3. Webhook alert বসান: "আপনার key `sk_abc...xyz` গত এক মিনিটে 50টা ভিন্ন IP থেকে 10,000 বার ব্যবহার হয়েছে।"
 
 ```typescript
 async function detectAbusePattern(keyId: string): Promise<void> {

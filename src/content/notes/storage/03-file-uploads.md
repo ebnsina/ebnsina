@@ -1,9 +1,9 @@
 ---
 title: 'File Uploads'
-subtitle: 'Multipart parsing, validation, virus scanning, direct-to-storage upload, and processing pipelines.'
+subtitle: 'Multipart পার্সিং, ভ্যালিডেশন, virus scanning, সরাসরি স্টোরেজে আপলোড, আর প্রসেসিং পাইপলাইন।'
 chapter: 3
 level: 'beginner'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics:
   [
     'file uploads',
@@ -19,15 +19,23 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা বড় ওয়্যারহাউস, আর সামনে একটা ব্যস্ত ফ্রন্ট অফিস। আগে নিয়ম ছিল — যে-ই কোনো পার্সেল পাঠাবে, তাকে প্রথমে সেই ফ্রন্ট অফিসের লম্বা লাইনে দাঁড়াতে হবে। সেখানে ইবনে সিনা বা অন্য কেরানি পার্সেলটা হাতে নেবে, তারপর নিজে সেটা কাঁধে করে ভেতরের ওয়্যারহাউসের নির্দিষ্ট বে পর্যন্ত বয়ে নিয়ে যাবে। দিনে হাজার পার্সেল এলে অফিসটাই ভারী মালামাল টানাটানির চাপে হাঁপিয়ে উঠত — আসল কাজ, মানে যাচাই আর হিসাব রাখা, পিছিয়ে যেত।
+
+আল-খোয়ারিজমি এসে বুদ্ধিটা বদলে দিল। এখন পার্সেল হাতে নিয়ে অফিস আর নিজে বয়ে নেয় না। বদলে পাঠানোর লোকটাকে একটা এককালীন, অল্প সময়ের জন্য বৈধ গেট-পাস ধরিয়ে দেয় — "এই পাস দিয়ে সোজা গাড়ি চালিয়ে ৭ নম্বর বে-তে যান, নিজের পার্সেলটা নিজেই নামিয়ে রাখুন।" পাসটা মিনিট কয়েক পরেই অকেজো হয়ে যায়, আর শুধু ওই একটা ডেলিভারির জন্যই কাজ করে — অন্য বে বা অন্য পার্সেলে চলবে না। ফলে ভারী বাক্সটা আর কখনো অফিসের টেবিল ছুঁতেই হয় না।
+
+এই গল্পটাই **presigned URL** দিয়ে সরাসরি স্টোরেজে আপলোডের গল্প। ব্যস্ত ফ্রন্ট অফিস হলো আপনার **app server**, আর নিজে মাল বয়ে নেওয়াটা হলো সার্ভার নিজে upload প্রক্সি করা — যেটা তার bandwidth আর মেমরি খেয়ে ফেলে। এককালীন গেট-পাসটাই **presigned URL**, আর পাঠানোর লোকের সোজা বে-তে গিয়ে পার্সেল নামানোটাই ক্লায়েন্টের সরাসরি **object storage**-এ upload করা — app server পুরোপুরি বাইপাস হয়ে যায়, তার চাপ কমে। পাসের দ্রুত **expiry** আর শুধু ওই এক বে-তে সীমাবদ্ধ থাকাটাই হলো URL-এর short expiry আর scoped permission। বাস্তবে S3 বা MinIO-তে ঠিক এভাবেই বড় ফাইল আপলোড হয় — অফিস আগে থেকে টাইপ/সাইজ যাচাই করে পাস ইস্যু করে, তারপর গিগাবাইট-সাইজের ফাইলটা আর কখনো সার্ভারের ভেতর দিয়ে যায় না।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A package receiving dock: the courier (browser) delivers the package to reception (your server), reception checks it (validates type/size), logs it (generates a key), then sends it to the warehouse (object storage). Or, with a dock-to-warehouse conveyor (presigned URL), the courier drives directly to the warehouse door and drops it off — reception just hands them the dock number in advance.
+একটা প্যাকেজ রিসিভিং ডক: কুরিয়ার (ব্রাউজার) প্যাকেজটা রিসেপশনে (আপনার সার্ভার) পৌঁছে দেয়, রিসেপশন সেটা যাচাই করে (টাইপ/সাইজ ভ্যালিডেট করে), লগ করে (একটা key জেনারেট করে), তারপর ওয়্যারহাউসে (object storage) পাঠায়। অথবা, একটা ডক-থেকে-ওয়্যারহাউস কনভেয়র (presigned URL) থাকলে, কুরিয়ার সরাসরি ওয়্যারহাউসের দরজায় গিয়ে সেটা রেখে আসে — রিসেপশন শুধু আগে থেকেই ডক নম্বরটা তাকে ধরিয়ে দেয়।
 
 </Callout>
 
-## Two Upload Patterns
+## দুটো আপলোড প্যাটার্ন
 
 ```
 Pattern 1: Server-proxied upload
@@ -42,7 +50,7 @@ Pattern 2: Direct-to-storage (presigned URL)
   Con: validation must happen after the fact (or via object metadata)
 ```
 
-Choose based on file size and whether you need in-flight processing. Images → direct upload. Documents that need scanning → proxied.
+ফাইলের সাইজ আর আপনার in-flight প্রসেসিং লাগবে কিনা তার ভিত্তিতে বেছে নিন। ছবি → সরাসরি আপলোড। যেসব ডকুমেন্ট scan করা দরকার → proxied।
 
 ## Proxied Upload (Server Side)
 
@@ -125,9 +133,9 @@ export async function handleUpload(req: IncomingMessage, res: ServerResponse, us
 }
 ```
 
-Busboy streams the multipart body — no buffering the entire file in memory before hitting S3.
+Busboy multipart body-টা stream করে — S3-তে পৌঁছানোর আগে পুরো ফাইল মেমরিতে buffer করে না।
 
-## Express / Fastify Integration
+## Express / Fastify ইন্টিগ্রেশন
 
 ```typescript
 // Express
@@ -268,7 +276,7 @@ async function uploadFile(file: File) {
 
 ## File Validation
 
-Never trust the Content-Type header — it comes from the client. Check the actual bytes:
+কখনো Content-Type header-কে বিশ্বাস করবেন না — এটা ক্লায়েন্ট থেকে আসে। আসল বাইটগুলো চেক করুন:
 
 ```typescript
 import { fileTypeFromBuffer } from 'file-type';
@@ -296,7 +304,7 @@ async function validateFileType(buffer: Buffer, claimedType: string): Promise<st
 npm install file-type
 ```
 
-For images, also validate dimensions:
+ছবির ক্ষেত্রে dimension-ও ভ্যালিডেট করুন:
 
 ```typescript
 import sharp from 'sharp';
@@ -315,7 +323,7 @@ async function validateImage(buffer: Buffer): Promise<{ width: number; height: n
 
 ## Image Processing Pipeline
 
-Transform images before storing — resize, convert format, strip metadata:
+জমা করার আগে ছবি transform করুন — resize করুন, ফরম্যাট কনভার্ট করুন, metadata strip করুন:
 
 ```typescript
 import sharp from 'sharp';
@@ -377,7 +385,7 @@ async function processAndStoreImage(buffer: Buffer, userId: string) {
 
 ## Virus Scanning
 
-For user-uploaded documents and executables — scan before making accessible:
+ইউজারের আপলোড করা ডকুমেন্ট আর executable-এর জন্য — অ্যাক্সেসযোগ্য করার আগে scan করুন:
 
 ```typescript
 import NodeClam from 'clamscan';
@@ -407,7 +415,7 @@ services:
       - /var/run/clamav:/var/run/clamav
 ```
 
-For high-throughput, scan asynchronously: store to a quarantine bucket, scan via queue, move to the public bucket on pass or delete on fail.
+high-throughput-এর জন্য, asynchronously scan করুন: একটা quarantine bucket-এ জমা করুন, queue দিয়ে scan করুন, pass করলে public bucket-এ সরান বা fail করলে ডিলিট করুন।
 
 ## Upload Progress Tracking
 
@@ -440,9 +448,9 @@ function uploadWithProgress(
 }
 ```
 
-## Multipart Upload for Large Files
+## বড় ফাইলের জন্য Multipart Upload
 
-For files > 100MB, use S3 multipart upload — splits into chunks, uploads in parallel, more resilient to network failures:
+100MB-এর বেশি ফাইলের জন্য, S3 multipart upload ব্যবহার করুন — chunk-এ ভাগ করে, প্যারালালে আপলোড করে, নেটওয়ার্ক failure-এ বেশি resilient:
 
 ```typescript
 import {
@@ -506,7 +514,7 @@ async function multipartUpload(key: string, buffer: Buffer, contentType: string)
 }
 ```
 
-Set a lifecycle rule to abort incomplete multipart uploads automatically:
+অসম্পূর্ণ multipart upload অটোমেটিক abort করতে একটা lifecycle rule সেট করুন:
 
 ```typescript
 await s3.send(

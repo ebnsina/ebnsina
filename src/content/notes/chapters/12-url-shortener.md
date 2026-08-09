@@ -1,9 +1,9 @@
 ---
-title: 'Case Study: URL Shortener at Scale'
-subtitle: 'Design and build a production URL shortener with base62 encoding, Snowflake IDs, caching, rate limiting, and analytics.'
+title: 'কেস স্টাডি: স্কেলে URL Shortener'
+subtitle: 'base62 encoding, Snowflake ID, caching, rate limiting এবং analytics সহ একটি production URL shortener ডিজাইন করে বানান।'
 chapter: 12
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['system design', 'URL shortener', 'Snowflake ID', 'base62', 'analytics pipeline']
 ---
 
@@ -13,23 +13,31 @@ topics: ['system design', 'URL shortener', 'Snowflake ID', 'base62', 'analytics 
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## The Interview Classic — Done For Real
+## গল্পে বুঝি
 
-URL shorteners appear in every system design interview. But most explanations stop at "use a hash." Here we build the complete system: distributed ID generation, encoding, caching, rate limiting, analytics, and storage — all production-ready.
+ইবনে সিনার ভাইয়ের বিয়ের অনুষ্ঠান, গেটের পাশেই কোট-ব্যাগ জমা রাখার একটা কাউন্টার। আল-খোয়ারিজমি ভেতরে ঢোকার আগে তার বিশাল ভারী ব্যাগটা কাউন্টারে জমা দিল, বিনিময়ে হাতে পেল ছোট্ট একটা নম্বরওয়ালা টোকেন — "৪৭"। কাউন্টারের ছেলেটা তার খাতায় টুকে রাখল: টোকেন ৪৭ মানে ৩ নম্বর তাকের ব্যাগ। আল-খোয়ারিজমি নিশ্চিন্তে গিয়ে খাওয়াদাওয়া করল, পকেটে শুধু ওই ছোট টোকেন। ফেরার সময় সে টোকেনটা দেখাতেই ছেলেটা খাতা দেখে সঙ্গে সঙ্গে ৩ নম্বর তাক থেকে ব্যাগটা এনে হাতে ধরিয়ে দিল — এক সেকেন্ডও লাগল না।
+
+মজার ব্যাপার হলো, কোনো দুইজনের টোকেন এক হতে পারবে না — এক হলেই তো ভুল ব্যাগ চলে যাবে, তাই প্রতিটা টোকেন আলাদা। আর অনুষ্ঠানের হোস্ট ফাতিমা আল-ফিহরি যেহেতু বারবার ভেতর-বাইরে করছে, ছেলেটা তার টোকেনটা আর খাতায় খুঁজতেও যায় না — মুখস্থ হয়ে গেছে কোন তাকে, চোখের পলকে বের করে দেয়।
+
+আসলে এটাই একটা URL shortener। ভারী ব্যাগটা হলো লম্বা URL, ছোট টোকেনটা হলো short code, আর কাউন্টারের খাতাটা হলো key-value store যেখানে টোকেন-থেকে-URL এর mapping রাখা থাকে। টোকেন দেখিয়ে ব্যাগ ফেরত পাওয়াটাই lookup আর redirect, প্রতিটা টোকেন আলাদা রাখাটাই unique code generation, আর হোস্টের টোকেন মুখস্থ রাখাটাই hot link-এর cache। bit.ly বা TinyURL ঠিক এভাবেই একটা লম্বা লিংককে ছোট code-এ বদলে দেয়, আর কেউ ওই ছোট লিংকে ক্লিক করলে মুহূর্তেই মূল ঠিকানায় পৌঁছে দেয়।
+
+## ইন্টারভিউয়ের ক্লাসিক প্রশ্ন — এবার সত্যিকারভাবে
+
+URL shortener প্রতিটি system design interview-তে আসে। কিন্তু বেশিরভাগ ব্যাখ্যা "একটা hash ব্যবহার করো" বলেই থেমে যায়। এখানে আমরা পুরো সিস্টেমটা বানাব: distributed ID generation, encoding, caching, rate limiting, analytics এবং storage — সবই production-ready।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a coat check at a theater — you hand in a long URL and get a short ticket number. Present the ticket later, and you get your original URL back.
+থিয়েটারের একটি coat check-এর মতো — আপনি একটা লম্বা URL জমা দেন আর একটা ছোট ticket number পান। পরে ticket দেখালে আপনার মূল URL ফেরত পান।
 
 </Callout>
 
-## Requirements
+## প্রয়োজনীয়তা
 
-- **Functional**: Create short URLs, redirect to original, track click analytics
-- **Non-functional**: 1000 URL creations/sec, 100K redirects/sec, 99.9% uptime, sub-10ms redirect latency
-- **Storage**: 100M URLs, ~10GB data + analytics
+- **Functional**: short URL বানানো, মূল URL-এ redirect করা, click analytics track করা
+- **Non-functional**: প্রতি সেকেন্ডে 1000 URL creation, প্রতি সেকেন্ডে 100K redirect, 99.9% uptime, 10ms-এর নিচে redirect latency
+- **Storage**: 100M URL, ~10GB data + analytics
 
 <Mermaid
 title="URL Shortener Architecture"
@@ -40,7 +48,7 @@ code={`graph TD
   S --> Q["Analytics Queue<br/>Click Events"]`}
 />
 
-## The Complete System
+## সম্পূর্ণ সিস্টেম
 
 <CodeTabs tsFile="urlshortener.ts" goFile="urlshortener.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -881,45 +889,45 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 </div>
 </CodeTabs>
 
-## Design Decisions Explained
+## ডিজাইন সিদ্ধান্তের ব্যাখ্যা
 
-### Why Snowflake IDs instead of UUIDs or auto-increment?
+### UUID বা auto-increment-এর বদলে Snowflake ID কেন?
 
-- **Auto-increment** is predictable (users can guess URLs) and doesn't work across multiple servers
-- **UUIDs** are 36 characters — too long for a short URL
-- **Snowflake IDs** are 64-bit, sortable by time, unique across workers, and encode to 7-11 base62 characters
+- **Auto-increment** অনুমানযোগ্য (users URL guess করতে পারে) এবং একাধিক server-এ কাজ করে না
+- **UUID** 36 character — একটা short URL-এর জন্য বড্ড লম্বা
+- **Snowflake ID** 64-bit, সময় অনুযায়ী sortable, worker-জুড়ে unique, এবং 7-11 base62 character-এ encode হয়
 
-### Why 301 redirect instead of 302?
+### 302-এর বদলে 301 redirect কেন?
 
-- **301 (Permanent)** — browsers cache it, reducing server load. Use for links that won't change.
-- **302 (Temporary)** — every click hits your server. Use if you need accurate click tracking.
-- We use 301 with a short `max-age` to balance caching and analytics accuracy.
+- **301 (Permanent)** — browser এটা cache করে, server load কমায়। যেসব link বদলাবে না তার জন্য ব্যবহার করুন।
+- **302 (Temporary)** — প্রতিটি click আপনার server-এ আসে। accurate click tracking দরকার হলে ব্যবহার করুন।
+- আমরা caching আর analytics accuracy-র মধ্যে ভারসাম্য রাখতে ছোট `max-age` সহ 301 ব্যবহার করি।
 
-### Why async analytics?
+### async analytics কেন?
 
-Click tracking should never slow down redirects. We buffer events and flush them in batches to an analytics pipeline (Kafka, SQS). A dropped analytics event is acceptable; a slow redirect is not.
+Click tracking কখনো redirect ধীর করা উচিত নয়। আমরা event buffer করে batch-এ একটি analytics pipeline-এ (Kafka, SQS) flush করি। একটি analytics event হারিয়ে গেলে চলবে; একটি ধীর redirect চলবে না।
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- Snowflake IDs give you globally unique, time-sorted, compact IDs without coordination between servers
-- Base62 encoding produces short, URL-safe strings — 7 characters can encode 3.5 trillion URLs
-- Use LRU cache for hot URLs — the top 20% of URLs get 80% of traffic
-- Analytics must be async — never block the redirect path for tracking
-- Rate limiting at the API layer prevents abuse and protects downstream services
-- URL deduplication saves storage and ensures consistency
+- Snowflake ID আপনাকে server-জুড়ে কোনো coordination ছাড়াই globally unique, সময় অনুযায়ী sorted, compact ID দেয়
+- Base62 encoding ছোট, URL-safe string বানায় — 7 character দিয়ে 3.5 trillion URL encode করা যায়
+- Hot URL-এর জন্য LRU cache ব্যবহার করুন — উপরের 20% URL-ই 80% traffic পায়
+- Analytics অবশ্যই async হতে হবে — tracking-এর জন্য কখনো redirect path block করবেন না
+- API layer-এ rate limiting অপব্যবহার আটকায় এবং downstream service রক্ষা করে
+- URL deduplication storage বাঁচায় এবং consistency নিশ্চিত করে
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Bitly** processes 600M+ clicks per month using this exact architecture
-- **TinyURL** stores billions of URL mappings in a distributed database
-- **Twitter's t.co** shortens every URL in tweets for tracking and link safety
-- **YouTube** uses base64-encoded IDs for video URLs (11 characters = 73 quintillion possible IDs)
-- This architecture handles 100K+ redirects/second on modest hardware. For more, add Redis caching and horizontal scaling.
+- **Bitly** এই একই architecture ব্যবহার করে মাসে 600M+ click প্রসেস করে
+- **TinyURL** একটি distributed database-এ কোটি কোটি URL mapping store করে
+- **Twitter-এর t.co** tracking আর link safety-র জন্য tweet-এর প্রতিটি URL shorten করে
+- **YouTube** video URL-এর জন্য base64-encoded ID ব্যবহার করে (11 character = 73 quintillion সম্ভাব্য ID)
+- এই architecture মাঝারি hardware-এ প্রতি সেকেন্ডে 100K+ redirect সামলায়। আরও বেশির জন্য Redis caching আর horizontal scaling যোগ করুন।
 
 </div>

@@ -1,9 +1,9 @@
 ---
-title: 'Background Jobs — Roadmap'
-subtitle: 'Worker loops, Redis and Postgres-backed queues, retries, DLQs, idempotency, cron, and production patterns.'
+title: 'Background Jobs — রোডম্যাপ'
+subtitle: 'Worker loop, Redis ও Postgres-backed queue, retry, DLQ, idempotency, cron, এবং প্রোডাকশন প্যাটার্ন।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,21 +13,21 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-A post office sorting facility: letters arrive, get sorted into bins (queues), handlers (workers) process each bin, undeliverable mail goes to a holding area (dead-letter queue), and nothing important gets lost if a sorter goes home mid-shift (graceful shutdown).
+একটি পোস্ট অফিসের সর্টিং ফ্যাসিলিটি: চিঠি এসে পৌঁছায়, সেগুলো বিভিন্ন বিনে (queue) সর্ট করা হয়, হ্যান্ডলাররা (worker) প্রতিটি বিন প্রসেস করে, ডেলিভারি করা যায় না এমন চিঠি একটি হোল্ডিং এরিয়ায় (dead-letter queue) চলে যায়, আর কোনো সর্টার শিফটের মাঝখানে বাড়ি চলে গেলেও গুরুত্বপূর্ণ কিছু হারায় না (graceful shutdown)।
 
 </Callout>
 
-## What you will learn
+## যা শিখবেন
 
-Most web apps eventually need work that doesn't belong in an HTTP request — sending emails, processing uploads, syncing data, generating reports. This track covers the full picture: choosing a queue backend, handling failures without data loss, making jobs safe to retry, scheduling recurring work without running it twice, and the operational patterns for running workers reliably in production.
+বেশিরভাগ web app-এই শেষ পর্যন্ত এমন কাজের দরকার পড়ে যা HTTP request-এর মধ্যে থাকা উচিত নয় — email পাঠানো, upload প্রসেস করা, data sync করা, report তৈরি করা। এই ট্র্যাকটি পুরো ছবিটা কভার করে: একটি queue backend বাছাই করা, data হারানো ছাড়াই failure সামলানো, job-কে retry করার জন্য নিরাপদ বানানো, একই কাজ দুবার না চালিয়ে recurring কাজ schedule করা, এবং প্রোডাকশনে worker নির্ভরযোগ্যভাবে চালানোর অপারেশনাল প্যাটার্ন।
 
-## Chapters in this track
+## এই ট্র্যাকের চ্যাপ্টারগুলো
 
-1. **Why Background Jobs** — what belongs in a queue vs inline, worker architecture, choosing a backend
-2. **Queue Backends** — BullMQ on Redis vs pg-boss on Postgres, internals, transactional enqueueing
-3. **Retries & Backoff** — exponential backoff, jitter, distinguishing transient from permanent errors, DLQs
-4. **Idempotency** — at-least-once delivery, making jobs safe to run multiple times, fencing tokens
-5. **Cron & Scheduled Jobs** — queue-backed cron, leader election, timezone handling, missed runs
-6. **Worker Patterns & Production** — graceful shutdown, priority queues, fan-out, rate limiting, metrics
+1. **Why Background Jobs** — কী queue-তে যাবে বনাম inline, worker architecture, backend বাছাই
+2. **Queue Backends** — Redis-এ BullMQ বনাম Postgres-এ pg-boss, internals, transactional enqueueing
+3. **Retries & Backoff** — exponential backoff, jitter, transient বনাম permanent error আলাদা করা, DLQ
+4. **Idempotency** — at-least-once delivery, job-কে একাধিকবার চালানোর জন্য নিরাপদ বানানো, fencing token
+5. **Cron & Scheduled Jobs** — queue-backed cron, leader election, timezone handling, missed run
+6. **Worker Patterns & Production** — graceful shutdown, priority queue, fan-out, rate limiting, metrics

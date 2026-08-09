@@ -1,9 +1,9 @@
 ---
-title: 'Performance Optimization'
-subtitle: 'Code splitting, lazy loading, tree shaking, bundle analysis, and Core Web Vitals — making your frontend fast.'
+title: 'পারফরম্যান্স অপটিমাইজেশন'
+subtitle: 'Code splitting, lazy loading, tree shaking, bundle analysis, আর Core Web Vitals — তোমার ফ্রন্টএন্ডকে দ্রুত বানানো।'
 chapter: 6
 level: 'advanced'
-readingTime: '15 min'
+readingTime: '15 মিনিট'
 topics:
   [
     'performance',
@@ -19,27 +19,35 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Performance Matters
+## গল্পে বুঝি
 
-Performance is not a feature — it is the foundation. A study by Google showed that a 1-second delay in mobile load time can reduce conversions by up to 20%. Users on slower connections and cheaper devices are especially impacted. Understanding the tools and techniques to measure and optimize frontend performance separates good developers from great ones.
+বুখারার বাজারে ইবনে সিনার একটা দোকান। দোকান খোলার সময় সে যদি পেছনের গুদামের পুরো মালপত্র টেনে সামনে সাজিয়ে বসত, দোকান খুলতেই ঘণ্টা পার হয়ে যেত, সামনেটা জিনিসে ঠাসা হয়ে খদ্দের ঢোকার জায়গাই থাকত না। তাই সে বুদ্ধি করে বেশিরভাগ মাল গুদামে প্যাক করাই রাখে — কেউ যখন কোনো একটা জিনিস চায়, ঠিক তখনই সেটা খুলে বের করে দেয়। আর মাল আসে বড় এক কন্টেইনারে নয়, বরং ছোট ছোট লেবেল-লাগানো ক্রেটে; যে ক্রেটটা দরকার শুধু সেটাই খুলে।
+
+খদ্দেররা দিনভর একই প্রশ্ন করে — "সমরকন্দের রেশমের গজপ্রতি দাম কত?" প্রতিবার হিসাব কষার বদলে ইবনে সিনা একবার হিসাব করে দামটা একটা কাগজে লিখে কাউন্টারে সেঁটে রাখে; পরের বার শুধু কাগজ দেখে বলে দেয়। আর যেসব মাল ঢাউস আকারের, সেগুলো সে টানটান করে ছোট বাক্সে রি-প্যাক করে রাখে — কম জায়গা নেয়, দ্রুত নাড়াচাড়া করা যায়, গাড়িতে চটপট ওঠে।
+
+এই দোকানটাই আসলে একটা ফ্রন্টএন্ড অ্যাপ। "চাওয়ার মুহূর্তে তবেই জিনিস খোলা" হলো **lazy loading** — রিসোর্স তখনই লোড করা যখন সত্যিই দরকার। বড় কন্টেইনারের বদলে ছোট লেবেল-করা ক্রেট হলো **code splitting** — এক বিশাল bundle না পাঠিয়ে ছোট ছোট chunk প্রয়োজনমতো লোড। বারবার একই দামের হিসাব কাগজে লিখে রাখা হলো **memoization** — একই ইনপুটের ফল বারবার না গুনে ক্যাশ করা। আর ঢাউস মাল ছোট বাক্সে রি-প্যাক করা হলো **image optimization** আর ছোট **bundle size** — WebP/AVIF, tree shaking, ছোট লাইব্রেরি দিয়ে যা কম বাইট নেয়, দ্রুত পৌঁছায়। বাস্তবে React.lazy, dynamic import, `loading="lazy"`, useMemo — সব এই একই নীতিতে চলে: যতটুকু দরকার ঠিক ততটুকুই, ঠিক যখন দরকার তখনই।
+
+## পারফরম্যান্স কেন গুরুত্বপূর্ণ
+
+পারফরম্যান্স কোনো ফিচার নয় — এটাই ভিত্তি। Google-এর একটা স্টাডি দেখিয়েছে যে মোবাইল লোড টাইমে ১ সেকেন্ডের দেরি conversion ২০% পর্যন্ত কমিয়ে দিতে পারে। ধীর কানেকশন আর সস্তা ডিভাইসের ইউজাররা বিশেষভাবে ক্ষতিগ্রস্ত হয়। ফ্রন্টএন্ড পারফরম্যান্স মাপা আর অপটিমাইজ করার টুল ও টেকনিক বোঝাটাই ভালো ডেভেলপারকে দুর্দান্ত ডেভেলপার থেকে আলাদা করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like optimizing a factory production line — code splitting is having separate lines for different products. Lazy loading is only powering up a machine when an order needs it.
+একটা ফ্যাক্টরির প্রোডাকশন লাইন অপটিমাইজ করার মতো — code splitting হলো বিভিন্ন প্রোডাক্টের জন্য আলাদা আলাদা লাইন রাখা। Lazy loading হলো কোনো মেশিন কেবল তখনই চালু করা যখন একটা অর্ডারের জন্য সেটা দরকার।
 
 </Callout>
 
 ## Core Web Vitals
 
-Google's three metrics that measure real user experience:
+Google-এর তিনটা মেট্রিক যা বাস্তব ইউজার এক্সপেরিয়েন্স মাপে:
 
-| Metric                              | What It Measures    | Good       | Needs Work | Poor    |
-| ----------------------------------- | ------------------- | ---------- | ---------- | ------- |
-| **LCP** (Largest Contentful Paint)  | Loading performance | &lt; 2.5s  | 2.5–4s     | > 4s    |
-| **INP** (Interaction to Next Paint) | Responsiveness      | &lt; 200ms | 200–500ms  | > 500ms |
-| **CLS** (Cumulative Layout Shift)   | Visual stability    | &lt; 0.1   | 0.1–0.25   | > 0.25  |
+| Metric                              | কী মাপে             | ভালো       | কাজ দরকার | খারাপ   |
+| ----------------------------------- | ------------------- | ---------- | --------- | ------- |
+| **LCP** (Largest Contentful Paint)  | Loading performance | &lt; 2.5s  | 2.5–4s    | > 4s    |
+| **INP** (Interaction to Next Paint) | Responsiveness      | &lt; 200ms | 200–500ms | > 500ms |
+| **CLS** (Cumulative Layout Shift)   | Visual stability    | &lt; 0.1   | 0.1–0.25  | > 0.25  |
 
 ```typescript
 // Measure Core Web Vitals in your app
@@ -60,7 +68,7 @@ onCLS(sendToAnalytics);
 
 ## Code Splitting
 
-Instead of shipping one massive JavaScript bundle, split your code into smaller chunks that load on demand.
+একটা বিশাল JavaScript bundle পাঠানোর বদলে, তোমার কোডকে ছোট ছোট chunk-এ ভাগ করো যেগুলো প্রয়োজনমতো লোড হয়।
 
 ```typescript
 // React.lazy — route-level code splitting
@@ -110,9 +118,9 @@ function BlogPostEditor({ showPreview }: { showPreview: boolean }) {
 }
 ```
 
-## Lazy Loading Images and Components
+## Image আর Component Lazy Loading
 
-Load resources only when they are needed — when they enter the viewport or when the user triggers an action.
+রিসোর্স কেবল তখনই লোড করো যখন সেগুলো দরকার — যখন সেগুলো viewport-এ ঢোকে বা ইউজার কোনো অ্যাকশন ট্রিগার করে।
 
 ```typescript
 // Native lazy loading for images
@@ -167,19 +175,19 @@ function LazySection({ children }: { children: React.ReactNode }) {
 
 <Callout type="tip">
 
-**Performance optimization priority:**
+**পারফরম্যান্স অপটিমাইজেশনের অগ্রাধিকার:**
 
-1. **Measure first** — use Lighthouse, Chrome DevTools Performance tab, or `web-vitals`
-2. **Reduce bundle size** — code splitting, tree shaking, smaller libraries
-3. **Optimize images** — use WebP/AVIF, responsive srcsets, lazy loading
-4. **Minimize render work** — memoization, virtualization for long lists
-5. **Cache aggressively** — service workers, CDN headers, SWR patterns
+1. **আগে মাপো** — Lighthouse, Chrome DevTools Performance tab, বা `web-vitals` ব্যবহার করো
+2. **Bundle size কমাও** — code splitting, tree shaking, ছোট লাইব্রেরি
+3. **Image অপটিমাইজ করো** — WebP/AVIF ব্যবহার করো, responsive srcset, lazy loading
+4. **Render work কমাও** — memoization, লম্বা লিস্টের জন্য virtualization
+5. **আক্রমণাত্মকভাবে cache করো** — service worker, CDN header, SWR প্যাটার্ন
 
 </Callout>
 
 ## Tree Shaking
 
-Tree shaking removes unused exports from your final bundle. It works with ES modules (`import`/`export`) — not CommonJS (`require`).
+Tree shaking তোমার ফাইনাল bundle থেকে অব্যবহৃত export বাদ দেয়। এটা ES module-এর (`import`/`export`) সাথে কাজ করে — CommonJS (`require`)-এর সাথে নয়।
 
 ```typescript
 // math.ts — library module
@@ -220,9 +228,9 @@ import { debounce } from 'lodash-es';
 debounce(fn, 300);
 ```
 
-## Virtualization for Long Lists
+## লম্বা লিস্টের জন্য Virtualization
 
-Rendering 10,000 DOM nodes kills performance. Virtualization only renders the items currently visible in the viewport.
+10,000 DOM node render করা পারফরম্যান্স শেষ করে দেয়। Virtualization কেবল viewport-এ এখন দৃশ্যমান আইটেমগুলোই render করে।
 
 ```typescript
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -267,7 +275,7 @@ function VirtualProductList({ products }: { products: Product[] }) {
 
 ## Memoization
 
-Prevent unnecessary re-renders and expensive recalculations.
+অপ্রয়োজনীয় re-render আর ব্যয়বহুল পুনর্গণনা প্রতিরোধ করো।
 
 ```typescript
 import { memo, useMemo, useCallback } from "react";
@@ -311,17 +319,17 @@ function ProductPage() {
 
 <Callout type="warning">
 
-**Do not memoize everything:**
+**সবকিছু memoize করো না:**
 
-- `memo` has a cost — it must compare all props on every render. Only use it on components that re-render with the same props frequently.
-- `useMemo` and `useCallback` add complexity. Profile first, optimize only where measurements show a problem.
-- Premature optimization makes code harder to read with no measurable benefit.
+- `memo`-এর একটা খরচ আছে — প্রতিটা render-এ এটাকে সব prop তুলনা করতে হয়। কেবল সেই কম্পোনেন্টে এটা ব্যবহার করো যেগুলো একই prop নিয়ে ঘন ঘন re-render হয়।
+- `useMemo` আর `useCallback` জটিলতা বাড়ায়। আগে profile করো, কেবল সেখানেই optimize করো যেখানে মাপজোখ কোনো সমস্যা দেখায়।
+- অকালে optimize করলে কোড পড়া কঠিন হয়ে যায়, অথচ কোনো মাপযোগ্য সুবিধা মেলে না।
 
 </Callout>
 
 ## Bundle Analysis
 
-Visualize what is in your JavaScript bundle to identify bloat.
+তোমার JavaScript bundle-এ কী আছে তা ভিজ্যুয়ালাইজ করে bloat শনাক্ত করো।
 
 ```bash
 # Next.js
@@ -334,18 +342,18 @@ npx vite-bundle-visualizer
 npx webpack-bundle-analyzer dist/stats.json
 ```
 
-Common findings and fixes:
+সাধারণ যা পাওয়া যায় আর সমাধান:
 
-- `moment.js` (300KB) — replace with `date-fns` (tree-shakeable) or `dayjs` (2KB)
-- `lodash` (70KB) — use `lodash-es` for tree shaking or individual imports
-- Duplicate dependencies — check with `npm ls <package>`
-- Unused polyfills — configure browserslist to target modern browsers only
+- `moment.js` (300KB) — `date-fns` (tree-shakeable) বা `dayjs` (2KB) দিয়ে বদলাও
+- `lodash` (70KB) — tree shaking-এর জন্য `lodash-es` বা আলাদা আলাদা import ব্যবহার করো
+- Duplicate dependency — `npm ls <package>` দিয়ে চেক করো
+- অব্যবহৃত polyfill — শুধু আধুনিক ব্রাউজার টার্গেট করতে browserslist কনফিগার করো
 
-## Key Takeaways
+## মূল কথা
 
-1. **Core Web Vitals** (LCP, INP, CLS) are the three metrics that matter most — measure them with real user data
-2. **Code splitting** at the route level is the single biggest performance win for most apps
-3. **Lazy load** images natively with `loading="lazy"` and heavy components with `React.lazy`
-4. **Tree shaking** works with ES modules — use named imports and tree-shakeable libraries
-5. **Virtualize** long lists instead of rendering thousands of DOM nodes
-6. **Measure before optimizing** — use Lighthouse, bundle analyzers, and DevTools profiler
+1. **Core Web Vitals** (LCP, INP, CLS) হলো তিনটা মেট্রিক যা সবচেয়ে বেশি গুরুত্বপূর্ণ — বাস্তব ইউজার ডেটা দিয়ে সেগুলো মাপো
+2. **Code splitting** route level-এ করাটা বেশিরভাগ অ্যাপের জন্য একক সবচেয়ে বড় পারফরম্যান্স জয়
+3. **Lazy load** — image-কে natively `loading="lazy"` দিয়ে আর heavy কম্পোনেন্টকে `React.lazy` দিয়ে লোড করো
+4. **Tree shaking** ES module-এর সাথে কাজ করে — named import আর tree-shakeable লাইব্রেরি ব্যবহার করো
+5. হাজার হাজার DOM node render করার বদলে লম্বা লিস্ট **Virtualize** করো
+6. **অপটিমাইজ করার আগে মাপো** — Lighthouse, bundle analyzer, আর DevTools profiler ব্যবহার করো

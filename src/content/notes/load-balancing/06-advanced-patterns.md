@@ -1,9 +1,9 @@
 ---
-title: 'Advanced Load Balancing Patterns'
-subtitle: "Blue-green deployments, circuit breakers, global load balancing, and anycast — patterns for deployments that can't go wrong."
+title: 'Advanced Load Balancing Pattern'
+subtitle: 'Blue-green deployment, circuit breaker, global load balancing, আর anycast — যেসব deployment ভুল হওয়া চলে না তার pattern।'
 chapter: 6
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['blue-green', 'canary', 'circuit breaker', 'global load balancing', 'anycast', 'GeoDNS']
 ---
 
@@ -11,19 +11,27 @@ topics: ['blue-green', 'canary', 'circuit breaker', 'global load balancing', 'an
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনার একটা রেস্তোরাঁ চেইন, শহরের নানা এলাকায় শাখা। এবার তিনি একদম নতুন একটা মেনু নামাচ্ছেন। কিন্তু পুরো শহরের সব টেবিলে একসাথে নতুন রান্না পরিবেশন করার ঝুঁকি তিনি নেন না — প্রথমে শুধু একটা টেবিলে নতুন ডিশগুলো দেন, তারপর চুপচাপ দেখেন খদ্দের খুশি না অভিযোগ করছে। এক টেবিলে সব ঠিক থাকলে ধীরে ধীরে আরও টেবিলে ছড়ান। একেই বলে ছোট একটা অংশ দিয়ে যাচাই।
+
+ভেতরে ইবনে সিনা দুটো আলাদা রান্নাঘর সবসময় পুরো লোকবল নিয়ে চালু রাখেন — একটায় পুরনো মেনু রান্না হয়, অন্যটায় নতুন মেনু, দুটোই সমান প্রস্তুত। কোনো সমস্যা হলে তিনি এক মুহূর্তে সব অর্ডার এক রান্নাঘর থেকে অন্যটায় ঘুরিয়ে দিতে পারেন, আর গণ্ডগোল দেখলে সাথে সাথে আগেরটায় ফিরিয়ে আনতে পারেন। আর একটা নিয়ম তিনি কখনও ভাঙেন না — প্রতিটা খদ্দেরকে তার বাসার সবচেয়ে কাছের শাখায় বসান, যাতে খাবার দ্রুত আর গরম গরম পৌঁছায়। কোনো এক শাখার ম্যানেজার হিসেবে আল-খোয়ারিজমি আর ফাতিমা আল-ফিহরি এই নিয়মগুলোই মেনে চলেন।
+
+এই গল্পটাই আসলে advanced load balancing। শুধু এক টেবিলে নতুন ডিশ দিয়ে যাচাই করাটা হলো **canary release** — নতুন version-এ অল্প একটু traffic পাঠিয়ে আগে দেখা। দুটো সমান রান্নাঘর রেখে এক পলকে সব অর্ডার এদিক-ওদিক ঘোরানোটা হলো **blue-green deployment** — দুটো identical environment, atomically switch, দরকারে instant rollback। আর প্রতিটা খদ্দেরকে কাছের শাখায় বসানোটা হলো **geo / global load balancing** — user-কে তার নিকটতম region-এ route করা। বাস্তবে এভাবেই বড় সাইটগুলো ঝুঁকি না নিয়ে deploy করে: canary দিয়ে অল্প traffic-এ যাচাই, blue-green দিয়ে নিরাপদ switch, আর GeoDNS/Anycast দিয়ে সবাইকে কাছের datacenter-এ পাঠানো।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A railway track switchover: you don't stop the train to switch tracks — you build a parallel track, test it, then flip the switch instantly. Blue-green deployment does the same: the new version is running and ready before a single user request hits it. The switch is instantaneous; rollback is just flipping it back.
+একটা রেল ট্র্যাক switchover: আপনি track বদলাতে ট্রেন থামান না — আপনি একটা সমান্তরাল track বানান, সেটা test করেন, তারপর সঙ্গে সঙ্গে switch flip করেন। Blue-green deployment ঠিক এই কাজটাই করে: একটা user request hit করার আগেই নতুন version চলছে আর প্রস্তুত। switch তাৎক্ষণিক; rollback মানে শুধু এটা আবার ফিরিয়ে দেওয়া।
 
 </Callout>
 
-## Blue-Green Deployments
+## Blue-Green Deployment
 
-Blue is live. Green is the new version. Traffic switches atomically.
+Blue live। Green নতুন version। Traffic atomically switch হয়।
 
-**HAProxy blue-green with runtime API:**
+**Runtime API দিয়ে HAProxy blue-green:**
 
 ```bash
 #!/bin/bash
@@ -49,7 +57,7 @@ haproxy_cmd "set server api_green/s2 state ready"
 echo "Traffic shifted to green"
 ```
 
-Config with both backends:
+দুটো backend নিয়ে config:
 
 ```
 backend api_blue
@@ -66,11 +74,11 @@ frontend https_in
     default_backend api_blue
 ```
 
-The condition `nbsrv(api_blue) eq 0` means "use green if blue has no active servers" — a natural fallback to green when all blue servers are drained.
+`nbsrv(api_blue) eq 0` condition-এর মানে "blue-তে কোনো active server না থাকলে green ব্যবহার করো" — সব blue server drain হলে স্বাভাবিকভাবে green-এ fallback।
 
-## Circuit Breaking at the LB
+## LB-তে Circuit Breaking
 
-HAProxy can detect repeated failures and temporarily remove a backend:
+HAProxy বারবার failure শনাক্ত করে সাময়িকভাবে একটা backend সরাতে পারে:
 
 ```
 backend api_servers
@@ -84,11 +92,11 @@ backend api_servers
     errorfile 503 /etc/haproxy/errors/maintenance.http
 ```
 
-For application-level circuit breaking (e.g., downstream service errors), implement in the application layer (Opossum, Resilience4j) — HAProxy only sees the upstream HTTP response.
+application-level circuit breaking-এর জন্য (যেমন downstream service error), application layer-এ implement করুন (Opossum, Resilience4j) — HAProxy শুধু upstream HTTP response দেখে।
 
 ## Slow Backend Detection
 
-Use HAProxy's `timeout` tuning and server weights to deprioritize slow servers:
+ধীর server-দের deprioritize করতে HAProxy-র `timeout` tuning আর server weight ব্যবহার করুন:
 
 ```bash
 # Script to watch response times and lower weight for slow servers
@@ -116,13 +124,13 @@ done
 
 ## Global Load Balancing
 
-Routing users to the nearest or healthiest datacenter:
+user-দের নিকটতম বা সবচেয়ে সুস্থ datacenter-এ route করা:
 
-**GeoDNS:** DNS responds with different IPs based on client geography.
+**GeoDNS:** DNS client-এর ভৌগোলিক অবস্থানের ভিত্তিতে ভিন্ন IP দিয়ে সাড়া দেয়।
 
 - AWS Route 53 Geolocation routing
 - Cloudflare Load Balancing
-- Return EU IP for EU clients, US IP for US clients
+- EU client-এর জন্য EU IP, US client-এর জন্য US IP ফেরত দেয়
 
 ```
 # Route 53 Geolocation example (via AWS CLI)
@@ -149,7 +157,7 @@ aws route53 change-resource-record-sets --hosted-zone-id Z123 --change-batch '{
 }'
 ```
 
-**Latency-based routing:** Route to whichever datacenter responds fastest:
+**Latency-based routing:** যে datacenter দ্রুততম সাড়া দেয় তাতে route করুন:
 
 ```bash
 aws route53 change-resource-record-sets --hosted-zone-id Z123 --change-batch '{
@@ -169,11 +177,11 @@ aws route53 change-resource-record-sets --hosted-zone-id Z123 --change-batch '{
 
 ## Anycast
 
-One IP address advertised from multiple locations simultaneously. BGP routing sends each client to the topographically closest server announcing that IP. Cloudflare uses this for their entire network.
+একটা IP address একসাথে একাধিক location থেকে বিজ্ঞাপিত হয়। BGP routing প্রতিটা client-কে সেই IP announce করা topographically নিকটতম server-এ পাঠায়। Cloudflare তাদের পুরো network-এর জন্য এটা ব্যবহার করে।
 
-You need BGP peering capability (colocation or BGP-capable cloud) to implement anycast yourself. For most teams: use Cloudflare or AWS Global Accelerator instead.
+নিজে anycast implement করতে আপনার BGP peering সক্ষমতা লাগে (colocation বা BGP-capable cloud)। বেশিরভাগ team-এর জন্য: এর বদলে Cloudflare বা AWS Global Accelerator ব্যবহার করুন।
 
-**AWS Global Accelerator** is effectively anycast-as-a-service:
+**AWS Global Accelerator** কার্যত anycast-as-a-service:
 
 ```bash
 aws globalaccelerator create-accelerator \
@@ -187,11 +195,11 @@ aws globalaccelerator create-listener \
   --port-ranges "[{\"FromPort\":443,\"ToPort\":443}]"
 ```
 
-Traffic enters AWS's network at the nearest edge PoP, then travels AWS's private backbone to the region — faster and more reliable than the public internet.
+Traffic নিকটতম edge PoP-এ AWS-এর network-এ ঢোকে, তারপর AWS-এর private backbone দিয়ে region-এ যায় — public internet-এর চেয়ে দ্রুত আর বেশি নির্ভরযোগ্য।
 
-## Health Check Aggregation for Global LB
+## Global LB-র জন্য Health Check Aggregation
 
-When a datacenter is degraded (not completely down), you want to shift traffic away — not all-or-nothing:
+একটা datacenter degraded হলে (পুরোপুরি down নয়), আপনি traffic সরাতে চান — সব-অথবা-কিছুই-না নয়:
 
 ```bash
 #!/bin/bash
@@ -228,11 +236,11 @@ aws route53 change-resource-record-sets \
   }"
 ```
 
-At 0 healthy servers, weight drops to 0 — Route 53 stops routing to this datacenter automatically.
+0 healthy server-এ, weight 0-তে নেমে যায় — Route 53 স্বয়ংক্রিয়ভাবে এই datacenter-এ routing বন্ধ করে দেয়।
 
 ## Request Hedging
 
-Send the same request to two backends simultaneously, return whichever responds first. Reduces tail latency at the cost of doubled backend load:
+একই request একসাথে দুটো backend-এ পাঠান, যেটা আগে সাড়া দেয় সেটা ফেরত দিন। দ্বিগুণ backend load-এর বিনিময়ে tail latency কমায়:
 
 ```nginx
 # nginx Plus: proxy_next_upstream with timeout
@@ -244,11 +252,11 @@ location / {
 }
 ```
 
-This isn't true hedging (parallel requests) — it's sequential fallback with a timeout. True hedging requires application-level implementation.
+এটা সত্যিকারের hedging নয় (parallel request) — এটা একটা timeout সহ sequential fallback। সত্যিকারের hedging-এর জন্য application-level implementation লাগে।
 
 ## Observability
 
-Always measure these at the LB layer:
+সবসময় LB layer-এ এগুলো measure করুন:
 
 ```bash
 # HAProxy stats via CSV — good for dashboards
@@ -262,7 +270,7 @@ for row in reader:
 "
 ```
 
-Push to Prometheus via `haproxy_exporter`:
+`haproxy_exporter` দিয়ে Prometheus-এ push করুন:
 
 ```yaml
 # docker-compose.yml
@@ -273,9 +281,9 @@ haproxy-exporter:
     - '9101:9101'
 ```
 
-Key metrics:
+গুরুত্বপূর্ণ metric:
 
-- `haproxy_backend_requests_total` — request rate per backend
+- `haproxy_backend_requests_total` — per backend request rate
 - `haproxy_backend_response_errors_total` — 5xx rate
 - `haproxy_backend_queue_average_time_seconds` — queuing latency
 - `haproxy_server_status` — 1=UP, 0=DOWN

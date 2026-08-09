@@ -1,9 +1,9 @@
 ---
 title: 'Writing Dockerfiles'
-subtitle: 'Layer caching, multi-stage builds, non-root users, and the instructions that actually matter for production images.'
+subtitle: 'Layer caching, multi-stage build, non-root user, এবং প্রোডাকশন image-এর জন্য যেসব instruction আসলে গুরুত্বপূর্ণ।'
 chapter: 2
 level: 'beginner'
-readingTime: '11 min'
+readingTime: '11 মিনিট'
 topics: ['Dockerfile', 'multi-stage builds', 'layer cache', 'non-root', 'image size']
 ---
 
@@ -13,15 +13,23 @@ topics: ['Dockerfile', 'multi-stage builds', 'layer cache', 'non-root', 'image s
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A recipe with prep steps: you don't peel garlic after the dish is plated. In a Dockerfile, order matters — put the steps that change least often first so Docker can cache them. Change your app code without reinstalling all dependencies.
+prep step সহ একটা রেসিপি: রান্না প্লেটে সাজানোর পর আপনি রসুন ছাড়ান না। Dockerfile-এ order-টা গুরুত্বপূর্ণ — যে step-গুলো সবচেয়ে কম বদলায় সেগুলো আগে রাখুন যাতে Docker সেগুলো cache করতে পারে। সব dependency আবার install না করেই আপনার অ্যাপ কোড বদলান।
 
 </Callout>
 
-## Layer Caching: Order Matters
+## গল্পে বুঝি
 
-Every RUN, COPY, and ADD instruction creates a new layer. Docker caches layers and reuses them if nothing above them changed. Put slow, stable steps early; fast, frequently-changing steps late.
+কর্ডোবার এক নামকরা রাঁধুনি ইবনে সিনার একটা সিগনেচার পদ আছে, আর সেটা বানানোর নিয়মটা তিনি একটা রেসিপি কার্ডে ধাপে ধাপে লিখে রেখেছেন। কার্ডের একদম উপরে লেখা — শুরু হবে আগে থেকে বানানো একটা মজবুত স্টক দিয়ে, শূন্য থেকে হাঁড়ি চাপাতে হবে না। তারপর নিচে সাজানো নির্দিষ্ট ক্রমে ধাপগুলো: মশলা বাটা, ঘণ্টাখানেক ধরে জ্বাল দেওয়া, শেষে উপরে গার্নিশ ছড়িয়ে দেওয়া। প্রতিটা ধাপের পর রান্নাটা এক ধাপ এগিয়ে একটা নতুন অবস্থায় পৌঁছায়।
+
+ইবনে সিনা চালাক লোক। তিনি খেয়াল করলেন, স্টক আর মশলা-জ্বালের ধাপগুলো ধীর কিন্তু প্রায় কখনো বদলায় না, অথচ শেষের গার্নিশটা অতিথিভেদে রোজ বদলায় — কখনো ধনেপাতা, কখনো বাদাম। তাই তিনি ধীর, কম-বদলানো ধাপগুলো কার্ডের উপরে আর ঘনঘন-বদলানো গার্নিশটা একদম নিচে রাখলেন। এখন শুধু গার্নিশ বদলালে তাঁকে আবার স্টক ফোটাতে বা মশলা জ্বাল দিতে হয় না — আগের প্রস্তুত ধাপগুলো যেমন ছিল তেমনই পুনর্ব্যবহার করেন, শুধু শেষ ধাপটা নতুন করে করেন। রান্নার সময় ঘণ্টা থেকে নেমে আসে মিনিটে।
+
+এই রেসিপি কার্ডটাই আসলে একটা **Dockerfile** — উপর থেকে নিচে সাজানো ধাপে ধাপে instruction-এর একটা রেসিপি। "আগে থেকে বানানো স্টক দিয়ে শুরু" হলো **FROM base image**, যার উপরে আপনি নিজের অ্যাপ গড়ে তোলেন। কার্ডের প্রতিটা ক্রমিক ধাপ একটা করে instruction, আর প্রতিটা instruction একটা করে **layer** তৈরি করে। শুধু শেষ ধাপ বদলালে আগের প্রস্তুত ধাপগুলো পুনর্ব্যবহার করাটাই **Docker layer caching** — তাই ধীর, স্থিতিশীল ধাপ (base image, dependency install) আগে রাখুন, ঘনঘন বদলানো ধাপ (আপনার source code copy) শেষে। বাস্তবে এই order-ই ঠিক করে দেয় `git push`-এর পর CI-তে আপনার image ৫ সেকেন্ডে build হবে নাকি ২ মিনিট ধরে সব dependency আবার install হবে।
+
+## Layer Caching: Order গুরুত্বপূর্ণ
+
+প্রতিটা RUN, COPY, আর ADD instruction একটা নতুন layer তৈরি করে। Docker layer cache করে আর যদি সেগুলোর উপরের কিছু না বদলায় তবে পুনর্ব্যবহার করে। ধীর, স্থিতিশীল step-গুলো আগে রাখুন; দ্রুত, ঘনঘন বদলানো step-গুলো পরে।
 
 ```dockerfile
 # WRONG — cache busted on every code change
@@ -38,9 +46,9 @@ RUN npm ci                               # install — cached until package.json
 COPY . .                                 # copy source code last
 ```
 
-With the correct order, changing `server.ts` only rebuilds from the `COPY . .` layer. `npm ci` is skipped because the `package.json` layer didn't change. Build time drops from 2 minutes to 5 seconds.
+সঠিক order-এ, `server.ts` বদলালে শুধু `COPY . .` layer থেকে rebuild হয়। `package.json` layer না বদলানোয় `npm ci` বাদ পড়ে। Build time ২ মিনিট থেকে ৫ সেকেন্ডে নেমে আসে।
 
-## Instructions That Matter
+## যেসব Instruction গুরুত্বপূর্ণ
 
 ```dockerfile
 FROM node:20-alpine          # always pin a specific version — 'latest' breaks builds
@@ -83,7 +91,7 @@ docker run myapp other-script.js  # runs: node other-script.js
 
 ## Multi-Stage Builds
 
-Build in one stage, copy only the output to a minimal final image. Keeps build tools, source code, and test artifacts out of the production image.
+এক stage-এ build করুন, শুধু আউটপুটটুকু একটা minimal final image-এ copy করুন। এতে build tool, source code, আর test artifact প্রোডাকশন image-এর বাইরে থাকে।
 
 ```dockerfile
 # Stage 1: build
@@ -109,7 +117,7 @@ CMD ["node", "dist/server.js"]
 # Builder: ~800MB    Production: ~150MB
 ```
 
-**Go multi-stage (produces a ~10MB image):**
+**Go multi-stage (একটা ~10MB image তৈরি করে):**
 
 ```dockerfile
 FROM golang:1.22-alpine AS builder
@@ -128,9 +136,9 @@ ENTRYPOINT ["/server"]
 # Final image: ~10MB (the binary + TLS certs)
 ```
 
-## Security: Run as Non-Root
+## Security: Non-Root হিসেবে চালান
 
-By default, containers run as root. A process that escapes the container's namespaces runs as root on the host — extremely dangerous.
+ডিফল্টভাবে containers root হিসেবে চলে। container-এর namespace থেকে বেরিয়ে যাওয়া একটা process হোস্টে root হিসেবে চলে — অত্যন্ত বিপজ্জনক।
 
 ```dockerfile
 FROM node:20-alpine
@@ -162,7 +170,7 @@ docker run --cap-add=NET_BIND_SERVICE myapp
 
 ## .dockerignore
 
-Exclude files that shouldn't go into the build context — speeds up builds and prevents secrets leaking into images:
+যেসব file build context-এ যাওয়া উচিত নয় সেগুলো বাদ দিন — এতে build দ্রুত হয় আর secret image-এ leak হওয়া ঠেকায়:
 
 ```
 # .dockerignore
@@ -180,9 +188,9 @@ README.md
 docker-compose*.yml  # build context, not needed in image
 ```
 
-Without `.dockerignore`, `COPY . .` sends `node_modules` (hundreds of MB) to the Docker daemon on every build, even though they'll be overwritten by `npm ci`.
+`.dockerignore` ছাড়া, `COPY . .` প্রতিটা build-এ `node_modules` (শত শত MB) Docker daemon-এ পাঠায়, যদিও সেগুলো `npm ci` দিয়ে overwrite হয়ে যাবে।
 
-## Keeping Images Small
+## Image ছোট রাখা
 
 ```bash
 # Check layer sizes
@@ -202,7 +210,7 @@ docker images myapp
 # myapp        latest   98MB   ← target: under 200MB for Node apps
 ```
 
-**Reducing size:**
+**Size কমানো:**
 
 ```dockerfile
 # Use alpine base
@@ -231,9 +239,9 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 HEALTHCHECK CMD curl -f http://localhost:3000/health || exit 1
 ```
 
-Health checks let Docker (and orchestrators) detect a running-but-broken container. Without them, a container that started but crashed internally looks healthy.
+Health check Docker (আর orchestrator)-কে একটা চলছে-কিন্তু-নষ্ট container শনাক্ত করতে দেয়। এগুলো ছাড়া, চালু হয়ে ভেতরে ক্র্যাশ করা একটা container দেখতে healthy মনে হয়।
 
-## Dockerfile for a Typical Node.js API
+## একটা সাধারণ Node.js API-র জন্য Dockerfile
 
 ```dockerfile
 FROM node:20-alpine AS base
@@ -262,4 +270,4 @@ HEALTHCHECK --interval=30s --timeout=3s \
 CMD ["node", "dist/server.js"]
 ```
 
-This pattern: `base` → `deps` (prod deps) + `builder` (full build) → `production` (clean final image). Common in modern Node.js projects.
+এই প্যাটার্ন: `base` → `deps` (prod deps) + `builder` (full build) → `production` (পরিষ্কার final image)। আধুনিক Node.js প্রজেক্টে খুবই প্রচলিত।

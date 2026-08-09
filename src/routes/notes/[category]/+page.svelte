@@ -4,16 +4,12 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import TrackBadge from '$lib/components/notes/TrackBadge.svelte';
-	import LocaleToggle from '$lib/components/notes/LocaleToggle.svelte';
 	import { GROUP_ORDER } from '$lib/data/categories';
 	import { catColor } from '$lib/colors';
 	import { progress, xpForLevel } from '$lib/progress.svelte';
-	import { nt } from '$lib/i18n/notes';
+	import { t } from '$lib/data/notes-strings';
 
 	let { data } = $props();
-
-	const t = $derived(nt(data.locale));
-	const base = $derived(data.base);
 
 	onMount(() => progress.hydrate());
 
@@ -39,18 +35,15 @@
 	);
 </script>
 
-<Seo title={`${data.meta.label} — Notes`} description={data.meta.description} />
+<Seo title={`${data.meta.label} — ${t.notesTitle}`} description={data.meta.description} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8" lang={data.locale}>
+<div class="mx-auto max-w-5xl px-5 sm:px-8" lang="bn">
 	<header class="mb-8">
-		<div class="flex items-center justify-between gap-3">
-			<a
-				href={base}
-				class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
-				>{t.backToNotes}</a
-			>
-			<LocaleToggle locale={data.locale} available={data.hasCounterpart} />
-		</div>
+		<a
+			href="/notes"
+			class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
+			>{t.backToNotes}</a
+		>
 		<h1 class="mb-3 mt-3 font-serif text-3xl font-semibold tracking-tight">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
@@ -73,7 +66,7 @@
 				</div>
 			{:else if nextChapter}
 				<a
-					href={`${base}/${data.category}/${nextChapter.slug}`}
+					href={`/notes/${data.category}/${nextChapter.slug}`}
 					class="rounded-2xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 					>{doneCount === 0 ? t.startHere : t.continueWord} →</a
 				>
@@ -107,7 +100,7 @@
 			{@const isNext = nextChapter?.slug === ch.slug}
 			<li class="relative flex gap-4">
 				<a
-					href={`${base}/${data.category}/${ch.slug}`}
+					href={`/notes/${data.category}/${ch.slug}`}
 					class="group -mx-2.5 flex min-w-0 flex-1 items-center gap-3 px-2.5 py-3 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)] sm:gap-4"
 				>
 					{@render stepNode(ch, isDone, isNext)}

@@ -1,9 +1,9 @@
 ---
-title: 'Reliability Culture & SRE Org Design'
-subtitle: 'Staff+ SRE work, embedding, charters, blame-aware orgs, mentoring, sustainable on-call. The non-technical lever that makes or breaks every reliability program.'
+title: 'Reliability Culture ও SRE Org Design'
+subtitle: 'Staff+ SRE work, embedding, charters, blame-aware org, mentoring, sustainable on-call। যে non-technical lever প্রতিটা reliability program বানায় বা ভাঙে।'
 chapter: 19
 level: 'mastery'
-readingTime: '26 min'
+readingTime: '26 মিনিট'
 topics: ['org design', 'staff SRE', 'culture', 'embedding', 'charters', 'on-call', 'mentoring']
 ---
 
@@ -13,23 +13,31 @@ topics: ['org design', 'staff SRE', 'culture', 'embedding', 'charters', 'on-call
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A hospital's safety culture — checklists and blameless reviews exist because smart people still make mistakes under pressure.
+একটা hospital-এর safety culture — checklist আর blameless review থাকে কারণ smart লোকজনও চাপের মুখে ভুল করে।
 
 </Callout>
 
-## Why this is the chapter that scales you
+## গল্পে বুঝি
 
-You can be the best Postgres tuner in the company and the org will still produce outages, burn out engineers, and miss SLOs — if the culture, charter, and org structure are wrong. The senior IC who graduates to Staff+ SRE spends most of their effort here, not at the keyboard.
+শহরের বড় হাসপাতালটায় নতুন ডিরেক্টর ইবনে সিনা যোগ দিয়ে দেখলেন, patient safety-র পুরো দায়িত্ব একজন লোকের কাঁধে — একলা "safety officer" আল-খোয়ারিজমি। কিছু ভুল হলে সবাই তার দিকে আঙুল তোলে, আর ডাক্তার-নার্স-ওয়ার্ডবয়রা ভাবে "ওটা তো ওনার কাজ"। ফলে ভুল ওষুধ, ভুল ফাইল, ভুল বেড — চলতেই থাকে। ইবনে সিনা একটা কথাই সবাইকে বোঝালেন: রোগীর নিরাপত্তা কারও একার কাজ না, এটা প্রতিটা ডাক্তার, নার্স, এমনকি স্ট্রেচার ঠেলা ওয়ার্ডবয়েরও shared responsibility। এখন থেকে যে কেউ — সিনিয়র সার্জন হোক বা নতুন নার্স — কোনো ঝুঁকি দেখলে হাত তুলে "থামুন" বলতে পারবে, আর তার জন্য কাউকে দোষারোপ করা হবে না।
 
-This chapter is the org-design playbook the SRE-leadership canon points at: Google's SRE book, Will Larson's writing, Charity Majors' essays, and what real SRE teams at Stripe, Cloudflare, Shopify, and Datadog actually do.
+সবচেয়ে বড় বদলটা এল ভুল সামলানোর ধরনে। আগে কোনো দুর্ঘটনা হলে খোঁজা হতো "কে করল", এখন খোঁজা হয় "কোন system-টা এই ভুলটা হতে দিল" — খোলাখুলি বসে সবাই মিলে কেস স্টাডি করে, শাস্তি নয়, শেখা। আর safety-র expert-দের ইবনে সিনা তিন ভাবে সাজালেন: কয়েকজনকে সরাসরি ওয়ার্ডে বসিয়ে দিলেন যেন তারা টিমের সাথে মিশে কাজ করে, ফাতিমা আল-ফিহরির নেতৃত্বে একটা central standards টিম বানালেন যারা সবার জন্য এক checklist আর protocol লেখে, আর কয়েকজনকে রাখলেন adviser হিসেবে — যারা শুধু পরামর্শ দেয়, চাপিয়ে দেয় না। কোনো একটা কড়া নিয়ম নয়, বরং এই পুরো ভাগ করে নেওয়া culture-টাই আসলে রোগীদের বাঁচিয়ে রাখল।
 
-## The four SRE org shapes
+এই হাসপাতালই একটা reliability-সচেতন engineering org। রোগীর নিরাপত্তা সবার কাজ হওয়া = reliability একটা shared responsibility, শুধু SRE টিমের একার নয় বরং প্রতিটা engineer-এর। যে কেউ ভয় ছাড়া "থামুন" বলা আর ভুলকে খোলাখুলি স্টাডি করা = blameless learning culture — ব্যক্তি নয়, system-এর নাম করা। আর safety expert-দের তিন ভাবে সাজানো = SRE org model-এর তিন রূপ: ওয়ার্ডে বসানো expert = **embedded** SRE, central standards টিম = **platform team**, আর adviser = **consulting** মডেল। মূল শিক্ষা এক: কোনো একটা practice নয়, culture-টাই যা কোনো org-কে সত্যিই reliable রাখে। বাস্তবেও Google-এর SRE বই থেকে Etsy-র blameless postmortem পর্যন্ত সব জায়গায় বারবার বলা হয় — tooling কেনা যায়, culture গড়তে হয়।
 
-Every SRE program ends up shaped like one of these. Each has tradeoffs.
+## এই chapter কেন আপনাকে scale করে
 
-### 1. Centralized SRE (Google original model)
+আপনি company-র সেরা Postgres tuner হতে পারেন আর org তবুও outage তৈরি করবে, engineer-দের burn out করবে, আর SLO মিস করবে — যদি culture, charter আর org structure ভুল হয়। যে senior IC Staff+ SRE-তে graduate করে সে তার বেশিরভাগ effort এখানে ব্যয় করে, keyboard-এ নয়।
+
+এই chapter হলো সেই org-design playbook যেদিকে SRE-leadership canon নির্দেশ করে: Google-এর SRE book, Will Larson-এর লেখা, Charity Majors-এর essay, আর Stripe, Cloudflare, Shopify আর Datadog-এর বাস্তব SRE team-রা আসলে যা করে।
+
+## চারটা SRE org আকার
+
+প্রতিটা SRE program শেষমেশ এগুলোর একটার আকার নেয়। প্রতিটার tradeoff আছে।
+
+### 1. Centralized SRE (Google-এর মূল model)
 
 ```
    Product Eng                Product Eng                Product Eng
@@ -40,8 +48,8 @@ Every SRE program ends up shaped like one of these. Each has tradeoffs.
                        (owns oncall for everything)
 ```
 
-Pros: deep operational expertise, consistent standards, central authority.
-Cons: silo'd from product, becomes a bottleneck, culture of "throw it over the wall."
+Pros: deep operational expertise, consistent standard, central authority।
+Cons: product থেকে silo'd, একটা bottleneck হয়ে যায়, "throw it over the wall" culture।
 
 ### 2. Embedded SRE (Google modern + Stripe)
 
@@ -54,8 +62,8 @@ Cons: silo'd from product, becomes a bottleneck, culture of "throw it over the w
               (K8s, CI/CD, observability stack, IDP)
 ```
 
-Pros: SRE knowledge transfers, product team learns to operate, no silo.
-Cons: needs many SREs, churn risk when SRE rotates out.
+Pros: SRE knowledge transfer হয়, product team operate করতে শেখে, কোনো silo নেই।
+Cons: অনেক SRE লাগে, SRE rotate out হলে churn risk।
 
 ### 3. Platform Engineering ("you build it, you run it" + golden paths)
 
@@ -67,8 +75,8 @@ Cons: needs many SREs, churn risk when SRE rotates out.
               "golden paths" that make doing the right thing easy.
 ```
 
-Pros: full ownership, no central bottleneck, scales to thousands of engineers.
-Cons: requires very mature product engineers, long onboarding, real risk of "everyone solves the same problem differently."
+Pros: full ownership, কোনো central bottleneck নেই, হাজার হাজার engineer পর্যন্ত scale করে।
+Cons: খুব mature product engineer লাগে, দীর্ঘ onboarding, "সবাই একই সমস্যা ভিন্নভাবে সমাধান করে"-র বাস্তব risk।
 
 ### 4. SRE Consulting (small-org variant)
 
@@ -80,10 +88,10 @@ Cons: requires very mature product engineers, long onboarding, real risk of "eve
               hard-mode debugging.
 ```
 
-Pros: works at 50-200 engineer scale, low overhead.
-Cons: SRE recommendations get ignored without authority; works best with strong tech leadership backing.
+Pros: 50-200 engineer scale-এ কাজ করে, low overhead।
+Cons: authority ছাড়া SRE recommendation উপেক্ষিত হয়; strong tech leadership backing থাকলে সবচেয়ে ভালো কাজ করে।
 
-### Picking the shape
+### আকার বাছা
 
 ```
 Engineers <  100        — Consulting model.
@@ -92,11 +100,11 @@ Engineers <  100        — Consulting model.
 Eng > 2000              — Whatever Google says + your scale-specific tweaks.
 ```
 
-There is no "one right answer." There is a "right for your stage." Re-evaluate every couple years.
+কোনো "একটা সঠিক উত্তর" নেই। একটা "আপনার stage-এর জন্য সঠিক" আছে। প্রতি কয়েক বছরে পুনর্মূল্যায়ন করুন।
 
-## The SRE charter — write it down
+## SRE charter — লিখে রাখুন
 
-Every SRE team needs a one-page charter. Without it, you become whatever broken thing the org pushes onto you.
+প্রতিটা SRE team-এর একটা one-page charter লাগে। এটা ছাড়া, org আপনার উপর যে ভাঙাচোরা জিনিস চাপায় আপনি তাই হয়ে যান।
 
 ```markdown
 # Payments SRE Charter (v2)
@@ -141,11 +149,11 @@ while enabling product to ship at current pace.
 Escalation path: SRE Lead → Engineering Director → CTO.
 ```
 
-The most important section is "What we do NOT own." Without it, you'll absorb every operational job nobody wants.
+সবচেয়ে গুরুত্বপূর্ণ section হলো "What we do NOT own"। এটা ছাড়া, আপনি প্রতিটা operational কাজ শুষে নেবেন যা কেউ চায় না।
 
-## Production Readiness Review (PRR) — the gate that protects you
+## Production Readiness Review (PRR) — যে gate আপনাকে রক্ষা করে
 
-The single highest-leverage process in mature SRE orgs. A new service does not move to prod (or to SRE on-call ownership) until it passes PRR.
+Mature SRE org-এ সবচেয়ে বেশি-leverage-এর process। একটা নতুন service PRR পাস না করা পর্যন্ত prod-এ (বা SRE on-call ownership-এ) যায় না।
 
 Sample checklist:
 
@@ -189,11 +197,11 @@ People
   □ Runbook reviewed by oncoming on-call engineer
 ```
 
-A team that's used to "ship and iterate" will resist the PRR. The right reframe: **PRR is the price of getting SRE pager support.** No PRR? Product team carries the pager. Most teams change their mind quickly.
+"ship and iterate"-এ অভ্যস্ত একটা team PRR-এ resist করবে। সঠিক reframe: **PRR হলো SRE pager support পাওয়ার দাম।** PRR নেই? Product team pager বহন করে। বেশিরভাগ team দ্রুত মত পাল্টায়।
 
 ## On-call sustainability
 
-Burnout is the failure mode that ends SRE programs. The signals:
+Burnout হলো সেই failure mode যা SRE program শেষ করে দেয়। লক্ষণ:
 
 ```
 - Pages > 2/week per person sustained
@@ -203,7 +211,7 @@ Burnout is the failure mode that ends SRE programs. The signals:
 - High attrition specifically among on-call engineers
 ```
 
-The senior-team rules of thumb:
+Senior-team rule of thumb:
 
 ```
 - Rotation size: minimum 6, ideally 8 people. Smaller = unsustainable.
@@ -213,7 +221,7 @@ The senior-team rules of thumb:
 - Quarterly retro on the rotation: what's noisy, what's missing, what hurts.
 ```
 
-### The follow-the-sun pattern
+### Follow-the-sun pattern
 
 ```
 NA team    — covers Americas business hours (~16 h/day with buffer)
@@ -224,11 +232,11 @@ Each pod: 6+ engineers. Each carries pager during their region's hours only.
 After-hours = lower-severity escalation only; criticals still escalate immediately.
 ```
 
-This is the only sustainable on-call shape past ~50 engineers. Smaller orgs do "tag-team" on-call across two timezones with explicit handoff.
+~50 engineer-এর পরে এটাই একমাত্র sustainable on-call আকার। ছোট org-রা explicit handoff সহ দুই timezone জুড়ে "tag-team" on-call করে।
 
-### Compensation models
+### Compensation model
 
-Real-world patterns:
+বাস্তব pattern:
 
 ```
 - On-call hourly stipend ($N/hour on-call, regardless of pages)
@@ -237,11 +245,11 @@ Real-world patterns:
 - Just include in salary band (assumes the salary actually reflects it)
 ```
 
-Whichever you pick: be transparent. Engineers compare notes; opaque on-call comp breeds resentment fast.
+যেটাই বাছুন: transparent থাকুন। Engineer-রা note মেলায়; অস্বচ্ছ on-call comp দ্রুত resentment জন্মায়।
 
-## Postmortems and blame-aware (not "blameless") culture
+## Postmortem আর blame-aware (blameless নয়) culture
 
-"Blameless" became a slogan that confused people. The honest framing: **blame-aware**. We name the systems and processes that failed. We do not hide that humans were involved — but we accept that the system let the human make the mistake.
+"Blameless" একটা slogan হয়ে গেল যা লোকজনকে বিভ্রান্ত করল। সৎ framing: **blame-aware**। আমরা যে system আর process fail করেছে সেগুলোর নাম করি। আমরা লুকাই না যে human জড়িত ছিল — কিন্তু আমরা মেনে নিই যে system-ই human-কে ভুল করতে দিয়েছে।
 
 ```
 Bad postmortem language:
@@ -253,9 +261,9 @@ Good postmortem language:
    ran it during the incident; the tool's design made this possible."
 ```
 
-The action items target the system, not the person. The engineer is named only for _what they did to mitigate_, not for what they "got wrong."
+Action item system-কে target করে, ব্যক্তিকে নয়। Engineer-এর নাম শুধু _তারা mitigate করতে যা করেছে_ তার জন্য উল্লেখ হয়, তারা যা "ভুল করেছে" তার জন্য নয়।
 
-### Postmortem rituals that actually work
+### যে postmortem ritual আসলে কাজ করে
 
 ```
 - Within 48 h of resolution: draft published.
@@ -265,13 +273,13 @@ The action items target the system, not the person. The engineer is named only f
 - "Postmortem of the postmortem" once a year — what's not getting done?
 ```
 
-Action item completion rates below 70% mean the postmortem ritual is theater. Fix the _process_, not the postmortems.
+70%-এর নিচে action item completion rate মানে postmortem ritual একটা theater। _process_ ফিক্স করুন, postmortem নয়।
 
-## Career ladders for SRE
+## SRE-র জন্য career ladder
 
-A common org failure: SRE has no senior career path because "we hire from infra/SWE." Result: senior SREs leave for SWE roles.
+একটা common org failure: SRE-র কোনো senior career path নেই কারণ "আমরা infra/SWE থেকে hire করি"। ফল: senior SRE-রা SWE role-এর জন্য চলে যায়।
 
-The Staff+ SRE ladder, condensed:
+Staff+ SRE ladder, সংক্ষিপ্ত:
 
 ```
 Senior SRE (L5-ish)
@@ -294,11 +302,11 @@ Principal SRE (L8+)
   - Counterpart to a VP/C-level on the technical side.
 ```
 
-The job widens, not narrows, with seniority. A Staff SRE who only fights fires is mis-leveled.
+seniority-র সাথে কাজ প্রশস্ত হয়, সংকুচিত হয় না। যে Staff SRE শুধু আগুন নেভায় সে mis-leveled।
 
-## Mentoring — the highest-leverage IC work
+## Mentoring — সবচেয়ে বেশি-leverage-এর IC work
 
-A senior SRE who mentors three other engineers ships more reliability than one who fixes more incidents themselves. The patterns:
+যে senior SRE তিনজন অন্য engineer-কে mentor করে সে যে নিজে বেশি incident ফিক্স করে তার চেয়ে বেশি reliability ship করে। Pattern:
 
 ```
 - Pair on real incidents. Run the IC role for them while they observe.
@@ -308,11 +316,11 @@ A senior SRE who mentors three other engineers ships more reliability than one w
 - Give them visibility — let them present the team's work upward.
 ```
 
-Mentoring a junior to the point they can be IC for a Sev-2 takes 6-12 months and is worth more than three years of your own incident heroics.
+একজন junior-কে এই পর্যায়ে mentor করা যেখানে সে একটা Sev-2-র জন্য IC হতে পারে তাতে 6-12 মাস লাগে আর এটা আপনার নিজের তিন বছরের incident heroics-এর চেয়ে বেশি মূল্যবান।
 
-## Cross-team programs Staff+ SRE owns
+## যে cross-team program Staff+ SRE-র মালিক
 
-The work that justifies the level:
+যে কাজ level-টাকে justify করে:
 
 ```
 - Reliability roadmap. What gets us to 99.99%? Where do we stop investing?
@@ -325,11 +333,11 @@ The work that justifies the level:
 - On-call health program. Org-wide page volume, after-hours load, retention.
 ```
 
-Each is a year-long initiative. Each touches every team. None of them are "fix this one outage."
+প্রতিটা একটা year-long initiative। প্রতিটা প্রতিটা team-কে স্পর্শ করে। কোনোটাই "এই একটা outage ফিক্স করো" নয়।
 
-## Reliability metrics for leadership
+## Leadership-এর জন্য reliability metric
 
-The numbers a Staff+ SRE reports to leadership:
+যে সংখ্যাগুলো একজন Staff+ SRE leadership-কে report করে:
 
 ```
 SLO attainment by service             — green/yellow/red. Trend.
@@ -341,11 +349,11 @@ Change failure rate                   — % of deploys triggering rollback.
 Cost per request (or chosen unit)     — per service. Trend.
 ```
 
-Notice what's missing: no "uptime %." That's a vanity metric. SLO attainment is the better one — it captures the _user-relevant_ reliability the team committed to.
+লক্ষ্য করুন কী নেই: কোনো "uptime %" নেই। ওটা একটা vanity metric। SLO attainment ভালোটা — এটা team যে _user-relevant_ reliability-তে committed হয়েছে সেটা ধরে।
 
-## Hiring and team composition
+## Hiring আর team composition
 
-A balanced SRE team has roughly:
+একটা balanced SRE team-এ প্রায়:
 
 ```
 - 1 senior IC who could be staff
@@ -354,7 +362,7 @@ A balanced SRE team has roughly:
 - 1 manager (player-coach in small teams; pure manager past ~6 reports)
 ```
 
-Hiring filters that actually predict success:
+যে hiring filter আসলে success predict করে:
 
 ```
 - Has run a real on-call rotation (not just "I was on a team that did").
@@ -364,22 +372,22 @@ Hiring filters that actually predict success:
 - Has automated themselves out of a job at least once.
 ```
 
-The classic hiring trap: hiring "DevOps" engineers who are really CI/CD engineers, then expecting them to do production reliability. Those are different skills. Be honest with yourself about what you're filling.
+classic hiring ফাঁদ: "DevOps" engineer hire করা যারা আসলে CI/CD engineer, তারপর তাদের কাছ থেকে production reliability আশা করা। ওগুলো ভিন্ন skill। আপনি আসলে কী পূরণ করছেন সে ব্যাপারে নিজের সাথে সৎ থাকুন।
 
-## Common org pitfalls
+## Common org pitfall
 
-1. **No charter, no scope discipline.** SRE absorbs everything operational; can't deliver on anything.
-2. **No production readiness gate.** Bad services land on SRE pagers; SRE burns out.
-3. **Tiny on-call rotations.** 3-person rotations break a person every quarter.
-4. **Postmortems with no action item follow-through.** Same incident next year.
-5. **No senior IC ladder.** Senior SREs leave.
-6. **Punishing the engineer who rolled back.** They're the hero of the story.
-7. **SRE reporting only to engineering.** Without product/leadership exposure, no leverage.
-8. **Toil cap not enforced.** Team becomes ops, slowly.
+1. **কোনো charter নেই, কোনো scope discipline নেই।** SRE সবকিছু operational শুষে নেয়; কিছুতেই deliver করতে পারে না।
+2. **কোনো production readiness gate নেই।** খারাপ service SRE pager-এ পড়ে; SRE burn out হয়।
+3. **ছোট on-call rotation।** 3-জনের rotation প্রতি quarter-এ একজনকে ভাঙে।
+4. **action item follow-through ছাড়া postmortem।** একই incident পরের বছর।
+5. **কোনো senior IC ladder নেই।** Senior SRE-রা চলে যায়।
+6. **যে engineer rollback করল তাকে শাস্তি দেওয়া।** তারা গল্পের নায়ক।
+7. **SRE শুধু engineering-এ report করা।** product/leadership exposure ছাড়া, কোনো leverage নেই।
+8. **Toil cap enforce না করা।** Team ধীরে ধীরে ops হয়ে যায়।
 
-## A real org transformation — one example
+## একটা বাস্তব org transformation — একটা উদাহরণ
 
-A real pattern from a mid-sized SaaS, anonymized:
+একটা mid-sized SaaS থেকে একটা বাস্তব pattern, anonymized:
 
 ```
 Year 0: 80 engineers, 2 "DevOps" engineers, 1 in-prod outage per week.
@@ -399,21 +407,21 @@ Year 3: Platform Eng team owns golden paths: deploy template, observability
         Outages: rare, short, well-postmortemed. SRE team can take vacations.
 ```
 
-Three years to "good." Not because the technology was hard — because culture and structure took that long to land.
+"good"-এ পৌঁছতে তিন বছর। technology কঠিন ছিল বলে নয় — কারণ culture আর structure land হতে ওই সময়টা লাগল।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Will Larson — StaffEng](https://staffeng.com/) and [Irrational Exuberance](https://lethain.com/) — eng org structure
-- [Charity Majors — charity.wtf](https://charity.wtf/) — modern ops culture writing
+- [Will Larson — StaffEng](https://staffeng.com/) আর [Irrational Exuberance](https://lethain.com/) — eng org structure
+- [Charity Majors — charity.wtf](https://charity.wtf/) — আধুনিক ops culture-এর লেখা
 - [Lara Hogan — wherewithall.com](https://larahogan.me/) — engineering management
-- [Google re:Work](https://rework.withgoogle.com/) — team effectiveness research (psych safety, etc.)
+- [Google re:Work](https://rework.withgoogle.com/) — team effectiveness research (psych safety, ইত্যাদি)
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Pick an SRE org shape that fits your stage; revisit annually.**
-2. **A written charter is the floor — without one, scope creep destroys the team.**
-3. **Production Readiness Review is the highest-leverage gate** — it's why product teams improve.
-4. **On-call sustainability is the long-term constraint** — protect rotation size and after-hours load.
-5. **Postmortems are blame-aware, not blameless** — name the system, not the person; track action items.
-6. **Staff+ SRE work is org-wide programs**, not heroic incident response.
-7. **Career ladders for SRE matter** — without them, your seniors leave for SWE.
+1. **আপনার stage-এর সাথে মেলে এমন একটা SRE org আকার বাছুন; বছরে একবার revisit করুন।**
+2. **একটা লিখিত charter হলো floor — একটা ছাড়া, scope creep team ধ্বংস করে।**
+3. **Production Readiness Review হলো সবচেয়ে বেশি-leverage-এর gate** — এই কারণেই product team উন্নত হয়।
+4. **On-call sustainability হলো দীর্ঘমেয়াদী constraint** — rotation size আর after-hours load রক্ষা করুন।
+5. **Postmortem blame-aware, blameless নয়** — system-এর নাম করুন, ব্যক্তির নয়; action item track করুন।
+6. **Staff+ SRE work হলো org-wide program**, heroic incident response নয়।
+7. **SRE-র জন্য career ladder গুরুত্বপূর্ণ** — এগুলো ছাড়া, আপনার senior-রা SWE-র জন্য চলে যায়।

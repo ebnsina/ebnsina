@@ -1,9 +1,9 @@
 ---
-title: 'Distributed Systems Theory for SREs'
-subtitle: 'CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens. The theory that explains why your distributed system breaks the way it does.'
+title: 'SRE-দের জন্য Distributed Systems Theory'
+subtitle: 'CAP, PACELC, FLP, Raft, Paxos, gossip, vector clocks, CRDTs, fencing tokens। যে theory ব্যাখ্যা করে আপনার distributed system কেন যেভাবে ভাঙে সেভাবে ভাঙে।'
 chapter: 15
 level: 'mastery'
-readingTime: '32 min'
+readingTime: '32 মিনিট'
 topics:
   [
     'distributed systems',
@@ -23,21 +23,29 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Coordinating a team spread across time zones — agreement takes longer, partial failures are normal, and you design around them.
+time zone জুড়ে ছড়ানো একটা team coordinate করা — সম্মতি পেতে বেশি সময় লাগে, partial failure স্বাভাবিক, আর আপনি সেগুলোর চারপাশে design করেন।
 
 </Callout>
 
-## Why theory matters at the SRE level
+## গল্পে বুঝি
 
-You can run a single-node service for years without thinking about consensus. The day you add a second region, a leader election, or a read replica, distributed-systems theory stops being academic — it becomes the explanation for every "this can't be happening" outage.
+সমুদ্রের বুকে ছড়ানো কয়েকটা দ্বীপ-শহর মিলে একটাই ফেডারেশন — আল-খোয়ারিজমির দ্বীপ, ইবনে সিনার দ্বীপ, ফাতিমা আল-ফিহরির দ্বীপ, সবাই এক নিয়মে চলতে চায়। কিন্তু দ্বীপগুলোর মধ্যে যোগাযোগ শুধু নৌকায় — চিঠি বয়ে নিয়ে যাওয়া ধীর, অনিশ্চিত নৌকা। এক রাতে ভয়ানক ঝড় উঠল, সব নৌকা বন্ধ। প্রতিটা দ্বীপ এখন একা, বাকিদের খবর জানে না। এখন ফাতিমার কাউন্সিলের সামনে কঠিন প্রশ্ন — নতুন ব্যবসার অনুমতি, জমির দলিল, এসব সিদ্ধান্ত কি নিজেরা নিয়ে ফেলবে যাতে শহর সচল থাকে, নাকি ঝড় থামা পর্যন্ত সব থামিয়ে রাখবে যাতে সব দ্বীপ একই খাতায় থাকে?
 
-This chapter is the working theory a senior SRE references in design reviews and incident retros. It is enough to read papers, argue with vendors about consistency claims, and predict the failure mode of a system before it fails.
+আল-খোয়ারিজমি নিজের দ্বীপে সিদ্ধান্ত নিতেই থাকল — শহর চলল ঠিকই, কিন্তু ঝড় থামার পর দেখা গেল একই জমি সে আর ইবনে সিনা দুজন দুজনকে বেচে দিয়েছে, দুই খাতায় দুই কথা। উল্টোদিকে ফাতিমা সব থামিয়ে বসে রইল — তার খাতা নিখুঁত রইল, কিন্তু ঝড়ের ক'দিন কেউ কোনো কাজ করাতে পারল না। দুজনের কেউই ঝড়ের সময় একসাথে "সবাই একমত" আর "শহর সচল" — দুটোই পেল না। আর পুরনো একটা নিয়ম তারা আগেই শিখেছিল: বড় কোনো সিদ্ধান্ত তখনই পাকা, যখন অর্ধেকের বেশি দ্বীপ রাজি হয়। এক দ্বীপ থেকে বহুদিন কোনো নৌকা না এলে? কেউ জানে না সেটা ঝড়ে ডুবে গেছে, নাকি শুধু নৌকা পায়নি — দুটোই দেখতে হুবহু এক।
 
-## The eight fallacies of distributed computing
+গল্পটাই আসলে **distributed systems theory**। ঝড়ে নৌকা বন্ধ হওয়া = network **partition**; আর partition-এর সময় "নিজেরা সিদ্ধান্ত নিয়ে সচল থাকা নাকি থামিয়ে সবাইকে এক রাখা" — এটাই **CAP**-এর মূল কথা, partition-এ আপনাকে **consistency** আর **availability**-র মধ্যে একটা বাছতেই হবে, দুটো একসাথে পাবেন না। "অর্ধেকের বেশি দ্বীপ রাজি হলে সিদ্ধান্ত পাকা" = **consensus**/**quorum** (majority)। আর ডুবে যাওয়া দ্বীপ আর নৌকাহীন দ্বীপকে আলাদা করতে না পারা = কোনো perfect **failure detector** নেই — slow আর dead-কে নিশ্চিতভাবে আলাদা করা অসম্ভব। বাস্তবে ঠিক এ কারণেই etcd বা ZooKeeper partition-এ minority side-কে read-only করে দেয়, Raft প্রতিটা commit-এ majority-র জন্য অপেক্ষা করে, আর প্রতিটা "node কি মরেছে?" প্রশ্নের উত্তর শেষমেশ একটা timeout-এর অনুমান — নিশ্চয়তা নয়। জ্ঞানী governor-রা এই সীমাগুলোকে অস্বীকার করে না, বরং এগুলোকে ধরে নিয়েই নিয়ম বানায়।
 
-L. Peter Deutsch's classic — every one of these is the cause of a real outage you've shipped:
+## SRE-level-এ theory কেন গুরুত্বপূর্ণ
+
+আপনি consensus নিয়ে না ভেবেই বছরের পর বছর একটা single-node service চালাতে পারেন। যেদিন আপনি দ্বিতীয় একটা region, একটা leader election, বা একটা read replica যোগ করেন, সেদিন distributed-systems theory আর academic থাকে না — এটা প্রতিটা "এটা হতেই পারে না" outage-এর ব্যাখ্যা হয়ে যায়।
+
+এই chapter হলো সেই working theory যা একজন senior SRE design review আর incident retro-তে reference করে। এটা paper পড়া, consistency claim নিয়ে vendor-দের সাথে তর্ক করা, আর একটা system ভাঙার আগেই তার failure mode predict করার জন্য যথেষ্ট।
+
+## Distributed computing-এর আটটা fallacy
+
+L. Peter Deutsch-এর classic — এর প্রতিটাই আপনার ship করা কোনো না কোনো বাস্তব outage-এর কারণ:
 
 ```
 1. The network is reliable.
@@ -50,13 +58,13 @@ L. Peter Deutsch's classic — every one of these is the cause of a real outage 
 8. The network is homogeneous.
 ```
 
-Memorize them. The first three explain ~70% of distributed bugs. Every "we'll just add a retry" decision must be checked against #1 (it can lose your message both ways) and #2 (the retry might race the original).
+মুখস্থ করুন। প্রথম তিনটা ~70% distributed bug ব্যাখ্যা করে। প্রতিটা "আমরা শুধু একটা retry যোগ করব" সিদ্ধান্ত #1 (এটা আপনার message দুই দিকেই হারাতে পারে) আর #2 (retry-টা original-এর সাথে race করতে পারে)-এর বিপরীতে যাচাই করতে হবে।
 
-## CAP — the most misquoted theorem in our industry
+## CAP — আমাদের industry-র সবচেয়ে বেশি ভুল-উদ্ধৃত theorem
 
-Eric Brewer's CAP theorem says: in the presence of a _network Partition_, a system must choose between Consistency and Availability. That's it.
+Eric Brewer-এর CAP theorem বলে: একটা network _Partition_-এর উপস্থিতিতে একটা system-কে Consistency আর Availability-র মধ্যে বাছতে হবে। এটুকুই।
 
-The common misquote: "pick two of three." That's wrong. Networks partition. You don't get to pick "no partition." You get to pick C-or-A _during_ a partition.
+common ভুল-উদ্ধৃতি: "তিনটার মধ্যে দুটো বাছুন।" সেটা ভুল। Network partition হয়। আপনি "no partition" বাছার সুযোগ পান না। আপনি partition-এর _সময়ে_ C-নাকি-A বাছার সুযোগ পান।
 
 ```
 Partition occurs.
@@ -68,18 +76,18 @@ When the partition heals, AP systems must reconcile divergent writes.
 CP systems just resume.
 ```
 
-### Real-world examples
+### বাস্তব উদাহরণ
 
-| System                        | Choice                              | Behavior under partition                                |
-| ----------------------------- | ----------------------------------- | ------------------------------------------------------- |
-| etcd, Consul, ZooKeeper       | CP                                  | Minority side becomes read-only                         |
-| Cassandra, DynamoDB (default) | AP                                  | Both sides accept writes; LWW or merge later            |
-| Postgres (single primary)     | CP                                  | Standby may be promoted; split-brain risk if mishandled |
-| Spanner (TrueTime)            | "CP-ish, with bounded availability" | Refuses writes that can't get a TrueTime quorum         |
+| System                        | Choice                              | Partition-এর সময় behavior                             |
+| ----------------------------- | ----------------------------------- | ------------------------------------------------------ |
+| etcd, Consul, ZooKeeper       | CP                                  | Minority দিক read-only হয়ে যায়                       |
+| Cassandra, DynamoDB (default) | AP                                  | দুই দিকই write নেয়; পরে LWW বা merge                  |
+| Postgres (single primary)     | CP                                  | Standby promote হতে পারে; ভুল সামলালে split-brain risk |
+| Spanner (TrueTime)            | "CP-ish, with bounded availability" | যে write TrueTime quorum পায় না সেটা refuse করে       |
 
-## PACELC — the more useful framework
+## PACELC — আরও কাজের framework
 
-Daniel Abadi's extension. The complete tradeoff is:
+Daniel Abadi-র extension। সম্পূর্ণ tradeoff-টা:
 
 ```
 If a Partition happens:  Choose Availability or Consistency  (the CAP part)
@@ -92,19 +100,19 @@ Example labels:
   Spanner    CP / EC — picks consistency always; pays latency cost.
 ```
 
-PACELC is the more useful framework because most of the time the system _isn't_ partitioned. The latency-vs-consistency choice is the daily one. The CAP choice is the once-a-quarter one.
+PACELC বেশি কাজের framework কারণ বেশিরভাগ সময় system _partitioned নয়_। latency-vs-consistency-র পছন্দটা প্রতিদিনের। CAP পছন্দটা quarter-এ একবারের।
 
-## FLP impossibility — why consensus algorithms have weird timeouts
+## FLP impossibility — কেন consensus algorithm-এর অদ্ভুত timeout থাকে
 
-Fischer-Lynch-Paterson (1985): in a fully asynchronous distributed system, no deterministic consensus algorithm can guarantee both safety and liveness if even one node may crash.
+Fischer-Lynch-Paterson (1985): একটা সম্পূর্ণ asynchronous distributed system-এ, এমনকি একটা node crash করতে পারলেও কোনো deterministic consensus algorithm safety আর liveness দুটোই guarantee করতে পারে না।
 
-Translation: you cannot tell "this node is slow" apart from "this node is dead" without a timeout. Every real consensus protocol (Paxos, Raft, ZAB) breaks this impossibility by adding **partial synchrony assumptions** (eventually messages get through within some delay) and **failure detectors** (timeouts).
+অনুবাদ: timeout ছাড়া আপনি "এই node ধীর"-কে "এই node মৃত" থেকে আলাদা করতে পারবেন না। প্রতিটা বাস্তব consensus protocol (Paxos, Raft, ZAB) এই impossibility-কে **partial synchrony assumption** (শেষমেশ message কোনো delay-এর মধ্যে পৌঁছয়) আর **failure detector** (timeout) যোগ করে ভাঙে।
 
-This is why every Raft cluster has heartbeat timeouts you can tune, and why every "split-brain" incident report mentions clock skew.
+এই কারণেই প্রতিটা Raft cluster-এ tune করার মতো heartbeat timeout থাকে, আর প্রতিটা "split-brain" incident report-এ clock skew উল্লেখ থাকে।
 
-## Consensus — Raft in 2 minutes
+## Consensus — 2 মিনিটে Raft
 
-Raft is the algorithm to learn first. Paxos is older and equivalent in power but harder to implement correctly. Raft is the basis of etcd, Consul, CockroachDB, TiKV.
+Raft হলো প্রথমে শেখার algorithm। Paxos পুরনো আর power-এ সমান কিন্তু সঠিকভাবে implement করা কঠিন। Raft হলো etcd, Consul, CockroachDB, TiKV-র ভিত্তি।
 
 ```
 Roles:        Leader (one), Followers (many), Candidate (briefly).
@@ -127,14 +135,14 @@ Replication:
 Safety guarantee: at most one Leader per term; committed entries never lost.
 ```
 
-### Why this matters for SREs
+### SRE-দের কাছে কেন এটা গুরুত্বপূর্ণ
 
-- **Cluster size = 2f+1.** A 3-node cluster tolerates 1 failure. 5-node tolerates 2. Even-sized clusters give you no extra fault tolerance — a 4-node cluster still tolerates only 1 failure (you need majority = 3 either way) but doubles disagreement risk.
-- **Quorum writes block on the slowest of (f+1) nodes.** A slow disk on one node halves your write latency. Spread your replicas across nodes with similar disk performance.
-- **Geo-distributed Raft is brutal.** Every commit is one round trip to the slowest member of the quorum. Atlanta + Frankfurt + Tokyo = ~150 ms commit latency floor.
-- **Leader pinning.** etcd/CockroachDB let you pin the Raft leader to one region so reads from that region are local. The minority regions pay the WAN cost on writes only.
+- **Cluster size = 2f+1.** একটা 3-node cluster 1টা failure সহ্য করে। 5-node 2টা সহ্য করে। জোড়-সংখ্যার cluster আপনাকে কোনো extra fault tolerance দেয় না — একটা 4-node cluster এখনও মাত্র 1টা failure সহ্য করে (দুই ক্ষেত্রেই majority = 3 লাগে) কিন্তু disagreement risk দ্বিগুণ করে।
+- **Quorum write (f+1) node-এর সবচেয়ে ধীরটার উপর block করে।** এক node-এর একটা slow disk আপনার write latency অর্ধেক করে দেয়। similar disk performance-ওয়ালা node জুড়ে replica ছড়ান।
+- **Geo-distributed Raft নিষ্ঠুর।** প্রতিটা commit quorum-এর সবচেয়ে ধীর member-এ এক round trip। Atlanta + Frankfurt + Tokyo = ~150 ms commit latency floor।
+- **Leader pinning.** etcd/CockroachDB আপনাকে Raft leader এক region-এ pin করতে দেয় যাতে সেই region থেকে read local হয়। minority region-গুলো শুধু write-এ WAN cost দেয়।
 
-### Operational pages around Raft systems
+### Raft system-এর চারপাশে operational page
 
 ```
 - "etcd cluster lost quorum" — usually network partition or 2/3 disks slow.
@@ -145,7 +153,7 @@ Safety guarantee: at most one Leader per term; committed entries never lost.
 
 ## Linearizability vs serializability vs strong consistency
 
-The words mean different things. Conflating them is how you mis-spec consistency.
+শব্দগুলোর মানে ভিন্ন। এগুলো গুলিয়ে ফেলাই হলো consistency mis-spec করার উপায়।
 
 ```
 Linearizability       — single-object real-time order. Each read sees the
@@ -166,9 +174,9 @@ Read Committed        — you only see committed data. (Default in Postgres.)
 Eventual Consistency  — converges if writes stop. No order guarantees.
 ```
 
-The honest framing: 99% of features want Read Committed plus a sticky-write rule for read-after-write UX. The other 1% (financial ledgers, inventory) need Serializable. Knowing which one you're running prevents subtle data bugs.
+সৎ framing: 99% feature-এর Read Committed plus read-after-write UX-এর জন্য একটা sticky-write rule দরকার। বাকি 1% (financial ledger, inventory)-এর Serializable দরকার। আপনি কোনটা চালাচ্ছেন সেটা জানা subtle data bug ঠেকায়।
 
-### Anomalies you should recognize
+### যে anomaly-গুলো আপনার চেনা উচিত
 
 ```
 Dirty read       — read uncommitted data. (Read Committed prevents this.)
@@ -180,7 +188,7 @@ Write skew       — two transactions read disjoint sets, write disjoint sets,
                    but together violate an invariant.
 ```
 
-The "doctors on call" example for write skew:
+write skew-এর "doctors on call" উদাহরণ:
 
 ```sql
 -- Invariant: at least one doctor on call.
@@ -193,11 +201,11 @@ UPDATE oncall SET on_call = false WHERE doctor_id = 1;
 COMMIT;
 ```
 
-Snapshot Isolation does NOT prevent this. SSI does. So does explicit `SELECT ... FOR UPDATE`.
+Snapshot Isolation এটা ঠেকায় না। SSI ঠেকায়। explicit `SELECT ... FOR UPDATE`-ও ঠেকায়।
 
-## Vector clocks — knowing what happened before what
+## Vector clocks — কী কার আগে ঘটেছে জানা
 
-A logical clock for distributed events. Each node keeps a counter for itself and the latest seen counters for every peer. Compare two events:
+distributed event-এর জন্য একটা logical clock। প্রতিটা node নিজের জন্য একটা counter আর প্রতিটা peer-এর সর্বশেষ দেখা counter রাখে। দুটো event তুলনা করুন:
 
 ```
 Event A's vector: { N1: 5, N2: 3, N3: 7 }
@@ -208,13 +216,13 @@ Is B → A?  No: B.N3 (8) > A.N3 (7).
 Conclusion: A and B are concurrent. Application must merge.
 ```
 
-Used by: Riak, Cassandra (sort of), DynamoDB (vector versions internally), Git (sort of — DAG of commits).
+যারা ব্যবহার করে: Riak, Cassandra (অনেকটা), DynamoDB (ভেতরে vector version), Git (অনেকটা — commit-এর DAG)।
 
-The SRE relevance: when you see "vector clocks" in a system's docs, expect to deal with conflict resolution at the application layer. The DB will hand you both versions and ask which wins.
+SRE-প্রাসঙ্গিকতা: যখন একটা system-এর docs-এ "vector clocks" দেখবেন, application layer-এ conflict resolution সামলানোর জন্য প্রস্তুত থাকুন। DB আপনাকে দুটো version হাতে ধরিয়ে জিজ্ঞেস করবে কোনটা জিতবে।
 
-## CRDTs — the conflict-resolution that doesn't ask
+## CRDTs — যে conflict-resolution জিজ্ঞেস করে না
 
-Conflict-free Replicated Data Types: data structures where concurrent updates always merge to the same result, no matter the order. No coordination needed.
+Conflict-free Replicated Data Types: এমন data structure যেখানে concurrent update সবসময় একই result-এ merge হয়, order যাই হোক। কোনো coordination লাগে না।
 
 ```
 G-Counter (grow-only counter):
@@ -230,13 +238,13 @@ OR-Set (observed-remove set):
   Lets you concurrently add and remove the same element correctly.
 ```
 
-Used by: Redis Enterprise (CRDTs across regions), Riak, Riverbed, collaborative editors (Yjs, Automerge).
+যারা ব্যবহার করে: Redis Enterprise (region জুড়ে CRDT), Riak, Riverbed, collaborative editor (Yjs, Automerge)।
 
-The catch: CRDTs constrain your data model. You can't trivially CRDT a relational `JOIN`. The good news: shopping carts, presence states, social graphs, document editing, and KV counters all have natural CRDT representations.
+catch: CRDT আপনার data model-কে constrain করে। আপনি সহজে একটা relational `JOIN`-কে CRDT করতে পারবেন না। ভালো খবর: shopping cart, presence state, social graph, document editing আর KV counter — সবারই natural CRDT representation আছে।
 
-## Gossip — eventual consistency at scale
+## Gossip — স্কেলে eventual consistency
 
-Gossip protocols spread state by random pairwise exchanges. Each node periodically picks a random peer, exchanges state, and merges. After O(log N) rounds, the cluster converges.
+Gossip protocol random pairwise exchange দিয়ে state ছড়ায়। প্রতিটা node পর্যায়ক্রমে একটা random peer বাছে, state exchange করে আর merge করে। O(log N) round-এর পর cluster converge করে।
 
 ```
 Used by:   Cassandra (cluster membership), Consul (gossip layer),
@@ -254,11 +262,11 @@ When you'd choose gossip:
   - Failure detection (Phi-accrual is the clever variant)
 ```
 
-You don't write gossip protocols; you operate them. Symptoms of trouble: nodes "blipping" in and out of the cluster (timeouts too aggressive), or stale state lingering after a node really died (timeouts too loose).
+আপনি gossip protocol লেখেন না; আপনি সেগুলো operate করেন। সমস্যার লক্ষণ: node cluster-এ "blipping" (timeout খুব aggressive), বা একটা node সত্যিই মরে যাওয়ার পরও stale state ঝুলে থাকা (timeout খুব loose)।
 
-## Idempotency, exactly-once, and the lies we tell
+## Idempotency, exactly-once, আর আমাদের বলা মিথ্যাগুলো
 
-"Exactly-once delivery" is a marketing claim. The truth:
+"Exactly-once delivery" একটা marketing claim। সত্যিটা:
 
 ```
 At-most-once   — fire and forget. Message may be lost.
@@ -266,7 +274,7 @@ At-least-once  — retry until ack. Message may be delivered multiple times.
 "Exactly-once" — at-least-once delivery + idempotent receiver = effective once.
 ```
 
-The receiver is doing the work. That's why every queue/event-bus README hammers idempotency:
+receiver-ই কাজটা করছে। এই কারণেই প্রতিটা queue/event-bus README idempotency-তে জোর দেয়:
 
 ```typescript
 // Bad: not idempotent. Retried delivery double-charges.
@@ -282,11 +290,11 @@ async function processOrder(msg) {
 }
 ```
 
-Kafka's "exactly once" is at-least-once delivery + producer transactions + idempotent consumers. It works only inside Kafka. The moment you write to anything else, you own the dedup logic.
+Kafka-র "exactly once" হলো at-least-once delivery + producer transaction + idempotent consumer। এটা শুধু Kafka-র ভেতরে কাজ করে। আপনি যেই মুহূর্তে অন্য কিছুতে write করবেন, dedup logic-এর মালিক আপনি।
 
-## Fencing tokens — preventing the zombie writer
+## Fencing tokens — zombie writer ঠেকানো
 
-The classic Martin Kleppmann example: a process holds a distributed lock, GC pauses for 30 seconds, the lock expires, another process takes over, then the original wakes up and writes anyway. Both think they hold the lock. Data corrupts.
+classic Martin Kleppmann উদাহরণ: একটা process একটা distributed lock ধরে, GC 30 second pause করে, lock expire হয়, আরেকটা process দখল নেয়, তারপর original-টা জেগে ওঠে আর তবুও write করে। দুজনেই ভাবে তারা lock ধরে আছে। Data corrupt হয়।
 
 ```
 Fix: every lock acquisition returns a monotonically increasing token.
@@ -300,11 +308,11 @@ await storage.write({ key, value, token });
 // storage layer: "I've already seen token 23 from process B. Reject 17."
 ```
 
-Used by: Spanner (timestamps as tokens), Chubby, modern S3 conditional writes (`If-Match`), HDFS NameNode generation IDs. If your distributed lock provider doesn't return a fencing token, it isn't safe — period.
+যারা ব্যবহার করে: Spanner (token হিসেবে timestamp), Chubby, আধুনিক S3 conditional write (`If-Match`), HDFS NameNode generation ID। আপনার distributed lock provider যদি fencing token ফেরত না দেয়, সেটা safe না — ব্যস।
 
-## Time and clocks — the silent killer
+## Time আর clocks — নীরব ঘাতক
 
-Server clocks drift. NTP keeps them within ~10–100 ms. Across regions, clock skew can be seconds. Every "ordering by timestamp" assumption you make is suspect.
+Server clock drift করে। NTP এগুলো ~10–100 ms-এর মধ্যে রাখে। region জুড়ে clock skew second হতে পারে। "timestamp দিয়ে ordering"-এর প্রতিটা assumption সন্দেহজনক।
 
 ```
 - "Last writer wins" by wall clock — unsafe across regions.
@@ -318,11 +326,11 @@ Fixes:
     Used by Spanner. The cluster waits out the uncertainty window before committing.
 ```
 
-When you see a system claim "globally consistent timestamps," ask: TrueTime? HLC? Or are they trusting NTP? The answer tells you the failure mode.
+যখন একটা system "globally consistent timestamps" claim করে দেখবেন, জিজ্ঞেস করুন: TrueTime? HLC? নাকি তারা NTP-তে ভরসা করছে? উত্তরটা আপনাকে failure mode বলে দেয়।
 
 ## Coordination-avoidance patterns
 
-Theory in practice. The senior-SRE mantra: **coordination is the enemy of scale.** Whenever you can avoid it, do.
+বাস্তবে theory। senior-SRE mantra: **coordination হলো scale-এর শত্রু।** যেখানেই এড়াতে পারেন, এড়ান।
 
 ```
 - Sharded counters instead of locking a single row.
@@ -333,13 +341,13 @@ Theory in practice. The senior-SRE mantra: **coordination is the enemy of scale.
 - Read-your-writes via session stickiness instead of synchronous replication.
 ```
 
-The two-line rule: every time you find yourself adding a lock, ask "can I make this commutative or idempotent instead?" If yes, do that instead.
+দুই লাইনের নিয়ম: যখনই নিজেকে একটা lock যোগ করতে দেখবেন, জিজ্ঞেস করুন "এর বদলে কি এটাকে commutative বা idempotent করা যায়?" যদি হ্যাঁ, সেটাই করুন।
 
-## Partial failure — the defining feature of distsys
+## Partial failure — distsys-এর সংজ্ঞায়ক বৈশিষ্ট্য
 
-In a single-node system, things work or they don't. In a distributed system, half the dependencies are up and half are down, and the half that's up doesn't always know which is which.
+একটা single-node system-এ জিনিস হয় কাজ করে নয়তো করে না। একটা distributed system-এ অর্ধেক dependency up আর অর্ধেক down, আর যে অর্ধেক up সেটা সবসময় জানে না কোনটা কোনটা।
 
-The patterns that contain partial failure:
+যে pattern-গুলো partial failure contain করে:
 
 ```
 - Timeouts on every RPC. No exceptions. (No timeout = crash later.)
@@ -353,11 +361,11 @@ The patterns that contain partial failure:
   requests pile up.
 ```
 
-These patterns are why senior teams write "Bulkhead" and "CircuitBreaker" in design docs as nouns, not verbs.
+এই pattern-গুলোর জন্যই senior team design doc-এ "Bulkhead" আর "CircuitBreaker" noun হিসেবে লেখে, verb হিসেবে নয়।
 
-## Papers worth a careful read (in order)
+## যত্ন করে পড়ার মতো paper (ক্রম অনুযায়ী)
 
-The reading list a senior SRE has actually read, not just heard of:
+একজন senior SRE যে reading list আসলে পড়েছে, শুধু নাম শোনেনি:
 
 ```
 1. "Time, Clocks, and the Ordering of Events"     — Lamport, 1978
@@ -372,31 +380,31 @@ The reading list a senior SRE has actually read, not just heard of:
 10. "Jepsen reports"                              — Aphyr.com
 ```
 
-The Jepsen reports are required reading — they're the field's empirical reality check. Many vendors quietly fixed bugs after a Jepsen test embarrassed them.
+Jepsen report-গুলো অবশ্যপাঠ্য — এগুলো field-এর empirical reality check। Jepsen test একটা vendor-কে লজ্জা দেওয়ার পর অনেকে নীরবে bug ফিক্স করেছে।
 
-## Common SRE-level theory mistakes
+## SRE-level-এর common theory ভুল
 
-1. **Treating CAP as a static label** instead of a behavior during partition.
-2. **Assuming network is reliable + latency is zero** in any retry/timeout policy.
-3. **"We're using Kafka, so exactly-once."** Only inside Kafka. Outside, you dedupe.
-4. **Replacing Raft with custom leader election** because "we know our system." This goes badly. Use etcd.
-5. **Trusting wall-clock ordering across regions.** Use logical or hybrid clocks.
-6. **Locks without fencing tokens.** Single line, infinite trouble.
-7. **Synchronous replication "for safety"** without realizing it doubles your tail latency.
+1. **CAP-কে একটা static label হিসেবে treat করা** partition-এর সময় একটা behavior-এর বদলে।
+2. **যেকোনো retry/timeout policy-তে ধরে নেওয়া network reliable + latency zero।**
+3. **"আমরা Kafka ব্যবহার করছি, তাই exactly-once।"** শুধু Kafka-র ভেতরে। বাইরে, আপনি dedupe করেন।
+4. **"আমরা আমাদের system চিনি" বলে Raft-কে custom leader election দিয়ে replace করা।** এটা খারাপ হয়। etcd ব্যবহার করুন।
+5. **region জুড়ে wall-clock ordering-এ ভরসা করা।** logical বা hybrid clock ব্যবহার করুন।
+6. **fencing token ছাড়া lock।** এক লাইন, অসীম ঝামেলা।
+7. **"safety-র জন্য" synchronous replication** — না বুঝে যে এটা আপনার tail latency দ্বিগুণ করে।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Papers We Love](https://paperswelove.org/) — curated systems papers + talks
-- [The Morning Paper archive (Adrian Colyer)](https://blog.acolyer.org/) — paper-a-day summaries
+- [Papers We Love](https://paperswelove.org/) — curated systems paper + talk
+- [The Morning Paper archive (Adrian Colyer)](https://blog.acolyer.org/) — paper-a-day summary
 - [Aphyr — Jepsen](https://jepsen.io/analyses) — adversarial distributed-systems testing
 - [Murat Demirbas — Metadata](https://muratbuffalo.blogspot.com/) — distsys research blog
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **CAP is about behavior during partition; PACELC adds the daily tradeoff.**
-2. **FLP says you can't tell slow from dead** — every consensus protocol uses timeouts as a workaround.
-3. **Raft is the consensus algorithm to know first**, and `2f+1` is the cluster sizing rule.
-4. **Linearizability ≠ serializability ≠ snapshot isolation** — pick the one your feature actually needs.
-5. **Idempotency is the only real "exactly once"** — design receivers, not pipes.
-6. **Fencing tokens are the only safe distributed locks.**
-7. **Clocks lie; use logical, hybrid, or TrueTime when ordering matters.**
+1. **CAP হলো partition-এর সময় behavior নিয়ে; PACELC প্রতিদিনের tradeoff যোগ করে।**
+2. **FLP বলে আপনি slow-কে dead থেকে আলাদা করতে পারবেন না** — প্রতিটা consensus protocol workaround হিসেবে timeout ব্যবহার করে।
+3. **Raft হলো প্রথমে জানার consensus algorithm**, আর `2f+1` হলো cluster sizing rule।
+4. **Linearizability ≠ serializability ≠ snapshot isolation** — আপনার feature-এর আসলে যেটা লাগে সেটা বাছুন।
+5. **Idempotency-ই একমাত্র আসল "exactly once"** — pipe নয়, receiver design করুন।
+6. **Fencing token-ই একমাত্র safe distributed lock।**
+7. **Clock মিথ্যা বলে; ordering গুরুত্বপূর্ণ হলে logical, hybrid বা TrueTime ব্যবহার করুন।**

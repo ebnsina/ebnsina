@@ -1,19 +1,19 @@
 ---
-title: 'API Security Testing'
-subtitle: 'REST and GraphQL attack techniques, broken authentication, mass assignment, rate limiting bypass, BOLA/BFLA, and automated API scanning.'
+title: 'API সিকিউরিটি টেস্টিং'
+subtitle: 'REST এবং GraphQL অ্যাটাক টেকনিক, ব্রোকেন অথেন্টিকেশন, মাস অ্যাসাইনমেন্ট, রেট লিমিটিং বাইপাস, BOLA/BFLA, এবং অটোমেটেড API স্ক্যানিং।'
 chapter: 23
 level: 'intermediate'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics:
   [
-    'API security',
+    'API সিকিউরিটি',
     'REST API',
     'GraphQL',
     'BOLA',
     'BFLA',
-    'mass assignment',
+    'মাস অ্যাসাইনমেন্ট',
     'JWT',
-    'API testing',
+    'API টেস্টিং',
     'OWASP API Top 10'
   ]
 ---
@@ -22,11 +22,19 @@ topics:
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+সরকারি রেকর্ড অফিসের সার্ভিস উইন্ডোতে বসে থাকা কেরানিটা একটু বেখেয়ালি। ফাতিমা আল-ফিহরি জানালার সামনে গিয়ে বলল, "ফাইল নম্বর ১২৪ দিন।" কেরানি নম্বরটা শুনেই তাক থেকে ফাইলটা টেনে হাতে ধরিয়ে দিল — একবারও জিজ্ঞেস করল না ফাইলটা আসলে ফাতিমার নিজের কিনা। ফাতিমা তখন কৌতূহলে বলল, "১২৩ নম্বরটাও দিন তো।" কেরানি সেটাও দিয়ে দিল — অথচ ১২৩ নম্বর ফাইলটা তো ইবনে সিনার, সম্পূর্ণ অচেনা একজনের। শুধু নম্বর বদলে দিয়েই ফাতিমা অন্য কারও ফাইল হাতে পেয়ে গেল।
+
+তার উপর ফাতিমা শুধু একটা ঠিকানা জানতে চেয়েছিল, কিন্তু কেরানি পুরো মোটা ফাইলটাই ধরিয়ে দিল — ভেতরে চিকিৎসার কাগজ, ব্যাংকের হিসাব, সব ব্যক্তিগত পাতা একসাথে। আবার আল-খোয়ারিজমি জানালার সামনে দাঁড়িয়ে থামা ছাড়া একের পর এক হাজারটা ফাইল নম্বর বলে যাচ্ছিল, আর কেরানি বিরতিহীনভাবে প্রতিটার জবাব দিয়ে যাচ্ছিল — একবারও থামিয়ে বলল না "একটু আস্তে, ভাই।"
+
+এই গল্পটাই আসলে **API security**-র মূল সমস্যাগুলো। নম্বর যাচাই না করে যেকোনো ফাইল ধরিয়ে দেওয়াটা হলো **broken object-level authorization** (API-তে যাকে IDOR বলে) — সমাধান হলো প্রতিটা রিকোয়েস্টে যাচাই করা যে জিনিসটা আসলেই এই ইউজারের (enforce ownership per request)। শুধু ঠিকানা চাইলেও পুরো ফাইল দিয়ে দেওয়া হলো **excessive data exposure** — সমাধান হলো শুধু যেটুকু দরকার ঠিক সেই field-টুকুই ফেরত দেওয়া (minimal fields)। আর না থামিয়ে হাজারটা রিকোয়েস্টের জবাব দেওয়াটা হলো **missing rate limit** — সমাধান হলো প্রতি ইউজারে রিকোয়েস্টের সংখ্যা বেঁধে দেওয়া (rate-limit)। বাস্তবে এই তিনটাই **OWASP API Security Top 10**-এর শীর্ষ ঝুঁকি (API1, API3, API4), আর প্রায় প্রতিটা বড় ডেটা ফাঁসের পেছনে এই সাধারণ ভুলগুলোই দায়ী।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব-জীবনের উপমা**
 
-APIs are the back doors that power every mobile app, SPA, and integration. They're often built fast, tested for functionality but not security, and exposed directly to the internet — making them the richest attack surface in modern applications.
+API হলো সেই পেছনের দরজা যা প্রতিটি মোবাইল অ্যাপ, SPA, এবং ইন্টিগ্রেশনকে চালায়। এগুলো প্রায়ই দ্রুত বানানো হয়, ফাংশনালিটির জন্য টেস্ট করা হয় কিন্তু সিকিউরিটির জন্য নয়, এবং সরাসরি ইন্টারনেটে এক্সপোজড থাকে — যার ফলে আধুনিক অ্যাপ্লিকেশনগুলোর মধ্যে এটাই সবচেয়ে সমৃদ্ধ অ্যাটাক সারফেস।
 
 </Callout>
 
@@ -45,7 +53,7 @@ API9  Improper Inventory Management           → shadow APIs, deprecated versio
 API10 Unsafe Consumption of APIs              → trusting third-party API responses
 ```
 
-## API Discovery
+## API ডিসকভারি
 
 ```bash
 # Find API endpoints — most important first step
@@ -73,7 +81,7 @@ ffuf -u https://target.com/api/FUZZ -w api-endpoints.txt -mc 200,201,204,301,302
 
 ## BOLA (Broken Object Level Authorization)
 
-The most common API vulnerability. Also called IDOR in APIs.
+সবচেয়ে কমন API ভালনারেবিলিটি। API-তে একে IDOR-ও বলা হয়।
 
 ```bash
 # Find your own resource ID
@@ -125,9 +133,9 @@ done
 # Capture 10 tokens, analyze entropy
 ```
 
-## Mass Assignment
+## মাস অ্যাসাইনমেন্ট
 
-APIs that auto-bind request body to database models:
+যেসব API রিকোয়েস্ট বডিকে সরাসরি ডাটাবেস মডেলের সাথে অটো-বাইন্ড করে:
 
 ```bash
 # Vulnerable code (Node.js):
@@ -153,7 +161,7 @@ PUT /api/v1/users/profile
 # Also try: GET /api/users/1 vs PUT /api/users/1 — update only shows subset?
 ```
 
-## GraphQL Security
+## GraphQL সিকিউরিটি
 
 ```bash
 # Introspection — discover all types, queries, mutations
@@ -189,7 +197,7 @@ curl -X POST https://api.target.com/graphql \
 {"mutation": "{ updateUser(id: 2, role: \"admin\") { id role } }"}
 ```
 
-## Automated API Testing
+## অটোমেটেড API টেস্টিং
 
 ```bash
 # Nuclei — fast template-based scanner
@@ -212,7 +220,7 @@ python3 arjun.py -u https://api.target.com/v1/search
 # Tests thousands of parameter names → finds hidden ones
 ```
 
-## API Security Testing Checklist
+## API সিকিউরিটি টেস্টিং চেকলিস্ট
 
 ```markdown
 ## Authentication
@@ -251,7 +259,7 @@ python3 arjun.py -u https://api.target.com/v1/search
 
 ## Real Project: OWASP crAPI
 
-crAPI (Completely Ridiculous API) — intentionally vulnerable API:
+crAPI (Completely Ridiculous API) — ইচ্ছাকৃতভাবে ভালনারেবল বানানো একটি API:
 
 ```bash
 # Run locally with Docker

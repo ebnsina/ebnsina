@@ -1,9 +1,9 @@
 ---
-title: 'gRPC & Protocol Buffers'
-subtitle: 'Build high-performance APIs with gRPC — Protocol Buffers, service definitions, streaming, and when to choose gRPC over REST.'
+title: 'gRPC ও Protocol Buffers'
+subtitle: 'gRPC দিয়ে হাই-পারফরম্যান্স API বানান — Protocol Buffers, service definition, streaming, আর কখন REST-এর বদলে gRPC বেছে নেবেন।'
 chapter: 7
 level: 'advanced'
-readingTime: '14 min'
+readingTime: '14 মিনিট'
 topics: ['gRPC', 'Protocol Buffers', 'protobuf', 'streaming', 'service definitions']
 ---
 
@@ -11,21 +11,29 @@ topics: ['gRPC', 'Protocol Buffers', 'protobuf', 'streaming', 'service definitio
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What is gRPC?
+## গল্পে বুঝি
 
-gRPC (gRPC Remote Procedure Call) is a high-performance RPC framework created by Google. It uses HTTP/2 for transport, Protocol Buffers for serialization, and provides features like streaming, deadlines, and load balancing out of the box.
+ইবনে সিনার একটা কুরিয়ার কোম্পানির দুটো ব্রাঞ্চ অফিস — একটা ঢাকায়, একটা চট্টগ্রামে। আগে দুই অফিসের কর্মীরা নিজেদের মধ্যে খবর পাঠাতে লম্বা হাতে-লেখা চিঠি লিখত: "আজ ঢাকা থেকে চট্টগ্রামের গুদামে ৫০টা প্যাকেট গেছে, ওজন এত, গাড়ির নম্বর এই, ডেলিভারির তারিখ এই।" চিঠিগুলো মোটা, লিখতে সময় লাগে, খামে ভরে পাঠাতে হয়, আর হাতের লেখা এদিক-ওদিক হলে অন্য পাশে পড়তে ভুল হয়ে যায়। সোজা কথা — বড়, ধীর, আর ভুল বোঝার সুযোগ বেশি।
+
+তারপর ইবনে সিনা একটা বুদ্ধি বের করল। দুই অফিসকে সে একটা এক রকমের সাংকেতিক কোডবই (codebook) ধরিয়ে দিল — দুই পাশেই হুবহু একই বই। এখন গোটা একটা বাক্য না লিখে শুধু একটা ছোট কোড লেখা স্লিপ পাঠালেই চলে: "K7-42" মানেই কোডবই অনুযায়ী "৫০টা প্যাকেট, স্ট্যান্ডার্ড ওজন, রুট ৭, গাড়ি ৪২"। যেহেতু দুই পাশেরই একদম একই কোডবই, তাই কোডটা খুলতে কোনো ঝামেলা বা ভুল বোঝাবুঝি নেই — আর স্লিপটা এত ছোট যে চিঠির বদলে চোখের পলকে চলে যায়।
+
+এই কোডবইটাই হলো **protobuf**-এর শেয়ার্ড schema বা **contract**, আর ছোট কোড-স্লিপটাই হলো compact **binary** message — লম্বা JSON/text চিঠির বদলে অনেক ছোট আর দ্রুত। দুই পাশে আগে থেকে একই contract থাকায় ডেটা পড়তে কোনো দ্বিধা নেই, আর কোড-জেনারেট করা stub দিয়ে সেই কোডবই দুই অফিসেই এক থাকে। বাস্তবে এভাবেই **gRPC** দিয়ে ভেতরের microservice-গুলো নিজেদের মধ্যে কথা বলে — যেখানে দুটো সার্ভিসই আগে থেকে একই `.proto` contract জানে, সেখানে service-to-service কল দ্রুত, ছোট আর নির্ভুল হয়।
+
+## gRPC কী?
+
+gRPC (gRPC Remote Procedure Call) হলো Google-এর তৈরি একটি হাই-পারফরম্যান্স RPC ফ্রেমওয়ার্ক। এটা transport-এর জন্য HTTP/2, serialization-এর জন্য Protocol Buffers ব্যবহার করে, আর streaming, deadline, load balancing-এর মতো ফিচার আগে থেকেই দেয়।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like internal radio communication at a warehouse — fast, compact, efficient protocol between workers who know the codes. Not meant for talking to customers, but perfect for internal coordination.
+একটা গুদামে ভেতরের রেডিও যোগাযোগের মতো — কোড জানা কর্মীদের মধ্যে দ্রুত, কম্প্যাক্ট, দক্ষ protocol। কাস্টমারের সাথে কথা বলার জন্য নয়, কিন্তু ভেতরের সমন্বয়ের জন্য নিখুঁত।
 
 </Callout>
 
 ## Protocol Buffers
 
-Protocol Buffers (protobuf) is a language-neutral serialization format. You define your data structure in a `.proto` file, and the protobuf compiler generates code for your language.
+Protocol Buffers (protobuf) হলো একটি language-neutral serialization format। আপনি একটি `.proto` ফাইলে আপনার ডেটা স্ট্রাকচার সংজ্ঞায়িত করেন, আর protobuf compiler আপনার language-এর জন্য কোড generate করে।
 
 ```protobuf
 // user.proto
@@ -82,7 +90,7 @@ message ListUsersResponse {
 }
 ```
 
-### Why Protobuf Over JSON?
+### JSON-এর বদলে Protobuf কেন?
 
 ```typescript
 // JSON (human readable, larger)
@@ -101,18 +109,18 @@ message ListUsersResponse {
 // Also: strict typing, no parsing ambiguity, faster serialization
 ```
 
-| Feature          | JSON                   | Protobuf               |
-| ---------------- | ---------------------- | ---------------------- |
-| Format           | Text                   | Binary                 |
-| Size             | Larger                 | 3-10x smaller          |
-| Parse speed      | Slower                 | 5-100x faster          |
-| Schema           | Optional (JSON Schema) | Required (.proto)      |
-| Human readable   | Yes                    | No                     |
-| Language support | Universal              | Code generation needed |
+| বৈশিষ্ট্য        | JSON                 | Protobuf              |
+| ---------------- | -------------------- | --------------------- |
+| Format           | Text                 | Binary                |
+| Size             | বড়                  | 3-10x ছোট             |
+| Parse speed      | ধীর                  | 5-100x দ্রুত          |
+| Schema           | ঐচ্ছিক (JSON Schema) | আবশ্যক (.proto)       |
+| Human readable   | হ্যাঁ                | না                    |
+| Language support | সর্বজনীন             | code generation দরকার |
 
-## Service Definitions
+## Service Definition
 
-gRPC services are defined in the `.proto` file:
+gRPC service `.proto` ফাইলে সংজ্ঞায়িত করা হয়:
 
 ```protobuf
 // user_service.proto
@@ -149,7 +157,7 @@ message ChatMessage {
 }
 ```
 
-## Implementing a gRPC Server
+## একটি gRPC Server ইমপ্লিমেন্ট করা
 
 ```typescript
 import * as grpc from '@grpc/grpc-js';
@@ -259,7 +267,7 @@ server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), (err,
 });
 ```
 
-## Implementing a gRPC Client
+## একটি gRPC Client ইমপ্লিমেন্ট করা
 
 ```typescript
 import * as grpc from '@grpc/grpc-js';
@@ -311,9 +319,9 @@ async function uploadUsers(users: CreateUserRequest[]): Promise<UploadUsersRespo
 }
 ```
 
-## gRPC Status Codes
+## gRPC Status Code
 
-gRPC has its own status code system:
+gRPC-এর নিজস্ব status code সিস্টেম আছে:
 
 ```typescript
 // gRPC status codes (not HTTP status codes)
@@ -342,45 +350,45 @@ client.getUser({ id: '42' }, { deadline }, (err, response) => {
 
 <Callout type="tip">
 
-**gRPC Best Practices**
+**gRPC Best Practice**
 
-- Always set **deadlines** on client calls to prevent hanging requests
-- Use **server streaming** for large result sets instead of pagination
-- Use **interceptors** (middleware) for logging, auth, and metrics
-- Keep messages small — gRPC has a default 4MB message size limit
-- Use **health checks** (`grpc.health.v1.Health`) for load balancer integration
+- hang হয়ে থাকা request ঠেকাতে client call-এ সবসময় **deadline** সেট করুন
+- বড় result set-এর জন্য pagination-এর বদলে **server streaming** ব্যবহার করুন
+- logging, auth, আর metrics-এর জন্য **interceptor** (middleware) ব্যবহার করুন
+- message ছোট রাখুন — gRPC-তে ডিফল্ট 4MB message সাইজ লিমিট আছে
+- load balancer ইন্টিগ্রেশনের জন্য **health check** (`grpc.health.v1.Health`) ব্যবহার করুন
 
 </Callout>
 
-## When to Use gRPC vs REST
+## কখন gRPC বনাম REST ব্যবহার করবেন
 
-| Use Case                     | gRPC                  | REST            |
-| ---------------------------- | --------------------- | --------------- |
-| Microservice-to-microservice | Excellent             | Good            |
-| Browser clients              | Limited (needs proxy) | Native          |
-| Mobile clients               | Good (with libraries) | Native          |
-| Real-time streaming          | Built-in              | Needs WebSocket |
-| Public API                   | Poor                  | Excellent       |
-| Performance-critical         | Best                  | Good            |
-| Human debugging              | Hard (binary)         | Easy (JSON)     |
+| Use Case                     | gRPC                   | REST            |
+| ---------------------------- | ---------------------- | --------------- |
+| Microservice-to-microservice | চমৎকার                 | ভালো            |
+| Browser client               | সীমিত (proxy দরকার)    | Native          |
+| Mobile client                | ভালো (লাইব্রেরি দিয়ে) | Native          |
+| Real-time streaming          | বিল্ট-ইন               | WebSocket দরকার |
+| Public API                   | দুর্বল                 | চমৎকার          |
+| Performance-critical         | সেরা                   | ভালো            |
+| Human debugging              | কঠিন (binary)          | সহজ (JSON)      |
 
 <Callout type="warning">
 
-**gRPC Limitations**
+**gRPC-এর সীমাবদ্ধতা**
 
-- Not natively supported in browsers — you need a gRPC-Web proxy (like Envoy)
-- Binary format is hard to debug without tooling
-- Less ecosystem support than REST for API gateways, documentation, and monitoring
-- Requires code generation step in your build pipeline
-- Not ideal for public-facing APIs where developers expect REST/JSON
+- browser-এ native সাপোর্ট নেই — আপনার একটি gRPC-Web proxy দরকার (যেমন Envoy)
+- binary format tooling ছাড়া ডিবাগ করা কঠিন
+- API gateway, documentation, আর monitoring-এর জন্য REST-এর তুলনায় কম ইকোসিস্টেম সাপোর্ট
+- আপনার build pipeline-এ একটি code generation ধাপ দরকার
+- public-facing API-এর জন্য আদর্শ নয়, যেখানে ডেভেলপাররা REST/JSON আশা করে
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **gRPC uses HTTP/2 + Protobuf** for high-performance, typed, binary communication
-2. **Protocol Buffers** provide schema-first, compact serialization — 3-10x smaller than JSON
-3. **Four RPC types**: unary, server streaming, client streaming, bidirectional streaming
-4. **Use gRPC for internal services** where performance and type safety matter
-5. **Use REST for public APIs** where developer experience and browser support matter
-6. **Always set deadlines** and handle gRPC status codes properly
+1. **gRPC HTTP/2 + Protobuf ব্যবহার করে** হাই-পারফরম্যান্স, typed, binary যোগাযোগের জন্য
+2. **Protocol Buffers** schema-first, কম্প্যাক্ট serialization দেয় — JSON-এর চেয়ে 3-10x ছোট
+3. **চার ধরনের RPC**: unary, server streaming, client streaming, bidirectional streaming
+4. যেখানে performance আর type safety গুরুত্বপূর্ণ সেই **internal service-এর জন্য gRPC ব্যবহার করুন**
+5. যেখানে developer experience আর browser সাপোর্ট গুরুত্বপূর্ণ সেই **public API-এর জন্য REST ব্যবহার করুন**
+6. **সবসময় deadline সেট করুন** আর gRPC status code ঠিকভাবে সামলান

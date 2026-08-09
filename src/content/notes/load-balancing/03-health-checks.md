@@ -1,9 +1,9 @@
 ---
 title: 'Health Checks'
-subtitle: 'Active vs passive detection, failure thresholds, graceful draining — keeping dead backends out of rotation.'
+subtitle: 'Active vs passive detection, failure threshold, graceful draining — মৃত backend-গুলোকে rotation-এর বাইরে রাখা।'
 chapter: 3
 level: 'beginner'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics: ['health checks', 'HAProxy', 'nginx', 'active', 'passive', 'connection draining']
 ---
 
@@ -11,17 +11,25 @@ topics: ['health checks', 'HAProxy', 'nginx', 'active', 'passive', 'connection d
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরির একটা বড় কাপড় সেলাইয়ের কারখানা, লম্বা লাইনে সারি সারি কারিগর বসে কাজ করছে। ফাতিমা নিজে supervisor — তার একটাই দায়িত্ব, লাইনটা যেন কখনো থমকে না যায়। প্রতি কয়েক মিনিট পরপর সে লাইন ধরে হেঁটে যায় আর প্রতিটা কারিগরকে জিজ্ঞেস করে, "সব ঠিক আছে? একটা শেষ করা টুকরো দেখাও তো।" কেউ যদি সাড়া দিতে না পারে বা টুকরোটা এগিয়ে দিতে না পারে, ফাতিমা তাকে সঙ্গে সঙ্গে লাইন থেকে সরিয়ে দেয় — তার কাজ বাকিদের মধ্যে ভাগ করে দেয়।
+
+কিন্তু ফাতিমা শুধু জিজ্ঞেস করেই থেমে থাকে না। কাজ করতে করতে সে আসল output-এর দিকেও চোখ রাখে। কোনো একজন কারিগর যদি একের পর এক বাতিল হওয়া, এলোমেলো সেলাই বের করতে থাকে, ফাতিমা কিছু না বলেই চুপচাপ তার কাজটা অন্য কারো হাতে তুলে দেয়। আর যাকে সরিয়ে দেওয়া হয়েছিল সে যখন আবার সুস্থ হয়ে ভালো টুকরো দেখাতে পারে, ফাতিমা তাকে আবার লাইনে ফিরিয়ে আনে।
+
+গল্পটাই আসলে **health check**। ফাতিমা হলো **load balancer**, প্রতিটা কারিগর একটা **backend**। প্রতি কয়েক মিনিটে "সব ঠিক আছে?" জিজ্ঞেস করাটা হলো **active** health check — LB নিজে থেকে একটা health endpoint-এ probe পাঠায়। আর কাজের মধ্যে বাতিল টুকরো খেয়াল করাটা হলো **passive** health check — আসল request ব্যর্থ হচ্ছে দেখে ধরা। যে কারিগর সাড়া দিতে পারে না বা reject বের করে তাকে লাইন থেকে সরানো মানে backend-টাকে **rotation** থেকে বাদ দেওয়া, আর সুস্থ হওয়ার পর ফিরিয়ে আনা মানে আবার rotation-এ যোগ করা। বাস্তবে HAProxy বা nginx ঠিক এই দুটো উপায়েই মৃত backend চিনে সরিয়ে রাখে — active probe ধীর অবনতি ধরে, passive detection হঠাৎ failure ধরে।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A hospital triage system: a nurse periodically checks each room to see if the patient is stable (active checks). But the nurse also notices immediately if a patient codes while being treated (passive detection). You need both — scheduled checks catch slow degradation, real-time observation catches sudden failures.
+একটা হাসপাতালের triage system: একজন নার্স নিয়মিত প্রতিটা room চেক করে দেখে রোগী stable আছে কিনা (active check)। কিন্তু নার্স তখনই সঙ্গে সঙ্গে খেয়াল করে যদি চিকিৎসা চলাকালীন কোনো রোগীর অবস্থা খারাপ হয় (passive detection)। আপনার দুটোই দরকার — নির্ধারিত check ধীর অবনতি ধরে, real-time observation হঠাৎ failure ধরে।
 
 </Callout>
 
 ## Passive Health Checks
 
-Passive checks detect failure by watching live request outcomes. If a backend returns errors or times out, the LB marks it down.
+Passive check live request-এর ফলাফল দেখে failure শনাক্ত করে। কোনো backend error দিলে বা timeout হলে, LB সেটাকে down মার্ক করে।
 
 **nginx:**
 
@@ -32,14 +40,14 @@ upstream backend {
 }
 ```
 
-- `max_fails=3` — mark server down after 3 failures within `fail_timeout`
-- `fail_timeout=30s` — window for counting failures AND how long the server stays down before retry
+- `max_fails=3` — `fail_timeout`-এর মধ্যে 3 বার failure হলে server down মার্ক করে
+- `fail_timeout=30s` — failure গোনার window এবং retry করার আগে server কতক্ষণ down থাকে
 
-**The limitation:** passive checks require real traffic to detect failure. A server that goes down between requests isn't detected until a user hits it and gets an error. The user's request fails.
+**সীমাবদ্ধতা:** passive check-এর failure ধরতে আসল traffic দরকার। দুই request-এর মাঝখানে যে server down হয়ে যায় সেটা ততক্ষণ ধরা পড়ে না যতক্ষণ না কোনো user সেটাতে hit করে error পায়। User-এর request ব্যর্থ হয়।
 
 ## Active Health Checks
 
-The LB sends synthetic requests to each backend on a schedule, independent of real traffic. Failed backends are removed before real requests reach them.
+LB একটা schedule অনুযায়ী প্রতিটা backend-এ synthetic request পাঠায়, আসল traffic থেকে স্বাধীনভাবে। ব্যর্থ backend-গুলো আসল request পৌঁছানোর আগেই সরিয়ে ফেলা হয়।
 
 **nginx Plus** (commercial) active health check:
 
@@ -58,7 +66,7 @@ server {
 }
 ```
 
-**HAProxy** (active checks built into open source):
+**HAProxy** (open source-এ active check built-in):
 
 ```
 backend api_servers
@@ -68,15 +76,15 @@ backend api_servers
     server s2 10.0.0.11:3000 check inter 10s fall 3 rise 2
 ```
 
-Parameters:
+Parameter:
 
-- `inter 10s` — check every 10 seconds
-- `fall 3` — mark down after 3 consecutive failures
-- `rise 2` — mark up after 2 consecutive successes (prevents flapping)
+- `inter 10s` — প্রতি 10 সেকেন্ডে check
+- `fall 3` — টানা 3 বার failure-এর পর down মার্ক
+- `rise 2` — টানা 2 বার success-এর পর up মার্ক (flapping প্রতিরোধ করে)
 
-## The Health Endpoint
+## Health Endpoint
 
-The backend must expose a `/health` endpoint the LB can call:
+Backend-কে একটা `/health` endpoint expose করতে হবে যেটা LB কল করতে পারে:
 
 ```typescript
 // Express
@@ -85,7 +93,7 @@ app.get('/health', (req, res) => {
 });
 ```
 
-A basic `/health` that always returns 200 only catches process crashes. A useful health check verifies the dependencies the server needs:
+একটা basic `/health` যেটা সবসময় 200 return করে সেটা শুধু process crash ধরে। কাজের একটা health check server-এর দরকারি dependency-গুলো যাচাই করে:
 
 ```typescript
 app.get('/health', async (req, res) => {
@@ -99,9 +107,9 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-503 signals the LB to remove this server from rotation. The LB doesn't parse the JSON — it just looks at the HTTP status code.
+503 LB-কে সংকেত দেয় এই server-কে rotation থেকে সরিয়ে ফেলতে। LB JSON parse করে না — সে শুধু HTTP status code দেখে।
 
-**Be careful:** if the database goes down and all servers return 503, the LB removes all backends. That's usually correct (the app is broken) but plan for it — some teams split health into `liveness` (is the process alive?) and `readiness` (can it serve traffic?) and configure the LB to use readiness.
+**সাবধান:** database down হলে আর সব server 503 দিলে, LB সব backend সরিয়ে ফেলে। এটা সাধারণত সঠিক (app-টা ভাঙা) কিন্তু এর জন্য পরিকল্পনা রাখুন — কিছু team health-কে `liveness`-এ (process কি বেঁচে আছে?) আর `readiness`-এ (এটা কি traffic serve করতে পারে?) ভাগ করে আর LB-কে readiness ব্যবহার করতে configure করে।
 
 ```typescript
 // /health/live — always 200 while process is up
@@ -118,11 +126,11 @@ app.get('/health/ready', async (req, res) => {
 });
 ```
 
-Configure LB to use `/health/ready`.
+LB-কে `/health/ready` ব্যবহার করতে configure করুন।
 
 ## TCP Health Checks
 
-For non-HTTP backends (databases, Redis, custom TCP):
+non-HTTP backend-এর জন্য (database, Redis, custom TCP):
 
 **HAProxy TCP check:**
 
@@ -134,9 +142,9 @@ backend postgres
     server db2 10.0.0.11:5432 check
 ```
 
-HAProxy opens a TCP connection, checks it succeeds, and closes it. Doesn't send any data — just verifies the port is open.
+HAProxy একটা TCP connection খোলে, সেটা সফল হয় কিনা check করে, আর বন্ধ করে দেয়। কোনো data পাঠায় না — শুধু port খোলা আছে কিনা যাচাই করে।
 
-For Redis, use a more specific check:
+Redis-এর জন্য, আরও নির্দিষ্ট check ব্যবহার করুন:
 
 ```
 backend redis
@@ -149,11 +157,11 @@ backend redis
 
 ## Connection Draining
 
-When a backend needs to come down (deploy, scale-in), don't kill connections instantly. Drain them:
+কোনো backend যখন down করতে হবে (deploy, scale-in), connection সঙ্গে সঙ্গে kill করবেন না। সেগুলো drain করুন:
 
-1. Mark the server as "draining" — stop routing new requests to it
-2. Let existing connections finish
-3. After a timeout, shut down
+1. server-কে "draining" মার্ক করুন — তাতে নতুন request routing বন্ধ করুন
+2. বিদ্যমান connection-গুলো শেষ হতে দিন
+3. একটা timeout-এর পর, shut down করুন
 
 **HAProxy runtime API:**
 
@@ -180,7 +188,7 @@ nginx -s reload
 nginx -s quit
 ```
 
-**Application-side draining with SIGTERM:**
+**SIGTERM দিয়ে application-side draining:**
 
 ```typescript
 process.on('SIGTERM', async () => {
@@ -195,7 +203,7 @@ process.on('SIGTERM', async () => {
 });
 ```
 
-Pair this with Kubernetes `terminationGracePeriodSeconds: 30` and a `preStop` sleep to give the LB time to stop routing before SIGTERM arrives:
+এটাকে Kubernetes `terminationGracePeriodSeconds: 30` আর একটা `preStop` sleep-এর সাথে জোড়া দিন যাতে SIGTERM আসার আগে LB-কে routing বন্ধ করার সময় দেওয়া যায়:
 
 ```yaml
 lifecycle:
@@ -207,20 +215,20 @@ terminationGracePeriodSeconds: 35
 
 ## Flapping Prevention
 
-A server that oscillates between up and down (network hiccup, intermittent error) causes the LB to constantly change routing. The `rise` parameter prevents this:
+যে server up আর down-এর মধ্যে দোল খায় (network hiccup, intermittent error) সেটা LB-কে বারবার routing বদলাতে বাধ্য করে। `rise` parameter এটা প্রতিরোধ করে:
 
 ```
 server s1 10.0.0.10:3000 check fall 3 rise 2
 ```
 
-- Down after **3 consecutive failures**
-- Back up only after **2 consecutive successes**
+- **টানা 3 বার failure**-এর পর down
+- **টানা 2 বার success**-এর পরই কেবল আবার up
 
-This means a single successful check after failure won't immediately restore the server — it needs to prove stability.
+মানে failure-এর পর একটা মাত্র সফল check সঙ্গে সঙ্গে server restore করবে না — এটাকে stability প্রমাণ করতে হবে।
 
 ## Health Check Overhead
 
-Each active health check is a real HTTP request. With 10 backends, every-5s checks, and 3 LB instances: 10 × 12/min × 3 = 360 requests/min to `/health`. Usually negligible, but protect the endpoint from heavy checks:
+প্রতিটা active health check একটা আসল HTTP request। 10-টা backend, প্রতি 5s check, আর 3-টা LB instance নিয়ে: 10 × 12/min × 3 = 360 request/min `/health`-এ যায়। সাধারণত নগণ্য, কিন্তু endpoint-টাকে ভারী check থেকে রক্ষা করুন:
 
 ```typescript
 app.get('/health', async (req, res) => {
@@ -233,12 +241,12 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-Or use HAProxy's `fastinter` for the first failure and normal `inter` otherwise:
+অথবা প্রথম failure-এর জন্য HAProxy-র `fastinter` আর অন্যথায় স্বাভাবিক `inter` ব্যবহার করুন:
 
 ```
 server s1 10.0.0.10:3000 check inter 30s fastinter 5s downinter 10s
 ```
 
-- `inter 30s` — healthy: check every 30s
-- `fastinter 5s` — recovery: check every 5s once server comes back up (confirm stability quickly)
-- `downinter 10s` — down: check every 10s (detect when it recovers)
+- `inter 30s` — healthy: প্রতি 30s check
+- `fastinter 5s` — recovery: server আবার up হওয়ার পর প্রতি 5s check (দ্রুত stability নিশ্চিত করা)
+- `downinter 10s` — down: প্রতি 10s check (কখন recover হয় শনাক্ত করতে)

@@ -1,9 +1,9 @@
 ---
-title: 'Indexes & Query Plans'
-subtitle: 'How the database finds rows fast — B-tree indexes, EXPLAIN, and when an index is useless.'
+title: 'Indexes ও Query Plans'
+subtitle: 'ডেটাবেস কীভাবে দ্রুত row খুঁজে পায় — B-tree index, EXPLAIN, আর কখন একটা index অকেজো।'
 chapter: 5
 level: 'intermediate'
-readingTime: '17 min'
+readingTime: '17 মিনিট'
 topics: ['index', 'explain', 'b-tree']
 ---
 
@@ -11,52 +11,60 @@ topics: ['index', 'explain', 'b-tree']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Problem Indexes Solve
+## গল্পে বুঝি
 
-Without an index, finding rows that match `WHERE email = 'lubna@example.com'` means reading **every row** in the table — a _sequential scan_. On a million-row table that's a million reads to find one row. An index is a separate, sorted data structure that lets the database jump straight to matching rows, the same way a book's index sends you to a page instead of reading cover to cover.
+আল-খোয়ারিজমির হাতে ৯০০ পৃষ্ঠার একটা মোটা রেফারেন্স বই। শিক্ষক বললেন, বইয়ে "photosynthesis" শব্দটা যতবার এসেছে সবগুলো পেজ খুঁজে বের করো। আল-খোয়ারিজমি চাইলে পৃষ্ঠা এক থেকে শুরু করে নয়শো পর্যন্ত এক এক করে পড়তে পারে — কিন্তু সেটা সারা বিকেল খেয়ে ফেলবে। তার বদলে সে বইয়ের একদম পেছনে গেল, যেখানে অক্ষরের ক্রমে সাজানো index আছে। "photosynthesis" খুঁজতেই পাশে লেখা — পৃষ্ঠা ৪৫, ২১১, ৬৭৮। আল-খোয়ারিজমি সোজা ওই তিনটা পেজে চলে গেল, সেকেন্ডের মধ্যে কাজ শেষ।
 
-The trade-off: indexes speed up reads but slow down writes (every `INSERT` / `UPDATE` / `DELETE` must also update the index) and consume disk space. Index deliberately, not reflexively.
+পরের দিন শিক্ষক বললেন, এবার "the" শব্দটা কোন কোন পেজে আছে বের করো। আল-খোয়ারিজমি আবার পেছনের index-এ হাত দিতে গিয়ে থমকে গেল — "the" তো প্রায় প্রতিটা পেজেই আছে, index-এ লিখলে নয়শো পৃষ্ঠার নম্বরই লিখতে হবে। এখানে index দেখে এক এক পেজে লাফানোর চেয়ে বইটা সোজা গোড়া থেকে পড়ে যাওয়াই আসলে দ্রুত। আল-খোয়ারিজমি বুদ্ধি খাটিয়ে ঠিক করল — বিরল শব্দের জন্য index, আর সর্বত্র থাকা শব্দের জন্য পুরো বই পড়া।
 
-## B-Tree Indexes
+এটাই database-এর গল্প। পুরো বই এক এক পেজে পড়া হলো **full-table scan**, আর পেছনের অক্ষরক্রমিক index দেখে সোজা পেজে লাফানো হলো **index lookup**। কোনটা বেছে নেবে সেটা ঠিক করে **query planner** — বিরল মান (high selectivity) হলে index, আর প্রায়-সব-row-এ থাকা মান (low selectivity) হলে scan। আল-খোয়ারিজমি মনে মনে যে হিসাব করল, `EXPLAIN` চালালে ঠিক সেই সিদ্ধান্তটাই তোমাকে দেখিয়ে দেয় — planner index ধরল নাকি scan করল। বাস্তবে Postgres-এ `status = 'active'` যেখানে ৯০% row-ই active, সেখানে planner index থাকা সত্ত্বেও scan বেছে নেয় — ঠিক "the" শব্দের মতোই।
 
-Postgres's default index type is a **B-tree** (balanced tree). It keeps keys sorted and stays only a few levels deep even for huge tables, so any lookup takes a handful of page reads. Because it stores keys _in order_, a B-tree accelerates:
+## Index যে সমস্যাটা সমাধান করে
+
+Index ছাড়া `WHERE email = 'lubna@example.com'` এর সাথে ম্যাচ করা row খুঁজতে হলে টেবিলের **প্রতিটা row** পড়তে হয় — একে বলে _sequential scan_। এক মিলিয়ন row-এর টেবিলে একটা row খুঁজতে সেটা এক মিলিয়ন read। Index হলো একটা আলাদা, sorted ডেটা স্ট্রাকচার যা ডেটাবেসকে সরাসরি ম্যাচিং row-এ লাফ দিতে দেয় — ঠিক যেমন একটা বইয়ের index আপনাকে গোটা বই না পড়িয়ে সরাসরি একটা পেজে পাঠায়।
+
+ট্রেড-অফটা হলো: index read দ্রুত করে কিন্তু write ধীর করে (প্রতিটা `INSERT` / `UPDATE` / `DELETE`-কে index-ও আপডেট করতে হয়) এবং disk space খায়। Index দিন ইচ্ছাকৃতভাবে, রিফ্লেক্সে নয়।
+
+## B-Tree Index
+
+Postgres-এর ডিফল্ট index টাইপ হলো **B-tree** (balanced tree)। এটা key-গুলোকে sorted রাখে এবং বিশাল টেবিলেও মাত্র কয়েক লেভেল গভীর থাকে, তাই যেকোনো lookup-এ মুষ্টিমেয় কয়েকটা page read লাগে। যেহেতু এটা key-গুলো _অর্ডার অনুযায়ী_ রাখে, একটা B-tree এগুলো দ্রুত করে:
 
 - Equality: `WHERE id = 42`
-- Ranges: `WHERE created_at >= '2026-01-01'`
-- Sorting: `ORDER BY created_at` (the index is already sorted)
-- Prefix matching: `WHERE email LIKE 'lubna%'` (but _not_ `LIKE '%lubna'`)
+- Range: `WHERE created_at >= '2026-01-01'`
+- Sorting: `ORDER BY created_at` (index তো আগে থেকেই sorted)
+- Prefix matching: `WHERE email LIKE 'lubna%'` (কিন্তু `LIKE '%lubna'` _নয়_)
 
 ```sql
 CREATE INDEX idx_users_email ON users (email);
 ```
 
-A `UNIQUE` constraint or `PRIMARY KEY` creates a B-tree index automatically — you don't add one separately.
+একটা `UNIQUE` constraint বা `PRIMARY KEY` স্বয়ংক্রিয়ভাবে একটা B-tree index বানায় — আপনাকে আলাদা করে যোগ করতে হয় না।
 
 <Callout type="info">
 
-**B-trees aren't the only index type.** Postgres also offers `hash` (equality only), `GIN` (for `jsonb`, arrays, and full-text search), `GiST` (geometric / range data), and `BRIN` (huge, naturally-ordered tables like time-series logs). B-tree is the right default for the vast majority of cases; reach for the others when their specific data shape applies. The db-internals track covers their machinery.
+**B-tree-ই একমাত্র index টাইপ নয়।** Postgres আরো দেয় `hash` (শুধু equality), `GIN` (`jsonb`, array, আর full-text search-এর জন্য), `GiST` (geometric / range ডেটা), আর `BRIN` (বিশাল, স্বাভাবিকভাবে-অর্ডারড টেবিল যেমন time-series log)। বেশিরভাগ ক্ষেত্রেই B-tree হলো সঠিক ডিফল্ট; অন্যগুলোর দিকে হাত বাড়ান যখন তাদের নির্দিষ্ট ডেটা শেপ প্রযোজ্য হয়। db-internals ট্র্যাকে এদের কলকব্জা কভার করা আছে।
 
 </Callout>
 
-## Composite Indexes and Column Order
+## Composite Index আর Column Order
 
-A **composite** (multi-column) index covers several columns at once:
+একটা **composite** (multi-column) index একসাথে কয়েকটা column কভার করে:
 
 ```sql
 CREATE INDEX idx_orders_cust_date ON orders (customer_id, created_at);
 ```
 
-Column **order matters enormously**. This index is sorted by `customer_id` first, then `created_at` within each customer. It serves:
+Column-এর **order-টা প্রচণ্ড জরুরি**। এই index-টা আগে `customer_id` অনুযায়ী sorted, তারপর প্রতিটা customer-এর ভেতরে `created_at` অনুযায়ী। এটা কাজে লাগে:
 
-- `WHERE customer_id = 10` — yes (leading column)
-- `WHERE customer_id = 10 AND created_at > '2026-01-01'` — yes, ideal
-- `WHERE created_at > '2026-01-01'` alone — **no**, because `created_at` is not the leading column
+- `WHERE customer_id = 10` — হ্যাঁ (leading column)
+- `WHERE customer_id = 10 AND created_at > '2026-01-01'` — হ্যাঁ, আদর্শ
+- একা `WHERE created_at > '2026-01-01'` — **না**, কারণ `created_at` leading column নয়
 
-This is the **leftmost-prefix rule**: a composite index helps only when your filter uses a contiguous prefix of its columns starting from the first. Order columns by equality first, then range/sort columns.
+এটাই হলো **leftmost-prefix rule**: একটা composite index তখনই সাহায্য করে যখন আপনার filter তার column-গুলোর একটা contiguous prefix ব্যবহার করে, প্রথমটা থেকে শুরু করে। Column-গুলো সাজান আগে equality, তারপর range/sort column দিয়ে।
 
-## Covering Indexes
+## Covering Index
 
-If an index contains _every_ column a query needs, Postgres can answer entirely from the index without touching the table — an **index-only scan**. The `INCLUDE` clause adds payload columns that aren't part of the search key:
+যদি একটা index-এ একটা query-র প্রয়োজনীয় _প্রতিটা_ column থাকে, তাহলে Postgres টেবিল স্পর্শ না করেই পুরোটা index থেকে উত্তর দিতে পারে — একটা **index-only scan**। `INCLUDE` clause payload column যোগ করে যেগুলো search key-র অংশ নয়:
 
 ```sql
 CREATE INDEX idx_orders_cust_amount
@@ -66,18 +74,18 @@ CREATE INDEX idx_orders_cust_amount
 SELECT amount FROM orders WHERE customer_id = 10;
 ```
 
-Covering indexes can dramatically speed up hot queries, at the cost of a larger index.
+Covering index হট query-গুলোকে নাটকীয়ভাবে দ্রুত করতে পারে, বিনিময়ে একটা বড় index-এর খরচে।
 
-## Reading Query Plans with EXPLAIN
+## EXPLAIN দিয়ে Query Plan পড়া
 
-`EXPLAIN` shows the _plan_ the optimizer chose — without running the query. `EXPLAIN ANALYZE` actually executes it and reports real timings and row counts, which is what you want when diagnosing slowness.
+`EXPLAIN` দেখায় optimizer কোন _plan_ বেছেছে — query না চালিয়েই। `EXPLAIN ANALYZE` আসলেই এটা execute করে এবং বাস্তব timing ও row count রিপোর্ট করে, ধীরগতির diagnose করার সময় এটাই আপনার দরকার।
 
 ```sql
 EXPLAIN ANALYZE
 SELECT * FROM orders WHERE customer_id = 10;
 ```
 
-A plan reads as a tree of nodes; indentation shows nesting, and you read inner (more-indented) nodes first. Two plans for the same query:
+একটা plan পড়া হয় node-এর একটা tree হিসেবে; indentation nesting দেখায়, আর ভেতরের (বেশি-indented) node আগে পড়তে হয়। একই query-র দুটো plan:
 
 ```text
 -- Without an index:
@@ -93,54 +101,54 @@ Index Scan using idx_orders_cust on orders
   Index Cond: (customer_id = 10)
 ```
 
-Key things to read off a plan:
+একটা plan থেকে যেসব মূল জিনিস পড়ে নেবেন:
 
-- **Node type** — `Seq Scan` (read whole table), `Index Scan`, `Index Only Scan`, `Bitmap Heap Scan`, or join nodes like `Nested Loop`, `Hash Join`, `Merge Join`.
-- **`cost`** — the planner's estimate, in arbitrary units (startup..total). Lower is what it optimizes for.
-- **`actual time`** — real milliseconds (only with `ANALYZE`).
-- **`rows` estimated vs actual** — a large mismatch means stale statistics; run `ANALYZE tablename` to refresh them. Bad estimates lead to bad plans.
-- **`Rows Removed by Filter`** — high numbers mean you scanned far more than you returned, a hint that an index would help.
+- **Node type** — `Seq Scan` (পুরো টেবিল read), `Index Scan`, `Index Only Scan`, `Bitmap Heap Scan`, বা `Nested Loop`, `Hash Join`, `Merge Join`-এর মতো join node।
+- **`cost`** — planner-এর অনুমান, একটা arbitrary একক-এ (startup..total)। এটা যত কম, planner তত optimize করে।
+- **`actual time`** — বাস্তব millisecond (শুধু `ANALYZE`-এর সাথে)।
+- **`rows` estimated vs actual** — বড় গরমিল মানে stale statistics; সেগুলো refresh করতে `ANALYZE tablename` চালান। খারাপ estimate খারাপ plan-এর দিকে নিয়ে যায়।
+- **`Rows Removed by Filter`** — বড় সংখ্যা মানে আপনি যা return করেছেন তার চেয়ে অনেক বেশি scan করেছেন, একটা ইঙ্গিত যে একটা index সাহায্য করবে।
 
 <Callout type="tip">
 
-**The estimate-vs-actual gap is your best clue.** If the planner expects 10 rows but gets 100,000, it likely chose a nested loop that's now catastrophically slow. The fix is often `ANALYZE` to update statistics, or restructuring the query so the planner can estimate better.
+**Estimate-vs-actual gap-টাই আপনার সেরা সূত্র।** যদি planner ১০টা row আশা করে কিন্তু ১০০,০০০ পায়, তাহলে সম্ভবত এটা একটা nested loop বেছেছে যা এখন বিপর্যয়করভাবে ধীর। সমাধান প্রায়ই হয় statistics আপডেট করতে `ANALYZE`, বা query-টা এমনভাবে পুনর্গঠন করা যাতে planner আরো ভালো estimate করতে পারে।
 
 </Callout>
 
-## Seq Scan vs Index Scan and Selectivity
+## Seq Scan vs Index Scan আর Selectivity
 
-A sequential scan isn't always bad. The planner weighs **selectivity** — what fraction of rows a condition matches:
+একটা sequential scan সবসময় খারাপ নয়। Planner **selectivity** ওজন করে — একটা condition কত ভগ্নাংশ row-এর সাথে ম্যাচ করে:
 
-- **High selectivity** (matches few rows, e.g. a unique email) → index scan wins. Jump to the few matches.
-- **Low selectivity** (matches many rows, e.g. `status = 'active'` where 90% are active) → a seq scan is often _faster_, because following index pointers to most of the table, in random order, costs more than streaming the whole table sequentially.
+- **High selectivity** (কম row ম্যাচ করে, যেমন একটা unique email) → index scan জেতে। অল্প কয়েকটা ম্যাচে লাফ দাও।
+- **Low selectivity** (অনেক row ম্যাচ করে, যেমন `status = 'active'` যেখানে ৯০% active) → একটা seq scan প্রায়ই _দ্রুত_, কারণ টেবিলের বেশিরভাগ অংশে index pointer ধরে, random order-এ যাওয়ার খরচ পুরো টেবিল sequential-ভাবে স্ট্রিম করার চেয়ে বেশি।
 
-This is why an index on a boolean or low-cardinality column frequently goes unused — and why the planner is right to ignore it. Indexes pay off when they let you skip the _majority_ of rows.
+এই কারণেই একটা boolean বা low-cardinality column-এর উপর একটা index প্রায়ই ব্যবহার হয় না — আর এই কারণেই planner সেটা উপেক্ষা করতে ঠিক। Index তখনই লাভ দেয় যখন তারা আপনাকে _অধিকাংশ_ row বাদ দিতে দেয়।
 
-## When Indexes Don't Help
+## যখন Index সাহায্য করে না
 
-An index on a column is wasted if the query can't use it. Common cases:
+একটা column-এর উপর index অপচয় যদি query সেটা ব্যবহার করতে না পারে। সাধারণ ক্ষেত্রগুলো:
 
-- **Function or expression on the column.** `WHERE lower(email) = 'lubna@x.com'` can't use a plain index on `email`. Create an _expression index_: `CREATE INDEX ON users (lower(email))`.
-- **Leading wildcard.** `LIKE '%lubna'` can't use a B-tree (it's sorted by prefix). Trigram (`GIN` + `pg_trgm`) indexes handle this.
-- **Type mismatch.** Comparing an indexed `text` column to an integer literal may force a cast that bypasses the index.
-- **Low selectivity**, as above — the planner correctly skips it.
-- **Tiny tables.** Below a few hundred rows, a seq scan is faster than index overhead; the planner won't bother with the index.
-- **`OR` across different columns** sometimes prevents index use; a `UNION` of two indexed queries, or a bitmap scan, can be faster.
+- **Column-এর উপর function বা expression।** `WHERE lower(email) = 'lubna@x.com'` `email`-এর উপর একটা সাধারণ index ব্যবহার করতে পারে না। একটা _expression index_ বানান: `CREATE INDEX ON users (lower(email))`।
+- **Leading wildcard।** `LIKE '%lubna'` একটা B-tree ব্যবহার করতে পারে না (এটা prefix অনুযায়ী sorted)। Trigram (`GIN` + `pg_trgm`) index এটা সামলায়।
+- **Type mismatch।** একটা indexed `text` column-কে একটা integer literal-এর সাথে তুলনা করলে এমন একটা cast বাধ্য হতে পারে যা index বাইপাস করে।
+- **Low selectivity**, উপরের মতো — planner ঠিকমতোই এটা এড়িয়ে যায়।
+- **ক্ষুদ্র টেবিল।** কয়েকশ row-এর নিচে, একটা seq scan index-এর overhead-এর চেয়ে দ্রুত; planner index নিয়ে মাথা ঘামাবে না।
+- **ভিন্ন column জুড়ে `OR`** কখনো কখনো index ব্যবহার আটকে দেয়; দুটো indexed query-র একটা `UNION`, বা একটা bitmap scan, দ্রুত হতে পারে।
 
 <Callout type="warning">
 
-**Don't index everything.** Each index adds write amplification and storage. A table with fifteen indexes can spend more time maintaining them than serving queries. Index the columns your real `WHERE`, `JOIN`, and `ORDER BY` clauses actually use, then verify with `EXPLAIN` that the index is chosen. Drop indexes that `pg_stat_user_indexes` shows are never scanned.
+**সবকিছুতে index দেবেন না।** প্রতিটা index write amplification আর storage যোগ করে। পনেরোটা index-ওয়ালা একটা টেবিল query serve করার চেয়ে সেগুলো maintain করতেই বেশি সময় ব্যয় করতে পারে। আপনার আসল `WHERE`, `JOIN`, আর `ORDER BY` clause যে column-গুলো আসলেই ব্যবহার করে সেগুলোতে index দিন, তারপর `EXPLAIN` দিয়ে যাচাই করুন যে index-টা বেছে নেওয়া হয়েছে। `pg_stat_user_indexes` যেগুলো কখনো scan হয় না দেখায়, সেই index-গুলো ফেলে দিন।
 
 </Callout>
 
-## A Practical Workflow
+## একটা ব্যবহারিক Workflow
 
-1. Find the slow query (from logs or `pg_stat_statements`).
-2. Run `EXPLAIN ANALYZE` on it.
-3. Spot the expensive node — usually a `Seq Scan` with many `Rows Removed by Filter`, or a join with a bad row estimate.
-4. Add a targeted index (matching column order to the query), or refactor the query.
-5. Re-run `EXPLAIN ANALYZE` and confirm the plan changed and the time dropped.
+1. ধীর query-টা খুঁজুন (log বা `pg_stat_statements` থেকে)।
+2. এর উপর `EXPLAIN ANALYZE` চালান।
+3. ব্যয়বহুল node-টা চিহ্নিত করুন — সাধারণত অনেক `Rows Removed by Filter`-ওয়ালা একটা `Seq Scan`, বা খারাপ row estimate-ওয়ালা একটা join।
+4. একটা targeted index যোগ করুন (column order query-র সাথে ম্যাচ করে), বা query refactor করুন।
+5. আবার `EXPLAIN ANALYZE` চালান এবং নিশ্চিত করুন যে plan বদলেছে আর সময় কমেছে।
 
 ## Recap
 
-Indexes are sorted side structures that let the database skip most of a table; B-trees handle equality, ranges, and ordering. Composite indexes obey the leftmost-prefix rule, covering indexes enable index-only scans, and `EXPLAIN ANALYZE` is how you see what's really happening. But indexes only help high-selectivity, sargable conditions — and every one costs you on writes. Next we make concurrent writes safe with transactions.
+Index হলো sorted side structure যা ডেটাবেসকে একটা টেবিলের বেশিরভাগ বাদ দিতে দেয়; B-tree equality, range, আর ordering সামলায়। Composite index leftmost-prefix rule মানে, covering index index-only scan সম্ভব করে, আর `EXPLAIN ANALYZE` হলো আসলে কী ঘটছে তা দেখার উপায়। কিন্তু index শুধু high-selectivity, sargable condition-এই সাহায্য করে — আর প্রতিটাই write-এ আপনাকে খরচ করায়। পরে আমরা transaction দিয়ে concurrent write নিরাপদ করব।

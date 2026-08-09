@@ -13,12 +13,11 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
 	import { progress } from '$lib/progress.svelte';
-	import { nt, notesBase, type Locale } from '$lib/i18n/notes';
+	import { t } from '$lib/data/notes-strings';
 
 	type Track = {
 		category: string;
 		label: string;
-		enLabel?: string;
 		slugs: string[];
 		minutes: number;
 	};
@@ -33,10 +32,7 @@
 		minutes: number;
 	};
 
-	let { levels, locale = 'en' }: { levels: Level[]; locale?: Locale } = $props();
-
-	const t = $derived(nt(locale));
-	const base = $derived(notesBase(locale));
+	let { levels }: { levels: Level[] } = $props();
 
 	onMount(() => progress.hydrate());
 
@@ -44,7 +40,7 @@
 
 	const ordered = $derived(
 		levels.flatMap((l) =>
-			l.tracks.flatMap((t) => t.slugs.map((s) => ({ category: t.category, slug: s })))
+			l.tracks.flatMap((tk) => tk.slugs.map((s) => ({ category: tk.category, slug: s })))
 		)
 	);
 	const doneTotal = $derived(
@@ -65,7 +61,7 @@
 		</div>
 		{#if next}
 			<a
-				href={`${base}/${next.category}/${next.slug}`}
+				href={`/notes/${next.category}/${next.slug}`}
 				class="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-accent"
 			>
 				{doneTotal === 0 ? t.beginPath : t.continuePath}
@@ -81,7 +77,7 @@
 	<div>
 		{#each levels as lvl (lvl.n)}
 			{@const done = progress.ready
-				? lvl.tracks.reduce((n, t) => n + progress.doneIn(t.category, t.slugs), 0)
+				? lvl.tracks.reduce((n, tk) => n + progress.doneIn(tk.category, tk.slugs), 0)
 				: 0}
 			<section class="grid gap-x-12 gap-y-6 pb-16 lg:grid-cols-[15rem_1fr]">
 				<!-- level: a heading, not a card -->
@@ -107,7 +103,7 @@
 						{@const tdone = tk.slugs.length > 0 && td === tk.slugs.length}
 						<li>
 							<a
-								href={`${base}/${tk.category}`}
+								href={`/notes/${tk.category}`}
 								class="group -mx-2.5 flex items-baseline justify-between gap-4 px-2.5 py-2.5 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)]"
 							>
 								<span class="flex min-w-0 items-center gap-1.5">

@@ -1,9 +1,9 @@
 ---
-title: 'Distributed Consensus'
-subtitle: 'Implement simplified Raft leader election with term management, vote requests, and heartbeats.'
+title: 'ডিস্ট্রিবিউটেড কনসেনসাস'
+subtitle: 'term ম্যানেজমেন্ট, vote request আর heartbeat সহ সরলীকৃত Raft leader election implement করুন।'
 chapter: 9
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['Raft', 'leader election', 'consensus', 'distributed systems']
 ---
 
@@ -13,17 +13,25 @@ topics: ['Raft', 'leader election', 'consensus', 'distributed systems']
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## The Consensus Problem
+## গল্পে বুঝি
 
-In a distributed system, multiple servers must agree on the same value even when some servers crash or network partitions occur. This is the **consensus problem** — and it's one of the hardest problems in computer science.
+গ্রামের শালিস কমিটির সাত সদস্য বসেছে মেলার তারিখ ঠিক করতে। নিয়ম সোজা — কোনো সিদ্ধান্ত তখনই পাস, যখন সংখ্যাগরিষ্ঠ, মানে সাতজনের মধ্যে অন্তত চারজন একমত হয়। সেদিন ইবনে সিনা আর ফাতিমা আল-ফিহরি কাজে আটকে আসতে পারেনি, তবু বাকি পাঁচজন হাজির ছিল বলে বৈঠক থেমে থাকেনি — পাঁচজনের মধ্যে চারজন যেহেতু একটা তারিখে রাজি, তাই সিদ্ধান্ত পাকা হয়ে গেল, দুজন অনুপস্থিত থাকা সত্ত্বেও। প্রস্তাব কে তুলবে সেটা নিয়ে হুড়োহুড়ি এড়াতে ওরা আগেই আল-খোয়ারিজমিকে সভাপতি বেছে নিয়েছিল; সেই একাই প্রস্তাব তোলে, বাকিরা কেবল হ্যাঁ-না ভোট দেয়।
 
-**Raft** solves this by electing a single leader that makes all decisions. If the leader dies, the remaining nodes elect a new one. This is simpler than alternatives like Paxos while being equally correct.
+মাঝপথে আল-খোয়ারিজমিকে জরুরি কাজে গ্রামের বাইরে যেতে হলো, বৈঠক নেতৃত্বহীন। বাকিরা তখন আর অপেক্ষা না করে নতুন করে ভোট দিয়ে ফাতিমা আল-ফিহরিকে সভাপতি বানাল, আর কাজ যেভাবে চলছিল সেভাবেই চলতে থাকল। গুরুত্বপূর্ণ ব্যাপার — প্রতিটা চূড়ান্ত সিদ্ধান্ত সবাই একই কার্যবিবরণী খাতায় (মিনিট-বুকে) হুবহু একই কথায় লিখে রাখে, যাতে যে-ই পরে খাতা খুলুক, সবার কাছে ঠিক একই ইতিহাস থাকে, কোনো গরমিল নয়।
+
+এই গল্পটাই আসলে **distributed consensus**। কমিটির সদস্যরা হলো node, সংখ্যাগরিষ্ঠের রাজি হওয়াটাই **quorum** — কয়েকজন অনুপস্থিত বা যোগাযোগহীন থাকলেও সিস্টেম আটকায় না। এক সভাপতি বেছে নেওয়া হলো **leader election**, আর সভাপতি হারিয়ে গেলে নতুন সভাপতি বেছে নেওয়াটাই re-election; সবার একই মিনিট-বুক হলো replicated log। **Raft** ঠিক এভাবেই কাজ করে, আর এর উপরেই দাঁড়িয়ে আছে etcd, ZooKeeper-এর মতো সিস্টেম — যেখানে একগুচ্ছ সার্ভারকে ব্যর্থতা সত্ত্বেও একটাই সিদ্ধান্তে একমত থাকতে হয়।
+
+## কনসেনসাস সমস্যা
+
+একটা ডিস্ট্রিবিউটেড সিস্টেমে একাধিক সার্ভারকে একই মানে একমত হতে হয়, এমনকি যখন কিছু সার্ভার ক্র্যাশ করে বা নেটওয়ার্ক partition ঘটে। এটাই **কনসেনসাস সমস্যা** — আর এটা কম্পিউটার সায়েন্সের কঠিনতম সমস্যাগুলোর একটা।
+
+**Raft** এটা সমাধান করে একটা মাত্র leader নির্বাচন করে, যে সব সিদ্ধান্ত নেয়। leader মারা গেলে বাকি node-গুলো একটা নতুন leader নির্বাচন করে। এটা Paxos-এর মতো বিকল্পগুলোর চেয়ে সহজ কিন্তু সমানভাবে সঠিক।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a board of directors voting — multiple members must agree on a decision, and it takes a majority to pass. If the chair resigns, a new election happens.
+একটা board of directors-এর ভোটের মতো — একাধিক সদস্যকে একটা সিদ্ধান্তে একমত হতে হয়, আর পাস হতে সংখ্যাগরিষ্ঠতা লাগে। চেয়ারম্যান পদত্যাগ করলে একটা নতুন নির্বাচন হয়।
 
 </Callout>
 
@@ -36,13 +44,13 @@ code={`graph LR
   L -- heartbeat --> F4["Follower 4"]`}
 />
 
-## Raft Key Concepts
+## Raft-এর মূল ধারণা
 
-- **Term** — a logical clock. Each election increments the term. A node with a higher term wins disputes.
-- **Leader** — handles all client requests and replicates to followers
-- **Candidate** — a follower that hasn't heard from the leader and starts an election
-- **Follower** — passive node that responds to leader/candidate requests
-- **Majority (quorum)** — a candidate needs votes from a majority to become leader (e.g., 3 out of 5)
+- **Term** — একটা লজিক্যাল ঘড়ি। প্রতিটা নির্বাচন term বাড়িয়ে দেয়। উচ্চতর term থাকা node বিরোধে জেতে।
+- **Leader** — সব ক্লায়েন্ট রিকোয়েস্ট হ্যান্ডল করে আর follower-দের কাছে replicate করে
+- **Candidate** — একটা follower যে leader-এর কাছ থেকে কিছু শোনেনি আর একটা নির্বাচন শুরু করে
+- **Follower** — passive node যে leader/candidate-এর রিকোয়েস্টে সাড়া দেয়
+- **Majority (quorum)** — leader হতে একটা candidate-কে সংখ্যাগরিষ্ঠ ভোট লাগে (যেমন 5-এর মধ্যে 3)
 
 <CodeTabs tsFile="raft.ts" goFile="raft.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -673,23 +681,23 @@ func main() {
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল শিক্ষা
 
-- Raft ensures only ONE leader exists per term — split-brain is prevented by requiring majority votes
-- **Randomized election timeouts** prevent multiple nodes from starting elections simultaneously
-- Higher terms always win — if a node sees a higher term, it immediately steps down
-- A candidate must have an up-to-date log to get votes — this prevents stale nodes from becoming leader
-- **Heartbeats** from the leader prevent unnecessary elections
+- Raft নিশ্চিত করে প্রতি term-এ শুধু একটাই leader থাকে — সংখ্যাগরিষ্ঠ ভোট বাধ্যতামূলক করে split-brain ঠেকানো হয়
+- **Randomized election timeout** একাধিক node-এর একসাথে নির্বাচন শুরু করা ঠেকায়
+- উচ্চতর term সবসময় জেতে — একটা node উচ্চতর term দেখলে সাথে সাথে step down করে
+- একটা candidate-কে vote পেতে হলে up-to-date log থাকতে হবে — এটা বাসি node-কে leader হওয়া থেকে ঠেকায়
+- leader-এর কাছ থেকে **heartbeat** অপ্রয়োজনীয় নির্বাচন ঠেকায়
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **etcd** (used by Kubernetes) implements Raft for distributed key-value consensus
-- **CockroachDB** uses Raft for consistent replication across nodes
-- **HashiCorp Consul** uses Raft for service discovery consensus
-- You rarely implement consensus yourself. Use etcd, ZooKeeper, or Consul. But understanding Raft helps you debug and operate these systems.
+- **etcd** (Kubernetes ব্যবহার করে) ডিস্ট্রিবিউটেড key-value কনসেনসাসের জন্য Raft implement করে
+- **CockroachDB** node জুড়ে consistent replication-এর জন্য Raft ব্যবহার করে
+- **HashiCorp Consul** service discovery কনসেনসাসের জন্য Raft ব্যবহার করে
+- আপনি নিজে খুব কমই কনসেনসাস implement করবেন। etcd, ZooKeeper, বা Consul ব্যবহার করুন। কিন্তু Raft বোঝা এই সিস্টেমগুলো ডিবাগ আর অপারেট করতে সাহায্য করে।
 
 </div>

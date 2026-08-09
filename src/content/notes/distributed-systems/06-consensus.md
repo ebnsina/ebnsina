@@ -1,9 +1,9 @@
 ---
 title: 'Consensus: Raft & Paxos'
-subtitle: 'How a group of machines agrees on a single value despite failures: leader election, log replication, and a full walkthrough of Raft.'
+subtitle: 'Failure সত্ত্বেও একদল মেশিন কীভাবে একটি একক মানে একমত হয়: leader election, log replication, এবং Raft-এর একটি পূর্ণ walkthrough।'
 chapter: 6
 level: 'advanced'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['consensus', 'raft', 'paxos']
 ---
 
@@ -11,48 +11,56 @@ topics: ['consensus', 'raft', 'paxos']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-**Consensus** is the problem of getting a group of machines to agree on a single value — or, more usefully, on a single ordered sequence of values — even when some of those machines crash and the network drops messages. It is the beating heart of reliable distributed systems: leader election, distributed locks, configuration management, and the strongly consistent (CP) stores of the last chapter are all consensus in disguise. This chapter explains the problem and walks through Raft, the algorithm designed to be understandable.
+## গল্পে বুঝি
 
-## The consensus problem
+সাগরে সাত-আটটা মাছ ধরার নৌকার একটা বহর। মাছের ঝাঁক কোন দিকে সেটা নিয়ে সবার আন্দাজ আলাদা, রেডিওর সিগন্যালও থেকে থেকে কেটে যায় — কেউ একটা কথা বলল তো অর্ধেক নৌকা শুনতেই পেল না। তবু সবাইকে একটাই স্পটে জাল ফেলতে হবে, নইলে বহর ছড়িয়ে গিয়ে জাল প্যাঁচ লাগবে আর ধরা মাছও কম। তাই তারা একটা নিয়ম বানাল: একটা নৌকাকে লিড ধরা হবে, সে-ই স্পট প্রস্তাব করবে। এবারের লিড ইবনে রুশদের নৌকা — সে রেডিওতে হাঁক দিল, "উত্তর-পুবের চরের কাছে জাল ফেলি।"
 
-A correct consensus algorithm must satisfy four properties:
+কিন্তু ইবনে রুশদ একা বললেই স্পট চূড়ান্ত হয় না। বাকিরা শুনে "রাজি" সিগন্যাল ফেরত পাঠায়, আর অর্ধেকের বেশি নৌকা রাজি হলে তবেই স্পটটা পাকা — আল-বিরুনি আর দুই-একটা নৌকা রেডিও রেঞ্জের বাইরে থাকলেও বাকিদের সংখ্যাগরিষ্ঠতা থাকায় সিদ্ধান্ত আটকায় না। এবার ধরো ঝড়ে ইবনে রুশদের নৌকা রেঞ্জের বাইরে হারিয়ে গেল, হাঁক থামল। কিছুক্ষণ কারও হাঁক না পেয়ে আল-খোয়ারিজমির নৌকা নিজেকে নতুন লিড ঘোষণা করে, বাকিদের রাজি করিয়ে বহর আবার চলতে থাকে। আর প্রতিটা নৌকা রাজি-হওয়া স্পটটা নিজের লগবইয়ে একই ক্রমে টুকে রাখে — পরে মিলিয়ে দেখলে সবার খাতা এক।
 
-- **Agreement:** no two non-faulty nodes decide on different values.
-- **Validity (integrity):** the value decided was actually proposed by some node — the system can't invent a value.
-- **Termination:** every non-faulty node eventually decides (it doesn't hang forever).
-- **Fault tolerance:** the above hold even though some nodes crash.
+এই গল্পটাই **consensus**। প্রতিটা নৌকা একেকটা **node**, লিড নৌকা হলো নির্বাচিত **leader**, আর "অর্ধেকের বেশি রাজি" হলো **quorum** (majority) — তাই কয়েকটা নৌকা অকেজো থাকলেও সিদ্ধান্ত আটকায় না। লিড হারিয়ে গেলে নতুন লিড বেছে নেওয়াটাই **leader re-election**, আর সবার লগবইয়ে একই ক্রমে স্পট টুকে রাখাটাই **replicated log**। বাস্তবে **Raft** ঠিক এভাবেই কাজ করে — একজন leader, majority quorum, আর replicated log — আর etcd, ZooKeeper, Consul-এর মতো সিস্টেম এই algorithm-এর উপরই দাঁড়িয়ে; Paxos একই সমস্যা আগে সমাধান করলেও Raft বোঝা সহজ বলে নতুন সিস্টেমগুলো এটাকেই বেছে নেয়।
 
-Achieving all of this is genuinely hard. Recall the FLP result from chapter 2: in a fully asynchronous network where even one node may crash, _no_ algorithm can guarantee both safety and termination. Practical algorithms sidestep this by assuming the network is mostly timely (using timeouts) so that they always stay _safe_ (never decide two different values) and _eventually_ terminate once the network behaves.
+**Consensus** হলো একদল মেশিনকে একটি একক মানে — বা, আরও দরকারিভাবে, একটি একক order করা মানের ক্রমে — একমত করানোর সমস্যা, এমনকি যখন সেই মেশিনগুলোর কিছু crash করে আর network message drop করে। এটা নির্ভরযোগ্য distributed system-এর স্পন্দিত হৃদয়: leader election, distributed lock, configuration management, এবং গত অধ্যায়ের strongly consistent (CP) store সবই ছদ্মবেশে consensus। এই অধ্যায় সমস্যাটা ব্যাখ্যা করে আর Raft-এর মধ্য দিয়ে হাঁটে, যে algorithm-টা বোধগম্য হওয়ার জন্য ডিজাইন করা।
 
-## Quorums and why you need an odd number
+## Consensus সমস্যা
 
-Consensus algorithms make progress using a **majority quorum**: any decision requires agreement from more than half the nodes. Because any two majorities of the same group must share at least one node, two conflicting decisions can never both gather a majority — that shared node would have to vote for both, which it refuses to do. This is what guarantees agreement.
+একটি সঠিক consensus algorithm-কে চারটি বৈশিষ্ট্য মেটাতে হবে:
 
-A majority of N nodes tolerates the failure of a _minority_:
+- **Agreement:** কোনো দুটি non-faulty node ভিন্ন মানে সিদ্ধান্ত নেয় না।
+- **Validity (integrity):** যে মান সিদ্ধান্ত হলো তা আসলে কোনো node প্রস্তাব করেছিল — সিস্টেম কোনো মান বানিয়ে ফেলতে পারে না।
+- **Termination:** প্রতিটি non-faulty node অবশেষে সিদ্ধান্ত নেয় (এটা চিরকাল ঝুলে থাকে না)।
+- **Fault tolerance:** কিছু node crash করলেও উপরের সবগুলো টেকে।
 
-| Nodes (N) | Majority needed | Failures tolerated |
-| --------- | --------------- | ------------------ |
-| 3         | 2               | 1                  |
-| 5         | 3               | 2                  |
-| 7         | 4               | 3                  |
+এই সবকিছু অর্জন করা সত্যিই কঠিন। অধ্যায় ২-এর FLP ফলাফল মনে করো: একটি সম্পূর্ণ asynchronous network-এ যেখানে একটিমাত্র node-ও crash করতে পারে, _কোনো_ algorithm safety ও termination দুটোই গ্যারান্টি করতে পারে না। ব্যবহারিক algorithm এটা এড়ায় এই ধরে নিয়ে যে network বেশিরভাগ সময় সময়মতো (timeout ব্যবহার করে) যাতে তারা সবসময় _safe_ থাকে (কখনো দুটি ভিন্ন মানে সিদ্ধান্ত নেয় না) আর network ঠিকঠাক আচরণ করলে _অবশেষে_ terminate করে।
 
-Note that 4 nodes tolerate only 1 failure — the same as 3 — so clusters are almost always sized to an **odd number**. The minority side of a partition cannot form a majority, so it stops; this is exactly the CP behavior that keeps the system from splitting its brain.
+## Quorum এবং কেন একটি বিজোড় সংখ্যা দরকার
 
-## Raft: consensus you can follow
+Consensus algorithm একটি **majority quorum** ব্যবহার করে অগ্রগতি করে: যেকোনো সিদ্ধান্তে অর্ধেকের বেশি node-এর সম্মতি লাগে। যেহেতু একই দলের যেকোনো দুটি majority-কে অন্তত একটি node ভাগ করতেই হবে, দুটি সাংঘর্ষিক সিদ্ধান্ত কখনো দুটোই একটি majority জোগাড় করতে পারে না — সেই ভাগ করা node-কে দুটোর জন্যই ভোট দিতে হতো, যা সে করতে অস্বীকার করে। এটাই agreement গ্যারান্টি করে।
 
-Raft was explicitly designed to be easier to understand than Paxos while being equally capable. It decomposes consensus into three pieces: **leader election**, **log replication**, and **safety**. Every node is in one of three states at any time:
+N node-এর একটি majority একটি _সংখ্যালঘুর_ failure সহ্য করে:
 
-- **Follower:** passive; responds to the leader and to candidates.
-- **Candidate:** a node trying to become leader.
-- **Leader:** the single node handling all client requests for the current term.
+| Node (N) | দরকারি majority | সহ্য করা failure |
+| -------- | --------------- | ---------------- |
+| 3        | 2               | 1                |
+| 5        | 3               | 2                |
+| 7        | 4               | 3                |
 
-### Terms: logical time for the cluster
+খেয়াল করো 4 node শুধু 1 failure সহ্য করে — 3-এর সমান — তাই cluster প্রায় সবসময় একটি **বিজোড় সংখ্যায়** আকার দেওয়া হয়। একটি partition-এর সংখ্যালঘু পক্ষ একটি majority গঠন করতে পারে না, তাই এটা থামে; এটাই ঠিক সেই CP আচরণ যা সিস্টেমকে তার brain ভাগ করা থেকে রক্ষা করে।
 
-Raft divides time into **terms**, numbered consecutively. Each term begins with an election. A term is a logical clock (chapter 7) that lets nodes detect stale information: every message carries its sender's term, and any node that sees a higher term immediately steps down to follower and adopts it. At most one leader is elected per term.
+## Raft: যে consensus তুমি অনুসরণ করতে পারো
+
+Raft সুস্পষ্টভাবে Paxos-এর চেয়ে বোঝা সহজ হওয়ার জন্য ডিজাইন করা হয়েছিল, একইসাথে সমান সক্ষম। এটা consensus-কে তিন টুকরোয় ভাগ করে: **leader election**, **log replication**, এবং **safety**। প্রতিটি node যেকোনো সময় তিনটি অবস্থার একটিতে থাকে:
+
+- **Follower:** নিষ্ক্রিয়; leader ও candidate-কে সাড়া দেয়।
+- **Candidate:** একটি node যে leader হওয়ার চেষ্টা করছে।
+- **Leader:** একক node যে বর্তমান term-এর সব client request সামলায়।
+
+### Term: cluster-এর জন্য logical time
+
+Raft time-কে **term**-এ ভাগ করে, ধারাবাহিকভাবে সংখ্যায়িত। প্রতিটি term একটি election দিয়ে শুরু হয়। একটি term হলো একটি logical clock (অধ্যায় ৭) যা node-কে বাসি তথ্য শনাক্ত করতে দেয়: প্রতিটি message তার প্রেরকের term বহন করে, আর যেকোনো node যেটা একটি উচ্চতর term দেখে তা তাৎক্ষণিকভাবে follower-এ নেমে গিয়ে সেটা গ্রহণ করে। প্রতি term-এ সর্বোচ্চ একজন leader নির্বাচিত হয়।
 
 ### Leader election
 
-Each follower runs a randomized **election timeout** (say, 150–300ms). If it goes that long without hearing from a leader, it suspects the leader is dead and starts an election:
+প্রতিটি follower একটি randomized **election timeout** চালায় (ধরো, 150–300ms)। একটি leader-এর কথা না শুনে এতটা সময় গেলে, সে সন্দেহ করে leader মৃত আর একটি election শুরু করে:
 
 ```text
 1. Follower increments its term and becomes a Candidate.
@@ -68,15 +76,15 @@ Each follower runs a randomized **election timeout** (say, 150–300ms). If it g
    starts.
 ```
 
-The **randomized** timeout is the trick that keeps split votes rare: nodes are unlikely to time out simultaneously, so usually one candidate gets a head start and wins cleanly.
+**Randomized** timeout হলো সেই কৌশল যা split vote-কে বিরল রাখে: node একসাথে time out হওয়ার সম্ভাবনা কম, তাই সাধারণত একজন candidate একটু এগিয়ে থেকে পরিষ্কারভাবে জেতে।
 
-### Heartbeats
+### Heartbeat
 
-Once elected, the leader sends periodic **heartbeats** (empty `AppendEntries` messages) to all followers. Heartbeats reset the followers' election timeouts, suppressing new elections. The moment heartbeats stop — leader crash or partition — a follower times out and the election cycle begins again. This is the same slow-vs-dead timeout from chapter 2: a healthy-but-slow leader can be wrongly replaced, which Raft tolerates because terms ensure the old leader steps down once it reconnects.
+নির্বাচিত হওয়ার পর, leader সব follower-কে পর্যায়ক্রমিক **heartbeat** পাঠায় (খালি `AppendEntries` message)। Heartbeat follower-দের election timeout reset করে, নতুন election দমন করে। যে মুহূর্তে heartbeat থামে — leader crash বা partition — একটি follower time out করে আর election চক্র আবার শুরু হয়। এটা অধ্যায় ২-এর সেই একই slow-বনাম-dead timeout: একটি সুস্থ-কিন্তু-ধীর leader ভুলভাবে প্রতিস্থাপিত হতে পারে, যা Raft সহ্য করে কারণ term নিশ্চিত করে পুরনো leader পুনরায় সংযুক্ত হওয়া মাত্রই নেমে যায়।
 
 ### Log replication
 
-Client requests are commands appended to the leader's **log**. The leader's job is to replicate its log, in order, to a majority:
+Client request হলো leader-এর **log**-এ যুক্ত করা command। Leader-এর কাজ তার log, order-এ, একটি majority-তে replicate করা:
 
 ```text
 1. Client sends a command to the leader.
@@ -88,33 +96,33 @@ Client requests are commands appended to the leader's **log**. The leader's job 
    AppendEntries) that the entry is committed, so they apply it too.
 ```
 
-Each entry is identified by its index and the term in which it was created. `AppendEntries` includes the index and term of the entry _preceding_ the new ones; a follower rejects the request if its log doesn't match there. This **consistency check** lets the leader detect and repair divergence by walking backward until the logs agree, then overwriting the follower's conflicting tail. Because all entries flow through the leader in one order, every replica's log converges to the same sequence — a linearizable, replicated state machine.
+প্রতিটি entry তার index আর যে term-এ এটা তৈরি হয়েছিল তা দিয়ে শনাক্ত হয়। `AppendEntries`-এ নতুনগুলোর _আগের_ entry-র index ও term থাকে; একটি follower request প্রত্যাখ্যান করে যদি সেখানে তার log না মেলে। এই **consistency check** leader-কে divergence শনাক্ত ও মেরামত করতে দেয় পিছনের দিকে হেঁটে log গুলো একমত হওয়া পর্যন্ত, তারপর follower-এর সাংঘর্ষিক লেজ overwrite করে। যেহেতু সব entry leader-এর মধ্য দিয়ে একটি order-এ প্রবাহিত হয়, প্রতিটি replica-র log একই ক্রমে converge করে — একটি linearizable, replicated state machine।
 
 ### Safety
 
-The properties above are not enough on their own; Raft adds restrictions so a newly elected leader can never erase a committed entry:
+উপরের বৈশিষ্ট্যগুলো নিজে থেকে যথেষ্ট নয়; Raft কিছু restriction যোগ করে যাতে একটি নবনির্বাচিত leader কখনো একটি committed entry মুছতে না পারে:
 
-- **Election restriction:** a node only grants its vote to a candidate whose log is at least as up to date as its own. This guarantees the winner already holds every committed entry, so no committed data is ever lost in a leadership change.
-- **Commit rule:** a leader only counts an entry as committed once it is stored on a majority _and_ belongs to the leader's current term. This subtle rule prevents a rare scenario where an entry replicated on a majority could otherwise be overwritten by a later leader.
+- **Election restriction:** একটি node শুধু সেই candidate-কে ভোট দেয় যার log অন্তত তার নিজের মতো up to date। এটা গ্যারান্টি দেয় যে বিজয়ী ইতিমধ্যে প্রতিটি committed entry ধরে রেখেছে, তাই একটি leadership পরিবর্তনে কোনো committed data হারায় না।
+- **Commit rule:** একটি leader একটি entry-কে committed হিসেবে তখনই গোনে যখন এটা একটি majority-তে সংরক্ষিত _এবং_ leader-এর বর্তমান term-এর অন্তর্গত। এই সূক্ষ্ম নিয়ম একটি বিরল দৃশ্যপট প্রতিরোধ করে যেখানে একটি majority-তে replicate হওয়া একটি entry অন্যথায় একটি পরের leader দ্বারা overwrite হতে পারত।
 
 <Callout type="info">
 
-**Note:** Raft turns the abstract consensus problem into a _replicated log_. Agreeing on "the next entry in the log," over and over, is equivalent to running an identical state machine on every node. This **replicated state machine** pattern is how etcd, Consul, and CockroachDB provide the strongly consistent storage that locks, leader election, and configuration depend on.
+**নোট:** Raft বিমূর্ত consensus সমস্যাকে একটি _replicated log_-এ পরিণত করে। "log-এর পরের entry"-তে বারবার একমত হওয়া প্রতিটি node-এ একটি অভিন্ন state machine চালানোর সমতুল্য। এই **replicated state machine** প্যাটার্ন হলো etcd, Consul, আর CockroachDB যেভাবে strongly consistent storage দেয় যার উপর lock, leader election, ও configuration নির্ভর করে।
 
 </Callout>
 
-## A brief contrast with Paxos
+## Paxos-এর সাথে সংক্ষিপ্ত তুলনা
 
-Paxos, introduced by Leslie Lamport, was the first proven-correct consensus algorithm and remains the theoretical foundation. **Basic Paxos** lets a group agree on a _single_ value through a two-phase exchange: a _prepare_ phase in which a proposer claims a proposal number and learns any value already accepted, and an _accept_ phase in which it asks nodes to accept its value. Quorums guarantee agreement exactly as in Raft.
+Paxos, Leslie Lamport-এর প্রবর্তিত, ছিল প্রথম প্রমাণিত-সঠিক consensus algorithm এবং এখনো তাত্ত্বিক ভিত্তি। **Basic Paxos** একটি দলকে একটি দুই-দফা বিনিময়ের মাধ্যমে একটি _একক_ মানে একমত হতে দেয়: একটি _prepare_ দফা যাতে একটি proposer একটি proposal number দাবি করে আর ইতিমধ্যে গৃহীত যেকোনো মান জানে, আর একটি _accept_ দফা যাতে সে node-দের তার মান গ্রহণ করতে বলে। Quorum ঠিক Raft-এর মতোই agreement গ্যারান্টি করে।
 
-But agreeing on one value is rarely what you want — you want a _log_ of values, which requires **Multi-Paxos**, and that extension is famously underspecified. The differences in practice:
+কিন্তু একটি মানে একমত হওয়া খুব কমই তুমি যা চাও — তুমি মানের একটি _log_ চাও, যার জন্য **Multi-Paxos** লাগে, আর সেই সম্প্রসারণ কুখ্যাতভাবে অসম্পূর্ণভাবে বর্ণিত। বাস্তবে পার্থক্যগুলো:
 
-- **Understandability:** Raft was designed around it; Paxos is notoriously hard to teach and to implement correctly.
-- **Leadership:** Raft has a strong, explicit leader as a first-class concept. Multi-Paxos bolts a leader on as an optimization, less cleanly.
-- **Equivalence:** they tolerate the same failures and provide the same guarantees. Raft is not "better" in power — it is better _specified_, which is why most new systems choose it.
+- **বোধগম্যতা:** Raft এর চারপাশে ডিজাইন করা হয়েছিল; Paxos কুখ্যাতভাবে শেখানো ও সঠিকভাবে বাস্তবায়ন করা কঠিন।
+- **Leadership:** Raft-এর একটি শক্তিশালী, সুস্পষ্ট leader একটি first-class ধারণা হিসেবে আছে। Multi-Paxos একটি leader-কে একটি optimization হিসেবে জুড়ে দেয়, কম পরিষ্কারভাবে।
+- **সমতুল্যতা:** তারা একই failure সহ্য করে আর একই গ্যারান্টি দেয়। Raft ক্ষমতায় "ভালো" নয় — এটা ভালোভাবে _বর্ণিত_, এজন্যই বেশিরভাগ নতুন সিস্টেম এটা বেছে নেয়।
 
 <Callout type="tip">
 
-**Practical advice:** never implement consensus from scratch for production. Subtle safety bugs hide in the corners — split votes, log repair, the commit rule — and they surface only under rare failure timing. Build on a battle-tested implementation (etcd, ZooKeeper, Consul) and spend your effort on using it correctly.
+**ব্যবহারিক পরামর্শ:** production-এর জন্য কখনো শূন্য থেকে consensus বাস্তবায়ন কোরো না। সূক্ষ্ম safety bug কোণে লুকিয়ে থাকে — split vote, log repair, commit rule — আর সেগুলো শুধু বিরল failure timing-এ ধরা দেয়। একটি যুদ্ধ-পরীক্ষিত বাস্তবায়নের উপর গড়ো (etcd, ZooKeeper, Consul) আর তোমার প্রচেষ্টা সেটা সঠিকভাবে ব্যবহার করায় খরচ করো।
 
 </Callout>

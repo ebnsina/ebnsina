@@ -1,9 +1,9 @@
 ---
 title: 'Storage in Practice'
-subtitle: 'Cost optimization, access control, signed URLs for private content, backup strategy, and operational patterns.'
+subtitle: 'খরচ অপটিমাইজেশন, access control, প্রাইভেট কনটেন্টের জন্য signed URL, backup strategy, আর অপারেশনাল প্যাটার্ন।'
 chapter: 5
 level: 'intermediate'
-readingTime: '8 min'
+readingTime: '8 মিনিট'
 topics:
   [
     'storage cost',
@@ -21,15 +21,23 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A storage unit facility: some units are unlocked and open to the public (public bucket), some require a key (private with signed URL), the facility manager controls who gets keys and for how long. The facility charges by space used and by how often you access the units — so you organize things you rarely need into cheaper long-term storage.
+একটা স্টোরেজ ইউনিট ফ্যাসিলিটি: কিছু ইউনিট খোলা আর পাবলিকের জন্য উন্মুক্ত (public bucket), কিছু চাবি লাগে (signed URL সহ private), ফ্যাসিলিটি ম্যানেজার নিয়ন্ত্রণ করেন কে চাবি পাবে আর কতক্ষণের জন্য। ফ্যাসিলিটি চার্জ করে ব্যবহৃত জায়গা আর আপনি কত ঘন ঘন ইউনিটগুলো অ্যাক্সেস করেন তার ভিত্তিতে — তাই যেসব জিনিস কদাচিৎ দরকার সেগুলো সস্তা দীর্ঘমেয়াদী স্টোরেজে সাজিয়ে রাখেন।
 
 </Callout>
 
+## গল্পে বুঝি
+
+ইবনে সিনার পরিবার নতুন বাসায় উঠেছে, আর ফাতিমা আল-ফিহরি ঠিক করলেন ঘরের জিনিসপত্র বুদ্ধি খাটিয়ে গুছিয়ে রাখবেন। প্রতিদিনের রান্নার জিনিস — চাল, ডাল, তেল, মশলা — এগুলো তিনি রান্নাঘরের সামনের তাকেই হাতের নাগালে রাখলেন। এই জায়গাটা ছোট আর দামি, কিন্তু হাত বাড়ালেই পাওয়া যায়, তাই যা রোজ লাগে সেটাই এখানে থাকে। অন্যদিকে বছরে একবার লাগা শীতের লেপ-কম্বল, পুরনো কাগজপত্র, বাচ্চাদের ছোটবেলার জিনিস — এসব তিনি তুলে দিলেন বাড়ির চিলেকোঠায় (attic)। ওখানে জায়গা প্রচুর আর সস্তা, কিন্তু নামাতে হলে মই বেয়ে ধুলোর মধ্যে উঠতে হয়, ঝামেলা।
+
+ফাতিমা আরেকটা নিয়ম করলেন — তাকের কোনো জিনিসে যদি এক বছর হাত না পড়ে, সেটা এমনিতেই চিলেকোঠায় উঠে যাবে, তাকে জায়গা খালি হবে দরকারি জিনিসের জন্য। আর যেসব কাগজ সত্যিই অপূরণীয় — জন্মসনদ, দলিল — সেগুলোর একটা করে কপি তিনি শহরের ওপারে আল-খোয়ারিজমির বাসায় রেখে এলেন, যাতে এ বাড়িতে কিছু হলেও মূল কপি বেঁচে থাকে।
+
+এই গল্পটাই storage in practice। সামনের **রান্নাঘরের তাক** হলো **hot storage** — দ্রুত, কিন্তু দামি, তাই শুধু ঘনঘন লাগা ডেটা এখানে রাখেন। **চিলেকোঠা** হলো **cold/archive tier** — সস্তা কিন্তু ধীর, কদাচিৎ লাগা ডেটার জন্য। এক বছর না ছোঁয়া জিনিস তাক থেকে চিলেকোঠায় আপনাআপনি সরে যাওয়াটাই **lifecycle/tiering policy** (hot → cold)। আর ওপারের বাসায় রাখা কপিগুলোই **offsite backup**। বাস্তবে AWS S3 ঠিক এভাবেই কাজ করে — সক্রিয় ফাইল থাকে S3 Standard-এ, পুরনো ফাইল lifecycle rule দিয়ে অটোমেটিক নেমে যায় Standard-IA হয়ে Glacier-এ (সস্তা archive, নামাতে সময় লাগে), আর আরেক region-এ mirror করাই আপনার offsite backup।
+
 ## Access Patterns
 
-Three access patterns cover most use cases:
+তিনটা access pattern বেশিরভাগ use case কভার করে:
 
 ```
 1. Public assets (profile avatars, product images, public documents)
@@ -47,7 +55,7 @@ Three access patterns cover most use cases:
 
 ## Presigned Download URLs
 
-Private files are not publicly accessible. Generate a time-limited URL when a user needs to download:
+প্রাইভেট ফাইল পাবলিকভাবে অ্যাক্সেসযোগ্য নয়। ইউজারের যখন ডাউনলোড করার দরকার হয় তখন একটা time-limited URL জেনারেট করুন:
 
 ```typescript
 import { GetObjectCommand } from '@aws-sdk/client-s3';
@@ -80,12 +88,12 @@ app.get('/files/:key/download', async (req, res) => {
 });
 ```
 
-**TTL guidance:**
+**TTL গাইডলাইন:**
 
-- Document downloads: 1 hour
-- Streaming video: 4–8 hours (must outlast the session)
-- Presigned PUT for upload: 5–15 minutes
-- API access tokens tied to presigned URL: match token TTL
+- ডকুমেন্ট ডাউনলোড: 1 ঘণ্টা
+- স্ট্রিমিং ভিডিও: 4–8 ঘণ্টা (session-এর চেয়ে বেশি টিকতে হবে)
+- আপলোডের জন্য presigned PUT: 5–15 মিনিট
+- presigned URL-এর সাথে যুক্ত API access token: token TTL-এর সাথে মেলান
 
 ## Bucket Organization
 
@@ -103,11 +111,11 @@ backups/
   exports/{jobId}/{filename}.csv        ← private, lifecycle deletes after 7d
 ```
 
-Use prefixes to apply lifecycle policies and IAM policies independently without managing multiple buckets.
+একাধিক bucket ম্যানেজ না করে, prefix ব্যবহার করে স্বাধীনভাবে lifecycle policy আর IAM policy প্রয়োগ করুন।
 
-## Bucket Policies and IAM
+## Bucket Policies আর IAM
 
-MinIO service account with prefix-scoped access:
+prefix-scoped access সহ MinIO service account:
 
 ```bash
 # Create service account limited to one prefix
@@ -142,7 +150,7 @@ const tenantKey = (tenantId: string, filename: string) => `tenants/${tenantId}/$
 
 ## Cost Optimization
 
-Object storage cost has two components: **storage** ($/GB/month) and **requests** ($/1000 requests).
+object storage-এর খরচের দুটো অংশ: **storage** ($/GB/month) আর **requests** ($/1000 requests)।
 
 ```
 S3 Standard:          $0.023/GB    + $0.005/1000 PUT  + $0.0004/1000 GET
@@ -153,7 +161,7 @@ S3 Glacier Deep:      $0.00099/GB  + retrieval: hours
 MinIO (self-hosted):  ~$0.005/GB (hardware cost) + $0 per request
 ```
 
-Lifecycle policies automate cost optimization:
+lifecycle policy খরচ অপটিমাইজেশন অটোমেট করে:
 
 ```typescript
 import { PutBucketLifecycleConfigurationCommand } from '@aws-sdk/client-s3';
@@ -190,7 +198,7 @@ await s3.send(
 );
 ```
 
-**Deduplication:** if multiple users upload the same file, store once:
+**Deduplication:** একাধিক ইউজার একই ফাইল আপলোড করলে, একবারই জমা করুন:
 
 ```typescript
 import { createHash } from 'crypto';
@@ -224,9 +232,9 @@ async function deduplicatedUpload(buffer: Buffer, contentType: string) {
 
 ## Backup Strategy
 
-**3-2-1 rule:** 3 copies, 2 different media, 1 offsite.
+**3-2-1 নিয়ম:** 3টা কপি, 2টা ভিন্ন media, 1টা offsite।
 
-For MinIO:
+MinIO-র জন্য:
 
 ```bash
 # Mirror MinIO to S3 (offsite backup)
@@ -276,7 +284,7 @@ spec:
                       key: url
 ```
 
-**Verify backups work** — test restore quarterly:
+**ব্যাকআপ কাজ করে কিনা যাচাই করুন** — প্রতি ত্রৈমাসিকে restore টেস্ট করুন:
 
 ```bash
 #!/bin/bash
@@ -291,7 +299,7 @@ psql $TEST_DATABASE_URL -c "SELECT count(*) FROM users;"
 
 ## Orphaned File Cleanup
 
-Files get orphaned when DB records are deleted but storage objects remain:
+DB record ডিলিট হলেও storage object থেকে গেলে ফাইল orphan হয়ে যায়:
 
 ```typescript
 async function cleanupOrphanedFiles() {
@@ -341,7 +349,7 @@ async function cleanupOrphanedFiles() {
 }
 ```
 
-Run weekly via a CronJob or a one-off manual trigger.
+সাপ্তাহিকভাবে একটা CronJob দিয়ে বা এককালীন ম্যানুয়াল trigger দিয়ে চালান।
 
 ## Operational Checklist
 
@@ -358,7 +366,7 @@ Run weekly via a CronJob or a one-off manual trigger.
 □ Signed URL TTL matches use case (short for uploads, longer for streaming)
 ```
 
-## Monitoring Storage
+## Storage মনিটরিং
 
 ```typescript
 import { CloudWatchClient, GetMetricStatisticsCommand } from '@aws-sdk/client-cloudwatch';

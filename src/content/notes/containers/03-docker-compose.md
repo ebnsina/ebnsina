@@ -1,9 +1,9 @@
 ---
 title: 'Docker Compose'
-subtitle: 'Multi-service local environments, dependency ordering, networking, and the patterns that make compose actually useful.'
+subtitle: 'Multi-service লোকাল এনভায়রনমেন্ট, dependency ordering, networking, এবং যেসব প্যাটার্ন compose-কে আসলেই কাজের করে তোলে।'
 chapter: 3
 level: 'beginner'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['docker compose', 'networking', 'volumes', 'depends_on', 'environment']
 ---
 
@@ -13,19 +13,27 @@ topics: ['docker compose', 'networking', 'volumes', 'depends_on', 'environment']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A stage manager's call sheet: one document that says who needs to be where and when before the show can start — orchestra in pit, actors backstage, lights ready. Docker Compose is your call sheet for services: one file, one command, all the pieces start in the right order.
+একজন stage manager-এর call sheet: একটা ডকুমেন্ট যা বলে দেয় শো শুরুর আগে কাকে কখন কোথায় থাকতে হবে — orchestra pit-এ, actor backstage-এ, light প্রস্তুত। Docker Compose হলো আপনার সার্ভিসগুলোর call sheet: একটা file, একটা command, সব অংশ ঠিক order-এ চালু হয়।
 
 </Callout>
 
-## The Problem Compose Solves
+## গল্পে বুঝি
 
-Running a modern application locally typically means starting: your API server, a database, a cache, a queue, maybe a worker process. Doing this manually means multiple terminal windows, fragile shell scripts, and "works on my machine" debugging.
+ফাতিমা আল-ফিহরি একটা নাটকের মঞ্চ ব্যবস্থাপক (stage manager)। শো শুরুর আগে তাকে একসঙ্গে অনেককে ঠিক জায়গায় আনতে হয় — মূল অভিনেতা ইবনে সিনা, বাদ্যযন্ত্রীর দলের প্রধান আল-খোয়ারিজমি, আর আলো নিয়ন্ত্রণের ক্রু। আগে সে প্রত্যেককে আলাদা করে ডেকে আনত: একজনকে ডাকে, সে আসে, তারপর পরেরজন — এলোমেলো, সময়সাপেক্ষ, আর একজন ভুল সময়ে ঢুকে পড়লেই পুরো দৃশ্য মাটি।
 
-Compose defines all of this in one declarative file — `docker-compose.yml` — and starts everything with `docker compose up`.
+এখন ফাতিমার হাতে একটাই cue-sheet। সেই এক কাগজে লেখা আছে কে কে থাকবে, কে কার সাথে কথা বলবে, আর কে আগে ঢুকবে কে পরে — আলো তৈরি না হওয়া পর্যন্ত অভিনেতা মঞ্চে উঠবে না। শো শুরুর সময় ফাতিমা একবার "সবাই যার যার জায়গায়" বলে ডাক দেয়, গোটা কাস্ট সঠিক ক্রমে মঞ্চে চলে আসে। শো শেষে একটাই ডাক — "সবাই নামো" — আর সবাই একসঙ্গে বিদায়। কাউকে আলাদা করে ধরে আনা-নেওয়ার ঝামেলা নেই।
 
-## A Complete Example
+এই গল্পটাই আসলে **Docker Compose**। ওই একটা cue-sheet হলো একটা declarative Compose file — যেখানে আপনার multi-container অ্যাপের সব service (web, database, cache) একসঙ্গে লেখা থাকে। কে কার সাথে কথা বলবে সেই তারের সংযোগটাই Compose-এর network, আর "আলো আগে, অভিনেতা পরে" — এই ক্রম বজায় রাখাটাই depends_on। "সবাই জায়গায়" মানে `docker compose up` (সব container একসঙ্গে চালু), আর "সবাই নামো" মানে `docker compose down` (সব একসঙ্গে বন্ধ)। বাস্তবে ঠিক এভাবেই ডেভেলপাররা লোকাল মেশিনে API + Postgres + Redis একটামাত্র command দিয়ে দাঁড় করান এবং কাজ শেষে একসাথে থামান — প্রতিটা container হাতে হাতে আলাদা করে চালানোর বদলে।
+
+## Compose যে সমস্যা সমাধান করে
+
+একটা আধুনিক অ্যাপ্লিকেশন লোকালি চালানো মানে সাধারণত চালু করা: আপনার API server, একটা database, একটা cache, একটা queue, হয়তো একটা worker process। এটা ম্যানুয়ালি করা মানে একাধিক টার্মিনাল উইন্ডো, ভঙ্গুর shell script, আর "works on my machine" ডিবাগিং।
+
+Compose এই সবকিছু একটা declarative file-এ সংজ্ঞায়িত করে — `docker-compose.yml` — আর `docker compose up` দিয়ে সবকিছু চালু করে।
+
+## একটা সম্পূর্ণ উদাহরণ
 
 ```yaml
 # docker-compose.yml
@@ -103,7 +111,7 @@ docker compose down -v
 
 ## Networking
 
-All services in a Compose file share a default network. Services reach each other by service name:
+একটা Compose file-এর সব সার্ভিস একটা ডিফল্ট network শেয়ার করে। সার্ভিসগুলো একে অপরের কাছে সার্ভিস নাম দিয়ে পৌঁছায়:
 
 ```yaml
 services:
@@ -126,7 +134,7 @@ docker compose exec api ping db
 # PING db (172.20.0.3): 56 data bytes
 ```
 
-**Custom networks for isolation:**
+**Isolation-এর জন্য custom network:**
 
 ```yaml
 services:
@@ -148,9 +156,9 @@ networks:
   backend:
 ```
 
-## depends_on and Startup Order
+## depends_on আর Startup Order
 
-`depends_on` controls startup order but not readiness — a container can be "started" and not yet accepting connections. Use health checks for proper ordering:
+`depends_on` startup order নিয়ন্ত্রণ করে কিন্তু readiness নয় — একটা container "started" হয়েও এখনও connection নিতে না-ও পারে। সঠিক ordering-এর জন্য health check ব্যবহার করুন:
 
 ```yaml
 services:
@@ -170,11 +178,11 @@ services:
       start_period: 10s # grace period before failures count
 ```
 
-**Without health checks:** your app starts, tries to connect to postgres, fails because postgres is still initializing, and crashes. With health checks: api waits until postgres reports healthy.
+**Health check ছাড়া:** আপনার অ্যাপ চালু হয়, postgres-এ connect করার চেষ্টা করে, postgres এখনও initialize হচ্ছে বলে ব্যর্থ হয়, আর ক্র্যাশ করে। Health check থাকলে: postgres healthy রিপোর্ট না করা পর্যন্ত api অপেক্ষা করে।
 
-## Environment Variables
+## Environment Variable
 
-Three ways to pass environment variables:
+Environment variable পাস করার তিনটা উপায়:
 
 ```yaml
 services:
@@ -201,11 +209,11 @@ REDIS_URL=redis://redis:6379
 JWT_SECRET=dev-secret-not-for-production
 ```
 
-**Compose automatically loads `.env`** in the project directory. Variables in `.env` are available as `${VAR}` in the compose file — but they're for compose configuration, not automatically passed to containers unless you explicitly reference them.
+**Compose প্রজেক্ট ডিরেক্টরির `.env` স্বয়ংক্রিয়ভাবে লোড করে।** `.env`-এর variable-গুলো compose file-এ `${VAR}` হিসেবে পাওয়া যায় — কিন্তু সেগুলো compose configuration-এর জন্য, আপনি সুনির্দিষ্টভাবে রেফারেন্স না করলে সেগুলো স্বয়ংক্রিয়ভাবে container-এ পাস হয় না।
 
-## Override Files
+## Override File
 
-Compose merges multiple files — use this for environment-specific config:
+Compose একাধিক file মার্জ করে — environment-specific config-এর জন্য এটা ব্যবহার করুন:
 
 ```yaml
 # docker-compose.yml (base — committed)
@@ -239,9 +247,9 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.ci.yml up --abort-on-container-exit
 ```
 
-## Useful Patterns
+## কাজের প্যাটার্ন
 
-**Run database migrations before starting the app:**
+**অ্যাপ চালু করার আগে database migration চালান:**
 
 ```yaml
 services:
@@ -262,14 +270,14 @@ services:
         condition: service_healthy
 ```
 
-**Scale a service:**
+**একটা সার্ভিস scale করুন:**
 
 ```bash
 docker compose up --scale worker=3
 # Starts 3 worker containers, all pulling from the same queue
 ```
 
-**Watch for file changes and rebuild:**
+**File পরিবর্তন লক্ষ্য করে rebuild করুন:**
 
 ```bash
 # Docker Compose Watch (v2.22+)
@@ -289,7 +297,7 @@ services:
           path: package.json
 ```
 
-## Profiles for Optional Services
+## Optional Service-এর জন্য Profiles
 
 ```yaml
 services:
@@ -320,4 +328,4 @@ docker compose up
 docker compose --profile dev up
 ```
 
-This keeps the default compose startup minimal while making optional services easy to activate.
+এটা ডিফল্ট compose startup-কে minimal রাখে আর একই সাথে optional সার্ভিস সহজে activate করতে দেয়।

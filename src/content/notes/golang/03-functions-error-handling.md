@@ -1,9 +1,9 @@
 ---
-title: 'Functions & Error Handling'
-subtitle: "Go's approach to functions and errors is radically different from most languages — explicit, composable, and impossible to ignore."
+title: 'Functions ও Error Handling'
+subtitle: 'Function আর error নিয়ে Go-র দৃষ্টিভঙ্গি বেশিরভাগ ভাষার চেয়ে একদম আলাদা — explicit, composable, আর এড়িয়ে যাওয়া অসম্ভব।'
 chapter: 3
 level: 'beginner'
-readingTime: '20 min'
+readingTime: '20 মিনিট'
 topics: ['functions', 'error handling', 'multiple returns', 'defer', 'closures']
 ---
 
@@ -11,9 +11,17 @@ topics: ['functions', 'error handling', 'multiple returns', 'defer', 'closures']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Functions in Go
+## গল্পে বুঝি
 
-Functions are first-class citizens in Go. They can be assigned to variables, passed as arguments, and returned from other functions.
+আল-খোয়ারিজমির একটা ইলেকট্রনিক্স মেরামতের দোকান আছে, সামনে একটা জব-কাউন্টার। ফাতিমা আল-ফিহরি তার নষ্ট হেয়ার-ড্রায়ারটা কাউন্টারে জমা দিয়ে টোকেন নিয়ে গেল। এখানে ড্রায়ারটা হলো input — আপনি কিছু একটা হাতে তুলে দিলেন। বিকেলে ফিরে এসে ফাতিমা আল-ফিহরি কাউন্টারে টোকেন দেখাল, আর আল-খোয়ারিজমি তাকে দুটো জিনিসের একটা ফেরত দেয়: হয় ঠিক-হয়ে-যাওয়া ড্রায়ারটা, নয়তো সেই ড্রায়ার আর সাথে একটা লেখা স্লিপ — "সারানো গেল না, মোটর পুড়ে গেছে"।
+
+মজার ব্যাপার হলো, আল-খোয়ারিজমি কখনোই চেঁচিয়ে দোকান মাথায় তোলে না বা হঠাৎ ফাতিমা আল-ফিহরিকে চমকে দেয় না। সে চুপচাপ প্রতিবার জিনিসটার সাথে স্লিপটাও হাতে ধরিয়ে দেয়, আর ফাতিমা আল-ফিহরির কাজ হলো ড্রায়ার নিয়ে খুশিমনে চলে যাওয়ার আগে সেই স্লিপটা পড়া। স্লিপে যদি "সারানো গেল না" লেখা থাকে অথচ ফাতিমা আল-ফিহরি না পড়েই ধরে নেয় সব ঠিক আছে, তাহলে বাসায় গিয়ে সুইচ টিপে সে বিপদে পড়বে।
+
+এটাই Go-তে function আর error handling। function হলো আল-খোয়ারিজমির কাউন্টার: আপনি input দেন, আর সে output ফেরত দেয়। কিন্তু Go-তে output-এর সাথে সবসময় একটা দ্বিতীয় value — error — ফেরত আসে, ঠিক সেই "সারানো গেল না" স্লিপের মতো। Python বা Java হলে দোকানদার হয়তো ব্যর্থতায় প্লেট ছুড়ে মারত (exception), কিন্তু Go ভদ্রভাবে জিনিসের পাশে স্লিপটা রেখে দেয় — আর আপনাকে প্রতিবার `if err != nil` দিয়ে সেই স্লিপ পড়তেই হয়, ধরে নেওয়া চলে না যে সব ঠিক হয়েছে। এই কারণেই বাস্তব Go কোডে file পড়া, network call, বা database query-র পরপরই আপনি এই error-check দেখতে পাবেন — ব্যর্থতা কখনো লুকিয়ে থাকে না, প্রতিটাই একটা ফেরত-আসা value হিসেবে হাতে আসে।
+
+## Go-তে Functions
+
+Go-তে function হলো first-class citizen। এগুলো variable-এ assign করা যায়, argument হিসেবে পাস করা যায়, আর অন্য function থেকে return করা যায়।
 
 ```go
 // Basic function
@@ -41,9 +49,9 @@ func parseConfig(path string) (host string, port int, err error) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Multiple return values are like ordering from a restaurant. You get your food AND a receipt. The receipt (error) tells you if something went wrong. In Python or Java, the restaurant might throw your plate at the wall (exception) — you have to catch it. In Go, they politely hand you a note saying "we're out of that."
+Multiple return value অনেকটা রেস্টুরেন্ট থেকে অর্ডার করার মতো। আপনি খাবার পান, সাথে একটা রসিদও। রসিদটা (error) বলে দেয় কিছু ভুল হলো কিনা। Python বা Java-তে রেস্টুরেন্ট হয়তো আপনার প্লেট দেয়ালে ছুড়ে মারে (exception) — আপনাকে সেটা ধরতে হয়। Go-তে তারা ভদ্রভাবে আপনার হাতে একটা নোট ধরিয়ে দেয় "এটা আমাদের কাছে শেষ।"
 
 </Callout>
 
@@ -68,7 +76,7 @@ numbers := []int{10, 20, 30}
 sum(numbers...)      // 60
 ```
 
-## Functions as Values
+## Function যখন Value
 
 ```go
 // Assign function to variable
@@ -94,7 +102,7 @@ doubled := apply([]int{1, 2, 3}, func(n int) int {
 
 ## Closures
 
-A closure captures variables from its surrounding scope:
+একটা closure তার আশপাশের scope থেকে variable capture করে:
 
 ```go
 func makeCounter() func() int {
@@ -113,13 +121,13 @@ fmt.Println(counter())  // 3
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A closure is like a person with a notebook. The notebook (`count`) stays with them even after they leave the room where they got it. Every time you call the function, they open the notebook, update the number, and tell you the result.
+একটা closure অনেকটা নোটবুক হাতে থাকা একজন মানুষের মতো। নোটবুকটা (`count`) তার সাথেই থেকে যায়, এমনকি যে ঘর থেকে সে এটা পেয়েছিল সেটা ছেড়ে চলে গেলেও। প্রতিবার আপনি function কল করলে সে নোটবুক খোলে, সংখ্যাটা আপডেট করে, আর আপনাকে ফলাফল জানায়।
 
 </Callout>
 
-### Real-World Closure: Rate Limiter
+### বাস্তব জীবনের Closure: Rate Limiter
 
 ```go
 func newRateLimiter(maxPerSecond int) func() bool {
@@ -153,9 +161,9 @@ if limiter() {
 }
 ```
 
-## Error Handling: Go's Deliberate Choice
+## Error Handling: Go-র সুচিন্তিত সিদ্ধান্ত
 
-Go uses **explicit error returns** instead of exceptions. This is the most controversial and most important design decision in the language.
+Go exception-এর বদলে **explicit error return** ব্যবহার করে। এটা ভাষাটার সবচেয়ে বিতর্কিত আর সবচেয়ে গুরুত্বপূর্ণ ডিজাইন সিদ্ধান্ত।
 
 ```go
 // The error interface is dead simple:
@@ -173,9 +181,9 @@ func readFile(path string) ([]byte, error) {
 }
 ```
 
-### Why No Exceptions?
+### Exception কেন নেই?
 
-In Java or Python, exceptions can be thrown from anywhere and caught anywhere. This creates invisible control flow — you can't tell by reading a function whether it might suddenly jump to a catch block three layers up.
+Java বা Python-এ exception যেকোনো জায়গা থেকে throw করা যায় আর যেকোনো জায়গায় catch করা যায়। এটা একটা অদৃশ্য control flow তৈরি করে — একটা function পড়ে আপনি বুঝতে পারবেন না এটা হঠাৎ তিন স্তর উপরের কোনো catch block-এ লাফ দেবে কিনা।
 
 ```go
 // Go forces you to handle every error at the call site
@@ -188,15 +196,15 @@ if err != nil {
 
 <Callout type="tip">
 
-**The `if err != nil` pattern appears roughly every 3 lines in Go code.** It's verbose, but it means:
+**`if err != nil` প্যাটার্ন Go কোডে মোটামুটি প্রতি 3 লাইন পরপর দেখা যায়।** এটা verbose, কিন্তু এর মানে:
 
-- Every error is visible in the code path
-- You can't accidentally ignore an error
-- Reading Go code, you always know what can fail and how it's handled
+- প্রতিটা error কোড path-এ দৃশ্যমান
+- আপনি ভুলে কোনো error উপেক্ষা করতে পারবেন না
+- Go কোড পড়লে আপনি সবসময় জানেন কী fail করতে পারে আর সেটা কীভাবে হ্যান্ডল হয়
 
 </Callout>
 
-## Creating Errors
+## Error তৈরি করা
 
 ```go
 import (
@@ -220,7 +228,7 @@ if err != nil {
 
 ## Sentinel Errors
 
-Pre-defined errors that callers can check against:
+আগে থেকে সংজ্ঞায়িত error, যেগুলোর সাথে caller মিলিয়ে দেখতে পারে:
 
 ```go
 // Standard library examples
@@ -253,7 +261,7 @@ if err != nil {
 
 ## Custom Error Types
 
-When you need more context than a string:
+যখন একটা string-এর চেয়ে বেশি context দরকার:
 
 ```go
 type ValidationError struct {
@@ -285,16 +293,16 @@ if errors.As(err, &valErr) {
 
 <Callout type="info">
 
-**`errors.Is` vs `errors.As`:**
+**`errors.Is` বনাম `errors.As`:**
 
-- **`errors.Is(err, target)`** — "Is this error (or any wrapped error in the chain) equal to this specific value?" Used for sentinel errors.
-- **`errors.As(err, &target)`** — "Can I extract a specific error type from this chain?" Used for custom error types.
+- **`errors.Is(err, target)`** — "এই error (বা chain-এর যেকোনো wrapped error) কি এই নির্দিষ্ট value-র সমান?" Sentinel error-এর জন্য ব্যবহৃত হয়।
+- **`errors.As(err, &target)`** — "এই chain থেকে আমি কি একটা নির্দিষ্ট error type বের করতে পারি?" Custom error type-এর জন্য ব্যবহৃত হয়।
 
 </Callout>
 
-## Defer: Cleanup That Never Fails
+## Defer: যে Cleanup কখনো ব্যর্থ হয় না
 
-`defer` schedules a function call to run when the surrounding function returns. It's Go's way of ensuring cleanup happens — like a `finally` block, but attached to specific operations.
+`defer` একটা function কল শিডিউল করে যা আশপাশের function return করার সময় রান হয়। এটা Go-র নিশ্চিত করার উপায় যে cleanup ঘটবেই — অনেকটা `finally` block-এর মতো, কিন্তু নির্দিষ্ট operation-এর সাথে বাঁধা।
 
 ```go
 func processFile(path string) error {
@@ -314,7 +322,7 @@ func processFile(path string) error {
 }
 ```
 
-### Defer is LIFO (Last In, First Out)
+### Defer হলো LIFO (Last In, First Out)
 
 ```go
 func example() {
@@ -330,13 +338,13 @@ func example() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-`defer` is like stacking plates. You put the first plate down (first defer), then another on top, then another. When you clean up, you pick up the top plate first (last deferred call runs first). This is the LIFO stack order.
+`defer` অনেকটা প্লেট স্তূপ করার মতো। আপনি প্রথম প্লেটটা রাখেন (প্রথম defer), তার উপর আরেকটা, তার উপর আরেকটা। পরিষ্কার করার সময় আপনি উপরের প্লেটটা আগে তোলেন (শেষ defer করা কল আগে রান হয়)। এটাই LIFO stack ক্রম।
 
 </Callout>
 
-### Real-World Defer: Database Transaction
+### বাস্তব জীবনের Defer: Database Transaction
 
 ```go
 func transferMoney(db *sql.DB, from, to int, amount float64) error {
@@ -364,9 +372,9 @@ func transferMoney(db *sql.DB, from, to int, amount float64) error {
 }
 ```
 
-## Panic and Recover (Use Sparingly)
+## Panic এবং Recover (কম ব্যবহার করুন)
 
-`panic` is for truly unrecoverable situations. `recover` catches panics — mainly used in middleware and frameworks.
+`panic` সত্যিকারের অপ্রতিরোধ্য পরিস্থিতির জন্য। `recover` panic ধরে — মূলত middleware আর framework-এ ব্যবহৃত হয়।
 
 ```go
 // Panic — the program crashes with a stack trace
@@ -394,15 +402,15 @@ func safeHandler(next http.Handler) http.Handler {
 
 <Callout type="warning">
 
-**Rule of thumb:** Use `panic` only for programmer errors (wrong configuration, impossible states). Use `error` returns for anything that could reasonably happen at runtime (file not found, network timeout, invalid input). If you're writing a library, almost never panic — return errors instead.
+**মূলনীতি:** `panic` শুধু programmer error-এর জন্য ব্যবহার করুন (ভুল configuration, অসম্ভব state)। runtime-এ যুক্তিসঙ্গতভাবে ঘটতে পারে এমন যেকোনো কিছুর জন্য `error` return ব্যবহার করুন (file not found, network timeout, invalid input)। আপনি যদি একটা library লেখেন, প্রায় কখনোই panic করবেন না — এর বদলে error return করুন।
 
 </Callout>
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Multiple return values** are Go's answer to exceptions — `result, err := doThing()`
-2. **`if err != nil`** is the most common Go pattern — embrace it, don't fight it
-3. **Wrap errors with `%w`** — `fmt.Errorf("context: %w", err)` preserves the error chain
-4. **`errors.Is` for sentinel errors**, **`errors.As` for typed errors** — both traverse the wrapped chain
-5. **`defer` guarantees cleanup** — use it for files, locks, transactions, and connections
-6. **Panic is for programmer errors**, not runtime failures — if the user can trigger it, use an error return instead
+1. **Multiple return value** হলো exception-এর প্রতি Go-র জবাব — `result, err := doThing()`
+2. **`if err != nil`** হলো সবচেয়ে সাধারণ Go প্যাটার্ন — এটাকে আপন করে নিন, এর বিরুদ্ধে লড়বেন না
+3. **`%w` দিয়ে error wrap করুন** — `fmt.Errorf("context: %w", err)` error chain সংরক্ষণ করে
+4. **Sentinel error-এর জন্য `errors.Is`**, **typed error-এর জন্য `errors.As`** — দুটোই wrapped chain ধরে এগোয়
+5. **`defer` cleanup নিশ্চিত করে** — file, lock, transaction, আর connection-এর জন্য ব্যবহার করুন
+6. **Panic programmer error-এর জন্য**, runtime failure-এর জন্য নয় — user যদি এটা ঘটাতে পারে, তাহলে error return ব্যবহার করুন

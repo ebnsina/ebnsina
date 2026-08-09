@@ -1,9 +1,9 @@
 ---
-title: 'Working with Data'
-subtitle: 'JSON, HTTP clients, databases, and file I/O — the bread and butter of every Go backend service.'
+title: 'Data নিয়ে কাজ করা'
+subtitle: 'JSON, HTTP client, database, আর file I/O — প্রতিটা Go backend service-এর নিত্যদিনের হাতিয়ার।'
 chapter: 12
 level: 'intermediate'
-readingTime: '22 min'
+readingTime: '22 মিনিট'
 topics: ['JSON', 'HTTP', 'database', 'SQL', 'file I/O', 'REST API']
 ---
 
@@ -13,15 +13,23 @@ topics: ['JSON', 'HTTP', 'database', 'SQL', 'file I/O', 'REST API']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A plumber's toolkit — JSON is the pipe, HTTP clients are the fittings, SQL is the wrench. Each tool does one job well; this chapter teaches you to use them together without leaks.
+একজন প্লাম্বারের টুলকিট — JSON হলো পাইপ, HTTP client হলো ফিটিং, SQL হলো রেঞ্চ। প্রতিটা টুল একটা করে কাজ ভালোভাবে করে; এই অধ্যায় আপনাকে শেখায় কীভাবে এগুলো একসাথে ব্যবহার করবেন কোনো লিক ছাড়াই।
 
 </Callout>
 
-## JSON: The Universal Data Format
+## গল্পে বুঝি
 
-Every Go backend deals with JSON. Go's `encoding/json` package uses struct tags to control serialization.
+পাসপোর্ট অফিসের বাইরে একটা ছোট কাউন্টারে ফাতিমা আল-ফিহরি বসে ফর্ম পূরণ করে দেয়। এক লোক এসে হাতে লেখা নিজের একটা কাগজ দিল — নাম, বাবার নাম, ঠিকানা, জন্মতারিখ সব নিজের মতো করে সাজানো। এই কাগজ দিয়ে তো অফিসে জমা দেওয়া যাবে না; অফিস শুধু ওদের নির্দিষ্ট ছাপানো ফর্মটাই নেয়, যেখানে প্রতিটা ঘরের নাম আর ক্রম বাঁধা। তাই ফাতিমা আল-ফিহরি লোকটার কাগজের প্রতিটা তথ্য তুলে অফিসের সেই স্ট্যান্ডার্ড ফর্মের ঠিক ঠিক ঘরে বসিয়ে দেয় — এই ঘরে নাম, ওই ঘরে জন্মতারিখ। এবার ফর্মটা খামে ভরে অফিসে পাঠানো যায়।
+
+কিছুক্ষণ পর অফিস থেকে একটা জবাবি খাম এল — ভেতরে আবার সেই একই ছাপানো ফরম্যাটে অফিসের সিদ্ধান্ত লেখা। ফাতিমা আল-ফিহরি খাম খুলে ফর্মটার ঘরে ঘরে চোখ বুলিয়ে তথ্যগুলো নিজের একটা সাদা ওয়ার্কশিটে টুকে নেয়, যাতে লোকটাকে সহজ ভাষায় বুঝিয়ে দিতে পারে। দুই পক্ষই ওই একই ছাপানো ফরম্যাট মানে বলেই ফাতিমা আল-ফিহরি মাঝখানে বসে দোভাষীর কাজটা করতে পারছে।
+
+গল্পটাই আসলে JSON নিয়ে কাজ করা। লোকটার হাতে লেখা কাগজ, মানে নিজের মতো সাজানো ওয়ার্কশিট, হলো Go-এর **struct**; আর দুই পক্ষের মানা সেই ছাপানো স্ট্যান্ডার্ড ফর্ম হলো **JSON**। struct থেকে তথ্য তুলে স্ট্যান্ডার্ড ফর্মে বসিয়ে বাইরে পাঠানোর কাজটাই **marshal** (encode), আর বাইরে থেকে আসা ফর্ম খুলে আবার নিজের struct-এ টুকে নেওয়াটাই **unmarshal** (decode)। বাস্তবে HTTP API-তে ঠিক এটাই ঘটে — আপনি request পাঠানোর সময় struct-কে marshal করে JSON body বানান, আর response-এর JSON body-কে unmarshal করে আবার struct-এ ফেরত আনেন। দুই সার্ভিস আলাদা ভাষায় লেখা হলেও, JSON নামের ওই সাধারণ ফরম্যাট মানে বলেই একে অন্যের সাথে কথা বলতে পারে।
+
+## JSON: সর্বজনীন Data Format
+
+প্রতিটা Go backend-কে JSON নিয়ে কাজ করতে হয়। Go-এর `encoding/json` package serialization নিয়ন্ত্রণ করতে struct tag ব্যবহার করে।
 
 ```go
 type User struct {
@@ -54,9 +62,9 @@ var parsed User
 err := json.Unmarshal([]byte(jsonStr), &parsed)
 ```
 
-### Streaming JSON (Large Data)
+### Streaming JSON (বড় Data)
 
-For large payloads, use `json.Encoder`/`json.Decoder` instead of `Marshal`/`Unmarshal`:
+বড় payload-এর জন্য `Marshal`/`Unmarshal`-এর বদলে `json.Encoder`/`json.Decoder` ব্যবহার করুন:
 
 ```go
 // Encode directly to a writer (HTTP response, file)
@@ -75,13 +83,13 @@ func readJSON(r io.Reader, dst any) error {
 
 <Callout type="tip">
 
-**Use `json.Decoder` for HTTP request bodies**, not `json.Unmarshal`. The decoder reads from the stream directly without buffering the entire body in memory. It also supports `DisallowUnknownFields()` which catches typos in field names.
+**HTTP request body-র জন্য `json.Decoder` ব্যবহার করুন**, `json.Unmarshal` নয়। decoder পুরো body-কে memory-তে buffer না করে সরাসরি stream থেকে read করে। এটা `DisallowUnknownFields()`-ও সাপোর্ট করে যা field name-এ typo ধরে ফেলে।
 
 </Callout>
 
-## Building HTTP Servers
+## HTTP Server বানানো
 
-Go's `net/http` package is production-ready out of the box. No framework needed.
+Go-এর `net/http` package বাক্সের বাইরে থেকেই production-ready। কোনো framework লাগে না।
 
 ```go
 package main
@@ -165,15 +173,15 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Go's `net/http` is like a Swiss Army knife that happens to also be a chef's knife. Most languages need a framework (Express, Flask, Spring) to build web servers. Go's standard library is so good that companies like Cloudflare run production services on it directly. Frameworks like Gin or Echo add convenience, but they're not required.
+Go-এর `net/http` অনেকটা এমন একটা সুইস আর্মি নাইফের মতো যেটা আবার একটা শেফের ছুরিও। বেশিরভাগ ভাষায় web server বানাতে একটা framework লাগে (Express, Flask, Spring)। Go-এর standard library এতটাই ভালো যে Cloudflare-এর মতো কোম্পানি সরাসরি এতে production service চালায়। Gin বা Echo-র মতো framework সুবিধা যোগ করে, কিন্তু বাধ্যতামূলক নয়।
 
 </Callout>
 
 ## HTTP Middleware
 
-Middleware wraps handlers to add cross-cutting concerns:
+Middleware cross-cutting concern যোগ করতে handler-কে মুড়ে দেয়:
 
 ```go
 // Logging middleware
@@ -217,7 +225,7 @@ func main() {
 }
 ```
 
-## Making HTTP Requests
+## HTTP Request পাঠানো
 
 ```go
 // Simple GET
@@ -270,13 +278,13 @@ resp, err := client.Do(req)
 
 <Callout type="warning">
 
-**Never use `http.DefaultClient` in production.** It has no timeout — a slow server will hang your goroutine forever. Always create a client with an explicit timeout.
+**production-এ কখনো `http.DefaultClient` ব্যবহার করবেন না।** এতে কোনো timeout নেই — একটা ধীর server আপনার goroutine-কে চিরকালের জন্য ঝুলিয়ে রাখবে। সবসময় একটা explicit timeout দিয়ে client তৈরি করুন।
 
 </Callout>
 
-## Database Access with `database/sql`
+## `database/sql` দিয়ে Database Access
 
-Go's `database/sql` is a thin, powerful abstraction over SQL databases:
+Go-এর `database/sql` হলো SQL database-এর উপর একটা পাতলা, শক্তিশালী abstraction:
 
 ```go
 import (
@@ -303,7 +311,7 @@ func main() {
 }
 ```
 
-### CRUD Operations
+### CRUD Operation
 
 ```go
 // CREATE
@@ -381,11 +389,11 @@ func deleteUser(db *sql.DB, id int) error {
 
 <Callout type="tip">
 
-**Always call `rows.Close()` and check `rows.Err()`** when iterating query results. Forgetting `Close()` leaks database connections. Forgetting `Err()` silently drops errors that happen during iteration.
+**query result iterate করার সময় সবসময় `rows.Close()` কল করুন আর `rows.Err()` চেক করুন।** `Close()` ভুলে গেলে database connection leak হয়। `Err()` ভুলে গেলে iteration-এর সময় ঘটা error নীরবে হারিয়ে যায়।
 
 </Callout>
 
-### Transactions
+### Transaction
 
 ```go
 func transferFunds(db *sql.DB, fromID, toID int, amount float64) error {
@@ -450,12 +458,12 @@ if err := scanner.Err(); err != nil {
 }
 ```
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Use struct tags** to control JSON field names — `json:"field_name,omitempty"`
-2. **Use `json.Decoder`** for HTTP bodies, `json.Marshal` for in-memory data
-3. **Go 1.22+ has built-in routing** — `mux.HandleFunc("GET /users/{id}", handler)`
-4. **Always set HTTP client timeouts** — `&http.Client{Timeout: 10 * time.Second}`
-5. **`database/sql` manages connection pools** — configure `MaxOpenConns` and `MaxIdleConns`
-6. **Check `rows.Err()` after iteration** — silent errors are the worst kind
-7. **Use `defer tx.Rollback()`** for transactions — it's a no-op after `Commit()`
+1. **JSON field name নিয়ন্ত্রণ করতে struct tag ব্যবহার করুন** — `json:"field_name,omitempty"`
+2. **HTTP body-র জন্য `json.Decoder`** ব্যবহার করুন, in-memory data-র জন্য `json.Marshal`
+3. **Go 1.22+-এ built-in routing আছে** — `mux.HandleFunc("GET /users/{id}", handler)`
+4. **সবসময় HTTP client-এ timeout সেট করুন** — `&http.Client{Timeout: 10 * time.Second}`
+5. **`database/sql` connection pool ম্যানেজ করে** — `MaxOpenConns` আর `MaxIdleConns` কনফিগার করুন
+6. **iteration-এর পর `rows.Err()` চেক করুন** — নীরব error-ই সবচেয়ে খারাপ ধরনের
+7. **transaction-এর জন্য `defer tx.Rollback()` ব্যবহার করুন** — `Commit()`-এর পর এটা no-op

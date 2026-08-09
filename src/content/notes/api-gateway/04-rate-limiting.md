@@ -1,9 +1,9 @@
 ---
 title: 'Rate Limiting at the Gateway'
-subtitle: 'Fixed window, sliding window, token bucket — protect your backends from abuse and enforce fair usage without touching service code.'
+subtitle: 'Fixed window, sliding window, token bucket — service code-এ হাত না দিয়েই আপনার backend-কে abuse থেকে বাঁচান আর fair usage enforce করুন।'
 chapter: 4
 level: 'intermediate'
-readingTime: '13 min'
+readingTime: '13 মিনিট'
 topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'throttling']
 ---
 
@@ -13,23 +13,31 @@ topics: ['rate limiting', 'token bucket', 'sliding window', 'Redis', 'throttling
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A turnstile at a subway station — it allows one person through at a time, enforces a pace, and doesn't care who you are or where you're going. The platform (your backend) never sees the crowd; it just sees a steady stream.
+সাবওয়ে স্টেশনের একটা turnstile — এটা একবারে একজনকে যেতে দেয়, একটা গতি বজায় রাখে, আর আপনি কে বা কোথায় যাচ্ছেন তা নিয়ে মাথা ঘামায় না। প্ল্যাটফর্ম (আপনার backend) কখনো ভিড় দেখে না; সে শুধু একটা স্থির স্রোত দেখে।
 
 </Callout>
 
-## Why at the Gateway
+## গল্পে বুঝি
 
-Rate limiting in every service is redundant and inconsistent. At the gateway you get:
+শহরের সবচেয়ে বড় অ্যামিউজমেন্ট পার্ক চালান আল-খোয়ারিজমি। ভেতরে রোলার কোস্টার, খাবারের স্টল, বাথরুম — সব আছে, কিন্তু পুরো পার্কে ঢোকার রাস্তা মাত্র একটাই, সামনের মেইন গেট। ছুটির দিনে যদি হাজার হাজার লোক একসাথে হুড়মুড়িয়ে ঢুকে পড়ে, তাহলে প্রতিটা রাইডে বিপজ্জনক ভিড় জমে, খাবারের লাইন গেটের বাইরে চলে যায়, বাথরুম উপচে পড়ে — পুরো পার্ক অচল। তাই আল-খোয়ারিজমি একটা সহজ নিয়ম বসালেন: মেইন গেট দিয়ে ঘণ্টায় সর্বোচ্চ এত হাজার লোককেই ঢুকতে দেওয়া হবে, তার বেশি নয়।
 
-- One config to change limits globally
-- Limits enforced before requests consume any service resources
-- Aggregated view: limit per user across all services, not per-service buckets
+গেটের দারোয়ান ফাতিমা আল-ফিহরি একটা কাউন্টার হাতে দাঁড়িয়ে থাকেন। কোটা পূর্ণ হয়ে গেলে বাড়তি ভিজিটরদের হয় বাইরে অপেক্ষা করতে বলা হয়, নয়তো "এই ঘণ্টায় আর জায়গা নেই, একটু পরে আসুন" বলে ফিরিয়ে দেওয়া হয়। মজার ব্যাপার — ভেতরের কোনো রাইড অপারেটরকে আর আলাদা করে ভিড় সামলাতে হয় না। একটা গেটে ভিড় থামালেই ভেতরের সব রাইড, সব স্টল, সব বাথরুম একসাথে বেঁচে যায়।
+
+এই গল্পটাই হলো gateway-তে **rate limiting**। একটাই মেইন গেট = আপনার API gateway, যেখান দিয়ে সব traffic ঢোকে। ঘণ্টায় ভিজিটর ক্যাপ করা = প্রতি client-এর request rate limit করা। ভেতরের কোনো রাইড অতিরিক্ত ভিড়ে না ভাঙা = সব backend service একসাথে overload থেকে বাঁচা। কোটার বেশি ভিজিটরকে অপেক্ষা করানো বা ফিরিয়ে দেওয়া = gateway থেকে throttle করা বা **429** (Too Many Requests) ফেরত দেওয়া। বাস্তবে Cloudflare, Kong বা AWS API Gateway ঠিক এভাবেই একটা জায়গায় limit বসিয়ে পেছনের ডজনখানেক service-কে একসাথে abuse আর traffic spike থেকে রক্ষা করে — প্রতিটা service-এ আলাদা করে পাহারা বসানোর দরকার পড়ে না।
+
+## কেন Gateway-তে
+
+প্রতিটা সার্ভিসে rate limiting অতিরিক্ত আর অসামঞ্জস্যপূর্ণ। gateway-তে করলে আপনি পান:
+
+- limit globally বদলানোর একটাই config
+- request কোনো service resource খরচ করার আগেই enforce হওয়া limit
+- একত্রিত ভিউ: সব সার্ভিস মিলিয়ে per-user limit, per-service bucket নয়
 
 ## Fixed Window
 
-Count requests in a fixed time window (e.g., current minute). Simple but has a burst problem at window edges.
+একটা fixed time window-এ (যেমন চলতি মিনিট) request গোনা। সহজ, তবে window-এর প্রান্তে একটা burst সমস্যা আছে।
 
 ```typescript
 class FixedWindowLimiter {
@@ -55,11 +63,11 @@ class FixedWindowLimiter {
 }
 ```
 
-**The edge burst problem:** With a 60-request/minute limit, a client can send 60 at 11:59 and 60 at 12:00 — 120 requests in 2 seconds. Sliding window fixes this.
+**edge burst সমস্যা:** মিনিটে 60-request limit থাকলে, একটা client 11:59-এ 60টা আর 12:00-এ 60টা পাঠাতে পারে — 2 সেকেন্ডে 120টা request। sliding window এটা ঠিক করে।
 
 ## Sliding Window
 
-Count requests in the last N seconds, not in the current calendar window:
+চলতি ক্যালেন্ডার window-এ নয়, শেষ N সেকেন্ডে request গোনা:
 
 ```typescript
 class SlidingWindowLimiter {
@@ -88,11 +96,11 @@ class SlidingWindowLimiter {
 }
 ```
 
-More accurate, but stores one Redis entry per request. For very high traffic keys, the sorted set grows large — cap with `ZREMRANGEBYRANK` to keep only the last N entries.
+বেশি নির্ভুল, তবে প্রতিটা request-এর জন্য একটা করে Redis entry রাখে। খুব বেশি traffic-এর key-র জন্য sorted set বড় হয়ে যায় — শুধু শেষ N entry রাখতে `ZREMRANGEBYRANK` দিয়ে cap করুন।
 
 ## Token Bucket
 
-The smoothest algorithm. A bucket fills at a constant rate (refill rate). Each request consumes one token. Bursts are allowed up to the bucket capacity.
+সবচেয়ে মসৃণ algorithm। একটা bucket একটা স্থির হারে (refill rate) ভরে। প্রতিটা request একটা token খরচ করে। bucket capacity পর্যন্ত burst অনুমোদিত।
 
 ```typescript
 class TokenBucketLimiter {
@@ -149,9 +157,9 @@ class TokenBucketLimiter {
 }
 ```
 
-## Response Headers
+## Response Header
 
-Always tell clients their rate limit status:
+সবসময় client-কে তাদের rate limit status জানান:
 
 ```typescript
 function applyRateLimitHeaders(
@@ -175,11 +183,11 @@ res.status(429).json({
 });
 ```
 
-The `Retry-After` header lets well-behaved clients back off automatically instead of hammering you harder.
+`Retry-After` header ভালো-আচরণের client-কে আপনাকে আরও জোরে হাতুড়ি না মেরে নিজে থেকেই পিছিয়ে যেতে দেয়।
 
-## Limit Keys
+## Limit Key
 
-What you limit on determines the attack surface:
+আপনি কীসের উপর limit বসান তা attack surface ঠিক করে দেয়:
 
 ```typescript
 function getLimitKey(req: Request): string {
@@ -198,7 +206,7 @@ function getLimitKey(req: Request): string {
 }
 ```
 
-**Layered limits** — apply multiple limits simultaneously:
+**Layered limit** — একসাথে একাধিক limit বসানো:
 
 ```typescript
 async function checkRateLimits(req: Request): Promise<void> {
@@ -217,7 +225,7 @@ async function checkRateLimits(req: Request): Promise<void> {
 
 ## Kong Rate Limiting Plugin
 
-In production, use battle-tested plugins rather than rolling your own:
+production-এ নিজের বানানোর চেয়ে battle-tested plugin ব্যবহার করুন:
 
 ```yaml
 # Kong declarative config (deck)
@@ -233,4 +241,4 @@ plugins:
       hide_client_headers: false
 ```
 
-Kong handles the Redis atomicity, header injection, and 429 responses. Your job is configuring the limits per route and per consumer tier.
+Kong Redis atomicity, header injection আর 429 response সামলায়। আপনার কাজ হলো per route আর per consumer tier limit configure করা।

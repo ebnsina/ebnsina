@@ -1,9 +1,9 @@
 ---
 title: 'CDN with nginx and Varnish'
-subtitle: 'Cache static assets close to users — self-hosted edge caching with nginx proxy_cache and Varnish as a reverse proxy.'
+subtitle: 'ইউজারের কাছাকাছি static asset ক্যাশ করুন — nginx proxy_cache আর Varnish-কে reverse proxy হিসেবে দিয়ে সেল্ফ-হোস্টেড edge caching।'
 chapter: 4
 level: 'intermediate'
-readingTime: '10 min'
+readingTime: '10 মিনিট'
 topics: ['CDN', 'nginx', 'Varnish', 'caching', 'edge caching', 'cache invalidation', 'HTTP headers']
 ---
 
@@ -13,15 +13,23 @@ topics: ['CDN', 'nginx', 'Varnish', 'caching', 'edge caching', 'cache invalidati
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A chain of convenience stores stocking the most popular products locally: customers don't drive to the central warehouse for a bottle of water. A CDN does the same for files — copies are cached at servers close to users, so a request for an image in Frankfurt doesn't cross the Atlantic to retrieve it from a US origin server.
+সবচেয়ে জনপ্রিয় পণ্যগুলো স্থানীয়ভাবে স্টক করে রাখা একগুচ্ছ কনভিনিয়েন্স স্টোর: এক বোতল পানির জন্য কাস্টমার সেন্ট্রাল ওয়্যারহাউসে যায় না। একটা CDN ফাইলের জন্য একই কাজ করে — কপিগুলো ইউজারের কাছের সার্ভারে ক্যাশ করা থাকে, তাই Frankfurt-এ একটা ছবির রিকোয়েস্টকে সেটা আনতে আটলান্টিক পেরিয়ে US-এর origin সার্ভার পর্যন্ত যেতে হয় না।
 
 </Callout>
 
-## How HTTP Caching Works
+## গল্পে বুঝি
 
-Before building infrastructure, understand the headers that drive caching:
+ঈদের ছুটিতে হাইওয়ের টোল প্লাজায় গাড়ির লম্বা লাইন। মূল টোল বুথে বসে আছেন আল-খোয়ারিজমি — প্রতিটা গাড়ির জন্য তাকে পুরো রেকর্ড খুলে দেখতে হয়: গাড়িটা কোন ক্যাটাগরির, ভাড়া কত, রসিদে কী কী লিখতে হবে। এই পুরো লুকআপে সময় লাগে, আর ভিড়ের সময় পেছনে লাইন এত লম্বা হয়ে যায় যে গাড়িগুলো নড়তেই পারে না।
+
+তখন ফাতিমা আল-ফিহরি একটা বুদ্ধি বের করলেন। তিনি লক্ষ্য করলেন, লাইনের ৯০ শতাংশ গাড়িই আসলে সাধারণ প্রাইভেট কার — সবার জন্য হুবহু একই রসিদ। তাই তিনি মূল বুথের সামনে একটা এক্সপ্রেস লেন খুললেন, আর সেই সাধারণ রসিদের একগাদা কপি আগেভাগে ছাপিয়ে হাতের কাছে রেখে দিলেন। এখন সাধারণ কারের চালক ইবনে সিনা এলে তাকে আর মূল বুথ পর্যন্ত যেতে হয় না — এক্সপ্রেস লেন থেকে সেকেন্ডেই একটা ছাপানো রসিদ ধরিয়ে দেওয়া হয়, মূল বুথকে একটুও বিরক্ত করতে হয় না। ছাপানো কপিগুলো প্রতি ঘণ্টায় একবার নতুন করে ছাপানো হয়, আর সরকার যেদিন ভাড়া বদলে দেয়, সেদিন পুরনো কপিগুলো ছিঁড়ে ফেলে নতুন করে ছাপাতে হয়।
+
+এই গল্পটাই আসলে **nginx** বা **Varnish**-এর মতো front cache। ধীরগতির মূল বুথ, যেখানে প্রতিটা গাড়ির পুরো রেকর্ড খোলা হয়, সেটা হলো আপনার **origin** সার্ভার আর স্টোরেজ — আসল কাজটা ওখানেই হয়। এক্সপ্রেস লেন থেকে আগে-থেকে-ছাপানো রসিদ বিলি করা হলো cache থেকে রেসপন্স সার্ভ করা, তাতে origin-এর উপর চাপ কমে যায় (origin offload)। "একই সাধারণ রসিদ" — অর্থাৎ কোন গাড়ি কোন ছাপানো কপি পাবে সেটা ঠিক করার নিয়ম — হলো **cache key**। আর প্রতি ঘণ্টায় নতুন করে ছাপানো হলো **TTL**, আর ভাড়া বদলালে পুরনো কপি ছিঁড়ে ফেলা হলো **purge** বা invalidation। বাস্তবে ঠিক এভাবেই Cloudflare বা Fastly-র মতো CDN কোটি কোটি ইউজারকে ছবি-CSS-JS সার্ভ করে, অথচ আপনার মূল সার্ভারে সেই একই ফাইলের জন্য বারবার রিকোয়েস্ট পৌঁছায় না।
+
+## HTTP Caching কীভাবে কাজ করে
+
+ইনফ্রাস্ট্রাকচার বানানোর আগে, যে header-গুলো caching চালায় সেগুলো বুঝে নিন:
 
 ```
 Cache-Control: public, max-age=31536000, immutable
@@ -40,11 +48,11 @@ Vary: Accept-Encoding
   Cache separately per encoding variant (gzip, br, identity)
 ```
 
-**Content-addressed URLs** eliminate invalidation complexity: `/images/avatar-a3f7b2.webp` — the hash changes when content changes, so files are cached forever.
+**Content-addressed URL** invalidation-এর জটিলতা দূর করে: `/images/avatar-a3f7b2.webp` — content বদলালে hash বদলায়, তাই ফাইল চিরকালের জন্য ক্যাশ করা যায়।
 
-## nginx as Caching Reverse Proxy
+## nginx-কে Caching Reverse Proxy হিসেবে
 
-nginx `proxy_cache` turns any nginx instance into a caching layer in front of your origin (MinIO or app server):
+nginx `proxy_cache` যেকোনো nginx ইনস্ট্যান্সকে আপনার origin-এর (MinIO বা অ্যাপ সার্ভার) সামনে একটা caching layer-এ পরিণত করে:
 
 ```nginx
 # /etc/nginx/nginx.conf
@@ -106,7 +114,7 @@ location /purge {
 
 ## Varnish Cache
 
-Varnish is purpose-built for HTTP caching — more powerful than nginx proxy_cache, uses VCL (Varnish Configuration Language):
+Varnish বিশেষভাবে HTTP caching-এর জন্য বানানো — nginx proxy_cache-এর চেয়ে বেশি শক্তিশালী, VCL (Varnish Configuration Language) ব্যবহার করে:
 
 ```bash
 # Install
@@ -183,7 +191,7 @@ VARNISH_LISTEN_PORT=6081
 
 ## Cache Invalidation
 
-**By URL (Varnish PURGE):**
+**URL দিয়ে (Varnish PURGE):**
 
 ```vcl
 # In vcl_recv, allow PURGE method from trusted IPs
@@ -209,7 +217,7 @@ async function purgeFromCDN(keys: string[]) {
 }
 ```
 
-**By tag (Varnish xkey module — more powerful):**
+**tag দিয়ে (Varnish xkey module — বেশি শক্তিশালী):**
 
 ```vcl
 # Tag objects with logical group IDs
@@ -272,15 +280,15 @@ volumes:
   minio_data:
 ```
 
-nginx handles TLS termination, Varnish handles caching, MinIO is origin.
+nginx TLS termination সামলায়, Varnish caching সামলায়, MinIO হলো origin।
 
 ```
 Browser → nginx (TLS) → Varnish (cache) → MinIO (origin)
 ```
 
-## Serving from MinIO Directly with nginx Proxy
+## nginx Proxy দিয়ে সরাসরি MinIO থেকে সার্ভ করা
 
-Simpler than Varnish for smaller scale:
+ছোট স্কেলে Varnish-এর চেয়ে সহজ:
 
 ```nginx
 server {
@@ -324,7 +332,7 @@ server {
 
 ## Cache Warming
 
-Pre-populate cache after deploy or cache flush:
+deploy বা cache flush-এর পর cache আগেই ভরে রাখুন:
 
 ```typescript
 async function warmCache(keys: string[]) {
@@ -351,7 +359,7 @@ const popularKeys = await db.query(
 await warmCache(popularKeys.rows.map((r) => r.storage_key));
 ```
 
-## Monitoring Cache Performance
+## Cache Performance মনিটরিং
 
 ```bash
 # nginx cache stats (requires stub_status module)
@@ -382,9 +390,9 @@ app.use((req, res, next) => {
 });
 ```
 
-**Target:** >90% cache hit rate for static assets. If below, check:
+**লক্ষ্য:** static asset-এর জন্য >90% cache hit rate। এর নিচে হলে, চেক করুন:
 
-- `Vary` header fragmenting the cache by user-agent/cookie
-- Short TTLs preventing effective caching
-- Cache too small for working set (`max_size`)
-- Cookies on asset requests bypassing cache
+- `Vary` header user-agent/cookie দিয়ে cache-কে fragment করছে
+- ছোট TTL কার্যকর caching আটকাচ্ছে
+- working set-এর জন্য cache খুবই ছোট (`max_size`)
+- asset request-এ cookie থাকায় cache বাইপাস হচ্ছে

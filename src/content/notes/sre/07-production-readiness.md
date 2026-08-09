@@ -1,9 +1,9 @@
 ---
 title: 'Production Readiness Reviews'
-subtitle: 'The PRR checklist that prevents 80% of preventable launches-into-fire, with a real launch gate Terraform module.'
+subtitle: 'যে PRR চেকলিস্ট প্রতিরোধযোগ্য launch-into-fire-এর 80% ঠেকিয়ে দেয়, একটি বাস্তব launch gate Terraform module সহ।'
 chapter: 7
 level: 'intermediate'
-readingTime: '16 min'
+readingTime: '16 মিনিট'
 topics: ['PRR', 'launch review', 'runbook', 'production readiness', 'checklist']
 ---
 
@@ -13,21 +13,29 @@ topics: ['PRR', 'launch review', 'runbook', 'production readiness', 'checklist']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জগতের উদাহরণ**
 
-A building inspection before occupancy — someone independent checks the structure is safe before people move in.
+occupancy-র আগে একটা building inspection — মানুষজন ঢোকার আগে কোনো নিরপেক্ষ কেউ যাচাই করে দেখে যে structure-টা নিরাপদ।
 
 </Callout>
 
-## Why PRRs exist
+## গল্পে বুঝি
 
-A Production Readiness Review (PRR) is a structured checkpoint before SRE accepts the pager for a service. It exists for one reason: **the cost of fixing a missing dashboard at launch is 10x lower than fixing it during a 2am incident.**
+ফাতিমা আল-ফিহরি শহরের বিল্ডিং সেফটি ইন্সপেক্টর। শহরের প্রান্তে একটা নতুন কারখানা সবে তৈরি হয়েছে, মালিক আজই শ্রমিকদের ঢুকিয়ে উৎপাদন শুরু করতে চান। কিন্তু ফাতিমার occupancy certificate সই না হওয়া পর্যন্ত কারখানার গেটে তালা। তিনি হাতে একটা ছাপানো চেকলিস্ট নিয়ে ভেতরে ঢোকেন, আর এক এক করে যাচাই করেন — fire alarm আর smoke detector কি ওয়্যার করা এবং টেস্ট করা আছে? জরুরি বেরোনোর পথগুলো কি খোলা এবং চিহ্নিত? দেয়ালে টাঙানো লিখিত emergency drill-book কি জায়গামতো আছে? প্রতিটা শিফটের জন্য কি প্রশিক্ষিত লোক roster-এ বসানো? আর wiring কি পুরো লোড সামলাতে পারবে, নাকি সব মেশিন একসাথে চললে গলে যাবে?
 
-PRRs are the most leveraged thing SRE does. One hour of review prevents weeks of pager pain.
+আজ smoke detector লাগানো আছে ঠিকই, কিন্তু কোনোটাই টেস্ট করা হয়নি, আর দ্বিতীয় শিফটের জন্য কোনো প্রশিক্ষিত লোক roster-এ নেই। ফাতিমা certificate সই করেন না — "এই দুটো ঠিক করুন, তারপর আবার আসব।" মালিক বিরক্ত হন, একদিন দেরি হয়। কিন্তু ফাতিমা জানেন, চালু কারখানায় আগুন লাগার পর detector কাজ করছে না আবিষ্কার করার খরচ আজকের এই দেরির চেয়ে হাজার গুণ বেশি।
 
-## The launch criteria checklist
+এই গল্পটাই আসলে **Production Readiness Review**। ফাতিমার occupancy sign-off = service launch করার আগের PRR gate। টেস্ট করা fire alarm আর smoke detector = **monitoring ও alerting**; দেয়ালের drill-book = **runbook**; প্রতি শিফটে প্রশিক্ষিত roster = **on-call coverage**; পুরো লোড সামলানো wiring = **capacity** (আর তার সাথে SLO দিয়ে মাপা নির্ভরযোগ্যতা); চিহ্নিত জরুরি বেরোনোর পথ = **graceful degradation/failover**। যেকোনো একটা item fail করলে launch block। বাস্তবে Google-এর SRE team ঠিক এভাবেই নতুন service-এর pager হাতে নেওয়ার আগে একটা structured PRR চালায় — একটা মিসিং dashboard launch-এর সময় ঠিক করা, 2am-এর incident-এ ঠিক করার চেয়ে ঢের সস্তা।
 
-A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked until it's resolved.
+## PRR কেন থাকে
+
+Production Readiness Review (PRR) হলো একটা structured checkpoint, যেটা SRE কোনো service-এর pager গ্রহণ করার আগে হয়। এটা একটা কারণেই থাকে: **launch-এর সময় একটা missing dashboard ঠিক করার খরচ, 2am-এর incident-এর সময় সেটা ঠিক করার খরচের চেয়ে 10x কম।**
+
+PRR হলো SRE যা করে তার মধ্যে সবচেয়ে leveraged জিনিস। এক ঘণ্টার review কয়েক সপ্তাহের pager-যন্ত্রণা ঠেকিয়ে দেয়।
+
+## launch criteria checklist
+
+একটা PRR হলো yes/no checklist। যেকোনো item-এ অস্পষ্টতা মানে launch block, যতক্ষণ না সেটা সমাধান হচ্ছে।
 
 ```markdown
 # PRR: [Service Name] — [Owner Team] — [Launch Date]
@@ -95,11 +103,11 @@ A PRR is a yes/no checklist. Ambiguity in any item means the launch is blocked u
 - [ ] Post-launch monitoring shift assigned (extra eyes for 48h)
 ```
 
-This is a comprehensive list. Tailor it — most services don't need every item, but the team must consciously skip an item, not forget it.
+এটা একটা বিস্তৃত list। এটাকে নিজের প্রয়োজন অনুযায়ী সাজিয়ে নিন — বেশিরভাগ service-এর প্রতিটা item লাগে না, কিন্তু team-কে সচেতনভাবে কোনো item skip করতে হবে, ভুলে গিয়ে বাদ দিলে চলবে না।
 
-## A worked PRR for a real service
+## একটা বাস্তব service-এর জন্য একটা worked PRR
 
-Let's run a PRR for a payment-service launch. The conversation as it would actually happen:
+চলুন একটা payment-service launch-এর জন্য একটা PRR চালাই। বাস্তবে যেমনটা হতো ঠিক তেমন কথোপকথন:
 
 ```
 SRE:  "Walk me through the deploy."
@@ -115,11 +123,11 @@ SRE:  "BLOCKED. Rollback must be one command and complete in under
        test it Monday, then we re-review."
 ```
 
-That conversation, repeated across the checklist, is the PRR. Every block is a real thing the team would have eventually discovered in a real outage at much higher cost.
+সেই কথোপকথন, পুরো checklist জুড়ে বারবার করলে সেটাই হলো PRR। প্রতিটা block আসলে একটা বাস্তব জিনিস, যেটা team শেষ পর্যন্ত একটা বাস্তব outage-এ অনেক বেশি খরচে আবিষ্কার করত।
 
-## Codifying the checklist as policy
+## checklist-কে policy হিসেবে codify করা
 
-A checklist that humans run is a checklist humans skip. Bake it into deploy tooling.
+যে checklist মানুষ চালায়, সে checklist মানুষ skip করে। এটাকে deploy tooling-এর ভেতরে bake করে দিন।
 
 ```hcl
 # terraform/modules/service/main.tf
@@ -183,17 +191,17 @@ data "http" "runbook_check" {
 }
 ```
 
-To launch a new service, a team must invoke this module. They cannot create a service in production without an SLO, an alert, a dashboard, and a reachable runbook. The PRR has moved from "checklist" to "compile-time error."
+নতুন একটা service launch করতে হলে, team-কে এই module invoke করতেই হবে। একটা SLO, একটা alert, একটা dashboard, আর একটা reachable runbook ছাড়া তারা production-এ কোনো service তৈরি করতে পারবে না। PRR "checklist" থেকে "compile-time error"-এ চলে এসেছে।
 
 <Callout type="tip">
 
-**Make the right way the easy way.** If your launch tooling enforces 80% of the PRR automatically, the human review can focus on the 20% that requires judgment (capacity, security, customer impact).
+**সঠিক পথটাকেই সহজ পথ বানান।** যদি আপনার launch tooling PRR-এর 80% automatically enforce করে, তাহলে human review সেই 20%-এ মনোযোগ দিতে পারে যেখানে বিচারবুদ্ধি লাগে (capacity, security, customer impact)।
 
 </Callout>
 
-## The runbook (the most-skipped item)
+## runbook (সবচেয়ে বেশি skip হওয়া item)
 
-Runbooks are the artifact most teams produce worst. A real runbook follows a structured shape:
+Runbook হলো সেই artifact যেটা বেশিরভাগ team সবচেয়ে খারাপভাবে বানায়। একটা বাস্তব runbook একটা structured shape মেনে চলে:
 
 ````markdown
 # Runbook: payment-service / PaymentLatencyHigh
@@ -235,7 +243,7 @@ kubectl rollout undo deployment/payment-service -n payments
 ```
 ````
 
-Wait 60s. Confirm latency drops on dashboard.
+60s অপেক্ষা করুন। dashboard-এ latency কমেছে কিনা নিশ্চিত করুন।
 
 ### 2. If database is the bottleneck (CPU > 80%)
 
@@ -249,7 +257,7 @@ kubectl rollout restart deployment/payment-service
 
 ### 3. If Stripe is the bottleneck
 
-Enable degraded mode (cash-on-delivery only):
+degraded mode চালু করুন (cash-on-delivery only):
 
 ```bash
 kubectl patch configmap payment-config \
@@ -269,11 +277,11 @@ kubectl patch configmap payment-config \
 
 ````
 
-The hallmarks: deep links (not "go look at Grafana"), copy-pasteable commands, ordered mitigations from least-risky to most-risky.
+এর বৈশিষ্ট্যগুলো: deep link (শুধু "গিয়ে Grafana দেখো" নয়), copy-paste করার মতো command, আর least-risky থেকে most-risky পর্যন্ত সাজানো mitigation।
 
 ## Pre-launch monitoring shift
 
-For SEV-critical launches, schedule extra eyes for the first 48 hours. This is the single highest-leverage tradition in launch ops.
+SEV-critical launch-এর জন্য, প্রথম 48 ঘণ্টা extra eyes-এর ব্যবস্থা রাখুন। launch ops-এ এটাই একমাত্র সবচেয়ে বেশি leverage-দেওয়া tradition।
 
 ```typescript
 // Launch monitoring shift schedule
@@ -300,7 +308,7 @@ const launchShift = {
 
 ## Annual recertification
 
-PRRs are not one-time. Services drift. Annual recertification:
+PRR এককালীন জিনিস নয়। Service drift করে। বার্ষিক recertification:
 
 ```bash
 # A real CI job that checks PRR compliance
@@ -318,19 +326,19 @@ sre-prr-check --service payment-service
 # Status: NEEDS RECERTIFICATION
 ```
 
-Failed recertification means SRE escalates to the engineering manager. Not punitive — it's the back-pressure that prevents production from rotting silently.
+recertification ব্যর্থ হওয়া মানে SRE engineering manager-এর কাছে escalate করে। শাস্তিমূলক কিছু নয় — এটা সেই back-pressure যেটা production-কে নীরবে পচে যাওয়া থেকে ঠেকায়।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [Google SRE Book — Launch Coordination Engineering](https://sre.google/sre-book/launch-coordination-checklists/) — the original PRR checklist
+- [Google SRE Book — Launch Coordination Engineering](https://sre.google/sre-book/launch-coordination-checklists/) — মূল PRR checklist
 - [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) — pillars + review process
-- [Google Cloud Architecture Framework](https://cloud.google.com/architecture/framework) — counterpart to AWS WA
-- [12-factor app](https://12factor.net/) — pre-PRR baseline for service hygiene
+- [Google Cloud Architecture Framework](https://cloud.google.com/architecture/framework) — AWS WA-এর প্রতিরূপ
+- [12-factor app](https://12factor.net/) — service hygiene-এর জন্য pre-PRR baseline
 
-## Key Takeaways
+## মূল কথাগুলো
 
-1. **PRRs catch the most outage causes** at 10x lower cost than at incident time
-2. **The checklist must be checked**, not memorized — write it down
-3. **Bake the baseline into Terraform** — the right way becomes the only way
-4. **Runbooks need deep links and copy-pasteable commands**, not vague pointers
-5. **Recertify annually** — services drift, drift causes outages, drift is preventable
+1. **PRR সবচেয়ে বেশি outage-এর কারণ ধরে ফেলে** incident-এর সময়ের চেয়ে 10x কম খরচে
+2. **checklist মুখস্থ নয়, চেক করতে হবে** — লিখে রাখুন
+3. **baseline-টা Terraform-এ bake করুন** — সঠিক পথই একমাত্র পথ হয়ে ওঠে
+4. **Runbook-এ deep link আর copy-paste করার মতো command লাগে**, অস্পষ্ট ইশারা নয়
+5. **প্রতি বছর recertify করুন** — service drift করে, drift outage ঘটায়, drift প্রতিরোধযোগ্য

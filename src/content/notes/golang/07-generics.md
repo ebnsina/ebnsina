@@ -1,9 +1,9 @@
 ---
 title: 'Generics'
-subtitle: "Write code that works with any type — Go 1.18's biggest feature eliminates boilerplate without sacrificing type safety."
+subtitle: 'যেকোনো type-এর সাথে কাজ করে এমন কোড লিখুন — Go 1.18-এর সবচেয়ে বড় feature type safety না হারিয়েই boilerplate মুছে দেয়।'
 chapter: 7
 level: 'intermediate'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['generics', 'type parameters', 'constraints', 'type inference']
 ---
 
@@ -11,9 +11,17 @@ topics: ['generics', 'type parameters', 'constraints', 'type inference']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## The Problem Generics Solve
+## গল্পে বুঝি
 
-Before generics (Go 1.18), you had two bad options for writing reusable code:
+ফাতিমা আল-ফিহরির একটা ছোট বেকারি-কাম-হস্তশিল্পের দোকান। ঈদের সময় সে বিস্কুট বানায়, শীতে বাচ্চাদের জন্য মাটির খেলনা গড়ে, আবার একটা কর্নারে হাতে বানানো সাবানও বিক্রি করে। মজার ব্যাপার হলো — তিন জিনিসের নকশা একই: তারার আকৃতি। আগে সে ভাবত প্রতিটা জিনিসের জন্য আলাদা তারা-ছাঁচ লাগবে, একটা বিস্কুটের জন্য, একটা মাটির খেলনার জন্য, আরেকটা সাবানের জন্য। তিনটে আলাদা ছাঁচ কেনা, তিনটে জায়গায় রাখা, একটা ভাঙলে আবার ঠিক ওই মাপেরটা খুঁজে আনা — খুব ঝামেলা।
+
+তারপর ইবনে সিনা, ফাতিমা আল-ফিহরির কারিগর, একটা মজবুত ধাতুর তারা-ছাঁচ বানিয়ে দিল। এখন ফাতিমা আল-ফিহরি যা-ই চাপ দিক না কেন — বিস্কুটের কাঁচা খামির, নরম মাটি, বা গলানো সাবান — একই ছাঁচ চেপে ঠিক একই তারার আকৃতি বেরিয়ে আসে। ছাঁচটা কিন্তু যেকোনো জিনিস নেয় না; যা চাপা যায়, ছাঁচে ধরে এমন উপাদানই নেয়। ফলে ফল সবসময় নিখুঁত তারা — কোনোবার বেঢপ কিছু বেরোয় না।
+
+এই এক ছাঁচ-বহু-উপাদানের গল্পটাই আসলে **generics**। ছাঁচ হলো একটা generic function, আর যে উপাদানটা চাপছেন সেটাই **type parameter** — একই function বিস্কুট (int), মাটি (string), সাবান (struct) সব type-এই কাজ করে, প্রতিটার জন্য আলাদা function লিখতে হয় না (duplication বাদ)। আবার ছাঁচ যেমন যা-খুশি নেয় না, তেমনি constraint দিয়ে ঠিক করে দেওয়া হয় কোন type গুলো চলবে — তাই ফল সবসময় সঠিক আকৃতি, মানে **type safety** বজায় থাকে। বাস্তবে Go-র `slices.Sort` বা `Contains` ঠিক এভাবেই একটাই function হয়ে int, string, float — সব slice-এ কাজ করে, compile-time-এ টাইপ ঠিক আছে কিনা যাচাই করেই।
+
+## Generics যে সমস্যার সমাধান করে
+
+Generics-এর আগে (Go 1.18), reusable কোড লেখার জন্য আপনার হাতে দুটো বাজে অপশন ছিল:
 
 ```go
 // Option 1: Write the same function for every type (boilerplate)
@@ -44,9 +52,9 @@ func Contains(slice []interface{}, target interface{}) bool {
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Generics are like a universal adapter plug. Without generics, you need a different adapter for every country (function per type). With generics, you have one adapter that works everywhere — but it still enforces the rule that "the plug must be the right shape" (type constraints).
+Generics অনেকটা একটা universal adapter প্লাগের মতো। Generics ছাড়া, প্রতিটা দেশের জন্য আপনার আলাদা adapter লাগে (প্রতি type-এ একটা function)। Generics দিয়ে, আপনার একটা adapter আছে যা সব জায়গায় কাজ করে — কিন্তু এটা এখনও নিয়মটা enforce করে যে "প্লাগের আকার ঠিক থাকতে হবে" (type constraint)।
 
 </Callout>
 
@@ -71,7 +79,7 @@ Contains([]string{"a", "b"}, "c")     // T = string, returns false
 Contains[float64]([]float64{1.1, 2.2}, 2.2)
 ```
 
-### Multiple Type Parameters
+### একাধিক Type Parameter
 
 ```go
 func Map[T any, R any](slice []T, fn func(T) R) []R {
@@ -94,9 +102,9 @@ emails := Map(users, func(u User) string {
 })
 ```
 
-## Constraints: Limiting Type Parameters
+## Constraints: Type Parameter সীমিত করা
 
-Constraints define what operations a type parameter supports:
+Constraint সংজ্ঞায়িত করে একটা type parameter কোন operation সমর্থন করে:
 
 ```go
 // Built-in constraints
@@ -164,7 +172,7 @@ type OrderedStringer interface {
 
 ## Generic Types
 
-Generics aren't just for functions — you can create generic structs:
+Generics শুধু function-এর জন্য নয় — আপনি generic struct-ও তৈরি করতে পারেন:
 
 ```go
 // Generic stack
@@ -210,7 +218,7 @@ strStack.Push("hello")
 
 ### Generic Result Type
 
-A common pattern for functions that might fail:
+যেসব function fail করতে পারে তাদের জন্য একটা সাধারণ প্যাটার্ন:
 
 ```go
 type Result[T any] struct {
@@ -242,7 +250,7 @@ result := <-fetchAsync(ctx, func() (User, error) {
 user, err := result.Unwrap()
 ```
 
-## Real-World Generic Utilities
+## বাস্তব জীবনের Generic Utility
 
 ### Filter, Reduce, Find
 
@@ -339,11 +347,11 @@ configCache := NewCache[string, string](1 * time.Hour)
 configCache.Set("theme", "dark")
 ```
 
-## When NOT to Use Generics
+## কখন Generics ব্যবহার করবেন না
 
 <Callout type="warning">
 
-**Don't use generics just because you can.** The Go team's guidance: if you're writing the same code three times with different types, consider generics. If it's once or twice, just write the concrete version.
+**শুধু পারেন বলেই generics ব্যবহার করবেন না।** Go টিমের গাইডলাইন: আপনি যদি একই কোড ভিন্ন type নিয়ে তিনবার লিখছেন, তাহলে generics বিবেচনা করুন। একবার বা দুবার হলে, শুধু concrete version-ই লিখুন।
 
 </Callout>
 
@@ -366,9 +374,9 @@ func Map[T, R any](slice []T, fn func(T) R) []R { ... }
 func Keys[K comparable, V any](m map[K]V) []K { ... }
 ```
 
-## The `slices` and `maps` Standard Library
+## `slices` এবং `maps` Standard Library
 
-Go 1.21+ added generic utility packages:
+Go 1.21+ generic utility package যোগ করেছে:
 
 ```go
 import (
@@ -394,11 +402,11 @@ maps.DeleteFunc(m, func(k string, v int) bool {
 // m = {"b": 2, "c": 3}
 ```
 
-## Key Takeaways
+## মূল যেসব শিখলেন
 
-1. **Generics eliminate type-specific boilerplate** — one `Contains[T]` replaces `ContainsInt`, `ContainsString`, etc.
-2. **`comparable` for equality**, **`cmp.Ordered` for ordering** — use the right constraint
-3. **Custom constraints are interfaces** with type unions (`int | float64 | string`)
-4. **Generic structs** are powerful for data structures — `Stack[T]`, `Cache[K, V]`, `Result[T]`
-5. **Use `slices` and `maps` packages** — standard library already has common generic utilities
-6. **Don't overuse generics** — if a concrete type or interface works, prefer that. Generics are for data structures and utilities, not business logic
+1. **Generics type-নির্দিষ্ট boilerplate মুছে দেয়** — একটা `Contains[T]` `ContainsInt`, `ContainsString` ইত্যাদির জায়গা নেয়
+2. **সমতার জন্য `comparable`**, **ক্রমের জন্য `cmp.Ordered`** — ঠিক constraint ব্যবহার করুন
+3. **Custom constraint হলো interface** type union সহ (`int | float64 | string`)
+4. **Generic struct** data structure-এর জন্য শক্তিশালী — `Stack[T]`, `Cache[K, V]`, `Result[T]`
+5. **`slices` আর `maps` package ব্যবহার করুন** — standard library-তে ইতিমধ্যেই সাধারণ generic utility আছে
+6. **Generics-এর অতিরিক্ত ব্যবহার করবেন না** — concrete type বা interface কাজ করলে, সেটাই বেছে নিন। Generics data structure আর utility-র জন্য, business logic-এর জন্য নয়

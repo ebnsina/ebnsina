@@ -1,9 +1,9 @@
 ---
 title: 'Alerting & On-Call'
-subtitle: "Alerts that fire when users are impacted, not when metrics twitch — SLO-based alerting, runbooks, and on-call practices that don't burn people out."
+subtitle: 'যে alert তখনই fire করে যখন ইউজার আক্রান্ত হয়, metric একটু নড়লেই নয় — SLO-based alerting, runbooks, আর এমন on-call practice যা মানুষজনকে পুড়িয়ে ফেলে না।'
 chapter: 5
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['alerting', 'on-call', 'SLO', 'error budget', 'PagerDuty', 'runbooks', 'alert fatigue']
 ---
 
@@ -11,38 +11,46 @@ topics: ['alerting', 'on-call', 'SLO', 'error budget', 'PagerDuty', 'runbooks', 
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+আল-খোয়ারিজমির পাড়ায় একটা রাত-পাহারার ব্যবস্থা আছে। পাড়ার মাঝখানে একটা জোরালো ঘণ্টা বসানো — নিয়ম হলো এই ঘণ্টা শুধু তখনই বাজবে যখন সত্যিকারের বিপদ, মানে আগুন লাগবে কিংবা কোনো বাড়িতে চোর ঢুকবে। আর কার্ডে একটা রোটা টাঙানো — কোন রাতে কার নাম, সেই রাতে সে-ই জেগে ঘণ্টার সাড়ায় ছুটে যাবে। ইবনে সিনার নামের রাতে ঘণ্টা বাজলে ইবনে সিনাই ওঠে, ফাতিমা আল-ফিহরির নামের রাতে সে। ব্যবস্থাটা দিব্যি চলছিল — ঘণ্টা কালেভদ্রে বাজত, কিন্তু বাজলেই সবাই জানত এবার সত্যি কিছু একটা ঘটেছে, তাই কেউ দেরি করত না।
+
+একদিন কেউ একজন ঘণ্টার সুতোটা এত সংবেদনশীল করে বেঁধে দিল যে, রাস্তার বেড়াল লাফালে বা জোরে বাতাস বইলেও ঘণ্টা বেজে উঠত। প্রথম কয়েক রাত পাহারাদাররা ধড়ফড় করে উঠল, বেরিয়ে দেখল — কিছুই না। এমন ভুয়া ডাক রাতের পর রাত চলতে থাকায় তারা ধরেই নিল, "ও বাজছে বাজুক, আবার নিশ্চয়ই বেড়াল।" ঠিক সেই রাতেই সত্যিকারের চোর ঢুকল, ঘণ্টা বাজল — কিন্তু রোটায় থাকা লোকটা পাশ ফিরে ঘুমিয়ে রইল। বিপদটা ঘটে গেল, অথচ ঘণ্টা তো বেজেছিলই।
+
+এই গল্পটাই আসলে alerting আর on-call-এর গল্প। সত্যিকারের threshold-এ বাঁধা ঘণ্টা — আগুন বা চোর — হলো একটা actionable **alert**: বাজলেই মানুষের সত্যিকারের কিছু একটা করা দরকার। রাতের রোটা হলো **on-call rotation** — কে সাড়া দেবে তার একটা roster। আর অতিসংবেদনশীল ঘণ্টাকে উপেক্ষা করতে শেখা মানুষগুলোই হলো **alert fatigue**: noisy, false alert এত বেশি হলে মানুষ আসল alert-কেও পাত্তা দেওয়া বন্ধ করে দেয়। বাস্তবে PagerDuty-র মতো টুল দিয়ে ঠিক এভাবেই on-call rotation চালানো হয় — আর সেখানে সবচেয়ে বড় শৃঙ্খলাটা হলো ঘণ্টা শুধু meaningful threshold-এই বাঁধা, যাতে fatigue-এ পড়ে কেউ কখনো আসল বিপদটা ঘুমিয়ে না কাটায়।
+
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A smoke detector vs a fire department dispatch: a smoke detector alerts on smoke — which could be burnt toast or a house fire. The fire department dispatches when there's a confirmed fire requiring response. Alert on symptoms that require human action (fire), not on every metric wiggle (smoke). Too many false alarms and people disable the detector.
+একটা smoke detector বনাম fire department dispatch: একটা smoke detector ধোঁয়া পেলেই alert করে — যেটা পোড়া টোস্টও হতে পারে, আবার বাড়িতে আগুনও। fire department তখন পাঠায় যখন সত্যিই একটা নিশ্চিত আগুন থাকে যাতে সাড়া দেওয়া দরকার। এমন symptom-এ alert করুন যাতে মানুষের action দরকার (আগুন), প্রতিটা metric নড়াচড়ায় নয় (ধোঁয়া)। খুব বেশি ভুয়া অ্যালার্ম হলে মানুষ detector-টাই বন্ধ করে দেয়।
 
 </Callout>
 
-## Alert Fatigue Is a Safety Problem
+## Alert Fatigue একটা Safety Problem
 
-A system that pages engineers 20 times per day trains them to ignore pages. When the real incident fires, the response is slow. Alert fatigue kills SLAs.
+যে সিস্টেম দিনে 20 বার engineer-দের page করে, সেটা তাদের page উপেক্ষা করতে শেখায়। যখন আসল incident fire করে, তখন সাড়া দিতে দেরি হয়। Alert fatigue SLA মেরে ফেলে।
 
-The root cause is alerting on the wrong things:
+মূল কারণ হলো ভুল জিনিসের উপর alert করা:
 
-- Threshold-based alerts that fire when metrics exceed a static number
-- Alerts for things that self-heal without intervention
-- Alerts with no clear action
+- Threshold-based alert যা একটা স্থির সংখ্যা metric ছাড়ালেই fire করে
+- এমন জিনিসের alert যা হস্তক্ষেপ ছাড়াই নিজে থেকে ঠিক হয়ে যায়
+- কোনো স্পষ্ট action নেই এমন alert
 
-**The test for every alert:** "If this fires at 3am, should an engineer wake up and do something within 15 minutes?" If no: the alert should not page. It can log, post to Slack, or be recorded, but it should not page.
+**প্রতিটা alert-এর জন্য পরীক্ষা:** "এটা যদি রাত 3টায় fire করে, একজন engineer-এর কি জেগে উঠে 15 মিনিটের মধ্যে কিছু করা উচিত?" যদি না হয়: alert-টা page করা উচিত নয়। এটা log করতে পারে, Slack-এ post করতে পারে, বা রেকর্ড করা যেতে পারে, কিন্তু page করা উচিত নয়।
 
 ## SLO-Based Alerting
 
-Alert on user impact, not metric thresholds.
+metric threshold নয়, user impact-এর উপর alert করুন।
 
-**Step 1: Define SLOs**
+**Step 1: SLO সংজ্ঞায়িত করুন**
 
 ```
 Success rate SLO: 99.9% of requests succeed over 30 days
 Latency SLO: P99 < 500ms for 99.5% of requests over 30 days
 ```
 
-**Step 2: Calculate error budget**
+**Step 2: Error budget হিসাব করুন**
 
 ```
 99.9% success → 0.1% errors allowed
@@ -50,9 +58,9 @@ Latency SLO: P99 < 500ms for 99.5% of requests over 30 days
 Budget: 43.2 minutes of 100% outage (or equivalent degradation)
 ```
 
-**Step 3: Alert on burn rate**
+**Step 3: Burn rate-এর উপর alert করুন**
 
-Burn rate = how fast you're consuming error budget. At 1x you exhaust exactly at month end. At 14x you exhaust in ~2 days.
+Burn rate = আপনি কত দ্রুত error budget খরচ করছেন। 1x-এ আপনি ঠিক মাসের শেষে শেষ করেন। 14x-এ আপনি ~2 দিনে শেষ করে ফেলেন।
 
 ```yaml
 # Alert when burning fast enough to exhaust budget in < 1 hour
@@ -81,7 +89,7 @@ Burn rate = how fast you're consuming error budget. At 1x you exhaust exactly at
     severity: warning
 ```
 
-Two windows: `[5m]` catches sudden spikes, `[30m]` catches slow degradation. Both required — a single window misses one class of failure.
+দুটো window: `[5m]` হঠাৎ spike ধরে, `[30m]` ধীর degradation ধরে। দুটোই দরকার — একটা মাত্র window একধরনের failure মিস করে।
 
 ## Alert Taxonomy
 
@@ -107,117 +115,117 @@ No notification:
 
 ## Runbooks
 
-Every alert that pages must have a runbook. The runbook is written before the incident, not during.
+যে প্রতিটা alert page করে তার একটা runbook থাকতেই হবে। runbook incident-এর আগে লেখা হয়, চলাকালীন নয়।
 
 ````markdown
 # Runbook: HighErrorBudgetBurnRate
 
-## What this means
+## এর মানে কী
 
-The order-service error rate is high enough to exhaust our 30-day error
-budget in less than 2 days. Users are seeing failures on order creation.
+order-service-এর error rate এত বেশি যে আমাদের 30-দিনের error
+budget 2 দিনেরও কম সময়ে শেষ হয়ে যাবে। ইউজাররা order তৈরিতে failure দেখছে।
 
-## Immediate steps (< 5 minutes)
+## তাৎক্ষণিক পদক্ষেপ (< 5 minutes)
 
-1. Check current error rate:
+1. বর্তমান error rate চেক করুন:
    - Grafana dashboard: https://grafana.internal/d/orders/order-service
-   - Look at "Error Rate by Path" panel
+   - "Error Rate by Path" panel দেখুন
 
-2. Check recent deployments:
+2. সাম্প্রতিক deployment চেক করুন:
    ```bash
    kubectl rollout history deployment/order-service -n production
    ```
 ````
 
-If deployed in last 30 minutes: consider rollback.
+গত 30 মিনিটে deploy হয়ে থাকলে: rollback বিবেচনা করুন।
 
-3. Check downstream services:
+3. Downstream service চেক করুন:
    - Payment service: https://grafana.internal/d/payments
    - Database: https://grafana.internal/d/postgres
 
 ## Diagnosis paths
 
-**If errors started at a deploy time:**
+**যদি error একটা deploy-এর সময় থেকে শুরু হয়:**
 
 ```bash
 kubectl rollout undo deployment/order-service -n production
 ```
 
-Monitor for 5 minutes. If error rate drops: deploy was the cause.
+5 মিনিট monitor করুন। error rate কমলে: deploy-ই কারণ ছিল।
 
-**If payment service is erroring:**
+**যদি payment service error দিচ্ছে:**
 
-- Check payment service runbook: https://runbooks.internal/payment-service
-- Activate payment fallback mode: `kubectl set env deployment/order-service PAYMENT_FALLBACK=true -n production`
+- payment service runbook চেক করুন: https://runbooks.internal/payment-service
+- payment fallback mode চালু করুন: `kubectl set env deployment/order-service PAYMENT_FALLBACK=true -n production`
 
-**If database errors:**
+**যদি database error:**
 
-- Check connection pool: `psql -h db.internal -c "SELECT count(*), state FROM pg_stat_activity GROUP BY state;"`
-- If connections exhausted: restart PgBouncer: `systemctl restart pgbouncer`
+- connection pool চেক করুন: `psql -h db.internal -c "SELECT count(*), state FROM pg_stat_activity GROUP BY state;"`
+- connection ফুরিয়ে গেলে: PgBouncer restart করুন: `systemctl restart pgbouncer`
 
 ## Escalation
 
-- 15 minutes: escalate to service owner (@layla in #incidents)
-- 30 minutes: escalate to engineering lead (@ahmad)
+- 15 minutes: service owner-এর কাছে escalate করুন (#incidents-এ @layla)
+- 30 minutes: engineering lead-এর কাছে escalate করুন (@ahmad)
 
-## Related alerts
+## সম্পর্কিত alert
 
-- OrderQueueHigh — queue backing up may indicate processing failures
+- OrderQueueHigh — queue জমে যাওয়া processing failure নির্দেশ করতে পারে
 - PaymentServiceDown — downstream dependency
 
 ```
 
-A runbook without steps to take is useless. A runbook with steps to take is a tool. Update it after every incident with what you learned.
+action ধাপ ছাড়া একটা runbook অকেজো। action ধাপসহ একটা runbook একটা টুল। প্রতিটা incident-এর পরে যা শিখলেন তা দিয়ে এটা আপডেট করুন।
 
 ## On-Call Rotation
 
 ```
 
-Rotation structure:
+Rotation কাঠামো:
 
-- Primary: first to receive page
-- Secondary: escalation if primary doesn't ack in 15min
-- Rotation: weekly, Monday to Monday
+- Primary: page প্রথমে যে পায়
+- Secondary: primary 15min-এ ack না করলে escalation
+- Rotation: সাপ্তাহিক, সোমবার থেকে সোমবার
 
 Handoff:
 
-- Written summary of current incidents, known issues, upcoming deploys
-- 30-minute sync with incoming on-call
-- Confirm all alerts are resolved or documented
+- বর্তমান incident, পরিচিত issue, আসন্ন deploy-এর লিখিত summary
+- আগত on-call-এর সাথে 30-মিনিটের sync
+- সব alert resolved বা নথিভুক্ত কিনা নিশ্চিত করুন
 
 Compensation:
 
-- Disrupted sleep = comp time next day (explicit policy)
-- Weekend pages = extra day off
-  Clear policy prevents resentment
+- ঘুম নষ্ট = পরদিন comp time (স্পষ্ট policy)
+- Weekend page = অতিরিক্ত একদিন ছুটি
+  স্পষ্ট policy বিরক্তি প্রতিরোধ করে
 
 ```
 
 ## Incident Response
 
-When a critical alert fires:
+যখন একটা critical alert fire করে:
 
 ```
 
-0m — Alert fires, primary on-call acknowledges
-2m — Assess severity. Create incident channel: #incident-YYYY-MM-DD-service
-5m — Identify impact: how many users, which features
-10m — Mitigation attempt (rollback, traffic shift, restart)
-15m — Update stakeholders: "Order service degraded, team investigating"
-30m — If not mitigated: escalate, call for help
-60m — If not mitigated: incident commander takes over coordination
+0m — Alert fire করে, primary on-call acknowledge করে
+2m — severity যাচাই করুন। incident channel তৈরি করুন: #incident-YYYY-MM-DD-service
+5m — impact শনাক্ত করুন: কতজন ইউজার, কোন feature
+10m — Mitigation চেষ্টা (rollback, traffic shift, restart)
+15m — stakeholder-দের আপডেট দিন: "Order service degraded, team investigating"
+30m — mitigate না হলে: escalate করুন, সাহায্য চান
+60m — mitigate না হলে: incident commander সমন্বয়ের দায়িত্ব নেয়
 
 Resolution:
-— Verify metrics returned to baseline
-— "All-clear" message in incident channel
-— Write preliminary post-mortem within 24h
-— Full post-mortem within 5 business days
+— metric baseline-এ ফিরেছে কিনা যাচাই করুন
+— incident channel-এ "All-clear" message
+— 24 ঘণ্টার মধ্যে প্রাথমিক post-mortem লিখুন
+— 5 কর্মদিবসের মধ্যে সম্পূর্ণ post-mortem
 
 ````
 
 ## Post-Mortems
 
-A blameless post-mortem focuses on systems, not people.
+একটা blameless post-mortem মানুষ নয়, সিস্টেমের উপর মনোযোগ দেয়।
 
 ```markdown
 # Post-Mortem: Order Service Outage 2024-01-15
@@ -259,11 +267,11 @@ pool (50 connections) was exhausted within 45 minutes of the deploy.
 | Add payment-service circuit breaker in order-service | Fatima | 2024-01-24 |
 ````
 
-The post-mortem's value is the action items. An incident without action items is a missed opportunity — you'll see the same failure again.
+Post-mortem-এর আসল মূল্য হলো action item গুলো। action item ছাড়া একটা incident মানে একটা হারানো সুযোগ — একই failure আপনি আবার দেখবেন।
 
 ## On-Call Health Metrics
 
-Track and review:
+ট্র্যাক করুন আর পর্যালোচনা করুন:
 
 ```
 Mean Time to Acknowledge (MTTA): target < 5 minutes
@@ -274,4 +282,4 @@ Post-mortems completed: 100% of P1/P2 incidents
 Action items resolved: review at each quarterly infra review
 ```
 
-If pages per week exceeds 5, prioritize alert pruning over new features. An on-call rotation that burns people out will cost more in attrition than the features you're shipping.
+সপ্তাহে page সংখ্যা 5 ছাড়িয়ে গেলে, নতুন feature-এর চেয়ে alert pruning-কে অগ্রাধিকার দিন। যে on-call rotation মানুষকে পুড়িয়ে ফেলে, সেটা আপনি যে feature ship করছেন তার চেয়ে বেশি খরচ করাবে attrition-এ।

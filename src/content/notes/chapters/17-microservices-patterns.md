@@ -1,9 +1,9 @@
 ---
 title: 'Microservices Patterns'
-subtitle: 'Implement the saga pattern, circuit breakers, service discovery, and distributed transactions.'
+subtitle: 'Saga pattern, circuit breaker, service discovery এবং distributed transaction implement করুন।'
 chapter: 17
 level: 'advanced'
-readingTime: '25 min'
+readingTime: '25 মিনিট'
 topics: ['saga pattern', 'circuit breaker', 'service discovery', 'distributed transactions']
 ---
 
@@ -13,11 +13,19 @@ topics: ['saga pattern', 'circuit breaker', 'service discovery', 'distributed tr
 	import Mermaid from '$lib/components/content/Mermaid.svelte';
 </script>
 
-## What are Microservices Patterns?
+## গল্পে বুঝি
 
-When you break a monolith into microservices, you trade one set of problems for another. A single database transaction that used to be atomic now spans multiple services. A service call that used to be a function call can now fail due to network issues. **Microservices patterns** are battle-tested solutions to these distributed systems challenges -- the saga pattern for distributed transactions, circuit breakers for fault tolerance, and service discovery for dynamic routing.
+ইবনে সিনার একটা বিশাল ফুড কোর্ট। শুরুতে পুরো জায়গায় ছিল একটাই দৈত্যাকার রান্নাঘর — বিরিয়ানি, কাবাব, ড্রিংকস, ডেজার্ট, সবকিছু ওই এক রান্নাঘরেই একসাথে রান্না হতো (এটাই monolith)। কিন্তু একটা চুলা নষ্ট হলে পুরো রান্নাঘর থমকে যেত, আর ভিড়ের সময় ভেতরে এত জটলা যে কেউ নড়তেও পারত না। তাই ইবনে সিনা জিনিসটা ভেঙে দিল — এখন আলাদা আলাদা বিশেষায়িত স্টল: বিরিয়ানি স্টল, কাবাব স্টল, ড্রিংকস স্টল, ডেজার্ট স্টল। প্রতিটি স্টলে নিজের রাঁধুনি, নিজের স্টক, আর নিজের ক্যাশ বাক্স — একটা স্টল আরেকটার হিসাব বা মাল ধরে না (প্রতিটা আলাদা service, নিজের database নিজের হাতে)।
 
-Think of it like an orchestra. In a small band, everyone can see each other and stay in sync. But in a 100-piece orchestra, you need a conductor (saga orchestrator) to coordinate, section leaders (circuit breakers) to handle individual failures gracefully, and a seating chart (service registry) so everyone knows where to find each other.
+এখন আল-খোয়ারিজমি একটা কম্বো অর্ডার দিলে — বিরিয়ানি, একটা কাবাব, একটা ড্রিংক আর একটা ডেজার্ট একসাথে — কোনো একটা স্টল একা এটা সামলাতে পারে না; কাউন্টার থেকে চারটা স্টলে খবর যায়, প্রত্যেকে নিজের অংশ বানায়, তারপর একসাথে থালায় সাজিয়ে দেওয়া হয় (এটাই API composition)। ফাতিমা আল-ফিহরি যখন ডেজার্ট স্টলে গিয়ে দেখে পুডিং শেষ, তখন সমস্যা — বাকি স্টল তো ততক্ষণে বিরিয়ানি বেড়ে ফেলেছে, কাবাব ভেজে ফেলেছে। তাই কম্বোটা পুরোপুরি না হওয়ায় প্রত্যেককে নিজের অংশ ফেরত/বাতিল করতে হয়, ক্যাশ বাক্স থেকে টাকা ফেরত যায় (এটাই saga — একটা step ব্যর্থ হলে আগের step-গুলো উল্টো করে undo করা)। সুবিধা হলো, বিরিয়ানি স্টলে ভিড় বাড়লে ইবনে সিনা শুধু ওখানেই বাড়তি লোক দেয় বা নতুন চুলা বসায়, বাকি স্টল বন্ধ না করেই (independent deploy আর scale)। তবে দাম হলো — চারটা স্টলের মধ্যে সমন্বয় করাটা এক রান্নাঘরের চেয়ে অনেক বেশি ঝামেলার (tradeoff)।
+
+এই গল্পটাই আসলে **microservices**। এক দৈত্যাকার রান্নাঘর হলো **monolith**, আর আলাদা আলাদা স্টল প্রতিটা নিজের ক্যাশ বাক্স (database) নিয়ে হলো আলাদা **microservice**; কম্বো অর্ডার কয়েক স্টলে ছড়িয়ে দেওয়াই API composition, আর মাঝপথে একটা স্টল ফেল করলে সবার অংশ undo করাই **saga**। বাস্তবে Amazon, Uber, Netflix ঠিক এভাবেই order বা booking-কে ছোট ছোট service-এ ভাগ করে — প্রতিটা আলাদা deploy আর scale করা যায়, কিন্তু বিনিময়ে distributed coordination-এর জটিলতা মেনে নিতে হয়।
+
+## Microservices Patterns কী?
+
+আপনি যখন একটি monolith ভেঙে microservice বানান, তখন এক সমস্যার বদলে আরেক সমস্যা নেন। একটা single database transaction যা আগে atomic ছিল, এখন একাধিক service জুড়ে ছড়িয়ে পড়ে। একটা service call যা আগে একটা function call ছিল, এখন network সমস্যার কারণে ব্যর্থ হতে পারে। **Microservices pattern** এই distributed systems চ্যালেঞ্জগুলোর যুদ্ধে পরীক্ষিত সমাধান -- distributed transaction-এর জন্য saga pattern, fault tolerance-এর জন্য circuit breaker, এবং dynamic routing-এর জন্য service discovery।
+
+এটাকে একটা অর্কেস্ট্রার মতো ভাবুন। একটা ছোট ব্যান্ডে, সবাই একে অপরকে দেখে sync থাকতে পারে। কিন্তু 100 জনের একটা অর্কেস্ট্রায়, coordinate করতে আপনার একজন কন্ডাক্টর (saga orchestrator) লাগে, প্রতিটি failure সুন্দরভাবে সামলাতে section leader (circuit breaker) লাগে, আর একটা seating chart (service registry) লাগে যাতে সবাই জানে কাকে কোথায় পাবে।
 
 <Mermaid
 title="Saga Orchestration Pattern"
@@ -26,21 +34,21 @@ code={`graph TD
   O --> S1["Order Service<br/>Step 1"] --> S2["Inventory Service<br/>Step 2"] --> S3["Payment Service<br/>Step 3"]`}
 />
 
-## Real-World Analogy
+## বাস্তব জীবনের উদাহরণ
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a shopping mall — instead of one mega-store, there are specialized shops (clothing, electronics, food), each independently run with their own staff and inventory.
+একটি শপিং মলের মতো — একটা মেগা-স্টোরের বদলে, বিশেষায়িত দোকান (কাপড়, ইলেকট্রনিক্স, খাবার) থাকে, প্রতিটি নিজস্ব কর্মী আর inventory নিয়ে স্বাধীনভাবে চলে।
 
 </Callout>
 
-When you order on Amazon, a single "Place Order" click triggers a multi-step saga across services: the order service creates the order, the inventory service reserves the items, and the payment service charges your card. If payment fails, the saga runs compensating transactions in reverse -- unreserving inventory and cancelling the order. Netflix uses circuit breakers so that when their recommendation service goes down, the homepage still loads with a default list instead of showing an error page.
+আপনি Amazon-এ order দিলে, একটা "Place Order" ক্লিক service-জুড়ে একটি multi-step saga trigger করে: order service order বানায়, inventory service item reserve করে, আর payment service আপনার card charge করে। Payment ব্যর্থ হলে, saga উল্টো দিকে compensating transaction চালায় -- inventory unreserve করে আর order cancel করে। Netflix circuit breaker ব্যবহার করে, যাতে তাদের recommendation service down হলেও homepage একটা error page না দেখিয়ে একটা default list নিয়ে load হয়।
 
-## Building a Saga Orchestrator
+## একটি Saga Orchestrator বানানো
 
-Here's a complete saga orchestrator with circuit breakers, service discovery, retry with exponential backoff, and compensating transactions. This implements the full order flow used by companies like Uber and Amazon.
+এখানে একটি সম্পূর্ণ saga orchestrator আছে -- circuit breaker, service discovery, exponential backoff সহ retry, এবং compensating transaction সহ। এটা Uber আর Amazon-এর মতো কোম্পানির ব্যবহৃত পুরো order flow implement করে।
 
 <CodeTabs tsFile="saga-orchestrator.ts" goFile="saga-orchestrator.go">
 <div class="ct-panel ct-active" data-lang="ts">
@@ -882,35 +890,35 @@ func main() {
 </div>
 </CodeTabs>
 
-## What Makes This Production-Ready
+## এটাকে যা Production-Ready করে
 
-- **Saga orchestration** -- coordinates multi-step distributed transactions with a clear state machine
-- **Compensating transactions** -- automatic rollback in reverse order when any step fails
-- **Circuit breakers** -- prevents cascading failures by short-circuiting calls to unhealthy services
-- **Exponential backoff with jitter** -- retries failed calls without thundering herd problems
-- **Service registry** -- dynamic service discovery with health checking for resilient routing
-- **Full state tracking** -- every saga step transition is logged for debugging and auditing
+- **Saga orchestration** -- একটি স্পষ্ট state machine দিয়ে multi-step distributed transaction coordinate করে
+- **Compensating transaction** -- কোনো step ব্যর্থ হলে উল্টো ক্রমে স্বয়ংক্রিয় rollback
+- **Circuit breaker** -- unhealthy service-এ call short-circuit করে cascading failure আটকায়
+- **Jitter সহ exponential backoff** -- thundering herd সমস্যা ছাড়াই ব্যর্থ call retry করে
+- **Service registry** -- resilient routing-এর জন্য health checking সহ dynamic service discovery
+- **সম্পূর্ণ state tracking** -- প্রতিটি saga step transition debugging আর auditing-এর জন্য log করা হয়
 
 <div class="takeaways">
 
-### Key Takeaways
+### মূল কথা
 
-- The saga pattern replaces distributed transactions with a sequence of local transactions plus compensating actions
-- Always define compensating transactions for every saga step -- they are your rollback mechanism
-- Circuit breakers prevent one failing service from taking down the entire system
-- Exponential backoff with jitter prevents retry storms that would overwhelm recovering services
-- Service discovery enables dynamic scaling -- services can be added or removed without configuration changes
-- Log every state transition in your saga for debugging production issues
+- Saga pattern distributed transaction-কে একগুচ্ছ local transaction + compensating action দিয়ে প্রতিস্থাপন করে
+- প্রতিটি saga step-এর জন্য সবসময় compensating transaction সংজ্ঞায়িত করুন -- এগুলোই আপনার rollback ব্যবস্থা
+- Circuit breaker একটি ব্যর্থ service-কে পুরো সিস্টেম নামিয়ে দেওয়া থেকে আটকায়
+- Jitter সহ exponential backoff সেই retry storm আটকায় যা পুনরুদ্ধার হতে থাকা service-কে চাপে ফেলে দিত
+- Service discovery dynamic scaling সম্ভব করে -- configuration না বদলেই service যোগ বা বাদ দেওয়া যায়
+- Production সমস্যা debug করতে saga-র প্রতিটি state transition log করুন
 
 </div>
 
 <div class="when-to-use">
 
-### Real-World Usage
+### বাস্তব ব্যবহার
 
-- **Uber** uses saga orchestration for ride booking: match driver, authorize payment, start ride, with rollback at every step
-- **Netflix** pioneered the circuit breaker pattern with Hystrix to handle partial failures across 700+ microservices
-- **Amazon** uses sagas for order fulfillment across inventory, payment, and shipping services
-- Use sagas when you need consistency across services but cannot use a single database transaction
+- **Uber** ride booking-এর জন্য saga orchestration ব্যবহার করে: driver match, payment authorize, ride start, প্রতিটি step-এ rollback সহ
+- **Netflix** 700+ microservice-জুড়ে আংশিক failure সামলাতে Hystrix দিয়ে circuit breaker pattern-এর পথিকৃৎ হয়
+- **Amazon** inventory, payment আর shipping service-জুড়ে order fulfillment-এর জন্য saga ব্যবহার করে
+- Saga ব্যবহার করুন যখন আপনার service-জুড়ে consistency দরকার কিন্তু একটি single database transaction ব্যবহার করা যায় না
 
 </div>

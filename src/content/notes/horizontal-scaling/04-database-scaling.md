@@ -1,9 +1,9 @@
 ---
 title: 'Scaling the Database Layer'
-subtitle: 'Read replicas, connection pooling, and why the database is almost always the horizontal scaling bottleneck.'
+subtitle: 'Read replica, connection pooling, এবং কেন ডেটাবেস প্রায় সবসময়ই horizontal scaling-এর bottleneck।'
 chapter: 4
 level: 'intermediate'
-readingTime: '9 min'
+readingTime: '9 মিনিট'
 topics: ['read replicas', 'connection pooling', 'PgBouncer', 'database bottleneck', 'sharding']
 ---
 
@@ -13,21 +13,29 @@ topics: ['read replicas', 'connection pooling', 'PgBouncer', 'database bottlenec
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A library with one librarian handling every transaction: adding more reading tables (app servers) doesn't help if the librarian (database) is the bottleneck. The solutions: hire assistant librarians for reading (read replicas), install a revolving door so multiple people can check in and out quickly (connection pooling), or open multiple branches (sharding).
+একটা লাইব্রেরি যেখানে একজন লাইব্রেরিয়ান প্রতিটা লেনদেন সামলায়: আরও পড়ার টেবিল (অ্যাপ সার্ভার) যোগ করলে লাভ নেই যদি লাইব্রেরিয়ান (ডেটাবেস) নিজেই bottleneck হয়। সমাধানগুলো: পড়ার জন্য সহকারী লাইব্রেরিয়ান নিয়োগ দিন (read replica), একটা ঘূর্ণায়মান দরজা বসান যাতে একসাথে অনেকে দ্রুত ঢুকতে-বেরোতে পারে (connection pooling), অথবা একাধিক শাখা খুলুন (sharding)।
 
 </Callout>
 
-## Why the Database Bottlenecks First
+## গল্পে বুঝি
 
-Application servers are stateless — you can add 10 more and they all serve traffic equally. The database is stateful — you can only add one writer (in most configurations), and every app server must reach it.
+সমরকন্দ শহরে জমি-জমার দলিল, বিয়ে, ব্যবসার চুক্তি — সব কিছু সরকারিভাবে সিলমোহর করেন একজনই নোটারি, ইবনে সিনা। তাঁর সামনে বসার জন্য একটাই ডেস্ক। শহরের কেরানিরা বেড়ে গেছে দ্রুত — নতুন কেরানি বসাতে লাগে শুধু একটা টেবিল আর চেয়ার, তাই তারা যত খুশি বাড়ানো যায়। কিন্তু সব কেরানি শেষমেশ ওই একটা নোটারি ডেস্কেই এসে লাইন দেয়। কেরানি বাড়ানোয় কোনো লাভ হয় না, কারণ সবাই আটকে যায় ইবনে সিনার একটামাত্র ডেস্কে। ভিড় সামলাতে না পেরে ইবনে সিনা হিমশিম।
 
-As you scale app servers, the database connection count grows with them. At 50 app servers with 10 connections each, you have 500 database connections — which exhausts even a large Postgres instance's connection limit and creates enormous overhead.
+তখন শহর তিনটা বুদ্ধি বের করল। প্রথমত, খেয়াল করা গেল বেশিরভাগ মানুষ আসলে নতুন কিছু নিবন্ধন করতে আসে না — তারা শুধু পুরনো দলিল **পড়তে** চায়। তাই কয়েকটা রিডিং-রুম খোলা হলো, যেখানে প্রতিটা দলিলের সিলমোহর করা নকল রাখা থাকে; যাদের শুধু পড়া দরকার তারা আর নোটারির লাইনে দাঁড়ায় না, রিডিং-রুমে গিয়ে দেখে নেয়। দ্বিতীয়ত, সবচেয়ে বেশি চাওয়া কয়েকটা দলিল আল-খোয়ারিজমি একটা ফ্রন্ট-ডেস্কে মুখস্থ রাখেন — কেউ চাইলেই সঙ্গে সঙ্গে বলে দেন, নকল বের করারও দরকার হয় না। শেষমেশ যখন নিবন্ধনের চাপও একটা অফিসে আর ধরে না, তখন ফাতিমা আল-ফিহরি রেকর্ডগুলো এলাকা অনুযায়ী ভাগ করে আলাদা আলাদা নোটারি অফিসে ছড়িয়ে দেন — উত্তর পাড়ার দলিল এক অফিসে, দক্ষিণ পাড়ারটা আরেক অফিসে।
 
-## Connection Pooling with PgBouncer
+গল্পটাই আসলে **database scaling**। ইবনে সিনার একটামাত্র ডেস্ক হলো **primary database** — আসল **bottleneck**। রিডিং-রুমের সিলমোহর করা নকলগুলো হলো **read replica** (পড়ার চাপ ছড়িয়ে দেয়), মুখস্থ ফ্রন্ট-ডেস্ক হলো database-এর সামনে বসানো **cache** (সবচেয়ে বেশি চাওয়া read গুলো শোষণ করে), আর এলাকা অনুযায়ী রেকর্ড ভাগ করাটাই **sharding/partitioning** (write-এর চাপও ভাগ করে দেয়)। আর সবচেয়ে জরুরি শিক্ষা — কেরানি (stateless app server) বাড়ানো সহজ, কিন্তু নোটারি ডেস্ক (database) বাড়ানো কঠিন, কারণ সেখানে state থাকে। বাস্তবেও ঠিক তা-ই: Postgres, MySQL-এ read replica, Redis cache আর user ID দিয়ে shard করে বড় সাইটগুলো এভাবেই database-এর চাপ সামলায়।
 
-PgBouncer multiplexes many application connections onto fewer database connections:
+## কেন ডেটাবেস আগে Bottleneck হয়
+
+অ্যাপ্লিকেশন সার্ভার stateless — আপনি আরও ১০টা যোগ করতে পারেন এবং তারা সবাই সমানভাবে ট্রাফিক সামলায়। ডেটাবেস stateful — আপনি শুধু একটা writer যোগ করতে পারেন (বেশিরভাগ configuration-এ), এবং প্রতিটা অ্যাপ সার্ভারকে সেটায় পৌঁছাতে হয়।
+
+যত অ্যাপ সার্ভার scale করবেন, ডেটাবেস connection সংখ্যা তার সাথে বাড়বে। ৫০টা অ্যাপ সার্ভার প্রতিটায় ১০টা connection নিয়ে থাকলে, আপনার ৫০০টা ডেটাবেস connection হয় — যা এমনকি একটা বড় Postgres instance-এর connection limit শেষ করে দেয় এবং বিশাল overhead তৈরি করে।
+
+## PgBouncer দিয়ে Connection Pooling
+
+PgBouncer অনেক application connection-কে কম সংখ্যক ডেটাবেস connection-এ multiplex করে:
 
 ```
 50 app servers × 10 connections = 500 connections to PgBouncer
@@ -57,15 +65,15 @@ server_idle_timeout = 600         # close idle Postgres connections after 10m
 query_timeout = 0                 # no query timeout (set per-query in app)
 ```
 
-**Pool modes:**
+**Pool mode:**
 
-| Mode          | Connection released    | Best for                                          |
-| ------------- | ---------------------- | ------------------------------------------------- |
-| `session`     | On client disconnect   | Stateful sessions (SET, prepared statements)      |
-| `transaction` | After each transaction | Most web apps — recommended                       |
-| `statement`   | After each statement   | Not recommended — can break multi-statement flows |
+| Mode          | Connection কখন ছাড়ে      | কীসের জন্য সবচেয়ে ভালো                              |
+| ------------- | ------------------------- | ---------------------------------------------------- |
+| `session`     | Client disconnect হলে     | Stateful session (SET, prepared statement)           |
+| `transaction` | প্রতিটা transaction-এর পর | বেশিরভাগ web app — সুপারিশকৃত                        |
+| `statement`   | প্রতিটা statement-এর পর   | সুপারিশ করা হয় না — multi-statement flow ভাঙতে পারে |
 
-**Transaction mode limitations:** Session-level state (SET, advisory locks, LISTEN/NOTIFY, prepared statements) doesn't survive across PgBouncer transactions. If your app uses `SET LOCAL` or prepared statements, either use session mode or disable statement-level features:
+**Transaction mode-এর সীমাবদ্ধতা:** Session-level state (SET, advisory lock, LISTEN/NOTIFY, prepared statement) PgBouncer transaction জুড়ে টিকে থাকে না। আপনার অ্যাপ যদি `SET LOCAL` বা prepared statement ব্যবহার করে, তাহলে হয় session mode ব্যবহার করুন নয়তো statement-level feature বন্ধ করুন:
 
 ```typescript
 // WRONG with transaction pooling — SET is lost after transaction
@@ -76,9 +84,9 @@ const result = await db.query('SELECT * FROM users'); // might not use myschema
 const result = await db.query('SELECT * FROM myschema.users');
 ```
 
-## Read Replicas
+## Read Replica
 
-Add read replicas to scale read throughput independently from write throughput:
+Write throughput থেকে স্বাধীনভাবে read throughput scale করতে read replica যোগ করুন:
 
 ```typescript
 import { Pool } from 'pg';
@@ -113,7 +121,7 @@ const orders = await db.replica('SELECT * FROM orders WHERE user_id = $1', [user
 await db.primary('INSERT INTO orders (...) VALUES (...)', [...values]);
 ```
 
-**Replication lag consideration:** Reads on replicas might be slightly behind the primary. After a write, read from primary if you need the just-written data:
+**Replication lag বিবেচনা:** replica-তে read primary থেকে সামান্য পিছিয়ে থাকতে পারে। একটা write-এর পর, সদ্য লেখা ডেটা যদি দরকার হয় তাহলে primary থেকে read করুন:
 
 ```typescript
 async function createOrderAndFetch(data: OrderData): Promise<Order> {
@@ -130,9 +138,9 @@ async function createOrderAndFetch(data: OrderData): Promise<Order> {
 }
 ```
 
-## Caching to Reduce Database Load
+## ডেটাবেস Load কমাতে Caching
 
-Before adding replicas, check if caching can absorb reads at a fraction of the cost:
+Replica যোগ করার আগে, দেখুন caching খরচের একটা ভগ্নাংশে read শোষণ করতে পারে কিনা:
 
 ```typescript
 import Redis from 'ioredis';
@@ -155,11 +163,11 @@ async function getProduct(productId: string): Promise<Product> {
 }
 ```
 
-A 90% cache hit rate reduces database load by 10x for that query type. This is often the most cost-effective scale operation before adding read replicas.
+90% cache hit rate সেই query type-এর জন্য ডেটাবেস load 10x কমিয়ে দেয়। Read replica যোগ করার আগে এটাই প্রায়ই সবচেয়ে সাশ্রয়ী scale operation।
 
-## Query Optimization Before Scaling
+## Scale করার আগে Query Optimization
 
-A slow query causing database load often has an index problem, not a scaling problem:
+ডেটাবেস load তৈরি করা একটা slow query-এর প্রায়ই একটা index সমস্যা থাকে, scaling সমস্যা নয়:
 
 ```sql
 -- Find slow queries
@@ -188,11 +196,11 @@ CREATE INDEX CONCURRENTLY idx_orders_user_id ON orders(user_id);
 -- CONCURRENTLY: no lock on the table, safe in production
 ```
 
-A single missing index can cause 100x database load. Fix indexes before adding hardware.
+একটা মাত্র missing index 100x ডেটাবেস load ঘটাতে পারে। Hardware যোগ করার আগে index ঠিক করুন।
 
-## Connection Limits by Instance Size
+## Instance Size অনুযায়ী Connection Limit
 
-Postgres max connections by instance (approximate):
+Instance অনুযায়ী Postgres max connection (আনুমানিক):
 
 | AWS RDS Instance | vCPU | RAM  | Max connections |
 | ---------------- | ---- | ---- | --------------- |
@@ -202,27 +210,27 @@ Postgres max connections by instance (approximate):
 | db.m5.xlarge     | 4    | 16GB | ~250            |
 | db.m5.4xlarge    | 16   | 64GB | ~1000           |
 
-Without PgBouncer, you hit the connection limit before you hit CPU or memory limits. Always run PgBouncer in front of managed Postgres.
+PgBouncer ছাড়া, আপনি CPU বা memory limit-এ পৌঁছানোর আগেই connection limit-এ পৌঁছে যান। Managed Postgres-এর সামনে সবসময় PgBouncer চালান।
 
-## When to Shard
+## কখন Shard করবেন
 
-Sharding (partitioning data across multiple primary databases) is a last resort. Consider it when:
+Sharding (একাধিক primary ডেটাবেস জুড়ে ডেটা partition করা) হলো একদম শেষ উপায়। এটা বিবেচনা করুন যখন:
 
-- Single primary is at CPU or I/O limit even with optimized queries
-- Write volume exceeds what one machine can handle
-- Dataset is too large for one machine's storage
+- Optimized query সত্ত্বেও single primary CPU বা I/O limit-এ থাকে
+- Write volume একটা মেশিন যা সামলাতে পারে তার বেশি হয়
+- Dataset একটা মেশিনের storage-এর জন্য অনেক বড়
 
-Most applications never need sharding. Before sharding:
+বেশিরভাগ অ্যাপ্লিকেশনের কখনো sharding দরকার হয় না। Shard করার আগে:
 
-1. Optimize queries and indexes
-2. Add read replicas for read-heavy workloads
-3. Cache aggressively
-4. Upgrade to a larger instance
-5. Use CQRS (separate read models in purpose-built stores)
+1. Query এবং index optimize করুন
+2. Read-heavy workload-এর জন্য read replica যোগ করুন
+3. আক্রমণাত্মকভাবে cache করুন
+4. একটা বড় instance-এ upgrade করুন
+5. CQRS ব্যবহার করুন (উদ্দেশ্য-নির্দিষ্ট store-এ আলাদা read model)
 
-If you must shard, partition by the natural distribution key (user ID, tenant ID) that lets you route queries without cross-shard joins. Cross-shard joins are expensive and complex — design to avoid them.
+যদি shard করতেই হয়, natural distribution key (user ID, tenant ID) দিয়ে partition করুন যা cross-shard join ছাড়াই query route করতে দেয়। Cross-shard join ব্যয়বহুল এবং জটিল — এগুলো এড়াতে ডিজাইন করুন।
 
-## Scaling Stack Summary
+## Scaling Stack সারসংক্ষেপ
 
 ```
 Level 1: Add PgBouncer (connection pooling)
@@ -246,4 +254,4 @@ Level 5: Sharding / CQRS
   Effect: horizontal write scaling (rare requirement)
 ```
 
-Work through the levels in order. Most applications max out at Level 3.
+Level-গুলো ক্রমানুসারে কাজ করুন। বেশিরভাগ অ্যাপ্লিকেশন Level 3-এ গিয়ে সর্বোচ্চে পৌঁছায়।

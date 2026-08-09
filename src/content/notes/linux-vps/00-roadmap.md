@@ -1,9 +1,9 @@
 ---
-title: 'Linux & VPS Basics — Roadmap'
-subtitle: 'Twelve chapters that take you from a brand-new VPS to a hardened, monitored, ready-to-run-real-software box. No managed cloud.'
+title: 'Linux ও VPS বেসিকস — রোডম্যাপ'
+subtitle: 'বারোটি চ্যাপ্টার যা আপনাকে একদম নতুন একটা VPS থেকে হার্ডেন করা, মনিটর করা, রিয়েল সফটওয়্যার চালানোর জন্য প্রস্তুত একটা বক্সে নিয়ে যাবে। কোনো ম্যানেজড ক্লাউড নয়।'
 chapter: 0
 level: 'beginner'
-readingTime: '6 min'
+readingTime: '6 মিনিট'
 topics: ['roadmap', 'linux', 'vps', 'self-hosted']
 ---
 
@@ -11,47 +11,47 @@ topics: ['roadmap', 'linux', 'vps', 'self-hosted']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What you will be able to do at the end
+## শেষে আপনি যা করতে পারবেন
 
-You will rent a VPS, harden it, install the things a real backend needs, and feel at home on the command line. Every other chapter on this site assumes you can do this. If you cannot already SSH into a box and feel comfortable, start here.
+আপনি একটা VPS ভাড়া নেবেন, সেটাকে হার্ডেন করবেন, রিয়েল ব্যাকএন্ডের জন্য যা যা দরকার তা ইনস্টল করবেন, আর কমান্ড লাইনে নিজেকে ঘরের মতো স্বচ্ছন্দ মনে করবেন। এই সাইটের বাকি প্রতিটা চ্যাপ্টার ধরে নেয় যে আপনি এটা পারেন। আপনি যদি এখনো কোনো বক্সে SSH করতে না পারেন আর স্বাচ্ছন্দ্য বোধ না করেন, তাহলে এখান থেকেই শুরু করুন।
 
 <Callout type="info">
 
-This track is **vendor-neutral**. Any VPS provider works — Hetzner, OVH, DigitalOcean, Linode, Vultr, a Raspberry Pi on your desk, or an old laptop. The skills are the box, not the brand.
+এই ট্র্যাকটা **ভেন্ডর-নিউট্রাল**। যেকোনো VPS প্রোভাইডার কাজ করবে — Hetzner, OVH, DigitalOcean, Linode, Vultr, আপনার টেবিলের একটা Raspberry Pi, কিংবা পুরনো একটা ল্যাপটপ। স্কিলটা হলো বক্স নিয়ে, ব্র্যান্ড নিয়ে নয়।
 
 </Callout>
 
-## Prereqs
+## প্রিরিকুইজিট
 
-- Comfortable typing in a terminal (you can `cd` and `ls`)
-- A laptop with `ssh` installed (macOS and Linux already have it; on Windows use WSL or PowerShell's OpenSSH)
-- A credit card for a $5/month VPS (or use your own hardware)
+- টার্মিনালে টাইপ করতে স্বচ্ছন্দ (আপনি `cd` আর `ls` পারেন)
+- একটা ল্যাপটপ যেখানে `ssh` ইনস্টল করা আছে (macOS আর Linux-এ আগে থেকেই থাকে; Windows-এ WSL বা PowerShell-এর OpenSSH ব্যবহার করুন)
+- $5/মাসের একটা VPS-এর জন্য একটা ক্রেডিট কার্ড (অথবা নিজের হার্ডওয়্যার ব্যবহার করুন)
 
-## The 12 chapters, in order
+## ১২টি চ্যাপ্টার, ক্রম অনুযায়ী
 
 **Foundations**
 
-1. **Picking a VPS** — what a VPS actually is, how to choose, how to provision
-2. **First login & SSH hardening** — keys, `sshd_config`, fail2ban, the front door
-3. **The Linux filesystem** — paths, permissions, ownership, the FHS
-4. **Processes & signals** — what your app actually _is_ on Linux
-5. **systemd** — services that survive reboot
+1. **Picking a VPS** — একটা VPS আসলে কী, কীভাবে বাছবেন, কীভাবে প্রভিশন করবেন
+2. **First login & SSH hardening** — কী, `sshd_config`, fail2ban, সদর দরজা
+3. **The Linux filesystem** — পাথ, পারমিশন, ওনারশিপ, FHS
+4. **Processes & signals** — Linux-এ আপনার অ্যাপ আসলে _কী_
+5. **systemd** — এমন সার্ভিস যা রিবুট পার হয়ে টিকে থাকে
 
 **Core**
 
-6. **Sockets, ports, and what's listening** — `ss`, `lsof`, port theory
-7. **Firewall fundamentals** — `nftables`/`iptables`, the chains that protect you
-8. **Users, groups, and sudo** — least privilege without ceremony
-9. **Logs & journalctl** — where output goes, how to read it, how to rotate it
+6. **Sockets, ports, and what's listening** — `ss`, `lsof`, পোর্ট থিওরি
+7. **Firewall fundamentals** — `nftables`/`iptables`, যে চেইনগুলো আপনাকে রক্ষা করে
+8. **Users, groups, and sudo** — বাড়াবাড়ি ছাড়াই least privilege
+9. **Logs & journalctl** — আউটপুট কোথায় যায়, কীভাবে পড়বেন, কীভাবে রোটেট করবেন
 
 **Advanced**
 
-10. **Resource limits** — cgroups, `ulimit`, OOM killer, the limits that bite
-11. **Cron & systemd timers** — scheduled work without surprises
-12. **Production checklist** — every box you ever provision, in one runbook
+10. **Resource limits** — cgroups, `ulimit`, OOM killer, যে লিমিটগুলো কামড় বসায়
+11. **Cron & systemd timers** — চমক ছাড়া শিডিউল করা কাজ
+12. **Production checklist** — আপনি যত বক্সই প্রভিশন করুন, সব এক রানবুকে
 
-## How to use this track
+## এই ট্র্যাক কীভাবে ব্যবহার করবেন
 
-Read in order. Do every chapter on a real VPS, not in your head. Break things on purpose. Re-provision and do it again — muscle memory matters more than notes.
+ক্রম অনুযায়ী পড়ুন। প্রতিটা চ্যাপ্টার একটা রিয়েল VPS-এ করুন, মাথার ভেতরে নয়। ইচ্ছে করে জিনিস ভাঙুন। আবার প্রভিশন করে আবার করুন — নোটের চেয়ে মাসল মেমরি বেশি গুরুত্বপূর্ণ।
 
-Total reading time: ~2.5 hours. Total hands-on time, the first time: 8–12 hours over a weekend.
+মোট পড়ার সময়: ~২.৫ ঘণ্টা। প্রথমবার মোট হাতে-কলমে কাজের সময়: এক উইকেন্ডে ৮–১২ ঘণ্টা।

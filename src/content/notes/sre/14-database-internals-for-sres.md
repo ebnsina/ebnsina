@@ -1,9 +1,9 @@
 ---
-title: 'Database Internals for SREs'
-subtitle: "MVCC, replication lag, hot rows, query plans, B-tree vs LSM, connection pools at scale. The DB knowledge that separates 'I run Postgres' from 'I keep Postgres up under fire.'"
+title: 'SRE-দের জন্য Database Internals'
+subtitle: "MVCC, replication lag, hot rows, query plans, B-tree vs LSM, স্কেলে connection pools। যে DB জ্ঞান 'আমি Postgres চালাই'-কে 'আমি চাপের মুখেও Postgres টিকিয়ে রাখি' থেকে আলাদা করে।"
 chapter: 14
 level: 'mastery'
-readingTime: '30 min'
+readingTime: '30 মিনিট'
 topics:
   ['postgres', 'mysql', 'replication', 'MVCC', 'query planning', 'connection pool', 'B-tree', 'LSM']
 ---
@@ -14,21 +14,29 @@ topics:
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Knowing how a car engine works even though you're a driver — you don't rebuild it, but you know when the noise is serious.
+আপনি ড্রাইভার হলেও গাড়ির engine কীভাবে কাজ করে সেটা জানা — আপনি এটা নতুন করে বানান না, কিন্তু কখন শব্দটা গুরুতর সেটা বোঝেন।
 
 </Callout>
 
-## Why SREs need DB internals
+## গল্পে বুঝি
 
-A backend dev can ship a feature with `SELECT * FROM users WHERE id = $1`. A senior SRE has to answer: why does that query use 12 GB of RAM today, why did the replica lag jump to 40 minutes at 3 AM, why did `pg_stat_activity` show 800 idle-in-transaction connections, and why does the same query plan flip from index scan to seq scan once a quarter.
+শহরের সবচেয়ে বড় রেকর্ড-আর্কাইভের ম্যানেজার ফাতিমা আল-ফিহরি। লক্ষ লক্ষ ফাইল, সারি সারি তাক। কিন্তু আর্কাইভটা মসৃণভাবে চলে শুধু একটাই কারণে — ফাতিমা ভেতরের যন্ত্রপাতিটা বোঝেন। কেউ একটা নথি খুঁজতে এলে তিনি জানেন, সামনের index-card ক্যাটালগ থেকে দেখলে সেকেন্ডে তাকের নম্বর পাওয়া যায়; কিন্তু ক্যাটালগ এড়িয়ে গোটা তাক এক এক করে খুঁজলে সেই একই কাজে আধা ঘণ্টা লেগে যায়। তাই ধীরগতির অভিযোগ এলে তিনি আগে দেখেন — খোঁজাটা ক্যাটালগ ধরে হচ্ছে, নাকি পুরো তাক scan করে।
 
-This chapter is the operating layer of databases. It assumes you can write SQL; it teaches you what the database _does_ when you submit it.
+একদিন সকালে কাজ থমকে গেল। এক ক্লার্ক একটা ড্রয়ার সম্পাদনার জন্য খুলে সেটায় তালা দিয়ে বসে আছে — বাকি সবাই সেই এক ড্রয়ারের জন্য লাইনে দাঁড়িয়ে অপেক্ষা করছে, কেউ এগোতে পারছে না। এদিকে শাখা-অফিস ফোন করে বলছে তাদের নথিটা এখনও পুরনো, কারণ শাখার ফটোকপি-করা ক্যাটালগ মূল ক্যাটালগের চেয়ে সবসময় কয়েক মিনিট পিছিয়ে থাকে। আর সামনের ডেস্কে অনুরোধের স্তূপ জমছে — কারণ ফাতিমার হাতে গোনা কয়েকজন রানার-বয়, সবাই এখন ব্যস্ত, তাই নতুন অনুরোধ কেউ তুলছেই না, শুধু জমছে। ফাতিমা এক এক করে আসল কারণ ধরে ঠিক করলেন: তালা-দেওয়া ক্লার্ককে দ্রুত শেষ করালেন, শাখাকে বললেন জরুরি নথি মূল ক্যাটালগ থেকেই দেখতে, আর রানার-বয়ের সংখ্যার বেশি অনুরোধ যেন একসাথে না ঢোকে সেই বন্দোবস্ত করলেন।
 
-## Storage engines — B-tree vs LSM, and why it matters
+এই আর্কাইভটাই একটা database, আর ফাতিমা হলেন SRE। index-card ক্যাটালগ বনাম গোটা-তাক scan — এটাই **query plan** আর **index**: ক্যাটালগ থাকলে (আর optimizer সেটা ব্যবহার করলে) খোঁজা দ্রুত, না থাকলে full seq scan-এ crawl করে। একটা ড্রয়ারে তালা দিয়ে সবাইকে লাইনে দাঁড় করানো — এটাই **lock contention**: এক row-তে writer বসে থাকলে বাকিরা serialize হয়ে অপেক্ষা করে। শাখার ক্যাটালগ মূলটার চেয়ে পিছিয়ে থাকা — এটাই **replication lag**, replica সবসময় primary-র কয়েক সেকেন্ড/মিনিট পেছনে। আর সব রানার-বয় ব্যস্ত থাকায় অনুরোধ জমে যাওয়া — এটাই **connection pool** exhaustion: pool-এর সব connection আটকে গেলে নতুন request queue-তে পড়ে থাকে, service কার্যত down। বাস্তবে Postgres চালানো SRE ঠিক এভাবেই কাজ করেন — `EXPLAIN ANALYZE`-এ plan দেখেন, `pg_stat_activity`-তে lock আর long transaction ধরেন, replication lag-এ time দিয়ে alert দেন, আর PgBouncer দিয়ে connection pool সামলান। ভেতরের যন্ত্রপাতি জানেন বলেই তিনি উপসর্গ নয়, আসল কারণটা সারান।
 
-Two families dominate modern databases. The choice constrains everything downstream — write amplification, compaction stalls, p99 latency, recovery time.
+## SRE-দের কেন DB internals লাগে
+
+একজন backend dev `SELECT * FROM users WHERE id = $1` দিয়ে একটা feature ship করতে পারে। একজন senior SRE-কে জবাব দিতে হয়: আজ কেন এই query 12 GB RAM খাচ্ছে, রাত 3টায় replica lag কেন হঠাৎ 40 মিনিটে লাফ দিল, কেন `pg_stat_activity`-তে 800টা idle-in-transaction connection দেখাল, আর কেন একই query plan quarter-এ একবার index scan থেকে seq scan-এ flip করে যায়।
+
+এই chapter হলো database-এর operating layer। ধরে নেওয়া হচ্ছে আপনি SQL লিখতে পারেন; এটা শেখায় আপনি submit করার পর database আসলে _কী করে_।
+
+## Storage engines — B-tree vs LSM, আর কেন এটা গুরুত্বপূর্ণ
+
+আধুনিক database-এ দুটো family প্রাধান্য পায়। এই পছন্দ downstream-এর সবকিছু নির্ধারণ করে দেয় — write amplification, compaction stalls, p99 latency, recovery time।
 
 ### B-tree (Postgres, MySQL InnoDB, SQL Server)
 
@@ -54,21 +62,21 @@ Two families dominate modern databases. The choice constrains everything downstr
 
 ### Operational implications
 
-|                    | B-tree (Postgres)                      | LSM (Cassandra/Rocks)             |
-| ------------------ | -------------------------------------- | --------------------------------- |
-| What spikes p99    | Vacuum, autovacuum on hot tables       | Compaction storms                 |
-| What spikes disk   | WAL bursts, full-page writes           | SSTable rewrite during compaction |
-| What spikes memory | Connection sort/hash work              | Bloom filter + block cache        |
-| Tail-latency knob  | `checkpoint_timeout`, `bgwriter_delay` | Compaction throttle, level sizing |
-| Backup pattern     | pg_basebackup + WAL replay             | snapshot SSTables (immutable!)    |
+|                   | B-tree (Postgres)                      | LSM (Cassandra/Rocks)              |
+| ----------------- | -------------------------------------- | ---------------------------------- |
+| যা p99 বাড়ায়    | Vacuum, hot table-এ autovacuum         | Compaction storms                  |
+| যা disk বাড়ায়   | WAL bursts, full-page writes           | Compaction-এর সময় SSTable rewrite |
+| যা memory বাড়ায় | Connection sort/hash work              | Bloom filter + block cache         |
+| Tail-latency knob | `checkpoint_timeout`, `bgwriter_delay` | Compaction throttle, level sizing  |
+| Backup pattern    | pg_basebackup + WAL replay             | snapshot SSTables (immutable!)     |
 
-You don't pick the engine, the team picks the database. But knowing which family you're operating tells you which knobs _exist_.
+আপনি engine বাছেন না, team database বাছে। কিন্তু আপনি কোন family চালাচ্ছেন সেটা জানা মানে জানা কোন knob-গুলো আসলে _আছে_।
 
-## MVCC — the source of half of Postgres's surprises
+## MVCC — Postgres-এর অর্ধেক চমকের উৎস
 
-Multi-Version Concurrency Control: when you `UPDATE` a row, the database doesn't overwrite it — it writes a new row version (tuple) and marks the old version dead. Readers see the version current at their snapshot.
+Multi-Version Concurrency Control: আপনি যখন একটা row `UPDATE` করেন, database সেটা overwrite করে না — একটা নতুন row version (tuple) লেখে আর পুরনো version-কে dead হিসেবে mark করে। Reader-রা তাদের snapshot অনুযায়ী current version দেখে।
 
-This is why:
+এই কারণেই:
 
 ```sql
 -- This UPDATE doesn't free disk space.
@@ -80,9 +88,9 @@ UPDATE users SET last_login = now() WHERE id = 1;
 -- VACUUM is what reclaims the space.
 ```
 
-### The senior-SRE Postgres failure modes
+### Senior-SRE-দের Postgres failure mode
 
-**1. Long-running transaction blocks vacuum.**
+**1. Long-running transaction vacuum block করে।**
 
 ```
 A reporting query runs for 4 hours.
@@ -99,9 +107,9 @@ WHERE state != 'idle' AND xact_start < now() - interval '5 minutes'
 ORDER BY xact_age DESC;
 ```
 
-Mitigation: kill the transaction, then `VACUUM`. Long-term: separate reporting onto a replica.
+Mitigation: transaction-টা kill করুন, তারপর `VACUUM`। দীর্ঘমেয়াদে: reporting আলাদা করে একটা replica-তে নিন।
 
-**2. Idle-in-transaction.**
+**2. Idle-in-transaction।**
 
 ```
 App opens BEGIN, does an UPDATE, then... hangs (waiting for an external API).
@@ -109,24 +117,24 @@ The connection sits idle but holds row locks AND a snapshot.
 Other writers wait. Vacuum can't progress.
 ```
 
-Set `idle_in_transaction_session_timeout = '30s'`. Anything else is asking for a 3 AM page.
+`idle_in_transaction_session_timeout = '30s'` সেট করুন। এর বাইরে যা কিছু মানে রাত 3টার page ডেকে আনা।
 
-**3. Wraparound.**
+**3. Wraparound।**
 
-Postgres uses a 32-bit transaction ID. If the oldest unfrozen XID is more than 2 billion behind, the database stops accepting writes ("To prevent data loss, the database is shut down.").
+Postgres 32-bit transaction ID ব্যবহার করে। সবচেয়ে পুরনো unfrozen XID যদি 2 billion-এর বেশি পিছিয়ে যায়, database write নেওয়া বন্ধ করে দেয় ("To prevent data loss, the database is shut down.")।
 
 ```sql
 SELECT datname, age(datfrozenxid) FROM pg_database ORDER BY 2 DESC;
 -- Anything > 1.5 billion: page now.
 ```
 
-Wraparound has taken down Sentry, Mailchimp, and others. Modern PG (14+, including PG 16/17) handles it better — incremental freezing reduces emergency vacuums — but the 32-bit XID failure mode still exists. Monitor `age(datfrozenxid)` and alert at 1.5B regardless of version.
+Wraparound Sentry, Mailchimp আর আরও অনেককে ধসিয়ে দিয়েছে। আধুনিক PG (14+, PG 16/17 সহ) এটা ভালোভাবে সামলায় — incremental freezing emergency vacuum কমায় — কিন্তু 32-bit XID-এর failure mode-টা এখনও আছে। version যাই হোক, `age(datfrozenxid)` monitor করুন আর 1.5B-তে alert দিন।
 
-## Replication lag — the metric you must alert on
+## Replication lag — যে metric-এ আপনাকে alert করতেই হবে
 
-Every read replica lags. The questions are: by how much, and what's your tolerance?
+প্রতিটা read replica lag করে। প্রশ্ন হলো: কতটা, আর আপনার tolerance কী?
 
-### The lag types in Postgres
+### Postgres-এ lag-এর ধরন
 
 ```sql
 -- Bytes of WAL not yet sent
@@ -141,25 +149,25 @@ FROM pg_stat_replication;
 SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag_time;
 ```
 
-Three causes, in order of frequency:
+তিনটা কারণ, frequency অনুযায়ী সাজানো:
 
-**1. Long-running query on the replica.** The replica pauses replay to keep query results consistent (`hot_standby_feedback`) or aborts queries that conflict (default). Either way, big BI queries cause lag spikes.
+**1. Replica-তে long-running query।** Replica query result consistent রাখতে replay pause করে (`hot_standby_feedback`) অথবা conflicting query abort করে (default)। যেভাবেই হোক, বড় BI query lag spike ঘটায়।
 
-**2. WAL write throughput exceeds replica disk.** Cheap replicas with slower disks fall behind under write storms. The fix is faster disks, not "tune postgres."
+**2. WAL write throughput replica disk-কে ছাড়িয়ে যায়।** slower disk-ওয়ালা সস্তা replica write storm-এ পিছিয়ে পড়ে। সমাধান দ্রুত disk, "tune postgres" নয়।
 
-**3. Single-threaded WAL replay.** Postgres replays WAL in one thread. A burst of bulk inserts on the primary that took 5 parallel writers can take 5x as long to replay. Solution at scale: logical replication that replays per-table in parallel (Postgres 16+: `parallel_apply`).
+**3. Single-threaded WAL replay।** Postgres এক thread-এ WAL replay করে। primary-তে 5টা parallel writer যে bulk insert-এর burst নিয়েছে সেটা replay করতে 5x সময় লাগতে পারে। স্কেলে সমাধান: logical replication যা per-table parallel-এ replay করে (Postgres 16+: `parallel_apply`)।
 
 <Callout type="tip">
 
-**Alert on lag in time, not bytes.** "10 GB behind" means nothing without write rate. "120 seconds behind" tells the user-facing impact: a query just routed to the replica might miss data they wrote 90 seconds ago.
+**lag-এ alert দিন time-এ, byte-এ নয়।** write rate ছাড়া "10 GB behind"-এর কোনো মানে নেই। "120 seconds behind" user-facing impact বলে দেয়: replica-তে route হওয়া একটা query হয়তো 90 second আগে user-এর লেখা data মিস করবে।
 
 </Callout>
 
-### Read-after-write — the consistency you'll get sued over
+### Read-after-write — যে consistency-র জন্য আপনার নামে মামলা হবে
 
-A user updates their profile, then loads their profile page. App reads from a replica. Replica is 2 seconds behind. User sees stale data.
+একজন user তার profile update করে, তারপর profile page load করে। App replica থেকে read করে। Replica 2 second পিছিয়ে। User stale data দেখে।
 
-Mitigations, ordered by simplicity:
+Mitigation, simplicity অনুযায়ী সাজানো:
 
 ```typescript
 // 1. Sticky reads after writes — keep reads on the primary for N seconds
@@ -180,11 +188,11 @@ async function readAfterWrite(writeLsn) {
 //    user-visible writes. Costs latency on every write.
 ```
 
-Most teams pick option 1 — cheap and good enough for human-driven UX.
+বেশিরভাগ team option 1 বাছে — সস্তা আর human-driven UX-এর জন্য যথেষ্ট ভালো।
 
-## Query planning — why the same query is fast today and slow tomorrow
+## Query planning — কেন একই query আজ fast আর কাল slow
 
-The optimizer estimates rows for each step using statistics gathered by `ANALYZE`. When estimates are wrong, it picks a bad plan. The classic failure:
+Optimizer `ANALYZE`-এর জমানো statistics দিয়ে প্রতিটা step-এর row estimate করে। estimate ভুল হলে খারাপ plan বাছে। classic failure:
 
 ```sql
 -- Statistics say this column has 100 distinct values, evenly distributed.
@@ -212,9 +220,9 @@ CREATE STATISTICS my_table_extstats (dependencies)
   ON category, status FROM my_table;          -- multi-column correlations
 ```
 
-### The plan-flip outage
+### Plan-flip outage
 
-The pattern that hits every PG-running company eventually:
+যে pattern শেষ পর্যন্ত প্রতিটা PG-চালানো company-কে আঘাত করে:
 
 ```
 3 AM: autoanalyze runs on `orders` table.
@@ -225,15 +233,15 @@ The pattern that hits every PG-running company eventually:
       All connections fill with the slow query. Pool exhausted. App down.
 ```
 
-Detection: `pg_stat_statements` shows the query's mean time spiking. Mitigation: pin the plan (`SET enable_seqscan = off` for that query, or use pg_hint_plan), then reanalyze.
+Detection: `pg_stat_statements`-এ query-র mean time spike দেখায়। Mitigation: plan pin করুন (ঐ query-র জন্য `SET enable_seqscan = off`, অথবা pg_hint_plan ব্যবহার), তারপর reanalyze।
 
-Prevention: don't write queries whose plans are sensitive to small statistics changes. Use `LIMIT`. Add the right composite indexes. Treat the query plan as part of your API contract.
+Prevention: এমন query লিখবেন না যার plan সামান্য statistics পরিবর্তনে sensitive। `LIMIT` ব্যবহার করুন। ঠিক composite index যোগ করুন। query plan-কে আপনার API contract-এর অংশ হিসেবে ভাবুন।
 
-## The connection pool — where production really dies
+## Connection pool — যেখানে production আসলে মরে
 
-A 100-RPS service with 10 ms queries needs ~1 connection on average. A typical app opens 50. With 20 app instances, the database sees 1,000 connections. Postgres's `max_connections` default is 100. Each connection costs ~10 MB of memory. At 1,000 connections, that's 10 GB just on connection state.
+10 ms query-ওয়ালা একটা 100-RPS service-এর গড়ে ~1 connection লাগে। সাধারণ একটা app 50টা খোলে। 20টা app instance-এ database 1,000 connection দেখে। Postgres-এর `max_connections`-এর default 100। প্রতিটা connection-এ ~10 MB memory খরচ। 1,000 connection-এ শুধু connection state-এ 10 GB।
 
-This is why every Postgres-at-scale shop puts **PgBouncer** (or rds-proxy, pgcat) in front:
+এই কারণেই প্রতিটা Postgres-at-scale shop সামনে **PgBouncer** (বা rds-proxy, pgcat) বসায়:
 
 ```
 App instances (200) → PgBouncer (transaction pooling, ~100 conns each)
@@ -251,11 +259,11 @@ transaction pooling — connection released after each transaction.
 statement pooling   — released after each statement. Usually too aggressive.
 ```
 
-Transaction pooling breaks code that uses `SET search_path` or `LISTEN/NOTIFY` or session-level prepared statements. Audit before turning it on.
+Transaction pooling সেই code ভাঙে যা `SET search_path` বা `LISTEN/NOTIFY` বা session-level prepared statement ব্যবহার করে। চালু করার আগে audit করুন।
 
-### Sizing the pool
+### Pool-এর size ঠিক করা
 
-Underrated math. Pool too small: requests queue, latency rises. Pool too large: you spend cycles on lock contention and context switches in the database, throughput _drops_.
+underrated math। Pool খুব ছোট: request queue করে, latency বাড়ে। Pool খুব বড়: database-এ lock contention আর context switch-এ cycle খরচ হয়, throughput _কমে_।
 
 ```
 Optimal pool size ≈ ((cores * 2) + effective_spindle_count)
@@ -266,13 +274,13 @@ For a 16-core PG server with NVMe (treat as 1 spindle):
 You almost never want > 4x cores on the DB side.
 ```
 
-Hikaripool's docs have the original benchmark; it generalizes.
+HikariCP-র docs-এ original benchmark আছে; এটা সাধারণভাবে প্রযোজ্য।
 
-## Hot rows and lock contention
+## Hot rows আর lock contention
 
-Two writers update the same row → they serialize. At 10k RPS on a single counter row, the database is single-threaded.
+দুজন writer একই row update করে → তারা serialize হয়। একটা single counter row-তে 10k RPS-এ database single-threaded।
 
-The classic case: a `pageviews` counter incremented on every request.
+classic case: প্রতিটা request-এ increment হওয়া একটা `pageviews` counter।
 
 ```sql
 UPDATE counters SET pageviews = pageviews + 1 WHERE name = 'home';
@@ -280,7 +288,7 @@ UPDATE counters SET pageviews = pageviews + 1 WHERE name = 'home';
 -- Throughput cap: 1 / latency_per_update. ~5k/s on healthy PG. Then it falls over.
 ```
 
-Patterns to fix:
+সমাধানের pattern:
 
 ```sql
 -- 1. Sharded counters: 100 rows, increment a random one, sum on read.
@@ -294,11 +302,11 @@ INSERT INTO pageview_events (ts, page) VALUES (now(), 'home');
 -- 3. Move counters out of the OLTP DB entirely. Redis INCR. Or a TSDB.
 ```
 
-You'll see this pattern in user-facing leaderboards, billing-event meters, and rate limiters. The fix is architectural; the DB tuning won't save you.
+এই pattern আপনি user-facing leaderboard, billing-event meter আর rate limiter-এ দেখবেন। সমাধান architectural; DB tuning আপনাকে বাঁচাবে না।
 
-## Index strategy — the operational view
+## Index strategy — operational দৃষ্টিভঙ্গি
 
-Indexes speed reads, slow writes, and consume disk. Senior teams treat indexes like infrastructure.
+Index read দ্রুত করে, write ধীর করে আর disk খায়। Senior team-রা index-কে infrastructure-এর মতো treat করে।
 
 ```sql
 -- Find unused indexes (eligible for drop)
@@ -314,18 +322,18 @@ SELECT * FROM pgstattuple('my_index'::regclass);
 -- > 30% wasted space? REINDEX CONCURRENTLY.
 ```
 
-### CONCURRENTLY is non-negotiable
+### CONCURRENTLY non-negotiable
 
 ```sql
 CREATE INDEX CONCURRENTLY idx_users_email ON users(email);
 REINDEX INDEX CONCURRENTLY idx_users_email;
 ```
 
-Without `CONCURRENTLY`, the operation takes an exclusive lock for minutes-to-hours on a big table. With it, the operation is online but takes ~2x as long. Always pay the time; never the lock.
+`CONCURRENTLY` ছাড়া operation-টা বড় table-এ কয়েক মিনিট থেকে কয়েক ঘণ্টা exclusive lock নেয়। এটা দিয়ে operation online থাকে কিন্তু ~2x বেশি সময় লাগে। সবসময় সময়টা দিন; lock-টা কখনো নয়।
 
-## Migrations under load
+## Load-এর মধ্যে migrations
 
-Every team eventually does a long migration on a hot table. The traps:
+প্রতিটা team শেষ পর্যন্ত একটা hot table-এ long migration করে। ফাঁদগুলো:
 
 ```sql
 -- BAD: rewrites every row, holds AccessExclusiveLock.
@@ -336,7 +344,7 @@ ALTER TABLE orders ALTER COLUMN id TYPE BIGINT;
 ALTER TABLE orders ADD COLUMN total_cents BIGINT DEFAULT 0 NOT NULL;
 ```
 
-The pattern that works for online migrations:
+online migration-এর জন্য যে pattern কাজ করে:
 
 ```
 1. Add the new column nullable. (Cheap metadata change.)
@@ -347,13 +355,13 @@ The pattern that works for online migrations:
 5. Drop the old column.
 ```
 
-Tools that automate this safely: `pg_repack`, `pg_squeeze`, GitHub's `gh-ost` (MySQL).
+যে tool এটা নিরাপদে automate করে: `pg_repack`, `pg_squeeze`, GitHub-এর `gh-ost` (MySQL)।
 
-## Backup and recovery — the SRE-level questions
+## Backup আর recovery — SRE-level প্রশ্ন
 
-Backups you haven't restored aren't backups. Test quarterly.
+যে backup আপনি restore করেননি সেটা backup না। quarterly test করুন।
 
-The questions a senior SRE asks:
+একজন senior SRE যে প্রশ্নগুলো করে:
 
 ```
 - RPO?  How much data can you lose?           → drives backup frequency
@@ -364,15 +372,15 @@ The questions a senior SRE asks:
 - Quarterly restore drill: time to RPO+RTO?   → real numbers, not promises
 ```
 
-Postgres patterns at scale:
+স্কেলে Postgres-এর pattern:
 
-- `pg_basebackup` for the snapshot, plus continuous WAL archiving (`pgbackrest`, `wal-g`).
-- A test cluster restored every night from yesterday's backup; smoke tests run against it.
-- Logical backup (`pg_dump`) in addition for catastrophic-corruption escape hatch.
+- snapshot-এর জন্য `pg_basebackup`, plus continuous WAL archiving (`pgbackrest`, `wal-g`)।
+- একটা test cluster প্রতি রাতে গতকালের backup থেকে restore হয়; তার উপর smoke test চলে।
+- catastrophic-corruption escape hatch-এর জন্য এর সাথে logical backup (`pg_dump`)।
 
-## Connection patterns from the application side
+## Application দিক থেকে connection patterns
 
-The app-side rules that prevent most DB outages:
+যে app-side নিয়মগুলো বেশিরভাগ DB outage ঠেকায়:
 
 ```typescript
 // 1. Set statement_timeout per query class.
@@ -414,27 +422,27 @@ Tier F
   Trusting CPU% as a DB health metric
 ```
 
-## Common pitfalls that cause Sev-1s
+## Sev-1 ঘটায় এমন common pitfall
 
-1. **Letting one team's `SELECT * FROM events ORDER BY ts` table-scan the OLTP DB at peak.** Use a replica or a column store; OLTP is not for analytics.
-2. **`max_connections = 1000` because "we have 1000 app threads."** Always pool. Always.
-3. **Untested failover.** The first time you fail over a primary in production should never be the actual outage.
-4. **Schema migration without `CONCURRENTLY` or batch backfill.** A 30-minute lock on `users` is a P0.
-5. **No `statement_timeout` on the app side.** A runaway report eats every connection.
-6. **Vacuum disabled "to reduce noise."** You will visit wraparound. It is unfun.
+1. **এক team-এর `SELECT * FROM events ORDER BY ts`-কে peak-এ OLTP DB table-scan করতে দেওয়া।** replica বা column store ব্যবহার করুন; OLTP analytics-এর জন্য নয়।
+2. **`max_connections = 1000` কারণ "আমাদের 1000টা app thread আছে।"** সবসময় pool করুন। সবসময়।
+3. **Untested failover।** production-এ প্রথমবার primary fail over করাটা কখনো actual outage-এর সময় হওয়া উচিত নয়।
+4. **`CONCURRENTLY` বা batch backfill ছাড়া schema migration।** `users`-এ 30-মিনিটের lock একটা P0।
+5. **App-side-এ কোনো `statement_timeout` নেই।** একটা runaway report প্রতিটা connection খেয়ে ফেলে।
+6. **"noise কমাতে" Vacuum disable করা।** আপনি wraparound-এ পৌঁছবেন। এটা মজার না।
 
-## Stay current
+## আপডেটেড থাকুন
 
-- [PostgreSQL docs](https://www.postgresql.org/docs/current/) — version-current; the index for performance, MVCC, WAL
+- [PostgreSQL docs](https://www.postgresql.org/docs/current/) — version-current; performance, MVCC, WAL-এর index
 - [MySQL reference](https://dev.mysql.com/doc/refman/en/) — InnoDB internals
 - [Use the Index, Luke](https://use-the-index-luke.com/) — index theory, free
-- [Designing Data-Intensive Applications (Kleppmann)](https://dataintensive.net/) — durable database fundamentals
+- [Designing Data-Intensive Applications (Kleppmann)](https://dataintensive.net/) — টেকসই database fundamentals
 
-## Key Takeaways
+## মূল শিক্ষা
 
-1. **Storage engine determines failure mode** — B-tree dies on vacuum bloat, LSM dies on compaction.
-2. **MVCC + long transactions = bloat** — set `idle_in_transaction_session_timeout`.
-3. **Replication lag is a time metric, not a byte metric** — alert in seconds.
-4. **Pool with PgBouncer; size at ~2x cores** — bigger is slower, not faster.
-5. **Plan-flips cause silent outages** — `pg_stat_statements` is your earliest warning.
-6. **Untested backups don't exist** — quarterly restore drill, with the timer running.
+1. **Storage engine failure mode নির্ধারণ করে** — B-tree vacuum bloat-এ মরে, LSM compaction-এ মরে।
+2. **MVCC + long transaction = bloat** — `idle_in_transaction_session_timeout` সেট করুন।
+3. **Replication lag একটা time metric, byte metric নয়** — second-এ alert দিন।
+4. **PgBouncer দিয়ে pool করুন; ~2x cores-এ size করুন** — বড় মানে ধীর, দ্রুত নয়।
+5. **Plan-flip নীরব outage ঘটায়** — `pg_stat_statements` আপনার সবচেয়ে আগের warning।
+6. **Untested backup-এর অস্তিত্ব নেই** — timer চালু রেখে quarterly restore drill।

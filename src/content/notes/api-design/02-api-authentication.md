@@ -1,9 +1,9 @@
 ---
 title: 'API Authentication'
-subtitle: 'Secure your APIs with API keys, OAuth 2.0, JWT tokens, and session-based auth — understand when to use each approach.'
+subtitle: 'API key, OAuth 2.0, JWT token, আর session-based auth দিয়ে আপনার API সুরক্ষিত করুন — কখন কোনটা ব্যবহার করবেন তা বুঝে নিন।'
 chapter: 2
 level: 'beginner'
-readingTime: '12 min'
+readingTime: '12 মিনিট'
 topics: ['authentication', 'API keys', 'OAuth 2.0', 'JWT', 'sessions']
 ---
 
@@ -11,26 +11,34 @@ topics: ['authentication', 'API keys', 'OAuth 2.0', 'JWT', 'sessions']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Authentication vs Authorization
+## গল্পে বুঝি
 
-Before diving in, understand the difference:
+ধানমন্ডিতে একটা মেম্বার-অনলি ক্লাব আছে, যেখানে শুধু সদস্যরাই ঢুকতে পারে। প্রতিটি সদস্যের কাছে একটা পার্সোনাল মেম্বারশিপ কার্ড থাকে, আর সেই কার্ডে খোদাই করা থাকে একটা গোপন নম্বর — শুধু ওই সদস্য আর ক্লাবের অফিসই সেটা জানে। ইবনে সিনা সেদিন গেটে কার্ডটা দেখাল, দারোয়ান নম্বরটা মিলিয়ে দেখল আসল সদস্য কিনা, তারপরই ভেতরে ঢুকতে দিল। কিন্তু ভেতরে তো অনেকগুলো রুম — জিম, রেস্টুরেন্ট, লাইব্রেরি। প্রতিটা রুমের সামনে গিয়ে বারবার গোপন নম্বরওয়ালা কার্ড বের করাটা যেমন ঝামেলা, তেমনি ঝুঁকিরও — বারবার দেখালে কেউ নম্বরটা দেখে ফেলতে পারে।
 
-- **Authentication** (AuthN) — Who are you? Proving your identity.
-- **Authorization** (AuthZ) — What can you do? Checking permissions.
+তাই ক্লাব একটা সহজ ব্যবস্থা রাখে। গেটে একবার কার্ড যাচাই হয়ে গেলে ফাতিমা আল-ফিহরি রিসেপশন থেকে হাতে একটা ছোট এন্ট্রি স্ট্যাম্প নিয়ে নেয় — সেটা শুধু ওই দিনটার জন্য বৈধ, রাত হলেই মুছে যায়। এরপর প্রতিটা রুমে সে শুধু হাতের স্ট্যাম্পটা দেখায়, আর গোপন কার্ড বের করতে হয় না। আবার আল-খোয়ারিজমি নিজে সদস্য নয়, কিন্তু তার বন্ধু একজন পুরনো সদস্য তাকে স্পন্সর করে অফিসকে বলে দিয়েছে — "ও শুধু রেস্টুরেন্টে বসবে, আর কোথাও নয়।" অফিস আল-খোয়ারিজমিকে সীমিত অ্যাক্সেসের একটা পাস দেয়, বন্ধুর গোপন কার্ড নম্বর তাকে জানাতে হয় না।
 
-Every API request must first authenticate the caller, then check if they are authorized to perform the requested action.
+এই পুরো ব্যাপারটাই আসলে **API authentication**। গোপন নম্বরওয়ালা মেম্বারশিপ কার্ড হলো **API key** — server-to-server কল বা কোনো সার্ভিসকে শনাক্ত করতে যেমন Stripe বা OpenAI এর secret key ব্যবহার হয়। দিনের জন্য বৈধ এন্ট্রি স্ট্যাম্প হলো **token/session** (যেমন JWT) — একবার login করে বারবার password না দিয়েই প্রতিটা request-এ সেই short-lived token পাঠানো, যেটার একটা expiry থাকে। আর স্পন্সরের মাধ্যমে সীমিত পাস পাওয়াটা হলো **OAuth** delegation — "Login with Google" এ আপনি Google-কে দিয়ে অ্যাপকে শুধু email-নাম দেখার সীমিত অনুমতি দেন, নিজের Google password কখনো অ্যাপকে দেন না।
+
+## Authentication বনাম Authorization
+
+শুরু করার আগে পার্থক্যটা বুঝে নিন:
+
+- **Authentication** (AuthN) — আপনি কে? নিজের পরিচয় প্রমাণ করা।
+- **Authorization** (AuthZ) — আপনি কী করতে পারবেন? পারমিশন চেক করা।
+
+প্রতিটি API request-এ প্রথমে caller-কে authenticate করতে হবে, তারপর চেক করতে হবে সে যে অ্যাকশন চাইছে তার জন্য সে authorized কিনা।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-Like a hotel key card — at check-in (login), you verify your ID and receive a key card (token). The card opens your room and the pool but not the staff area. Lost cards can be deactivated instantly.
+হোটেলের key card-এর মতো — check-in (login)-এ আপনার ID যাচাই করা হয় আর আপনি একটি key card (token) পান। কার্ডটা আপনার রুম আর পুল খোলে, কিন্তু স্টাফ এরিয়া নয়। হারিয়ে যাওয়া কার্ড সাথে সাথে ডিঅ্যাক্টিভেট করা যায়।
 
 </Callout>
 
-## API Keys
+## API Key
 
-The simplest form of authentication. The server generates a unique key, and the client sends it with every request.
+authentication-এর সবচেয়ে সহজ রূপ। সার্ভার একটি ইউনিক key তৈরি করে, আর client প্রতিটি request-এর সাথে সেটা পাঠায়।
 
 ```typescript
 // Client sends API key in header
@@ -65,27 +73,27 @@ app.use('/api', apiKeyAuth);
 
 <Callout type="warning">
 
-**API Key Security**
+**API Key সিকিউরিটি**
 
-- Never embed API keys in frontend JavaScript — anyone can read them
-- API keys should be sent in headers, never in URLs (URLs get logged)
-- Rotate keys periodically and support multiple active keys during rotation
-- Prefix keys with their type: `sk_live_` (secret live), `pk_test_` (public test)
+- কখনো frontend JavaScript-এ API key রাখবেন না — যে কেউ পড়ে ফেলতে পারবে
+- API key header-এ পাঠানো উচিত, কখনো URL-এ নয় (URL log হয়ে যায়)
+- key নিয়মিত rotate করুন এবং rotation চলাকালীন একাধিক active key সাপোর্ট করুন
+- key-এর আগে টাইপ যুক্ত করুন: `sk_live_` (secret live), `pk_test_` (public test)
 
 </Callout>
 
-### When to Use API Keys
+### কখন API Key ব্যবহার করবেন
 
 - Server-to-server communication
-- Rate limiting and usage tracking
-- Public APIs where you need to identify the caller
-- NOT for user-facing authentication (use OAuth/JWT instead)
+- Rate limiting আর usage tracking
+- Public API যেখানে caller-কে শনাক্ত করতে হবে
+- ইউজার-ফেসিং authentication-এর জন্য নয় (তখন OAuth/JWT ব্যবহার করুন)
 
 ## JWT (JSON Web Tokens)
 
-JWTs are self-contained tokens that encode user information and a signature. The server does not need to look up a database to validate them.
+JWT হলো self-contained token যা ইউজার ইনফরমেশন আর একটি signature এনকোড করে রাখে। এগুলো validate করতে সার্ভারকে database-এ খুঁজতে হয় না।
 
-A JWT has three parts: **Header.Payload.Signature**
+একটি JWT-এর তিনটি অংশ থাকে: **Header.Payload.Signature**
 
 ```typescript
 // JWT structure (base64-decoded)
@@ -111,7 +119,7 @@ HMACSHA256(
 )
 ```
 
-### Implementing JWT Auth
+### JWT Auth ইমপ্লিমেন্ট করা
 
 ```typescript
 import jwt from 'jsonwebtoken';
@@ -200,23 +208,23 @@ app.post('/api/auth/refresh', async (req, res) => {
 
 <Callout type="tip">
 
-**JWT Best Practices**
+**JWT Best Practice**
 
-- Keep access tokens short-lived (5-15 minutes)
-- Use refresh tokens (7-30 days) to get new access tokens
-- Store refresh token hashes in the database so you can revoke them
-- Never store sensitive data in the JWT payload — it is base64-encoded, not encrypted
-- Use `RS256` (asymmetric) for microservices so services can verify tokens without knowing the secret
+- access token স্বল্পমেয়াদি রাখুন (৫-১৫ মিনিট)
+- নতুন access token পেতে refresh token (৭-৩০ দিন) ব্যবহার করুন
+- refresh token-এর hash database-এ রাখুন যাতে সেগুলো revoke করতে পারেন
+- JWT payload-এ কখনো sensitive ডেটা রাখবেন না — এটা base64-এনকোডেড, encrypted নয়
+- microservices-এর জন্য `RS256` (asymmetric) ব্যবহার করুন যাতে service-গুলো secret না জেনেই token verify করতে পারে
 
 </Callout>
 
 ## OAuth 2.0
 
-OAuth 2.0 is a framework for delegated authorization. It lets users grant third-party apps limited access to their accounts without sharing passwords.
+OAuth 2.0 হলো delegated authorization-এর একটি ফ্রেমওয়ার্ক। এটা ইউজারদের password শেয়ার না করেই third-party অ্যাপকে তাদের অ্যাকাউন্টে সীমিত access দিতে দেয়।
 
-### The Authorization Code Flow
+### Authorization Code Flow
 
-This is the most common flow for web applications:
+web অ্যাপ্লিকেশনের জন্য এটাই সবচেয়ে প্রচলিত flow:
 
 ```typescript
 // Step 1: Redirect user to authorization server
@@ -273,7 +281,7 @@ app.get('/callback', async (req, res) => {
 
 ## Session-Based Authentication
 
-The traditional approach — server stores session data, client stores a session ID cookie.
+সনাতন পদ্ধতি — সার্ভার session ডেটা রাখে, client একটি session ID cookie রাখে।
 
 ```typescript
 import session from 'express-session';
@@ -321,31 +329,31 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
 }
 ```
 
-## Choosing the Right Method
+## সঠিক পদ্ধতি বেছে নেওয়া
 
-| Method    | Best For                         | Stateless? | Scalability |
-| --------- | -------------------------------- | ---------- | ----------- |
-| API Keys  | Server-to-server, public APIs    | Yes        | High        |
-| JWT       | SPAs, mobile apps, microservices | Yes        | High        |
-| Sessions  | Traditional web apps, SSR        | No         | Medium      |
-| OAuth 2.0 | Third-party access, SSO          | Depends    | High        |
+| পদ্ধতি    | কীসের জন্য সেরা                | Stateless? | Scalability |
+| --------- | ------------------------------ | ---------- | ----------- |
+| API Key   | Server-to-server, public API   | হ্যাঁ      | High        |
+| JWT       | SPA, mobile app, microservices | হ্যাঁ      | High        |
+| Session   | সনাতন web app, SSR             | না         | Medium      |
+| OAuth 2.0 | Third-party access, SSO        | নির্ভর করে | High        |
 
 <Callout type="tip">
 
-**Decision Guide**
+**সিদ্ধান্ত নেওয়ার গাইড**
 
-- Building a public API? Start with **API keys**
-- Building an SPA or mobile app? Use **JWT** with refresh tokens
-- Building a server-rendered web app? **Sessions** with Redis are battle-tested
-- Need "Login with Google/GitHub"? **OAuth 2.0** Authorization Code flow
-- Microservices? **JWT with RS256** — services verify without shared secrets
+- একটি public API বানাচ্ছেন? **API key** দিয়ে শুরু করুন
+- একটি SPA বা mobile app বানাচ্ছেন? refresh token-সহ **JWT** ব্যবহার করুন
+- server-rendered web app বানাচ্ছেন? Redis-সহ **session** পরীক্ষিত ও নির্ভরযোগ্য
+- "Login with Google/GitHub" দরকার? **OAuth 2.0** Authorization Code flow
+- microservices? **RS256-সহ JWT** — service-গুলো shared secret ছাড়াই verify করে
 
 </Callout>
 
-## Key Takeaways
+## মূল কথা
 
-1. **Authentication proves identity**, authorization checks permissions — they are separate concerns
-2. **API keys** are simple but only suitable for server-to-server or identifying public API consumers
-3. **JWTs** are stateless and scalable but require short expiry + refresh token rotation
-4. **OAuth 2.0** delegates authorization — the user grants your app permission without sharing their password
-5. **Sessions** are stateful but simpler to implement and easier to revoke
+1. **Authentication পরিচয় প্রমাণ করে**, authorization পারমিশন চেক করে — এরা আলাদা বিষয়
+2. **API key** সহজ, কিন্তু কেবল server-to-server বা public API consumer শনাক্ত করার জন্যই উপযুক্ত
+3. **JWT** stateless আর scalable, তবে স্বল্প expiry + refresh token rotation দরকার
+4. **OAuth 2.0** authorization delegate করে — ইউজার password শেয়ার না করেই আপনার অ্যাপকে পারমিশন দেয়
+5. **Session** stateful কিন্তু ইমপ্লিমেন্ট করা সহজ এবং revoke করাও সহজ

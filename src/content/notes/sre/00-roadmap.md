@@ -1,9 +1,9 @@
 ---
-title: '8-Week Roadmap: Fullstack → SRE'
-subtitle: 'A solid two-month plan to convert a working fullstack engineer into a junior-SRE-ready operator. Daily breakdown, real labs, and a final capstone.'
+title: '8 সপ্তাহের রোডম্যাপ: Fullstack → SRE'
+subtitle: 'একজন কর্মরত fullstack engineer-কে junior-SRE-ready operator বানানোর জন্য দুই মাসের একটি সলিড প্ল্যান। প্রতিদিনের ব্রেকডাউন, রিয়েল ল্যাব, আর একটি ফাইনাল ক্যাপস্টোন।'
 chapter: 0
 level: 'beginner'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['roadmap', 'learning', 'career', 'fullstack to SRE', 'hands-on']
 ---
 
@@ -11,39 +11,39 @@ topics: ['roadmap', 'learning', 'career', 'fullstack to SRE', 'hands-on']
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## What this roadmap assumes you already know
+## এই রোডম্যাপ ধরে নিচ্ছে যা তুমি আগে থেকেই জানো
 
-You are coming from a real fullstack background. Specifically, you can:
+তুমি একটা রিয়েল fullstack ব্যাকগ্রাউন্ড থেকে আসছ। নির্দিষ্টভাবে, তুমি পারো:
 
-- Build a non-trivial web app end-to-end (React/Vue/Svelte + Node/Python/Go backend)
-- Read and write SQL beyond `SELECT *`
-- Use git daily — branches, rebases, merge conflicts
-- Run containers locally with `docker run` and `docker compose`
-- Deploy something to a cloud provider (Vercel, Render, Fly.io, or raw EC2)
-- Read HTTP traces in browser devtools and understand status codes
+- একটা non-trivial web app end-to-end বানাতে (React/Vue/Svelte + Node/Python/Go backend)
+- `SELECT *`-এর বাইরে গিয়ে SQL পড়তে ও লিখতে
+- git প্রতিদিন ব্যবহার করতে — branches, rebases, merge conflicts
+- লোকালি container চালাতে `docker run` আর `docker compose` দিয়ে
+- একটা cloud provider-এ কিছু deploy করতে (Vercel, Render, Fly.io, বা raw EC2)
+- ব্রাউজার devtools-এ HTTP traces পড়তে আর status codes বুঝতে
 
-You do **not** need to know:
+তোমার **যা জানার দরকার নেই**:
 
 - Kubernetes internals
-- PromQL or any monitoring DSL
+- PromQL বা কোনো monitoring DSL
 - Terraform
-- Queueing theory or SLO math
+- Queueing theory বা SLO math
 - On-call practices
 - Linux performance tuning
 
-If the assumed list looks unfamiliar, spend 2-3 weeks on fullstack fundamentals first — the SRE concepts will not stick without them.
+উপরের ধরে-নেওয়া লিস্টটা যদি অচেনা লাগে, আগে 2-3 সপ্তাহ fullstack fundamentals-এ দাও — সেগুলো ছাড়া SRE কনসেপ্টগুলো মাথায় গেঁথে যাবে না।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উদাহরণ**
 
-A web developer learning SRE is like a building architect learning structural engineering. You already know how rooms connect; now you learn why the building stays up under load, fire, and earthquakes. The new mental model is "what happens when things break," not "how do I add a feature."
+একজন web developer-এর SRE শেখা হচ্ছে একজন building architect-এর structural engineering শেখার মতো। রুমগুলো কীভাবে কানেক্ট হয় তুমি আগে থেকেই জানো; এখন শিখছ কেন load, আগুন, আর ভূমিকম্পের নিচেও বিল্ডিংটা দাঁড়িয়ে থাকে। নতুন mental model হচ্ছে "জিনিস ভেঙে গেলে কী হয়", "কীভাবে একটা feature যোগ করব" নয়।
 
 </Callout>
 
-## The roadmap shape
+## রোডম্যাপের গঠন
 
-Eight weeks. Every week has the same shape:
+আট সপ্তাহ। প্রতি সপ্তাহের গঠন একই:
 
 ```
 Mon-Tue   Theory + reading (1.5h/day)
@@ -54,9 +54,9 @@ Sun       Off (deliberately — sustained pace beats burnout)
 Total: ~15-18h/week. Realistic alongside a full-time job.
 ```
 
-You will build one substantial project across all 8 weeks: a **production-grade observable Go service running on Kubernetes with full SRE practices**. Each week adds one layer.
+তুমি পুরো 8 সপ্তাহ জুড়ে একটা সলিড প্রজেক্ট বানাবে: **full SRE practices সহ Kubernetes-এ চলা একটা production-grade observable Go service**। প্রতি সপ্তাহে একটা করে লেয়ার যোগ হবে।
 
-## Tools you will install in Week 0
+## Week 0-তে যেসব tool install করবে
 
 ```bash
 # Local dev
@@ -73,7 +73,7 @@ brew install gh                                   # GitHub CLI
 - A small cloud account: Fly.io, DigitalOcean, or AWS Free Tier
 ```
 
-Verify install:
+Install যাচাই করো:
 
 ```bash
 kubectl version --client    # >= 1.30 (1.28 went EOL in 2025)
@@ -87,19 +87,19 @@ k6 version                  # >= 0.50
 
 ## Week 1 — The mental model
 
-### Goals
+### লক্ষ্য
 
-Internalize the SRE worldview: SLI/SLO/error budget, the four golden signals, the deploy-vs-reliability tradeoff.
+SRE-র worldview মাথায় ঢুকিয়ে ফেলা: SLI/SLO/error budget, চারটা golden signal, deploy-vs-reliability tradeoff।
 
 ### Reading (Mon-Tue)
 
-- Chapters 1, 2, 3 of this course (you are reading them anyway)
-- Google SRE Book, free online: chapters 1, 2, 4 — _Introduction_, _Production Environment_, _Service Level Objectives_
-- Charity Majors, "The Engineer/Manager Pendulum" blog post (sets the mindset)
+- এই কোর্সের chapter 1, 2, 3 (তুমি এমনিতেও পড়ছ)
+- Google SRE Book, ফ্রি অনলাইন: chapter 1, 2, 4 — _Introduction_, _Production Environment_, _Service Level Objectives_
+- Charity Majors, "The Engineer/Manager Pendulum" ব্লগ পোস্ট (মাইন্ডসেট সেট করে দেয়)
 
 ### Lab (Wed-Fri)
 
-**Build a Go HTTP service with RED metrics.**
+**RED metrics সহ একটা Go HTTP service বানাও।**
 
 ```go
 // main.go
@@ -127,36 +127,36 @@ var (
 // + /metrics exposed for scraping
 ```
 
-Spin up Prometheus locally to scrape it. Build a Grafana dashboard with three panels: rate, errors, p99 duration.
+লোকালি Prometheus চালিয়ে ওটাকে scrape করাও। তিনটা প্যানেলসহ একটা Grafana dashboard বানাও: rate, errors, p99 duration।
 
-### Saturday project work
+### শনিবারের project work
 
-Deploy the service to Fly.io (or your cloud of choice). Wire Grafana Cloud to scrape it remotely.
+Service-টা Fly.io-তে (বা তোমার পছন্দের cloud-এ) deploy করো। Grafana Cloud দিয়ে ওটাকে রিমোটলি scrape করাও।
 
 ### Deliverable
 
-A live URL serving fake traffic, with a public Grafana dashboard you can share. Commit the repo to GitHub — you will extend it every week.
+একটা লাইভ URL যেটা fake traffic serve করছে, সাথে একটা public Grafana dashboard যেটা তুমি শেয়ার করতে পারো। repo-টা GitHub-এ commit করো — প্রতি সপ্তাহে এটাই তুমি extend করবে।
 
 ### Success criteria
 
-You can answer: "What is the p99 latency of /api/orders over the last 5 minutes?" by looking only at your dashboard.
+তুমি উত্তর দিতে পারো: "শেষ 5 মিনিটে /api/orders-এর p99 latency কত?" — শুধু তোমার dashboard দেখেই।
 
 ---
 
 ## Week 2 — Containers and Kubernetes basics
 
-### Goals
+### লক্ষ্য
 
-Get past "Docker for dev" into "Kubernetes for production." Pods, deployments, services, namespaces, kubectl muscle memory.
+"Docker for dev" পেরিয়ে "Kubernetes for production"-এ যাওয়া। Pods, deployments, services, namespaces, kubectl muscle memory।
 
 ### Reading (Mon-Tue)
 
-- _Kubernetes Up & Running_ (3rd ed) — chapters 1-7
-- The Kubernetes "concepts" docs: Pod, Deployment, Service, ConfigMap
+- _Kubernetes Up & Running_ (3rd ed) — chapter 1-7
+- Kubernetes "concepts" docs: Pod, Deployment, Service, ConfigMap
 
 ### Lab (Wed-Fri)
 
-**Migrate your Week 1 service to Kubernetes.**
+**তোমার Week 1-এর service-টা Kubernetes-এ migrate করো।**
 
 ```bash
 # Spin up local K8s
@@ -170,7 +170,7 @@ kind load docker-image my-svc:0.1 --name sre-lab
 kubectl apply -f k8s/
 ```
 
-Write the manifests by hand the first time (don't use Helm yet):
+প্রথমবার manifests গুলো হাতে লিখো (এখনো Helm ব্যবহার করো না):
 
 ```yaml
 # k8s/deployment.yaml
@@ -205,35 +205,35 @@ spec:
             limits: { cpu: 500m, memory: 512Mi }
 ```
 
-### Saturday project work
+### শনিবারের project work
 
-Add a sidecar container that runs a small log shipper. Get logs into stdout, view with `kubectl logs`.
+একটা sidecar container যোগ করো যেটা একটা ছোট log shipper চালায়। Logs গুলো stdout-এ আনো, `kubectl logs` দিয়ে দেখো।
 
 ### Deliverable
 
-Service running on local kind cluster with 3 replicas, health probes, resource limits, structured logs.
+3 replicas, health probes, resource limits আর structured logs সহ লোকাল kind cluster-এ চলা service।
 
 ### Success criteria
 
-You can `kubectl rollout restart deployment/my-svc` and watch zero-downtime rolling restarts in your Grafana dashboard.
+তুমি `kubectl rollout restart deployment/my-svc` করতে পারো আর তোমার Grafana dashboard-এ zero-downtime rolling restart দেখতে পারো।
 
 ---
 
 ## Week 3 — Observability: metrics, logs, traces
 
-### Goals
+### লক্ষ্য
 
-Wire up the three pillars properly. Stop using `console.log` for production debugging.
+তিনটা pillar ঠিকমতো wire up করা। Production debugging-এর জন্য `console.log` ব্যবহার বন্ধ করা।
 
 ### Reading (Mon-Tue)
 
-- This course: chapter 3 (re-read deeply)
-- _Observability Engineering_ (Charity Majors et al), chapters 1-4
+- এই কোর্স: chapter 3 (গভীরভাবে আবার পড়ো)
+- _Observability Engineering_ (Charity Majors et al), chapter 1-4
 - OpenTelemetry "concepts" docs
 
 ### Lab (Wed-Fri)
 
-**Add structured logging:**
+**Structured logging যোগ করো:**
 
 ```go
 import "log/slog"
@@ -247,7 +247,7 @@ logger.Info("order received",
 )
 ```
 
-**Add distributed tracing:**
+**Distributed tracing যোগ করো:**
 
 ```go
 import (
@@ -266,48 +266,48 @@ ctx, span := tracer.Start(ctx, "createOrder")
 defer span.End()
 ```
 
-**Wire Loki for logs:**
+**Logs-এর জন্য Loki wire করো:**
 
-Promtail or Grafana Agent ships container logs to Loki. View in Grafana with LogQL.
+Promtail বা Grafana Agent container logs গুলো Loki-তে পাঠায়। Grafana-তে LogQL দিয়ে দেখো।
 
-### Saturday project work
+### শনিবারের project work
 
-Build a "diagnose this slow request" exercise. Inject random 200-500ms latency into one endpoint. Use traces to find which span is slow. Then use logs (filtered by trace_id) to pinpoint the line.
+একটা "diagnose this slow request" এক্সারসাইজ বানাও। একটা endpoint-এ random 200-500ms latency inject করো। কোন span slow সেটা খুঁজতে traces ব্যবহার করো। তারপর logs (trace_id দিয়ে filter করা) দিয়ে লাইনটা পিনপয়েন্ট করো।
 
 ### Deliverable
 
-Single-pane Grafana view: dashboard panel → click a slow request → drill into trace → drill into logs.
+Single-pane Grafana view: dashboard panel → একটা slow request-এ ক্লিক → trace-এ drill → logs-এ drill।
 
 ### Success criteria
 
-Given a trace ID, you can find the corresponding logs in under 10 seconds.
+একটা trace ID দেওয়া হলে, তুমি 10 সেকেন্ডের কমে সংশ্লিষ্ট logs খুঁজে বের করতে পারো।
 
 ---
 
 ## Week 4 — SLOs and burn-rate alerting
 
-### Goals
+### লক্ষ্য
 
-Define an SLO for your service, implement burn-rate alerts, and prove they fire on injected failures.
+তোমার service-এর জন্য একটা SLO define করো, burn-rate alerts implement করো, আর inject করা failure-এ সেগুলো fire করে সেটা প্রমাণ করো।
 
 ### Reading (Mon-Tue)
 
-- This course: chapter 2 (deep re-read)
+- এই কোর্স: chapter 2 (গভীরভাবে আবার পড়ো)
 - Google SRE Workbook chapter 5: "Alerting on SLOs"
-- The `sloth` tool docs (you will use it on Friday)
+- `sloth` tool-এর docs (শুক্রবার এটা ব্যবহার করবে)
 
 ### Lab (Wed-Fri)
 
-**Pick an SLO** for your `/api/orders` endpoint:
+তোমার `/api/orders` endpoint-এর জন্য **একটা SLO বেছে নাও**:
 
 ```
 SLI:  successful (non-5xx) requests / total requests
 SLO:  99.5% over 30-day rolling window
 ```
 
-(99.5% is generous on purpose — it gives you a budget to actually consume during testing.)
+(99.5% ইচ্ছাকৃতভাবে উদার — এটা তোমাকে testing-এর সময় আসলেই খরচ করার মতো একটা budget দেয়।)
 
-**Write Prometheus recording rules and burn-rate alerts** by hand the first time:
+প্রথমবার হাতে **Prometheus recording rules আর burn-rate alerts লিখো**:
 
 ```yaml
 groups:
@@ -323,82 +323,82 @@ groups:
       # ... + multi-window multi-burn-rate alerts
 ```
 
-Then **regenerate the same rules using `sloth`** to see the production-grade output.
+তারপর production-grade output দেখতে **`sloth` দিয়ে একই rules আবার generate করো**।
 
-**Inject failures** to fire the alerts:
+Alerts fire করাতে **failures inject করো**:
 
 ```bash
 # Use a chaos script that returns 500 for 10% of requests for 10 min
 curl -X POST http://your-svc/admin/chaos -d '{"errorRate": 0.1, "duration": "10m"}'
 ```
 
-Watch your fast-burn alert fire in 2-5 minutes.
+তোমার fast-burn alert 2-5 মিনিটের মধ্যে fire করা দেখো।
 
-### Saturday project work
+### শনিবারের project work
 
-Write a one-page **error budget policy** for your service. What happens at 50% budget? At 0%? Treat it as if you had a real product team to negotiate with.
+তোমার service-এর জন্য এক পাতার একটা **error budget policy** লিখো। budget 50%-এ কী হয়? 0%-এ? এমনভাবে ভাবো যেন তোমার একটা রিয়েল product team-এর সাথে negotiate করতে হচ্ছে।
 
 ### Deliverable
 
-SLO dashboard showing burn rate, alerts wired to PagerDuty (use the free tier), at least one demonstrated "alert fired during chaos test" screenshot.
+burn rate দেখানো একটা SLO dashboard, PagerDuty-তে wire করা alerts (free tier ব্যবহার করো), আর অন্তত একটা প্রমাণিত "chaos test-এর সময় alert fired" screenshot।
 
 ### Success criteria
 
-You can predict, given a burn rate, exactly how many days of error budget remain.
+একটা burn rate দেওয়া হলে, তুমি প্রেডিক্ট করতে পারো ঠিক কত দিনের error budget বাকি আছে।
 
 ---
 
 ## Week 5 — Incident response
 
-### Goals
+### লক্ষ্য
 
-Run a realistic incident from page to postmortem. Know the ICS roles by heart.
+page থেকে postmortem পর্যন্ত একটা রিয়েলিস্টিক incident চালানো। ICS roles মুখস্থ জানা।
 
 ### Reading (Mon-Tue)
 
-- This course: chapters 4 and 5
-- Pagerduty's free _Incident Response_ docs (they are exceptional)
-- 3 real public postmortems: Cloudflare 2019-07-02, GitLab 2017-01-31, AWS S3 2017-02-28
+- এই কোর্স: chapter 4 আর 5
+- PagerDuty-র ফ্রি _Incident Response_ docs (এগুলো অসাধারণ)
+- 3টা রিয়েল public postmortem: Cloudflare 2019-07-02, GitLab 2017-01-31, AWS S3 2017-02-28
 
 ### Lab (Wed-Fri)
 
-**Drill 1: solo incident response.** Have a friend (or a script) inject a failure into your service while you are doing other work. Your phone (PagerDuty) pages you. Practice:
+**Drill 1: solo incident response.** একজন বন্ধুকে (বা একটা script-কে) দিয়ে তুমি অন্য কাজ করার সময় তোমার service-এ একটা failure inject করাও। তোমার ফোন (PagerDuty) তোমাকে page করে। প্র্যাকটিস করো:
 
-1. Acknowledge within 5 minutes
-2. Open an "incident channel" (a Discord/Slack/Notion doc)
-3. Run the IC playbook solo: declare severity, hypothesize, mitigate
-4. Write a real timeline as you go
+1. 5 মিনিটের মধ্যে Acknowledge করা
+2. একটা "incident channel" খোলা (একটা Discord/Slack/Notion doc)
+3. IC playbook একা চালানো: severity declare করা, hypothesize করা, mitigate করা
+4. চলতে চলতে একটা রিয়েল timeline লেখা
 
-**Drill 2: paired roles.** Get a friend to play OL while you play IC. Inject a multi-cause failure (e.g., DB latency spike + a stuck deployment). Practice the handoff between roles.
+**Drill 2: paired roles.** একজন বন্ধুকে OL খেলতে বলো আর তুমি IC খেলো। একটা multi-cause failure inject করো (যেমন, DB latency spike + একটা আটকে যাওয়া deployment)। role-দের মধ্যে handoff প্র্যাকটিস করো।
 
-### Saturday project work
+### শনিবারের project work
 
-Write a **full postmortem** for the Drill 2 incident. Use the template from chapter 5 verbatim. Include action items with dates.
+Drill 2-এর incident-এর জন্য একটা **full postmortem** লিখো। chapter 5-এর template হুবহু ব্যবহার করো। তারিখসহ action items রাখো।
 
 ### Deliverable
 
-A postmortem doc you would not be embarrassed to share publicly.
+এমন একটা postmortem doc যেটা public-ভাবে শেয়ার করতে তোমার লজ্জা লাগবে না।
 
 ### Success criteria
 
-Your timeline has timestamps to the minute. Your action items are sized, owned, dated. Your root cause statement names the system, not the person.
+তোমার timeline-এ মিনিট পর্যন্ত timestamp আছে। তোমার action items sized, owned, dated। তোমার root cause statement সিস্টেমের নাম বলে, মানুষের নয়।
 
 ---
 
 ## Week 6 — Infrastructure as code
 
-### Goals
+### লক্ষ্য
 
-Stop hand-editing cloud consoles. Express infrastructure as Terraform; review it like code.
+cloud console হাতে-edit করা বন্ধ করা। infrastructure-কে Terraform হিসেবে express করা; কোডের মতো review করা।
 
 ### Reading (Mon-Tue)
 
-- HashiCorp's official Terraform tutorials (the AWS or GCP track depending on your cloud)
-- _Terraform Up and Running_ (3rd ed), chapters 1-5
+- HashiCorp-এর অফিসিয়াল Terraform tutorials (তোমার cloud অনুযায়ী AWS বা GCP track)
+- _Terraform Up and Running_ (3rd ed), chapter 1-5
 
 ### Lab (Wed-Fri)
 
-**Replace your Fly.io/manual deploy with Terraform.**
+**তোমার Fly.io/manual deploy-কে Terraform দিয়ে replace করো।**
 
 ```hcl
 # main.tf
@@ -427,39 +427,39 @@ resource "fly_machine" "svc" {
 }
 ```
 
-**Add a CI workflow that runs `terraform plan` on every PR** and `terraform apply` on merge to main.
+**একটা CI workflow যোগ করো যেটা প্রতি PR-এ `terraform plan` চালায়** আর main-এ merge হলে `terraform apply` চালায়।
 
-**Module-ize the service.** Build `modules/observable-service` that bundles the deployment + dashboard + alerts. Now adding a new service is a 10-line `module "x"` call.
+**Service-টাকে module-ize করো।** একটা `modules/observable-service` বানাও যেটা deployment + dashboard + alerts একসাথে বান্ডল করে। এখন একটা নতুন service যোগ করা মানে 10-লাইনের একটা `module "x"` call।
 
-### Saturday project work
+### শনিবারের project work
 
-Write a small Terraform module that, given a service name and SLO target, generates the SLO recording rules + burn-rate alerts as Kubernetes manifests. This is the "PRR baseline" pattern from chapter 7.
+একটা ছোট Terraform module লিখো যেটা একটা service name আর SLO target দিলে, SLO recording rules + burn-rate alerts-কে Kubernetes manifests হিসেবে generate করে। এটা chapter 7-এর "PRR baseline" pattern।
 
 ### Deliverable
 
-Your service deployed end-to-end via `git push` → CI → terraform apply. No manual cloud-console clicks.
+তোমার service end-to-end deploy হচ্ছে `git push` → CI → terraform apply-এর মাধ্যমে। কোনো manual cloud-console ক্লিক নেই।
 
 ### Success criteria
 
-You can stand up an identical staging environment by running `terraform workspace new staging && terraform apply` with the same code.
+একই code দিয়ে `terraform workspace new staging && terraform apply` চালিয়ে তুমি একটা হুবহু একই staging environment দাঁড় করাতে পারো।
 
 ---
 
 ## Week 7 — Capacity planning and load testing
 
-### Goals
+### লক্ষ্য
 
-Predict where your service breaks before it breaks. Use real load tests in CI.
+তোমার service ভাঙার আগেই কোথায় ভাঙবে সেটা প্রেডিক্ট করা। CI-তে রিয়েল load tests ব্যবহার করা।
 
 ### Reading (Mon-Tue)
 
-- This course: chapter 6
-- Brendan Gregg, _Systems Performance_ (2nd ed) — chapters 1, 2, 6 (CPU)
-- Neil Gunther's USL paper or summary blog post
+- এই কোর্স: chapter 6
+- Brendan Gregg, _Systems Performance_ (2nd ed) — chapter 1, 2, 6 (CPU)
+- Neil Gunther-এর USL paper বা summary ব্লগ পোস্ট
 
 ### Lab (Wed-Fri)
 
-**Write a k6 load test** for your service:
+তোমার service-এর জন্য **একটা k6 load test লিখো**:
 
 ```javascript
 import http from 'k6/http';
@@ -485,52 +485,52 @@ export default function () {
 }
 ```
 
-**Run it as a stress test** to find the cliff. Increase concurrency until SLO breaks. Note the number — that is your _measured_ capacity.
+cliff খুঁজতে **এটাকে একটা stress test হিসেবে চালাও**। SLO না ভাঙা পর্যন্ত concurrency বাড়াও। সংখ্যাটা টুকে রাখো — ওটাই তোমার _measured_ capacity।
 
-**Apply Little's Law** to derive how many replicas you need at 2x current traffic. Verify with another load test.
+বর্তমান traffic-এর 2x-এ কতগুলো replica লাগবে তা derive করতে **Little's Law apply করো**। আরেকটা load test দিয়ে verify করো।
 
-### Saturday project work
+### শনিবারের project work
 
-Wire k6 into CI — block merges if the load test fails the thresholds.
+k6-কে CI-তে wire করো — load test threshold ফেল করলে merge block করো।
 
 ### Deliverable
 
-A capacity table for your service, with measured numbers, Little's Law math, and recommended replica count for 1x/2x/5x current traffic.
+তোমার service-এর একটা capacity table, যাতে measured সংখ্যা, Little's Law-এর হিসাব, আর বর্তমান traffic-এর 1x/2x/5x-এর জন্য recommended replica count থাকবে।
 
 ### Success criteria
 
-You can answer "if traffic 3x next month, what breaks first?" with an actual number, not a guess.
+"পরের মাসে traffic 3x হলে প্রথমে কী ভাঙবে?" — তুমি একটা আন্দাজ নয়, একটা আসল সংখ্যা দিয়ে উত্তর দিতে পারো।
 
 ---
 
 ## Week 8 — Capstone: chaos + DR + the writeup
 
-### Goals
+### লক্ষ্য
 
-Combine everything. Run a real chaos experiment with guardrails. Test a DR procedure. Write up the whole 8 weeks.
+সবকিছু একসাথে করা। guardrails সহ একটা রিয়েল chaos experiment চালানো। একটা DR procedure test করা। পুরো 8 সপ্তাহ লিখে ফেলা।
 
 ### Reading (Mon-Tue)
 
-- This course: chapters 8, 9, 10
+- এই কোর্স: chapter 8, 9, 10
 - _Chaos Engineering_ (Casey Rosenthal, Nora Jones) — relevant chapters
-- 1-2 chaos engineering case studies (Netflix, LinkedIn)
+- 1-2টা chaos engineering case study (Netflix, LinkedIn)
 
 ### Lab (Wed-Fri)
 
-**Day 1 — Chaos experiment.** Use Chaos Mesh on your kind cluster (or a cheap K8s on cloud). Run a pod-kill experiment with full guardrails:
+**Day 1 — Chaos experiment.** তোমার kind cluster-এ (বা cloud-এ একটা সস্তা K8s-এ) Chaos Mesh ব্যবহার করো। full guardrails সহ একটা pod-kill experiment চালাও:
 
-- Documented hypothesis
+- ডকুমেন্টেড hypothesis
 - Steady-state dashboard
 - Kill-switch script
 - Abort criteria
 
-**Day 2 — DR drill.** Provision a "DR" deployment in a second region/cluster. Practice failing over: DNS flip, DB promotion (use a logical replica with a script), traffic verification. Time it. That number is your real RTO.
+**Day 2 — DR drill.** একটা দ্বিতীয় region/cluster-এ একটা "DR" deployment provision করো। fail over প্র্যাকটিস করো: DNS flip, DB promotion (একটা script দিয়ে logical replica ব্যবহার করো), traffic verification। সময় মাপো। ঐ সংখ্যাটাই তোমার রিয়েল RTO।
 
-**Day 3 — Toil audit.** Look back at the 8 weeks. List every manual thing you did more than once. Plan how you would automate each.
+**Day 3 — Toil audit.** 8 সপ্তাহ পেছনে তাকাও। একের বেশিবার হাতে করা প্রতিটা কাজ লিস্ট করো। প্রতিটা কীভাবে automate করবে তার প্ল্যান করো।
 
-### Saturday project work — the writeup
+### শনিবারের project work — the writeup
 
-Write a public blog post (or detailed README) summarizing the 8 weeks:
+8 সপ্তাহের সারসংক্ষেপ করে একটা public ব্লগ পোস্ট (বা detailed README) লিখো:
 
 ```markdown
 # 8 weeks from fullstack to SRE — what I built and what I learned
@@ -565,67 +565,67 @@ A Go service running on Kubernetes with:
 
 ### Deliverable
 
-- A working capstone project on GitHub (anyone can clone and stand up the full system)
-- A public writeup
-- A clear plan for what to learn next
+- GitHub-এ একটা কাজ-করা capstone project (যে কেউ clone করে full system দাঁড় করাতে পারে)
+- একটা public writeup
+- এরপর কী শিখবে তার একটা পরিষ্কার প্ল্যান
 
 ### Success criteria
 
-You can interview for a junior SRE role and credibly walk through a real production system you built and operated.
+তুমি একটা junior SRE role-এর জন্য interview দিতে পারো আর তুমি নিজে বানানো ও operate করা একটা রিয়েল production system নিয়ে বিশ্বাসযোগ্যভাবে কথা বলতে পারো।
 
 ---
 
-## What you will not have learned (be honest)
+## যা তুমি শেখোনি (সৎ হও)
 
-Eight weeks is enough to be a **junior SRE candidate**. It is not enough to be a senior SRE. Things you have not deeply touched yet:
+আট সপ্তাহ তোমাকে **junior SRE candidate** বানানোর জন্য যথেষ্ট। senior SRE হওয়ার জন্য যথেষ্ট নয়। যেসব জিনিস তুমি এখনো গভীরভাবে ছুঁয়ে দেখোনি:
 
-- Linux performance tuning (perf, eBPF, flame graphs at the kernel level)
+- Linux performance tuning (perf, eBPF, kernel-level flame graphs)
 - Network engineering (BGP, anycast, CDN internals, packet captures)
-- Database internals beyond "what is a connection pool"
-- Multi-tenant cluster security (network policies, OPA/Kyverno, RBAC at scale)
-- Cost optimization at scale (FinOps)
+- "connection pool কী"-এর বাইরে database internals
+- Multi-tenant cluster security (network policies, OPA/Kyverno, scale-এ RBAC)
+- Scale-এ cost optimization (FinOps)
 - Service mesh deep-dive (Istio, Linkerd internals)
-- Large-scale Kubernetes (1000+ nodes, GitOps at scale, cluster lifecycle)
+- Large-scale Kubernetes (1000+ nodes, scale-এ GitOps, cluster lifecycle)
 
-Plan another 6-12 months of on-the-job depth in a real SRE role to fill those.
+ওগুলো ভরাট করতে একটা রিয়েল SRE role-এ আরও 6-12 মাসের on-the-job গভীরতার প্ল্যান করো।
 
 <Callout type="tip">
 
-**The 8-week plan works if you do the labs.** Reading SRE books without building the system gives you vocabulary, not skill. Skip the reading if you must, but do not skip the labs. The hands-on hours are where the mental model actually forms.
+**8-সপ্তাহের প্ল্যান কাজ করে যদি তুমি labs গুলো করো।** সিস্টেমটা না বানিয়ে SRE বই পড়লে তুমি vocabulary পাবে, skill নয়। দরকার হলে reading বাদ দাও, কিন্তু labs বাদ দিও না। hands-on ঘণ্টাগুলোতেই আসলে mental model তৈরি হয়।
 
 </Callout>
 
 ## Pacing and rest
 
-Eight weeks is sustainable only if you protect the rest. Real recommendations from people who have done this:
+আট সপ্তাহ তখনই sustainable যখন তুমি বিশ্রামটা রক্ষা করো। যারা এটা করেছে তাদের রিয়েল recommendation:
 
-- **One full day off per week, no exceptions.** The day after lab work compounds.
-- **No "catch-up weekends."** If you fell behind, slip the schedule by a week. Don't double up.
-- **Time-box everything.** A 2-hour lab that sprawls into 5 hours indicates something is wrong with the lab or your environment, not your effort.
-- **Pair with someone.** A study partner doing the same roadmap is the single biggest predictor of finishing.
+- **সপ্তাহে একদিন পুরো ছুটি, কোনো ব্যতিক্রম নয়।** lab work-এর পরদিন compound হয়।
+- **কোনো "catch-up weekend" নয়।** পিছিয়ে পড়লে schedule এক সপ্তাহ slip করো। double করো না।
+- **সবকিছু time-box করো।** একটা 2-ঘণ্টার lab 5 ঘণ্টায় গড়ালে বুঝবে lab বা তোমার environment-এ কিছু ভুল আছে, তোমার effort-এ নয়।
+- **কারো সাথে pair করো।** একই রোডম্যাপ করা একজন study partner হচ্ছে শেষ করার সবচেয়ে বড় predictor।
 
-## What to do at week 9
+## Week 9-এ কী করবে
 
-If you finished week 8 and want to go deeper, the highest-leverage next steps:
+Week 8 শেষ করে আরও গভীরে যেতে চাইলে, সবচেয়ে high-leverage পরবর্তী পদক্ষেপ:
 
-1. **Get oncall somewhere.** A real pager rotation teaches things no lab can.
-2. **Contribute to an open-source SRE tool.** Prometheus, Thanos, OpenTelemetry, kube-prometheus-stack. Even small docs PRs build context.
-3. **Read every public postmortem.** GitHub is full of them. Make a habit of reading one per week.
-4. **Apply for SRE roles.** A capstone on GitHub + a writeup beats a generic resume by an order of magnitude.
+1. **কোথাও oncall জোগাড় করো।** একটা রিয়েল pager rotation এমন জিনিস শেখায় যা কোনো lab পারে না।
+2. **একটা open-source SRE tool-এ contribute করো।** Prometheus, Thanos, OpenTelemetry, kube-prometheus-stack। ছোট docs PR-ও context তৈরি করে।
+3. **প্রতিটা public postmortem পড়ো।** GitHub এগুলোতে ভরা। সপ্তাহে একটা করে পড়ার অভ্যাস করো।
+4. **SRE role-এর জন্য apply করো।** GitHub-এ একটা capstone + একটা writeup একটা generic resume-কে বহু গুণে হারিয়ে দেয়।
 
 ## Stay current
 
-This roadmap is curated for 2026. Tools shift fast. For live references:
+এই রোডম্যাপটা 2026-এর জন্য curated। Tools দ্রুত বদলায়। লাইভ রেফারেন্সের জন্য:
 
-- [Google SRE books](https://sre.google/books/) — free, the canonical curriculum
-- [CNCF Landscape](https://landscape.cncf.io) — what's actually in production now
-- [Kubernetes docs](https://kubernetes.io/docs/) — version-tracked, always current
-- [USENIX SREcon talks](https://www.usenix.org/conferences) — what working SREs are doing this year
+- [Google SRE books](https://sre.google/books/) — ফ্রি, canonical curriculum
+- [CNCF Landscape](https://landscape.cncf.io) — এখন production-এ আসলে কী আছে
+- [Kubernetes docs](https://kubernetes.io/docs/) — version-tracked, সবসময় current
+- [USENIX SREcon talks](https://www.usenix.org/conferences) — কর্মরত SRE-রা এই বছর কী করছে
 
 ## Key Takeaways
 
-1. **Eight weeks, ~16h/week** — sustainable alongside a job
-2. **One project across all weeks** — depth beats breadth here
-3. **The labs are the curriculum** — reading is supporting material
-4. **End with a public artifact** — a real system + a real writeup is what unlocks the next role
-5. **Plan for week 9 onward** — eight weeks gets you to junior; depth comes from real production
+1. **আট সপ্তাহ, ~16h/week** — একটা job-এর পাশাপাশি sustainable
+2. **সব সপ্তাহ জুড়ে একটা প্রজেক্ট** — এখানে depth beats breadth
+3. **Labs-ই curriculum** — reading হচ্ছে supporting material
+4. **একটা public artifact দিয়ে শেষ করো** — একটা রিয়েল system + একটা রিয়েল writeup-ই পরের role আনলক করে
+5. **Week 9-এর পরের জন্য প্ল্যান করো** — আট সপ্তাহ তোমাকে junior পর্যন্ত নেয়; depth আসে রিয়েল production থেকে

@@ -1,31 +1,39 @@
 ---
 title: 'Linked Lists'
-subtitle: 'Understand pointer-based data structures — nodes, traversal, and why they matter for queues, LRU caches, and more.'
+subtitle: 'পয়েন্টার-ভিত্তিক ডেটা স্ট্রাকচার বুঝুন — nodes, traversal, এবং কেন এগুলো queues, LRU caches ও আরও অনেক কিছুর জন্য গুরুত্বপূর্ণ।'
 chapter: 3
 level: 'beginner'
-readingTime: '13 min'
 topics: ['linked list', 'singly linked', 'doubly linked', 'fast slow pointers']
+readingTime: '13 মিনিট'
 ---
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
-## Why Linked Lists?
+## গল্পে বুঝি
 
-Linked lists aren't used as often as arrays in day-to-day code, but they're the foundation for many critical data structures: queues, deques, LRU caches, adjacency lists for graphs, and more. Understanding how pointers connect nodes is essential for working with trees and graphs later.
+ইবনে সিনা তার ছোট বোন ফাতিমা আল-ফিহরির জন্মদিনে সারা বাড়িতে একটা treasure hunt সাজিয়েছে। প্রথম clue-টা সে ফাতিমা আল-ফিহরির হাতে ধরিয়ে দিল — কাগজে লেখা: "রান্নাঘরের চালের ড্রামে দেখো।" ফাতিমা আল-ফিহরি সেখানে গিয়ে দ্বিতীয় clue পেল: "বারান্দার টবের নিচে।" টবের নিচের clue বলল আলমারির কথা, আলমারিরটা বলল ছাদের কথা — এভাবে একটার পর একটা চিরকুট ধরে ধরে সে শেষ chocolate-এর বাক্স পর্যন্ত পৌঁছাল। মজার ব্যাপারটা হলো, ফাতিমা আল-ফিহরি চাইলেও সরাসরি পঞ্চম clue-এ লাফ দিতে পারবে না — কারণ কোন চিরকুট কোথায় লুকানো সেটা শুধু তার আগের চিরকুটটাই জানে। প্রথম থেকে শুরু করে এক এক করে হাঁটা ছাড়া উপায় নেই।
+
+খেলার মাঝপথে ইবনে সিনার মনে হলো, আলমারি আর ছাদের মাঝে আরেকটা মজার stop যোগ করা যাক — সোফার নিচে। পুরো খেলা নতুন করে সাজাতে হলো না তাকে। সে শুধু আলমারির চিরকুটে লিখল "সোফার নিচে দেখো", আর সোফার নিচে একটা নতুন চিরকুট রাখল যেখানে লেখা আগের সেই ছাদের ঠিকানা। মাত্র একটা চিরকুট বদলে আর একটা নতুন রেখেই মাঝখানে নতুন stop ঢুকে গেল — বাকি কোনো চিরকুট ছুঁতেও হলো না।
+
+এই খেলাটাই আসলে একটা **linked list**। প্রতিটা চিরকুট হলো একটা **node** — তাতে দুটো জিনিস আছে: একটা তথ্য (এখানে যে কাজটা, বা কোনো value) আর পরের চিরকুট কোথায় তার ঠিকানা, অর্থাৎ **pointer to next**। ফাতিমা আল-ফিহরির হাতের প্রথম চিরকুটটাই **head**। যেহেতু কোনো node শুধু তার পরেরটাকে চেনে, তাই index দিয়ে সরাসরি পাঁচ নম্বরে পৌঁছানো যায় না — head থেকে হেঁটে যেতেই হয় (**no random access**)। কিন্তু মাঝখানে insert করা সস্তা: একটা pointer বদলে, নতুন node-কে পুরনো ঠিকানায় তাক করালেই হলো, বাকি সব node অক্ষত থাকে (**cheap insert by re-pointing**)। বাস্তবে music player-এর playlist ঠিক এভাবেই কাজ করে — প্রতিটা গান পরের গানের দিকে pointer রাখে, তাই মাঝখানে একটা গান যোগ বা বাদ দিতে পুরো তালিকা নতুন করে সাজাতে হয় না, শুধু দুটো link বদলালেই চলে।
+
+## Linked Lists কেন?
+
+Linked lists দৈনন্দিন কোডে arrays-এর মতো ঘন ঘন ব্যবহৃত হয় না, কিন্তু এগুলো অনেক গুরুত্বপূর্ণ ডেটা স্ট্রাকচারের ভিত্তি: queues, deques, LRU caches, graphs-এর adjacency lists, এবং আরও অনেক কিছু। পয়েন্টার কীভাবে nodes-কে সংযুক্ত করে সেটা বোঝা পরবর্তীতে trees ও graphs নিয়ে কাজ করার জন্য অপরিহার্য।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-Like a scavenger hunt — each clue tells you where to find the next one, but you can't jump to clue #5 directly. To insert a new clue in the middle, you just update two pointers — no need to renumber everything.
+একটা scavenger hunt-এর মতো — প্রতিটা clue তোমাকে বলে দেয় পরেরটা কোথায় পাবে, কিন্তু তুমি সরাসরি clue #5-এ লাফ দিতে পারো না। মাঝখানে একটা নতুন clue ঢোকাতে চাইলে শুধু দুটো পয়েন্টার আপডেট করলেই হয় — সবকিছু নতুন করে নম্বর দেওয়ার দরকার নেই।
 
 </Callout>
 
 ## Singly Linked List
 
-Each node holds a value and a pointer to the next node.
+প্রতিটা node একটা value আর পরের node-এর দিকে একটা পয়েন্টার ধরে রাখে।
 
 ```typescript
 class ListNode<T> {
@@ -88,7 +96,7 @@ class LinkedList<T> {
 
 ## Fast & Slow Pointer Pattern
 
-The most important linked list technique. Use two pointers moving at different speeds to detect cycles, find midpoints, and more.
+সবচেয়ে গুরুত্বপূর্ণ linked list কৌশল। দুটো পয়েন্টার ভিন্ন গতিতে চালিয়ে cycles শনাক্ত করা, midpoints খুঁজে বের করা, এবং আরও অনেক কিছু করা যায়।
 
 ```typescript
 // Detect cycle in a linked list
@@ -133,27 +141,27 @@ function reverse<T>(head: ListNode<T> | null): ListNode<T> | null {
 
 <Callout type="tip">
 
-**Reversing a linked list** comes up constantly — in interviews and in real code (e.g., reversing a segment of an undo history). Practice until you can write it without thinking.
+**একটা linked list reverse করা** বারবার সামনে আসে — interviews-এ এবং বাস্তব কোডে (যেমন, একটা undo history-র একটা segment reverse করা)। যতক্ষণ না ভাবা ছাড়াই লিখতে পারো, ততক্ষণ practice করো।
 
 </Callout>
 
-## Arrays vs. Linked Lists
+## Arrays বনাম Linked Lists
 
-| Operation         | Array      | Linked List      |
-| ----------------- | ---------- | ---------------- |
-| Access by index   | O(1)       | O(n)             |
-| Insert at front   | O(n)       | O(1)             |
-| Insert at end     | O(1)\*     | O(n) or O(1)\*\* |
-| Delete from front | O(n)       | O(1)             |
-| Search            | O(n)       | O(n)             |
-| Memory            | Contiguous | Scattered        |
+| Operation          | Array      | Linked List      |
+| ------------------ | ---------- | ---------------- |
+| Index দিয়ে access | O(1)       | O(n)             |
+| সামনে insert       | O(n)       | O(1)             |
+| শেষে insert        | O(1)\*     | O(n) or O(1)\*\* |
+| সামনে থেকে delete  | O(n)       | O(1)             |
+| Search             | O(n)       | O(n)             |
+| Memory             | Contiguous | Scattered        |
 
-\* Amortized for dynamic arrays.
-\*\* O(1) if you maintain a tail pointer.
+\* Dynamic arrays-এর জন্য amortized।
+\*\* একটা tail pointer রাখলে O(1)।
 
-## Key Takeaways
+## মূল বিষয়গুলো
 
-1. **Linked lists excel at front insertions/deletions** — O(1) vs arrays' O(n)
-2. **Fast & slow pointers** solve cycle detection and midpoint finding elegantly
-3. **Reversing a linked list** is the most common linked list operation — know it cold
-4. **Use arrays by default** — linked lists are building blocks for more complex structures, rarely used alone
+1. **Linked lists সামনের দিকের insertions/deletions-এ পারদর্শী** — O(1), যেখানে arrays-এ O(n)
+2. **Fast & slow pointers** cycle detection ও midpoint খুঁজে বের করার কাজটা সুন্দরভাবে সমাধান করে
+3. **একটা linked list reverse করা** সবচেয়ে সাধারণ linked list operation — এটা ভালোভাবে জানো
+4. **ডিফল্ট হিসেবে arrays ব্যবহার করো** — linked lists হলো আরও জটিল স্ট্রাকচারের building blocks, একা খুব কমই ব্যবহৃত হয়

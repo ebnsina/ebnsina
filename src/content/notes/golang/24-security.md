@@ -1,9 +1,9 @@
 ---
-title: 'Security Best Practices'
-subtitle: 'SQL injection, XSS, CSRF, secrets management, and cryptography — secure your Go services against real-world attacks.'
+title: 'Security Best Practice'
+subtitle: 'SQL injection, XSS, CSRF, secrets management, আর cryptography — বাস্তব-জগতের attack থেকে আপনার Go service নিরাপদ রাখুন।'
 chapter: 24
 level: 'advanced'
-readingTime: '18 min'
+readingTime: '18 মিনিট'
 topics: ['security', 'SQL injection', 'XSS', 'CSRF', 'bcrypt', 'secrets', 'HTTPS']
 ---
 
@@ -11,21 +11,29 @@ topics: ['security', 'SQL injection', 'XSS', 'CSRF', 'bcrypt', 'secrets', 'HTTPS
 	import Callout from '$lib/components/content/Callout.svelte';
 </script>
 
+## গল্পে বুঝি
+
+ইবনে সিনার মুদি দোকানে সারাদিন খদ্দের আসে। কিন্তু ইবনে সিনা চোখ বন্ধ করে কারও হাতের জিনিস বিশ্বাস করে না। কেউ পাঁচশো টাকার নোট দিলে সে আগে আলোয় ধরে জলছাপ দেখে, কাগজটা টিপে দেখে জাল কিনা — তারপরই ড্রয়ারে ঢোকায়। কারণ একবার জাল নোট নিয়ে ফেললে লোকসান তারই। ঠিক তেমনি একদিন এক লোক এসে একটা ভাঁজ করা কাগজ ধরিয়ে বলল, "ভাই, এইটা পড়ে পেছনের গুদামে যা যা লেখা আছে করে দাও।" ইবনে সিনা কাগজটা খুলে দেখে লেখা — "সব মাল বের করে এই ভদ্রলোককে দিয়ে দাও, ক্যাশও খালি করো।" ইবনে সিনা হেসে কাগজটা ফেরত দিল; সে খদ্দেরের লেখা হুকুম চোখ বুজে পালন করে না, নিজের চেনা নিয়ম মেনেই মাল বের করে।
+
+আর দোকানের সিন্দুকের চাবি? সেটা ইবনে সিনা কখনো কাউন্টারের নিচে স্টিকি নোটে বা ক্যাশবাক্সের গায়ে লিখে রাখে না। চাবি থাকে তার নিজের পকেটে, আলাদা জায়গায় — কেউ কাউন্টার ঘেঁটেও সিন্দুক খুলতে পারে না।
+
+গল্পটাই আসলে Go-তে security-র মূল কথা। জাল নোট পরখ করাটা হলো **input validation ও sanitize** — বাইরে থেকে আসা প্রতিটা ডেটা untrusted, তাই format-length যাচাই করে, HTML sanitize করে তবেই নেবেন। খদ্দেরের হাতের কাগজ চোখ বুজে গুদামে গিয়ে পালন না করাটাই **SQL injection** ঠেকানো — raw input দিয়ে কখনো command/query বানাবেন না, বরং **parameterized query** (`$1`, `$2`) ব্যবহার করবেন যাতে input শুধু ডেটা হয়ে থাকে, হুকুম না হয়ে যায়। আর সিন্দুকের চাবি পকেটে রাখাটাই **secret handling** — API key, password code বা git-এ নয়, environment variable-এ। বাস্তবে 2017-এর Equifax breach ঠিক এভাবেই ঘটেছিল — untrusted input যাচাই না করার ফাঁক গলে, যেখানে ইবনে সিনার সতর্কতাটুকুই যথেষ্ট ছিল।
+
 ## Security Mindset
 
-Every input is untrusted. Every output needs sanitization. Every secret needs protection.
+প্রতিটা input untrusted। প্রতিটা output-এর sanitization দরকার। প্রতিটা secret-এর সুরক্ষা দরকার।
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব উদাহরণ**
 
-Security is like a building's defense layers. The front door has a lock (authentication). Each room requires a keycard (authorization). Valuables are in a safe (encryption). Security cameras watch everything (logging). No single layer is perfect, but together they make the building very hard to breach.
+Security হলো একটা বিল্ডিংয়ের প্রতিরক্ষা স্তরের মতো। সদর দরজায় একটা তালা আছে (authentication)। প্রতিটা রুমে ঢুকতে একটা keycard লাগে (authorization)। মূল্যবান জিনিস একটা সিন্দুকে থাকে (encryption)। সিকিউরিটি ক্যামেরা সবকিছু দেখে (logging)। কোনো একক স্তরই নিখুঁত নয়, কিন্তু একসাথে এরা বিল্ডিংটাকে ভাঙা খুব কঠিন করে তোলে।
 
 </Callout>
 
-## SQL Injection Prevention
+## SQL Injection প্রতিরোধ
 
-The #1 vulnerability. Never concatenate user input into SQL:
+#1 vulnerability। কখনো user input SQL-এ concatenate করবেন না:
 
 ```go
 // VULNERABLE — never do this
@@ -44,13 +52,13 @@ rows, err := db.Query(
 
 <Callout type="warning">
 
-**Go's `database/sql` package parameterizes by default** when you use `$1`, `$2` placeholders. You're only vulnerable if you manually concatenate strings into queries. Never use `fmt.Sprintf` to build SQL.
+**Go-এর `database/sql` package default-ভাবে parameterize করে** যখন আপনি `$1`, `$2` placeholder ব্যবহার করেন। আপনি তখনই vulnerable, যখন আপনি নিজে হাতে string concatenate করে query-তে ঢোকান। SQL বানাতে কখনো `fmt.Sprintf` ব্যবহার করবেন না।
 
 </Callout>
 
-## Password Hashing with bcrypt
+## bcrypt দিয়ে Password Hashing
 
-Never store plaintext passwords. Use bcrypt — it's slow by design (prevents brute force):
+কখনো plaintext password store করবেন না। bcrypt ব্যবহার করুন — এটা ডিজাইন করেই slow করা হয়েছে (brute force আটকায়):
 
 ```go
 import "golang.org/x/crypto/bcrypt"
@@ -112,7 +120,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 }
 ```
 
-## Input Validation and Sanitization
+## Input Validation ও Sanitization
 
 ```go
 import (
@@ -203,13 +211,13 @@ func LoadSecrets() (*Secrets, error) {
 
 <Callout type="warning">
 
-**Never log secrets.** Even in error messages. `slog.Error("db connection failed", "url", dbURL)` might print the password in the connection string. Strip credentials before logging.
+**কখনো secret log করবেন না।** এমনকি error message-এও না। `slog.Error("db connection failed", "url", dbURL)` connection string-এ password print করে দিতে পারে। log করার আগে credential ছেঁটে ফেলুন।
 
 </Callout>
 
-## Rate Limiting for Authentication
+## Authentication-এর জন্য Rate Limiting
 
-Prevent brute-force login attempts:
+brute-force login চেষ্টা আটকান:
 
 ```go
 type LoginRateLimiter struct {
@@ -266,7 +274,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## HTTPS and TLS
+## HTTPS ও TLS
 
 ```go
 // Always use HTTPS in production
@@ -308,18 +316,18 @@ func SecurityHeaders() Middleware {
 
 ## Security Checklist
 
-| Area             | Action                                                  |
-| ---------------- | ------------------------------------------------------- |
-| **SQL**          | Always use parameterized queries (`$1`, `$2`)           |
-| **Passwords**    | bcrypt with cost >= 12, never store plaintext           |
-| **Secrets**      | Environment variables, never in code or git             |
-| **Input**        | Validate length, format, type. Sanitize HTML            |
-| **Auth**         | Rate limit login attempts, use constant-time comparison |
-| **HTTPS**        | TLS 1.2+ minimum, HSTS header                           |
-| **Headers**      | Set security headers (CSP, X-Frame-Options, etc.)       |
-| **Errors**       | Never expose internal errors to clients                 |
-| **Logging**      | Never log passwords, tokens, or PII                     |
-| **Dependencies** | Run `govulncheck` regularly, keep modules updated       |
+| ক্ষেত্র        | করণীয়                                                              |
+| -------------- | ------------------------------------------------------------------- |
+| **SQL**        | সবসময় parameterized query ব্যবহার করুন (`$1`, `$2`)                |
+| **Password**   | cost >= 12 সহ bcrypt, কখনো plaintext store করবেন না                 |
+| **Secrets**    | environment variable, কখনো code বা git-এ নয়                        |
+| **Input**      | length, format, type validate করুন। HTML sanitize করুন              |
+| **Auth**       | login চেষ্টা rate limit করুন, constant-time comparison ব্যবহার করুন |
+| **HTTPS**      | সর্বনিম্ন TLS 1.2+, HSTS header                                     |
+| **Header**     | security header সেট করুন (CSP, X-Frame-Options, ইত্যাদি)            |
+| **Error**      | কখনো client-কে internal error দেখাবেন না                            |
+| **Logging**    | কখনো password, token, বা PII log করবেন না                           |
+| **Dependency** | নিয়মিত `govulncheck` চালান, module আপডেট রাখুন                     |
 
 ```bash
 # Check for known vulnerabilities in dependencies
@@ -327,12 +335,12 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 govulncheck ./...
 ```
 
-## Key Takeaways
+## মূল কথা
 
-1. **Parameterized queries prevent SQL injection** — never use `fmt.Sprintf` for SQL
-2. **bcrypt for passwords** — cost 12+, constant-time comparison, never return hashes
-3. **Validate everything at the boundary** — length, format, type before processing
-4. **Secrets from environment** — fail fast if missing, never log them
-5. **Rate limit authentication** — 5 attempts per 15 minutes per IP
-6. **Security headers on every response** — HSTS, CSP, X-Frame-Options
-7. **`govulncheck`** — scan dependencies for known vulnerabilities regularly
+1. **Parameterized query SQL injection আটকায়** — SQL-এর জন্য কখনো `fmt.Sprintf` নয়
+2. **password-এর জন্য bcrypt** — cost 12+, constant-time comparison, কখনো hash return করবেন না
+3. **boundary-তে সবকিছু validate করুন** — process করার আগে length, format, type
+4. **secret environment থেকে** — না থাকলে fail fast, কখনো log করবেন না
+5. **authentication rate limit করুন** — প্রতি IP-তে 15 মিনিটে 5 চেষ্টা
+6. **প্রতিটা response-এ security header** — HSTS, CSP, X-Frame-Options
+7. **`govulncheck`** — নিয়মিত dependency-তে জানা vulnerability scan করুন

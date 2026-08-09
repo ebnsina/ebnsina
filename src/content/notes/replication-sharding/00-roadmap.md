@@ -1,9 +1,9 @@
 ---
-title: 'Replication & Sharding — Roadmap'
-subtitle: 'Postgres streaming replicas by hand. Manual shard routing without Vitess.'
+title: 'Replication & Sharding — রোডম্যাপ'
+subtitle: 'Postgres streaming replica নিজ হাতে। Vitess ছাড়াই manual shard routing।'
 chapter: 0
 level: 'beginner'
-readingTime: '3 min'
+readingTime: '3 মিনিট'
 topics: ['roadmap']
 ---
 
@@ -13,20 +13,20 @@ topics: ['roadmap']
 
 <Callout type="info">
 
-**Real-World Analogy**
+**বাস্তব জীবনের উপমা**
 
-A growing library system: one branch (primary) holds the authoritative collection. Copies (replicas) let more people read simultaneously and survive a branch fire. When the collection outgrows all branches, you split it across buildings by subject (sharding). Most libraries never need to shard — but every library should have a backup copy.
+একটি বেড়ে ওঠা লাইব্রেরি সিস্টেম: একটি শাখা (primary) মূল, নির্ভরযোগ্য সংগ্রহটি ধরে রাখে। কপি (replica) থাকায় একসাথে আরও বেশি মানুষ পড়তে পারে এবং কোনো শাখায় আগুন লাগলেও সংগ্রহ টিকে থাকে। যখন সংগ্রহ সব শাখা ছাড়িয়ে যায়, তখন আপনি এটিকে বিষয় অনুযায়ী আলাদা বিল্ডিংয়ে ভাগ করেন (sharding)। বেশিরভাগ লাইব্রেরিরই কখনও shard করার দরকার হয় না — কিন্তু প্রতিটি লাইব্রেরির একটি backup কপি থাকা উচিত।
 
 </Callout>
 
-## What you will learn
+## যা যা শিখবেন
 
-Replication solves availability and read scale. Sharding solves write scale. This track covers both from first principles: how Postgres WAL streaming works, how to set up a standby by hand with `pg_basebackup`, the theory behind shard key selection and routing strategies, and how to build a shard router in application code without a proxy layer. The final chapter covers Postgres table partitioning — the single-server alternative that handles most use cases without the operational complexity of sharding.
+Replication সমাধান করে availability এবং read scale। Sharding সমাধান করে write scale। এই track দুটোকেই প্রথম নীতি থেকে কভার করে: Postgres WAL streaming কীভাবে কাজ করে, `pg_basebackup` দিয়ে নিজ হাতে একটি standby কীভাবে সেটআপ করবেন, shard key নির্বাচন ও routing strategy-র পেছনের theory, এবং কীভাবে proxy layer ছাড়াই application code-এ একটি shard router বানাবেন। শেষ chapter-এ থাকছে Postgres table partitioning — single-server বিকল্প যা sharding-এর operational জটিলতা ছাড়াই বেশিরভাগ use case সামলে নেয়।
 
-## Chapters in this track
+## এই track-এর chapter-গুলো
 
-1. **Replication Fundamentals** — WAL, synchronous vs async, replication lag, read replicas in code
+1. **Replication Fundamentals** — WAL, synchronous vs async, replication lag, code-এ read replica
 2. **Postgres Streaming Replication** — pg_basebackup, standby setup, manual failover, WAL archiving
-3. **Sharding Concepts** — when to shard, shard key selection, range vs hash vs consistent hashing
-4. **Manual Shard Routing** — shard manager, repository pattern, cross-shard operations, migrations
+3. **Sharding Concepts** — কখন shard করবেন, shard key নির্বাচন, range vs hash vs consistent hashing
+4. **Manual Shard Routing** — shard manager, repository pattern, cross-shard operation, migration
 5. **Postgres Partitioning** — range, list, hash partitioning, pg_partman, partition pruning
