@@ -41,6 +41,44 @@ Markdown content lives in `src/content/blog/*.md` and `src/content/notes/<catego
 
 Note frontmatter schema: `title, subtitle, chapter (number), level ("beginner"|"intermediate"|"advanced"|"mastery"), readingTime, topics[]`. Categories are declared in `src/lib/data/categories.ts` (`CATEGORIES` map → `label`/`description`/`group`; `GROUP_ORDER` orders the groups). A new track needs: the markdown files, a `CATEGORIES` entry, and a manifest rebuild — it then flows automatically into the notes roadmap, folders, and badges.
 
+### Every notes chapter needs a story section (non-negotiable)
+
+**Each chapter carries one substantial narrative section that teaches the core idea through a concrete, everyday scene before any code or diagram.** In Bangla chapters the heading is `## গল্পে বুঝি`; in English chapters use an equivalent narrative section. This is the house style — a chapter without it does not match the rest of the notes.
+
+Requirements:
+
+- **Multi-paragraph, not a one-line analogy.** A Callout with "it's like a library" does not satisfy this.
+- **A concrete setting with named people doing things** — a shop, bazaar, library, post office, kitchen, caravanserai, money-changer's counter. Use the Islamic Golden Age names below.
+- **Close with an explicit mapping** from each story element back to the technical term, with the terms in bold — "the counter shelf is the **cache**, the warehouse walk is the **DB query**".
+- **The harder the concept, the more the story matters.** Consensus, backpressure and CRDTs need it more than caching does.
+
+The canonical example to match for length, rhythm and mapping style is `src/content/notes-bn/caching/02-cache-strategies.md`.
+
+### Bangla writing rule — NEVER over-translate (applies everywhere)
+
+This governs **all** Bangla output: notes content (`src/content/notes-bn/`), blog posts, and UI strings (`src/lib/i18n/notes.ts`, `src/lib/data/categories.bn.ts`).
+
+**Keep technical and product terms in English, written in Bangla script (transliterated). Do not invent or reach for a "pure Bangla" equivalent.** A Bangla developer says these words in English — translating them makes the text _harder_ to read, not more native. Bangla supplies the grammar and connective tissue; the terminology stays recognisable.
+
+| Write this                | Not this                   |
+| ------------------------- | -------------------------- |
+| বিল্ড ও শিপ               | তৈরি ও প্রকাশ              |
+| অপারেট ও স্কেল            | পরিচালনা ও স্কেল           |
+| ফান্ডামেন্টালস            | মৌলিক ভিত্তি               |
+| মাস্টারি                  | পারদর্শিতা                 |
+| হরাইজন্টালি স্কেল         | অনুভূমিকভাবে বৃদ্ধি        |
+| ইভেন্ট-ড্রিভেন            | ইভেন্ট-চালিত               |
+| রিলায়েবিলিটি / সিকিউরিটি | নির্ভরযোগ্যতা / নিরাপত্তা  |
+| ল্যাঙ্গুয়েজ              | ভাষা (programming context) |
+
+The test: **read it aloud to a working Bangladeshi developer.** If they would not say that word in that sentence, it is over-translated. When unsure, keep the English term — either in Latin script (`REST`, `API`, `GraphQL`, `Redis`, `XP`) or transliterated (ক্যাশ, লেটেন্সি, ডিপ্লয়, স্কিমা, থ্রুপুট). Acronyms and product names always stay in Latin script.
+
+Ordinary non-technical prose is normal Bangla — this rule is about terminology, not about writing English in Bangla letters.
+
+Code, code comments, identifiers, log strings and `topics[]` arrays stay in **English**. Frontmatter `title`/`subtitle`/`description` are Bangla.
+
+**Blog language: Bangla by default** — write new blog posts in Bangla unless the user explicitly asks for English.
+
 ### Example naming (content & code samples)
 
 In examples, placeholder data, and sample identifiers, use names and references from the **Islamic Golden Age** instead of generic "Alice/Bob/Acme/foo". Draw from its scholars and cities — e.g. people: Ibn Sina, Al-Khwarizmi, Ibn al-Haytham, Al-Biruni, Al-Kindi, Al-Razi, Al-Farabi, Ibn Rushd, Omar Khayyam, Fatima al-Fihri, Maryam al-Astrulabi; cities: Baghdad, Cordoba, Damascus, Samarkand, Bukhara, Cairo, Fez. (The site is authored as "Ebn Sina" / Ibn Sina, so this keeps examples on-theme.) This applies to new notes chapters, demo data, usernames, table rows, and request/response samples.
