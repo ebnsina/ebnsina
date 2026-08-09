@@ -10,6 +10,12 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 		description: 'Core system design concepts and case studies',
 		group: 'Foundations'
 	},
+	'system-design': {
+		label: 'System Design: Zero to Mastery',
+		description:
+			'A complete curriculum for engineers who have never designed a system — estimation, storage, scaling, failure, and six end-to-end project designs',
+		group: 'Foundations'
+	},
 	dsa: { label: 'DSA', description: 'Data structures and algorithms', group: 'Foundations' },
 	networking: {
 		label: 'Networking',
@@ -136,6 +142,11 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 		description: 'Full-text search, Elasticsearch, indexing',
 		group: 'Data'
 	},
+	video: {
+		label: 'Video',
+		description: 'Codecs, containers, transcoding, packaging, ABR streaming, and delivery',
+		group: 'Media'
+	},
 	'load-balancing': {
 		label: 'Load Balancing',
 		description: 'Algorithms, health checks, session affinity',
@@ -209,6 +220,7 @@ export const GROUP_ORDER = [
 	'APIs',
 	'Infrastructure',
 	'Data',
+	'Media',
 	'Scaling',
 	'Reliability',
 	'Security'

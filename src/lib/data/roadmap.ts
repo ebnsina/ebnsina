@@ -47,9 +47,10 @@ export const ROADMAP: RoadmapLevel[] = [
 		outcomes: [
 			'Running infrastructure in production',
 			'Scaling data and traffic horizontally',
-			'Caching, queues and load balancing'
+			'Caching, queues and load balancing',
+			'Streaming media end to end'
 		],
-		groups: ['Infrastructure', 'Data', 'Scaling']
+		groups: ['Infrastructure', 'Data', 'Media', 'Scaling']
 	},
 	{
 		n: 4,
