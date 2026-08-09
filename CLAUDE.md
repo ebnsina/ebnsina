@@ -26,7 +26,9 @@ pnpm vitest run <path>       # run a single test file
 node scripts/build-manifest.mjs   # rebuild notes manifest after adding/editing note content (see below)
 ```
 
-There are two vitest projects defined in `vite.config.ts`: `client` (browser, files `*.svelte.{test,spec}.ts`) and `server` (node, other `*.{test,spec}.ts`). `expect.requireAssertions` is on — every test must assert.
+**There are currently no tests and no `e2e/` directory**, so `pnpm test` fails on "no test files found" — that is the standing state, not a regression you introduced. The real gates are **`pnpm check`** (expect `0 ERRORS 0 WARNINGS`) and **`pnpm build`** (prerenders every route, so it catches mdsvex/content breakage). `pnpm lint` reports one pre-existing eslint error — `{@html}` in `Seo.svelte`.
+
+If you do add tests: two vitest projects are defined in `vite.config.ts` — `client` (browser, files `*.svelte.{test,spec}.ts`) and `server` (node, other `*.{test,spec}.ts`). `expect.requireAssertions` is on, so every test must assert.
 
 ## Critical: configuration lives in vite.config.ts, not svelte.config.js
 
@@ -91,7 +93,9 @@ In examples, placeholder data, and sample identifiers, use names and references 
 
 ### mdsvex authoring rules (content compiles as Svelte)
 
-Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a raw `<`, `>`, `{`, or `}` breaks the build. Use `&lt;`/`&gt;` and avoid/escape curly braces; put anything with those characters (code, JSON, C, SQL) inside triple-backtick fenced blocks where they're safe. Shiki highlighting (`vite.config.ts` → `highlighter`) emits `{@html ...}` and must escape backslashes — see the `escapeSvelte(...).replace(/\\/g, ...)` there. Content components available to chapters: `Callout` (types `info`/`tip`/`warning`), `Diagram`, `CodeTabs` (under `src/lib/components/content/`).
+Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a raw `<`, `>`, `{`, or `}` breaks the build. Use `&lt;`/`&gt;` and avoid/escape curly braces; put anything with those characters (code, JSON, C, SQL) inside triple-backtick fenced blocks where they're safe. Shiki highlighting (`vite.config.ts` → `highlighter`) emits `{@html ...}` and must escape backslashes — see the `escapeSvelte(...).replace(/\\/g, ...)` there.
+
+Components under `src/lib/components/content/`: `Callout` (types `info`/`tip`/`warning`), `CodeTabs`, `Mermaid`, `LevelBadge`, `CdnPlayground`. There is **no mdsvex layout injecting them** — a chapter that uses one imports it itself in a `<script>` block placed directly after the frontmatter.
 
 ## Notes "journey" gamification
 
@@ -99,7 +103,9 @@ The notes section is a localStorage-backed learning game (no DB):
 
 - **`src/lib/progress.svelte.ts`** — a rune-based store (exported singleton `progress`). Completed chapters are the single source of truth; **XP and ranks are derived** from them (never stored separately). Persists to `localStorage` key `notes-progress-v1`; call `progress.hydrate()` in `onMount` (client-only, to avoid SSR hydration mismatch — gate UI on `progress.ready`). Supports export/import/reset.
 - **`src/lib/data/roadmap.ts`** — the 4-level path (Fundamentals → Mastery), mapping content **groups** to levels. Rendered by `Roadmap.svelte` on the notes index.
-- **Badges** — `isTrackComplete()` derives a per-track badge (all chapters in a category done); shown via `TrackBadge.svelte` and a "Track mastered" toast in `ChapterComplete.svelte`.
+- **Badges** — `isTrackComplete()` derives a per-track badge (all chapters in a category done). It surfaces in two places only: the track header (`TrackBadge.svelte` on `/notes/[category]`) and the "Track mastered" toast in `ChapterComplete.svelte`. The notes index used to carry a grid of ~40 badges under the roadmap; it was removed as duplicated information — completion shows inline on the roadmap rows instead. Don't add it back.
+
+The roadmap level titles/blurbs/outcomes rendered on `/notes` come from `t.roadmap[level.n]` in `notes-strings.ts` (Bangla), overlaying the English defaults in `roadmap.ts`.
 
 Per-chapter `level` should progress monotonically (beginner→mastery) within a track.
 
@@ -115,13 +121,24 @@ Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project w
 
 ## Design system & theming
 
-`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--accent/--brand-accent`, plus `--accent-hex` consumed by three.js) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). Fonts: display/serif = Bricolage Grotesque, sans = Epilogue, mono = Geist Mono, **pixel = Geist Pixel** (self-hosted from the `geist` package at `static/fonts/`, used for the gamified notes UI via `font-pixel`). **Coloured surfaces are aurora gradients.** `src/lib/colors.ts` holds eight aurora themes; `auroraAt(i)` (cyclic) / `auroraFor(key)` (stable hash) return an inline style setting `--au-1/2/3` (bloom lights), `--au-b1/b2/b3` (base sweep), `--aa` (angle) and `--ax/--ay` (light origin). Put that style on an element carrying `.aurora-surface` (paints the gradient) or `.glass-card` (same, plus white ink and a pinned dark `--bg`). The layer stack lives in those classes, **not** in a custom property — a `var()` inside a custom property resolves against the element it was declared on, so a `--aurora-bg` var would give every card the `:root` fallback. Used by post/project cards, notes folders, roadmap level cards + track avatars, chapter rows and case-study panels. `catColor`/`catFor` (flat categorical hues) remain for the three.js accents and small markers.
+`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **The accent is indigo** (`--accent: #5949fa` light, `#8d95ff` dark; `--accent-solid` is deliberately identical in both themes because it always carries white ink). Reskinning the whole site means changing those hex values and nothing else.
 
-**Lightning CSS gotcha:** never hand-write a `-webkit-` alias next to a standard property — Lightning CSS then prunes the _standard_ one and only the prefixed version ships (this silently killed the header's `backdrop-filter`). Write the standard property alone and let it prefix from browserslist. (Same family of problem as the `corner-shape` `@supports` gate above.)
+**Fonts — two families plus the Bangla face:**
+
+- **Mona Sans** (`@fontsource-variable/mona-sans`) fills `--font-sans`, `--font-display` and `--font-serif` — there is no separate serif or display family.
+- **Geist Mono** fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
+- **Noto Serif Bengali** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
+- `static/fonts/` still holds `GeistPixel-Square.woff2` and the Oddval faces, and `geist` is still in `dependencies` — all unused leftovers. Don't build on them.
+
+**Coloured surfaces are aurora gradients.** `src/lib/colors.ts` holds eight aurora themes; `auroraAt(i)` (cyclic) / `auroraFor(key)` (stable hash) return an inline style setting `--au-1/2/3` (bloom lights), `--au-b1/b2/b3` (base sweep), `--aa` (angle) and `--ax/--ay` (light origin). Put that style on an element carrying `.aurora-surface` (paints the gradient) or `.glass-card` (same, plus white ink and a pinned dark `--bg`). The layer stack lives in those classes, **not** in a custom property — a `var()` inside a custom property resolves against the element it was declared on, so a `--aurora-bg` var would give every card the `:root` fallback. Current users: post/project cards, `SeriesNav`, and the `/directory` notes folders. The notes roadmap and chapter rows were deliberately flattened off aurora — they are type and whitespace now, so don't reintroduce gradient bars there.
+
+`catColor(i)` / `catFor(key)` (an indigo ramp at constant lightness steps) return flat hexes for the three.js accents and small markers — `PageBanner` derives its canvas accent with `catFor()`, and the track page tints its badge with `catColor()`. There is no `--accent-hex` var; three.js takes hex strings as props.
+
+**Lightning CSS gotcha:** never hand-write a `-webkit-` alias next to a standard property — Lightning CSS then prunes the _standard_ one and only the prefixed version ships (this silently killed the header's `backdrop-filter`). Write the standard property alone and let it prefix from browserslist.
 
 The header (`Header.svelte`) is transparent at rest so it blends into the hero, and fades in a blurred surface once scrolled — painted by a `::before` so nav text is never inside a filtered layer. It has no bottom rule in either state.
 
-Brand/visual constraints: no neon/glow; minimal cards; geometric type with a cherry/burgundy accent.
+Brand/visual constraints: no neon/glow; minimal cards; **sharp corners** (the old global `corner-shape: squircle` was removed — no squircle helpers remain); indigo is the only saturated colour.
 
 ## Icons
 
@@ -138,7 +155,7 @@ import Icon from '$lib/components/Icon.svelte';
 
 - Svelte 5 runes only (`$props`, `$state`, `$derived`, `$effect`). When a value reads a prop, make it `$derived` (svelte-check flags `state_referenced_locally`).
 - SEO via the shared `src/lib/components/Seo.svelte` (uses `page` from `$app/state`); wired into every route. `sitemap.xml` and `rss.xml` are prerendered endpoints.
-- Routes are `prerender = true`; `prerender.handleHttpError`/`handleMissingId` are set to `'warn'`.
+- The whole site prerenders: `src/routes/+layout.ts` sets `export const prerender = true`, and `prerender.handleHttpError`/`handleMissingId` are `'warn'` in `vite.config.ts`. A dynamic route therefore needs an `entries()` in its `+page.ts` or it never gets built.
 
 ---
 
