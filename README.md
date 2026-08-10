@@ -1,6 +1,6 @@
 ### Salam, I'm Ebn Sina 
 
-Maker @ [Fajr Labs](https://github.com/fajrlabs) · building halal softwares for Muslims · Rajshahi 🇧🇩
+Crafting halal software for the ummah & beyond · Rajshahi 🇧🇩
 
 ```ts
 const ebnsina = {
