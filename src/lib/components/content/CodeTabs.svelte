@@ -34,7 +34,7 @@
 <style>
 	.code-tabs {
 		border: 1px solid var(--rule);
-		border-radius: 12px;
+		border-radius: var(--radius-card);
 		overflow: hidden;
 		margin: 1.5rem 0;
 	}

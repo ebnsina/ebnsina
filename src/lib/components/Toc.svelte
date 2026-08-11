@@ -9,10 +9,13 @@
 	let {
 		headings,
 		activeId,
+		visible = true,
 		onnavigate
 	}: {
 		headings: Heading[];
 		activeId: string;
+		/** false once the article body has scrolled past — the rail retires with it. */
+		visible?: boolean;
 		onnavigate: (e: MouseEvent, id: string) => void;
 	} = $props();
 
@@ -42,6 +45,7 @@
 
 <nav
 	class="toc"
+	class:hidden-rail={!visible}
 	class:open
 	aria-label="Table of contents"
 	onpointerenter={() => (open = true)}
@@ -49,26 +53,30 @@
 	onfocusin={() => (open = true)}
 	onfocusout={close}
 >
-	<!-- Collapsed: the ticks. Links, so the rail alone is navigable. -->
-	<ul class="ticks" aria-hidden={open}>
-		{#each headings as h, i (h.id)}
-			<li>
-				<a
-					class="tick"
-					class:sub={h.depth === 3}
-					class:read={activeIndex >= 0 && i < activeIndex}
-					class:current={h.id === activeId}
-					href={`#${h.id}`}
-					aria-label={h.text}
-					tabindex={open ? -1 : 0}
-					onclick={(e) => {
-						onnavigate(e, h.id);
-						close();
-					}}
-				></a>
-			</li>
-		{/each}
-	</ul>
+	<!-- Collapsed: the ticks. Links, so the rail alone is navigable. Reading
+	     progress deliberately lives on the focus button's ring, not here — a
+	     second vertical line beside the ticks read as clutter. -->
+	<div class="rail" aria-hidden={open}>
+		<ul class="ticks" style="--n: {headings.length}">
+			{#each headings as h, i (h.id)}
+				<li>
+					<a
+						class="tick"
+						class:sub={h.depth === 3}
+						class:read={activeIndex >= 0 && i < activeIndex}
+						class:current={h.id === activeId}
+						href={`#${h.id}`}
+						aria-label={h.text}
+						tabindex={open ? -1 : 0}
+						onclick={(e) => {
+							onnavigate(e, h.id);
+							close();
+						}}
+					></a>
+				</li>
+			{/each}
+		</ul>
+	</div>
 
 	<!-- Expanded: the titles. -->
 	<div class="panel" inert={!open}>
@@ -112,6 +120,16 @@
 		/* Padding is hover surface — it keeps the pointer inside the nav while it
 		   crosses from the ticks to the panel. */
 		padding: 0.75rem 0 0.75rem 1.25rem;
+		transition:
+			opacity 0.25s ease,
+			visibility 0.25s;
+	}
+	/* Fades out with the article rather than vanishing, so scrolling past the
+	   end doesn't read as a glitch. */
+	.toc.hidden-rail {
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 	@media (min-width: 1400px) {
 		.toc {
@@ -121,20 +139,30 @@
 
 	/* ---------- ticks ---------- */
 
-	.ticks {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 8px;
-		padding-right: 2px;
+	.rail {
 		transition:
 			opacity 0.18s ease,
 			transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 	}
-	.toc.open .ticks {
+	.toc.open .rail {
 		opacity: 0;
 		transform: translateX(6px);
 		pointer-events: none;
+	}
+
+	.ticks {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		/* Fixed to the widest tick (the current one). The rail is anchored by its
+		   right edge, so without this the column re-measures every time the
+		   current heading changes depth and the gauge slides sideways. */
+		width: 26px;
+		/* The rail must fit on screen whichever chapter it's for, so the spacing
+		   closes up as the heading count grows rather than the column running
+		   off the viewport. */
+		gap: clamp(3px, calc((58vh - var(--n) * 2px) / var(--n)), 8px);
+		padding-right: 2px;
 	}
 
 	.tick {
@@ -181,11 +209,19 @@
 		translate: 0 -50%;
 		right: 0;
 		width: 17.5rem;
-		max-height: calc(100vh - 6rem);
+		/* Deliberately short — a compact list that scrolls reads better than a
+		   full-height column of headings, and it stays clear of the header and
+		   the bottom of the window at any viewport height. */
+		max-height: min(24rem, calc(100vh - 12rem));
 		overflow-y: auto;
-		scrollbar-width: none;
+		overscroll-behavior: contain;
+		/* thin, not hidden: when the list overflows, the bar is the only cue
+		   that there's more below */
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in oklch, var(--fg) 22%, transparent) transparent;
 		padding: 0.85rem 0.9rem 0.9rem 1.1rem;
 		border: 1px solid var(--rule);
+		border-radius: var(--radius-card);
 		/* Near-opaque: the panel overhangs the article's right edge, so the text
 		   underneath must not read through it. */
 		background: color-mix(in oklch, var(--bg) 97%, transparent);
@@ -200,7 +236,11 @@
 			transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 	}
 	.panel::-webkit-scrollbar {
-		display: none;
+		width: 6px;
+	}
+	.panel::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: color-mix(in oklch, var(--fg) 22%, transparent);
 	}
 	.toc.open .panel {
 		opacity: 1;
@@ -274,7 +314,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.ticks,
+		.rail,
 		.tick,
 		.panel,
 		.row,

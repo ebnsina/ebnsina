@@ -67,7 +67,7 @@
 			{:else if nextChapter}
 				<a
 					href={`/notes/${data.category}/${nextChapter.slug}`}
-					class="rounded-2xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
+					class="rounded-xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 					>{doneCount === 0 ? t.startHere : t.continueWord} →</a
 				>
 			{/if}
@@ -101,7 +101,7 @@
 			<li class="relative flex gap-4">
 				<a
 					href={`/notes/${data.category}/${ch.slug}`}
-					class="group -mx-2.5 flex min-w-0 flex-1 items-center gap-3 px-2.5 py-3 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)] sm:gap-4"
+					class="group -mx-2.5 flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-3 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)] sm:gap-4"
 				>
 					{@render stepNode(ch, isDone, isNext)}
 					<span class="min-w-0 flex-1">

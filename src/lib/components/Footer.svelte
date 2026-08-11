@@ -29,6 +29,7 @@
 				{ label: 'GitHub', href: SITE.social.github, external: true },
 				{ label: 'Twitter', href: SITE.social.twitter, external: true },
 				{ label: 'LinkedIn', href: SITE.social.linkedin, external: true },
+				{ label: 'Email', href: `mailto:${SITE.email}` },
 				{ label: 'RSS feed', href: '/rss.xml' }
 			]
 		}
@@ -38,7 +39,7 @@
 <footer class="mt-20" style="border-top: 1px solid color-mix(in oklch, var(--fg) 7%, transparent)">
 	<div class="mx-auto max-w-5xl px-5 py-14 sm:px-8">
 		<div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8">
-			<!-- brand + contact: the CTA now lives here rather than repeating on every page -->
+			<!-- brand blurb; contact is a plain link in the Elsewhere column -->
 			<div class="max-w-xs">
 				<p class="font-display text-base font-semibold tracking-tight">
 					Ebn <span class="text-accent">Sina</span>
@@ -47,12 +48,6 @@
 					Software engineer building infrastructure and developer products — and writing about the
 					craft behind them.
 				</p>
-				<a
-					href={`mailto:${SITE.email}`}
-					class="mt-4 inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_oklch,var(--fg)_14%,transparent)] px-3.5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
-				>
-					<Icon name="mail" size={14} /> Get in touch
-				</a>
 			</div>
 
 			{#each columns as col (col.heading)}

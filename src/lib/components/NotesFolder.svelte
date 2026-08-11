@@ -22,51 +22,76 @@
 	let host = $state<HTMLElement>();
 	let open = $state(false);
 	let up = $state(false);
+	// A click pins the panel: hovering away must not yank it out from under the
+	// pointer once it was opened deliberately. Hover-opened panels still close
+	// on leave.
+	let pinned = $state(false);
+	let maxH = $state(0);
 	let hasHover = true;
 
 	onMount(() => {
 		hasHover = window.matchMedia('(hover: hover)').matches;
 	});
 
-	// decide whether to open downward or upward based on available space
+	// Height is measured, not guessed: pick the side with room, then cap the
+	// panel to the space actually there so a long track list scrolls instead of
+	// running off the viewport (or up under the sticky header).
 	function place() {
 		if (!host) return;
+		const GAP = 0; // the panel sits flush against the card
+		const EDGE = 16; // breathing room at the viewport edge
+		const HEADER = 76; // sticky header — never open underneath it
 		const r = host.getBoundingClientRect();
-		const panelH = Math.min(items.length * 50 + 36, 380);
-		const below = window.innerHeight - r.bottom;
-		up = below < panelH + 16 && r.top > below;
+		const below = window.innerHeight - r.bottom - GAP - EDGE;
+		const above = r.top - GAP - EDGE - HEADER;
+		const wanted = items.length * 52 + 24;
+
+		up = below < Math.min(wanted, 380) && above > below;
+		maxH = Math.max(140, Math.min(wanted, up ? above : below));
 	}
-	function show() {
+	function show(pin = false) {
 		place();
 		open = true;
+		if (pin) pinned = true;
 	}
 	function hide() {
 		open = false;
+		pinned = false;
 	}
 	function toggle(e: MouseEvent) {
 		e.preventDefault();
-		if (open) hide();
-		else show();
+		if (open && pinned) hide();
+		else show(true);
 	}
 	function onEnter() {
 		if (hasHover) show();
 	}
 	function onLeave() {
-		if (hasHover) hide();
+		if (hasHover && !pinned) open = false;
+	}
+	function onWindowPointerDown(e: PointerEvent) {
+		if (pinned && host && !host.contains(e.target as Node)) hide();
+	}
+	function onWindowKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && open) hide();
 	}
 </script>
 
-<svelte:window onresize={() => open && place()} />
+<svelte:window
+	onresize={() => open && place()}
+	onpointerdown={onWindowPointerDown}
+	onkeydown={onWindowKeydown}
+/>
 
 <div
 	bind:this={host}
 	class="folder"
 	class:open
 	class:up
-	style={aurora}
+	style="{aurora};--panel-max:{maxH}px"
 	onmouseenter={onEnter}
 	onmouseleave={onLeave}
-	onfocusin={show}
+	onfocusin={() => show()}
 	onfocusout={hide}
 	role="group"
 >
@@ -130,7 +155,7 @@
 		font: inherit;
 		color: #fff;
 		/* the back panel */
-		border-radius: 0.55rem 0.85rem 0.85rem 0.85rem;
+		border-radius: 0.55rem var(--radius-card) var(--radius-card) var(--radius-card);
 	}
 	/* back panel — the aurora itself (.aurora-surface paints it), plus a sheen */
 	.back {
@@ -196,7 +221,7 @@
 		flex-direction: column;
 		justify-content: flex-end;
 		gap: 0.25rem;
-		border-radius: 0.55rem 0.55rem 0.85rem 0.85rem;
+		border-radius: 0.55rem 0.55rem var(--radius-card) var(--radius-card);
 		/* the wash darkens the same aurora so the pocket reads as a plane in
 		   front of the back panel and the label stays legible */
 		box-shadow:
@@ -250,12 +275,18 @@
 		position: absolute;
 		left: 0;
 		right: 0;
-		top: calc(100% + 0.4rem);
+		top: 100%;
 		display: flex;
 		flex-direction: column;
 		gap: 0.1rem;
 		padding: 0.7rem 0.5rem 0.55rem;
-		border-radius: 0.85rem;
+		/* Capped to the room measured in place(), so a long list scrolls instead
+		   of running past the viewport edge. */
+		max-height: var(--panel-max, 22rem);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		scrollbar-width: thin;
+		border-radius: var(--radius-card);
 		background: linear-gradient(180deg, color-mix(in oklch, var(--c1) 10%, #fff), #fff);
 		border: 1px solid color-mix(in oklch, var(--c2) 22%, #ffffff);
 		box-shadow:
@@ -271,7 +302,7 @@
 	}
 	.folder.up .panel {
 		top: auto;
-		bottom: calc(100% + 0.4rem);
+		bottom: 100%;
 		transform-origin: bottom center;
 		transform: translateY(0.5rem) scale(0.98);
 	}
@@ -283,7 +314,7 @@
 	.item {
 		display: block;
 		padding: 0.5rem 0.6rem;
-		border-radius: 0.55rem;
+		border-radius: var(--radius-button);
 		transition: background 0.15s ease;
 	}
 	.item:hover {

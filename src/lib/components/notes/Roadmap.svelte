@@ -104,7 +104,7 @@
 						<li>
 							<a
 								href={`/notes/${tk.category}`}
-								class="group -mx-2.5 flex items-baseline justify-between gap-4 px-2.5 py-2.5 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)]"
+								class="group -mx-2.5 flex items-baseline justify-between gap-4 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_4%,transparent)]"
 							>
 								<span class="flex min-w-0 items-center gap-1.5">
 									<span

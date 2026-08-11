@@ -36,6 +36,20 @@
 	let headings = $state<Heading[]>([]);
 	let activeId = $state('');
 	let article = $state<HTMLElement>();
+	// The rail is position: fixed, so nothing ties it to the article's extent —
+	// without this it hangs in the margin over the outro and the page footer.
+	let articleInView = $state(true);
+	// 0–1 through the article body. Measured off the article, not the document,
+	// so the page header and footer don't count as "reading".
+	let progress = $state(0);
+
+	function updateProgress() {
+		if (!article) return;
+		const r = article.getBoundingClientRect();
+		const span = r.height - window.innerHeight;
+		progress =
+			span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : r.bottom <= window.innerHeight ? 1 : 0;
+	}
 
 	const slugify = (s: string) =>
 		s
@@ -47,6 +61,7 @@
 	onMount(() => {
 		if (!article) return;
 		let observer: IntersectionObserver | undefined;
+		let bodyObserver: IntersectionObserver | undefined;
 
 		(async () => {
 			await tick();
@@ -117,9 +132,33 @@
 				{ rootMargin: '0px 0px -65% 0px', threshold: 0 }
 			);
 			hs.forEach((h) => observer!.observe(h));
+
+			// 4. the TOC only belongs beside the article. The rail is pinned to the
+			//    viewport's vertical centre, so the honest test is whether the
+			//    article still covers that centre line — collapsing the root to it
+			//    retires the rail exactly as the text leaves its side, instead of
+			//    leaving it stranded next to the outro and the page footer. The
+			//    band is 10% rather than a bare centre line — a zero-height root
+			//    rect can never report an intersection.
+			bodyObserver = new IntersectionObserver(([e]) => (articleInView = e.isIntersecting), {
+				rootMargin: '-45% 0px -45% 0px',
+				threshold: 0
+			});
+			bodyObserver.observe(article!);
+
+			// 5. reading progress — drawn as the ring around the focus button, which
+			//    is on every page at every width.
+			updateProgress();
+			window.addEventListener('scroll', updateProgress, { passive: true });
+			window.addEventListener('resize', updateProgress);
 		})();
 
-		return () => observer?.disconnect();
+		return () => {
+			observer?.disconnect();
+			bodyObserver?.disconnect();
+			window.removeEventListener('scroll', updateProgress);
+			window.removeEventListener('resize', updateProgress);
+		};
 	});
 
 	function toToc(e: MouseEvent, id: string) {
@@ -153,7 +192,7 @@
 		     1280px there isn't margin enough to keep it off the text. -->
 		<aside id="toc-aside" class="hidden xl:block">
 			{#if headings.length}
-				<Toc {headings} {activeId} onnavigate={toToc} />
+				<Toc {headings} {activeId} visible={articleInView} onnavigate={toToc} />
 			{/if}
 		</aside>
 	{/if}
@@ -162,20 +201,48 @@
 <button
 	type="button"
 	class="reader-toggle"
+	style="--p: {progress}"
 	aria-pressed={reader}
+	aria-label={reader ? 'Exit focus mode' : 'Focus mode'}
 	title={reader ? 'Exit focus mode (Esc)' : 'Focus mode — hide everything but the article'}
 	onclick={() => (reader = !reader)}
 >
-	<!-- separate instances: the icon wrapper doesn't re-render on a changed glyph prop -->
+	<!-- separate instances: the icon wrapper doesn't re-render on a changed glyph prop.
+	     Icon-only: the book reads as reader mode and the × as leaving it, so the
+	     label was just repeating the glyph. The title attribute still explains it. -->
 	{#if reader}
-		<Icon name="close" size={14} strokeWidth={2} />
+		<Icon name="close" size={17} strokeWidth={2} />
 	{:else}
-		<Icon name="book" size={14} strokeWidth={2} />
+		<Icon name="book" size={17} strokeWidth={2} />
 	{/if}
-	<span>{reader ? 'Exit focus' : 'Focus'}</span>
 </button>
 
 <style>
+	/* Reading progress: a ring traced around the button by a conic gradient,
+	   masked down to the border only. This is the site's only progress
+	   indicator — it replaced a bar across the top of the page, and it beat a
+	   gauge in the TOC rail, which read as clutter beside the ticks.
+	   Standard `mask` properties alone — a hand-written -webkit- alias would make
+	   Lightning CSS prune the standard one. */
+	.reader-toggle::before {
+		content: '';
+		position: absolute;
+		/* Concentric corners: a ring sitting --ring-gap outside the button needs a
+		   radius that much LARGER, or its arc cuts across the button's own curve.
+		   Both derive from the one value, so they can't drift — and if the button
+		   radius changes, the ring follows. `inherit` was the bug: it copied the
+		   button's radius while sitting 4px further out. */
+		--ring-gap: 4px;
+		inset: calc(-1 * var(--ring-gap));
+		border-radius: calc(var(--radius-button) + var(--ring-gap));
+		padding: 2px;
+		background: conic-gradient(var(--accent) calc(var(--p) * 1turn), transparent 0);
+		mask:
+			linear-gradient(#000 0 0) content-box,
+			linear-gradient(#000 0 0);
+		mask-composite: exclude;
+		pointer-events: none;
+	}
 	.reader-toggle {
 		position: fixed;
 		right: 1rem;
@@ -183,15 +250,12 @@
 		z-index: 45;
 		display: inline-flex;
 		align-items: center;
-		gap: 0.4rem;
-		padding: 0.45rem 0.75rem;
+		justify-content: center;
+		padding: 0.5rem;
 		border: 1px solid var(--rule);
-		border-radius: 999px;
+		border-radius: var(--radius-button);
 		background: color-mix(in oklch, var(--bg) 88%, transparent);
 		backdrop-filter: blur(10px);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.02em;
 		color: var(--muted);
 		transition:
 			color 0.15s,

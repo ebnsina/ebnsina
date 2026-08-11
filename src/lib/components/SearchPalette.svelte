@@ -290,7 +290,7 @@
 		max-width: 34rem;
 		overflow: hidden;
 		border: 1px solid var(--rule);
-		border-radius: 1rem;
+		border-radius: var(--radius-card);
 		background: var(--bg);
 		box-shadow: 0 24px 60px -20px color-mix(in oklch, var(--fg) 40%, transparent);
 	}
@@ -300,7 +300,7 @@
 		align-items: center;
 		gap: 0.9rem;
 		margin: 0 0.4rem;
-		border-radius: 0.6rem;
+		border-radius: var(--radius-button);
 		padding: 0.55rem 0.7rem;
 		text-decoration: none;
 		color: inherit;

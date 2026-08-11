@@ -153,7 +153,15 @@ Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project w
 
 The header (`Header.svelte`) is transparent at rest so it blends into the hero, and fades in a blurred surface once scrolled — painted by a `::before` so nav text is never inside a filtered layer. It has no bottom rule in either state.
 
-Brand/visual constraints: no neon/glow; minimal cards; **sharp corners** (the old global `corner-shape: squircle` was removed — no squircle helpers remain); indigo is the only saturated colour.
+Brand/visual constraints: no neon/glow; minimal cards; indigo is the only saturated colour.
+
+**Corner radius has two tokens and no third option**: `--radius-button` (0.75rem) for buttons and controls, `--radius-card` (1.5rem) for cards and panels — declared on `:root` in `layout.css` right after the brand palette. Tailwind's `--radius-xl` / `--radius-3xl` are aliased to them in `@theme inline`, so `rounded-xl` in markup and `var(--radius-button)` in CSS are the same declaration and cannot drift; changing those two values re-rounds the whole site. Content panels that read as cards (callouts, code blocks, Mermaid figures, prose images) take the card radius. Pills stay `rounded-full`, and small inline chips (kbd, inline code, level badges) keep their own small radii. The site previously enforced **sharp corners** through a global `border-radius: 0 !important`; that reset is gone, so `rounded-*` classes in the markup are live and do mean what they say.
+
+The card radius is declared on **`.aurora-surface` / `.glass-card` themselves**, not on each component's cover class — so any coloured surface is rounded by construction and a new one can't ship sharp. Components needing a different silhouette (the folder's tab corner, its pocket) override it from their own scoped rule, which wins on specificity.
+
+**Reading progress lives in the TOC rail**, not in a bar across the top — a hairline gauge beside the ticks fills to your position, measured off the article element (so the page header/footer don't count as reading). Below `xl` there is no rail, so the same value traces a conic-gradient ring around the focus button. `ReadingBar.svelte` and its `<ReadingBar />` on the chapter route were deleted; don't reintroduce a top bar.
+
+**Callouts and blockquotes are tinted blocks, not bordered boxes.** `Callout.svelte` sets one `--cl` per type (info = `--accent`, tip = green, warning = amber, each with a dark-theme value) and drives fill, ink and icon from it. The prose blockquote gets the same treatment in `--accent` plus a masked info icon in its left grid column — masked, so it inks itself from `color`. Media cards are frameless: the aurora cover carries the radius, shadow and hover lift, and the copy sits below it on the page.
 
 ## Icons
 

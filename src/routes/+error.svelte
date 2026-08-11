@@ -17,7 +17,7 @@
 	</p>
 	<a
 		href="/"
-		class="rounded-2xl bg-accent-solid px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
+		class="rounded-xl bg-accent-solid px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 		>Back home</a
 	>
 </div>

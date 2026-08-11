@@ -162,7 +162,7 @@
 	}
 	.diagram {
 		border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
-		border-radius: 0.85rem;
+		border-radius: var(--radius-card);
 		padding: 1.25rem;
 		overflow-x: auto;
 		background: color-mix(in oklch, var(--fg) 2.5%, transparent);
@@ -170,7 +170,7 @@
 	@media (max-width: 639px) {
 		.diagram {
 			padding: 0.85rem;
-			border-radius: 0.7rem;
+			border-radius: var(--radius-card);
 		}
 	}
 	/* title now sits ABOVE the card, not inside it */

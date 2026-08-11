@@ -30,7 +30,7 @@
 
 <a
 	href="#main"
-	class="sr-only z-50 focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:rounded-2xl focus:border focus:border-fg focus:bg-bg focus:px-3 focus:py-2"
+	class="sr-only z-50 focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:rounded-xl focus:border focus:border-fg focus:bg-bg focus:px-3 focus:py-2"
 	>Skip to content</a
 >
 

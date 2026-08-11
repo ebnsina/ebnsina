@@ -1,6 +1,7 @@
 <script lang="ts">
-	/** Opens the global search palette. `compact` is the icon-only form used in
-	 *  the mobile header, where there is no room for the label and shortcut. */
+	/** Opens the global search palette. On desktop the shortcut itself is the
+	 *  affordance — no icon, no label. `compact` is the mobile form, where the
+	 *  shortcut is meaningless without a keyboard, so it shows the icon instead. */
 	import Icon from '$lib/components/Icon.svelte';
 	import { openSearch, warmSearch } from '$lib/search-ui.svelte';
 
@@ -17,9 +18,9 @@
 	aria-label="Search"
 	aria-keyshortcuts="Meta+K Control+K"
 >
-	<Icon name="search" size={compact ? 18 : 15} />
-	{#if !compact}
-		<span class="label">Search</span>
+	{#if compact}
+		<Icon name="search" size={18} />
+	{:else}
 		<kbd>⌘K</kbd>
 	{/if}
 </button>
@@ -28,9 +29,11 @@
 	.search-trigger {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.45rem;
-		border-radius: 0.75rem;
-		padding: 0.4rem 0.6rem;
+		gap: 0.35rem;
+		border-radius: var(--radius-button);
+		/* Sized off the theme toggle beside it: same icon, same padding, so the
+		   two read as one pair of controls rather than a pill next to a button. */
+		padding: 0.375rem;
 		font-size: 0.8rem;
 		color: var(--muted);
 		transition:
@@ -40,12 +43,6 @@
 	.search-trigger:hover {
 		background: color-mix(in oklch, var(--fg) 6%, transparent);
 		color: var(--fg);
-	}
-	.search-trigger.is-compact {
-		padding: 0.375rem;
-	}
-	.label {
-		font-size: 0.8rem;
 	}
 	kbd {
 		border: 1px solid var(--rule);

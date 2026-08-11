@@ -144,7 +144,7 @@
 	.menu-item {
 		display: block;
 		width: 100%;
-		border-radius: 0.5rem;
+		border-radius: var(--radius-button);
 		padding: 0.45rem 0.7rem;
 		text-align: left;
 		font-size: 0.85rem;

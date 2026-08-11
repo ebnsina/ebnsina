@@ -58,6 +58,68 @@
 	--card-base: oklch(0.205 0 0);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   CORNER RADIUS — single source of truth, same idea as the brand accent.
+   Two radii carry the whole system: buttons and controls at --radius-button,
+   card and panel surfaces at --radius-card. Change these two values and every
+   corner on the site follows, because the Tailwind scale below is aliased to
+   them — `rounded-xl` in markup and var(--radius-button) in CSS resolve to the
+   same declaration, so neither can drift from the other.
+   Content panels that read as cards — callouts, code blocks, figures, images —
+   take the card radius so a page never mixes shapes. Controls smaller than
+   ~28px take --radius-chip (`rounded-md`), since the button radius on a 19px
+   box is a circle. Dots stay circles (`rounded-full`).
+   This replaces a global `border-radius: 0 !important` reset that used to flatten
+   the site. That `!important` was there to beat Tailwind's utilities and the UA
+   defaults on form controls from one place; with the scale itself aliased here,
+   nothing needs overriding, so it's gone. `rounded-*` classes in the markup are
+   live again and do mean what they say. ───────────────────────────────────── */
+:root {
+	--radius-button: 0.75rem;
+	--radius-card: 1.5rem;
+	/* Third rung, for controls under ~28px — a checkbox, a small chip. At that
+	   size the button radius eats the whole edge and the control reads as a
+	   circle (a checkbox starts looking like a radio). Same wiring: Tailwind's
+	   `rounded-md` is aliased to it below. */
+	--radius-chip: 0.4rem;
+}
+
+/* ROUNDED BY DEFAULT. The mirror image of the old flattening reset: instead of
+   forcing every corner to 0, every corner starts at the button radius, and
+   anything wanting the card radius (or a bespoke silhouette) says so. Because
+   `*` has zero specificity, ANY other rule beats it — a Tailwind `rounded-*`
+   utility, a component's scoped style, the token rules below. So this can never
+   fight a deliberate choice; it only catches the ones nobody thought about.
+   That is the point: a new control cannot ship sharp by omission, and there is
+   still exactly one place to change the shape language.
+   It MUST live in @layer base. Unlayered CSS outranks every @layer, so an
+   unlayered `*` here would beat Tailwind's own `rounded-*` utilities (they sit
+   in @layer utilities) — including `rounded-full` — and quietly override the
+   markup it is meant to defer to. The old reset used !important for the
+   opposite reason: it wanted to win. This one has to lose.
+   Radius on an element with no background or border paints nothing, so the
+   blast radius is only the elements that actually draw a box. */
+@layer base {
+	*,
+	*::before,
+	*::after {
+		border-radius: var(--radius-button);
+	}
+
+	/* The deliberate exceptions — full-bleed surfaces and rules, which have no
+	   corners to speak of and read as a seam, not an object. Keep this list
+	   short: if something belongs here, ask first whether it should just be
+	   square in its own component. */
+	:where(html, body, hr, th, td) {
+		border-radius: 0;
+	}
+	/* the header's blurred surface is full-bleed — a radius would round the top
+	   corners of the page (pseudo-elements can't go inside :where()) */
+	.site-header::before {
+		border-radius: 0;
+	}
+}
+
 /* Expose the runtime vars as Tailwind theme tokens, so utilities like
    `text-accent`, `bg-bg`, `border-rule` are brand-driven AND theme-aware.
    `inline` makes the utilities reference the live var rather than copying it. */
@@ -76,6 +138,13 @@
 	--color-accent: var(--accent);
 	--color-accent-soft: var(--accent-soft);
 	--color-accent-solid: var(--accent-solid);
+
+	/* Alias the two rungs of Tailwind's radius scale we actually use onto the
+	   tokens above (the values match Tailwind's own defaults), so `rounded-xl`
+	   and `rounded-3xl` are the button and card radii by definition. */
+	--radius-md: var(--radius-chip);
+	--radius-xl: var(--radius-button);
+	--radius-3xl: var(--radius-card);
 }
 
 /* Bangla locale (/bn/notes). Override the display/text font tokens on the
@@ -157,19 +226,6 @@ body {
 	color: var(--fg);
 }
 
-/* Sharp corners, site-wide. This is a deliberate global design rule, so it
-   overrides every source of rounding at once — Tailwind's `rounded-*`
-   utilities, component styles, and the browser's own defaults on form
-   controls — rather than being unpicked one declaration at a time.
-   `!important` is doing exactly the job it exists for here: an intentional,
-   non-negotiable override. Corollary: `rounded-*` classes left in the markup
-   are inert, so don't trust them to indicate shape. */
-*,
-*::before,
-*::after {
-	border-radius: 0 !important;
-}
-
 @layer base {
 	a {
 		color: inherit;
@@ -204,8 +260,16 @@ body {
 	--au-b3: #14105e;
 }
 
+/* Every coloured surface on the site is one of these, so the card radius is
+   declared HERE rather than on each component's cover class — that way a new
+   surface is rounded by construction and can't ship sharp because someone
+   forgot a class. Components that need a different silhouette (the folder's
+   tab corner, the pocket) override it from their own scoped rule, which wins
+   on specificity. */
 .aurora-surface,
 .glass-card {
+	border-radius: var(--radius-card);
+	overflow: hidden;
 	background:
 		/* scrim — keeps white text legible wherever a light blooms */
 		linear-gradient(200deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3)),
@@ -235,9 +299,7 @@ body {
 	--accent: #ffffff;
 	--bg: #14101f;
 	position: relative;
-	overflow: hidden;
 	color: #fff;
-	border-radius: 0.85rem;
 	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
 	transition:
 		box-shadow 0.25s ease,
@@ -263,47 +325,47 @@ body {
    page's own, so titles keep full contrast and the accent reads on hover.
    Put .aurora-surface + an auroraFor()/auroraAt() style on the __cover. */
 
+/* No frame: the gradient cover is the only object on the page — it carries the
+   radius, the shadow and the hover lift — and the copy sits underneath it on
+   the page surface, with no border or box around the pair. */
 .media-card {
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
-	border-radius: 0.85rem;
-	background: var(--bg);
-	border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
-	box-shadow: 0 3px 10px -8px rgba(0, 0, 0, 0.22);
+	background: none;
+	border: 0;
 	text-decoration: none;
 	color: var(--fg);
-	transition:
-		box-shadow 0.25s ease,
-		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-		border-color 0.25s ease;
-}
-
-a.media-card:hover,
-.media-card--link:hover {
-	transform: translateY(-2px);
-	border-color: color-mix(in oklch, var(--accent) 30%, transparent);
-	box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.3);
 }
 
 .media-card__cover {
 	flex: none;
 	height: 13.5rem;
+	box-shadow: 0 3px 10px -8px rgba(0, 0, 0, 0.22);
+	transition:
+		box-shadow 0.25s ease,
+		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+a.media-card:hover .media-card__cover,
+.media-card--link:hover .media-card__cover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
 }
 
+/* Copy sits on the page, so it aligns to the cover's edge rather than being
+   inset inside a frame. */
 .media-card__body {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	padding: 0.9rem 1.1rem 1rem;
+	padding: 0.85rem 0.15rem 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.media-card {
+	.media-card__cover {
 		transition: none;
 	}
-	a.media-card:hover,
-	.media-card--link:hover {
+	a.media-card:hover .media-card__cover,
+	.media-card--link:hover .media-card__cover {
 		transform: none;
 	}
 }
@@ -320,6 +382,7 @@ a.media-card:hover,
 	font-weight: 500;
 	letter-spacing: 0.02em;
 	padding: 0.2em 0.6em;
+	border-radius: var(--radius-button);
 	/* Glass chip: a translucent pane that samples whatever is behind it rather
 	   than painting its own tone. The fill is a mix of --fg into *transparent*,
 	   so it picks up the page in light and dark with no per-theme override.
@@ -445,13 +508,45 @@ a.media-card:hover,
 	font-size: 0.98rem;
 	margin: 1.6em 0 0.4em;
 }
+/* A tinted accent block, not a ruled quote: the bar is gone, the fill is a light
+   wash of the brand accent and the text is the accent itself. Both sides derive
+   from --accent, so it re-tints with the brand and works in either theme. */
 .prose-editorial blockquote {
 	position: relative;
-	background: color-mix(in oklch, var(--accent) 5%, transparent);
-	border-left: 2px solid var(--accent);
-	padding: 1.4em 1.3em 1em;
-	border-radius: 0 0.5rem 0.5rem 0;
+	background: color-mix(in oklch, var(--accent) 12%, transparent);
+	color: var(--accent);
+	border: 0;
+	padding: 1.2em 1.4em;
+	border-radius: var(--radius-card);
 	margin: 1.6em 0;
+	/* Grid, not flex: the icon takes column 1 of the first row and every child
+	   paragraph is pinned to column 2, so a multi-paragraph quote stays aligned
+	   under itself instead of laying out beside the icon. */
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: 0.85em;
+}
+.prose-editorial blockquote > * {
+	grid-column: 2;
+}
+/* Masked rather than an inline SVG, so it inks itself from `color` and follows
+   the accent in both themes. Note the standard `mask` only — writing a
+   -webkit- alias here would make Lightning CSS drop the standard property. */
+.prose-editorial blockquote::before {
+	content: '';
+	grid-column: 1;
+	grid-row: 1;
+	flex: none;
+	width: 1.15em;
+	height: 1.15em;
+	margin-top: 0.15em;
+	background: currentColor;
+	mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cline%20x1='12'%20y1='16'%20x2='12'%20y2='12'/%3E%3Cline%20x1='12'%20y1='8'%20x2='12.01'%20y2='8'/%3E%3C/svg%3E")
+		center / contain no-repeat;
+}
+/* bold runs inside would otherwise drop back to --fg and break the single tone */
+.prose-editorial blockquote :where(strong, b, em, a) {
+	color: inherit;
 }
 .prose-editorial blockquote p {
 	margin: 0;
@@ -464,7 +559,7 @@ a.media-card:hover,
 	border-radius: 4px;
 }
 .prose-editorial img {
-	border-radius: 10px;
+	border-radius: var(--radius-card);
 	border: 1px solid var(--rule);
 }
 .prose-editorial hr {
@@ -472,19 +567,38 @@ a.media-card:hover,
 	border-top: 1px solid var(--rule);
 	margin: 2.5em 0;
 }
+/* Rounded like every other content panel. That needs `separate` borders — a
+   collapsed table draws cell borders over the corner and the radius disappears
+   — so the frame moves to the table and the cells keep only their inner rules. */
 .prose-editorial table {
-	width: 100%;
-	border-collapse: collapse;
+	/* Hug the cells: the frame now lives on the table itself, so a full-width
+	   block would draw a box with empty space to the right of the last column.
+	   Wider-than-the-measure tables still scroll inside it. */
+	width: max-content;
+	max-width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: 0.86rem;
 	margin: 1.4em 0;
 	display: block;
-	overflow-x: auto;
+	overflow: auto;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius-card);
 }
 .prose-editorial th,
 .prose-editorial td {
-	border: 1px solid var(--rule);
+	border: 0;
+	border-right: 1px solid var(--rule);
+	border-bottom: 1px solid var(--rule);
 	padding: 0.5em 0.75em;
 	text-align: left;
+}
+/* drop the rules that would double up on the table's own frame */
+.prose-editorial tr > *:last-child {
+	border-right: 0;
+}
+.prose-editorial tr:last-child > * {
+	border-bottom: 0;
 }
 .prose-editorial th {
 	font-weight: 600;
@@ -500,7 +614,7 @@ a.media-card:hover,
 	font-size: 0.82rem;
 	line-height: 1.6;
 	padding: 1rem 1.1rem;
-	border-radius: 0.75rem;
+	border-radius: var(--radius-card);
 	border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
 	overflow-x: auto;
 	margin: 1.4em 0;
@@ -577,7 +691,7 @@ a.media-card:hover,
 	display: flex;
 	align-items: center;
 	padding: 0.3rem;
-	border-radius: 6px;
+	border-radius: var(--radius-button);
 	border: 1px solid color-mix(in oklch, var(--fg) 15%, transparent);
 	background: var(--bg);
 	color: var(--muted);

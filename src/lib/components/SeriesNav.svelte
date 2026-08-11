@@ -90,6 +90,7 @@
 		align-items: baseline;
 		gap: 0.75rem;
 		padding: 0.625rem 1.25rem;
+		border-radius: var(--radius-button);
 		text-decoration: none;
 		color: var(--fg);
 		font-size: 0.9375rem;

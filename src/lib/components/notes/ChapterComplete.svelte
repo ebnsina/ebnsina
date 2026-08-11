@@ -83,7 +83,7 @@
 		aria-label={done ? 'Mark chapter incomplete' : 'Mark chapter complete'}
 	>
 		<span
-			class="grid size-5 shrink-0 place-items-center border transition-colors"
+			class="grid size-5 shrink-0 place-items-center rounded-md border transition-colors"
 			class:border-accent={done}
 			class:bg-accent={done}
 			class:border-[color-mix(in_oklch,var(--fg)_25%,transparent)]={!done}
@@ -110,7 +110,7 @@
 
 {#if toast}
 	<div
-		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-2.5 font-pixel text-xs shadow-xl"
+		class="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-3xl px-5 py-2.5 font-pixel text-xs shadow-xl"
 		class:bg-fg={!trackMastered}
 		class:text-bg={!trackMastered}
 		class:bg-accent={trackMastered}

@@ -59,7 +59,7 @@
 			<div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
 				<a
 					href="/projects"
-					class="rounded-2xl bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
+					class="rounded-xl bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
 					>See my work</a
 				>
 				<a

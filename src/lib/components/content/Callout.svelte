@@ -10,19 +10,11 @@
 		title?: string;
 		children: Snippet;
 	} = $props();
-
-	const iconColor = $derived(
-		{
-			info: 'var(--accent)',
-			tip: 'oklch(0.7 0.18 145)',
-			warning: 'oklch(0.78 0.18 85)'
-		}[type]
-	);
 </script>
 
 <div class="callout callout-{type}">
 	<div class="flex items-start gap-3">
-		<span class="callout-icon" style="color: {iconColor}">
+		<span class="callout-icon">
 			{#if type === 'info'}
 				<svg
 					width="18"
@@ -78,27 +70,46 @@
 </div>
 
 <style>
+	/* One colour per type drives the whole block — fill, ink and icon — so the
+	   callout reads as a single tinted object rather than a bordered box. The
+	   light-theme greens/ambers are darkened for contrast on a pale tint and
+	   lifted again in dark. */
 	.callout {
+		--cl: var(--accent);
 		position: relative;
 		padding: 1rem 1.1rem;
 		margin: 1.5rem 0;
-		border-radius: 0.75rem;
-		border: 1px solid color-mix(in oklch, var(--fg) 8%, transparent);
-		background: color-mix(in oklch, var(--fg) 2.5%, transparent);
+		border-radius: var(--radius-card);
+		border: 0;
+		background: color-mix(in oklch, var(--cl) 12%, transparent);
+		color: var(--cl);
+	}
+	.callout-tip {
+		--cl: oklch(0.52 0.15 152);
+	}
+	.callout-warning {
+		--cl: oklch(0.55 0.14 70);
+	}
+	:global(html.dark) .callout-tip {
+		--cl: oklch(0.8 0.16 152);
+	}
+	:global(html.dark) .callout-warning {
+		--cl: oklch(0.83 0.15 82);
 	}
 	.callout-icon {
 		flex-shrink: 0;
 		margin-top: 2px;
+		color: var(--cl);
 	}
 	.callout-title {
 		font-weight: 600;
 		font-size: 0.875rem;
 		margin-bottom: 0.25rem;
-		color: var(--fg);
+		color: var(--cl);
 	}
 	.callout-body {
 		font-size: 0.875rem;
-		color: var(--muted);
+		color: var(--cl);
 		line-height: 1.7;
 	}
 	.callout-body :global(p) {
@@ -110,8 +121,9 @@
 	.callout-body :global(p:last-child) {
 		margin-bottom: 0;
 	}
-	.callout-body :global(strong) {
-		color: var(--fg);
+	.callout-body :global(strong),
+	.callout-body :global(a) {
+		color: inherit;
 	}
 	.callout-body :global(ul),
 	.callout-body :global(ol) {
@@ -127,7 +139,7 @@
 	.callout-body :global(code) {
 		font-family: var(--font-mono);
 		font-size: 0.8125rem;
-		background: color-mix(in oklch, var(--fg) 10%, transparent);
+		background: color-mix(in oklch, var(--cl) 16%, transparent);
 		padding: 0.1em 0.35em;
 		border-radius: 4px;
 	}

@@ -2,7 +2,6 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
-	import ReadingBar from '$lib/components/notes/ReadingBar.svelte';
 	import ChapterComplete from '$lib/components/notes/ChapterComplete.svelte';
 	import { t } from '$lib/data/notes-strings';
 
@@ -13,8 +12,6 @@
 </script>
 
 <Seo title={`${meta.title} — ${data.categoryLabel}`} description={meta.subtitle} type="article" />
-
-<ReadingBar />
 
 <ArticleLayout lang="bn">
 	{#snippet header()}
