@@ -1,4 +1,4 @@
-### Salam, I'm Ebn Sina 
+### Salam, I'm Ebn Sina
 
 Crafting halal software for the ummah & beyond · Rajshahi 🇧🇩
 

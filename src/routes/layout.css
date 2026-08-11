@@ -602,21 +602,6 @@ a.media-card:hover,
 }
 
 /* ============================================================
-   Table of contents
-   ============================================================ */
-
-.toc-link.toc-active {
-	color: var(--accent);
-	font-weight: 600;
-}
-#toc-aside {
-	scrollbar-width: none;
-}
-#toc-aside::-webkit-scrollbar {
-	display: none;
-}
-
-/* ============================================================
    Reveal-on-scroll
    ============================================================ */
 

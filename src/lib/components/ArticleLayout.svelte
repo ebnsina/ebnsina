@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { onMount, tick } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import Toc from '$lib/components/Toc.svelte';
 
 	let {
 		header,
@@ -132,12 +133,11 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div
-	{lang}
-	class="mx-auto items-start gap-y-10 px-5 sm:px-8 {reader
-		? 'max-w-[44rem]'
-		: 'grid max-w-5xl lg:grid-cols-[minmax(0,44rem)_13rem] lg:justify-between'}"
->
+<!-- Full site container (matches header/footer), so the article lines up with
+     the rest of the page. The TOC is pinned to the viewport edge rather than
+     holding a column, so nothing here depends on whether it's showing. Focus
+     mode is the narrow-measure option. -->
+<div {lang} class="mx-auto px-5 sm:px-8 {reader ? 'max-w-[44rem]' : 'max-w-5xl'}">
 	<article bind:this={article} class="min-w-0">
 		{@render header()}
 		<div class="prose-editorial">
@@ -149,35 +149,11 @@
 	</article>
 
 	{#if !reader}
-		<aside
-			id="toc-aside"
-			class="sticky top-12 hidden max-h-[calc(100vh-3.5rem)] self-start overflow-y-auto pb-4 pr-1 pt-[4.5rem] lg:block"
-		>
+		<!-- xl, not lg: the rail is pinned to the viewport edge now, and below
+		     1280px there isn't margin enough to keep it off the text. -->
+		<aside id="toc-aside" class="hidden xl:block">
 			{#if headings.length}
-				<nav aria-label="Table of contents">
-					<span
-						class="mb-3 block font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-muted"
-						>Contents</span
-					>
-					<ul
-						class="space-y-0.5 pl-4"
-						style="border-left: 1px solid color-mix(in oklch, var(--fg) 8%, transparent)"
-					>
-						{#each headings as h (h.id)}
-							<li>
-								<a
-									href={`#${h.id}`}
-									onclick={(e) => toToc(e, h.id)}
-									class="toc-link block py-1 text-[14px] leading-[1.5] text-muted no-underline transition-colors hover:text-fg"
-									class:toc-active={activeId === h.id}
-									class:pl-3={h.depth === 3}
-								>
-									{h.text}
-								</a>
-							</li>
-						{/each}
-					</ul>
-				</nav>
+				<Toc {headings} {activeId} onnavigate={toToc} />
 			{/if}
 		</aside>
 	{/if}
