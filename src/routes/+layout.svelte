@@ -4,7 +4,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import SearchPalette from '$lib/components/SearchPalette.svelte';
-	import { onNavigate } from '$app/navigation';
+	import { onNavigate, afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
 
@@ -23,6 +23,12 @@
 			});
 			transition.finished.finally(() => root.classList.remove('nav-vt'));
 		});
+	});
+
+	afterNavigate(() => {
+		if (typeof window !== 'undefined' && window.umami) {
+			window.umami.track();
+		}
 	});
 </script>
 

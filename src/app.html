@@ -1,25 +1,29 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="text-scale" content="scale" />
-		<meta name="theme-color" content="#f6f7f2" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#1a1d24" media="(prefers-color-scheme: dark)" />
-		<script>
-			// FOUC guard: apply the light/dark theme before first paint.
-			// The brand accent is no longer user-selectable — indigo is the only
-			// hue — so clear any accent a previous visit persisted.
-			(() => {
-				const s = localStorage.getItem('theme');
-				const d = matchMedia('(prefers-color-scheme: dark)').matches;
-				if (s === 'dark' || (!s && d)) document.documentElement.classList.add('dark');
-				localStorage.removeItem('brand-accent');
-			})();
-		</script>
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="text-scale" content="scale" />
+	<meta name="theme-color" content="#f6f7f2" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#1a1d24" media="(prefers-color-scheme: dark)" />
+	<script>
+		// FOUC guard: apply the light/dark theme before first paint.
+		// The brand accent is no longer user-selectable — indigo is the only
+		// hue — so clear any accent a previous visit persisted.
+		(() => {
+			const s = localStorage.getItem('theme');
+			const d = matchMedia('(prefers-color-scheme: dark)').matches;
+			if (s === 'dark' || (!s && d)) document.documentElement.classList.add('dark');
+			localStorage.removeItem('brand-accent');
+		})();
+	</script>
+	<script defer src="https://cloud.umami.is/script.js" data-website-id="65abd0df-2408-4a9f-b799-627bccdaadc1"></script>
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
 </html>
