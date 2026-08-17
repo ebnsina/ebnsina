@@ -12,8 +12,9 @@
 import { getNoteCategories } from '$lib/content';
 import { categoryMeta } from '$lib/data/notes-labels';
 import { SERIES, seriesMeta } from '$lib/data/series';
+import { KITS } from '$lib/data/kits';
 
-export type Kind = 'chapter' | 'post' | 'track' | 'series' | 'project' | 'page';
+export type Kind = 'chapter' | 'post' | 'track' | 'series' | 'tool' | 'project' | 'page';
 
 export type Hit = {
 	url: string;
@@ -37,6 +38,7 @@ const KIND_LABEL: Record<Kind, string> = {
 	post: 'Writing',
 	track: 'Track',
 	series: 'Series',
+	tool: 'Tool',
 	project: 'Project',
 	page: 'Page'
 };
@@ -85,6 +87,18 @@ async function localRows(): Promise<Row[]> {
 		return row(hit, fold(`${s.title} ${s.tagline} ${s.slug.replace(/-/g, ' ')}`));
 	});
 
+	// Kits are a handful of static entries, same reasoning as tracks and series.
+	const kitRows = KITS.map((k) => {
+		const hit: Hit = {
+			url: `/tools/${k.slug}`,
+			title: k.title,
+			subtitle: k.tagline,
+			kind: 'tool',
+			context: 'Tools'
+		};
+		return row(hit, fold(`${k.title} ${k.tagline} ${k.slug.replace(/-/g, ' ')}`));
+	});
+
 	const projectRows = projects.map((p) => {
 		const hit: Hit = {
 			url: `/projects/${p.slug}`,
@@ -105,6 +119,13 @@ async function localRows(): Promise<Row[]> {
 			context: 'Read'
 		},
 		{ url: '/blog', title: 'Writing', subtitle: 'Standalone posts', kind: 'page', context: 'Read' },
+		{
+			url: '/tools',
+			title: 'Tools',
+			subtitle: 'Kits that go with the series',
+			kind: 'page',
+			context: 'Read'
+		},
 		{
 			url: '/series',
 			title: 'Series',
@@ -152,6 +173,7 @@ async function localRows(): Promise<Row[]> {
 	return [
 		...tracks,
 		...seriesRows,
+		...kitRows,
 		...projectRows,
 		...pages.map((p) => row(p, fold(`${p.title} ${p.subtitle} ${p.url.slice(1)}`)))
 	];
@@ -238,7 +260,7 @@ export function search(query: string, rows: Row[], limit = 12): Hit[] {
 		// is — it is what "search by post name" actually means.
 		if (tokens.length > 1 && r.t.includes(q)) score += 90;
 		// Landmarks first: a track or a page outranks one chapter that mentions it.
-		if (r.kind === 'track' || r.kind === 'series') score += 30;
+		if (r.kind === 'track' || r.kind === 'series' || r.kind === 'tool') score += 30;
 		else if (r.kind === 'page' || r.kind === 'project') score += 20;
 		// Among equals, the more specific (shorter) title is the better answer.
 		score -= Math.min(r.t.length, 60) / 60;

@@ -13,6 +13,7 @@
 				{ label: 'Writing', href: '/blog' },
 				{ label: 'Series', href: '/series' },
 				{ label: 'Notes', href: '/notes' },
+				{ label: 'Tools', href: '/tools' },
 				{ label: 'Directory', href: '/directory' },
 				{ label: 'Projects', href: '/projects' }
 			]

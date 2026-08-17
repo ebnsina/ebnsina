@@ -7,6 +7,7 @@ import {
 	getSeriesParts
 } from '$lib/content';
 import { SITE } from '$lib/config';
+import { KITS } from '$lib/data/kits';
 
 export const prerender = true;
 
@@ -19,8 +20,11 @@ export function GET() {
 		'/now',
 		'/blog',
 		'/series',
-		'/notes'
+		'/notes',
+		'/tools'
 	];
+
+	for (const k of KITS) paths.push(`/tools/${k.slug}`);
 
 	for (const p of getBlogPosts()) paths.push(`/blog/${p.slug}`);
 	for (const t of getAllTags()) paths.push(`/blog/tags/${encodeURIComponent(t)}`);
