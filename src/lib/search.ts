@@ -11,8 +11,9 @@
  */
 import { getNoteCategories } from '$lib/content';
 import { categoryMeta } from '$lib/data/notes-labels';
+import { SERIES, seriesMeta } from '$lib/data/series';
 
-export type Kind = 'chapter' | 'post' | 'track' | 'project' | 'page';
+export type Kind = 'chapter' | 'post' | 'track' | 'series' | 'project' | 'page';
 
 export type Hit = {
 	url: string;
@@ -26,13 +27,16 @@ export type Hit = {
 /** A hit plus the folded strings it is matched against. */
 type Row = Hit & { t: string; s: string; h: string };
 
-/** Build-time row shape: [kind, category, slug, title, subtitle, haystack]. */
+/** Build-time row shape: [kind, group, slug, title, subtitle, haystack].
+ *  `group` is the track for a chapter and the series slug for a series part;
+ *  it is empty for a standalone post. */
 type RawRow = [0 | 1, string, string, string, string, string];
 
 const KIND_LABEL: Record<Kind, string> = {
 	chapter: 'Notes',
 	post: 'Writing',
 	track: 'Track',
+	series: 'Series',
 	project: 'Project',
 	page: 'Page'
 };
@@ -69,6 +73,18 @@ async function localRows(): Promise<Row[]> {
 		return [row(hit, fold(`${meta.label} ${meta.description} ${category.replace(/-/g, ' ')}`))];
 	});
 
+	// Series landings are a handful of static entries — same reasoning as tracks.
+	const seriesRows = SERIES.map((s) => {
+		const hit: Hit = {
+			url: `/series/${s.slug}`,
+			title: s.title,
+			subtitle: s.tagline,
+			kind: 'series',
+			context: 'Series'
+		};
+		return row(hit, fold(`${s.title} ${s.tagline} ${s.slug.replace(/-/g, ' ')}`));
+	});
+
 	const projectRows = projects.map((p) => {
 		const hit: Hit = {
 			url: `/projects/${p.slug}`,
@@ -88,7 +104,14 @@ async function localRows(): Promise<Row[]> {
 			kind: 'page',
 			context: 'Read'
 		},
-		{ url: '/blog', title: 'Writing', subtitle: 'Posts and series', kind: 'page', context: 'Read' },
+		{ url: '/blog', title: 'Writing', subtitle: 'Standalone posts', kind: 'page', context: 'Read' },
+		{
+			url: '/series',
+			title: 'Series',
+			subtitle: 'Multi-part writing, read in order',
+			kind: 'page',
+			context: 'Read'
+		},
 		{
 			url: '/directory',
 			title: 'Track directory',
@@ -128,6 +151,7 @@ async function localRows(): Promise<Row[]> {
 
 	return [
 		...tracks,
+		...seriesRows,
 		...projectRows,
 		...pages.map((p) => row(p, fold(`${p.title} ${p.subtitle} ${p.url.slice(1)}`)))
 	];
@@ -143,18 +167,25 @@ export function loadRows(): Promise<Row[]> {
 			localRows()
 		]);
 
-		const indexed = (raw as RawRow[]).map(([kind, category, slug, title, subtitle, haystack]) =>
-			row(
-				{
-					url: kind === 0 ? `/notes/${category}/${slug}` : `/blog/${slug}`,
-					title,
-					subtitle,
-					kind: kind === 0 ? 'chapter' : 'post',
-					context: kind === 0 ? (categoryMeta(category)?.label ?? category) : 'Writing'
-				},
+		const indexed = (raw as RawRow[]).map(([kind, group, slug, title, subtitle, haystack]) => {
+			// A prose row with a group is a series part; without one it's a post.
+			const url =
+				kind === 0
+					? `/notes/${group}/${slug}`
+					: group
+						? `/series/${group}/${slug}`
+						: `/blog/${slug}`;
+			const context =
+				kind === 0
+					? (categoryMeta(group)?.label ?? group)
+					: group
+						? (seriesMeta(group)?.title ?? 'Series')
+						: 'Writing';
+			return row(
+				{ url, title, subtitle, kind: kind === 0 ? 'chapter' : 'post', context },
 				haystack
-			)
-		);
+			);
+		});
 
 		return [...local, ...indexed];
 	})();
@@ -207,7 +238,7 @@ export function search(query: string, rows: Row[], limit = 12): Hit[] {
 		// is — it is what "search by post name" actually means.
 		if (tokens.length > 1 && r.t.includes(q)) score += 90;
 		// Landmarks first: a track or a page outranks one chapter that mentions it.
-		if (r.kind === 'track') score += 30;
+		if (r.kind === 'track' || r.kind === 'series') score += 30;
 		else if (r.kind === 'page' || r.kind === 'project') score += 20;
 		// Among equals, the more specific (shorter) title is the better answer.
 		score -= Math.min(r.t.length, 60) / 60;

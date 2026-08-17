@@ -11,6 +11,7 @@
 			heading: 'Read',
 			links: [
 				{ label: 'Writing', href: '/blog' },
+				{ label: 'Series', href: '/series' },
 				{ label: 'Notes', href: '/notes' },
 				{ label: 'Directory', href: '/directory' },
 				{ label: 'Projects', href: '/projects' }

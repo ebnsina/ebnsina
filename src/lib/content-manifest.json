@@ -52,140 +52,6 @@
 			}
 		},
 		{
-			"slug": "video-mastery-1-video-and-player",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ১: ভিডিও আসলে কী, আর প্লেয়ার কীভাবে চালায়",
-				"description": "পিক্সেল আর ফ্রেম থেকে শুরু করে কোডেক, রেট কন্ট্রোল, কন্টেইনার, সেগমেন্ট, ABR আর প্লেয়ারের ভেতরের পাইপলাইন — পুরো গল্পটা, ধাপে ধাপে।",
-				"date": "2026-07-28",
-				"tags": ["video", "streaming", "codec", "hls", "dash", "bangla", "engineering"],
-				"minutesRead": 42,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 1
-			}
-		},
-		{
-			"slug": "video-mastery-2-build-a-transcoder",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ২: শেখার জন্য একটা ট্রান্সকোডার বানাই",
-				"description": "ffmpeg দিয়ে হাতে-কলমে — probe থেকে ল্যাডার, কি-ফ্রেম বাঁধা, HLS প্যাকেজিং, থাম্বনেইল, সাবটাইটেল, আর একটা ওয়ার্কার যেটা পুরো কাজটা নিজে করে।",
-				"date": "2026-07-28",
-				"tags": ["video", "ffmpeg", "transcoding", "hls", "bangla", "engineering"],
-				"minutesRead": 48,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 2
-			}
-		},
-		{
-			"slug": "video-mastery-3-production-transcoder",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৩: প্রোডাকশন-গ্রেড ট্রান্সকোডার",
-				"description": "দশজন থেকে দশ হাজার — আর্কিটেকচার, স্টেট মেশিন, চাংকড এনকোডিং, পার-টাইটেল ল্যাডার, প্যাকেজিং, CDN, খরচ, আর ব্যর্থতার পূর্ণ তালিকা।",
-				"date": "2026-07-28",
-				"tags": ["video", "transcoding", "architecture", "scaling", "bangla", "engineering"],
-				"minutesRead": 52,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 3
-			}
-		},
-		{
-			"slug": "video-mastery-4-netflix",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৪: নেটফ্লিক্স কীভাবে করে",
-				"description": "পার-টাইটেল থেকে পার-শট, VMAF, ডাইনামিক অপটিমাইজার, Cosmos মাইক্রোসার্ভিস পাইপলাইন, AV1 আর ফিল্ম গ্রেইন সিনথেসিস, আর Open Connect — নেটফ্লিক্সের নিজের লেখা থেকে, সংখ্যাসহ।",
-				"date": "2026-07-29",
-				"tags": ["video", "netflix", "streaming", "vmaf", "av1", "cdn", "bangla", "engineering"],
-				"minutesRead": 46,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 4
-			}
-		},
-		{
-			"slug": "video-mastery-5-vimeo",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৫: Vimeo কীভাবে করে",
-				"description": "Falkor ট্রান্সকোডিং ইনফ্রা, স্পট ইনস্ট্যান্সে চাংকড এনকোডিং, এনকোডারের ভেতর থেকে VMAF মাপা, Artax দিয়ে প্রোগ্রেসিভ MP4 বানানো, DRM-এর তিন যুগ, আর স্টোরেজের খরচ কমানো।",
-				"date": "2026-07-29",
-				"tags": [
-					"video",
-					"vimeo",
-					"transcoding",
-					"vmaf",
-					"drm",
-					"storage",
-					"bangla",
-					"engineering"
-				],
-				"minutesRead": 44,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 5
-			}
-		},
-		{
-			"slug": "video-mastery-6-mux",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৬: Mux কীভাবে করে",
-				"description": "জাস্ট-ইন-টাইম ট্রান্সকোডিং, নিউরাল নেটওয়ার্ক দিয়ে মিলিসেকেন্ডে পার-টাইটেল ল্যাডার, কোয়ালিটি টিয়ার, ওয়েবহুক-চালিত API, LL-HLS, আর ClickHouse-এ চলা QoE অ্যানালিটিক্স — সাথে তিন প্রোভাইডারের তুলনা।",
-				"date": "2026-07-29",
-				"tags": [
-					"video",
-					"mux",
-					"transcoding",
-					"api",
-					"qoe",
-					"clickhouse",
-					"bangla",
-					"engineering"
-				],
-				"minutesRead": 45,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 6
-			}
-		},
-		{
-			"slug": "video-mastery-7-live",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৭: লাইভ",
-				"description": "RTMP থেকে SRT আর WHIP, রিয়েল-টাইম এনকোডিংয়ের সীমা, LL-HLS আসলে কীভাবে কাজ করে, লেটেন্সির বাজেট, DVR, ফেইলওভার, SCTE-35 আর বিজ্ঞাপন, আর মাল্টি-CDN স্টিয়ারিং।",
-				"date": "2026-07-30",
-				"tags": [
-					"video",
-					"live",
-					"streaming",
-					"hls",
-					"webrtc",
-					"ads",
-					"cdn",
-					"bangla",
-					"engineering"
-				],
-				"minutesRead": 47,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 7
-			}
-		},
-		{
-			"slug": "video-mastery-8-player",
-			"meta": {
-				"title": "ভিডিও মাস্টারি — পর্ব ৮: প্লেয়ার",
-				"description": "নেটিভ HLS বনাম MSE বনাম Managed Media Source, বাফার ব্যবস্থাপনা, ABR অ্যালগরিদম (থ্রুপুট বনাম BOLA), স্টার্টআপের সিদ্ধান্ত, EME আর DRM, ক্যাপশন, CMCD, অটোপ্লে নীতি, আর ত্রুটি থেকে ফেরা।",
-				"date": "2026-07-30",
-				"tags": [
-					"video",
-					"player",
-					"abr",
-					"mse",
-					"eme",
-					"drm",
-					"captions",
-					"bangla",
-					"engineering"
-				],
-				"minutesRead": 46,
-				"series": "ভিডিও মাস্টারি",
-				"seriesPart": 8
-			}
-		},
-		{
 			"slug": "vps-deploy-guide",
 			"meta": {
 				"title": "Full-Stack VPS Deployment: React, Node, Go, Postgres, Redis, ClickHouse, Redpanda & More",
@@ -219,6 +85,553 @@
 				"date": "2026-02-01",
 				"tags": ["meta", "writing"],
 				"minutesRead": 1
+			}
+		}
+	],
+	"series": [
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "01-how-marketplaces-actually-work",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১: মার্কেটপ্লেস ভেতর থেকে",
+				"description": "গিগ পাবলিশ করেছ, ইম্প্রেশন শূন্য — সমস্যাটা স্কিলে না, ফানেলে। Fiverr আর Upwork-এর সার্চ কীভাবে সাজায়, নতুন সেলার কেন অদৃশ্য থাকে, আর প্ল্যাটফর্ম আসলে কার স্বার্থে চলে।",
+				"date": "2026-08-24",
+				"tags": ["freelancing", "fiverr", "upwork", "marketplace", "bangla"],
+				"minutesRead": 26,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 1
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "02-fiverr-or-upwork",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ২: Fiverr না Upwork",
+				"description": "একটায় বায়ার তোমার কাছে আসে, অন্যটায় তুমি বায়ারের কাছে যাও — এই একটা পার্থক্য থেকেই ফি, নগদ প্রবাহ, কাজের ধরন আর তোমার প্রথম তিন মাসের কৌশল সব আলাদা হয়ে যায়।",
+				"date": "2026-08-25",
+				"tags": ["freelancing", "fiverr", "upwork", "bangla"],
+				"minutesRead": 25,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 2
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "03-niche-and-positioning",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৩: নিশ ও পজিশনিং",
+				"description": "\"আমি সব পারি\" মার্কেটপ্লেসে সবচেয়ে দুর্বল অবস্থান। নিশ কীভাবে বাছবে, চাহিদা আছে কি না সেটা কীভাবে যাচাই করবে, আর একটা নির্দিষ্ট প্রতিশ্রুতি কীভাবে বানাবে।",
+				"date": "2026-08-26",
+				"tags": ["freelancing", "positioning", "niche", "bangla"],
+				"minutesRead": 23,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 3
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "04-profile-that-converts",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৪: প্রোফাইল যেটা কনভার্ট করে",
+				"description": "Upwork প্রোফাইল আর Fiverr সেলার প্রোফাইল — টাইটেল, ওভারভিউ, পোর্টফোলিও, স্কিল ট্যাগ, ছবি আর ভিডিওতে ক্লায়েন্ট আসলে কী দেখে, কোথায় বিশ্বাস হারায়, আর খালি প্রোফাইল কীভাবে ভরবে।",
+				"date": "2026-08-27",
+				"tags": ["freelancing", "upwork", "fiverr", "profile", "bangla"],
+				"minutesRead": 23,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 4
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "05-fiverr-gig-anatomy",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৫: Fiverr গিগের অ্যানাটমি",
+				"description": "গিগ টাইটেল, ক্যাটাগরি, সার্চ ট্যাগ, ডেসক্রিপশন, তিনটা প্যাকেজ, ডেলিভারি টাইম আর এক্সট্রা — প্রতিটা ঘর কীভাবে সার্চ আর কনভার্শনে কাজ করে, আর কোন ঘরটা একবার ভুল হলে আর ফেরানো যায় না।",
+				"date": "2026-08-28",
+				"tags": ["freelancing", "fiverr", "gig", "bangla"],
+				"minutesRead": 24,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 5
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "06-gig-media-and-faq",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৬: গিগ মিডিয়া ও FAQ",
+				"description": "থাম্বনেইল, গ্যালারি, ভিডিও, PDF, FAQ আর রিকোয়ারমেন্ট ফর্ম — ক্লিক আর অর্ডারের মাঝখানের ধাপগুলোতে এগুলোই সিদ্ধান্ত নেওয়ায়, আর ডেলিভারির ঘড়িটাও এখানেই ঠিক হয়।",
+				"date": "2026-08-29",
+				"tags": ["freelancing", "fiverr", "conversion", "bangla"],
+				"minutesRead": 22,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 6
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "07-upwork-proposals",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৭: Upwork প্রপোজাল",
+				"description": "যে প্রপোজালের রিপ্লাই আসে তার গঠন, ক্লায়েন্টের তালিকাটা আসলে কীভাবে সাজানো, Connects-এর বাজেট কীভাবে চালাবে, কোন জব পোস্টে বিড করবেই না, আর হায়ারিং হিস্ট্রি পড়ে তুমি কী জানতে পারো।",
+				"date": "2026-08-30",
+				"tags": ["freelancing", "upwork", "proposals", "bangla"],
+				"minutesRead": 26,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 7
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "08-first-order",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৮: প্রথম অর্ডার",
+				"description": "জিরো রিভিউ থেকে বেরোনোর বাস্তব কৌশল — প্রথম অর্ডার আসলে কোথা থেকে আসে, কম দামে শুরু করার সঠিক ও ভুল উপায়, আর কাজ শুরুর আগে ব্রিফ পরিষ্কার করার পদ্ধতি।",
+				"date": "2026-08-31",
+				"tags": ["freelancing", "fiverr", "upwork", "bangla"],
+				"minutesRead": 22,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 8
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "09-client-communication-and-scope",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ৯: ক্লায়েন্ট কমিউনিকেশন ও স্কোপ",
+				"description": "রেসপন্স টাইম, স্কোপ ক্রিপ কেন আসলে প্রাইসিংয়ের ব্যর্থতা, রিভিশনের সীমা ধরে রাখার ভাষা, খারাপ খবর দেওয়ার পদ্ধতি আর ইংরেজিতে পেশাদার লেখা — যেখানে বেশিরভাগ অর্ডার আসলে ভাঙে।",
+				"date": "2026-09-01",
+				"tags": ["freelancing", "communication", "scope", "bangla"],
+				"minutesRead": 23,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 9
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "10-reviews-and-metrics",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১০: রিভিউ ও মেট্রিক",
+				"description": "Fiverr-এর Success Score আর Upwork-এর Job Success Score আসলে কী মাপে, কোন ভুলে স্কোর পড়ে, ক্যানসেলেশন কেন খারাপ রিভিউয়ের চেয়েও ব্যয়বহুল, আর একটা খারাপ রিভিউ এলে কী করবে।",
+				"date": "2026-09-02",
+				"tags": ["freelancing", "fiverr", "upwork", "metrics", "bangla"],
+				"minutesRead": 24,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 10
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "11-climbing-levels",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১১: লেভেলে ওঠা",
+				"description": "Fiverr-এর New freelancer → Level 1 → Level 2 → Top Rated আর Upwork-এর Rising Talent → Top Rated → Top Rated Plus ও Expert-Vetted — বাস্তব শর্ত, সময়সীমা, গ্রেস পিরিয়ড, আর কী ভাঙলে ব্যাজ চলে যায়।",
+				"date": "2026-09-03",
+				"tags": ["freelancing", "fiverr", "upwork", "levels", "bangla"],
+				"minutesRead": 24,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 11
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "12-pricing-and-retainers",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১২: প্রাইসিং ও রিটেইনার",
+				"description": "ঘণ্টাপ্রতি নিট আয় বের করা, দাম বাড়ানোর সঠিক সময় ও ধাপ, প্যাকেজ পুনর্গঠন ও আপসেল, আর এক-অর্ডারের ক্লায়েন্টকে মাসিক রিটেইনারে নিয়ে যাওয়ার পদ্ধতি।",
+				"date": "2026-09-04",
+				"tags": ["freelancing", "pricing", "retainers", "bangla"],
+				"minutesRead": 22,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 12
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "13-payments-and-tax",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১৩: পেমেন্ট ও ট্যাক্স",
+				"description": "Fiverr আর Upwork থেকে বাংলাদেশে টাকা আনার পুরো পথ — উইথড্র চ্যানেল, তিন জায়গার কাটা, ব্যাংক কী কাগজ চায়, ফ্রিল্যান্সার আইডি ও প্রণোদনা, রেকর্ড রাখা আর করের দায়িত্ব।",
+				"date": "2026-09-05",
+				"tags": ["freelancing", "payments", "tax", "bangladesh", "bangla"],
+				"minutesRead": 23,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 13
+			}
+		},
+		{
+			"series": "freelance-zero-to-pro",
+			"slug": "14-risks-and-beyond-the-platform",
+			"meta": {
+				"title": "ফ্রিল্যান্সিং: জিরো থেকে প্রো — পর্ব ১৪: ঝুঁকি ও প্ল্যাটফর্মের বাইরে",
+				"description": "যে কারণে অ্যাকাউন্ট সত্যিই ব্যান হয় আর যেগুলো নিছক লোককথা, ToS-এর ফাঁদ, স্ক্যাম চেনা, প্ল্যাটফর্ম-নির্ভরতার ঝুঁকি, আর নিয়মের ভেতরে থেকেই নিজের ক্লায়েন্ট বেস বানানো।",
+				"date": "2026-09-06",
+				"tags": ["freelancing", "security", "risk", "bangla"],
+				"minutesRead": 24,
+				"series": "ফ্রিল্যান্সিং: জিরো থেকে প্রো",
+				"seriesPart": 14
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "01-why-remote-hiring-says-no",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১: রিমোট হায়ারিং কেন \"না\" বলে",
+				"description": "দুইশো অ্যাপ্লিকেশন, তিনটা রিপ্লাই — সমস্যাটা স্কিলে না, ফানেলে। হায়ারিং ফানেল ভেতর থেকে কেমন দেখায়, কোন ধাপে বাংলাদেশি ক্যান্ডিডেট বাদ পড়ে, \"সিনিয়র\" শব্দটা ওদের কাছে কী মানে, আর কোন বাজারগুলো বাস্তবে তোমার জন্য খোলা — উপসাগরীয় দেশ, তুরস্ক আর ইউরোপ আগে, US পরে।",
+				"date": "2026-08-17",
+				"tags": ["career", "remote work", "hiring", "interview", "bangla"],
+				"minutesRead": 26,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 1
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "02-positioning",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ২: পজিশনিং — সিনিয়র গল্পটা",
+				"description": "\"আমি ফুল-স্ট্যাক, সবই পারি\" কেন সবচেয়ে দুর্বল অবস্থান। ছয় বছরের কাজকে দুই লাইনে দাঁড় করানো — ডোমেইন, সমস্যার ধরন আর স্কোপ দিয়ে এমন একটা পরিচয় যেটা অচেনা হায়ারিং ম্যানেজার মনে রাখে।",
+				"date": "2026-08-18",
+				"tags": ["career", "remote work", "positioning", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 2
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "03-resume-and-profiles",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৩: রেজিউমে, LinkedIn আর GitHub",
+				"description": "বিদেশি স্ক্রিনারের চোখ ৩০ সেকেন্ডে কোথায় পড়ে — এক পাতার রেজিউমের কাঠামো, বুলেট লেখার ফর্মুলা, ATS নিয়ে সত্যি-মিথ্যা, LinkedIn-এর যে তিনটা ফিল্ড সার্চে ধরা পড়ে, আর GitHub কখন সাহায্য করে কখন ক্ষতি।",
+				"date": "2026-08-19",
+				"tags": ["career", "remote work", "resume", "linkedin", "bangla"],
+				"minutesRead": 26,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 3
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "04-public-proof",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৪: পাবলিক প্রমাণ — লেখা, ওপেন সোর্স, পোর্টফোলিও",
+				"description": "অচেনা কোম্পানির নামের বদলে যাচাইযোগ্য প্রমাণ — কী লিখবে আর কীভাবে, ওপেন সোর্সে কোন ধরনের কাজ আসলে ওজন পায়, README কেন কোডের চেয়ে বেশি পড়া হয়, আর কোন জিনিসগুলো উল্টো ক্ষতি করে।",
+				"date": "2026-08-20",
+				"tags": ["career", "remote work", "writing", "open source", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 4
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "05-where-the-roles-are",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৫: আসল রিমোট রোল কোথায়",
+				"description": "অগ্রাধিকারের ক্রমে চারটা বাজার — উপসাগরীয় দেশ, তুরস্ক, ইউরোপ/UK, তারপর US। কোথায় সত্যিকারের রিমোট রোল আছে, ৩০ সেকেন্ডে কীভাবে ফিল্টার করবে, এজেন্সি মার্কেট কীভাবে কাজ করে, আর টার্গেট কোম্পানির তালিকা কীভাবে বানাবে।",
+				"date": "2026-08-21",
+				"tags": ["career", "remote work", "job search", "bangla"],
+				"minutesRead": 28,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 5
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "06-outreach",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৬: আউটরিচ যেটার রিপ্লাই আসে",
+				"description": "কোল্ড অ্যাপ্লিকেশনের রেসপন্স রেট ১–২%, রেফারেলের ২০–৪০% — ব্যবধানটা কীভাবে পার হবে। অচেনা মানুষের কাছে রেফারেল চাওয়া, হায়ারিং ম্যানেজারকে সরাসরি লেখা, রিক্রুটারদের সাথে কাজ করা, আর ফলো-আপের নিয়ম।",
+				"date": "2026-08-22",
+				"tags": ["career", "remote work", "networking", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 6
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "07-english-and-async",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৭: ইংরেজি আর অ্যাসিঙ্ক কমিউনিকেশন",
+				"description": "রিমোট হায়ারিংয়ে সবচেয়ে বেশি ওজন পায় যেটা, অথচ প্রস্তুতি নেয় সবচেয়ে কম মানুষ — লিখে বোঝানো, ব্লক হলে প্রশ্ন করা, কলে দাঁড়ানো, অ্যাকসেন্ট নিয়ে সত্যি কথা, আর ভিন্নমত জানানোর ভাষা।",
+				"date": "2026-08-23",
+				"tags": ["career", "remote work", "communication", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 7
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "08-recruiter-and-hm-screen",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৮: রিক্রুটার স্ক্রিন আর হায়ারিং ম্যানেজার কল",
+				"description": "লুপের প্রথম দুই কল — যেখানে সবচেয়ে বেশি ক্যান্ডিডেট বাদ পড়ে অথচ কেউ প্রস্তুতি নেয় না। ৯০ সেকেন্ডের পরিচয়, বেতনের প্রশ্ন, টাইমজোন ও নিয়োগের প্রশ্ন, আর ম্যানেজারের আসল দুশ্চিন্তা।",
+				"date": "2026-08-24",
+				"tags": ["career", "remote work", "interview", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 8
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "09-coding-round",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ৯: কোডিং রাউন্ড",
+				"description": "সিনিয়র লেভেলে DSA-র আসল ওজন কতটা, কোন প্যাটার্নগুলো যথেষ্ট, বাস্তব-কোডবেস রাউন্ডে কীভাবে আলাদা হবে, জোরে চিন্তা করার অভ্যাস, আর আটকে গেলে ঠিক কী করতে হয়।",
+				"date": "2026-08-25",
+				"tags": ["career", "remote work", "interview", "algorithms", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 9
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "10-system-design",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১০: সিস্টেম ডিজাইন ইন্টারভিউ",
+				"description": "সিনিয়র লেভেলের সবচেয়ে ওজনদার রাউন্ড — অস্পষ্ট প্রশ্ন সংকুচিত করা, সংখ্যা দিয়ে হিসাব, ট্রেড-অফের ভাষা, অতিরিক্ত ইঞ্জিনিয়ারিংয়ের ফাঁদ, আর ব্যর্থতা ও অপারেশনের যে অংশে বেশিরভাগ ক্যান্ডিডেট চুপ হয়ে যায়।",
+				"date": "2026-08-26",
+				"tags": ["career", "remote work", "interview", "system design", "bangla"],
+				"minutesRead": 28,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 10
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "11-take-home",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১১: টেক-হোম অ্যাসাইনমেন্ট",
+				"description": "রিমোট লুপে টেক-হোম সবচেয়ে সাধারণ, আর তোমার জন্য সবচেয়ে বড় সুযোগ — কতটা সময় দেবে, কতটা বানাবে, README-তে কী লিখবে, রিভিউ কলে কীভাবে ডিফেন্ড করবে, আর কোন অ্যাসাইনমেন্ট ভদ্রভাবে ফিরিয়ে দেবে।",
+				"date": "2026-08-27",
+				"tags": ["career", "remote work", "interview", "bangla"],
+				"minutesRead": 20,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 11
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "12-behavioural",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১২: বিহেভিয়ারাল রাউন্ড আর স্টোরি ব্যাংক",
+				"description": "বারোটা গল্প আগে থেকে তৈরি রাখলে \"একটা দ্বন্দ্বের কথা বলো\" প্রশ্নে আর ফাঁকা লাগে না — STAR-এর দুর্বল জায়গা, একই গল্প তিন প্রশ্নে, সাংস্কৃতিক অনুবাদ, আর রিমোট-নির্দিষ্ট প্রশ্নগুলো।",
+				"date": "2026-08-28",
+				"tags": ["career", "remote work", "interview", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 12
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "13-offer-and-negotiation",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১৩: অফার আর নেগোশিয়েশন",
+				"description": "পে ব্যান্ড কোথা থেকে বের করবে, লোকেশন-ভিত্তিক বেতনের যুক্তি ও পাল্টা যুক্তি, ইকুইটির আসল মূল্য, কন্ট্রাক্টর রেট বনাম ফুল-টাইম বেতনের হিসাব, আর সবচেয়ে ব্যয়বহুল তিনটা ভুল।",
+				"date": "2026-08-29",
+				"tags": ["career", "remote work", "negotiation", "compensation", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 13
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "14-contract-and-employment",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১৪: কন্ট্রাক্ট — contractor, EOR, নাকি এজেন্সি",
+				"description": "তোমাকে কে নিয়োগ দিচ্ছে সেটা বেতনের মতোই গুরুত্বপূর্ণ। তিনটা কাঠামোর তুলনা, IP ও invention ক্লজ, নন-কম্পিট, নোটিশ, পেমেন্টের শর্ত, আর সই করার আগে যে লাইনগুলো অবশ্যই পড়তে হয়।",
+				"date": "2026-08-30",
+				"tags": ["career", "remote work", "contract", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 14
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "15-payments-and-tax",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১৫: পেমেন্ট আর ট্যাক্স — বাংলাদেশ থেকে",
+				"description": "টাকাটা আসলে কীভাবে আসবে — রেমিট্যান্স চ্যানেল আর তাদের খরচ, ফরেন কারেন্সি অ্যাকাউন্ট, প্রণোদনা, ইনভয়েস ও রেকর্ড, আর IT/ITES আয়ের কর কাঠামোর যে অংশটা জানতেই হয়।",
+				"date": "2026-08-31",
+				"tags": ["career", "remote work", "payments", "tax", "bangla"],
+				"minutesRead": 24,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 15
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "16-first-90-days",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১৬: প্রথম ৯০ দিন",
+				"description": "চাকরি পাওয়া অর্ধেক কাজ। অ্যাসিঙ্ক টিমে বিশ্বাস অর্জন — প্রথম দুই সপ্তাহে কী জিজ্ঞেস করবে, কত দ্রুত প্রথম জিনিস শিপ করবে, ওভারল্যাপের ঘণ্টাগুলো কীভাবে খরচ করবে, আর \"চুপচাপ ভালো কাজ\" ফাঁদটা কী।",
+				"date": "2026-09-01",
+				"tags": ["career", "remote work", "onboarding", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 16
+			}
+		},
+		{
+			"series": "remote-job-prep",
+			"slug": "17-staying-and-growing",
+			"meta": {
+				"title": "রিমোট জব প্রিপারেশন — পর্ব ১৭: টিকে থাকা আর এগোনো",
+				"description": "রিমোটে প্রমোশন হলওয়েতে হয় না — প্রভাবের নথি, দৃশ্যমানতা বনাম আত্মপ্রচার, সিনিয়র থেকে স্টাফের পথ, লে-অফে দূরত্বের ঝুঁকি, বার্নআউটের সীমা, আর পুরো সিরিজের এক পাতার চেকলিস্ট।",
+				"date": "2026-09-02",
+				"tags": ["career", "remote work", "growth", "bangla"],
+				"minutesRead": 22,
+				"series": "রিমোট জব প্রিপারেশন",
+				"seriesPart": 17
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "01-video-and-player",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ১: ভিডিও আসলে কী, আর প্লেয়ার কীভাবে চালায়",
+				"description": "পিক্সেল আর ফ্রেম থেকে শুরু করে কোডেক, রেট কন্ট্রোল, কন্টেইনার, সেগমেন্ট, ABR আর প্লেয়ারের ভেতরের পাইপলাইন — পুরো গল্পটা, ধাপে ধাপে।",
+				"date": "2026-07-28",
+				"tags": ["video", "streaming", "codec", "hls", "dash", "bangla", "engineering"],
+				"minutesRead": 42,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 1
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "02-build-a-transcoder",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ২: শেখার জন্য একটা ট্রান্সকোডার বানাই",
+				"description": "ffmpeg দিয়ে হাতে-কলমে — probe থেকে ল্যাডার, কি-ফ্রেম বাঁধা, HLS প্যাকেজিং, থাম্বনেইল, সাবটাইটেল, আর একটা ওয়ার্কার যেটা পুরো কাজটা নিজে করে।",
+				"date": "2026-07-28",
+				"tags": ["video", "ffmpeg", "transcoding", "hls", "bangla", "engineering"],
+				"minutesRead": 48,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 2
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "03-production-transcoder",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৩: প্রোডাকশন-গ্রেড ট্রান্সকোডার",
+				"description": "দশজন থেকে দশ হাজার — আর্কিটেকচার, স্টেট মেশিন, চাংকড এনকোডিং, পার-টাইটেল ল্যাডার, প্যাকেজিং, CDN, খরচ, আর ব্যর্থতার পূর্ণ তালিকা।",
+				"date": "2026-07-28",
+				"tags": ["video", "transcoding", "architecture", "scaling", "bangla", "engineering"],
+				"minutesRead": 52,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 3
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "04-netflix",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৪: নেটফ্লিক্স কীভাবে করে",
+				"description": "পার-টাইটেল থেকে পার-শট, VMAF, ডাইনামিক অপটিমাইজার, Cosmos মাইক্রোসার্ভিস পাইপলাইন, AV1 আর ফিল্ম গ্রেইন সিনথেসিস, আর Open Connect — নেটফ্লিক্সের নিজের লেখা থেকে, সংখ্যাসহ।",
+				"date": "2026-07-29",
+				"tags": ["video", "netflix", "streaming", "vmaf", "av1", "cdn", "bangla", "engineering"],
+				"minutesRead": 46,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 4
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "05-vimeo",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৫: Vimeo কীভাবে করে",
+				"description": "Falkor ট্রান্সকোডিং ইনফ্রা, স্পট ইনস্ট্যান্সে চাংকড এনকোডিং, এনকোডারের ভেতর থেকে VMAF মাপা, Artax দিয়ে প্রোগ্রেসিভ MP4 বানানো, DRM-এর তিন যুগ, আর স্টোরেজের খরচ কমানো।",
+				"date": "2026-07-29",
+				"tags": [
+					"video",
+					"vimeo",
+					"transcoding",
+					"vmaf",
+					"drm",
+					"storage",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 44,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 5
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "06-mux",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৬: Mux কীভাবে করে",
+				"description": "জাস্ট-ইন-টাইম ট্রান্সকোডিং, নিউরাল নেটওয়ার্ক দিয়ে মিলিসেকেন্ডে পার-টাইটেল ল্যাডার, কোয়ালিটি টিয়ার, ওয়েবহুক-চালিত API, LL-HLS, আর ClickHouse-এ চলা QoE অ্যানালিটিক্স — সাথে তিন প্রোভাইডারের তুলনা।",
+				"date": "2026-07-29",
+				"tags": [
+					"video",
+					"mux",
+					"transcoding",
+					"api",
+					"qoe",
+					"clickhouse",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 45,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 6
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "07-live",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৭: লাইভ",
+				"description": "RTMP থেকে SRT আর WHIP, রিয়েল-টাইম এনকোডিংয়ের সীমা, LL-HLS আসলে কীভাবে কাজ করে, লেটেন্সির বাজেট, DVR, ফেইলওভার, SCTE-35 আর বিজ্ঞাপন, আর মাল্টি-CDN স্টিয়ারিং।",
+				"date": "2026-07-30",
+				"tags": [
+					"video",
+					"live",
+					"streaming",
+					"hls",
+					"webrtc",
+					"ads",
+					"cdn",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 47,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 7
+			}
+		},
+		{
+			"series": "video-mastery",
+			"slug": "08-player",
+			"meta": {
+				"title": "ভিডিও মাস্টারি — পর্ব ৮: প্লেয়ার",
+				"description": "নেটিভ HLS বনাম MSE বনাম Managed Media Source, বাফার ব্যবস্থাপনা, ABR অ্যালগরিদম (থ্রুপুট বনাম BOLA), স্টার্টআপের সিদ্ধান্ত, EME আর DRM, ক্যাপশন, CMCD, অটোপ্লে নীতি, আর ত্রুটি থেকে ফেরা।",
+				"date": "2026-07-30",
+				"tags": [
+					"video",
+					"player",
+					"abr",
+					"mse",
+					"eme",
+					"drm",
+					"captions",
+					"bangla",
+					"engineering"
+				],
+				"minutesRead": 46,
+				"series": "ভিডিও মাস্টারি",
+				"seriesPart": 8
 			}
 		}
 	],

@@ -34,11 +34,11 @@ export const SITE = {
 		twitter: 'https://twitter.com/ebns1na',
 		linkedin: 'https://linkedin.com/in/ebnsina.dev'
 	},
-	// Header nav, deliberately short. Directory is the notes track listing, so it
-	// hangs off /notes rather than competing with it; Uses/Now/RSS live in the footer.
+	// Header nav, kept to three. Everything else that is browsable — Series,
+	// Notes, Directory, Uses, Now, RSS — is reachable from the footer sitemap
+	// (and from ⌘K), so the header stays a masthead rather than a menu.
 	nav: [
 		{ label: 'Writing', href: '/blog' },
-		{ label: 'Notes', href: '/notes' },
 		{ label: 'Projects', href: '/projects' },
 		{ label: 'About', href: '/about' }
 	]

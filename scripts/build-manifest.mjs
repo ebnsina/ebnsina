@@ -1,6 +1,7 @@
-// Rebuilds the notes half of content-manifest.json by scanning local content,
-// so new tracks self-register without re-running the `es` migration.
-// Blog entries are preserved from the existing manifest.
+// Rebuilds the notes and series halves of content-manifest.json by scanning
+// local content, so new tracks and series parts self-register without
+// re-running the `es` migration. Blog entries are preserved from the existing
+// manifest.
 //
 // Also emits src/lib/search-index.json — the ⌘K palette's index. Both come
 // from the same pass because the search haystack needs each file's headings,
@@ -14,6 +15,7 @@ import { join } from 'node:path';
 const ROOT = '/Users/ebnsina/Sites/ebnsina';
 const NOTES_DIR = join(ROOT, 'src/content/notes');
 const BLOG_DIR = join(ROOT, 'src/content/blog');
+const SERIES_DIR = join(ROOT, 'src/content/series');
 const MANIFEST = join(ROOT, 'src/lib/content-manifest.json');
 const SEARCH_INDEX = join(ROOT, 'src/lib/search-index.json');
 
@@ -62,23 +64,25 @@ function parseFrontmatter(text) {
 	return meta;
 }
 
-/** Scan the notes tree into manifest entries. `text` rides along for the search
- *  index and is stripped before the manifest is written. */
-function scanNotes(baseDir) {
+/** Scan a `<dir>/<group>/<file>.md` tree into manifest entries. Notes group by
+ *  `category`, series by `series`, so the grouping key is a parameter. `text`
+ *  rides along for the search index and is stripped before the manifest is
+ *  written. */
+function scanTree(baseDir, groupKey) {
 	if (!existsSync(baseDir)) return [];
 	const dirs = readdirSync(baseDir).filter((d) => statSync(join(baseDir, d)).isDirectory());
 	const out = [];
-	for (const category of dirs.sort()) {
-		const files = readdirSync(join(baseDir, category)).filter((f) => f.endsWith('.md'));
+	for (const group of dirs.sort()) {
+		const files = readdirSync(join(baseDir, group)).filter((f) => f.endsWith('.md'));
 		for (const file of files.sort()) {
 			const slug = file.replace(/\.md$/, '');
-			const text = readFileSync(join(baseDir, category, file), 'utf8');
+			const text = readFileSync(join(baseDir, group, file), 'utf8');
 			const meta = parseFrontmatter(text);
 			if (!meta) {
-				console.warn(`! no frontmatter: ${category}/${file}`);
+				console.warn(`! no frontmatter: ${group}/${file}`);
 				continue;
 			}
-			out.push({ category, slug, meta, text });
+			out.push({ [groupKey]: group, slug, meta, text });
 		}
 	}
 	return out;
@@ -138,6 +142,9 @@ function chapterRow({ category, slug, meta, text }) {
 	];
 }
 
+/** Blog posts live flat, so their text is read here rather than carried along
+ *  from a tree scan. Series parts share the row shape (kind 1) but carry their
+ *  series slug in the group column so the URL can be rebuilt at runtime. */
 function postRow(entry) {
 	const file = join(BLOG_DIR, `${entry.slug}.md`);
 	const text = existsSync(file) ? readFileSync(file, 'utf8') : '';
@@ -157,20 +164,45 @@ function postRow(entry) {
 	];
 }
 
-const notes = scanNotes(NOTES_DIR);
+function partRow({ series, slug, meta, text }) {
+	return [
+		1, // reads like a post — it is prose, just ordered
+		series,
+		slug,
+		meta.title,
+		meta.description ?? '',
+		haystack(meta.title, meta.description ?? '', [
+			(meta.tags ?? []).join(' '),
+			meta.series ?? '',
+			series.replace(/-/g, ' '),
+			slug.replace(/[-\d]+/g, ' '),
+			headings(text).join(' ')
+		])
+	];
+}
+
+const notes = scanTree(NOTES_DIR, 'category');
+const series = scanTree(SERIES_DIR, 'series');
 
 const existing = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 const blog = existing.blog ?? [];
-const manifest = { blog, notes: notes.map(({ text, ...rest }) => rest) };
+const strip = ({ text, ...rest }) => rest;
+const manifest = { blog, series: series.map(strip), notes: notes.map(strip) };
 
 writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 
-const rows = [...notes.map(chapterRow), ...blog.filter((p) => !p.meta.draft).map(postRow)];
+const rows = [
+	...notes.map(chapterRow),
+	...blog.filter((p) => !p.meta.draft).map(postRow),
+	...series.filter((p) => !p.meta.draft).map(partRow)
+];
 writeFileSync(SEARCH_INDEX, JSON.stringify(rows) + '\n');
 
 const trackCount = new Set(notes.map((n) => n.category)).size;
 const indexKb = Math.round(Buffer.byteLength(JSON.stringify(rows)) / 1024);
 console.log(
-	`Manifest rebuilt: ${manifest.notes.length} note chapters across ${trackCount} tracks, ${blog.length} blog posts preserved.`
+	`Manifest rebuilt: ${manifest.notes.length} note chapters across ${trackCount} tracks, ` +
+		`${manifest.series.length} series parts across ${new Set(series.map((s) => s.series)).size} series, ` +
+		`${blog.length} blog posts preserved.`
 );
 console.log(`Search index rebuilt: ${rows.length} rows, ${indexKb} KB raw.`);

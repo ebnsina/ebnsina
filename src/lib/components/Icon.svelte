@@ -9,6 +9,7 @@
 	 */
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
+		ArrowLeft02Icon,
 		ArrowRight02Icon,
 		ArrowUpRight01Icon,
 		BookOpen01Icon,
@@ -26,6 +27,7 @@
 	} from '@hugeicons/core-free-icons';
 
 	const ICONS = {
+		arrowLeft: ArrowLeft02Icon,
 		arrowRight: ArrowRight02Icon,
 		arrowUpRight: ArrowUpRight01Icon,
 		book: BookOpen01Icon,

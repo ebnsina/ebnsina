@@ -1,13 +1,33 @@
-import { getBlogPosts, getAllTags, getNoteCategories, getChapters } from '$lib/content';
+import {
+	getBlogPosts,
+	getAllTags,
+	getNoteCategories,
+	getChapters,
+	getSeriesSlugs,
+	getSeriesParts
+} from '$lib/content';
 import { SITE } from '$lib/config';
 
 export const prerender = true;
 
 export function GET() {
-	const paths: string[] = ['', '/projects', '/about', '/uses', '/now', '/blog', '/notes'];
+	const paths: string[] = [
+		'',
+		'/projects',
+		'/about',
+		'/uses',
+		'/now',
+		'/blog',
+		'/series',
+		'/notes'
+	];
 
 	for (const p of getBlogPosts()) paths.push(`/blog/${p.slug}`);
 	for (const t of getAllTags()) paths.push(`/blog/tags/${encodeURIComponent(t)}`);
+	for (const s of getSeriesSlugs()) {
+		paths.push(`/series/${s}`);
+		for (const p of getSeriesParts(s)) paths.push(`/series/${s}/${p.slug}`);
+	}
 	for (const c of getNoteCategories()) {
 		paths.push(`/notes/${c}`);
 		for (const ch of getChapters(c)) paths.push(`/notes/${c}/${ch.slug}`);

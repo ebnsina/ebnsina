@@ -34,14 +34,37 @@ If you do add tests: two vitest projects are defined in `vite.config.ts` — `cl
 
 There is **no `svelte.config.js`** — this project uses the experimental `sveltekit({...})` Vite-plugin config form. All SvelteKit options (`adapter`, `preprocess`/mdsvex, `extensions`, `prerender`, `compilerOptions.experimental.async`, `experimental.remoteFunctions`) are passed inside the `sveltekit()` call in `vite.config.ts`. Editing a `svelte.config.js` will do nothing. `compilerOptions.experimental.async: true` is enabled (top-level `await` / async components are allowed).
 
-## Content pipeline (blog + notes)
+## Content pipeline (blog + series + notes)
 
-Markdown content lives in `src/content/blog/*.md` and `src/content/notes/<category>/*.md`. Reading/loading goes through `src/lib/content.ts`, which uses two layers:
+Markdown content lives in `src/content/blog/*.md`, `src/content/series/<series>/*.md` and `src/content/notes/<category>/*.md`. Reading/loading goes through `src/lib/content.ts`, which uses two layers:
 
-- **`src/lib/content-manifest.json`** — a committed, metadata-only index (frontmatter for every post/chapter). Used for all listing/sorting/counting so the client never bundles full content. **Regenerate it with `node scripts/build-manifest.mjs` after adding/editing/removing note files** — it scans `src/content/notes/`, parses frontmatter, and preserves the existing `blog` entries.
+- **`src/lib/content-manifest.json`** — a committed, metadata-only index (frontmatter for every post/part/chapter). Used for all listing/sorting/counting so the client never bundles full content. **Regenerate it with `node scripts/build-manifest.mjs` after adding/editing/removing note or series files** — it scans `src/content/notes/` and `src/content/series/`, parses frontmatter, and preserves the existing `blog` entries.
 - **Lazy `import.meta.glob`** — one chunk per file, loaded on demand in `loadPost`/`loadChapter`. Do not eagerly import content; it produces a multi-MB client chunk.
 
 Note frontmatter schema: `title, subtitle, chapter (number), level ("beginner"|"intermediate"|"advanced"|"mastery"), readingTime, topics[]`. Categories are declared in `src/lib/data/categories.ts` (`CATEGORIES` map → `label`/`description`/`group`; `GROUP_ORDER` orders the groups), with their Bangla display strings in `src/lib/data/notes-labels.ts`. A new track needs: the markdown files, a `CATEGORIES` entry (plus a `NOTES_CATEGORIES` entry), and a manifest rebuild — it then flows automatically into the notes roadmap, folders, and badges.
+
+### Series
+
+Multi-part writing lives under `/series`, not `/blog`. A series is a directory of markdown parts (`src/content/series/<slug>/NN-*.md`) plus one entry in `src/lib/data/series.ts` (`SERIES` → `slug`/`title`/`tagline`/`description`/`status`) and a manifest rebuild — nothing else. Parts keep the blog frontmatter shape and add `series` (display title) and `seriesPart` (the ordering key; **ordering is by `seriesPart`, never by date or filename**).
+
+Three routes: `/series` (all series, each collapsed to a cover plus the first few parts), `/series/<slug>` (the full ordered index), `/series/<slug>/<part>` (the article — `SeriesPager` for prev/next, `SeriesNav` for the whole index below it). Series parts are **not** listed on `/blog`; each series shows there as a single aurora strip linking into `/series`. They are also excluded from `/blog/tags/*`, so a part renders its tags as plain pills rather than links.
+
+Parts are Bangla prose, so the article sets `lang="bn"` like a notes chapter; the surrounding chrome (`/series`, the landing header, the pager) stays English.
+
+Moving a post into a series changes its URL, so add the old slug to `MOVED_POSTS` in `series.ts` — `/blog/[slug]` builds those as 308 redirects (prerendered, same mechanism as the `/bn/*` ones). RSS carries posts and series parts in one date-sorted feed.
+
+A part still in progress carries `draft: true`; drafts are filtered out of every listing and out of `entries()`, so they never prerender. `SeriesMeta.plannedParts` then makes the counts read "5 of 17 parts" instead of implying the series is finished — set it while a series is `status: 'ongoing'`.
+
+### Content facts must be verified, never recalled
+
+**Any claim in content that can go stale must be checked against a live source before it is written** — platform rules and fees (Fiverr levels, Upwork JSS/Connects, payout channels), pricing, API/library behaviour, job-market conditions, tax and regulatory rules. Model training data is old by definition; a confidently wrong threshold is worse than no number.
+
+The rules:
+
+- Verify against the **primary source** (the platform's own help/docs page, the vendor's pricing page) rather than a blog post summarising it. Use `ctx7` for library/API docs, WebSearch/WebFetch for everything else.
+- When a specific number or threshold goes in the prose, **date it** ("২০২৬ সালের মাঝামাঝি অনুযায়ী") and tell the reader to confirm it at the source, since it moves.
+- If it can't be verified, describe the **mechanism** generically instead of stating a figure. Don't invent statistics, and frame illustrative numbers as illustrative ("মোটামুটি", "আনুমানিক").
+- The same applies to outline stubs — don't bake an unverified figure into a bullet that will later be written up as fact.
 
 ### Notes are Bangla-only
 
