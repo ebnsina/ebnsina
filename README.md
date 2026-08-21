@@ -1,6 +1,6 @@
 ### Salam, I'm Ebn Sina
 
-Crafting halal software for the ummah & beyond · Rajshahi 🇧🇩
+Crafting software for the ummah & beyond · Rajshahi 🇧🇩
 
 ```ts
 const ebnsina = {
