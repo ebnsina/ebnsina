@@ -257,6 +257,7 @@
 	.qs-fill {
 		position: absolute;
 		inset: 0 auto 0 0;
+		border-radius: 0;
 		background: var(--fg);
 	}
 </style>

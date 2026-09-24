@@ -60,7 +60,7 @@
 
 <!-- its own section, on the page, so the footer stays a quiet sitemap -->
 <section class="mx-auto mt-24 max-w-5xl px-5 sm:px-8" aria-labelledby="contact-heading">
-	<div class="surface flex flex-col items-center px-6 py-16 text-center sm:py-20">
+	<div class="surface flex flex-col px-5 py-10 sm:items-center sm:px-6 sm:py-20 sm:text-center">
 		<p class="eyebrow mb-4">Contact</p>
 		<h2
 			id="contact-heading"
@@ -72,7 +72,31 @@
 			I'm happy to talk through architecture, a system that's struggling, or a product you want to
 			get off the ground.
 		</p>
-		<ul class="mt-8 flex flex-wrap items-center justify-center gap-3">
+		<!-- phones: a grouped list of tappable rows, like a settings screen -->
+		<ul class="mt-8 divide-y divide-rule overflow-hidden rounded-xl bg-bg sm:hidden">
+			{#each contacts as c (c.href)}
+				<li>
+					<a
+						href={c.href}
+						target={c.external ? '_blank' : undefined}
+						rel={c.external ? 'noopener' : undefined}
+						class="flex min-h-14 items-center gap-3.5 px-4 py-3 active:bg-[color-mix(in_oklab,var(--fg)_5%,transparent)]"
+					>
+						<span
+							class="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent"
+						>
+							<Icon name={c.icon} size={18} />
+						</span>
+						<span class="min-w-0 flex-1">
+							<span class="block text-xs text-muted">{c.label}</span>
+							<span class="block truncate">{c.value}</span>
+						</span>
+						<Icon name={c.external ? 'arrowUpRight' : 'arrowRight'} size={16} class="text-faint" />
+					</a>
+				</li>
+			{/each}
+		</ul>
+		<ul class="mt-8 hidden flex-wrap items-center justify-center gap-3 sm:flex">
 			{#each contacts as c (c.href)}
 				<li>
 					<a

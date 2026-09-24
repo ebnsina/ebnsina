@@ -50,8 +50,8 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
-		"@fontsource-variable/geist-mono": "^5.2.8",
 		"@fontsource/hind-siliguri": "^5.3.0",
+		"@fontsource/space-mono": "^5.3.0",
 		"geist": "^1.7.2",
 		"mermaid": "^11.16.0",
 		"phosphor-svelte": "^3.1.0"
