@@ -67,7 +67,7 @@
 			{:else if nextChapter}
 				<a
 					href={`/notes/${data.category}/${nextChapter.slug}`}
-					class="rounded-xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklab,var(--accent-solid)_82%,black)]"
+					class="btn btn-solid"
 					>{doneCount === 0 ? t.startHere : t.continueWord} <Icon name="arrowRight" size={14} /></a
 				>
 			{/if}
@@ -111,7 +111,7 @@
 							>
 							{#if isNext}
 								<span
-									class="shrink-0 rounded-lg bg-accent-solid px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-white"
+									class="shrink-0 rounded-lg bg-accent-solid px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-on-accent"
 									>{doneCount === 0 ? t.startBadge : t.nextBadge}</span
 								>
 							{/if}

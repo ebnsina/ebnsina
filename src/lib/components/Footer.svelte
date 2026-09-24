@@ -74,9 +74,9 @@
 						target={c.external ? '_blank' : undefined}
 						rel={c.external ? 'noopener' : undefined}
 						aria-label={`${c.label}: ${c.value}`}
-						class="contact-pill"
+						class="contact-pill btn btn-ghost"
 					>
-						<Icon name={c.icon} size={20} />
+						<Icon name={c.icon} size={18} />
 						<span class="contact-label"><span>{c.value}</span></span>
 					</a>
 				</li>
@@ -90,7 +90,7 @@
 		<div class="relative z-10 grid gap-10 pt-16 pb-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8">
 			<div class="max-w-xs">
 				<p class="font-display text-base font-semibold tracking-tight">
-					Ebn <span class="text-accent">Sina</span>
+					Ebn <span class="font-normal text-muted">Sina</span>
 				</p>
 				<p class="mt-2.5 text-[0.95rem] leading-relaxed text-muted">
 					Software engineer building infrastructure and developer products — and writing about the
@@ -140,20 +140,11 @@
 	/* Icon-only at rest; hovering or focusing slides the value out. The label
 	   animates grid-template-columns 0fr → 1fr, which transitions smoothly to the
 	   text's real width with no measured max-width. */
+	/* .btn supplies size, type and colour; this only removes the side padding so
+	   the collapsed button is a 46px square around its icon */
 	.contact-pill {
-		display: inline-flex;
-		align-items: center;
-		height: 3rem;
-		padding: 0 0.875rem;
-		border-radius: var(--radius-button);
-		background: var(--bg);
-		color: var(--fg);
-		font-size: 0.9375rem;
-		font-weight: 500;
-		text-decoration: none;
-		transition:
-			background-color 0.3s ease,
-			color 0.3s ease;
+		gap: 0;
+		padding: 0 13px;
 	}
 	.contact-label {
 		display: grid;
@@ -166,10 +157,10 @@
 		overflow: hidden;
 		white-space: nowrap;
 	}
-	.contact-pill:hover,
 	.contact-pill:focus-visible {
+		border-color: var(--accent-solid);
 		background: var(--accent-solid);
-		color: #fff;
+		color: var(--on-accent);
 	}
 	.contact-pill:hover .contact-label,
 	.contact-pill:focus-visible .contact-label {

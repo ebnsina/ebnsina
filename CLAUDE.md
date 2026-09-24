@@ -158,16 +158,19 @@ There is no 3D (three.js/Threlte were removed). The home hero and `PageBanner` a
 
 ## Design system & theming
 
-`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **The accent is Honolulu blue** (`--accent: #006db0` light, `#60abeb` dark; `--accent-solid` is deliberately identical in both themes because it always carries white ink). Reskinning the whole site means changing those hex values and nothing else.
+`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **The site is monochrome — no hue anywhere, including state and emphasis.** `--accent` is ink (`--fg`), `--accent-solid` is `#0b0b0d` light / `#f4f4f6` dark with `--on-accent` as its text colour; greys are `--muted`, `--faint`, `--rule`, `--rule-strong`, `--surface`. Hierarchy comes from weight, size and space. (Previously: `--accent: #006db0` light, `#60abeb` dark; `--accent-solid` is deliberately identical in both themes because it always carries white ink). Reskinning the whole site means changing those hex values and nothing else.
 
 **Fonts — two families plus the Bangla face:**
 
-- **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-sans`, `--font-display` and `--font-serif` — there is no separate serif or display family.
+- **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-display` and `--font-serif` — every heading (h1–h3 are forced to 700 = Bulky).
+- **Mona Sans Variable** (`@fontsource-variable/mona-sans`, width axis loaded) fills `--font-sans` — all body text.
 - **Geist Mono** fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
-- **Noto Sans Bengali** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
+- **Hind Siliguri** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
 - `static/fonts/` still holds `GeistPixel-Square.woff2` and the Oddval faces, and `geist` is still in `dependencies` — all unused leftovers. Don't build on them.
 
 Colour mixes involving `--accent` use **oklab**, never oklch: oklch interpolates hue, and blending the blue (hue 246) toward the warm page (hue 40) swings through red and tints everything pink.
+
+**Every corner is square** — a global `border-radius: 0 !important` in the monochrome block at the end of `layout.css`; the radius tokens still exist but resolve to nothing visible. **Buttons** use `.btn` + `.btn-solid`/`.btn-ghost` (46px, mono uppercase, 0.12em tracking, invert to solid on hover); don't hand-roll button styles.
 
 **Type rules.** Every small uppercase label uses the `.eyebrow` class (mono, 0.68rem, 0.16em tracking, muted), and every article-type h1 uses `.title-page`. Both live in `@layer components` in `layout.css` so utilities can still override. Headings are weight 600, never bold. Bengali text is never letter-spaced (a `[lang='bn']` rule forces it off). Don't hand-roll new tracking/size combos.
 
@@ -179,7 +182,7 @@ Colour mixes involving `--accent` use **oklab**, never oklch: oklch interpolates
 
 The header (`Header.svelte`) is transparent at rest so it blends into the hero, and fades in a blurred surface once scrolled — painted by a `::before` so nav text is never inside a filtered layer. It has no bottom rule in either state.
 
-Brand/visual constraints: no neon/glow; minimal cards; Honolulu blue is the only saturated colour.
+Brand/visual constraints: no neon/glow; minimal cards; no hue anywhere.
 
 **Corner radius has two tokens and no third option**: `--radius-button` (0.75rem) for buttons and controls, `--radius-card` (1.5rem) for cards and panels — declared on `:root` in `layout.css` right after the brand palette. Tailwind's `--radius-xl` / `--radius-3xl` are aliased to them in `@theme inline`, so `rounded-xl` in markup and `var(--radius-button)` in CSS are the same declaration and cannot drift; changing those two values re-rounds the whole site. Content panels that read as cards (callouts, code blocks, Mermaid figures, prose images) take the card radius. Pills stay `rounded-full`, and small inline chips (kbd, inline code, level badges) keep their own small radii. The site previously enforced **sharp corners** through a global `border-radius: 0 !important`; that reset is gone, so `rounded-*` classes in the markup are live and do mean what they say.
 

@@ -24,11 +24,11 @@
 		lang="bn"
 	>
 		{#snippet actions()}
-			<a href={href(parts[0].slug)} class="start-link">
+			<a href={href(parts[0].slug)} class="btn btn-solid">
 				Start with part 1
-				<Icon name="arrowRight" size={15} />
+				<Icon name="arrowRight" size={14} class="icon-shift" />
 			</a>
-			<a href="/series" class="back-link">All series</a>
+			<a href="/series" class="btn btn-ghost">All series</a>
 		{/snippet}
 	</PageBanner>
 
@@ -58,29 +58,7 @@
 </div>
 
 <style>
-	.start-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.45rem;
-		padding: 0.6rem 1.05rem;
-		border-radius: var(--radius-button);
-		background: var(--accent-solid);
-		color: #fff;
-		font-size: 0.875rem;
-		font-weight: 600;
-		text-decoration: none;
-	}
 
-	.back-link {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.6rem 1.05rem;
-		border-radius: var(--radius-button);
-		background: color-mix(in oklch, var(--fg) 6%, transparent);
-		font-size: 0.875rem;
-		font-weight: 600;
-		text-decoration: none;
-	}
 
 	.parts {
 		list-style: none;

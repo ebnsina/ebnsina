@@ -1,19 +1,18 @@
-/** The site runs on ONE hue: Honolulu blue. What used to be a categorical palette of
- *  eight hues is now eight steps along a single Honolulu-blue lightness ramp — authored
- *  as oklch(L 0.11 246) and stored as sRGB hex so the same values work in CSS
- *  (color-mix).
+/** The site is monochrome. Categories are eight steps along a cool grey ramp,
+ *  stored as hex so the same values work in CSS (color-mix).
  *
  *  Categories are therefore distinguished by *value*, not by hue. Keep it that
  *  way: adding a second hue here re-introduces the rainbow this replaced. */
 export const CAT_COLORS = [
-	'#07568b', // oklch 0.44 0.11 246
-	'#1e659b', // oklch 0.49 0.11 246
-	'#2f74aa', // oklch 0.54 0.11 246
-	'#3f83bb', // oklch 0.59 0.11 246
-	'#4f92cb', // oklch 0.64 0.11 246
-	'#5ea2db', // oklch 0.69 0.11 246
-	'#6eb1ec', // oklch 0.74 0.11 246
-	'#7dc1fd' // oklch 0.79 0.11 246
+	// monochrome: a cool grey ramp, no hue
+	'#3a3a40',
+	'#4a4a51',
+	'#5a5a62',
+	'#63636d',
+	'#74747e',
+	'#85858f',
+	'#94949f',
+	'#a3a3ad'
 ];
 
 export const catColor = (i: number) =>

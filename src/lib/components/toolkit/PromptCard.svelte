@@ -132,7 +132,7 @@
 
 	.primary {
 		background: var(--accent-solid);
-		color: #fff;
+		color: var(--on-accent);
 	}
 
 	.ghost {

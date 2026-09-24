@@ -24,18 +24,18 @@
 >
 	<div class="hero-bg" aria-hidden="true"></div>
 
-	<div class="mx-auto flex max-w-3xl flex-col items-center px-5 pt-12 pb-20 text-center sm:px-8 sm:pt-20 sm:pb-28">
+	<div class="mx-auto flex max-w-5xl flex-col items-center px-5 pt-12 pb-20 text-center sm:px-8 sm:pt-20 sm:pb-28">
 		<p
-			class="mb-8 inline-flex items-center gap-2 rounded-full bg-[color-mix(in_oklch,var(--fg)_5%,transparent)] px-3.5 py-1.5 eyebrow"
+			class="mb-8 inline-flex items-center gap-2 eyebrow"
 		>
 			<span class="inline-block size-1.5 rounded-full bg-accent"></span>
 			<Typewriter words={TITLES} />
 		</p>
 
 		<h1
-			class="font-display text-[2.4rem] font-semibold leading-[1.04] tracking-[-0.035em] text-balance sm:text-6xl"
+			class="font-display text-[clamp(2.5rem,7.2vw,5.75rem)] leading-[0.97] tracking-[-0.038em] text-balance [font-stretch:86%]"
 		>
-			Building <span class="text-accent">fast, durable</span> systems — and the craft behind them.
+			Building <span class="font-light">fast, durable</span> systems — and the craft behind them.
 		</h1>
 
 		<p class="mt-7 max-w-2xl text-lg leading-[1.65] text-pretty text-muted sm:text-xl">
@@ -47,18 +47,18 @@
 		<div class="mt-10 flex flex-wrap items-center justify-center gap-3">
 			<a
 				href="/projects"
-				class="rounded-xl bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[color-mix(in_oklab,var(--accent-solid)_82%,black)]"
+				class="btn btn-solid"
 				>See my work</a
 			>
 			<a
 				href="/blog"
-				class="group inline-flex items-center gap-1.5 rounded-xl bg-[color-mix(in_oklch,var(--fg)_6%,transparent)] px-5 py-2.5 text-sm font-medium transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_10%,transparent)]"
+				class="btn btn-ghost"
 			>
 				Read the writing
 				<Icon
 					name="arrowRight"
 					size={14}
-					class="transition-transform group-hover:translate-x-0.5"
+					class="icon-shift"
 				/>
 			</a>
 		</div>
