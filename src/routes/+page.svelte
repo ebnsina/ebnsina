@@ -14,7 +14,7 @@
 		'Full-Stack Engineer'
 	];
 
-	const FOCUS = ['Video infrastructure', 'CDN & edge', 'Analytics pipelines', 'Developer tools'];
+	const FOCUS = ['Backend & APIs', 'Distributed systems', 'Video & streaming', 'Data pipelines'];
 </script>
 
 <Seo />
@@ -38,10 +38,9 @@
 			Building <span class="text-accent">fast, durable</span> systems — and the craft behind them.
 		</h1>
 
-		<p class="mt-7 max-w-2xl text-lg leading-[1.65] text-pretty text-muted sm:text-xl">
-			I'm {SITE.name}, an engineer where infrastructure meets product. Right now I'm deep in
-			<span class="text-fg">video infrastructure</span> — ingest, transcoding at scale, and the edge caching
-			that gets frames to viewers fast. I write here to think out loud.
+		<p class="mt-7 max-w-xl text-lg leading-[1.65] text-pretty text-muted sm:text-xl">
+			I'm {SITE.name}, a backend and platform engineer. I design systems that stay fast and reliable
+			as they scale, and write about how they work.
 		</p>
 
 		<div class="mt-10 flex flex-wrap items-center justify-center gap-3">
