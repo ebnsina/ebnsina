@@ -13,7 +13,7 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 	'system-design': {
 		label: 'System Design: Zero to Mastery',
 		description:
-			'A complete curriculum for engineers who have never designed a system — estimation, storage, scaling, failure, and six end-to-end project designs',
+			'A complete curriculum for engineers who have never designed a system: estimation, storage, scaling, failure, and six end-to-end project designs',
 		group: 'Foundations'
 	},
 	dsa: { label: 'DSA', description: 'Data structures and algorithms', group: 'Foundations' },
@@ -209,7 +209,7 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 	},
 	'ethical-hacking': {
 		label: 'Ethical Hacking',
-		description: 'Penetration testing, OSINT, exploitation, CTF — zero to professional',
+		description: 'Penetration testing, OSINT, exploitation, CTF, from zero to professional',
 		group: 'Security'
 	}
 };

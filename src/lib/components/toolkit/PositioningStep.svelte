@@ -36,7 +36,7 @@
 	const line = $derived(
 		[
 			p.role,
-			p.domain && `— ${p.domain}`,
+			p.domain && `· ${p.domain}`,
 			p.problemType && `, ${p.problemType}`,
 			p.stack.length ? `. ${p.stack.join(', ')}` : ''
 		]
@@ -128,7 +128,7 @@
 				<p class="line proof-line">
 					{proof.problem}
 					{#if proof.metric.before && proof.metric.after}
-						— {proof.metric.before} → {proof.metric.after} {proof.metric.unit}
+						: {proof.metric.before} → {proof.metric.after} {proof.metric.unit}
 					{/if}
 				</p>
 			{/if}

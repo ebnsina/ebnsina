@@ -164,7 +164,7 @@
 		label="শেষ লাইন"
 		bind:value={draft.closing}
 		rows={2}
-		placeholder="I can send a 20-minute walkthrough of how I'd approach the reconciliation — want it?"
+		placeholder="I can send a 20-minute walkthrough of how I'd approach the reconciliation. Want it?"
 		hint="একটা নির্দিষ্ট পরবর্তী ধাপ দাও।"
 	/>
 

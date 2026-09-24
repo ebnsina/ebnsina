@@ -19,7 +19,7 @@
 		profilePage?: boolean;
 	} = $props();
 
-	const fullTitle = $derived(title ? `${title} — ${SITE.name}` : SITE.title);
+	const fullTitle = $derived(title ? `${title} | ${SITE.name}` : SITE.title);
 	const canonical = $derived(new URL(page.url.pathname, SITE.url).href);
 	const ogImage = $derived(new URL(image, SITE.url).href);
 
@@ -93,7 +93,7 @@
 	<meta name="twitter:creator" content={SITE.twitterHandle} />
 	<meta name="twitter:site" content={SITE.twitterHandle} />
 
-	<link rel="alternate" type="application/rss+xml" title="{SITE.name} — RSS" href="/rss.xml" />
+	<link rel="alternate" type="application/rss+xml" title="{SITE.name} RSS" href="/rss.xml" />
 
 	{@html jsonLdScript}
 </svelte:head>

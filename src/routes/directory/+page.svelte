@@ -12,15 +12,15 @@
 </script>
 
 <Seo
-	title="Track directory — Notes"
-	description="Browse every notes track, grouped by area — foundations, languages, infrastructure, data, scaling and more."
+	title="Track directory · Notes"
+	description="Browse every notes track, grouped by area: foundations, languages, infrastructure, data, scaling and more."
 />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
 		eyebrow="The directory"
 		title="Browse all tracks"
-		description={`Every track, grouped by area — ${trackCount} tracks across ${total} chapters. Hover a folder to open its topics.`}
+		description={`Every track, grouped by area. ${trackCount} tracks across ${total} chapters. Hover a folder to open its topics.`}
 	/>
 
 	<div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">

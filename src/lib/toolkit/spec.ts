@@ -63,7 +63,7 @@ export function overviewSpec(p: Positioning, evidence: Evidence[], platform: str
 			...evidence.map((e, i) => ({ label: `Evidence ${i + 1}`, body: evidenceBlock(e) }))
 		],
 		constraints: [
-			'The first 250 characters must stand alone — they are all a client sees in search results.',
+			'The first 250 characters must stand alone. They are all a client sees in search results.',
 			'Open with the problem I solve, not with "I am a…".',
 			'Every claim must be backed by one of the evidence blocks above.',
 			PLAIN_ENGLISH,
@@ -87,7 +87,7 @@ export function gigSpec(gig: GigDraft, p: Positioning, evidence: Evidence[]): Pr
 						.filter((pk) => pk.name)
 						.map(
 							(pk) =>
-								`Package ${pk.name}: ${pk.price}, ${pk.deliveryDays} days, ${pk.revisions} revisions — ${pk.includes.join('; ')}`
+								`Package ${pk.name}: ${pk.price}, ${pk.deliveryDays} days, ${pk.revisions} revisions: ${pk.includes.join('; ')}`
 						)
 				]
 					.filter(Boolean)
@@ -98,7 +98,7 @@ export function gigSpec(gig: GigDraft, p: Positioning, evidence: Evidence[]): Pr
 		constraints: [
 			'Maximum 1200 characters.',
 			'Lead with what the buyer gets, not with my biography.',
-			'State plainly what is NOT included — that prevents the scope disputes that cost ratings.',
+			'State plainly what is NOT included. That prevents the scope disputes that cost ratings.',
 			PLAIN_ENGLISH,
 			NO_INVENTION
 		],
@@ -142,7 +142,7 @@ export function proposalSpec(
 		].filter((c): c is { label: string; body: string } => c !== null),
 		constraints: [
 			extraction.screeners.length
-				? 'Follow the screening instruction exactly and literally — it is the first thing the client checks.'
+				? 'Follow the screening instruction exactly and literally. It is the first thing the client checks.'
 				: '',
 			'Open by naming their specific problem, not by introducing myself.',
 			'Answer every question they asked, in their order.',
@@ -152,7 +152,7 @@ export function proposalSpec(
 			PLAIN_ENGLISH,
 			NO_INVENTION
 		].filter(Boolean),
-		output: 'The proposal text only — no subject line, no explanation of your choices.'
+		output: 'The proposal text only: no subject line, no explanation of your choices.'
 	};
 }
 

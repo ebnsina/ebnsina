@@ -14,22 +14,19 @@
 
 <Seo
 	title="Series"
-	description="Multi-part writing meant to be read in order — one subject taken from first principles to production."
+	description="Multi-part writing meant to be read in order: one subject taken from first principles to production."
 />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
 		title="Series"
-		description="Multi-part writing meant to be read in order — one subject, taken from first principles all the way to production."
+		description="Multi-part writing meant to be read in order: one subject, taken from first principles all the way to production."
 	/>
 
 	<div class="flex flex-col gap-10">
 		{#each data.series as { meta, parts } (meta.slug)}
 			<section use:reveal class="series-panel">
-				<a
-					href={`/series/${meta.slug}`}
-					class="panel-cover surface"
-				>
+				<a href={`/series/${meta.slug}`} class="panel-cover surface">
 					<span class="panel-eyebrow">
 						<Icon name="bookText" size={14} />
 						{partsLabel(parts.length, meta.plannedParts)} · {meta.status === 'complete'
@@ -84,7 +81,6 @@
 		padding: 1.25rem 1.35rem;
 		text-decoration: none;
 	}
-
 
 	.panel-eyebrow {
 		display: inline-flex;

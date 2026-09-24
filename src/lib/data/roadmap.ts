@@ -17,7 +17,7 @@ export const ROADMAP: RoadmapLevel[] = [
 		title: 'Fundamentals',
 		level: 'beginner',
 		blurb:
-			'How systems talk, store data, and move bits across the network — the bedrock everything else builds on.',
+			'How systems talk, store data, and move bits across the network. The bedrock everything else builds on.',
 		outcomes: [
 			'How clients and servers talk',
 			'Storing and modelling data',
@@ -30,7 +30,7 @@ export const ROADMAP: RoadmapLevel[] = [
 		title: 'Build & Ship',
 		level: 'intermediate',
 		blurb:
-			'Write the services and interfaces people actually use — languages, and the APIs that connect them.',
+			'Write the services and interfaces people actually use: languages, and the APIs that connect them.',
 		outcomes: [
 			'Backend languages in practice',
 			'Designing clean REST & GraphQL APIs',
@@ -57,7 +57,7 @@ export const ROADMAP: RoadmapLevel[] = [
 		title: 'Mastery',
 		level: 'mastery',
 		blurb:
-			'Keep it reliable and secure under real-world pressure — the work that separates seniors from the rest.',
+			'Keep it reliable and secure under real-world pressure. The work that separates seniors from the rest.',
 		outcomes: [
 			'Observability and reliability under load',
 			'Security and auth at scale',

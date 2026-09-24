@@ -8,7 +8,7 @@
 	const sorted = [...projects].sort((a, b) => a.order - b.order || b.year - a.year);
 </script>
 
-<Seo title="Projects" description="Things I've built — products, tools, experiments." />
+<Seo title="Projects" description="Things I've built: products, tools, experiments." />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
@@ -18,8 +18,8 @@
 	/>
 
 	<p class="mx-auto mb-10 max-w-2xl text-center text-[1.05rem] leading-[1.75] text-muted">
-		Eight products built end to end — video, live streaming, webinars, analytics, links, images,
-		commerce, and the account platform they all share — followed by a few tools on the side. The
+		Eight products built end to end (video, live streaming, webinars, analytics, links, images,
+		commerce, and the account platform they all share), followed by a few tools on the side. The
 		theme is the same throughout: take something operationally painful and make it boring and
 		reliable.
 	</p>

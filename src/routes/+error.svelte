@@ -12,12 +12,8 @@
 	</h1>
 	<p class="mb-8 text-muted">
 		{page.status === 404
-			? "That page doesn't exist — or it moved."
+			? "That page doesn't exist, or it moved."
 			: (page.error?.message ?? 'An unexpected error occurred.')}
 	</p>
-	<a
-		href="/"
-		class="btn btn-solid"
-		>Back home</a
-	>
+	<a href="/" class="btn btn-solid">Back home</a>
 </div>

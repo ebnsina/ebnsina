@@ -35,7 +35,7 @@
 		<h1
 			class="font-display text-[clamp(2.5rem,7.2vw,5.75rem)] leading-[0.97] tracking-[-0.038em] text-balance"
 		>
-			Building <span class="text-accent">fast, durable</span> systems.
+			Building <span class="text-accent">fast, durable</span> systems and the craft behind them.
 		</h1>
 
 		<p class="mt-7 max-w-xl text-lg leading-[1.65] text-pretty text-muted sm:text-xl">

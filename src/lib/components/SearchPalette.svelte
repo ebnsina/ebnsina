@@ -252,7 +252,7 @@
 				</p>
 			{:else}
 				<p class="border-t border-rule px-4 py-8 text-center text-sm text-muted">
-					Search every chapter, track, post and project — by title, topic or heading.
+					Search every chapter, track, post and project by title, topic or heading.
 				</p>
 			{/if}
 

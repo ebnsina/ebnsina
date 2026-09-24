@@ -125,7 +125,7 @@
 					Ebn <span class="text-accent">Sina</span>
 				</p>
 				<p class="mt-2.5 text-[0.95rem] leading-relaxed text-muted">
-					Software engineer building infrastructure and developer products — and writing about the
+					Software engineer building infrastructure and developer products, and writing about the
 					craft behind them.
 				</p>
 			</div>

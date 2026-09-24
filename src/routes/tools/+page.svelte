@@ -9,13 +9,13 @@
 
 <Seo
 	title="Tools"
-	description="Working tools that go with the series — an evidence bank, a profile and gig builder, and a proposal composer that reads the job post."
+	description="Working tools that go with the series: an evidence bank, a profile and gig builder, and a proposal composer that reads the job post."
 />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
 		title="Tools"
-		description="Kits that turn each series into something you actually fill in — your evidence, your profile, your proposal. Everything stays in your browser."
+		description="Kits that turn each series into something you actually fill in: your evidence, your profile, your proposal. Everything stays in your browser."
 	/>
 
 	<div class="flex flex-col gap-4">
@@ -42,7 +42,7 @@
 	</div>
 
 	<p class="note">
-		No account, no upload. Everything you type is stored in this browser only — export it from any
+		No account, no upload. Everything you type is stored in this browser only. Export it from any
 		kit to move or back it up.
 	</p>
 </div>
@@ -55,7 +55,6 @@
 		padding: 1.25rem 1.4rem;
 		text-decoration: none;
 	}
-
 
 	.is-planned {
 		opacity: 0.55;

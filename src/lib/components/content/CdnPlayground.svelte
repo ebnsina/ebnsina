@@ -33,7 +33,7 @@
 					nodePop.setAttribute('stroke', '#999');
 				} else {
 					const remaining = Math.max(0, Math.round((entry.exp - Date.now()) / 1000));
-					popTTL.textContent = remaining > 0 ? 'cached — TTL ' + remaining + 's' : 'cache: expired';
+					popTTL.textContent = remaining > 0 ? 'cached · TTL ' + remaining + 's' : 'cache: expired';
 					nodePop.setAttribute('stroke', remaining > 0 ? '#1e6b3a' : '#b31412');
 				}
 			}
@@ -76,7 +76,7 @@
 				await animatePacket(70, 350, 95, 400, '#4a4a4a');
 				if (isHit) {
 					showLatency('~8ms  HIT');
-					addFlowLog('GET /resource → PoP [' + region + '] — X-Cache: HIT (~8ms)', 'log-hit');
+					addFlowLog('GET /resource → PoP [' + region + '] · X-Cache: HIT (~8ms)', 'log-hit');
 					await animatePacket(350, 70, 95, 350, '#1e6b3a');
 				} else {
 					await animatePacket(350, 630, 95, 500, '#b31412');
@@ -84,7 +84,7 @@
 					await animatePacket(630, 350, 95, 500, '#555');
 					popCache[region] = { exp: Date.now() + TTL_SEC * 1000 };
 					addFlowLog(
-						'GET /resource → PoP [' + region + '] → origin — X-Cache: MISS (~180ms)',
+						'GET /resource → PoP [' + region + '] → origin · X-Cache: MISS (~180ms)',
 						'log-miss'
 					);
 					await animatePacket(350, 70, 95, 400, '#4a4a4a');
@@ -99,7 +99,7 @@
 				popCache[region] = null;
 				updatePopDisplay(region);
 				setFlowStatus('purged', '');
-				addFlowLog('PURGE PoP [' + region + '] — cache cleared', 'log-info');
+				addFlowLog('PURGE PoP [' + region + '] · cache cleared', 'log-info');
 			});
 			document.getElementById('sel-region').addEventListener('change', () => {
 				updatePopDisplay(document.getElementById('sel-region').value);
@@ -143,7 +143,7 @@
 					html =
 						'<span class="tag tag-browser">browser: ' +
 						fmt(maxAge) +
-						'</span><span class="tag tag-none">CDN: skip</span><p>Only the browser may cache this. Shared caches (CDN, proxies) must not store it. Correct for authenticated pages — different users see different content.</p>';
+						'</span><span class="tag tag-none">CDN: skip</span><p>Only the browser may cache this. Shared caches (CDN, proxies) must not store it. Correct for authenticated pages, where different users see different content.</p>';
 				} else {
 					const cdnTTL = sMaxAge !== '' ? parseInt(sMaxAge) : maxAge;
 					html =
@@ -220,7 +220,7 @@
 						: 'empty';
 				document.getElementById(region + '-status').className =
 					'sim-pop-status' + (isHit ? ' hit' : entry ? ' miss' : '');
-				document.getElementById(region + '-ttl').textContent = isHit ? 'TTL: ' + ttlRem + 's' : '—';
+				document.getElementById(region + '-ttl').textContent = isHit ? 'TTL: ' + ttlRem + 's' : '–';
 				document.getElementById(region + '-stats').innerHTML =
 					'HIT: ' + pop.hits + ' &nbsp; MISS: ' + pop.misses;
 			}
@@ -252,7 +252,7 @@
 					pops[r].cache = {};
 					renderPop(r);
 				});
-				addSimLog('PURGE ALL — cache cleared across all PoPs', 'log-info');
+				addSimLog('PURGE ALL · cache cleared across all PoPs', 'log-info');
 			});
 			document
 				.getElementById('sim-url')
@@ -315,7 +315,7 @@
 				);
 				const pkt = document.getElementById('stack-pkt');
 				pkt.style.opacity = '0';
-				badge.textContent = '—';
+				badge.textContent = '–';
 				badge.className = 'pg-badge';
 				layoutWires();
 			}
@@ -367,7 +367,7 @@
 					addStackLog('Gcore CDN Cache: HIT  (TTL 3580s remaining)', 'log-hit');
 					setMs('sn-gcore', '~6ms');
 					await animPacket('sn-gcore', 'sn-user', '#1e6b3a');
-					setBadge('HIT — 6ms', 'hit');
+					setBadge('HIT · 6ms', 'hit');
 					addStackLog('Response delivered. Origin never contacted.', 'log-hit');
 				},
 				'ram-hit': async () => {
@@ -384,7 +384,7 @@
 					await sleep(250);
 					lightLayer('sl-cdncache', 'miss');
 					await sleep(350);
-					addStackLog('Gcore CDN: MISS — forwarding to shield', 'log-miss');
+					addStackLog('Gcore CDN: MISS · forwarding to shield', 'log-miss');
 					await animPacket('sn-gcore', 'sn-shield', '#4a4a4a');
 					lightNode('sn-shield');
 					lightLayer('sl-access', 'pass');
@@ -394,7 +394,7 @@
 					addStackLog('OpenResty RAM cache: HIT  (~0.1ms lookup)', 'log-hit');
 					setMs('sn-shield', '~18ms');
 					await animPacket('sn-shield', 'sn-user', '#1e6b3a');
-					setBadge('RAM HIT — 18ms', 'hit');
+					setBadge('RAM HIT · 18ms', 'hit');
 				},
 				'disk-hit': async () => {
 					setBadge('running…', '');
@@ -421,11 +421,11 @@
 					addStackLog('Disk cache: HIT  (NVMe, ~1ms read)', 'log-hit');
 					setMs('sn-shield', '~22ms');
 					await animPacket('sn-shield', 'sn-user', '#1e6b3a');
-					setBadge('Disk HIT — 22ms', 'hit');
+					setBadge('Disk HIT · 22ms', 'hit');
 				},
 				'full-miss': async () => {
 					setBadge('running…', '');
-					addStackLog('GET /api/live-prices  (full MISS — all caches cold)', 'log-info');
+					addStackLog('GET /api/live-prices  (full MISS, all caches cold)', 'log-info');
 					lightNode('sn-user');
 					await animPacket('sn-user', 'sn-gcore', '#4a4a4a');
 					lightNode('sn-gcore');
@@ -458,7 +458,7 @@
 					await animPacket('sn-shield', 'sn-gcore', '#555');
 					await animPacket('sn-gcore', 'sn-user', '#4a4a4a');
 					setMs('sn-shield', '~160ms');
-					setBadge('MISS — 160ms', 'miss');
+					setBadge('MISS · 160ms', 'miss');
 					addStackLog('Next request to any PoP: HIT.', 'log-hit');
 				},
 				'waf-block': async () => {
@@ -476,7 +476,7 @@
 					addStackLog('WAF rule matched: sqli-tautology → 403 Forbidden', 'log-miss');
 					setMs('sn-gcore', '~2ms');
 					await animPacket('sn-gcore', 'sn-user', '#b31412');
-					setBadge('WAF BLOCK — 403', 'miss');
+					setBadge('WAF BLOCK · 403', 'miss');
 					addStackLog('Shield and origin never saw this request.', 'log-hit');
 				},
 				'rate-limit': async () => {
@@ -500,7 +500,7 @@
 					addStackLog('access.lua: token bucket empty for this IP → 429', 'log-miss');
 					setMs('sn-shield', '~5ms');
 					await animPacket('sn-shield', 'sn-user', '#b31412');
-					setBadge('RATE LIMITED — 429', 'miss');
+					setBadge('RATE LIMITED · 429', 'miss');
 				},
 				'origin-down': async () => {
 					setBadge('running…', '');
@@ -537,7 +537,7 @@
 					await animPacket('sn-origin', 'sn-shield', '#e0a000');
 					await animPacket('sn-shield', 'sn-user', '#e0a000');
 					setMs('sn-shield', 'STALE ~5s');
-					setBadge('STALE — origin down', '');
+					setBadge('STALE · origin down', '');
 					addStackLog('User received stale copy. Site stays up. (X-Cache: STALE)', 'log-hit');
 				}
 			};
@@ -590,7 +590,7 @@
 				});
 				ball.style.transition = 'none';
 				ball.style.left = '-20px';
-				status.textContent = '—';
+				status.textContent = '–';
 			}
 			async function runPhases(steps) {
 				running = true;
@@ -617,8 +617,8 @@
 				normal: [
 					{ phase: 'ph-set', color: 'pass', note: 'Variables computed from request headers' },
 					{ phase: 'ph-rewrite', color: 'pass', note: 'No rewrite rules matched' },
-					{ phase: 'ph-access', color: 'pass', note: 'Rate limit OK — token consumed' },
-					{ phase: 'ph-cache', color: 'pass', note: 'Cache MISS — forwarding to upstream' },
+					{ phase: 'ph-access', color: 'pass', note: 'Rate limit OK, token consumed' },
+					{ phase: 'ph-cache', color: 'pass', note: 'Cache MISS, forwarding to upstream' },
 					{ phase: 'ph-proxy', color: 'pass', note: 'Origin returned 200 OK in 140ms' },
 					{ phase: 'ph-hf', color: 'mod', note: 'X-Cache: MISS header injected' },
 					{ phase: 'ph-log', color: 'pass', note: 'Metrics pushed to Redis' }
@@ -630,7 +630,7 @@
 					{
 						phase: 'ph-cache',
 						color: 'pass',
-						note: 'Cache HIT — served from disk in ~1ms',
+						note: 'Cache HIT, served from disk in ~1ms',
 						halt: true
 					}
 				],
@@ -668,10 +668,10 @@
 					{ phase: 'ph-set', color: 'pass', note: 'Variables computed' },
 					{ phase: 'ph-rewrite', color: 'pass', note: 'No rewrite matched' },
 					{ phase: 'ph-access', color: 'pass', note: 'Session cookie verified' },
-					{ phase: 'ph-cache', color: 'mod', note: 'Cache bypassed — Cache-Control: private' },
+					{ phase: 'ph-cache', color: 'mod', note: 'Cache bypassed (Cache-Control: private)' },
 					{ phase: 'ph-proxy', color: 'pass', note: 'Origin served personalised response' },
 					{ phase: 'ph-hf', color: 'mod', note: 'Set-Cookie + private headers preserved' },
-					{ phase: 'ph-log', color: 'pass', note: 'Logged — user_id from JWT claim' }
+					{ phase: 'ph-log', color: 'pass', note: 'Logged: user_id from JWT claim' }
 				]
 			};
 			document.querySelectorAll('.phase-scen').forEach((btn) => {
@@ -724,7 +724,7 @@
 					);
 				} else {
 					rejected++;
-					addBucketLog('✗ ' + (label || 'request') + ' rejected — 429  [bucket empty]', 'bl-err');
+					addBucketLog('✗ ' + (label || 'request') + ' rejected · 429  [bucket empty]', 'bl-err');
 				}
 				renderBucket();
 			}
@@ -774,7 +774,7 @@
 				fetch: {
 					badge: 'FETCHING',
 					fill: 0,
-					text: 'Request sent to origin. Single-flight lock held — concurrent requests wait rather than all hit origin simultaneously.'
+					text: 'Request sent to origin. Single-flight lock held, so concurrent requests wait rather than all hit origin simultaneously.'
 				},
 				fresh: {
 					badge: 'HIT ✓',
@@ -789,7 +789,7 @@
 				reval: {
 					badge: 'REVALIDATING',
 					fill: 0,
-					text: 'Edge sends If-None-Match: "<etag>" to origin. If unchanged, origin returns 304 (no body) — cheap and fast. TTL reset.'
+					text: 'Edge sends If-None-Match: "<etag>" to origin. If unchanged, origin returns 304 (no body), which is cheap and fast. TTL reset.'
 				}
 			};
 			function go(idx) {
@@ -808,7 +808,7 @@
 					'pg-badge ' +
 					(state === 'fresh' ? 'hit' : state === 'stale' || state === 'reval' ? 'miss' : '');
 				ttlFill.style.width = d.fill + '%';
-				ttlVal.textContent = state === 'fresh' ? TTL_DEMO + 's' : '—';
+				ttlVal.textContent = state === 'fresh' ? TTL_DEMO + 's' : '–';
 				explain.textContent = d.text;
 				if (state === 'fresh') {
 					ttlStart = Date.now();
@@ -898,7 +898,7 @@
 			<option value="de">Frankfurt PoP</option>
 			<option value="us">Virginia PoP</option>
 		</select>
-		<span class="pg-badge" id="flow-status">—</span>
+		<span class="pg-badge" id="flow-status">–</span>
 	</div>
 	<svg id="flow-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
 		<defs>
@@ -917,7 +917,7 @@
 			</symbol>
 		</defs>
 		<text id="latency-label" x="350" y="18" class="svg-latency" text-anchor="middle" opacity="0"
-			>—</text
+			>–</text
 		>
 		<text id="pop-ttl" x="350" y="38" class="svg-small" text-anchor="middle">cache: empty</text>
 		<line x1="100" y1="95" x2="318" y2="95" stroke="#e0e0e0" stroke-width="2" />
@@ -1026,8 +1026,8 @@
 <h3 class="pg-section-heading">Mini CDN simulator</h3>
 
 <p class="pg-section-text">
-	Three independent PoP caches. Send requests to any region — each PoP maintains its own cache
-	state. Watch hit rates build up, TTLs count down, and see how purge affects all PoPs.
+	Three independent PoP caches. Send requests to any region. Each PoP maintains its own cache state.
+	Watch hit rates build up, TTLs count down, and see how purge affects all PoPs.
 </p>
 
 <div class="pg-card">
@@ -1060,26 +1060,26 @@
 		<div class="sim-pop" id="pop-sg">
 			<div class="sim-pop-name">Singapore</div>
 			<div class="sim-pop-status" id="sg-status">empty</div>
-			<div class="sim-pop-ttl" id="sg-ttl">—</div>
+			<div class="sim-pop-ttl" id="sg-ttl">–</div>
 			<div class="sim-pop-stats" id="sg-stats">HIT: 0 &nbsp; MISS: 0</div>
 		</div>
 		<div class="sim-pop" id="pop-de">
 			<div class="sim-pop-name">Frankfurt</div>
 			<div class="sim-pop-status" id="de-status">empty</div>
-			<div class="sim-pop-ttl" id="de-ttl">—</div>
+			<div class="sim-pop-ttl" id="de-ttl">–</div>
 			<div class="sim-pop-stats" id="de-stats">HIT: 0 &nbsp; MISS: 0</div>
 		</div>
 		<div class="sim-pop" id="pop-us">
 			<div class="sim-pop-name">Virginia</div>
 			<div class="sim-pop-status" id="us-status">empty</div>
-			<div class="sim-pop-ttl" id="us-ttl">—</div>
+			<div class="sim-pop-ttl" id="us-ttl">–</div>
 			<div class="sim-pop-stats" id="us-stats">HIT: 0 &nbsp; MISS: 0</div>
 		</div>
 	</div>
 	<div class="pg-log" id="sim-log"><span class="pg-log-empty">Log will appear here…</span></div>
 </div>
 
-<h3 class="pg-section-heading">Full CDN stack — all layers</h3>
+<h3 class="pg-section-heading">Full CDN stack: all layers</h3>
 
 <p class="pg-section-text">
 	Pick a scenario and watch the request travel through every layer. Each layer lights up as the
@@ -1165,9 +1165,9 @@
 <h3 class="pg-section-heading">nginx phase pipeline</h3>
 
 <p class="pg-section-text">
-	Every HTTP request passes through nginx's phases left to right. Pick a scenario — the request ball
-	moves through each phase, stopping where it gets blocked or short-circuited. Green = pass through,
-	yellow = modified, red = blocked.
+	Every HTTP request passes through nginx's phases left to right. Pick a scenario and the request
+	ball moves through each phase, stopping where it gets blocked or short-circuited. Green = pass
+	through, yellow = modified, red = blocked.
 </p>
 
 <div class="pg-card">
@@ -1237,7 +1237,7 @@
 				<div class="ph-desc">emit metrics</div>
 			</div>
 		</div>
-		<div class="phase-status" id="phase-status">—</div>
+		<div class="phase-status" id="phase-status">–</div>
 	</div>
 </div>
 
@@ -1355,7 +1355,7 @@
 			</div>
 		</div>
 		<div class="csm-ttl-wrap">
-			<div class="csm-ttl-label">TTL <span id="csm-ttl-val">—</span></div>
+			<div class="csm-ttl-label">TTL <span id="csm-ttl-val">–</span></div>
 			<div class="csm-ttl-bar"><div class="csm-ttl-fill" id="csm-ttl-fill"></div></div>
 		</div>
 		<div class="csm-explain" id="csm-explain">Press Step or Auto to begin.</div>

@@ -35,15 +35,11 @@
 	);
 </script>
 
-<Seo title={`${data.meta.label} — ${t.notesTitle}`} description={data.meta.description} />
+<Seo title={`${data.meta.label} · ${t.notesTitle}`} description={data.meta.description} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8" lang="bn">
 	<header class="mb-8">
-		<a
-			href="/notes"
-			class="eyebrow transition-colors hover:text-fg"
-			>{t.backToNotes}</a
-		>
+		<a href="/notes" class="eyebrow transition-colors hover:text-fg">{t.backToNotes}</a>
 		<h1 class="mb-3 mt-3 title-page">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
@@ -65,9 +61,7 @@
 					<TrackBadge label={data.meta.label} color={trackColor} earned size="sm" />
 				</div>
 			{:else if nextChapter}
-				<a
-					href={`/notes/${data.category}/${nextChapter.slug}`}
-					class="btn btn-solid"
+				<a href={`/notes/${data.category}/${nextChapter.slug}`} class="btn btn-solid"
 					>{doneCount === 0 ? t.startHere : t.continueWord} <Icon name="arrowRight" size={14} /></a
 				>
 			{/if}
@@ -121,10 +115,7 @@
 					<span class="hidden flex-shrink-0 sm:block"
 						><LevelBadge level={ch.meta.level} label={t.levels[ch.meta.level]} /></span
 					>
-					<span
-						class="hidden flex-shrink-0 eyebrow sm:block"
-						>{ch.meta.readingTime}</span
-					>
+					<span class="hidden flex-shrink-0 eyebrow sm:block">{ch.meta.readingTime}</span>
 					<Icon
 						name="arrowRight"
 						size={16}

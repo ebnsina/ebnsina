@@ -48,7 +48,7 @@ export const projects: Project[] = [
 		slug: 'alchemist',
 		icon: 'film',
 		description:
-			'Video transcoding and delivery — upload once and get an adaptive stream that plays on any phone, on any connection, with signed playback and per-minute billing.',
+			'Video transcoding and delivery. Upload once and get an adaptive stream that plays on any phone, on any connection, with signed playback and per-minute billing.',
 		year: 2026,
 		stack: ['Go', 'ffmpeg', 'PostgreSQL', 'ClickHouse', 'S3'],
 		featured: true,
@@ -57,11 +57,11 @@ export const projects: Project[] = [
 			summary:
 				'A video platform that turns one upload into an adaptive-bitrate stream, encodes in parallel without visible seams, and only spends compute on the renditions people actually watch.',
 			problem:
-				'Course creators, publishers and product teams in Bangladesh need video that starts fast on a cheap phone over a patchy mobile connection — and they pay for every minute of encoding and every gigabyte served. Alchemist takes a single upload and produces an adaptive stream that starts at the smallest size and climbs as the connection allows, with playback links that expire and a library that is protected from casual copying.',
+				'Course creators, publishers and product teams in Bangladesh need video that starts fast on a cheap phone over a patchy mobile connection, and they pay for every minute of encoding and every gigabyte served. Alchemist takes a single upload and produces an adaptive stream that starts at the smallest size and climbs as the connection allows, with playback links that expire and a library that is protected from casual copying.',
 			challenges: [
 				{
 					title: 'Parallel encoding without quality seams',
-					body: 'Splitting a long video into chunks is the only way to encode it quickly, but chunks encoded independently tend to pump — the quality visibly jumps at every boundary. Each chunk is encoded with constant-quality rate control capped by a buffer limit, never per-chunk average bitrate, on a fixed two-second keyframe interval shared by every rendition with scene-cut keyframes disabled. Because every rendition lines up on the same boundaries, chunks stitch back together and players switch sizes mid-stream without a re-encode.'
+					body: 'Splitting a long video into chunks is the only way to encode it quickly, but chunks encoded independently tend to pump: the quality visibly jumps at every boundary. Each chunk is encoded with constant-quality rate control capped by a buffer limit, never per-chunk average bitrate, on a fixed two-second keyframe interval shared by every rendition with scene-cut keyframes disabled. Because every rendition lines up on the same boundaries, chunks stitch back together and players switch sizes mid-stream without a re-encode.'
 				},
 				{
 					title: 'Only paying to encode what gets watched',
@@ -69,11 +69,11 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Protecting a library without real DRM',
-					body: 'Customers selling courses need more than an unguessable URL. Segments are encrypted with common encryption and a key licence, with the opening seconds left in the clear so playback starts without waiting on the licence. Links can be bound to a single viewer and a watermark label, with a per-viewer device cap and origin locking on top. It is honest encryption, not studio DRM — and the documentation says so.'
+					body: 'Customers selling courses need more than an unguessable URL. Segments are encrypted with common encryption and a key licence, with the opening seconds left in the clear so playback starts without waiting on the licence. Links can be bound to a single viewer and a watermark label, with a per-viewer device cap and origin locking on top. It is honest encryption, not studio DRM, and the documentation says so.'
 				},
 				{
 					title: 'Importing whole libraries safely',
-					body: 'Moving to a new host means pulling hundreds of videos from wherever they live now. Import accepts a URL, a CSV, another hosting provider or a customer’s own bucket — and because fetching arbitrary URLs from inside the network is a classic server-side request forgery hole, every fetch is checked against private address ranges and re-checked after each redirect.'
+					body: 'Moving to a new host means pulling hundreds of videos from wherever they live now. Import accepts a URL, a CSV, another hosting provider or a customer’s own bucket. Because fetching arbitrary URLs from inside the network is a classic server-side request forgery hole, every fetch is checked against private address ranges and re-checked after each redirect.'
 				}
 			],
 			implementation: [
@@ -87,7 +87,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Stable identities for changing files',
-					body: 'A video can have its file replaced, be trimmed in the built-in studio, or gain captions and chapters while its id, embed code and analytics stay the same — so a link printed in a course never breaks.'
+					body: 'A video can have its file replaced, be trimmed in the built-in studio, or gain captions and chapters while its id, embed code and analytics stay the same, so a link printed in a course never breaks.'
 				}
 			],
 			stackWhy: [
@@ -105,7 +105,7 @@ export const projects: Project[] = [
 				},
 				{
 					tech: 'ClickHouse',
-					why: 'Viewing heartbeats are high-volume and append-only — exactly what a columnar store aggregates cheaply.'
+					why: 'Viewing heartbeats are high-volume and append-only, exactly what a columnar store aggregates cheaply.'
 				},
 				{
 					tech: 'S3-compatible storage',
@@ -128,7 +128,7 @@ export const projects: Project[] = [
 		slug: 'yayin',
 		icon: 'broadcast',
 		description:
-			'Live streaming on your own channel — go live from OBS or a browser, reach viewers as adaptive HLS, and find the recording already waiting as a video.',
+			'Live streaming on your own channel. Go live from OBS or a browser, reach viewers as adaptive HLS, and find the recording already waiting as a video.',
 		year: 2026,
 		stack: ['Go', 'MediaMTX', 'ffmpeg', 'S3'],
 		featured: true,
@@ -155,11 +155,11 @@ export const projects: Project[] = [
 			implementation: [
 				{
 					title: 'Recording without a re-upload',
-					body: 'When a broadcast ends, its recording is handed to the on-demand video pipeline as a background job that retries for up to a day — so an outage never loses a recording, and the broadcaster never uploads the same hours twice.'
+					body: 'When a broadcast ends, its recording is handed to the on-demand video pipeline as a background job that retries for up to a day, so an outage never loses a recording, and the broadcaster never uploads the same hours twice.'
 				},
 				{
 					title: 'Plans that depend on each other',
-					body: 'Live streaming builds on the video platform underneath it, so a channel can only be switched on when that dependency is active — the account layer enforces the relationship rather than each product checking it.'
+					body: 'Live streaming builds on the video platform underneath it, so a channel can only be switched on when that dependency is active. The account layer enforces the relationship rather than each product checking it.'
 				}
 			],
 			stackWhy: [
@@ -195,7 +195,7 @@ export const projects: Project[] = [
 		slug: 'seyr',
 		icon: 'chart',
 		description:
-			'Privacy-first web analytics — no cookies, no consent banner, no stored addresses, and every number an exact count rather than a sample.',
+			'Privacy-first web analytics: no cookies, no consent banner, no stored addresses, and every number an exact count rather than a sample.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'JavaScript'],
 		featured: true,
@@ -204,11 +204,11 @@ export const projects: Project[] = [
 			summary:
 				'Cookieless site analytics that counts unique visitors without being able to follow any one of them, reported in the business’s own time zone.',
 			problem:
-				'Site owners want to know which pages people read and where they came from, without cookie banners or handing visitor data to an ad company. Seyr reports pages, referrers, countries and devices with exact counts — and is built so that even someone holding the database cannot reconstruct who visited.',
+				'Site owners want to know which pages people read and where they came from, without cookie banners or handing visitor data to an ad company. Seyr reports pages, referrers, countries and devices with exact counts, and is built so that even someone holding the database cannot reconstruct who visited.',
 			challenges: [
 				{
 					title: 'Counting visitors without tracking them',
-					body: 'Unique visitors normally mean a cookie or a fingerprint. Instead, a visitor is a truncated one-way hash of the site, the address and the browser, salted with a random value that lives only in memory and rolls over every day. The same person produces a different identifier tomorrow, and no raw address is ever stored — so there is nothing to link across days, even from a full copy of the table.'
+					body: 'Unique visitors normally mean a cookie or a fingerprint. Instead, a visitor is a truncated one-way hash of the site, the address and the browser, salted with a random value that lives only in memory and rolls over every day. The same person produces a different identifier tomorrow, and no raw address is ever stored, so there is nothing to link across days, even from a full copy of the table.'
 				},
 				{
 					title: 'Keeping fake traffic out',
@@ -258,20 +258,20 @@ export const projects: Project[] = [
 		slug: 'ulak',
 		icon: 'link',
 		description:
-			'Short links on your own domain — a readable address and a QR code for every link, with click counts that tell you which poster or SMS worked.',
+			'Short links on your own domain, with a readable address and a QR code for every link, with click counts that tell you which poster or SMS worked.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL'],
 		featured: true,
 		order: 4,
 		caseStudy: {
 			summary:
-				'A branded link shortener built for links that get printed, read aloud and typed back in — with domain verification that keeps checking after day one.',
+				'A branded link shortener built for links that get printed, read aloud and typed back in, with domain verification that keeps checking after day one.',
 			problem:
-				'Businesses put links on posters, SMS campaigns and packaging, then have no idea which one worked — and a random short code is hard to type from a printed flyer. Ulak serves short links from the customer’s own domain, generates a QR code for each, and counts clicks per link so every channel can be measured.',
+				'Businesses put links on posters, SMS campaigns and packaging, then have no idea which one worked, and a random short code is hard to type from a printed flyer. Ulak serves short links from the customer’s own domain, generates a QR code for each, and counts clicks per link so every channel can be measured.',
 			challenges: [
 				{
 					title: 'Proving a domain is really yours',
-					body: 'Serving links from a customer’s domain means verifying ownership and that the domain actually points at the service. Verification uses a DNS TXT record plus a resolution check, and a nightly sweep re-checks every domain — pausing, not deleting, any that stop resolving, and notifying the owner.'
+					body: 'Serving links from a customer’s domain means verifying ownership and that the domain actually points at the service. Verification uses a DNS TXT record plus a resolution check, and a nightly sweep re-checks every domain, pausing (not deleting) any that stop resolving, and notifying the owner.'
 				},
 				{
 					title: 'Slugs people can read aloud',
@@ -279,7 +279,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Links that can change after printing',
-					body: 'Once a poster is printed its link cannot change — but its destination might need to. Redirects are temporary rather than permanent, so browsers never cache the old destination and a link can be repointed at any time.'
+					body: 'Once a poster is printed its link cannot change, but its destination might need to. Redirects are temporary rather than permanent, so browsers never cache the old destination and a link can be repointed at any time.'
 				}
 			],
 			implementation: [
@@ -317,7 +317,7 @@ export const projects: Project[] = [
 		slug: 'hafif',
 		icon: 'image',
 		description:
-			'Image delivery — keep images where they already are and request any size and format from a signed URL, resized and cached on the fly.',
+			'Image delivery. Keep images where they already are and request any size and format from a signed URL, resized and cached on the fly.',
 		year: 2026,
 		stack: ['Go', 'libvips'],
 		featured: true,
@@ -326,7 +326,7 @@ export const projects: Project[] = [
 			summary:
 				'An on-the-fly image service that resizes and re-encodes from signed URLs, caches aggressively, and cannot be turned into an open proxy.',
 			problem:
-				'Product photos and article images are often far larger than the phone that shows them. Hafif lets a site keep its originals where they are and ask for the size and format each page needs — the image is fetched, resized, re-encoded to a modern format and cached, so the next visitor gets it instantly.',
+				'Product photos and article images are often far larger than the phone that shows them. Hafif lets a site keep its originals where they are and ask for the size and format each page needs. The image is fetched, resized, re-encoded to a modern format and cached, so the next visitor gets it instantly.',
 			challenges: [
 				{
 					title: 'Not becoming an open proxy',
@@ -372,7 +372,7 @@ export const projects: Project[] = [
 		slug: 'dukkan',
 		icon: 'storefront',
 		description:
-			'An online shop built around how selling already works in Bangladesh — cash on delivery, courier booking, every district and thana, and a ledger that reconciles.',
+			'An online shop built around how selling already works in Bangladesh: cash on delivery, courier booking, every district and thana, and a ledger that reconciles.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'S3'],
 		featured: true,
@@ -381,15 +381,15 @@ export const projects: Project[] = [
 			summary:
 				'Commerce for cash-on-delivery markets: couriers, settlements and a double-entry ledger, with a path from a single shop to a multi-seller marketplace.',
 			problem:
-				'Most online selling in Bangladesh is cash on delivery through a courier, and the hard part is not the storefront — it is knowing whether the courier’s settlement matches the orders. Dukkan runs the shop, books couriers against all 64 districts and their thanas, and keeps the books straight; adding a second seller turns the same shop into a marketplace with commission and payouts.',
+				'Most online selling in Bangladesh is cash on delivery through a courier, and the hard part is not the storefront. It is knowing whether the courier’s settlement matches the orders. Dukkan runs the shop, books couriers against all 64 districts and their thanas, and keeps the books straight; adding a second seller turns the same shop into a marketplace with commission and payouts.',
 			challenges: [
 				{
 					title: 'Money that has to reconcile',
-					body: 'Every amount is an integer in the smallest unit, shown with South Asian digit grouping. Behind it sits a double-entry ledger — courier and gateway receivables, bank, per-seller payables, commission — that rejects an unbalanced entry before it ever reaches the database.'
+					body: 'Every amount is an integer in the smallest unit, shown with South Asian digit grouping. Behind it sits a double-entry ledger (courier and gateway receivables, bank, per-seller payables, commission) that rejects an unbalanced entry before it ever reaches the database.'
 				},
 				{
 					title: 'Checking courier settlements',
-					body: 'Couriers pay out in bulk and report in spreadsheets whose columns vary. Settlement reports are matched by column header, parsed without floating point, and the gap between what the courier paid and what matched orders account for is shown plainly — with parcels left unpaid too long flagged for follow-up.'
+					body: 'Couriers pay out in bulk and report in spreadsheets whose columns vary. Settlement reports are matched by column header, parsed without floating point, and the gap between what the courier paid and what matched orders account for is shown plainly, with parcels left unpaid too long flagged for follow-up.'
 				},
 				{
 					title: 'Never overselling',
@@ -409,7 +409,7 @@ export const projects: Project[] = [
 			stackWhy: [
 				{
 					tech: 'Go',
-					why: 'A large domain — catalogue, orders, couriers, ledger, payouts — kept in one type-checked codebase.'
+					why: 'A large domain (catalogue, orders, couriers, ledger, payouts) kept in one type-checked codebase.'
 				},
 				{
 					tech: 'PostgreSQL',
@@ -436,7 +436,7 @@ export const projects: Project[] = [
 		slug: 'majlis',
 		icon: 'chalkboard',
 		description:
-			'Webinars for large rooms — the audience joins with a short code, no account or download, and can chat, ask, upvote and answer polls in time with the talk.',
+			'Webinars for large rooms. The audience joins with a short code, no account or download, and can chat, ask, upvote and answer polls in time with the talk.',
 		year: 2026,
 		stack: ['Go', 'WebSockets', 'PostgreSQL'],
 		featured: true,
@@ -445,7 +445,7 @@ export const projects: Project[] = [
 			summary:
 				'An interactive webinar room for hundreds of people that avoids a media server entirely, and keeps polls in sync with a stream that runs seconds behind.',
 			problem:
-				'A class or a town hall of a few hundred people needs everyone to hear the host and be able to take part — without installing anything. Majlis lets the audience join with a six-character code, and gives them chat, questions with upvotes and live polls; the recording lands in the video library afterwards.',
+				'A class or a town hall of a few hundred people needs everyone to hear the host and be able to take part without installing anything. Majlis lets the audience join with a six-character code, and gives them chat, questions with upvotes and live polls; the recording lands in the video library afterwards.',
 			challenges: [
 				{
 					title: 'Scale without a media server',
@@ -453,7 +453,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Polls that arrive before the host says them',
-					body: 'With viewers seconds behind, a poll launched live would appear before the audience has heard the question. Every message records both wall-clock time and position in the talk, and polls are held back by the room’s measured lag — the median of recent player reports, clamped to a sane range because browsers cannot be trusted.'
+					body: 'With viewers seconds behind, a poll launched live would appear before the audience has heard the question. Every message records both wall-clock time and position in the talk, and polls are held back by the room’s measured lag: the median of recent player reports, clamped to a sane range because browsers cannot be trusted.'
 				},
 				{
 					title: 'One slow reader must not stall the room',
@@ -481,7 +481,7 @@ export const projects: Project[] = [
 				}
 			],
 			features: [
-				'Join with a six-character code — no account, no download',
+				'Join with a six-character code: no account, no download',
 				'Chat, questions with upvotes and moderated Q&A',
 				'Live polls synchronised to the stream delay',
 				'Recording saved to the video library',
@@ -495,7 +495,7 @@ export const projects: Project[] = [
 		slug: 'seher',
 		icon: 'wallet',
 		description:
-			'One account, one wallet and one bill for a family of products — with tenant isolation enforced by the database and a ledger that cannot drift.',
+			'One account, one wallet and one bill for a family of products, with tenant isolation enforced by the database and a ledger that cannot drift.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'SvelteKit'],
 		featured: true,
@@ -504,11 +504,11 @@ export const projects: Project[] = [
 			summary:
 				'The account platform underneath every product: organisations, a prepaid wallet in taka, subscriptions, API keys and notifications, in a modular monolith built to be split later.',
 			problem:
-				'Running several products as separate SaaS means separate logins, separate bills and separate security models. Seher gives a business one account, one set of organisations and one wallet: top up once, switch products on, and each product charges for what it uses — with plain, published prices.',
+				'Running several products as separate SaaS means separate logins, separate bills and separate security models. Seher gives a business one account, one set of organisations and one wallet: top up once, switch products on, and each product charges for what it uses, with plain, published prices.',
 			challenges: [
 				{
 					title: 'Tenant isolation in the database, not the app',
-					body: 'Application-level filtering is one forgotten clause away from a data leak. Every organisation-scoped table — more than a hundred of them — has row-level security keyed on the account set for that transaction, and the application role sees zero rows without it. API keys resolve to an account too, so machines get exactly the same isolation as people.'
+					body: 'Application-level filtering is one forgotten clause away from a data leak. Every organisation-scoped table (more than a hundred of them) has row-level security keyed on the account set for that transaction, and the application role sees zero rows without it. API keys resolve to an account too, so machines get exactly the same isolation as people.'
 				},
 				{
 					title: 'A wallet that cannot go wrong',
@@ -530,7 +530,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Everything a team needs around it',
-					body: 'Members and roles, API keys, per-device sessions, an audit log, and a notification bell pushed over WebSockets — built once and shared by every product.'
+					body: 'Members and roles, API keys, per-device sessions, an audit log, and a notification bell pushed over WebSockets, built once and shared by every product.'
 				}
 			],
 			stackWhy: [
@@ -562,7 +562,7 @@ export const projects: Project[] = [
 		slug: 'snapkeep',
 		icon: 'aperture',
 		description:
-			'A native macOS screenshot and screen-recording tool — capture, annotate, and keep, fully on-device with no accounts, cloud, or telemetry.',
+			'A native macOS screenshot and screen-recording tool. Capture, annotate, and keep, fully on-device with no accounts, cloud, or telemetry.',
 		year: 2026,
 		stack: ['Swift 6', 'SwiftUI', 'ScreenCaptureKit', 'Vision'],
 		url: 'https://github.com/ebnsina/SnapKeep/releases',
@@ -570,25 +570,25 @@ export const projects: Project[] = [
 		order: 9,
 		caseStudy: {
 			summary:
-				'A native macOS capture tool — region/window/full-screen screenshots, screen recording, annotation, and on-device OCR — that never touches the network.',
+				'A native macOS capture tool (region/window/full-screen screenshots, screen recording, annotation, and on-device OCR) that never touches the network.',
 			problem:
-				'Privacy-conscious Mac users and creators want fast capture, annotation, and short screen recordings without sending anything to the cloud. SnapKeep does it all on-device: no accounts, no telemetry, no cost — a menubar utility that captures, annotates, and keeps.',
+				'Privacy-conscious Mac users and creators want fast capture, annotation, and short screen recordings without sending anything to the cloud. SnapKeep does it all on-device: no accounts, no telemetry, no cost. A menubar utility that captures, annotates, and keeps.',
 			challenges: [
 				{
 					title: 'Making screen-recording permission painless',
-					body: 'macOS Screen Recording permission is notoriously awkward — it typically forces users to quit and relaunch the app before capture works. SnapKeep triggers the system permission prompt at the right moment on launch and then re-checks authorization every time it comes back to the foreground, so returning from System Settings picks up the newly-granted permission automatically, with no manual restart.'
+					body: 'macOS Screen Recording permission is notoriously awkward: it typically forces users to quit and relaunch the app before capture works. SnapKeep triggers the system permission prompt at the right moment on launch and then re-checks authorization every time it comes back to the foreground, so returning from System Settings picks up the newly-granted permission automatically, with no manual restart.'
 				},
 				{
 					title: 'Low-latency recording and real-time encoding',
-					body: 'Screen frames arrive continuously on a background thread and must be encoded to video without ever blocking the UI or dropping behind real time. The recording engine runs entirely off the main thread on its own synchronized queue and deals with the real constraints of hardware H.264 — dimensions rounded to even numbers, a real-time encoding budget, a bounded backlog, and starting the video timeline from the first captured frame before audio is mixed in.'
+					body: 'Screen frames arrive continuously on a background thread and must be encoded to video without ever blocking the UI or dropping behind real time. The recording engine runs entirely off the main thread on its own synchronized queue and deals with the real constraints of hardware H.264: dimensions rounded to even numbers, a real-time encoding budget, a bounded backlog, and starting the video timeline from the first captured frame before audio is mixed in.'
 				},
 				{
 					title: 'One annotation model, identical on screen and export',
-					body: "Every markup tool — pen, marker, arrow, shapes, text, numbered steps, pixelate — is described by a single data model with one shared drawing routine used both for the live editing canvas and the final exported image, guaranteeing what you see is exactly what you save. Pixelate redaction carefully maps between on-screen coordinates and the image's true pixel grid so a redacted region can be cropped, downscaled, and re-enlarged into a solid mosaic that can't be reversed."
+					body: "Every markup tool (pen, marker, arrow, shapes, text, numbered steps, pixelate) is described by a single data model with one shared drawing routine used both for the live editing canvas and the final exported image, guaranteeing what you see is exactly what you save. Pixelate redaction carefully maps between on-screen coordinates and the image's true pixel grid so a redacted region can be cropped, downscaled, and re-enlarged into a solid mosaic that can't be reversed."
 				},
 				{
 					title: 'Fully offline OCR and a menubar-only lifecycle',
-					body: "Copy-Text extracts text from any capture using Apple's on-device text recognition — no image ever leaves the machine — and reorders the results to match natural reading order. The app lives entirely in the menu bar with no Dock icon, allows only one running instance, and registers truly system-wide keyboard shortcuts so capture fires no matter which app currently has focus."
+					body: "Copy-Text extracts text from any capture using Apple's on-device text recognition (no image ever leaves the machine) and reorders the results to match natural reading order. The app lives entirely in the menu bar with no Dock icon, allows only one running instance, and registers truly system-wide keyboard shortcuts so capture fires no matter which app currently has focus."
 				}
 			],
 			implementation: [
@@ -602,7 +602,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Database-free local storage',
-					body: 'Captures are saved as timestamped PNG/JPEG files in the user\'s Pictures folder and copied to the clipboard immediately. The history view is simply the newest files read back from that folder — there is no database and no network, which keeps the "everything stays on your Mac" promise honest and the storage format completely transparent.'
+					body: 'Captures are saved as timestamped PNG/JPEG files in the user\'s Pictures folder and copied to the clipboard immediately. The history view is simply the newest files read back from that folder. There is no database and no network, which keeps the "everything stays on your Mac" promise honest and the storage format completely transparent.'
 				},
 				{
 					title: 'Reproducible builds and one-click distribution',
@@ -640,7 +640,7 @@ export const projects: Project[] = [
 				'Screen recording to H.264 MP4 or animated GIF, with a post-recording Studio (trim, captions, silence detection)',
 				'Annotation editor: pen, marker, arrow, shapes, text, numbered steps, pixelate/redact, undo/redo',
 				'On-device Vision OCR, Beautify (gradient backdrop, padding, shadow), and pin-to-desktop',
-				'Menubar history grid — click to copy, drag out, pin/reveal/share/delete — plus native sharing',
+				'Menubar history grid (click to copy, drag out, pin/reveal/share/delete) plus native sharing',
 				'100% local: no network calls, no telemetry, no accounts'
 			],
 			status: 'Released v0.1.2 · GitHub Releases (not yet notarized)'
@@ -651,42 +651,42 @@ export const projects: Project[] = [
 		slug: 'seomaster',
 		icon: 'trendUp',
 		description:
-			'An all-in-one SEO SaaS that guides a zero-visitor site toward ranking on Google — built for non-technical users, teaching as it works.',
+			'An all-in-one SEO SaaS that guides a zero-visitor site toward ranking on Google, built for non-technical users, teaching as it works.',
 		year: 2026,
 		stack: ['SvelteKit', 'Drizzle', 'PostgreSQL', 'TanStack AI'],
 		featured: false,
 		order: 10,
 		caseStudy: {
 			summary:
-				'An SEO SaaS that audits a site, scores it, and teaches non-technical owners exactly what to fix — with a provider-agnostic, fully optional AI fix assistant.',
+				'An SEO SaaS that audits a site, scores it, and teaches non-technical owners exactly what to fix, with a provider-agnostic, fully optional AI fix assistant.',
 			problem:
-				'Beginner site owners have zero-visitor sites and no idea how to rank on Google. SEOMaster audits a site and then explains, in plain language, what is wrong and exactly how to fix it — turning raw SEO data into do-this-next guidance instead of dashboards non-technical users cannot interpret.',
+				'Beginner site owners have zero-visitor sites and no idea how to rank on Google. SEOMaster audits a site and then explains, in plain language, what is wrong and exactly how to fix it, turning raw SEO data into do-this-next guidance instead of dashboards non-technical users cannot interpret.',
 			challenges: [
 				{
 					title: 'AI that is provider-agnostic and fully optional',
-					body: 'AI is bring-your-own-key and can never become a hard dependency — the entire product has to remain fully usable with no AI configured at all. A single abstraction picks whichever provider (OpenAI, Anthropic, Gemini, or a local model) is set purely from environment, every AI-powered feature is gated behind a "is AI configured?" check, and the local-model path is treated as keyless so users can run it for free.'
+					body: 'AI is bring-your-own-key and can never become a hard dependency. The entire product has to remain fully usable with no AI configured at all. A single abstraction picks whichever provider (OpenAI, Anthropic, Gemini, or a local model) is set purely from environment, every AI-powered feature is gated behind a "is AI configured?" check, and the local-model path is treated as keyless so users can run it for free.'
 				},
 				{
 					title: 'Keeping AI output structured and reliable',
-					body: "Generated fixes and content drafts have to render as real UI, not a wall of chat text. Each AI request is given a strict schema the model must fill, so responses come back as validated, typed data rather than prose, and the prompts explicitly forbid jargon and inventing facts about the user's business — because the audience is beginners who can't tell a hallucination from a real recommendation."
+					body: "Generated fixes and content drafts have to render as real UI, not a wall of chat text. Each AI request is given a strict schema the model must fill, so responses come back as validated, typed data rather than prose, and the prompts explicitly forbid jargon and inventing facts about the user's business, because the audience is beginners who can't tell a hallucination from a real recommendation."
 				},
 				{
 					title: 'Background crawling without a separate infra tier',
-					body: 'Site crawls, daily rank checks, and weekly reports are long-running and scheduled — the kind of work that usually needs a dedicated job server. Here the job workers run inside the same process as the web app, so a single small VPS handles both, guarded against accidentally starting twice during development and degrading gracefully to in-process crawling when no queue backend is available.'
+					body: 'Site crawls, daily rank checks, and weekly reports are long-running and scheduled: the kind of work that usually needs a dedicated job server. Here the job workers run inside the same process as the web app, so a single small VPS handles both, guarded against accidentally starting twice during development and degrading gracefully to in-process crawling when no queue backend is available.'
 				},
 				{
 					title: 'Teaching beginners, decoupled from AI',
-					body: "Every issue the audit can find ships with hand-written, plain-language guidance — what it is, why it matters, how to fix it, how hard it is, and how much impact it has. This teaching content always works, with or without AI. When AI is configured it layers a tailored, copy-paste-ready fix on top; when it isn't, the manual steps stand on their own."
+					body: "Every issue the audit can find ships with hand-written, plain-language guidance: what it is, why it matters, how to fix it, how hard it is, and how much impact it has. This teaching content always works, with or without AI. When AI is configured it layers a tailored, copy-paste-ready fix on top; when it isn't, the manual steps stand on their own."
 				}
 			],
 			implementation: [
 				{
 					title: 'Pluggable AI layer with structured output',
-					body: "A small factory returns the configured provider's client, and the draft- and fix-generation features both request a schema-constrained response, so what comes back is already parsed and validated against the shape the UI expects — no fragile text-parsing of model output."
+					body: "A small factory returns the configured provider's client, and the draft- and fix-generation features both request a schema-constrained response, so what comes back is already parsed and validated against the shape the UI expects, with no fragile text-parsing of model output."
 				},
 				{
 					title: 'Scheduled background job pipeline',
-					body: "Three job types — crawls, rank refreshes, and report generation — run on a shared queue backed by an in-memory store. Recurring work is registered once at startup on cron schedules (a daily rank sweep, a weekly report) in a way that's safe to run repeatedly without piling up duplicates."
+					body: "Three job types (crawls, rank refreshes, and report generation) run on a shared queue backed by an in-memory store. Recurring work is registered once at startup on cron schedules (a daily rank sweep, a weekly report) in a way that's safe to run repeatedly without piling up duplicates."
 				},
 				{
 					title: 'Crawl → audit → score pipeline',
@@ -698,7 +698,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'A schema modeling the whole SEO domain',
-					body: 'The database schema captures the full domain: the multi-tenant core, the site → crawl → page/issue hierarchy, keywords with historical rank snapshots for trend charts, competitors, content briefs, cached analysis, and Google account tokens stored encrypted at rest — with database-level constraints enforcing per-organization uniqueness.'
+					body: 'The database schema captures the full domain: the multi-tenant core, the site → crawl → page/issue hierarchy, keywords with historical rank snapshots for trend charts, competitors, content briefs, cached analysis, and Google account tokens stored encrypted at rest, with database-level constraints enforcing per-organization uniqueness.'
 				}
 			],
 			stackWhy: [
@@ -716,11 +716,11 @@ export const projects: Project[] = [
 				},
 				{
 					tech: 'BullMQ + Redis',
-					why: 'Durable background crawls, rank refreshes, and schedulers — run in-process for single-VPS simplicity, but able to be split out to scale later.'
+					why: 'Durable background crawls, rank refreshes, and schedulers, run in-process for single-VPS simplicity, but able to be split out to scale later.'
 				},
 				{
 					tech: 'Zod',
-					why: 'One validator guards every external input — API requests and AI responses alike — so bad data is rejected at the edge.'
+					why: 'One validator guards every external input (API requests and AI responses alike), so bad data is rejected at the edge.'
 				},
 				{
 					tech: 'Tailwind CSS 4',
@@ -743,7 +743,7 @@ export const projects: Project[] = [
 		slug: 'utilslab',
 		icon: 'toolbox',
 		description:
-			'A fast, free, fully static collection of 49 calculators and tools — financial, health, math, everyday, and developer — that all run in the browser.',
+			'A fast, free, fully static collection of 49 calculators and tools (financial, health, math, everyday, and developer) that all run in the browser.',
 		year: 2026,
 		stack: ['SvelteKit', 'Svelte 5', 'Tailwind', 'TypeScript'],
 		featured: false,
@@ -752,11 +752,11 @@ export const projects: Project[] = [
 			summary:
 				'49 single-purpose calculators and tools across five categories, driven by one declarative registry and prerendered to static HTML that runs entirely in the browser.',
 			problem:
-				'Everyday users and developers want quick, single-purpose utilities without accounts, ads, or sending data to a server. UtilsLab is a free collection of 49 tools — financial, health, math, everyday, and developer — where everything runs client-side and every page is prerendered for instant loads.',
+				'Everyday users and developers want quick, single-purpose utilities without accounts, ads, or sending data to a server. UtilsLab is a free collection of 49 tools (financial, health, math, everyday, and developer) where everything runs client-side and every page is prerendered for instant loads.',
 			challenges: [
 				{
 					title: 'Scaling to 49 tools with a consistent UX',
-					body: 'Hand-building 49 bespoke pages would inevitably drift apart in look and behavior and become a maintenance burden. Instead, every tool is described declaratively — its input fields plus a pure function that turns those inputs into typed result widgets (a stat, a table, a chart series) — and one generic shell renders them all uniformly. Adding a tool is a matter of describing it and dropping it into the catalog, not building another page.'
+					body: 'Hand-building 49 bespoke pages would inevitably drift apart in look and behavior and become a maintenance burden. Instead, every tool is described declaratively: its input fields plus a pure function that turns those inputs into typed result widgets (a stat, a table, a chart series), and one generic shell renders them all uniformly. Adding a tool is a matter of describing it and dropping it into the catalog, not building another page.'
 				},
 				{
 					title: 'Fully client-side privacy',
@@ -778,7 +778,7 @@ export const projects: Project[] = [
 				},
 				{
 					title: 'Declarative schema with escape hatches',
-					body: "A tool can be described three ways: a standard calculator (input fields plus a compute function), a reversible text transform (e.g. minify ↔ beautify), or — for the handful that don't fit a form, like the scientific calculator and the unit and color converters — a fully custom component. The common cases stay effortless without boxing in the exceptions."
+					body: "A tool can be described three ways: a standard calculator (input fields plus a compute function), a reversible text transform (e.g. minify ↔ beautify), or, for the handful that don't fit a form (like the scientific calculator and the unit and color converters), a fully custom component. The common cases stay effortless without boxing in the exceptions."
 				},
 				{
 					title: 'Static prerendering',
@@ -816,7 +816,7 @@ export const projects: Project[] = [
 				}
 			],
 			features: [
-				'Financial: mortgage, loan, compound interest, sales tax, ROI, savings goal — with amortization tables and charts',
+				'Financial: mortgage, loan, compound interest, sales tax, ROI, savings goal, with amortization tables and charts',
 				'Health & fitness: BMI, calorie, body fat, BMR, ideal weight, water intake, running pace',
 				'Math: scientific calculator, percentage, fraction, quadratic solver, statistics',
 				'Everyday: age, tip, discount, unit converter, color converter',

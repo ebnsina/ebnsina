@@ -53,7 +53,7 @@
 						{:else}
 							<span class="dot" data-severity="ok"></span>
 						{/if}
-						{e.domain || '—'}
+						{e.domain || '–'}
 					</span>
 				</button>
 

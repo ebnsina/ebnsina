@@ -25,7 +25,7 @@
 			<span class="pager-title">{partLabel(prev.meta.title)}</span>
 		</a>
 	{:else}
-		<span class="pager-edge">Part 1 — the start of the series</span>
+		<span class="pager-edge">Part 1, the start of the series</span>
 	{/if}
 
 	{#if next}

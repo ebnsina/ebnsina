@@ -206,7 +206,7 @@
 	style="--p: {progress}"
 	aria-pressed={reader}
 	aria-label={reader ? 'Exit focus mode' : 'Focus mode'}
-	title={reader ? 'Exit focus mode (Esc)' : 'Focus mode — hide everything but the article'}
+	title={reader ? 'Exit focus mode (Esc)' : 'Focus mode: hide everything but the article'}
 	onclick={() => (reader = !reader)}
 >
 	<!-- separate instances: the icon wrapper doesn't re-render on a changed glyph prop.

@@ -12,31 +12,25 @@
 	const nextHref = $derived(data.next ? `/notes/${data.category}/${data.next.slug}` : null);
 </script>
 
-<Seo title={`${meta.title} — ${data.categoryLabel}`} description={meta.subtitle} type="article" />
+<Seo title={`${meta.title} · ${data.categoryLabel}`} description={meta.subtitle} type="article" />
 
 <ArticleLayout lang="bn">
 	{#snippet header()}
 		<header class="mb-10 pb-8">
 			<div class="article-meta mb-4 flex flex-wrap items-center gap-3">
-				<a
-					href={`/notes/${data.category}`}
-					class="eyebrow transition-colors hover:text-fg"
+				<a href={`/notes/${data.category}`} class="eyebrow transition-colors hover:text-fg"
 					><Icon name="arrowLeft" size={14} /> {data.categoryLabel}</a
 				>
 				<span class="text-rule">·</span>
 				<LevelBadge level={meta.level} label={t.levels[meta.level]} />
 				<span class="text-rule">·</span>
-				<span class="eyebrow"
-					>{meta.readingTime}</span
-				>
+				<span class="eyebrow">{meta.readingTime}</span>
 				<span class="text-rule">·</span>
 				<span class="eyebrow">
 					{String(meta.chapter).padStart(2, '0')} / {String(data.total).padStart(2, '0')}
 				</span>
 			</div>
-			<h1
-				class="mb-4 title-page"
-			>
+			<h1 class="mb-4 title-page">
 				{meta.title}
 			</h1>
 			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.subtitle}</p>

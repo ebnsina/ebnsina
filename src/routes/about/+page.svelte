@@ -5,7 +5,7 @@
 
 <Seo
 	title="About"
-	description="A bit about Ebn Sina — engineer, builder, occasional writer."
+	description="A bit about Ebn Sina: engineer, builder, occasional writer."
 	profilePage
 />
 
@@ -13,25 +13,25 @@
 	<PageBanner
 		eyebrow="About"
 		title="Ebn Sina"
-		description="Software engineer. Building things that hold up — over coffee, mostly."
+		description="Software engineer. Building things that hold up, over coffee mostly."
 	/>
 
 	<div class="prose-editorial mx-auto max-w-[44rem]">
 		<p>
 			<strong>Ebn Sina</strong> is a software engineer who builds complex infrastructure and developer
-			products end to end — video infrastructure, CDN and edge delivery, analytics pipelines, media players,
-			error-tracking tools, e-commerce, and learning platforms — plus the platform engineering that keeps
+			products end to end: video infrastructure, CDN and edge delivery, analytics pipelines, media players,
+			error-tracking tools, e-commerce, and learning platforms, plus the platform engineering that keeps
 			them fast and durable.
 		</p>
 		<p>
-			I've spent the last several years shipping software that real people rely on — backend
+			I've spent the last several years shipping software that real people rely on: backend
 			services, developer tools, and the occasional deeply unfashionable internal CLI. I care about
 			correctness, taste, and shipping.
 		</p>
 		<p>
 			My work sits at the intersection of infrastructure and product: distributed backends built to
 			survive real traffic, frontends that don't make users wait, and the platform engineering layer
-			that makes both sustainable. I've built the hard, complex pieces across a lot of domains —
+			that makes both sustainable. I've built the hard, complex pieces across a lot of domains:
 			video infrastructure (ingest, transcoding at scale, edge caching), CDN and edge delivery,
 			analytics pipelines, media players, error-tracking and observability tooling, e-commerce
 			platforms, and learning systems. The common thread is systems with real load and real users
@@ -40,7 +40,7 @@
 
 		<h2>Background</h2>
 		<p>
-			Started with web development, drifted toward systems, ended up somewhere in between — which
+			Started with web development, drifted toward systems, ended up somewhere in between, which
 			turns out to be where most of the interesting problems live. I've worked across the stack long
 			enough to have strong opinions about most layers of it, and enough scars to know which
 			opinions to hold loosely.

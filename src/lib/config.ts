@@ -1,11 +1,11 @@
 export const SITE = {
 	name: 'Ebn Sina',
-	title: 'Ebn Sina — Software Engineer',
+	title: 'Ebn Sina | Software Engineer',
 	description:
-		'Software engineer building complex infrastructure and developer products — video, CDN, analytics, media players, error tracking, e-commerce, and learning platforms — thoughtful, fast, and durable.',
+		'Software engineer building complex infrastructure and developer products: video, CDN, analytics, media players, error tracking, e-commerce, and learning platforms. Thoughtful, fast, and durable.',
 	// One-line factual identity for structured data / LLM extraction.
 	jobTitle: 'Software Engineer',
-	bio: 'Ebn Sina is a software engineer who builds complex infrastructure and developer products end to end — video infrastructure, CDN and edge delivery, analytics pipelines, media players, error-tracking tools, e-commerce platforms, and learning platforms — plus the platform engineering that keeps them fast and durable.',
+	bio: 'Ebn Sina is a software engineer who builds complex infrastructure and developer products end to end: video infrastructure, CDN and edge delivery, analytics pipelines, media players, error-tracking tools, e-commerce platforms, and learning platforms, plus the platform engineering that keeps them fast and durable.',
 	knowsAbout: [
 		'Distributed systems',
 		'Backend engineering',

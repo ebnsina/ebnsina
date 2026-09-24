@@ -49,7 +49,7 @@
 		bind:value={profile.title}
 		platform={platform === 'upwork' ? 'upwork' : undefined}
 		limitKey={platform === 'upwork' ? 'title' : undefined}
-		placeholder="Payments & order systems — reliability"
+		placeholder="Payments & order systems, reliability"
 		hint="পজিশনিং ধাপের লাইনটাই এখানে বসে, ছোট করে।"
 	/>
 
