@@ -11,9 +11,6 @@ importers:
       '@fontsource-variable/geist-mono':
         specifier: ^5.2.8
         version: 5.2.8
-      '@fontsource-variable/mona-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@fontsource/noto-serif-bengali':
         specifier: ^5.2.10
         version: 5.2.10
@@ -212,9 +209,6 @@ packages:
 
   '@fontsource-variable/geist-mono@5.2.8':
     resolution: {integrity: sha512-KI5bj+hkkRiHttYHmccotUZ80ZuZyai+RwI1d7UId0clkx/jXxlo8qYK8j54WzmpBjtMoEMPyllV7faDcj+6RA==}
-
-  '@fontsource-variable/mona-sans@5.2.8':
-    resolution: {integrity: sha512-8OWdTcP8KvRxkU1Skkk+tX3D5XHN9buejxSDwrT7teRfGnpKBYxQUApV/+zS8TzeHiSU8H5Tc0HfBr57ahgcvA==}
 
   '@fontsource/noto-serif-bengali@5.2.10':
     resolution: {integrity: sha512-pCuFQUgfuGfG2goWn73XKbPOTwMXzHq/aziyIRmN1t0HkPs1ueJlwczPobQsQAtYdX7bp5Oj3cp3hWSTuJhepA==}
@@ -2719,8 +2713,6 @@ snapshots:
       levn: 0.4.1
 
   '@fontsource-variable/geist-mono@5.2.8': {}
-
-  '@fontsource-variable/mona-sans@5.2.8': {}
 
   '@fontsource/noto-serif-bengali@5.2.10': {}
 

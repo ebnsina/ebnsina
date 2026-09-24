@@ -52,7 +52,6 @@
 	},
 	"dependencies": {
 		"@fontsource-variable/geist-mono": "^5.2.8",
-		"@fontsource-variable/mona-sans": "^5.2.8",
 		"@fontsource/noto-serif-bengali": "^5.2.10",
 		"@hugeicons/core-free-icons": "^4.2.3",
 		"@hugeicons/svelte": "^1.1.4",

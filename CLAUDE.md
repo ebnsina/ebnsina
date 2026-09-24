@@ -163,7 +163,7 @@ Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project w
 
 **Fonts — two families plus the Bangla face:**
 
-- **Mona Sans** (`@fontsource-variable/mona-sans`) fills `--font-sans`, `--font-display` and `--font-serif` — there is no separate serif or display family.
+- **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-sans`, `--font-display` and `--font-serif` — there is no separate serif or display family.
 - **Geist Mono** fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
 - **Noto Serif Bengali** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
 - `static/fonts/` still holds `GeistPixel-Square.woff2` and the Oddval faces, and `geist` is still in `dependencies` — all unused leftovers. Don't build on them.
