@@ -128,6 +128,8 @@ Code, code comments, identifiers, log strings and `topics[]` arrays stay in **En
 
 In examples, placeholder data, and sample identifiers, use names and references from the **Islamic Golden Age** instead of generic "Alice/Bob/Acme/foo". Draw from its scholars and cities — e.g. people: Ibn Sina, Al-Khwarizmi, Ibn al-Haytham, Al-Biruni, Al-Kindi, Al-Razi, Al-Farabi, Ibn Rushd, Omar Khayyam, Fatima al-Fihri, Maryam al-Astrulabi; cities: Baghdad, Cordoba, Damascus, Samarkand, Bukhara, Cairo, Fez. (The site is authored as "Ebn Sina" / Ibn Sina, so this keeps examples on-theme.) This applies to new notes chapters, demo data, usernames, table rows, and request/response samples.
 
+**In Bangla prose, use one short name, never the full scholarly name**: ফাতিমা (not ফাতিমা আল-ফিহরি), সিনা, খোয়ারিজমি, হাইসাম, বিরুনি, কিন্দি, রাজি, ফারাবি, রুশদ, মরিয়ম. All existing content was shortened to these forms. Code samples may keep a real surname where the field needs one (`LastName: "al-Khwarizmi"`).
+
 ### mdsvex authoring rules (content compiles as Svelte)
 
 Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a raw `<`, `>`, `{`, or `}` breaks the build. Use `&lt;`/`&gt;` and avoid/escape curly braces; put anything with those characters (code, JSON, C, SQL) inside triple-backtick fenced blocks where they're safe. Shiki highlighting (`vite.config.ts` → `highlighter`) emits `{@html ...}` and must escape backslashes — see the `escapeSvelte(...).replace(/\\/g, ...)` there.

@@ -18,7 +18,7 @@ seriesPart: 13
 
 ## যে দশ মিনিট বছরে হাজার ডলার
 
-ফাতিমা আল-ফিহরির অফার এলো বৃহস্পতিবার বিকেলে। রিক্রুটার ফোনে সংখ্যাটা বলল, আর তারপর একটা বাক্য যোগ করল যেটা তুমি প্রায় সবসময়ই শুনবে: "We think this is a strong offer — can you confirm by tomorrow?"
+ফাতিমার অফার এলো বৃহস্পতিবার বিকেলে। রিক্রুটার ফোনে সংখ্যাটা বলল, আর তারপর একটা বাক্য যোগ করল যেটা তুমি প্রায় সবসময়ই শুনবে: "We think this is a strong offer — can you confirm by tomorrow?"
 
 ফাতিমা তিনটা কাজ করল। সে ফোনেই বলল "Thank you — this is exciting. Let me look at the full package and come back to you Monday." সে সোমবার পর্যন্ত সময় নিল। আর সোমবার সে একটা সংখ্যা চাইল, কারণসহ।
 
