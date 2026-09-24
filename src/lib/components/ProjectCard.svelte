@@ -18,17 +18,19 @@
 >
 	<div class="flex flex-1 flex-col">
 		<span
-			class="pointer-events-none absolute right-7 top-7 -rotate-12 text-faint transition duration-300 group-hover:rotate-0 group-hover:scale-110 group-hover:text-muted motion-reduce:transition-none"
+			class="pointer-events-none absolute right-7 top-7 -rotate-12 text-secondary opacity-80 transition duration-300 group-hover:rotate-0 group-hover:scale-110 group-hover:opacity-100 motion-reduce:transition-none"
 			aria-hidden="true"
 		>
-			<Icon name={project.icon} size={36} weight="light" />
+			<Icon name={project.icon} size={36} weight="duotone" />
 		</span>
 		<h3
 			class="pr-12 font-display text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-accent"
 		>
 			{project.title}
 		</h3>
-		<p class="mt-2.5 line-clamp-2 text-[0.95rem] leading-relaxed text-muted">{project.description}</p>
+		<p class="mt-2.5 line-clamp-2 text-[0.95rem] leading-relaxed text-muted">
+			{project.description}
+		</p>
 		{#if project.caseStudy}
 			<span
 				class="mt-auto inline-flex items-center gap-1.5 pt-7 eyebrow transition-colors group-hover:text-accent"

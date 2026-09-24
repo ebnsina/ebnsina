@@ -2,7 +2,6 @@
 
 /* Two families do all the work: PolySans for every text role, Geist Mono for
    all numbers + code. Hind Siliguri covers the Bangla (/bn) locale. */
-@import '@fontsource-variable/mona-sans/wdth.css';
 @import '@fontsource-variable/geist-mono';
 
 /* Hind Siliguri — the Bangla face for the notes. Only its Bengali subset loads:
@@ -139,7 +138,6 @@
 		font-family: var(--font-display);
 		font-size: clamp(2.125rem, 5.4vw, 3.875rem);
 		font-weight: 700;
-		font-stretch: 86%;
 		line-height: 1.02;
 		letter-spacing: -0.032em;
 		text-wrap: balance;
@@ -149,11 +147,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
-   Light = Honolulu-blue accent on a soft warm-neutral. */
+   Zumurrud: emerald primary, brass secondary, on cool-neutral greys. */
 :root {
 	color-scheme: light;
-	/* Monochrome editorial: greys with a slight cool bias, no hue anywhere.
-	   --accent is ink, so everything that used a brand colour renders as ink. */
 	--bg: #ffffff;
 	--fg: #0b0b0d;
 	--muted: #63636d;
@@ -161,11 +157,17 @@
 	--rule: #ededf0;
 	--rule-strong: #dededf;
 	--surface: #f7f7f8;
-	--accent: var(--fg);
-	--accent-soft: var(--surface);
+	--primary: #0e7c5a;
+	--secondary: #a8742a;
+	--success: #1e8e4f;
+	--warning: #b7791f;
+	--danger: #c8372d;
+	--info: #2667b8;
+	--accent: var(--primary);
+	--accent-soft: color-mix(in oklab, var(--primary) 10%, var(--bg));
 	--brand-accent: var(--accent);
-	--accent-solid: #0b0b0d;
-	--on-accent: #f4f4f6;
+	--accent-solid: var(--primary);
+	--on-accent: #ffffff;
 	--card-base: #ffffff;
 }
 
@@ -178,8 +180,14 @@
 	--rule: #1c1c21;
 	--rule-strong: #2b2b32;
 	--surface: #111114;
-	--accent: var(--fg);
-	--accent-solid: #f4f4f6;
+	--primary: #34c99a;
+	--secondary: #d9a55a;
+	--success: #4cc77f;
+	--warning: #f0b44c;
+	--danger: #f2706a;
+	--info: #6fa8ee;
+	--accent: var(--primary);
+	--accent-solid: var(--primary);
 	--on-accent: #0b0b0d;
 	--card-base: #111114;
 }
@@ -250,8 +258,8 @@
    `text-accent`, `bg-bg`, `border-rule` are brand-driven AND theme-aware.
    `inline` makes the utilities reference the live var rather than copying it. */
 @theme inline {
-	--font-sans: 'Mona Sans Variable', ui-sans-serif, system-ui, sans-serif;
-	/* PolySans for headings, Mona Sans for body */
+	--font-sans: 'PolySans', ui-sans-serif, system-ui, sans-serif;
+	/* PolySans for headings and body */
 	--font-display: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-serif: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -267,6 +275,12 @@
 	--color-accent-solid: var(--accent-solid);
 	--color-on-accent: var(--on-accent);
 	--color-faint: var(--faint);
+	--color-primary: var(--primary);
+	--color-secondary: var(--secondary);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-danger: var(--danger);
+	--color-info: var(--info);
 
 	/* Alias the two rungs of Tailwind's radius scale we actually use onto the
 	   tokens above (the values match Tailwind's own defaults), so `rounded-xl`
@@ -284,7 +298,7 @@
    line-height, so bump it on the subtree. */
 [lang='bn'] {
 	/* All Bangla text = Hind Siliguri; numbers/code stay Geist Mono. */
-	--font-sans: 'Hind Siliguri', 'Mona Sans Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Hind Siliguri', 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-display: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
 	--font-serif: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
 	--font-pixel: 'Geist Mono Variable', 'Hind Siliguri', ui-monospace, monospace;
@@ -298,7 +312,7 @@
 }
 /* But never re-font code — fenced blocks and inline code stay monospace/Latin. */
 [lang='bn'] :where(code, pre, kbd, samp) {
-	--font-sans: 'Mona Sans Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -959,7 +973,7 @@ html.nav-vt::view-transition-group(*) {
 }
 
 /* ============================================================
-   Monochrome editorial rules
+   Editorial rules
    ============================================================ */
 /* every corner square: no radius token because there is no radius */
 *,
@@ -967,20 +981,11 @@ html.nav-vt::view-transition-group(*) {
 *::after {
 	border-radius: 0 !important;
 }
-/* headings: PolySans Bulky; body stays Mona Sans */
+/* headings: PolySans Bulky; body PolySans Neutral */
 h1,
 h2,
 h3 {
 	font-family: var(--font-display);
 	font-weight: 700;
 	letter-spacing: -0.026em;
-}
-/* no hue anywhere — state and emphasis included */
-.level-badge {
-	color: var(--muted) !important;
-	background: var(--surface) !important;
-}
-.callout {
-	--cl: var(--fg) !important;
-	background: var(--surface) !important;
 }

@@ -201,7 +201,7 @@
 		{:else if phase === 'challenge'}
 			<p>{slots} slot, {policy.toUpperCase()} নিয়ে চলছে…</p>
 		{:else if result}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={result.pass}>
 				<Icon name={result.pass ? 'trophy' : 'close'} size={18} />
 				<b>{result.pass ? `পাস, +${xpForLevel(LEVEL)} XP` : 'ফেল'}</b>
 				<span class="num">hit ratio {pct.format(result.hitRatio)}</span>

@@ -2,7 +2,13 @@
 	import { SITE } from '$lib/config';
 	import Icon, { type IconName } from '$lib/components/Icon.svelte';
 
-	const contacts: { icon: IconName; label: string; value: string; href: string; external?: boolean }[] = [
+	const contacts: {
+		icon: IconName;
+		label: string;
+		value: string;
+		href: string;
+		external?: boolean;
+	}[] = [
 		{ icon: 'mail', label: 'Email', value: SITE.email, href: `mailto:${SITE.email}` },
 		{ icon: 'phone', label: 'Call', value: '+880 1841-252123', href: `tel:${SITE.phone}` },
 		{
@@ -87,10 +93,12 @@
 
 <footer class="relative mt-24 overflow-hidden bg-[color-mix(in_oklch,var(--fg)_3%,var(--bg))]">
 	<div class="mx-auto max-w-5xl px-5 sm:px-8">
-		<div class="relative z-10 grid gap-10 pt-16 pb-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8">
+		<div
+			class="relative z-10 grid gap-10 pt-16 pb-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8"
+		>
 			<div class="max-w-xs">
 				<p class="font-display text-base font-semibold tracking-tight">
-					Ebn <span class="font-normal text-muted">Sina</span>
+					Ebn <span class="text-accent">Sina</span>
 				</p>
 				<p class="mt-2.5 text-[0.95rem] leading-relaxed text-muted">
 					Software engineer building infrastructure and developer products — and writing about the
@@ -128,7 +136,6 @@
 				</nav>
 			{/each}
 		</div>
-
 	</div>
 
 	<!-- oversized wordmark: its cap line meets the link columns, and it is cropped

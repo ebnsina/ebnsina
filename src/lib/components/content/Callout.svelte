@@ -7,7 +7,7 @@
 		title,
 		children
 	}: {
-		type?: 'info' | 'tip' | 'warning';
+		type?: 'info' | 'tip' | 'warning' | 'danger';
 		title?: string;
 		children: Snippet;
 	} = $props();
@@ -26,10 +26,8 @@
 </div>
 
 <style>
-	/* One colour per type drives the whole block — fill, ink and icon — so the
-	   callout reads as a single tinted object rather than a bordered box. The
-	   light-theme greens/ambers are darkened for contrast on a pale tint and
-	   lifted again in dark. */
+	/* One palette token per type tints the fill and inks the icon and title;
+	   body text stays --fg so it reads at full contrast on every tint. */
 	.callout {
 		--cl: var(--accent);
 		position: relative;
@@ -40,17 +38,17 @@
 		background: color-mix(in oklab, var(--cl) 12%, transparent);
 		color: var(--cl);
 	}
+	.callout-info {
+		--cl: var(--info);
+	}
 	.callout-tip {
-		--cl: oklch(0.52 0.15 152);
+		--cl: var(--success);
 	}
 	.callout-warning {
-		--cl: oklch(0.55 0.14 70);
+		--cl: var(--warning);
 	}
-	:global(html.dark) .callout-tip {
-		--cl: oklch(0.8 0.16 152);
-	}
-	:global(html.dark) .callout-warning {
-		--cl: oklch(0.83 0.15 82);
+	.callout-danger {
+		--cl: var(--danger);
 	}
 	.callout-icon {
 		flex-shrink: 0;
@@ -65,7 +63,7 @@
 	}
 	.callout-body {
 		font-size: 0.875rem;
-		color: var(--cl);
+		color: var(--fg);
 		line-height: 1.7;
 	}
 	.callout-body :global(p) {

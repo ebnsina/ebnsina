@@ -35,8 +35,8 @@
 			class:is-min={scrolled}
 			aria-label={SITE.name}
 		>
-			<span class="lm-full">Ebn <span class="font-normal text-muted">Sina</span></span>
-			<span class="lm-short" aria-hidden="true">E<span class="font-normal text-muted">S</span></span>
+			<span class="lm-full">Ebn <span class="text-accent">Sina</span></span>
+			<span class="lm-short" aria-hidden="true">E<span class="text-accent">S</span></span>
 		</a>
 
 		<nav class="hidden min-w-0 items-center gap-0.5 text-sm sm:flex">

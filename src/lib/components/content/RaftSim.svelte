@@ -204,7 +204,7 @@
 			<p>সবাই আবার যুক্ত। নতুন leader সবার log মিলিয়ে নিচ্ছে…</p>
 		{:else if result}
 			{@const passed = result.lost.length > 0}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={passed}>
 				<Icon name={passed ? 'trophy' : 'close'} size={18} />
 				<b>{passed ? `পাস, +${XP} XP` : 'এখনো কিছু হারায়নি'}</b>
 			</p>

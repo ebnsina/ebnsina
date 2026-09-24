@@ -205,7 +205,7 @@
 		{:else if mode === 'challenge'}
 			<p>{CHALLENGE_SPEED}× গতিতে চলছে…</p>
 		{:else if result}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={passed}>
 				<Icon name={passed ? 'trophy' : 'close'} size={18} />
 				<b>{passed ? `পাস, +${xpForLevel(LEVEL)} XP` : 'ফেল'}</b>
 				<span class="num">stale {result.stale} · primary {pct.format(result.share)}</span>

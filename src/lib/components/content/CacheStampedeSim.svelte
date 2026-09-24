@@ -194,7 +194,7 @@
 				TTL {ttl}s, {MODES.find(([m]) => m === mode)?.[1]} নিয়ে চলছে, {CHALLENGE_SPEED}× গতিতে…
 			</p>
 		{:else if result}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={result.pass}>
 				<Icon name={result.pass ? 'trophy' : 'close'} size={18} />
 				<b>{result.pass ? `পাস, +${xpForLevel(LEVEL)} XP` : 'ফেল'}</b>
 				<span class="num">peak DB {result.peakDb} · ধীর {result.slow}</span>

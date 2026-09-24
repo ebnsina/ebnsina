@@ -235,7 +235,7 @@
 		{:else if mode === 'challenge'}
 			<p>চলছে, {SPEED}× গতিতে…</p>
 		{:else if run}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={run.pass}>
 				<Icon name={won ? 'trophy' : run.pass ? 'check' : 'close'} size={18} />
 				<b>
 					{#if won}পাস, +{xpForLevel(LEVEL)} XP{:else if run.pass}পাস, কিন্তু retry ছাড়া{:else}ফেল{/if}

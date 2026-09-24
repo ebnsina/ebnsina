@@ -209,7 +209,7 @@
 		{:else if mode === 'challenge'}
 			<p>{LABEL[algo]} দিয়ে চলছে, {CHALLENGE_SPEED}× গতিতে…</p>
 		{:else if result}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={passed}>
 				<Icon name={passed ? 'trophy' : 'close'} size={18} />
 				<b>{passed ? `পাস, +${xpForLevel(LEVEL)} XP` : 'ফেল'}</b>
 				<span class="num">p99 {ms.format(result.p99 * 1000)} ms</span>

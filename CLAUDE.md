@@ -134,7 +134,7 @@ In examples, placeholder data, and sample identifiers, use names and references 
 
 Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a raw `<`, `>`, `{`, or `}` breaks the build. Use `&lt;`/`&gt;` and avoid/escape curly braces; put anything with those characters (code, JSON, C, SQL) inside triple-backtick fenced blocks where they're safe. Shiki highlighting (`vite.config.ts` → `highlighter`) emits `{@html ...}` and must escape backslashes — see the `escapeSvelte(...).replace(/\\/g, ...)` there.
 
-Components under `src/lib/components/content/`: `Callout` (types `info`/`tip`/`warning`), `CodeTabs`, `Mermaid`, `LevelBadge`, `CdnPlayground`. There is **no mdsvex layout injecting them** — a chapter that uses one imports it itself in a `<script>` block placed directly after the frontmatter.
+Components under `src/lib/components/content/`: `Callout` (types `info`/`tip`/`warning`/`danger`), `CodeTabs`, `Mermaid`, `LevelBadge`, `CdnPlayground`. There is **no mdsvex layout injecting them** — a chapter that uses one imports it itself in a `<script>` block placed directly after the frontmatter.
 
 ### Chapter simulators
 
@@ -164,31 +164,30 @@ There is no 3D (three.js/Threlte were removed). The home hero and `PageBanner` a
 
 ## Design system & theming
 
-`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **The site is monochrome — no hue anywhere, including state and emphasis.** `--accent` is ink (`--fg`), `--accent-solid` is `#0b0b0d` light / `#f4f4f6` dark with `--on-accent` as its text colour; greys are `--muted`, `--faint`, `--rule`, `--rule-strong`, `--surface`. Hierarchy comes from weight, size and space. (Previously: `--accent: #006db0` light, `#60abeb` dark; `--accent-solid` is deliberately identical in both themes because it always carries white ink). Reskinning the whole site means changing those hex values and nothing else.
+`src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **Palette: Zumurrud** — emerald `--primary` (`#0e7c5a` light / `#34c99a` dark) and brass `--secondary` (`#a8742a` / `#d9a55a`), plus semantic `--success`, `--warning`, `--danger`, `--info`, each with a light and dark value, on cool-neutral greys (`--muted`, `--faint`, `--rule`, `--rule-strong`, `--surface`). All are Tailwind colours too (`text-primary`, `bg-danger`, …). `--accent` and `--accent-solid` alias `--primary`; `--on-accent` is the ink on a solid primary fill. Use the semantic tokens for state (pass = success, fail = danger), never a hand-picked hex. Reskinning the whole site means changing those hex values and nothing else.
 
-**Fonts — two families plus the Bangla face:**
+**Fonts — PolySans for all text, Geist Mono, plus the Bangla face:**
 
-- **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-display` and `--font-serif` — every heading (h1–h3 are forced to 700 = Bulky).
-- **Mona Sans Variable** (`@fontsource-variable/mona-sans`, width axis loaded) fills `--font-sans` — all body text.
+- **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-sans`, `--font-display` and `--font-serif` — body text and every heading (h1–h3 are forced to 700 = Bulky).
 - **Geist Mono** fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
 - **Hind Siliguri** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
 - `static/fonts/` still holds `GeistPixel-Square.woff2` and the Oddval faces, and `geist` is still in `dependencies` — all unused leftovers. Don't build on them.
 
 Colour mixes involving `--accent` use **oklab**, never oklch: oklch interpolates hue, and blending the blue (hue 246) toward the warm page (hue 40) swings through red and tints everything pink.
 
-**Every corner is square** — a global `border-radius: 0 !important` in the monochrome block at the end of `layout.css`; the radius tokens still exist but resolve to nothing visible. **Buttons** use `.btn` + `.btn-solid`/`.btn-ghost` (46px, mono uppercase, 0.12em tracking, invert to solid on hover); don't hand-roll button styles.
+**Every corner is square** — a global `border-radius: 0 !important` in the "Editorial rules" block at the end of `layout.css`; the radius tokens still exist but resolve to nothing visible. **Buttons** use `.btn` + `.btn-solid`/`.btn-ghost` (46px, mono uppercase, 0.12em tracking, invert to solid on hover); don't hand-roll button styles.
 
 **Type rules.** Every small uppercase label uses the `.eyebrow` class (mono, 0.68rem, 0.16em tracking, muted), and every article-type h1 uses `.title-page`. Both live in `@layer components` in `layout.css` so utilities can still override. Headings are weight 600, never bold. Bengali text is never letter-spaced (a `[lang='bn']` rule forces it off). Don't hand-roll new tracking/size combos.
 
 **Coloured surfaces are aurora gradients.** `src/lib/colors.ts` holds eight aurora themes; `auroraAt(i)` (cyclic) / `auroraFor(key)` (stable hash) return an inline style setting `--au-1/2/3` (bloom lights), `--au-b1/b2/b3` (base sweep), `--aa` (angle) and `--ax/--ay` (light origin). Put that style on an element carrying `.aurora-surface` (paints the gradient) or `.glass-card` (same, plus white ink and a pinned dark `--bg`). The layer stack lives in those classes, **not** in a custom property — a `var()` inside a custom property resolves against the element it was declared on, so a `--aurora-bg` var would give every card the `:root` fallback. Current users: `SeriesNav` and the `/directory` notes folders only. Post/project cards, series strips and tool kits are flat `.surface` / `.media-card` panels (tinted fill, no border, no gradient) — keep them that way. The notes roadmap and chapter rows were deliberately flattened off aurora — they are type and whitespace now, so don't reintroduce gradient bars there.
 
-`catColor(i)` / `catFor(key)` (a Honolulu-blue ramp at constant lightness steps) return flat hexes for small markers — the track page tints its badge with `catColor()`, the project page uses `catFor()`.
+`catColor(i)` / `catFor(key)` (an emerald ramp at constant lightness steps) return flat hexes for small markers — the track page tints its badge with `catColor()`, the project page uses `catFor()`.
 
 **Lightning CSS gotcha:** never hand-write a `-webkit-` alias next to a standard property — Lightning CSS then prunes the _standard_ one and only the prefixed version ships (this silently killed the header's `backdrop-filter`). Write the standard property alone and let it prefix from browserslist.
 
 The header (`Header.svelte`) is transparent at rest so it blends into the hero, and fades in a blurred surface once scrolled — painted by a `::before` so nav text is never inside a filtered layer. It has no bottom rule in either state.
 
-Brand/visual constraints: no neon/glow; minimal cards; no hue anywhere.
+Brand/visual constraints: no neon/glow; minimal cards; colour only from the palette tokens.
 
 **Corner radius has two tokens and no third option**: `--radius-button` (0.75rem) for buttons and controls, `--radius-card` (1.5rem) for cards and panels — declared on `:root` in `layout.css` right after the brand palette. Tailwind's `--radius-xl` / `--radius-3xl` are aliased to them in `@theme inline`, so `rounded-xl` in markup and `var(--radius-button)` in CSS are the same declaration and cannot drift; changing those two values re-rounds the whole site. Content panels that read as cards (callouts, code blocks, Mermaid figures, prose images) take the card radius. Pills stay `rounded-full`, and small inline chips (kbd, inline code, level badges) keep their own small radii. The site previously enforced **sharp corners** through a global `border-radius: 0 !important`; that reset is gone, so `rounded-*` classes in the markup are live and do mean what they say.
 
@@ -196,7 +195,7 @@ The card radius is declared on **`.aurora-surface` / `.glass-card` themselves**,
 
 **Reading progress lives in the TOC rail**, not in a bar across the top — a hairline gauge beside the ticks fills to your position, measured off the article element (so the page header/footer don't count as reading). Below `xl` there is no rail, so the same value traces a conic-gradient ring around the focus button. `ReadingBar.svelte` and its `<ReadingBar />` on the chapter route were deleted; don't reintroduce a top bar.
 
-**Callouts and blockquotes are tinted blocks, not bordered boxes.** `Callout.svelte` sets one `--cl` per type (info = `--accent`, tip = green, warning = amber, each with a dark-theme value) and drives fill, ink and icon from it. The prose blockquote gets the same treatment in `--accent` plus a masked info icon in its left grid column — masked, so it inks itself from `color`. Media cards are frameless: the aurora cover carries the radius, shadow and hover lift, and the copy sits below it on the page.
+**Callouts and blockquotes are tinted blocks, not bordered boxes.** `Callout.svelte` sets one `--cl` per type from the palette (`info`, `tip` = success, `warning`, `danger`) and drives fill, title and icon from it; body text stays `--fg` for contrast. The prose blockquote gets the same treatment in `--accent` plus a masked info icon in its left grid column — masked, so it inks itself from `color`. Media cards are frameless: the aurora cover carries the radius, shadow and hover lift, and the copy sits below it on the page.
 
 ## Icons
 

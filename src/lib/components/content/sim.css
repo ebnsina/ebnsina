@@ -16,6 +16,10 @@
 .sim-verdict {
 	justify-content: flex-start;
 	margin: 0;
+	color: var(--danger);
+}
+.sim-verdict.ok {
+	color: var(--success);
 }
 .sim .num {
 	font-family: var(--font-mono);
@@ -41,6 +45,7 @@
 	font-size: 1.05rem;
 }
 .sim-stats .hot dd {
+	color: var(--danger);
 	font-weight: 700;
 	text-decoration: underline;
 	text-underline-offset: 4px;
@@ -60,7 +65,7 @@
 }
 .sim-controls input[type='range'] {
 	width: 100%;
-	accent-color: var(--fg);
+	accent-color: var(--primary);
 }
 .sim-challenge {
 	border-top: 1px solid var(--rule);

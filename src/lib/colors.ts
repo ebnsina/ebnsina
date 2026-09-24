@@ -1,18 +1,17 @@
-/** The site is monochrome. Categories are eight steps along a cool grey ramp,
- *  stored as hex so the same values work in CSS (color-mix).
+/** Categories are eight steps along the emerald (primary) lightness ramp —
+ *  oklch(L 0.11 165), stored as hex so the same values work in CSS (color-mix).
  *
  *  Categories are therefore distinguished by *value*, not by hue. Keep it that
  *  way: adding a second hue here re-introduces the rainbow this replaced. */
 export const CAT_COLORS = [
-	// monochrome: a cool grey ramp, no hue
-	'#3a3a40',
-	'#4a4a51',
-	'#5a5a62',
-	'#63636d',
-	'#74747e',
-	'#85858f',
-	'#94949f',
-	'#a3a3ad'
+	'#006543', // oklch 0.44 0.11 165
+	'#007350',
+	'#0f825e',
+	'#29926d',
+	'#3ca17b',
+	'#4eb18a',
+	'#5fc199',
+	'#70d1a9' // oklch 0.79 0.11 165
 ];
 
 export const catColor = (i: number) =>
@@ -150,4 +149,3 @@ export const auroraAt = (i: number) =>
 	auroraVars(
 		AURORA_THEMES[((i % AURORA_THEMES.length) + AURORA_THEMES.length) % AURORA_THEMES.length]
 	);
-

@@ -182,7 +182,7 @@
 		{:else if mode === 'challenge'}
 			<p>{workers} worker নিয়ে চলছে, {CHALLENGE_SPEED}× গতিতে…</p>
 		{:else if result}
-			<p class="sim-verdict">
+			<p class="sim-verdict" class:ok={passed}>
 				<Icon
 					name={passed ? (result.workers === MIN_WORKERS ? 'trophy' : 'check') : 'close'}
 					size={18}
