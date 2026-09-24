@@ -2,7 +2,6 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { auroraFor } from '$lib/colors';
 	import { partLabel, partsLabel } from '$lib/data/series';
 	import { reveal } from '$lib/actions';
 
@@ -20,10 +19,8 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
-		eyebrow="Series"
 		title="Series"
 		description="Multi-part writing meant to be read in order — one subject, taken from first principles all the way to production."
-		shape="pages"
 	/>
 
 	<div class="flex flex-col gap-10">
@@ -31,10 +28,10 @@
 			<section use:reveal class="series-panel">
 				<a
 					href={`/series/${meta.slug}`}
-					class="panel-cover aurora-surface"
-					style={auroraFor(meta.title)}
+					class="panel-cover surface"
 				>
 					<span class="panel-eyebrow">
+						<Icon name="bookText" size={14} />
 						{partsLabel(parts.length, meta.plannedParts)} · {meta.status === 'complete'
 							? 'Complete'
 							: 'Ongoing'}
@@ -78,8 +75,6 @@
 		}
 	}
 
-	/* The cover carries the copy (there is no cover image), so unlike a post
-	   card it sets its own ink — `.aurora-surface` only paints the gradient. */
 	.panel-cover {
 		display: flex;
 		flex-direction: column;
@@ -87,21 +82,19 @@
 		gap: 0.4rem;
 		min-height: 12rem;
 		padding: 1.25rem 1.35rem;
-		color: #fff;
 		text-decoration: none;
-		transition: transform 0.2s ease;
 	}
 
-	.panel-cover:hover {
-		transform: translateY(-2px);
-	}
 
 	.panel-eyebrow {
-		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-family: var(--font-pixel);
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: rgba(255, 255, 255, 0.82);
+		letter-spacing: 0.16em;
+		color: var(--muted);
 	}
 
 	.panel-heading {
@@ -117,7 +110,7 @@
 		margin: 0;
 		font-size: 0.875rem;
 		line-height: 1.55;
-		color: rgba(255, 255, 255, 0.88);
+		color: var(--muted);
 	}
 
 	.panel-list {
@@ -144,7 +137,7 @@
 	}
 
 	.panel-row:hover {
-		background: color-mix(in oklch, var(--accent) 7%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 7%, var(--bg));
 	}
 
 	.panel-num {

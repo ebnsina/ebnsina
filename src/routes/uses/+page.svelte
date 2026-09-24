@@ -49,16 +49,15 @@
 		eyebrow="Uses"
 		title="What I use"
 		description="Hardware, software, and services that have earned their place."
-		shape="keyboard"
 	/>
 
-	<div class="max-w-[44rem] space-y-12">
+	<div class="mx-auto max-w-[44rem] space-y-12">
 		{#each groups as g (g.name)}
 			<section use:reveal>
 				<h2 class="mb-4 font-serif text-2xl font-semibold tracking-tight">{g.name}</h2>
-				<dl class="divide-y divide-rule border-y border-rule">
+				<dl>
 					{#each g.items as [name, desc] (name)}
-						<div class="grid grid-cols-1 gap-x-4 gap-y-0.5 py-3 sm:grid-cols-[11rem_1fr]">
+						<div class="grid grid-cols-1 gap-x-4 gap-y-0.5 py-2 sm:grid-cols-[11rem_1fr]">
 							<dt class="font-medium">{name}</dt>
 							<dd class="text-muted">{desc}</dd>
 						</div>

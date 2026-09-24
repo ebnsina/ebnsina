@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { onMount, tick } from 'svelte';
+	import { mount, onMount, tick } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Toc from '$lib/components/Toc.svelte';
 
@@ -107,20 +107,22 @@
 				const btn = document.createElement('button');
 				btn.className = 'copy-btn';
 				btn.setAttribute('aria-label', 'Copy code');
-				const copyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-				const okIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-				btn.innerHTML = copyIcon;
+				// both glyphs are mounted once; `.copied` swaps which one shows
+				const icon = (name: 'copy' | 'check', cls: string) => {
+					const span = document.createElement('span');
+					span.className = cls;
+					mount(Icon, { target: span, props: { name, size: 14 } });
+					btn.appendChild(span);
+				};
+				icon('copy', 'copy-icon');
+				icon('check', 'ok-icon');
 				wrap.appendChild(btn);
 				btn.addEventListener('click', async () => {
 					await navigator.clipboard.writeText(
 						pre.querySelector('code')?.innerText ?? pre.innerText
 					);
-					btn.innerHTML = okIcon;
 					btn.classList.add('copied');
-					setTimeout(() => {
-						btn.innerHTML = copyIcon;
-						btn.classList.remove('copied');
-					}, 2000);
+					setTimeout(() => btn.classList.remove('copied'), 2000);
 				});
 			});
 
@@ -211,9 +213,9 @@
 	     Icon-only: the book reads as reader mode and the × as leaving it, so the
 	     label was just repeating the glyph. The title attribute still explains it. -->
 	{#if reader}
-		<Icon name="close" size={17} strokeWidth={2} />
+		<Icon name="close" size={17} />
 	{:else}
-		<Icon name="book" size={17} strokeWidth={2} />
+		<Icon name="book" size={17} />
 	{/if}
 </button>
 

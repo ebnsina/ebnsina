@@ -14,7 +14,7 @@
 </script>
 
 <span
-	class="level-badge inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest"
+	class="level-badge inline-flex items-center rounded-lg px-2.5 py-1 eyebrow"
 	style="color: {color}; background: color-mix(in oklch, {color} 14%, transparent);"
 >
 	{label ?? level}

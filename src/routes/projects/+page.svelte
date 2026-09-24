@@ -3,7 +3,6 @@
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import { projects } from '$lib/data/projects';
-	import { SITE } from '$lib/config';
 	import { reveal } from '$lib/actions';
 
 	const sorted = [...projects].sort((a, b) => a.order - b.order || b.year - a.year);
@@ -15,24 +14,17 @@
 	<PageBanner
 		eyebrow="Work"
 		title="Projects"
-		description="A selection of the things I've designed, shipped, or contributed to."
-		shape="cubes"
+		description="Products I've designed and built, and the engineering behind each one."
 	/>
 
-	<p class="mb-8 max-w-2xl text-[1.05rem] leading-[1.75] text-muted">
-		A mix of products, internal platforms, and open-source tools. Most share a theme: take something
-		operationally painful, make it boring and reliable, and get out of the way. A few highlights are
-		below — source is on
-		<a
-			href={SITE.social.github}
-			target="_blank"
-			rel="noopener"
-			class="text-fg underline decoration-[color-mix(in_oklch,var(--fg)_25%,transparent)] underline-offset-2 hover:text-accent"
-			>GitHub</a
-		>.
+	<p class="mx-auto mb-10 max-w-2xl text-center text-[1.05rem] leading-[1.75] text-muted">
+		Eight products built end to end — video, live streaming, webinars, analytics, links, images,
+		commerce, and the account platform they all share — followed by a few tools on the side. The
+		theme is the same throughout: take something operationally painful and make it boring and
+		reliable.
 	</p>
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 		{#each sorted as project (project.title)}
 			<div use:reveal class="h-full"><ProjectCard {project} /></div>
 		{/each}

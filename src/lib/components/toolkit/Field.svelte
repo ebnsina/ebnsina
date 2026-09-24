@@ -126,7 +126,7 @@
 	.control {
 		width: 100%;
 		padding: 0.55rem 0.7rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);

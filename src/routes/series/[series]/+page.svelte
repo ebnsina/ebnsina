@@ -2,7 +2,7 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import FormattedDate from '$lib/components/FormattedDate.svelte';
-	import { auroraFor } from '$lib/colors';
+	import PageBanner from '$lib/components/PageBanner.svelte';
 	import { partLabel, partsLabel } from '$lib/data/series';
 	import { reveal } from '$lib/actions';
 
@@ -17,29 +17,24 @@
 <Seo title={meta.title} description={meta.tagline} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
-	<nav class="pt-2 text-sm text-muted">
-		<a href="/series" class="hover:text-fg">← All series</a>
-	</nav>
+	<PageBanner
+		eyebrow={`Series · ${partsLabel(parts.length, meta.plannedParts)} · ${minutes} min · ${meta.status === 'complete' ? 'Complete' : 'Ongoing'}`}
+		title={meta.title}
+		description={meta.tagline}
+		lang="bn"
+	>
+		{#snippet actions()}
+			<a href={href(parts[0].slug)} class="start-link">
+				Start with part 1
+				<Icon name="arrowRight" size={15} />
+			</a>
+			<a href="/series" class="back-link">All series</a>
+		{/snippet}
+	</PageBanner>
 
-	<header class="hero aurora-surface mt-6" style={auroraFor(meta.title)}>
-		<span class="hero-eyebrow">
-			Series · {partsLabel(parts.length, meta.plannedParts)} · {minutes} min · {meta.status ===
-			'complete'
-				? 'Complete'
-				: 'Ongoing'}
-		</span>
-		<h1 class="hero-heading" lang="bn">{meta.title}</h1>
-		<p class="hero-tagline">{meta.tagline}</p>
-	</header>
-
-	<p class="mt-8 max-w-2xl text-base leading-relaxed text-muted" lang="bn">
+	<p class="mx-auto max-w-2xl text-base leading-relaxed text-muted" lang="bn">
 		{meta.description}
 	</p>
-
-	<a href={href(parts[0].slug)} class="start-link mt-7">
-		Start with part 1
-		<Icon name="arrowRight" size={15} />
-	</a>
 
 	<ol class="parts" lang="bn">
 		{#each parts as part (part.slug)}
@@ -63,41 +58,6 @@
 </div>
 
 <style>
-	.hero {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		gap: 0.5rem;
-		min-height: 15rem;
-		padding: 1.5rem 1.75rem;
-		color: #fff;
-	}
-
-	.hero-eyebrow {
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: rgba(255, 255, 255, 0.82);
-	}
-
-	.hero-heading {
-		margin: 0;
-		font-family: var(--font-serif, var(--font-display));
-		font-size: 2rem;
-		font-weight: 600;
-		line-height: 1.15;
-		letter-spacing: -0.02em;
-	}
-
-	.hero-tagline {
-		margin: 0;
-		max-width: 44ch;
-		font-size: 0.9375rem;
-		line-height: 1.6;
-		color: rgba(255, 255, 255, 0.9);
-	}
-
 	.start-link {
 		display: inline-flex;
 		align-items: center;
@@ -111,11 +71,23 @@
 		text-decoration: none;
 	}
 
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.6rem 1.05rem;
+		border-radius: var(--radius-button);
+		background: color-mix(in oklch, var(--fg) 6%, transparent);
+		font-size: 0.875rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
 	.parts {
 		list-style: none;
 		/* Set here, not as a utility class: the scoped selector outranks `mt-*`,
 		   so a Tailwind margin on this element would silently do nothing. */
-		margin: 3.5rem 0 0;
+		margin: 3.5rem auto 0;
+		max-width: 48rem;
 		padding: 0;
 		border-top: 1px solid var(--rule);
 	}
@@ -134,7 +106,7 @@
 	}
 
 	.part:hover {
-		background: color-mix(in oklch, var(--accent) 5%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 5%, var(--bg));
 	}
 
 	.part-num {
@@ -174,10 +146,10 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-family: var(--font-pixel);
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.16em;
 		color: color-mix(in oklch, var(--fg) 45%, transparent);
 	}
 

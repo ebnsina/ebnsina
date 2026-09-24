@@ -251,10 +251,10 @@
 	.label {
 		display: block;
 		margin-bottom: 0.6rem;
-		font-family: var(--font-mono);
+		font-family: var(--font-pixel);
 		font-size: 10px;
 		font-weight: 600;
-		letter-spacing: 0.15em;
+		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		color: var(--muted);
 	}

@@ -21,9 +21,9 @@
 <div class="badge" class:earned class:sm={size === 'sm'} style="--bc:{color}" title={label}>
 	<div class="medal">
 		{#if earned}
-			<Icon name="trophy" strokeWidth={1.8} />
+			<Icon name="trophy" />
 		{:else}
-			<Icon name="lock" strokeWidth={1.8} />
+			<Icon name="lock" />
 		{/if}
 	</div>
 	<span class="label">{label}</span>

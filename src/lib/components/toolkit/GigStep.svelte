@@ -176,7 +176,8 @@
 		flex-direction: column;
 		gap: 0.4rem;
 		padding: 0.7rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 	}
 
@@ -191,7 +192,7 @@
 	.pkg-includes {
 		width: 100%;
 		padding: 0.4rem 0.5rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);

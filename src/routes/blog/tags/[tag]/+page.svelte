@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
 	import PostCard from '$lib/components/PostCard.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let { data } = $props();
 </script>
@@ -9,16 +10,16 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<header class="mb-10">
-		<a href="/blog" class="text-sm text-muted hover:text-fg">← All writing</a>
-		<h1 class="mt-4 font-serif text-4xl font-semibold tracking-tight">
-			<span class="text-muted">#</span>{data.tag}
+		<a href="/blog" class="text-sm text-muted hover:text-fg"><Icon name="arrowLeft" size={14} /> All writing</a>
+		<h1 class="mt-4 title-page">
+			<Icon name="tag" size={28} class="inline align-[-0.1em] text-muted" /> {data.tag}
 		</h1>
 		<p class="mt-2 text-muted">
 			{data.posts.length} post{data.posts.length === 1 ? '' : 's'}
 		</p>
 	</header>
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 		{#each data.posts as post (post.slug)}
 			<div class="h-full">
 				<PostCard

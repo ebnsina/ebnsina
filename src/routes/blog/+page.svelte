@@ -3,7 +3,6 @@
 	import PostCard from '$lib/components/PostCard.svelte';
 	import PageBanner from '$lib/components/PageBanner.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { auroraFor } from '$lib/colors';
 	import { partsLabel } from '$lib/data/series';
 	import { reveal } from '$lib/actions';
 
@@ -17,15 +16,13 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<PageBanner
-		eyebrow="Writing"
 		title="Writing"
 		description="Essays, post-mortems, and small notes on software engineering."
-		shape="pages"
 	/>
 	{#if data.tags.length}
-		<div class="-mt-6 mb-10 flex flex-wrap gap-2">
+		<div class="-mt-6 mb-10 flex flex-wrap justify-center gap-2">
 			{#each data.tags as t (t)}
-				<a href={`/blog/tags/${t}`} class="tag-pill">#{t}</a>
+				<a href={`/blog/tags/${t}`} class="tag-pill"><Icon name="tag" size={12} />{t}</a>
 			{/each}
 		</div>
 	{/if}
@@ -38,19 +35,18 @@
 				<a
 					use:reveal
 					href={`/series/${meta.slug}`}
-					class="series-strip aurora-surface"
-					style={auroraFor(meta.title)}
+					class="series-strip surface"
 				>
-					<span class="strip-eyebrow">Series · {partsLabel(count, meta.plannedParts)}</span>
+					<span class="strip-eyebrow"><Icon name="bookText" size={14} /> Series · {partsLabel(count, meta.plannedParts)}</span>
 					<span class="strip-title" lang="bn">{meta.title}</span>
 					<span class="strip-tagline">{meta.tagline}</span>
-					<span class="strip-cta"><Icon name="arrowRight" size={16} color="#fff" /></span>
+					<span class="strip-cta"><Icon name="arrowRight" size={16} /></span>
 				</a>
 			{/each}
 		</div>
 	{/if}
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 		{#each data.posts as post (post.slug)}
 			<div use:reveal class="h-full">
 				<PostCard
@@ -75,22 +71,20 @@
 		align-items: center;
 		gap: 0.2rem 1rem;
 		padding: 1.15rem 1.35rem;
-		color: #fff;
 		text-decoration: none;
-		transition: transform 0.2s ease;
 	}
 
-	.series-strip:hover {
-		transform: translateY(-2px);
-	}
 
 	.strip-eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
 		grid-area: eyebrow;
-		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-family: var(--font-pixel);
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: rgba(255, 255, 255, 0.82);
+		letter-spacing: 0.16em;
+		color: var(--muted);
 	}
 
 	.strip-title {
@@ -106,7 +100,7 @@
 		grid-area: tagline;
 		font-size: 0.875rem;
 		line-height: 1.55;
-		color: rgba(255, 255, 255, 0.88);
+		color: var(--muted);
 	}
 
 	.strip-cta {
@@ -117,12 +111,12 @@
 		width: 2.25rem;
 		height: 2.25rem;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.16);
+		background: color-mix(in oklch, var(--fg) 6%, transparent);
 		transition: background-color 0.15s ease;
 	}
 
 	.series-strip:hover .strip-cta {
-		background: rgba(255, 255, 255, 0.28);
+		background: color-mix(in oklch, var(--fg) 10%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

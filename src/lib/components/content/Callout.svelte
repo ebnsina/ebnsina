@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -15,52 +16,7 @@
 <div class="callout callout-{type}">
 	<div class="flex items-start gap-3">
 		<span class="callout-icon">
-			{#if type === 'info'}
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line
-						x1="12"
-						y1="8"
-						x2="12.01"
-						y2="8"
-					/></svg
-				>
-			{:else if type === 'tip'}
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path
-						d="M2 12l10 5 10-5"
-					/></svg
-				>
-			{:else}
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					><path
-						d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-					/><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg
-				>
-			{/if}
+			<Icon name={type === 'info' ? 'info' : type === 'tip' ? 'lightbulb' : 'warning'} size={18} />
 		</span>
 		<div class="min-w-0">
 			{#if title}<div class="callout-title">{title}</div>{/if}
@@ -81,7 +37,7 @@
 		margin: 1.5rem 0;
 		border-radius: var(--radius-card);
 		border: 0;
-		background: color-mix(in oklch, var(--cl) 12%, transparent);
+		background: color-mix(in oklab, var(--cl) 12%, transparent);
 		color: var(--cl);
 	}
 	.callout-tip {
@@ -139,7 +95,7 @@
 	.callout-body :global(code) {
 		font-family: var(--font-mono);
 		font-size: 0.8125rem;
-		background: color-mix(in oklch, var(--cl) 16%, transparent);
+		background: color-mix(in oklab, var(--cl) 16%, transparent);
 		padding: 0.1em 0.35em;
 		border-radius: 4px;
 	}

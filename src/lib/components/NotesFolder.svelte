@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { CategoryMeta } from '$lib/data/categories';
 	import { onMount } from 'svelte';
 
@@ -106,15 +107,7 @@
 				<span class="count">{items.length}</span>
 			</span>
 			<span class="preview">{preview}{items.length > 3 ? ` · +${items.length - 3}` : ''}</span>
-			<svg
-				class="chev"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2.4"
-				stroke-linecap="round"
-				stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg
-			>
+			<span class="chev"><Icon name="caretDown" size={15} weight="bold" /></span>
 		</span>
 	</button>
 

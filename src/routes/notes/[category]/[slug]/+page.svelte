@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import ArticleLayout from '$lib/components/ArticleLayout.svelte';
 	import LevelBadge from '$lib/components/content/LevelBadge.svelte';
@@ -19,22 +20,22 @@
 			<div class="article-meta mb-4 flex flex-wrap items-center gap-3">
 				<a
 					href={`/notes/${data.category}`}
-					class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
-					>← {data.categoryLabel}</a
+					class="eyebrow transition-colors hover:text-fg"
+					><Icon name="arrowLeft" size={14} /> {data.categoryLabel}</a
 				>
 				<span class="text-rule">·</span>
 				<LevelBadge level={meta.level} label={t.levels[meta.level]} />
 				<span class="text-rule">·</span>
-				<span class="text-[10px] font-semibold uppercase tracking-widest text-muted"
+				<span class="eyebrow"
 					>{meta.readingTime}</span
 				>
 				<span class="text-rule">·</span>
-				<span class="text-[10px] font-semibold uppercase tracking-widest text-muted">
+				<span class="eyebrow">
 					{String(meta.chapter).padStart(2, '0')} / {String(data.total).padStart(2, '0')}
 				</span>
 			</div>
 			<h1
-				class="mb-4 font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl sm:leading-[1.1]"
+				class="mb-4 title-page"
 			>
 				{meta.title}
 			</h1>
@@ -94,10 +95,10 @@
 		max-width: 280px;
 	}
 	.chapter-nav-label {
-		font-size: 0.6875rem;
+		font-size: 0.68rem;
 		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 	.chapter-nav-title {

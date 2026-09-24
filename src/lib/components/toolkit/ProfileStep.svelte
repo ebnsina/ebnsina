@@ -82,7 +82,8 @@
 		display: inline-flex;
 		gap: 0.25rem;
 		padding: 0.2rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-button);
 		align-self: flex-start;
 	}
@@ -99,7 +100,7 @@
 	}
 
 	.tab.is-on {
-		background: color-mix(in oklch, var(--accent) 12%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 12%, var(--bg));
 		color: var(--accent);
 	}
 

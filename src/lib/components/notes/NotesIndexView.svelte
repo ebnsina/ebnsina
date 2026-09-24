@@ -50,7 +50,7 @@
 <Seo title={t.notesTitle} description={t.notesDesc} />
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8" lang="bn">
-	<PageBanner eyebrow={t.notesTitle} title={t.notesTitle} description={t.notesDesc} shape="graph" />
+	<PageBanner title={t.notesTitle} description={t.notesDesc} />
 
 	<JourneyHeader {total} />
 

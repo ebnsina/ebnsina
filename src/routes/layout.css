@@ -1,20 +1,20 @@
 @import 'tailwindcss';
 
 /* Two families do all the work: PolySans for every text role, Geist Mono for
-   all numbers + code. Noto Serif Bengali covers the Bangla (/bn) locale. */
+   all numbers + code. Noto Sans Bengali covers the Bangla (/bn) locale. */
 @import '@fontsource-variable/geist-mono';
 
-/* Noto Serif Bengali — the Bangla face for the /bn notes locale. PolySans
+/* Noto Sans Bengali — the Bangla face for the /bn notes locale. PolySans
    carries no Bengali glyphs, so this covers the /bn UI. Both the Bengali and
    Latin subsets load so mixed Bangla + Latin (names, code) render in one family. */
-@import '@fontsource/noto-serif-bengali/bengali-400.css';
-@import '@fontsource/noto-serif-bengali/bengali-500.css';
-@import '@fontsource/noto-serif-bengali/bengali-600.css';
-@import '@fontsource/noto-serif-bengali/bengali-700.css';
-@import '@fontsource/noto-serif-bengali/400.css';
-@import '@fontsource/noto-serif-bengali/500.css';
-@import '@fontsource/noto-serif-bengali/600.css';
-@import '@fontsource/noto-serif-bengali/700.css';
+@import '@fontsource/noto-sans-bengali/bengali-400.css';
+@import '@fontsource/noto-sans-bengali/bengali-500.css';
+@import '@fontsource/noto-sans-bengali/bengali-600.css';
+@import '@fontsource/noto-sans-bengali/bengali-700.css';
+@import '@fontsource/noto-sans-bengali/400.css';
+@import '@fontsource/noto-sans-bengali/500.css';
+@import '@fontsource/noto-sans-bengali/600.css';
+@import '@fontsource/noto-sans-bengali/700.css';
 
 /* PolySans is static: Median spans 500–600 so the site's 550/600 weights map to it. */
 @font-face {
@@ -74,6 +74,35 @@
 	font-display: swap;
 }
 
+/* Type rules: every small uppercase label is `.eyebrow` (mono, one size, one
+   tracking); headings are PolySans 600. In a layer so utilities can override. */
+@layer components {
+	/* icons sit on the text baseline when inline, and never shrink in flex rows */
+	.icon {
+		display: inline-block;
+		flex-shrink: 0;
+		vertical-align: -0.14em;
+	}
+	.eyebrow {
+		font-family: var(--font-pixel);
+		font-size: 0.72rem;
+		font-weight: 500;
+		line-height: 1.4;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	/* h1 on article-type pages (posts, chapters, series parts, projects, tracks) */
+	.title-page {
+		font-family: var(--font-display);
+		font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.6rem);
+		font-weight: 600;
+		line-height: 1.1;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
@@ -91,14 +120,14 @@
 	   these two hex values (this light one + the dark one below). Everything
 	   else — buttons, links, progress, selection, Mermaid diagrams — derives
 	   from --accent, so no other colour needs touching. ───────────────────── */
-	--accent: #5949fa; /* Indigo — brand text + links; 5.4:1 on --bg */
-	--accent-soft: color-mix(in oklch, var(--accent) 18%, var(--bg));
+	--accent: #006db0; /* Honolulu blue — brand text + links; 5.3:1 on --bg */
+	--accent-soft: color-mix(in oklab, var(--accent) 18%, var(--bg));
 	--brand-accent: var(--accent);
-	/* Filled-button indigo. Deliberately the SAME value in both themes: a primary
+	/* Filled-button Honolulu blue. Deliberately the SAME value in both themes: a primary
 	   button should read as one electric colour everywhere, and it always carries
-	   white ink (5.6:1). --accent itself has to lighten in dark mode to stay
+	   white ink (5.5:1). --accent itself has to lighten in dark mode to stay
 	   legible as text, which would wash the button out — hence the split. */
-	--accent-solid: #5949fa;
+	--accent-solid: #006db0;
 	/* neutral base for mixing card colours (keeps hues true) */
 	--card-base: oklch(0.995 0 0);
 }
@@ -106,12 +135,12 @@
 :root.dark {
 	color-scheme: dark;
 	/* Neutral layered blacks — chroma kept near-zero so the UI reads as shades
-	   of black, not a red tint. Olive --accent stays the only saturated colour. */
+	   of black, not a red tint. --accent stays the only saturated colour. */
 	--bg: oklch(0.165 0.002 250);
 	--fg: oklch(0.9 0.003 250);
 	--muted: oklch(0.62 0.004 250);
 	--rule: oklch(0.27 0.003 250);
-	--accent: #8d95ff; /* Indigo — lifted for the dark theme; 7.2:1 on --bg */
+	--accent: #60abeb; /* Honolulu blue — lifted for the dark theme; 7.8:1 on --bg */
 	--card-base: oklch(0.205 0 0);
 }
 
@@ -167,7 +196,7 @@
 	   corners to speak of and read as a seam, not an object. Keep this list
 	   short: if something belongs here, ask first whether it should just be
 	   square in its own component. */
-	:where(html, body, hr, th, td) {
+	:where(html, body, footer, hr, th, td, ol, ul, dl, li, dt, dd) {
 		border-radius: 0;
 	}
 	/* the header's blurred surface is full-bleed — a radius would round the top
@@ -206,17 +235,23 @@
 
 /* Bangla locale (/bn/notes). Override the display/text font tokens on the
    lang="bn" subtree so every heading, body, and pixel-UI string picks up
-   Noto Serif Bengali. Latin digits keep Geist Mono via the leading fallback;
-   Bengali glyphs fall through to Noto Serif Bengali. Mono (code) is left alone
+   Noto Sans Bengali. Latin digits keep Geist Mono via the leading fallback;
+   Bengali glyphs fall through to Noto Sans Bengali. Mono (code) is left alone
    so code blocks stay in Geist Mono. Bengali reads better with a touch more
    line-height, so bump it on the subtree. */
 [lang='bn'] {
-	/* All Bangla text = Noto Serif Bengali; numbers/code stay Geist Mono. */
-	--font-sans: 'Noto Serif Bengali', 'PolySans', ui-sans-serif, system-ui, sans-serif;
-	--font-display: 'Noto Serif Bengali', 'PolySans', ui-sans-serif, sans-serif;
-	--font-serif: 'Noto Serif Bengali', 'PolySans', ui-sans-serif, sans-serif;
-	--font-pixel: 'Geist Mono Variable', 'Noto Serif Bengali', ui-monospace, monospace;
+	/* All Bangla text = Noto Sans Bengali; numbers/code stay Geist Mono. */
+	--font-sans: 'Noto Sans Bengali', 'PolySans', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Noto Sans Bengali', 'PolySans', ui-sans-serif, sans-serif;
+	--font-serif: 'Noto Sans Bengali', 'PolySans', ui-sans-serif, sans-serif;
+	--font-pixel: 'Geist Mono Variable', 'Noto Sans Bengali', ui-monospace, monospace;
 	line-height: 1.75;
+}
+/* Bengali must never be letter-spaced — tracking splits conjuncts apart. The
+   !important is deliberate: it has to beat every scoped and utility tracking. */
+[lang='bn'],
+[lang='bn'] * {
+	letter-spacing: normal !important;
 }
 /* But never re-font code — fenced blocks and inline code stay monospace/Latin. */
 [lang='bn'] :where(code, pre, kbd, samp) {
@@ -228,9 +263,9 @@ html {
 	color: var(--fg);
 	font-family: var(--font-sans);
 	/* Responsive root size — every rem-based size scales with the viewport, so
-	   this ramp is the single lever for the whole site's type scale. Capped at
-	   16px: the previous 17px desktop step made body copy read oversized. */
-	font-size: 13.5px;
+	   this ramp is the single lever for the whole site's type scale. Tops out at
+	   16.5px; PolySans sets small, so anything under ~15px read cramped. */
+	font-size: 15px;
 	line-height: 1.6;
 	scroll-behavior: smooth;
 	scroll-padding-top: 5.5rem;
@@ -243,21 +278,22 @@ html {
 }
 @media (min-width: 480px) {
 	html {
-		font-size: 14.25px;
+		font-size: 15.5px;
 	}
 }
 @media (min-width: 768px) {
 	html {
-		font-size: 14.75px;
+		font-size: 16px;
 	}
 }
 @media (min-width: 1024px) {
 	html {
-		font-size: 15.25px;
+		font-size: 16.5px;
 	}
 }
 
 body {
+	overflow-x: clip; /* full-bleed heroes use 100vw */
 	min-height: 100dvh;
 	font-feature-settings:
 		'kern' 1,
@@ -374,57 +410,46 @@ body {
 	box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.45);
 }
 
-/* ============================================================
-   Media card — aurora as cover art, content on the page surface
-   ============================================================
-   The counterpart to .glass-card: instead of setting text on the aurora, the
-   gradient is a cover band and the copy sits below on --bg. Ink stays the
-   page's own, so titles keep full contrast and the accent reads on hover.
-   Put .aurora-surface + an auroraFor()/auroraAt() style on the __cover. */
+/* Hero backdrop (home + PageBanner): two soft lights from above — the brand blue and
+   a cooler blue — so the space has depth without lines or texture. */
+.hero-bg {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	border-radius: 0;
+	background:
+		radial-gradient(38% 50% at 36% 0%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 70%),
+		radial-gradient(34% 46% at 66% 4%, color-mix(in oklch, #38bdf8 14%, transparent), transparent 70%);
+}
 
-/* No frame: the gradient cover is the only object on the page — it carries the
-   radius, the shadow and the hover lift — and the copy sits underneath it on
-   the page surface, with no border or box around the pair. */
+/* Flat tinted panel — what cards and strips use now that gradients are gone. */
+.surface {
+	border-radius: var(--radius-card);
+	background: color-mix(in oklch, var(--fg) 3.5%, var(--bg));
+	color: var(--fg);
+	transition: background-color 0.2s ease;
+}
+a.surface:hover {
+	background: color-mix(in oklch, var(--fg) 6%, var(--bg));
+}
+
+/* ============================================================
+   Media card — flat hairline card for posts and projects
+   ============================================================ */
 .media-card {
 	display: flex;
 	flex-direction: column;
-	background: none;
-	border: 0;
-	text-decoration: none;
+	padding: 1.75rem;
+	border-radius: var(--radius-card);
+	background: color-mix(in oklch, var(--fg) 3.5%, var(--bg));
 	color: var(--fg);
+	text-decoration: none;
+	transition: background-color 0.2s ease;
 }
-
-.media-card__cover {
-	flex: none;
-	height: 13.5rem;
-	box-shadow: 0 3px 10px -8px rgba(0, 0, 0, 0.22);
-	transition:
-		box-shadow 0.25s ease,
-		transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-}
-a.media-card:hover .media-card__cover,
-.media-card--link:hover .media-card__cover {
-	transform: translateY(-2px);
-	box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
-}
-
-/* Copy sits on the page, so it aligns to the cover's edge rather than being
-   inset inside a frame. */
-.media-card__body {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	padding: 0.85rem 0.15rem 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.media-card__cover {
-		transition: none;
-	}
-	a.media-card:hover .media-card__cover,
-	.media-card--link:hover .media-card__cover {
-		transform: none;
-	}
+a.media-card:hover,
+.media-card--link:hover {
+	background: color-mix(in oklch, var(--fg) 6%, var(--bg));
 }
 
 /* ============================================================
@@ -434,6 +459,7 @@ a.media-card:hover .media-card__cover,
 .tag-pill {
 	display: inline-flex;
 	align-items: center;
+	gap: 0.35em;
 	font-family: var(--font-mono);
 	font-size: 0.66rem;
 	font-weight: 500;
@@ -455,13 +481,13 @@ a.media-card:hover .media-card__cover,
 }
 .tag-pill:hover {
 	color: var(--accent);
-	background: color-mix(in oklch, var(--accent) 8%, transparent);
-	border-color: color-mix(in oklch, var(--accent) 35%, transparent);
+	background: color-mix(in oklab, var(--accent) 8%, transparent);
+	border-color: color-mix(in oklab, var(--accent) 35%, transparent);
 }
 /* accent variant — e.g. a project role */
 .tag-pill.is-role {
 	color: var(--accent);
-	border-color: color-mix(in oklch, var(--accent) 30%, transparent);
+	border-color: color-mix(in oklab, var(--accent) 30%, transparent);
 }
 
 /* ============================================================
@@ -469,7 +495,7 @@ a.media-card:hover .media-card__cover,
    ============================================================ */
 
 .prose-editorial {
-	font-size: 0.975rem;
+	font-size: 1.03rem;
 	line-height: 1.75;
 	letter-spacing: -0.003em;
 	color: var(--fg);
@@ -478,7 +504,7 @@ a.media-card:hover .media-card__cover,
    slightly smaller body, tighter leading, and trimmer heading rhythm. */
 @media (max-width: 639px) {
 	.prose-editorial {
-		font-size: 0.94rem;
+		font-size: 1rem;
 		line-height: 1.65;
 		letter-spacing: 0;
 	}
@@ -503,7 +529,7 @@ a.media-card:hover .media-card__cover,
 .prose-editorial h2,
 .prose-editorial h3 {
 	font-family: var(--font-serif);
-	font-weight: 550;
+	font-weight: 600;
 	letter-spacing: -0.018em;
 	line-height: 1.3;
 }
@@ -554,7 +580,7 @@ a.media-card:hover .media-card__cover,
 }
 .prose-editorial h1 {
 	font-family: var(--font-serif);
-	font-weight: 550;
+	font-weight: 600;
 	letter-spacing: -0.022em;
 	font-size: 1.85rem;
 	margin: 1.4em 0 0.5em;
@@ -570,7 +596,7 @@ a.media-card:hover .media-card__cover,
    from --accent, so it re-tints with the brand and works in either theme. */
 .prose-editorial blockquote {
 	position: relative;
-	background: color-mix(in oklch, var(--accent) 12%, transparent);
+	background: color-mix(in oklab, var(--accent) 12%, transparent);
 	color: var(--accent);
 	border: 0;
 	padding: 1.2em 1.4em;
@@ -770,6 +796,16 @@ a.media-card:hover .media-card__cover,
 .copy-btn.copied {
 	opacity: 1;
 	color: var(--accent);
+}
+.copy-btn > span {
+	display: flex;
+}
+.copy-btn .ok-icon,
+.copy-btn.copied .copy-icon {
+	display: none;
+}
+.copy-btn.copied .ok-icon {
+	display: flex;
 }
 
 /* ============================================================

@@ -135,7 +135,8 @@
 
 	.empty {
 		padding: 1.25rem;
-		border: 1px dashed var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		color: var(--muted);
 		font-size: 0.875rem;
@@ -155,13 +156,14 @@
 	}
 
 	.card {
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		overflow: hidden;
 	}
 
 	.card.is-open {
-		border-color: color-mix(in oklch, var(--accent) 40%, var(--rule));
+		background: color-mix(in oklab, var(--accent) 5%, transparent);
 	}
 
 	.row {
@@ -212,7 +214,6 @@
 		flex-direction: column;
 		gap: 0.85rem;
 		padding: 0.4rem 1rem 1rem;
-		border-top: 1px solid var(--rule);
 	}
 
 	.two,
@@ -254,9 +255,9 @@
 		align-items: center;
 		gap: 0.45rem;
 		padding: 0.55rem 0.9rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
-		background: none;
+		background: color-mix(in oklab, var(--fg) 7%, transparent);
 		color: var(--fg);
 		font-size: 0.875rem;
 		font-weight: 600;
@@ -264,7 +265,7 @@
 	}
 
 	.add:hover {
-		border-color: var(--accent);
+		background: color-mix(in oklab, var(--accent) 12%, transparent);
 		color: var(--accent);
 	}
 </style>

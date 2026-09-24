@@ -15,21 +15,21 @@
 <article class="mx-auto max-w-3xl px-5 pb-8 sm:px-8" style="--cc: {accent}">
 	<a
 		href="/projects"
-		class="mt-2 inline-block font-mono text-[0.72rem] uppercase tracking-[0.18em] text-muted transition-colors hover:text-fg"
+		class="mt-2 inline-block eyebrow transition-colors hover:text-fg"
 	>
-		← Projects
+		<Icon name="arrowLeft" size={14} /> Projects
 	</a>
 
-	<header class="mb-12 mt-6 border-b border-[color-mix(in_oklch,var(--fg)_10%,transparent)] pb-10">
+	<header class="mb-12 mt-6">
 		<div
-			class="mb-4 flex flex-wrap items-center gap-3 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-muted"
+			class="mb-4 flex flex-wrap items-center gap-3 eyebrow"
 		>
 			<span>{project.year}</span>
 			{#if cs.status}<span>·</span><span>{cs.status}</span>{/if}
 			{#if project.featured}<span>·</span><span style="color: var(--cc)">Featured</span>{/if}
 		</div>
 		<h1
-			class="font-serif text-2xl font-semibold leading-[1.15] tracking-tight sm:text-3xl"
+			class="title-page"
 			style={`view-transition-name: ${vtName('project-title', project.slug)}`}
 		>
 			{project.title}
@@ -49,14 +49,14 @@
 				rel="noopener"
 				class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-fg underline decoration-[color-mix(in_oklch,var(--fg)_25%,transparent)] underline-offset-4 transition-colors hover:text-accent"
 			>
-				Visit project <Icon name="arrowUpRight" size={15} strokeWidth={2.5} />
+				Visit project <Icon name="arrowUpRight" size={15} weight="bold" />
 			</a>
 		{/if}
 	</header>
 
 	<!-- Problem -->
 	<section class="mb-12" use:reveal>
-		<h2 class="mb-3 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
+		<h2 class="mb-3 eyebrow" style="color: var(--cc)">
 			The problem
 		</h2>
 		<p class="text-base leading-[1.8] text-fg/90">{cs.problem}</p>
@@ -64,7 +64,7 @@
 
 	<!-- Challenges -->
 	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">
 			Challenges
 		</h2>
 		<!-- plain prose, separated by hairlines — these are long-form narrative
@@ -81,7 +81,7 @@
 
 	<!-- Implementation -->
 	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">
 			Implementation
 		</h2>
 		<div class="space-y-7">
@@ -96,13 +96,13 @@
 
 	<!-- Stack rationale -->
 	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">
 			Why this stack
 		</h2>
 		<dl class="grid">
 			{#each cs.stackWhy as row (row.tech)}
 				<div
-					class="grid grid-cols-[8rem_1fr] gap-4 border-t border-[color-mix(in_oklch,var(--fg)_8%,transparent)] py-3.5 first:border-t-0 first:pt-0 sm:grid-cols-[10rem_1fr]"
+					class="grid grid-cols-[8rem_1fr] gap-4 py-2.5 first:pt-0 sm:grid-cols-[10rem_1fr]"
 				>
 					<dt class="font-mono text-sm font-medium text-fg">{row.tech}</dt>
 					<dd class="text-sm leading-relaxed text-muted">{row.why}</dd>
@@ -113,7 +113,7 @@
 
 	<!-- Features -->
 	<section class="mb-4" use:reveal>
-		<h2 class="mb-5 font-mono text-[0.72rem] uppercase tracking-[0.2em]" style="color: var(--cc)">
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">
 			What it does
 		</h2>
 		<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">

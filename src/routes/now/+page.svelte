@@ -12,10 +12,9 @@
 		eyebrow="Now · Updated {label}"
 		title="What I'm doing now"
 		description="A snapshot of what I'm building, learning, and thinking about right now."
-		shape="ring"
 	/>
 
-	<div class="prose-editorial max-w-[44rem]">
+	<div class="prose-editorial mx-auto max-w-[44rem]">
 		<h2>Work</h2>
 		<ul>
 			<li>

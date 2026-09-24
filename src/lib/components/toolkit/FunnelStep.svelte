@@ -145,7 +145,8 @@
 		flex-direction: column;
 		gap: 0.1rem;
 		padding: 0.6rem 0.7rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 	}
 
@@ -173,7 +174,7 @@
 		border-radius: var(--radius-button);
 		font-size: 0.875rem;
 		line-height: 1.6;
-		background: color-mix(in oklch, var(--cl) 10%, var(--bg));
+		background: color-mix(in oklab, var(--cl) 10%, var(--bg));
 		color: var(--fg);
 		--cl: var(--accent);
 	}
@@ -220,7 +221,7 @@
 	.num {
 		width: 4rem;
 		padding: 0.3rem 0.4rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);
@@ -242,7 +243,8 @@
 
 	.empty {
 		padding: 1.25rem;
-		border: 1px dashed var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		color: var(--muted);
 		font-size: 0.875rem;
@@ -255,9 +257,9 @@
 	.add {
 		align-self: flex-start;
 		padding: 0.5rem 0.9rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
-		background: none;
+		background: color-mix(in oklab, var(--fg) 7%, transparent);
 		color: var(--fg);
 		font-size: 0.875rem;
 		font-weight: 600;
@@ -265,7 +267,7 @@
 	}
 
 	.add:hover {
-		border-color: var(--accent);
+		background: color-mix(in oklab, var(--accent) 12%, transparent);
 		color: var(--accent);
 	}
 </style>

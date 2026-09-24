@@ -54,10 +54,10 @@
 <Seo title={kit.tagline} description={kit.description} />
 
 <div class="mx-auto max-w-4xl px-5 sm:px-8" lang="bn">
-	<nav class="pt-2 text-sm text-muted"><a href="/tools" class="hover:text-fg">← সব টুল</a></nav>
+	<nav class="pt-2 text-sm text-muted"><a href="/tools" class="hover:text-fg"><Icon name="arrowLeft" size={14} /> সব টুল</a></nav>
 
 	<header class="head">
-		<h1 class="title">{kit.title}</h1>
+		<h1 class="title-page">{kit.title}</h1>
 		<p class="desc">{kit.description}</p>
 	</header>
 
@@ -107,9 +107,9 @@
 		</section>
 
 		<nav class="pager">
-			<button class="nav" disabled={active === 0} onclick={() => (active -= 1)}>← আগের ধাপ</button>
+			<button class="nav" disabled={active === 0} onclick={() => (active -= 1)}><Icon name="arrowLeft" size={14} /> আগের ধাপ</button>
 			<button class="nav" disabled={active === kit.steps.length - 1} onclick={() => (active += 1)}
-				>পরের ধাপ →</button
+				>পরের ধাপ <Icon name="arrowRight" size={14} /></button
 			>
 		</nav>
 
@@ -140,13 +140,6 @@
 		margin: 1.5rem 0 1.75rem;
 	}
 
-	.title {
-		margin: 0;
-		font-family: var(--font-serif, var(--font-display));
-		font-size: 1.875rem;
-		font-weight: 600;
-		letter-spacing: -0.01em;
-	}
 
 	.desc {
 		margin: 0.5rem 0 0;
@@ -158,7 +151,8 @@
 
 	.planned {
 		padding: 1.25rem;
-		border: 1px dashed var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		color: var(--muted);
 	}
@@ -177,17 +171,16 @@
 		align-items: center;
 		gap: 0.4rem;
 		padding: 0.4rem 0.75rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: 999px;
-		background: none;
+		background: color-mix(in oklab, var(--fg) 5%, transparent);
 		color: var(--muted);
 		font-size: 0.8125rem;
 		cursor: pointer;
 	}
 
 	.pill.is-on {
-		border-color: var(--accent);
-		background: color-mix(in oklch, var(--accent) 10%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 12%, var(--bg));
 		color: var(--accent);
 		font-weight: 600;
 	}
@@ -200,7 +193,8 @@
 
 	.panel {
 		padding: 1.25rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 	}
 
@@ -273,7 +267,6 @@
 	.data {
 		margin: 2.5rem 0 1rem;
 		padding-top: 1rem;
-		border-top: 1px solid var(--rule);
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;

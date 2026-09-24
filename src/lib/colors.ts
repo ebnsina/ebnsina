@@ -1,39 +1,23 @@
-/** The site runs on ONE hue: indigo. What used to be a categorical palette of
- *  eight hues is now eight steps along a single indigo lightness ramp — authored
- *  as oklch(L 0.11 277) and stored as sRGB hex so the same values work in CSS
- *  (color-mix) AND in three.js (THREE.Color can't parse oklch()).
+/** The site runs on ONE hue: Honolulu blue. What used to be a categorical palette of
+ *  eight hues is now eight steps along a single Honolulu-blue lightness ramp — authored
+ *  as oklch(L 0.11 246) and stored as sRGB hex so the same values work in CSS
+ *  (color-mix).
  *
  *  Categories are therefore distinguished by *value*, not by hue. Keep it that
  *  way: adding a second hue here re-introduces the rainbow this replaced. */
 export const CAT_COLORS = [
-	'#444a8e', // oklch 0.44 0.11 277
-	'#51599e', // oklch 0.49
-	'#5f67ae', // oklch 0.54
-	'#6d76be', // oklch 0.59
-	'#7b85ce', // oklch 0.64
-	'#8a95df', // oklch 0.69
-	'#99a4f0', // oklch 0.74
-	'#a8b4ff' // oklch 0.79
-];
-
-// Vivid variant — same indigo ramp at higher chroma (oklch L 0.17 277), for
-// solid tiles that carry white text; soft-tint usage stays on CAT_COLORS.
-export const CAT_VIVID = [
-	'#3b39a6', // oklch 0.42 0.17 277
-	'#4749b7', // oklch 0.47
-	'#5458c8', // oklch 0.52
-	'#6168d9', // oklch 0.57
-	'#6f77ea', // oklch 0.62
-	'#7d87fb', // oklch 0.67
-	'#8b97ff', // oklch 0.72
-	'#9aa7ff' // oklch 0.77
+	'#07568b', // oklch 0.44 0.11 246
+	'#1e659b', // oklch 0.49 0.11 246
+	'#2f74aa', // oklch 0.54 0.11 246
+	'#3f83bb', // oklch 0.59 0.11 246
+	'#4f92cb', // oklch 0.64 0.11 246
+	'#5ea2db', // oklch 0.69 0.11 246
+	'#6eb1ec', // oklch 0.74 0.11 246
+	'#7dc1fd' // oklch 0.79 0.11 246
 ];
 
 export const catColor = (i: number) =>
 	CAT_COLORS[((i % CAT_COLORS.length) + CAT_COLORS.length) % CAT_COLORS.length];
-
-export const catVivid = (i: number) =>
-	CAT_VIVID[((i % CAT_VIVID.length) + CAT_VIVID.length) % CAT_VIVID.length];
 
 function hashIndex(key: string, len: number) {
 	let h = 2166136261;
@@ -47,9 +31,6 @@ function hashIndex(key: string, len: number) {
 /** Deterministic, well-spread colour from a string key (so colours look varied
  *  and don't repeat in lockstep across lists). */
 export const catFor = (key: string) => CAT_COLORS[hashIndex(key, CAT_COLORS.length)];
-
-/** Same stable hash as {@link catFor}, but the vivid variant. */
-export const catVividFor = (key: string) => CAT_VIVID[hashIndex(key, CAT_VIVID.length)];
 
 /* ============================================================
    Aurora card gradients
@@ -171,6 +152,3 @@ export const auroraAt = (i: number) =>
 		AURORA_THEMES[((i % AURORA_THEMES.length) + AURORA_THEMES.length) % AURORA_THEMES.length]
 	);
 
-/** Same, but stable for a given string key (title, slug, …). */
-export const auroraFor = (key: string) =>
-	auroraVars(AURORA_THEMES[hashIndex(key, AURORA_THEMES.length)]);

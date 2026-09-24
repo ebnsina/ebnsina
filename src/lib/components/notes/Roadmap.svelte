@@ -83,7 +83,7 @@
 				<!-- level: a heading, not a card -->
 				<div class="lg:sticky lg:top-24 lg:self-start">
 					<div class="flex items-center gap-2.5">
-						<span class="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-muted">
+						<span class="eyebrow">
 							{t.levelWord(lvl.n)}
 						</span>
 						<LevelBadge level={lvl.level} label={t.levels[lvl.level]} />
@@ -112,7 +112,7 @@
 										>{tk.label}</span
 									>
 									{#if tdone}
-										<Icon name="check" size={12} strokeWidth={3} color="var(--accent)" />
+										<Icon name="check" size={12} weight="bold" color="var(--accent)" />
 									{/if}
 								</span>
 								<span class="shrink-0 font-mono text-[0.68rem] text-muted">

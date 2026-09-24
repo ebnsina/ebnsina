@@ -70,8 +70,8 @@
 	}
 
 	.pager-link:hover {
-		border-color: color-mix(in oklch, var(--accent) 45%, var(--rule));
-		background: color-mix(in oklch, var(--accent) 5%, var(--bg));
+		border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+		background: color-mix(in oklab, var(--accent) 5%, var(--bg));
 	}
 
 	.is-next {
@@ -82,10 +82,10 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-family: var(--font-pixel);
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.15em;
+		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 

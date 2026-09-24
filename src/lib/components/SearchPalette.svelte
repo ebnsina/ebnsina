@@ -234,7 +234,7 @@
 								{/if}
 							</span>
 							<span class="shrink-0 text-right">
-								<span class="block font-mono text-[0.6rem] uppercase tracking-widest text-muted">
+								<span class="block eyebrow">
 									{kindLabel(hit.kind)}
 								</span>
 								{#if hit.context}
@@ -313,7 +313,7 @@
 	   own ink, so the matched word is the thing the eye lands on. */
 	.search-hit mark {
 		border-radius: 0.2rem;
-		background: color-mix(in oklch, var(--accent) 16%, transparent);
+		background: color-mix(in oklab, var(--accent) 16%, transparent);
 		color: var(--accent);
 		font-weight: 600;
 	}

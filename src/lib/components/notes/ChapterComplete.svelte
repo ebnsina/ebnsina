@@ -89,7 +89,7 @@
 			class:border-[color-mix(in_oklch,var(--fg)_25%,transparent)]={!done}
 		>
 			{#if done}
-				<Icon name="check" size={12} strokeWidth={3} color="#fff" />
+				<Icon name="check" size={12} weight="bold" color="#fff" />
 			{/if}
 		</span>
 		<span class="group-hover:text-fg">

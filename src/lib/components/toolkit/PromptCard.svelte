@@ -77,9 +77,9 @@
 	.prompt {
 		margin-top: 1.5rem;
 		padding: 1rem 1.1rem;
-		border: 1px dashed var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-card);
-		background: color-mix(in oklch, var(--accent) 3%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 3%, var(--bg));
 	}
 
 	.head {
@@ -136,8 +136,7 @@
 	}
 
 	.ghost {
-		background: transparent;
-		border-color: var(--rule);
+		background: color-mix(in oklab, var(--fg) 5%, transparent);
 		color: var(--muted);
 	}
 

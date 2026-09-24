@@ -26,6 +26,8 @@ export const SITE = {
 	url: 'https://ebnsina.dev',
 	author: 'Ebn Sina',
 	email: 'ebnsina.dev@gmail.com',
+	// E.164, digits only after the plus — reused for tel: and wa.me links
+	phone: '+8801841252123',
 	locale: 'en-US',
 	twitterHandle: '@ebns1na',
 	ogImage: '/og.png',

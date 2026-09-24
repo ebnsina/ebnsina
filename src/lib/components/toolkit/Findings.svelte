@@ -46,7 +46,7 @@
 		align-items: start;
 		padding: 0.55rem 0.7rem;
 		border-radius: var(--radius-button);
-		background: color-mix(in oklch, var(--cl) 8%, var(--bg));
+		background: color-mix(in oklab, var(--cl) 8%, var(--bg));
 		--cl: var(--accent);
 	}
 

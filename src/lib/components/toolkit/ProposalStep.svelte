@@ -180,7 +180,8 @@
 
 	.read {
 		padding: 0.9rem 1rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		display: flex;
 		flex-direction: column;
@@ -231,8 +232,8 @@
 	.chip {
 		padding: 0.2rem 0.55rem;
 		border-radius: 999px;
-		border: 1px solid var(--rule);
-		background: none;
+		border: 1px solid transparent;
+		background: color-mix(in oklab, var(--fg) 5%, transparent);
 		font-family: var(--font-mono);
 		font-size: 0.6875rem;
 		color: var(--muted);
@@ -255,7 +256,7 @@
 
 	.chip.is-toggle.is-on {
 		border-color: var(--accent);
-		background: color-mix(in oklch, var(--accent) 12%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 12%, var(--bg));
 		color: var(--accent);
 	}
 

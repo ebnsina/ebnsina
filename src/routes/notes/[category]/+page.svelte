@@ -41,10 +41,10 @@
 	<header class="mb-8">
 		<a
 			href="/notes"
-			class="text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors hover:text-fg"
+			class="eyebrow transition-colors hover:text-fg"
 			>{t.backToNotes}</a
 		>
-		<h1 class="mb-3 mt-3 font-serif text-3xl font-semibold tracking-tight">{data.meta.label}</h1>
+		<h1 class="mb-3 mt-3 title-page">{data.meta.label}</h1>
 		<p class="text-lg text-muted">{data.meta.description}</p>
 	</header>
 
@@ -67,8 +67,8 @@
 			{:else if nextChapter}
 				<a
 					href={`/notes/${data.category}/${nextChapter.slug}`}
-					class="rounded-xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklch,var(--accent-solid)_82%,black)]"
-					>{doneCount === 0 ? t.startHere : t.continueWord} →</a
+					class="rounded-xl bg-accent-solid px-4 py-2 font-pixel text-xs text-white transition-colors hover:bg-[color-mix(in_oklab,var(--accent-solid)_82%,black)]"
+					>{doneCount === 0 ? t.startHere : t.continueWord} <Icon name="arrowRight" size={14} /></a
 				>
 			{/if}
 		</div>
@@ -84,7 +84,7 @@
 			class:text-muted={!isDone && !isNext}
 		>
 			{#if isDone}
-				<Icon name="check" size={13} strokeWidth={3} />
+				<Icon name="check" size={13} weight="bold" />
 			{:else}
 				{String(ch.meta.chapter).padStart(2, '0')}
 			{/if}
@@ -122,7 +122,7 @@
 						><LevelBadge level={ch.meta.level} label={t.levels[ch.meta.level]} /></span
 					>
 					<span
-						class="hidden flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted sm:block"
+						class="hidden flex-shrink-0 eyebrow sm:block"
 						>{ch.meta.readingTime}</span
 					>
 					<Icon

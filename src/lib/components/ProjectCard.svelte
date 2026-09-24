@@ -1,6 +1,6 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Project } from '$lib/data/projects';
-	import { auroraFor } from '$lib/colors';
 	let { project }: { project: Project } = $props();
 	// Prefer the internal case-study page; fall back to a live/repo link.
 	const primary = $derived(
@@ -14,21 +14,26 @@
 	href={primary}
 	target={external ? '_blank' : undefined}
 	rel={external ? 'noopener' : undefined}
-	class="media-card group h-full {primary ? 'media-card--link' : ''}"
+	class="media-card group relative h-full {primary ? 'media-card--link' : ''}"
 >
-	<div class="media-card__cover aurora-surface" style={auroraFor(project.title)}></div>
-	<div class="media-card__body">
+	<div class="flex flex-1 flex-col">
+		<span
+			class="pointer-events-none absolute right-7 top-7 -rotate-12 text-accent opacity-80 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-110 motion-reduce:transition-none"
+			aria-hidden="true"
+		>
+			<Icon name={project.icon} size={36} weight="duotone" />
+		</span>
 		<h3
-			class="line-clamp-2 font-serif text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-accent"
+			class="pr-12 font-display text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-accent"
 		>
 			{project.title}
 		</h3>
-		<p class="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">{project.description}</p>
+		<p class="mt-2.5 line-clamp-2 text-[0.95rem] leading-relaxed text-muted">{project.description}</p>
 		{#if project.caseStudy}
 			<span
-				class="mt-auto pt-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-muted transition-colors group-hover:text-accent"
+				class="mt-auto inline-flex items-center gap-1.5 pt-7 eyebrow transition-colors group-hover:text-accent"
 			>
-				Case study →
+				Case study <Icon name="arrowRight" size={14} />
 			</span>
 		{/if}
 	</div>

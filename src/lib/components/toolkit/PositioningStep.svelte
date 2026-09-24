@@ -174,7 +174,7 @@
 	.select {
 		width: 100%;
 		padding: 0.55rem 0.7rem;
-		border: 1px solid var(--rule);
+		border: 1px solid transparent;
 		border-radius: var(--radius-button);
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);
@@ -191,7 +191,7 @@
 	.preview {
 		padding: 0.9rem 1rem;
 		border-radius: var(--radius-card);
-		background: color-mix(in oklch, var(--accent) 6%, var(--bg));
+		background: color-mix(in oklab, var(--accent) 6%, var(--bg));
 	}
 
 	.line {
