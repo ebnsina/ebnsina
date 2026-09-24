@@ -263,6 +263,15 @@
 	input[type='checkbox'] {
 		border-radius: var(--radius-chip);
 	}
+	/* A one-sided border is a line, not a box — rounding bends its ends. */
+	.border-t,
+	.border-b,
+	.border-l,
+	.border-r,
+	.border-x,
+	.border-y {
+		border-radius: 0;
+	}
 	/* the header's blurred surface is full-bleed — a radius would round the top
 	   corners of the page (pseudo-elements can't go inside :where()) */
 	.site-header::before {
@@ -822,6 +831,7 @@ a.media-card:hover,
 	border-top: 3.5px solid transparent;
 	border-bottom: 3.5px solid transparent;
 	border-left: 5px solid currentColor;
+	border-radius: 0;
 	transition: transform 0.18s ease;
 }
 .code-details[open] > .code-summary::before {

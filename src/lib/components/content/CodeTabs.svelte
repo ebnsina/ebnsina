@@ -41,6 +41,7 @@
 	.code-tabs-header {
 		display: flex;
 		border-bottom: 1px solid var(--rule);
+		border-radius: 0;
 		background: color-mix(in oklch, var(--fg) 3%, transparent);
 	}
 	.code-tab-btn {
@@ -54,6 +55,7 @@
 		background: none;
 		border: none;
 		border-bottom: 2px solid transparent;
+		border-radius: 0;
 		cursor: pointer;
 		transition: color 0.15s;
 	}

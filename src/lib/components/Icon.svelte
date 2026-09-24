@@ -1,109 +1,112 @@
 <script module lang="ts">
 	/**
-	 * The site's icon set — Phosphor. Every icon the UI uses is registered in the
-	 * map below, so call sites stay terse (`<Icon name="check" />`) and swapping the
-	 * concrete glyph for a role happens in exactly one place.
+	 * The site's icon set — Hugeicons (free, stroke-rounded). Every icon the UI uses
+	 * is registered in the map below, so call sites stay terse (`<Icon name="check" />`)
+	 * and swapping the concrete glyph for a role happens in exactly one place.
 	 *
 	 * Never use emoji or hand-rolled inline <svg> for UI icons — add a role here.
 	 */
-	import GithubLogoIcon from 'phosphor-svelte/lib/GithubLogoIcon';
-	import LinkedinLogoIcon from 'phosphor-svelte/lib/LinkedinLogoIcon';
-	import XLogoIcon from 'phosphor-svelte/lib/XLogoIcon';
-	import RssIcon from 'phosphor-svelte/lib/RssIcon';
-	import PhoneIcon from 'phosphor-svelte/lib/PhoneIcon';
-	import WhatsappLogoIcon from 'phosphor-svelte/lib/WhatsappLogoIcon';
-	import ApertureIcon from 'phosphor-svelte/lib/ApertureIcon';
-	import BroadcastIcon from 'phosphor-svelte/lib/BroadcastIcon';
-	import ChalkboardTeacherIcon from 'phosphor-svelte/lib/ChalkboardTeacherIcon';
-	import ChartLineIcon from 'phosphor-svelte/lib/ChartLineIcon';
-	import FilmStripIcon from 'phosphor-svelte/lib/FilmStripIcon';
-	import ImageIcon from 'phosphor-svelte/lib/ImageIcon';
-	import LinkSimpleIcon from 'phosphor-svelte/lib/LinkSimpleIcon';
-	import StorefrontIcon from 'phosphor-svelte/lib/StorefrontIcon';
-	import ToolboxIcon from 'phosphor-svelte/lib/ToolboxIcon';
-	import TrendUpIcon from 'phosphor-svelte/lib/TrendUpIcon';
-	import WalletIcon from 'phosphor-svelte/lib/WalletIcon';
-	import WrenchIcon from 'phosphor-svelte/lib/WrenchIcon';
-	import BookOpenTextIcon from 'phosphor-svelte/lib/BookOpenTextIcon';
-	import ArrowLeftIcon from 'phosphor-svelte/lib/ArrowLeftIcon';
-	import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
-	import ArrowUpIcon from 'phosphor-svelte/lib/ArrowUpIcon';
-	import ArrowUpRightIcon from 'phosphor-svelte/lib/ArrowUpRightIcon';
-	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
-	import CopyIcon from 'phosphor-svelte/lib/CopyIcon';
-	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
-	import LightbulbIcon from 'phosphor-svelte/lib/LightbulbIcon';
-	import ListIcon from 'phosphor-svelte/lib/ListIcon';
-	import MoonIcon from 'phosphor-svelte/lib/MoonIcon';
-	import SunIcon from 'phosphor-svelte/lib/SunIcon';
-	import TreeStructureIcon from 'phosphor-svelte/lib/TreeStructureIcon';
-	import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
-	import BookOpenIcon from 'phosphor-svelte/lib/BookOpenIcon';
-	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
-	import XIcon from 'phosphor-svelte/lib/XIcon';
-	import ClockIcon from 'phosphor-svelte/lib/ClockIcon';
-	import BankIcon from 'phosphor-svelte/lib/BankIcon';
-	import ListChecksIcon from 'phosphor-svelte/lib/ListChecksIcon';
-	import LockIcon from 'phosphor-svelte/lib/LockIcon';
-	import EnvelopeSimpleIcon from 'phosphor-svelte/lib/EnvelopeSimpleIcon';
-	import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
-	import GearIcon from 'phosphor-svelte/lib/GearIcon';
-	import SparkleIcon from 'phosphor-svelte/lib/SparkleIcon';
-	import TrophyIcon from 'phosphor-svelte/lib/TrophyIcon';
-	import TagIcon from 'phosphor-svelte/lib/TagIcon';
+	import {
+		Alert02Icon,
+		ApertureIcon,
+		ArrowDown01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
+		ArrowUp02Icon,
+		ArrowUpRight01Icon,
+		Award01Icon,
+		BankIcon,
+		Book02Icon,
+		BookOpen01Icon,
+		BulbIcon,
+		Call02Icon,
+		Cancel01Icon,
+		ChartIncreaseIcon,
+		ChartLineData01Icon,
+		CheckListIcon,
+		Clock01Icon,
+		Copy01Icon,
+		Film01Icon,
+		GithubIcon,
+		HierarchySquare01Icon,
+		Image01Icon,
+		InformationCircleIcon,
+		Link01Icon,
+		Linkedin01Icon,
+		LiveStreaming02Icon,
+		LockIcon,
+		Mail01Icon,
+		Menu01Icon,
+		Moon02Icon,
+		NewTwitterIcon,
+		RssIcon,
+		Search01Icon,
+		Settings02Icon,
+		SparklesIcon,
+		Store01Icon,
+		Sun03Icon,
+		Tag01Icon,
+		TeacherIcon,
+		Tick02Icon,
+		ToolboxIcon,
+		Wallet01Icon,
+		WhatsappIcon,
+		Wrench01Icon
+	} from '@hugeicons/core-free-icons';
 
 	const ICONS = {
-		phone: PhoneIcon,
-		whatsapp: WhatsappLogoIcon,
-		github: GithubLogoIcon,
-		linkedin: LinkedinLogoIcon,
-		x: XLogoIcon,
+		phone: Call02Icon,
+		whatsapp: WhatsappIcon,
+		github: GithubIcon,
+		linkedin: Linkedin01Icon,
+		x: NewTwitterIcon,
 		rss: RssIcon,
 		aperture: ApertureIcon,
-		broadcast: BroadcastIcon,
-		chalkboard: ChalkboardTeacherIcon,
-		chart: ChartLineIcon,
-		film: FilmStripIcon,
-		image: ImageIcon,
-		link: LinkSimpleIcon,
-		storefront: StorefrontIcon,
+		broadcast: LiveStreaming02Icon,
+		chalkboard: TeacherIcon,
+		chart: ChartLineData01Icon,
+		film: Film01Icon,
+		image: Image01Icon,
+		link: Link01Icon,
+		storefront: Store01Icon,
 		toolbox: ToolboxIcon,
-		trendUp: TrendUpIcon,
-		wallet: WalletIcon,
-		wrench: WrenchIcon,
-		bookText: BookOpenTextIcon,
-		arrowLeft: ArrowLeftIcon,
-		arrowRight: ArrowRightIcon,
-		arrowUp: ArrowUpIcon,
-		arrowUpRight: ArrowUpRightIcon,
-		caretDown: CaretDownIcon,
-		copy: CopyIcon,
-		diagram: TreeStructureIcon,
-		info: InfoIcon,
-		lightbulb: LightbulbIcon,
-		menu: ListIcon,
-		moon: MoonIcon,
-		sun: SunIcon,
-		warning: WarningIcon,
-		book: BookOpenIcon,
-		check: CheckIcon,
-		close: XIcon,
-		clock: ClockIcon,
+		trendUp: ChartIncreaseIcon,
+		wallet: Wallet01Icon,
+		wrench: Wrench01Icon,
+		bookText: BookOpen01Icon,
+		arrowLeft: ArrowLeft02Icon,
+		arrowRight: ArrowRight02Icon,
+		arrowUp: ArrowUp02Icon,
+		arrowUpRight: ArrowUpRight01Icon,
+		caretDown: ArrowDown01Icon,
+		copy: Copy01Icon,
+		diagram: HierarchySquare01Icon,
+		info: InformationCircleIcon,
+		lightbulb: BulbIcon,
+		menu: Menu01Icon,
+		moon: Moon02Icon,
+		sun: Sun03Icon,
+		warning: Alert02Icon,
+		book: Book02Icon,
+		check: Tick02Icon,
+		close: Cancel01Icon,
+		clock: Clock01Icon,
 		landmark: BankIcon,
-		listChecks: ListChecksIcon,
+		listChecks: CheckListIcon,
 		lock: LockIcon,
-		mail: EnvelopeSimpleIcon,
-		search: MagnifyingGlassIcon,
-		settings: GearIcon,
-		sparkles: SparkleIcon,
-		tag: TagIcon,
-		trophy: TrophyIcon
+		mail: Mail01Icon,
+		search: Search01Icon,
+		settings: Settings02Icon,
+		sparkles: SparklesIcon,
+		tag: Tag01Icon,
+		trophy: Award01Icon
 	};
 
 	export type IconName = keyof typeof ICONS;
 </script>
 
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 
 	let {
 		name,
@@ -114,12 +117,17 @@
 	}: {
 		name: IconName;
 		size?: number;
-		weight?: 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
+		weight?: 'regular' | 'bold';
 		color?: string;
 		class?: string;
 	} = $props();
-
-	const Glyph = $derived(ICONS[name]);
 </script>
 
-<Glyph {size} {weight} {color} class="icon {klass}" aria-hidden="true" />
+<HugeiconsIcon
+	icon={ICONS[name]}
+	{size}
+	{color}
+	strokeWidth={weight === 'bold' ? 2 : 1.5}
+	class="icon {klass}"
+	aria-hidden="true"
+/>

@@ -14,15 +14,18 @@ importers:
       '@fontsource/space-mono':
         specifier: ^5.3.0
         version: 5.3.0
+      '@hugeicons/core-free-icons':
+        specifier: ^4.3.5
+        version: 4.3.5
+      '@hugeicons/svelte':
+        specifier: ^1.1.5
+        version: 1.1.5(svelte@5.56.3(@typescript-eslint/types@8.61.0))
       geist:
         specifier: ^1.7.2
         version: 1.7.2(next@16.2.9(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       mermaid:
         specifier: ^11.16.0
         version: 11.16.0
-      phosphor-svelte:
-        specifier: ^3.1.0
-        version: 3.1.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0))
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -194,6 +197,14 @@ packages:
 
   '@fontsource/space-mono@5.3.0':
     resolution: {integrity: sha512-FrpBMOVWn3PRdRHlrZWC55X3kZG/2BTH7SM5ZyS/bky3iKya2BturI5lk+t0RoDQL2JyHzURsVq/EisCsxpI5A==}
+
+  '@hugeicons/core-free-icons@4.3.5':
+    resolution: {integrity: sha512-Sv+NjHRPnQk+yZsGCMcGznCHdTfJR9PMMOEKcJYAQU4gy90dmlc9PwdtvYOImBZIjiheMsTLL5eMn2DmHxUiUg==}
+
+  '@hugeicons/svelte@1.1.5':
+    resolution: {integrity: sha512-aau7Z9kJWi3QtakeHeFBj+TqHl7NQBO6/BWbnBTete8On3+L/CD1iSmf4vFNs90fcpQeP+567hT4wImEMNd1Fg==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -1950,15 +1961,6 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  phosphor-svelte@3.1.0:
-    resolution: {integrity: sha512-nldtxx+XCgNREvrb7O5xgDsefytXpSkPTx8Rnu3f2qQCUZLDV1rLxYSd2Jcwckuo9lZB1qKMqGR17P4UDC0PrA==}
-    peerDependencies:
-      svelte: ^5.0.0 || ^5.0.0-next.96
-      vite: '>=5'
-    peerDependenciesMeta:
-      vite:
-        optional: true
-
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -2594,6 +2596,12 @@ snapshots:
   '@fontsource/hind-siliguri@5.3.0': {}
 
   '@fontsource/space-mono@5.3.0': {}
+
+  '@hugeicons/core-free-icons@4.3.5': {}
+
+  '@hugeicons/svelte@1.1.5(svelte@5.56.3(@typescript-eslint/types@8.61.0))':
+    dependencies:
+      svelte: 5.56.3(@typescript-eslint/types@8.61.0)
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -4233,14 +4241,6 @@ snapshots:
       minipass: 7.1.3
 
   pathe@2.0.3: {}
-
-  phosphor-svelte@3.1.0(svelte@5.56.3(@typescript-eslint/types@8.61.0))(vite@8.0.16(@types/node@24.13.2)(jiti@2.7.0)):
-    dependencies:
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-      svelte: 5.56.3(@typescript-eslint/types@8.61.0)
-    optionalDependencies:
-      vite: 8.0.16(@types/node@24.13.2)(jiti@2.7.0)
 
   picocolors@1.1.1: {}
 

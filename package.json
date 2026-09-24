@@ -52,8 +52,9 @@
 	"dependencies": {
 		"@fontsource/hind-siliguri": "^5.3.0",
 		"@fontsource/space-mono": "^5.3.0",
+		"@hugeicons/core-free-icons": "^4.3.5",
+		"@hugeicons/svelte": "^1.1.5",
 		"geist": "^1.7.2",
-		"mermaid": "^11.16.0",
-		"phosphor-svelte": "^3.1.0"
+		"mermaid": "^11.16.0"
 	}
 }

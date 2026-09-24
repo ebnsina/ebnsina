@@ -189,7 +189,7 @@ The header (`Header.svelte`) is transparent at rest so it blends into the hero, 
 
 Brand/visual constraints: no neon/glow; minimal cards; colour only from the palette tokens.
 
-**Corner radius** — the four tokens above are declared on `:root` in `layout.css`, and Tailwind's `--radius-md/-lg/-xl/-3xl` alias them in `@theme inline`, so markup classes and CSS cannot drift; changing a token re-rounds the whole site. Every element starts at the button radius via a zero-specificity `*` rule in `@layer base`; full-bleed surfaces (html, body, footer, lists, table cells) are exempt. A top-border-only divider or a fill inside a rounded box sets `border-radius: 0` itself.
+**Corner radius** — the four tokens above are declared on `:root` in `layout.css`, and Tailwind's `--radius-md/-lg/-xl/-3xl` alias them in `@theme inline`, so markup classes and CSS cannot drift; changing a token re-rounds the whole site. Every element starts at the button radius via a zero-specificity `*` rule in `@layer base`; full-bleed surfaces (html, body, footer, lists, table cells) are exempt. A one-sided border is a line, not a box: `border-t/b/l/r/x/y` utilities are squared by a base rule, and hand-written one-sided borders (and fills inside a rounded box) set `border-radius: 0` themselves.
 
 The card radius is declared on **`.aurora-surface` / `.glass-card` themselves**, not on each component's cover class — so any coloured surface is rounded by construction and a new one can't ship sharp. Components needing a different silhouette (the folder's tab corner, its pocket) override it from their own scoped rule, which wins on specificity.
 
@@ -199,14 +199,14 @@ The card radius is declared on **`.aurora-surface` / `.glass-card` themselves**,
 
 ## Icons
 
-Never use emoji in UI. Icons are **Phosphor** (`phosphor-svelte`, deep imports from `phosphor-svelte/lib/<Name>Icon`), always reached through the single wrapper `src/lib/components/Icon.svelte`:
+Never use emoji in UI. Icons are **Hugeicons** (`@hugeicons/svelte` + `@hugeicons/core-free-icons`, stroke-rounded), always reached through the single wrapper `src/lib/components/Icon.svelte`:
 
 ```svelte
 import Icon from '$lib/components/Icon.svelte';
 <Icon name="trophy" size={14} weight="bold" color="var(--bg)" />
 ```
 
-`Icon.svelte` holds the whole icon set as a `name → Phosphor component` map, so a role is registered once and every call site stays terse. **To use a new icon, add a role to that map** — do not import from `phosphor-svelte` at a call site, and do not hand-roll inline `<svg>`. Colour defaults to `currentColor`.
+`Icon.svelte` holds the whole icon set as a `name → Hugeicons icon` map, so a role is registered once and every call site stays terse. **To use a new icon, add a role to that map** — do not import from `@hugeicons/*` at a call site, and do not hand-roll inline `<svg>`. `weight` is `regular` (1.5 stroke) or `bold` (2); the free set has no fill/duotone. Colour defaults to `currentColor`.
 
 ## Conventions
 
