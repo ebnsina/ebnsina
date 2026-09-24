@@ -9,6 +9,7 @@ topics: ['LRU', 'LFU', 'TTL', 'eviction', 'memory management']
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import EvictionSim from '$lib/components/content/EvictionSim.svelte';
 </script>
 
 <Callout type="info">
@@ -199,6 +200,14 @@ LFU বেশি জটিল এবং এর একটা **উল্টো ca
 Access frequency নির্বিশেষে সবচেয়ে পুরনো এন্ট্রিটা evict করে। সহজ কিন্তু সাধারণত optimal নয় — 10 মিনিট আগে যোগ হওয়া এবং প্রতি সেকেন্ডে অ্যাক্সেস হওয়া একটা আইটেম, 9 মিনিট আগে যোগ হওয়া এবং কখনও অ্যাক্সেস না হওয়া আইটেমের চেয়ে আগে evict হওয়া উচিত নয়।
 
 যখন আপনি সত্যিই শুধু সাম্প্রতিকতম N-টা আইটেম রাখতে চান, যেমন একটা event log, তখন এটা ব্যবহৃত হয়।
+
+## হাতে-কলমে: কোন policy টিকে থাকে
+
+নিচের cache-এ প্রতিটা ঘর একটা slot। বেশিরভাগ request যায় অল্প কয়েকটা hot key-তে (ভরাট ঘর), বাকিগুলো ছড়ানো লম্বা tail-এ। মাঝে মাঝে একটা batch job চলে, যেটা এক ঝাঁক নতুন key একবার করে পড়ে আর কখনো ফিরে আসে না (দাগকাটা ঘর)। ওপরে যে **cache pollution**-এর কথা বলা হলো, এটাই সেই পরিস্থিতি।
+
+LRU রেখে **Batch scan চালাও** চাপো আর দেখো hot key-গুলোর কী হয়। তারপর একই কাজ LFU আর FIFO দিয়ে করো। চ্যালেঞ্জে মেমরি বাড়িয়ে পার পাওয়া যাবে না।
+
+<EvictionSim />
 
 ## Random Replacement
 

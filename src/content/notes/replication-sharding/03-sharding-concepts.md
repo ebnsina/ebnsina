@@ -10,6 +10,7 @@ topics:
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import ShardingSim from '$lib/components/content/ShardingSim.svelte';
 </script>
 
 <Callout type="info">
@@ -204,6 +205,14 @@ ring.addShard('shard-3');
 ring.getShard('customer-123'); // → 'shard-2'
 // Adding shard-4: only ~25% of keys move (vs 75% with hash-mod)
 ```
+
+## হাতে-কলমে: shard যোগ করলে কত key সরে?
+
+নিচে কয়েক হাজার customer key কয়েকটা shard-এ ভাগ করা। একটা shard যোগ বা সরিয়ে দেখো: কালো ঘরগুলো সেই key যেগুলোকে অন্য shard-এ সরাতে হবে, মানে production-এ ততখানি ডেটা copy। প্রথমে `hash % N` দিয়ে চেষ্টা করো, তারপর consistent hashing দিয়ে।
+
+Consistent hashing-এ virtual node কমিয়ে দেখো। কম key সরলেও একটা shard বাকিদের চেয়ে অনেক বেশি ভরে যায়। চ্যালেঞ্জে দুটো শর্তই একসাথে মেলাতে হবে।
+
+<ShardingSim />
 
 ## Cross-Shard Query
 

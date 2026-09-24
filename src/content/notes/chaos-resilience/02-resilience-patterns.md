@@ -9,6 +9,7 @@ topics: ['circuit breaker', 'bulkhead', 'timeout', 'retry', 'graceful degradatio
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import RetryStormSim from '$lib/components/content/RetryStormSim.svelte';
 </script>
 
 <Callout type="info">
@@ -221,6 +222,14 @@ breaker.on('close', () => logger.info('Payment circuit CLOSED'));
 // Provide a fallback when circuit is open
 breaker.fallback(() => ({ status: 'pending', message: 'Payment queued for processing' }));
 ```
+
+## হাতে-কলমে: retry storm থামাও
+
+নিচের সিমুলেটরে user-রা সেকেন্ডে 80টা request পাঠায়, আর পেছনের dependency সেকেন্ডে মোটামুটি 100টা সামলাতে পারে। মানে স্বাভাবিক দিনে হাতে জায়গা আছে। এবার "Outage দাও" চাপো: dependency কয়েক সেকেন্ডের জন্য ধীর হয়ে যায়, request timeout হতে থাকে, আর প্রতিটা timeout একটা নতুন retry পাঠায়। খেয়াল করো outage শেষ হওয়ার পরেও load বার capacity-র রেখার ওপরে থেকে যায় কিনা।
+
+ধরো ফাতিমার payment service এই dependency-কে call করে। Outage চলে গেছে, dependency আবার পুরো গতিতে, তবুও সিস্টেম ঠিক হচ্ছে না। কেন? চ্যালেঞ্জ চালিয়ে বের করো, তারপর retry, timeout, backoff আর circuit breaker দিয়ে সেটা ঠিক করো।
+
+<RetryStormSim />
 
 ## Bulkheads
 

@@ -9,6 +9,7 @@ topics: ['stampede', 'thundering herd', 'mutex', 'probabilistic expiry', 'dog pi
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import CacheStampedeSim from '$lib/components/content/CacheStampedeSim.svelte';
 </script>
 
 ## গল্পে বুঝি
@@ -163,6 +164,14 @@ class ProbabilisticCache<T> {
 **এটি যেভাবে কাজ করে:** যে প্রতিটি request একটি cache entry পড়ে, সেটি probabilistically সিদ্ধান্ত নেয় আগেভাগে refresh করবে কিনা। expiry যত কাছাকাছি আসে এবং entry compute করতে যত বেশি সময় লেগেছিল, probability তত বাড়ে। ব্যয়বহুল entry-গুলো আগেই refresh হয়। একাধিক process স্বাধীনভাবে এই সিদ্ধান্ত নেয়, তাই কোনো coordination ছাড়াই cache গরম (warm) থাকে।
 
 এটি গবেষণাপত্র _"Optimal Probabilistic Cache Stampede Prevention"_-এর XFetch algorithm-এর উপর ভিত্তি করে।
+
+## হাতে-কলমে: stampede ঘটিয়ে দেখো
+
+নিচের সিমুলেটরে একটাই hot key, আর প্রতিবার সেটা rebuild করতে DB-র লাগে 200ms, ওপরের উদাহরণের মতোই। ওপরের বারটা দেখায় TTL কতটা বাকি। ভরাট বর্গগুলো DB-তে চলমান query, ফাঁপা বর্গগুলো অপেক্ষমাণ request।
+
+প্রথমে **None** রেখে দেখো TTL শূন্য হওয়ার মুহূর্তে DB-র কী হয়। তারপর **Lock** আর **Early refresh** (ওপরের XFetch) বদলে ঠিক সেই মুহূর্তটা আবার দেখো। চ্যালেঞ্জে দুটো শর্ত একসাথে মানতে হবে, আর lock দিয়ে সেটা হয় না।
+
+<CacheStampedeSim />
 
 ## Fix 3 — Stale-While-Revalidate
 

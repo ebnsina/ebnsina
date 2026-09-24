@@ -269,7 +269,7 @@
 		"03-eviction-policies",
 		"Eviction Policies",
 		"LRU, LFU, TTL এবং তাদের সঙ্গীরা — মেমরি ভরে গেলে cache কীভাবে ঠিক করে কোনটা ফেলে দেবে।",
-		"memory management caching গল্পে বুঝি কেন গুরুত্বপূর্ণ time to live least recently used frequently fifo first in out random replacement redis আপনার cache-এর আকার নির্ধারণ একসাথে ব্যবহার"
+		"memory management caching গল্পে বুঝি কেন গুরুত্বপূর্ণ time to live least recently used frequently fifo first in out হাতে-কলমে কোন policy টিকে থাকে random replacement redis আপনার cache-এর আকার নির্ধারণ একসাথে ব্যবহার"
 	],
 	[
 		0,
@@ -293,7 +293,7 @@
 		"06-cache-stampede",
 		"Cache Stampede ও Thundering Herd",
 		"একটি জনপ্রিয় cache entry expire হলে এবং একসাথে হাজার হাজার request database-এ আঘাত করলে কী ঘটে — এবং কীভাবে সেটা থামানো যায়।",
-		"mutex probabilistic expiry dog pile caching গল্পে বুঝি কেন এটি প্রয়োজন সমস্যাটি পুনরুৎপাদন করা fix 1 lock একবারই repopulation 2 early xfetch 3 stale-while-revalidate 4 warming বেছে নেওয়া"
+		"mutex probabilistic expiry dog pile caching গল্পে বুঝি কেন এটি প্রয়োজন সমস্যাটি পুনরুৎপাদন করা fix 1 lock একবারই repopulation 2 early xfetch হাতে-কলমে ঘটিয়ে দেখো 3 stale-while-revalidate 4 warming বেছে নেওয়া"
 	],
 	[
 		0,
@@ -397,7 +397,7 @@
 		"02-resilience-patterns",
 		"Resilience Patterns",
 		"Timeouts, retries, circuit breakers, bulkheads, এবং graceful degradation — সেই বিল্ডিং ব্লক যা failure-কে আটকে রাখে।",
-		"breaker bulkhead timeout retry chaos গল্পে বুঝি ভিত্তি hedged requests pattern-গুলো একসাথে ব্যবহার"
+		"breaker bulkhead timeout retry chaos গল্পে বুঝি ভিত্তি হাতে-কলমে storm থামাও hedged requests pattern-গুলো একসাথে ব্যবহার"
 	],
 	[
 		0,
@@ -997,7 +997,7 @@
 		"06-consensus",
 		"Consensus: Raft & Paxos",
 		"Failure সত্ত্বেও একদল মেশিন কীভাবে একটি একক মানে একমত হয়: leader election, log replication, এবং Raft-এর একটি পূর্ণ walkthrough।",
-		"distributed systems গল্পে বুঝি সমস্যা quorum কেন বিজোড় সংখ্যা দরকার যে তুমি অনুসরণ করতে পারো term cluster-এর জন্য logical time heartbeat safety paxos-এর সাথে সংক্ষিপ্ত তুলনা"
+		"distributed systems গল্পে বুঝি সমস্যা quorum কেন বিজোড় সংখ্যা দরকার যে তুমি অনুসরণ করতে পারো term cluster-এর জন্য logical time heartbeat safety হাতে-কলমে partition করে ভাঙার চেষ্টা করো paxos-এর সাথে সংক্ষিপ্ত তুলনা"
 	],
 	[
 		0,
@@ -2029,7 +2029,7 @@
 		"02-algorithms",
 		"Load Balancing Algorithm",
 		"Round-robin, least connections, IP hash, weighted routing — কোন algorithm কখন মানানসই আর backend সমান না হলে কী ঘটে।",
-		"consistent hashing algorithms গল্পে বুঝি round robin source affinity random with two choices power of বাছাইয়ের গাইড slow start"
+		"consistent hashing algorithms গল্পে বুঝি round robin source affinity random with two choices power of হাতে-কলমে ধীর server লুকিয়ে ফেলো বাছাইয়ের গাইড slow start"
 	],
 	[
 		0,
@@ -2477,7 +2477,7 @@
 		"01-latency-thinking",
 		"Latency Thinking",
 		"P50 vs P99 vs P999, tail latency-র সমস্যা, latency budget, আর কেন average সবচেয়ে গুরুত্বপূর্ণ failure-গুলো লুকিয়ে ফেলে।",
-		"percentiles slo performance গল্পে বুঝি মিথ্যা বলে সঠিকভাবে মাপা কোডে prometheus-এ histogram bucket load testing little s law চারটে উৎস throughput ট্রেড-অফ"
+		"percentiles slo performance গল্পে বুঝি মিথ্যা বলে সঠিকভাবে মাপা কোডে prometheus-এ histogram bucket load testing little s law হাতে-কলমে queue ভেঙে দেখো চারটে উৎস throughput ট্রেড-অফ"
 	],
 	[
 		0,
@@ -2605,7 +2605,7 @@
 		"01-replication-fundamentals",
 		"Replication Fundamentals",
 		"Replication কেন আছে, synchronous vs asynchronous, WAL-ভিত্তিক streaming, এবং প্রতিটি replica যে consistency trade-off নিয়ে আসে।",
-		"postgresql wal read replicas sharding গল্পে বুঝি postgres কীভাবে কাজ করে lag application code-এ levels slots"
+		"postgresql wal read replicas sharding গল্পে বুঝি postgres কীভাবে কাজ করে lag application code-এ levels হাতে-কলমে নিজের write কি দেখা যায় slots"
 	],
 	[
 		0,
@@ -2621,7 +2621,7 @@
 		"03-sharding-concepts",
 		"Sharding Concepts",
 		"যখন replication যথেষ্ট নয়, partition key, shard routing strategy, এবং shard করলে আপনি যে operational জটিলতা মেনে নেন।",
-		"consistent hashing horizontal partitioning গল্পে বুঝি কখন করবেন vs নির্বাচন range hash cross-shard query directory-based বাস্তবতা"
+		"consistent hashing horizontal partitioning গল্পে বুঝি কখন করবেন vs নির্বাচন range hash হাতে-কলমে যোগ কত সরে cross-shard query directory-based বাস্তবতা"
 	],
 	[
 		0,

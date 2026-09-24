@@ -9,6 +9,7 @@ topics: ['latency', 'percentiles', 'P99', 'tail latency', 'latency budget', 'SLO
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import QueueSim from '$lib/components/content/QueueSim.svelte';
 </script>
 
 ## গল্পে বুঝি
@@ -173,6 +174,14 @@ W = 100 / 200 = 0.5 seconds average latency
 ```
 
 Throughput না বাড়িয়ে latency অর্ধেক করতে: concurrency কমাও (কম request queue করো) অথবা `W` কমাও (প্রতিটা request দ্রুততর করো)।
+
+## হাতে-কলমে: queue ভেঙে দেখো
+
+নিচের সিমুলেটরে প্রতিটা বর্গ একটা অপেক্ষমাণ request, আর প্রতিটা worker গড়ে 100ms-এ একটা request শেষ করে, মানে সেকেন্ডে মোটামুটি 10টা। Traffic ধীরে ধীরে বাড়াও আর খেয়াল করো: load 50% থেকে 70%-এ গেলে p99 প্রায় একই থাকে, কিন্তু 90%-এর কাছে গেলেই queue জমতে শুরু করে আর p99 লাফিয়ে ওঠে। 100% পার হলে queue আর কখনো খালি হয় না।
+
+তারপর চ্যালেঞ্জটা চালাও। প্রথমে যে উত্তরটা মাথায় আসবে, সেটাই সম্ভবত ভুল।
+
+<QueueSim />
 
 ## চারটে Latency-র উৎস
 

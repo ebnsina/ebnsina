@@ -107,8 +107,9 @@ class Progress {
 		return sum;
 	}
 
+	// Chapters only: passed simulator challenges (key `challenge/…`) add XP but aren't chapters.
 	get count() {
-		return Object.keys(this.completed).length;
+		return Object.keys(this.completed).filter((k) => !k.startsWith('challenge/')).length;
 	}
 
 	/** Current rank + progress toward the next one. */

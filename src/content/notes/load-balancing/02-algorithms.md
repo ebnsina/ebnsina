@@ -9,6 +9,7 @@ topics: ['load balancing', 'round-robin', 'least connections', 'consistent hashi
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import LoadBalancerSim from '$lib/components/content/LoadBalancerSim.svelte';
 </script>
 
 <Callout type="info">
@@ -168,6 +169,14 @@ backend api_servers
 ```
 
 বড়, distributed load balancer fleet-এর জন্য (যেমন service mesh-এ Nginx Plus বা Envoy), এটা global least-connections-এর চেয়ে বেশি পছন্দনীয় কারণ এটার জন্য LB instance-গুলোর মধ্যে shared state লাগে না।
+
+## হাতে-কলমে: ধীর server লুকিয়ে ফেলো
+
+গল্পের ক্লিনিকে ফিরে যাই। ধরো আজ রাজির কম্পিউটার বারবার হ্যাং করছে, তাই প্রতিটা রোগী দেখতে তাঁর কয়েক গুণ সময় লাগছে। ফাতিমা যদি আগের মতোই পালা করে পাঠাতে থাকেন, রাজির দরজার সামনে লাইন বাড়তেই থাকবে, অথচ সিনা আর খোয়ারিজমি মাঝে মাঝে ফাঁকা বসে থাকবেন।
+
+নিচের সিমুলেটরে চারটা backend, আর s2 হলো সেই ধীর রাজি। প্রতিটা বর্গ একটা request: ভরা বর্গ মানে কাজ চলছে, ফাঁপা বর্গ মানে queue-তে অপেক্ষা। Algorithm বদলে দেখো s2-এর queue কী করে, তারপর চ্যালেঞ্জটা চালাও।
+
+<LoadBalancerSim />
 
 ## Consistent Hashing
 

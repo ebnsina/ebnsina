@@ -136,6 +136,10 @@ Markdown is compiled as Svelte, so in **prose** (outside fenced code blocks) a r
 
 Components under `src/lib/components/content/`: `Callout` (types `info`/`tip`/`warning`), `CodeTabs`, `Mermaid`, `LevelBadge`, `CdnPlayground`. There is **no mdsvex layout injecting them** — a chapter that uses one imports it itself in a `<script>` block placed directly after the frontmatter.
 
+### Chapter simulators
+
+Some chapters carry a `## হাতে-কলমে: …` section with an interactive simulator plus a graded challenge (`QueueSim` in `performance/01-latency-thinking` is the reference). Each is three files: a pure, seeded, frame-rate-independent sim in `src/lib/<name>-sim.ts` (seeded with `mulberry32` from `rng.ts`), a vitest test that locks the challenge (the naive answer fails, the intended one passes), and a component in `content/` that imports the shared `sim.css`. Numbers in the prose and result text come from the sim, never from memory. Passing awards XP through `progress.complete('challenge', <slug>, <level>)`. The `challenge/` keys count toward XP but not toward the chapter count. Only add one where the concept changes over time (queues, lag, votes). Static topics don't get one.
+
 ## Notes "journey" gamification
 
 The notes section is a localStorage-backed learning game (no DB):

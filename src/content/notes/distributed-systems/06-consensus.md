@@ -9,6 +9,7 @@ topics: ['consensus', 'raft', 'paxos']
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import RaftSim from '$lib/components/content/RaftSim.svelte';
 </script>
 
 ## গল্পে বুঝি
@@ -110,6 +111,14 @@ Client request হলো leader-এর **log**-এ যুক্ত করা com
 **নোট:** Raft বিমূর্ত consensus সমস্যাকে একটি _replicated log_-এ পরিণত করে। "log-এর পরের entry"-তে বারবার একমত হওয়া প্রতিটি node-এ একটি অভিন্ন state machine চালানোর সমতুল্য। এই **replicated state machine** প্যাটার্ন হলো etcd, Consul, আর CockroachDB যেভাবে strongly consistent storage দেয় যার উপর lock, leader election, ও configuration নির্ভর করে।
 
 </Callout>
+
+## হাতে-কলমে: partition করে Raft ভাঙার চেষ্টা করো
+
+নিচে পাঁচটা node-এর একটা ছোট Raft cluster চলছে, সময়টা অনেক ধীর করে দেওয়া যাতে vote আর heartbeat message চোখে দেখা যায়। প্রতিটা বৃত্তের ভেতরের সংখ্যাটা ওই node-এর term, ভরা বৃত্ত হলো leader। কোনো node-এ ক্লিক করলে সেটা network partition-এর অন্য পাশে চলে যায়। দেখো, leader যে পাশে নেই সেখানে election timeout-এর পর নতুন election হয় কি না, আর কোন পাশে write commit হয়।
+
+মনে রাখার নিয়ম একটাই: পাঁচটা node-এ commit-এর জন্য অন্তত তিনটার সম্মতি লাগে। তারপর চ্যালেঞ্জটা চালাও। একটা write হারানো সম্ভব, কিন্তু কোনটা হারাতে পারবে আর কোনটা পারবে না, সেটাই এই অধ্যায়ের আসল শিক্ষা।
+
+<RaftSim />
 
 ## Paxos-এর সাথে সংক্ষিপ্ত তুলনা
 

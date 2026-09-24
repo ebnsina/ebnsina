@@ -18,6 +18,7 @@ topics:
 
 <script>
 	import Callout from '$lib/components/content/Callout.svelte';
+	import ReplicationLagSim from '$lib/components/content/ReplicationLagSim.svelte';
 </script>
 
 <Callout type="info">
@@ -203,6 +204,14 @@ function getDb(req: Request, isWrite: boolean): Pool {
   return replica;
 }
 ```
+
+## হাতে-কলমে: নিজের write কি দেখা যায়?
+
+নিচে একটা primary আর দুটো async replica। User-রা কিছু save করে, আর app সাথে সাথে তাদের page reload করে। সেই read যদি এমন replica-তে যায় যেটা এখনো write-টা replay করেনি, user দেখে তার save হারিয়ে গেছে। প্রতিটা বর্গ এমন একটা read: ভরাট মানে replica থেকে ঠিক ডেটা, ফাঁপা মানে primary থেকে, ডোরাকাটা মানে stale।
+
+উপরের তিনটে consistency level-ই এখানে বেছে নেওয়া যায়। Lag বাড়িয়ে দেখো stale read কীভাবে বাড়ে, তারপর চ্যালেঞ্জে এমন একটা window খোঁজো যেটা খুব ছোটও না, খুব বড়ও না।
+
+<ReplicationLagSim />
 
 ## Replication Slots
 
