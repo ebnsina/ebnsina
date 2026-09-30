@@ -80,16 +80,13 @@
 			});
 
 			// 2. code blocks: fold control + copy button.
-			//    Each <pre> is moved into a <details open> so a reader can collapse a
-			//    block they've read past. Open by default — nothing is hidden; the
-			//    control is just there. The language comes from the `language-*`
-			//    class Shiki puts on the <code>.
+			//    Each <pre> is moved into a <details>, collapsed by default. Language comes
+			//    from the `language-*` class Shiki puts on the <code>.
 			article!.querySelectorAll<HTMLPreElement>('pre').forEach((pre) => {
 				if (pre.parentElement?.classList.contains('code-block-wrapper')) return;
 
 				const details = document.createElement('details');
 				details.className = 'code-details';
-				details.open = true;
 				const summary = document.createElement('summary');
 				summary.className = 'code-summary';
 				const code = pre.querySelector('code');

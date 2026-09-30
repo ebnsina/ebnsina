@@ -63,7 +63,7 @@
 			startOnLoad: false,
 			securityLevel: 'strict',
 			theme: 'base',
-			fontFamily: "'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace",
+			fontFamily: "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace",
 			themeVariables: {
 				darkMode: isDark,
 				background: 'transparent',

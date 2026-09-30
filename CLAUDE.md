@@ -166,10 +166,10 @@ There is no 3D (three.js/Threlte were removed). The home hero and `PageBanner` a
 
 `src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **Palette: Zumurrud** — emerald `--primary` (`#0e7c5a` light / `#34c99a` dark) and brass `--secondary` (`#a8742a` / `#d9a55a`), plus semantic `--success`, `--warning`, `--danger`, `--info`, each with a light and dark value, on cool-neutral greys (`--muted`, `--faint`, `--rule`, `--rule-strong`, `--surface`). All are Tailwind colours too (`text-primary`, `bg-danger`, …). `--accent` and `--accent-solid` alias `--primary`; `--on-accent` is the ink on a solid primary fill. Use the semantic tokens for state (pass = success, fail = danger), never a hand-picked hex. Reskinning the whole site means changing those hex values and nothing else.
 
-**Fonts — PolySans for all text, Space Mono, plus the Bangla face:**
+**Fonts — PolySans for all text, IBM Plex Mono, plus the Bangla face:**
 
 - **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-sans`, `--font-display` and `--font-serif` — body text and every heading (h1–h3 are forced to 700 = Bulky).
-- **Space Mono** (`@fontsource/space-mono`, 400 + 700 only) fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
+- **IBM Plex Mono** (`@fontsource/ibm-plex-mono`, 400 + 700 only) fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
 - **Hind Siliguri** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
 - `static/fonts/` still holds `GeistPixel-Square.woff2` and the Oddval faces, and `geist` is still in `dependencies` — all unused leftovers. Don't build on them.
 

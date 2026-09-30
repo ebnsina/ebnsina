@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 
-/* Two families do all the work: PolySans for every text role, Space Mono for
+/* Two families do all the work: PolySans for every text role, IBM Plex Mono for
    all numbers + code. Hind Siliguri covers the Bangla (/bn) locale. */
-@import '@fontsource/space-mono/400.css';
-@import '@fontsource/space-mono/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/700.css';
 
 /* Hind Siliguri — the Bangla face for the notes. Only its Bengali subset loads:
    Latin words inside Bangla text fall through to the site's own families, so an
@@ -287,9 +287,9 @@
 	/* PolySans for headings and body */
 	--font-display: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-serif: 'PolySans', ui-sans-serif, system-ui, sans-serif;
-	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+	--font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 	/* "pixel" role is now just the mono face — used for numbers/stats in the notes UI. */
-	--font-pixel: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+	--font-pixel: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
 	--color-bg: var(--bg);
 	--color-fg: var(--fg);
@@ -318,16 +318,16 @@
 
 /* Bangla locale (/bn/notes). Override the display/text font tokens on the
    lang="bn" subtree so every heading, body, and pixel-UI string picks up
-   Hind Siliguri. Latin digits keep Space Mono via the leading fallback;
+   Hind Siliguri. Latin digits keep IBM Plex Mono via the leading fallback;
    Bengali glyphs fall through to Hind Siliguri. Mono (code) is left alone
-   so code blocks stay in Space Mono. Bengali reads better with a touch more
+   so code blocks stay in IBM Plex Mono. Bengali reads better with a touch more
    line-height, so bump it on the subtree. */
 [lang='bn'] {
-	/* All Bangla text = Hind Siliguri; numbers/code stay Space Mono. */
+	/* All Bangla text = Hind Siliguri; numbers/code stay IBM Plex Mono. */
 	--font-sans: 'Hind Siliguri', 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-display: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
 	--font-serif: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
-	--font-pixel: 'Space Mono', 'Hind Siliguri', ui-monospace, monospace;
+	--font-pixel: 'IBM Plex Mono', 'Hind Siliguri', ui-monospace, monospace;
 	line-height: 1.75;
 }
 /* Bengali must never be letter-spaced — tracking splits conjuncts apart. The
