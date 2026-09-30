@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { mount, onMount, tick } from 'svelte';
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon, { type IconName } from '$lib/components/Icon.svelte';
 	import Toc from '$lib/components/Toc.svelte';
 
 	let {
@@ -79,40 +79,34 @@
 				return { id, text: h.textContent ?? '', depth: h.tagName === 'H3' ? 3 : 2 };
 			});
 
-			// 2. code blocks: fold control + copy button.
-			//    Each <pre> is moved into a <details>, collapsed by default. Language comes
-			//    from the `language-*` class Shiki puts on the <code>.
+			// 2. code blocks: a copy button on each <pre>, then one collapsed fold bar per
+			//    block. A CodeTabs group folds as a whole, tabs included.
+			const addIcon = (target: HTMLElement, name: IconName, cls: string) => {
+				const span = document.createElement('span');
+				span.className = cls;
+				mount(Icon, { target: span, props: { name, size: 14 } });
+				target.appendChild(span);
+			};
+			const span = (className: string, textContent: string) =>
+				Object.assign(document.createElement('span'), { className, textContent });
+
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local, non-reactive
+			const units = new Set<HTMLElement>();
 			article!.querySelectorAll<HTMLPreElement>('pre').forEach((pre) => {
 				if (pre.parentElement?.classList.contains('code-block-wrapper')) return;
 
-				const details = document.createElement('details');
-				details.className = 'code-details';
-				const summary = document.createElement('summary');
-				summary.className = 'code-summary';
-				const code = pre.querySelector('code');
-				// set by the Shiki highlighter in vite.config.ts
-				const lang = pre.dataset.lang || 'code';
-				const lines = (code?.textContent ?? '').replace(/\n$/, '').split('\n').length;
-				summary.textContent = `${lang} · ${lines} ${lines === 1 ? 'line' : 'lines'}`;
-				details.appendChild(summary);
-				pre.parentNode!.insertBefore(details, pre);
-
 				const wrap = document.createElement('div');
 				wrap.className = 'code-block-wrapper';
-				details.appendChild(wrap);
+				pre.parentNode!.insertBefore(wrap, pre);
 				wrap.appendChild(pre);
+				units.add(pre.closest<HTMLElement>('.code-tabs') ?? wrap);
+
 				const btn = document.createElement('button');
 				btn.className = 'copy-btn';
 				btn.setAttribute('aria-label', 'Copy code');
 				// both glyphs are mounted once; `.copied` swaps which one shows
-				const icon = (name: 'copy' | 'check', cls: string) => {
-					const span = document.createElement('span');
-					span.className = cls;
-					mount(Icon, { target: span, props: { name, size: 14 } });
-					btn.appendChild(span);
-				};
-				icon('copy', 'copy-icon');
-				icon('check', 'ok-icon');
+				addIcon(btn, 'copy', 'copy-icon');
+				addIcon(btn, 'check', 'ok-icon');
 				wrap.appendChild(btn);
 				btn.addEventListener('click', async () => {
 					await navigator.clipboard.writeText(
@@ -122,6 +116,39 @@
 					setTimeout(() => btn.classList.remove('copied'), 2000);
 				});
 			});
+
+			for (const unit of units) {
+				const pres = [...unit.querySelectorAll<HTMLPreElement>('pre')];
+				// data-lang is stamped by the Shiki highlighter in vite.config.ts
+				const langs = [...new Set(pres.map((p) => p.dataset.lang || 'code'))].join(' / ');
+				const lines = Math.max(
+					...pres.map((p) => (p.textContent ?? '').replace(/\n$/, '').split('\n').length)
+				);
+
+				const bar = document.createElement('button');
+				bar.type = 'button';
+				bar.className = 'code-fold-bar';
+				bar.setAttribute('aria-expanded', 'false');
+				addIcon(bar, 'code', 'code-fold-icon');
+				bar.append(
+					span('code-fold-label', 'Code example'),
+					span('code-fold-meta', `${langs} · ${lines} ${lines === 1 ? 'line' : 'lines'}`)
+				);
+				addIcon(bar, 'caretDown', 'code-fold-caret');
+
+				const body = document.createElement('div');
+				body.className = 'code-fold-body';
+				body.hidden = true;
+				const fold = document.createElement('div');
+				fold.className = 'code-fold';
+				unit.parentNode!.insertBefore(fold, unit);
+				fold.append(bar, body);
+				body.appendChild(unit);
+				bar.addEventListener('click', () => {
+					body.hidden = !body.hidden;
+					bar.setAttribute('aria-expanded', String(!body.hidden));
+				});
+			}
 
 			// 3. scroll spy
 			observer = new IntersectionObserver(

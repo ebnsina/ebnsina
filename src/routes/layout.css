@@ -801,51 +801,65 @@ a.media-card:hover,
 	position: relative;
 }
 
-/* Collapsible code blocks. Open by default (set in ArticleLayout); the summary
-   is a quiet label the reader can click to fold a block away. */
-.code-details {
+/* Code blocks start folded behind a bar (built in ArticleLayout); a CodeTabs
+   group folds as one unit, tabs included. */
+.code-fold {
 	margin: 1.4em 0;
 }
-.code-details > .code-summary {
+.code-fold-bar {
 	display: flex;
 	align-items: center;
-	gap: 0.45em;
-	width: fit-content;
+	gap: 0.6rem;
+	width: 100%;
+	padding: 0.7rem 1rem;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius-button);
+	background: color-mix(in oklab, var(--fg) 3%, var(--bg));
+	color: var(--fg);
+	text-align: left;
 	cursor: pointer;
-	list-style: none;
+	transition: border-color 0.15s;
+}
+.code-fold-bar:hover {
+	border-color: var(--rule-strong);
+}
+.code-fold-bar:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+.code-fold-icon {
+	display: flex;
+	color: var(--accent);
+}
+.code-fold-label {
+	font-family: var(--font-sans);
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+.code-fold-meta {
+	margin-left: auto;
 	font-family: var(--font-mono);
-	font-size: 0.66rem;
-	letter-spacing: 0.02em;
+	font-size: 0.68rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
 	color: var(--muted);
-	padding: 0.15em 0;
-	transition: color 0.15s;
 }
-.code-details > .code-summary::-webkit-details-marker {
-	display: none;
-}
-/* our own disclosure triangle, so it rotates with the open state */
-.code-details > .code-summary::before {
-	content: '';
-	width: 0;
-	height: 0;
-	border-top: 3.5px solid transparent;
-	border-bottom: 3.5px solid transparent;
-	border-left: 5px solid currentColor;
-	border-radius: 0;
+.code-fold-caret {
+	display: flex;
+	color: var(--muted);
 	transition: transform 0.18s ease;
 }
-.code-details[open] > .code-summary::before {
-	transform: rotate(90deg);
+.code-fold-bar[aria-expanded='true'] .code-fold-caret {
+	transform: rotate(180deg);
 }
-.code-details > .code-summary:hover {
-	color: var(--fg);
+.code-fold-body {
+	margin-top: 0.5rem;
 }
-/* the block sits directly under its summary, so drop the <pre>'s own margin */
-.code-details .code-block-wrapper > pre.shiki {
-	margin: 0.35em 0 0;
+.code-fold-body > .code-block-wrapper > pre.shiki {
+	margin: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-	.code-details > .code-summary::before {
+	.code-fold-caret {
 		transition: none;
 	}
 }

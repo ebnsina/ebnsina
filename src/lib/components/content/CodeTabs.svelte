@@ -36,7 +36,7 @@
 		border: 1px solid var(--rule);
 		border-radius: var(--radius-card);
 		overflow: hidden;
-		margin: 1.5rem 0;
+		margin: 0;
 	}
 	.code-tabs-header {
 		display: flex;
