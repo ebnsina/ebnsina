@@ -40,6 +40,11 @@ export const NOTES_CATEGORIES: Record<string, LocalizedCategory> = {
 	webhooks: { label: 'Webhooks', description: 'পাঠানো, সাইনিং, রিট্রাই, আইডেম্পোটেন্সি' },
 	'linux-vps': { label: 'Linux / VPS', description: 'SSH, systemd, ফায়ারওয়াল, প্রসেস' },
 	'web-server': { label: 'ওয়েব সার্ভার', description: 'Nginx, রিভার্স প্রক্সি, এজ ক্যাশিং' },
+	dns: {
+		label: 'DNS: জিরো টু মাস্টারি',
+		description:
+			'প্রথম লুকআপ থেকে DNSSEC, ইমেইল অথ, ট্রাফিক স্টিয়ারিং, আর যেকোনো DNS সমস্যা ডিবাগ করার প্লেবুক'
+	},
 	'tls-certs': {
 		label: 'TLS ও সার্টিফিকেট',
 		description: "Let's Encrypt, ACME, সার্টিফিকেট ম্যানেজমেন্ট"

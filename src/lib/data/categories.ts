@@ -74,6 +74,12 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 		description: 'Nginx, reverse proxy, edge caching',
 		group: 'Infrastructure'
 	},
+	dns: {
+		label: 'DNS: Zero to Mastery',
+		description:
+			'From the first lookup to DNSSEC, email auth, traffic steering, and a debugging playbook for every DNS failure',
+		group: 'Infrastructure'
+	},
 	'tls-certs': {
 		label: 'TLS & Certs',
 		description: "Let's Encrypt, ACME, certificate management",
