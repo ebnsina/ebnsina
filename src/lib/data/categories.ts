@@ -80,6 +80,12 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 			'From the first lookup to DNSSEC, email auth, traffic steering, and a debugging playbook for every DNS failure',
 		group: 'Infrastructure'
 	},
+	cdn: {
+		label: 'CDN: Zero to Mastery',
+		description:
+			'From the first edge hit to cache keys, purging, edge security, a self-hosted CDN, and a debugging playbook for every CDN failure',
+		group: 'Infrastructure'
+	},
 	'tls-certs': {
 		label: 'TLS & Certs',
 		description: "Let's Encrypt, ACME, certificate management",
