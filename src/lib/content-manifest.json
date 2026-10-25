@@ -1674,6 +1674,337 @@
 			}
 		},
 		{
+			"category": "cdn",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "CDN: জিরো টু মাস্টারি — রোডম্যাপ",
+				"subtitle": "পনেরোটা চ্যাপ্টার যা CDN-কে \"একটা সুইচ অন করলেই সাইট ফাস্ট\" থেকে নিয়ে যায় এমন জায়গায়, যেখানে কোন রিকোয়েস্ট কেন HIT বা MISS হলো, আর ভাঙলে কোথায় ভাঙল, সেটা আপনি নিজেই বলতে পারবেন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "৬ মিনিট",
+				"topics": [
+					"roadmap",
+					"cdn",
+					"caching",
+					"edge",
+					"debugging"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "01-what-is-a-cdn",
+			"meta": {
+				"title": "CDN কী, কেন",
+				"subtitle": "আলোর গতির সীমা, হ্যান্ডশেকের গুণফল, origin-এর ওপর চাপ — CDN কোন সমস্যার সমাধান, PoP-এজ-origin শব্দগুলো কী বোঝায়, আর কোন সমস্যা CDN কখনোই সারাতে পারে না।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "১৬ মিনিট",
+				"topics": [
+					"cdn",
+					"latency",
+					"pop",
+					"edge",
+					"origin",
+					"rtt",
+					"offload"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "02-request-journey",
+			"meta": {
+				"title": "একটা রিকোয়েস্টের পুরো যাত্রা",
+				"subtitle": "ব্রাউজারে URL টাইপ করা থেকে বাইট ফেরত পাওয়া পর্যন্ত: DNS কীভাবে কাছের PoP বেছে দেয়, এজে TLS কেন শেষ হয়, ক্যাশ লুকআপের চারটা ফল, shield হয়ে origin পর্যন্ত যাওয়া, আর curl দিয়ে প্রতিটা ধাপ মাপা।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "১৮ মিনিট",
+				"topics": [
+					"cdn",
+					"request flow",
+					"anycast",
+					"tls termination",
+					"cache hit",
+					"cache miss",
+					"origin shield",
+					"curl timing"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "03-cache-control",
+			"meta": {
+				"title": "ক্যাশিং হেডার: Cache-Control থেকে revalidation",
+				"subtitle": "কোন রেসপন্স কে জমা রাখবে, কতক্ষণ টাটকা ধরবে, মেয়াদ শেষে কী করবে: প্রতিটা Cache-Control ডিরেক্টিভ, Age, ETag আর 304, CDN-এর জন্য আলাদা হেডার, Set-Cookie-র ফাঁদ, আর প্রতিটা ধরনের কন্টেন্টের জন্য তৈরি রেসিপি।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"cache-control",
+					"s-maxage",
+					"no-cache",
+					"no-store",
+					"etag",
+					"revalidation",
+					"cdn-cache-control",
+					"surrogate-control",
+					"stale-while-revalidate"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "04-cache-keys",
+			"meta": {
+				"title": "ক্যাশ কী — CDN কোন দুইটা রিকোয়েস্টকে \"একই\" ধরে",
+				"subtitle": "স্কিম, হোস্ট, পাথ, query string, cookie আর Vary — ক্যাশ কী ঠিক না থাকলে hit ratio কীভাবে নিঃশব্দে মরে যায়, আর ভুল কী কীভাবে এক ইউজারের পেজ আরেকজনকে দেখায়।",
+				"chapter": 4,
+				"level": "beginner",
+				"readingTime": "১৬ মিনিট",
+				"topics": [
+					"cache key",
+					"query string",
+					"vary",
+					"cookies",
+					"hit ratio",
+					"cdn"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "05-reading-cdn-responses",
+			"meta": {
+				"title": "CDN রেসপন্স পড়া — curl দিয়ে এজের ভেতরটা দেখা",
+				"subtitle": "Age, Cache-Status, ভেন্ডর হেডার, কোন PoP উত্তর দিল, এজ বাইপাস করে origin-এ সরাসরি যাওয়া, আর প্রতিটা মিলিসেকেন্ড কোথায় গেল তা মাপা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "১৮ মিনিট",
+				"topics": [
+					"curl",
+					"cache-status",
+					"age",
+					"response headers",
+					"debugging",
+					"cdn"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "06-purge-and-invalidation",
+			"meta": {
+				"title": "পার্জ ও ইনভ্যালিডেশন — ক্যাশ থেকে পুরনো জিনিস সরানো",
+				"subtitle": "URL, প্রিফিক্স, ট্যাগ দিয়ে পার্জ, সফট বনাম হার্ড পার্জ, \"সব পার্জ\" কেন origin ফেলে দেয়, আর কেন সবচেয়ে ভালো পার্জ হলো যেটা কখনো লাগে না।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "১৭ মিনিট",
+				"topics": [
+					"purge",
+					"invalidation",
+					"surrogate keys",
+					"cache tags",
+					"versioned assets",
+					"stale-while-revalidate",
+					"cdn"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "07-origin-architecture",
+			"meta": {
+				"title": "Origin আর্কিটেকচার",
+				"subtitle": "Origin shield, request collapsing, origin-কে লুকিয়ে রাখা, ফেইলওভার আর আসল ক্লায়েন্ট IP — CDN-এর পেছনের সার্ভারটা কীভাবে সাজালে MISS-এর ঝড়েও সে দাঁড়িয়ে থাকে।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"origin",
+					"origin shield",
+					"tiered caching",
+					"request collapsing",
+					"origin protection",
+					"failover",
+					"real ip",
+					"object storage"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "08-tls-and-protocols",
+			"meta": {
+				"title": "এজে TLS ও প্রোটোকল",
+				"subtitle": "একটা HTTPS রিকোয়েস্টে আসলে দুইটা আলাদা TLS কানেকশন — সার্টিফিকেট কোথা থেকে আসে, TLS মোড কেন রিডাইরেক্ট লুপ বানায়, HSTS কেন ফেরত নেওয়া কঠিন, আর HTTP/2, HTTP/3, 0-RTT এজে কী বদলায়।",
+				"chapter": 8,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"tls",
+					"certificates",
+					"sni",
+					"hsts",
+					"http2",
+					"http3",
+					"quic",
+					"0-rtt",
+					"ech",
+					"redirect loop"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "09-dynamic-content",
+			"meta": {
+				"title": "ডায়নামিক কন্টেন্ট",
+				"subtitle": "কোন রেসপন্স সবার জন্য একই আর কোনটা একজনের নিজস্ব — API, লগইন করা ইউজার, কুকি, মাইক্রোক্যাশিং, এজে পেজ জোড়া লাগানো, আর সেই ভয়ংকর বাগ যেখানে একজনের অ্যাকাউন্ট পেজ সবাই দেখে।",
+				"chapter": 9,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"dynamic content",
+					"microcaching",
+					"authorization",
+					"cookies",
+					"cache bypass",
+					"esi",
+					"graphql",
+					"private data leak"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "10-performance",
+			"meta": {
+				"title": "CDN পারফরম্যান্স অপ্টিমাইজেশন",
+				"subtitle": "কমপ্রেশন, ইমেজ, Early Hints, origin কানেকশন, বড় ফাইল ও ভিডিও — আর সবচেয়ে জরুরি, ইউজারের দিক থেকে আসলে কতটা ফাস্ট হলো সেটা মাপা।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"compression",
+					"brotli",
+					"zstd",
+					"image optimization",
+					"early hints",
+					"range requests",
+					"rum",
+					"core web vitals",
+					"server-timing"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "11-edge-compute",
+			"meta": {
+				"title": "এজ কম্পিউট",
+				"subtitle": "CDN-এর এজে নিজের কোড চালানো — isolate, Wasm আর কন্টেইনারের পার্থক্য, কোন কাজ এজে মানায় আর কোনটা মানায় না, KV-এর eventual consistency, লিমিট, টেস্টিং আর ভেন্ডর লক-ইন।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"edge compute",
+					"edge functions",
+					"v8 isolates",
+					"webassembly",
+					"edge kv",
+					"wintertc",
+					"fetch api",
+					"cold start"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "12-edge-security",
+			"meta": {
+				"title": "এজে সিকিউরিটি",
+				"subtitle": "DDoS শোষণ, WAF, রেট লিমিট, বট, origin লুকানো, signed URL, আর দুইটা আক্রমণ যেগুলো CDN-এর নিজের ক্যাশকে অস্ত্র বানায়: cache poisoning ও cache deception।",
+				"chapter": 12,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"ddos",
+					"waf",
+					"rate limiting",
+					"bot management",
+					"origin protection",
+					"signed urls",
+					"web cache poisoning",
+					"web cache deception",
+					"cors"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "13-build-your-own-cdn",
+			"meta": {
+				"title": "নিজের CDN বানানো",
+				"subtitle": "কয়েকটা VPS, nginx proxy_cache, GeoDNS আর একটা পার্জ স্ক্রিপ্ট দিয়ে নিজের ছোট CDN — কখন এটা বুদ্ধিমানের কাজ, কখন নয়, আর প্রতিটা অংশ কীভাবে জোড়া লাগে।",
+				"chapter": 13,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"self-hosted cdn",
+					"nginx",
+					"proxy_cache",
+					"varnish",
+					"geodns",
+					"anycast",
+					"purge"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "14-debugging-playbook",
+			"meta": {
+				"title": "CDN ডিবাগিং প্লেবুক",
+				"subtitle": "আন্দাজে কনফিগ না বদলে লেয়ার ধরে ধরে পরীক্ষা: আট ধাপের পদ্ধতি, প্রতিটা লক্ষণের সম্ভাব্য কারণ, নিশ্চিত করার কমান্ড আর সমাধান, সাথে একটা কপি-পেস্ট CDN-চেক স্ক্রিপ্ট।",
+				"chapter": 14,
+				"level": "mastery",
+				"readingTime": "৩২ মিনিট",
+				"topics": [
+					"cdn debugging",
+					"troubleshooting",
+					"curl",
+					"cache miss",
+					"stale content",
+					"5xx",
+					"cors",
+					"waf"
+				]
+			}
+		},
+		{
+			"category": "cdn",
+			"slug": "15-production-cdn",
+			"meta": {
+				"title": "প্রোডাকশন CDN ও বড় আউটেজ",
+				"subtitle": "মাল্টি-CDN, খরচের মডেল, কনফিগ অ্যাজ কোড, মনিটরিং আর SLO, CDN ডাউন হলে কী করবেন, আর ইতিহাসের বড় CDN আউটেজগুলো থেকে শিক্ষা।",
+				"chapter": 15,
+				"level": "mastery",
+				"readingTime": "২৬ মিনিট",
+				"topics": [
+					"multi-cdn",
+					"cdn cost",
+					"config as code",
+					"monitoring",
+					"slo",
+					"incident",
+					"outage",
+					"postmortem"
+				]
+			}
+		},
+		{
 			"category": "chaos-resilience",
 			"slug": "00-roadmap",
 			"meta": {

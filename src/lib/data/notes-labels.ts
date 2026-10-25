@@ -45,6 +45,11 @@ export const NOTES_CATEGORIES: Record<string, LocalizedCategory> = {
 		description:
 			'প্রথম লুকআপ থেকে DNSSEC, ইমেইল অথ, ট্রাফিক স্টিয়ারিং, আর যেকোনো DNS সমস্যা ডিবাগ করার প্লেবুক'
 	},
+	cdn: {
+		label: 'CDN: জিরো টু মাস্টারি',
+		description:
+			'প্রথম এজ হিট থেকে ক্যাশ কী, পার্জিং, এজ সিকিউরিটি, নিজের CDN বানানো, আর যেকোনো CDN সমস্যা ডিবাগ করার প্লেবুক'
+	},
 	'tls-certs': {
 		label: 'TLS ও সার্টিফিকেট',
 		description: "Let's Encrypt, ACME, সার্টিফিকেট ম্যানেজমেন্ট"
