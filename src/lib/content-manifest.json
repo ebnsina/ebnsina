@@ -6050,6 +6050,301 @@
 			}
 		},
 		{
+			"category": "live-streaming",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "লাইভ স্ট্রিমিং: জিরো টু মাস্টারি — রোডম্যাপ",
+				"subtitle": "তেরোটা চ্যাপ্টার যা ক্যামেরা থেকে দর্শকের স্ক্রিন পর্যন্ত লাইভ ভিডিওর প্রতিটা হপ দেখায়, আর লাইভ চলার মাঝখানে কিছু ভাঙলে কোথায় তাকাতে হবে সেটা শেখায়।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "৬ মিনিট",
+				"topics": [
+					"roadmap",
+					"live streaming",
+					"rtmp",
+					"srt",
+					"ll-hls",
+					"webrtc",
+					"debugging"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "01-what-is-live",
+			"meta": {
+				"title": "লাইভ স্ট্রিমিং আসলে কী",
+				"subtitle": "কনটেন্ট যখন এখনো তৈরিই হয়নি, তখন কী কী বদলে যায় — রিয়েল-টাইম বাজেট, দ্বিতীয় সুযোগ না থাকা, glass-to-glass লেটেন্সি, লেটেন্সির শ্রেণি, আর কোন কাজে কতটা লেটেন্সি চলে।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "১৬ মিনিট",
+				"topics": [
+					"live streaming",
+					"latency",
+					"glass-to-glass",
+					"contribution",
+					"distribution"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "02-contribution-protocols",
+			"meta": {
+				"title": "কন্ট্রিবিউশন প্রোটোকল",
+				"subtitle": "এনকোডার থেকে সার্ভারে স্ট্রিম পাঠানোর চার পথ — RTMP, SRT, WHIP আর RIST — প্রতিটা খারাপ নেটওয়ার্কে কী করে, কোনটা কখন বেছে নেবেন, আর OBS ও ffmpeg দিয়ে প্রতিটা নিজে চালিয়ে দেখা।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"rtmp",
+					"enhanced rtmp",
+					"srt",
+					"whip",
+					"webrtc",
+					"rist",
+					"rtsp",
+					"obs",
+					"ffmpeg"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "03-live-encoder-settings",
+			"meta": {
+				"title": "লাইভ এনকোডার সেটিংস",
+				"subtitle": "লাইভ এনকোডারের প্রতিটা সেটিং কেন VOD-এর উল্টো — CBR, দুই সেকেন্ডের কীফ্রেম, B-frame, preset, হার্ডওয়্যার এনকোডার, অডিও, আর আপলোড স্পিড থেকে বিটরেট ঠিক করার হিসাব।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "১৮ মিনিট",
+				"topics": [
+					"live encoder",
+					"cbr",
+					"keyframe interval",
+					"gop",
+					"x264",
+					"nvenc",
+					"videotoolbox",
+					"obs",
+					"bitrate"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "04-ingest-servers",
+			"meta": {
+				"title": "ইনজেস্ট সার্ভার",
+				"subtitle": "এনকোডারের স্ট্রিম যে দরজা দিয়ে আপনার প্ল্যাটফর্মে ঢোকে — কী কাজ করে, কোন সফটওয়্যার বেছে নেবেন, আর একটা VPS-এ MediaMTX চালিয়ে Go দিয়ে স্ট্রিম কী যাচাই, হুক, ফায়ারওয়াল, RTMPS ও রেকর্ডিং পর্যন্ত নিজে সেট করা।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"ingest",
+					"mediamtx",
+					"srs",
+					"nginx-rtmp",
+					"stream key",
+					"authentication",
+					"hooks",
+					"rtmps",
+					"firewall"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "05-live-transcode-package",
+			"meta": {
+				"title": "লাইভ ট্রান্সকোডিং ও প্যাকেজিং",
+				"subtitle": "এক সেকেন্ডের ভিডিও এক সেকেন্ডের মধ্যে — একটা ffmpeg কমান্ডে তিনটা রেন্ডিশন, keyframe মেলানো, স্লাইডিং উইন্ডো প্লেলিস্ট, লাইভ এজ, PROGRAM-DATE-TIME, আর কতগুলো স্ট্রিম একটা সার্ভারে ধরবে সেটা নিজে মাপা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"live transcoding",
+					"ffmpeg",
+					"hls",
+					"var_stream_map",
+					"sliding window",
+					"program-date-time",
+					"gpu encoding"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "06-low-latency",
+			"meta": {
+				"title": "লো লেটেন্সি: কোন পথ, কখন, কতটা দামে",
+				"subtitle": "টিউন করা HLS, LL-HLS, LL-DASH, WebRTC/WHEP আর HESP পাশাপাশি — কত latency আসলে দরকার, কীভাবে মাপবেন, প্লেয়ার কীভাবে লাইভ এজের কাছে থাকে, আর CDN-কে কী কী পারতে হবে।",
+				"chapter": 6,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"low latency",
+					"ll-hls",
+					"ll-dash",
+					"webrtc",
+					"whep",
+					"latency measurement",
+					"hls.js",
+					"dash.js"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "07-dvr-live-to-vod",
+			"meta": {
+				"title": "DVR, টাইমশিফট ও live-to-VOD",
+				"subtitle": "লাইভে পেছনে টানা, শুরু থেকে দেখা, সম্প্রচার চলতে চলতেই রেকর্ড করা, PROGRAM-DATE-TIME দিয়ে হাইলাইট কাটা, আর শেষ হলে রেকর্ডিংকে VOD-তে তুলে দেওয়া — সাথে স্টোরেজ আর প্লেলিস্টের আকারের হিসাব।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"dvr",
+					"timeshift",
+					"start-over",
+					"live-to-vod",
+					"clipping",
+					"program-date-time",
+					"retention"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "08-live-delivery-at-scale",
+			"meta": {
+				"title": "স্কেলে লাইভ ডেলিভারি",
+				"subtitle": "সবাই একই সেকেন্ডে একই নতুন সেগমেন্ট চায়, আর প্লেলিস্ট প্রতি কয়েক সেকেন্ডে বদলায় — এই দুই কারণে লাইভ ভিডিও CDN-এর জন্য VOD-এর চেয়ে অনেক কঠিন। TTL, request collapsing, negative caching, ফ্ল্যাশ ক্রাউড, মাল্টি-CDN আর ইগ্রেসের হিসাব।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"live delivery",
+					"cdn",
+					"playlist ttl",
+					"request collapsing",
+					"negative caching",
+					"flash crowd",
+					"multi-cdn",
+					"content steering"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "09-reliability",
+			"meta": {
+				"title": "লাইভের রিলায়েবিলিটি",
+				"subtitle": "ক্যামেরা থেকে দর্শক পর্যন্ত প্রতিটা হপ কোথায় ভাঙে, আর কীভাবে ভাঙলেও দর্শক টের না পায় — রিডানডেন্ট কন্ট্রিবিউশন, ইনজেস্ট ফেইলওভার, ডিসকন্টিনিউটি, স্লেট, A/B পাইপলাইন, SCTE-35, আর বড় ইভেন্টের রিহার্সাল।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"live reliability",
+					"redundancy",
+					"failover",
+					"discontinuity",
+					"slate",
+					"scte-35",
+					"srt bonding",
+					"runbook"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "10-interactivity-sync",
+			"meta": {
+				"title": "ইন্টারঅ্যাক্টিভিটি ও সিঙ্ক",
+				"subtitle": "প্রতিটা দর্শক আলাদা লেটেন্সিতে দেখে, তাই \"এখন\" মানে সবার কাছে আলাদা মুহূর্ত। টাইমড মেটাডেটা, EXT-X-DATERANGE, PROGRAM-DATE-TIME, চ্যাট সিঙ্ক, স্পয়লার সমস্যা, আর ওয়াচ পার্টিতে সবাইকে একসাথে রাখা।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"timed metadata",
+					"id3",
+					"emsg",
+					"ext-x-daterange",
+					"program-date-time",
+					"chat sync",
+					"watch party",
+					"hls.js"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "11-build-a-live-pipeline",
+			"meta": {
+				"title": "পুরো একটা লাইভ পাইপলাইন বানানো",
+				"subtitle": "একটা VPS-এ শূন্য থেকে চালু লাইভ চ্যানেল: স্ট্রিম কী যাচাই করা ইনজেস্ট, তিন রেন্ডিশনের ABR ট্রান্সকোড, nginx origin, hls.js প্লেয়ার, রেকর্ডিং, আর লেটেন্সি মাপার ঘড়ি। প্রতিটা ফাইল আসলেই চালিয়ে দেখা।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "৩০ মিনিট",
+				"topics": [
+					"live streaming",
+					"mediamtx",
+					"ffmpeg",
+					"docker compose",
+					"nginx",
+					"hls.js",
+					"srt",
+					"rtmp",
+					"go"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "12-live-monitoring",
+			"meta": {
+				"title": "লাইভ মনিটরিং",
+				"subtitle": "ক্যামেরা থেকে দর্শক পর্যন্ত প্রতিটা লেয়ারে কী মাপবেন, কোনটায় রাত তিনটায় ফোন বাজবে আর কোনটা সকালে দেখলেও চলবে, আর একটা আসল স্ট্রিমে ইচ্ছা করে সমস্যা বাধিয়ে অ্যালার্টগুলো জ্বলতে দেখা।",
+				"chapter": 12,
+				"level": "mastery",
+				"readingTime": "২৬ মিনিট",
+				"topics": [
+					"live streaming",
+					"monitoring",
+					"prometheus",
+					"alertmanager",
+					"mediamtx",
+					"srt",
+					"hls",
+					"go",
+					"runbook"
+				]
+			}
+		},
+		{
+			"category": "live-streaming",
+			"slug": "13-debugging-playbook",
+			"meta": {
+				"title": "লাইভ স্ট্রিমিং ডিবাগিং প্লেবুক",
+				"subtitle": "ক্যামেরা থেকে দর্শক পর্যন্ত একটা ফ্রেমের পথ ধরে আট ধাপের পদ্ধতি, প্রতিটা চেনা লক্ষণের সম্ভাব্য কারণ, নিশ্চিত করার কমান্ড আর সমাধান, সাথে একটা কপি-পেস্ট চেক স্ক্রিপ্ট যা আসল স্ট্রিমে চালিয়ে দেখা।",
+				"chapter": 13,
+				"level": "mastery",
+				"readingTime": "৩২ মিনিট",
+				"topics": [
+					"live streaming",
+					"debugging",
+					"troubleshooting",
+					"hls",
+					"srt",
+					"rtmp",
+					"mediamtx",
+					"ffmpeg",
+					"ffprobe",
+					"obs"
+				]
+			}
+		},
+		{
 			"category": "load-balancing",
 			"slug": "00-roadmap",
 			"meta": {
@@ -9241,6 +9536,588 @@
 					"SLO",
 					"error budget",
 					"A/B testing"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "ভিডিও প্লেয়ার: জিরো টু মাস্টারি — রোডম্যাপ",
+				"subtitle": "তেরোটা চ্যাপ্টার যা প্লেয়ারকে \"একটা video ট্যাগ বসালেই চলে\" থেকে নিয়ে যায় এমন জায়গায়, যেখানে কোন ভিডিও কেন আটকাল, কেন শুরু হতে দেরি হলো, কেন এক ডিভাইসে চলে আর আরেকটায় চলে না, সেটা আপনি নিজেই খুঁজে বের করতে পারবেন।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "৬ মিনিট",
+				"topics": [
+					"roadmap",
+					"video player",
+					"mse",
+					"eme",
+					"hls.js",
+					"debugging"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "01-what-a-player-is",
+			"meta": {
+				"title": "প্লেয়ার আসলে কী",
+				"subtitle": "ফেচ, ডিমাক্স, ডিকোড, রেন্ডার আর A/V সিঙ্ক — একটা ভিডিও প্লেয়ারের পাঁচটা কাজ, কোনটা ব্রাউজার করে আর কোনটা আপনার JavaScript, আর প্লেয়ার লাইব্রেরিগুলোর মানচিত্র।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "১৬ মিনিট",
+				"topics": [
+					"video player",
+					"decode pipeline",
+					"mse",
+					"native player",
+					"hls.js",
+					"shaka",
+					"av sync"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "02-the-video-element",
+			"meta": {
+				"title": "video এলিমেন্টের ভেতরে",
+				"subtitle": "প্রতিটা অ্যাট্রিবিউট, readyState আর networkState-এর মান, ইভেন্টের পুরো ক্রম, play() প্রমিস আর অটোপ্লে পলিসি — যার উপর প্রতিটা ওয়েব প্লেয়ার দাঁড়িয়ে আছে।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "১৮ মিনিট",
+				"topics": [
+					"htmlmediaelement",
+					"video element",
+					"readystate",
+					"media events",
+					"autoplay",
+					"mediaerror"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "03-media-source-extensions",
+			"meta": {
+				"title": "Media Source Extensions",
+				"subtitle": "MediaSource, SourceBuffer, কোডেক স্ট্রিং পড়া, init আর media segment, buffered রেঞ্জ, QuotaExceededError আর ManagedMediaSource — নিজের হাতে বাইট খাইয়ে ভিডিও চালানো।",
+				"chapter": 3,
+				"level": "beginner",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"mse",
+					"mediasource",
+					"sourcebuffer",
+					"codec strings",
+					"fmp4",
+					"managedmediasource"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "04-manifest-to-playback",
+			"meta": {
+				"title": "ম্যানিফেস্ট থেকে প্লেব্যাক",
+				"subtitle": "hls.js, dash.js আর Shaka Player কীভাবে একটা ম্যানিফেস্টকে appendBuffer-এ পরিণত করে — লোডার, প্লেলিস্ট রিফ্রেশ, রেন্ডিশন বাছাই, ট্রান্সমাক্স, কোন কনফিগ আসলে গুরুত্বপূর্ণ, আর কখন Safari-র নেটিভ HLS ভালো।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"hls.js",
+					"dash.js",
+					"shaka-player",
+					"manifest",
+					"stream controller",
+					"native hls",
+					"player config"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "05-buffer-and-abr",
+			"meta": {
+				"title": "বাফার ও ABR বাস্তবায়ন",
+				"subtitle": "বাফার টার্গেট, ব্যাক বাফার, থ্রুপুট মাপার আসল কৌশল, BOLA আর হাইব্রিড, ভিউপোর্ট ক্যাপিং, বাফারের ফাঁক পার হওয়া, TV-র মেমরি সীমা, আর খারাপ নেটওয়ার্ক বানিয়ে প্লেয়ার পরীক্ষা করা।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"buffer",
+					"abr",
+					"ewma",
+					"bola",
+					"hls.js",
+					"shaka-player",
+					"dash.js",
+					"gap jumping",
+					"netem"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "06-startup-seek-thumbnails",
+			"meta": {
+				"title": "স্টার্টআপ, সিক ও থাম্বনেইল",
+				"subtitle": "প্লে চাপা থেকে প্রথম ফ্রেম পর্যন্ত প্রতিটা মিলিসেকেন্ড কোথায় যায়, কীভাবে কমাবেন, ফিডে পরের ভিডিও আগে থেকে তৈরি রাখা, কীফ্রেমে সিক, আর টাইমলাইনের থাম্বনেইল: WebVTT স্প্রাইট, I-frame প্লেলিস্ট, DASH ইমেজ ট্র্যাক।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"startup time",
+					"time to first frame",
+					"preload",
+					"seeking",
+					"trick play",
+					"thumbnails",
+					"webvtt",
+					"i-frame playlist",
+					"ffmpeg"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "07-captions-audio-a11y",
+			"meta": {
+				"title": "ক্যাপশন, অডিও ট্র্যাক ও অ্যাক্সেসিবিলিটি",
+				"subtitle": "WebVTT-এর পুরো সিনট্যাক্স ও স্টাইলিং, TTML/IMSC, ভিডিওর ভেতরে লুকানো CEA-608/708, HLS ও DASH-এ টেক্সট ট্র্যাক, ফোর্সড সাবটাইটেল, একাধিক ভাষা ও অডিও ডেসক্রিপশন, বাংলা ক্যাপশনের ফন্ট ও যুক্তাক্ষরের সমস্যা, আর কিবোর্ড ও স্ক্রিন রিডারে চলা প্লেয়ার কন্ট্রোল।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"captions",
+					"subtitles",
+					"webvtt",
+					"imsc",
+					"cea-608",
+					"cea-708",
+					"audio tracks",
+					"audio description",
+					"accessibility",
+					"wcag",
+					"bangla"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "08-drm-and-eme",
+			"meta": {
+				"title": "DRM ও EME: প্লেয়ারের দিক থেকে",
+				"subtitle": "requestMediaKeySystemAccess থেকে লাইসেন্স পর্যন্ত প্রতিটা ধাপ, Widevine, PlayReady আর FairPlay-এর পার্থক্য, robustness, HDCP-র কালো স্ক্রিন, আর DRM এরর পড়ে কারণ বের করা।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"drm",
+					"eme",
+					"widevine",
+					"playready",
+					"fairplay",
+					"cdm",
+					"hdcp",
+					"shaka-player"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "09-ads",
+			"meta": {
+				"title": "প্লেয়ারে অ্যাড",
+				"subtitle": "CSAI বনাম SSAI, VAST, VMAP, SIMID আর Open Measurement, HLS interstitials, অ্যাড ব্রেকের সীমানায় কেন প্লেয়ার আটকে যায়, আর দর্শককে বিরক্ত না করে অ্যাড দেখানো।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"ads",
+					"csai",
+					"ssai",
+					"vast",
+					"vmap",
+					"simid",
+					"omid",
+					"hls interstitials",
+					"ima sdk"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "10-mobile-tv-casting",
+			"meta": {
+				"title": "মোবাইল, TV ও কাস্টিং",
+				"subtitle": "iOS-এর AVPlayer, Android-এর Media3, স্মার্ট TV আর Roku, Chromecast আর AirPlay, Picture-in-Picture আর লক-স্ক্রিন কন্ট্রোল, আর কোন ডিভাইস কোন কোডেক হার্ডওয়্যারে চালায় সেটা জেনে নেওয়া।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"avplayer",
+					"media3",
+					"exoplayer",
+					"smart tv",
+					"roku",
+					"chromecast",
+					"airplay",
+					"picture-in-picture",
+					"media session",
+					"hardware decode"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "11-qoe-analytics",
+			"meta": {
+				"title": "প্লেয়ার অ্যানালিটিক্স ও QoE",
+				"subtitle": "প্লেয়ারের প্রতিটা মুহূর্ত মাপা — VST, রিবাফার, EBVS-এর নিখুঁত সংজ্ঞা, একটা টেস্ট করা ট্র্যাকার, সেশন ইভেন্ট মডেল, CMCD দিয়ে CDN লগের সাথে জোড়া লাগানো, আর ড্যাশবোর্ডে কোন গড়টা মিথ্যা বলে।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"qoe",
+					"video analytics",
+					"video start time",
+					"rebuffer ratio",
+					"cmcd",
+					"media capabilities",
+					"sendbeacon"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "12-build-a-player",
+			"meta": {
+				"title": "শূন্য থেকে একটা প্লেয়ার",
+				"subtitle": "কোনো লাইব্রেরি ছাড়া, শুধু Media Source Extensions দিয়ে HLS fMP4 চালানো — প্লেলিস্ট পার্সার, append কিউ, বাফার গোল, ABR, রেন্ডিশন বদল, seek, লাইভ রিফ্রেশ, রিট্রাই। প্রতিটা অংশ আসল ব্রাউজারে চালিয়ে পরীক্ষা করা।",
+				"chapter": 12,
+				"level": "mastery",
+				"readingTime": "৩০ মিনিট",
+				"topics": [
+					"mse",
+					"hls",
+					"fmp4",
+					"sourcebuffer",
+					"abr",
+					"player from scratch",
+					"typescript"
+				]
+			}
+		},
+		{
+			"category": "video-player",
+			"slug": "13-debugging-playbook",
+			"meta": {
+				"title": "প্লেয়ার ডিবাগিং প্লেবুক",
+				"subtitle": "আন্দাজ না করে লেয়ার ধরে ধরে — কোন প্লেব্যাক পথ চলছে, নেটওয়ার্ক, ম্যানিফেস্ট, কোডেক ও MSE, DRM, বাফার ও ABR, রেন্ডারিং, ডিভাইস। সাথে লক্ষণ থেকে সমাধানের পূর্ণ ক্যাটালগ আর একটা পরীক্ষা করা কনসোল স্নিপেট।",
+				"chapter": 13,
+				"level": "mastery",
+				"readingTime": "৩২ মিনিট",
+				"topics": [
+					"player debugging",
+					"troubleshooting",
+					"mse",
+					"eme",
+					"hls.js",
+					"media-internals",
+					"cors",
+					"autoplay",
+					"hdcp"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "00-roadmap",
+			"meta": {
+				"title": "VOD: জিরো টু মাস্টারি — রোডম্যাপ",
+				"subtitle": "তেরোটা চ্যাপ্টার যা একটা ভিডিও আপলোড হওয়া থেকে হাজার মানুষের স্ক্রিনে চলা পর্যন্ত পুরো VOD প্ল্যাটফর্ম দেখায়, আর ভাঙলে কোন ধাপে ভাঙল সেটা বের করতে শেখায়।",
+				"chapter": 0,
+				"level": "beginner",
+				"readingTime": "৬ মিনিট",
+				"topics": [
+					"roadmap",
+					"vod",
+					"upload",
+					"transcoding",
+					"packaging",
+					"debugging"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "01-what-is-vod",
+			"meta": {
+				"title": "VOD প্ল্যাটফর্ম আসলে কী",
+				"subtitle": "একটা ভিডিও আপলোড হওয়া থেকে দর্শকের স্ক্রিনে চলা পর্যন্ত পুরো পথ এক পাতায়: প্রতিটা ধাপ কী করে, কোথায় sync আর কোথায় async, অ্যাসেটের state machine, আর নিজে বানাবেন নাকি কিনবেন।",
+				"chapter": 1,
+				"level": "beginner",
+				"readingTime": "১৬ মিনিট",
+				"topics": [
+					"vod",
+					"video platform",
+					"architecture",
+					"state machine",
+					"webhooks",
+					"build vs buy"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "02-upload",
+			"meta": {
+				"title": "আপলোড: বড় ভিডিও নির্ভরযোগ্যভাবে তোলা",
+				"subtitle": "কেন এক টানে গিগাবাইট ফাইল আপলোড ভেঙে যায়, আর কীভাবে presigned URL, S3 মাল্টিপার্ট আর tus দিয়ে মোবাইল নেটওয়ার্কেও আপলোড শেষ পর্যন্ত পৌঁছায়।",
+				"chapter": 2,
+				"level": "beginner",
+				"readingTime": "১৮ মিনিট",
+				"topics": [
+					"upload",
+					"resumable upload",
+					"tus",
+					"s3 multipart",
+					"presigned url",
+					"s3-compatible storage"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "03-ingest-and-probing",
+			"meta": {
+				"title": "ইনজেস্ট ও প্রোবিং: ফাইলটা আসলে কী",
+				"subtitle": "আপলোড হওয়া ফাইল এনকোডারে পাঠানোর আগে খুলে দেখা: ffprobe-এর JSON-এর প্রতিটা দরকারি ফিল্ড, বাস্তবের অদ্ভুত ফাইল, কোনটা বাতিল আর কোনটা ঠিক করে নেবেন, আর Go দিয়ে একটা নিরাপদ প্রোব।",
+				"chapter": 3,
+				"level": "intermediate",
+				"readingTime": "১৯ মিনিট",
+				"topics": [
+					"ingest",
+					"ffprobe",
+					"validation",
+					"vfr",
+					"rotation",
+					"hdr",
+					"corrupt files"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "04-encoding-jobs",
+			"meta": {
+				"title": "এনকোডিং জব অর্কেস্ট্রেশন",
+				"subtitle": "একটা আপলোড থেকে ডজনখানেক জব: River দিয়ে ট্রানজ্যাকশনের ভেতরে জব ঢোকানো, ইউনিক জব, রিট্রাই আর ক্যানসেল, রেন্ডিশন-প্রতি ফ্যান-আউট, শেষজনের হাতে প্যাকেজিং, প্রোগ্রেস, আর ভাঙা ফাইলকে ফ্লিট খেতে না দেওয়া।",
+				"chapter": 4,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"encoding jobs",
+					"river",
+					"job queue",
+					"retries",
+					"idempotency",
+					"fan-out",
+					"ffmpeg progress"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "05-storage-layout",
+			"meta": {
+				"title": "স্টোরেজ লেআউট ও লাইফসাইকেল",
+				"subtitle": "একটা ভিডিও প্রসেস হওয়ার পর হাজার হাজার অবজেক্ট হয়ে যায়। সেগুলোর কী কীভাবে সাজাবেন, কোনটা কতদিন রাখবেন, কীভাবে সত্যিই মুছবেন, আর ভাঙা বা হারানো ফাইল কীভাবে ধরবেন।",
+				"chapter": 5,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"object storage",
+					"key design",
+					"lifecycle",
+					"deletion",
+					"consistency",
+					"checksums",
+					"minio",
+					"garage"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "06-packaging-strategies",
+			"meta": {
+				"title": "প্যাকেজিং কৌশল",
+				"subtitle": "আগে থেকে সব ফরম্যাটে প্যাকেজ করে রাখবেন, নাকি রিকোয়েস্ট এলে তখন বানাবেন? স্টোরেজ, কম্পিউট, লেটেন্সি আর নমনীয়তার মধ্যে বাছাই, আর প্রতি রিকোয়েস্টে manifest বদলানো।",
+				"chapter": 6,
+				"level": "intermediate",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"packaging",
+					"just-in-time packaging",
+					"cmaf",
+					"cbcs",
+					"cenc",
+					"manifest manipulation",
+					"shaka packager",
+					"nginx-vod-module"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "07-thumbnails-captions",
+			"meta": {
+				"title": "থাম্বনেইল, প্রিভিউ ও ক্যাপশন",
+				"subtitle": "এনকোডের পাশাপাশি যে কাজগুলো একটা ভিডিওকে প্রোডাক্ট বানায়: ভালো পোস্টার বাছাই, স্টোরিবোর্ড স্প্রাইট, ছোট প্রিভিউ, অটো ক্যাপশন, চ্যাপ্টার আর অডিওর লাউডনেস, সবগুলো ব্যাকগ্রাউন্ড জব হিসেবে।",
+				"chapter": 7,
+				"level": "intermediate",
+				"readingTime": "১৯ মিনিট",
+				"topics": [
+					"thumbnails",
+					"storyboard",
+					"webvtt",
+					"previews",
+					"captions",
+					"whisper",
+					"loudness",
+					"ebu r128",
+					"river"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "08-security",
+			"meta": {
+				"title": "VOD সিকিউরিটি",
+				"subtitle": "কে কোন ভিডিও, কতক্ষণ, কোথা থেকে দেখতে পারবে — প্লেব্যাক টোকেন, সাইনড ম্যানিফেস্ট, AES-128 বনাম DRM, কী ম্যানেজমেন্ট, ফরেনসিক ওয়াটারমার্ক আর অডিট।",
+				"chapter": 8,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"vod security",
+					"playback tokens",
+					"signed urls",
+					"drm",
+					"key management",
+					"watermarking",
+					"geo restriction"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "09-catalog-playback-api",
+			"meta": {
+				"title": "ক্যাটালগ ও প্লেব্যাক API",
+				"subtitle": "VOD প্ল্যাটফর্মের সামনের দরজা — PostgreSQL ডেটা মডেল আর RLS, asset-এর লাইফসাইকেল API, প্লেব্যাক রেসপন্স, ওয়েবহুক, আইডেম্পোটেন্সি, স্থির এরর কোড, পেজিনেশন আর সার্চ।",
+				"chapter": 9,
+				"level": "advanced",
+				"readingTime": "২৪ মিনিট",
+				"topics": [
+					"catalog",
+					"playback api",
+					"postgresql",
+					"rls",
+					"webhooks",
+					"idempotency",
+					"pagination",
+					"full-text search"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "10-analytics-and-cost",
+			"meta": {
+				"title": "VOD অ্যানালিটিক্স ও খরচ",
+				"subtitle": "একটা \"ভিউ\" আসলে কী, ওয়াচ টাইম আর কমপ্লিশন কীভাবে মাপবেন, আর এনকোডিং, স্টোরেজ ও ডেলিভারির খরচ কোথা থেকে আসে আর কোন লিভারে কমে।",
+				"chapter": 10,
+				"level": "advanced",
+				"readingTime": "২২ মিনিট",
+				"topics": [
+					"video analytics",
+					"watch time",
+					"completion rate",
+					"clickhouse",
+					"cost model",
+					"egress",
+					"per-title encoding"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "11-scale-multi-region",
+			"meta": {
+				"title": "স্কেল ও মাল্টি-রিজিয়ন",
+				"subtitle": "নতুন এপিসোড রিলিজের রাতে সবাই একসাথে প্রথম সেগমেন্ট চায় — কোল্ড ক্যাশ, origin-এর উপর ঝড়, এনকোডিং ক্যাপাসিটি, রেপ্লিকেশন শেষ হওয়ার আগেই \"ready\" ঘোষণা, আর ক্যাটালগ ডেটাবেস হারালে কী হয়।",
+				"chapter": 11,
+				"level": "advanced",
+				"readingTime": "২০ মিনিট",
+				"topics": [
+					"scaling",
+					"flash crowd",
+					"cdn prewarm",
+					"origin shield",
+					"multi-region",
+					"replication",
+					"multi-cdn",
+					"disaster recovery"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "12-build-a-vod-platform",
+			"meta": {
+				"title": "একটা ছোট VOD প্ল্যাটফর্ম বানানো",
+				"subtitle": "Go, PostgreSQL, River, Garage, ffmpeg আর nginx দিয়ে শুরু থেকে শেষ: ব্রাউজার থেকে সরাসরি আপলোড, কিউতে এনকোড জব, তিন ধাপের fMP4 HLS, ক্যাশ করা এজ, আর hls.js-এ প্লেব্যাক। প্রতিটা ফাইল এখানে আছে, আর পুরোটা আসলে চালিয়ে টেস্ট করা।",
+				"chapter": 12,
+				"level": "mastery",
+				"readingTime": "৩৫ মিনিট",
+				"topics": [
+					"vod platform",
+					"go",
+					"chi",
+					"river",
+					"postgresql",
+					"garage",
+					"s3",
+					"ffmpeg",
+					"hls",
+					"nginx",
+					"hls.js"
+				]
+			}
+		},
+		{
+			"category": "vod",
+			"slug": "13-debugging-playbook",
+			"meta": {
+				"title": "VOD ডিবাগিং প্লেবুক",
+				"subtitle": "একটা ভিডিওর পথ ধরে আট লেয়ারের পদ্ধতি: আপলোড থেকে প্লেয়ার পর্যন্ত কোথায় ভাঙল সেটা আন্দাজে নয়, প্রমাণ দিয়ে বের করা। সাথে লক্ষণ থেকে কারণের পূর্ণ ক্যাটালগ আর একটা কপি-পেস্ট চেক স্ক্রিপ্ট।",
+				"chapter": 13,
+				"level": "mastery",
+				"readingTime": "৩২ মিনিট",
+				"topics": [
+					"vod debugging",
+					"troubleshooting",
+					"ffprobe",
+					"hls",
+					"upload",
+					"river",
+					"cors",
+					"cdn cache",
+					"playback"
 				]
 			}
 		},

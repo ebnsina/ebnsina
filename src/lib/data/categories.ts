@@ -159,6 +159,24 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
 		description: 'Codecs, containers, transcoding, packaging, ABR streaming, and delivery',
 		group: 'Media'
 	},
+	'video-player': {
+		label: 'Video Player: Zero to Mastery',
+		description:
+			'The media element, MSE, EME, captions, ads, native and TV players, QoE, a player built from scratch, and a debugging playbook',
+		group: 'Media'
+	},
+	vod: {
+		label: 'VOD: Zero to Mastery',
+		description:
+			'Upload, ingest, encoding jobs, storage, packaging, security, catalog, cost, a mini VOD platform, and a debugging playbook',
+		group: 'Media'
+	},
+	'live-streaming': {
+		label: 'Live Streaming: Zero to Mastery',
+		description:
+			'Contribution protocols, live encoders, ingest, low latency, DVR, scale, redundancy, a live pipeline end to end, and a debugging playbook',
+		group: 'Media'
+	},
 	'load-balancing': {
 		label: 'Load Balancing',
 		description: 'Algorithms, health checks, session affinity',
