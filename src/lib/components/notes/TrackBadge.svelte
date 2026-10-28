@@ -65,7 +65,7 @@
 		height: 42%;
 	}
 	.badge.earned .medal {
-		color: #fff;
+		color: var(--bg);
 		background:
 			linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 45%),
 			linear-gradient(

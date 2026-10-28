@@ -35,7 +35,7 @@
 			class:is-min={scrolled}
 			aria-label={SITE.name}
 		>
-			<span class="lm-full">Ebn <span class="text-accent">Sina</span></span>
+			<span class="lm-full"><span class="text-muted">Ebn</span> Sina</span>
 			<span class="lm-short" aria-hidden="true">E<span class="text-accent">S</span></span>
 		</a>
 

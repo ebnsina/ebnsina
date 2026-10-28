@@ -51,17 +51,10 @@
 	}
 
 	.finding[data-severity='blocker'] {
-		--cl: #d94a4a;
+		--cl: var(--danger);
 	}
 	.finding[data-severity='warning'] {
-		--cl: #c98a1b;
-	}
-
-	:global(.dark) .finding[data-severity='blocker'] {
-		--cl: #ff8b8b;
-	}
-	:global(.dark) .finding[data-severity='warning'] {
-		--cl: #e3b662;
+		--cl: var(--warning);
 	}
 
 	.tag {

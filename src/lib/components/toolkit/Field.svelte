@@ -112,10 +112,10 @@
 	}
 
 	.counter[data-state='over-practical'] {
-		color: #c98a1b;
+		color: var(--warning);
 	}
 	.counter[data-state='over-max'] {
-		color: #d94a4a;
+		color: var(--danger);
 	}
 
 	.sep {
@@ -147,7 +147,7 @@
 	}
 
 	.control[data-state='over-max'] {
-		border-color: #d94a4a;
+		border-color: var(--danger);
 	}
 
 	.hint {

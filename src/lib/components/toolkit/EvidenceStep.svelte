@@ -200,13 +200,13 @@
 		background: var(--accent);
 	}
 	.dot[data-severity='blocker'] {
-		background: #d94a4a;
+		background: var(--danger);
 	}
 	.dot[data-severity='warning'] {
-		background: #c98a1b;
+		background: var(--warning);
 	}
 	.dot[data-severity='ok'] {
-		background: #2f9e6f;
+		background: var(--success);
 	}
 
 	.body {
@@ -246,7 +246,7 @@
 	}
 
 	.link.danger:hover {
-		color: #d94a4a;
+		color: var(--danger);
 	}
 
 	.add {

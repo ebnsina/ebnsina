@@ -220,7 +220,7 @@
 	.is-screener {
 		padding: 0.6rem 0.7rem;
 		border-radius: var(--radius-button);
-		background: color-mix(in oklch, #d94a4a 10%, var(--bg));
+		background: color-mix(in oklch, var(--danger) 10%, var(--bg));
 	}
 
 	.chips {

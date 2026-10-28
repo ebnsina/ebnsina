@@ -298,7 +298,7 @@
 	}
 
 	.link.danger:hover {
-		color: #d94a4a;
+		color: var(--danger);
 	}
 
 	.file {
@@ -310,6 +310,6 @@
 		flex-basis: 100%;
 		margin: 0;
 		font-size: 0.8125rem;
-		color: #d94a4a;
+		color: var(--danger);
 	}
 </style>

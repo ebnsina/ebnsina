@@ -34,7 +34,7 @@
 				} else {
 					const remaining = Math.max(0, Math.round((entry.exp - Date.now()) / 1000));
 					popTTL.textContent = remaining > 0 ? 'cached · TTL ' + remaining + 's' : 'cache: expired';
-					nodePop.setAttribute('stroke', remaining > 0 ? '#1e6b3a' : '#b31412');
+					nodePop.setAttribute('stroke', remaining > 0 ? '#5e5e5e' : '#5a5a5a');
 				}
 			}
 			function animatePacket(x1, x2, y, duration, color) {
@@ -77,9 +77,9 @@
 				if (isHit) {
 					showLatency('~8ms  HIT');
 					addFlowLog('GET /resource → PoP [' + region + '] · X-Cache: HIT (~8ms)', 'log-hit');
-					await animatePacket(350, 70, 95, 350, '#1e6b3a');
+					await animatePacket(350, 70, 95, 350, '#5e5e5e');
 				} else {
-					await animatePacket(350, 630, 95, 500, '#b31412');
+					await animatePacket(350, 630, 95, 500, '#5a5a5a');
 					showLatency('~180ms  MISS');
 					await animatePacket(630, 350, 95, 500, '#555');
 					popCache[region] = { exp: Date.now() + TTL_SEC * 1000 };
@@ -366,7 +366,7 @@
 					await sleep(400);
 					addStackLog('Gcore CDN Cache: HIT  (TTL 3580s remaining)', 'log-hit');
 					setMs('sn-gcore', '~6ms');
-					await animPacket('sn-gcore', 'sn-user', '#1e6b3a');
+					await animPacket('sn-gcore', 'sn-user', '#5e5e5e');
 					setBadge('HIT · 6ms', 'hit');
 					addStackLog('Response delivered. Origin never contacted.', 'log-hit');
 				},
@@ -393,7 +393,7 @@
 					await sleep(400);
 					addStackLog('OpenResty RAM cache: HIT  (~0.1ms lookup)', 'log-hit');
 					setMs('sn-shield', '~18ms');
-					await animPacket('sn-shield', 'sn-user', '#1e6b3a');
+					await animPacket('sn-shield', 'sn-user', '#5e5e5e');
 					setBadge('RAM HIT · 18ms', 'hit');
 				},
 				'disk-hit': async () => {
@@ -420,7 +420,7 @@
 					await sleep(400);
 					addStackLog('Disk cache: HIT  (NVMe, ~1ms read)', 'log-hit');
 					setMs('sn-shield', '~22ms');
-					await animPacket('sn-shield', 'sn-user', '#1e6b3a');
+					await animPacket('sn-shield', 'sn-user', '#5e5e5e');
 					setBadge('Disk HIT · 22ms', 'hit');
 				},
 				'full-miss': async () => {
@@ -446,7 +446,7 @@
 					lightLayer('sl-disk', 'miss');
 					await sleep(300);
 					addStackLog('All caches cold. Fetching from origin…', 'log-miss');
-					await animPacket('sn-shield', 'sn-origin', '#b31412');
+					await animPacket('sn-shield', 'sn-origin', '#5a5a5a');
 					lightNode('sn-origin');
 					setMs('sn-origin', '~140ms');
 					await sleep(500);
@@ -465,7 +465,7 @@
 					setBadge('running…', '');
 					addStackLog("GET /?q=' OR 1=1--  (SQL injection attempt)", 'log-info');
 					lightNode('sn-user');
-					await animPacket('sn-user', 'sn-gcore', '#b31412');
+					await animPacket('sn-user', 'sn-gcore', '#5a5a5a');
 					lightNode('sn-gcore');
 					lightLayer('sl-ddos', 'pass');
 					await sleep(300);
@@ -475,7 +475,7 @@
 					await sleep(400);
 					addStackLog('WAF rule matched: sqli-tautology → 403 Forbidden', 'log-miss');
 					setMs('sn-gcore', '~2ms');
-					await animPacket('sn-gcore', 'sn-user', '#b31412');
+					await animPacket('sn-gcore', 'sn-user', '#5a5a5a');
 					setBadge('WAF BLOCK · 403', 'miss');
 					addStackLog('Shield and origin never saw this request.', 'log-hit');
 				},
@@ -499,7 +499,7 @@
 					await sleep(400);
 					addStackLog('access.lua: token bucket empty for this IP → 429', 'log-miss');
 					setMs('sn-shield', '~5ms');
-					await animPacket('sn-shield', 'sn-user', '#b31412');
+					await animPacket('sn-shield', 'sn-user', '#5a5a5a');
 					setBadge('RATE LIMITED · 429', 'miss');
 				},
 				'origin-down': async () => {
@@ -524,7 +524,7 @@
 					await sleep(200);
 					lightLayer('sl-disk', 'miss');
 					await sleep(250);
-					await animPacket('sn-shield', 'sn-origin', '#b31412');
+					await animPacket('sn-shield', 'sn-origin', '#5a5a5a');
 					lightNode('sn-origin');
 					setMs('sn-origin', 'timeout ✗');
 					await sleep(700);
@@ -534,8 +534,8 @@
 					);
 					lightLayer('sl-disk', 'hit');
 					await sleep(300);
-					await animPacket('sn-origin', 'sn-shield', '#e0a000');
-					await animPacket('sn-shield', 'sn-user', '#e0a000');
+					await animPacket('sn-origin', 'sn-shield', '#acacac');
+					await animPacket('sn-shield', 'sn-user', '#acacac');
 					setMs('sn-shield', 'STALE ~5s');
 					setBadge('STALE · origin down', '');
 					addStackLog('User received stale copy. Site stays up. (X-Cache: STALE)', 'log-hit');
@@ -603,7 +603,7 @@
 					if (idx < 0) break;
 					moveBall(
 						idx,
-						step.color === 'block' ? '#b31412' : step.color === 'mod' ? '#e0a000' : '#4a4a4a'
+						step.color === 'block' ? '#5a5a5a' : step.color === 'mod' ? '#acacac' : '#4a4a4a'
 					);
 					phEls[idx].className = 'phase-box ' + (step.color || 'pass');
 					status.textContent = step.note || '';
@@ -1283,11 +1283,11 @@
 			</div>
 			<div class="bucket-stat-row">
 				<span class="bucket-stat-label">Allowed</span>
-				<span class="bucket-stat-val" style="color:#1e6b3a" id="tb-allowed">0</span>
+				<span class="bucket-stat-val" style="color:#5e5e5e" id="tb-allowed">0</span>
 			</div>
 			<div class="bucket-stat-row">
 				<span class="bucket-stat-label">Rejected</span>
-				<span class="bucket-stat-val" style="color:#b31412" id="tb-rejected">0</span>
+				<span class="bucket-stat-val" style="color:#5a5a5a" id="tb-rejected">0</span>
 			</div>
 			<div class="bucket-log" id="tb-log"></div>
 		</div>

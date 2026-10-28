@@ -3,32 +3,32 @@
 	--pg-mute: var(--muted);
 	--pg-ink: var(--fg);
 	--pg-bg: var(--bg);
-	--pg-pass-bg: #e6f4ea;
-	--pg-pass-fg: #1e6b3a;
-	--pg-pass-bd: #a8d5b5;
-	--pg-miss-bg: #fce8e6;
-	--pg-miss-fg: #b31412;
-	--pg-miss-bd: #f5a8a6;
-	--pg-hit-bg: #e8f4fd;
-	--pg-hit-fg: #1565c0;
-	--pg-hit-bd: #90c8f0;
-	--pg-mod-bg: #fff8e1;
-	--pg-mod-fg: #7b5800;
-	--pg-mod-bd: #ffe082;
+	--pg-pass-bg: #f0f0f0;
+	--pg-pass-fg: #5e5e5e;
+	--pg-pass-bd: #cacaca;
+	--pg-miss-bg: #ececec;
+	--pg-miss-fg: #5a5a5a;
+	--pg-miss-bd: #bcbcbc;
+	--pg-hit-bg: #f2f2f2;
+	--pg-hit-fg: #666666;
+	--pg-hit-bd: #c1c1c1;
+	--pg-mod-bg: #f8f8f8;
+	--pg-mod-fg: #5e5e5e;
+	--pg-mod-bd: #e2e2e2;
 }
 html.dark {
-	--pg-pass-bg: oklch(0.22 0.07 145);
-	--pg-pass-fg: oklch(0.76 0.18 145);
-	--pg-pass-bd: oklch(0.36 0.1 145);
-	--pg-miss-bg: oklch(0.21 0.07 20);
-	--pg-miss-fg: oklch(0.72 0.2 20);
-	--pg-miss-bd: oklch(0.35 0.12 20);
-	--pg-hit-bg: oklch(0.21 0.06 240);
-	--pg-hit-fg: oklch(0.73 0.16 240);
-	--pg-hit-bd: oklch(0.35 0.1 240);
-	--pg-mod-bg: oklch(0.23 0.06 90);
-	--pg-mod-fg: oklch(0.82 0.14 90);
-	--pg-mod-bd: oklch(0.38 0.1 90);
+	--pg-pass-bg: oklch(0.22 0 0);
+	--pg-pass-fg: oklch(0.76 0 0);
+	--pg-pass-bd: oklch(0.36 0 0);
+	--pg-miss-bg: oklch(0.21 0 0);
+	--pg-miss-fg: oklch(0.72 0 0);
+	--pg-miss-bd: oklch(0.35 0 0);
+	--pg-hit-bg: oklch(0.21 0 0);
+	--pg-hit-fg: oklch(0.73 0 0);
+	--pg-hit-bd: oklch(0.35 0 0);
+	--pg-mod-bg: oklch(0.23 0 0);
+	--pg-mod-fg: oklch(0.82 0 0);
+	--pg-mod-bd: oklch(0.38 0 0);
 }
 .pg-card {
 	border: 1px solid var(--pg-line);
@@ -100,13 +100,13 @@ html.dark {
 	font-style: italic;
 }
 .pg-log .log-hit {
-	color: #7ac17a;
+	color: #b0b0b0;
 }
 .pg-log .log-miss {
-	color: #e07070;
+	color: #929292;
 }
 .pg-log .log-info {
-	color: #7ab8d4;
+	color: #b0b0b0;
 }
 .pg-two-col {
 	display: grid;
@@ -467,7 +467,7 @@ html.dark {
 	left: 0;
 	right: 0;
 	height: 0;
-	background: rgba(30, 107, 58, 0.12);
+	background: rgba(94, 94, 94, 0.12);
 	transition: height 0.3s;
 }
 .bucket-inner {
@@ -540,10 +540,10 @@ html.dark {
 	color: var(--pg-mute);
 }
 .bucket-log .bl-ok {
-	color: #1e6b3a;
+	color: #5e5e5e;
 }
 .bucket-log .bl-err {
-	color: #b31412;
+	color: #5a5a5a;
 }
 .csm-wrap {
 	padding: 20px;

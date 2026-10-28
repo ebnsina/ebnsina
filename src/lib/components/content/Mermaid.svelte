@@ -20,8 +20,8 @@
 	// CSS var (the single source of truth) so diagrams reskin with the rest of
 	// the site; the node fill is derived from it.
 	const PALETTE = {
-		light: { bg: '#fbfaf9', fg: '#2e2925', muted: '#7a716c', rule: '#e7e2dd' },
-		dark: { bg: '#211e1d', fg: '#ece9e6', muted: '#a79c98', rule: '#423c3a' }
+		light: { bg: '#fafafa', fg: '#2a2a2a', muted: '#737373', rule: '#e3e3e3' },
+		dark: { bg: '#1f1f1f', fg: '#e9e9e9', muted: '#9e9e9e', rule: '#3d3d3d' }
 	};
 
 	const clampHex = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
@@ -56,7 +56,7 @@
 		const base = isDark ? PALETTE.dark : PALETTE.light;
 		// brand accent from the single source; node fill derived from it
 		const css = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-		const accent = /^#[0-9a-f]{6}$/i.test(css) ? css : isDark ? '#7e9443' : '#5a6c23';
+		const accent = /^#[0-9a-f]{6}$/i.test(css) ? css : isDark ? '#8b8b8b' : '#656565';
 		const p = { ...base, accent, node: hexMix(base.bg, accent, isDark ? 0.22 : 0.12) };
 		const { default: mermaid } = await import('mermaid');
 		mermaid.initialize({
