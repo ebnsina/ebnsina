@@ -10,6 +10,8 @@
 	let { children } = $props();
 	// The home hero carries the header itself; every page shares the contact footer.
 	const home = $derived(page.url.pathname === '/');
+	// /projects ends on the dark band, so the footer picks up straight from it
+	const endsDark = $derived(page.url.pathname === '/projects');
 
 	// A subtle fade + lift between routes via the View Transitions API, for a
 	// smooth app-like feel. Skipped where unsupported or for reduced-motion users.
@@ -45,7 +47,7 @@
 
 {#if !home}<Header />{/if}
 <SearchPalette />
-<main id="main" class={home ? '' : 'pt-12 pb-24 sm:pt-16 sm:pb-32'}>
+<main id="main" class={home ? '' : endsDark ? 'pt-12 sm:pt-16' : 'pt-12 pb-24 sm:pt-16 sm:pb-32'}>
 	{@render children()}
 </main>
-<Contact tall={home} />
+<Contact tall={home} night={endsDark} />

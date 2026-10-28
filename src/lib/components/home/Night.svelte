@@ -9,23 +9,24 @@
 	}));
 </script>
 
-<!-- Dusk and night skies are stacked; scrolling fades night in over dusk. -->
+<!-- Dusk and night skies are stacked. The markup is the finished night, so the footer is
+     complete before (or without) JavaScript; the scroll animation then sets dusk-to-night. -->
 <svg class="night" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
 	<defs>
 		<linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
 			<stop offset="0" style="stop-color: var(--dusk-0)" />
-			<stop offset="0.22" style="stop-color: var(--dusk-1)" />
-			<stop offset="0.42" style="stop-color: var(--dusk-2)" />
-			<stop offset="0.62" style="stop-color: var(--dusk-3)" />
-			<stop offset="0.82" style="stop-color: var(--dusk-4)" />
+			<stop offset="0.2" style="stop-color: var(--dusk-1)" />
+			<stop offset="0.4" style="stop-color: var(--dusk-2)" />
+			<stop offset="0.6" style="stop-color: var(--dusk-3)" />
+			<stop offset="0.8" style="stop-color: var(--dusk-4)" />
 			<stop offset="1" style="stop-color: var(--dusk-5)" />
 		</linearGradient>
 		<linearGradient id="nightsky" x1="0" y1="0" x2="0" y2="1">
-			<stop offset="0" style="stop-color: var(--dusk-0)" />
-			<stop offset="0.22" style="stop-color: var(--night-1)" />
-			<stop offset="0.42" style="stop-color: var(--night-2)" />
-			<stop offset="0.62" style="stop-color: var(--night-3)" />
-			<stop offset="0.82" style="stop-color: var(--night-4)" />
+			<stop offset="0" style="stop-color: var(--night-top, var(--dusk-0))" />
+			<stop offset="0.2" style="stop-color: var(--night-1)" />
+			<stop offset="0.4" style="stop-color: var(--night-2)" />
+			<stop offset="0.6" style="stop-color: var(--night-3)" />
+			<stop offset="0.8" style="stop-color: var(--night-4)" />
 			<stop offset="1" style="stop-color: var(--night-5)" />
 		</linearGradient>
 		<radialGradient id="mglow">
@@ -42,11 +43,11 @@
 		</linearGradient>
 	</defs>
 	<rect width="1440" height="900" fill="url(#dusk)" />
-	<rect class="sky-night" width="1440" height="900" fill="url(#nightsky)" opacity="0" />
-	<g class="stars" opacity="0" style="fill: var(--star)">
+	<rect class="sky-night" width="1440" height="900" fill="url(#nightsky)" />
+	<g class="stars" style="fill: var(--star)">
 		{#each stars as s, i (i)}<circle class="star" cx={s.x} cy={s.y} r={s.r} />{/each}
 	</g>
-	<g class="moon" opacity="0">
+	<g class="moon">
 		<circle cx="1000" cy="500" r="180" fill="url(#mglow)" />
 		<circle cx="1000" cy="500" r="46" style="fill: var(--moon)" />
 		<circle cx="1018" cy="488" r="40" style="fill: var(--moon-shade)" opacity="0.92" />
@@ -66,7 +67,18 @@
 <style>
 	.night {
 		/* fade in from the page so the footer has no top edge */
-		mask-image: linear-gradient(transparent, #000 35%);
+		/* eased, not linear, so there is no visible line where the sky begins */
+		mask-image: linear-gradient(
+			transparent,
+			rgb(0 0 0 / 0.04) 8%,
+			rgb(0 0 0 / 0.14) 16%,
+			rgb(0 0 0 / 0.3) 24%,
+			rgb(0 0 0 / 0.5) 32%,
+			rgb(0 0 0 / 0.7) 40%,
+			rgb(0 0 0 / 0.86) 48%,
+			rgb(0 0 0 / 0.96) 56%,
+			#000 64%
+		);
 		position: absolute;
 		inset: 0;
 		z-index: -1;

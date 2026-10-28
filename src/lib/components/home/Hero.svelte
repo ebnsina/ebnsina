@@ -62,8 +62,8 @@
 
 	<footer class="foot">
 		<p class="fade">
-			I design and ship backends and interfaces that stay calm under load. Currently working on
-			video infrastructure.
+			I design and ship backends and interfaces that stay calm under load. Currently working on AI
+			agents, video infrastructure and CDN.
 		</p>
 		<a class="fade cta" href="#work" onclick={go}>
 			Selected work <Icon name="arrowDown" size={16} />
