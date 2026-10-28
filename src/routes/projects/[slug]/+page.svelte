@@ -52,50 +52,56 @@
 		<p class="text-base leading-[1.8] text-fg/90">{cs.problem}</p>
 	</section>
 
-	<!-- Challenges -->
-	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 eyebrow" style="color: var(--cc)">Challenges</h2>
-		<!-- plain prose, separated by hairlines — these are long-form narrative
+	{#if cs.challenges}
+		<!-- Challenges -->
+		<section class="mb-12" use:reveal>
+			<h2 class="mb-5 eyebrow" style="color: var(--cc)">Challenges</h2>
+			<!-- plain prose, separated by hairlines — these are long-form narrative
 			 entries, not cards, so colour would only get in the way of reading -->
-		<div class="space-y-7">
-			{#each cs.challenges as item (item.title)}
-				<div>
-					<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
-					<p class="leading-[1.75] text-muted">{item.body}</p>
-				</div>
-			{/each}
-		</div>
-	</section>
+			<div class="space-y-7">
+				{#each cs.challenges as item (item.title)}
+					<div>
+						<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
+						<p class="leading-[1.75] text-muted">{item.body}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
-	<!-- Implementation -->
-	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 eyebrow" style="color: var(--cc)">Implementation</h2>
-		<div class="space-y-7">
-			{#each cs.implementation as item (item.title)}
-				<div>
-					<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
-					<p class="leading-[1.75] text-muted">{item.body}</p>
-				</div>
-			{/each}
-		</div>
-	</section>
+	{#if cs.implementation}
+		<!-- Implementation -->
+		<section class="mb-12" use:reveal>
+			<h2 class="mb-5 eyebrow" style="color: var(--cc)">Implementation</h2>
+			<div class="space-y-7">
+				{#each cs.implementation as item (item.title)}
+					<div>
+						<h3 class="mb-1.5 font-serif text-base font-semibold tracking-tight">{item.title}</h3>
+						<p class="leading-[1.75] text-muted">{item.body}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
-	<!-- Stack rationale -->
-	<section class="mb-12" use:reveal>
-		<h2 class="mb-5 eyebrow" style="color: var(--cc)">Why this stack</h2>
-		<dl class="grid">
-			{#each cs.stackWhy as row (row.tech)}
-				<div class="grid grid-cols-[8rem_1fr] gap-4 py-2.5 first:pt-0 sm:grid-cols-[10rem_1fr]">
-					<dt class="font-mono text-sm font-medium text-fg">{row.tech}</dt>
-					<dd class="text-sm leading-relaxed text-muted">{row.why}</dd>
-				</div>
-			{/each}
-		</dl>
-	</section>
+	{#if cs.stackWhy}
+		<!-- Stack rationale -->
+		<section class="mb-12" use:reveal>
+			<h2 class="mb-5 eyebrow" style="color: var(--cc)">Why this stack</h2>
+			<dl class="grid">
+				{#each cs.stackWhy as row (row.tech)}
+					<div class="grid grid-cols-[8rem_1fr] gap-4 py-2.5 first:pt-0 sm:grid-cols-[10rem_1fr]">
+						<dt class="font-mono text-sm font-medium text-fg">{row.tech}</dt>
+						<dd class="text-sm leading-relaxed text-muted">{row.why}</dd>
+					</div>
+				{/each}
+			</dl>
+		</section>
+	{/if}
 
 	<!-- Features -->
 	<section class="mb-4" use:reveal>
-		<h2 class="mb-5 eyebrow" style="color: var(--cc)">What it does</h2>
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">What’s built</h2>
 		<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
 			{#each cs.features as feat (feat)}
 				<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
@@ -106,4 +112,21 @@
 			{/each}
 		</ul>
 	</section>
+
+	{#if cs.planned}
+		<section class="mt-12 mb-4" use:reveal>
+			<h2 class="mb-5 eyebrow" style="color: var(--cc)">What’s next</h2>
+			<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
+				{#each cs.planned as item (item)}
+					<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
+						<span
+							class="mt-[0.55em] h-1 w-1 shrink-0 rounded-full border"
+							style="border-color: var(--cc)"
+						></span>
+						<span>{item}</span>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 </article>
