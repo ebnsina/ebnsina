@@ -122,7 +122,7 @@
 		>
 			<div class="max-w-xs">
 				<p class="font-display text-base font-semibold tracking-tight">
-					Ebn <span class="text-accent">Sina</span>
+					<span class="text-muted">Ebn</span> Sina
 				</p>
 				<p class="mt-2.5 text-[0.95rem] leading-relaxed text-muted">
 					Software engineer building infrastructure and developer products, and writing about the

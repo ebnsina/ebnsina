@@ -317,7 +317,7 @@
 		display: block;
 		font-weight: 600;
 		font-size: 0.92rem;
-		color: #18181d;
+		color: #181818;
 	}
 	.item:hover .item-name {
 		color: var(--c2);
@@ -326,7 +326,7 @@
 		display: block;
 		font-size: 0.76rem;
 		line-height: 1.35;
-		color: #61616b;
+		color: #616161;
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.back,

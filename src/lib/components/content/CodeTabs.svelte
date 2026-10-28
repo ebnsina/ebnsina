@@ -22,10 +22,10 @@
 <div class="code-tabs" bind:this={root}>
 	<div class="code-tabs-header">
 		<button class="code-tab-btn" class:active={active === 'ts'} onclick={() => (active = 'ts')}>
-			<span class="tab-dot" style="background:#3178c6"></span>{tsFile}
+			<span class="tab-dot" style="background:#767676"></span>{tsFile}
 		</button>
 		<button class="code-tab-btn" class:active={active === 'go'} onclick={() => (active = 'go')}>
-			<span class="tab-dot" style="background:#00add8"></span>{goFile}
+			<span class="tab-dot" style="background:#9f9f9f"></span>{goFile}
 		</button>
 	</div>
 	<div class="code-tabs-body">{@render children()}</div>

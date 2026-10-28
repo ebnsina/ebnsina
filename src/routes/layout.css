@@ -1,7 +1,12 @@
 @import 'tailwindcss';
 
-/* Two families do all the work: PolySans for every text role, IBM Plex Mono for
-   all numbers + code. Hind Siliguri covers the Bangla (/bn) locale. */
+/* Inter for body and UI text, PolySans for headings/display, IBM Plex Mono for
+   numbers + code. Hind Siliguri covers the Bangla (/bn) locale. */
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/700.css';
 
@@ -148,22 +153,23 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
-   Zumurrud: emerald primary, brass secondary, on cool-neutral greys. */
+   Monochrome: black, white and neutral greys only. Primary is the ink itself;
+   semantic states are grey levels and rely on their icon/label, never on hue. */
 :root {
 	color-scheme: light;
 	--bg: #ffffff;
-	--fg: #0b0b0d;
-	--muted: #63636d;
-	--faint: #94949f;
-	--rule: #ededf0;
-	--rule-strong: #dededf;
-	--surface: #f7f7f8;
-	--primary: #0e7c5a;
-	--secondary: #a8742a;
-	--success: #1e8e4f;
-	--warning: #b7791f;
-	--danger: #c8372d;
-	--info: #2667b8;
+	--fg: #0a0a0a;
+	--muted: #636363;
+	--faint: #949494;
+	--rule: #ededed;
+	--rule-strong: #dedede;
+	--surface: #f7f7f7;
+	--primary: #0a0a0a;
+	--secondary: #525252;
+	--success: #262626;
+	--warning: #525252;
+	--danger: #0a0a0a;
+	--info: #404040;
 	--accent: var(--primary);
 	--accent-soft: color-mix(in oklab, var(--primary) 10%, var(--bg));
 	--brand-accent: var(--accent);
@@ -174,23 +180,23 @@
 
 :root.dark {
 	color-scheme: dark;
-	--bg: #0a0a0c;
-	--fg: #ececef;
-	--muted: #9797a2;
-	--faint: #6b6b76;
-	--rule: #1c1c21;
-	--rule-strong: #2b2b32;
-	--surface: #111114;
-	--primary: #34c99a;
-	--secondary: #d9a55a;
-	--success: #4cc77f;
-	--warning: #f0b44c;
-	--danger: #f2706a;
-	--info: #6fa8ee;
+	--bg: #0a0a0a;
+	--fg: #ededed;
+	--muted: #999999;
+	--faint: #6b6b6b;
+	--rule: #1c1c1c;
+	--rule-strong: #2b2b2b;
+	--surface: #121212;
+	--primary: #ededed;
+	--secondary: #b3b3b3;
+	--success: #d4d4d4;
+	--warning: #b3b3b3;
+	--danger: #ededed;
+	--info: #c4c4c4;
 	--accent: var(--primary);
 	--accent-solid: var(--primary);
-	--on-accent: #0b0b0d;
-	--card-base: #111114;
+	--on-accent: #0a0a0a;
+	--card-base: #121212;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -283,8 +289,8 @@
    `text-accent`, `bg-bg`, `border-rule` are brand-driven AND theme-aware.
    `inline` makes the utilities reference the live var rather than copying it. */
 @theme inline {
-	--font-sans: 'PolySans', ui-sans-serif, system-ui, sans-serif;
-	/* PolySans for headings and body */
+	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+	/* PolySans for headings and display */
 	--font-display: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-serif: 'PolySans', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -324,7 +330,7 @@
    line-height, so bump it on the subtree. */
 [lang='bn'] {
 	/* All Bangla text = Hind Siliguri; numbers/code stay IBM Plex Mono. */
-	--font-sans: 'Hind Siliguri', 'PolySans', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Hind Siliguri', 'Inter', ui-sans-serif, system-ui, sans-serif;
 	--font-display: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
 	--font-serif: 'Hind Siliguri', 'PolySans', ui-sans-serif, sans-serif;
 	--font-pixel: 'IBM Plex Mono', 'Hind Siliguri', ui-monospace, monospace;
@@ -338,7 +344,7 @@
 }
 /* But never re-font code — fenced blocks and inline code stay monospace/Latin. */
 [lang='bn'] :where(code, pre, kbd, samp) {
-	--font-sans: 'PolySans', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -428,12 +434,12 @@ body {
 	--aa: 152deg;
 	--ax: 14%;
 	--ay: 8%;
-	--au-1: #8799ff;
-	--au-2: #f3d3cd;
-	--au-3: #58006b;
-	--au-b1: #0c27bf;
-	--au-b2: #081b86;
-	--au-b3: #14105e;
+	--au-1: #a0a0a0;
+	--au-2: #dadada;
+	--au-3: #323232;
+	--au-b1: #414141;
+	--au-b2: #2c2c2c;
+	--au-b3: #1e1e1e;
 }
 
 /* Every coloured surface on the site is one of these, so the card radius is
@@ -473,7 +479,7 @@ body {
 	--fg: #ffffff;
 	--muted: rgba(255, 255, 255, 0.86);
 	--accent: #ffffff;
-	--bg: #14101f;
+	--bg: #141414;
 	position: relative;
 	color: #fff;
 	box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.32);
@@ -1016,7 +1022,7 @@ html.nav-vt::view-transition-group(*) {
 /* ============================================================
    Editorial rules
    ============================================================ */
-/* headings: PolySans Bulky; body PolySans Neutral */
+/* headings: PolySans Bulky; body Inter */
 h1,
 h2,
 h3 {

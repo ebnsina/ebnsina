@@ -180,13 +180,13 @@
 	}
 
 	.verdict[data-tone='bad'] {
-		--cl: #d94a4a;
+		--cl: var(--danger);
 	}
 	.verdict[data-tone='warn'] {
-		--cl: #c98a1b;
+		--cl: var(--warning);
 	}
 	.verdict[data-tone='good'] {
-		--cl: #2f9e6f;
+		--cl: var(--success);
 	}
 
 	.table-wrap {
@@ -238,7 +238,7 @@
 	}
 
 	.del:hover {
-		color: #d94a4a;
+		color: var(--danger);
 	}
 
 	.empty {
