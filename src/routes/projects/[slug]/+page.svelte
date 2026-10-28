@@ -101,7 +101,7 @@
 
 	<!-- Features -->
 	<section class="mb-4" use:reveal>
-		<h2 class="mb-5 eyebrow" style="color: var(--cc)">What’s built</h2>
+		<h2 class="mb-5 eyebrow" style="color: var(--cc)">What it does</h2>
 		<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
 			{#each cs.features as feat (feat)}
 				<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
@@ -112,21 +112,4 @@
 			{/each}
 		</ul>
 	</section>
-
-	{#if cs.planned}
-		<section class="mt-12 mb-4" use:reveal>
-			<h2 class="mb-5 eyebrow" style="color: var(--cc)">What’s next</h2>
-			<ul class="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
-				{#each cs.planned as item (item)}
-					<li class="flex gap-2.5 text-sm leading-relaxed text-muted">
-						<span
-							class="mt-[0.55em] h-1 w-1 shrink-0 rounded-full border"
-							style="border-color: var(--cc)"
-						></span>
-						<span>{item}</span>
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
 </article>

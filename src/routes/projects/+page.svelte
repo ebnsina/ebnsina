@@ -19,9 +19,8 @@
 
 	<p class="mx-auto mb-10 max-w-2xl text-center text-[1.05rem] leading-[1.75] text-muted">
 		Products I’ve built end to end, ordered from the most complex down: deployment, video, CDN, live
-		streaming, AI calling, education, analytics, commerce and the tools around them. Each page says
-		what’s built and what’s next. The theme is the same throughout: take something operationally
-		painful and make it boring and reliable.
+		streaming, AI calling, education, analytics, commerce and the tools around them. The theme is
+		the same throughout: take something operationally painful and make it boring and reliable.
 	</p>
 
 	<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
