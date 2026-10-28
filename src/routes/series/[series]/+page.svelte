@@ -16,7 +16,7 @@
 
 <Seo title={meta.title} description={meta.tagline} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		eyebrow={`Series · ${partsLabel(parts.length, meta.plannedParts)} · ${minutes} min · ${meta.status === 'complete' ? 'Complete' : 'Ongoing'}`}
 		title={meta.title}
@@ -32,7 +32,7 @@
 		{/snippet}
 	</PageBanner>
 
-	<p class="mx-auto max-w-2xl text-base leading-relaxed text-muted" lang="bn">
+	<p class="max-w-2xl text-base leading-relaxed text-muted" lang="bn">
 		{meta.description}
 	</p>
 
@@ -122,10 +122,8 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--2);
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: color-mix(in oklch, var(--fg) 45%, transparent);
 	}
 

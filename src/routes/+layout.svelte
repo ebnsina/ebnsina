@@ -2,13 +2,13 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import Header from '$lib/components/Header.svelte';
-	import Footer from '$lib/components/Footer.svelte';
+	import Contact from '$lib/components/home/Contact.svelte';
 	import SearchPalette from '$lib/components/SearchPalette.svelte';
 	import { onNavigate, afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 
 	let { children } = $props();
-	// The home page carries its own bar and contact footer (a port of ~/Sites/sina).
+	// The home hero carries the header itself; every page shares the contact footer.
 	const home = $derived(page.url.pathname === '/');
 
 	// A subtle fade + lift between routes via the View Transitions API, for a
@@ -45,7 +45,7 @@
 
 {#if !home}<Header />{/if}
 <SearchPalette />
-<main id="main" class={home ? '' : 'py-12 sm:py-20'}>
+<main id="main" class={home ? '' : 'pt-12 pb-24 sm:pt-16 sm:pb-32'}>
 	{@render children()}
 </main>
-{#if !home}<Footer />{/if}
+<Contact tall={home} />

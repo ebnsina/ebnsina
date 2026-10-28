@@ -49,7 +49,7 @@
 
 <Seo title={t.notesTitle} description={t.notesDesc} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8" lang="bn">
+<div class="page" lang="bn">
 	<PageBanner title={t.notesTitle} description={t.notesDesc} />
 
 	<JourneyHeader {total} />

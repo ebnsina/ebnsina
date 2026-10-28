@@ -12,7 +12,7 @@
 
 <Seo title={`${project.title} · Case study`} description={cs.summary} type="article" />
 
-<article class="mx-auto max-w-3xl px-5 pb-8 sm:px-8" style="--cc: {accent}">
+<article class="page max-w-[calc(48rem+2*var(--sina-gutter))] pb-8" style="--cc: {accent}">
 	<a href="/projects" class="mt-2 inline-block eyebrow transition-colors hover:text-fg">
 		<Icon name="arrowLeft" size={14} /> Projects
 	</a>

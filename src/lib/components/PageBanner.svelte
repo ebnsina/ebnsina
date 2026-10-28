@@ -35,25 +35,27 @@
 	.page-hero {
 		display: grid;
 		justify-items: start;
-		gap: var(--step-0);
-		padding-bottom: var(--step-4);
+		gap: 1.5rem;
+		padding-block: clamp(2rem, 6vw, 5rem) clamp(3rem, 7vw, 6rem);
 	}
 	h1 {
-		max-width: 20ch;
-		font-size: var(--step-5);
-		line-height: var(--leading-display);
-		letter-spacing: var(--tracking-display);
+		max-width: 16ch;
+		font-size: clamp(2.75rem, 7vw, 6rem);
+		font-weight: 400;
+		line-height: 0.98;
+		letter-spacing: -0.03em;
 	}
 	.lede {
-		max-width: 52ch;
-		font-size: var(--step-1);
-		line-height: var(--leading-ui);
+		max-width: 40ch;
+		font-family: var(--font-display);
+		font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+		line-height: 1.3;
+		letter-spacing: -0.015em;
 		color: var(--muted);
 	}
 	.actions {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--step--1);
-		margin-top: var(--step-0);
 	}
 </style>

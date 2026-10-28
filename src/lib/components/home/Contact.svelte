@@ -4,10 +4,22 @@
 	import { gsap, SplitText, motion } from '$lib/motion';
 
 	const year = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(new Date());
-	const links = [
+	// The site footer. Full height on the home page, where the night falls as you scroll.
+	let { tall = false }: { tall?: boolean } = $props();
+
+	const pages = [
 		['Writing', '/blog'],
+		['Series', '/series'],
+		['Notes', '/notes'],
 		['Projects', '/projects'],
+		['Tools', '/tools'],
+		['Directory', '/directory'],
+		['About', '/about'],
+		['Uses', '/uses'],
 		['CV', '/cv'],
+		['RSS', '/rss.xml']
+	];
+	const elsewhere = [
 		['GitHub', SITE.social.github],
 		['LinkedIn', SITE.social.linkedin],
 		['WhatsApp', `https://wa.me/${SITE.phone.slice(1)}`]
@@ -73,37 +85,45 @@
 	}
 </script>
 
-<section id="contact" class="contact" bind:this={root}>
+<footer id="contact" class="contact" class:tall bind:this={root}>
 	<Night />
 	<p class="label pre">Have something to build?</p>
 	<a class="mail" href="mailto:{SITE.email}" onmouseenter={scramble} onfocus={scramble}>
 		<span class="hello pre">Say hello</span>
 		<em bind:this={mail}>{SITE.email}</em>
 	</a>
-	<footer class="base pre">
-		<span>© {year} {SITE.name}</span>
-		<nav>
-			{#each links as [name, href] (href)}
-				<a {href} target={href.startsWith('/') ? undefined : '_blank'} rel="noopener">{name}</a>
+	<div class="base pre">
+		<nav aria-label="Site">
+			{#each pages as [name, href] (href)}
+				<a {href}>{name}</a>
 			{/each}
 		</nav>
-	</footer>
-</section>
+		<nav aria-label="Elsewhere">
+			{#each elsewhere as [name, href] (href)}
+				<a {href} target="_blank" rel="noopener">{name}</a>
+			{/each}
+			<span>© {year} {SITE.name}</span>
+		</nav>
+	</div>
+</footer>
 
 <style>
 	.contact {
 		position: relative;
 		isolation: isolate;
 		overflow: hidden;
-		min-height: 150svh;
+		min-height: 100svh;
 		display: grid;
 		align-content: end;
 		padding: clamp(6rem, 14vw, 12rem) var(--sina-gutter) 2rem;
 		color: var(--on-band);
 		border-radius: 0;
 	}
+	.tall {
+		min-height: 150svh;
+	}
 	.label {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--band-mute);
 		margin-bottom: 2rem;
 	}
@@ -127,16 +147,16 @@
 	.base {
 		display: flex;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.75rem 2rem;
 		flex-wrap: wrap;
 		margin-top: clamp(4rem, 10vw, 8rem);
-		font-size: 0.875rem;
+		font-size: var(--step--2);
 		color: var(--band-mute);
 	}
 	nav {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 1.5rem;
+		gap: 0.5rem 1.25rem;
 	}
 	nav a:hover {
 		color: var(--band-hi);

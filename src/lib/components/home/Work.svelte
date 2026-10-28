@@ -3,10 +3,19 @@
 	import { projects } from '$lib/data/projects';
 	import { gsap, motion } from '$lib/motion';
 
-	const selected = projects
+	type Project = (typeof projects)[number];
+	const featured = projects
 		.filter((p) => p.featured)
 		.sort((a, b) => a.order - b.order)
 		.slice(0, 5);
+
+	// The home page shows five featured projects; /projects passes every one.
+	let {
+		items = featured,
+		heading = 'Selected work',
+		more = true
+	}: { items?: Project[]; heading?: string; more?: boolean } = $props();
+	const num = (i: number) => String(i + 1).padStart(2, '0');
 	let root: HTMLElement;
 
 	$effect(() =>
@@ -44,14 +53,14 @@
 
 <section id="work" class="work" bind:this={root}>
 	<header class="head pre">
-		<h2>Selected work</h2>
-		<a href="/projects">All projects</a>
+		<h2>{heading}</h2>
+		{#if more}<a href="/projects">All projects</a>{/if}
 	</header>
 	<ol>
-		{#each selected as p, i (p.slug)}
+		{#each items as p, i (p.slug)}
 			<li>
 				<a href="/projects/{p.slug}">
-					<em class="n" aria-hidden="true">0{i + 1}</em>
+					<em class="n" aria-hidden="true">{num(i)}</em>
 					<div class="t pre">
 						<h3>{p.title}</h3>
 						<span class="arrow" aria-hidden="true"><Icon name="arrowRight" size={32} /></span>
@@ -70,9 +79,11 @@
 
 <style>
 	.work {
-		background: var(--band);
+		/* the band fades back into the page at its foot instead of ending on a hard edge */
+		--fade: clamp(8rem, 16vw, 14rem);
+		background: linear-gradient(var(--band) calc(100% - var(--fade)), var(--bg));
 		color: var(--on-band);
-		padding: clamp(4rem, 10vw, 9rem) var(--sina-gutter);
+		padding: clamp(4rem, 10vw, 9rem) var(--sina-gutter) calc(var(--fade) + 2rem);
 		overflow: hidden;
 		border-radius: 0;
 	}
@@ -82,7 +93,7 @@
 		align-items: baseline;
 		gap: 1rem;
 		flex-wrap: wrap;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--band-mute);
 		margin-bottom: clamp(2rem, 6vw, 5rem);
 	}
@@ -104,7 +115,7 @@
 	li a {
 		position: relative;
 		display: grid;
-		grid-template-columns: 1.2fr 1fr;
+		grid-template-columns: 1.6fr 1fr;
 		gap: 1.5rem 3rem;
 		align-items: end;
 		padding-left: clamp(2rem, 5vw, 5rem);
@@ -118,7 +129,7 @@
 		z-index: 0;
 		font-family: var(--font-display);
 		font-style: normal;
-		font-size: clamp(4rem, 10vw, 9rem);
+		font-size: clamp(3rem, 6vw, 5.5rem);
 		line-height: 1;
 		color: transparent;
 		-webkit-text-stroke: 1px color-mix(in oklab, var(--on-band) 22%, transparent);
@@ -135,10 +146,10 @@
 	}
 	h3 {
 		font-family: var(--font-display);
-		font-size: clamp(2.25rem, 5.5vw, 5rem);
+		font-size: clamp(1.75rem, 3vw, 2.75rem);
 		font-weight: 400;
 		letter-spacing: -0.025em;
-		line-height: 0.95;
+		line-height: 1.05;
 		transition: color 0.4s ease;
 	}
 	li a:hover h3 {
@@ -165,7 +176,7 @@
 		color: var(--band-soft);
 	}
 	.meta {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--band-mute);
 	}
 	.year {

@@ -196,10 +196,8 @@
 
 	.block-label {
 		display: block;
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: var(--step--3);
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
 		color: var(--muted);
 		margin-bottom: 0.3rem;
 	}

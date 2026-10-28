@@ -82,10 +82,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--2);
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 

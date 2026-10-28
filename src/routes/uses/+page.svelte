@@ -44,14 +44,14 @@
 
 <Seo title="Uses" description="Hardware, software, and services I actually use." />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		eyebrow="Uses"
 		title="What I use"
 		description="Hardware, software, and services that have earned their place."
 	/>
 
-	<div class="mx-auto max-w-[44rem] space-y-12">
+	<div class="max-w-[44rem] space-y-12">
 		{#each groups as g (g.name)}
 			<section use:reveal>
 				<h2 class="mb-4 font-serif text-2xl font-semibold tracking-tight">{g.name}</h2>

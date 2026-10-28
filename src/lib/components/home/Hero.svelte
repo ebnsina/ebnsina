@@ -1,30 +1,15 @@
 <script lang="ts">
 	import Scene from './Scene.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { SITE } from '$lib/config';
+	import Header from '$lib/components/Header.svelte';
 	import { gsap, SplitText, motion } from '$lib/motion';
 
-	const fmt = new Intl.DateTimeFormat('en-GB', {
-		hour: '2-digit',
-		minute: '2-digit',
-		timeZone: 'Asia/Dhaka'
-	});
-	// Prerendered without a time; the live clock starts once the page runs.
-	let time = $state('UTC+6');
 	let root: HTMLElement;
 	// Scroll without writing the hash into the URL
 	function go(e: MouseEvent) {
 		e.preventDefault();
 		document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
 	}
-
-	$effect(() => {
-		const tick = () => (time = fmt.format(new Date()));
-		tick();
-		const id = setInterval(tick, 10_000);
-		return () => clearInterval(id);
-	});
 
 	$effect(() =>
 		motion(root, (reduce) => {
@@ -34,7 +19,11 @@
 				.timeline({ defaults: { ease: 'power4.out' } })
 				.to(q('.ridge'), { y: 0, duration: d(1.6), stagger: 0.12 }, 0)
 				.to(q('.sun'), { y: 0, duration: d(3), ease: 'power2.out' }, 0.2)
-				.from(q('.fade'), { autoAlpha: 0, y: 10, duration: d(0.9), stagger: 0.1 }, 0.8);
+				.from(
+					q('.fade, .site-header'),
+					{ autoAlpha: 0, y: 10, duration: d(0.9), stagger: 0.1 },
+					0.8
+				);
 
 			SplitText.create(root.querySelector('h1'), {
 				type: 'lines,words',
@@ -67,13 +56,7 @@
 
 <section class="hero" bind:this={root}>
 	<Scene />
-	<header class="bar">
-		<a class="fade logo" href="/">{SITE.name}</a>
-		<span class="fade right">
-			<span class="clock">Bangladesh · {time}</span>
-			<ThemeToggle />
-		</span>
-	</header>
+	<Header inset={false} />
 
 	<h1>Software engineer<br />building <em>distributed,</em><br />well-made systems.</h1>
 
@@ -100,29 +83,13 @@
 		gap: 2rem;
 		border-radius: 0;
 	}
-	.logo {
-		font-family: var(--font-display);
-		font-weight: 700;
-		font-size: 1.25rem;
-		color: var(--fg);
-		letter-spacing: -0.02em;
-	}
-	.bar,
 	.foot {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
 		gap: 1rem;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--muted);
-	}
-	.bar {
-		align-items: center;
-	}
-	.right {
-		display: inline-flex;
-		align-items: center;
-		gap: 1rem;
 	}
 	h1 {
 		align-self: center;
@@ -163,9 +130,6 @@
 		.foot {
 			flex-direction: column;
 			align-items: flex-start;
-		}
-		.clock {
-			display: none;
 		}
 	}
 </style>

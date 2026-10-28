@@ -17,7 +17,7 @@
 	description="Multi-part writing meant to be read in order: one subject taken from first principles to production."
 />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		title="Series"
 		description="Multi-part writing meant to be read in order: one subject, taken from first principles all the way to production."
@@ -86,10 +86,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--2);
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 

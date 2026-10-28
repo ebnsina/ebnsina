@@ -20,13 +20,27 @@
 				: 'light';
 	});
 
-	function set(next: Theme) {
+	function apply(next: Theme) {
 		theme = next;
 		const root = document.documentElement;
 		root.classList.toggle('dark', next === 'dark');
 		root.classList.toggle('palette-color', next === 'color');
 		localStorage.setItem('theme', next);
 		window.dispatchEvent(new Event('themechange'));
+	}
+
+	// The new theme seeps out from the click (see .theme-vt in layout.css).
+	function set(next: Theme, event: MouseEvent) {
+		if (next === theme) return;
+		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduce || !document.startViewTransition) return apply(next);
+		const root = document.documentElement;
+		root.style.setProperty('--vt-x', `${event.clientX}px`);
+		root.style.setProperty('--vt-y', `${event.clientY}px`);
+		root.classList.add('theme-vt');
+		document
+			.startViewTransition(() => apply(next))
+			.finished.finally(() => root.classList.remove('theme-vt'));
 	}
 </script>
 
@@ -38,7 +52,7 @@
 			aria-checked={theme === o.value}
 			aria-label={o.label}
 			title={o.label}
-			onclick={() => set(o.value)}
+			onclick={(e) => set(o.value, e)}
 		>
 			<Icon name={o.icon} size={15} />
 		</button>

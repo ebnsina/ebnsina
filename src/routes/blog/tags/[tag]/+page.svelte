@@ -8,7 +8,7 @@
 
 <Seo title={`#${data.tag}`} description={`Posts tagged #${data.tag}`} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<header class="mb-10">
 		<a href="/blog" class="text-sm text-muted hover:text-fg"
 			><Icon name="arrowLeft" size={14} /> All writing</a

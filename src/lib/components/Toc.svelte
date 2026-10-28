@@ -251,11 +251,9 @@
 	.label {
 		display: block;
 		margin-bottom: 0.6rem;
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--3);
 		font-weight: 600;
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
 		color: var(--muted);
 	}
 

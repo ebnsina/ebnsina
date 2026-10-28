@@ -85,14 +85,13 @@
 		flex-shrink: 0;
 		vertical-align: -0.14em;
 	}
+	/* small labels, as on the home page: plain sans, one step down, muted */
 	.eyebrow {
-		font-family: var(--font-pixel);
-		font-size: var(--step--2);
+		font-family: var(--font-sans);
+		font-size: var(--step--1);
 		font-weight: 400;
 		line-height: var(--leading-ui);
-		letter-spacing: var(--tracking-label);
-		text-transform: uppercase;
-		color: var(--faint);
+		color: var(--muted);
 	}
 	/* Buttons — one rule for every button: 46px, mono uppercase label, square.
 	   Solid is ink on paper; ghost is paper with a strong hairline. Both invert
@@ -102,15 +101,13 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		height: 46px;
-		min-width: 46px;
-		padding: 0 22px;
+		height: 44px;
+		min-width: 44px;
+		padding: 0 20px;
 		border: 1px solid var(--accent-solid);
-		font-family: var(--font-mono);
-		font-size: var(--step--2);
+		font-family: var(--font-sans);
+		font-size: var(--step--1);
 		font-weight: 400;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
 		text-decoration: none;
 		white-space: nowrap;
 		transition:
@@ -143,7 +140,7 @@
 	.title-page {
 		font-family: var(--font-display);
 		font-size: var(--step-5);
-		font-weight: 700;
+		font-weight: 400;
 		line-height: var(--leading-display);
 		letter-spacing: var(--tracking-display);
 		text-wrap: balance;
@@ -698,13 +695,10 @@ body {
 
 /* Flat tinted panel — what cards and strips use now that gradients are gone. */
 .surface {
-	border-radius: var(--radius-card);
-	background: var(--surface);
+	border-top: 1px solid var(--rule);
+	border-radius: 0;
+	background: none;
 	color: var(--fg);
-	transition: background-color 0.2s ease;
-}
-a.surface:hover {
-	background: color-mix(in oklch, var(--fg) 6%, var(--bg));
 }
 
 /* ============================================================
@@ -713,16 +707,21 @@ a.surface:hover {
 .media-card {
 	display: flex;
 	flex-direction: column;
-	padding: 1.75rem;
-	border-radius: var(--radius-card);
-	background: var(--surface);
+	padding: var(--step-2) 0;
+	border-top: 1px solid var(--rule);
+	border-radius: 0;
+	background: none;
 	color: var(--fg);
 	text-decoration: none;
-	transition: background-color 0.2s ease;
 }
-a.media-card:hover,
-.media-card--link:hover {
-	background: color-mix(in oklch, var(--fg) 6%, var(--bg));
+a.media-card:hover h3,
+.media-card--link:hover h3 {
+	color: var(--em);
+}
+
+/* Page edge, shared with the home page and the header and footer. */
+.page {
+	padding-inline: var(--sina-gutter);
 }
 
 /* ============================================================
@@ -733,10 +732,10 @@ a.media-card:hover,
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35em;
-	font-family: var(--font-mono);
+	font-family: var(--font-sans);
 	font-size: var(--step--2);
 	font-weight: 500;
-	letter-spacing: 0.02em;
+
 	padding: 0.2em 0.6em;
 	border-radius: var(--radius-button);
 	/* Glass chip: a translucent pane that samples whatever is behind it rather
@@ -1099,21 +1098,37 @@ a.media-card:hover,
 	animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Theme toggle: spatial circular reveal via the View Transitions API.
-   Disable the default cross-fade so the JS-driven clip-path expansion (from the
-   toggle button) is the only animation; the new theme is painted on top and
-   wiped open over the old one. Scoped to .theme-vt so route navigation (which
-   shares the same `root` snapshot) keeps its own transition below. */
-html.theme-vt::view-transition-old(root),
-html.theme-vt::view-transition-new(root) {
+/* Theme switch: the new theme seeps outward from the click with a wide,
+   feathered edge and a light blur that settles, so the page changes like
+   light shifting rather than a wipe. Scoped to .theme-vt so route navigation
+   keeps its own transition below. --vt-x/--vt-y are set from the click. */
+@property --vt-r {
+	syntax: '<length-percentage>';
+	inherits: false;
+	initial-value: 0%;
+}
+html.theme-vt::view-transition-old(root) {
 	animation: none;
 	mix-blend-mode: normal;
 }
-html.theme-vt::view-transition-old(root) {
-	z-index: 1;
-}
 html.theme-vt::view-transition-new(root) {
-	z-index: 2;
+	mix-blend-mode: normal;
+	mask-image: radial-gradient(
+		circle at var(--vt-x, 50%) var(--vt-y, 50%),
+		#000 var(--vt-r),
+		transparent calc(var(--vt-r) + 35%)
+	);
+	animation: theme-seep 1.4s cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+@keyframes theme-seep {
+	from {
+		--vt-r: -35%;
+		filter: blur(3px);
+	}
+	to {
+		--vt-r: 140%;
+		filter: blur(0);
+	}
 }
 
 /* Page navigation: a subtle, professional fade + lift — the outgoing view
@@ -1190,12 +1205,18 @@ html.nav-vt::view-transition-group(*) {
 /* ============================================================
    Editorial rules
    ============================================================ */
-/* headings: PolySans Bulky; body Inter */
+/* display titles are regular weight, as on the home page; smaller headings 600 */
+h1 {
+	font-weight: 400;
+}
+h2,
+h3 {
+	font-weight: 600;
+}
 h1,
 h2,
 h3 {
 	font-family: var(--font-display);
-	font-weight: 700;
 	line-height: var(--leading-heading);
 	letter-spacing: var(--tracking-heading);
 }
