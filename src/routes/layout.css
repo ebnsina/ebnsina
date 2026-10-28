@@ -153,8 +153,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Runtime brand palette — single source of truth, theme-switches at :root.
-   Monochrome: black, white and neutral greys only. Primary is the ink itself;
-   semantic states are grey levels and rely on their icon/label, never on hue. */
+   Monochrome only. Primary is the ink itself;
+   semantic states are monochrome levels and rely on their icon/label, never on hue. */
 :root {
 	color-scheme: light;
 	--bg: #ffffff;
