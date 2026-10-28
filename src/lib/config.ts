@@ -34,7 +34,7 @@ export const SITE = {
 	social: {
 		github: 'https://github.com/ebnsina',
 		twitter: 'https://twitter.com/ebns1na',
-		linkedin: 'https://linkedin.com/in/ebnsina.dev'
+		linkedin: 'https://linkedin.com/in/ebn-sina'
 	},
 	// Header nav, kept to three. Everything else that is browsable — Series,
 	// Notes, Directory, Uses, Now, RSS — is reachable from the footer sitemap

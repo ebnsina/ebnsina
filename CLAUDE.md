@@ -23,6 +23,7 @@ pnpm test                    # unit (vitest) then e2e (playwright)
 pnpm test:unit               # vitest only
 pnpm vitest run <path>       # run a single test file
 node scripts/build-manifest.mjs   # rebuild notes manifest after adding/editing note content (see below)
+pnpm build && pnpm preview, then pnpm cv:pdf http://localhost:<port>/cv   # regenerate static/ebn-sina-cv.pdf after editing /cv
 ```
 
 **There are currently no tests and no `e2e/` directory**, so `pnpm test` fails on "no test files found" — that is the standing state, not a regression you introduced. The real gates are **`pnpm check`** (expect `0 ERRORS 0 WARNINGS`) and **`pnpm build`** (prerenders every route, so it catches mdsvex/content breakage). `pnpm lint` reports one pre-existing eslint error — `{@html}` in `Seo.svelte`.

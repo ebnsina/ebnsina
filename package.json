@@ -14,7 +14,8 @@
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:unit": "vitest",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"cv:pdf": "node scripts/build-cv-pdf.mjs"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
