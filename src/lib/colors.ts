@@ -26,9 +26,8 @@ export const catFor = (key: string) => CAT_COLORS[hashIndex(key, CAT_COLORS.leng
    Aurora card gradients
    ============================================================
    Each card gets its own aurora: two or three soft lights blooming over a deep
-   base sweep, varied per card so no two read the same. Colours are neutral
-   greys (each the same lightness as the hue it replaced), so the site stays
-   monochrome. Every theme
+   base sweep, varied per card so no two read the same. Colours are monochrome,
+   each the same lightness as the hue it replaced. Every theme
    keeps a dark base so white text stays legible. Each entry feeds only CSS
    custom properties consumed by `.glass-card`:
      l1/l2/l3 — the light bloom colours (bright → mid → deep)
