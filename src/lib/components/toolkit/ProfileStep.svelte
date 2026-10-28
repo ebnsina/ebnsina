@@ -94,7 +94,7 @@
 		border-radius: calc(var(--radius-button) - 0.2rem);
 		background: none;
 		color: var(--muted);
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -106,7 +106,7 @@
 
 	.lede {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.7;
 		color: var(--muted);
 		max-width: 62ch;

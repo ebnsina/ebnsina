@@ -147,7 +147,7 @@
 
 	.lede {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.7;
 		color: var(--muted);
 		max-width: 62ch;
@@ -166,7 +166,7 @@
 
 	.label {
 		display: block;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		margin-bottom: 0.35rem;
 	}
@@ -179,12 +179,12 @@
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 	}
 
 	.hint {
 		margin: 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 	}
 
@@ -196,14 +196,14 @@
 
 	.line {
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--step-0);
 		line-height: 1.6;
 		font-weight: 600;
 	}
 
 	.proof-line {
 		margin-top: 0.3rem;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		font-weight: 400;
 		color: var(--muted);
 	}

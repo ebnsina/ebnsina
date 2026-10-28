@@ -1,62 +1,74 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon, { type IconName } from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 
-	let dark = $state(false);
+	type Theme = 'light' | 'color' | 'dark';
+	const options: { value: Theme; label: string; icon: IconName }[] = [
+		{ value: 'light', label: 'Light', icon: 'sun' },
+		{ value: 'color', label: 'Colour', icon: 'palette' },
+		{ value: 'dark', label: 'Dark', icon: 'moon' }
+	];
+
+	let theme = $state<Theme>('light');
 
 	onMount(() => {
-		dark = document.documentElement.classList.contains('dark');
+		const root = document.documentElement;
+		theme = root.classList.contains('dark')
+			? 'dark'
+			: root.classList.contains('palette-color')
+				? 'color'
+				: 'light';
 	});
 
-	function apply() {
-		dark = !dark;
-		document.documentElement.classList.toggle('dark', dark);
-		localStorage.setItem('theme', dark ? 'dark' : 'light');
-		window.dispatchEvent(new Event('themechange'));
-	}
-
-	function toggle(event: MouseEvent) {
-		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		// Fall back to an instant switch where View Transitions aren't supported
-		// or the user prefers reduced motion.
-		if (reduce || !document.startViewTransition) {
-			apply();
-			return;
-		}
-
-		// Reveal the new theme as a circle growing from the click point.
-		const x = event.clientX;
-		const y = event.clientY;
-		const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-
-		// Tag the root so the clip-reveal CSS applies only to this transition,
-		// not page-navigation transitions (which share the same `root` snapshot).
+	function set(next: Theme) {
+		theme = next;
 		const root = document.documentElement;
-		root.classList.add('theme-vt');
-		const transition = document.startViewTransition(apply);
-
-		transition.ready.then(() => {
-			root.animate(
-				{
-					clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`]
-				},
-				{
-					duration: 480,
-					easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-					pseudoElement: '::view-transition-new(root)'
-				}
-			);
-		});
-
-		transition.finished.finally(() => root.classList.remove('theme-vt'));
+		root.classList.toggle('dark', next === 'dark');
+		root.classList.toggle('palette-color', next === 'color');
+		localStorage.setItem('theme', next);
+		window.dispatchEvent(new Event('themechange'));
 	}
 </script>
 
-<button
-	onclick={toggle}
-	aria-label="Toggle colour theme"
-	class="rounded-xl p-1.5 text-muted transition-colors hover:bg-[color-mix(in_oklch,var(--fg)_6%,transparent)] hover:text-fg"
->
-	<Icon name={dark ? 'sun' : 'moon'} size={18} />
-</button>
+<div class="switch" role="radiogroup" aria-label="Theme">
+	{#each options as o (o.value)}
+		<button
+			type="button"
+			role="radio"
+			aria-checked={theme === o.value}
+			aria-label={o.label}
+			title={o.label}
+			onclick={() => set(o.value)}
+		>
+			<Icon name={o.icon} size={15} />
+		</button>
+	{/each}
+</div>
+
+<style>
+	.switch {
+		display: inline-flex;
+		gap: 0.125rem;
+		padding: 0.125rem;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--radius-button);
+	}
+	button {
+		display: grid;
+		place-items: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		border-radius: var(--radius-chip);
+		color: var(--muted);
+		transition:
+			color 0.15s,
+			background-color 0.15s;
+	}
+	button:hover {
+		color: var(--fg);
+	}
+	button[aria-checked='true'] {
+		background: var(--fg);
+		color: var(--bg);
+	}
+</style>

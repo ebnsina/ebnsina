@@ -54,7 +54,9 @@
 <Seo title={kit.tagline} description={kit.description} />
 
 <div class="mx-auto max-w-4xl px-5 sm:px-8" lang="bn">
-	<nav class="pt-2 text-sm text-muted"><a href="/tools" class="hover:text-fg"><Icon name="arrowLeft" size={14} /> সব টুল</a></nav>
+	<nav class="pt-2 text-sm text-muted">
+		<a href="/tools" class="hover:text-fg"><Icon name="arrowLeft" size={14} /> সব টুল</a>
+	</nav>
 
 	<header class="head">
 		<h1 class="title-page">{kit.title}</h1>
@@ -107,7 +109,9 @@
 		</section>
 
 		<nav class="pager">
-			<button class="nav" disabled={active === 0} onclick={() => (active -= 1)}><Icon name="arrowLeft" size={14} /> আগের ধাপ</button>
+			<button class="nav" disabled={active === 0} onclick={() => (active -= 1)}
+				><Icon name="arrowLeft" size={14} /> আগের ধাপ</button
+			>
 			<button class="nav" disabled={active === kit.steps.length - 1} onclick={() => (active += 1)}
 				>পরের ধাপ <Icon name="arrowRight" size={14} /></button
 			>
@@ -140,11 +144,10 @@
 		margin: 1.5rem 0 1.75rem;
 	}
 
-
 	.desc {
 		margin: 0.5rem 0 0;
 		max-width: 68ch;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.75;
 		color: var(--muted);
 	}
@@ -175,7 +178,7 @@
 		border-radius: 999px;
 		background: color-mix(in oklab, var(--fg) 5%, transparent);
 		color: var(--muted);
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		cursor: pointer;
 	}
 
@@ -187,7 +190,7 @@
 
 	.num {
 		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-size: var(--step--3);
 		opacity: 0.7;
 	}
 
@@ -208,13 +211,13 @@
 
 	.panel-title {
 		margin: 0;
-		font-size: 1.125rem;
+		font-size: var(--step-1);
 		font-weight: 600;
 	}
 
 	.panel-blurb {
 		margin: 0.2rem 0 0;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.6;
 		color: var(--muted);
 		max-width: 60ch;
@@ -225,7 +228,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--accent);
 		text-decoration: none;
 		white-space: nowrap;
@@ -238,7 +241,7 @@
 
 	.loading {
 		color: var(--muted);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 	}
 
 	.pager {
@@ -250,7 +253,7 @@
 	.nav {
 		background: none;
 		border: 0;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 		cursor: pointer;
 	}
@@ -274,7 +277,7 @@
 	}
 
 	.data-label {
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 
@@ -288,7 +291,7 @@
 		background: none;
 		border: 0;
 		padding: 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 		cursor: pointer;
 	}
@@ -302,14 +305,14 @@
 	}
 
 	.file {
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		flex-basis: 100%;
 	}
 
 	.err {
 		flex-basis: 100%;
 		margin: 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		color: var(--danger);
 	}
 </style>

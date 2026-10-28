@@ -32,12 +32,13 @@
 		     below stays the standalone writing. -->
 		<div class="mb-10 flex flex-col gap-3">
 			{#each data.series as { meta, count } (meta.slug)}
-				<a
-					use:reveal
-					href={`/series/${meta.slug}`}
-					class="series-strip surface"
-				>
-					<span class="strip-eyebrow"><Icon name="bookText" size={14} /> Series · {partsLabel(count, meta.plannedParts)}</span>
+				<a use:reveal href={`/series/${meta.slug}`} class="series-strip surface">
+					<span class="strip-eyebrow"
+						><Icon name="bookText" size={14} /> Series · {partsLabel(
+							count,
+							meta.plannedParts
+						)}</span
+					>
 					<span class="strip-title" lang="bn">{meta.title}</span>
 					<span class="strip-tagline">{meta.tagline}</span>
 					<span class="strip-cta"><Icon name="arrowRight" size={16} /></span>
@@ -74,14 +75,13 @@
 		text-decoration: none;
 	}
 
-
 	.strip-eyebrow {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
 		grid-area: eyebrow;
 		font-family: var(--font-pixel);
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: var(--muted);
@@ -90,7 +90,7 @@
 	.strip-title {
 		grid-area: title;
 		font-family: var(--font-serif, var(--font-display));
-		font-size: 1.25rem;
+		font-size: var(--step-1);
 		font-weight: 600;
 		line-height: 1.25;
 		letter-spacing: -0.01em;
@@ -98,7 +98,7 @@
 
 	.strip-tagline {
 		grid-area: tagline;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.55;
 		color: var(--muted);
 	}

@@ -883,15 +883,15 @@
 <div class="pg-card">
 	<div class="pg-toolbar">
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="btn-send">Send Request</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="btn-purge">Purge Cache</button
 		>
 		<select
-			class="pg-select font-sans text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none cursor-pointer appearance-none"
+			class="pg-select font-sans text-sm px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none cursor-pointer appearance-none"
 			id="sel-region"
 		>
 			<option value="sg">Singapore PoP</option>
@@ -989,7 +989,7 @@
 			<div class="pg-group" id="ttl-group">
 				<label class="pg-label" for="max-age">max-age (browser, seconds)</label>
 				<input
-					class="pg-input w-full font-mono text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
+					class="pg-input w-full font-mono text-sm px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
 					type="number"
 					id="max-age"
 					value="3600"
@@ -999,7 +999,7 @@
 			<div class="pg-group" id="smaxage-group">
 				<label class="pg-label" for="s-maxage">s-maxage (CDN, seconds)</label>
 				<input
-					class="pg-input w-full font-mono text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
+					class="pg-input w-full font-mono text-sm px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
 					type="number"
 					id="s-maxage"
 					value=""
@@ -1033,26 +1033,26 @@
 <div class="pg-card">
 	<div class="pg-toolbar">
 		<input
-			class="pg-input w-44 font-mono text-[13px] px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
+			class="pg-input w-44 font-mono text-sm px-2.5 py-1.5 border border-rule rounded-xl bg-bg text-fg focus:outline-none focus:border-fg transition-colors"
 			id="sim-url"
 			type="text"
 			value="/assets/logo.png"
 			placeholder="/path/to/resource"
 		/>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="sim-sg">→ Singapore</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="sim-de">→ Frankfurt</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="sim-us">→ Virginia</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="sim-purge-all">Purge All</button
 		>
 	</div>
@@ -1089,31 +1089,31 @@
 <div class="pg-card">
 	<div class="pg-toolbar" style="flex-wrap:wrap;gap:6px;">
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="cdn-hit">Gcore Cache HIT</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="ram-hit">Shield RAM HIT</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="disk-hit">Shield Disk HIT</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="full-miss">Full MISS</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="waf-block">WAF Block</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="rate-limit">Rate Limited</button
 		>
 		<button
-			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn scen-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="origin-down">Origin Down</button
 		>
 		<span class="pg-badge" id="stack-badge">pick a scenario</span>
@@ -1173,27 +1173,27 @@
 <div class="pg-card">
 	<div class="pg-toolbar" style="flex-wrap:wrap;gap:6px;">
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="normal">Normal GET</button
 		>
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="cache-hit">Cache HIT</button
 		>
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="rate-limit">Rate Limited</button
 		>
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="waf">WAF Block</button
 		>
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="jwt-fail">JWT Fail</button
 		>
 		<button
-			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn phase-scen inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			data-scen="private">Private Path</button
 		>
 	</div>
@@ -1252,18 +1252,18 @@
 <div class="pg-card">
 	<div class="pg-toolbar">
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="tb-one">Send 1 Request</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="tb-burst">Burst ×10</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="tb-reset">Reset</button
 		>
-		<span style="margin-left:auto;font-size:13px;color:var(--muted)"
+		<span style="margin-left:auto;font-size: var(--step--1);color:var(--muted)"
 			>Refill: 3/sec &nbsp; Capacity: 20</span
 		>
 	</div>
@@ -1305,19 +1305,19 @@
 <div class="pg-card">
 	<div class="pg-toolbar">
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-fg text-bg border-0 cursor-pointer hover:opacity-75 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity duration-150"
 			id="csm-step">Step →</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="csm-auto">Auto</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="csm-purge">Purge</button
 		>
 		<button
-			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
+			class="pg-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-transparent text-fg border border-rule cursor-pointer hover:bg-rule disabled:opacity-35 disabled:cursor-not-allowed transition-colors duration-150"
 			id="csm-reset">Reset</button
 		>
 		<span class="pg-badge" id="csm-badge">EMPTY</span>

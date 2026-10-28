@@ -261,7 +261,7 @@
 		flex-wrap: wrap;
 		gap: 0.4rem 1rem;
 		margin-top: 0.6rem;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 	.ev-legend span {

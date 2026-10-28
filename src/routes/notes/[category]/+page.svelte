@@ -73,7 +73,7 @@
 		 already sequential, so the rail was drawing something the numbers said. -->
 	{#snippet stepNode(ch: (typeof data.chapters)[number], isDone: boolean, isNext: boolean)}
 		<span
-			class="w-6 shrink-0 font-mono text-[0.65rem] transition-colors"
+			class="w-6 shrink-0 font-mono text-xs transition-colors"
 			class:text-accent={isDone || isNext}
 			class:text-muted={!isDone && !isNext}
 		>
@@ -105,7 +105,7 @@
 							>
 							{#if isNext}
 								<span
-									class="shrink-0 rounded-lg bg-accent-solid px-2 py-0.5 font-pixel text-[0.55rem] uppercase tracking-wide text-on-accent"
+									class="shrink-0 rounded-lg bg-accent-solid px-2 py-0.5 font-pixel text-[length:var(--step--3)] uppercase tracking-wide text-on-accent"
 									>{doneCount === 0 ? t.startBadge : t.nextBadge}</span
 								>
 							{/if}

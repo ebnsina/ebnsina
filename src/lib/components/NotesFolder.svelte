@@ -231,19 +231,19 @@
 	.name {
 		font-family: var(--font-display);
 		font-weight: 700;
-		font-size: 1.02rem;
+		font-size: var(--step-0);
 		letter-spacing: -0.01em;
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 	}
 	.count {
 		font-family: var(--font-mono);
-		font-size: 0.66rem;
+		font-size: var(--step--2);
 		padding: 0.06rem 0.42rem;
 		border-radius: 0.4rem;
 		background: rgba(255, 255, 255, 0.24);
 	}
 	.preview {
-		font-size: 0.73rem;
+		font-size: var(--step--2);
 		color: rgba(255, 255, 255, 0.85);
 		white-space: nowrap;
 		overflow: hidden;
@@ -316,7 +316,7 @@
 	.item-name {
 		display: block;
 		font-weight: 600;
-		font-size: 0.92rem;
+		font-size: var(--step-0);
 		color: #181818;
 	}
 	.item:hover .item-name {
@@ -324,7 +324,7 @@
 	}
 	.item-desc {
 		display: block;
-		font-size: 0.76rem;
+		font-size: var(--step--2);
 		line-height: 1.35;
 		color: #616161;
 	}

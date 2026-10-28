@@ -20,9 +20,7 @@
 <ArticleLayout>
 	{#snippet header()}
 		<header class="mb-10 pb-8">
-			<div
-				class="article-meta mb-4 flex flex-wrap items-center gap-3 eyebrow"
-			>
+			<div class="article-meta mb-4 flex flex-wrap items-center gap-3 eyebrow">
 				<FormattedDate date={meta.date} />
 				{#if meta.minutesRead}
 					<span>·</span><span>{meta.minutesRead} min read</span>

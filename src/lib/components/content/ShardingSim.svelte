@@ -210,7 +210,7 @@
 		grid-template-columns: 2.25rem 1fr 3rem;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 	}
 	.sh-bar .num:last-child {
 		text-align: right;
@@ -242,7 +242,7 @@
 		margin: 0;
 		padding: 0;
 		border: 0;
-		font-size: 0.85rem;
+		font-size: var(--step--1);
 	}
 	.sh-strategy legend {
 		margin-bottom: 0.35rem;

@@ -190,14 +190,14 @@
 
 	.read-title {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 	}
 
 	.block-label {
 		display: block;
 		font-family: var(--font-mono);
-		font-size: 0.5625rem;
+		font-size: var(--step--3);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
 		color: var(--muted);
@@ -213,7 +213,7 @@
 	}
 
 	.block li {
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		line-height: 1.55;
 	}
 
@@ -235,7 +235,7 @@
 		border: 1px solid transparent;
 		background: color-mix(in oklab, var(--fg) 5%, transparent);
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 
@@ -250,7 +250,7 @@
 	.chip.is-toggle {
 		cursor: pointer;
 		font-family: var(--font-sans);
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--fg);
 	}
 
@@ -262,7 +262,7 @@
 
 	.label {
 		display: block;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		margin-bottom: 0.4rem;
 	}

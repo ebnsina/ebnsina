@@ -252,7 +252,7 @@
 		display: block;
 		margin-bottom: 0.6rem;
 		font-family: var(--font-pixel);
-		font-size: 10px;
+		font-size: var(--step--3);
 		font-weight: 600;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
@@ -266,7 +266,7 @@
 	.row {
 		display: block;
 		padding: 0.2rem 0;
-		font-size: 13.5px;
+		font-size: var(--step--1);
 		line-height: 1.45;
 		color: var(--muted);
 		text-decoration: none;
@@ -285,7 +285,7 @@
 	}
 	.row.sub {
 		padding-left: 0.75rem;
-		font-size: 13px;
+		font-size: var(--step--1);
 	}
 	.row:hover {
 		color: var(--fg);

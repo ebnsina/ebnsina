@@ -77,7 +77,7 @@
 	}
 	.label {
 		font-family: var(--font-pixel);
-		font-size: 0.6rem;
+		font-size: var(--step--3);
 		line-height: 1.2;
 		color: color-mix(in oklch, var(--fg) 55%, transparent);
 		overflow: hidden;
@@ -91,7 +91,7 @@
 	}
 	.meta {
 		font-family: var(--font-pixel);
-		font-size: 0.5rem;
+		font-size: var(--step--3);
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		color: color-mix(in oklch, var(--fg) 40%, transparent);

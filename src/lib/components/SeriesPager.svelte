@@ -83,7 +83,7 @@
 		align-items: center;
 		gap: 0.35rem;
 		font-family: var(--font-pixel);
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: var(--muted);
@@ -98,7 +98,7 @@
 	}
 
 	.pager-title {
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		font-weight: 600;
 		line-height: 1.4;
 	}
@@ -109,7 +109,7 @@
 		justify-content: center;
 		border-style: dashed;
 		color: var(--muted);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

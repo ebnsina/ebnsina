@@ -61,7 +61,7 @@
 		flex: none;
 		margin-top: 0.1rem;
 		font-family: var(--font-mono);
-		font-size: 0.5625rem;
+		font-size: var(--step--3);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
 		color: var(--cl);
@@ -74,14 +74,14 @@
 
 	.msg {
 		margin: 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		line-height: 1.5;
 		color: var(--fg);
 	}
 
 	.fix {
 		margin: 0.15rem 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		line-height: 1.5;
 		color: var(--muted);
 	}

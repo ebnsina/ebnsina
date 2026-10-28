@@ -274,13 +274,13 @@
 	}
 	.rf-term {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: var(--step--2);
 	}
 	.rf-leader .rf-term {
 		fill: var(--bg);
 	}
 	.rf-name {
-		font-size: 11px;
+		font-size: var(--step--2);
 	}
 	.rf-logs {
 		display: grid;
@@ -291,7 +291,7 @@
 		grid-template-columns: 9rem 1fr;
 		gap: 0.5rem;
 		align-items: center;
-		font-size: 0.8rem;
+		font-size: var(--step--1);
 	}
 	.rf-who small {
 		color: var(--muted);
@@ -308,7 +308,7 @@
 		place-items: center;
 		border: 1px solid var(--fg);
 		font-family: var(--font-mono);
-		font-size: 0.7rem;
+		font-size: var(--step--2);
 	}
 	.rf-cell.done {
 		background: var(--fg);

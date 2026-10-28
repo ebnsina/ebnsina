@@ -71,7 +71,7 @@
 	 and quietly. -->
 <section class="mb-14 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
 	<div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-		<p class="font-mono text-[0.72rem] text-muted">
+		<p class="font-mono text-xs text-muted">
 			<span class="text-fg">{progress.ready ? progress.count : 0}/{total}</span>
 			{t.chaptersWord}
 			<span class="mx-1 opacity-40">·</span>
@@ -126,7 +126,7 @@
 	</div>
 
 	{#if progress.ready && progress.rank.next}
-		<p class="font-mono text-[0.72rem] text-muted">
+		<p class="font-mono text-xs text-muted">
 			{t.xpToNext(progress.rank.toNext, nextRankName)}
 		</p>
 	{/if}
@@ -147,7 +147,7 @@
 		border-radius: var(--radius-button);
 		padding: 0.45rem 0.7rem;
 		text-align: left;
-		font-size: 0.85rem;
+		font-size: var(--step--1);
 		transition: background-color 0.12s;
 	}
 	.menu-item:hover {

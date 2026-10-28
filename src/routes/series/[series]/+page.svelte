@@ -58,8 +58,6 @@
 </div>
 
 <style>
-
-
 	.parts {
 		list-style: none;
 		/* Set here, not as a utility class: the scoped selector outranks `mt-*`,
@@ -90,7 +88,7 @@
 	.part-num {
 		flex: none;
 		font-family: var(--font-mono);
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-variant-numeric: tabular-nums;
 		line-height: 1.6;
 		color: color-mix(in oklch, var(--fg) 45%, transparent);
@@ -104,7 +102,7 @@
 	}
 
 	.part-title {
-		font-size: 1.0625rem;
+		font-size: var(--step-0);
 		font-weight: 600;
 		line-height: 1.35;
 		transition: color 0.15s ease;
@@ -115,7 +113,7 @@
 	}
 
 	.part-desc {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.6;
 		color: var(--muted);
 	}
@@ -125,7 +123,7 @@
 		flex-wrap: wrap;
 		gap: 0.4rem;
 		font-family: var(--font-pixel);
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: color-mix(in oklch, var(--fg) 45%, transparent);

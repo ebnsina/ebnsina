@@ -62,7 +62,7 @@
 
 	.eyebrow {
 		font-family: var(--font-pixel);
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: var(--muted);
@@ -70,13 +70,13 @@
 
 	.title {
 		font-family: var(--font-serif, var(--font-display));
-		font-size: 1.375rem;
+		font-size: var(--step-2);
 		font-weight: 600;
 		line-height: 1.25;
 	}
 
 	.tagline {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.55;
 		color: var(--muted);
 		max-width: 60ch;
@@ -98,7 +98,7 @@
 
 	.note {
 		margin: 1.5rem 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 	}
 
