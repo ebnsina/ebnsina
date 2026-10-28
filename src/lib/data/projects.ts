@@ -19,8 +19,6 @@ export type CaseStudy = {
 	stackWhy?: StackReason[];
 	/** Notable shipped capabilities. */
 	features: string[];
-	/** What's designed but not built yet. */
-	planned?: string[];
 	/** Current state, e.g. "In development", "Released". */
 	status?: string;
 };
@@ -120,15 +118,12 @@ export const projects: Project[] = [
 				'Signed, expiring playback with encryption, watermark labels and device caps',
 				'Captions, chapters, trims and file replacement that keep the same video id',
 				'A branded embeddable player, webhooks and nested folders',
-				'Per-video viewer analytics and per-minute billing'
-			],
-			planned: [
+				'Per-video viewer analytics and per-minute billing',
 				'Commercial DRM: Widevine, PlayReady and FairPlay',
-				'Viewer statistics: plays and watch time',
 				'Importers from Vimeo, Bunny and storage buckets',
 				'H.265, DASH and 4K'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -189,14 +184,14 @@ export const projects: Project[] = [
 				}
 			],
 			features: [
-				'Stream keys per channel over RTMP, SRT or browser WHIP',
-				'Adaptive HLS playback with short segments',
-				'Automatic recording into the video library',
-				'Crash-tolerant clean-up of abandoned broadcasts',
-				'Usage-based plans enforced by the account layer'
+				'Live servers set up from a single command, and moved to a new machine with a reinstall command',
+				'Streams pushed over RTMP, SRT or browser WHIP, or pulled from another source',
+				'Low-latency or standard adaptive HLS playback',
+				'Rewind while live, quality templates, backup sources and ad breaks',
+				'Recordings saved straight into the video library',
+				'Health and status for each server and stream, plus a player check'
 			],
-			planned: ['A first run on a production server', 'Saving recordings into the video library'],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -253,19 +248,16 @@ export const projects: Project[] = [
 				}
 			],
 			features: [
-				'Cookieless, address-free unique visitor counting',
-				'Pages, referrers, countries and devices with exact counts',
-				'Custom events and period-over-period comparisons',
-				'Shareable dashboards by link',
-				'Per-site retention and data export'
-			],
-			planned: [
-				'Online payments and Bangladeshi-taka pricing',
-				'A realtime view, landing and exit pages, and scroll depth',
-				'Chart notes, read-only share links and personal API keys',
+				'Cookieless tracking script of about 680 bytes, with bot filtering and de-duplication',
+				'Visitors, sources, pages, places, devices and custom events, compared with the previous period',
+				'Goals, funnels, revenue and visitor paths',
+				'Plain-language insights, why-it-changed breakdowns and anomaly alerts by email or webhook',
+				'A realtime view, landing and exit pages, scroll depth and chart notes',
+				'Organisations with roles, usage metering, plans and online payments in taka',
+				'Read-only share links, personal API keys, and full export and import',
 				'Analytics for video and mobile apps'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -324,7 +316,7 @@ export const projects: Project[] = [
 				'UTM parameters, tags and time-zone-aware expiry',
 				'Per-link click analytics with bot filtering'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -377,9 +369,9 @@ export const projects: Project[] = [
 				'WebP, AVIF, JPEG and PNG output with browser negotiation',
 				'HMAC-signed URLs with key rotation',
 				'Year-long caching with atomic disk writes',
-				'Usage metering per organisation'
+				'Usage metering per organisation',
+				'Image processing on its own machines once traffic justifies it'
 			],
-			planned: ['Image processing on its own machines once traffic justifies it'],
 			status: 'API complete · console in progress'
 		}
 	},
@@ -444,7 +436,7 @@ export const projects: Project[] = [
 				'Custom storefront domains and printable receipts',
 				'Staff roles kept separate from money settings'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -570,7 +562,7 @@ export const projects: Project[] = [
 				'Organisations, roles, API keys and per-device sessions',
 				'Real-time notifications and an audit log'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -864,16 +856,14 @@ export const projects: Project[] = [
 				'Backups to any S3-compatible storage, environments with shared variables, scheduled jobs and a browser terminal',
 				'Custom and wildcard domains, password protection and IP allowlists',
 				'Uptime checks, a public status page, alerts to Slack, Discord and Telegram, and cost per app',
-				'An AI assistant that explains failed deploys, an MCP server for coding agents, and a CLI'
-			],
-			planned: [
+				'An AI assistant that explains failed deploys, an MCP server for coding agents, and a CLI',
 				'Preview deploys for every pull request, including a copy of the database',
 				'Static sites',
 				'A GitHub App for one-click repository access',
 				'Online payments for the hosted edition',
 				'Rollback and backups for Compose apps'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -897,9 +887,7 @@ export const projects: Project[] = [
 				'A firewall for attacks, bots, risky addresses, country blocking and rate limits, each verified on the edge',
 				'Signed URLs, CORS and bandwidth caps with alerts',
 				'Visitor analytics, request logs and log export',
-				'Usage metered from edge logs'
-			],
-			planned: [
+				'Usage metered from edge logs',
 				'A second edge server, with automatic failover',
 				'Multi-CDN: local traffic on the own edge, the rest of the world on a partner network',
 				'Invoicing from the metered usage'
@@ -930,9 +918,7 @@ export const projects: Project[] = [
 				'Signed webhooks with retries and a dead-letter queue',
 				'A merchant app: stores, products, FAQs, customers with CSV import, call logs with recordings and credits',
 				'An operator dashboard with step-by-step traces of every order and why calls failed',
-				'Integration docs written for AI coding assistants'
-			],
-			planned: [
+				'Integration docs written for AI coding assistants',
 				'Conversion analytics and A/B testing of call scripts',
 				'Shopify and WooCommerce plugins',
 				'Agents for failed payments and inbound calls',
@@ -964,15 +950,13 @@ export const projects: Project[] = [
 				'Portals for students and guardians with one-time-code sign-in and SMS invitations',
 				'A public website for the institution, built from page sections',
 				'An AI helper for writing lessons and quiz questions, with any model provider',
-				'A one-command installer with automatic HTTPS and backups'
-			],
-			planned: [
+				'A one-command installer with automatic HTTPS and backups',
 				'A mobile app',
 				'Bangla and Arabic (right-to-left) interfaces',
 				'SCORM and H5P lessons',
 				'Video transcoding'
 			],
-			status: 'Built · pre-launch'
+			status: 'Pre-launch'
 		}
 	},
 	{
@@ -995,9 +979,7 @@ export const projects: Project[] = [
 				'Agents from templates (order confirmation, cart recovery or blank), published as frozen versions',
 				'A streaming chat engine with tool use, and a live test chat beside the agent settings',
 				'Bring your own model keys: Anthropic, Gemini or any OpenAI-compatible service, stored encrypted',
-				'Conversation transcripts and 30-day numbers'
-			],
-			planned: [
+				'Conversation transcripts and 30-day numbers',
 				'Shareable chat links and a website widget',
 				'An events API, signed webhooks and a staff inbox for hand-off',
 				'A knowledge base with Bangla search, and test runs before publishing',
@@ -1027,9 +1009,10 @@ export const projects: Project[] = [
 				'Staff PIN sign-in with limited access, an action trail and an end-of-day cash report',
 				'VAT settings with Mushak-6.3 invoices and receipt-printer output',
 				'An owner dashboard for menu, staff, branding and revenue',
-				'A customer phone app with cart, checkout, SMS-code sign-in and order history'
+				'A customer phone app with cart, checkout, SMS-code sign-in and order history',
+				'Restaurants with several branches',
+				'A production SMS provider'
 			],
-			planned: ['Restaurants with several branches', 'A production SMS provider'],
 			status: 'Working MVP'
 		}
 	},
@@ -1053,9 +1036,9 @@ export const projects: Project[] = [
 				'Key delivery that works with any standard player, checking a signed, expiring pass',
 				'An admin dashboard with daily key-request numbers',
 				'Platform management with API-key and signing-secret rotation',
-				'Search across all keys and an audit log of every change'
+				'Search across all keys and an audit log of every change',
+				'Licences for Widevine, PlayReady and FairPlay'
 			],
-			planned: ['Licences for Widevine, PlayReady and FairPlay'],
 			status: 'In production for its first platform'
 		}
 	},
@@ -1079,9 +1062,7 @@ export const projects: Project[] = [
 				'A shop on its own address with three themes, branding and policy pages',
 				'Cart and cash-on-delivery checkout with delivery charges, free-delivery limits and discount codes',
 				'Orders with a timeline, status emails, invoices, packing slips and order tracking',
-				'A sales dashboard with best sellers, low stock and customers'
-			],
-			planned: [
+				'A sales dashboard with best sellers, low stock and customers',
 				'bKash, Nagad, SSLCommerz and aamarPay',
 				'Courier and SMS apps: Steadfast, Pathao, RedX, Paperfly',
 				'An app system for outside developers, with signed webhooks',
@@ -1137,9 +1118,10 @@ export const projects: Project[] = [
 				'Orders, a sales dashboard, customers, team roles and API keys',
 				'Steadfast courier booking and tracking, with a delivery-history check before cash on delivery',
 				'SSLCommerz payments (bKash, Nagad, cards), verified with the gateway',
-				'Order status SMS'
+				'Order status SMS',
+				'Pathao and RedX couriers',
+				'Mobile apps on the same API'
 			],
-			planned: ['Pathao and RedX couriers', 'Mobile apps on the same API'],
 			status: 'Working MVP'
 		}
 	},
@@ -1163,9 +1145,12 @@ export const projects: Project[] = [
 				'Colour profiles converted to sRGB',
 				'On-the-fly resizing from signed, expiring URLs',
 				'Smart crop, auto-rotation, retina sizes and blurred placeholders',
-				'Batch processing, cache pre-warming, API keys, usage tracking and rate limits'
+				'Batch processing, cache pre-warming, API keys, usage tracking and rate limits',
+				'Wide-colour (P3) output',
+				'Animated images',
+				'Load testing',
+				'AI alt text'
 			],
-			planned: ['Wide-colour (P3) output', 'Animated images', 'Load testing', 'AI alt text'],
 			status: 'Working MVP'
 		}
 	},
@@ -1189,9 +1174,7 @@ export const projects: Project[] = [
 				'68 components, 7 widgets and 6 full blocks: AI chat, calendar, dashboard, file explorer, kanban and media generator',
 				'A CLI to add one component or all of them',
 				'Keyboard and screen-reader support, layouts down to 320px, right-to-left and light and dark themes',
-				'Automated accessibility checks on every docs page'
-			],
-			planned: [
+				'Automated accessibility checks on every docs page',
 				'Paid blocks and full app templates (SaaS, CMS, blog, shop, AI agents) for a one-time price'
 			],
 			status: 'Released · MIT'
@@ -1217,9 +1200,11 @@ export const projects: Project[] = [
 				'Seat maps for bus decks, multi-coach trains and aircraft cabins, computed from layouts',
 				'Checkout with a 10-minute seat hold, simulated payment and a printable ticket',
 				'Booking lookup by reference and email',
-				'Built so a new country can be added without database changes'
+				'Built so a new country can be added without database changes',
+				'A real booking backend',
+				'More countries',
+				'Scannable ticket barcodes'
 			],
-			planned: ['A real booking backend', 'More countries', 'Scannable ticket barcodes'],
 			status: 'Demo'
 		}
 	}
