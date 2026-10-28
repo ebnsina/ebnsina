@@ -5,15 +5,15 @@
 
 <Seo title={page.status === 404 ? 'Not found' : 'Error'} noindex />
 
-<div class="mx-auto max-w-3xl px-5 py-24 sm:px-8 text-center">
-	<p class="mb-4 font-mono text-sm text-muted">{page.status}</p>
+<div class="mx-auto max-w-5xl px-5 py-24 sm:px-8">
+	<p class="mb-4 eyebrow">{page.status}</p>
 	<h1 class="mb-4 title-page">
 		{page.status === 404 ? 'Not here.' : 'Something broke.'}
 	</h1>
 	<p class="mb-8 text-muted">
 		{page.status === 404
 			? "That page doesn't exist, or it moved."
-			: (page.error?.message ?? 'An unexpected error occurred.')}
+			: 'Something went wrong on our side. Try again in a moment, or head back home.'}
 	</p>
 	<a href="/" class="btn btn-solid">Back home</a>
 </div>

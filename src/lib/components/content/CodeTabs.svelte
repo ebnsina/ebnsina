@@ -49,7 +49,7 @@
 		align-items: center;
 		gap: 6px;
 		padding: 0.5rem 1rem;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-family: var(--font-mono);
 		color: var(--muted);
 		background: none;

@@ -90,7 +90,7 @@
 					</div>
 					<h3 class="mt-2 font-display text-lg font-semibold tracking-tight">{lvl.title}</h3>
 					<p class="mt-2 text-sm leading-relaxed text-muted">{lvl.blurb}</p>
-					<p class="mt-3 font-mono text-[0.68rem] text-muted">
+					<p class="mt-3 font-mono text-xs text-muted">
 						{t.tracksCount(lvl.tracks.length)} · {fmtH(lvl.minutes)}
 						{#if done > 0}· {done}/{lvl.totalCh}{/if}
 					</p>
@@ -115,7 +115,7 @@
 										<Icon name="check" size={12} weight="bold" color="var(--accent)" />
 									{/if}
 								</span>
-								<span class="shrink-0 font-mono text-[0.68rem] text-muted">
+								<span class="shrink-0 font-mono text-xs text-muted">
 									{tk.slugs.length} · {fmtH(tk.minutes)}{#if td > 0 && !tdone}
 										· {td}{/if}
 								</span>

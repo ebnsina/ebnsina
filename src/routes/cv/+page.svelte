@@ -91,7 +91,7 @@
 		<h1>{SITE.name}</h1>
 		<p class="role">Senior Software Engineer · Distributed Systems</p>
 		<p class="contact">
-			{SITE.email} | {SITE.phone} | Dhaka, Bangladesh (UTC+6) | Open to remote or relocation<br />
+			{SITE.email} | {SITE.phone} | Dhaka, Bangladesh (UTC+6)<br />
 			{bare(SITE.url)} | {bare(SITE.social.github)} | {bare(SITE.social.linkedin)}
 		</p>
 		<a class="btn btn-solid print-hide" href={PDF} download>Download PDF</a>
@@ -156,16 +156,16 @@
 		line-height: 1.55;
 	}
 	h1 {
-		font-size: 2rem;
+		font-size: var(--step-4);
 		font-weight: 700;
 	}
 	.role {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 	}
 	.contact,
 	.meta {
 		color: var(--muted);
-		font-size: 0.9rem;
+		font-size: var(--step--1);
 	}
 	header .btn {
 		margin-top: 1rem;
@@ -175,7 +175,7 @@
 		padding-bottom: 0.25rem;
 		border-bottom: 1px solid var(--rule);
 		border-radius: 0;
-		font-size: 1rem;
+		font-size: var(--step-0);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
@@ -196,7 +196,6 @@
 	@media print {
 		:global(header.site-header),
 		:global(footer),
-		:global(section[aria-labelledby='contact-heading']),
 		:global(.print-hide),
 		:global(a[href='#main']) {
 			display: none !important;

@@ -14,14 +14,8 @@
 	<PageBanner
 		eyebrow="Work"
 		title="Projects"
-		description="Products I've designed and built, and the engineering behind each one."
+		description="Products I've built end to end, most complex first, and the engineering behind each one."
 	/>
-
-	<p class="mx-auto mb-10 max-w-2xl text-center text-[1.05rem] leading-[1.75] text-muted">
-		Products I’ve built end to end, ordered from the most complex down: deployment, video, CDN, live
-		streaming, AI calling, education, analytics, commerce and the tools around them. The theme is
-		the same throughout: take something operationally painful and make it boring and reliable.
-	</p>
 
 	<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 		{#each sorted as project (project.title)}

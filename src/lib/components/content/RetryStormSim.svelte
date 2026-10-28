@@ -322,7 +322,7 @@
 	}
 	.rs-legend {
 		margin: 0.4rem 0 0;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 	.rs-check {

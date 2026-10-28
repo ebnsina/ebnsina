@@ -89,14 +89,14 @@
 		max-width: 280px;
 	}
 	.chapter-nav-label {
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 	.chapter-nav-title {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		color: var(--fg);
 		white-space: nowrap;

@@ -127,7 +127,7 @@
 
 	.lede {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.7;
 		color: var(--muted);
 		max-width: 62ch;
@@ -139,7 +139,7 @@
 		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		color: var(--muted);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 	}
 
 	.empty p {
@@ -181,7 +181,7 @@
 	}
 
 	.row-title {
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		font-weight: 600;
 	}
 
@@ -189,7 +189,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 
@@ -240,7 +240,7 @@
 		background: none;
 		border: 0;
 		padding: 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		cursor: pointer;
 		color: var(--muted);
 	}
@@ -259,7 +259,7 @@
 		border-radius: var(--radius-button);
 		background: color-mix(in oklab, var(--fg) 7%, transparent);
 		color: var(--fg);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		cursor: pointer;
 	}

@@ -21,9 +21,7 @@
 <ArticleLayout lang="bn">
 	{#snippet header()}
 		<header class="mb-10 pb-8">
-			<div
-				class="article-meta mb-4 flex flex-wrap items-center gap-3 eyebrow"
-			>
+			<div class="article-meta mb-4 flex flex-wrap items-center gap-3 eyebrow">
 				<a href={`/series/${series.series}`} class="transition-colors hover:text-fg" lang="bn"
 					><Icon name="arrowLeft" size={14} /> {series.title}</a
 				>
@@ -35,9 +33,7 @@
 					<span class="text-rule">·</span><span>{meta.minutesRead} min read</span>
 				{/if}
 			</div>
-			<h1
-				class="mb-4 title-page"
-			>
+			<h1 class="mb-4 title-page">
 				{meta.title}
 			</h1>
 			<p class="text-base leading-relaxed text-muted sm:text-lg">{meta.description}</p>
@@ -60,7 +56,9 @@
 		     via "All parts" below — repeating it under every article was noise. -->
 		<SeriesPager {series} />
 		<footer class="mt-16 flex justify-between pt-8 text-sm text-muted">
-			<a href={`/series/${series.series}`} class="hover:text-fg"><Icon name="arrowLeft" size={14} /> All parts</a>
+			<a href={`/series/${series.series}`} class="hover:text-fg"
+				><Icon name="arrowLeft" size={14} /> All parts</a
+			>
 			<a href="/rss.xml" class="hover:text-fg">Subscribe via RSS</a>
 		</footer>
 	{/snippet}

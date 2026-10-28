@@ -238,7 +238,7 @@
 									{kindLabel(hit.kind)}
 								</span>
 								{#if hit.context}
-									<span class="mt-0.5 block max-w-[9rem] truncate text-[0.7rem] text-muted"
+									<span class="mt-0.5 block max-w-[9rem] truncate text-xs text-muted"
 										>{hit.context}</span
 									>
 								{/if}
@@ -257,7 +257,7 @@
 			{/if}
 
 			<div
-				class="flex items-center justify-between gap-3 border-t border-rule px-4 py-2 font-mono text-[0.62rem] text-muted"
+				class="flex items-center justify-between gap-3 border-t border-rule px-4 py-2 font-mono text-[length:var(--step--3)] text-muted"
 			>
 				<span><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>↵</kbd> open · <kbd>esc</kbd> close</span>
 				{#if results.length}<span>{results.length} results</span>{/if}
@@ -272,7 +272,7 @@
 		border-radius: 0.35rem;
 		padding: 0.05rem 0.3rem;
 		font-family: var(--font-mono);
-		font-size: 0.62rem;
+		font-size: var(--step--3);
 		line-height: 1.4;
 	}
 

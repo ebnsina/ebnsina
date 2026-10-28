@@ -99,14 +99,14 @@
 	}
 
 	.label {
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		color: var(--fg);
 	}
 
 	.counter {
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
+		font-size: var(--step--2);
 		font-variant-numeric: tabular-nums;
 		color: var(--muted);
 	}
@@ -131,7 +131,7 @@
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.55;
 		resize: vertical;
 		transition: border-color 0.15s ease;
@@ -152,7 +152,7 @@
 
 	.hint {
 		margin: 0;
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		line-height: 1.5;
 		color: var(--muted);
 	}

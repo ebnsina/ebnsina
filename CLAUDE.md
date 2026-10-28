@@ -159,20 +159,26 @@ Projects live in `src/lib/data/projects.ts` (`projects: Project[]`). A project w
 
 **Write case studies as engineering narrative, not code walkthroughs.** Each `challenges`/`implementation` entry should read problem → approach → tradeoff: open with _why it was hard_, then the conceptual approach. Do **not** name code-level identifiers — no function/method/API names, file names, or literal call signatures (e.g. `buildAdapter()`, `navigator.sendBeacon`, `loadOrBuild`, `on_publish`). Keep the genuinely meaningful architecture/tech terms (columnar OLAP store, HMAC-signed URLs, ICC→sRGB, fragmented MP4, adaptive-bitrate ladder). `stackWhy` explains _why this tech fits the problem_, not which API was called. This is what the reader — a hiring manager or peer, not someone reading the source — actually cares about.
 
-## Heroes
+## Home page and page headers
 
-There is no 3D (three.js/Threlte were removed). The home hero and `PageBanner` are centered and full-bleed, pulled up under the sticky header so it blends into them, with a shared `.hero-bg` backdrop (two soft lights, no lines or texture) from `layout.css`. `PageBanner` must be the first element inside `<main>`.
+The home page (`src/routes/+page.svelte`, components in `src/lib/components/home/`) is a port of `~/Sites/sina`: dawn landscape hero, dark work band, statement, and a dusk-to-night contact footer, animated with GSAP (`src/lib/motion.ts`; every timeline runs inside `motion()`, which honours reduced motion). On `/` the layout hides the site `Header`/`Footer`; the hero carries its own bar and the contact section is the footer. Elements GSAP reveals carry `.pre`, hidden only under `.js` so the page reads without JavaScript. Scene colours come from tokens (`--band`, `--sky-*`, `--r*-a/b`, `--dusk-*`, `--night-*`), defined for monochrome light, dark and the colour palette in `layout.css`.
+
+Every other page opens with `PageBanner` (left-aligned on the page column, eyebrow + `--step-5` title + lede), under the slim non-sticky `Header`.
 
 ## Design system & theming
 
 `src/routes/layout.css` is the single source of truth. Runtime brand vars (`--bg/--fg/--muted/--rule/--accent/--accent-soft/--accent-solid/--brand-accent/--card-base`) are defined on `:root` / `:root.dark` and exposed as Tailwind v4 tokens via `@theme inline` (so `text-accent`, `bg-bg` are theme-aware). **Palette: monochrome**, in light and dark. `--primary` is the page ink (`#0a0a0a` light / `#ededed` dark) and `--secondary` a mid grey; the semantic `--success`, `--warning`, `--danger`, `--info` are monochrome levels too, so state is told apart by label, weight or icon, never by hue. Neutrals: `--muted`, `--faint`, `--rule`, `--rule-strong`, `--surface`. All are Tailwind colours (`text-primary`, `bg-danger`, …). `--accent` and `--accent-solid` alias `--primary`; `--on-accent` is the ink on a solid primary fill. Never add a hue; the only colour left on the site is Shiki code highlighting. Reskinning the site means changing those values and nothing else.
 
-**Fonts — Inter for body, PolySans for headings, IBM Plex Mono, plus the Bangla face:**
+**Fonts — Inter for body, PolySans for headings, Geist Mono, plus the Bangla face:**
 
 - **Inter** (`@fontsource/inter`, 300–700, imported at the top of `layout.css`) fills `--font-sans`: body and UI text.
 - **PolySans** (static woff2 in `static/fonts/polysans/`, `@font-face` in `layout.css`; Slim 300 / Neutral 400 / Median 500–600 / Bulky 700) fills `--font-display` and `--font-serif`: every heading (h1–h3 are forced to 700 = Bulky).
-- **IBM Plex Mono** (`@fontsource/ibm-plex-mono`, 400 + 700 only) fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
+- **Geist Mono** (`@fontsource/geist-mono`, 400 + 700 only) fills `--font-mono` _and_ `--font-pixel`. The "pixel" role is a leftover name for the numeric/stat type in the notes UI (`font-pixel`); it is plain mono now, not an arcade face.
 - **Hind Siliguri** is layered in under `[lang='bn']`, which overrides the text tokens on that subtree and bumps `line-height` to 1.75. Code is explicitly excluded so fenced blocks stay Latin monospace. The notes pages set `lang="bn"` on their wrapper (and `ArticleLayout` takes a `lang` prop) — that attribute is what activates the Bangla face, so keep it on any new notes surface.
+
+**Theme switch:** Light, Colour and Dark (`ThemeToggle`, stored in `localStorage.theme`, applied before paint in `app.html` as `.dark` or `.palette-color`). Colour is sina's warm palette (paper, rust accent, deep green band) and is light only.
+
+**Type scale:** one minor third (×1.2) in `layout.css` — `--step--3` … `--step-6`, with `--leading-*` and `--tracking-*` per role. Tailwind's `text-xs` … `text-7xl` are aliased to the steps. Never hand-write a font size; pick a step. The home page keeps sina's own display sizes.
 
 Colour mixes use **oklab**, never oklch, so the palette stays monochrome.
 

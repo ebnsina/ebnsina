@@ -63,7 +63,7 @@
 			startOnLoad: false,
 			securityLevel: 'strict',
 			theme: 'base',
-			fontFamily: "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace",
+			fontFamily: "'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace",
 			themeVariables: {
 				darkMode: isDark,
 				background: 'transparent',
@@ -166,7 +166,7 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		font-size: 0.6875rem;
+		font-size: var(--step--2);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
@@ -195,7 +195,7 @@
 	}
 	.mermaid-fallback {
 		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 		white-space: pre-wrap;
 		margin: 0;

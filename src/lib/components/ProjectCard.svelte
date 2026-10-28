@@ -28,7 +28,7 @@
 		>
 			{project.title}
 		</h3>
-		<p class="mt-2.5 line-clamp-2 text-[0.95rem] leading-relaxed text-muted">
+		<p class="mt-2.5 line-clamp-2 text-base leading-relaxed text-muted">
 			{project.description}
 		</p>
 		{#if project.caseStudy}

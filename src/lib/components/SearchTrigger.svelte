@@ -34,7 +34,7 @@
 		/* Sized off the theme toggle beside it: same icon, same padding, so the
 		   two read as one pair of controls rather than a pill next to a button. */
 		padding: 0.375rem;
-		font-size: 0.8rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 		transition:
 			color 0.15s,
@@ -49,7 +49,7 @@
 		border-radius: 0.35rem;
 		padding: 0.05rem 0.3rem;
 		font-family: var(--font-mono);
-		font-size: 0.62rem;
+		font-size: var(--step--3);
 		line-height: 1.5;
 	}
 </style>

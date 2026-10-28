@@ -57,12 +57,12 @@
 	}
 	.callout-title {
 		font-weight: 600;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		margin-bottom: 0.25rem;
 		color: var(--cl);
 	}
 	.callout-body {
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		color: var(--fg);
 		line-height: 1.7;
 	}
@@ -92,7 +92,7 @@
 	}
 	.callout-body :global(code) {
 		font-family: var(--font-mono);
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		background: color-mix(in oklab, var(--cl) 16%, transparent);
 		padding: 0.1em 0.35em;
 		border-radius: 4px;

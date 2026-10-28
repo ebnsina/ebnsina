@@ -128,7 +128,7 @@
 
 	.lede {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.7;
 		color: var(--muted);
 		max-width: 62ch;
@@ -152,19 +152,19 @@
 
 	.stat-n {
 		font-family: var(--font-pixel, var(--font-mono));
-		font-size: 1.25rem;
+		font-size: var(--step-1);
 		font-variant-numeric: tabular-nums;
 		line-height: 1;
 	}
 
 	.stat-label {
-		font-size: 0.6875rem;
+		font-size: var(--step--2);
 		color: var(--muted);
 	}
 
 	.stat-share {
 		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-size: var(--step--3);
 		color: color-mix(in oklch, var(--fg) 45%, transparent);
 	}
 
@@ -172,7 +172,7 @@
 		margin: 0;
 		padding: 0.6rem 0.8rem;
 		border-radius: var(--radius-button);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.6;
 		background: color-mix(in oklab, var(--cl) 10%, var(--bg));
 		color: var(--fg);
@@ -196,14 +196,14 @@
 	.table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 	}
 
 	.table th {
 		text-align: left;
 		font-weight: 600;
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: var(--step--2);
 		padding: 0.3rem 0.4rem;
 	}
 
@@ -214,7 +214,7 @@
 
 	.week {
 		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		white-space: nowrap;
 	}
 
@@ -247,7 +247,7 @@
 		background: color-mix(in oklab, var(--fg) 4%, transparent);
 		border-radius: var(--radius-card);
 		color: var(--muted);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 	}
 
 	.empty p {
@@ -261,7 +261,7 @@
 		border-radius: var(--radius-button);
 		background: color-mix(in oklab, var(--fg) 7%, transparent);
 		color: var(--fg);
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		cursor: pointer;
 	}

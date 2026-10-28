@@ -87,7 +87,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		font-family: var(--font-pixel);
-		font-size: 0.68rem;
+		font-size: var(--step--2);
 		text-transform: uppercase;
 		letter-spacing: 0.16em;
 		color: var(--muted);
@@ -96,7 +96,7 @@
 	.panel-heading {
 		margin: 0;
 		font-family: var(--font-serif, var(--font-display));
-		font-size: 1.5rem;
+		font-size: var(--step-2);
 		font-weight: 600;
 		line-height: 1.2;
 		letter-spacing: -0.01em;
@@ -104,7 +104,7 @@
 
 	.panel-tagline {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--step--1);
 		line-height: 1.55;
 		color: var(--muted);
 	}
@@ -127,7 +127,7 @@
 		border-radius: var(--radius-button);
 		text-decoration: none;
 		color: var(--fg);
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.5;
 		transition: background-color 0.15s ease;
 	}
@@ -139,7 +139,7 @@
 	.panel-num {
 		flex: none;
 		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		font-variant-numeric: tabular-nums;
 		color: color-mix(in oklch, var(--fg) 55%, transparent);
 	}
@@ -150,7 +150,7 @@
 		gap: 0.4rem;
 		margin-top: 0.85rem;
 		padding-left: 0.5rem;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		color: var(--accent);
 		text-decoration: none;

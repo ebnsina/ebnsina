@@ -91,13 +91,13 @@
 
 	.title {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		font-weight: 600;
 	}
 
 	.sub {
 		margin: 0.2rem 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		line-height: 1.55;
 		color: var(--muted);
 		max-width: 52ch;
@@ -106,7 +106,7 @@
 	.tokens {
 		flex: none;
 		font-family: var(--font-mono);
-		font-size: 0.625rem;
+		font-size: var(--step--3);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: var(--muted);
@@ -125,7 +125,7 @@
 		padding: 0.45rem 0.85rem;
 		border-radius: var(--radius-button);
 		border: 1px solid transparent;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -146,7 +146,7 @@
 
 	.blocked {
 		margin: 0.6rem 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		color: var(--muted);
 	}
 
@@ -158,7 +158,7 @@
 		border-radius: var(--radius-card);
 		background: color-mix(in oklch, var(--fg) 4%, var(--bg));
 		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: var(--step--2);
 		line-height: 1.6;
 		white-space: pre-wrap;
 		color: var(--fg);

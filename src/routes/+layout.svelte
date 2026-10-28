@@ -5,8 +5,11 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import SearchPalette from '$lib/components/SearchPalette.svelte';
 	import { onNavigate, afterNavigate } from '$app/navigation';
+	import { page } from '$app/state';
 
 	let { children } = $props();
+	// The home page carries its own bar and contact footer (a port of ~/Sites/sina).
+	const home = $derived(page.url.pathname === '/');
 
 	// A subtle fade + lift between routes via the View Transitions API, for a
 	// smooth app-like feel. Skipped where unsupported or for reduced-motion users.
@@ -40,9 +43,9 @@
 	>Skip to content</a
 >
 
-<Header />
+{#if !home}<Header />{/if}
 <SearchPalette />
-<main id="main" class="py-12 sm:py-20">
+<main id="main" class={home ? '' : 'py-12 sm:py-20'}>
 	{@render children()}
 </main>
-<Footer />
+{#if !home}<Footer />{/if}

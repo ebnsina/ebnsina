@@ -10,9 +10,12 @@
 
 <div class="mx-auto max-w-5xl px-5 sm:px-8">
 	<header class="mb-10">
-		<a href="/blog" class="text-sm text-muted hover:text-fg"><Icon name="arrowLeft" size={14} /> All writing</a>
+		<a href="/blog" class="text-sm text-muted hover:text-fg"
+			><Icon name="arrowLeft" size={14} /> All writing</a
+		>
 		<h1 class="mt-4 title-page">
-			<Icon name="tag" size={28} class="inline align-[-0.1em] text-muted" /> {data.tag}
+			<Icon name="tag" size={28} class="inline align-[-0.1em] text-muted" />
+			{data.tag}
 		</h1>
 		<p class="mt-2 text-muted">
 			{data.posts.length} post{data.posts.length === 1 ? '' : 's'}

@@ -147,7 +147,7 @@
 
 	.lede {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: var(--step-0);
 		line-height: 1.7;
 		color: var(--muted);
 		max-width: 62ch;
@@ -155,7 +155,7 @@
 
 	.label {
 		display: block;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		font-weight: 600;
 		margin-bottom: 0.45rem;
 	}
@@ -197,7 +197,7 @@
 		background: color-mix(in oklch, var(--fg) 2%, var(--bg));
 		color: var(--fg);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--step--1);
 		resize: vertical;
 	}
 
