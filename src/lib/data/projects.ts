@@ -908,15 +908,14 @@ export const projects: Project[] = [
 		}
 	},
 	{
-		title: 'Kormi AI',
-		slug: 'kormi-ai',
+		title: 'AI order-confirmation calls',
+		slug: 'ai-calling',
 		icon: 'phone',
 		description:
 			'AI phone calls for online shops in Bangladesh: confirms cash-on-delivery orders and recovers abandoned carts automatically, in Bangla.',
 		year: 2026,
 		role: 'Sole engineer',
 		stack: ['Go', 'PostgreSQL', 'Redis', 'React', 'SvelteKit'],
-		url: 'https://kormi.ai',
 		featured: true,
 		order: 5,
 		caseStudy: {
