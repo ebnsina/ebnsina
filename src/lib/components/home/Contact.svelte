@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Night from './Night.svelte';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { SITE } from '$lib/config';
 	import { afterNavigate } from '$app/navigation';
 	import { gsap, ScrollTrigger, SplitText, motion } from '$lib/motion';
@@ -111,6 +112,7 @@
 				<a {href} target="_blank" rel="noopener">{name}</a>
 			{/each}
 			<span>© {year} {SITE.name}</span>
+			<span class="theme"><ThemeToggle /></span>
 		</nav>
 	</div>
 </footer>
@@ -182,6 +184,20 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem 1.25rem;
+	}
+	/* the header drops the theme switch on phones; it lives here instead */
+	.theme {
+		display: none;
+		/* the switch reads its ink from these; give it the footer's */
+		--fg: var(--on-band);
+		--bg: var(--band);
+		--muted: var(--band-mute);
+		--rule-strong: color-mix(in oklab, var(--on-band) 25%, transparent);
+	}
+	@media (max-width: 639px) {
+		.theme {
+			display: inline-flex;
+		}
 	}
 	nav a:hover {
 		color: var(--band-hi);
