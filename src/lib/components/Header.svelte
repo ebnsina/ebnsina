@@ -96,7 +96,9 @@
 </svg>
 
 <header class="site-header" class:inset>
-	<a href="/" class="logo">{SITE.name}</a>
+	<a href="/" class="logo" aria-label={SITE.name}>
+		<span class="full">{SITE.name}</span><span class="short" aria-hidden="true">ES</span>
+	</a>
 	<nav aria-label="Main">
 		<span class="links">
 			{#each SITE.nav as item (item.href)}
@@ -207,28 +209,22 @@
 			display: none;
 		}
 	}
-	/* phones: name and switches on the first row, the links on their own row below */
+	.short {
+		display: none;
+	}
+	/* phones: one row, initials and the links; search hides (⌘K has no key here)
+	   and the theme switch moves to the footer */
 	@media (max-width: 639px) {
-		.site-header {
-			display: grid;
-			grid-template-columns: 1fr auto;
-			grid-template-areas:
-				'logo tools'
-				'links links';
-			row-gap: 0.75rem;
-		}
-		nav {
-			display: contents;
-		}
-		.logo {
-			grid-area: logo;
-		}
+		.full,
 		.tools {
-			grid-area: tools;
+			display: none;
+		}
+		.short {
+			display: inline;
 		}
 		.links {
-			grid-area: links;
-			gap: 1.25rem;
+			gap: 1rem;
+			font-size: var(--step--2);
 		}
 	}
 </style>
