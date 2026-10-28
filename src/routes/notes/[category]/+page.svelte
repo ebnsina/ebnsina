@@ -37,7 +37,7 @@
 
 <Seo title={`${data.meta.label} · ${t.notesTitle}`} description={data.meta.description} />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8" lang="bn">
+<div class="page" lang="bn">
 	<header class="mb-8">
 		<a href="/notes" class="eyebrow transition-colors hover:text-fg">{t.backToNotes}</a>
 		<h1 class="mb-3 mt-3 title-page">{data.meta.label}</h1>

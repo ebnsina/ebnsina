@@ -65,6 +65,8 @@
 
 <style>
 	.night {
+		/* fade in from the page so the footer has no top edge */
+		mask-image: linear-gradient(transparent, #000 35%);
 		position: absolute;
 		inset: 0;
 		z-index: -1;

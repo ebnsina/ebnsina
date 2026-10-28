@@ -5,7 +5,7 @@
 
 <Seo title={page.status === 404 ? 'Not found' : 'Error'} noindex />
 
-<div class="mx-auto max-w-5xl px-5 py-24 sm:px-8">
+<div class="page py-24">
 	<p class="mb-4 eyebrow">{page.status}</p>
 	<h1 class="mb-4 title-page">
 		{page.status === 404 ? 'Not here.' : 'Something broke.'}

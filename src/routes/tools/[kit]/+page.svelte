@@ -53,7 +53,7 @@
 
 <Seo title={kit.tagline} description={kit.description} />
 
-<div class="mx-auto max-w-4xl px-5 sm:px-8" lang="bn">
+<div class="page max-w-[calc(56rem+2*var(--sina-gutter))]" lang="bn">
 	<nav class="pt-2 text-sm text-muted">
 		<a href="/tools" class="hover:text-fg"><Icon name="arrowLeft" size={14} /> সব টুল</a>
 	</nav>

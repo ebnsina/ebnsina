@@ -105,10 +105,8 @@
 
 	.tokens {
 		flex: none;
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: var(--step--3);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
 		color: var(--muted);
 	}
 

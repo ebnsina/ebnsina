@@ -7,14 +7,14 @@
 
 <Seo title="Now" description="What I'm focused on right now." />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		eyebrow="Now · Updated {label}"
 		title="What I'm doing now"
 		description="A snapshot of what I'm building, learning, and thinking about right now."
 	/>
 
-	<div class="prose-editorial mx-auto max-w-[44rem]">
+	<div class="prose-editorial max-w-[44rem]">
 		<h2>Work</h2>
 		<ul>
 			<li>

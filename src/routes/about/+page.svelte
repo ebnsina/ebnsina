@@ -9,14 +9,14 @@
 	profilePage
 />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		eyebrow="About"
 		title="Ebn Sina"
 		description="Software engineer. Building things that hold up, over coffee mostly."
 	/>
 
-	<div class="prose-editorial mx-auto max-w-[44rem]">
+	<div class="prose-editorial max-w-[44rem]">
 		<p>
 			<strong>Ebn Sina</strong> is a software engineer who builds complex infrastructure and developer
 			products end to end: video infrastructure, CDN and edge delivery, analytics pipelines, media players,

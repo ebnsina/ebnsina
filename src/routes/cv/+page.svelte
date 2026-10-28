@@ -195,7 +195,7 @@
 
 	@media print {
 		:global(header.site-header),
-		:global(footer),
+		:global(#contact),
 		:global(.print-hide),
 		:global(a[href='#main']) {
 			display: none !important;

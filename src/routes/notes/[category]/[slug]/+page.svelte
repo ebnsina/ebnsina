@@ -91,8 +91,6 @@
 	.chapter-nav-label {
 		font-size: var(--step--2);
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 	.chapter-nav-title {

@@ -14,13 +14,13 @@
 	description="Notes on engineering, craft, and the tools I use to build software."
 />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		title="Writing"
 		description="Essays, post-mortems, and small notes on software engineering."
 	/>
 	{#if data.tags.length}
-		<div class="-mt-6 mb-10 flex flex-wrap justify-center gap-2">
+		<div class="mb-10 flex flex-wrap gap-2">
 			{#each data.tags as t (t)}
 				<a href={`/blog/tags/${t}`} class="tag-pill"><Icon name="tag" size={12} />{t}</a>
 			{/each}
@@ -80,10 +80,8 @@
 		align-items: center;
 		gap: 0.4rem;
 		grid-area: eyebrow;
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--2);
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 

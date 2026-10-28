@@ -12,7 +12,7 @@
 	description="Working tools that go with the series: an evidence bank, a profile and gig builder, and a proposal composer that reads the job post."
 />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		title="Tools"
 		description="Kits that turn each series into something you actually fill in: your evidence, your profile, your proposal. Everything stays in your browser."
@@ -61,10 +61,8 @@
 	}
 
 	.eyebrow {
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--2);
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
 		color: var(--muted);
 	}
 

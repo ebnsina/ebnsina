@@ -202,7 +202,12 @@
      the rest of the page. The TOC is pinned to the viewport edge rather than
      holding a column, so nothing here depends on whether it's showing. Focus
      mode is the narrow-measure option. -->
-<div {lang} class="mx-auto px-5 sm:px-8 {reader ? 'max-w-[44rem]' : 'max-w-5xl'}">
+<div
+	{lang}
+	class="page {reader
+		? 'max-w-[calc(44rem+2*var(--sina-gutter))]'
+		: 'max-w-[calc(64rem+2*var(--sina-gutter))]'}"
+>
 	<article bind:this={article} class="min-w-0">
 		{@render header()}
 		<div class="prose-editorial">

@@ -16,7 +16,7 @@
 	description="Browse every notes track, grouped by area: foundations, languages, infrastructure, data, scaling and more."
 />
 
-<div class="mx-auto max-w-5xl px-5 sm:px-8">
+<div class="page">
 	<PageBanner
 		eyebrow="The directory"
 		title="Browse all tracks"

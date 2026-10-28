@@ -90,10 +90,8 @@
 		color: var(--fg);
 	}
 	.meta {
-		font-family: var(--font-pixel);
+		font-family: var(--font-sans);
 		font-size: var(--step--3);
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
 		color: color-mix(in oklch, var(--fg) 40%, transparent);
 	}
 	.badge.earned .meta {
