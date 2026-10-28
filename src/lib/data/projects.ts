@@ -12,13 +12,15 @@ export type CaseStudy = {
 	/** The problem the project solves, and for whom. */
 	problem: string;
 	/** Genuine engineering challenges and how they were addressed. */
-	challenges: CaseStudySection[];
+	challenges?: CaseStudySection[];
 	/** Concrete implementation highlights. */
-	implementation: CaseStudySection[];
+	implementation?: CaseStudySection[];
 	/** Why each core technology was chosen. */
-	stackWhy: StackReason[];
+	stackWhy?: StackReason[];
 	/** Notable shipped capabilities. */
 	features: string[];
+	/** What's designed but not built yet. */
+	planned?: string[];
 	/** Current state, e.g. "In development", "Released". */
 	status?: string;
 };
@@ -44,7 +46,7 @@ export type Project = {
 
 export const projects: Project[] = [
 	{
-		title: 'Alchemist',
+		title: 'Video platform',
 		slug: 'alchemist',
 		icon: 'film',
 		description:
@@ -52,12 +54,12 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['Go', 'ffmpeg', 'PostgreSQL', 'ClickHouse', 'S3'],
 		featured: true,
-		order: 1,
+		order: 2,
 		caseStudy: {
 			summary:
 				'A video platform that turns one upload into an adaptive-bitrate stream, encodes in parallel without visible seams, and only spends compute on the renditions people actually watch.',
 			problem:
-				'Course creators, publishers and product teams in Bangladesh need video that starts fast on a cheap phone over a patchy mobile connection, and they pay for every minute of encoding and every gigabyte served. Alchemist takes a single upload and produces an adaptive stream that starts at the smallest size and climbs as the connection allows, with playback links that expire and a library that is protected from casual copying.',
+				'Course creators, publishers and product teams in Bangladesh need video that starts fast on a cheap phone over a patchy mobile connection, and they pay for every minute of encoding and every gigabyte served. It takes a single upload and produces an adaptive stream that starts at the smallest size and climbs as the connection allows, with playback links that expire and a library that is protected from casual copying.',
 			challenges: [
 				{
 					title: 'Parallel encoding without quality seams',
@@ -120,11 +122,17 @@ export const projects: Project[] = [
 				'A branded embeddable player, webhooks and nested folders',
 				'Per-video viewer analytics and per-minute billing'
 			],
+			planned: [
+				'Commercial DRM: Widevine, PlayReady and FairPlay',
+				'Viewer statistics: plays and watch time',
+				'Importers from Vimeo, Bunny and storage buckets',
+				'H.265, DASH and 4K'
+			],
 			status: 'Built · pre-launch'
 		}
 	},
 	{
-		title: 'Yayın',
+		title: 'Live streaming',
 		slug: 'yayin',
 		icon: 'broadcast',
 		description:
@@ -132,12 +140,12 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['Go', 'MediaMTX', 'ffmpeg', 'S3'],
 		featured: true,
-		order: 2,
+		order: 4,
 		caseStudy: {
 			summary:
 				'A live-streaming service that accepts any common encoder, transcodes to an adaptive stream in real time, and turns every broadcast into an on-demand video without a re-upload.',
 			problem:
-				'Teachers, churches and small broadcasters want their own channel instead of a platform that owns the audience. Yayın gives each channel a stream key: point OBS or a webcam at it, viewers get an adaptive stream, and when the broadcast ends the recording flows straight into the video library.',
+				'Teachers, churches and small broadcasters want their own channel instead of a platform that owns the audience. It gives each channel a stream key: point OBS or a webcam at it, viewers get an adaptive stream, and when the broadcast ends the recording flows straight into the video library.',
 			challenges: [
 				{
 					title: 'Accepting any encoder without trusting it',
@@ -187,11 +195,12 @@ export const projects: Project[] = [
 				'Crash-tolerant clean-up of abandoned broadcasts',
 				'Usage-based plans enforced by the account layer'
 			],
+			planned: ['A first run on a production server', 'Saving recordings into the video library'],
 			status: 'Built · pre-launch'
 		}
 	},
 	{
-		title: 'Seyr',
+		title: 'Privacy-first web analytics',
 		slug: 'seyr',
 		icon: 'chart',
 		description:
@@ -199,12 +208,12 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'JavaScript'],
 		featured: true,
-		order: 3,
+		order: 7,
 		caseStudy: {
 			summary:
 				'Cookieless site analytics that counts unique visitors without being able to follow any one of them, reported in the business’s own time zone.',
 			problem:
-				'Site owners want to know which pages people read and where they came from, without cookie banners or handing visitor data to an ad company. Seyr reports pages, referrers, countries and devices with exact counts, and is built so that even someone holding the database cannot reconstruct who visited.',
+				'Site owners want to know which pages people read and where they came from, without cookie banners or handing visitor data to an ad company. It reports pages, referrers, countries and devices with exact counts, and is built so that even someone holding the database cannot reconstruct who visited.',
 			challenges: [
 				{
 					title: 'Counting visitors without tracking them',
@@ -250,24 +259,30 @@ export const projects: Project[] = [
 				'Shareable dashboards by link',
 				'Per-site retention and data export'
 			],
+			planned: [
+				'Online payments and Bangladeshi-taka pricing',
+				'A realtime view, landing and exit pages, and scroll depth',
+				'Chart notes, read-only share links and personal API keys',
+				'Analytics for video and mobile apps'
+			],
 			status: 'Built · pre-launch'
 		}
 	},
 	{
-		title: 'Ulak',
+		title: 'Branded link shortener',
 		slug: 'ulak',
 		icon: 'link',
 		description:
 			'Short links on your own domain, with a readable address and a QR code for every link, with click counts that tell you which poster or SMS worked.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL'],
-		featured: true,
-		order: 4,
+		featured: false,
+		order: 22,
 		caseStudy: {
 			summary:
 				'A branded link shortener built for links that get printed, read aloud and typed back in, with domain verification that keeps checking after day one.',
 			problem:
-				'Businesses put links on posters, SMS campaigns and packaging, then have no idea which one worked, and a random short code is hard to type from a printed flyer. Ulak serves short links from the customer’s own domain, generates a QR code for each, and counts clicks per link so every channel can be measured.',
+				'Businesses put links on posters, SMS campaigns and packaging, then have no idea which one worked, and a random short code is hard to type from a printed flyer. It serves short links from the customer’s own domain, generates a QR code for each, and counts clicks per link so every channel can be measured.',
 			challenges: [
 				{
 					title: 'Proving a domain is really yours',
@@ -313,20 +328,20 @@ export const projects: Project[] = [
 		}
 	},
 	{
-		title: 'Hafif',
+		title: 'Image delivery',
 		slug: 'hafif',
 		icon: 'image',
 		description:
 			'Image delivery. Keep images where they already are and request any size and format from a signed URL, resized and cached on the fly.',
 		year: 2026,
 		stack: ['Go', 'libvips'],
-		featured: true,
-		order: 5,
+		featured: false,
+		order: 13,
 		caseStudy: {
 			summary:
 				'An on-the-fly image service that resizes and re-encodes from signed URLs, caches aggressively, and cannot be turned into an open proxy.',
 			problem:
-				'Product photos and article images are often far larger than the phone that shows them. Hafif lets a site keep its originals where they are and ask for the size and format each page needs. The image is fetched, resized, re-encoded to a modern format and cached, so the next visitor gets it instantly.',
+				'Product photos and article images are often far larger than the phone that shows them. It lets a site keep its originals where they are and ask for the size and format each page needs. The image is fetched, resized, re-encoded to a modern format and cached, so the next visitor gets it instantly.',
 			challenges: [
 				{
 					title: 'Not becoming an open proxy',
@@ -364,24 +379,25 @@ export const projects: Project[] = [
 				'Year-long caching with atomic disk writes',
 				'Usage metering per organisation'
 			],
+			planned: ['Image processing on its own machines once traffic justifies it'],
 			status: 'API complete · console in progress'
 		}
 	},
 	{
-		title: 'Dukkan',
+		title: 'Cash-on-delivery commerce',
 		slug: 'dukkan',
 		icon: 'storefront',
 		description:
 			'An online shop built around how selling already works in Bangladesh: cash on delivery, courier booking, every district and thana, and a ledger that reconciles.',
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'S3'],
-		featured: true,
-		order: 6,
+		featured: false,
+		order: 12,
 		caseStudy: {
 			summary:
 				'Commerce for cash-on-delivery markets: couriers, settlements and a double-entry ledger, with a path from a single shop to a multi-seller marketplace.',
 			problem:
-				'Most online selling in Bangladesh is cash on delivery through a courier, and the hard part is not the storefront. It is knowing whether the courier’s settlement matches the orders. Dukkan runs the shop, books couriers against all 64 districts and their thanas, and keeps the books straight; adding a second seller turns the same shop into a marketplace with commission and payouts.',
+				'Most online selling in Bangladesh is cash on delivery through a courier, and the hard part is not the storefront. It is knowing whether the courier’s settlement matches the orders. It runs the shop, books couriers against all 64 districts and their thanas, and keeps the books straight; adding a second seller turns the same shop into a marketplace with commission and payouts.',
 			challenges: [
 				{
 					title: 'Money that has to reconcile',
@@ -432,7 +448,7 @@ export const projects: Project[] = [
 		}
 	},
 	{
-		title: 'Majlis',
+		title: 'Webinar rooms',
 		slug: 'majlis',
 		icon: 'chalkboard',
 		description:
@@ -440,16 +456,16 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['Go', 'WebSockets', 'PostgreSQL'],
 		featured: true,
-		order: 7,
+		order: 10,
 		caseStudy: {
 			summary:
 				'An interactive webinar room for hundreds of people that avoids a media server entirely, and keeps polls in sync with a stream that runs seconds behind.',
 			problem:
-				'A class or a town hall of a few hundred people needs everyone to hear the host and be able to take part without installing anything. Majlis lets the audience join with a six-character code, and gives them chat, questions with upvotes and live polls; the recording lands in the video library afterwards.',
+				'A class or a town hall of a few hundred people needs everyone to hear the host and be able to take part without installing anything. It lets the audience join with a six-character code, and gives them chat, questions with upvotes and live polls; the recording lands in the video library afterwards.',
 			challenges: [
 				{
 					title: 'Scale without a media server',
-					body: 'Two-way video for hundreds of people needs a costly selective forwarding server. Majlis deliberately has no audience video: the host’s broadcast rides the live-streaming pipeline, and all interaction travels over WebSockets. The tradeoff is that viewers are several seconds behind the host.'
+					body: 'Two-way video for hundreds of people needs a costly selective forwarding server. The room deliberately has no audience video: the host’s broadcast rides the live-streaming pipeline, and all interaction travels over WebSockets. The tradeoff is that viewers are several seconds behind the host.'
 				},
 				{
 					title: 'Polls that arrive before the host says them',
@@ -491,7 +507,7 @@ export const projects: Project[] = [
 		}
 	},
 	{
-		title: 'Seher',
+		title: 'Shared accounts and billing',
 		slug: 'seher',
 		icon: 'wallet',
 		description:
@@ -499,12 +515,12 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['Go', 'PostgreSQL', 'SvelteKit'],
 		featured: true,
-		order: 8,
+		order: 9,
 		caseStudy: {
 			summary:
 				'The account platform underneath every product: organisations, a prepaid wallet in taka, subscriptions, API keys and notifications, in a modular monolith built to be split later.',
 			problem:
-				'Running several products as separate SaaS means separate logins, separate bills and separate security models. Seher gives a business one account, one set of organisations and one wallet: top up once, switch products on, and each product charges for what it uses, with plain, published prices.',
+				'Running several products as separate SaaS means separate logins, separate bills and separate security models. It gives a business one account, one set of organisations and one wallet: top up once, switch products on, and each product charges for what it uses, with plain, published prices.',
 			challenges: [
 				{
 					title: 'Tenant isolation in the database, not the app',
@@ -567,7 +583,7 @@ export const projects: Project[] = [
 		stack: ['Swift 6', 'SwiftUI', 'ScreenCaptureKit', 'Vision'],
 		url: 'https://github.com/ebnsina/SnapKeep/releases',
 		featured: false,
-		order: 9,
+		order: 19,
 		caseStudy: {
 			summary:
 				'A native macOS capture tool (region/window/full-screen screenshots, screen recording, annotation, and on-device OCR) that never touches the network.',
@@ -655,7 +671,7 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['SvelteKit', 'Drizzle', 'PostgreSQL', 'TanStack AI'],
 		featured: false,
-		order: 10,
+		order: 21,
 		caseStudy: {
 			summary:
 				'An SEO SaaS that audits a site, scores it, and teaches non-technical owners exactly what to fix, with a provider-agnostic, fully optional AI fix assistant.',
@@ -747,7 +763,7 @@ export const projects: Project[] = [
 		year: 2026,
 		stack: ['SvelteKit', 'Svelte 5', 'Tailwind', 'TypeScript'],
 		featured: false,
-		order: 11,
+		order: 24,
 		caseStudy: {
 			summary:
 				'49 single-purpose calculators and tools across five categories, driven by one declarative registry and prerendered to static HTML that runs entirely in the browser.',
@@ -824,6 +840,388 @@ export const projects: Project[] = [
 				'Instant client-side search, per-category theming, and reversible text tools with live recomputation'
 			],
 			status: 'Production-ready static build'
+		}
+	},
+	{
+		title: 'Self-hosted deployment platform',
+		slug: 'deploy-platform',
+		icon: 'diagram',
+		description:
+			'Deploy apps to Linux servers you already own, with automatic HTTPS, health-checked rollouts and one-click databases. Self-hosted for free or as a hosted service.',
+		year: 2026,
+		stack: ['Rust', 'Axum', 'PostgreSQL', 'Docker', 'Caddy', 'SvelteKit'],
+		featured: true,
+		order: 1,
+		caseStudy: {
+			summary:
+				'A deployment platform that turns a handful of rented servers into something that feels like a managed cloud, without handing over the servers or the bill.',
+			problem:
+				'Managed platforms are easy until the invoice grows; running your own servers is cheap until a deploy breaks at night. This platform puts a small agent on each server and does the operations work: builds, rollouts, certificates, databases, backups and alerts, so a small team gets the convenience of a platform on machines it controls.',
+			features: [
+				'Deploy from Git, a container image or Docker Compose; traffic switches only after a health check passes, with automatic rollback',
+				'Several servers per project: apps placed by free memory, moved without downtime, and moved off a server that stops responding',
+				'One-click Postgres, MariaDB, MongoDB, Valkey and ClickHouse, plus app templates such as Gitea, n8n and Metabase',
+				'Backups to any S3-compatible storage, environments with shared variables, scheduled jobs and a browser terminal',
+				'Custom and wildcard domains, password protection and IP allowlists',
+				'Uptime checks, a public status page, alerts to Slack, Discord and Telegram, and cost per app',
+				'An AI assistant that explains failed deploys, an MCP server for coding agents, and a CLI'
+			],
+			planned: [
+				'Preview deploys for every pull request, including a copy of the database',
+				'Static sites',
+				'A GitHub App for one-click repository access',
+				'Online payments for the hosted edition',
+				'Rollback and backups for Compose apps'
+			],
+			status: 'Built · pre-launch'
+		}
+	},
+	{
+		title: 'Content delivery network',
+		slug: 'cdn',
+		icon: 'aperture',
+		description:
+			'A CDN in front of a website or storage bucket: custom domains with free certificates, cache rules, a firewall and real-time visitor analytics.',
+		year: 2026,
+		stack: ['Go', 'OpenResty', 'PostgreSQL', 'ClickHouse'],
+		featured: true,
+		order: 3,
+		caseStudy: {
+			summary:
+				'An edge network for sites whose visitors are mostly in Bangladesh, where content served from Singapore or Europe still feels slow.',
+			problem:
+				'Global CDNs route a lot of Bangladeshi traffic through distant points of presence. This network serves it from a local edge, with the controls a site owner expects (caching, purging, security and logs) managed from one console and an API.',
+			features: [
+				'Distributions with custom domains and automatic free TLS certificates',
+				'Cache rules, and purging by path or pattern',
+				'A firewall for attacks, bots, risky addresses, country blocking and rate limits, each verified on the edge',
+				'Signed URLs, CORS and bandwidth caps with alerts',
+				'Visitor analytics, request logs and log export',
+				'Usage metered from edge logs'
+			],
+			planned: [
+				'A second edge server, with automatic failover',
+				'Multi-CDN: local traffic on the own edge, the rest of the world on a partner network',
+				'Invoicing from the metered usage'
+			],
+			status: 'Live on staging'
+		}
+	},
+	{
+		title: 'Kormi AI',
+		slug: 'kormi-ai',
+		icon: 'phone',
+		description:
+			'AI phone calls for online shops in Bangladesh: confirms cash-on-delivery orders and recovers abandoned carts automatically, in Bangla.',
+		year: 2026,
+		role: 'Sole engineer',
+		stack: ['Go', 'PostgreSQL', 'Redis', 'React', 'SvelteKit'],
+		url: 'https://kormi.ai',
+		featured: true,
+		order: 5,
+		caseStudy: {
+			summary:
+				'An order-event API that turns a new cash-on-delivery order into a phone call, and the call’s answer back into a confirmed or cancelled order.',
+			problem:
+				'Cash-on-delivery shops lose money on fake and unconfirmed orders, and calling every customer by hand does not scale. A shop sends its order events to the API; the service calls the customer in Bangla, records the answer, retries politely and reports the result back by webhook.',
+			features: [
+				'An order-event API that never calls twice for the same order and can cancel a pending call',
+				'Keypad-response calls with Bangla text-to-speech, amounts read out as Bengali words',
+				'Retries on a schedule that respects quiet hours, with per-customer do-not-disturb',
+				'Signed webhooks with retries and a dead-letter queue',
+				'A merchant app: stores, products, FAQs, customers with CSV import, call logs with recordings and credits',
+				'An operator dashboard with step-by-step traces of every order and why calls failed',
+				'Integration docs written for AI coding assistants'
+			],
+			planned: [
+				'Conversion analytics and A/B testing of call scripts',
+				'Shopify and WooCommerce plugins',
+				'Agents for failed payments and inbound calls',
+				'More countries and languages'
+			],
+			status: 'In production'
+		}
+	},
+	{
+		title: 'School and learning management',
+		slug: 'learning-management',
+		icon: 'chalkboard',
+		description:
+			'Courses, classes, exams, fees and a school website in one self-hosted system for academies, schools, madrasas and coaching centers.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'River', 'SvelteKit', 'S3'],
+		featured: true,
+		order: 6,
+		caseStudy: {
+			summary:
+				'One install per institution covering both online courses and the day-to-day running of a school, built for Bangladesh first.',
+			problem:
+				'Institutions in Bangladesh usually juggle an LMS for courses, spreadsheets for fees and attendance, and a separate website. This system brings them together on the institution’s own server, with local payment methods and report cards in the national GPA format.',
+			features: [
+				'Courses with lessons, timed and shuffled quizzes, assignments with late penalties, weighted gradebooks and publicly verifiable certificates',
+				'Classes, students and guardians, attendance, timetables, exams with GPA 5.0 report cards, fees, admissions, staff and payroll',
+				'Library, transport, hostel, an income and expense ledger, an academic calendar, ID cards and hifz tracking',
+				'Course sales through bKash, SSLCommerz or Stripe, bank transfer with slip review, coupons and instalments',
+				'Portals for students and guardians with one-time-code sign-in and SMS invitations',
+				'A public website for the institution, built from page sections',
+				'An AI helper for writing lessons and quiz questions, with any model provider',
+				'A one-command installer with automatic HTTPS and backups'
+			],
+			planned: [
+				'A mobile app',
+				'Bangla and Arabic (right-to-left) interfaces',
+				'SCORM and H5P lessons',
+				'Video transcoding'
+			],
+			status: 'Built · pre-launch'
+		}
+	},
+	{
+		title: 'AI customer agents',
+		slug: 'ai-agents',
+		icon: 'sparkles',
+		description:
+			'AI agents that talk with a business’s customers, starting with order confirmation and cart recovery, and report structured results back.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'River', 'SvelteKit'],
+		featured: true,
+		order: 8,
+		caseStudy: {
+			summary:
+				'A workspace where a business builds an agent from a template, tests it live, publishes a frozen version and reads every conversation.',
+			problem:
+				'Small businesses want AI to handle routine customer conversations, but they need to control what the agent says, use their own model accounts and get a clear outcome from each chat rather than a transcript to read.',
+			features: [
+				'Accounts with email confirmation, password reset and lock-out, one workspace each, isolated in the database',
+				'Agents from templates (order confirmation, cart recovery or blank), published as frozen versions',
+				'A streaming chat engine with tool use, and a live test chat beside the agent settings',
+				'Bring your own model keys: Anthropic, Gemini or any OpenAI-compatible service, stored encrypted',
+				'Conversation transcripts and 30-day numbers'
+			],
+			planned: [
+				'Shareable chat links and a website widget',
+				'An events API, signed webhooks and a staff inbox for hand-off',
+				'A knowledge base with Bangla search, and test runs before publishing',
+				'WhatsApp, then voice agents'
+			],
+			status: 'In development'
+		}
+	},
+	{
+		title: 'Restaurant ordering and POS',
+		slug: 'restaurant-pos',
+		icon: 'clock',
+		description:
+			'A restaurant’s website with online ordering, an offline-capable tablet till, a kitchen screen and a customer phone app.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'SvelteKit', 'Expo'],
+		order: 11,
+		caseStudy: {
+			summary:
+				'Everything a single restaurant runs on, from the menu online to the receipt printer, with a till that keeps working when the internet doesn’t.',
+			problem:
+				'Restaurants in Bangladesh lose sales when the connection drops at the counter, and VAT invoices have to follow the national Mushak format. This system keeps taking orders offline, syncs them without duplicates, and prints compliant bills.',
+			features: [
+				'A public website with the menu, delivery or pickup ordering, table bookings and opening hours',
+				'A tablet till that works offline and syncs without double orders: tables, takeaway, split bills, cash, card, bKash and Nagad',
+				'A kitchen screen with ticket timers',
+				'Staff PIN sign-in with limited access, an action trail and an end-of-day cash report',
+				'VAT settings with Mushak-6.3 invoices and receipt-printer output',
+				'An owner dashboard for menu, staff, branding and revenue',
+				'A customer phone app with cart, checkout, SMS-code sign-in and order history'
+			],
+			planned: ['Restaurants with several branches', 'A production SMS provider'],
+			status: 'Working MVP'
+		}
+	},
+	{
+		title: 'Video key service (DRM)',
+		slug: 'video-keys',
+		icon: 'lock',
+		description:
+			'Stores the keys that encrypt each video and hands them only to players carrying a short-lived pass signed by the streaming platform.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'Caddy'],
+		url: 'https://securedrm.link',
+		order: 14,
+		caseStudy: {
+			summary:
+				'A small, separate service that does one security-critical job for video platforms: guarding content keys.',
+			problem:
+				'Keeping encryption keys inside the main video platform means one bug can expose every video. Moving them to their own service, with its own database, audit log and narrow API, shrinks what can go wrong.',
+			features: [
+				'An API to create, import, read and delete one key per video',
+				'Key delivery that works with any standard player, checking a signed, expiring pass',
+				'An admin dashboard with daily key-request numbers',
+				'Platform management with API-key and signing-secret rotation',
+				'Search across all keys and an audit log of every change'
+			],
+			planned: ['Licences for Widevine, PlayReady and FairPlay'],
+			status: 'In production for its first platform'
+		}
+	},
+	{
+		title: 'Online store builder',
+		slug: 'store-builder',
+		icon: 'storefront',
+		description:
+			'A multi-tenant store platform for small merchants: products, a themed shop on its own address, cash-on-delivery orders and sales tracking.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'SvelteKit', 'S3'],
+		order: 15,
+		caseStudy: {
+			summary:
+				'Sign up, add products and start taking cash-on-delivery orders the same day, with each store’s data isolated in the database.',
+			problem:
+				'Small sellers on social media need a real shop with order tracking, but most store builders assume card payments and foreign couriers. This one starts from cash on delivery and local delivery charges.',
+			features: [
+				'Accounts, stores and teams with invite links, isolated per store in the database',
+				'Products with categories, size and colour options, photos and stock history',
+				'A shop on its own address with three themes, branding and policy pages',
+				'Cart and cash-on-delivery checkout with delivery charges, free-delivery limits and discount codes',
+				'Orders with a timeline, status emails, invoices, packing slips and order tracking',
+				'A sales dashboard with best sellers, low stock and customers'
+			],
+			planned: [
+				'bKash, Nagad, SSLCommerz and aamarPay',
+				'Courier and SMS apps: Steadfast, Pathao, RedX, Paperfly',
+				'An app system for outside developers, with signed webhooks',
+				'Custom domains, plans and a developer SDK'
+			],
+			status: 'In development'
+		}
+	},
+	{
+		title: 'Pharmacy management',
+		slug: 'pharmacy-management',
+		icon: 'tag',
+		description:
+			'Point of sale and stock control for pharmacy chains: batches and expiry, first-expiry-first-out sales, prescriptions and branch transfers.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'Redis', 'SvelteKit'],
+		order: 16,
+		caseStudy: {
+			summary:
+				'A shared catalog with stock per branch, where every sale takes the soonest-expiring batch first and every stock change is recorded.',
+			problem:
+				'Pharmacies lose money to expired stock and have to know exactly which batch went to which customer. Tracking batches and expiry from goods receipt to checkout makes both visible.',
+			features: [
+				'One catalog with stock per branch and barcode lookup',
+				'Purchase orders and goods receipt by batch and expiry date',
+				'A fast cashier screen: first-expiry-first-out, VAT, discounts, partial payment and customer credit',
+				'Prescription dispensing and customer records',
+				'Adjustments, supplier returns, branch transfers and stock counts',
+				'Expiry and low-stock alerts, sales and stock-value reports, and a full stock-change history'
+			],
+			status: 'Working MVP'
+		}
+	},
+	{
+		title: 'Self-hosted online shop',
+		slug: 'online-shop',
+		icon: 'storefront',
+		description:
+			'A single-merchant shop for Bangladesh, installed per store: catalog, checkout, couriers, local payments and SMS, behind a public API.',
+		year: 2026,
+		stack: ['Go', 'PostgreSQL', 'River', 'SvelteKit'],
+		repo: 'https://github.com/ebnsina/fajr-shop',
+		order: 17,
+		caseStudy: {
+			summary:
+				'An API-first shop where the storefront, the admin and future mobile apps all use the same documented API.',
+			problem:
+				'Cash-on-delivery shops get burned by customers who refuse parcels. Checking a phone number’s delivery history before accepting the order, and confirming payments with the gateway before marking them paid, closes the two most common leaks.',
+			features: [
+				'A catalog with variants, filters and brands, and a home page with banners',
+				'Cart, guest checkout, discount codes and delivery zones',
+				'Wishlist, reviews, and questions and answers',
+				'Orders, a sales dashboard, customers, team roles and API keys',
+				'Steadfast courier booking and tracking, with a delivery-history check before cash on delivery',
+				'SSLCommerz payments (bKash, Nagad, cards), verified with the gateway',
+				'Order status SMS'
+			],
+			planned: ['Pathao and RedX couriers', 'Mobile apps on the same API'],
+			status: 'Working MVP'
+		}
+	},
+	{
+		title: 'Image optimization service',
+		slug: 'image-optimizer',
+		icon: 'image',
+		description:
+			'Resizes, converts and compresses images to the smallest file that still looks identical, served from signed, cacheable URLs.',
+		year: 2026,
+		stack: ['Go', 'libvips', 'SvelteKit', 'nginx'],
+		order: 18,
+		caseStudy: {
+			summary:
+				'A developer API that searches for the lowest quality setting a viewer can’t tell apart from the original, and keeps colours accurate.',
+			problem:
+				'Fixed quality settings either waste bytes or visibly damage images, and colour profiles are often dropped, so photos shift colour. Measuring each result and converting profiles properly solves both.',
+			features: [
+				'AVIF, WebP, JPEG and PNG, picking the best format each browser accepts',
+				'A visually lossless mode that measures every result against the original',
+				'Colour profiles converted to sRGB',
+				'On-the-fly resizing from signed, expiring URLs',
+				'Smart crop, auto-rotation, retina sizes and blurred placeholders',
+				'Batch processing, cache pre-warming, API keys, usage tracking and rate limits'
+			],
+			planned: ['Wide-colour (P3) output', 'Animated images', 'Load testing', 'AI alt text'],
+			status: 'Working MVP'
+		}
+	},
+	{
+		title: 'Svelte component library',
+		slug: 'component-library',
+		icon: 'toolbox',
+		description:
+			'Accessible Svelte 5 components that developers copy into their projects with a CLI, so they own the code.',
+		year: 2026,
+		stack: ['TypeScript', 'Svelte 5', 'SvelteKit', 'Playwright'],
+		url: 'https://ebnsina.github.io/sinaui/',
+		repo: 'https://github.com/ebnsina/sinaui',
+		order: 20,
+		caseStudy: {
+			summary:
+				'The UI foundation every one of these products is built on, open source and themed through a few CSS variables.',
+			problem:
+				'Component libraries either lock you into a package you can’t change or hand you snippets with no accessibility. Copying tested, accessible source into the app gives both ownership and quality.',
+			features: [
+				'68 components, 7 widgets and 6 full blocks: AI chat, calendar, dashboard, file explorer, kanban and media generator',
+				'A CLI to add one component or all of them',
+				'Keyboard and screen-reader support, layouts down to 320px, right-to-left and light and dark themes',
+				'Automated accessibility checks on every docs page'
+			],
+			planned: [
+				'Paid blocks and full app templates (SaaS, CMS, blog, shop, AI agents) for a one-time price'
+			],
+			status: 'Released · MIT'
+		}
+	},
+	{
+		title: 'Travel booking',
+		slug: 'travel-booking',
+		icon: 'search',
+		description:
+			'One search across buses, trains and flights in Bangladesh, with seat maps and the full fare shown up front.',
+		year: 2026,
+		stack: ['TypeScript', 'SvelteKit', 'Drizzle', 'SQLite'],
+		repo: 'https://github.com/ebnsina/safar',
+		order: 23,
+		caseStudy: {
+			summary:
+				'A complete booking flow on generated data: 65 places, 342 routes and about 239,000 departures.',
+			problem:
+				'Booking travel in Bangladesh means a different site for each operator and fares that change at checkout. One search with honest, full prices and real seat maps fixes the experience.',
+			features: [
+				'Search across buses, trains and flights with filters, sorting and paging',
+				'Seat maps for bus decks, multi-coach trains and aircraft cabins, computed from layouts',
+				'Checkout with a 10-minute seat hold, simulated payment and a printable ticket',
+				'Booking lookup by reference and email',
+				'Built so a new country can be added without database changes'
+			],
+			planned: ['A real booking backend', 'More countries', 'Scannable ticket barcodes'],
+			status: 'Demo'
 		}
 	}
 ];
