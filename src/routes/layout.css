@@ -986,12 +986,21 @@ a.media-card:hover h3,
 	width: 100%;
 	padding: 0.7rem 1rem;
 	border: 1px solid var(--rule);
-	border-radius: var(--radius-button);
+	border-radius: var(--radius-card);
 	background: color-mix(in oklab, var(--fg) 3%, var(--bg));
 	color: var(--fg);
 	text-align: left;
 	cursor: pointer;
-	transition: border-color 0.15s;
+	transition:
+		border-color 0.15s,
+		border-radius 0.15s;
+}
+/* open: the bar and the code read as one panel, joined with square inner corners */
+.code-fold-bar[aria-expanded='true'],
+.code-fold-bar[aria-expanded='true']:hover {
+	border-bottom-color: transparent;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 .code-fold-bar:hover {
 	border-color: var(--rule-strong);
@@ -1025,11 +1034,13 @@ a.media-card:hover h3,
 .code-fold-bar[aria-expanded='true'] .code-fold-caret {
 	transform: rotate(180deg);
 }
-.code-fold-body {
-	margin-top: 0.5rem;
-}
 .code-fold-body > .code-block-wrapper > pre.shiki {
 	margin: 0;
+}
+.code-fold-body pre.shiki,
+.code-fold-body > :first-child {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
 }
 @media (prefers-reduced-motion: reduce) {
 	.code-fold-caret {
@@ -1235,4 +1246,22 @@ h3 {
 .ch-mask {
 	padding-inline: 0.02em;
 	margin-inline: -0.02em;
+}
+
+/* Aurora surfaces carry both sets inline (see colors.ts); pick one per theme. */
+:is(.aurora-surface, .glass-card, [style*='--aum-1']) {
+	--au-1: var(--aum-1);
+	--au-2: var(--aum-2);
+	--au-3: var(--aum-3);
+	--au-b1: var(--aum-b1);
+	--au-b2: var(--aum-b2);
+	--au-b3: var(--aum-b3);
+}
+:root.palette-color :is(.aurora-surface, .glass-card, [style*='--aum-1']) {
+	--au-1: var(--auc-1);
+	--au-2: var(--auc-2);
+	--au-3: var(--auc-3);
+	--au-b1: var(--auc-b1);
+	--au-b2: var(--auc-b2);
+	--au-b3: var(--auc-b3);
 }

@@ -13,8 +13,10 @@
 	let {
 		items = featured,
 		heading = 'Selected work',
-		more = true
-	}: { items?: Project[]; heading?: string; more?: boolean } = $props();
+		more = true,
+		// false when the band runs straight into the night footer
+		fade = true
+	}: { items?: Project[]; heading?: string; more?: boolean; fade?: boolean } = $props();
 	const num = (i: number) => String(i + 1).padStart(2, '0');
 	let root: HTMLElement;
 
@@ -37,21 +39,23 @@
 					ease: 'power3.out',
 					scrollTrigger: { trigger: li, start: 'top 85%' }
 				});
-				gsap.fromTo(
-					li.querySelector('.n'),
-					{ y: 60 },
-					{
-						y: -60,
-						ease: 'none',
-						scrollTrigger: { trigger: li, start: 'top bottom', end: 'bottom top', scrub: true }
-					}
-				);
+				// the number drifts only where it sits beside the title, not above it on phones
+				if (matchMedia('(min-width: 801px)').matches)
+					gsap.fromTo(
+						li.querySelector('.n'),
+						{ y: 60 },
+						{
+							y: -60,
+							ease: 'none',
+							scrollTrigger: { trigger: li, start: 'top bottom', end: 'bottom top', scrub: true }
+						}
+					);
 			});
 		})
 	);
 </script>
 
-<section id="work" class="work" bind:this={root}>
+<section id="work" class="work" class:fade bind:this={root}>
 	<header class="head pre">
 		<h2>{heading}</h2>
 		{#if more}<a href="/projects">All projects</a>{/if}
@@ -80,12 +84,16 @@
 <style>
 	.work {
 		/* the band fades back into the page at its foot instead of ending on a hard edge */
-		--fade: clamp(8rem, 16vw, 14rem);
-		background: linear-gradient(var(--band) calc(100% - var(--fade)), var(--bg));
+		background: var(--band);
 		color: var(--on-band);
-		padding: clamp(4rem, 10vw, 9rem) var(--sina-gutter) calc(var(--fade) + 2rem);
+		padding: clamp(4rem, 10vw, 9rem) var(--sina-gutter);
 		overflow: hidden;
 		border-radius: 0;
+	}
+	.fade {
+		--fade: clamp(8rem, 16vw, 14rem);
+		background: linear-gradient(var(--band) calc(100% - var(--fade)), var(--bg));
+		padding-bottom: calc(var(--fade) + 2rem);
 	}
 	.head {
 		display: flex;
@@ -188,11 +196,12 @@
 			grid-template-columns: 1fr;
 			gap: 1rem;
 			padding-left: 0;
-			padding-top: 1.5rem;
 		}
+		/* on phones the number sits on its own line above the title */
 		.n {
-			top: -0.5rem;
-			font-size: 3.5rem;
+			position: static;
+			display: block;
+			font-size: 2.5rem;
 		}
 		.arrow {
 			display: none;

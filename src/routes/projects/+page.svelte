@@ -17,4 +17,4 @@
 	/>
 </div>
 
-<Work items={sorted} heading="{sorted.length} projects" more={false} />
+<Work items={sorted} heading="{sorted.length} projects" more={false} fade={false} />
